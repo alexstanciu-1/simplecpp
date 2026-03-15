@@ -1,6 +1,6 @@
 <?php
 
-namsepace simplecpp\generator;
+namespace simplecpp\generator;
 
 class cpp
 {	
@@ -18,7 +18,7 @@ class cpp
 		}
 
 		switch ($node->kind) {
-			case ast\AST_STMT_LIST:
+			case \ast\AST_STMT_LIST:
 				$code = "";
 				foreach ($node->children as $child) {
 					if ($child !== null) {
@@ -28,14 +28,14 @@ class cpp
 				return $code;
 
 			// NEW: Handle the echo statement
-			case ast\AST_ECHO:
+			case \ast\AST_ECHO:
 				$expr = $this->generate($node->children['expr'], $context);
 				// Translate to C++ std::cout. 
 				// Note: PHP's echo doesn't add a newline by default, so we don't add std::endl here.
 				return "\tstd::cout << " . $expr . ";\n";
 
 			default:
-				return "/* unsupported node: " . ast\get_kind_name($node->kind) . " */\n";
+				return "/* unsupported node: " . \ast\get_kind_name($node->kind) . " */\n";
 		}
 	}
 }
