@@ -1,7 +1,7 @@
 # Project Specification: Simple C++ (scpp)
 
 ## 1. Project Overview
-**Simple C++** is a high-performance transpiler designed to convert a strictly-typed subset of PHP into modern, memory-safe C++20. The project aims to provide the ease of PHP’s syntax with the execution speed and resource management of C++, creating a "managed" C++ environment.
+**Simple C++** is a high-performance S2S compiler designed to convert a strictly-typed subset of PHP into modern, memory-safe C++20. The project aims to provide the ease of PHP’s syntax with the execution speed and resource management of C++, creating a "managed" C++ environment.
 
 ## 2. Core Goals
 * **Performance:** Generate C++ code that is significantly faster than interpreted PHP while remaining readable.
@@ -32,10 +32,10 @@ We have implemented a four-tier parameter and return strategy to balance perform
 
 ### D. Strict Shadowing Prevention
 * **Choice:** Compilation with `-Wshadow -Werror`.
-* **Rationale:** Since we pass strings by `const &`, the transpiler explicitly forbids "accidental" modification of parameters. This forces developers to be aware of their memory usage and intent, aligning with the "Strict Type Awareness" goal.
+* **Rationale:** Since we pass strings by `const &`, the S2S compiler explicitly forbids "accidental" modification of parameters. This forces developers to be aware of their memory usage and intent, aligning with the "Strict Type Awareness" goal.
 
 ## 4. Technical Constraints
-* **Strict Typing:** Every function parameter and return type must have a PHP type hint; untyped code will trigger a `Transpilation Error`.
+* **Strict Typing:** Every function parameter and return type must have a PHP type hint; untyped code will trigger a `S2S compiler Error`.
 * **C++ Version:** Target is **C++20** to utilize modern features like `auto` return type deduction and improved move semantics.
 * **AST Version:** Utilizes **php-ast version 85**, which optimizes built-in types into node flags for faster processing.
 

@@ -1,17 +1,7 @@
 <?php
 
-if ($_SERVER['REQUEST_URI'] === '/simple-cpp/master_specs.csv') {
-	$mime = mime_content_type(__DIR__."/master_specs.csv");
-	header('Content-Type: application/csv');
-	header('Content-Disposition: attachment; filename="master_specs.csv";');
-	readfile(__DIR__."/master_specs.csv");
-	exit;
-}
-
 require_once __DIR__ . '/../generator/cpp.php';
-require_once __DIR__ . '/../tests/public_html/index.php';
 
-/*
 // 1. The User's Code
 $user_code = <<<'PHP'
 <?php
@@ -67,4 +57,3 @@ catch (\Exception $e) {
 File: {$e->getFile()}
 Line: {$e->getLine()}\n" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
 }
-*/

@@ -3,7 +3,7 @@
 namespace simplecpp\generator;
 
 /**
- * The cpp class is responsible for S2S compiler PHP Abstract Syntax Tree (AST) nodes 
+ * The cpp class is responsible for transpiling PHP Abstract Syntax Tree (AST) nodes 
  * into valid C++23 source code.
  */
 class cpp
@@ -16,7 +16,7 @@ class cpp
      */
     public function compile(\ast\Node $root_node): string
     {
-		// MASTER INCLUDE: Points to the library bridge header
+        // MASTER INCLUDE: Points to the library bridge header
         $includes = "#include \"_inc.h\"\n\n";
         
         $global_code = ""; 
@@ -49,8 +49,6 @@ class cpp
         // Internal entry point for the PHP script logic
         $final_cpp .= $this->indent(1) . "void run_script() {\n";
         $final_cpp .= $main_code;
-		// Force C++ to flush the standard output buffer
-		# $final_cpp .= $this->indent(2) . "std::cout << std::flush;\n";
         $final_cpp .= $this->indent(1) . "}\n";
         $final_cpp .= "}\n\n";
 
@@ -205,10 +203,8 @@ class cpp
                 $l = $this->generate($node->children['left'], $context, 0);
                 $r = $this->generate($node->children['right'], $context, 0);
                 $ops = [
-					
                     \ast\flags\BINARY_ADD => '+', \ast\flags\BINARY_SUB => '-',
                     \ast\flags\BINARY_MUL => '*', \ast\flags\BINARY_DIV => '/',
-					\ast\flags\BINARY_CONCAT => '+', // PHP '.' maps to C++ '+'
                     \ast\flags\BINARY_MOD => '%', \ast\flags\BINARY_POW => 'pow',
                     \ast\flags\BINARY_IS_EQUAL => '==', \ast\flags\BINARY_IS_NOT_EQUAL => '!=',
                     \ast\flags\BINARY_IS_SMALLER => '<', \ast\flags\BINARY_IS_GREATER => '>',
@@ -279,31 +275,8 @@ class cpp
                 $name = str_replace('\\', '::', $node->children['name']);
                 return $this->indent($level) . "namespace $name {\n" . $this->generate($node->children['stmts'], $context, $level + 1) . $this->indent($level) . "}\n";
 
-           case \ast\AST_NAME:
-				$name = $node->children['name'];
-				// Map PHP 'null' to C++ 'nullptr'
-				if (strtolower($name) === 'null') {
-					return 'scpp::null';
-				}
-				return $name;
-		
-            case (\defined('ast\AST_GROUP') ? \ast\AST_GROUP : 522): 
-				return "(" . $this->generate($node->children['expr'], $context, 0) . ")";
-
-			case \ast\AST_CONST:
-				return $this->generate($node->children['name'], $context, 0);
-
-			case \ast\AST_CONST_DECL:
-				$code = "";
-				foreach ($node->children as $const) {
-					$name = $const->children['name'];
-					$value = $this->generate($const->children['value'], $context, 0);
-					$code .= $this->indent($level) . "static constexpr auto $name = $value;\n";
-				}
-				return $code;
-
-			case \ast\flags\BINARY_CONCAT: // Node flag for the '.' operator
-				return "($l + $r)";
+            case \ast\AST_NAME: return $node->children['name'];
+            case \ast\AST_GROUP: return "(" . $this->generate($node->children['expr'], $context, 0) . ")";
 
             default:
                 throw new \Exception("Unsupported AST Node: " . \ast\get_kind_name($node->kind));
