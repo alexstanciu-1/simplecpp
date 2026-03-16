@@ -1,0 +1,23 @@
+Group,Category,Feature Name,Dev Status,PHP Code (Test Case),Expected C++ Code,Expected Output,Technical Specs & AST Notes
+Core & Types,Basic,Program Entry,Completed,"<?php echo ""Hi"";","int main() { scpp::print(""Hi""); return 0; }",Hi,Wraps AST root. Initializes library defaults.
+Core & Types,Types,Integer,Completed,$n /** int */ = 10;,scpp::int_t n = 10;,10,Mapped to long long. AST looks for hint exactly after var.
+Core & Types,Types,Float,Completed,$f /** float */ = 1.5;,scpp::float_t f = 1.5;,1.5,Mapped to double.
+Core & Types,Types,Boolean,Completed,$b /** bool */ = true;,scpp::bool_t b = true;,1,Mapped to bool. Transpiler maps AST_CONST true/false.
+Core & Types,Types,Safe String,Completed,"$s /** string */ = ""x"";","scpp::string s = ""x"";",x,operator=(null_t) is deleted to prevent runtime crashes.
+Core & Types,Types,Nullable Type,Completed,$s /** string? */ = null;,scpp::optional<scpp::string> s = scpp::null;,(empty),std::optional wrapper. scpp::null triggers std::nullopt.
+Core & Types,Constants,Universal Null,Completed,return null;,return scpp::null;,N/A,null_t singleton bridging nullptr and nullopt.
+Variables & Memory,Variables,Auto Inference,Completed,$v = 5; $v = 10;,auto v = 5; v = 10;,10,Requires a SymbolTable to avoid outputting auto twice for the same variable.
+Variables & Memory,Variables,Inline Hint,In-Progress,$v /** int */ = 5;,scpp::int_t v = 5;,5,"Uses token_get_all() to find comments ""exactly after"" the variable assignment."
+Variables & Memory,Variables,Type Guard,Proposal,"$v /** int */ = 5; $v = ""x"";",(Transpilation aborted),Build Error,Generator should throw an error if a variable attempts to change types without a new scope.
+Variables & Memory,Memory,Instantiation,In-Progress,$obj = new Class();,auto obj = scpp::create<Class>();,N/A,PHP's new maps to a custom create template returning an scpp::shared_p<Class>.
+Variables & Memory,Memory,Object Nulling,Completed,$obj = null;,obj = scpp::null;,N/A,"Custom operator=(null_t) in shared_p calls reset(), freeing memory if ref count is 0."
+Operators & Math,Operators,String Concat,Completed,"$s = ""A"" . ""B"";","auto s = scpp::string(""A"") + ""B"";",AB,AST_BINARY_OP maps to +. First literal cast to scpp::string to enable operator overload.
+Operators & Math,Operators,Null Concat,Completed,"$a /** string? */ = null; ""Hi "" . $a;","scpp::print(""Hi "" + a);",Hi,"operator+(const char*, optional) safely ignores the empty optional state."
+Operators & Math,Operators,Null Equality,Completed,$a /** int? */ = null; if ($a == null),if (a == scpp::null),TRUE,Handled via bool operator==(null_t) inside scpp::optional and scpp::shared_p.
+Operators & Math,Operators,Math,Completed,$n = (10 + 5) * 2;,auto n = (10 + 5) * 2;,30,Direct mapping of standard arithmetic nodes from the AST.
+Control & Functions,Control,If / Else,Completed,if ($a) { ... },if (a) { ... },N/A,AST_IF mapping. Nullables rely on operator bool() inside std::optional.
+Control & Functions,Control,While Loop,Completed,while ($x < 5),while (x < 5),N/A,Maps directly from AST_WHILE.
+Control & Functions,Control,Foreach,Proposal,foreach($arr as $v),if(arr != scpp::null) { for(auto& v : arr) { ... } },N/A,Requires scpp::array to implement iterators. Wrapped in null-check to prevent C++ crashes.
+Control & Functions,Functions,Nullable Params,Completed,function f(?int $n),void f(scpp::optional<scpp::int_t> n),N/A,AST_PARAM checks for nullable flag and wraps the type in optional.
+Control & Functions,Functions,Default Params,In-Progress,function f($n = null),void f(scpp::optional<scpp::int_t> n = scpp::null),N/A,Maps the AST default value directly to the C++ default argument in the signature.
+Control & Functions,Functions,Return Hints,In-Progress,function f(): ?string,scpp::optional<scpp::string> f(),N/A,Maps PHP return type AST nodes to the correct C++ function return type signature.
