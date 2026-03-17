@@ -129,10 +129,10 @@ If multiple valid target types exist, the expression is rejected as ambiguous.
 ## 3.7 Arithmetic Operators
 
 Supported:
-- +
-- -
-- *
-- /
+- `+`
+- `-`
+- `*`
+- `/`
 
 Rules:
 
