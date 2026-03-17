@@ -1,3 +1,5 @@
+# Simple C++ Specification
+
 ## 1. Overview
 
 Simple C++ S2S is a **source-to-source (S2S) multi-language compiler**.
@@ -10,11 +12,27 @@ It consists of:
   - memory abstraction
 - A **transcoder** that converts source languages into C++:
   - PHP (**in progress**)
-  - Simple C++ (**planned**)
-  - JavaScript (**planned**)
-  - Python (**planned**)
+  - Simple C++ (**later**)
+  - JavaScript (**later**)
+  - Python (**later**)
 
-The transcoder normalizes input languages into a unified intermediate representation before generating C++ code.
+The transcoder converts each source language into C++ using a language-specific implementation.
+
+### Compilation Pipeline
+
+Source Language (SL)  
+→ SL Parser  
+→ SL AST  
+→ Transcoder (SL-specific implementation)  
+→ C++  
+→ Compiler  
+→ Binary  
+
+Each source language currently defines its own AST and transcoder.
+
+A unified intermediate representation was evaluated but is not currently planned.  
+The majority of transformation logic is language-specific, making a shared IR  
+provide limited benefit relative to its complexity.
 
 The generated C++ code is then compiled using a standard C++ toolchain.
 
@@ -48,7 +66,7 @@ It is intended as a **controlled intermediate representation**, not a full C++ r
 - **Partial memory safety**, aiming to improve over time
 
 ### Interoperability
-- Compatible with **C and C++**
+- Designed to interoperate with **C and C++**
 - Leverages existing **C/C++ ecosystem**
 
 ### Language Constraints
@@ -96,6 +114,7 @@ The following types are passed by **const reference (`const &`)**:
 #### Limitations (Explicit)
 - Does **not prevent reference cycles**; `weak_ptr` must be used correctly where needed
 - Full memory safety is **not formally proven** at this stage
+- Aliasing is currently unrestricted and relies on shared ownership semantics
 
 ---
 
