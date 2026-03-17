@@ -17,6 +17,10 @@ User-defined operator overloading is not supported.
 
 Invalid conversions are rejected at compile time. Forbidden conversions may be implemented as deleted conversions in the runtime.
 
+Some explicit conversions may fail at runtime when input values are not valid.
+
+The exact runtime error handling model (exceptions, error objects, or termination) will be defined in a later section.
+
 ---
 
 ## 3.2 Types Covered
@@ -41,7 +45,6 @@ Allowed implicit conversions:
 | From   | To          |
 |--------|-------------|
 | bool   | int         |
-| bool   | float       |
 | int    | float       |
 | null_t | nullable<T> |
 | null_t | shared_p<T> |
@@ -58,6 +61,7 @@ Allowed explicit conversions:
 
 | From   | To     |
 |--------|--------|
+| bool   | float  |
 | int    | bool   |
 | float  | bool   |
 | float  | int    |
@@ -66,8 +70,18 @@ Allowed explicit conversions:
 | bool   | string |
 | string | int    |
 | string | float  |
+| string | bool   |
 
-Explicit conversion syntax is to be defined.
+Explicit conversion syntax:
+
+    (type)expression
+
+This syntax does not map directly to C++ casting semantics.
+
+It is restricted to conversions explicitly allowed by the Simple C++ conversion matrix.
+
+If the conversion is not explicitly defined:
+→ compile-time error
 
 ---
 
@@ -173,8 +187,9 @@ Rules:
 
 Notes:
 - numeric comparison uses standard promotion rules
+- for mixed int/float: int is promoted to float before comparison
 - string comparison is lexicographic
-- object comparison rules to be defined later
+- object comparison rules defined separately
 
 ---
 
@@ -190,21 +205,19 @@ Rules:
 
 Conditional expressions define a special evaluation rule:
 - int is allowed in conditionals (0 = false, non-zero = true)
-- this does not imply a general implicit conversion from int to bool
+- null is allowed and evaluates to false
+- this does not imply general implicit conversion to bool
 
 Examples:
 
     if (0)      // false
     if (125)    // true
+    if (null)   // false
 
 Invalid:
 
     if (0.00)   // error
     if (125.88) // error
-
-Meaning:
-- int is allowed in conditionals
-- float is not implicitly convertible to bool
 
 ---
 
@@ -265,3 +278,36 @@ These are:
 ## 3.14 Operator Precedence
 
 Operator precedence follows standard C++ rules unless otherwise specified.
+
+---
+
+## 3.15 String to Bool Conversion (Detailed)
+
+Explicit conversion required.
+
+Allowed values:
+- "1" → true
+- "0" → false
+- "true" → true
+- "false" → false
+
+Behavior:
+- if value is known at compile time and invalid → compile-time error
+- if value is not known at compile time and invalid → runtime error
+
+---
+
+## 3.16 Numeric Comparison Rule
+
+For any operation involving int and float:
+- int is converted to float
+- comparison is done in float domain
+
+---
+
+## 3.17 Enforcement Rule
+
+All operations must match the defined matrices exactly.
+
+If no rule exists for a given combination:
+→ the expression is a compile-time error.
