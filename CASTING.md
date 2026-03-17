@@ -21,20 +21,22 @@ Some explicit conversions may fail at runtime when input values are not valid.
 
 The exact runtime error handling model (exceptions, error objects, or termination) will be defined in a later section.
 
+Object comparison behavior is defined separately in `OBJECT_COMPARISON.md`.
+
 ---
 
 ## 3.2 Types Covered
 
-- bool
-- int
-- float
-- string
-- null_t
-- nullable<T>
+- `bool`
+- `int`
+- `float`
+- `string`
+- `null_t`
+- `nullable<T>`
 - pointer-like types:
-  - shared_p<T>
-  - weak_p<T>
-  - unique_p<T>
+  - `shared_p<T>`
+  - `weak_p<T>`
+  - `unique_p<T>`
 
 ---
 
@@ -93,21 +95,21 @@ The following are not allowed:
 - string ↔ pointer-like
 - object ↔ primitive (implicit)
 - pointer-like ↔ primitive
-- null_t → primitive
+- `null_t` → primitive
 
 Forbidden conversions must fail at compile time.
 
 ---
 
-## 3.6 null Behavior
+## 3.6 `null` Behavior
 
-- null has type null_t
-- it remains null_t until resolved by context
+- `null` has type `null_t`
+- it remains `null_t` until resolved by context
 - if no valid target type is known → compile-time error
 
-Assignment from null_t is allowed only for:
-- nullable<T>
-- pointer-like types (shared_p<T>, weak_p<T>, unique_p<T>)
+Assignment from `null_t` is allowed only for:
+- `nullable<T>`
+- pointer-like types (`shared_p<T>`, `weak_p<T>`, `unique_p<T>`)
 
 Examples:
 
@@ -129,12 +131,12 @@ Generated-code-visible equivalences:
     nullptr == std::nullopt // true
     nullptr != std::nullopt // false
 
-Comparison with null is only valid when both operands are:
-- null_t
-- nullable<T>
+Comparison with `null` is only valid when both operands are:
+- `null_t`
+- `nullable<T>`
 - pointer-like types
 
-All other comparisons involving null are invalid.
+All other comparisons involving `null` are invalid.
 
 If multiple valid target types exist, the expression is rejected as ambiguous.
 
@@ -158,8 +160,8 @@ Rules:
 | float + float   | float  |
 
 Invalid:
-- arithmetic on bool
-- arithmetic on null
+- arithmetic on `bool`
+- arithmetic on `null`
 - arithmetic on pointer-like types
 
 ---
@@ -187,9 +189,9 @@ Rules:
 
 Notes:
 - numeric comparison uses standard promotion rules
-- for mixed int/float: int is promoted to float before comparison
+- for mixed `int` / `float`, `int` is promoted to `float` before comparison
 - string comparison is lexicographic
-- object comparison rules defined separately
+- object comparison rules are defined separately in `OBJECT_COMPARISON.md`
 
 ---
 
@@ -201,12 +203,12 @@ Supported:
 - `!`
 
 Rules:
-- logical operators operate on bool
+- logical operators operate on `bool`
 
 Conditional expressions define a special evaluation rule:
-- int is allowed in conditionals (0 = false, non-zero = true)
-- null is allowed and evaluates to false
-- this does not imply general implicit conversion to bool
+- `int` is allowed in conditionals (`0 = false`, non-zero = true)
+- `null` is allowed in conditionals and evaluates to false
+- this does not imply general implicit conversion to `bool`
 
 Examples:
 
@@ -253,13 +255,13 @@ Not allowed:
 
 ## 3.12 Vector Behavior
 
-- no arithmetic operators for vector<T>
-- indexing supported
-- append supported via:
+- no arithmetic operators for `vector<T>`
+- indexing is supported
+- append is supported via:
 
     my_vector[] = value;
 
-The empty index operator [] is treated as an append operation.
+The empty index operator `[]` is treated as an append operation.
 
 ---
 
@@ -267,7 +269,7 @@ The empty index operator [] is treated as an append operation.
 
 User-defined operator overloading is not supported.
 
-A limited set of explicit conversion methods (e.g. toString, toInt) may be allowed.
+A limited set of explicit conversion methods (e.g. `toString`, `toInt`) may be allowed.
 
 These are:
 - explicit by default
@@ -286,10 +288,10 @@ Operator precedence follows standard C++ rules unless otherwise specified.
 Explicit conversion required.
 
 Allowed values:
-- "1" → true
-- "0" → false
-- "true" → true
-- "false" → false
+- `"1"` → `true`
+- `"0"` → `false`
+- `"true"` → `true`
+- `"false"` → `false`
 
 Behavior:
 - if value is known at compile time and invalid → compile-time error
@@ -299,8 +301,8 @@ Behavior:
 
 ## 3.16 Numeric Comparison Rule
 
-For any operation involving int and float:
-- int is converted to float
+For any comparison involving `int` and `float`:
+- `int` is converted to `float`
 - comparison is done in float domain
 
 ---

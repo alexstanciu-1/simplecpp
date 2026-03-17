@@ -15,43 +15,43 @@ This avoids hidden costs and unclear semantics.
 ## 2. Equality and Inequality
 
 Supported operators:
-- ==
-- !=
+- `==`
+- `!=`
 
-### 2.1 shared_p<T>
+### 2.1 `shared_p<T>`
 
-- shared_p<T> == shared_p<T> → true if both refer to the same underlying object
-- shared_p<T> != shared_p<T> → inverse
+- `shared_p<T> == shared_p<T>` → true if both refer to the same underlying object
+- `shared_p<T> != shared_p<T>` → inverse
 
-### 2.2 unique_p<T>
+### 2.2 `unique_p<T>`
 
-- unique_p<T> == unique_p<T> → true if both refer to the same underlying object
-- unique_p<T> != unique_p<T> → inverse
+- `unique_p<T> == unique_p<T>` → true if both refer to the same underlying object
+- `unique_p<T> != unique_p<T>` → inverse
 
-### 2.3 weak_p<T>
+### 2.3 `weak_p<T>`
 
 Rules:
 - if both are expired or empty → equal
 - if one is expired/empty and the other is not → not equal
 - if both resolve to live objects → compare resolved identity
 
-Expired weak references are treated as null.
+Expired weak references are treated as `null`.
 
 ---
 
-## 3. Object vs null
+## 3. Object vs `null`
 
 Allowed:
-- object == null
-- object != null
+- `object == null`
+- `object != null`
 
 Meaning:
 - checks whether the object reference is empty or null
 
 Applies to:
-- shared_p<T>
-- unique_p<T>
-- weak_p<T> (expired is considered null)
+- `shared_p<T>`
+- `unique_p<T>`
+- `weak_p<T>` (expired is considered `null`)
 
 ---
 
@@ -70,10 +70,10 @@ Unless explicitly defined in future extensions.
 ## 5. Relational Operators
 
 Forbidden for object-like types:
-- <
-- <=
-- >
-- >=
+- `<`
+- `<=`
+- `>`
+- `>=`
 
 Reason:
 - no meaningful default ordering
@@ -86,10 +86,10 @@ Reason:
 
 ### 6.1 Equality
 
-- nullable<T> == nullable<T>:
-    - both null → true
-    - one null → false
-    - both non-null → compare contained values using T rules
+- `nullable<T> == nullable<T>`:
+  - both null → true
+  - one null → false
+  - both non-null → compare contained values using `T` rules
 
 ### 6.2 Inequality
 
@@ -98,7 +98,7 @@ Reason:
 ### 6.3 Relational Operators
 
 Allowed only if:
-- T supports relational operators
+- `T` supports relational operators
 - both values are non-null
 
 Otherwise:
@@ -143,7 +143,7 @@ User-defined operator overloading is not supported.
 Custom comparison behavior is not available in v1.
 
 Future extensions may allow:
-- explicit comparison methods (e.g. equals())
+- explicit comparison methods (e.g. `equals()`)
 
 ---
 
