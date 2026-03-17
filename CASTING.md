@@ -91,6 +91,10 @@ Forbidden conversions must fail at compile time.
 - it remains null_t until resolved by context
 - if no valid target type is known → compile-time error
 
+Assignment from null_t is allowed only for:
+- nullable<T>
+- pointer-like types (shared_p<T>, weak_p<T>, unique_p<T>)
+
 Examples:
 
     auto x = null; // error
@@ -110,6 +114,13 @@ Generated-code-visible equivalences:
     null != std::nullopt    // false
     nullptr == std::nullopt // true
     nullptr != std::nullopt // false
+
+Comparison with null is only valid when both operands are:
+- null_t
+- nullable<T>
+- pointer-like types
+
+All other comparisons involving null are invalid.
 
 If multiple valid target types exist, the expression is rejected as ambiguous.
 
@@ -177,7 +188,11 @@ Supported:
 Rules:
 - logical operators operate on bool
 
-Conditional evaluation rules:
+Conditional expressions define a special evaluation rule:
+- int is allowed in conditionals (0 = false, non-zero = true)
+- this does not imply a general implicit conversion from int to bool
+
+Examples:
 
     if (0)      // false
     if (125)    // true
@@ -204,6 +219,7 @@ Supported:
 
 Rules:
 - assignment requires valid implicit or explicit conversion
+- explicit-only conversions must use explicit cast syntax
 - compound assignment follows arithmetic rules
 
 ---
@@ -230,6 +246,8 @@ Not allowed:
 
     my_vector[] = value;
 
+The empty index operator [] is treated as an append operation.
+
 ---
 
 ## 3.13 User-defined Conversions
@@ -241,3 +259,9 @@ A limited set of explicit conversion methods (e.g. toString, toInt) may be allow
 These are:
 - explicit by default
 - restricted in scope
+
+---
+
+## 3.14 Operator Precedence
+
+Operator precedence follows standard C++ rules unless otherwise specified.
