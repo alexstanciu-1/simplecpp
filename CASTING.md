@@ -44,14 +44,14 @@ Object comparison behavior is defined separately in `OBJECT_COMPARISON.md`.
 
 Allowed implicit conversions:
 
-| From   | To          |
-|--------|-------------|
-| bool   | int         |
-| int    | float       |
-| null_t | nullable<T> |
-| null_t | shared_p<T> |
-| null_t | weak_p<T>   |
-| null_t | unique_p<T> |
+| From   | To             |
+|--------|----------------|
+| bool   | int            |
+| int    | float          |
+| null_t | nullable<T>    |
+| null_t | shared_p<T>    |
+| null_t | weak_p<T>      |
+| null_t | unique_p<T>    |
 
 All other implicit conversions are forbidden.
 
@@ -152,12 +152,12 @@ Supported:
 
 Rules:
 
-| Expression      | Result |
-|-----------------|--------|
-| int + int       | int    |
-| int + float     | float  |
-| float + int     | float  |
-| float + float   | float  |
+| Expression    | Result |
+|---------------|--------|
+| int + int     | int    |
+| int + float   | float  |
+| float + int   | float  |
+| float + float | float  |
 
 Invalid:
 - arithmetic on `bool`
@@ -313,3 +313,16 @@ All operations must match the defined matrices exactly.
 
 If no rule exists for a given combination:
 → the expression is a compile-time error.
+
+---
+
+## 3.18 Code Generation Rule
+
+Generated C++ code must construct Simple C++ runtime values explicitly.
+
+Examples:
+
+    auto x = (int_t)12;
+    auto s = (string_t)"text";
+
+This prevents generated code from relying on native C++ primitive semantics and ensures all values enter the Simple C++ runtime model explicitly.

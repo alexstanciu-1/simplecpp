@@ -302,3 +302,22 @@ This includes:
 
 - `CASTING.md`
 - `OBJECT_COMPARISON.md`
+
+---
+
+## 11. Code Generation Rules
+
+Generated C++ code must construct Simple C++ runtime values explicitly.
+
+Examples:
+
+    auto x = (int_t)12;
+    auto s = (string_t)"text";
+
+This prevents generated code from relying on native C++ primitive semantics and ensures all values enter the Simple C++ runtime model explicitly.
+
+Source-language object creation is translated into:
+
+    create<T>()
+
+not raw C++ allocation.
