@@ -1,5 +1,3 @@
-# Simple C++ Specification
-
 ## 1. Overview
 
 Simple C++ S2S is a **source-to-source (S2S) multi-language compiler**.
@@ -11,10 +9,12 @@ It consists of:
   - casting
   - memory abstraction
 - A **transcoder** that converts source languages into C++:
-  - PHP
-  - Simple C++
-  - JavaScript
-  - Python
+  - PHP (**in progress**)
+  - Simple C++ (**planned**)
+  - JavaScript (**planned**)
+  - Python (**planned**)
+
+The transcoder normalizes input languages into a unified intermediate representation before generating C++ code.
 
 The generated C++ code is then compiled using a standard C++ toolchain.
 
