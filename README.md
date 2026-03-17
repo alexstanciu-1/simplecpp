@@ -43,7 +43,7 @@ The generated C++ code is then compiled using a standard C++ toolchain.
 ## 2. Language Definition
 
 Simple C++ is a **C++-inspired intermediate programming language** defined as:
-- a **restricted subset of C++ syntax**
+- a **restricted and controlled subset of C++-like syntax**
 - with **additional safety and usability constraints**
 
 It is intended as a **controlled intermediate representation**, not a full C++ replacement.
