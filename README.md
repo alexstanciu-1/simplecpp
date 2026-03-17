@@ -1,4 +1,4 @@
-# Simple C++ Specification
+# Simple C++
 
 ## 1. Overview
 
