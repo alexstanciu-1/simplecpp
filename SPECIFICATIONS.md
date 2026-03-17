@@ -135,7 +135,15 @@ Generated form:
 
     auto x = create<MyClass>();
 
-The generated form is equivalent in intent to managed allocation and must not expose raw C++ allocation semantics.
+The `new` keyword in source languages is a semantic construct.
+
+It does not correspond to C++ raw allocation.
+
+All object creation is translated into runtime-managed allocation via:
+
+    create<T>()
+
+The generated form must not expose raw C++ allocation semantics.
 
 ---
 
