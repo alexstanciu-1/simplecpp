@@ -1,4 +1,4 @@
-# Simple C++
+# Simple C++ — Overview
 
 ## 1. Overview
 
@@ -34,6 +34,8 @@ A unified intermediate representation was evaluated but is not currently planned
 The majority of transformation logic is language-specific, making a shared IR  
 provide limited benefit relative to its complexity.
 
+Each transcoder is responsible for producing valid C++ code that adheres to the runtime model and language constraints.
+
 The generated C++ code is then compiled using a standard C++ toolchain.
 
 ---
@@ -45,6 +47,8 @@ Simple C++ is a **C++-inspired intermediate programming language** defined as:
 - with **additional safety and usability constraints**
 
 It is intended as a **controlled intermediate representation**, not a full C++ replacement.
+
+Simple C++ can also be used directly as a source language in later stages.
 
 ---
 
@@ -70,7 +74,7 @@ It is intended as a **controlled intermediate representation**, not a full C++ r
 - Leverages existing **C/C++ ecosystem**
 
 ### Language Constraints
-- No templates (user-level)
+- No user-defined templates; limited built-in generic constructs are supported
 - Limited and well-defined type system
 
 ---
@@ -91,20 +95,26 @@ Simple C++ is designed to:
 
 The Simple C++ runtime uses modern C++ features to enforce constraints.
 
+The runtime library defines the core types and semantics used by generated code.
+
 ### 5.2 Memory Model
 
 - No use of raw pointers
-- `new` is disallowed
+- Source-level `new` is translated into managed allocation and does not expose raw C++ allocation semantics
 - All heap allocations are wrapped in managed constructs (e.g. `shared_ptr`)
 - No user-visible pointer control
 
 ### 5.3 Data Passing Rules
 
-The following types are passed by **const reference (`const &`)**:
-- string
-- array
-- map (`std::map`)
-- unordered_map (`std::unordered_map`)
+- Primitive types:
+  - passed by value
+  - returned by value
+
+- `string`, `vector`:
+  - passed by `const &` (to avoid copies)
+
+- Other types:
+  - passed via managed pointer wrappers
 
 ### 5.4 Safety Guarantees
 
@@ -125,7 +135,15 @@ The following types are passed by **const reference (`const &`)**:
 
 ---
 
-## 7. Scope of this Document
+## 7. Non-Goals
+
+- Full C++ compatibility
+- Zero-cost abstractions at all costs
+- Complete memory safety guarantees at this stage
+
+---
+
+## 8. Scope of this Document
 
 This document provides a **high-level introduction**.
 
