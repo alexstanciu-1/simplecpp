@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_URI'] === '/simple-cpp/master_specs.csv') {
 	exit;
 }
 
-require_once __DIR__ . '/../generator/cpp.php';
+require_once __DIR__ . '/../generator/from_php.php';
 require_once __DIR__ . '/../tests/public_html/index.php';
 
 /*
@@ -25,13 +25,13 @@ PHP;
 try
 {
 	$ast = ast\parse_code($user_code, $version = 85);
-	$compiler = new \simplecpp\generator\cpp();
+	$compiler = new \simplecpp\generator\from_php();
 	$cpp_output = $compiler->compile($ast);
 
 	// --- COMPILATION & EXECUTION ---
 
 	// 1. Save to a temporary file
-	$file_path = __DIR__ . '/temp_output.cpp';
+	$file_path = __DIR__ . '/temp_output.from_php';
 	$bin_path = __DIR__ . '/temp_output.out';
 	file_put_contents($file_path, $cpp_output);
 
