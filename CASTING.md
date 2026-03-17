@@ -153,12 +153,12 @@ Invalid:
 ## 3.8 Comparison Operators
 
 Supported:
-- ==
-- !=
-- <
-- <=
-- >
-- >=
+- `==`
+- `!=`
+- `<`
+- `<=`
+- `>`
+- `>=`
 
 Rules:
 
@@ -181,9 +181,9 @@ Notes:
 ## 3.9 Logical Operators and Conditionals
 
 Supported:
-- &&
-- ||
-- !
+- `&&`
+- `||`
+- `!`
 
 Rules:
 - logical operators operate on bool
@@ -211,11 +211,11 @@ Meaning:
 ## 3.10 Assignment Operators
 
 Supported:
-- =
-- +=
-- -=
-- *=
-- /=
+- `=`
+- `+=`
+- `-=`
+- `*=`
+- `/=`
 
 Rules:
 - assignment requires valid implicit or explicit conversion
