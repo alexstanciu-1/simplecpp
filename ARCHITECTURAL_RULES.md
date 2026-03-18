@@ -56,4 +56,15 @@ Non-owning references are derived from existing owning values:
 All conversions must be explicitly defined in the spec.
 
 ## 9. No Fallback Behavior
-Anything not defined must fail at S2S transformation time.
+Anything not defined must be rejected by the Simple C++ toolchain.
+
+Rejection may occur either during S2S transformation or during generated C++ compilation,
+depending on where the rule is enforced in the current implementation.
+
+The intended long-term direction is to move source-language-visible errors earlier into
+S2S diagnostics where practical.
+
+## 10. Generated C++ Compilation Check
+The S2S transformation must also perform a generated-C++ compiler check.
+
+If the generated C++ does not compile, the Simple C++ toolchain must treat that as a failure.

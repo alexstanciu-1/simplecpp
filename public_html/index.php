@@ -1,5 +1,38 @@
 <?php
 
+if ($_GET['export_php_ast'] ?? false) {
+	
+	$source_code = file_get_contents("php://input") ?: '<?php echo "works";';
+	// echo "ok!";
+	
+	$ast_vers_used = 120; # max(\ast\get_supported_versions());
+	
+	$ast = \ast\parse_code($source_code, $ast_vers_used);
+	/*
+	var_dump( max(\ast\get_supported_versions()),$ast);
+	
+	function ast_for_json(\ast\Node $node) {
+		$ret = (object)$node;
+		foreach ($node->chidren ?? [] as $child) {
+			$ret->chidren[] = ($child instanceof \ast\Node) ? ast_for_json($child) : $child;
+		}
+		return $ret;
+	}
+	*/
+	// var_dump($ast);
+	header('Content-Type: application/json; charset=utf-8');
+	echo json_encode([
+		'php_version' => PHP_VERSION,
+		'php_ast_extension_version' => phpversion('ast'),
+		'ast_version_used' => $ast_vers_used,
+		'supported_versions' => \ast\get_supported_versions(),
+		'tokens' => token_get_all($source_code),
+		'ast' => $ast,
+	]);
+	
+	exit;
+}
+
 if ($_SERVER['REQUEST_URI'] === '/simple-cpp/master_specs.csv') {
 	$mime = mime_content_type(__DIR__."/master_specs.csv");
 	header('Content-Type: application/csv');

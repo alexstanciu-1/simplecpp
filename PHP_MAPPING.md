@@ -12,7 +12,13 @@ Simple C++ PHP is:
 - normalized to the Simple C++ model during S2S transformation
 
 Anything not explicitly defined in this document or in the core Simple C++
-specification must produce an error during S2S transformation.
+specification must be rejected by the Simple C++ toolchain.
+
+Rejection may occur either during S2S transformation or during generated C++
+compilation, depending on where the rule is enforced in the current implementation.
+
+The intended long-term direction is to move source-language-visible errors earlier into
+S2S diagnostics where practical.
 
 ---
 
@@ -46,7 +52,7 @@ Examples of behaviors that must not be inherited automatically:
 - dynamic typing behavior not defined by the Simple C++ model
 
 If a construct is not explicitly supported:
-- S2S transformation must fail
+- the Simple C++ toolchain must reject it
 
 ### 3.2 Typed target model
 
@@ -255,17 +261,33 @@ Raw C++ allocation must not be emitted for language-level object creation.
 
 ---
 
-## 9. Error Policy During Transformation
+## 9. Toolchain Rejection Policy
 
-The following must produce S2S transformation errors:
+The following must be rejected by the Simple C++ toolchain:
 - unsupported PHP constructs
 - unsupported coercions
 - unsupported dynamic behavior
 - any construct not explicitly defined by the mapping rules or core spec
 
-This rule is strict by design.
+Rejection may occur either:
+- during S2S transformation
+- or during generated C++ compilation
 
-The goal is:
+This depends on where the rule is enforced in the current implementation.
+
+The intended long-term direction is to move source-language-visible errors earlier into
+S2S diagnostics where practical.
+
+## 9.1 Generated C++ Compilation Check
+
+The Simple C++ PHP toolchain must also perform a generated-C++ compiler check.
+
+If the generated C++ does not compile, the toolchain must treat the overall transformation as failed.
+
+This allows the current implementation to keep the PHP frontend lighter while still enforcing
+Simple C++ semantic constraints through the hardened runtime and C++ compiler where needed.
+
+The goal remains:
 - predictability
 - semantic clarity
 - full compliance with the Simple C++ model

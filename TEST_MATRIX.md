@@ -102,6 +102,7 @@ Expected result for `fail_compile`:
 | `tests/runtime_mechanics/pass/RT-UQ-03_04_identity_null.cpp` | `RT-UQ-03`, `RT-UQ-04` | covered | unique identity and null-state comparison |
 | `tests/runtime_mechanics/pass/RT-WK-03_04_05_06_basic.cpp` | `RT-WK-03`, `RT-WK-04`, `RT-WK-05`, `RT-WK-06` | covered | weak derivation, expiry, identity, null-state |
 | `tests/runtime_mechanics/pass/RT-NBL-06_null_relational_throws.cpp` | `RT-NBL-06` | covered | current runtime null-side throw path |
+| `tests/runtime_mechanics/pass/RT-PTR-BOOL-01_contextual_bool.cpp` | hardening / contextual bool boundary | covered | explicit `operator bool()` works in conditions for nullable/shared/unique/weak only |
 
 ### Runtime-mechanics compile-fail tests
 
@@ -111,6 +112,7 @@ Expected result for `fail_compile`:
 | `tests/runtime_mechanics/fail_compile/RT-SH-06_no_cross_wrapper_compare.cpp` | `RT-SH-06` | covered | shared cross-wrapper compare unavailable |
 | `tests/runtime_mechanics/fail_compile/RT-UQ-05_no_relational.cpp` | `RT-UQ-05` | covered | unique relational compare unavailable |
 | `tests/runtime_mechanics/fail_compile/RT-UQ-06_no_cross_wrapper_compare.cpp` | `RT-UQ-06` | covered | unique cross-wrapper compare unavailable |
+| `tests/runtime_mechanics/fail_compile/RT-PTR-BOOL-01_no_bool_assignment_from_wrappers.cpp` | hardening / contextual bool boundary | covered | explicit contextual bool does not imply implicit assignment to `bool_t` or `bool` |
 | `tests/runtime_mechanics/fail_compile/RT-WK-02_not_primary_allocation.cpp` | `RT-WK-02` | covered | no `weak<T>(...)` primary allocator |
 | `tests/runtime_mechanics/fail_compile/RT-WK-07_no_relational.cpp` | `RT-WK-07` | covered | weak relational compare unavailable |
 
@@ -154,3 +156,7 @@ After this batch, the remaining requirements are primarily:
 - requirements that need source inspection more than runtime execution
 
 See `TEST_COVERAGE.md` for the full per-requirement status table.
+
+
+## Hardening Note
+The runtime now prefers explicit deleted overloads, deleted constructors, and constrained templates/concepts for unsupported or type-dependent paths so forbidden operations fail deterministically at compile time where practical.

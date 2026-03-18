@@ -56,7 +56,7 @@ Each row captures:
 |---|---|---|---|---|
 | RT-CORE-* | `include/scpp/runtime.hpp` and `include/scpp/runtime_fwd.hpp` | shared forward declarations / common aliases | Core runtime entry surface and shared declarations | Optional aggregator layer if present |
 | RT-CGEN-* | `include/scpp/runtime.hpp`, `include/scpp/memory.hpp` | exported public runtime API | Codegen-visible API boundary | Must match generated code assumptions and exclude native generated-language-visible types/API use |
-| RT-INTG-* | `include/scpp/internal/*` | internal helpers only | Internal implementation support | Must not leak into generated-code-visible API |
+| RT-INTG-* | `include/scpp/type_traits.hpp` and `include/scpp/internal/*` | constrained helper concepts / internal helpers only | Internal implementation support | Must not leak into generated-code-visible API |
 
 ---
 

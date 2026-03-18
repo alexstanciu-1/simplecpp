@@ -558,6 +558,9 @@ Source basis:
 - `ARCHITECTURAL_RULES.md`
 - `RUNTIME_DESIGN_NOTE.md`
 
+`RT-CGEN-06` and `RT-CGEN-07` define hard generated-code boundary invariants.
+All other code-generation-facing requirements operate within those constraints.
+
 #### RT-CGEN-01
 Generated code must be able to construct runtime values explicitly through wrapper constructors or explicit wrapper entry points.
 
@@ -573,7 +576,11 @@ Generated code must not need to emit raw C++ allocation primitives for language-
 #### RT-CGEN-05
 Generated code must not need to name internal storage types such as `std::string` or smart-pointer types.
 
----
+#### RT-CGEN-06
+Generated Simple C++ code must never contain native C++ primitive types, direct `std::*` usage, or native C++ structures/classes as generated-language-visible values.
+
+#### RT-CGEN-07
+Native interoperability belongs to explicit C++ bridge/integration code outside the generated Simple C++ semantic surface.
 
 ## 11. Commenting Requirements for Source Code
 
@@ -667,10 +674,5 @@ auto ow = weak(o1);
 This target set is not the whole language, but it is enough to validate the initial runtime kernel.
 
 
-### 6.8 Codegen / Boundary Requirements
-
-#### RT-CGEN-06
-Generated Simple C++ code must never contain native C++ primitive types, direct `std::*` usage, or native C++ structures/classes as generated-language-visible values.
-
-#### RT-CGEN-07
-Native interoperability belongs to explicit C++ bridge/integration code outside the generated Simple C++ semantic surface.
+## Hardening Note
+The runtime now prefers explicit deleted overloads, deleted constructors, and constrained templates/concepts for unsupported or type-dependent paths so forbidden operations fail deterministically at compile time where practical.

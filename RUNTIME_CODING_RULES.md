@@ -26,3 +26,14 @@ Perform runtime validation where compile-time checks are not possible.
 
 ## 9. Modular Headers
 Each type/module should be isolated in its own header.
+
+
+## Hardening Note
+The runtime now prefers explicit deleted overloads, deleted constructors, and constrained templates/concepts for unsupported or type-dependent paths so forbidden operations fail deterministically at compile time where practical.
+
+
+## 10. Contextual Bool Discipline
+Where the runtime intentionally exposes boolean context for wrappers such as `nullable<T>` or pointer-like wrappers, it should do so via `explicit operator bool()` only. This supports conditions and logical contexts without reopening broad implicit conversion paths.
+
+## 11. Constrained Templates and Concepts
+Use constrained templates/concepts where an operation should exist only when the wrapped type supports it. This is preferred over accidental template instantiation or late runtime failure.

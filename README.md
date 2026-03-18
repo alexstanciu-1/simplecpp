@@ -38,6 +38,10 @@ Each transcoder is responsible for producing valid C++ code that adheres to the 
 
 The generated C++ code is then compiled using a standard C++ toolchain.
 
+In the current implementation, the toolchain must also treat generated-C++ compilation
+failure as a Simple C++ toolchain failure, even when a given invalid construct was not
+rejected earlier during S2S transformation.
+
 ---
 
 ## 2. Language Definition

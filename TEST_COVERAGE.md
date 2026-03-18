@@ -40,7 +40,7 @@ This coverage file keeps the original IDs intact and calls out the duplication i
 | RT-TRACE-01 | audit/manual | — | Requirement IDs are present in source comments; verify by code review. |
 | RT-TRACE-02 | audit/manual | — | Source-basis traceability is maintained in `RUNTIME_REQUIREMENTS.md`; not a runtime test. |
 | RT-FAIL-01 | partial | multiple fail-compile tests | Forbidden API paths are blocked in many places, but not exhaustively enumerated. |
-| RT-FAIL-02 | partial | multiple fail-compile tests | Compile-time blocking exists for many paths; some constraints remain runtime or audit-only. |
+| RT-FAIL-02 | partial | multiple fail-compile tests, `tests/runtime_mechanics/fail_compile/RT-PTR-BOOL-01_no_bool_assignment_from_wrappers.cpp` | Compile-time blocking exists for many paths; some constraints remain runtime or audit-only. |
 | RT-FAIL-03 | partial | `tests/language_surface/pass/RT-STR-08_invalid_conversion_throws.cpp`, fail-compile suite | No fallback coercions are observed in tested paths; still a broader audit concern. |
 | RT-NULL-01 | covered | `tests/language_surface/pass/RT-NULL-01_02_06_basic.cpp` | — |
 | RT-NULL-02 | covered | `tests/language_surface/pass/RT-NULL-01_02_06_basic.cpp` | — |
@@ -157,3 +157,13 @@ It is:
 1. decide which audit/manual requirements should become enforceable code constraints
 2. tighten the runtime API where those rules should be mechanically enforced
 3. then add new compile-fail tests for those newly enforceable boundaries
+
+
+## Hardening Note
+The runtime now prefers explicit deleted overloads, deleted constructors, and constrained templates/concepts for unsupported or type-dependent paths so forbidden operations fail deterministically at compile time where practical.
+
+
+## Hardening-specific tests added
+
+- `tests/runtime_mechanics/pass/RT-PTR-BOOL-01_contextual_bool.cpp` confirms that explicit contextual `operator bool()` is usable in conditions for `shared_p<T>`, `unique_p<T>`, `weak_p<T>`, and `nullable<T>` without broadening ordinary implicit conversion semantics.
+- `tests/runtime_mechanics/fail_compile/RT-PTR-BOOL-01_no_bool_assignment_from_wrappers.cpp` confirms that contextual `operator bool()` does not allow implicit assignment into `bool_t` or native `bool`.
