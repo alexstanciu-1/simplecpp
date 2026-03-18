@@ -12,8 +12,8 @@ This document normalizes the current Simple C++ semantic rules into a matrix for
 	- tests
 	- coverage tracking
 
-This file is a **decision and normalization artifact**.
-It is not intended to replace:
+This file is a decision and normalization artifact.
+It does not replace:
 - `SPECIFICATIONS.md`
 - `CASTING.md`
 - `OBJECT_COMPARISON.md`
@@ -24,7 +24,7 @@ If a rule here conflicts with the core spec, the core spec remains authoritative
 
 ## Status Legend
 
-- **Current** = matches current implemented/runtime-tested behavior
+- **Current** = matches current implemented/runtime-tested behavior or an agreed project rule
 - **Spec** = stated in spec, but not fully normalized into exhaustive matrix/testing yet
 - **Open** = still needs an explicit project decision
 - **Candidate** = proposed normalization, needs confirmation
@@ -68,10 +68,11 @@ Use these columns when reviewing:
 | SM-NULL-003 | null | `null_t` | `unique_p<T>` | yes | empty `unique_p<T>` | compile-time available | Current | `RT-NULL-02`, `RT-UQ-04` |  |  |
 | SM-NULL-004 | null | `null_t` | `weak_p<T>` | yes | empty `weak_p<T>` | compile-time available | Current | `RT-NULL-02`, `RT-WK-06` |  |  |
 | SM-NULL-005 | null | `null_t` | `bool_t` / `int_t` / `float_t` / `string_t` | no | n/a | compile-time error | Current | `RT-NULL-04`, `RT-FAIL-01` |  |  |
-| SM-NULL-006 | null | `null_t` | arithmetic operand | no | n/a | compile-time error | Current | `RT-NULL-07`, `RT-INT-08`, `RT-FAIL-01` |  |  |
-| SM-NULL-007 | null | `null_t` | conditional | yes | false | compile-time allowed in conditional only | Spec | `RT-NULL-05` |  | confirm exact intent |
-| SM-NULL-008 | null | `null_t` | invalid non-null comparison family | no | n/a | compile-time error | Spec | `RT-NULL-07`, `RT-FAIL-01` |  | matrix still incomplete |
-| SM-NULL-009 | null | `null_t` | ambiguous unresolved context | no | n/a | compile-time error | Open | `RT-NULL-08`, `RT-FAIL-01` |  | needs exact examples/policy |
+| SM-NULL-006 | null | `null_t` | arithmetic operand | no | n/a | compile-time error | Current | `RT-NULL-07`, `RT-FAIL-01` |  |  |
+| SM-NULL-007 | null | `null_t` | conditional | Open | Open | Open | Open | `RT-NULL-05` |  | not decided in this pass |
+| SM-NULL-008 | null | `null_t == X` / `null_t != X` | any Simple C++ value | yes | equality true only for semantic-null states | compile-time available | Current | `RT-NULL-07`, `RT-NULL-08` |  | only `==` and `!=` |
+| SM-NULL-009 | null | `null_t` | relational (`<`, `<=`, `>`, `>=`) with anything | no | n/a | compile-time error | Current | `RT-NULL-07`, `RT-FAIL-01` |  |  |
+| SM-NULL-010 | null | `null_t` | unresolved target context (for example `auto x = null;`) | no | n/a | compile-time error | Current | `RT-NULL-09`, `RT-FAIL-01` |  | overloads/templates are out of generated-language scope |
 
 ---
 
@@ -114,44 +115,43 @@ Supported operators considered here:
 |---|---|---|---|---|---|---|---|---|---|
 | SM-CMP-001 | `bool_t` | `bool_t` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-BOOL-03` |  |  |
 | SM-CMP-002 | `int_t` | `int_t` | all six | `bool_t` | compile-time available | Current | `RT-INT-04` |  |  |
-| SM-CMP-003 | `int_t` | `float_t` | all six | `bool_t` | compile-time available with float promotion | Current | `RT-FLOAT-04`, `RT-CMP-NUM-*` |  |  |
-| SM-CMP-004 | `float_t` | `int_t` | all six | `bool_t` | compile-time available with float promotion | Current | `RT-FLOAT-04`, `RT-CMP-NUM-*` |  |  |
+| SM-CMP-003 | `int_t` | `float_t` | all six | `bool_t` | compile-time available with float promotion | Current | `RT-FLOAT-04` |  |  |
+| SM-CMP-004 | `float_t` | `int_t` | all six | `bool_t` | compile-time available with float promotion | Current | `RT-FLOAT-04` |  |  |
 | SM-CMP-005 | `float_t` | `float_t` | all six | `bool_t` | compile-time available | Current | `RT-FLOAT-03` |  |  |
 | SM-CMP-006 | `string_t` | `string_t` | all six | `bool_t` | compile-time available | Current | `RT-STR-04` |  | lexicographic |
-| SM-CMP-007 | `string_t` | numeric / bool / null | no | n/a | compile-time error | Spec | `RT-FAIL-01` |  | expand tests exhaustively |
-| SM-CMP-008 | `bool_t` | numeric / string / null | no unless explicitly specified | n/a | compile-time error | Spec | `RT-FAIL-01` |  | need exhaustive matrix rows |
+| SM-CMP-007 | `string_t` | numeric / bool | no | n/a | compile-time error | Spec | `RT-FAIL-01` |  | expand tests exhaustively |
+| SM-CMP-008 | `bool_t` | numeric / string | no unless explicitly specified | n/a | compile-time error | Spec | `RT-FAIL-01` |  | need exhaustive matrix rows |
 
 ## 4.2 Null Comparison
 
 | Matrix ID | Left | Right | Allowed | Result Type | Enforcement | Status | Requirement(s) | Decision | Notes |
 |---|---|---|---|---|---|---|---|---|---|
 | SM-CMP-009 | `null_t` | `null_t` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-NULL-06` |  |  |
-| SM-CMP-010 | `nullable<T>` | `null_t` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-NBL-05` |  |  |
-| SM-CMP-011 | `shared_p<T>` / `unique_p<T>` / `weak_p<T>` | `null_t` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-SH-04`, `RT-UQ-04`, `RT-WK-06` |  |  |
-| SM-CMP-012 | `null_t` | primitive/string | no | n/a | compile-time error | Current | `RT-NULL-07`, `RT-FAIL-01` |  |  |
-| SM-CMP-013 | `null_t` | relational (`<`, `<=`, `>`, `>=`) with anything | no | n/a | compile-time error | Spec | `RT-NULL-07`, `RT-FAIL-01` |  | confirm universal ban |
+| SM-CMP-010 | `null_t` | any Simple C++ value | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-NULL-07`, `RT-NULL-08` |  | true only for semantic-null values |
+| SM-CMP-011 | `null_t` | relational compare with anything | no | n/a | compile-time error | Current | `RT-NULL-07`, `RT-FAIL-01` |  |  |
 
 ## 4.3 Nullable Comparison
 
 | Matrix ID | Left | Right | Allowed | Result Type | Enforcement | Status | Requirement(s) | Decision | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| SM-CMP-014 | `nullable<T>` | `nullable<T>` | `==`, `!=` | `bool_t` | compile-time available | Current | `RT-NBL-04` |  | compare empty/value states and values |
-| SM-CMP-015 | `nullable<T>` | `nullable<T>` | relational operators | `bool_t` | runtime-valid only when both non-null | Current | `RT-NBL-06` |  | current implementation throws on null-side relations |
-| SM-CMP-016 | `nullable<T>` | different `nullable<U>` | no by default | n/a | compile-time error | Candidate | `RT-FAIL-01` |  | confirm strict same-T requirement |
-| SM-CMP-017 | `nullable<T>` | raw `T` | Open | Open | Open | Open | `RT-NBL-*` |  | decide if direct comparisons should exist |
+| SM-CMP-012 | `nullable<T>` | `nullable<T>` | `==`, `!=` | `bool_t` | compile-time available | Current | `RT-NBL-04` |  | compare empty/value states and values |
+| SM-CMP-013 | `nullable<T>` | `null_t` | `==`, `!=` | `bool_t` | compile-time available | Current | `RT-NBL-05`, `RT-NULL-08` |  |  |
+| SM-CMP-014 | `nullable<T>` | `nullable<T>` | relational operators | `bool_t` | runtime-valid only when both non-null | Current | `RT-NBL-06` |  | current implementation throws on null-side relations |
+| SM-CMP-015 | `nullable<T>` | different `nullable<U>` | no by default | n/a | compile-time error | Candidate | `RT-FAIL-01` |  | confirm strict same-T requirement |
+| SM-CMP-016 | `nullable<T>` | raw `T` | Open | Open | Open | Open | `RT-NBL-*` |  | decide if direct comparisons should exist |
 
 ## 4.4 Object / Ownership Wrapper Comparison
 
 | Matrix ID | Left | Right | Allowed | Result Type | Enforcement | Status | Requirement(s) | Decision | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| SM-CMP-018 | `shared_p<T>` | `shared_p<T>` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-SH-03` |  | identity |
-| SM-CMP-019 | `unique_p<T>` | `unique_p<T>` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-UQ-03` |  | identity / current ownership state |
-| SM-CMP-020 | `weak_p<T>` | `weak_p<T>` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-WK-05` |  | resolved identity / expired-as-null semantics |
-| SM-CMP-021 | `shared_p<T>` | relational compare | no | n/a | compile-time error | Current | `RT-SH-05` |  |  |
-| SM-CMP-022 | `unique_p<T>` | relational compare | no | n/a | compile-time error | Current | `RT-UQ-05` |  |  |
-| SM-CMP-023 | `weak_p<T>` | relational compare | no | n/a | compile-time error | Current | `RT-WK-07` |  |  |
-| SM-CMP-024 | cross-wrapper compare (`shared_p<T>` vs `weak_p<T>`, etc.) | any compare | no | n/a | compile-time error | Current | `RT-SH-06`, `RT-UQ-06`, `RT-FAIL-01` |  |  |
-| SM-CMP-025 | same wrapper, different `T` | any compare | no by default | n/a | compile-time error | Candidate | `RT-FAIL-01` |  | confirm explicit same-T requirement |
+| SM-CMP-017 | `shared_p<T>` | `shared_p<T>` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-SH-03` |  | identity |
+| SM-CMP-018 | `unique_p<T>` | `unique_p<T>` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-UQ-03` |  | identity / current ownership state |
+| SM-CMP-019 | `weak_p<T>` | `weak_p<T>` | `==`, `!=` only | `bool_t` | compile-time available | Current | `RT-WK-05` |  | resolved identity / expired-as-null semantics |
+| SM-CMP-020 | `shared_p<T>` | relational compare | no | n/a | compile-time error | Current | `RT-SH-05` |  |  |
+| SM-CMP-021 | `unique_p<T>` | relational compare | no | n/a | compile-time error | Current | `RT-UQ-05` |  |  |
+| SM-CMP-022 | `weak_p<T>` | relational compare | no | n/a | compile-time error | Current | `RT-WK-07` |  |  |
+| SM-CMP-023 | cross-wrapper compare (`shared_p<T>` vs `weak_p<T>`, etc.) | any compare except via `null` | no | n/a | compile-time error | Current | `RT-SH-06`, `RT-UQ-06`, `RT-FAIL-01` |  |  |
+| SM-CMP-024 | same wrapper, different `T` | any compare | no by default | n/a | compile-time error | Candidate | `RT-FAIL-01` |  | confirm explicit same-T requirement |
 
 ---
 
@@ -161,7 +161,7 @@ Supported operators considered here:
 
 | Matrix ID | Operand(s) | Allowed | Result Type | Enforcement | Status | Requirement(s) | Decision | Notes |
 |---|---|---|---|---|---|---|---|---|
-| SM-LOG-001 | `bool_t && bool_t` / `bool_t \|\| bool_t` / `!bool_t` | yes | `bool_t` | compile-time available | Current | `RT-BOOL-04` |  |  |
+| SM-LOG-001 | `bool_t && bool_t` / `bool_t || bool_t` / `!bool_t` | yes | `bool_t` | compile-time available | Current | `RT-BOOL-04` |  |  |
 | SM-LOG-002 | non-`bool_t` logical operators | no | n/a | compile-time error | Candidate | `RT-FAIL-01` |  | confirm universal rule |
 
 ## 5.2 Conditional Use (`if`, `while`, etc.)
@@ -170,7 +170,7 @@ Supported operators considered here:
 |---|---|---|---|---|---|---|---|---|
 | SM-COND-001 | `bool_t` | yes | direct boolean value | compile-time available | Current | `RT-BOOL-04` |  |  |
 | SM-COND-002 | `int_t` | yes | zero = false, non-zero = true | compile-time available in conditional only | Current | `RT-INT-07` |  |  |
-| SM-COND-003 | `null_t` | yes | false | compile-time available in conditional only | Spec | `RT-NULL-05` |  | confirm exact rule |
+| SM-COND-003 | `null_t` | Open | Open | Open | Open | `RT-NULL-05` |  | not decided in this pass |
 | SM-COND-004 | `float_t` | no | n/a | compile-time error | Current | `RT-FLOAT-05` |  |  |
 | SM-COND-005 | `string_t` | no | n/a | compile-time error | Candidate | `RT-FAIL-01` |  | should be explicit if desired |
 | SM-COND-006 | `nullable<T>` | Open | Open | Open | Open | `RT-NBL-*` |  | decide whether nullable truthiness exists |
@@ -192,7 +192,7 @@ Supported operators considered here:
 | SM-ASG-005 | `string_t` | primitive wrappers | no implicit / yes explicit | compile-time explicit only | Current | `RT-STR-06` |  | via helper conversions |
 | SM-ASG-006 | `null_t` | nullable / pointer-like wrappers | yes | compile-time available | Current | `RT-NULL-02`, `RT-NBL-02`, `RT-SH-04`, `RT-UQ-04`, `RT-WK-06` |  |  |
 | SM-ASG-007 | cross-wrapper ownership assignment | no by default | compile-time error | Candidate | `RT-FAIL-01` |  | confirm no bridge assignment |
-| SM-ASG-008 | native type entry directly in generated code | no | compile-time / codegen rule | Candidate | `RT-CGEN-06`, `RT-CGEN-07` |  | mostly codegen policy |
+| SM-ASG-008 | native type entry directly in generated code | no | compile-time / codegen rule | Current | `RT-CGEN-06`, `RT-CGEN-07` |  | mostly codegen policy |
 
 ## 6.2 Compound Assignment
 
@@ -256,12 +256,12 @@ Supported operators considered here:
 | Matrix ID | Rule | Allowed | Result / Meaning | Enforcement | Status | Requirement(s) | Decision | Notes |
 |---|---|---|---|---|---|---|---|---|
 | SM-NBL-001 | `nullable<T>` from `T` | yes | value-present nullable | compile-time available | Current | `RT-NBL-02` |  |  |
-| SM-NBL-002 | `nullable<T>` from `null` | yes | empty nullable | compile-time available | Current | `RT-NBL-02` |  |  |
+| SM-NBL-002 | `nullable<T>` from `null` | yes | empty nullable | compile-time available | Current | `RT-NBL-02`, `RT-NULL-08` |  |  |
 | SM-NBL-003 | `has_value()` / empty-state query | yes | state query | compile-time available | Current | `RT-NBL-03` |  |  |
 | SM-NBL-004 | `nullable<T> == nullable<T>` | yes | compare state/values | compile-time available | Current | `RT-NBL-04` |  |  |
-| SM-NBL-005 | `nullable<T> == null` | yes | empty-state compare | compile-time available | Current | `RT-NBL-05` |  |  |
+| SM-NBL-005 | `nullable<T> == null` | yes | empty-state compare | compile-time available | Current | `RT-NBL-05`, `RT-NULL-08` |  |  |
 | SM-NBL-006 | relational compare when both sides non-null and `T` supports compare | yes | compare contained values | runtime valid | Current | `RT-NBL-06` |  |  |
-| SM-NBL-007 | relational compare when one or both sides null | Open / currently throw | Open | runtime throw currently | Current | `RT-NBL-06` |  | needs final semantic decision |
+| SM-NBL-007 | relational compare when one or both sides null | Open / currently throw | Open | runtime throw currently | Current | `RT-NBL-06`, `RT-FAIL-03` |  | needs final semantic decision |
 | SM-NBL-008 | arithmetic on `nullable<T>` | no by default | n/a | compile-time error | Candidate | `RT-FAIL-01` |  | confirm no arithmetic surface |
 | SM-NBL-009 | direct conditional truthiness for `nullable<T>` | Open | Open | Open | Open | `RT-NBL-*` |  | decide explicitly |
 
@@ -276,9 +276,9 @@ Supported operators considered here:
 | SM-MEM-001 | `create<T>(args...)` | yes | current default managed ownership helper | compile-time available | Current | `RT-MEM-01`, `RT-MEM-02` |  | currently `shared_p<T>` |
 | SM-MEM-002 | `shared<T>(args...)` | yes | `shared_p<T>` | compile-time available | Current | `RT-MEM-03` |  |  |
 | SM-MEM-003 | `unique<T>(args...)` | yes | `unique_p<T>` | compile-time available | Current | `RT-MEM-04` |  |  |
-| SM-MEM-004 | `weak(x)` from owning compatible value | yes | `weak_p<T>` | compile-time available | Current | `RT-MEM-05`, `RT-WK-03` |  |  |
+| SM-MEM-004 | `weak(x)` from owning compatible value | yes | `weak_p<T>` | compile-time available | Current | `RT-MEM-05`, `RT-WK-03`, `RT-CGEN-03` |  |  |
 | SM-MEM-005 | `weak<T>(args...)` primary allocation helper | no | n/a | compile-time error | Current | `RT-WK-02`, `RT-MEM-06` |  |  |
-| SM-MEM-006 | raw `new`, `std::make_shared`, `std::make_unique` in generated code surface | no | n/a | codegen rule / compile policy | Spec | `RT-CGEN-04` |  |  |
+| SM-MEM-006 | raw `new`, `std::make_shared`, `std::make_unique` in generated code surface | no | n/a | codegen rule / compile policy | Current | `RT-CGEN-04`, `RT-CGEN-06` |  |  |
 
 ## 11.2 Wrapper Interaction
 
@@ -287,9 +287,9 @@ Supported operators considered here:
 | SM-MEM-007 | `shared_p<T>` copy | yes | compile-time available | Current | `RT-SH-01`, `RT-SH-03` |  |  |
 | SM-MEM-008 | `unique_p<T>` copy | no | compile-time error | Current | `RT-UQ-01` |  |  |
 | SM-MEM-009 | `unique_p<T>` move | yes | compile-time available | Current | `RT-UQ-02` |  |  |
-| SM-MEM-010 | `weak_p<T>` expired compare as null | yes | runtime/compare semantics | Current | `RT-WK-04`, `RT-WK-06` |  |  |
+| SM-MEM-010 | `weak_p<T>` expired compare as null | yes | runtime/compare semantics | Current | `RT-WK-04`, `RT-WK-06`, `RT-NULL-08` |  |  |
 | SM-MEM-011 | direct conversion between ownership wrappers | no by default | compile-time error | Candidate | `RT-FAIL-01` |  | confirm no bridge conversions |
-| SM-MEM-012 | stack allocation of managed object-like values in generated code | no by default | codegen rule | Spec | `RT-OWN-*`, `RT-CGEN-06` |  | confirm final policy |
+| SM-MEM-012 | stack allocation of managed object-like values in generated code | no by default | codegen rule | Spec | `RT-CGEN-06`, `RT-CGEN-07` |  | confirm final policy |
 
 ---
 
@@ -299,11 +299,12 @@ These are semantic rules, but many are primarily enforced by code generation pol
 
 | Matrix ID | Rule | Expected State | Enforcement Mode | Status | Requirement(s) | Decision | Notes |
 |---|---|---|---|---|---|---|---|
-| SM-CGEN-001 | generated code uses only `scpp::` language-visible types/helpers | required | codegen + audit | Spec | `RT-CGEN-01`, `RT-CGEN-06` |  |  |
-| SM-CGEN-002 | generated code does not expose native types / `std::*` directly | required | codegen + audit | Spec | `RT-CGEN-06` |  |  |
-| SM-CGEN-003 | generated code does not call native allocation primitives directly | required | codegen + audit | Spec | `RT-CGEN-04` |  |  |
-| SM-CGEN-004 | native interop belongs in C++ bridge code, not generated Simple C++ surface | required | architecture + audit | Spec | `RT-CGEN-07` |  |  |
-| SM-CGEN-005 | generated code may use `create<T>()`, `shared<T>()`, `unique<T>()`, `weak(x)` only as defined | required | codegen + runtime surface | Current | `RT-CGEN-02`, `RT-CGEN-03`, `RT-CGEN-05` |  |  |
+| SM-CGEN-001 | generated code uses only `scpp::` language-visible types/helpers | required | codegen + audit | Current | `RT-CGEN-01`, `RT-CGEN-06` |  |  |
+| SM-CGEN-002 | generated code does not expose native types / `std::*` directly | required | codegen + audit | Current | `RT-CGEN-05`, `RT-CGEN-06` |  |  |
+| SM-CGEN-003 | generated code does not call native allocation primitives directly | required | codegen + audit | Current | `RT-CGEN-04`, `RT-CGEN-06` |  |  |
+| SM-CGEN-004 | native interop belongs in C++ bridge code, not generated Simple C++ surface | required | architecture + audit | Current | `RT-CGEN-07` |  |  |
+| SM-CGEN-005 | generated code may use `create<T>()`, `shared<T>()`, `unique<T>()`, `weak(x)` only as defined | required | codegen + runtime surface | Current | `RT-CGEN-02`, `RT-CGEN-03` |  |  |
+| SM-CGEN-006 | generated code must not rely on overloads or template surface features | required | codegen + audit | Current | `RT-CGEN-06`, `RT-CGEN-07` |  | runtime may still use templates internally |
 
 ---
 
@@ -327,7 +328,7 @@ These are the most important semantic decisions still not fully normalized.
 
 | Decision ID | Topic | Current State | Why It Matters | Recommended Next Action | Decision | Notes |
 |---|---|---|---|---|---|---|
-| SD-001 | `null_t` conditional semantics | partially implied | affects language truthiness model | confirm exact conditional-only rule |  |  |
+| SD-001 | `null_t` conditional semantics | still open | affects language truthiness model | confirm exact rule or ban |  |  |
 | SD-002 | `nullable<T>` relational comparison with null side(s) | current runtime throw | affects semantics and tests | choose final rule explicitly |  |  |
 | SD-003 | `nullable<T>` truthiness | undefined | affects conditional matrix | decide explicit yes/no |  |  |
 | SD-004 | string-to-bool accepted set | partially defined by implementation | affects source compatibility | confirm exact accepted literals and case/whitespace policy |  |  |
