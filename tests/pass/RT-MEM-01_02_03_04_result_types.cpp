@@ -1,8 +1,13 @@
 #include <scpp/runtime.hpp>
 #include <type_traits>
 
+// Test-only host helper type.
+// This struct exists only to exercise runtime ownership/reference mechanics.
+// It is NOT a generated Simple C++ type.
+// This helper deliberately uses a Simple C++ field type because this test can remain fully inside
+// the generated-language-visible type surface while still validating ownership helper result types.
 struct Demo {
-	int value;
+	scpp::int_t value;
 	explicit Demo(int v) : value(v) {
 	}
 };

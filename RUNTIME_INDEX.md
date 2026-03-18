@@ -55,7 +55,7 @@ Each row captures:
 | Requirement Prefix / ID | Primary File | Primary Symbol(s) | Responsibility | Notes |
 |---|---|---|---|---|
 | RT-CORE-* | `include/scpp/core.hpp` or `include/scpp/fwd.hpp` | shared forward declarations / common aliases | Core runtime entry surface and shared declarations | Optional aggregator layer if present |
-| RT-CGEN-* | `include/scpp/core.hpp`, `include/scpp/memory.hpp` | exported public runtime API | Codegen-visible API boundary | Must match generated code assumptions |
+| RT-CGEN-* | `include/scpp/core.hpp`, `include/scpp/memory.hpp` | exported public runtime API | Codegen-visible API boundary | Must match generated code assumptions and exclude native generated-language-visible types/API use |
 | RT-INTG-* | `include/scpp/internal/*` | internal helpers only | Internal implementation support | Must not leak into generated-code-visible API |
 
 ---

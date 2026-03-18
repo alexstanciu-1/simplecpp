@@ -51,6 +51,8 @@ Generated code may use only the public API exposed inside `namespace scpp`.
 
 The runtime may use `std::*` internally, but this must not leak into the generated-code-visible contract.
 
+Generated code must not directly use native primitives, direct `std::*` types/functions, or native C++ structures/classes as generated-language-visible values.
+
 ### 3.3 Spec-driven Behavior
 
 Any runtime-visible conversion, operator, or comparison must be traceable to an explicit spec rule.
@@ -663,3 +665,12 @@ auto ow = weak(o1);
 ```
 
 This target set is not the whole language, but it is enough to validate the initial runtime kernel.
+
+
+### 6.8 Codegen / Boundary Requirements
+
+#### RT-CGEN-03
+Generated Simple C++ code must never contain native C++ primitive types, direct `std::*` usage, or native C++ structures/classes as generated-language-visible values.
+
+#### RT-CGEN-04
+Native interoperability belongs to explicit C++ bridge/integration code outside the generated Simple C++ semantic surface.

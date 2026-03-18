@@ -108,3 +108,13 @@ After running this suite successfully, the next best move is to add:
 - a tiny test runner script for pass tests
 - a tiny compile-fail checker script
 - explicit notes in `RUNTIME_INDEX.md` linking tests back to symbols
+
+
+## Test Intent Boundary
+
+This suite contains two different kinds of tests:
+
+- **language-surface tests**: these should prefer `scpp::*` value/field types because they model generated Simple C++ expectations
+- **runtime-mechanics tests**: these may use small native C++ host-side helper structs when the purpose is only to validate ownership/control-block mechanics rather than generated-language-visible field semantics
+
+Whenever a native helper struct appears in a test, the test file must say so explicitly.

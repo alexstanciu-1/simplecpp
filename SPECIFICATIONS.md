@@ -359,3 +359,21 @@ When an explicit ownership form is required, generated code must use:
 Weak references are derived from existing owning values through:
 
     weak(x)
+
+
+
+
+## 6A. No Native Type or Native API Use in Generated Code
+Generated Simple C++ code must never contain native C++ primitive types, native standard-library types, or direct calls to native functions.
+
+This includes:
+- native primitives such as `int`, `double`, `bool`
+- direct `std::*` types or functions
+- direct use of native C++ structures/classes as generated-language-visible values
+
+All generated-language-visible values must use the public `scpp::*` runtime surface.
+
+## 6B. Interoperability Boundary
+Interoperability with native C++ code, native libraries, and native data structures belongs to C++ integration code, not to generated Simple C++ code.
+
+Any such bridge must be written explicitly in C++ outside the generated-language semantic surface.
