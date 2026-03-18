@@ -33,7 +33,7 @@ The runtime now prefers explicit deleted overloads, deleted constructors, and co
 
 
 ## 10. Contextual Bool Discipline
-Where the runtime intentionally exposes boolean context for wrappers such as `nullable<T>` or pointer-like wrappers, it should do so via `explicit operator bool()` only. This supports conditions and logical contexts without reopening broad implicit conversion paths.
+Where the runtime intentionally exposes boolean context for wrappers such as `nullable<T>` or pointer-like wrappers, it should do so via `explicit operator bool()` only. This support is for generated/runtime mechanics, not for source-language truthiness, and it must not reopen broad implicit conversion paths or implicit assignment into `bool_t` / native `bool`.
 
 ## 11. Constrained Templates and Concepts
 Use constrained templates/concepts where an operation should exist only when the wrapped type supports it. This is preferred over accidental template instantiation or late runtime failure.

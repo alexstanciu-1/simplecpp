@@ -61,7 +61,7 @@ This coverage file keeps the original IDs intact and calls out the duplication i
 | RT-INT-02 | covered | `tests/language_surface/pass/RT-INT-01_02_05_07_storage_condition_explicit.cpp` | — |
 | RT-INT-03 | covered | `tests/language_surface/pass/RT-INT-03_04_basic.cpp`, `tests/language_surface/pass/RT-INT-03_07_compound_assignment_and_explicit_float_to_int.cpp` | includes compound assignment coverage |
 | RT-INT-04 | covered | `tests/language_surface/pass/RT-INT-03_04_basic.cpp`, `tests/language_surface/pass/RT-INT-06_RT-FLOAT-04_mixed_numeric.cpp` | — |
-| RT-INT-05 | covered | `tests/language_surface/pass/RT-INT-01_02_05_07_storage_condition_explicit.cpp` | Uses `condition_value()` explicitly. |
+| RT-INT-05 | covered | `tests/language_surface/pass/RT-INT-01_02_05_07_storage_condition_explicit.cpp` | Covers the explicit named predicate/helper boundary rather than source-language truthiness. |
 | RT-INT-06 | covered | `tests/language_surface/pass/RT-INT-06_RT-FLOAT-04_mixed_numeric.cpp` | — |
 | RT-INT-07 | covered | `tests/language_surface/pass/RT-INT-01_02_05_07_storage_condition_explicit.cpp`, `tests/language_surface/pass/RT-INT-03_07_compound_assignment_and_explicit_float_to_int.cpp` | Explicit native extraction and explicit `float_t -> int_t` helper are covered. |
 | RT-INT-08 | covered | `tests/language_surface/fail_compile/RT-INT-08_no_bool_or_null_arithmetic.cpp`, `tests/language_surface/fail_compile/RT-INT-08_no_pointer_arithmetic.cpp` | bool/null and pointer-like arithmetic are both blocked. |

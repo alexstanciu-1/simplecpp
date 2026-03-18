@@ -298,7 +298,7 @@ Source basis:
 `bool_t` must support equality and inequality with `bool_t`.
 
 #### RT-BOOL-04
-`bool_t` must support logical operators required by `CASTING.md`.
+`bool_t` must support logical operators required by `CASTING.md` without broadening boolean semantics into general host-language truthiness.
 
 #### RT-BOOL-05
 `bool_t` must support the implicit `bool -> int` path through the runtime-visible wrapper model.
@@ -308,6 +308,9 @@ Arithmetic on `bool_t` must not be exposed.
 
 #### RT-BOOL-07
 String/numeric/pointer-like conversions involving `bool_t` must follow the explicit/implicit matrix exactly.
+
+#### RT-BOOL-08
+Lowered/generated control flow may consume native `bool` results produced by comparison or logical lowering without materializing `bool_t`. This control-flow bridge must not be treated as a general implicit conversion rule.
 
 ## 9.3 `int_t`
 
@@ -328,7 +331,7 @@ Source basis:
 `int_t` must support comparison operators against `int_t` and `float_t` exactly as defined.
 
 #### RT-INT-05
-`int_t` must support conditional evaluation semantics used by the language (`0` false, non-zero true) without implying a general implicit conversion to `bool_t`.
+`int_t` must not be directly usable as a source-language conditional operand. If the runtime exposes a named predicate helper for tests, implementation internals, or lowering support, that helper must remain explicit and must not imply contextual conversion to native `bool` or implicit conversion to `bool_t`.
 
 #### RT-INT-06
 `int_t` must support the implicit `int -> float` path.
@@ -358,7 +361,7 @@ Source basis:
 Mixed `int_t` / `float_t` arithmetic and comparison must promote the `int_t` side to `float_t` semantics.
 
 #### RT-FLOAT-05
-`float_t` is not valid in conditional expressions by default under the language rules; the runtime must not expose a general truthiness API that undermines this rule.
+`float_t` is not valid as a direct conditional operand under the language rules; the runtime must not expose a general truthiness API that undermines this rule.
 
 #### RT-FLOAT-06
 `float_t` must support only the explicit conversion paths defined by the matrix.

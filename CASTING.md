@@ -203,23 +203,32 @@ Supported:
 - `!`
 
 Rules:
-- logical operators operate on `bool`
+- logical operators operate on semantic-boolean operands only
+- at the source-language level, that means boolean values and boolean-producing expressions such as comparisons
+- comparison expressions lower to native C++ `bool`; those results are valid directly in generated control flow
+- this bridge does **not** create a general implicit conversion path from non-boolean value families to `bool`
 
-Conditional expressions define a special evaluation rule:
-- `int` is allowed in conditionals (`0 = false`, non-zero = true)
-- `null` is allowed in conditionals and evaluates to false
-- this does not imply general implicit conversion to `bool`
+Conditional expressions therefore follow this rule:
+- the condition must already be semantic-boolean
+- `bool` / `bool_t` values are valid
+- comparison results are valid
+- non-boolean direct conditions remain invalid unless a separate explicit boolean-producing operation is documented
 
-Examples:
+Valid examples:
 
-    if (0)      // false
-    if (125)    // true
-    if (null)   // false
+    if ($flag)            // valid boolean condition
+    if ($a < $b)          // valid comparison result
+    if (!($a == $b))      // valid logical composition
 
 Invalid:
 
-    if (0.00)   // error
-    if (125.88) // error
+    if (0)        // error
+    if (125)      // error
+    if (null)     // error
+    if (0.00)     // error
+    if ("x")      // error
+
+Runtime-only contextual `operator bool()` support on selected wrapper families is a runtime hardening mechanism. It does not broaden source-language truthiness.
 
 ---
 

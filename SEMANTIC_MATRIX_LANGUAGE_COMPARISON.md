@@ -37,12 +37,13 @@ Scope:
 | object/ownership wrapper identity comparison only | baseline | 🟡 | 🔴 | 🟡 | 🟡 | C++ smart pointers have pointer identity analogues, but the exact wrapper model differs; Python/PHP object comparison semantics are customizable or broader. |
 | relational comparison on ownership wrappers forbidden | baseline | 🟡 | 🔴 | 🟡 | 🟡 | C++ raw/smart pointer ordering history differs; Python often errors; PHP/JS object comparison models are not analogous. |
 | cross-wrapper ownership comparison forbidden | baseline | 🔴 | 🔴 | ⚫ | ⚫ | The compared languages do not expose the same managed-wrapper families as first-class language constructs. |
-| only `bool_t` has logical operators | baseline | 🔴 | 🔴 | 🔴 | 🔴 | Python/JS/PHP all apply boolean operators to arbitrary truthy/falsy operands; C++ allows contextual conversions to bool. |
+| logical operators require semantic-boolean operands | baseline | 🔴 | 🔴 | 🔴 | 🔴 | Python/JS/PHP all accept broader truthy/falsy operand families; C++ allows contextual conversion to bool in more places. |
 | `bool_t` usable directly in conditionals | baseline | 🟢 | 🟢 | 🟡 | 🟡 | All support boolean conditions, but JS/PHP also auto-coerce many non-boolean values. |
-| `int_t` allowed in conditionals (`0` false, non-zero true) but not general bool conversion | baseline | 🟡 | 🔴 | 🔴 | 🔴 | C++ contextual conversion is similar but broader; Python/JS/PHP permit broad truthiness rather than this narrow special-case. |
-| `float_t` forbidden in conditionals | baseline | 🔴 | 🔴 | 🔴 | 🔴 | All four languages treat numeric zero/non-zero as false/true or allow bool conversion. |
-| `string_t` forbidden in conditionals | baseline | 🔴 | 🔴 | 🔴 | 🔴 | Python, JS, and PHP all have string truthiness rules; C++ allows conversions in various ways. |
-| pointer-like truthiness forbidden by default | baseline | 🔴 | 🔴 | ⚫ | ⚫ | C++ permits pointer-to-bool contextual conversion; JS/PHP do not have the same pointer model. |
+| comparison results lower to native `bool` and are directly usable in control flow | baseline | 🟡 | 🟢 | 🟢 | 🟢 | Most languages already use native boolean comparison results; the difference is that Simple C++ still keeps a separate semantic wrapper model for ordinary boolean values. |
+| direct `int_t` conditions forbidden | baseline | 🔴 | 🔴 | 🔴 | 🔴 | All compared languages allow some numeric-to-boolean conditional path or contextual conversion. |
+| direct `float_t` conditions forbidden | baseline | 🔴 | 🔴 | 🔴 | 🔴 | All four languages allow some numeric conditional behavior or bool conversion. |
+| direct `string_t` conditions forbidden | baseline | 🔴 | 🔴 | 🔴 | 🔴 | Python, JS, and PHP all have string truthiness rules; C++ offers broader conversion freedom through host types. |
+| pointer-like truthiness forbidden at source level; runtime-only contextual bool may exist narrowly | baseline | 🔴 | 🔴 | ⚫ | ⚫ | C++ is closest mechanically because explicit/contextual bool is possible, but Simple C++ treats it as a narrow runtime bridge rather than a source-language rule. |
 | same-type plain assignment allowed | baseline | 🟢 | 🟢 | 🟢 | 🟢 | This is common everywhere, though the surrounding type systems differ. |
 | cross-wrapper ownership assignment forbidden | baseline | 🔴 | ⚫ | ⚫ | ⚫ | No close analogue in Python/JS/PHP; C++ smart-pointer ecosystem differs. |
 | compound assignment only for normalized allowed families | baseline | 🟡 | 🟡 | 🔴 | 🔴 | C++ and Python are somewhat closer; JS/PHP have wider coercive behavior. |
