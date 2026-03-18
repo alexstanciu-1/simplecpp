@@ -9,18 +9,20 @@ mkdir -p "$build_dir"
 
 failed=0
 
-for test_file in "$root_dir"/tests/fail_compile/*.cpp; do
+while IFS= read -r test_file; do
 	test_name="$(basename "$test_file" .cpp)"
-	log_file="$build_dir/$test_name.log"
+	group_name="$(basename "$(dirname "$test_file")")"
+	parent_name="$(basename "$(dirname "$(dirname "$test_file")")")"
+	log_file="$build_dir/${parent_name}_${group_name}_${test_name}.log"
 
-	echo "==> compiling fail test: $test_name"
-	if g++ -std=c++20 -Wall -Wextra -Werror -I"$root_dir/include" "$root_dir"/src/*.cpp "$test_file" -o "$build_dir/$test_name" >"$log_file" 2>&1; then
-		echo "FAIL-COMPILE TEST UNEXPECTEDLY SUCCEEDED: $test_name"
+	echo "==> compiling fail test: ${parent_name}/${group_name}/${test_name}"
+	if g++ -std=c++20 -Wall -Wextra -Werror -I"$root_dir/include" "$root_dir"/src/*.cpp "$test_file" -o "$build_dir/${parent_name}_${group_name}_${test_name}" >"$log_file" 2>&1; then
+		echo "FAIL-COMPILE TEST UNEXPECTEDLY SUCCEEDED: ${parent_name}/${group_name}/${test_name}"
 		failed=1
 	else
-		echo "expected compile failure observed: $test_name"
+		echo "expected compile failure observed: ${parent_name}/${group_name}/${test_name}"
 	fi
-done
+done < <(find "$root_dir/tests/language_surface/fail_compile" "$root_dir/tests/runtime_mechanics/fail_compile" -name '*.cpp' | sort)
 
 if [[ "$failed" -ne 0 ]]; then
 	exit 1

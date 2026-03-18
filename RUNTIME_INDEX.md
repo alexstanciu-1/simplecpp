@@ -54,8 +54,8 @@ Each row captures:
 
 | Requirement Prefix / ID | Primary File | Primary Symbol(s) | Responsibility | Notes |
 |---|---|---|---|---|
-| RT-CORE-* | `include/scpp/core.hpp` or `include/scpp/fwd.hpp` | shared forward declarations / common aliases | Core runtime entry surface and shared declarations | Optional aggregator layer if present |
-| RT-CGEN-* | `include/scpp/core.hpp`, `include/scpp/memory.hpp` | exported public runtime API | Codegen-visible API boundary | Must match generated code assumptions and exclude native generated-language-visible types/API use |
+| RT-CORE-* | `include/scpp/runtime.hpp` and `include/scpp/runtime_fwd.hpp` | shared forward declarations / common aliases | Core runtime entry surface and shared declarations | Optional aggregator layer if present |
+| RT-CGEN-* | `include/scpp/runtime.hpp`, `include/scpp/memory.hpp` | exported public runtime API | Codegen-visible API boundary | Must match generated code assumptions and exclude native generated-language-visible types/API use |
 | RT-INTG-* | `include/scpp/internal/*` | internal helpers only | Internal implementation support | Must not leak into generated-code-visible API |
 
 ---
@@ -75,7 +75,7 @@ Each row captures:
 | RT-BOOL-* | `include/scpp/bool_t.hpp` | `scpp::bool_t` | Semantic boolean wrapper | No host-language truthiness leakage |
 | RT-INT-* | `include/scpp/int_t.hpp` | `scpp::int_t` | Semantic integer wrapper | Arithmetic and comparison rules must align with `CASTING.md` |
 | RT-FLOAT-* | `include/scpp/float_t.hpp` | `scpp::float_t` | Semantic floating-point wrapper | Mixed numeric arithmetic may also require cross-file operators |
-| RT-NUM-* | `include/scpp/int_t.hpp`, `include/scpp/float_t.hpp`, optional `include/scpp/numeric_ops.hpp` | mixed numeric operators / comparison helpers | Shared numeric behavior across `int_t` and `float_t` | Keep responsibility explicit if extracted into a dedicated file |
+| RT-NUM-* | `include/scpp/int_t.hpp`, `include/scpp/float_t.hpp` | mixed numeric operators / comparison helpers | Shared numeric behavior across `int_t` and `float_t` | Keep responsibility explicit if extracted into a dedicated file |
 
 ---
 
@@ -84,7 +84,6 @@ Each row captures:
 | Requirement Prefix / ID | Primary File | Primary Symbol(s) | Responsibility | Notes |
 |---|---|---|---|---|
 | RT-STR-* | `include/scpp/string_t.hpp` | `scpp::string_t` | Semantic string wrapper | Explicit string conversions only |
-| RT-STRCONV-* | `include/scpp/string_t.hpp`, optional `src/string_t.cpp` | conversion helpers | Explicit string-to-int/float/bool behavior | Good place for should-fail edge cases |
 
 ---
 
@@ -100,9 +99,9 @@ Each row captures:
 
 | Requirement Prefix / ID | Primary File | Primary Symbol(s) | Responsibility | Notes |
 |---|---|---|---|---|
-| RT-SHARED-* | `include/scpp/shared_p.hpp` | `scpp::shared_p<T>` | Shared ownership wrapper | Public semantic wrapper over implementation storage |
-| RT-UNIQUE-* | `include/scpp/unique_p.hpp` | `scpp::unique_p<T>` | Unique ownership wrapper | Explicit ownership model only |
-| RT-WEAK-* | `include/scpp/weak_p.hpp` | `scpp::weak_p<T>` | Non-owning reference wrapper | Must be derived from owning object or empty state |
+| RT-SH-* | `include/scpp/shared_p.hpp` | `scpp::shared_p<T>` | Shared ownership wrapper | Public semantic wrapper over implementation storage |
+| RT-UQ-* | `include/scpp/unique_p.hpp` | `scpp::unique_p<T>` | Unique ownership wrapper | Explicit ownership model only |
+| RT-WK-* | `include/scpp/weak_p.hpp` | `scpp::weak_p<T>` | Non-owning reference wrapper | Must be derived from owning object or empty state |
 
 ---
 
@@ -128,7 +127,7 @@ Each row captures:
 | Requirement Prefix / ID | Primary File | Primary Symbol(s) | Responsibility | Notes |
 |---|---|---|---|---|
 | RT-CMP-OBJ-* | `include/scpp/shared_p.hpp`, `include/scpp/unique_p.hpp`, `include/scpp/weak_p.hpp`, `include/scpp/nullable.hpp` | object/null comparison operators | Object identity and null-state comparison rules | Must align with `OBJECT_COMPARISON.md` |
-| RT-CMP-NUM-* | `include/scpp/int_t.hpp`, `include/scpp/float_t.hpp`, optional `include/scpp/numeric_ops.hpp` | numeric comparison operators | Numeric comparison promotion rules | Must align with `CASTING.md` |
+| RT-CMP-NUM-* | `include/scpp/int_t.hpp`, `include/scpp/float_t.hpp` | numeric comparison operators | Numeric comparison promotion rules | Must align with `CASTING.md` |
 
 ---
 
@@ -138,27 +137,27 @@ Use this section only if the runtime remains split into headers and `.cpp` files
 
 | Source File | Implements Mainly | Notes |
 |---|---|---|
-| `src/string_t.cpp` | `RT-STRCONV-*` | Heavy parsing / explicit conversions are reasonable here |
-| `src/numeric_ops.cpp` | `RT-NUM-*`, `RT-CMP-NUM-*` | Only if mixed numeric operators are not header-defined |
-| `src/memory.cpp` | `RT-MEM-*`, `RT-OWN-*` | Optional; header-only is often simpler at current stage |
-
----
+| `src/bool_t.cpp` | `RT-BOOL-*` | Out-of-line bool wrapper support currently used by the split build |
+| `src/float_t.cpp` | `RT-FLOAT-*`, `RT-CMP-NUM-*` | Out-of-line float wrapper and numeric comparison support |
+| `src/int_t.cpp` | `RT-INT-*`, `RT-NUM-*`, `RT-CMP-NUM-*` | Out-of-line integer wrapper plus mixed numeric operators |
+| `src/string_t.cpp` | `RT-STR-*` | Explicit string conversion and parsing failure paths |
 
 ## Test Mapping Convention
 
 Recommended test path structure:
 
 ```text
-tests/pass/RT-INT-03_add_int_int.cpp
-tests/pass/RT-FLOAT-03_add_float_float.cpp
-tests/fail/RT-STRCONV-02_implicit_string_to_int.cpp
-tests/fail/RT-CMP-OBJ-03_ordering_shared_ptrs.cpp
+tests/language_surface/pass/RT-INT-03_04_basic.cpp
+tests/language_surface/pass/RT-FLOAT-03_basic.cpp
+tests/language_surface/fail_compile/RT-STR-05_no_implicit_numeric_concat.cpp
+tests/runtime_mechanics/fail_compile/RT-SH-05_no_relational.cpp
 ```
 
 Recommended rule:
 - one primary requirement per test file
 - additional related requirements may be listed in comments
 - should-fail tests must state the expected reason
+- use `language_surface` for generated-language-visible semantics and `runtime_mechanics` for host/runtime-only behavior
 
 ---
 

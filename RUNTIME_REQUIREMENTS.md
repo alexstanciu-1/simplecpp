@@ -168,7 +168,7 @@ Examples:
 - `RT-STR-04`    → string wrapper rule
 - `RT-NBL-03`    → nullable rule
 - `RT-MEM-06`    → ownership helper rule
-- `RT-CMP-04`    → comparison rule
+- `RT-SH-04`     → shared ownership comparison/null rule
 - `RT-CGEN-02`   → code-generation-facing rule
 - `RT-TST-03`    → test rule
 
@@ -669,8 +669,8 @@ This target set is not the whole language, but it is enough to validate the init
 
 ### 6.8 Codegen / Boundary Requirements
 
-#### RT-CGEN-03
+#### RT-CGEN-06
 Generated Simple C++ code must never contain native C++ primitive types, direct `std::*` usage, or native C++ structures/classes as generated-language-visible values.
 
-#### RT-CGEN-04
+#### RT-CGEN-07
 Native interoperability belongs to explicit C++ bridge/integration code outside the generated Simple C++ semantic surface.
