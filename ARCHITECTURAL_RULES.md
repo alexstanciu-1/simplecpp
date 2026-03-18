@@ -25,6 +25,16 @@ All literals and values must be wrapped explicitly:
     auto x = (int_t)12;
     auto s = (string_t)"abc";
 
+Managed object creation must also enter through the public runtime helpers:
+
+    auto a = create<MyClass>();
+    auto b = shared<MyClass>();
+    auto c = unique<MyClass>();
+
+Non-owning references are derived from existing owning values:
+
+    auto w = weak(a);
+
 ## 8. Spec-Driven Conversions
 All conversions must be explicitly defined in the spec.
 

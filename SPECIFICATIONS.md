@@ -124,14 +124,13 @@ Behavior:
 ### 3.1 Default Behavior
 
 - Objects are allocated using managed ownership
-- Shared ownership is the default object model
 - Direct use of raw pointers is not allowed
 
 At the source level:
 
     auto x = new MyClass();
 
-Generated form:
+Generated default form:
 
     auto x = create<MyClass>();
 
@@ -139,15 +138,42 @@ The `new` keyword in source languages is a semantic construct.
 
 It does not correspond to C++ raw allocation.
 
-All object creation is translated into runtime-managed allocation via:
+All default object creation is translated into runtime-managed allocation via:
 
     create<T>()
 
+The current default behavior of `create<T>()` is to return:
+
+    shared_p<T>
+
 The generated form must not expose raw C++ allocation semantics.
+
+### 3.2 Explicit Ownership Helpers
+
+The runtime exposes explicit ownership helpers:
+
+    shared<T>()  -> shared_p<T>
+    unique<T>()  -> unique_p<T>
+
+These helpers are used when an explicit ownership choice is required by the language rule or by manually authored runtime-facing code.
+
+They do not change the meaning of source-level `new`, which still lowers to:
+
+    create<T>()
+
+unless another source-language rule explicitly states otherwise.
+
+`weak_p<T>` is not a primary allocation form.
+
+A weak reference is derived from an existing owning value:
+
+    weak(x)
+
+where `x` is an owning managed object compatible with `weak_p<T>` creation.
 
 ---
 
-### 3.2 Weak References
+### 3.3 Weak References
 
 - `weak_p<T>` may be used to avoid cycles
 - Cycles are not automatically prevented
@@ -155,24 +181,27 @@ The generated form must not expose raw C++ allocation semantics.
 
 Notes:
 - shared ownership does **not** prevent cycles
-- `weak_ptr`-like behavior must be used correctly where needed
+- weak-reference behavior must be used correctly where needed
 - full safety remains to be proven over time
 
 ---
 
-### 3.3 Allocation Rules
+### 3.4 Allocation Rules
 
 - Allocation is triggered through managed creation helpers such as:
 
     create<T>()
+    shared<T>()
+    unique<T>()
 
 - Source-level `new` is allowed
 - Source-level `new` is translated into managed allocation
+- `weak(x)` derives a non-owning reference and does not perform allocation
 - No user-visible raw allocation semantics exist
 
 ---
 
-### 3.4 Stack Values
+### 3.5 Stack Values
 
 - Stack allocation is not allowed by default for object-like managed values
 - Explicit stack allocation may be allowed in future versions
@@ -320,4 +349,13 @@ Source-language object creation is translated into:
 
     create<T>()
 
-not raw C++ allocation.
+by default, not raw C++ allocation.
+
+When an explicit ownership form is required, generated code must use:
+
+    shared<T>()
+    unique<T>()
+
+Weak references are derived from existing owning values through:
+
+    weak(x)

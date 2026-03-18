@@ -59,9 +59,11 @@ Applies to:
 
 Comparing different object types is forbidden.
 
-Example:
+Examples:
 
     shared_p<A> == shared_p<B> // error
+    shared_p<A> == unique_p<A> // error
+    shared_p<A> == weak_p<A>   // error
 
 Unless explicitly defined in future extensions.
 

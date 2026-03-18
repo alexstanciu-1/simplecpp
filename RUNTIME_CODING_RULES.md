@@ -13,7 +13,7 @@ Use explicit constructors or helpers for conversions defined as explicit.
 Operators must be implemented directly on wrapper types or as scpp functions.
 
 ## 5. Small Public API
-Expose only necessary constructs to generated code.
+Expose only necessary constructs to generated code, including only the managed creation helpers required by the spec (`create<T>()`, `shared<T>()`, `unique<T>()`, and `weak(x)`).
 
 ## 6. Internal Accessors
 Allow internal access for runtime implementation, not for generated code.

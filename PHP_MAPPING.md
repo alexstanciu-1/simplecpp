@@ -172,6 +172,25 @@ This maps to the Simple C++ object-creation model:
 
 Generated code must not emit raw C++ `new` for language-level object creation.
 
+### 6.3 Explicit ownership helpers
+
+The runtime also exposes explicit ownership helpers:
+
+    auto a = shared<My_Class>();
+    auto b = unique<My_Class>();
+
+These helpers do not change the source-level meaning of `new`.
+The default lowering of source-level `new` remains:
+
+    create<T>()
+
+unless a later source-language rule explicitly requires a different ownership form.
+
+`weak_p<T>` is not a primary allocation result.
+Weak references are derived from an existing owning value:
+
+    auto w = weak(a);
+
 ---
 
 ## 7. Nullability
@@ -220,7 +239,19 @@ Generated object creation must use:
 
     create<T>()
 
-not raw C++ allocation.
+for default ownership,
+or:
+
+    shared<T>()
+    unique<T>()
+
+when an explicit ownership form is required by the language rule being lowered.
+
+Weak references must be derived from an existing owning object:
+
+    weak(x)
+
+Raw C++ allocation must not be emitted for language-level object creation.
 
 ---
 

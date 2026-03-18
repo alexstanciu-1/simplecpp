@@ -314,6 +314,9 @@ All operations must match the defined matrices exactly.
 If no rule exists for a given combination:
 → the expression is a compile-time error.
 
+Ownership choice is not inferred from operator usage or later optimization.
+If the frontend or generated code needs an explicit ownership form, it must use the corresponding runtime helper directly.
+
 ---
 
 ## 3.18 Code Generation Rule
@@ -324,5 +327,12 @@ Examples:
 
     auto x = (int_t)12;
     auto s = (string_t)"text";
+
+Managed object creation must also use the Simple C++ runtime helpers explicitly:
+
+    auto a = create<MyClass>(); // default ownership policy (currently shared_p<MyClass>)
+    auto b = shared<MyClass>(); // explicit shared_p<MyClass>
+    auto c = unique<MyClass>(); // explicit unique_p<MyClass>
+    auto w = weak(a);           // derived weak_p<MyClass>
 
 This prevents generated code from relying on native C++ primitive semantics and ensures all values enter the Simple C++ runtime model explicitly.
