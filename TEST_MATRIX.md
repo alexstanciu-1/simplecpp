@@ -63,7 +63,7 @@ Expected result for `fail_compile`:
 | `tests/language_surface/pass/RT-NULL-03_interop.cpp` | `RT-NULL-03` | covered | contextual `nullptr` / `nullopt` interop |
 | `tests/language_surface/pass/RT-BOOL-01_03_04_basic.cpp` | `RT-BOOL-01`, `RT-BOOL-03`, `RT-BOOL-04` | covered | bool wrapper equality and logical operators |
 | `tests/language_surface/pass/RT-BOOL-02_05_entry_to_int.cpp` | `RT-BOOL-02`, `RT-BOOL-05` | covered | bool runtime entry and bool→int wrapper path |
-| `tests/language_surface/pass/RT-INT-01_02_05_07_storage_condition_explicit.cpp` | `RT-INT-01`, `RT-INT-02`, `RT-INT-05`, `RT-INT-07` | partial | explicit native extraction covered; broader matrix still audit-linked |
+| `tests/language_surface/pass/RT-INT-01_02_05_07_storage_condition_explicit.cpp` | `RT-INT-01`, `RT-INT-02`, `RT-INT-05`, `RT-INT-07` | covered | storage/condition/native explicit extraction |
 | `tests/language_surface/pass/RT-INT-03_04_basic.cpp` | `RT-INT-03`, `RT-INT-04` | covered | int arithmetic and comparison |
 | `tests/language_surface/pass/RT-INT-06_RT-FLOAT-04_mixed_numeric.cpp` | `RT-INT-06`, `RT-FLOAT-04` | covered | mixed numeric promotion behavior |
 | `tests/language_surface/pass/RT-FLOAT-01_02_06_storage_explicit.cpp` | `RT-FLOAT-01`, `RT-FLOAT-02`, `RT-FLOAT-06` | partial | explicit native extraction covered |
@@ -130,7 +130,7 @@ This update added tests specifically for previously uncovered runtime behaviors:
 - `RT-INT-01`
 - `RT-INT-02`
 - `RT-INT-05`
-- `RT-INT-07` (partial)
+- `RT-INT-07`
 - `RT-INT-08`
 - `RT-FLOAT-01`
 - `RT-FLOAT-02`

@@ -1,379 +1,179 @@
-# Simple C++ — Specifications
+# SPECIFICATIONS.md (Rewritten --- Normative Core)
 
-## 1. Overview
+## 1. Purpose
 
-This document defines the core language model for Simple C++.
+This document defines the **normative semantics** of the *Simple C++*
+language and toolchain.
 
-Simple C++ is a C++-inspired intermediate language designed to be:
-- simple
-- predictable
-- partially memory-safe, aiming to improve over time
-- suitable for source-to-source (S2S) compilation
+It specifies: - type system behavior - operator semantics - conversion
+rules - enforcement model
 
-More specific behavioral rules are defined in:
-- `CASTING.md` — conversion, operators, and conditionals
-- `OBJECT_COMPARISON.md` — object comparison semantics
+All other documents must conform to this specification.
 
-If conflicts arise, these specialized documents take precedence for their respective domains.
+------------------------------------------------------------------------
 
----
+## 2. Source of Truth Hierarchy
 
-## 2. Type System
+In case of conflict, the following precedence applies:
 
-### 2.1 Primitive Types
+1.  **Executable tests (fail/pass)**
+2.  **SEMANTIC_MATRIX.md**
+3.  **This document (SPECIFICATIONS.md)**
+4.  **RUNTIME_REQUIREMENTS.md (constraints and rationale)**
 
-The following primitive types are supported:
+Implication: - Tests define the final observable behavior. - The
+semantic matrix defines allowed/forbidden operations. - This document
+defines system-wide rules and invariants.
 
-- `bool`
-  - Values: `true`, `false`
-  - Backed by: `scpp::bool_t`
+------------------------------------------------------------------------
 
-- `int`
-  - 8-byte signed integer
-  - Backed by: `scpp::int_t` (`long long`)
+## 3. Terminology (Normative)
 
-- `float`
-  - 8-byte floating point
-  - Backed by: `scpp::float_t` (`double`)
+The following terms are used with strict meaning:
 
-Primitive types:
-- are value types
-- are not heap-allocated
-- are passed by value
-- are returned by value
+-   **Allowed**\
+    A construct is valid and must compile.
 
----
+-   **Forbidden**\
+    A construct must not compile (either rejected or fail compilation).
 
-### 2.2 Standard Wrapped Types
+-   **Rejected (S2S)**\
+    Must be rejected during source-to-source transformation.
 
-The following wrapped standard types are provided:
+-   **Compile-time failure (C++)**\
+    May pass S2S but must fail during C++ compilation.
 
-- `string`
-  - Wrapper over `std::string`
-  - Runtime type: `scpp::string_t`
+-   **Explicit conversion**\
+    Requires an explicit function or cast (never implicit).
 
-- `vector<T>`
-  - Wrapper over `std::vector<T>`
-  - Runtime type: `scpp::vector_t<T>`
+-   **Implicit conversion**\
+    Automatic conversion. Always forbidden unless explicitly stated
+    (none currently allowed).
 
-Where:
-- `T` must be a valid Simple C++ type or a user-defined Simple C++ type
+-   **Unsupported**\
+    Not implemented yet; behavior is undefined.
 
-By default:
-- `string` and `vector<T>` are passed by `const &`
-- `string` and `vector<T>` are used to avoid unnecessary copying
+------------------------------------------------------------------------
 
-Additional wrapped types may be added later.
+## 4. Core Language Invariants
 
----
+### 4.1 No implicit conversions
 
-### 2.3 Composite Types
+There are **no implicit conversions** between types.
 
-#### `null_t`
+### 4.2 No truthiness
 
-Simple C++ defines a universal null type.
+There is **no truthiness model**.
 
-Definition:
+### 4.3 Strict operator typing
 
-    inline constexpr null_t null{};
+Operators are only defined for explicitly allowed type combinations.
 
-    struct null_t {
-        constexpr operator std::nullptr_t() const { return nullptr; }
-        constexpr operator std::nullopt_t() const { return std::nullopt; }
-    };
+### 4.4 No fallback coercion
 
-Behavior:
-- represents both pointer-null and optional-empty
-- is compatible with `nullptr` and `std::nullopt` in generated code
-- does not implicitly convert to primitive types
-- resolves only through contextual typing
+There is no automatic fallback such as numeric, string, or boolean
+coercion.
 
-`null_t` is intended to remain abstract at the language level and be resolved only where context provides a valid target type.
+### 4.5 Semantic completeness via matrix
 
----
+All valid operations must be defined in `SEMANTIC_MATRIX.md`.
 
-### 2.4 Pointer-like Types
+------------------------------------------------------------------------
 
-Pointer-like types are managed runtime types provided by the language runtime:
+## 5. Type System Overview
 
-- `shared_p<T>` → shared ownership
-- `weak_p<T>` → non-owning reference
-- `unique_p<T>` → exclusive ownership
+Primitive types: - int_t - float_t - bool_t - string_t - null_t
 
-Characteristics:
-- no raw pointers are exposed to the user
-- all pointer-like allocations are managed
-- pointer semantics are not user-visible
-- comparison behavior is defined in `OBJECT_COMPARISON.md`
+Composite types: - nullable`<T>`{=html} - shared_p`<T>`{=html} -
+unique_p`<T>`{=html} - weak_p`<T>`{=html}
 
----
+------------------------------------------------------------------------
 
-### 2.5 Nullable Types
+## 6. Conversion Model
 
-- `nullable<T>` → wrapper over `std::optional<T>`
+### 6.1 General rule
 
-Behavior:
-- can hold either a value or `null`
-- integrates with `null_t`
-- comparison rules are defined in `OBJECT_COMPARISON.md`
+Conversions are never implicit.
 
----
+### 6.2 Explicit conversions
 
-## 3. Ownership Model
+-   float_t → int_t via to_int(float_t), truncation toward zero
+-   bool_t → int_t (true → 1, false → 0)
 
-### 3.1 Default Behavior
+### 6.3 Forbidden conversions
 
-- Objects are allocated using managed ownership
-- Direct use of raw pointers is not allowed
+-   null_t → non-nullable
+-   string_t → numeric or bool
+-   pointer wrappers → numeric or other wrappers
 
-At the source level:
+------------------------------------------------------------------------
 
-    auto x = new MyClass();
+## 7. Operator Semantics
 
-Generated default form:
+### 7.1 Arithmetic
 
-    auto x = create<MyClass>();
+Allowed only if explicitly defined.
 
-The `new` keyword in source languages is a semantic construct.
+### 7.2 Comparison
 
-It does not correspond to C++ raw allocation.
+All comparison operators return native C++ bool.
 
-All default object creation is translated into runtime-managed allocation via:
+### 7.3 Assignment
 
-    create<T>()
+Compound assignments allowed only if defined in matrix.
 
-The current default behavior of `create<T>()` is to return:
+### 7.4 Pointer-like types
 
-    shared_p<T>
+Allowed: - equality within same wrapper
 
-The generated form must not expose raw C++ allocation semantics.
+Forbidden: - arithmetic - relational comparisons - cross-wrapper
+comparisons
 
-### 3.2 Explicit Ownership Helpers
+------------------------------------------------------------------------
 
-The runtime exposes explicit ownership helpers:
+## 8. Conditional Semantics
 
-    shared<T>()  -> shared_p<T>
-    unique<T>()  -> unique_p<T>
+Conditions must resolve explicitly to bool_t.
 
-These helpers are used when an explicit ownership choice is required by the language rule or by manually authored runtime-facing code.
+------------------------------------------------------------------------
 
-They do not change the meaning of source-level `new`, which still lowers to:
+## 9. Enforcement Model
 
-    create<T>()
+### 9.1 S2S enforcement
 
-unless another source-language rule explicitly states otherwise.
+Reject invalid constructs early.
 
-`weak_p<T>` is not a primary allocation form.
+### 9.2 C++ enforcement
 
-A weak reference is derived from an existing owning value:
+Fail compilation when necessary.
 
-    weak(x)
+### 9.3 Rule classification
 
-where `x` is an owning managed object compatible with `weak_p<T>` creation.
+Each rule must be classified as S2S or C++ enforced.
 
----
+------------------------------------------------------------------------
 
-### 3.3 Weak References
+## 10. Runtime Constraints
 
-- `weak_p<T>` may be used to avoid cycles
-- Cycles are not automatically prevented
-- Cycles must currently be handled manually
+Runtime must: - prevent implicit conversions - use explicit
+constructors - delete forbidden operators
 
-Notes:
-- shared ownership does **not** prevent cycles
-- weak-reference behavior must be used correctly where needed
-- full safety remains to be proven over time
+------------------------------------------------------------------------
 
----
+## 11. Relationship to PHP
 
-### 3.4 Allocation Rules
+Simple C++ is a restricted transformation target, not PHP runtime.
 
-- Allocation is triggered through managed creation helpers such as:
+------------------------------------------------------------------------
 
-    create<T>()
-    shared<T>()
-    unique<T>()
+## 12. Completeness Requirement
 
-- Source-level `new` is allowed
-- Source-level `new` is translated into managed allocation
-- `weak(x)` derives a non-owning reference and does not perform allocation
-- No user-visible raw allocation semantics exist
+Every rule must exist in: - semantic matrix - tests - implementation or
+rejection
 
----
+------------------------------------------------------------------------
 
-### 3.5 Stack Values
+## 13. Non-goals
 
-- Stack allocation is not allowed by default for object-like managed values
-- Explicit stack allocation may be allowed in future versions
-
-Primitive values remain value types and are not heap-allocated.
-
----
-
-## 4. Passing Rules
-
-### 4.1 Primitive Types
-
-- passed by value
-- returned by value
-
----
-
-### 4.2 String and Vector
-
-- `string`
-- `vector<T>`
-
-are passed by `const &` by default to avoid copying.
-
----
-
-### 4.3 Other Types
-
-Other non-primitive values should be wrapped in:
-- `shared_p<T>`
-- `unique_p<T>`
-- `weak_p<T>`
-
-They are passed by value with pointer-like semantics.
-
----
-
-### 4.4 Explicit References
-
-- Explicit pass-by-reference may be allowed
-- Explicit return-by-reference may be allowed
-
-Detailed function and reference rules may be defined separately.
-
----
-
-## 5. Type Definitions
-
-Types are implemented as wrappers in the `scpp` namespace.
-
-Example:
-
-    namespace scpp {
-        class int_t {
-        private:
-            long long value;
-        };
-    }
-
-Mapped runtime types:
-
-- `scpp::bool_t` → `bool`
-- `scpp::int_t` → `long long`
-- `scpp::float_t` → `double`
-- `scpp::string_t` → `std::string`
-- `scpp::vector_t<T>` → `std::vector<T>`
-- `scpp::nullable<T>` → `std::optional<T>`
-- `scpp::shared_p<T>` → `std::shared_ptr<T>`
-- `scpp::weak_p<T>` → `std::weak_ptr<T>`
-- `scpp::unique_p<T>` → `std::unique_ptr<T>`
-
-Notes:
-- runtime types in the `scpp` namespace are not user-facing
-- runtime types are generated by the transpiler
-- all user-visible values must conform to the internal Simple C++ type system
-
----
-
-## 6. Conversion and Operator Model
-
-Casting and operator behavior is defined in `CASTING.md`.
-
-Key principles:
-- implicit conversions are limited
-- explicit conversions use:
-
-    (type)expression
-
-- invalid conversions are compile-time errors
-- forbidden conversions may be implemented as deleted conversions in the runtime
-- conditionals follow special evaluation rules and do not imply general implicit conversions
-
----
-
-## 7. Object Model
-
-Object comparison behavior is defined in `OBJECT_COMPARISON.md`.
-
-Key principles:
-- objects compare by identity
-- nullable values compare by contained value when present
-- pointer-like types compare by identity or null state
-- relational ordering for object-like values is not defined by default
-
----
-
-## 8. Error Model
-
-To be defined later.
-
-This includes:
-- runtime conversion failures
-- invalid explicit conversions where runtime values are involved
-- possible exception or error-object policy
-
----
-
-## 9. Notes
-
-- Each source language defines its own AST and transcoder
-- A unified intermediate representation is not currently used
-- The majority of AST traversal and transformation logic is language-specific
-
----
-
-## 10. Related Specifications
-
-- `CASTING.md`
-- `OBJECT_COMPARISON.md`
-
----
-
-## 11. Code Generation Rules
-
-Generated C++ code must construct Simple C++ runtime values explicitly.
-
-Examples:
-
-    auto x = (int_t)12;
-    auto s = (string_t)"text";
-
-This prevents generated code from relying on native C++ primitive semantics and ensures all values enter the Simple C++ runtime model explicitly.
-
-Source-language object creation is translated into:
-
-    create<T>()
-
-by default, not raw C++ allocation.
-
-When an explicit ownership form is required, generated code must use:
-
-    shared<T>()
-    unique<T>()
-
-Weak references are derived from existing owning values through:
-
-    weak(x)
-
-
-
-
-## 6A. No Native Type or Native API Use in Generated Code
-Generated Simple C++ code must never contain native C++ primitive types, native standard-library types, or direct calls to native functions.
-
-This includes:
-- native primitives such as `int`, `double`, `bool`
-- direct `std::*` types or functions
-- direct use of native C++ structures/classes as generated-language-visible values
-
-All generated-language-visible values must use the public `scpp::*` runtime surface.
-
-## 6B. Interoperability Boundary
-Interoperability with native C++ code, native libraries, and native data structures belongs to C++ integration code, not to generated Simple C++ code.
-
-Any such bridge must be written explicitly in C++ outside the generated-language semantic surface.
+The system does not support: - PHP semantics - dynamic typing - implicit
+coercion

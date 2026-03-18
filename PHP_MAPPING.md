@@ -224,11 +224,32 @@ They are then interpreted according to:
 
 ## 8. Code Generation Rules
 
-### 8.1 Namespace
+### 8.1 Namespace and Program Container
 
-Generated C++ code must remain inside:
+The project adopts the architectural split:
 
-    namespace scpp
+- `scpp` = platform namespace
+- `scpp_gen` = generated user program namespace
+
+Generated PHP user code must not be emitted directly into `scpp`.
+
+When PHP source has no namespace, generated user code must remain inside:
+
+    namespace scpp_gen
+
+When PHP source declares a namespace such as:
+
+    namespace Abc\Def;
+
+its translated declarations and top-level wrapper must be emitted inside:
+
+    namespace scpp_gen::Abc::Def
+
+Top-level executable PHP statements must be wrapped into a generated entry function such as:
+
+    __scpp_main__
+
+A global host entry point then delegates into that generated function.
 
 ### 8.2 Explicit runtime entry
 
@@ -236,28 +257,58 @@ Generated values must enter the runtime model explicitly.
 
 Examples:
 
-    auto x = (int_t)12;
-    auto s = (string_t)"text";
+    auto x = (scpp::int_t)12;
+    auto s = (scpp::string_t)"text";
 
 ### 8.3 Managed object creation
 
-Generated object creation must use:
+Generated object creation must use fully qualified platform helpers:
 
-    create<T>()
+    scpp::create<T>()
 
 for default ownership,
 or:
 
-    shared<T>()
-    unique<T>()
+    scpp::shared<T>()
+    scpp::unique<T>()
 
 when an explicit ownership form is required by the language rule being lowered.
 
 Weak references must be derived from an existing owning object:
 
-    weak(x)
+    scpp::weak(x)
 
 Raw C++ allocation must not be emitted for language-level object creation.
+
+### 8.4 Untyped variable declarations
+
+For dynamic-language frontends such as PHP, the S2S layer does not perform general type inference for variable declarations.
+
+Rule:
+- if the source declaration is untyped, emit `auto`
+- if the source declaration is explicitly typed, emit the mapped explicit Simple C++ type
+
+Examples:
+
+    $x = 12;
+
+becomes:
+
+    auto x = (scpp::int_t)12;
+
+    $y = my_func("abc");
+
+becomes:
+
+    auto y = my_func((scpp::string_t)"abc");
+
+    $z /** ?string */ = my_func("abc");
+
+becomes:
+
+    scpp::nullable<scpp::string_t> z = my_func((scpp::string_t)"abc");
+
+This keeps output deterministic and avoids cross-file or whole-program inference in the PHP frontend.
 
 ---
 
