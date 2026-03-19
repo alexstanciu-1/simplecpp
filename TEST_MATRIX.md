@@ -1,162 +1,237 @@
 # TEST_MATRIX.md
 
+## Scope
+
+This document is **normative**.
+
+Defines required test surface derived from:
+- SPECIFICATIONS.md
+- SEMANTIC_MATRIX.md
+
+---
+
 ## Purpose
 
-This document maps the current runtime snapshot to the current requirement-based test suite.
-
-It is based on the uploaded project snapshot used as source of truth for this chat.
-
-The suite is now separated into:
-- `tests/language_surface/pass/`
-- `tests/language_surface/fail_compile/`
-- `tests/runtime_mechanics/pass/`
-- `tests/runtime_mechanics/fail_compile/`
-
-This split makes the intent explicit:
-- **language-surface** tests model what generated Simple C++ code is expected to rely on
-- **runtime-mechanics** tests validate ownership/control details that require test helpers or host-side scaffolding
+- define what must be tested
+- ensure full coverage of matrix
+- support test generation
 
 ---
 
-## Build Model
+## Derivation Rule
 
-Current runtime snapshot is a split build, so all tests compile with:
+All tests must map to:
+- SPECIFICATIONS.md
+- SEMANTIC_MATRIX.md
+- TEST_MATERIALIZATION_CONTRACT.md
 
-```bash
-g++ -std=c++20 -Wall -Wextra -Werror -Iinclude src/*.cpp <test>.cpp -o /tmp/test_bin
-```
-
-Pass suite:
-
-```bash
-./tests/run_pass.sh
-```
-
-Compile-fail suite:
-
-```bash
-./tests/run_fail_compile.sh
-```
-
-Expected result for `fail_compile`:
-- compilation must fail
-- failure reason should match the test comment at least in substance
+No new semantics allowed.
 
 ---
 
-## Coverage Status Legend
+## Test Categories
 
-- **covered** = requirement has a direct primary test or a clearly linked test set
-- **partial** = some parts are covered, but the requirement still needs manual audit or deeper tests
-- **audit/manual** = not meaningfully testable through the current unit-test model, or primarily a source-structure rule
-- **frontend/manual** = belongs mainly to frontend/codegen contract rather than runtime-only unit tests
+- Positive compile
+- Positive execution
+- Negative compile
 
----
+Note:
+S2S rejection is not required in the current architecture.
+Validation is performed via C++ compilation.
 
-## Current Test Inventory
-
-### Language-surface pass tests
-
-| Test File | Primary Requirement(s) | Status | Notes |
-|---|---|---|---|
-| `tests/language_surface/pass/RT-NULL-01_02_06_basic.cpp` | `RT-NULL-01`, `RT-NULL-02`, `RT-NULL-06` | covered | null constant and null equality |
-| `tests/language_surface/pass/RT-NULL-03_interop.cpp` | `RT-NULL-03` | covered | contextual `nullptr` / `nullopt` interop |
-| `tests/language_surface/pass/RT-BOOL-01_03_04_basic.cpp` | `RT-BOOL-01`, `RT-BOOL-03`, `RT-BOOL-04` | covered | bool wrapper equality and logical operators |
-| `tests/language_surface/pass/RT-BOOL-02_05_entry_to_int.cpp` | `RT-BOOL-02`, `RT-BOOL-05` | covered | bool runtime entry and bool→int wrapper path |
-| `tests/language_surface/pass/RT-INT-01_02_05_07_storage_condition_explicit.cpp` | `RT-INT-01`, `RT-INT-02`, `RT-INT-05`, `RT-INT-07` | covered | storage and explicit predicate/helper boundary; no source-language truthiness implied |
-| `tests/language_surface/pass/RT-INT-03_04_basic.cpp` | `RT-INT-03`, `RT-INT-04` | covered | int arithmetic and comparison |
-| `tests/language_surface/pass/RT-INT-06_RT-FLOAT-04_mixed_numeric.cpp` | `RT-INT-06`, `RT-FLOAT-04` | covered | mixed numeric promotion behavior |
-| `tests/language_surface/pass/RT-FLOAT-01_02_06_storage_explicit.cpp` | `RT-FLOAT-01`, `RT-FLOAT-02`, `RT-FLOAT-06` | partial | explicit native extraction covered |
-| `tests/language_surface/pass/RT-FLOAT-03_basic.cpp` | `RT-FLOAT-03` | covered | float arithmetic |
-| `tests/language_surface/pass/RT-STR-01_02_construction_and_const_ref.cpp` | `RT-STR-01`, `RT-STR-02` | covered | wrapper construction and `const &` API use |
-| `tests/language_surface/pass/RT-STR-03_04_basic.cpp` | `RT-STR-03`, `RT-STR-04` | covered | string concatenation and comparison |
-| `tests/language_surface/pass/RT-STR-06_to_int_float_bool.cpp` | `RT-STR-06`, `RT-STR-07` | covered | explicit conversions and valid string→bool inputs |
-| `tests/language_surface/pass/RT-STR-08_invalid_conversion_throws.cpp` | `RT-STR-08` | covered | centralized invalid-conversion failure path |
-| `tests/language_surface/pass/RT-NBL-01_optional_integration.cpp` | `RT-NBL-01` | covered | null integration and value access |
-| `tests/language_surface/pass/RT-NBL-02_03_04_05_basic.cpp` | `RT-NBL-02`, `RT-NBL-03`, `RT-NBL-04`, `RT-NBL-05` | covered | nullable construction, state, equality, null checks |
-| `tests/language_surface/pass/RT-NBL-06_relational.cpp` | `RT-NBL-06` | covered | non-null relational path |
-| `tests/language_surface/pass/RT-VEC-03_04_05_basic.cpp` | `RT-VEC-03`, `RT-VEC-04`, `RT-VEC-05` | covered | minimal vector operations |
-| `tests/language_surface/pass/RT-CGEN-01_02_03_04_05_entry_points.cpp` | `RT-CGEN-01`..`RT-CGEN-05` | covered | direct generated-surface usage path covered for the primary entry-point requirements |
-
-### Language-surface compile-fail tests
-
-| Test File | Primary Requirement(s) | Status | Notes |
-|---|---|---|---|
-| `tests/language_surface/fail_compile/RT-BOOL-06_arithmetic_forbidden.cpp` | `RT-BOOL-06` | covered | `bool_t + bool_t` unavailable |
-| `tests/language_surface/fail_compile/RT-BOOL-07_no_implicit_string_to_bool.cpp` | `RT-BOOL-07` | covered | implicit `string_t -> bool_t` unavailable |
-| `tests/language_surface/fail_compile/RT-NULL-04_no_null_to_int.cpp` | `RT-NULL-04` | covered | primitive wrapper assignment from null unavailable |
-| `tests/language_surface/fail_compile/RT-NULL-07_invalid_int_compare.cpp` | `RT-NULL-07` | covered | primitive vs `null` comparison unavailable |
-| `tests/language_surface/fail_compile/RT-INT-08_no_bool_or_null_arithmetic.cpp` | `RT-INT-08` | covered | `int_t` arithmetic with `bool_t` / `null` unavailable |
-| `tests/language_surface/fail_compile/RT-FLOAT-05_no_conditional_truthiness.cpp` | `RT-FLOAT-05` | covered | no implicit truthiness for `float_t` |
-| `tests/language_surface/fail_compile/RT-STR-05_no_implicit_numeric_concat.cpp` | `RT-STR-05` | covered | `string_t + int_t` unavailable |
-| `tests/language_surface/fail_compile/RT-VEC-02_no_arithmetic.cpp` | `RT-VEC-02` | covered | vector arithmetic unavailable |
-
-### Runtime-mechanics pass tests
-
-| Test File | Primary Requirement(s) | Status | Notes |
-|---|---|---|---|
-| `tests/runtime_mechanics/pass/RT-MEM-01_02_03_04_result_types.cpp` | `RT-MEM-01`..`RT-MEM-04` | covered | helper result types and default ownership |
-| `tests/runtime_mechanics/pass/RT-MEM-05_06_08_weak_helper_surface.cpp` | `RT-MEM-05`, `RT-MEM-06`, `RT-MEM-08` | partial | `weak(x)` result and usage covered; non-allocation/stability aspects remain audit-linked |
-| `tests/runtime_mechanics/pass/RT-SH-03_04_identity_null.cpp` | `RT-SH-03`, `RT-SH-04` | covered | shared identity and null-state comparison |
-| `tests/runtime_mechanics/pass/RT-UQ-01_02_move_semantics.cpp` | `RT-UQ-01`, `RT-UQ-02` | covered | unique ownership and move-only behavior |
-| `tests/runtime_mechanics/pass/RT-UQ-03_04_identity_null.cpp` | `RT-UQ-03`, `RT-UQ-04` | covered | unique identity and null-state comparison |
-| `tests/runtime_mechanics/pass/RT-WK-03_04_05_06_basic.cpp` | `RT-WK-03`, `RT-WK-04`, `RT-WK-05`, `RT-WK-06` | covered | weak derivation, expiry, identity, null-state |
-| `tests/runtime_mechanics/pass/RT-NBL-06_null_relational_throws.cpp` | `RT-NBL-06` | covered | current runtime null-side throw path |
-| `tests/runtime_mechanics/pass/RT-PTR-BOOL-01_contextual_bool.cpp` | hardening / contextual bool boundary | covered | explicit `operator bool()` works in conditions for nullable/shared/unique/weak only |
-
-### Runtime-mechanics compile-fail tests
-
-| Test File | Primary Requirement(s) | Status | Notes |
-|---|---|---|---|
-| `tests/runtime_mechanics/fail_compile/RT-SH-05_no_relational.cpp` | `RT-SH-05` | covered | shared relational compare unavailable |
-| `tests/runtime_mechanics/fail_compile/RT-SH-06_no_cross_wrapper_compare.cpp` | `RT-SH-06` | covered | shared cross-wrapper compare unavailable |
-| `tests/runtime_mechanics/fail_compile/RT-UQ-05_no_relational.cpp` | `RT-UQ-05` | covered | unique relational compare unavailable |
-| `tests/runtime_mechanics/fail_compile/RT-UQ-06_no_cross_wrapper_compare.cpp` | `RT-UQ-06` | covered | unique cross-wrapper compare unavailable |
-| `tests/runtime_mechanics/fail_compile/RT-PTR-BOOL-01_no_bool_assignment_from_wrappers.cpp` | hardening / contextual bool boundary | covered | explicit contextual bool does not imply implicit assignment to `bool_t` or `bool` |
-| `tests/runtime_mechanics/fail_compile/RT-WK-02_not_primary_allocation.cpp` | `RT-WK-02` | covered | no `weak<T>(...)` primary allocator |
-| `tests/runtime_mechanics/fail_compile/RT-WK-07_no_relational.cpp` | `RT-WK-07` | covered | weak relational compare unavailable |
+Where the generator intentionally emits unresolved expressions or external symbols because types are unknown at S2S time, the required validation outcome is still expressed through compile success or compile failure.
 
 ---
 
-## Audit Result Against `RUNTIME_REQUIREMENTS.md`
+## 1. Arithmetic
 
-### Newly covered in this batch
+### Positive compile
+- exactly one compile-pass test per allowed arithmetic matrix cell
+- exactly one compile-pass test per allowed unary arithmetic matrix cell
 
-This update added tests specifically for previously uncovered runtime behaviors:
-- `RT-NULL-03`
-- `RT-NULL-07`
-- `RT-BOOL-02`
-- `RT-BOOL-05`
-- `RT-INT-01`
-- `RT-INT-02`
-- `RT-INT-05`
-- `RT-INT-07`
-- `RT-INT-08`
-- `RT-FLOAT-01`
-- `RT-FLOAT-02`
-- `RT-FLOAT-05`
-- `RT-FLOAT-06` (partial)
-- `RT-STR-01`
-- `RT-STR-02`
-- `RT-NBL-01`
-- `RT-VEC-02`
-- `RT-UQ-01`
-- `RT-UQ-02`
-- `RT-MEM-05`
-- `RT-MEM-06` (partial)
-- `RT-CGEN-01`..`RT-CGEN-05` (covered)
-- `RT-CGEN-06`..`RT-CGEN-07` (audit-only / partial)
+### Positive execution
+- exact execution cases and expected values are defined in TEST_MATERIALIZATION_CONTRACT.md
 
-### Remaining uncovered by executable tests
+### Negative compile
+- exactly one compile-fail test per forbidden arithmetic row/column family:
+  - any arithmetic with `bool_t`
+  - any arithmetic with `string_t`
+  - any arithmetic with `null_t`
+  - any arithmetic with `nullable<T>`
+  - any arithmetic with pointer wrappers
 
-After this batch, the remaining requirements are primarily:
-- source-structure / public-boundary rules
-- traceability/comment rules
-- frontend-only constraints
-- requirements that need source inspection more than runtime execution
+---
 
-See `TEST_COVERAGE.md` for the full per-requirement status table.
+## 2. Equality
+
+### Positive compile
+- exactly one compile-pass test per allowed equality matrix cell
+
+### Positive execution
+- exact execution cases and expected values are defined in TEST_MATERIALIZATION_CONTRACT.md
+
+### Negative compile
+- exactly one compile-fail test per forbidden equality family:
+  - cross-family comparisons
+  - pointer cross-wrapper
+  - pointer different `T`
+
+---
+
+## 3. Relational
+
+### Positive compile
+- exactly one compile-pass test per allowed relational matrix cell
+
+### Positive execution
+- exact execution cases and expected values are defined in TEST_MATERIALIZATION_CONTRACT.md
+
+### Negative compile
+- exactly one compile-fail test per forbidden non-numeric family
+
+---
+
+## 4. Logical
+
+### Positive compile
+- exactly one compile-pass test per allowed logical matrix cell
+
+### Positive execution
+- exact execution cases and expected values are defined in TEST_MATERIALIZATION_CONTRACT.md
+
+### Negative compile
+- exactly one compile-fail test per forbidden non-boolean-producing family
+
+---
+
+## 5. Assignment
+
+### Positive compile
+- exactly one compile-pass test per allowed assignment matrix cell
+
+### Positive execution
+- exact execution cases and expected values are defined in TEST_MATERIALIZATION_CONTRACT.md
+
+### Negative compile
+- exactly one compile-fail test per forbidden assignment family:
+  - cross-family primitive assignment
+  - implicit conversions
+  - direct `T -> nullable<T>`
+  - pointer mismatches
+  - `unique_p<T>` copy assignment
+
+---
+
+## 6. Compound Assignment
+
+### Positive compile
+- exactly one compile-pass test per allowed compound assignment matrix cell
+
+### Positive execution
+- exact execution cases and expected values are defined in TEST_MATERIALIZATION_CONTRACT.md
+
+### Negative compile
+- exactly one compile-fail test per forbidden compound-assignment family:
+  - mixed types
+  - non-numeric types
+
+---
+
+## 7. Conversions
+
+### Positive compile
+- exactly one compile-pass test per allowed explicit conversion edge
+
+### Positive execution
+- exact execution cases and expected values are defined in TEST_MATERIALIZATION_CONTRACT.md
+
+### Negative compile
+- exactly one compile-fail test per forbidden conversion family
+
+---
+
+## 8. Conditionals
+
+### Positive compile
+- exactly one compile-pass test per valid conditional expression family
+
+### Positive execution
+- exact execution cases and expected values are defined in TEST_MATERIALIZATION_CONTRACT.md
+
+### Negative compile
+- exactly one compile-fail test per forbidden direct conditional family
+
+---
+
+## 9. Wrappers
+
+### Positive compile
+- exactly one compile-pass test per allowed same-wrapper equality and assignment rule
+
+### Negative compile
+- exactly one compile-fail test per forbidden wrapper family:
+  - arithmetic
+  - relational
+  - cross-wrapper
+  - truthiness
+
+---
+
+## 10. `nullable<T>`
+
+### Positive compile
+- exactly one compile-pass test per allowed `nullable<T>` rule
+
+### Negative compile
+- exactly one compile-fail test per forbidden `nullable<T>` family:
+  - arithmetic
+  - relational
+  - truthiness
+  - conversions
+  - direct `T -> nullable<T>`
+
+---
+
+## 11. Unknown-Type Lowering / External Symbol Cases
+
+### Positive compile
+- exactly one compile-pass test where the generator emits `auto` and the final C++ type is deducible from visible declarations and allowed operations
+- exactly one compile-pass test where unresolved external references become valid once matching C++ declarations are visible at compile time
+
+### Negative compile
+- exactly one compile-fail test for unresolved external references with no visible declaration at compile time
+- exactly one compile-fail test for externally declared types that lead to forbidden operations under the semantic matrix
+- exactly one compile-fail test for overload resolution failure caused by incompatible declarations
+
+---
+
+## 12. Symmetry
+
+Where both operand orders are allowed, both operand orders MUST be tested exactly once at compile-pass level unless a single test file is explicitly defined in TEST_MATERIALIZATION_CONTRACT.md to cover both orders.
+
+---
+
+## 13. Coverage Requirement
+
+The generated suite MUST satisfy all of the following:
+- every allowed operation → exactly one required compile-pass materialization
+- every forbidden family/rule → exactly one required compile-fail materialization
+- every required execution case → exactly one execution materialization as defined in TEST_MATERIALIZATION_CONTRACT.md
+
+---
+
+## Final Statement
+
+Defines required tests.
+
+Does not define semantics.
 
 
-## Hardening Note
-The runtime now prefers explicit deleted overloads, deleted constructors, and constrained templates/concepts for unsupported or type-dependent paths so forbidden operations fail deterministically at compile time where practical.
+## TYPE INVENTORY RULE
+
+This document MUST NOT redefine the type inventory.
+
+All type definitions MUST be sourced from:
+SPECIFICATIONS.md → TYPE_FAMILY_REGISTRY
+
+Any duplication is considered invalid and must be removed.

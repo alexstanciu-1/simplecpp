@@ -1,150 +1,235 @@
-# Architectural Rules
+# ARCHITECTURAL_RULES.md
 
-## 1. Namespace Separation
-The project uses two distinct generated-code layers:
+## Scope
 
-- `scpp` = platform namespace
-  - runtime types
-  - runtime helpers
-  - future standard/platform libraries such as `scpp::io`
-- `scpp_gen` = generated user program namespace
-  - translated user classes
-  - translated user functions
-  - translated top-level wrapper
+This document defines **architectural constraints and layering rules** for the Simple C++ system.
 
-Generated code must never place translated user declarations directly into `scpp`.
+It does NOT define language semantics.
 
-## 2. Generated Program Container
-All translated user code must reside inside:
+All semantic behavior MUST be defined exclusively in:
+- SPECIFICATIONS.md
+- SEMANTIC_MATRIX.md
 
-    namespace scpp_gen
+If any rule in this document appears to define behavior, it is invalid and must be relocated.
 
-or, when the source language has a namespace, inside:
+---
 
-    namespace scpp_gen::...
+## Purpose
 
-For PHP this means the PHP namespace is mapped underneath `scpp_gen`.
+The purpose of this document is to:
+- enforce clear separation of concerns
+- define system layering
+- prevent semantic leakage across layers
+- ensure deterministic generation and validation
 
-Examples:
+---
 
-    <?php
-    $a = 10;
+## Core Architectural Principles
 
-becomes conceptually:
+### 1. Single Source of Truth
 
-    namespace scpp_gen {
-        int __scpp_main__() {
-            auto a = (scpp::int_t)10;
-            return 0;
-        }
-    }
+All language behavior is defined in exactly one place:
 
-    int main() {
-        return scpp_gen::__scpp_main__();
-    }
+- SPECIFICATIONS.md (normative core)
+- SEMANTIC_MATRIX.md (operational definition)
 
-And:
+No other document may define behavior.
 
-    <?php
-    namespace Abc;
-    class X {}
+---
 
-becomes conceptually:
+### 2. No Semantic Duplication
 
-    namespace scpp_gen::Abc {
-        class X {};
+Semantic rules MUST NOT appear in:
+- runtime documents
+- test documents
+- architectural documents
 
-        int __scpp_main__() {
-            return 0;
-        }
-    }
+If duplication occurs, it must be removed.
 
-    int main() {
-        return scpp_gen::Abc::__scpp_main__();
-    }
+---
 
-## 3. Host Entry Point
-Generated executables use a global C++ host entry point:
+### 3. Direction of Dependency
 
-    int main()
+Dependencies flow strictly downward:
 
-This host entry point must delegate to a generated program entry function inside `scpp_gen[::source_namespace...]`.
+1. Specification Layer
+2. Generation Layer
+3. Runtime Layer
+4. Validation Layer
 
-Suggested generated function name:
+Lower layers MUST NOT redefine or override higher-layer semantics.
 
-    __scpp_main__
+---
 
-## 4. Platform Access Rule
-Generated code may use only the public API exposed in `scpp`.
+### 4. No Backward Influence
 
-Generated code must access platform/runtime facilities using fully qualified names:
+- Runtime implementation MUST NOT influence specification
+- Tests MUST NOT define behavior
+- Generated artifacts MUST NOT redefine semantics
 
-    scpp::int_t
-    scpp::string_t
-    scpp::nullable<scpp::int_t>
-    scpp::create<MyClass>()
-    scpp::io::fopen(...)
+If divergence occurs, documentation must be updated explicitly.
 
-The project adopts **Option A — fully qualified calls** as the default rule.
+---
 
-`using namespace scpp;` must not be emitted by default.
+## Layering Model
 
-## 5. Shadowing
-Compilation uses `-Wshadow` to prevent accidental shadowing.
+### 1. Specification Layer
 
-## 6. No Root Namespace Access from Generated Code
-Generated user code must not access the global C++ namespace directly except through the required host `main()` shim emitted by the toolchain.
+Documents:
+- SPECIFICATIONS.md
+- SEMANTIC_MATRIX.md
 
-## 7. Public Runtime Boundary
-Generated code may only use the public API exposed in `scpp`.
+Responsibilities:
+- define all language semantics
+- define allowed and forbidden operations
+- define conversion and conditional rules
 
-## 8. Internal Bridge Boundary
-The runtime library may use `std::*` internally, but this must not leak into generated-language-visible code.
+---
 
-## 8A. No Native Type or Native API Use in Generated Code
-Generated Simple C++ code must never contain native C++ primitive types, native standard-library types, or direct calls to native functions as part of the generated-language surface.
+### 2. Generation Layer
 
-This includes:
-- native primitives such as `int`, `double`, `bool`
-- direct `std::*` types or functions
-- direct use of native C++ structures/classes as generated-language-visible values
+Responsibilities:
+- transform source code into Simple C++ representation
+- produce code consistent with the semantic matrix
 
-All generated-language-visible values must use the public `scpp::*` platform surface.
+Constraints:
+- must not invent new semantics
+- must not silently coerce types
+- must not perform semantic validation in the current scope
 
-## 8B. Interoperability Boundary
-Interoperability with native C++ code, native libraries, and native data structures belongs to C++ integration code, not to generated Simple C++ code.
+**Clarification (current architecture):**
+The S2S generator is a syntax-directed lowering stage, not a semantic validator.
 
-Any such bridge must be written explicitly in C++ outside the generated-language semantic surface.
+**Unknown-type lowering policy (current architecture):**
+When operand or result types are unknown at S2S time, the generator may still emit the lowered C++ expression without resolving semantic types locally.
 
-## 9. Explicit Wrapper Entry
-All literals and values must be wrapped explicitly:
+In such cases:
+- the generator may use `auto` for unknown expression results
+- the generator may emit unresolved external symbol references unchanged in lowered form
+- the generator is not required to resolve external declarations
+- semantic validity, overload resolution, external symbol resolution, and failure for missing or incompatible declarations are handled at the C++ compilation stage
 
-    auto x = (scpp::int_t)12;
-    auto s = (scpp::string_t)"abc";
+Emitting an unresolved expression does NOT imply that the expression is semantically valid.
 
-Managed object creation must also enter through the public runtime helpers:
+---
 
-    auto a = scpp::create<MyClass>();
-    auto b = scpp::shared<MyClass>();
-    auto c = scpp::unique<MyClass>();
+### 3. Runtime Layer
 
-Non-owning references are derived from existing owning values:
+Documents:
+- RUNTIME_REQUIREMENTS.md
+- RUNTIME_CODING_RULES.md
+- RUNTIME_DESIGN_NOTE.md
 
-    auto w = scpp::weak(a);
+Responsibilities:
+- enforce semantics through C++ type system
+- provide safe implementations of allowed operations
+- prevent forbidden operations via compile-time constraints
 
-## 10. Spec-Driven Conversions
-All conversions must be explicitly defined in the spec.
+Constraints:
+- must not introduce new behavior
+- must not allow implicit conversions
+- must not contradict the matrix
 
-## 11. No Fallback Behavior
-Anything not defined must be rejected by the Simple C++ toolchain.
+---
 
-Rejection may occur either during S2S transformation or during generated C++ compilation,
-depending on where the rule is enforced in the current implementation.
+### 4. Validation Layer
 
-The intended long-term direction is to move source-language-visible errors earlier into
-S2S diagnostics where practical.
+Documents:
+- TEST_MATRIX.md
+- TEST_COVERAGE.md
 
-## 12. Generated C++ Compilation Check
-The S2S transformation must also perform a generated-C++ compiler check.
+Responsibilities:
+- validate that implementation conforms to specification
+- ensure all matrix rules are tested
 
-If the generated C++ does not compile, the Simple C++ toolchain must treat that as a failure.
+Constraints:
+- tests are not authoritative
+- tests must not define semantics
+
+---
+
+## Separation of Concerns
+
+| Concern | Responsible Layer |
+|--------|------------------|
+| Language semantics | Specification Layer |
+| Transformation | Generation Layer |
+| Execution behavior | Runtime Layer |
+| Verification | Validation Layer |
+
+No layer may assume responsibilities of another.
+
+---
+
+## Enforcement Strategy
+
+### C++ Enforcement (Primary)
+
+- enforce typing rules
+- prevent forbidden operations through compilation failure
+- resolve externally visible declarations and overload selection
+- reject missing or incompatible declarations
+
+### S2S Enforcement (Future / Optional)
+
+- may reject invalid constructs early
+- not required in current architecture
+
+---
+
+## Consistency Requirements
+
+The following must always hold:
+
+- Every allowed operation appears in SEMANTIC_MATRIX.md
+- Every forbidden operation is absent from SEMANTIC_MATRIX.md
+- Every rule is testable
+- Every test maps to a rule
+
+---
+
+## Evolution Rules
+
+When modifying the system:
+
+1. Update SPECIFICATIONS.md first
+2. Update SEMANTIC_MATRIX.md
+3. Update generators
+4. Update runtime
+5. Update tests
+
+Never update lower layers first.
+
+---
+
+## Anti-Patterns (Forbidden)
+
+The following are explicitly forbidden:
+
+- Defining behavior in runtime documents
+- Treating C++ compilation outcomes as defining language semantics
+  instead of validating against the semantic matrix
+- Using tests to determine semantics
+- Allowing implicit conversions
+- Adding rules outside the matrix
+
+---
+
+### Generator Completeness Guarantee
+
+The S2S generator must be able to lower any syntactically valid source program
+without requiring semantic completeness (such as full type knowledge or symbol resolution).
+
+Semantic correctness is not a prerequisite for generation and is enforced
+by the C++ compilation stage.
+
+Generation failure must only occur for syntactic or structural reasons,
+not for semantic invalidity.
+
+## Final Rule
+
+Architecture enforces structure.
+
+Semantics define behavior.
+
+These must remain strictly separated.

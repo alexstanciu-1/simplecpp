@@ -8,8 +8,10 @@ It provides an index and navigation guide for runtime-related documentation in t
 
 It does NOT define language semantics.
 
-All language behavior MUST be defined exclusively in:
+All language behavior is defined exclusively in the specification layer:
 - SPECIFICATIONS.md
+- TYPE_FAMILY_REGISTRY.md
+- DERIVATION_RULES.md
 - SEMANTIC_MATRIX.md
 
 Runtime documents implement and enforce those semantics but do not define them.
@@ -30,17 +32,35 @@ This index exists to:
 
 The runtime layer is subordinate to the specification.
 
-- SPECIFICATIONS.md defines high-level rules
-- SEMANTIC_MATRIX.md defines allowed and forbidden operations
+- SPECIFICATIONS.md defines high-level rules and invariants
+- TYPE_FAMILY_REGISTRY.md defines the canonical family inventory and trait model
+- DERIVATION_RULES.md defines deterministic semantic derivation
+- SEMANTIC_MATRIX.md defines normalized allowed and forbidden operations
 - runtime documents implement those rules
 
-If any runtime document appears to contradict the specification or matrix, the specification takes precedence.
+If any runtime document appears to contradict the specification layer, the specification layer takes precedence.
 
 ---
 
 ## Runtime Documentation Overview
 
 ### 1. Core Runtime Constraints
+
+#### RUNTIME_API_CONTRACT.md
+
+Defines the canonical public runtime API surface.
+
+Includes:
+- required public include
+- required namespaces
+- required public types
+- required operator and conversion surface boundaries
+
+Does NOT define:
+- semantic meaning
+- allowed/forbidden semantics independently
+
+---
 
 #### RUNTIME_REQUIREMENTS.md
 
@@ -96,13 +116,16 @@ The runtime layer sits below the specification layer:
 
 1. Specification Layer
    - SPECIFICATIONS.md
+   - TYPE_FAMILY_REGISTRY.md
+   - DERIVATION_RULES.md
    - SEMANTIC_MATRIX.md
 
 2. Generation Layer
    - source-to-source transformation
 
 3. Runtime Layer
-   - runtime implementation (this index applies here)
+   - runtime implementation
+   - runtime documentation
 
 4. Validation Layer
    - test documents
@@ -115,32 +138,14 @@ Lower layers must not redefine higher-layer semantics.
 
 To understand the system:
 
-- Start with SPECIFICATIONS.md
-- Then read SEMANTIC_MATRIX.md
-- Then consult runtime documents for implementation details
-
-To implement or modify runtime behavior:
-
-1. Verify rule exists in SEMANTIC_MATRIX.md
-2. Implement enforcement in runtime
-3. Ensure forbidden cases fail at compile time
-4. Validate with tests
+- start with SPECIFICATIONS.md
+- then read TYPE_FAMILY_REGISTRY.md
+- then read DERIVATION_RULES.md
+- then read SEMANTIC_MATRIX.md
+- then consult runtime documents for implementation details
 
 ---
 
-## Important Constraints
+## Final
 
-- Runtime documents must not introduce new behavior
-- Runtime must not rely on implicit C++ behavior
-- All allowed operations must map to the semantic matrix
-- All forbidden operations must fail compilation
-
----
-
-## Final Statement
-
-This document is an index.
-
-It exists to organize runtime documentation and reinforce architectural boundaries.
-
-It must never become a source of semantic truth.
+This document is an index only.

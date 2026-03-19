@@ -2,194 +2,453 @@
 
 ## 1. Purpose
 
-This matrix defines the currently documented allowed and forbidden operation families in Simple C++.
+This document is the **single operational definition** of allowed and forbidden operations in the Simple C++ system.
 
-If an operation family is not explicitly listed, it is forbidden.
+It operationalizes `SPECIFICATIONS.md`.
 
-This document must align with:
-- `SPECIFICATIONS.md`
-- executable tests
+It is intended to drive:
+- generated/runtime type-layer code
+- generated C++ tests
+- generated PHP tests
+
+If an operation is not explicitly listed in this document, it is **forbidden**.
+
+This document is written to be:
+- explicit
+- exhaustive for the currently documented type families and operator families
+- machine-derivable for implementation and testing
 
 ---
 
-## 2. Result Type Convention
+## 2. Global Conventions
 
-- arithmetic returns a semantic numeric value type (`int_t` or `float_t`)
-- comparison returns native C++ `bool`
-- assignment returns the assigned semantic type
+### 2.1 Type families covered
 
-### 2.1 Boolean-result bridge
-Native C++ `bool` produced by comparison or logical lowering is valid directly in generated control-flow contexts.
+Primitive semantic wrappers:
+- `int_t`
+- `float_t`
+- `bool_t`
+- `string_t`
+- `null_t`
+
+Composite / wrapper families:
+- `nullable<T>`
+- `shared_p<T>`
+- `unique_p<T>`
+- `weak_p<T>`
+
+### 2.2 Result type convention
+
+- arithmetic operators return a semantic numeric value type
+- equality and relational comparison return native C++ `bool`
+- logical operators return native C++ `bool`
+- assignment returns the assigned semantic target type
+- explicit conversions return the target semantic type
+
+### 2.3 Boolean-result bridge
+
+Native C++ `bool` produced by:
+- comparison
+- logical operators
+
+is valid directly in generated control-flow lowering.
 
 This bridge:
 - is representation-only
-- does not create general truthiness
-- does not imply implicit conversion from arbitrary value types into `bool_t` or native `bool`
+- does not introduce general implicit conversion
+- does not create truthiness for arbitrary values
+- does not imply implicit assignment to `bool_t`
+
+### 2.4 Forbidden by omission
+
+If a cell, rule, or operator family is not explicitly marked as allowed, it is forbidden.
+
+There are no implicit allowances based on:
+- “same type”
+- “numeric intuition”
+- C++ defaults
+- PHP behavior
+- symmetry not explicitly listed
 
 ---
 
-## 3. Arithmetic Operators
+## 3. Arithmetic Operators (`+`, `-`, `*`, `/`)
 
-### 3.1 `int_t`
+Allowed arithmetic is **numeric-only**.
 
-| LHS \ RHS | `int_t` | `float_t` | `bool_t` | `null_t` | `string_t` | pointer-like |
-|---|---|---|---|---|---|---|
-| `int_t` | ✔ `int_t` | ✔ `float_t` | ❌ | ❌ | ❌ | ❌ |
+### 3.1 Binary arithmetic grid
 
-### 3.2 `float_t`
+| LHS \ RHS | `int_t` | `float_t` | `bool_t` | `string_t` | `null_t` | `nullable<T>` | `shared_p<T>` | `unique_p<T>` | `weak_p<T>` |
+|---|---|---|---|---|---|---|---|---|---|
+| `int_t` | ✔ `int_t` | ✔ `float_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `float_t` | ✔ `float_t` | ✔ `float_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `bool_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `string_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `null_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `nullable<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `shared_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `unique_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `weak_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-| LHS \ RHS | `int_t` | `float_t` | `bool_t` | `null_t` | `string_t` | pointer-like |
-|---|---|---|---|---|---|---|
-| `float_t` | ✔ `float_t` | ✔ `float_t` | ❌ | ❌ | ❌ | ❌ |
+### 3.2 Arithmetic notes
 
-### 3.3 `bool_t`
+- `int_t + int_t -> int_t`
+- `int_t - int_t -> int_t`
+- `int_t * int_t -> int_t`
+- `int_t / int_t -> int_t`
 
-| LHS \ RHS | any |
-|---|---|
-| `bool_t` | ❌ all arithmetic |
+- `int_t (+,-,*,/) float_t -> float_t`
+- `float_t (+,-,*,/) int_t -> float_t`
+- `float_t (+,-,*,/) float_t -> float_t`
 
-### 3.4 `string_t`
+No other arithmetic combinations are allowed.
 
-| LHS \ RHS | any |
-|---|---|
-| `string_t` | ❌ all arithmetic except separately documented string concatenation rules outside this core matrix |
+### 3.3 Unary arithmetic
 
-### 3.5 `null_t`
-
-| LHS \ RHS | any |
-|---|---|
-| `null_t` | ❌ all arithmetic |
-
-### 3.6 Pointer-like families
-
-| LHS \ RHS | any |
-|---|---|
-| pointer-like | ❌ all arithmetic |
+| Operator | `int_t` | `float_t` | `bool_t` | `string_t` | `null_t` | `nullable<T>` | `shared_p<T>` | `unique_p<T>` | `weak_p<T>` |
+|---|---|---|---|---|---|---|---|---|---|
+| unary `+` | ✔ `int_t` | ✔ `float_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| unary `-` | ✔ `int_t` | ✔ `float_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
-## 4. Comparison Operators
+## 4. Equality Operators (`==`, `!=`)
 
-### 4.1 Numeric
+### 4.1 Equality grid
 
-| LHS \ RHS | `int_t` | `float_t` |
-|---|---|---|
-| `int_t` | ✔ `bool` | ✔ `bool` |
-| `float_t` | ✔ `bool` | ✔ `bool` |
+| LHS \ RHS | `int_t` | `float_t` | `bool_t` | `string_t` | `null_t` | `nullable<T>` | `shared_p<T>` | `unique_p<T>` | `weak_p<T>` |
+|---|---|---|---|---|---|---|---|---|---|
+| `int_t` | ✔ `bool` | ✔ `bool` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `float_t` | ✔ `bool` | ✔ `bool` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `bool_t` | ❌ | ❌ | ✔ `bool` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `string_t` | ❌ | ❌ | ❌ | ✔ `bool` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `null_t` | ❌ | ❌ | ❌ | ❌ | ✔ `bool` | ✔ `bool` | ❌ | ❌ | ❌ |
+| `nullable<T>` | ❌ | ❌ | ❌ | ❌ | ✔ `bool` | ✔ `bool` | ❌ | ❌ | ❌ |
+| `shared_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✔ `bool` (same wrapper family, same pointee type) | ❌ | ❌ |
+| `unique_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✔ `bool` (same wrapper family, same pointee type) | ❌ |
+| `weak_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✔ `bool` (same wrapper family, same pointee type) |
 
-### 4.2 `bool_t`
+### 4.2 Equality notes
 
-| LHS \ RHS | `bool_t` |
+- Numeric equality is allowed only for:
+  - `int_t == int_t`
+  - `int_t == float_t`
+  - `float_t == int_t`
+  - `float_t == float_t`
+- `bool_t` equality is same-family only
+- `string_t` equality is same-family only
+- `null_t == null_t` is allowed
+- `nullable<T> == null_t` and `null_t == nullable<T>` are allowed
+- `nullable<T> == nullable<T>` is allowed only for the same `T`
+- Pointer-like equality is allowed only:
+  - within the same wrapper family
+  - with the same pointee type
+
+All other equality comparisons are forbidden.
+
+---
+
+## 5. Relational Comparison Operators (`<`, `<=`, `>`, `>=`)
+
+### 5.1 Relational grid
+
+| LHS \ RHS | `int_t` | `float_t` | `bool_t` | `string_t` | `null_t` | `nullable<T>` | `shared_p<T>` | `unique_p<T>` | `weak_p<T>` |
+|---|---|---|---|---|---|---|---|---|---|
+| `int_t` | ✔ `bool` | ✔ `bool` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `float_t` | ✔ `bool` | ✔ `bool` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `bool_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `string_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `null_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `nullable<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `shared_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `unique_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `weak_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### 5.2 Relational notes
+
+Relational comparison is allowed only for numeric families:
+- `int_t` with `int_t`
+- `int_t` with `float_t`
+- `float_t` with `int_t`
+- `float_t` with `float_t`
+
+All other relational comparisons are forbidden.
+
+---
+
+## 6. Logical Operators (`&&`, `||`, `!`)
+
+Logical operators are defined only over **boolean-producing expressions**.
+
+### 6.1 Binary logical grid (`&&`, `||`)
+
+| LHS \ RHS | `bool_t` | comparison result `bool` | logical result `bool` |
+|---|---|---|---|
+| `bool_t` | ✔ `bool` | ✔ `bool` | ✔ `bool` |
+| comparison result `bool` | ✔ `bool` | ✔ `bool` | ✔ `bool` |
+| logical result `bool` | ✔ `bool` | ✔ `bool` | ✔ `bool` |
+
+### 6.2 Unary logical grid (`!`)
+
+| Operand | Result |
 |---|---|
 | `bool_t` | ✔ `bool` |
+| comparison result `bool` | ✔ `bool` |
+| logical result `bool` | ✔ `bool` |
 
-### 4.3 `string_t`
+### 6.3 Logical notes
 
-| LHS \ RHS | `string_t` |
-|---|---|
-| `string_t` | ✔ `bool` for equality / inequality only |
+- Logical operators are not defined directly over:
+  - `int_t`
+  - `float_t`
+  - `string_t`
+  - `null_t`
+  - pointer wrappers
+  - `nullable<T>`
+- A value of type `bool_t` is a valid semantic boolean operand.
+- Comparison and logical results may participate in further logical expressions via the native-`bool` control-flow bridge.
+- For public runtime API purposes, user-defined logical operators are required only where at least one operand is a semantic runtime type. Built-in `bool && bool`, `bool || bool`, and `!bool` remain host-language behavior and are not part of the runtime API surface.
 
-### 4.4 `null_t`
+---
 
-| LHS \ RHS | `null_t` |
-|---|---|
-| `null_t` | ✔ `bool` for equality / inequality only |
+## 7. Basic Assignment Operator (`=`)
 
-### 4.5 Pointer-like families
+Assignment is explicit and does not imply conversion unless the matrix says so.
 
-| LHS \ RHS | same wrapper family and compatible pointee discipline | other wrapper family |
+### 7.1 Basic assignment grid
+
+| Target \ Source | `int_t` | `float_t` | `bool_t` | `string_t` | `null_t` | `nullable<T>` | `shared_p<T>` | `unique_p<T>` | `weak_p<T>` |
+|---|---|---|---|---|---|---|---|---|---|
+| `int_t` | ✔ `int_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `float_t` | ❌ | ✔ `float_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `bool_t` | ❌ | ❌ | ✔ `bool_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `string_t` | ❌ | ❌ | ❌ | ✔ `string_t` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `null_t` | ❌ | ❌ | ❌ | ❌ | ✔ `null_t` | ❌ | ❌ | ❌ | ❌ |
+| `nullable<T>` | ✔ `nullable<T>` from same `T` wrapped nullable only where same-family rule applies | ❌ | ❌ | ❌ | ✔ `nullable<T>` | ✔ `nullable<T>` for same `T` | ❌ | ❌ | ❌ |
+| `shared_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✔ `shared_p<T>` (same pointee type) | ❌ | ❌ |
+| `unique_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✔ `unique_p<T>` (move assignment only; copy assignment forbidden) | ❌ |
+| `weak_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✔ `weak_p<T>` (same pointee type) |
+
+### 7.2 Assignment notes
+
+- Primitive wrappers allow same-family assignment only.
+- No primitive assignment by implicit conversion is allowed.
+- `nullable<T>` assignment allows:
+  - assignment from `null_t`
+  - assignment from `nullable<T>` with the same `T`
+- Direct `T -> nullable<T>` assignment is forbidden.
+- `shared_p<T>` and `weak_p<T>` assignment are same wrapper family and same pointee type only.
+- `unique_p<T>` assignment is move-only within the same wrapper family and same pointee type.
+
+---
+
+## 8. Compound Assignment Operators (`+=`, `-=`, `*=`, `/=`)
+
+### 8.1 Compound assignment grid
+
+| Target \ Source | `int_t` | `float_t` | `bool_t` | `string_t` | `null_t` | `nullable<T>` | `shared_p<T>` | `unique_p<T>` | `weak_p<T>` |
+|---|---|---|---|---|---|---|---|---|---|
+| `int_t` | ✔ `int_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `float_t` | ❌ | ✔ `float_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `bool_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `string_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `null_t` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `nullable<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `shared_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `unique_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `weak_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### 8.2 Compound assignment notes
+
+- `int_t` supports `+=`, `-=`, `*=`, `/=` with `int_t` only
+- `float_t` supports `+=`, `-=`, `*=`, `/=` with `float_t` only
+- Mixed-type compound assignment is forbidden
+- Non-numeric compound assignment is forbidden
+
+---
+
+## 9. Explicit Conversion Grid
+
+Only explicit conversions listed below are allowed.
+
+### 9.1 Explicit conversion table
+
+| From \ To | `int_t` | `float_t` | `bool_t` | `string_t` | `null_t` | `nullable<T>` | `shared_p<T>` | `unique_p<T>` | `weak_p<T>` |
+|---|---|---|---|---|---|---|---|---|---|
+| `int_t` | — | ✔ explicit | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `float_t` | ✔ explicit | — | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `bool_t` | ✔ explicit | ❌ | — | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `string_t` | ❌ | ❌ | ❌ | — | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `null_t` | ❌ | ❌ | ❌ | ❌ | — | ❌ | ❌ | ❌ | ❌ |
+| `nullable<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | — | ❌ | ❌ | ❌ |
+| `shared_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | — | ❌ | ❌ |
+| `unique_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | — | ❌ |
+| `weak_p<T>` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | — |
+
+### 9.2 Conversion notes
+
+Allowed explicit conversions are exactly:
+- `int_t -> float_t`
+- `float_t -> int_t`
+- `bool_t -> int_t`
+
+All other conversions are forbidden.
+
+### 9.3 Normalization note
+
+This section defines only the existence of allowed conversion edges.
+
+It does NOT define:
+- the runtime API mechanism
+- the exact constructor surface
+- the exact syntax used by the generator
+
+Those are defined in:
+- RUNTIME_API_CONTRACT.md
+
+---
+
+## 10. Conditional Validity
+
+This section defines whether an expression family is valid in a conditional context.
+
+### 10.1 Valid conditional expression families
+
+| Expression family | Valid in condition | Result / interpretation |
 |---|---|---|
-| pointer-like | ✔ `bool` for `==` / `!=` only where documented | ❌ |
+| `bool_t` value | ✔ | semantic boolean operand |
+| comparison result (`bool`) | ✔ | native control-flow bool bridge |
+| logical-expression result (`bool`) | ✔ | native control-flow bool bridge |
 
-### 4.6 Forbidden comparison families
-- pointer-like relational comparison (`<`, `<=`, `>`, `>=`)
-- numeric vs `string_t`
-- numeric vs `null_t`
-- cross-family primitive comparison not explicitly listed
-- cross-wrapper pointer comparison unless explicitly documented
+### 10.2 Forbidden direct conditional expression families
 
----
-
-## 5. Assignment Operators
-
-### 5.1 Basic assignment
-Basic assignment is allowed only where the semantic matrix and type rules provide a compatible target/source combination.
-
-### 5.2 Compound assignment (`int_t`)
-| Operator | Allowed |
-|---|---|
-| `+=` | ✔ |
-| `-=` | ✔ |
-| `*=` | ✔ |
-| `/=` | ✔ |
-
-### 5.3 Compound assignment (`float_t`)
-| Operator | Allowed |
-|---|---|
-| `+=` | ✔ |
-| `-=` | ✔ |
-| `*=` | ✔ |
-| `/=` | ✔ |
-
-Compound assignment follows the same family restrictions as the underlying arithmetic.
-
----
-
-## 6. Conversion Matrix
-
-| From \ To | `int_t` | `float_t` | `bool_t` | `string_t` | `null_t` | pointer-like |
-|---|---|---|---|---|---|---|
-| `int_t` | — | ✔ explicit where documented | ❌ | ❌ | ❌ | ❌ |
-| `float_t` | ✔ explicit via `to_int(...)` | — | ❌ | ❌ | ❌ | ❌ |
-| `bool_t` | ✔ explicit | ❌ | — | ❌ | ❌ | ❌ |
-| `string_t` | ❌ | ❌ | ❌ | — | ❌ | ❌ |
-| `null_t` | ❌ | ❌ | ❌ | ❌ | — | ❌ |
-| pointer-like | ❌ | ❌ | ❌ | ❌ | ❌ | — |
-
----
-
-## 7. Conditional Usage
-
-### 7.1 Directly valid conditions
-
-| Expression family | Allowed in condition | Notes |
-|---|---|---|
-| `bool_t` value | ✔ | direct semantic-boolean value |
-| comparison result (`bool`) | ✔ | native lowered bool bridge only |
-| logical-expression result (`bool` or semantic-boolean equivalent) | ✔ | operands must already be semantic-boolean |
-
-### 7.2 Forbidden direct conditions
-
-| Expression family | Allowed in condition |
+| Expression family | Valid in condition |
 |---|---|
 | `int_t` value | ❌ |
 | `float_t` value | ❌ |
 | `string_t` value | ❌ |
 | `null_t` value | ❌ |
-| pointer-like value by source-language truthiness | ❌ |
-| `nullable<T>` value by source-language truthiness | ❌ |
+| `nullable<T>` value by truthiness | ❌ |
+| `shared_p<T>` value by truthiness | ❌ |
+| `unique_p<T>` value by truthiness | ❌ |
+| `weak_p<T>` value by truthiness | ❌ |
 
-### 7.3 Runtime-only contextual-bool note
-Selected runtime wrapper families may expose tightly scoped contextual-bool support for generated/runtime code.
+### 10.3 Conditional notes
 
-That support:
-- is not source-language truthiness
-- does not imply implicit assignment to `bool_t`
-- does not broaden the general conversion matrix
-
----
-
-## 8. Enforcement Notes
-
-- forbidden means the program must not compile
-- explicit conversion remains explicit even if implemented by a helper
-- missing operator coverage does not imply permissiveness; it implies forbidden behavior
+- No truthiness exists.
+- A non-boolean semantic value cannot become a condition by host-language convention.
+- Pointer wrappers and `nullable<T>` are not directly valid as conditions by value presence.
 
 ---
 
-## 9. Completeness Rule
+## 11. Pointer / Wrapper Family Summary
 
-Every valid operation family should:
-- appear in this matrix
-- be backed by tests when observable
-- be implemented or rejected by the toolchain
+This section restates wrapper-family operational constraints in normalized form.
+
+### 11.1 `shared_p<T>`
+
+Allowed:
+- equality / inequality with `shared_p<T>` of same pointee type
+- assignment from `shared_p<T>` of same pointee type
+
+Forbidden:
+- arithmetic
+- relational comparison
+- cross-wrapper comparison
+- conversion to/from numeric, string, boolean, or nullable families
+
+### 11.2 `unique_p<T>`
+
+Allowed:
+- equality / inequality with `unique_p<T>` of same pointee type
+- move assignment from `unique_p<T>` of same pointee type
+
+Forbidden:
+- arithmetic
+- relational comparison
+- cross-wrapper comparison
+- copy assignment
+- conversion to/from numeric, string, boolean, or nullable families
+
+### 11.3 `weak_p<T>`
+
+Allowed:
+- equality / inequality with `weak_p<T>` of same pointee type
+- assignment from `weak_p<T>` of same pointee type
+
+Forbidden:
+- arithmetic
+- relational comparison
+- cross-wrapper comparison
+- conversion to/from numeric, string, boolean, or nullable families
+
+### 11.4 `nullable<T>`
+
+Allowed:
+- equality / inequality with `null_t`
+- equality / inequality with `nullable<T>` of same `T`
+- assignment from `null_t`
+- assignment from `nullable<T>` of same `T`
+
+Forbidden:
+- arithmetic
+- relational comparison
+- direct truthiness in conditions
+- conversions unless explicitly added elsewhere
+
+---
+
+## 12. Consistency and derivation notes
+
+### 12.1 Symmetry is explicit
+Where both directions are allowed, both directions are listed explicitly in the grids.
+
+### 12.2 No hidden closure
+No operation is allowed merely because its result type participates in another operation.
+
+### 12.3 Test derivability
+This document is intended to be sufficient to derive:
+- positive tests for allowed operations
+- negative tests for forbidden operations
+
+### 12.4 Runtime derivability
+This document is intended to be sufficient to derive:
+- explicit allowed public overloads
+- absent or invalid forbidden public overloads
+- explicit conversion surface
+- conditional validation rules
+
+The exact public runtime interface and exact conversion mechanism are defined in:
+- RUNTIME_API_CONTRACT.md
+
+---
+
+## 13. Final rule
+
+This document is the single operational source of truth for allowed and forbidden operations.
+
+If an operation, conversion, comparison, assignment, logical form, or conditional use is not explicitly listed here as allowed, it is forbidden.
+
+
+## MATRIX STRUCTURE (Normative Organization)
+
+The semantic matrix is organized into independent operator blocks. Each block MUST be complete and self-contained.
+
+### Blocks
+
+1. Arithmetic
+2. Equality
+3. Relational
+4. Logical
+5. Assignment
+6. Compound Assignment
+7. Explicit Conversions
+8. Conditionals
+9. Family-Specific Rules
+
+Rules:
+- Each block MUST define full cross-family behavior.
+- Absence of a rule implies forbidden operation.
+- Blocks MUST NOT depend on implicit rules from other blocks.
+
+This structure allows safe extension when adding new families.
