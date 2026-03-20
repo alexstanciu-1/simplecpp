@@ -1,0 +1,981 @@
+{
+  "schema_version": "1.0.0",
+  "artifact": "scpp_runtime_config",
+  "runtime": {
+    "namespace": "scpp",
+    "umbrella_header": "scpp/runtime.hpp",
+    "create_default_owner": "shared",
+    "default_cast_policy": "forbidden",
+    "default_overload_policy": "forbidden",
+    "emit_deleted_for_forbidden_operations": true,
+    "comparison_result_type": "bool_t",
+    "condition_lowering": {
+      "semantic_type": "bool_t",
+      "cpp_bridge": "native_value"
+    }
+  },
+  "types": {
+    "null_t": {
+      "kind": "scalar_tag",
+      "header": "scpp/null_t.hpp",
+      "template": false,
+      "cpp_underlying": null,
+      "stable_core_api": [
+        "default_ctor"
+      ]
+    },
+    "nullopt_t": {
+      "kind": "scalar_tag",
+      "header": "scpp/nullopt_t.hpp",
+      "template": false,
+      "cpp_underlying": null,
+      "stable_core_api": [
+        "default_ctor"
+      ]
+    },
+    "nullptr_t": {
+      "kind": "scalar_tag",
+      "header": "scpp/nullptr_t.hpp",
+      "template": false,
+      "cpp_underlying": null,
+      "stable_core_api": [
+        "default_ctor"
+      ]
+    },
+    "bool_t": {
+      "kind": "scalar_wrapper",
+      "header": "scpp/bool_t.hpp",
+      "template": false,
+      "cpp_underlying": "bool",
+      "stable_core_api": [
+        "default_ctor",
+        "explicit_native_ctor",
+        "native_value"
+      ],
+      "entry_ctors": [
+        {
+          "from_cpp": "bool",
+          "explicit": true
+        }
+      ]
+    },
+    "int_t": {
+      "kind": "scalar_wrapper",
+      "header": "scpp/int_t.hpp",
+      "template": false,
+      "cpp_underlying": "std::int64_t",
+      "stable_core_api": [
+        "default_ctor",
+        "explicit_native_ctor",
+        "native_value"
+      ],
+      "entry_ctors": [
+        {
+          "from_cpp": "std::int64_t",
+          "explicit": true
+        }
+      ]
+    },
+    "float_t": {
+      "kind": "scalar_wrapper",
+      "header": "scpp/float_t.hpp",
+      "template": false,
+      "cpp_underlying": "double",
+      "stable_core_api": [
+        "default_ctor",
+        "explicit_native_ctor",
+        "native_value"
+      ],
+      "entry_ctors": [
+        {
+          "from_cpp": "double",
+          "explicit": true
+        }
+      ]
+    },
+    "string_t": {
+      "kind": "scalar_wrapper",
+      "header": "scpp/string_t.hpp",
+      "template": false,
+      "cpp_underlying": "std::string",
+      "stable_core_api": [
+        "default_ctor",
+        "explicit_native_ctor",
+        "explicit_string_view_ctor",
+        "explicit_cstr_ctor",
+        "native_value",
+        "size",
+        "empty",
+        "append"
+      ],
+      "entry_ctors": [
+        {
+          "from_cpp": "std::string",
+          "explicit": true
+        },
+        {
+          "from_cpp": "std::string_view",
+          "explicit": true
+        },
+        {
+          "from_cpp": "const char*",
+          "explicit": true
+        }
+      ]
+    },
+    "vector_t": {
+      "kind": "template_wrapper",
+      "header": "scpp/vector_t.hpp",
+      "template": true,
+      "template_params": [
+        "T"
+      ],
+      "cpp_underlying": "std::vector<T>",
+      "stable_core_api": [
+        "default_ctor",
+        "size",
+        "empty",
+        "clear",
+        "at",
+        "index",
+        "append"
+      ]
+    },
+    "shared_p": {
+      "kind": "template_wrapper",
+      "header": "scpp/shared_p.hpp",
+      "template": true,
+      "template_params": [
+        "T"
+      ],
+      "cpp_underlying": "std::shared_ptr<T>",
+      "stable_core_api": [
+        "default_ctor",
+        "null_ctor",
+        "nullptr_ctor",
+        "explicit_native_ctor",
+        "has_value",
+        "get",
+        "deref",
+        "arrow",
+        "native_value"
+      ]
+    },
+    "unique_p": {
+      "kind": "template_wrapper",
+      "header": "scpp/unique_p.hpp",
+      "template": true,
+      "template_params": [
+        "T"
+      ],
+      "cpp_underlying": "std::unique_ptr<T>",
+      "stable_core_api": [
+        "default_ctor",
+        "null_ctor",
+        "nullptr_ctor",
+        "explicit_native_ctor",
+        "move_ctor",
+        "move_assign",
+        "has_value",
+        "get",
+        "deref",
+        "arrow",
+        "native_value"
+      ],
+      "copyable": false,
+      "movable": true
+    },
+    "weak_p": {
+      "kind": "template_wrapper",
+      "header": "scpp/weak_p.hpp",
+      "template": true,
+      "template_params": [
+        "T"
+      ],
+      "cpp_underlying": "std::weak_ptr<T>",
+      "stable_core_api": [
+        "default_ctor",
+        "null_ctor",
+        "nullptr_ctor",
+        "explicit_native_ctor",
+        "explicit_from_shared",
+        "expired",
+        "lock",
+        "native_value"
+      ]
+    },
+    "nullable": {
+      "kind": "template_wrapper",
+      "header": "scpp/nullable.hpp",
+      "template": true,
+      "template_params": [
+        "T"
+      ],
+      "cpp_underlying": "std::optional<T>",
+      "stable_core_api": [
+        "default_ctor",
+        "null_ctor",
+        "nullopt_ctor",
+        "value_ctor",
+        "has_value",
+        "reset",
+        "value",
+        "value_or",
+        "native_value"
+      ]
+    }
+  },
+  "memory_helpers": {
+    "create": {
+      "enabled": true,
+      "returns": "shared_p<T>",
+      "kind": "factory",
+      "policy_role": "default_managed_creation"
+    },
+    "shared": {
+      "enabled": true,
+      "returns": "shared_p<T>",
+      "kind": "factory"
+    },
+    "unique": {
+      "enabled": true,
+      "returns": "unique_p<T>",
+      "kind": "factory"
+    },
+    "weak": {
+      "enabled": true,
+      "returns": "weak_p<T>",
+      "kind": "derived_reference",
+      "from": "shared_p<T>",
+      "allocates": false
+    }
+  },
+  "casts": [
+    {
+      "from": "null_t",
+      "to": "shared_p<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "null_t",
+      "to": "unique_p<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "null_t",
+      "to": "weak_p<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "null_t",
+      "to": "nullable<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "T",
+      "to": "nullable<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "shared_p<T>",
+      "to": "weak_p<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "int_t",
+      "to": "float_t",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": false
+    },
+    {
+      "from": "bool_t",
+      "to": "int_t",
+      "kind": "explicit",
+      "form": "constructor",
+      "template_rule": false
+    },
+    {
+      "from": "bool_t",
+      "to": "float_t",
+      "kind": "explicit",
+      "form": "constructor",
+      "template_rule": false
+    },
+    {
+      "from": "int_t",
+      "to": "bool_t",
+      "kind": "explicit",
+      "form": "named_cast",
+      "cast_name": "cast",
+      "template_rule": false
+    },
+    {
+      "from": "float_t",
+      "to": "bool_t",
+      "kind": "explicit",
+      "form": "named_cast",
+      "cast_name": "cast",
+      "template_rule": false
+    },
+    {
+      "from": "float_t",
+      "to": "int_t",
+      "kind": "explicit",
+      "form": "named_cast",
+      "cast_name": "cast",
+      "template_rule": false
+    }
+  ],
+  "overload_families": [
+    {
+      "name": "bool_logical",
+      "enabled": true,
+      "operators": [
+        {
+          "symbol": "!",
+          "arity": 1,
+          "operands": [
+            "bool_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "&&",
+          "arity": 2,
+          "operands": [
+            "bool_t",
+            "bool_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "||",
+          "arity": 2,
+          "operands": [
+            "bool_t",
+            "bool_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "bool_t",
+            "bool_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "bool_t",
+            "bool_t"
+          ],
+          "result": "bool_t"
+        }
+      ]
+    },
+    {
+      "name": "int_arithmetic",
+      "enabled": true,
+      "operators": [
+        {
+          "symbol": "+",
+          "arity": 1,
+          "operands": [
+            "int_t"
+          ],
+          "result": "int_t"
+        },
+        {
+          "symbol": "-",
+          "arity": 1,
+          "operands": [
+            "int_t"
+          ],
+          "result": "int_t"
+        },
+        {
+          "symbol": "+",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t"
+        },
+        {
+          "symbol": "-",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t"
+        },
+        {
+          "symbol": "*",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t"
+        },
+        {
+          "symbol": "/",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t"
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "<",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "<=",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": ">",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": ">=",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "bool_t"
+        }
+      ]
+    },
+    {
+      "name": "float_arithmetic",
+      "enabled": true,
+      "operators": [
+        {
+          "symbol": "+",
+          "arity": 1,
+          "operands": [
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "-",
+          "arity": 1,
+          "operands": [
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "+",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "-",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "*",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "/",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "<",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "<=",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": ">",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": ">=",
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        }
+      ]
+    },
+    {
+      "name": "mixed_numeric",
+      "enabled": true,
+      "promotion": {
+        "left": "int_t",
+        "right": "float_t",
+        "promote_to": "float_t"
+      },
+      "symmetric": true,
+      "operators": [
+        {
+          "symbol": "+",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "-",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "*",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "/",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "float_t"
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "<",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "<=",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": ">",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": ">=",
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "float_t"
+          ],
+          "result": "bool_t"
+        }
+      ]
+    },
+    {
+      "name": "string_ops",
+      "enabled": true,
+      "operators": [
+        {
+          "symbol": "+",
+          "arity": 2,
+          "operands": [
+            "string_t",
+            "string_t"
+          ],
+          "result": "string_t"
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "string_t",
+            "string_t"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "string_t",
+            "string_t"
+          ],
+          "result": "bool_t"
+        }
+      ]
+    },
+    {
+      "name": "pointer_null_comparisons",
+      "enabled": true,
+      "template_rule": true,
+      "operators": [
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "shared_p<T>",
+            "null_t"
+          ],
+          "result": "bool_t",
+          "symmetric": true
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "shared_p<T>",
+            "null_t"
+          ],
+          "result": "bool_t",
+          "symmetric": true
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "unique_p<T>",
+            "null_t"
+          ],
+          "result": "bool_t",
+          "symmetric": true
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "unique_p<T>",
+            "null_t"
+          ],
+          "result": "bool_t",
+          "symmetric": true
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "weak_p<T>",
+            "null_t"
+          ],
+          "result": "bool_t",
+          "symmetric": true
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "weak_p<T>",
+            "null_t"
+          ],
+          "result": "bool_t",
+          "symmetric": true
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "shared_p<T>",
+            "shared_p<T>"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "shared_p<T>",
+            "shared_p<T>"
+          ],
+          "result": "bool_t"
+        }
+      ]
+    },
+    {
+      "name": "nullable_ops",
+      "enabled": true,
+      "template_rule": true,
+      "operators": [
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "nullable<T>",
+            "null_t"
+          ],
+          "result": "bool_t",
+          "symmetric": true
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "nullable<T>",
+            "null_t"
+          ],
+          "result": "bool_t",
+          "symmetric": true
+        },
+        {
+          "symbol": "==",
+          "arity": 2,
+          "operands": [
+            "nullable<T>",
+            "nullable<T>"
+          ],
+          "result": "bool_t"
+        },
+        {
+          "symbol": "!=",
+          "arity": 2,
+          "operands": [
+            "nullable<T>",
+            "nullable<T>"
+          ],
+          "result": "bool_t"
+        }
+      ]
+    }
+  ],
+  "forbidden_operation_groups": [
+    {
+      "name": "bool_arithmetic",
+      "patterns": [
+        [
+          "bool_t",
+          "+",
+          "bool_t"
+        ],
+        [
+          "bool_t",
+          "-",
+          "bool_t"
+        ],
+        [
+          "bool_t",
+          "*",
+          "bool_t"
+        ],
+        [
+          "bool_t",
+          "/",
+          "bool_t"
+        ]
+      ]
+    },
+    {
+      "name": "pointer_cross_family_comparisons",
+      "patterns": [
+        [
+          "shared_p<T>",
+          "==",
+          "unique_p<T>"
+        ],
+        [
+          "shared_p<T>",
+          "!=",
+          "unique_p<T>"
+        ],
+        [
+          "shared_p<T>",
+          "==",
+          "weak_p<T>"
+        ],
+        [
+          "shared_p<T>",
+          "!=",
+          "weak_p<T>"
+        ],
+        [
+          "unique_p<T>",
+          "==",
+          "weak_p<T>"
+        ],
+        [
+          "unique_p<T>",
+          "!=",
+          "weak_p<T>"
+        ]
+      ]
+    },
+    {
+      "name": "vector_arithmetic",
+      "patterns": [
+        [
+          "vector_t<T>",
+          "+",
+          "vector_t<T>"
+        ],
+        [
+          "vector_t<T>",
+          "-",
+          "vector_t<T>"
+        ],
+        [
+          "vector_t<T>",
+          "*",
+          "vector_t<T>"
+        ],
+        [
+          "vector_t<T>",
+          "/",
+          "vector_t<T>"
+        ]
+      ]
+    }
+  ],
+  "generation": {
+    "emit_headers": true,
+    "emit_sources": true,
+    "emit_forward_declarations": true,
+    "emit_runtime_umbrella_header": true,
+    "emit_memory_helpers": true,
+    "emit_named_cast_helpers": true,
+    "named_cast_template": "cast<To>(value)",
+    "sort_generated_members": true,
+    "group_output_by_type": true
+  }
+}
