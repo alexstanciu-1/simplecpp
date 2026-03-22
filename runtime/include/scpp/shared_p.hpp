@@ -59,6 +59,11 @@ public:
 		return value_.get();
 	}
 
+	// Native C++ member-access bridge used by generated object calls.
+	T *operator->() const noexcept {
+		return value_.get();
+	}
+
 	// Controlled access to the native smart pointer.
 	[[nodiscard]] const std::shared_ptr<T> &native_value() const noexcept {
 		return value_;

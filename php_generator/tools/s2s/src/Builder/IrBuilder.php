@@ -8,6 +8,7 @@ use Scpp\S2S\IR\FunctionDecl;
 use Scpp\S2S\IR\MethodDecl;
 use Scpp\S2S\IR\NamespaceBlock;
 use Scpp\S2S\IR\ParamDecl;
+use Scpp\S2S\IR\PropertyDecl;
 use Scpp\S2S\IR\PhpFile;
 use Scpp\S2S\IR\Statement;
 use Scpp\S2S\Loader\ParsedInput;
@@ -153,15 +154,32 @@ final class IrBuilder
 	private function buildClass(array $node): ClassDecl
 	{
 		$children = $node['children'] ?? [];
+		$properties = [];
 		$methods = [];
 		foreach (($children['stmts']['children'] ?? []) as $member) {
-			if (is_array($member) && ($member['kind'] ?? null) === AstKind::METHOD) {
+			if (!is_array($member)) {
+				continue;
+			}
+			if (($member['kind'] ?? null) === AstKind::METHOD) {
 				$methods[] = $this->buildMethod($member);
+				continue;
+			}
+			if (($member['kind'] ?? null) === AstKind::PROP_DECL) {
+				foreach (($member['children']['props']['children'] ?? []) as $prop) {
+					if (!is_array($prop) || ($prop['kind'] ?? null) !== AstKind::PROP_ELEM) {
+						continue;
+					}
+					$properties[] = new PropertyDecl(
+						name: (string) ($prop['children']['name'] ?? ''),
+						type: $this->readTypeName($member['children']['type'] ?? null),
+					);
+				}
 			}
 		}
 
 		return new ClassDecl(
 			name: (string) ($children['name'] ?? 'Anonymous'),
+			properties: $properties,
 			methods: $methods,
 		);
 	}
@@ -206,6 +224,7 @@ final class IrBuilder
 				name: (string) ($children['name'] ?? ''),
 				type: $this->readTypeName($children['type'] ?? null),
 				isReference: (($node['flags'] ?? 0) & AstKind::PARAM_REF) !== 0,
+				default: $children['default'] ?? null,
 			);
 		}
 		return $params;
@@ -233,6 +252,10 @@ final class IrBuilder
 			return new Statement('assign', $node['children'] ?? [], $line);
 		}
 
+		if ($kind === AstKind::ASSIGN_REF) {
+			return new Statement('assign_ref', $node['children'] ?? [], $line);
+		}
+
 		if ($kind === AstKind::STATIC_VAR) {
 			return new Statement('static_var', $node['children'] ?? [], $line);
 		}
@@ -241,7 +264,7 @@ final class IrBuilder
 			return new Statement('return', $node['children']['expr'] ?? null, $line);
 		}
 
-		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL) {
+		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL) {
 			return new Statement('expr', $node, $line);
 		}
 

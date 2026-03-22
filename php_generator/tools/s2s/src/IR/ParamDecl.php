@@ -9,6 +9,7 @@ final class ParamDecl
 		public readonly string $name,
 		public readonly ?string $type,
 		public readonly bool $isReference,
+		public readonly mixed $default,
 	) {
 	}
 }

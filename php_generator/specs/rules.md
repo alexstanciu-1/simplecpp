@@ -148,7 +148,7 @@ PHP-specific behavior must go through runtime helpers when required.
 Examples:
 - `php::isset`
 - `php::empty`
-- `php::constant`
+- predefined/runtime constants through `::scpp::php` (classified from `get_defined_constants()`)
 - `php::identical`
 - `php::not_identical`
 - `scpp::pow`
@@ -335,12 +335,12 @@ The generator must not emit raw `new` for these supported construction forms.
 - fully-qualified PHP static access lowers to rooted C++ access, for example `\A\X::make()` → `::scpp::A::X::make()`
 
 ### 15.3 Static Access Through Instances
-PHP static access through an instance must be lowered syntactically using `decltype(...)`.
+PHP static access through an instance must be lowered syntactically using `::scpp::class_t<decltype(...)>`.
 
 Example:
-- `$x::make()` → `decltype(x)::make()`
+- `$x::make()` → `::scpp::class_t<decltype(x)>::make()`
 
-The generator must not attempt to validate whether `decltype(...)::member` is semantically valid for the produced C++ type.
+The generator must not attempt to validate whether `::scpp::class_t<decltype(...)>::member` is semantically valid for the produced C++ type.
 
 If the emitted C++ is invalid, it must fail at C++ compile time rather than being rejected by the generator.
 
@@ -484,9 +484,14 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-Global PHP constants are emitted through the PHP runtime layer:
+The generator snapshots `get_defined_constants()` once at startup. Constants found in that predefined-runtime snapshot are lowered through `::scpp::php`, while user-defined constants stay in the generated user namespace model.
+
+Examples:
 ```cpp
-auto a = php::constant(PHP_INT_MAX);
+auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp::php;`
+auto b = ::scpp::php::PHP_INT_MAX;   // explicit form
+auto c = LIMIT;                      // user-defined constant in the current generated namespace
+auto d = ::scpp::A::B::LIMIT;        // user-defined constant in another generated namespace
 ```
 
 ## 7. Null and nullable rules
@@ -604,7 +609,8 @@ These PHP semantics must go through the `php::` layer:
 - `empty($b)` -> `php::empty(b)`
 - strict equality `===` -> `php::identical(...)`
 - strict inequality `!==` -> `php::not_identical(...)`
-- global constants -> `php::constant(...)`
+- predefined/runtime constants discovered from `get_defined_constants()` -> `::scpp::php::...`
+- user-defined non-class constants -> generated user namespace path (no `::scpp::php` remapping)
 
 ## 13. Simple C++ runtime/helper boundary rules
 
@@ -831,9 +837,9 @@ A later decision must either:
 - let the C++ compiler fail for semantic issues outside generator scope
 
 ### 16.9 Static Access Through Instances
-- PHP static access through an instance must be lowered syntactically using `decltype(...)`
-- `$x::make()` → `decltype(x)::make()`
-- `$x::$prop` → `decltype(x)::prop`
+- PHP static access through an instance must be lowered syntactically using `::scpp::class_t<decltype(...)>`
+- `$x::make()` → `::scpp::class_t<decltype(x)>::make()`
+- `$x::$prop` → `::scpp::class_t<decltype(x)>::prop`
 - the generator must not attempt to validate whether the generated C++ member access is semantically valid
 
 

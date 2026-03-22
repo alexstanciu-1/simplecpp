@@ -1,7 +1,8 @@
 <?php
 
 if (false) {
-	$files = glob(realpath("../simple_cpp/php_generator/samples/")."/*.php");
+	$files = glob(realpath("../simple_cpp/php_generator/samples/")."/*/*.php");
+	var_dump(realpath("../simple_cpp/php_generator/samples/"));
 	
 	foreach ($files as $f) {
 		

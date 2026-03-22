@@ -40,10 +40,39 @@ namespace detail {
 template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
+// Extracts the underlying class from runtime pointer wrappers so generated
+// static calls can recover the represented class type from value carriers.
+template <typename T>
+struct class_of {
+	using type = remove_cvref_t<T>;
+};
+
+template <typename T>
+struct class_of<shared_p<T>> {
+	using type = T;
+};
+
+template <typename T>
+struct class_of<unique_p<T>> {
+	using type = T;
+};
+
+template <typename T>
+struct class_of<weak_p<T>> {
+	using type = T;
+};
+
+template <typename T>
+using class_of_t = typename class_of<remove_cvref_t<T>>::type;
+
 // Helper used in dependent static_asserts so unsupported templates fail cleanly.
 template <typename T>
 constexpr bool always_false_v = false;
 
 } // namespace detail
+
+// Public shorthand used by generated code.
+template <typename T>
+using class_t = detail::class_of_t<T>;
 
 } // namespace scpp

@@ -16,6 +16,12 @@ final class AstKind
 	public const CONST = 257;
 	public const NAME = 2048;
 	public const BINARY_OP = 521;
+	public const ASSIGN_REF = 519;
+	public const PROP = 513;
+	public const METHOD_CALL = 768;
+	public const CAST = 261;
+	public const PROP_DECL = 774;
+	public const PROP_ELEM = 1027;
 	public const NEW = 527;
 	public const STATIC_CALL = 770;
 	public const CALL = 516;

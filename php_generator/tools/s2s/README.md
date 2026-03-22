@@ -41,3 +41,15 @@ php tools/s2s/bin/run_samples.php
 - The current starter runs without Composer.
 - The CLI scripts use `bin/bootstrap.php` with direct `require_once` calls.
 - `composer.json` is present only as an optional future convenience.
+
+## Anchored namespace resolution
+The current generator now builds a declaration registry per file and resolves class/function names before emission.
+
+Resolution order in the current implementation:
+- rooted PHP names -> rooted `::scpp::...`
+- exact fully-qualified declarations already known in the file -> rooted `::scpp::...`
+- current-namespace exact matches -> rooted `::scpp::...`
+- anchored ancestor search for unique descendant matches -> rooted `::scpp::...`
+- otherwise -> preserve the previous relative/unqualified fallback emission
+
+This is intentionally an implementation step, not a claim of full PHP namespace parity yet.

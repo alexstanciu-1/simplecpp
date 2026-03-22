@@ -66,7 +66,7 @@ final class TypeMapper
 			'float' => 'float_t',
 			'bool' => 'bool_t',
 			'string' => 'string_t',
-			'void' => 'void_t',
+			'void' => 'void',
 			'vector_t' => 'vector_t',
 			default => $phpType,
 		};
