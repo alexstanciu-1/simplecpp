@@ -1,152 +1,851 @@
-# PHP to Simple C++ Conversion Catalog
+# Simple C++ – General Rules (Authoritative, Normalized)
 
-| ID | meaning | SUPPORTED | expected Simple C++ output rule | PHP code samples (examples) | C++ output | C++ output header | observations | test cases |
-|----|---------|-----------|---------------------------------|-----------------------------|------------|-------------------|-------------|------------|
-| LIT-INT-01 | assign integer literal | yes | Integer literals are always emitted as `static_cast<int_t>(value)`. First assignment uses `auto`. | `$a = 10;` | `auto a = static_cast<int_t>(10);` |  |  |  |
-| LIT-FLOAT-01 | assign float literal | yes | Float literals are always emitted as `static_cast<float_t>(value)`. First assignment uses `auto`. | `$a = 10.5;` | `auto a = static_cast<float_t>(10.5);` |  |  |  |
-| LIT-BOOL-01 | assign boolean true | yes | Boolean literals are emitted as `static_cast<bool_t>(value)`. First assignment uses `auto`. | `$a = true;` | `auto a = static_cast<bool_t>(true);` |  |  |  |
-| LIT-BOOL-02 | assign boolean false | yes | Boolean literals are emitted as `static_cast<bool_t>(value)`. First assignment uses `auto`. | `$a = false;` | `auto a = static_cast<bool_t>(false);` |  |  |  |
-| LIT-NULL-01 | assign null value | no | Direct assignment of `null` to an untyped variable is an error. Generation stops. | `$a = null;` | `error` |  | direct untyped null assignment not allowed |  |
-| LIT-STR-01 | assign single-quoted string | yes | PHP single-quoted strings are converted to valid C++ string literals, then wrapped as `string_t(...)`. First assignment uses `auto`. | `$a = 'x';` | `auto a = string_t("x");` |  | PHP single-quoted escaping may need normalization |  |
-| LIT-STR-02 | assign double-quoted string | yes | PHP double-quoted strings are converted to valid C++ string literals, then wrapped as `string_t(...)`. First assignment uses `auto`. | `$a = "x";` | `auto a = string_t("x");` |  | interpolation / escapes handled by dedicated rules later |  |
-| VAR-ASSIGN-02 | assign variable from variable | yes | Variable-to-variable assignment is copied directly. First assignment uses `auto`. Undefined RHS variables are allowed at generator stage. | `$a = $b;` | `auto a = b;` |  | if `a` already exists, omit `auto` |  |
-| VAR-REASSIGN-01 | variable reassignment | yes | First assignment uses `auto`; later assignments omit `auto`. Literal casts still apply on every assignment. | `$a = 1; $a = 2;` | `auto a = static_cast<int_t>(1); a = static_cast<int_t>(2);` |  | no type enforcement at generator stage |  |
-| EXPR-ARITH-01 | addition expression | yes | Preserve expression structure. Cast each literal operand individually. First assignment uses `auto`. | `$a = 1 + 2;` | `auto a = static_cast<int_t>(1) + static_cast<int_t>(2);` |  |  |  |
-| EXPR-ARITH-02 | subtraction expression | yes | Preserve expression structure. Cast each literal operand individually. First assignment uses `auto`. | `$a = 1 - 2;` | `auto a = static_cast<int_t>(1) - static_cast<int_t>(2);` |  |  |  |
-| EXPR-ARITH-03 | multiplication expression | yes | Preserve expression structure. Cast each literal operand individually. First assignment uses `auto`. | `$a = 2 * 3;` | `auto a = static_cast<int_t>(2) * static_cast<int_t>(3);` |  |  |  |
-| EXPR-ARITH-04 | division expression | yes | Preserve expression structure. Cast each literal operand individually. First assignment uses `auto`. | `$a = 4 / 2;` | `auto a = static_cast<int_t>(4) / static_cast<int_t>(2);` |  | division semantics vs PHP not modeled yet |  |
-| EXPR-CONCAT-01 | string concatenation | yes | PHP `.` becomes C++ `+`. String literals become `string_t(...)`. First assignment uses `auto`. | `$a = "a" . "b";` | `auto a = string_t("a") + string_t("b");` |  | operator support assumed |  |
-| EXPR-CMP-01 | equality comparison | yes | Preserve comparison operator. Cast literals individually. Outer parentheses may be dropped. Result assigned with `auto`. | `$a = (1 == 1);` | `auto a = static_cast<int_t>(1) == static_cast<int_t>(1);` |  |  |  |
-| EXPR-CMP-02 | strict equality comparison | yes | PHP `===` lowers to C++ `==`, relying on generated types for type behavior. Cast literals individually. | `$a = (1 === 1);` | `auto a = static_cast<int_t>(1) == static_cast<int_t>(1);` |  | strictness modeled through runtime typing, not operator spelling |  |
-| EXPR-CMP-03 | inequality comparison | yes | Preserve comparison operator. Cast literals individually. | `$a = (1 != 2);` | `auto a = static_cast<int_t>(1) != static_cast<int_t>(2);` |  |  |  |
-| EXPR-CMP-04 | less-than comparison | yes | Preserve comparison operator. Cast literals individually. | `$a = (1 < 2);` | `auto a = static_cast<int_t>(1) < static_cast<int_t>(2);` |  |  |  |
-| EXPR-LOGIC-01 | logical AND | yes | Preserve logical operator. Boolean literals are cast individually. | `$a = true && false;` | `auto a = static_cast<bool_t>(true) && static_cast<bool_t>(false);` |  | short-circuit assumed |  |
-| EXPR-LOGIC-02 | logical OR | yes | Preserve logical operator. Boolean literals are cast individually. | `$a = true || false;` | `auto a = static_cast<bool_t>(true) || static_cast<bool_t>(false);` |  | short-circuit assumed |  |
-| EXPR-LOGIC-03 | logical NOT | yes | Preserve unary logical operator. Literal operand must be cast. | `$a = !true;` | `auto a = !static_cast<bool_t>(true);` |  |  |  |
-| EXPR-LOGIC-04 | logical AND with variables | yes | Preserve logical operator. Variables are emitted as-is. First assignment uses `auto`. | `$a = $b && $c;` | `auto a = b && c;` |  |  |  |
-| EXPR-LOGIC-05 | logical OR with variables | yes | Preserve logical operator. Variables are emitted as-is. First assignment uses `auto`. | `$a = $b || $c;` | `auto a = b || c;` |  |  |  |
-| EXPR-LOGIC-06 | logical NOT with variable | yes | Preserve unary logical operator. Variable emitted as-is. | `$a = !$b;` | `auto a = !b;` |  |  |  |
-| EXPR-TERNARY-01 | ternary expression | yes | Preserve ternary structure. Condition is emitted as-is. Literal branches are cast individually. | `$a = $b ? 1 : 2;` | `auto a = b ? static_cast<int_t>(1) : static_cast<int_t>(2);` |  |  |  |
-| EXPR-NULLCOALESCE-01 | null coalescing | yes | Lower `$x ?? y` to `(x != null) ? x : y`. Fallback literals still follow normal casting rules. | `$a = $b ?? 10;` | `auto a = (b != null) ? b : static_cast<int_t>(10);` |  | `null` is emitted directly |  |
-| EXPR-MIXED-01 | arithmetic expression with variable and literal | yes | Variables emitted as-is. Literals are cast individually. Preserve expression shape. | `$a = $b + 1;` | `auto a = b + static_cast<int_t>(1);` |  |  |  |
-| EXPR-MIXED-02 | arithmetic expression with literal and variable | yes | Variables emitted as-is. Literals are cast individually, including on LHS. | `$a = 1 + $b;` | `auto a = static_cast<int_t>(1) + b;` |  |  |  |
-| EXPR-MIXED-03 | comparison between variable and literal | yes | Preserve comparison operator. Variables as-is. Literals cast individually. | `$a = $b == 1;` | `auto a = b == static_cast<int_t>(1);` |  |  |  |
-| EXPR-MIXED-04 | comparison between literal and variable | yes | Preserve comparison operator. Literals cast individually, including on LHS. | `$a = 1 == $b;` | `auto a = static_cast<int_t>(1) == b;` |  |  |  |
-| EXPR-MIXED-05 | string concatenation with variable and literal | yes | PHP `.` becomes `+`. String literals become `string_t(...)`. Variables are emitted as-is. | `$a = $b . "x";` | `auto a = b + string_t("x");` |  |  |  |
-| EXPR-MIXED-06 | string concatenation with literal and variable | yes | PHP `.` becomes `+`. String literals become `string_t(...)`. Variables are emitted as-is. | `$a = "x" . $b;` | `auto a = string_t("x") + b;` |  |  |  |
-| EXPR-MIXED-07 | arithmetic with two variables | yes | Pure variable expressions are emitted as-is. First assignment uses `auto`. | `$a = $b + $c;` | `auto a = b + c;` |  |  |  |
-| EXPR-NESTED-01 | nested arithmetic expression | yes | Preserve nested expression and parentheses. Cast every literal regardless of depth. | `$a = ($b + 1) * 2;` | `auto a = (b + static_cast<int_t>(1)) * static_cast<int_t>(2);` |  |  |  |
-| EXPR-NESTED-02 | nested comparison inside expression | yes | Preserve nested expression and parentheses. Cast every literal regardless of depth. | `$a = ($b + 1) > 2;` | `auto a = (b + static_cast<int_t>(1)) > static_cast<int_t>(2);` |  |  |  |
-| EXPR-CHAIN-01 | chained arithmetic expression | yes | Preserve chained expression without regrouping. Cast each literal individually. | `$a = 1 + 2 + 3;` | `auto a = static_cast<int_t>(1) + static_cast<int_t>(2) + static_cast<int_t>(3);` |  |  |  |
-| EXPR-CHAIN-02 | chained mixed expression | yes | Preserve chained expression. Variables as-is. Cast each literal individually. | `$a = $b + 1 + $c;` | `auto a = b + static_cast<int_t>(1) + c;` |  |  |  |
-| EXPR-CHAIN-03 | chained comparison and logical expression | yes | Preserve expression structure. Cast literals individually. Variables as-is. | `$a = $b < 10 && $c;` | `auto a = b < static_cast<int_t>(10) && c;` |  |  |  |
-| EXPR-CHAIN-04 | chained string concatenation | yes | PHP `.` becomes `+`. String literals become `string_t(...)`. Variables are emitted as-is. | `$a = "x" . $b . "y";` | `auto a = string_t("x") + b + string_t("y");` |  |  |  |
-| CTRL-IF-01 | simple if | yes | Preserve `if` structure. Condition emitted as-is. Body statements follow normal assignment rules, including literal casts. | `if ($a) { $b = 1; }` | `if (a) { auto b = static_cast<int_t>(1); }` |  | `auto` depends on first encounter in the current scope |  |
-| CTRL-IF-02 | if else | yes | Preserve `if / else` structure. Branch statements follow normal assignment rules, including literal casts. | `if ($a) { $b = 1; } else { $b = 2; }` | `if (a) { b = static_cast<int_t>(1); } else { b = static_cast<int_t>(2); }` |  | assumes `b` already exists in scope |  |
-| LOOP-FOR-01 | for loop | yes | Preserve `for` structure. Init follows assignment rules. Condition literals are cast. Increment preserved. | `for ($i = 0; $i < 10; $i++) { $a = $i; }` | `for (auto i = static_cast<int_t>(0); i < static_cast<int_t>(10); i++) { a = i; }` |  | loop variable first use -> `auto` |  |
-| LOOP-WHILE-01 | while loop | yes | Preserve `while` structure. Condition literals are cast. Body emitted using normal rules. | `while ($a < 10) { $a++; }` | `while (a < static_cast<int_t>(10)) { a++; }` |  |  |  |
-| OUT-01 | echo output | yes | `echo expr;` becomes `std::cout << expr;`. Variables emitted as-is. | `echo $a;` | `std::cout << a;` |  | runtime stream support assumed |  |
-| OUT-02 | multi-argument echo | yes | Multiple `echo` arguments become chained `<<` in the same order. | `echo $a, $b, $c;` | `std::cout << a << b << c;` |  | no separators added automatically |  |
-| RET-01 | return statement | yes | Preserve `return`. Cast return literals according to normal literal rules. | `return 1;` | `return static_cast<int_t>(1);` |  |  |  |
-| FUNC-ARGS-01 | function with parameters missing types | no | Missing parameter types are an error. Generation stops. | `function f($a, $b) { return $a; }` | `error` |  | parameters must have explicit types |  |
-| FUNC-DECL-01 | function declaration without explicit return type | yes | Missing return type emits `auto`. Return literals are cast. | `function f() { return 1; }` | `auto f() { return static_cast<int_t>(1); }` |  | parameter types remain mandatory when parameters exist |  |
-| FUNC-DECL-02 | typed function declaration with typed parameter | yes | Map PHP scalar types to runtime types. Primitive params and returns use by value. | `function f(int $a): int { return $a; }` | `int_t f(int_t a) { return a; }` |  |  |  |
-| FUNC-DECL-03 | typed function with nullable parameter | yes | Nullable PHP types become `nullable<T>`. Primitive nullable params use by value. Return literals are cast. | `function f(?int $a): int { return 1; }` | `int_t f(nullable<int_t> a) { return static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-04 | function with nullable return | yes | Nullable return becomes `nullable<T>`. `null` is returned directly. | `function f(int $a): ?int { return null; }` | `nullable<int_t> f(int_t a) { return null; }` |  |  |  |
-| FUNC-DECL-05 | function with nullable return and literal return | yes | Nullable primitive return still returns by value. Non-null literals are cast. | `function f(int $a): ?int { return 1; }` | `nullable<int_t> f(int_t a) { return static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-06 | typed function with string parameter and string return | yes | `string` maps to `string_t`. String params pass by `const &`. Safe pass-through string return may return by `const &`. | `function f(string $a): string { return $a; }` | `const string_t& f(const string_t& a) { return a; }` |  | return-by-ref only when safely returning existing stable object |  |
-| FUNC-DECL-07 | function with string literal return | yes | String literals become `string_t(...)`. Returning a temporary uses by-value return. | `function f(): string { return "x"; }` | `string_t f() { return string_t("x"); }` |  | temporary cannot be returned as `const &` |  |
-| FUNC-DECL-08 | function returning computed string | yes | Computed string expressions return by value. String params pass by `const &`. `.` becomes `+`. | `function f(string $a): string { return $a . "x"; }` | `string_t f(const string_t& a) { return a + string_t("x"); }` |  | computed temporary return |  |
-| FUNC-DECL-09 | function with int parameter and int literal return | yes | Primitive params and returns use by value. Return literals are cast. | `function f(int $a): int { return 1; }` | `int_t f(int_t a) { return static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-10 | function with multiple typed parameters | yes | Map all parameter types to runtime types. Primitive params and return use by value. | `function f(int $a, float $b): int { return $a; }` | `int_t f(int_t a, float_t b) { return a; }` |  |  |  |
-| FUNC-DECL-11 | function with bool parameter and bool return | yes | `bool` maps to `bool_t`. Primitive params and returns use by value. | `function f(bool $a): bool { return $a; }` | `bool_t f(bool_t a) { return a; }` |  |  |  |
-| FUNC-DECL-12 | function with bool literal return | yes | Boolean return literals are cast. Primitive return uses by value. | `function f(): bool { return true; }` | `bool_t f() { return static_cast<bool_t>(true); }` |  |  |  |
-| FUNC-DECL-13 | function with float parameter and float return | yes | `float` maps to `float_t`. Primitive params and returns use by value. | `function f(float $a): float { return $a; }` | `float_t f(float_t a) { return a; }` |  |  |  |
-| FUNC-DECL-14 | function with float literal return | yes | Float return literals are cast. Primitive return uses by value. | `function f(): float { return 1.5; }` | `float_t f() { return static_cast<float_t>(1.5); }` |  |  |  |
-| FUNC-DECL-15 | function with mixed return expression | yes | Preserve return expression shape. Variables as-is. Cast each literal individually. | `function f(int $a): int { return $a + 1; }` | `int_t f(int_t a) { return a + static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-16 | function with multiple return paths | yes | Preserve control flow. Cast return literals in all return paths. | `function f(int $a): int { if ($a) { return 1; } return 2; }` | `int_t f(int_t a) { if (a) { return static_cast<int_t>(1); } return static_cast<int_t>(2); }` |  |  |  |
-| FUNC-DECL-17 | function with inferred return from variable | yes | Missing return type emits `auto`. Parameters still require explicit types. | `function f(int $a) { return $a; }` | `auto f(int_t a) { return a; }` |  |  |  |
-| FUNC-DECL-18 | function with inferred return from literal | yes | Missing return type emits `auto`. Return literals are still cast. | `function f(int $a) { return 1; }` | `auto f(int_t a) { return static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-19 | function with inferred string return pass-through | yes | Missing return type emits `auto`. String params pass by `const &`. | `function f(string $a) { return $a; }` | `auto f(const string_t& a) { return a; }` |  |  |  |
-| FUNC-DECL-20 | function with inferred string literal return | yes | Missing return type emits `auto`. String literals become `string_t(...)`. | `function f(string $a) { return "x"; }` | `auto f(const string_t& a) { return string_t("x"); }` |  |  |  |
-| FUNC-DECL-21 | function with bool parameter and int return | yes | Map parameter and return types independently. Return literals are cast. | `function f(bool $a): int { return 1; }` | `int_t f(bool_t a) { return static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-22 | function with int parameter and bool return | yes | Map parameter and return types independently. Variable return emitted as-is. | `function f(int $a): bool { return $a; }` | `bool_t f(int_t a) { return a; }` |  | no generator-side type validation yet |  |
-| FUNC-DECL-23 | function with nullable string pass-through | yes | Nullable heavy types pass by `const &`. Safe pass-through return may return by `const &`. | `function f(?string $a): ?string { return $a; }` | `const nullable<string_t>& f(const nullable<string_t>& a) { return a; }` |  |  |  |
-| FUNC-DECL-24 | function with nullable string returning null | yes | Nullable heavy return uses by-value when returning `null`. | `function f(?string $a): ?string { return null; }` | `nullable<string_t> f(const nullable<string_t>& a) { return null; }` |  |  |  |
-| FUNC-DECL-25 | function with nullable string returning literal | yes | String literal return becomes `string_t(...)`. Returning a temporary uses by-value return. | `function f(?string $a): ?string { return "x"; }` | `nullable<string_t> f(const nullable<string_t>& a) { return string_t("x"); }` |  |  |  |
-| FUNC-DECL-26 | function with nullable int pass-through | yes | Nullable primitive params and returns use by value. | `function f(?int $a): ?int { return $a; }` | `nullable<int_t> f(nullable<int_t> a) { return a; }` |  |  |  |
-| FUNC-DECL-27 | function with nullable int returning literal | yes | Nullable primitive return uses by value. Non-null literals are cast. | `function f(?int $a): ?int { return 1; }` | `nullable<int_t> f(nullable<int_t> a) { return static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-28 | function with explicit void return | yes | `void` stays `void`. Function body follows normal transformation rules. | `function f(int $a): void { echo $a; }` | `void f(int_t a) { std::cout << a; }` |  |  |  |
-| FUNC-DECL-29 | function with void return and no statements | yes | Empty `void` function is preserved as-is. | `function f(): void {}` | `void f() {}` |  |  |  |
-| FUNC-DECL-30 | function with side effect and implicit return | yes | Body assignments follow normal rules. First local assignment uses `auto`. | `function f(int $a): void { $b = $a; }` | `void f(int_t a) { auto b = a; }` |  |  |  |
-| FUNC-DECL-31 | function with local integer literal assignment | yes | First local assignment uses `auto`. Literal is cast. | `function f(int $a): void { $b = 1; }` | `void f(int_t a) { auto b = static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-32 | function with local expression assignment | yes | First local assignment uses `auto`. Variables as-is. Literals cast individually. | `function f(int $a): void { $b = $a + 1; }` | `void f(int_t a) { auto b = a + static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-33 | function echoing string parameter | yes | String params pass by `const &`. `echo` becomes `std::cout <<`. | `function f(string $a): void { echo $a; }` | `void f(const string_t& a) { std::cout << a; }` |  |  |  |
-| FUNC-DECL-34 | function echoing string literal | yes | String literals become `string_t(...)` before streaming. | `function f(string $a): void { echo "x"; }` | `void f(const string_t& a) { std::cout << string_t("x"); }` |  |  |  |
-| FUNC-DECL-35 | function copying string parameter to local | yes | String params pass by `const &`. First local assignment uses `auto`. | `function f(string $a): void { $b = $a; }` | `void f(const string_t& a) { auto b = a; }` |  |  |  |
-| FUNC-DECL-36 | function assigning string literal to local | yes | String literals become `string_t(...)`. First local assignment uses `auto`. | `function f(string $a): void { $b = "x"; }` | `void f(const string_t& a) { auto b = string_t("x"); }` |  |  |  |
-| FUNC-DECL-37 | function with bool parameter and conditional echo | yes | Preserve `if`. Bool param uses by value. `echo` becomes `std::cout <<`. | `function f(bool $a): void { if ($a) { echo $a; } }` | `void f(bool_t a) { if (a) { std::cout << a; } }` |  |  |  |
-| FUNC-DECL-38 | function with float expression return | yes | Preserve expression. Float literals are cast. Primitive return uses by value. | `function f(float $a): float { return $a + 1.5; }` | `float_t f(float_t a) { return a + static_cast<float_t>(1.5); }` |  |  |  |
-| FUNC-DECL-39 | function with multiple int params and variable return expression | yes | Map parameter types. Preserve variable expression as-is. | `function f(int $a, int $b): int { return $a + $b; }` | `int_t f(int_t a, int_t b) { return a + b; }` |  |  |  |
-| FUNC-DECL-40 | function with mixed int return expression | yes | Map parameter types. Preserve expression. Cast literals individually. | `function f(int $a, int $b): int { return $a + 1 + $b; }` | `int_t f(int_t a, int_t b) { return a + static_cast<int_t>(1) + b; }` |  |  |  |
-| FUNC-DECL-41 | function with nullable int parameter and bare return | yes | Nullable primitive params use by value. Bare `return;` preserved in `void` function. | `function f(?int $a): void { return; }` | `void f(nullable<int_t> a) { return; }` |  |  |  |
-| FUNC-DECL-42 | function echoing nullable string parameter | yes | Nullable heavy params pass by `const &`. `echo` becomes `std::cout <<`. | `function f(?string $a): void { echo $a; }` | `void f(const nullable<string_t>& a) { std::cout << a; }` |  |  |  |
-| FUNC-DECL-43 | function with nullable int parameter and int fallback | yes | Null coalescing lowers to ternary with `null` comparison. Fallback literals are cast. | `function f(?int $a): int { return $a ?? 1; }` | `int_t f(nullable<int_t> a) { return (a != null) ? a : static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-44 | function with nullable string parameter and string fallback | yes | Null coalescing lowers to ternary with `null` comparison. String fallback becomes `string_t(...)`. Temporary string return uses by value. | `function f(?string $a): string { return $a ?? "x"; }` | `string_t f(const nullable<string_t>& a) { return (a != null) ? a : string_t("x"); }` |  |  |  |
-| FUNC-DECL-45 | function with nullable int parameter and nullable int fallback | yes | Null coalescing lowers to ternary with `null` comparison. Fallback literals are cast. Nullable primitive return uses by value. | `function f(?int $a): ?int { return $a ?? 1; }` | `nullable<int_t> f(nullable<int_t> a) { return (a != null) ? a : static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-46 | function with nullable string parameter and nullable string fallback | yes | Null coalescing lowers to ternary with `null` comparison. String fallback becomes `string_t(...)`. Return by value because fallback is temporary. | `function f(?string $a): ?string { return $a ?? "x"; }` | `nullable<string_t> f(const nullable<string_t>& a) { return (a != null) ? a : string_t("x"); }` |  |  |  |
-| FUNC-DECL-47 | function with conditional string output | yes | Preserve `if / else`. String literals become `string_t(...)`. `echo` becomes `std::cout <<`. | `function f(int $a): void { if ($a) { echo "x"; } else { echo "y"; } }` | `void f(int_t a) { if (a) { std::cout << string_t("x"); } else { std::cout << string_t("y"); } }` |  |  |  |
-| FUNC-DECL-48 | function with branch variable return and literal fallback | yes | Preserve control flow. Return variable as-is. Return literals are cast. | `function f(int $a): int { if ($a) { return $a; } return 1; }` | `int_t f(int_t a) { if (a) { return a; } return static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-49 | function with string pass-through return | yes | String params pass by `const &`. Safe pass-through string return may return by `const &`. | `function f(string $a): string { return $a; }` | `const string_t& f(const string_t& a) { return a; }` |  | duplicates FUNC-DECL-06 semantically |  |
-| FUNC-DECL-50 | function assigning nullable string parameter to local | yes | Nullable heavy params pass by `const &`. First local assignment uses `auto`. | `function f(?string $a): void { $b = $a; }` | `void f(const nullable<string_t>& a) { auto b = a; }` |  |  |  |
-| FUNC-DECL-51 | function assigning nullable int parameter to local | yes | Nullable primitive params pass by value. First local assignment uses `auto`. | `function f(?int $a): void { $b = $a; }` | `void f(nullable<int_t> a) { auto b = a; }` |  |  |  |
-| FUNC-DECL-52 | function with multi-argument echo | yes | Multi-argument `echo` lowers to chained `std::cout <<`. String literals become `string_t(...)`. | `function f(int $a): void { echo $a, "x"; }` | `void f(int_t a) { std::cout << a << string_t("x"); }` |  |  |  |
-| FUNC-DECL-53 | function returning comparison result | yes | Preserve comparison structure. Cast literals individually. Bool return uses by value. | `function f(): bool { return 1 == 1; }` | `bool_t f() { return static_cast<int_t>(1) == static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-54 | function comparing int param with literal | yes | Preserve comparison structure. Int literal is cast. Bool return uses by value. | `function f(int $a): bool { return $a == 1; }` | `bool_t f(int_t a) { return a == static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-55 | function comparing string param with string literal | yes | Preserve comparison structure. String literal becomes `string_t(...)`. Bool return uses by value. | `function f(string $a): bool { return $a == "x"; }` | `bool_t f(const string_t& a) { return a == string_t("x"); }` |  |  |  |
-| FUNC-DECL-56 | function with typed local reassignment | yes | First local assignment uses `auto`; later reassignment omits `auto`. Literal casts apply every time. | `function f(int $a): void { $b = 1; $b = 2; }` | `void f(int_t a) { auto b = static_cast<int_t>(1); b = static_cast<int_t>(2); }` |  |  |  |
-| FUNC-DECL-57 | function with local variable initialized from expression | yes | First local assignment uses `auto`. Variables as-is. Literals cast individually. | `function f(int $a): void { $b = $a + 1; }` | `void f(int_t a) { auto b = a + static_cast<int_t>(1); }` |  |  |  |
-| FUNC-DECL-58 | function with local variable initialized from literal-plus-variable | yes | First local assignment uses `auto`. Variables as-is. Literals cast individually, including on LHS. | `function f(int $a): void { $b = 1 + $a; }` | `void f(int_t a) { auto b = static_cast<int_t>(1) + a; }` |  |  |  |
-| FUNC-DECL-59 | function with chained local expression | yes | Preserve chained expression. Variables as-is. Cast each literal individually. | `function f(int $a): void { $b = $a + 1 + $a; }` | `void f(int_t a) { auto b = a + static_cast<int_t>(1) + a; }` |  |  |  |
-| FUNC-DECL-60 | function with string concatenation local assignment | yes | PHP `.` becomes `+`. String literals become `string_t(...)`. First local assignment uses `auto`. | `function f(string $a): void { $b = $a . "x"; }` | `void f(const string_t& a) { auto b = a + string_t("x"); }` |  |  |  |
-| FUNC-DECL-61 | function with string literal prefix concatenation | yes | PHP `.` becomes `+`. String literals become `string_t(...)`. First local assignment uses `auto`. | `function f(string $a): void { $b = "x" . $a; }` | `void f(const string_t& a) { auto b = string_t("x") + a; }` |  |  |  |
-| FUNC-DECL-62 | function with chained string concatenation local assignment | yes | PHP `.` becomes `+`. String literals become `string_t(...)`. Preserve chained expression. | `function f(string $a): void { $b = $a . "x" . $a; }` | `void f(const string_t& a) { auto b = a + string_t("x") + a; }` |  |  |  |
-| FUNC-DECL-63 | function with unary logical local assignment | yes | Preserve unary logical operator. Variables as-is. First local assignment uses `auto`. | `function f(bool $a): void { $b = !$a; }` | `void f(bool_t a) { auto b = !a; }` |  |  |  |
-| FUNC-DECL-64 | function with boolean AND return | yes | Preserve logical operator. Bool params and return use by value. | `function f(bool $a, bool $b): bool { return $a && $b; }` | `bool_t f(bool_t a, bool_t b) { return a && b; }` |  |  |  |
-| FUNC-DECL-65 | function with boolean OR return | yes | Preserve logical operator. Bool params and return use by value. | `function f(bool $a, bool $b): bool { return $a || $b; }` | `bool_t f(bool_t a, bool_t b) { return a || b; }` |  |  |  |
-| FUNC-DECL-66 | function with boolean NOT return | yes | Preserve unary logical operator. Bool param and return use by value. | `function f(bool $a): bool { return !$a; }` | `bool_t f(bool_t a) { return !a; }` |  |  |  |
-| FUNC-DECL-67 | function with less-than comparison return | yes | Preserve comparison structure. Literal is cast. Bool return uses by value. | `function f(int $a): bool { return $a < 10; }` | `bool_t f(int_t a) { return a < static_cast<int_t>(10); }` |  |  |  |
-| FUNC-DECL-68 | function with less-than comparison literal on LHS | yes | Preserve comparison structure. Literal is cast, including on LHS. Bool return uses by value. | `function f(int $a): bool { return 10 < $a; }` | `bool_t f(int_t a) { return static_cast<int_t>(10) < a; }` |  |  |  |
-| FUNC-DECL-69 | function with branch-local assignment | yes | Preserve `if`. First assignment in branch scope uses `auto`. Literal is cast. | `function f(int $a): void { if ($a) { $b = 1; } }` | `void f(int_t a) { if (a) { auto b = static_cast<int_t>(1); } }` |  |  |  |
-| FUNC-DECL-70 | function with same local name in both branches | yes | Preserve `if / else`. Each branch applies first-assignment rules independently. | `function f(int $a): void { if ($a) { $b = 1; } else { $b = 2; } }` | `void f(int_t a) { if (a) { auto b = static_cast<int_t>(1); } else { auto b = static_cast<int_t>(2); } }` |  | later cross-branch scope merge rules not yet defined |  |
-| FUNC-DECL-71 | function with while loop | yes | Preserve `while`. Condition literals are cast. Body preserved using normal rules. | `function f(int $a): void { while ($a < 10) { $a++; } }` | `void f(int_t a) { while (a < static_cast<int_t>(10)) { a++; } }` |  |  |  |
-| FUNC-DECL-72 | function with multi-argument string echo | yes | Multi-argument `echo` lowers to chained `std::cout <<`. String literals become `string_t(...)`. | `function f(): void { echo "x", "y"; }` | `void f() { std::cout << string_t("x") << string_t("y"); }` |  |  |  |
-| FUNC-CALL-01 | function call | yes | Preserve function call. First assignment uses `auto`. No cast applied to call result. | `$a = f();` | `auto a = f();` |  |  |  |
-| FUNC-CALL-02 | function call with arguments | yes | Preserve call shape. Cast each literal argument individually. Variables are passed as-is. | `$a = f(1, 2);` | `auto a = f(static_cast<int_t>(1), static_cast<int_t>(2));` |  |  |  |
-| FUNC-CALL-03 | function call with mixed literal types | yes | Cast each literal argument according to its own literal type. | `$a = f(1, 2.5);` | `auto a = f(static_cast<int_t>(1), static_cast<float_t>(2.5));` |  |  |  |
-| FUNC-CALL-04 | function call with string literal | yes | String literal arguments become `string_t(...)`. | `$a = f("x");` | `auto a = f(string_t("x"));` |  |  |  |
-| FUNC-CALL-05 | function call with variable and literal | yes | Variables pass as-is. Literal arguments are cast individually. | `$a = f($b, 1);` | `auto a = f(b, static_cast<int_t>(1));` |  |  |  |
-| FUNC-CALL-06 | function call with literal and variable | yes | Variables pass as-is. Literal arguments are cast individually. | `$a = f(1, $b);` | `auto a = f(static_cast<int_t>(1), b);` |  |  |  |
-| FUNC-CALL-07 | function call with variable and string literal | yes | String literal arguments become `string_t(...)`. Variables pass as-is. | `$a = f($b, "x");` | `auto a = f(b, string_t("x"));` |  |  |  |
-| FUNC-CALL-08 | function call with string literal and variable | yes | String literal arguments become `string_t(...)`. Variables pass as-is. | `$a = f("x", $b);` | `auto a = f(string_t("x"), b);` |  |  |  |
-| FUNC-CALL-09 | function call with boolean literals | yes | Boolean literal arguments are cast individually. | `$a = f(true, false);` | `auto a = f(static_cast<bool_t>(true), static_cast<bool_t>(false));` |  |  |  |
-| FUNC-CALL-10 | function call with variable and boolean literal | yes | Boolean literal arguments are cast individually. Variables pass as-is. | `$a = f($b, true);` | `auto a = f(b, static_cast<bool_t>(true));` |  |  |  |
-| FUNC-CALL-11 | function call without arguments | yes | Preserve call shape. First assignment uses `auto`. | `$a = f();` | `auto a = f();` |  | semantically overlaps FUNC-CALL-01 |  |
-| FUNC-CALL-12 | function call statement with integer literal | yes | Statement call preserved. Literal arguments are cast individually. | `f(1);` | `f(static_cast<int_t>(1));` |  |  |  |
-| FUNC-CALL-13 | function call statement with string literal | yes | Statement call preserved. String literal arguments become `string_t(...)`. | `f("x");` | `f(string_t("x"));` |  |  |  |
-| FUNC-CALL-14 | function call statement with variable | yes | Statement call preserved. Variable arguments pass as-is. | `f($a);` | `f(a);` |  |  |  |
-| FUNC-CALL-15 | function call statement with mixed arguments | yes | Preserve order. Cast or wrap each literal argument individually; variables pass as-is. | `f($a, $b, 1, "x", true);` | `f(a, b, static_cast<int_t>(1), string_t("x"), static_cast<bool_t>(true));` |  | nullable-argument call-site rules not yet cataloged |  |
-| ARR-INIT-01 | empty array | no | PHP array support is not implemented. Generation stops with error. | `$a = [];` | `error` |  | all `ARR-*` excluded for now |  |
-| ARR-INIT-02 | indexed array literal | no | PHP array support is not implemented. Generation stops with error. | `$a = [1, 2];` | `error` |  | all `ARR-*` excluded for now |  |
-| ARR-INIT-03 | associative array literal | no | PHP array support is not implemented. Generation stops with error. | `$a = ["x" => 1];` | `error` |  | all `ARR-*` excluded for now |  |
-| ARR-ACCESS-01 | read array index | no | PHP array support is not implemented. Generation stops with error. | `$a = $b[0];` | `error` |  | all `ARR-*` excluded for now |  |
-| ARR-ACCESS-02 | read array key | no | PHP array support is not implemented. Generation stops with error. | `$a = $b["x"];` | `error` |  | all `ARR-*` excluded for now |  |
-| ARR-ASSIGN-01 | assign array index | no | PHP array support is not implemented. Generation stops with error. | `$b[0] = 1;` | `error` |  | all `ARR-*` excluded for now |  |
-| ARR-ASSIGN-02 | assign array key | no | PHP array support is not implemented. Generation stops with error. | `$b["x"] = 1;` | `error` |  | all `ARR-*` excluded for now |  |
-| ARR-APPEND-01 | append to array | no | PHP array support is not implemented. Generation stops with error. | `$a[] = 1;` | `error` |  | all `ARR-*` excluded for now |  |
+This document is the single source of truth for the supported subset.
 
-## Notes
+---
 
-- This file reflects the catalog reconstructed from the session so far.
-- A few entries are intentionally semantically duplicated where they were discussed separately during rule discovery.
-- `C++ output header` and `test cases` remain mostly empty because they were not filled yet.
+## 0. Generator Responsibility Boundary
+
+The S2S generator is a deterministic structured code generator, not a semantic compiler.
+
+It performs only the checks required to emit configured C++ output reliably. Symbol resolution, type validation, inheritance validation, override validation, and other semantic compile-time checks are delegated to the C++ compiler unless a generation rule explicitly requires a local structural check.
+
+The generator must prefer deterministic syntactic lowering over semantic interpretation. If a supported source form can be lowered locally, it should be emitted. If the resulting C++ is semantically invalid, that failure belongs to the C++ compiler unless the generation rules state otherwise.
+
+---
+
+## 1. Runtime Contract
+
+All generated code targets the `scpp` runtime.
+
+Object construction and ownership helpers are runtime concepts. Current generation rules use `create<T>(...)` for user PHP class construction, while explicit runtime forms such as `shared(new MyClass)`, `weak($object)`, and `unique(new MyClass)` remain runtime-level constructs when they are later brought into the supported subset.
+
+### Core Types
+- `int_t`
+- `float_t`
+- `bool_t`
+- `string_t`
+- `nullable<T>`
+- `shared_p<T>`
+- `vector_t`
+- runtime `null` / `nullopt` support via the runtime helpers
+
+### Rules
+- `string_t` uses constructor form, not `static_cast`
+- `nullable<T>` is the null carrier for nullable value types
+- object/class/interface handle types use `shared_p<T>` and are inherently nullable
+- runtime `null` is the canonical null literal for generated code where null is supported
+- null comparisons/checks must use the configured runtime helpers such as `php::is_null(...)` and `php::not_null(...)`
+
+---
+
+## 2. Type System
+
+### Mandatory
+- parameters must be typed
+- return types must be explicit
+
+### Mapping
+- `int` → `int_t`
+- `float` → `float_t`
+- `bool` → `bool_t`
+- `string` → `string_t`
+- `?T` → `nullable<T>` for value-like types
+- class / interface / abstract object types → `shared_p<T>`
+- `?ClassType` / `?InterfaceType` / `?AbstractType` → `shared_p<T>`
+- object nullability does not currently change the emitted C++ type; `A` and `?A` both emit `shared_p<A>` for now
+
+### Returns
+- non-void functions must return a value on all paths
+- void functions cannot return a value
+
+
+### Variable Typing
+- explicit PHPDoc variable types are authoritative when present
+- explicit local variable typing currently comes from PHPDoc variable annotations
+- only the strict immediate-after-variable form is supported for explicit local variable typing
+- valid form example: `$x /** string */ = "test";`
+- invalid forms include placing the type comment before the variable, after the initializer, or detached from the variable token
+- `$x /** string */ = "test";` → `string_t x("test");`
+- `$x /** ?string */ = "test";` → `nullable<string_t> x("test");`
+- `$x /** ?string */ = null;` → `nullable<string_t> x = null;`
+- `$x /** A */ = new A();` → `shared_p<A> x = create<A>();`
+- `$x /** ?A */ = null;` → `shared_p<A> x = null;`
+
+### Untyped Variable Initialization
+- untyped variables may still lower to explicit runtime-wrapped expressions
+- `$x = "test";` → `auto x = string_t("test");`
+- constructor selection, conversion resolution, and overload resolution remain the C++ compiler's responsibility
+
+### Passing and Return Conventions
+- `int_t`, `float_t`, and `bool_t` use normal value semantics for parameters and returns unless explicit `&` is present
+- `string_t` and `vector_t` default to `const &` for parameters and return by value
+- explicit PHP `&` disables the default `const &` convention and must be emitted as a mutable reference
+- class/interface/abstract object types are emitted as `shared_p<T>` handles and are passed and returned by handle value
+- object nullability intent (`T` vs `?T`) does not currently change the emitted object-handle type
+- class/interface object types remain pointer-like in use (`->`)
+- user PHP classes must not be stored by value in generated code
+- runtime nullability enforcement for non-nullable object parameters/properties is deferred; current code generation keeps `T` and `?T` identical for object-handle types and relies on future injected checks
+
+---
+
+## 3. Literal Normalization
+
+All literals must be normalized.
+
+### Required forms
+- integer → `static_cast<int_t>(v)`
+- float → `static_cast<float_t>(v)`
+- bool → `static_cast<bool_t>(v)`
+- string → `string_t("...")`
+
+Applies to:
+- assignments
+- expressions
+- returns
+- function arguments
+- default values
+
+---
+
+## 4. Scope and Declaration
+
+### Scope kinds
+- global
+- namespace
+- function
+
+### Rules
+- first assignment in scope declares with `auto`
+- reassignment in the same scope must not redeclare with `auto`
+- use-before-declare is an error
+
+### Overloading
+- function and method overloading are forbidden by Simple C++ design
+- the generator must reject same-name overload sets rather than attempting overload-based lowering
+
+---
+
+## 5. Expressions
+
+### Supported operator families
+- arithmetic: `+ - * / %`
+- comparison: `== != < <= > >=`
+- logical: `&& ||`
+
+### Rules
+- recursive AST normalization
+- literals are normalized at leaves
+- parentheses are preserved
+- no combinatorial expansion
+
+---
+
+## 6. Runtime Delegation
+
+PHP-specific behavior must go through runtime helpers when required.
+
+Examples:
+- `php::isset`
+- `php::empty`
+- `php::constant`
+- `php::identical`
+- `php::not_identical`
+- `scpp::pow`
+- `scpp::cmp`
+
+---
+
+## 7. Casting
+
+- scalar casts use `static_cast<T>(...)`
+- string conversion uses `string_t(...)`
+- C-style casts are allowed only for non-literals when required as a temporary form
+
+---
+
+## 8. Functions
+
+- typed parameters are mandatory
+- explicit return types are mandatory
+- default values must be normalized
+- nullable types must be emitted as `nullable<T>` for nullable value types
+- references are supported for functions and methods when explicit in source
+- reference semantics are emitted literally and are never inferred
+- default parameter values are allowed and belong to declarations only
+
+---
+
+## 9. Control Flow
+
+### Supported
+- `if / else / elseif`
+- `while`
+- `do-while`
+- `for`
+- `switch` (known mismatch remains documented separately)
+
+### Rejected
+- `foreach`
+
+---
+
+## 10. Statements
+
+- expression statements are allowed
+- compound assignments are allowed after normalization
+- `++` and `--` require a declared variable
+
+---
+
+## 11. Rejected Features
+
+- arrays
+- `stdClass` / object iteration
+- `foreach`
+- `include` / `require`
+- `and` / `or` / `xor`
+- untyped parameters
+- function or method overloading
+- untyped raw `null` assignment
+
+---
+
+## 12. Incompatibilities
+
+See `incompatibilities.md`.
+
+Known items include:
+- division semantics
+- `switch` behavior differences
+- spaceship operator
+
+---
+
+## 13. Compilation Constraints
+
+All generated C++ code must compile with `-Wshadow` enabled.
+
+### Implications
+- generated symbol access must remain explicit and unambiguous under C++ shadowing semantics
+- generation must not rely on unstable lookup behavior
+- use-before-declare remains an error
+
+---
+
+## 14. Namespaces
+
+### 14.1 Declaration Emission
+- PHP namespaces are emitted under `scpp::...`
+- semicolon and braced namespace forms are structurally equivalent
+- compact nested namespace syntax such as `namespace scpp::A::B {}` is valid and preferred
+
+### 14.2 Qualified Name Lowering
+- fully-qualified PHP names `\A\B\x` lower to `::scpp::A::B::x`
+- qualified PHP names `A\B\x` lower to `A::B::x`
+- unqualified PHP names `x` remain `x`
+
+### 14.3 Uniform Symbol Path Rule
+Qualified symbol access is uniform across namespace-like members.
+
+Namespaces, classes, functions, constants, and namespace-scope variables use the same path resolution syntax, while preserving their own symbol kind and usage rules.
+
+### 14.4 Symbol Resolution Simplicity
+Except for explicitly defined cases, the generator must not attempt semantic symbol resolution.
+
+Namespace and class name lowering remains syntactic unless a rule states otherwise.
+
+### 14.5 Namespace Imports
+PHP `use` imports are deferred.
+
+They must not be translated directly to C++ `using namespace`.
+
+### 14.6 Namespace-Scope Constants and Variables
+- namespace-scope constants are allowed
+- namespace-scope mutable variables are forbidden
+
+
+## 15. File Emission Model
+
+- one PHP input file generates one `.hpp` file and one `.cpp` file
+- generation is organized per input file, not per class
+- the generated header contains declarations and the generated source contains out-of-line definitions
+- generated files may always include a broad runtime/project header
+- include minimization is not required for the generator
+
+### Forward Declarations
+- forward declarations may be used only in trivial obvious cases where a class type is referenced through `shared_p<T>` in declarations
+- the generator must not build a dependency solver for include optimization
+- if a case is not trivially safe for forward declaration, the generator may use the simpler include-based path instead
+
+## 16. Expression Emission Policy
+
+- expression lowering must remain structural and simple
+- the generator must not try to behave like a semantic expression compiler
+- casts, operators, precedence-preserving grouping, wrapper-type behavior, and null checks are emitted into C++ according to the configured forms and are then handled by the runtime and the C++ compiler
+- the generator should only reject an expression when a generation rule explicitly marks that source form unsupported
+
+## 17. Deferred Intent Metadata
+
+- source-level intent that is not yet enforced at generation time may be recorded as metadata
+- this includes, for example, non-null object intent where `T` and `?T` currently emit the same object-handle type
+- recording intent metadata must not change the current emitted C++ form unless a generation rule explicitly requires it
+- namespace-scope assignments are allowed only when they lower to constant declarations such as `const auto X = ...;`
+
+### 14.7 Namespace-Scope Executable Code
+Executable statements must not be emitted directly at namespace scope.
+
+Executable statements inside the same namespace body are consolidated into a single synthetic namespace `main()`, even when declarations appear between them.
+
+Declarations remain at namespace scope and do not split execution into separate synthetic functions.
+
+Source order of executable statements must be preserved when consolidating them into the synthetic namespace `main()`.
+
+This consolidation is valid only when all executable statements belong to the same namespace body and can be merged into a single generated code block for that namespace.
+
+If execution reaches the end of the synthetic namespace `main()` without an explicit return, the generator must append `return 0;`.
+
+The generated global `int main()` must return the result of the selected synthetic namespace `main()` call.
+
+### 14.8 Cross-Namespace Execution Restriction
+Executable statement consolidation applies only within a single namespace body.
+
+Executable code in a parent namespace and executable code in a nested namespace create different execution flows and are not allowed together.
+
+A nested namespace may appear inside a parent namespace execution region only when the nested namespace contributes declarations only.
+
+### 14.9 Multiple Namespace Blocks
+Multiple namespace blocks in one file are deferred until file-structure and translation-unit rules are specified.
+
+---
+
+## 15. Class Construction and Static Access
+
+### 15.1 Object Construction
+`new Class(...)` must be lowered to `create<Class>(...)`.
+
+Examples:
+- `new X()` → `create<X>()`
+- `new \A\B\X()` → `create<::scpp::A::B::X>()`
+
+The generator must not emit raw `new` for these supported construction forms.
+
+### 15.2 Static Access
+- same-namespace static access remains unqualified, for example `X::make()`
+- fully-qualified PHP static access lowers to rooted C++ access, for example `\A\X::make()` → `::scpp::A::X::make()`
+
+### 15.3 Static Access Through Instances
+PHP static access through an instance must be lowered syntactically using `decltype(...)`.
+
+Example:
+- `$x::make()` → `decltype(x)::make()`
+
+The generator must not attempt to validate whether `decltype(...)::member` is semantically valid for the produced C++ type.
+
+If the emitted C++ is invalid, it must fail at C++ compile time rather than being rejected by the generator.
+
+---
+
+# Appendix: Full Original Rules (verbatim)
+
+# Simple C++ – rules.md
+
+This is the single source of truth for generation rules and runtime assumptions.
+
+## 1. Scope and precedence
+
+- General rules in this document have precedence over per-example decisions.
+- Concrete examples may be corrected to comply with these rules.
+- The catalog is for coverage and traceability; this file defines the normative behavior.
+
+## 2. Emission namespace
+
+All generated C++ code must be emitted inside:
+
+```cpp
+namespace scpp {
+	// generated code
+}
+```
+
+## 3. Runtime assumptions
+
+### 3.1 Provided runtime types
+Primitive-like types:
+- `int_t` -> signed 8-byte integer
+- `bool_t` -> C++ `bool`
+- `float_t` -> signed 8-byte floating point
+
+Wrapper / heavy types:
+- `string_t` -> wrapper around `std::string`
+- `vector_t` -> wrapper around `std::vector`
+
+Null support:
+- `null_t` -> custom type
+- `null` -> `inline constexpr null_t null {};`
+
+Nullable support:
+- `nullable<T>`
+- `shared_p<T>`
+- `vector_t`
+- runtime `null` / `nullopt` support via the runtime helpers
+
+### 3.2 Provided runtime helpers
+- `create<T>()`
+- `shared<T>()`
+- `weak<T>()`
+- `unique<T>()`
+
+### 3.3 Runtime boundary
+The generator does **not** validate whether operator overloads or conversions exist in the runtime.
+
+If generated C++ later fails because of:
+- operator overload gaps
+- unsupported runtime conversions
+- stream operator gaps
+- missing runtime helpers
+
+that is outside the current generator scope and may fail at C++ compile time.
+
+### 3.4 Allowed assumed runtime/operator surface
+The generator is allowed to emit code that assumes support for:
+- arithmetic operators
+- comparison operators
+- logical operators
+- `std::cout <<`
+- string concatenation through `+`
+- comparisons against `null`
+
+## 4. Scope model
+
+A scope is:
+- a function body
+- a namespace body
+- the global namespace body
+
+This rule is used for first-assignment / `auto` decisions.
+
+## 5. Variable model
+
+- PHP variables map to native C++ identifiers by removing the `$` prefix.
+- Example: `$a` -> `a`
+- First assignment in the current scope -> declare with `auto`
+- Reassignment in the same scope -> no `auto`
+
+Examples:
+```cpp
+auto a = static_cast<int_t>(1);
+a = static_cast<int_t>(2);
+```
+
+## 6. Global literal normalization rule
+
+**All literals must always be converted to runtime-compatible C++ forms. No exceptions.**
+
+This applies:
+- in assignments
+- in expressions
+- in returns
+- in function arguments
+- in conditions
+- in branch bodies
+- in loop bodies
+
+### 6.1 Primitive literal normalization
+- `int` -> `static_cast<int_t>(...)`
+- `float` -> `static_cast<float_t>(...)`
+- `bool` -> `static_cast<bool_t>(...)`
+
+Examples:
+```cpp
+auto a = static_cast<int_t>(10);
+auto a = static_cast<float_t>(10.5);
+auto a = static_cast<bool_t>(true);
+```
+
+### 6.2 String literal normalization
+PHP string literals must first be normalized into valid C++ string literals, then materialized as `string_t("...")`.
+
+Examples:
+```cpp
+auto a = string_t("x");
+auto a = string_t("");
+```
+
+### 6.3 String restriction
+Never emit:
+```cpp
+static_cast<string_t>(...)
+```
+
+Always emit:
+```cpp
+string_t(...)
+```
+
+### 6.4 Constant normalization
+Global PHP constants are emitted through the PHP runtime layer:
+```cpp
+auto a = php::constant(PHP_INT_MAX);
+```
+
+## 7. Null and nullable rules
+
+### 7.1 Untyped null assignment
+Direct untyped `null` assignment is not allowed:
+```php
+$a = null;
+```
+-> error
+
+### 7.2 Nullable mapping
+- `?T` -> `nullable<T>`
+
+Examples:
+- `?int` -> `nullable<int_t>`
+- `?string` -> `nullable<string_t>`
+
+### 7.3 Typed null
+Allowed:
+```cpp
+nullable<int_t> a = null;
+```
+
+### 7.4 Nullable return of null
+Allowed.
+
+## 8. Type mapping
+
+- `int` -> `int_t`
+- `float` -> `float_t`
+- `bool` -> `bool_t`
+- `string` -> `string_t`
+- `vector` -> `vector_t`
+- `void` -> `void`
+
+Not implemented yet:
+- PHP `array`
+
+## 9. Parameter passing rules
+
+### 9.1 Pass by value
+- `int_t`
+- `float_t`
+- `bool_t`
+- `nullable<int_t>`
+- `nullable<float_t>`
+- `nullable<bool_t>`
+
+### 9.2 Pass by const &
+- `string_t`
+- `vector_t`
+- `nullable<string_t>`
+- `nullable<vector_t>`
+- future heavy wrapper types
+
+## 10. Return rules
+
+### 10.1 Missing declared return type
+- Missing return type -> `auto`
+
+### 10.2 Primitive-like returns
+Return by value for:
+- `int_t`
+- `float_t`
+- `bool_t`
+- `nullable<int_t>`
+- `nullable<float_t>`
+- `nullable<bool_t>`
+
+### 10.3 Heavy / wrapper returns
+Return by `const &` only when the returned expression is clearly an existing stable object/reference.
+
+Examples:
+```cpp
+const string_t& f(const string_t& a) { return a; }
+const nullable<string_t>& f(const nullable<string_t>& a) { return a; }
+```
+
+Return by value for:
+- literals
+- temporary objects
+- computed expressions
+- concatenations
+- function call results
+- any return expression whose lifetime safety is not explicitly known
+
+Examples:
+```cpp
+string_t f() { return string_t("x"); }
+string_t f(const string_t& a) { return a + string_t("x"); }
+string_t f() { return func_in_another_file(); }
+nullable<string_t> f(const nullable<string_t>& a) { return null; }
+```
+
+## 11. Function declaration rules
+
+### 11.1 Parameters
+- Parameters must have explicit types
+- Missing parameter type -> error
+
+### 11.2 Representative forms
+```cpp
+int_t f(int_t a) { return a; }
+const string_t& f(const string_t& a) { return a; }
+string_t f() { return string_t("x"); }
+```
+
+## 12. PHP runtime boundary rules
+
+These PHP semantics must go through the `php::` layer:
+
+- `unset($a)` -> `php::unset(a);`
+- `isset($b)` -> `php::isset(b)`
+- `empty($b)` -> `php::empty(b)`
+- strict equality `===` -> `php::identical(...)`
+- strict inequality `!==` -> `php::not_identical(...)`
+- global constants -> `php::constant(...)`
+
+## 13. Simple C++ runtime/helper boundary rules
+
+Helpers that are not plain PHP semantic primitives may go through the `scpp::` layer.
+
+Current accepted case:
+- exponentiation `**` -> `scpp::pow(...)`
+
+Example:
+```cpp
+auto a = scpp::pow(static_cast<int_t>(2), static_cast<int_t>(3));
+```
+
+## 14. Expression normalization rules
+
+### 14.1 Recursive normalization
+Expression normalization is recursive and bottom-up on the AST.
+
+Every literal at any depth must be normalized.
+
+Example:
+```cpp
+auto a = (b + static_cast<int_t>(1)) * static_cast<int_t>(2);
+```
+
+### 14.2 Parentheses
+Preserve parentheses to maintain evaluation order.
+
+### 14.3 Chained assignment
+Chained assignments must be decomposed into sequential statements.
+
+Example:
+```cpp
+auto b = static_cast<int_t>(1);
+auto a = b;
+```
+
+## 15. Generalized operator families
+
+### 15.1 Arithmetic family
+Covers:
+- `+`
+- `-`
+- `*`
+- `/`
+- `%`
+
+Rule:
+Binary arithmetic operations must be emitted as arithmetic on normalized runtime-typed operands. Any literal operand must first be converted with the appropriate `static_cast<..._t>(...)`.
+
+Examples:
+```cpp
+auto a = static_cast<int_t>(1) + static_cast<int_t>(2);
+auto a = static_cast<int_t>(1) - static_cast<int_t>(2);
+auto a = static_cast<int_t>(2) * static_cast<int_t>(3);
+auto a = static_cast<int_t>(4) / static_cast<int_t>(2);
+auto a = static_cast<int_t>(5) % static_cast<int_t>(2);
+auto a = b + static_cast<int_t>(1) + c;
+```
+
+### 15.2 Concatenation family
+PHP `.` maps to C++ `+` on `string_t` operands.
+
+Examples:
+```cpp
+auto a = string_t("a") + string_t("b");
+auto a = b + string_t("x");
+auto a = string_t("x") + b;
+```
+
+### 15.3 Non-strict comparison family
+Covers:
+- `==`
+- `!=`
+- `<`
+- `<=`
+- `>`
+- `>=`
+
+Rule:
+Comparison operations must operate on normalized operands. Any literal operand must be converted using the appropriate runtime cast.
+
+Examples:
+```cpp
+auto a = (b == static_cast<int_t>(1));
+auto a = (b != static_cast<int_t>(1));
+auto a = (b < static_cast<int_t>(1));
+auto a = (b <= static_cast<int_t>(1));
+auto a = (b > static_cast<int_t>(1));
+auto a = (b >= static_cast<int_t>(1));
+```
+
+### 15.4 Strict comparison family
+- `===` -> `php::identical(...)`
+- `!==` -> `php::not_identical(...)`
+
+Examples:
+```cpp
+auto a = php::identical(b, static_cast<int_t>(1));
+auto a = php::not_identical(b, static_cast<int_t>(1));
+```
+
+### 15.5 Unary numeric operators
+Examples:
+```cpp
+auto a = -b;
+auto a = +b;
+```
+
+## 16. Null coalescing
+
+Accepted lowering:
+```php
+$b ?? 1
+```
+
+becomes:
+```cpp
+(b != null) ? b : static_cast<int_t>(1)
+```
+
+Rules:
+- `null` is emitted directly
+- fallback literals still follow normal literal conversion rules
+
+## 17. Output rules
+
+- `echo` -> `std::cout <<`
+
+Examples:
+```cpp
+std::cout << a;
+std::cout << a << b << c;
+```
+
+## 18. Error handling policy
+
+For unsupported or invalid cases:
+- stop generation immediately
+- throw an error
+- include file / line / position if available
+
+## 19. Formatting
+
+Current target:
+- compact
+- readable
+- tabs for indentation
+
+## 20. Notes on known open incompatibilities
+
+These are known and not yet fully resolved in rules:
+
+### 20.1 Division semantics
+PHP `/` produces a floating-point result; C++ `/` depends on operand types.
+A later normalization/promotion rule is required.
+
+### 20.2 Loose comparison semantics
+PHP `==` and `!=` are not fully equivalent to native C++ `==` and `!=`.
+A later decision must either:
+- route them through runtime helpers, or
+- formally restrict supported operand/type combinations.
+
+
+
+## 16. Classes, Inheritance, and Members
+
+### 16.1 File Split
+- each user PHP class lowers to a header declaration unit and a source implementation unit
+- the header contains the class definition, fields, constructor declarations, destructor declarations, and method declarations
+- the source contains out-of-line constructor, destructor, and method bodies
+
+### 16.2 Supported Forms
+- inheritance is supported
+- interfaces are supported
+- traits are not supported
+- only one parent class is allowed
+- multiple interfaces are allowed
+
+### 16.3 Base Alias
+- if a class has a parent, emit `using base = Parent;` in the class body
+- `parent::method(...)` lowers to `base::method(...)`
+- `parent::__construct(...)` lowers to a base initializer call
+
+### 16.4 Construction and Lifetime Surface
+- `new Class(...)` lowers to `create<Class>(...)`
+- direct construction of user-defined PHP classes is forbidden
+- direct construction is required for whitelisted runtime/value types such as `string_t` and `vector_t`
+- explicit runtime ownership forms such as `weak($object)`, `unique(new MyClass)`, and `shared(new MyClass)` are allowed surface forms when separately supported by the generator; `shared(new MyClass)` is the explicit counterpart of `create<MyClass>(...)`
+
+### 16.5 Instance Context
+- `$this` is valid only in instance methods, constructors, and destructors
+- `$this->prop` lowers to `this->prop`
+- `$this->method(...)` lowers to `this->method(...)`
+
+### 16.6 Properties
+- properties must be typed
+- instance properties are emitted in the header only
+- property initialization at declaration is not supported; constructor initialization must be used instead
+- dynamic properties are not supported
+- dynamic property names are not supported
+- object-typed fields lower to handle fields such as `shared_p<B>`
+- when needed for headers, forward declarations such as `class B;` may be emitted
+- static object-typed properties use the same handle model
+
+### 16.7 Methods and Special Members
+- non-static methods are supported
+- static methods are supported
+- constructors are supported
+- destructors are supported
+- abstract classes are supported when explicitly declared abstract
+- abstract methods lower to pure virtual methods
+- interface methods lower to pure virtual methods
+- `#[\Override]` is required to emit `override`; the generator must not infer overrides
+- `final` is preserved on declarations
+- `abstract static` methods are rejected
+- `static` with `#[\Override]` is rejected
+- class and method overloading are forbidden
+
+### 16.8 Dispatch and Validation Boundary
+- ordinary methods are not made virtual unless an explicit rule requires it
+- dispatch remains ordinary C++ dispatch
+- the generator must not attempt hierarchy validation, symbol resolution across files, or override correctness checks unless a generation rule explicitly requires a local structural check
+- let the C++ compiler fail for semantic issues outside generator scope
+
+### 16.9 Static Access Through Instances
+- PHP static access through an instance must be lowered syntactically using `decltype(...)`
+- `$x::make()` → `decltype(x)::make()`
+- `$x::$prop` → `decltype(x)::prop`
+- the generator must not attempt to validate whether the generated C++ member access is semantically valid
+
+
+## (Added) Global Execution Clarification
+
+For global PHP executable code:
+
+namespace scpp {
+	int main() { ... }
+}
+
+int main() {
+	return scpp::main();
+}
+

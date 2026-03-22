@@ -12,30 +12,13 @@
     "condition_lowering": {
       "semantic_type": "bool_t",
       "cpp_bridge": "native_value"
-    }
+    },
+    "default_assignment_policy": "forbidden"
   },
   "types": {
     "null_t": {
       "kind": "scalar_tag",
       "header": "scpp/null_t.hpp",
-      "template": false,
-      "cpp_underlying": null,
-      "stable_core_api": [
-        "default_ctor"
-      ]
-    },
-    "nullopt_t": {
-      "kind": "scalar_tag",
-      "header": "scpp/nullopt_t.hpp",
-      "template": false,
-      "cpp_underlying": null,
-      "stable_core_api": [
-        "default_ctor"
-      ]
-    },
-    "nullptr_t": {
-      "kind": "scalar_tag",
-      "header": "scpp/nullptr_t.hpp",
       "template": false,
       "cpp_underlying": null,
       "stable_core_api": [
@@ -152,7 +135,6 @@
       "stable_core_api": [
         "default_ctor",
         "null_ctor",
-        "nullptr_ctor",
         "explicit_native_ctor",
         "has_value",
         "get",
@@ -172,7 +154,6 @@
       "stable_core_api": [
         "default_ctor",
         "null_ctor",
-        "nullptr_ctor",
         "explicit_native_ctor",
         "move_ctor",
         "move_assign",
@@ -196,7 +177,6 @@
       "stable_core_api": [
         "default_ctor",
         "null_ctor",
-        "nullptr_ctor",
         "explicit_native_ctor",
         "explicit_from_shared",
         "expired",
@@ -215,7 +195,6 @@
       "stable_core_api": [
         "default_ctor",
         "null_ctor",
-        "nullopt_ctor",
         "value_ctor",
         "has_value",
         "reset",
@@ -721,15 +700,6 @@
       "enabled": true,
       "operators": [
         {
-          "symbol": "+",
-          "arity": 2,
-          "operands": [
-            "string_t",
-            "string_t"
-          ],
-          "result": "string_t"
-        },
-        {
           "symbol": "==",
           "arity": 2,
           "operands": [
@@ -965,6 +935,146 @@
           "vector_t<T>"
         ]
       ]
+    },
+    {
+      "name": "string_arithmetic",
+      "patterns": [
+        [
+          "string_t",
+          "+",
+          "string_t"
+        ],
+        [
+          "string_t",
+          "-",
+          "string_t"
+        ],
+        [
+          "string_t",
+          "*",
+          "string_t"
+        ],
+        [
+          "string_t",
+          "/",
+          "string_t"
+        ]
+      ]
+    },
+    {
+      "name": "nullable_arithmetic",
+      "patterns": [
+        [
+          "nullable<T>",
+          "+",
+          "nullable<T>"
+        ],
+        [
+          "nullable<T>",
+          "-",
+          "nullable<T>"
+        ],
+        [
+          "nullable<T>",
+          "*",
+          "nullable<T>"
+        ],
+        [
+          "nullable<T>",
+          "/",
+          "nullable<T>"
+        ]
+      ]
+    },
+    {
+      "name": "pointer_arithmetic",
+      "patterns": [
+        [
+          "shared_p<T>",
+          "+",
+          "shared_p<T>"
+        ],
+        [
+          "shared_p<T>",
+          "-",
+          "shared_p<T>"
+        ],
+        [
+          "shared_p<T>",
+          "*",
+          "shared_p<T>"
+        ],
+        [
+          "shared_p<T>",
+          "/",
+          "shared_p<T>"
+        ],
+        [
+          "unique_p<T>",
+          "+",
+          "unique_p<T>"
+        ],
+        [
+          "unique_p<T>",
+          "-",
+          "unique_p<T>"
+        ],
+        [
+          "unique_p<T>",
+          "*",
+          "unique_p<T>"
+        ],
+        [
+          "unique_p<T>",
+          "/",
+          "unique_p<T>"
+        ],
+        [
+          "weak_p<T>",
+          "+",
+          "weak_p<T>"
+        ],
+        [
+          "weak_p<T>",
+          "-",
+          "weak_p<T>"
+        ],
+        [
+          "weak_p<T>",
+          "*",
+          "weak_p<T>"
+        ],
+        [
+          "weak_p<T>",
+          "/",
+          "weak_p<T>"
+        ]
+      ]
+    },
+    {
+      "name": "sentinel_arithmetic",
+      "patterns": [
+        [
+          "null_t",
+          "+",
+          "null_t"
+        ],
+        [
+          "null_t",
+          "-",
+          "null_t"
+        ],
+        [
+          "null_t",
+          "*",
+          "null_t"
+        ],
+        [
+          "null_t",
+          "/",
+          "null_t"
+        ]
+      ]
     }
   ],
   "generation": {
@@ -976,6 +1086,95 @@
     "emit_named_cast_helpers": true,
     "named_cast_template": "cast<To>(value)",
     "sort_generated_members": true,
-    "group_output_by_type": true
-  }
+    "group_output_by_type": true,
+    "emit_assignment_operators": true
+  },
+  "assignments": [
+    {
+      "target": "bool_t",
+      "source": "bool_t",
+      "kind": "copy"
+    },
+    {
+      "target": "int_t",
+      "source": "int_t",
+      "kind": "copy"
+    },
+    {
+      "target": "float_t",
+      "source": "float_t",
+      "kind": "copy"
+    },
+    {
+      "target": "string_t",
+      "source": "string_t",
+      "kind": "copy"
+    },
+    {
+      "target": "vector_t<T>",
+      "source": "vector_t<T>",
+      "kind": "copy",
+      "template_rule": true
+    },
+    {
+      "target": "nullable<T>",
+      "source": "T",
+      "kind": "copy",
+      "template_rule": true
+    },
+    {
+      "target": "nullable<T>",
+      "source": "nullable<T>",
+      "kind": "copy",
+      "template_rule": true
+    },
+    {
+      "target": "nullable<T>",
+      "source": "null_t",
+      "kind": "reset_to_empty",
+      "template_rule": true
+    },
+    {
+      "target": "shared_p<T>",
+      "source": "shared_p<T>",
+      "kind": "copy",
+      "template_rule": true
+    },
+    {
+      "target": "shared_p<T>",
+      "source": "null_t",
+      "kind": "reset_to_null",
+      "template_rule": true
+    },
+    {
+      "target": "unique_p<T>",
+      "source": "unique_p<T>",
+      "kind": "move",
+      "template_rule": true
+    },
+    {
+      "target": "unique_p<T>",
+      "source": "null_t",
+      "kind": "reset_to_null",
+      "template_rule": true
+    },
+    {
+      "target": "weak_p<T>",
+      "source": "weak_p<T>",
+      "kind": "copy",
+      "template_rule": true
+    },
+    {
+      "target": "weak_p<T>",
+      "source": "shared_p<T>",
+      "kind": "copy_from_shared",
+      "template_rule": true
+    },
+    {
+      "target": "weak_p<T>",
+      "source": "null_t",
+      "kind": "reset_to_empty",
+      "template_rule": true
+    }
+  ]
 }

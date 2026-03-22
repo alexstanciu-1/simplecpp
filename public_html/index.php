@@ -1,5 +1,29 @@
 <?php
 
+if (false) {
+	$files = glob(realpath("../simple_cpp/php_generator/samples/")."/*.php");
+	
+	foreach ($files as $f) {
+		
+		$source_code = file_get_contents($f);
+		$ast_vers_used = 120; # max(\ast\get_supported_versions());
+		$ast = \ast\parse_code($source_code, $ast_vers_used);
+		$json = 
+				[
+					'php_version' => PHP_VERSION,
+					'php_ast_extension_version' => phpversion('ast'),
+					'ast_version_used' => $ast_vers_used,
+					'supported_versions' => \ast\get_supported_versions(),
+					'tokens' => token_get_all($source_code),
+					'ast' => $ast,
+				];
+		file_put_contents($f.".json", json_encode($json));
+	}
+	
+	var_dump($files);
+	die;
+}
+
 if ($_GET['export_php_ast'] ?? false) {
 	
 	$source_code = file_get_contents("php://input") ?: '<?php echo "works";';
