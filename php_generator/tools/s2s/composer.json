@@ -1,0 +1,9 @@
+{
+	"name": "scpp/php-generator-skeleton",
+	"type": "project",
+	"autoload": {
+		"psr-4": {
+			"Scpp\\S2S\\": "src/"
+		}
+	}
+}
