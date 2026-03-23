@@ -6,6 +6,7 @@
 #include "scpp/null_t.hpp"
 #include "scpp/nullopt_t.hpp"
 #include "scpp/nullptr_t.hpp"
+#include "scpp/nullable.hpp"
 #include "scpp/string_t.hpp"
 
 namespace scpp {
@@ -45,6 +46,21 @@ inline int_t cast<int_t, float_t>(const float_t &value) {
 	return int_t(static_cast<std::int64_t>(value.native_value()));
 }
 
+
+
+// nullable<T> -> T
+// Explicit unwrap used by generator-emitted return/cast sites after a non-null control-flow check.
+template <typename To>
+inline To cast(const nullable<To> &value) {
+	return value.value();
+}
+
+// Identity cast for string_t
+// Keeps generator-emitted cast<string_t>(string_t) expressions valid and explicit.
+template <>
+inline string_t cast<string_t, string_t>(const string_t &value) {
+	return value;
+}
 // int_t -> string_t
 // Numeric to string conversion is explicit and centralized here.
 template <>

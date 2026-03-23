@@ -248,10 +248,22 @@ final class IrBuilder
 			}
 		}
 
+		$interfaces = [];
+		foreach (($children['implements']['children'] ?? []) as $interfaceNode) {
+			$name = $this->readNameString($interfaceNode);
+			if ($name !== '') {
+				$interfaces[] = $name;
+			}
+		}
+
 		return new ClassDecl(
 			name: (string) ($children['name'] ?? 'Anonymous'),
 			properties: $properties,
 			methods: $methods,
+			parentClass: ($name = $this->readNameString($children['extends'] ?? null)) !== '' ? $name : null,
+			interfaces: $interfaces,
+			isInterface: (((int) ($node['flags'] ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
+			isAbstract: (((int) ($node['flags'] ?? 0)) & AstKind::CLASS_ABSTRACT) !== 0,
 		);
 	}
 

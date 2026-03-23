@@ -34,6 +34,7 @@ final class Generator
 	/** @var array<string, bool> */
 	private array $predefinedConstants = [];
 	private NameRegistry $nameRegistry;
+	private ?string $currentReturnType = null;
 
 	/**
 
@@ -138,10 +139,10 @@ final class Generator
 
 		$useLines = $this->renderUseDeclarations($uses);
 		foreach ($useLines as $useLine) {
-			$header[] = $this->indent(1) . $useLine;
+			$source[] = $this->indent(1) . $useLine;
 		}
 		if ($useLines !== []) {
-			$header[] = '';
+			$source[] = '';
 		}
 
 		foreach ($constants as $constant) {
@@ -231,7 +232,8 @@ final class Generator
 
 	private function emitConstant(array &$header, ConstantDecl $constant, ?string $namespacePhp): void
 	{
-		$header[] = 'inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
+		$type = $this->inferConstantType($constant->value, $namespacePhp);
+		$header[] = 'inline const ' . $type . ' ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
 	}
 
 	/**
@@ -250,21 +252,33 @@ final class Generator
 
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
 	{
-		$header[] = 'class ' . $class->name . ' {';
+		$extends = [];
+		if ($class->parentClass !== null) {
+			$extends[] = 'public ' . $this->typeMapper->mapClassName($class->parentClass);
+		}
+		foreach ($class->interfaces as $interface) {
+			$extends[] = 'public ' . $this->typeMapper->mapClassName($interface);
+		}
+		$header[] = 'class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {';
 		$header[] = 'public:';
 		foreach ($class->properties as $property) {
 			$type = $property->type !== null ? $this->typeMapper->mapDeclaredType($property->type) : 'auto';
 			$header[] = $this->indent(1) . $type . ' ' . $property->name . ';';
 		}
 		foreach ($class->methods as $method) {
-			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class->name, $namespacePhp) . ';';
+			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';';
 		}
 		$header[] = '};';
 		$header[] = '';
 
-		foreach ($class->methods as $method) {
-			$source[] = $this->renderMethodDefinition($class->name, $method, $namespacePhp);
-			$source[] = '';
+		if (!$class->isInterface) {
+			foreach ($class->methods as $method) {
+				if ($this->methodIsAbstract($method, $class)) {
+					continue;
+				}
+				$source[] = $this->renderMethodDefinition($class, $method, $namespacePhp);
+				$source[] = '';
+			}
 		}
 	}
 
@@ -311,6 +325,7 @@ final class Generator
 		$source[] = 'int ' . $name . '() {';
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
+		$this->currentReturnType = 'int';
 		foreach ($statements as $statement) {
 			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
 				$source[] = $this->indent(1) . $line;
@@ -318,6 +333,7 @@ final class Generator
 		}
 		$source[] = $this->indent(1) . 'return 0;';
 		$source[] = '}';
+		$this->currentReturnType = null;
 	}
 
 	/**
@@ -334,14 +350,22 @@ final class Generator
 
 	 */
 
-	private function renderMethodDeclaration(MethodDecl $method, ?string $className = null, ?string $namespacePhp = null): string
+	private function renderMethodDeclaration(MethodDecl $method, ClassDecl|string|null $classDecl = null, ?string $namespacePhp = null): string
 	{
+		$className = is_string($classDecl) ? $classDecl : ($classDecl?->name);
 		if ($method->name === '__construct' && $className !== null) {
 			return $className . '(' . $this->renderParams($method->params, true, $namespacePhp) . ')';
 		}
 		$prefix = $method->isStatic ? 'static ' : '';
+		if (!$method->isStatic && $classDecl instanceof ClassDecl && ($classDecl->isInterface || $classDecl->parentClass !== null || $classDecl->interfaces !== [])) {
+			$prefix .= 'virtual ';
+		}
 		$returnType = $this->typeMapper->mapReturnType($method->returnType, $method->returnsByReference);
-		return $prefix . $returnType . ' ' . $method->name . '(' . $this->renderParams($method->params, true, $namespacePhp) . ')';
+		$declaration = $prefix . $returnType . ' ' . $method->name . '(' . $this->renderParams($method->params, true, $namespacePhp) . ')';
+		if ($classDecl instanceof ClassDecl && $this->methodIsAbstract($method, $classDecl)) {
+			$declaration .= ' = 0';
+		}
+		return $declaration;
 	}
 
 	/**
@@ -358,7 +382,35 @@ final class Generator
 
 	 */
 
-	private function renderMethodDefinition(string $className, MethodDecl $method, ?string $namespacePhp): string
+	
+	private function methodIsAbstract(MethodDecl $method, ClassDecl $class): bool
+	{
+		return $class->isInterface || $method->statements === [];
+	}
+
+	private function extractParentConstructorArgs(array $statements): ?array
+	{
+		$first = $statements[0] ?? null;
+		if (!$first instanceof Statement || $first->kind !== 'expr' || !is_array($first->payload)) {
+			return null;
+		}
+		$expr = $first->payload;
+		if (($expr['kind'] ?? null) !== AstKind::STATIC_CALL) {
+			return null;
+		}
+		$classNode = $expr['children']['class'] ?? null;
+		$method = (string) ($expr['children']['method'] ?? '');
+		if (!is_array($classNode) || ($classNode['kind'] ?? null) !== AstKind::NAME) {
+			return null;
+		}
+		$name = strtolower((string) ($classNode['children']['name'] ?? ''));
+		if ($name !== 'parent' || $method !== '__construct') {
+			return null;
+		}
+		return $expr['children']['args']['children'] ?? [];
+	}
+
+private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
 	{
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
@@ -368,13 +420,29 @@ final class Generator
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
 		}
+		$className = $class->name;
+		$statements = $method->statements;
+		$initializer = '';
 		if ($method->name === '__construct') {
-			$signature = $className . '::' . $className . '(' . $this->renderParams($method->params, false, $namespacePhp) . ')';
+			$this->currentReturnType = null;
+			if ($class->parentClass !== null) {
+				$parentArgs = $this->extractParentConstructorArgs($statements);
+				if ($parentArgs !== null) {
+					$initializer = ' : ' . $this->typeMapper->mapClassName($class->parentClass) . '(' . $this->renderArgs($parentArgs, $namespacePhp) . ')';
+					array_shift($statements);
+				}
+			}
+			$signature = $className . '::' . $className . '(' . $this->renderParams($method->params, false, $namespacePhp) . ')' . $initializer;
 		} else {
 			$returnType = $this->typeMapper->mapReturnType($method->returnType, $method->returnsByReference);
+			$this->currentReturnType = $returnType;
 			$signature = $returnType . ' ' . $className . '::' . $method->name . '(' . $this->renderParams($method->params, false, $namespacePhp) . ')';
 		}
-		return $signature . " {\n" . $this->renderBody($method->statements, $namespacePhp) . "\n}";
+		$body = $this->renderBody($statements, $namespacePhp);
+		$this->currentReturnType = null;
+		return $signature . " {
+" . $body . "
+}";
 	}
 
 	/**
@@ -422,8 +490,11 @@ final class Generator
 			}
 		}
 		$returnType = $this->typeMapper->mapReturnType($function->returnType, $function->returnsByReference);
+		$this->currentReturnType = $returnType;
 		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp) . ')';
-		return $signature . " {\n" . $this->renderBody($function->statements, $namespacePhp) . "\n}";
+		$body = $this->renderBody($function->statements, $namespacePhp);
+		$this->currentReturnType = null;
+		return $signature . " {\n" . $body . "\n}";
 	}
 
 	/**
@@ -560,7 +631,7 @@ final class Generator
 			if ($statement->payload === null) {
 				return ['return;'];
 			}
-			return ['return ' . $this->renderExpr($statement->payload, $namespacePhp) . ';'];
+			return ['return ' . $this->renderReturnExpr($statement->payload, $namespacePhp) . ';'];
 		}
 
 		if ($statement->kind === 'echo') {
@@ -778,6 +849,7 @@ final class Generator
 				AstKind::BINARY_BOOL_AND,
 				AstKind::BINARY_BOOL_OR,
 				AstKind::BINARY_IS_SMALLER,
+				AstKind::BINARY_IS_SMALLER_OR_EQUAL,
 				AstKind::BINARY_IS_GREATER,
 				AstKind::BINARY_IS_EQUAL,
 				AstKind::BINARY_IS_IDENTICAL,
@@ -1005,10 +1077,12 @@ final class Generator
 			return match ($flags) {
 				AstKind::PLUS => $left . ' + ' . $right,
 				AstKind::MINUS => $left . ' - ' . $right,
+				AstKind::MUL => $left . ' * ' . $right,
 				AstKind::BINARY_CONCAT => $this->renderStringConcat($leftNode, $rightNode, $namespacePhp),
 				AstKind::BINARY_BOOL_AND => '(' . $left . ' && ' . $right . ')',
 				AstKind::BINARY_BOOL_OR => '(' . $left . ' || ' . $right . ')',
 				AstKind::BINARY_IS_SMALLER => '(' . $left . ' < ' . $right . ')',
+				AstKind::BINARY_IS_SMALLER_OR_EQUAL => '(' . $left . ' <= ' . $right . ')',
 				AstKind::BINARY_IS_GREATER => '(' . $left . ' > ' . $right . ')',
 				AstKind::BINARY_IS_EQUAL, AstKind::BINARY_IS_IDENTICAL => '(' . $left . ' == ' . $right . ')',
 				default => '/* unsupported-binary-op-' . $flags . ' */',
@@ -1040,7 +1114,7 @@ final class Generator
 		}
 		if ($kind === AstKind::NEW) {
 			$class = $this->renderClassName($expr['children']['class'] ?? null, $namespacePhp);
-			return 'create<' . $class . '>(' . $this->renderArgs($expr['children']['args']['children'] ?? [], $namespacePhp) . ')';
+			return '::scpp::create<' . $class . '>(' . $this->renderArgs($expr['children']['args']['children'] ?? [], $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::STATIC_CALL) {
 			$classNode = $expr['children']['class'] ?? null;
@@ -1379,6 +1453,109 @@ final class Generator
 		}
 
 		return $trimmed;
+	}
+
+
+	private function renderReturnExpr(mixed $expr, ?string $namespacePhp): string
+	{
+		$rendered = $this->renderExpr($expr, $namespacePhp);
+		$expected = $this->currentReturnType;
+		if ($expected === null) {
+			return $rendered;
+		}
+
+		$exprType = $this->inferExprType($expr);
+		if ($exprType === 'nullable<' . $expected . '>') {
+			return 'cast<' . $expected . '>(' . $rendered . ')';
+		}
+
+		return $rendered;
+	}
+
+	private function inferExprType(mixed $expr): string
+	{
+		if (is_int($expr)) {
+			return 'int_t';
+		}
+		if (is_float($expr)) {
+			return 'float_t';
+		}
+		if (is_string($expr)) {
+			return 'string_t';
+		}
+		if (!is_array($expr)) {
+			return 'auto';
+		}
+
+		$kind = $expr['kind'] ?? null;
+		if ($kind === AstKind::VAR) {
+			$name = (string) ($expr['children']['name'] ?? '');
+			$declared = $this->declaredLocalTypes[$name] ?? null;
+			if ($declared === null) {
+				return 'auto';
+			}
+			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'ref_p<')) {
+				return $declared;
+			}
+			return $this->typeMapper->mapDeclaredType($declared);
+		}
+
+		return 'auto';
+	}
+
+	private function inferConstantType(mixed $expr, ?string $namespacePhp): string
+	{
+		if (is_int($expr)) {
+			return 'int_t';
+		}
+		if (is_float($expr)) {
+			return 'float_t';
+		}
+		if (is_string($expr)) {
+			return 'string_t';
+		}
+		if (!is_array($expr)) {
+			return 'auto';
+		}
+
+		$kind = $expr['kind'] ?? null;
+		if ($kind === AstKind::CONST) {
+			$name = strtolower(ltrim((string) ($expr['children']['name']['children']['name'] ?? ''), '\\'));
+			return match ($name) {
+				'true', 'false' => 'bool_t',
+				'null' => 'null_t',
+				default => 'auto',
+			};
+		}
+		if ($kind === AstKind::CAST) {
+			$flags = (int) ($expr['flags'] ?? 0);
+			return match ($flags) {
+				AstKind::TYPE_STRING => 'string_t',
+				AstKind::TYPE_LONG => 'int_t',
+				AstKind::TYPE_DOUBLE => 'float_t',
+				AstKind::TYPE_BOOL => 'bool_t',
+				default => 'auto',
+			};
+		}
+		if ($kind === AstKind::ENCAPS_LIST) {
+			return 'string_t';
+		}
+		if ($kind === AstKind::BINARY_OP) {
+			$flags = (int) ($expr['flags'] ?? 0);
+			return match ($flags) {
+				AstKind::BINARY_CONCAT => 'string_t',
+				AstKind::BINARY_BOOL_AND,
+				AstKind::BINARY_BOOL_OR,
+				AstKind::BINARY_IS_SMALLER,
+				AstKind::BINARY_IS_SMALLER_OR_EQUAL,
+				AstKind::BINARY_IS_GREATER,
+				AstKind::BINARY_IS_EQUAL,
+				AstKind::BINARY_IS_IDENTICAL => 'bool_t',
+				default => $this->inferConstantType($expr['children']['left'] ?? null, $namespacePhp),
+			};
+		}
+
+		return 'auto';
 	}
 
 	/** @return array<string, bool> */

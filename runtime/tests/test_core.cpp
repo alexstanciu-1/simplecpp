@@ -65,6 +65,27 @@ static void test_named_casts() {
 	assert(scpp::cast<scpp::string_t>(scpp::float_t(3.5)).native_value().starts_with("3.500000"));
 }
 
+// Verifies the PHP coercion layer used by php::echo.
+static void test_php_to_string_coercions() {
+	assert(scpp::php::to_string(scpp::string_t("abc")).native_value() == "abc");
+	assert(scpp::php::to_string(scpp::int_t(42)).native_value() == "42");
+	assert(scpp::php::to_string(scpp::bool_t(true)).native_value() == "1");
+	assert(scpp::php::to_string(scpp::bool_t(false)).native_value() == "");
+	assert(scpp::php::to_string(scpp::null).native_value() == "");
+	assert(scpp::php::to_string(scpp::nullopt).native_value() == "");
+	assert(scpp::php::to_string(scpp::null_ptr).native_value() == "");
+
+	const scpp::nullable<scpp::int_t> present_int(scpp::int_t(7));
+	const scpp::nullable<scpp::int_t> empty_int(scpp::null);
+	const scpp::nullable<scpp::bool_t> present_bool(scpp::bool_t(true));
+	const scpp::nullable<scpp::string_t> present_string(scpp::string_t("ok"));
+
+	assert(scpp::php::to_string(present_int).native_value() == "7");
+	assert(scpp::php::to_string(empty_int).native_value() == "");
+	assert(scpp::php::to_string(present_bool).native_value() == "1");
+	assert(scpp::php::to_string(present_string).native_value() == "ok");
+}
+
 // Verifies basic wrapped string and vector behavior needed by generated code.
 static void test_containers_and_strings() {
 	scpp::string_t left("Hello");
@@ -88,6 +109,7 @@ int main() {
 	test_int_operations();
 	test_float_operations();
 	test_named_casts();
+	test_php_to_string_coercions();
 	test_containers_and_strings();
 	return 0;
 }

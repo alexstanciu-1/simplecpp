@@ -21,6 +21,30 @@
       "header": "scpp/null_t.hpp",
       "template": false,
       "cpp_underlying": null,
+      "family": "sentinel",
+      "semantic_role": "generic_null",
+      "stable_core_api": [
+        "default_ctor"
+      ]
+    },
+    "nullopt_t": {
+      "kind": "scalar_tag",
+      "header": "scpp/nullopt_t.hpp",
+      "template": false,
+      "cpp_underlying": null,
+      "family": "sentinel",
+      "semantic_role": "optional_empty",
+      "stable_core_api": [
+        "default_ctor"
+      ]
+    },
+    "nullptr_t": {
+      "kind": "scalar_tag",
+      "header": "scpp/nullptr_t.hpp",
+      "template": false,
+      "cpp_underlying": null,
+      "family": "sentinel",
+      "semantic_role": "pointer_empty",
       "stable_core_api": [
         "default_ctor"
       ]
@@ -122,6 +146,56 @@
         "at",
         "index",
         "append"
+      ]
+    },
+    "value_p": {
+      "kind": "template_wrapper",
+      "header": "scpp/value_p.hpp",
+      "template": true,
+      "template_params": [
+        "T"
+      ],
+      "cpp_underlying": "T",
+      "family": "inline_storage",
+      "allocates": false,
+      "copyable": true,
+      "movable": true,
+      "stable_core_api": [
+        "default_ctor",
+        "copy_ctor",
+        "move_ctor",
+        "copy_assign",
+        "move_assign",
+        "explicit_value_ctor",
+        "in_place_ctor",
+        "has_value",
+        "get",
+        "deref",
+        "arrow"
+      ]
+    },
+    "ref_p": {
+      "kind": "template_wrapper",
+      "header": "scpp/ref_p.hpp",
+      "template": true,
+      "template_params": [
+        "T"
+      ],
+      "cpp_underlying": "T*",
+      "family": "reference",
+      "allocates": false,
+      "copyable": true,
+      "movable": true,
+      "nullable": false,
+      "stable_core_api": [
+        "value_ctor",
+        "copy_ctor",
+        "move_ctor",
+        "copy_assign",
+        "move_assign",
+        "get",
+        "deref",
+        "arrow"
       ]
     },
     "shared_p": {
@@ -227,6 +301,40 @@
       "kind": "derived_reference",
       "from": "shared_p<T>",
       "allocates": false
+    },
+    "value": {
+      "enabled": true,
+      "returns": "value_p<T>",
+      "kind": "factory",
+      "allocates": false,
+      "policy_role": "explicit_inline_value_creation"
+    },
+    "ref": {
+      "enabled": true,
+      "kind": "reference_adapter",
+      "allocates": false,
+      "overloads": [
+        {
+          "from": "T&",
+          "returns": "ref_p<T>",
+          "when": "T is not handle_like and not ref_like"
+        },
+        {
+          "from": "value_p<T>&",
+          "returns": "ref_p<T>"
+        },
+        {
+          "from": "ref_p<T>",
+          "returns": "ref_p<T>",
+          "policy_role": "identity"
+        },
+        {
+          "from": "T&",
+          "returns": "T&",
+          "when": "T is handle_like",
+          "policy_role": "handle_passthrough"
+        }
+      ]
     }
   },
   "casts": [
@@ -316,8 +424,216 @@
       "form": "named_cast",
       "cast_name": "cast",
       "template_rule": false
+    },
+    {
+      "from": "string_t",
+      "to": "string_t",
+      "kind": "explicit",
+      "form": "named_cast",
+      "cast_name": "cast",
+      "template_rule": false,
+      "policy_role": "identity"
+    },
+    {
+      "from": "nullable<T>",
+      "to": "T",
+      "kind": "explicit",
+      "form": "named_cast",
+      "cast_name": "cast",
+      "template_rule": true,
+      "policy_role": "unwrap_present_value"
+    },
+    {
+      "from": "nullopt_t",
+      "to": "nullable<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "nullptr_t",
+      "to": "shared_p<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "nullptr_t",
+      "to": "unique_p<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "nullptr_t",
+      "to": "weak_p<T>",
+      "kind": "implicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "T",
+      "to": "value_p<T>",
+      "kind": "explicit",
+      "form": "constructor",
+      "template_rule": true
+    },
+    {
+      "from": "T&",
+      "to": "ref_p<T>",
+      "kind": "explicit",
+      "form": "helper",
+      "helper_name": "ref",
+      "template_rule": true
+    },
+    {
+      "from": "value_p<T>&",
+      "to": "ref_p<T>",
+      "kind": "explicit",
+      "form": "helper",
+      "helper_name": "ref",
+      "template_rule": true
     }
   ],
+  "coercions": {
+    "condition": {
+      "semantic_type": "bool_t",
+      "bridge": "native_value",
+      "allowed_inputs": [
+        "bool_t"
+      ]
+    },
+    "text": {
+      "result_type": "string_t",
+      "dispatch_helper": "to_string",
+      "null_rendering": {
+        "null_t": "",
+        "nullopt_t": "",
+        "nullptr_t": ""
+      },
+      "rules": [
+        {
+          "from": "string_t",
+          "kind": "identity"
+        },
+        {
+          "from": "bool_t",
+          "kind": "helper",
+          "helper_name": "to_string"
+        },
+        {
+          "from": "int_t",
+          "kind": "helper",
+          "helper_name": "to_string"
+        },
+        {
+          "from": "float_t",
+          "kind": "helper",
+          "helper_name": "to_string"
+        },
+        {
+          "from": "null_t",
+          "kind": "literal",
+          "value": ""
+        },
+        {
+          "from": "nullopt_t",
+          "kind": "literal",
+          "value": ""
+        },
+        {
+          "from": "nullptr_t",
+          "kind": "literal",
+          "value": ""
+        },
+        {
+          "from": "nullable<T>",
+          "kind": "helper",
+          "helper_name": "to_string",
+          "template_rule": true
+        },
+        {
+          "from": "value_p<T>",
+          "kind": "helper",
+          "helper_name": "to_string",
+          "template_rule": true
+        },
+        {
+          "from": "ref_p<T>",
+          "kind": "helper",
+          "helper_name": "to_string",
+          "template_rule": true
+        },
+        {
+          "from": "shared_p<T>",
+          "kind": "helper",
+          "helper_name": "to_string",
+          "template_rule": true
+        },
+        {
+          "from": "unique_p<T>",
+          "kind": "helper",
+          "helper_name": "to_string",
+          "template_rule": true
+        },
+        {
+          "from": "weak_p<T>",
+          "kind": "helper",
+          "helper_name": "to_string",
+          "template_rule": true
+        }
+      ]
+    }
+  },
+  "subtyping": {
+    "object_subtype_source": "cpp_pointer_convertibility",
+    "wrapper_rules": [
+      {
+        "wrapper": "shared_p<T>",
+        "variance": "covariant",
+        "from": "shared_p<U>",
+        "to": "shared_p<T>",
+        "when": "U* is convertible to T*",
+        "kind": "implicit"
+      },
+      {
+        "wrapper": "weak_p<T>",
+        "variance": "covariant",
+        "from": "weak_p<U>",
+        "to": "weak_p<T>",
+        "when": "U* is convertible to T*",
+        "kind": "implicit"
+      },
+      {
+        "wrapper": "ref_p<T>",
+        "variance": "covariant",
+        "from": "ref_p<U>",
+        "to": "ref_p<T>",
+        "when": "U* is convertible to T*",
+        "kind": "implicit"
+      }
+    ],
+    "forbidden_wrapper_rules": [
+      {
+        "wrapper": "unique_p<T>",
+        "from": "unique_p<U>",
+        "to": "unique_p<T>",
+        "reason": "ownership_transfer_and_deleter_policy_not_standardized"
+      },
+      {
+        "wrapper": "nullable<T>",
+        "from": "nullable<U>",
+        "to": "nullable<T>",
+        "reason": "generic_inner_subtyping_not_enabled"
+      },
+      {
+        "wrapper": "value_p<T>",
+        "from": "value_p<U>",
+        "to": "value_p<T>",
+        "reason": "inline_value_wrapper_is_not_polymorphic"
+      }
+    ]
+  },
   "overload_families": [
     {
       "name": "bool_logical",
@@ -802,6 +1118,12 @@
           ],
           "result": "bool_t"
         }
+      ],
+      "sentinel_resolution": "equivalence_group",
+      "sentinel_equivalence_group": [
+        "null_t",
+        "nullopt_t",
+        "nullptr_t"
       ]
     },
     {
@@ -847,6 +1169,12 @@
           ],
           "result": "bool_t"
         }
+      ],
+      "sentinel_resolution": "equivalence_group",
+      "sentinel_equivalence_group": [
+        "null_t",
+        "nullopt_t",
+        "nullptr_t"
       ]
     }
   ],
@@ -1077,17 +1405,76 @@
       ]
     }
   ],
-  "generation": {
-    "emit_headers": true,
-    "emit_sources": true,
-    "emit_forward_declarations": true,
-    "emit_runtime_umbrella_header": true,
-    "emit_memory_helpers": true,
-    "emit_named_cast_helpers": true,
-    "named_cast_template": "cast<To>(value)",
-    "sort_generated_members": true,
-    "group_output_by_type": true,
-    "emit_assignment_operators": true
+  "composition_constraints": {
+    "family_tags": {
+      "shared_p<T>": "ownership",
+      "unique_p<T>": "ownership",
+      "weak_p<T>": "ownership",
+      "value_p<T>": "inline_storage",
+      "ref_p<T>": "reference",
+      "nullable<T>": "optionality"
+    },
+    "forbidden_nesting": [
+      {
+        "outer": "value_p<T>",
+        "inner_family": "ownership",
+        "reason": "inline_value_wrapper_must_not_embed_handle_like_ownership_wrappers"
+      },
+      {
+        "outer": "value_p<T>",
+        "inner": "ref_p<U>",
+        "reason": "inline_value_wrapper_must_not_embed_reference_wrappers"
+      },
+      {
+        "outer": "ref_p<T>",
+        "inner_family": "ownership",
+        "reason": "reference_wrapper_must_not_target_handle_like_ownership_wrappers"
+      },
+      {
+        "outer": "ref_p<T>",
+        "inner": "ref_p<U>",
+        "reason": "reference_wrapper_must_not_wrap_reference_wrapper"
+      },
+      {
+        "outer": "nullable<T>",
+        "inner": "unique_p<U>",
+        "reason": "optional_unique_ownership_is_forbidden_due_to_redundant_and_confusing_null_layering"
+      }
+    ],
+    "allowed_special_nesting": [
+      {
+        "outer": "nullable<T>",
+        "inner": "ref_p<U>",
+        "reason": "optional_borrowed_reference_is_allowed_for_runtime_level_use_but_is_not_the_primary_php_object_lowering_model"
+      }
+    ],
+    "helper_collapse_rules": [
+      {
+        "helper": "ref",
+        "input": "ref_p<T>",
+        "result": "ref_p<T>",
+        "policy": "identity"
+      },
+      {
+        "helper": "ref",
+        "input": "value_p<T>&",
+        "result": "ref_p<T>",
+        "policy": "unwrap_inner_value"
+      },
+      {
+        "helper": "ref",
+        "input_family": "ownership",
+        "result": "same_type",
+        "policy": "handle_passthrough"
+      }
+    ],
+    "php_lowering_guidance": {
+      "nullable_object_like": "nullable<shared_p<T>>",
+      "disfavored_forms": [
+        "nullable<ref_p<T>>",
+        "nullable<unique_p<T>>"
+      ]
+    }
   },
   "assignments": [
     {
@@ -1175,6 +1562,139 @@
       "source": "null_t",
       "kind": "reset_to_empty",
       "template_rule": true
+    },
+    {
+      "target": "value_p<T>",
+      "source": "value_p<T>",
+      "kind": "copy",
+      "template_rule": true
+    },
+    {
+      "target": "value_p<T>",
+      "source": "T",
+      "kind": "copy_into_inner",
+      "template_rule": true
+    },
+    {
+      "target": "ref_p<T>",
+      "source": "ref_p<T>",
+      "kind": "copy",
+      "template_rule": true
+    },
+    {
+      "target": "nullable<T>",
+      "source": "nullopt_t",
+      "kind": "reset_to_empty",
+      "template_rule": true
+    },
+    {
+      "target": "nullable<T>",
+      "source": "nullptr_t",
+      "kind": "reset_to_empty",
+      "template_rule": true,
+      "policy_role": "sentinel_equivalence"
+    },
+    {
+      "target": "shared_p<T>",
+      "source": "nullptr_t",
+      "kind": "reset_to_null",
+      "template_rule": true
+    },
+    {
+      "target": "shared_p<T>",
+      "source": "nullopt_t",
+      "kind": "reset_to_null",
+      "template_rule": true,
+      "policy_role": "sentinel_equivalence"
+    },
+    {
+      "target": "unique_p<T>",
+      "source": "nullptr_t",
+      "kind": "reset_to_null",
+      "template_rule": true
+    },
+    {
+      "target": "unique_p<T>",
+      "source": "nullopt_t",
+      "kind": "reset_to_null",
+      "template_rule": true,
+      "policy_role": "sentinel_equivalence"
+    },
+    {
+      "target": "weak_p<T>",
+      "source": "nullptr_t",
+      "kind": "reset_to_empty",
+      "template_rule": true
+    },
+    {
+      "target": "weak_p<T>",
+      "source": "nullopt_t",
+      "kind": "reset_to_empty",
+      "template_rule": true,
+      "policy_role": "sentinel_equivalence"
+    },
+    {
+      "target": "shared_p<T>",
+      "source": "shared_p<U>",
+      "kind": "copy_upcast",
+      "template_rule": true,
+      "when": "U* is convertible to T*"
+    },
+    {
+      "target": "weak_p<T>",
+      "source": "weak_p<U>",
+      "kind": "copy_upcast",
+      "template_rule": true,
+      "when": "U* is convertible to T*"
+    },
+    {
+      "target": "ref_p<T>",
+      "source": "ref_p<U>",
+      "kind": "copy_upcast",
+      "template_rule": true,
+      "when": "U* is convertible to T*"
     }
-  ]
+  ],
+  "sentinel_semantics": {
+    "equivalence_groups": [
+      {
+        "members": [
+          "null_t",
+          "nullopt_t",
+          "nullptr_t"
+        ],
+        "policy": "comparison_equivalent"
+      }
+    ]
+  },
+  "runtime_helpers_contract": {
+    "stable_helpers": [
+      "create",
+      "shared",
+      "unique",
+      "weak",
+      "value",
+      "ref",
+      "cast",
+      "to_string"
+    ],
+    "namespaces": {
+      "core": "scpp",
+      "php": "scpp::php"
+    },
+    "generator_allowed_helpers": [
+      "create",
+      "shared",
+      "unique",
+      "weak",
+      "value",
+      "ref",
+      "cast",
+      "to_string"
+    ],
+    "notes": {
+      "purpose": "declares stable runtime helper entry points that frontends/generators may target directly",
+      "separation_rule": "helpers listed here are shared knowledge contracts, not generator implementation details"
+    }
+  }
 }

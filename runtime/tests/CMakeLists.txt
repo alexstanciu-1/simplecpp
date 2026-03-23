@@ -33,3 +33,8 @@ add_test(NAME scpp_test_sentinels COMMAND test_sentinels)
 add_executable(test_value_ref test_value_ref.cpp)
 target_link_libraries(test_value_ref PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_value_ref COMMAND test_value_ref)
+
+# Cross-feature integration smoke coverage.
+add_executable(test_integration test_integration.cpp)
+target_link_libraries(test_integration PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_integration COMMAND test_integration)

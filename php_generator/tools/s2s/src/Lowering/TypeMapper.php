@@ -20,19 +20,19 @@ final class TypeMapper
 	public function mapDeclaredType(string $phpType): string
 	{
 		if ($this->isInlineValueType($phpType)) {
-			return 'value_p<' . $this->unwrapInlineValueType($phpType) . '>';
+			return 'value_p<' . $this->mapUserTypeName($this->unwrapInlineValueType($phpType)) . '>';
 		}
 
 		if (str_starts_with($phpType, '?')) {
 			$inner = substr($phpType, 1);
 			if ($this->isObjectType($inner)) {
-				return "shared_p<{$inner}>";
+				return 'shared_p<' . $this->mapUserTypeName($inner) . '>';
 			}
 			return 'nullable<' . $this->mapValueType($inner) . '>';
 		}
 
 		if ($this->isObjectType($phpType)) {
-			return "shared_p<{$phpType}>";
+			return 'shared_p<' . $this->mapUserTypeName($phpType) . '>';
 		}
 
 		return $this->mapValueType($phpType);
@@ -168,6 +168,12 @@ final class TypeMapper
 
 	 */
 
+
+	public function mapClassName(string $phpType): string
+	{
+		return $this->mapUserTypeName($phpType);
+	}
+
 	private function mapRefTargetType(string $phpType): string
 	{
 		if ($this->isInlineValueType($phpType)) {
@@ -190,8 +196,18 @@ final class TypeMapper
 			'string' => 'string_t',
 			'void' => 'void',
 			'vector_t' => 'vector_t',
-			default => $phpType,
+			default => $this->mapUserTypeName($phpType),
 		};
+	}
+
+	private function mapUserTypeName(string $phpType): string
+	{
+		$trimmed = ltrim($phpType, '\\');
+		if (str_contains($trimmed, '\\')) {
+			return '::scpp::' . str_replace('\\', '::', $trimmed);
+		}
+
+		return $trimmed;
 	}
 
 	/**

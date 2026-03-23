@@ -51,6 +51,8 @@ final class AstKind
 	public const PARAM = 1536;
 	public const STATIC_VAR = 532;
 	public const STATIC = 16;
+	public const CLASS_INTERFACE = 1;
+	public const CLASS_ABSTRACT = 64;
 	public const IF_ELEM = 535;
 	public const SWITCH = 536;
 	public const SWITCH_CASE = 537;
@@ -67,6 +69,8 @@ final class AstKind
 	public const BINARY_IS_EQUAL = 16;
 	public const BINARY_IS_IDENTICAL = 18;
 	public const BINARY_IS_SMALLER = 20;
+	public const BINARY_IS_SMALLER_OR_EQUAL = 21;
+	public const MUL = 3;
 	public const BINARY_IS_GREATER = 256;
 	public const BINARY_BOOL_OR = 258;
 	public const BINARY_BOOL_AND = 259;
