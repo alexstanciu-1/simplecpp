@@ -1,223 +1,246 @@
 # Runtime Config – Human Review Version
-Non-authoritative mirror of `config.json`
 
-## schema_version
+Non-authoritative review companion for `runtime/specs/config.json`.
 
-### Description
-Auto-generated section for `schema_version`.
+This file is for human inspection only. `config.json` remains the sole machine-readable source of truth.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
-|---|---|---|---|---|
-
-## artifact
+## 1. Runtime Defaults
 
 ### Description
-Auto-generated section for `artifact`.
+Defines the global rules the runtime expects frontends and generators to assume when no narrower rule applies.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
+| `namespace = scpp` | All public runtime wrappers and helpers live under one namespace. | `$x = 1;` | `::scpp::int_t x = ::scpp::int_t(1);` | The generated code should target the configured runtime namespace directly. |
+| `umbrella_header = scpp/runtime.hpp` | One umbrella include is the default integration point. | `echo 1;` | `#include <scpp/runtime.hpp>` | Keeps generated translation units stable even when internal headers evolve. |
+| `create_default_owner = shared` | Default managed object creation uses shared ownership. | `$x = new Service();` | `auto x = ::scpp::create<Service>();` | This matches the current PHP object-lowering model. |
+| `default_cast_policy = forbidden` | A cast is illegal unless it is explicitly listed in the cast table. | `$x = (bool)$value;` | `auto x = ::scpp::cast<::scpp::bool_t>(value);` | Prevents accidental C++ implicit conversions from becoming part of the language model. |
+| `default_overload_policy = forbidden` | An operator is illegal unless an overload family enables it. | `$x + $y;` | `auto z = x + y; // only when an enabled family covers it` | Operator surface area is opt-in, not inherited from underlying C++ types. |
+| `emit_deleted_for_forbidden_operations = true` | Forbidden operations should fail loudly at compile time. | `$a + $b; // where the combo is forbidden` | `auto operator+(...) = delete;` | This turns policy mistakes into local compiler errors instead of runtime surprises. |
+| `comparison_result_type = bool_t` | Comparisons standardize on one semantic boolean type. | `if ($a == $b) {}` | `::scpp::bool_t same = (a == b);` | The runtime does not leak raw native `bool` as its semantic result type. |
+| `condition_lowering.semantic_type = bool_t` | Conditions are expressed semantically as `bool_t`. | `if ($flag) {}` | `if (flag.native_value()) { ... }` | The generator first produces `bool_t`, then bridges to native C++ condition syntax. |
+| `default_assignment_policy = forbidden` | Assignments are illegal unless covered by the assignment matrix. | `$a = $b;` | `a = b; // only when an assignment rule exists` | This keeps assignment semantics explicit, especially for wrappers and sentinels. |
 
-## runtime
+## 2. Runtime Types
 
 ### Description
-Auto-generated section for `runtime`.
+Defines the semantic wrappers, sentinels, and template wrappers the runtime exposes. The intent here is not to restate every field mechanically, but to make the design reviewable.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+### 2.1 Sentinel tags
+
+#### Description
+These are zero-value semantic sentinels. They are not payload carriers; they exist to express different kinds of emptiness in a controlled way.
+
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `namespace` | `scpp` | `// example` | `// generated` | Auto-mapped from config |
-| `umbrella_header` | `scpp/runtime.hpp` | `// example` | `// generated` | Auto-mapped from config |
-| `create_default_owner` | `shared` | `// example` | `// generated` | Auto-mapped from config |
-| `default_cast_policy` | `forbidden` | `// example` | `// generated` | Auto-mapped from config |
-| `default_overload_policy` | `forbidden` | `// example` | `// generated` | Auto-mapped from config |
-| `emit_deleted_for_forbidden_operations` | `True` | `// example` | `// generated` | Auto-mapped from config |
-| `comparison_result_type` | `bool_t` | `// example` | `// generated` | Auto-mapped from config |
-| `condition_lowering` | `{'semantic_type': 'bool_t', 'cpp_bridge': 'native_value'}` | `// example` | `// generated` | Auto-mapped from config |
-| `default_assignment_policy` | `forbidden` | `// example` | `// generated` | Auto-mapped from config |
+| `null_t: scalar_tag` | Generic null sentinel. | `$x = null;` | `::scpp::null_t x = ::scpp::null_t();` | Used as the main null-like semantic value across casts, assignments, and comparisons. |
+| `nullopt_t: scalar_tag` | Optional-empty sentinel. | `$x = null; // optional-like empty state` | `::scpp::nullopt_t x = ::scpp::nullopt_t();` | Separates “empty optional” from other domains while still participating in sentinel equivalence where configured. |
+| `nullptr_t: scalar_tag` | Pointer-empty sentinel. | `$x = null; // pointer-like empty state` | `::scpp::nullptr_t x = ::scpp::nullptr_t();` | Allows handle-like wrappers to accept an explicit pointer-empty sentinel without exposing raw `nullptr` as the semantic API. |
 
-## types
+### 2.2 Scalar wrappers
+
+#### Description
+These wrappers provide stable semantic types over native C++ storage. They expose a small core API instead of inheriting the full behavior of the underlying native type.
+
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
+|---|---|---|---|---|
+| `bool_t -> bool` | Semantic scalar wrapper over a native C++ storage type. | `$flag = true;` | `::scpp::bool_t flag = ::scpp::bool_t(true);` | Wrapper exposes `native_value()` but keeps semantic boolean distinct from raw C++ `bool`. |
+| `int_t -> std::int64_t` | Semantic scalar wrapper over a native C++ storage type. | `$x = 42;` | `::scpp::int_t x = ::scpp::int_t(42);` | Standard integer wrapper for arithmetic and comparisons. |
+| `float_t -> double` | Semantic scalar wrapper over a native C++ storage type. | `$x = 3.5;` | `::scpp::float_t x = ::scpp::float_t(3.5);` | Standard floating wrapper for arithmetic and mixed numeric promotion. |
+| `string_t -> std::string` | Semantic scalar wrapper over a native C++ storage type. | `$s = "hello";` | `::scpp::string_t s = ::scpp::string_t("hello");` | String wrapper keeps construction explicit and text conversion centralized through helpers. |
+
+### 2.3 Template wrappers
+
+#### Description
+These wrappers add policy on top of native C++ templates: storage, ownership, borrowing, or optionality.
+
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
+|---|---|---|---|---|
+| `vector_t<T> -> std::vector<T>` | Vector wrapper with a narrow stable API. | `$items = [];` | `::scpp::vector_t<::scpp::int_t> items;` | Only the approved vector surface is part of the runtime contract. |
+| `value_p<T> -> inline storage` | Inline value wrapper, not a heap-owning handle. | `$point = make_point();` | `::scpp::value_p<Point> point(Point{...});` | Useful for small inline aggregates while staying inside the wrapper model. |
+| `ref_p<T> -> T* (non-null borrow)` | Reference wrapper for borrowing/aliasing without ownership. | `function useThing(Thing $x): void {}` | `void useThing(::scpp::ref_p<Thing> x);` | Config marks it as non-nullable and non-owning. |
+| `shared_p<T> -> std::shared_ptr<T>` | Primary managed ownership model for PHP object-like values. | `$svc = new Service();` | `::scpp::shared_p<Service> svc = ::scpp::create<Service>();` | Supports null construction, pointer comparison rules, and covariant upcast. |
+| `unique_p<T> -> std::unique_ptr<T>` | Exclusive ownership wrapper. | `// not the primary PHP lowering model` | `::scpp::unique_p<File> file = ::scpp::unique<File>();` | Move-only by policy; copy assignment is intentionally absent. |
+| `weak_p<T> -> std::weak_ptr<T>` | Non-owning observer of shared ownership. | `// derived from a shared-owned object` | `::scpp::weak_p<Service> w = ::scpp::weak(svc);` | Explicit lock/expired flow keeps liveness checks visible. |
+| `nullable<T> -> std::optional<T>` | Optional wrapper for explicit presence/absence. | `function f(?int $x) {}` | `void f(::scpp::nullable<::scpp::int_t> x);` | The config treats nullability as an explicit wrapper, not an ambient property. |
+
+## 3. Memory Helpers
 
 ### Description
-Auto-generated section for `types`.
+These helpers are the stable factory/adaptation surface for object creation, ownership conversion, inline value creation, and borrow adaptation.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `null_t` | `{'kind': 'scalar_tag', 'header': 'scpp/null_t.hpp', 'template': False, 'cpp_underlying': None, 'family': 'sentinel', 'semantic_role': 'generic_null', 'stable_core_api': ['default_ctor']}` | `// example` | `// generated` | Auto-mapped from config |
-| `nullopt_t` | `{'kind': 'scalar_tag', 'header': 'scpp/nullopt_t.hpp', 'template': False, 'cpp_underlying': None, 'family': 'sentinel', 'semantic_role': 'optional_empty', 'stable_core_api': ['default_ctor']}` | `// example` | `// generated` | Auto-mapped from config |
-| `nullptr_t` | `{'kind': 'scalar_tag', 'header': 'scpp/nullptr_t.hpp', 'template': False, 'cpp_underlying': None, 'family': 'sentinel', 'semantic_role': 'pointer_empty', 'stable_core_api': ['default_ctor']}` | `// example` | `// generated` | Auto-mapped from config |
-| `bool_t` | `{'kind': 'scalar_wrapper', 'header': 'scpp/bool_t.hpp', 'template': False, 'cpp_underlying': 'bool', 'stable_core_api': ['default_ctor', 'explicit_native_ctor', 'native_value'], 'entry_ctors': [{'from_cpp': 'bool', 'explicit': True}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `int_t` | `{'kind': 'scalar_wrapper', 'header': 'scpp/int_t.hpp', 'template': False, 'cpp_underlying': 'std::int64_t', 'stable_core_api': ['default_ctor', 'explicit_native_ctor', 'native_value'], 'entry_ctors': [{'from_cpp': 'std::int64_t', 'explicit': True}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `float_t` | `{'kind': 'scalar_wrapper', 'header': 'scpp/float_t.hpp', 'template': False, 'cpp_underlying': 'double', 'stable_core_api': ['default_ctor', 'explicit_native_ctor', 'native_value'], 'entry_ctors': [{'from_cpp': 'double', 'explicit': True}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `string_t` | `{'kind': 'scalar_wrapper', 'header': 'scpp/string_t.hpp', 'template': False, 'cpp_underlying': 'std::string', 'stable_core_api': ['default_ctor', 'explicit_native_ctor', 'explicit_string_view_ctor', 'explicit_cstr_ctor', 'native_value', 'size', 'empty', 'append'], 'entry_ctors': [{'from_cpp': 'std::string', 'explicit': True}, {'from_cpp': 'std::string_view', 'explicit': True}, {'from_cpp': 'const char*', 'explicit': True}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `vector_t` | `{'kind': 'template_wrapper', 'header': 'scpp/vector_t.hpp', 'template': True, 'template_params': ['T'], 'cpp_underlying': 'std::vector<T>', 'stable_core_api': ['default_ctor', 'size', 'empty', 'clear', 'at', 'index', 'append']}` | `// example` | `// generated` | Auto-mapped from config |
-| `value_p` | `{'kind': 'template_wrapper', 'header': 'scpp/value_p.hpp', 'template': True, 'template_params': ['T'], 'cpp_underlying': 'T', 'family': 'inline_storage', 'allocates': False, 'copyable': True, 'movable': True, 'stable_core_api': ['default_ctor', 'copy_ctor', 'move_ctor', 'copy_assign', 'move_assign', 'explicit_value_ctor', 'in_place_ctor', 'has_value', 'get', 'deref', 'arrow']}` | `// example` | `// generated` | Auto-mapped from config |
-| `ref_p` | `{'kind': 'template_wrapper', 'header': 'scpp/ref_p.hpp', 'template': True, 'template_params': ['T'], 'cpp_underlying': 'T*', 'family': 'reference', 'allocates': False, 'copyable': True, 'movable': True, 'nullable': False, 'stable_core_api': ['value_ctor', 'copy_ctor', 'move_ctor', 'copy_assign', 'move_assign', 'get', 'deref', 'arrow']}` | `// example` | `// generated` | Auto-mapped from config |
-| `shared_p` | `{'kind': 'template_wrapper', 'header': 'scpp/shared_p.hpp', 'template': True, 'template_params': ['T'], 'cpp_underlying': 'std::shared_ptr<T>', 'stable_core_api': ['default_ctor', 'null_ctor', 'explicit_native_ctor', 'has_value', 'get', 'deref', 'arrow', 'native_value']}` | `// example` | `// generated` | Auto-mapped from config |
-| `unique_p` | `{'kind': 'template_wrapper', 'header': 'scpp/unique_p.hpp', 'template': True, 'template_params': ['T'], 'cpp_underlying': 'std::unique_ptr<T>', 'stable_core_api': ['default_ctor', 'null_ctor', 'explicit_native_ctor', 'move_ctor', 'move_assign', 'has_value', 'get', 'deref', 'arrow', 'native_value'], 'copyable': False, 'movable': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `weak_p` | `{'kind': 'template_wrapper', 'header': 'scpp/weak_p.hpp', 'template': True, 'template_params': ['T'], 'cpp_underlying': 'std::weak_ptr<T>', 'stable_core_api': ['default_ctor', 'null_ctor', 'explicit_native_ctor', 'explicit_from_shared', 'expired', 'lock', 'native_value']}` | `// example` | `// generated` | Auto-mapped from config |
-| `nullable` | `{'kind': 'template_wrapper', 'header': 'scpp/nullable.hpp', 'template': True, 'template_params': ['T'], 'cpp_underlying': 'std::optional<T>', 'stable_core_api': ['default_ctor', 'null_ctor', 'value_ctor', 'has_value', 'reset', 'value', 'value_or', 'native_value']}` | `// example` | `// generated` | Auto-mapped from config |
+| `create<T>() -> shared_p<T>` | Default managed creation helper. | `$svc = new Service();` | `auto svc = ::scpp::create<Service>();` | Matches `create_default_owner = shared` and keeps allocation policy centralized. |
+| `shared<T>() -> shared_p<T>` | Explicit shared factory. | `// explicit shared ownership` | `auto svc = ::scpp::shared<Service>(...);` | Useful when the generator or hand-written runtime code wants to spell out ownership intent. |
+| `unique<T>() -> unique_p<T>` | Exclusive-ownership factory. | `// unique owner` | `auto file = ::scpp::unique<File>(...);` | Creates move-only ownership explicitly. |
+| `weak(shared_p<T>) -> weak_p<T>` | Derives a weak observer from shared ownership. | `// derived observer` | `auto w = ::scpp::weak(svc);` | Marked as non-allocating in config. |
+| `value<T>() -> value_p<T>` | Explicit inline-value creation. | `// inline stored value` | `auto p = ::scpp::value<Point>(...);` | This is the sanctioned path for inline storage. |
+| `ref(T&) / ref(value_p<T>&) / ref(ref_p<T>)` | Borrow adapter with identity and unwrap rules. | `$a = $obj; // borrowed view in lowered form` | `auto r = ::scpp::ref(obj);` | The helper is overloaded so borrowing stays explicit but ergonomic. |
+| `ref(handle_like) -> same_type` | Ownership handles pass through unchanged. | `// borrowing a shared object-like handle` | `auto same = ::scpp::ref(sharedObj);` | Config explicitly prevents wrapping handle-like values inside `ref_p`. |
 
-## memory_helpers
+## 4. Cast Rules
 
 ### Description
-Auto-generated section for `memory_helpers`.
+Only the listed casts exist. The default policy is forbidden, so every allowed conversion is a deliberate part of the language/runtime contract.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `create` | `{'enabled': True, 'returns': 'shared_p<T>', 'kind': 'factory', 'policy_role': 'default_managed_creation'}` | `// example` | `// generated` | Auto-mapped from config |
-| `shared` | `{'enabled': True, 'returns': 'shared_p<T>', 'kind': 'factory'}` | `// example` | `// generated` | Auto-mapped from config |
-| `unique` | `{'enabled': True, 'returns': 'unique_p<T>', 'kind': 'factory'}` | `// example` | `// generated` | Auto-mapped from config |
-| `weak` | `{'enabled': True, 'returns': 'weak_p<T>', 'kind': 'derived_reference', 'from': 'shared_p<T>', 'allocates': False}` | `// example` | `// generated` | Auto-mapped from config |
-| `value` | `{'enabled': True, 'returns': 'value_p<T>', 'kind': 'factory', 'allocates': False, 'policy_role': 'explicit_inline_value_creation'}` | `// example` | `// generated` | Auto-mapped from config |
-| `ref` | `{'enabled': True, 'kind': 'reference_adapter', 'allocates': False, 'overloads': [{'from': 'T&', 'returns': 'ref_p<T>', 'when': 'T is not handle_like and not ref_like'}, {'from': 'value_p<T>&', 'returns': 'ref_p<T>'}, {'from': 'ref_p<T>', 'returns': 'ref_p<T>', 'policy_role': 'identity'}, {'from': 'T&', 'returns': 'T&', 'when': 'T is handle_like', 'policy_role': 'handle_passthrough'}]}` | `// example` | `// generated` | Auto-mapped from config |
+| `null_t -> shared_p<T> / unique_p<T> / weak_p<T>` | Null sentinel may construct empty ownership wrappers implicitly. | `$x = null; // assigned to object-like handle` | `::scpp::shared_p<MyClass> x = ::scpp::null_t();` | This is how null-like PHP object state becomes an empty handle wrapper. |
+| `null_t -> nullable<T>` | Null sentinel may construct an empty nullable implicitly. | `$x = null; // assigned to ?int` | `::scpp::nullable<::scpp::int_t> x = ::scpp::null_t();` | Keeps nullable construction uniform with handle-null construction. |
+| `T -> nullable<T>` | A present value may construct a nullable implicitly. | `$x = 7; $y = $x; // into ?int slot` | `::scpp::nullable<::scpp::int_t> y = x;` | This is the normal “wrap present value” path. |
+| `shared_p<T> -> weak_p<T>` | Shared ownership may downgrade to weak observer implicitly. | `// derive observer from shared object` | `::scpp::weak_p<Service> w = svc;` | Weak-from-shared is considered safe and non-owning. |
+| `int_t -> float_t` | Integer widens to float implicitly. | `$x = 1; $y = 2.5; $z = $x + $y;` | `::scpp::float_t z = x + y;` | Supports mixed numeric families without requiring manual casts. |
+| `bool_t -> int_t / float_t` | Boolean to numeric is explicit only. | `$x = (int)$flag;` | `auto x = ::scpp::int_t(flag.native_value() ? 1 : 0);` | Config keeps this out of implicit conversion to avoid accidental arithmetic on booleans. |
+| `int_t / float_t -> bool_t` | Numeric to boolean uses explicit named cast. | `$x = (bool)$n;` | `auto x = ::scpp::cast<::scpp::bool_t>(n);` | Boolean semantics are centralized through `cast` rather than native implicit conversion. |
+| `float_t -> int_t` | Float to integer narrowing is explicit named cast. | `$x = (int)$f;` | `auto x = ::scpp::cast<::scpp::int_t>(f);` | Makes narrowing a policy decision instead of a silent C++ conversion. |
+| `string_t -> string_t` | Identity cast exists explicitly. | `$x = (string)$s;` | `auto x = ::scpp::cast<::scpp::string_t>(s);` | This avoids special-casing identity in the frontend. |
+| `nullable<T> -> T` | Unwrapping a present nullable is explicit. | `$x = $maybe; // after presence check` | `auto x = ::scpp::cast<T>(maybe);` | Config labels this as `unwrap_present_value`, so the generator must only use it when presence is guaranteed. |
+| `nullopt_t -> nullable<T>` | Optional-empty sentinel may construct empty nullable implicitly. | `$x = null; // empty optional route` | `::scpp::nullable<T> x = ::scpp::nullopt_t();` | Keeps sentinel entry points flexible while preserving wrapper semantics. |
+| `nullptr_t -> shared_p<T> / unique_p<T> / weak_p<T>` | Pointer-empty sentinel may construct empty handle wrappers implicitly. | `$x = null; // pointer-empty route` | `::scpp::shared_p<T> x = ::scpp::nullptr_t();` | Useful when the generator wants pointer-flavored empty semantics. |
+| `T -> value_p<T>` | Inline value construction is explicit. | `$point = buildPoint();` | `auto point = ::scpp::value_p<Point>(buildPoint());` | Inline storage is opt-in, not implicit. |
+| `T& / value_p<T>& -> ref_p<T> via ref` | Borrow creation is explicit through helper. | `$tmp = $obj; // borrowed lowering path` | `auto r = ::scpp::ref(obj);` | The helper enforces the approved borrowing/adaptation surface. |
 
-## casts
+## 5. Coercions
 
 ### Description
-Auto-generated section for `casts`.
+Coercions are not general casts. They describe context-driven lowering, currently for conditions and text rendering.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+### 5.1 Condition coercion
+
+#### Description
+Condition lowering is intentionally narrow: only semantic `bool_t` is accepted, and then bridged through `native_value`.
+
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `0` | `{'from': 'null_t', 'to': 'shared_p<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `1` | `{'from': 'null_t', 'to': 'unique_p<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `2` | `{'from': 'null_t', 'to': 'weak_p<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `3` | `{'from': 'null_t', 'to': 'nullable<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `4` | `{'from': 'T', 'to': 'nullable<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `5` | `{'from': 'shared_p<T>', 'to': 'weak_p<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `6` | `{'from': 'int_t', 'to': 'float_t', 'kind': 'implicit', 'form': 'constructor', 'template_rule': False}` | `// example` | `// generated` | Auto-mapped from config |
-| `7` | `{'from': 'bool_t', 'to': 'int_t', 'kind': 'explicit', 'form': 'constructor', 'template_rule': False}` | `// example` | `// generated` | Auto-mapped from config |
-| `8` | `{'from': 'bool_t', 'to': 'float_t', 'kind': 'explicit', 'form': 'constructor', 'template_rule': False}` | `// example` | `// generated` | Auto-mapped from config |
-| `9` | `{'from': 'int_t', 'to': 'bool_t', 'kind': 'explicit', 'form': 'named_cast', 'cast_name': 'cast', 'template_rule': False}` | `// example` | `// generated` | Auto-mapped from config |
-| `10` | `{'from': 'float_t', 'to': 'bool_t', 'kind': 'explicit', 'form': 'named_cast', 'cast_name': 'cast', 'template_rule': False}` | `// example` | `// generated` | Auto-mapped from config |
-| `11` | `{'from': 'float_t', 'to': 'int_t', 'kind': 'explicit', 'form': 'named_cast', 'cast_name': 'cast', 'template_rule': False}` | `// example` | `// generated` | Auto-mapped from config |
-| `12` | `{'from': 'string_t', 'to': 'string_t', 'kind': 'explicit', 'form': 'named_cast', 'cast_name': 'cast', 'template_rule': False, 'policy_role': 'identity'}` | `// example` | `// generated` | Auto-mapped from config |
-| `13` | `{'from': 'nullable<T>', 'to': 'T', 'kind': 'explicit', 'form': 'named_cast', 'cast_name': 'cast', 'template_rule': True, 'policy_role': 'unwrap_present_value'}` | `// example` | `// generated` | Auto-mapped from config |
-| `14` | `{'from': 'nullopt_t', 'to': 'nullable<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `15` | `{'from': 'nullptr_t', 'to': 'shared_p<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `16` | `{'from': 'nullptr_t', 'to': 'unique_p<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `17` | `{'from': 'nullptr_t', 'to': 'weak_p<T>', 'kind': 'implicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `18` | `{'from': 'T', 'to': 'value_p<T>', 'kind': 'explicit', 'form': 'constructor', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `19` | `{'from': 'T&', 'to': 'ref_p<T>', 'kind': 'explicit', 'form': 'helper', 'helper_name': 'ref', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `20` | `{'from': 'value_p<T>&', 'to': 'ref_p<T>', 'kind': 'explicit', 'form': 'helper', 'helper_name': 'ref', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
+| `condition.allowed_inputs = [bool_t]` | Only `bool_t` may enter a condition directly. | `if ($flag) {}` | `if (flag.native_value()) { ... }` | No other type gets PHP-style truthiness for free. Frontends must lower to `bool_t` first. |
+| `condition.bridge = native_value` | The semantic boolean is bridged to native C++ condition syntax. | `while ($flag) {}` | `while (flag.native_value()) { ... }` | This keeps control flow legal in C++ without weakening the semantic type system. |
 
-## coercions
+### 5.2 Text coercion
+
+#### Description
+Text contexts route through one result type, one helper family, and explicit null rendering. This prevents ad hoc concatenation or stream-based coercion from leaking into the model.
+
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
+|---|---|---|---|---|
+| `result_type = string_t` | Every text coercion ends as `string_t`. | `echo $x;` | `auto s = ::scpp::to_string(x);` | There is one canonical textual result type. |
+| `dispatch_helper = to_string` | Non-identity text conversions route through helper dispatch. | `echo $n;` | `::scpp::string_t s = ::scpp::to_string(n);` | Keeps formatting policy centralized. |
+| `null_t / nullopt_t / nullptr_t render as empty string` | Configured null-like sentinels print as empty text. | `echo null;` | `::scpp::print(::scpp::string_t(""));` | The config makes these three sentinels text-equivalent. |
+| `string_t is identity in text context` | Existing text stays text. | `echo $s;` | `::scpp::print(s);` | No redundant helper call is required for string identity. |
+| `bool_t / int_t / float_t use to_string` | Scalar wrappers have helper-driven text conversion. | `echo 42;` | `::scpp::print(::scpp::to_string(::scpp::int_t(42)));` | Avoids depending on native iostream formatting rules. |
+| `nullable<T> / value_p<T> / ref_p<T> / shared_p<T> / unique_p<T> / weak_p<T> use to_string` | Wrapper text conversion is helper-defined, not implicit. | `echo $obj;` | `::scpp::print(::scpp::to_string(obj));` | Important because wrapper text policy can change independently of storage representation. |
+
+## 6. Subtyping
 
 ### Description
-Auto-generated section for `coercions`.
+Subtyping is wrapper-specific. The source of truth is C++ pointer convertibility, but only selected wrappers inherit that capability.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `condition` | `{'semantic_type': 'bool_t', 'bridge': 'native_value', 'allowed_inputs': ['bool_t']}` | `// example` | `// generated` | Auto-mapped from config |
-| `text` | `{'result_type': 'string_t', 'dispatch_helper': 'to_string', 'null_rendering': {'null_t': '', 'nullopt_t': '', 'nullptr_t': ''}, 'rules': [{'from': 'string_t', 'kind': 'identity'}, {'from': 'bool_t', 'kind': 'helper', 'helper_name': 'to_string'}, {'from': 'int_t', 'kind': 'helper', 'helper_name': 'to_string'}, {'from': 'float_t', 'kind': 'helper', 'helper_name': 'to_string'}, {'from': 'null_t', 'kind': 'literal', 'value': ''}, {'from': 'nullopt_t', 'kind': 'literal', 'value': ''}, {'from': 'nullptr_t', 'kind': 'literal', 'value': ''}, {'from': 'nullable<T>', 'kind': 'helper', 'helper_name': 'to_string', 'template_rule': True}, {'from': 'value_p<T>', 'kind': 'helper', 'helper_name': 'to_string', 'template_rule': True}, {'from': 'ref_p<T>', 'kind': 'helper', 'helper_name': 'to_string', 'template_rule': True}, {'from': 'shared_p<T>', 'kind': 'helper', 'helper_name': 'to_string', 'template_rule': True}, {'from': 'unique_p<T>', 'kind': 'helper', 'helper_name': 'to_string', 'template_rule': True}, {'from': 'weak_p<T>', 'kind': 'helper', 'helper_name': 'to_string', 'template_rule': True}]}` | `// example` | `// generated` | Auto-mapped from config |
+| `object_subtype_source = cpp_pointer_convertibility` | Runtime polymorphism follows C++ pointer convertibility rules. | `interface I {} class A implements I {}` | `static_assert(std::is_convertible_v<A*, I*>);` | The config avoids inventing a parallel subtype lattice. |
+| `shared_p<U> -> shared_p<T> implicit when U* convertible to T*` | Shared handles are covariant. | `$x = new A(); $i = $x; // as interface/base` | `::scpp::shared_p<I> i = x;` | This is the core rule behind interface dispatch through shared ownership. |
+| `weak_p<U> -> weak_p<T> implicit when U* convertible to T*` | Weak observers are covariant too. | `// weak observer upcast` | `::scpp::weak_p<I> i = w;` | Keeps weak handles aligned with shared subtyping. |
+| `ref_p<U> -> ref_p<T> implicit when U* convertible to T*` | Borrowed references are covariant. | `function useBase(Base $x) {} useBase($derived);` | `void useBase(::scpp::ref_p<Base> x);` | Useful for non-owning interface/base dispatch. |
+| `unique_p<U> -> unique_p<T> forbidden` | Unique ownership upcast is not standardized here. | `// disallowed by config` | `// generator error` | Blocked because ownership transfer and deleter policy were intentionally left unstabilized. |
+| `nullable<U> -> nullable<T> forbidden` | Generic inner subtyping for nullable is disabled. | `// disallowed generic optional upcast` | `// generator error` | This avoids hidden composition rules inside optionality. |
+| `value_p<U> -> value_p<T> forbidden` | Inline value wrapper is not polymorphic. | `// disallowed inline polymorphic wrapper conversion` | `// generator error` | Inline storage should not pretend to be a virtual object handle. |
 
-## subtyping
+## 7. Enabled Operator Families
 
 ### Description
-Auto-generated section for `subtyping`.
+Only these operator families are enabled. Everything else is forbidden by default or by an explicit forbidden-operation group.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `object_subtype_source` | `cpp_pointer_convertibility` | `// example` | `// generated` | Auto-mapped from config |
-| `wrapper_rules` | `[{'wrapper': 'shared_p<T>', 'variance': 'covariant', 'from': 'shared_p<U>', 'to': 'shared_p<T>', 'when': 'U* is convertible to T*', 'kind': 'implicit'}, {'wrapper': 'weak_p<T>', 'variance': 'covariant', 'from': 'weak_p<U>', 'to': 'weak_p<T>', 'when': 'U* is convertible to T*', 'kind': 'implicit'}, {'wrapper': 'ref_p<T>', 'variance': 'covariant', 'from': 'ref_p<U>', 'to': 'ref_p<T>', 'when': 'U* is convertible to T*', 'kind': 'implicit'}]` | `// example` | `// generated` | Auto-mapped from config |
-| `forbidden_wrapper_rules` | `[{'wrapper': 'unique_p<T>', 'from': 'unique_p<U>', 'to': 'unique_p<T>', 'reason': 'ownership_transfer_and_deleter_policy_not_standardized'}, {'wrapper': 'nullable<T>', 'from': 'nullable<U>', 'to': 'nullable<T>', 'reason': 'generic_inner_subtyping_not_enabled'}, {'wrapper': 'value_p<T>', 'from': 'value_p<U>', 'to': 'value_p<T>', 'reason': 'inline_value_wrapper_is_not_polymorphic'}]` | `// example` | `// generated` | Auto-mapped from config |
+| `bool_logical` | Boolean logic and equality on `bool_t` are enabled. | `$a && $b;` | `auto x = a && b;` | Covers `!`, `&&`, `||`, `==`, `!=` on semantic booleans. |
+| `int_arithmetic` | Unary and binary arithmetic plus comparisons on `int_t` are enabled. | `$a + $b;` | `auto x = a + b;` | Covers arithmetic and relational operations for integers. |
+| `float_arithmetic` | Unary and binary arithmetic plus comparisons on `float_t` are enabled. | `$a / $b;` | `auto x = a / b;` | Floating arithmetic mirrors integer structure. |
+| `mixed_numeric` | Mixed `int_t` + `float_t` arithmetic/comparison promotes to `float_t`. | `$a + $b; // int + float` | `auto x = a + b; // result float_t` | Promotion is explicit in config rather than inferred ad hoc. |
+| `string_ops` | Only equality/inequality on `string_t` are enabled. | `$a == $b;` | `auto same = (a == b);` | Notably, string concatenation is not an operator family here. |
+| `pointer_null_comparisons` | Handle wrappers compare against the configured null-equivalence group and shared handles compare with same-family peers. | `$obj == null;` | `auto empty = (obj == ::scpp::null_t());` | This is how null checks stay legal without opening general pointer arithmetic or cross-family comparisons. |
+| `nullable_ops` | Nullable values compare with null-equivalent sentinels and same-type nullable peers. | `$maybe == null;` | `auto empty = (maybe == ::scpp::null_t());` | Makes presence tests legal while keeping nullable arithmetic forbidden. |
 
-## overload_families
+## 8. Forbidden Operation Groups
 
 ### Description
-Auto-generated section for `overload_families`.
+These are explicitly banned even if the underlying native C++ representation might support something similar. This section is important because it defines what the language refuses to mean.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `0` | `{'name': 'bool_logical', 'enabled': True, 'operators': [{'symbol': '!', 'arity': 1, 'operands': ['bool_t'], 'result': 'bool_t'}, {'symbol': '&&', 'arity': 2, 'operands': ['bool_t', 'bool_t'], 'result': 'bool_t'}, {'symbol': '\|\|', 'arity': 2, 'operands': ['bool_t', 'bool_t'], 'result': 'bool_t'}, {'symbol': '==', 'arity': 2, 'operands': ['bool_t', 'bool_t'], 'result': 'bool_t'}, {'symbol': '!=', 'arity': 2, 'operands': ['bool_t', 'bool_t'], 'result': 'bool_t'}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `1` | `{'name': 'int_arithmetic', 'enabled': True, 'operators': [{'symbol': '+', 'arity': 1, 'operands': ['int_t'], 'result': 'int_t'}, {'symbol': '-', 'arity': 1, 'operands': ['int_t'], 'result': 'int_t'}, {'symbol': '+', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'int_t'}, {'symbol': '-', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'int_t'}, {'symbol': '*', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'int_t'}, {'symbol': '/', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'int_t'}, {'symbol': '==', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'bool_t'}, {'symbol': '!=', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'bool_t'}, {'symbol': '<', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'bool_t'}, {'symbol': '<=', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'bool_t'}, {'symbol': '>', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'bool_t'}, {'symbol': '>=', 'arity': 2, 'operands': ['int_t', 'int_t'], 'result': 'bool_t'}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `2` | `{'name': 'float_arithmetic', 'enabled': True, 'operators': [{'symbol': '+', 'arity': 1, 'operands': ['float_t'], 'result': 'float_t'}, {'symbol': '-', 'arity': 1, 'operands': ['float_t'], 'result': 'float_t'}, {'symbol': '+', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'float_t'}, {'symbol': '-', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'float_t'}, {'symbol': '*', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'float_t'}, {'symbol': '/', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'float_t'}, {'symbol': '==', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '!=', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '<', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '<=', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '>', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '>=', 'arity': 2, 'operands': ['float_t', 'float_t'], 'result': 'bool_t'}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `3` | `{'name': 'mixed_numeric', 'enabled': True, 'promotion': {'left': 'int_t', 'right': 'float_t', 'promote_to': 'float_t'}, 'symmetric': True, 'operators': [{'symbol': '+', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'float_t'}, {'symbol': '-', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'float_t'}, {'symbol': '*', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'float_t'}, {'symbol': '/', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'float_t'}, {'symbol': '==', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '!=', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '<', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '<=', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '>', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'bool_t'}, {'symbol': '>=', 'arity': 2, 'operands': ['int_t', 'float_t'], 'result': 'bool_t'}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `4` | `{'name': 'string_ops', 'enabled': True, 'operators': [{'symbol': '==', 'arity': 2, 'operands': ['string_t', 'string_t'], 'result': 'bool_t'}, {'symbol': '!=', 'arity': 2, 'operands': ['string_t', 'string_t'], 'result': 'bool_t'}]}` | `// example` | `// generated` | Auto-mapped from config |
-| `5` | `{'name': 'pointer_null_comparisons', 'enabled': True, 'template_rule': True, 'operators': [{'symbol': '==', 'arity': 2, 'operands': ['shared_p<T>', 'null_t'], 'result': 'bool_t', 'symmetric': True}, {'symbol': '!=', 'arity': 2, 'operands': ['shared_p<T>', 'null_t'], 'result': 'bool_t', 'symmetric': True}, {'symbol': '==', 'arity': 2, 'operands': ['unique_p<T>', 'null_t'], 'result': 'bool_t', 'symmetric': True}, {'symbol': '!=', 'arity': 2, 'operands': ['unique_p<T>', 'null_t'], 'result': 'bool_t', 'symmetric': True}, {'symbol': '==', 'arity': 2, 'operands': ['weak_p<T>', 'null_t'], 'result': 'bool_t', 'symmetric': True}, {'symbol': '!=', 'arity': 2, 'operands': ['weak_p<T>', 'null_t'], 'result': 'bool_t', 'symmetric': True}, {'symbol': '==', 'arity': 2, 'operands': ['shared_p<T>', 'shared_p<T>'], 'result': 'bool_t'}, {'symbol': '!=', 'arity': 2, 'operands': ['shared_p<T>', 'shared_p<T>'], 'result': 'bool_t'}], 'sentinel_resolution': 'equivalence_group', 'sentinel_equivalence_group': ['null_t', 'nullopt_t', 'nullptr_t']}` | `// example` | `// generated` | Auto-mapped from config |
-| `6` | `{'name': 'nullable_ops', 'enabled': True, 'template_rule': True, 'operators': [{'symbol': '==', 'arity': 2, 'operands': ['nullable<T>', 'null_t'], 'result': 'bool_t', 'symmetric': True}, {'symbol': '!=', 'arity': 2, 'operands': ['nullable<T>', 'null_t'], 'result': 'bool_t', 'symmetric': True}, {'symbol': '==', 'arity': 2, 'operands': ['nullable<T>', 'nullable<T>'], 'result': 'bool_t'}, {'symbol': '!=', 'arity': 2, 'operands': ['nullable<T>', 'nullable<T>'], 'result': 'bool_t'}], 'sentinel_resolution': 'equivalence_group', 'sentinel_equivalence_group': ['null_t', 'nullopt_t', 'nullptr_t']}` | `// example` | `// generated` | Auto-mapped from config |
+| `bool_arithmetic` | Booleans are not numbers. | `$a + $b; // bools` | `// compile-time error` | Prevents accidental promotion of flags into arithmetic. |
+| `pointer_cross_family_comparisons` | Different ownership families must not be compared directly. | `$shared == $unique;` | `// compile-time error` | Ownership semantics differ; direct equality would be misleading. |
+| `vector_arithmetic` | Vectors do not gain arithmetic operators. | `$a + $b; // arrays/vectors` | `// compile-time error` | Avoids inventing element-wise semantics by accident. |
+| `string_arithmetic` | Strings do not gain arithmetic operators. | `$a + $b; // strings` | `// compile-time error` | Important because PHP string-plus-number behavior is already a source of ambiguity. |
+| `nullable_arithmetic` | Optional values do not participate in arithmetic directly. | `$a + $b; // nullable numbers` | `// compile-time error` | Forces explicit unwrap/coercion instead of propagating ambiguous null arithmetic. |
+| `pointer_arithmetic` | Ownership wrappers are not arithmetic operands. | `$obj + $obj;` | `// compile-time error` | Reinforces that handles are semantic wrappers, not address-like values. |
+| `sentinel_arithmetic` | Sentinels never behave like numbers. | `null + null;` | `// compile-time error` | Null-like values stay in the sentinel domain. |
 
-## forbidden_operation_groups
+## 9. Composition Constraints
 
 ### Description
-Auto-generated section for `forbidden_operation_groups`.
+This section controls which wrappers may nest inside which wrappers. It is one of the highest-value parts of the config because it prevents semantically messy composite types from becoming legal by accident.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `0` | `{'name': 'bool_arithmetic', 'patterns': [['bool_t', '+', 'bool_t'], ['bool_t', '-', 'bool_t'], ['bool_t', '*', 'bool_t'], ['bool_t', '/', 'bool_t']]}` | `// example` | `// generated` | Auto-mapped from config |
-| `1` | `{'name': 'pointer_cross_family_comparisons', 'patterns': [['shared_p<T>', '==', 'unique_p<T>'], ['shared_p<T>', '!=', 'unique_p<T>'], ['shared_p<T>', '==', 'weak_p<T>'], ['shared_p<T>', '!=', 'weak_p<T>'], ['unique_p<T>', '==', 'weak_p<T>'], ['unique_p<T>', '!=', 'weak_p<T>']]}` | `// example` | `// generated` | Auto-mapped from config |
-| `2` | `{'name': 'vector_arithmetic', 'patterns': [['vector_t<T>', '+', 'vector_t<T>'], ['vector_t<T>', '-', 'vector_t<T>'], ['vector_t<T>', '*', 'vector_t<T>'], ['vector_t<T>', '/', 'vector_t<T>']]}` | `// example` | `// generated` | Auto-mapped from config |
-| `3` | `{'name': 'string_arithmetic', 'patterns': [['string_t', '+', 'string_t'], ['string_t', '-', 'string_t'], ['string_t', '*', 'string_t'], ['string_t', '/', 'string_t']]}` | `// example` | `// generated` | Auto-mapped from config |
-| `4` | `{'name': 'nullable_arithmetic', 'patterns': [['nullable<T>', '+', 'nullable<T>'], ['nullable<T>', '-', 'nullable<T>'], ['nullable<T>', '*', 'nullable<T>'], ['nullable<T>', '/', 'nullable<T>']]}` | `// example` | `// generated` | Auto-mapped from config |
-| `5` | `{'name': 'pointer_arithmetic', 'patterns': [['shared_p<T>', '+', 'shared_p<T>'], ['shared_p<T>', '-', 'shared_p<T>'], ['shared_p<T>', '*', 'shared_p<T>'], ['shared_p<T>', '/', 'shared_p<T>'], ['unique_p<T>', '+', 'unique_p<T>'], ['unique_p<T>', '-', 'unique_p<T>'], ['unique_p<T>', '*', 'unique_p<T>'], ['unique_p<T>', '/', 'unique_p<T>'], ['weak_p<T>', '+', 'weak_p<T>'], ['weak_p<T>', '-', 'weak_p<T>'], ['weak_p<T>', '*', 'weak_p<T>'], ['weak_p<T>', '/', 'weak_p<T>']]}` | `// example` | `// generated` | Auto-mapped from config |
-| `6` | `{'name': 'sentinel_arithmetic', 'patterns': [['null_t', '+', 'null_t'], ['null_t', '-', 'null_t'], ['null_t', '*', 'null_t'], ['null_t', '/', 'null_t']]}` | `// example` | `// generated` | Auto-mapped from config |
+| `family_tags classify wrappers as ownership / inline_storage / reference / optionality` | Nesting rules reason in terms of family, not only concrete names. | `// type composition policy` | `// compile-time validation against family tags` | This makes the config extensible without duplicating every concrete combination. |
+| `value_p<T> must not contain ownership-family wrappers` | Inline value wrapper cannot embed `shared_p`, `unique_p`, or `weak_p`. | `// disallowed: value of handle` | `// generator error for value_p<shared_p<T>>` | Prevents “inline wrapper around heap handle” layering that adds confusion without value. |
+| `value_p<T> must not contain ref_p<U>` | Inline value wrapper cannot contain a borrow wrapper. | `// disallowed: value of ref` | `// generator error for value_p<ref_p<T>>` | Borrow semantics inside inline storage are intentionally not part of the model. |
+| `ref_p<T> must not target ownership-family wrappers` | A borrow wrapper cannot wrap a handle wrapper. | `// disallowed: borrowed handle wrapper` | `// generator error for ref_p<shared_p<T>>` | Config prefers handle passthrough instead of double-wrapping ownership in borrowing syntax. |
+| `ref_p<T> must not wrap ref_p<U>` | Borrow wrappers do not stack. | `// disallowed: ref of ref` | `// generator error for ref_p<ref_p<T>>` | Avoids meaningless alias-of-alias wrapper nests. |
+| `nullable<T> must not contain unique_p<U>` | Optional unique ownership is forbidden. | `// disallowed: ?unique owner` | `// generator error for nullable<unique_p<T>>` | Reason given by config: redundant and confusing null layering. |
+| `nullable<T> may contain ref_p<U> as a special allowed case` | Optional borrowed reference is allowed at runtime level. | `// runtime-level optional borrow` | `::scpp::nullable<::scpp::ref_p<T>> maybeRef;` | Config allows it, but explicitly marks it as not the primary PHP object-lowering model. |
+| `ref(ref_p<T>) -> ref_p<T>` | Borrow helper collapses identity. | `$x = $y; // already borrowed form` | `auto x = ::scpp::ref(existingRef); // same ref_p<T>` | Prevents redundant wrapper creation. |
+| `ref(value_p<T>&) -> ref_p<T>` | Borrow helper unwraps inline value to a borrow of its inner object. | `// borrow inline value` | `auto r = ::scpp::ref(inlineValue);` | This is the sanctioned bridge from inline storage to borrow semantics. |
+| `ref(handle_like) -> same_type` | Borrow helper passes ownership handles through unchanged. | `// borrow shared handle` | `auto same = ::scpp::ref(sharedObj);` | This is the reason `ref_p<shared_p<T>>` is both unnecessary and forbidden. |
+| `php_lowering_guidance.nullable_object_like = nullable<shared_p<T>>` | Nullable PHP objects should lower to nullable shared handles. | `function f(?MyClass $x) {}` | `void f(::scpp::nullable<::scpp::shared_p<MyClass>> x);` | This captures the project’s current main lowering model for PHP nullable object references. |
+| `php_lowering_guidance.disfavored_forms = nullable<ref_p<T>>, nullable<unique_p<T>>` | These forms are not the preferred PHP lowering target. | `// avoid these shapes in frontend lowering` | `// generator should choose nullable<shared_p<T>> instead` | This is guidance, not just a raw type-theory statement. |
 
-## composition_constraints
+## 10. Assignment Rules
 
 ### Description
-Auto-generated section for `composition_constraints`.
+Assignments are explicit policy. This section says which source-target pairs are legal and what kind of state change they mean.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `family_tags` | `{'shared_p<T>': 'ownership', 'unique_p<T>': 'ownership', 'weak_p<T>': 'ownership', 'value_p<T>': 'inline_storage', 'ref_p<T>': 'reference', 'nullable<T>': 'optionality'}` | `// example` | `// generated` | Auto-mapped from config |
-| `forbidden_nesting` | `[{'outer': 'value_p<T>', 'inner_family': 'ownership', 'reason': 'inline_value_wrapper_must_not_embed_handle_like_ownership_wrappers'}, {'outer': 'value_p<T>', 'inner': 'ref_p<U>', 'reason': 'inline_value_wrapper_must_not_embed_reference_wrappers'}, {'outer': 'ref_p<T>', 'inner_family': 'ownership', 'reason': 'reference_wrapper_must_not_target_handle_like_ownership_wrappers'}, {'outer': 'ref_p<T>', 'inner': 'ref_p<U>', 'reason': 'reference_wrapper_must_not_wrap_reference_wrapper'}, {'outer': 'nullable<T>', 'inner': 'unique_p<U>', 'reason': 'optional_unique_ownership_is_forbidden_due_to_redundant_and_confusing_null_layering'}]` | `// example` | `// generated` | Auto-mapped from config |
-| `allowed_special_nesting` | `[{'outer': 'nullable<T>', 'inner': 'ref_p<U>', 'reason': 'optional_borrowed_reference_is_allowed_for_runtime_level_use_but_is_not_the_primary_php_object_lowering_model'}]` | `// example` | `// generated` | Auto-mapped from config |
-| `helper_collapse_rules` | `[{'helper': 'ref', 'input': 'ref_p<T>', 'result': 'ref_p<T>', 'policy': 'identity'}, {'helper': 'ref', 'input': 'value_p<T>&', 'result': 'ref_p<T>', 'policy': 'unwrap_inner_value'}, {'helper': 'ref', 'input_family': 'ownership', 'result': 'same_type', 'policy': 'handle_passthrough'}]` | `// example` | `// generated` | Auto-mapped from config |
-| `php_lowering_guidance` | `{'nullable_object_like': 'nullable<shared_p<T>>', 'disfavored_forms': ['nullable<ref_p<T>>', 'nullable<unique_p<T>>']}` | `// example` | `// generated` | Auto-mapped from config |
+| `scalar wrappers assign by copy` | bool_t, int_t, float_t, string_t copy assign to same type. | `$a = $b;` | `a = b;` | These wrappers behave like normal value types for same-type assignment. |
+| `vector_t<T> assigns by copy` | Vectors copy assign to same type. | `$a = $b; // vector-like value` | `a = b;` | Consistent with vector wrapper as a value-like container. |
+| `nullable<T> <- T` | Present value may be assigned into nullable. | `$maybe = 7;` | `maybe = value;` | This is the assignment counterpart of `T -> nullable<T>` construction. |
+| `nullable<T> <- nullable<T>` | Nullable copies from same nullable type. | `$a = $b; // both nullable` | `a = b;` | Standard copy semantics on optional wrapper. |
+| `nullable<T> <- null_t / nullopt_t / nullptr_t` | Nullable may be reset to empty by any configured null-equivalent sentinel. | `$maybe = null;` | `maybe = ::scpp::null_t();` | Config explicitly treats these sentinels as reset sources. |
+| `shared_p<T> <- shared_p<T>` | Shared handles copy assign. | `$a = $b; // object handles` | `a = b;` | Copies the shared ownership handle, not the object. |
+| `shared_p<T> <- null_t / nullptr_t / nullopt_t` | Shared handle may reset to null via configured sentinels. | `$obj = null;` | `obj = ::scpp::null_t();` | Null-equivalent reset is deliberate and explicit. |
+| `unique_p<T> <- unique_p<T>` | Unique handles assign by move, not copy. | `$a = $b; // exclusive owner transfer in lowered model` | `a = std::move(b);` | Reflects move-only ownership. |
+| `unique_p<T> <- null_t / nullptr_t / nullopt_t` | Unique handle may reset to null. | `$obj = null;` | `obj = ::scpp::null_t();` | Reset is allowed even though copy is not. |
+| `weak_p<T> <- weak_p<T>` | Weak handles copy assign. | `$a = $b; // observers` | `a = b;` | Observers are cheap copyable handles. |
+| `weak_p<T> <- shared_p<T>` | Weak observer may be assigned from shared owner. | `$weak = $shared;` | `weak = shared;` | This mirrors the cast/helper downgrade path. |
+| `weak_p<T> <- null_t / nullptr_t / nullopt_t` | Weak observer may reset to empty. | `$weak = null;` | `weak = ::scpp::null_t();` | Empty-observer reset is explicit. |
+| `value_p<T> <- value_p<T> / T` | Inline value wrapper copies from same wrapper or copies into inner value. | `$box = $point;` | `box = point;` | Supports ordinary inline value replacement. |
+| `ref_p<T> <- ref_p<T>` | Borrow wrappers copy assign by alias copy. | `$a = $b; // borrowed refs` | `a = b;` | Copying a borrow copies the alias, not the referent. |
+| `shared_p<T> <- shared_p<U>, weak_p<T> <- weak_p<U>, ref_p<T> <- ref_p<U> when U* convertible to T*` | Assignment supports configured upcast/covariance for selected wrappers. | `$base = $derived;` | `base = derived;` | This is the assignment counterpart to the subtyping rules. |
 
-## assignments
+## 11. Sentinel Semantics
 
 ### Description
-Auto-generated section for `assignments`.
+Defines when distinct sentinel types should be treated as equivalent for specific semantic operations. The current config uses one equivalence group.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `0` | `{'target': 'bool_t', 'source': 'bool_t', 'kind': 'copy'}` | `// example` | `// generated` | Auto-mapped from config |
-| `1` | `{'target': 'int_t', 'source': 'int_t', 'kind': 'copy'}` | `// example` | `// generated` | Auto-mapped from config |
-| `2` | `{'target': 'float_t', 'source': 'float_t', 'kind': 'copy'}` | `// example` | `// generated` | Auto-mapped from config |
-| `3` | `{'target': 'string_t', 'source': 'string_t', 'kind': 'copy'}` | `// example` | `// generated` | Auto-mapped from config |
-| `4` | `{'target': 'vector_t<T>', 'source': 'vector_t<T>', 'kind': 'copy', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `5` | `{'target': 'nullable<T>', 'source': 'T', 'kind': 'copy', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `6` | `{'target': 'nullable<T>', 'source': 'nullable<T>', 'kind': 'copy', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `7` | `{'target': 'nullable<T>', 'source': 'null_t', 'kind': 'reset_to_empty', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `8` | `{'target': 'shared_p<T>', 'source': 'shared_p<T>', 'kind': 'copy', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `9` | `{'target': 'shared_p<T>', 'source': 'null_t', 'kind': 'reset_to_null', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `10` | `{'target': 'unique_p<T>', 'source': 'unique_p<T>', 'kind': 'move', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `11` | `{'target': 'unique_p<T>', 'source': 'null_t', 'kind': 'reset_to_null', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `12` | `{'target': 'weak_p<T>', 'source': 'weak_p<T>', 'kind': 'copy', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `13` | `{'target': 'weak_p<T>', 'source': 'shared_p<T>', 'kind': 'copy_from_shared', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `14` | `{'target': 'weak_p<T>', 'source': 'null_t', 'kind': 'reset_to_empty', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `15` | `{'target': 'value_p<T>', 'source': 'value_p<T>', 'kind': 'copy', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `16` | `{'target': 'value_p<T>', 'source': 'T', 'kind': 'copy_into_inner', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `17` | `{'target': 'ref_p<T>', 'source': 'ref_p<T>', 'kind': 'copy', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `18` | `{'target': 'nullable<T>', 'source': 'nullopt_t', 'kind': 'reset_to_empty', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `19` | `{'target': 'nullable<T>', 'source': 'nullptr_t', 'kind': 'reset_to_empty', 'template_rule': True, 'policy_role': 'sentinel_equivalence'}` | `// example` | `// generated` | Auto-mapped from config |
-| `20` | `{'target': 'shared_p<T>', 'source': 'nullptr_t', 'kind': 'reset_to_null', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `21` | `{'target': 'shared_p<T>', 'source': 'nullopt_t', 'kind': 'reset_to_null', 'template_rule': True, 'policy_role': 'sentinel_equivalence'}` | `// example` | `// generated` | Auto-mapped from config |
-| `22` | `{'target': 'unique_p<T>', 'source': 'nullptr_t', 'kind': 'reset_to_null', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `23` | `{'target': 'unique_p<T>', 'source': 'nullopt_t', 'kind': 'reset_to_null', 'template_rule': True, 'policy_role': 'sentinel_equivalence'}` | `// example` | `// generated` | Auto-mapped from config |
-| `24` | `{'target': 'weak_p<T>', 'source': 'nullptr_t', 'kind': 'reset_to_empty', 'template_rule': True}` | `// example` | `// generated` | Auto-mapped from config |
-| `25` | `{'target': 'weak_p<T>', 'source': 'nullopt_t', 'kind': 'reset_to_empty', 'template_rule': True, 'policy_role': 'sentinel_equivalence'}` | `// example` | `// generated` | Auto-mapped from config |
-| `26` | `{'target': 'shared_p<T>', 'source': 'shared_p<U>', 'kind': 'copy_upcast', 'template_rule': True, 'when': 'U* is convertible to T*'}` | `// example` | `// generated` | Auto-mapped from config |
-| `27` | `{'target': 'weak_p<T>', 'source': 'weak_p<U>', 'kind': 'copy_upcast', 'template_rule': True, 'when': 'U* is convertible to T*'}` | `// example` | `// generated` | Auto-mapped from config |
-| `28` | `{'target': 'ref_p<T>', 'source': 'ref_p<U>', 'kind': 'copy_upcast', 'template_rule': True, 'when': 'U* is convertible to T*'}` | `// example` | `// generated` | Auto-mapped from config |
+| `equivalence_group = [null_t, nullopt_t, nullptr_t] with policy comparison_equivalent` | The three configured sentinels compare as equivalent emptiness. | `$x == null;` | `x == ::scpp::null_t() // and equivalent sentinel forms` | This is what allows pointer-null and nullable-null comparisons to accept multiple sentinel spellings without inventing broader implicit conversions. |
 
-## sentinel_semantics
+## 12. Runtime Helpers Contract
 
 ### Description
-Auto-generated section for `sentinel_semantics`.
+Declares the stable helper names that generators/frontends are allowed to target directly. This is a cross-boundary contract, not an implementation detail list.
 
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `equivalence_groups` | `[{'members': ['null_t', 'nullopt_t', 'nullptr_t'], 'policy': 'comparison_equivalent'}]` | `// example` | `// generated` | Auto-mapped from config |
+| `stable_helpers = create, shared, unique, weak, value, ref, cast, to_string` | These helper entry points are part of the public contract. | `$x = new A(); echo $x;` | `::scpp::create<A>(); ::scpp::to_string(x);` | Anything outside this list should not become a generator dependency without contract change. |
+| `namespaces.core = scpp` | Core helpers live in `::scpp`. | `$x = 1;` | `::scpp::int_t x = ::scpp::int_t(1);` | This aligns type wrappers and helper entry points. |
+| `namespaces.php = scpp::php` | PHP-specific runtime helpers, when needed, live under a separate namespace. | `// frontend/runtime glue` | `::scpp::php::...;` | Keeps core runtime and PHP-facing glue separable. |
+| `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `$x = (bool)$n;` | `::scpp::cast<::scpp::bool_t>(n);` | Important because contract stability matters more than today’s internal implementation structure. |
+| `notes.separation_rule` | The contract lists shared knowledge helpers, not generator internals. | `// policy note` | `// no direct dependency on private helper names` | This is a governance rule: keep frontend/runtime coupling narrow and intentional. |
 
-## runtime_helpers_contract
+## 13. Scope Note
 
 ### Description
-Auto-generated section for `runtime_helpers_contract`.
-
-| Key | Value | PHP Example | Expected C++ Generated Code | Explanation |
-|---|---|---|---|---|
-| `stable_helpers` | `['create', 'shared', 'unique', 'weak', 'value', 'ref', 'cast', 'to_string']` | `// example` | `// generated` | Auto-mapped from config |
-| `namespaces` | `{'core': 'scpp', 'php': 'scpp::php'}` | `// example` | `// generated` | Auto-mapped from config |
-| `generator_allowed_helpers` | `['create', 'shared', 'unique', 'weak', 'value', 'ref', 'cast', 'to_string']` | `// example` | `// generated` | Auto-mapped from config |
-| `notes` | `{'purpose': 'declares stable runtime helper entry points that frontends/generators may target directly', 'separation_rule': 'helpers listed here are shared knowledge contracts, not generator implementation details'}` | `// example` | `// generated` | Auto-mapped from config |
-
+This review document is intentionally semantic and curated. It covers all major content areas present in `config.json`, but it does so by extracting the meaningful rules rather than reproducing every raw field mechanically.
