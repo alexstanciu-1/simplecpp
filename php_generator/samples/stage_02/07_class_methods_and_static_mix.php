@@ -35,3 +35,5 @@ function use_counter(int $seed): int {
 
 $a = use_counter(5);
 $b = $a;
+
+echo $b, "\n";

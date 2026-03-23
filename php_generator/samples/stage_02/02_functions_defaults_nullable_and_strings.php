@@ -32,3 +32,5 @@ $again = maybe_id($maybe);
 $text = normalize_name($next);
 $copy = $text;
 $copy = normalize_name($copy, 3);
+
+echo $copy, "|", $again, "\n";

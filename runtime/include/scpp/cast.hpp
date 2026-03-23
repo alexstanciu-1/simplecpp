@@ -4,6 +4,9 @@
 #include "scpp/float_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/null_t.hpp"
+#include "scpp/nullopt_t.hpp"
+#include "scpp/nullptr_t.hpp"
+#include "scpp/string_t.hpp"
 
 namespace scpp {
 
@@ -38,6 +41,44 @@ inline bool_t cast<bool_t, float_t>(const float_t &value) {
 template <>
 inline int_t cast<int_t, float_t>(const float_t &value) {
 	return int_t(static_cast<std::int64_t>(value.native_value()));
+}
+
+// int_t -> string_t
+// Numeric to string conversion is explicit and centralized here.
+template <>
+inline string_t cast<string_t, int_t>(const int_t &value) {
+	return string_t(std::to_string(value.native_value()));
+}
+
+// float_t -> string_t
+// Numeric to string conversion is explicit and centralized here.
+template <>
+inline string_t cast<string_t, float_t>(const float_t &value) {
+	return string_t(std::to_string(value.native_value()));
+}
+
+// bool_t -> string_t
+// Mirrors PHP string conversion for booleans: true => "1", false => "".
+template <>
+inline string_t cast<string_t, bool_t>(const bool_t &value) {
+	return string_t(value.native_value() ? "1" : "");
+}
+
+// null-like sentinels -> string_t
+// Mirrors PHP string conversion for null-like values as the empty string.
+template <>
+inline string_t cast<string_t, null_t>(const null_t &) {
+	return string_t("");
+}
+
+template <>
+inline string_t cast<string_t, nullopt_t>(const nullopt_t &) {
+	return string_t("");
+}
+
+template <>
+inline string_t cast<string_t, nullptr_t>(const nullptr_t &) {
+	return string_t("");
 }
 
 } // namespace scpp

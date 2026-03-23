@@ -32,3 +32,5 @@ $e = describe($a, $b, $c, $d);
 $f = $e;
 $g = combine(1, 2, $c);
 $h = combine($g, 3, $c);
+
+echo $f, "|", $h, "\n";

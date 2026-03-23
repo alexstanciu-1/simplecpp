@@ -32,3 +32,5 @@ function materialize(int $seed): int {
 $a = 1;
 $b = materialize($a);
 $c = $b;
+
+echo $c, "\n";

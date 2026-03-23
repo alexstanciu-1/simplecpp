@@ -5,10 +5,12 @@ namespace Scpp\S2S\Generator;
 
 use Scpp\S2S\Emit\CppFile;
 use Scpp\S2S\IR\ClassDecl;
+use Scpp\S2S\IR\ConstantDecl;
 use Scpp\S2S\IR\FunctionDecl;
 use Scpp\S2S\IR\MethodDecl;
 use Scpp\S2S\IR\PhpFile;
 use Scpp\S2S\IR\Statement;
+use Scpp\S2S\IR\UseDecl;
 use Scpp\S2S\Lowering\TypeMapper;
 use Scpp\S2S\Support\AstKind;
 
@@ -42,10 +44,10 @@ final class Generator
 		$header = ['#pragma once', '', '#include <scpp/runtime.hpp>', ''];
 		$source = ['#include "' . $baseName . '.hpp"', ''];
 
-		$hasRootNamespaceContent = ($file->classes !== [] || $file->functions !== [] || $file->rootStatements !== []);
-		$rootMainName = $file->rootStatements !== [] ? 'main' : null;
+		$hasRootNamespaceContent = ($file->rootUses !== [] || $file->constants !== [] || $file->classes !== [] || $file->functions !== [] || $file->rootStatements !== []);
+		$rootMainName = $file->rootStatements !== [] ? '__scpp_main' : null;
 		if ($hasRootNamespaceContent) {
-			$this->emitNamespaceBlock($header, $source, 'scpp', null, $file->classes, $file->functions, $file->rootStatements, $rootMainName);
+			$this->emitNamespaceBlock($header, $source, 'scpp', null, $file->rootUses, $file->constants, $file->classes, $file->functions, $file->rootStatements, $rootMainName);
 		}
 
 		$namespaceMainTargets = [];
@@ -56,6 +58,8 @@ final class Generator
 				$source,
 				'scpp::' . str_replace('\\', '::', $namespace->name),
 				$namespace->name,
+				$namespace->uses,
+				$namespace->constants,
 				$namespace->classes,
 				$namespace->functions,
 				$namespace->statements,
@@ -72,7 +76,7 @@ final class Generator
 
 		if ($file->rootStatements !== []) {
 			$source[] = 'int main() {';
-			$source[] = $this->indent(1) . 'return scpp::main();';
+			$source[] = $this->indent(1) . 'return scpp::__scpp_main();';
 			$source[] = '}';
 			$source[] = '';
 		} elseif ($namespaceMainTargets !== []) {
@@ -85,14 +89,29 @@ final class Generator
 		return new CppFile($baseName, $header, $source, $this->errors);
 	}
 
-	/** @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @param list<Statement> $statements */
-	private function emitNamespaceBlock(array &$header, array &$source, string $namespaceCpp, ?string $namespacePhp, array $classes, array $functions, array $statements, ?string $syntheticMainName = null): void
+	/** @param list<UseDecl> $uses @param list<ConstantDecl> $constants @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @param list<Statement> $statements */
+	private function emitNamespaceBlock(array &$header, array &$source, string $namespaceCpp, ?string $namespacePhp, array $uses, array $constants, array $classes, array $functions, array $statements, ?string $syntheticMainName = null): void
 	{
 		$header[] = 'namespace ' . $namespaceCpp . ' {';
 		$header[] = '';
 		$source[] = 'namespace ' . $namespaceCpp . ' {';
 		$source[] = $this->indent(1) . 'using namespace ::scpp::php;';
 		$source[] = '';
+
+		$useLines = $this->renderUseDeclarations($uses);
+		foreach ($useLines as $useLine) {
+			$header[] = $this->indent(1) . $useLine;
+		}
+		if ($useLines !== []) {
+			$header[] = '';
+		}
+
+		foreach ($constants as $constant) {
+			$this->emitConstant($header, $constant, $namespacePhp);
+		}
+		if ($constants !== []) {
+			$header[] = '';
+		}
 
 		foreach ($classes as $class) {
 			$this->emitClass($header, $source, $class, $namespacePhp);
@@ -108,6 +127,45 @@ final class Generator
 		$header[] = '';
 		$source[] = '}';
 		$source[] = '';
+	}
+
+	/** @param list<UseDecl> $uses @return list<string> */
+	private function renderUseDeclarations(array $uses): array
+	{
+		$out = [];
+		foreach ($uses as $use) {
+			$line = $this->renderUseDeclaration($use);
+			if ($line !== null) {
+				$out[] = $line;
+			}
+		}
+		return $out;
+	}
+
+	private function renderUseDeclaration(UseDecl $use): ?string
+	{
+		if ($use->isGrouped) {
+			$this->errors[] = 'Grouped use imports are not supported at line ' . $use->line . '.';
+			return null;
+		}
+		if ($use->alias !== null) {
+			$this->errors[] = 'Aliased use imports are not supported at line ' . $use->line . '.';
+			return null;
+		}
+		if ($use->kind === 'normal') {
+			$this->errors[] = 'Plain use imports are not supported at line ' . $use->line . '. Only use function/use const map to C++ using declarations.';
+			return null;
+		}
+		if ($use->name === '') {
+			$this->errors[] = 'Empty use import is not supported at line ' . $use->line . '.';
+			return null;
+		}
+		return 'using ::scpp::' . str_replace('\\', '::', ltrim($use->name, '\\')) . ';';
+	}
+
+	private function emitConstant(array &$header, ConstantDecl $constant, ?string $namespacePhp): void
+	{
+		$header[] = 'inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
 	}
 
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
@@ -152,7 +210,6 @@ final class Generator
 		$source[] = $this->indent(1) . 'return 0;';
 		$source[] = '}';
 	}
-
 
 	private function renderMethodDeclaration(MethodDecl $method, ?string $className = null, ?string $namespacePhp = null): string
 	{
@@ -276,13 +333,22 @@ final class Generator
 			return ['return ' . $this->renderExpr($statement->payload, $namespacePhp) . ';'];
 		}
 
+		if ($statement->kind === 'echo') {
+			// Preserve the exporter shape: one AST_ECHO node becomes one runtime print call.
+			return ['::scpp::php::echo(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
+		}
+
+		if ($statement->kind === 'unset') {
+			// Preserve the exporter shape: one AST_UNSET node becomes one runtime unset call.
+			return ['::scpp::php::unset(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
+		}
+
 		if ($statement->kind === 'expr') {
 			return [$this->renderExpr($statement->payload, $namespacePhp) . ';'];
 		}
 
 		return ['// Unsupported statement'];
 	}
-
 
 	private function extractSimpleVarName(mixed $expr): ?string
 	{
@@ -319,6 +385,7 @@ final class Generator
 			$leftType . ' ' . $leftName . ' = ' . $rightName . ';',
 		];
 	}
+
 	private function renderExpr(mixed $expr, ?string $namespacePhp): string
 	{
 		if (is_int($expr)) {
@@ -341,28 +408,46 @@ final class Generator
 		}
 		if ($kind === AstKind::CONST) {
 			$name = (string) ($expr['children']['name']['children']['name'] ?? '');
+			$flags = (int) ($expr['children']['name']['flags'] ?? 0);
 			return match (strtolower(ltrim($name, '\\'))) {
 				'true' => 'static_cast<bool_t>(true)',
 				'false' => 'static_cast<bool_t>(false)',
 				'null' => 'null',
-				default => $this->renderConstantName($name, $namespacePhp),
+				default => $this->renderConstantName($name, $flags, $namespacePhp),
 			};
 		}
 		if ($kind === AstKind::BINARY_OP) {
-			$left = $this->renderExpr($expr['children']['left'] ?? null, $namespacePhp);
-			$right = $this->renderExpr($expr['children']['right'] ?? null, $namespacePhp);
-			return $left . ' + ' . $right;
+			$leftNode = $expr['children']['left'] ?? null;
+			$rightNode = $expr['children']['right'] ?? null;
+			$left = $this->renderExpr($leftNode, $namespacePhp);
+			$right = $this->renderExpr($rightNode, $namespacePhp);
+			$flags = (int) ($expr['flags'] ?? 0);
+
+			return match ($flags) {
+				AstKind::PLUS => $left . ' + ' . $right,
+				AstKind::BINARY_CONCAT => $this->renderStringConcat($leftNode, $rightNode, $namespacePhp),
+				AstKind::BINARY_BOOL_AND => '(' . $left . ' && ' . $right . ')',
+				default => '/* unsupported-binary-op-' . $flags . ' */',
+			};
 		}
 		if ($kind === AstKind::CAST) {
 			$inner = $this->renderExpr($expr['children']['expr'] ?? null, $namespacePhp);
 			$flags = (int) ($expr['flags'] ?? 0);
 			return match ($flags) {
-				AstKind::TYPE_STRING => 'string_t(' . $inner . ')',
+				AstKind::TYPE_STRING => 'cast<string_t>(' . $inner . ')',
 				AstKind::TYPE_LONG => 'static_cast<int_t>(' . $inner . ')',
 				AstKind::TYPE_DOUBLE => 'static_cast<float_t>(' . $inner . ')',
 				AstKind::TYPE_BOOL => 'static_cast<bool_t>(' . $inner . ')',
 				default => '/* unsupported-cast */',
 			};
+		}
+		if ($kind === AstKind::ENCAPS_LIST) {
+			return $this->renderInterpolatedString($expr, $namespacePhp);
+		}
+		if ($kind === AstKind::DIM) {
+			$base = $this->renderExpr($expr['children']['expr'] ?? null, $namespacePhp);
+			$dim = $this->renderExpr($expr['children']['dim'] ?? null, $namespacePhp);
+			return $base . '[' . $dim . ']';
 		}
 		if ($kind === AstKind::PROP) {
 			$base = $this->renderExpr($expr['children']['expr'] ?? null, $namespacePhp);
@@ -380,6 +465,11 @@ final class Generator
 				? '::scpp::class_t<decltype(' . $this->renderExpr($classNode, $namespacePhp) . ')>'
 				: $this->renderClassName($classNode, $namespacePhp);
 			return $class . '::' . $method . '(' . $this->renderArgs($expr['children']['args']['children'] ?? [], $namespacePhp) . ')';
+		}
+		if ($kind === AstKind::AST_ISSET) {
+			// In this exporter, multi-argument isset() is already normalized into boolean-op trees.
+			// AST_ISSET itself carries exactly one operand in `children['var']`.
+			return '::scpp::php::isset(' . $this->renderExpr($expr['children']['var'] ?? null, $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr['children']['expr'] ?? null;
@@ -400,6 +490,96 @@ final class Generator
 		return '/* unsupported-expr-kind-' . $kind . ' */';
 	}
 
+	/** @return list<mixed> */
+	private function extractVariadicPayload(array $node): array
+	{
+		$children = $node['children'] ?? [];
+
+		if (array_key_exists('expr', $children)) {
+			$expr = $children['expr'];
+			if (is_array($expr) && array_key_exists('children', $expr) && is_array($expr['children'])) {
+				return array_values($expr['children']);
+			}
+			return [$expr];
+		}
+
+		if (array_key_exists('var', $children)) {
+			$var = $children['var'];
+			if (is_array($var) && array_key_exists('children', $var) && is_array($var['children'])) {
+				return array_values($var['children']);
+			}
+			return [$var];
+		}
+
+		if (is_array($children)) {
+			return array_values($children);
+		}
+
+		return [];
+	}
+
+	private function renderInterpolatedString(array $expr, ?string $namespacePhp): string
+	{
+		$parts = [];
+		foreach (($expr['children'] ?? []) as $child) {
+			$parts[] = $this->renderStringOperand($child, $namespacePhp);
+		}
+
+		if ($parts === []) {
+			return 'string_t("")';
+		}
+
+		return '(' . implode(' + ', $parts) . ')';
+	}
+
+	private function renderStringConcat(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
+	{
+		return '(' . $this->renderStringOperand($leftNode, $namespacePhp) . ' + ' . $this->renderStringOperand($rightNode, $namespacePhp) . ')';
+	}
+
+	private function renderStringOperand(mixed $expr, ?string $namespacePhp): string
+	{
+		if (is_string($expr)) {
+			return 'string_t(' . json_encode($expr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')';
+		}
+
+		if (is_int($expr) || is_float($expr)) {
+			return 'cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')';
+		}
+
+		if (!is_array($expr)) {
+			return 'string_t("")';
+		}
+
+		$kind = $expr['kind'] ?? null;
+		if ($kind === AstKind::CONST) {
+			$name = strtolower((string) ($expr['children']['name']['children']['name'] ?? ''));
+			if ($name === 'null' || $name === 'true' || $name === 'false') {
+				return 'cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')';
+			}
+		}
+
+		$rendered = $this->renderExpr($expr, $namespacePhp);
+		if ($kind === AstKind::ENCAPS_LIST) {
+			return $rendered;
+		}
+
+		return match ($kind) {
+			AstKind::VAR,
+			AstKind::DIM,
+			AstKind::PROP,
+			AstKind::METHOD_CALL,
+			AstKind::CALL,
+			AstKind::STATIC_CALL,
+			AstKind::AST_ISSET,
+			AstKind::CAST,
+			AstKind::BINARY_OP,
+			AstKind::ASSIGN,
+			AstKind::CLASS_CONST,
+			AstKind::STATIC_PROP => 'cast<string_t>(' . $rendered . ')',
+			default => 'cast<string_t>(' . $rendered . ')',
+		};
+	}
 
 	private function renderNameExpr(mixed $expr, ?string $namespacePhp): string
 	{
@@ -417,6 +597,25 @@ final class Generator
 		}
 		return $this->renderExpr($expr, $namespacePhp);
 	}
+
+	private function renderVariadicArgs(mixed $expr, ?string $namespacePhp): string
+	{
+		$out = [];
+		if (is_array($expr) && array_key_exists('children', $expr) && is_array($expr['children'])) {
+			$children = $expr['children'];
+			$isList = array_is_list($children);
+			if ($isList) {
+				foreach ($children as $child) {
+					$out[] = $this->renderExpr($child, $namespacePhp);
+				}
+			}
+		}
+		if ($out === []) {
+			$out[] = $this->renderExpr($expr, $namespacePhp);
+		}
+		return implode(', ', $out);
+	}
+
 	private function renderArgs(array $args, ?string $namespacePhp): string
 	{
 		$out = [];
@@ -444,12 +643,16 @@ final class Generator
 		return str_replace('\\', '::', $name);
 	}
 
-
-	private function renderConstantName(string $name, ?string $namespacePhp): string
+	private function renderConstantName(string $name, int $flags, ?string $namespacePhp): string
 	{
 		$trimmed = ltrim($name, '\\');
 		if ($trimmed === '') {
 			return '/* unsupported-const */';
+		}
+
+		$resolved = $this->nameRegistry->resolveConstant($name, $flags, $namespacePhp);
+		if ($resolved !== null) {
+			return '::scpp::' . str_replace('\\', '::', $resolved);
 		}
 
 		if (isset($this->predefinedConstants[$trimmed])) {

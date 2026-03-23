@@ -40,3 +40,5 @@ function build_objects(): int {
 $a = build_rooted();
 $b = build_objects();
 $c = $a + $b;
+
+echo $c, "\n";

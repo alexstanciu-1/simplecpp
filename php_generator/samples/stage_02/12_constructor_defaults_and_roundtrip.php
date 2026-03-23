@@ -31,3 +31,5 @@ $a = make_total();
 $b = make_total(5);
 $c = $a;
 $d = $b;
+
+echo $c, "|", $d, "\n";

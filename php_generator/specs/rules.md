@@ -159,7 +159,8 @@ Examples:
 ## 7. Casting
 
 - scalar casts use `static_cast<T>(...)`
-- string conversion uses `string_t(...)`
+- string conversion uses explicit `cast<string_t>(...)` only for supported pairs
+- in all other cases string conversion uses `string_t(...)`
 - C-style casts are allowed only for non-literals when required as a temporary form
 
 ---
@@ -256,9 +257,19 @@ Except for explicitly defined cases, the generator must not attempt semantic sym
 Namespace and class name lowering remains syntactic unless a rule states otherwise.
 
 ### 14.5 Namespace Imports
-PHP `use` imports are deferred.
+`use` follows C++ `using` semantics, not PHP import semantics.
 
-They must not be translated directly to C++ `using namespace`.
+Supported now:
+- `use function A\B\f;` lowers to `using ::scpp::A::B::f;`
+- `use const A\B\X;` lowers to `using ::scpp::A::B::X;`
+- `using namespace` must not be emitted for PHP `use`
+- emitted `using` declarations are namespace-local and are placed inside the generated `namespace scpp::... {}` block
+
+Rejected now:
+- plain `use A\B\X;`
+- aliasing such as `use function A\B\f as g;`
+- grouped imports such as `use function A\B\{f, g};`
+- any behavior relying on PHP fallback import/name-resolution semantics
 
 ### 14.6 Namespace-Scope Constants and Variables
 - namespace-scope constants are allowed
@@ -606,6 +617,7 @@ These PHP semantics must go through the `php::` layer:
 
 - `unset($a)` -> `php::unset(a);`
 - `isset($b)` -> `php::isset(b)`
+- when the exporter normalizes multi-operand forms, generation must follow the exported tree instead of reconstructing surface syntax
 - `empty($b)` -> `php::empty(b)`
 - strict equality `===` -> `php::identical(...)`
 - strict inequality `!==` -> `php::not_identical(...)`
@@ -677,8 +689,8 @@ PHP `.` maps to C++ `+` on `string_t` operands.
 Examples:
 ```cpp
 auto a = string_t("a") + string_t("b");
-auto a = b + string_t("x");
-auto a = string_t("x") + b;
+auto a = cast<string_t>(b) + string_t("x");
+auto a = string_t("x") + cast<string_t>(b);
 ```
 
 ### 15.3 Non-strict comparison family
@@ -738,12 +750,17 @@ Rules:
 
 ## 17. Output rules
 
-- `echo` -> `std::cout <<`
+- generated code currently routes output through `::scpp::php::echo(...)`
+- lowering must preserve the exporter shape
+- for the current exporter:
+	- each `AST_ECHO` node carries one operand
+	- `echo a, b, c;` is exported as multiple sibling `AST_ECHO` nodes
 
 Examples:
 ```cpp
-std::cout << a;
-std::cout << a << b << c;
+::scpp::php::echo(a);
+::scpp::php::echo(b);
+::scpp::php::echo(c);
 ```
 
 ## 18. Error handling policy
@@ -855,3 +872,7 @@ int main() {
 	return scpp::main();
 }
 
+Interpolation AST finding:
+- interpolated strings are represented as `AST_ENCAPS_LIST`, not as binary concat chains
+- generator lowering should join each part in order and cast interpolated non-string values to `string_t` explicitly
+- `samples/know_how/` remains the exporter-behavior reference folder for these checks

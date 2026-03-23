@@ -7,8 +7,9 @@ while still staying small enough to debug quickly.
 ## Goals
 
 - exercise interactions between declarations and executable flow
-- force synthetic `main()` generation through real executable statements
+- force synthetic entry generation through real executable statements
 - combine namespace, class, function, constant, reference, and typed-local rules
+- make success depend on exact stdout parity, not only on avoiding errors
 - keep each file in the ~30–40 line range
 
 ## Files
@@ -26,10 +27,14 @@ while still staying small enough to debug quickly.
 - `11_instance_based_static_access_matrix.php`
 - `12_constructor_defaults_and_roundtrip.php`
 
-## Next step
+## Expected testing model
 
-Export the matching parser output beside each PHP file using the same basename,
-for example:
+For each positive sample:
 
-- `01_flow_arithmetic_and_calls.php.json`
-- `02_functions_defaults_nullable_and_strings.php.json`
+1. run the PHP file and capture stdout
+2. generate C++
+3. compile the generated C++
+4. run the produced executable and capture stdout
+5. require exact stdout equality
+
+If any step fails, the sample fails.

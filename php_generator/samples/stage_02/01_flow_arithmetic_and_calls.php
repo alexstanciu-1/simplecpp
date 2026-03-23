@@ -36,3 +36,5 @@ $c = compute_mix($a, $b);
 $d = pair_sum($c, $b);
 $e = $d;
 $e = $e + 1;
+
+echo $e, "\n";

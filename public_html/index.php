@@ -1,11 +1,14 @@
 <?php
 
-if (false) {
+if ($_GET['resync_samples_ast'] ?? false) {
 	$files = glob(realpath("../simple_cpp/php_generator/samples/")."/*/*.php");
+	echo "<pre>\n";
 	var_dump(realpath("../simple_cpp/php_generator/samples/"));
 	
 	foreach ($files as $f) {
 		
+		echo "Starting: " . $f, "\n";
+	
 		$source_code = file_get_contents($f);
 		$ast_vers_used = 120; # max(\ast\get_supported_versions());
 		$ast = \ast\parse_code($source_code, $ast_vers_used);
@@ -24,8 +27,7 @@ if (false) {
 	var_dump($files);
 	die;
 }
-
-if ($_GET['export_php_ast'] ?? false) {
+else if ($_GET['export_php_ast'] ?? false) {
 	
 	$source_code = file_get_contents("php://input") ?: '<?php echo "works";';
 	// echo "ok!";
@@ -55,6 +57,33 @@ if ($_GET['export_php_ast'] ?? false) {
 		'ast' => $ast,
 	]);
 	
+	exit;
+}
+else if ((substr($_GET['__or__'], 0, strlen('test/')) === 'test/') || ($_GET['__or__'] === 'test')) {
+	$ffp = __DIR__ . "/" . $_GET['__or__'];
+	$rp = realpath($ffp);
+	if (($rp !== false) && is_file($rp)) {
+		// var_dump($ffp, $_GET['__or__']);
+		if (substr($rp, 0, strlen(__DIR__) + 1) === __DIR__ . "/") {
+			// ok
+			// $mime = mime_content_type($rp);
+			$ext = pathinfo($rp, PATHINFO_EXTENSION);
+			if (($mime_ty = ['css' => 'text/css', 'js' => 'text/javascript'][$ext])) {
+				header('Content-Type: '.$mime_ty);
+				readfile($rp);
+			}
+			else if (['php' => true, ][$ext]) {
+				require_once $rp;
+			}
+		}
+		else {
+			echo 'not allowed';
+			exit;
+		}
+	}
+	else {
+		require_once 'test/index.php';
+	}
 	exit;
 }
 

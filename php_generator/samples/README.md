@@ -20,3 +20,24 @@ This set is designed to exercise the currently decided rules in `specs/rules_cat
 - Treat files `01` to `09` as positive fixtures.
 - Treat file `10` as a negative fixture.
 - Export matching AST/token JSON beside each PHP file using the same basename.
+- For positive fixtures, compare exact stdout from PHP execution against exact stdout from the generated C++ executable.
+- For negative fixtures, keep the existing expectation: generator rejection before C++ compilation.
+
+
+## `know_how/`
+
+`know_how/` is the parser/exporter behavior folder.
+
+Use it to pin down how the current php-ast JSON exporter actually shapes the AST for tricky constructs before changing lowering logic.
+
+Current confirmed findings:
+- `echo a, b, c;` is exported as multiple sibling `AST_ECHO` nodes, not one variadic node.
+- `unset($a, $b, $c);` is exported as multiple sibling `AST_UNSET` nodes, not one variadic node.
+- `isset($a, $b, $c)` is exported as a boolean-expression tree combining single-operand `AST_ISSET` nodes.
+- Parentheses in the tested `echo` / `isset` cases do not introduce an important wrapper node in this exporter.
+
+Interpolation AST finding:
+- interpolated strings are represented as `AST_ENCAPS_LIST`, not as binary concat chains
+- generator lowering should join each part in order and cast interpolated non-string values to `string_t` explicitly
+- `samples/know_how/` remains the exporter-behavior reference folder for these checks
+

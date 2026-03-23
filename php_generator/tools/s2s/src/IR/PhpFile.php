@@ -13,6 +13,8 @@ final class PhpFile
 {
 	/**
 	 * @param list<NamespaceBlock> $namespaces
+	 * @param list<UseDecl> $rootUses
+	 * @param list<ConstantDecl> $constants
 	 * @param list<ClassDecl> $classes
 	 * @param list<FunctionDecl> $functions
 	 * @param list<Statement> $rootStatements
@@ -21,6 +23,8 @@ final class PhpFile
 	public function __construct(
 		public readonly string $path,
 		public readonly array $namespaces,
+		public readonly array $rootUses,
+		public readonly array $constants,
 		public readonly array $classes,
 		public readonly array $functions,
 		public readonly array $rootStatements,

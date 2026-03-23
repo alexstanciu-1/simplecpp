@@ -32,5 +32,12 @@ function pass_reader(Reader $reader, ?LocalReader $local): Reader {
 	return $copy;
 }
 
+function use_reader(Reader $reader): int {
+	return $reader->read(5);
+}
+
 $a = new LocalReader();
 $b = pass_reader($a, $a);
+$c = use_reader($b);
+
+echo $c, "\n";

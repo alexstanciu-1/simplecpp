@@ -7,6 +7,8 @@ require_once __DIR__ . '/../src/Loader/InputLoader.php';
 require_once __DIR__ . '/../src/Metadata/TypeCommentExtractor.php';
 require_once __DIR__ . '/../src/IR/PhpFile.php';
 require_once __DIR__ . '/../src/IR/NamespaceBlock.php';
+require_once __DIR__ . '/../src/IR/UseDecl.php';
+require_once __DIR__ . '/../src/IR/ConstantDecl.php';
 require_once __DIR__ . '/../src/IR/ClassDecl.php';
 require_once __DIR__ . '/../src/IR/PropertyDecl.php';
 require_once __DIR__ . '/../src/IR/FunctionDecl.php';

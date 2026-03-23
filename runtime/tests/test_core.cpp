@@ -61,6 +61,8 @@ static void test_named_casts() {
 	assert(scpp::cast<scpp::bool_t>(scpp::float_t(0.0)).native_value() == false);
 	assert(scpp::cast<scpp::bool_t>(scpp::float_t(-1.25)).native_value() == true);
 	assert(scpp::cast<scpp::int_t>(scpp::float_t(3.75)).native_value() == 3);
+	assert(scpp::cast<scpp::string_t>(scpp::int_t(42)).native_value() == "42");
+	assert(scpp::cast<scpp::string_t>(scpp::float_t(3.5)).native_value().starts_with("3.500000"));
 }
 
 // Verifies basic wrapped string and vector behavior needed by generated code.

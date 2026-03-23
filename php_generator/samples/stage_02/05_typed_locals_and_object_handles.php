@@ -29,3 +29,5 @@ function typed_object_roundtrip(Item $item): Item {
 $a = typed_state();
 $b = new Item();
 $c = typed_object_roundtrip($b);
+
+echo $a, "\n";

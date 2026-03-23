@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(scpp_runtime LANGUAGES CXX)
 
+enable_testing()
+
 add_library(scpp_runtime
 	src/runtime.cpp
 )
@@ -12,3 +14,5 @@ PUBLIC
 )
 
 target_compile_features(scpp_runtime PUBLIC cxx_std_20)
+
+add_subdirectory(tests)

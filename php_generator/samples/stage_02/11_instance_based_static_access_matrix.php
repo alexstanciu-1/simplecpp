@@ -35,3 +35,5 @@ function rooted_instance_call(): int {
 $a = local_instance_call();
 $b = rooted_instance_call();
 $c = $a + $b;
+
+echo $c, "\n";

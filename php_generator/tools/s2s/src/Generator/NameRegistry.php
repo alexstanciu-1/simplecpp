@@ -18,11 +18,16 @@ final class NameRegistry
 	private array $classes = [];
 	/** @var array<string, bool> */
 	private array $functions = [];
+	/** @var array<string, bool> */
+	private array $constants = [];
 
 	public static function fromPhpFile(PhpFile $file): self
 	{
 		$registry = new self();
 
+		foreach ($file->constants as $constant) {
+			$registry->constants[$constant->name] = true;
+		}
 		foreach ($file->classes as $class) {
 			$registry->classes[$class->name] = true;
 		}
@@ -30,6 +35,9 @@ final class NameRegistry
 			$registry->functions[$function->name] = true;
 		}
 		foreach ($file->namespaces as $namespace) {
+			foreach ($namespace->constants as $constant) {
+				$registry->constants[$namespace->name . '\\' . $constant->name] = true;
+			}
 			foreach ($namespace->classes as $class) {
 				$registry->classes[$namespace->name . '\\' . $class->name] = true;
 			}
@@ -49,6 +57,11 @@ final class NameRegistry
 	public function resolveFunction(string $phpName, int $flags, ?string $currentNamespace): ?string
 	{
 		return $this->resolve($phpName, $flags, $currentNamespace, $this->functions);
+	}
+
+	public function resolveConstant(string $phpName, int $flags, ?string $currentNamespace): ?string
+	{
+		return $this->resolve($phpName, $flags, $currentNamespace, $this->constants);
 	}
 
 	/**
