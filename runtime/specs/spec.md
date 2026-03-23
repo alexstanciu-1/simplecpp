@@ -77,7 +77,7 @@ The runtime class families should remain structurally stable even when cast and 
 
 ## 5. Runtime semantic families
 
-The runtime is organized into four semantic families:
+The runtime is organized into five semantic families:
 
 ### 5.1 Scalar semantic types
 These represent Simple C++ scalar values rather than native C++ primitives.
@@ -106,7 +106,19 @@ Included initially:
 - `unique_p<T>`
 - `weak_p<T>`
 
-### 5.4 Optionality semantic types
+### 5.4 Inline-storage semantic types
+These model explicit inline object/value storage that must not allocate.
+
+Included initially:
+- `value_p<T>`
+
+### 5.5 Reference semantic types
+These model safe non-owning references for value-like storage.
+
+Included initially:
+- `ref_p<T>`
+
+### 5.6 Optionality semantic types
 These model presence/absence of a value.
 
 Included initially:
@@ -161,7 +173,19 @@ Included initially:
 - `weak_p<T>` is observational/non-owning and must not dereference directly
 - ownership-changing behavior must never be inferred by ad hoc runtime rules; it must be explicitly modeled in configuration or helper semantics
 
-### 6.7 `nullable<T>`
+### 6.7 `value_p<T>`
+- `value_p<T>` stores its payload inline
+- `value_p<T>` is the explicit runtime marker for non-heap object/value storage
+- `value_p<T>` must not wrap ownership wrappers or reference wrappers
+- `value_p<T>` exists only by explicit opt-in; it is not the default lowering for PHP objects
+
+### 6.8 `ref_p<T>`
+- `ref_p<T>` is a safe non-owning reference to value-like storage
+- `ref_p<T>` must not wrap ownership wrappers or another `ref_p<T>`
+- `ref_p<T>` is intended for the future Simple C++ reference operator, not for raw-pointer replacement
+- references to ownership wrappers must collapse rather than nesting into `ref_p<shared_p<T>>`-like forms
+
+### 6.9 `nullable<T>`
 - `nullable<T>` models value optionality
 - it is not a substitute for pointer ownership
 - pointer wrappers and `nullable<T>` must remain semantically distinct even if both can represent absence
@@ -182,6 +206,10 @@ The runtime exposes helper functions for managed allocation/reference creation.
 - `unique()` is explicit unique allocation
 - `weak()` derives a weak reference from shared ownership
 - `weak()` must not allocate
+- `value()` constructs explicit inline-storage wrappers
+- `value()` must not allocate on behalf of the wrapper itself
+- `ref()` constructs `ref_p<T>` only for value-like inputs
+- `ref()` must act as a no-op boundary for `shared_p<T>`, `unique_p<T>`, and `weak_p<T>` inputs so the runtime never grows pointer-to-pointer style layers
 
 ### Constraint
 Policy flexibility is allowed only through configuration/version changes, not through context-sensitive ambiguity in generated code.

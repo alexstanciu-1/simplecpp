@@ -44,22 +44,32 @@ public:
 		return float_t(+value.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator-(const float_t &value) noexcept {
 		return float_t(-value.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator+(const float_t &left, const float_t &right) noexcept {
 		return float_t(left.value_ + right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator-(const float_t &left, const float_t &right) noexcept {
 		return float_t(left.value_ - right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator*(const float_t &left, const float_t &right) noexcept {
 		return float_t(left.value_ * right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator/(const float_t &left, const float_t &right) noexcept {
 		return float_t(left.value_ / right.value_);
 	}
@@ -69,22 +79,32 @@ public:
 		return bool_t(left.value_ == right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator!=(const float_t &left, const float_t &right) noexcept {
 		return bool_t(left.value_ != right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator<(const float_t &left, const float_t &right) noexcept {
 		return bool_t(left.value_ < right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator<=(const float_t &left, const float_t &right) noexcept {
 		return bool_t(left.value_ <= right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>(const float_t &left, const float_t &right) noexcept {
 		return bool_t(left.value_ > right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>=(const float_t &left, const float_t &right) noexcept {
 		return bool_t(left.value_ >= right.value_);
 	}
@@ -95,30 +115,44 @@ public:
 		return float_t(static_cast<double>(left.native_value()) + right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator+(const float_t &left, const int_t &right) noexcept {
 		return float_t(left.value_ + static_cast<double>(right.native_value()));
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator-(const int_t &left, const float_t &right) noexcept {
 		return float_t(static_cast<double>(left.native_value()) - right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator-(const float_t &left, const int_t &right) noexcept {
 		return float_t(left.value_ - static_cast<double>(right.native_value()));
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator*(const int_t &left, const float_t &right) noexcept {
 		return float_t(static_cast<double>(left.native_value()) * right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator*(const float_t &left, const int_t &right) noexcept {
 		return float_t(left.value_ * static_cast<double>(right.native_value()));
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator/(const int_t &left, const float_t &right) noexcept {
 		return float_t(static_cast<double>(left.native_value()) / right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr float_t operator/(const float_t &left, const int_t &right) noexcept {
 		return float_t(left.value_ / static_cast<double>(right.native_value()));
 	}
@@ -128,46 +162,68 @@ public:
 		return bool_t(static_cast<double>(left.native_value()) == right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator==(const float_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ == static_cast<double>(right.native_value()));
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator!=(const int_t &left, const float_t &right) noexcept {
 		return bool_t(static_cast<double>(left.native_value()) != right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator!=(const float_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ != static_cast<double>(right.native_value()));
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator<(const int_t &left, const float_t &right) noexcept {
 		return bool_t(static_cast<double>(left.native_value()) < right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator<(const float_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ < static_cast<double>(right.native_value()));
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator<=(const int_t &left, const float_t &right) noexcept {
 		return bool_t(static_cast<double>(left.native_value()) <= right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator<=(const float_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ <= static_cast<double>(right.native_value()));
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>(const int_t &left, const float_t &right) noexcept {
 		return bool_t(static_cast<double>(left.native_value()) > right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>(const float_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ > static_cast<double>(right.native_value()));
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>=(const int_t &left, const float_t &right) noexcept {
 		return bool_t(static_cast<double>(left.native_value()) >= right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>=(const float_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ >= static_cast<double>(right.native_value()));
 	}

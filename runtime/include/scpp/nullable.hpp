@@ -14,6 +14,8 @@ namespace scpp {
 // - empty-state comparisons return bool_t
 // - comparison of contained values delegates to the wrapped scpp type operators
 template <typename T>
+// Optional-value wrapper used for PHP-like nullable typed values in the prototype.
+// Spec link: this type centralizes behavior so generated code follows runtime/specs/spec.md instead of raw STL semantics.
 class nullable final {
 private:
 	std::optional<T> value_;
@@ -69,6 +71,8 @@ public:
 		return left.value_.value() == right.value_.value();
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend bool_t operator!=(const nullable<T> &left, const nullable<T> &right) {
 		return bool_t(!(left == right).native_value());
 	}

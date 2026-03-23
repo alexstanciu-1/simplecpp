@@ -12,6 +12,8 @@ namespace scpp {
 // - emptiness checks return bool_t
 // - indexed access is bounds-checked because it delegates to std::vector::at
 template <typename T>
+// Vector wrapper used for the current list-like container subset.
+// Spec link: this type centralizes behavior so generated code follows runtime/specs/spec.md instead of raw STL semantics.
 class vector_t final {
 private:
 	std::vector<T> value_;
@@ -57,6 +59,8 @@ public:
 		value_.push_back(value);
 	}
 
+	// Appends data while staying in the wrapper domain defined by the spec.
+	// How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 	void append(T &&value) {
 		value_.push_back(std::move(value));
 	}

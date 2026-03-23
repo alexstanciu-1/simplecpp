@@ -48,20 +48,76 @@ final class TypeCommentExtractor
 		return $result;
 	}
 
+	/**
+
+	 * Checks whether a token matches the exporter shape for a variable token.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function looksLikeVariableToken(array $token): bool
 	{
 		return isset($token[1]) && is_string($token[1]) && str_starts_with($token[1], '$');
 	}
+
+	/**
+
+	 * Checks whether a token matches the exporter shape for whitespace.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function looksLikeWhitespaceToken(array $token): bool
 	{
 		return isset($token[1]) && is_string($token[1]) && trim($token[1]) === '';
 	}
 
+	/**
+
+	 * Checks whether a token matches the exporter shape for a doc comment.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function looksLikeDocCommentToken(array $token): bool
 	{
 		return isset($token[1]) && is_string($token[1]) && str_starts_with($token[1], '/**');
 	}
+
+	/**
+
+	 * Extracts the declared type name from an inline doc comment when it matches the supported annotation form.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function extractInlineType(string $docComment): ?string
 	{
@@ -83,8 +139,32 @@ final class TypeCommentExtractor
 			return $this->isTypeName($body) ? $inner : null;
 		}
 
+		if (str_starts_with($inner, 'value ')) {
+			$body = trim(substr($inner, strlen('value ')));
+			return $this->isTypeName($body) ? 'value ' . $body : null;
+		}
+
+		if (str_starts_with($inner, 'ref ')) {
+			$body = trim(substr($inner, strlen('ref ')));
+			return $this->isTypeName($body) ? 'ref ' . $body : null;
+		}
+
 		return $this->isTypeName($inner) ? $inner : null;
 	}
+
+	/**
+
+	 * Validates whether an extracted inline type string belongs to the currently supported type vocabulary.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function isTypeName(string $type): bool
 	{

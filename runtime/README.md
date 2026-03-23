@@ -9,6 +9,8 @@ This runtime was generated from:
 
 - namespace: `scpp`
 - default `create()` ownership: `shared_p<T>`
+- explicit inline storage helper: `value<T>(...) -> value_p<T>`
+- explicit safe reference helper: `ref(x)` -> `ref_p<T>` for value-like storage, no-op for handle-like wrappers
 - comparison result type: `bool_t`
 - conditions in generated code should use `.native_value()`
 - this package is intentionally conservative and close to the provided config

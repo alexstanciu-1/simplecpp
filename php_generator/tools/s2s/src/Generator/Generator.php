@@ -14,6 +14,13 @@ use Scpp\S2S\IR\UseDecl;
 use Scpp\S2S\Lowering\TypeMapper;
 use Scpp\S2S\Support\AstKind;
 
+/**
+ * Emits Simple C++ declarations and statements from the IR. This file is where the catalog rules are turned into concrete header/source text.
+ *
+ * Relationship to specs:
+ * - this type exists to keep the implementation aligned with php_generator/specs/rules.md and rules_catalog.md
+ * - the implementation favors explicit normalized data over ad-hoc AST access during emission
+ */
 final class Generator
 {
 	/** @var array<string, bool> */
@@ -22,9 +29,25 @@ final class Generator
 	private array $errors = [];
 	/** @var array<string, string> */
 	private array $localTypeComments = [];
+	/** @var array<string, string> */
+	private array $declaredLocalTypes = [];
 	/** @var array<string, bool> */
 	private array $predefinedConstants = [];
 	private NameRegistry $nameRegistry;
+
+	/**
+
+	 * Stores collaborators and default state for this phase object.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	public function __construct(
 		private readonly TypeMapper $typeMapper = new TypeMapper(),
@@ -33,11 +56,26 @@ final class Generator
 		$this->nameRegistry = new NameRegistry();
 	}
 
+	/**
+
+	 * Generates the header/source pair for one lowered PHP file and accumulates generator diagnostics.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	public function generate(PhpFile $file): CppFile
 	{
 		$this->declaredLocals = [];
 		$this->errors = [];
 		$this->localTypeComments = $file->localTypeCommentsByKey;
+		$this->declaredLocalTypes = [];
 		$this->nameRegistry = NameRegistry::fromPhpFile($file);
 
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
@@ -142,6 +180,20 @@ final class Generator
 		return $out;
 	}
 
+	/**
+
+	 * Renders one lowered use declaration while rejecting PHP forms that do not map cleanly to the current prototype.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderUseDeclaration(UseDecl $use): ?string
 	{
 		if ($use->isGrouped) {
@@ -163,10 +215,38 @@ final class Generator
 		return 'using ::scpp::' . str_replace('\\', '::', ltrim($use->name, '\\')) . ';';
 	}
 
+	/**
+
+	 * Emits one lowered constant as an inline namespace-scoped declaration in the header.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function emitConstant(array &$header, ConstantDecl $constant, ?string $namespacePhp): void
 	{
 		$header[] = 'inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
 	}
+
+	/**
+
+	 * Emits a class declaration to the header and its method definitions to the source file.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
 	{
@@ -188,6 +268,20 @@ final class Generator
 		}
 	}
 
+	/**
+
+	 * Emits one top-level function declaration/definition pair.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function emitFunction(array &$header, array &$source, FunctionDecl $function, ?string $namespacePhp): void
 	{
 		$header[] = $this->renderFunctionDeclaration($function, $namespacePhp) . ';';
@@ -196,12 +290,27 @@ final class Generator
 		$source[] = '';
 	}
 
+	/**
+
+	 * Emits the synthetic entry point used for executable namespace/root statements.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function emitNamespaceMain(array &$header, array &$source, string $name, array $statements, ?string $namespacePhp): void
 	{
 		$header[] = 'int ' . $name . '();';
 		$header[] = '';
 		$source[] = 'int ' . $name . '() {';
 		$this->declaredLocals = [];
+		$this->declaredLocalTypes = [];
 		foreach ($statements as $statement) {
 			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
 				$source[] = $this->indent(1) . $line;
@@ -210,6 +319,20 @@ final class Generator
 		$source[] = $this->indent(1) . 'return 0;';
 		$source[] = '}';
 	}
+
+	/**
+
+	 * Renders a method signature using the current type and constructor mapping rules.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function renderMethodDeclaration(MethodDecl $method, ?string $className = null, ?string $namespacePhp = null): string
 	{
@@ -221,11 +344,29 @@ final class Generator
 		return $prefix . $returnType . ' ' . $method->name . '(' . $this->renderParams($method->params, true, $namespacePhp) . ')';
 	}
 
+	/**
+
+	 * Renders the out-of-class method definition body into the source file.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderMethodDefinition(string $className, MethodDecl $method, ?string $namespacePhp): string
 	{
 		$this->declaredLocals = [];
+		$this->declaredLocalTypes = [];
 		foreach ($method->params as $param) {
 			$this->declaredLocals[$param->name] = true;
+			if ($param->type !== null) {
+				$this->declaredLocalTypes[$param->name] = $param->type;
+			}
 		}
 		if ($method->name === '__construct') {
 			$signature = $className . '::' . $className . '(' . $this->renderParams($method->params, false, $namespacePhp) . ')';
@@ -236,22 +377,68 @@ final class Generator
 		return $signature . " {\n" . $this->renderBody($method->statements, $namespacePhp) . "\n}";
 	}
 
+	/**
+
+	 * Renders a function signature for the generated header.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderFunctionDeclaration(FunctionDecl $function, ?string $namespacePhp = null): string
 	{
 		$returnType = $this->typeMapper->mapReturnType($function->returnType, $function->returnsByReference);
 		return $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, true, $namespacePhp) . ')';
 	}
 
+	/**
+
+	 * Renders one full function body for the generated source file.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderFunctionDefinition(FunctionDecl $function, ?string $namespacePhp): string
 	{
 		$this->declaredLocals = [];
+		$this->declaredLocalTypes = [];
 		foreach ($function->params as $param) {
 			$this->declaredLocals[$param->name] = true;
+			if ($param->type !== null) {
+				$this->declaredLocalTypes[$param->name] = $param->type;
+			}
 		}
 		$returnType = $this->typeMapper->mapReturnType($function->returnType, $function->returnsByReference);
 		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp) . ')';
 		return $signature . " {\n" . $this->renderBody($function->statements, $namespacePhp) . "\n}";
 	}
+
+	/**
+
+	 * Renders the lowered parameter list, optionally including default expressions when a declaration requires them.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function renderParams(array $params, bool $includeDefaults, ?string $namespacePhp): string
 	{
@@ -266,6 +453,20 @@ final class Generator
 		return implode(', ', $out);
 	}
 
+	/**
+
+	 * Renders a list of lowered statements as an indented C++ block body.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderBody(array $statements, ?string $namespacePhp): string
 	{
 		$lines = [];
@@ -276,6 +477,20 @@ final class Generator
 		}
 		return implode("\n", $lines);
 	}
+
+	/**
+
+	 * Renders one lowered statement kind into one or more C++ source lines.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function renderStatement(Statement $statement, ?string $namespacePhp): array
 	{
@@ -294,7 +509,17 @@ final class Generator
 				}
 			}
 
-			$expr = $this->renderExpr($exprNode, $namespacePhp);
+			if ($typed !== null) {
+				$validationError = $this->validateTypedLocalAssignment($typed, $statement->kind, $exprNode, $statement->line);
+				if ($validationError !== null) {
+					$this->errors[] = $validationError;
+					return ['// ERROR: ' . $validationError];
+				}
+			}
+
+			$expr = $statement->kind === 'assign_ref'
+				? 'ref(' . $this->renderExpr($exprNode, $namespacePhp) . ')'
+				: $this->renderInitializerExpr($exprNode, $typed, $namespacePhp);
 			if ($exprNode !== null && $this->isNullExpr($exprNode) && $typed === null && $name !== null && !isset($this->declaredLocals[$name])) {
 				$this->errors[] = 'Untyped null assignment is rejected at line ' . $statement->line . '.';
 				return ['// ERROR: untyped null assignment rejected'];
@@ -303,7 +528,11 @@ final class Generator
 			if ($statement->kind === 'assign_ref') {
 				if ($name !== null && !isset($this->declaredLocals[$name])) {
 					$this->declaredLocals[$name] = true;
-					return ['auto& ' . $name . ' = ' . $expr . ';'];
+					if ($typed !== null) {
+						$this->declaredLocalTypes[$name] = $typed;
+						return [$this->typeMapper->mapTypedLocalType($typed) . ' ' . $name . ' = ' . $expr . ';'];
+					}
+					return ['auto ' . $name . ' = ' . $expr . ';'];
 				}
 				return [$target . ' = ' . $expr . ';'];
 			}
@@ -311,6 +540,7 @@ final class Generator
 			if ($name !== null && !isset($this->declaredLocals[$name])) {
 				$this->declaredLocals[$name] = true;
 				if ($typed !== null) {
+					$this->declaredLocalTypes[$name] = $typed;
 					return [$this->typeMapper->mapTypedLocalType($typed) . ' ' . $name . ' = ' . $expr . ';'];
 				}
 				return ['auto ' . $name . ' = ' . $expr . ';'];
@@ -343,12 +573,274 @@ final class Generator
 			return ['::scpp::php::unset(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
 		}
 
+		if ($statement->kind === 'if') {
+			return $this->renderIfStatement($statement->payload, $namespacePhp);
+		}
+
+		if ($statement->kind === 'while') {
+			$lines = ['while (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {'];
+			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
+				$lines[] = $line;
+			}
+			$lines[] = '}';
+			return $lines;
+		}
+
+		if ($statement->kind === 'do_while') {
+			$lines = ['do {'];
+			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
+				$lines[] = $line;
+			}
+			$lines[] = '} while (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ');';
+			return $lines;
+		}
+
+		if ($statement->kind === 'for') {
+			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
+			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
+			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
+			$lines = ['for (' . $init . '; ' . $cond . '; ' . $loop . ') {'];
+			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
+				$lines[] = $line;
+			}
+			$lines[] = '}';
+			return $lines;
+		}
+
+		if ($statement->kind === 'switch') {
+			$lines = ['switch (' . $this->renderSwitchExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {'];
+			foreach (($statement->payload['cases'] ?? []) as $case) {
+				$caseCond = $case['cond'] ?? null;
+				// Each lowered switch case is emitted in source order so generated case/default blocks preserve the catalog shape.
+				$lines[] = $caseCond === null
+					? $this->indent(1) . 'default:'
+					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':';
+				foreach ($this->renderNestedStatements($case['stmts'] ?? [], $namespacePhp) as $line) {
+					$lines[] = $line;
+				}
+			}
+			$lines[] = '}';
+			return $lines;
+		}
+
+		if ($statement->kind === 'break') {
+			$depth = $statement->payload;
+			if ($depth !== null && $depth !== 1) {
+				$this->errors[] = 'break depth > 1 is not supported at line ' . $statement->line . '.';
+				return ['// ERROR: unsupported break depth'];
+			}
+			return ['break;'];
+		}
+
+		if ($statement->kind === 'continue') {
+			$depth = $statement->payload;
+			if ($depth !== null && $depth !== 1) {
+				$this->errors[] = 'continue depth > 1 is not supported at line ' . $statement->line . '.';
+				return ['// ERROR: unsupported continue depth'];
+			}
+			return ['continue;'];
+		}
+
 		if ($statement->kind === 'expr') {
 			return [$this->renderExpr($statement->payload, $namespacePhp) . ';'];
 		}
 
 		return ['// Unsupported statement'];
 	}
+
+	/** @param list<array{cond:mixed,stmts:list<Statement>,line:int}> $branches @return list<string> */
+	private function renderIfStatement(array $branches, ?string $namespacePhp): array
+	{
+		$lines = [];
+		$index = 0;
+		foreach ($branches as $branch) {
+			$prefix = $index === 0 ? 'if' : (($branch['cond'] ?? null) === null ? 'else' : 'else if');
+			if ($prefix === 'else') {
+				$lines[] = 'else {';
+			} else {
+				$lines[] = $prefix . ' (' . $this->renderConditionExpr($branch['cond'] ?? null, $namespacePhp) . ') {';
+			}
+			foreach ($this->renderNestedStatements($branch['stmts'] ?? [], $namespacePhp) as $line) {
+				$lines[] = $line;
+			}
+			$lines[] = '}';
+			$index++;
+		}
+		return $lines;
+	}
+
+	/** @param list<Statement> $statements @return list<string> */
+	private function renderNestedStatements(array $statements, ?string $namespacePhp): array
+	{
+		$lines = [];
+		foreach ($statements as $statement) {
+			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
+				$lines[] = $this->indent(1) . $line;
+			}
+		}
+		return $lines;
+	}
+
+	/** @param list<mixed> $exprs */
+	private function renderForInit(array $exprs, ?string $namespacePhp): string
+	{
+		if ($exprs === []) {
+			return '';
+		}
+
+		$out = [];
+		foreach ($exprs as $expr) {
+			if (is_array($expr) && ($expr['kind'] ?? null) === AstKind::ASSIGN) {
+				$varNode = $expr['children']['var'] ?? null;
+				$name = $this->extractSimpleVarName($varNode);
+				if ($name !== null && !isset($this->declaredLocals[$name])) {
+					$this->declaredLocals[$name] = true;
+					$out[] = 'auto ' . $name . ' = ' . $this->renderExpr($expr['children']['expr'] ?? null, $namespacePhp);
+					continue;
+				}
+			}
+			$out[] = $this->renderExpr($expr, $namespacePhp);
+		}
+		return implode(', ', $out);
+	}
+
+	/** @param list<mixed> $exprs */
+	private function renderForClause(array $exprs, ?string $namespacePhp, string $fallback): string
+	{
+		if ($exprs === []) {
+			return $fallback;
+		}
+		return implode(', ', array_map(fn (mixed $expr): string => $this->renderExpr($expr, $namespacePhp), $exprs));
+	}
+
+	/** @param list<mixed> $exprs */
+	private function renderForConditionClause(array $exprs, ?string $namespacePhp): string
+	{
+		if ($exprs === []) {
+			return 'true';
+		}
+		if (count($exprs) === 1) {
+			return $this->renderConditionExpr($exprs[0], $namespacePhp);
+		}
+		$last = array_pop($exprs);
+		$prefix = implode(', ', array_map(fn (mixed $expr): string => $this->renderExpr($expr, $namespacePhp), $exprs));
+		return '(' . $prefix . ', ' . $this->renderConditionExpr($last, $namespacePhp) . ')';
+	}
+
+	/**
+
+	 * Renders any condition expression with the bool conversion required by the current Simple C++ runtime contract.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
+	private function renderConditionExpr(mixed $expr, ?string $namespacePhp): string
+	{
+		$rendered = $this->renderExpr($expr, $namespacePhp);
+		if ($this->exprProducesBool($expr)) {
+			return '(' . $rendered . ').native_value()';
+		}
+		return 'cast<bool_t>(' . $rendered . ').native_value()';
+	}
+
+	/**
+
+	 * Best-effort classifier used to avoid redundant bool casts around expressions already known to produce bool_t.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
+	private function exprProducesBool(mixed $expr): bool
+	{
+		if (!is_array($expr)) {
+			return false;
+		}
+		$kind = $expr['kind'] ?? null;
+		if ($kind === AstKind::UNARY_OP) {
+			return true;
+		}
+		if ($kind === AstKind::BINARY_OP) {
+			return in_array((int) ($expr['flags'] ?? 0), [
+				AstKind::BINARY_BOOL_AND,
+				AstKind::BINARY_BOOL_OR,
+				AstKind::BINARY_IS_SMALLER,
+				AstKind::BINARY_IS_GREATER,
+				AstKind::BINARY_IS_EQUAL,
+				AstKind::BINARY_IS_IDENTICAL,
+			], true);
+		}
+		return false;
+	}
+
+	/**
+
+	 * Renders the controlling expression of a `switch`, bridging bool-like wrappers to native switch-compatible values when required.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
+	private function renderSwitchExpr(mixed $expr, ?string $namespacePhp): string
+	{
+		$rendered = $this->renderExpr($expr, $namespacePhp);
+		return is_array($expr) ? '(' . $rendered . ').native_value()' : $rendered;
+	}
+
+	/**
+
+	 * Renders a switch-case label and rejects unsupported non-literal case forms in the current prototype.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
+	private function renderSwitchCaseValue(mixed $expr): string
+	{
+		if (is_int($expr) || is_float($expr)) {
+			return (string) $expr;
+		}
+		return '/* unsupported-switch-case */';
+	}
+
+	/**
+
+	 * Extracts a plain variable name when an expression is simple enough to become a declaration target.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function extractSimpleVarName(mixed $expr): ?string
 	{
@@ -359,10 +851,38 @@ final class Generator
 		return $name !== '' ? $name : null;
 	}
 
+	/**
+
+	 * Renders the left-hand side of an assignment for the currently supported assignment targets.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderAssignmentTarget(mixed $expr, ?string $namespacePhp): string
 	{
 		return $this->renderExpr($expr, $namespacePhp);
 	}
+
+	/**
+
+	 * Turns first assignment of a local into a declaration+assignment when the rules allow it.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function tryRenderDeclarationAssignChain(mixed $varNode, mixed $exprNode, ?string $typed, ?string $namespacePhp): ?array
 	{
@@ -385,6 +905,65 @@ final class Generator
 			$leftType . ' ' . $leftName . ' = ' . $rightName . ';',
 		];
 	}
+
+	private function validateTypedLocalAssignment(string $typedLocalType, string $statementKind, mixed $exprNode, int $line): ?string
+	{
+		if (!$this->typeMapper->isRefLocalType($typedLocalType)) {
+			return null;
+		}
+
+		if ($statementKind !== 'assign_ref') {
+			return 'ref typed locals must be initialized via reference assignment at line ' . $line . '.';
+		}
+
+		$innerType = $this->typeMapper->unwrapRefLocalType($typedLocalType);
+		if (!$this->typeMapper->isObjectLikeType($innerType)) {
+			return null;
+		}
+
+		$sourceName = $this->extractSimpleVarName($exprNode);
+		if ($sourceName === null) {
+			return 'ref typed object locals require a simple value local source at line ' . $line . '.';
+		}
+
+		$sourceType = $this->declaredLocalTypes[$sourceName] ?? null;
+		if ($sourceType === null || !$this->typeMapper->isInlineValueType($sourceType)) {
+			return 'ref typed object locals cannot bind to handle-like or untyped sources at line ' . $line . '.';
+		}
+
+		$sourceInnerType = $this->typeMapper->unwrapInlineValueType($sourceType);
+		if ($sourceInnerType !== $innerType) {
+			return 'ref typed object local type does not match referenced value source at line ' . $line . '.';
+		}
+
+		return null;
+	}
+
+	private function renderInitializerExpr(mixed $expr, ?string $typedLocalType, ?string $namespacePhp): string
+	{
+		if ($typedLocalType !== null && $this->typeMapper->isInlineValueType($typedLocalType)) {
+			$innerType = $this->typeMapper->unwrapInlineValueType($typedLocalType);
+			if (is_array($expr) && (($expr['kind'] ?? null) === AstKind::NEW)) {
+				return 'value<' . $innerType . '>(' . $this->renderArgs($expr['children']['args']['children'] ?? [], $namespacePhp) . ')';
+			}
+		}
+
+		return $this->renderExpr($expr, $namespacePhp);
+	}
+
+	/**
+
+	 * Renders one expression node from php-ast into the current Simple C++ expression subset.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function renderExpr(mixed $expr, ?string $namespacePhp): string
 	{
@@ -425,8 +1004,13 @@ final class Generator
 
 			return match ($flags) {
 				AstKind::PLUS => $left . ' + ' . $right,
+				AstKind::MINUS => $left . ' - ' . $right,
 				AstKind::BINARY_CONCAT => $this->renderStringConcat($leftNode, $rightNode, $namespacePhp),
 				AstKind::BINARY_BOOL_AND => '(' . $left . ' && ' . $right . ')',
+				AstKind::BINARY_BOOL_OR => '(' . $left . ' || ' . $right . ')',
+				AstKind::BINARY_IS_SMALLER => '(' . $left . ' < ' . $right . ')',
+				AstKind::BINARY_IS_GREATER => '(' . $left . ' > ' . $right . ')',
+				AstKind::BINARY_IS_EQUAL, AstKind::BINARY_IS_IDENTICAL => '(' . $left . ' == ' . $right . ')',
 				default => '/* unsupported-binary-op-' . $flags . ' */',
 			};
 		}
@@ -486,6 +1070,25 @@ final class Generator
 			$value = $this->renderExpr($expr['children']['expr'] ?? null, $namespacePhp);
 			return '(' . $target . ' = ' . $value . ')';
 		}
+		if ($kind === AstKind::UNARY_OP) {
+			$inner = $this->renderExpr($expr['children']['expr'] ?? null, $namespacePhp);
+			$flags = (int) ($expr['flags'] ?? 0);
+			return match ($flags) {
+				AstKind::UNARY_BOOL_NOT => '(!' . $inner . ')',
+				default => '/* unsupported-unary-op-' . $flags . ' */',
+			};
+		}
+		if ($kind === AstKind::POST_INC) {
+			$target = $this->renderAssignmentTarget($expr['children']['var'] ?? null, $namespacePhp);
+			return $target . ' = ' . $target . ' + static_cast<int_t>(1)';
+		}
+		if ($kind === AstKind::CONDITIONAL) {
+			$condNode = $expr['children']['cond'] ?? null;
+			$trueNode = $expr['children']['true'] ?? null;
+			$falseNode = $expr['children']['false'] ?? null;
+			$trueExpr = $trueNode === null ? $this->renderExpr($condNode, $namespacePhp) : $this->renderExpr($trueNode, $namespacePhp);
+			return '(' . $this->renderConditionExpr($condNode, $namespacePhp) . ' ? ' . $trueExpr . ' : ' . $this->renderExpr($falseNode, $namespacePhp) . ')';
+		}
 
 		return '/* unsupported-expr-kind-' . $kind . ' */';
 	}
@@ -518,6 +1121,20 @@ final class Generator
 		return [];
 	}
 
+	/**
+
+	 * Renders `AST_ENCAPS_LIST` interpolation by concatenating stringified fragments in source order.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderInterpolatedString(array $expr, ?string $namespacePhp): string
 	{
 		$parts = [];
@@ -532,10 +1149,38 @@ final class Generator
 		return '(' . implode(' + ', $parts) . ')';
 	}
 
+	/**
+
+	 * Renders PHP string concatenation through explicit string conversion helpers.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderStringConcat(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
 	{
 		return '(' . $this->renderStringOperand($leftNode, $namespacePhp) . ' + ' . $this->renderStringOperand($rightNode, $namespacePhp) . ')';
 	}
+
+	/**
+
+	 * Renders one operand that must participate in string concatenation or interpolation.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function renderStringOperand(mixed $expr, ?string $namespacePhp): string
 	{
@@ -581,6 +1226,20 @@ final class Generator
 		};
 	}
 
+	/**
+
+	 * Renders a PHP variable or symbol-name expression into the generated C++ identifier form.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderNameExpr(mixed $expr, ?string $namespacePhp): string
 	{
 		if (!is_array($expr)) {
@@ -597,6 +1256,20 @@ final class Generator
 		}
 		return $this->renderExpr($expr, $namespacePhp);
 	}
+
+	/**
+
+	 * Renders argument lists for exporter-lowered variadic-style payload nodes.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function renderVariadicArgs(mixed $expr, ?string $namespacePhp): string
 	{
@@ -616,6 +1289,20 @@ final class Generator
 		return implode(', ', $out);
 	}
 
+	/**
+
+	 * Renders a normal call argument list in source order.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function renderArgs(array $args, ?string $namespacePhp): string
 	{
 		$out = [];
@@ -624,6 +1311,20 @@ final class Generator
 		}
 		return implode(', ', $out);
 	}
+
+	/**
+
+	 * Renders a class-name expression with namespace resolution applied.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function renderClassName(mixed $node, ?string $namespacePhp): string
 	{
@@ -642,6 +1343,20 @@ final class Generator
 		}
 		return str_replace('\\', '::', $name);
 	}
+
+	/**
+
+	 * Renders a constant reference using the constant-resolution rules recorded in the name registry.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function renderConstantName(string $name, int $flags, ?string $namespacePhp): string
 	{
@@ -676,12 +1391,40 @@ final class Generator
 		return $result;
 	}
 
+	/**
+
+	 * Recognizes null-like expressions that should map directly to runtime sentinels.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function isNullExpr(mixed $expr): bool
 	{
 		return is_array($expr)
 			&& ($expr['kind'] ?? null) === AstKind::CONST
 			&& (($expr['children']['name']['children']['name'] ?? null) === 'null');
 	}
+
+	/**
+
+	 * Returns one tab-based indentation string, matching the project formatting preference.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function indent(int $level): string
 	{

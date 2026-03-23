@@ -15,6 +15,8 @@ namespace scpp {
 // - null comparisons use runtime sentinels
 // - dereference checks fail explicitly on null access
 template <typename T>
+// Unique ownership wrapper used for explicit unique-handle runtime scenarios.
+// Spec link: this type centralizes behavior so generated code follows runtime/specs/spec.md instead of raw STL semantics.
 class unique_p final {
 private:
 	std::unique_ptr<T> value_;
@@ -85,30 +87,44 @@ public:
 		return bool_t(left.value_ == nullptr);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend bool_t operator==(null_t, const unique_p<T> &right) noexcept {
 		return bool_t(right.value_ == nullptr);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend bool_t operator!=(const unique_p<T> &left, null_t) noexcept {
 		return bool_t(left.value_ != nullptr);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend bool_t operator!=(null_t, const unique_p<T> &right) noexcept {
 		return bool_t(right.value_ != nullptr);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend bool_t operator==(const unique_p<T> &left, nullptr_t) noexcept {
 		return bool_t(left.value_ == nullptr);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend bool_t operator==(nullptr_t, const unique_p<T> &right) noexcept {
 		return bool_t(right.value_ == nullptr);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend bool_t operator!=(const unique_p<T> &left, nullptr_t) noexcept {
 		return bool_t(left.value_ != nullptr);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend bool_t operator!=(nullptr_t, const unique_p<T> &right) noexcept {
 		return bool_t(right.value_ != nullptr);
 	}

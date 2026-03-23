@@ -18,6 +18,8 @@ namespace scpp {
 // - cast behavior is centralized rather than scattered across constructors
 
 template <typename To, typename From>
+// Implements one explicit cast pair allowed by the current runtime and generator contract.
+// How: conversions are centralized here so unsupported pairs fail at compile time instead of silently converting.
 To cast(const From &value) {
 	static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
 }

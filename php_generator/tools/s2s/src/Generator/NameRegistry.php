@@ -49,15 +49,57 @@ final class NameRegistry
 		return $registry;
 	}
 
+	/**
+
+	 * Resolves a class name using the PHP namespace/import rules captured in the registry tables.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	public function resolveClass(string $phpName, int $flags, ?string $currentNamespace): ?string
 	{
 		return $this->resolve($phpName, $flags, $currentNamespace, $this->classes);
 	}
 
+	/**
+
+	 * Resolves a function name using the PHP namespace/import rules captured in the registry tables.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	public function resolveFunction(string $phpName, int $flags, ?string $currentNamespace): ?string
 	{
 		return $this->resolve($phpName, $flags, $currentNamespace, $this->functions);
 	}
+
+	/**
+
+	 * Resolves a constant name using the PHP namespace/import rules captured in the registry tables.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	public function resolveConstant(string $phpName, int $flags, ?string $currentNamespace): ?string
 	{

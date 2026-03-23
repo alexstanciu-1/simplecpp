@@ -14,6 +14,13 @@ use Scpp\S2S\Metadata\TypeCommentExtractor;
  */
 final class Transpiler
 {
+	/**
+	 * Stores collaborators and default state for this phase object.
+	 *
+	 * Relationship to specs:
+	 * - preserves the subset and lowering rules documented for the prototype
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+	 */
 	public function __construct(
 		private readonly InputLoader $loader = new InputLoader(),
 		private readonly TypeCommentExtractor $typeComments = new TypeCommentExtractor(),
@@ -21,6 +28,20 @@ final class Transpiler
 		private readonly Generator $generator = new Generator(),
 	) {
 	}
+
+	/**
+
+	 * Runs the full S2S pipeline for one exported PHP fixture and returns the generated C++ plus diagnostics.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	public function transpile(string $phpPath): CppFile
 	{

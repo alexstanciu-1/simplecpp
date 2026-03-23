@@ -37,10 +37,14 @@ public:
 		return bool_t(!value.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator&&(const bool_t &left, const bool_t &right) noexcept {
 		return bool_t(left.value_ && right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator||(const bool_t &left, const bool_t &right) noexcept {
 		return bool_t(left.value_ || right.value_);
 	}
@@ -50,6 +54,8 @@ public:
 		return bool_t(left.value_ == right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator!=(const bool_t &left, const bool_t &right) noexcept {
 		return bool_t(left.value_ != right.value_);
 	}

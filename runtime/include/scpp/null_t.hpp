@@ -11,6 +11,8 @@ namespace scpp {
 // - participates in configured sentinel equality with nullopt_t and nullptr_t
 class null_t final {
 public:
+	// Implements `null_t` as part of the runtime surface consumed by generated Simple C++ code.
+	// How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 	constexpr null_t() noexcept = default;
 };
 

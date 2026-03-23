@@ -26,6 +26,11 @@ while still staying small enough to debug quickly.
 - `10_constants_casts_and_numbers.php`
 - `11_instance_based_static_access_matrix.php`
 - `12_constructor_defaults_and_roundtrip.php`
+- `13_control_flow_suite.php`
+- `14_if_else_and_switch_cases.php`
+- `15_value_local_point.php`
+- `16_ref_to_value_local.php`
+- `17_ref_to_handle_noop.php`
 
 ## Expected testing model
 

@@ -28,3 +28,8 @@ add_test(NAME scpp_test_core COMMAND test_core)
 add_test(NAME scpp_test_nullable COMMAND test_nullable)
 add_test(NAME scpp_test_pointers COMMAND test_pointers)
 add_test(NAME scpp_test_sentinels COMMAND test_sentinels)
+
+# Inline-value and safe-reference smoke coverage.
+add_executable(test_value_ref test_value_ref.cpp)
+target_link_libraries(test_value_ref PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_value_ref COMMAND test_value_ref)

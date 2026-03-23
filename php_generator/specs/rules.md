@@ -27,6 +27,8 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - `string_t`
 - `nullable<T>`
 - `shared_p<T>`
+- `value_p<T>`
+- `ref_p<T>`
 - `vector_t`
 - runtime `null` / `nullopt` support via the runtime helpers
 
@@ -34,6 +36,8 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - `string_t` uses constructor form, not `static_cast`
 - `nullable<T>` is the null carrier for nullable value types
 - object/class/interface handle types use `shared_p<T>` and are inherently nullable
+- `value_p<T>` is opt-in inline storage and is never the default lowering for PHP object types
+- `ref_p<T>` is reserved for explicit reference-expression lowering on value-like storage
 - runtime `null` is the canonical null literal for generated code where null is supported
 - null comparisons/checks must use the configured runtime helpers such as `php::is_null(...)` and `php::not_null(...)`
 
@@ -71,6 +75,14 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - `$x /** ?string */ = null;` → `nullable<string_t> x = null;`
 - `$x /** A */ = new A();` → `shared_p<A> x = create<A>();`
 - `$x /** ?A */ = null;` → `shared_p<A> x = null;`
+- `$x /** value Point */ = new Point(1, 2);` → `value_p<Point> x = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));`
+- `$x /** ref int */ = &$y;` → `ref_p<int_t> x = ref(y);`
+- `/** ref Point */` locals are allowed only when the referenced source is an explicit `value Point` local; otherwise generation must fail before producing `ref_p<shared_p<Point>>`-like shapes
+
+- explicit inline object/value storage is opt-in only through the local PHPDoc form `value T`
+- `value T` is currently supported for typed local variables only
+- when a `value T` local is initialized from `new T(...)`, generation must use `value<T>(...)` instead of `create<T>(...)`
+- if a future Simple C++ reference expression takes a handle-like wrapper (`shared_p<T>`, `unique_p<T>`, `weak_p<T>`), it must collapse to the original handle instead of creating nested pointer/reference layers
 
 ### Untyped Variable Initialization
 - untyped variables may still lower to explicit runtime-wrapped expressions
@@ -398,6 +410,8 @@ Null support:
 Nullable support:
 - `nullable<T>`
 - `shared_p<T>`
+- `value_p<T>`
+- `ref_p<T>`
 - `vector_t`
 - runtime `null` / `nullopt` support via the runtime helpers
 

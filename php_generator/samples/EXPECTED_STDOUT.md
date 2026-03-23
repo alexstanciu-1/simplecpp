@@ -28,6 +28,15 @@ These values were captured by running the PHP fixtures directly.
 - `10_constants_casts_and_numbers.php` → `limit|6`
 - `11_instance_based_static_access_matrix.php` → `42`
 - `12_constructor_defaults_and_roundtrip.php` → `5|7`
+- `13_control_flow_suite.php` → `ok
+3
+`
+- `14_if_else_and_switch_cases.php` → `low
+two
+`
+- `15_value_local_point.php` → `5`
+- `16_ref_to_value_local.php` → `6|6`
+- `17_ref_to_handle_noop.php` → `8|8`
 
 ## stage_03
 

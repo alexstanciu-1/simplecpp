@@ -19,6 +19,8 @@
 #include "scpp/shared_p.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
+#include "scpp/value_p.hpp"
+#include "scpp/ref_p.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/memory.hpp"
 #include "scpp/cast.hpp"

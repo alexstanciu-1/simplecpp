@@ -5,6 +5,8 @@
 
 namespace scpp {
 
+// Semantic floating-point wrapper implementing the configured numeric widening rules.
+// Spec link: this type centralizes behavior so generated code follows runtime/specs/spec.md instead of raw STL semantics.
 class float_t;
 
 // Semantic signed 64-bit integer wrapper.
@@ -40,6 +42,8 @@ public:
 		return int_t(+value.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr int_t operator-(const int_t &value) noexcept {
 		return int_t(-value.value_);
 	}
@@ -49,14 +53,20 @@ public:
 		return int_t(left.value_ + right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr int_t operator-(const int_t &left, const int_t &right) noexcept {
 		return int_t(left.value_ - right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr int_t operator*(const int_t &left, const int_t &right) noexcept {
 		return int_t(left.value_ * right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr int_t operator/(const int_t &left, const int_t &right) noexcept {
 		return int_t(left.value_ / right.value_);
 	}
@@ -67,22 +77,32 @@ public:
 		return bool_t(left.value_ == right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator!=(const int_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ != right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator<(const int_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ < right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator<=(const int_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ <= right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>(const int_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ > right.value_);
 	}
 
+	// Implements one runtime operator overload required by the current type contract.
+	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>=(const int_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ >= right.value_);
 	}

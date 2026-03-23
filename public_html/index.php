@@ -1,5 +1,12 @@
 <?php
 
+const Dev_Ips = ['84.232.237.17' => true, '142.132.176.11'  => true];
+
+if (!Dev_Ips[$_SERVER['REMOTE_ADDR']]) {
+	echo "forbidden.";
+	exit;
+}
+
 if ($_GET['resync_samples_ast'] ?? false) {
 	$files = glob(realpath("../simple_cpp/php_generator/samples/")."/*/*.php");
 	echo "<pre>\n";

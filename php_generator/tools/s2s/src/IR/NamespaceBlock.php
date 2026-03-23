@@ -3,6 +3,13 @@ declare(strict_types=1);
 
 namespace Scpp\S2S\IR;
 
+/**
+ * IR node representing one namespace bucket after namespace flattening.
+ *
+ * Relationship to specs:
+ * - this type exists to keep the implementation aligned with php_generator/specs/rules.md and rules_catalog.md
+ * - the implementation favors explicit normalized data over ad-hoc AST access during emission
+ */
 final class NamespaceBlock
 {
 	/**

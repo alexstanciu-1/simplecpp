@@ -16,6 +16,13 @@ use Scpp\S2S\IR\UseDecl;
 use Scpp\S2S\Loader\ParsedInput;
 use Scpp\S2S\Support\AstKind;
 
+/**
+ * Normalizes php-ast JSON into the smaller IR consumed by the generator. This is the main implementation of the lowering rules captured in rules_catalog.md.
+ *
+ * Relationship to specs:
+ * - this type exists to keep the implementation aligned with php_generator/specs/rules.md and rules_catalog.md
+ * - the implementation favors explicit normalized data over ad-hoc AST access during emission
+ */
 final class IrBuilder
 {
 	/**
@@ -176,6 +183,20 @@ final class IrBuilder
 		];
 	}
 
+	/**
+
+	 * Combines nested namespace fragments into one canonical PHP namespace string.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function combineNamespace(?string $prefix, string $name): string
 	{
 		if ($prefix === null || $prefix === '') {
@@ -186,6 +207,20 @@ final class IrBuilder
 		}
 		return $prefix . '\\' . $name;
 	}
+
+	/**
+
+	 * Builds one IR class declaration from the exported php-ast class node.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function buildClass(array $node): ClassDecl
 	{
@@ -220,6 +255,20 @@ final class IrBuilder
 		);
 	}
 
+	/**
+
+	 * Builds one IR function declaration from the exported function node.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function buildFunction(array $node): FunctionDecl
 	{
 		$children = $node['children'] ?? [];
@@ -232,6 +281,20 @@ final class IrBuilder
 			statements: $this->buildStatements($children['stmts']['children'] ?? []),
 		);
 	}
+
+	/**
+
+	 * Builds one IR method declaration from the exported method node.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function buildMethod(array $node): MethodDecl
 	{
@@ -361,6 +424,20 @@ final class IrBuilder
 		return $out;
 	}
 
+	/**
+
+	 * Maps php-ast use flags into the generator-facing textual kind.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function mapUseKind(int $flags): string
 	{
 		return match ($flags) {
@@ -369,6 +446,20 @@ final class IrBuilder
 			default => 'normal',
 		};
 	}
+
+	/**
+
+	 * Reads a PHP name node into its textual form without applying resolution rules yet.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function readNameString(mixed $node): string
 	{
@@ -387,6 +478,20 @@ final class IrBuilder
 		return ltrim((string) ($node['children']['name'] ?? ''), '\\');
 	}
 
+	/**
+
+	 * Reads an optional alias name from exported use-node data.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
+
 	private function readAliasString(mixed $alias): ?string
 	{
 		if ($alias === null) {
@@ -395,6 +500,20 @@ final class IrBuilder
 		$trimmed = trim((string) $alias);
 		return $trimmed !== '' ? $trimmed : null;
 	}
+
+	/**
+
+	 * Builds one lowered statement node for the executable subset currently supported by the generator.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function buildStatement(array $node): ?Statement
 	{
@@ -429,7 +548,71 @@ final class IrBuilder
 			return new Statement('unset', $node['children']['var'] ?? null, $line);
 		}
 
-		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL) {
+		if ($kind === AstKind::IF) {
+			$branches = [];
+			foreach (($node['children'] ?? []) as $branchNode) {
+				if (!is_array($branchNode) || ($branchNode['kind'] ?? null) !== AstKind::IF_ELEM) {
+					continue;
+				}
+				$branches[] = [
+					'cond' => $branchNode['children']['cond'] ?? null,
+					'stmts' => $this->buildStatements($branchNode['children']['stmts']['children'] ?? []),
+					'line' => (int) ($branchNode['lineno'] ?? $line),
+				];
+			}
+			return new Statement('if', $branches, $line);
+		}
+
+		if ($kind === AstKind::WHILE) {
+			return new Statement('while', [
+				'cond' => $node['children']['cond'] ?? null,
+				'stmts' => $this->buildStatements($node['children']['stmts']['children'] ?? []),
+			], $line);
+		}
+
+		if ($kind === AstKind::DO_WHILE) {
+			return new Statement('do_while', [
+				'cond' => $node['children']['cond'] ?? null,
+				'stmts' => $this->buildStatements($node['children']['stmts']['children'] ?? []),
+			], $line);
+		}
+
+		if ($kind === AstKind::FOR) {
+			return new Statement('for', [
+				'init' => array_values($node['children']['init']['children'] ?? []),
+				'cond' => array_values($node['children']['cond']['children'] ?? []),
+				'loop' => array_values($node['children']['loop']['children'] ?? []),
+				'stmts' => $this->buildStatements($node['children']['stmts']['children'] ?? []),
+			], $line);
+		}
+
+		if ($kind === AstKind::SWITCH) {
+			$cases = [];
+			foreach (($node['children']['stmts']['children'] ?? []) as $caseNode) {
+				if (!is_array($caseNode) || ($caseNode['kind'] ?? null) !== AstKind::SWITCH_CASE) {
+					continue;
+				}
+				// Preserve each exported switch case as explicit IR so the generator can comment and emit each case block deterministically.
+				$cases[] = [
+					'cond' => $caseNode['children']['cond'] ?? null,
+					'stmts' => $this->buildStatements($caseNode['children']['stmts']['children'] ?? []),
+				];
+			}
+			return new Statement('switch', [
+				'cond' => $node['children']['cond'] ?? null,
+				'cases' => $cases,
+			], $line);
+		}
+
+		if ($kind === AstKind::BREAK) {
+			return new Statement('break', $node['children']['depth'] ?? null, $line);
+		}
+
+		if ($kind === AstKind::CONTINUE) {
+			return new Statement('continue', $node['children']['depth'] ?? null, $line);
+		}
+
+		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::POST_INC) {
 			return new Statement('expr', $node, $line);
 		}
 
@@ -463,6 +646,20 @@ final class IrBuilder
 
 		return [];
 	}
+
+	/**
+
+	 * Reads a declared PHP type node into the canonical textual type used by the mapper.
+
+	 *
+
+	 * Relationship to specs:
+
+	 * - preserves the subset and lowering rules documented for the prototype
+
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+
+	 */
 
 	private function readTypeName(mixed $typeNode): ?string
 	{

@@ -13,6 +13,13 @@ namespace Scpp\S2S\Loader;
  */
 final class InputLoader
 {
+	/**
+	 * Loads exported AST and token data for one PHP source file and validates the expected JSON sidecar shape.
+	 *
+	 * Relationship to specs:
+	 * - preserves the subset and lowering rules documented for the prototype
+	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+	 */
 	public function load(string $phpPath): ParsedInput
 	{
 		if (!is_file($phpPath)) {
