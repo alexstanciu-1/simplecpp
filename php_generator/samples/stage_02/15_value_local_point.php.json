@@ -1,0 +1,834 @@
+{
+  "tokens": [
+    [
+      393,
+      "<?php\n",
+      1
+    ],
+    [
+      396,
+      "\n",
+      2
+    ],
+    [
+      336,
+      "class",
+      3
+    ],
+    [
+      396,
+      " ",
+      3
+    ],
+    [
+      262,
+      "Point",
+      3
+    ],
+    [
+      396,
+      " ",
+      3
+    ],
+    "{",
+    [
+      396,
+      "\n\t",
+      3
+    ],
+    [
+      326,
+      "public",
+      4
+    ],
+    [
+      396,
+      " ",
+      4
+    ],
+    [
+      262,
+      "int",
+      4
+    ],
+    [
+      396,
+      " ",
+      4
+    ],
+    [
+      266,
+      "$x",
+      4
+    ],
+    ";",
+    [
+      396,
+      "\n\t",
+      4
+    ],
+    [
+      326,
+      "public",
+      5
+    ],
+    [
+      396,
+      " ",
+      5
+    ],
+    [
+      262,
+      "int",
+      5
+    ],
+    [
+      396,
+      " ",
+      5
+    ],
+    [
+      266,
+      "$y",
+      5
+    ],
+    ";",
+    [
+      396,
+      "\n\n\t",
+      5
+    ],
+    [
+      310,
+      "function",
+      7
+    ],
+    [
+      396,
+      " ",
+      7
+    ],
+    [
+      262,
+      "__construct",
+      7
+    ],
+    "(",
+    [
+      262,
+      "int",
+      7
+    ],
+    [
+      396,
+      " ",
+      7
+    ],
+    [
+      266,
+      "$x",
+      7
+    ],
+    ",",
+    [
+      396,
+      " ",
+      7
+    ],
+    [
+      262,
+      "int",
+      7
+    ],
+    [
+      396,
+      " ",
+      7
+    ],
+    [
+      266,
+      "$y",
+      7
+    ],
+    ")",
+    [
+      396,
+      " ",
+      7
+    ],
+    "{",
+    [
+      396,
+      "\n\t\t",
+      7
+    ],
+    [
+      266,
+      "$this",
+      8
+    ],
+    [
+      388,
+      "->",
+      8
+    ],
+    [
+      262,
+      "x",
+      8
+    ],
+    [
+      396,
+      " ",
+      8
+    ],
+    "=",
+    [
+      396,
+      " ",
+      8
+    ],
+    [
+      266,
+      "$x",
+      8
+    ],
+    ";",
+    [
+      396,
+      "\n\t\t",
+      8
+    ],
+    [
+      266,
+      "$this",
+      9
+    ],
+    [
+      388,
+      "->",
+      9
+    ],
+    [
+      262,
+      "y",
+      9
+    ],
+    [
+      396,
+      " ",
+      9
+    ],
+    "=",
+    [
+      396,
+      " ",
+      9
+    ],
+    [
+      266,
+      "$y",
+      9
+    ],
+    ";",
+    [
+      396,
+      "\n\t",
+      9
+    ],
+    "}",
+    [
+      396,
+      "\n\n\t",
+      10
+    ],
+    [
+      310,
+      "function",
+      12
+    ],
+    [
+      396,
+      " ",
+      12
+    ],
+    [
+      262,
+      "sum",
+      12
+    ],
+    "(",
+    ")",
+    ":",
+    [
+      396,
+      " ",
+      12
+    ],
+    [
+      262,
+      "int",
+      12
+    ],
+    [
+      396,
+      " ",
+      12
+    ],
+    "{",
+    [
+      396,
+      "\n\t\t",
+      12
+    ],
+    [
+      313,
+      "return",
+      13
+    ],
+    [
+      396,
+      " ",
+      13
+    ],
+    [
+      266,
+      "$this",
+      13
+    ],
+    [
+      388,
+      "->",
+      13
+    ],
+    [
+      262,
+      "x",
+      13
+    ],
+    [
+      396,
+      " ",
+      13
+    ],
+    "+",
+    [
+      396,
+      " ",
+      13
+    ],
+    [
+      266,
+      "$this",
+      13
+    ],
+    [
+      388,
+      "->",
+      13
+    ],
+    [
+      262,
+      "y",
+      13
+    ],
+    ";",
+    [
+      396,
+      "\n\t",
+      13
+    ],
+    "}",
+    [
+      396,
+      "\n",
+      14
+    ],
+    "}",
+    [
+      396,
+      "\n\n",
+      15
+    ],
+    [
+      266,
+      "$p",
+      17
+    ],
+    [
+      396,
+      " ",
+      17
+    ],
+    [
+      392,
+      "/** value Point */",
+      17
+    ],
+    [
+      396,
+      " ",
+      17
+    ],
+    "=",
+    [
+      396,
+      " ",
+      17
+    ],
+    [
+      284,
+      "new",
+      17
+    ],
+    [
+      396,
+      " ",
+      17
+    ],
+    [
+      262,
+      "Point",
+      17
+    ],
+    "(",
+    [
+      260,
+      "2",
+      17
+    ],
+    ",",
+    [
+      396,
+      " ",
+      17
+    ],
+    [
+      260,
+      "3",
+      17
+    ],
+    ")",
+    ";",
+    [
+      396,
+      "\n",
+      17
+    ],
+    [
+      291,
+      "echo",
+      18
+    ],
+    [
+      396,
+      " ",
+      18
+    ],
+    [
+      266,
+      "$p",
+      18
+    ],
+    [
+      388,
+      "->",
+      18
+    ],
+    [
+      262,
+      "sum",
+      18
+    ],
+    "(",
+    ")",
+    ",",
+    [
+      396,
+      " ",
+      18
+    ],
+    [
+      269,
+      "\"\\n\"",
+      18
+    ],
+    ";",
+    [
+      396,
+      "\n",
+      18
+    ]
+  ],
+  "ast": {
+    "kind": 132,
+    "flags": 0,
+    "lineno": 1,
+    "children": [
+      {
+        "kind": 71,
+        "flags": 0,
+        "lineno": 3,
+        "children": {
+          "name": "Point",
+          "docComment": null,
+          "extends": null,
+          "implements": null,
+          "stmts": {
+            "kind": 132,
+            "flags": 0,
+            "lineno": 3,
+            "children": [
+              {
+                "kind": 774,
+                "flags": 1,
+                "lineno": 4,
+                "children": {
+                  "type": {
+                    "kind": 1,
+                    "flags": 4,
+                    "lineno": 4,
+                    "children": []
+                  },
+                  "props": {
+                    "kind": 138,
+                    "flags": 0,
+                    "lineno": 4,
+                    "children": [
+                      {
+                        "kind": 1027,
+                        "flags": 0,
+                        "lineno": 4,
+                        "children": {
+                          "name": "x",
+                          "default": null,
+                          "docComment": null,
+                          "hooks": null
+                        }
+                      }
+                    ]
+                  },
+                  "attributes": null
+                }
+              },
+              {
+                "kind": 774,
+                "flags": 1,
+                "lineno": 5,
+                "children": {
+                  "type": {
+                    "kind": 1,
+                    "flags": 4,
+                    "lineno": 5,
+                    "children": []
+                  },
+                  "props": {
+                    "kind": 138,
+                    "flags": 0,
+                    "lineno": 5,
+                    "children": [
+                      {
+                        "kind": 1027,
+                        "flags": 0,
+                        "lineno": 5,
+                        "children": {
+                          "name": "y",
+                          "default": null,
+                          "docComment": null,
+                          "hooks": null
+                        }
+                      }
+                    ]
+                  },
+                  "attributes": null
+                }
+              },
+              {
+                "kind": 70,
+                "flags": 1,
+                "lineno": 7,
+                "children": {
+                  "name": "__construct",
+                  "docComment": null,
+                  "params": {
+                    "kind": 136,
+                    "flags": 0,
+                    "lineno": 7,
+                    "children": [
+                      {
+                        "kind": 1536,
+                        "flags": 0,
+                        "lineno": 7,
+                        "children": {
+                          "type": {
+                            "kind": 1,
+                            "flags": 4,
+                            "lineno": 7,
+                            "children": []
+                          },
+                          "name": "x",
+                          "default": null,
+                          "attributes": null,
+                          "docComment": null,
+                          "hooks": null
+                        }
+                      },
+                      {
+                        "kind": 1536,
+                        "flags": 0,
+                        "lineno": 7,
+                        "children": {
+                          "type": {
+                            "kind": 1,
+                            "flags": 4,
+                            "lineno": 7,
+                            "children": []
+                          },
+                          "name": "y",
+                          "default": null,
+                          "attributes": null,
+                          "docComment": null,
+                          "hooks": null
+                        }
+                      }
+                    ]
+                  },
+                  "stmts": {
+                    "kind": 132,
+                    "flags": 0,
+                    "lineno": 7,
+                    "children": [
+                      {
+                        "kind": 518,
+                        "flags": 0,
+                        "lineno": 8,
+                        "children": {
+                          "var": {
+                            "kind": 513,
+                            "flags": 0,
+                            "lineno": 8,
+                            "children": {
+                              "expr": {
+                                "kind": 256,
+                                "flags": 0,
+                                "lineno": 8,
+                                "children": {
+                                  "name": "this"
+                                }
+                              },
+                              "prop": "x"
+                            }
+                          },
+                          "expr": {
+                            "kind": 256,
+                            "flags": 0,
+                            "lineno": 8,
+                            "children": {
+                              "name": "x"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "kind": 518,
+                        "flags": 0,
+                        "lineno": 9,
+                        "children": {
+                          "var": {
+                            "kind": 513,
+                            "flags": 0,
+                            "lineno": 9,
+                            "children": {
+                              "expr": {
+                                "kind": 256,
+                                "flags": 0,
+                                "lineno": 9,
+                                "children": {
+                                  "name": "this"
+                                }
+                              },
+                              "prop": "y"
+                            }
+                          },
+                          "expr": {
+                            "kind": 256,
+                            "flags": 0,
+                            "lineno": 9,
+                            "children": {
+                              "name": "y"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "returnType": null,
+                  "attributes": null,
+                  "__declId": 0
+                },
+                "endLineno": 9
+              },
+              {
+                "kind": 70,
+                "flags": 1,
+                "lineno": 11,
+                "children": {
+                  "name": "sum",
+                  "docComment": null,
+                  "params": {
+                    "kind": 136,
+                    "flags": 0,
+                    "lineno": 11,
+                    "children": []
+                  },
+                  "stmts": {
+                    "kind": 132,
+                    "flags": 0,
+                    "lineno": 11,
+                    "children": [
+                      {
+                        "kind": 278,
+                        "flags": 0,
+                        "lineno": 12,
+                        "children": {
+                          "expr": {
+                            "kind": 521,
+                            "flags": 1,
+                            "lineno": 12,
+                            "children": {
+                              "left": {
+                                "kind": 513,
+                                "flags": 0,
+                                "lineno": 12,
+                                "children": {
+                                  "expr": {
+                                    "kind": 256,
+                                    "flags": 0,
+                                    "lineno": 12,
+                                    "children": {
+                                      "name": "this"
+                                    }
+                                  },
+                                  "prop": "x"
+                                }
+                              },
+                              "right": {
+                                "kind": 513,
+                                "flags": 0,
+                                "lineno": 12,
+                                "children": {
+                                  "expr": {
+                                    "kind": 256,
+                                    "flags": 0,
+                                    "lineno": 12,
+                                    "children": {
+                                      "name": "this"
+                                    }
+                                  },
+                                  "prop": "y"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "returnType": {
+                    "kind": 1,
+                    "flags": 4,
+                    "lineno": 11,
+                    "children": []
+                  },
+                  "attributes": null,
+                  "__declId": 0
+                },
+                "endLineno": 12
+              }
+            ]
+          },
+          "attributes": null,
+          "type": null,
+          "__declId": 0
+        },
+        "endLineno": 8
+      },
+      {
+        "kind": 518,
+        "flags": 0,
+        "lineno": 17,
+        "children": {
+          "var": {
+            "kind": 256,
+            "flags": 0,
+            "lineno": 17,
+            "children": {
+              "name": "p"
+            }
+          },
+          "expr": {
+            "kind": 527,
+            "flags": 0,
+            "lineno": 17,
+            "children": {
+              "class": {
+                "kind": 2048,
+                "flags": 1,
+                "lineno": 17,
+                "children": {
+                  "name": "Point"
+                }
+              },
+              "args": {
+                "kind": 128,
+                "flags": 0,
+                "lineno": 17,
+                "children": [
+                  2,
+                  3
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "kind": 282,
+        "flags": 0,
+        "lineno": 18,
+        "children": {
+          "expr": {
+            "kind": 768,
+            "flags": 0,
+            "lineno": 18,
+            "children": {
+              "expr": {
+                "kind": 256,
+                "flags": 0,
+                "lineno": 18,
+                "children": {
+                  "name": "p"
+                }
+              },
+              "method": "sum",
+              "args": {
+                "kind": 128,
+                "flags": 0,
+                "lineno": 18,
+                "children": []
+              }
+            }
+          }
+        }
+      },
+      {
+        "kind": 282,
+        "flags": 0,
+        "lineno": 18,
+        "children": {
+          "expr": "\n"
+        }
+      }
+    ]
+  }
+}
