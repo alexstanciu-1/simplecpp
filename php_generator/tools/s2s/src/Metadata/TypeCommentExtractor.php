@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Scpp\S2S\Metadata;
 
 /**
- * Extracts strict immediate-after-variable local type comments.
+ * Extracts supported inline type comments from the exported token stream.
  */
 final class TypeCommentExtractor
 {
@@ -19,105 +19,141 @@ final class TypeCommentExtractor
 
 		for ($i = 0; $i < $count; $i++) {
 			$current = $tokens[$i];
-			if (!is_array($current) || !$this->looksLikeVariableToken($current)) {
+
+			if (is_array($current) && $this->looksLikeVariableToken($current)) {
+				$this->collectTrailingVariableTypeComment($tokens, $i, $result);
 				continue;
 			}
 
-			$j = $i + 1;
-			while ($j < $count && is_array($tokens[$j]) && $this->looksLikeWhitespaceToken($tokens[$j])) {
-				$j++;
-			}
-
-			$next = $tokens[$j] ?? null;
-			if (!is_array($next) || !$this->looksLikeDocCommentToken($next)) {
+			if (!is_array($current) || !$this->looksLikeDocCommentToken($current)) {
 				continue;
 			}
 
-			$type = $this->extractInlineType((string) $next[1]);
+			$type = $this->extractInlineType((string) $current[1]);
 			if ($type === null) {
 				continue;
 			}
 
-			$result[] = [
-				'name' => ltrim((string) $current[1], '$'),
-				'type' => $type,
-				'line' => (int) ($current[2] ?? 0),
-			];
+			$nextIndex = $this->findNextNonWhitespaceTokenIndex($tokens, $i + 1);
+			if ($nextIndex === null) {
+				continue;
+			}
+
+			$next = $tokens[$nextIndex] ?? null;
+			if ($next === '&') {
+				$afterAmpIndex = $this->findNextNonWhitespaceTokenIndex($tokens, $nextIndex + 1);
+				$afterAmp = $afterAmpIndex !== null ? ($tokens[$afterAmpIndex] ?? null) : null;
+				if (is_array($afterAmp) && $this->looksLikeVariableToken($afterAmp)) {
+					$this->pushResult($result, ltrim((string) $afterAmp[1], '$'), $type, (int) ($afterAmp[2] ?? 0));
+					continue;
+				}
+			}
+
+			if (is_array($next) && $this->looksLikeVariableToken($next)) {
+				$this->pushResult($result, ltrim((string) $next[1], '$'), $type, (int) ($next[2] ?? 0));
+				continue;
+			}
+
+			$prevIndex = $this->findPreviousNonWhitespaceTokenIndex($tokens, $i - 1);
+			$prev = $prevIndex !== null ? ($tokens[$prevIndex] ?? null) : null;
+			if ($this->isConstKeywordToken($prev) && is_array($next) && $this->looksLikeIdentifierToken($next)) {
+				$this->pushResult($result, (string) $next[1], $type, (int) ($next[2] ?? 0));
+			}
 		}
 
-		return $result;
+		return array_values($result);
 	}
 
-	/**
+	/** @param array<int, mixed> $tokens @param array<string, array{name:string,type:string,line:int}> $result */
+	private function collectTrailingVariableTypeComment(array $tokens, int $index, array &$result): void
+	{
+		$j = $index + 1;
+		$count = count($tokens);
+		while ($j < $count && is_array($tokens[$j]) && $this->looksLikeWhitespaceToken($tokens[$j])) {
+			$j++;
+		}
 
-	 * Checks whether a token matches the exporter shape for a variable token.
+		$next = $tokens[$j] ?? null;
+		if (!is_array($next) || !$this->looksLikeDocCommentToken($next)) {
+			return;
+		}
 
-	 *
+		$type = $this->extractInlineType((string) $next[1]);
+		if ($type === null) {
+			return;
+		}
 
-	 * Relationship to specs:
+		$current = $tokens[$index];
+		$this->pushResult($result, ltrim((string) $current[1], '$'), $type, (int) ($current[2] ?? 0));
+	}
 
-	 * - preserves the subset and lowering rules documented for the prototype
+	/** @param array<string, array{name:string,type:string,line:int}> $result */
+	private function pushResult(array &$result, string $name, string $type, int $line): void
+	{
+		$key = $line . ':' . $name;
+		$result[$key] = [
+			'name' => $name,
+			'type' => $type,
+			'line' => $line,
+		];
+	}
 
-	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
+	/** @param array<int, mixed> $tokens */
+	private function findNextNonWhitespaceTokenIndex(array $tokens, int $start): ?int
+	{
+		$count = count($tokens);
+		for ($i = $start; $i < $count; $i++) {
+			$token = $tokens[$i];
+			if (!is_array($token) || !$this->looksLikeWhitespaceToken($token)) {
+				return $i;
+			}
+		}
 
-	 */
+		return null;
+	}
+
+	/** @param array<int, mixed> $tokens */
+	private function findPreviousNonWhitespaceTokenIndex(array $tokens, int $start): ?int
+	{
+		for ($i = $start; $i >= 0; $i--) {
+			$token = $tokens[$i];
+			if (!is_array($token) || !$this->looksLikeWhitespaceToken($token)) {
+				return $i;
+			}
+		}
+
+		return null;
+	}
 
 	private function looksLikeVariableToken(array $token): bool
 	{
 		return isset($token[1]) && is_string($token[1]) && str_starts_with($token[1], '$');
 	}
 
-	/**
-
-	 * Checks whether a token matches the exporter shape for whitespace.
-
-	 *
-
-	 * Relationship to specs:
-
-	 * - preserves the subset and lowering rules documented for the prototype
-
-	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
-	 */
-
 	private function looksLikeWhitespaceToken(array $token): bool
 	{
 		return isset($token[1]) && is_string($token[1]) && trim($token[1]) === '';
 	}
-
-	/**
-
-	 * Checks whether a token matches the exporter shape for a doc comment.
-
-	 *
-
-	 * Relationship to specs:
-
-	 * - preserves the subset and lowering rules documented for the prototype
-
-	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
-	 */
 
 	private function looksLikeDocCommentToken(array $token): bool
 	{
 		return isset($token[1]) && is_string($token[1]) && str_starts_with($token[1], '/**');
 	}
 
-	/**
+	private function looksLikeIdentifierToken(array $token): bool
+	{
+		if (!isset($token[1]) || !is_string($token[1])) {
+			return false;
+		}
 
-	 * Extracts the declared type name from an inline doc comment when it matches the supported annotation form.
+		$value = $token[1];
+		return preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $value) === 1;
+	}
 
-	 *
-
-	 * Relationship to specs:
-
-	 * - preserves the subset and lowering rules documented for the prototype
-
-	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
-	 */
+	private function isConstKeywordToken(mixed $token): bool
+	{
+		return is_array($token) && isset($token[1]) && is_string($token[1]) && strtolower($token[1]) === 'const';
+	}
 
 	private function extractInlineType(string $docComment): ?string
 	{
@@ -139,9 +175,23 @@ final class TypeCommentExtractor
 			return $this->isTypeName($body) ? $inner : null;
 		}
 
-		if (str_starts_with($inner, 'value ')) {
-			$body = trim(substr($inner, strlen('value ')));
-			return $this->isTypeName($body) ? 'value ' . $body : null;
+		foreach (['value', 'shared', 'unique'] as $wrapper) {
+			if ($inner === $wrapper) {
+				return $wrapper;
+			}
+
+			if (preg_match('/^' . preg_quote($wrapper, '/') . '\s*<\s*(.+)\s*>$/', $inner, $matches) === 1) {
+				$body = trim($matches[1]);
+				if ($body === '' || preg_match('/^(?:value|shared|unique)\s*</', $body) === 1) {
+					return null;
+				}
+				return $this->isTypeName($body) ? $wrapper . '<' . $body . '>' : null;
+			}
+
+			if (str_starts_with($inner, $wrapper . ' ')) {
+				$body = trim(substr($inner, strlen($wrapper . ' ')));
+				return $this->isTypeName($body) ? $wrapper . '<' . $body . '>' : null;
+			}
 		}
 
 		if (str_starts_with($inner, 'ref ')) {
@@ -152,32 +202,35 @@ final class TypeCommentExtractor
 		return $this->isTypeName($inner) ? $inner : null;
 	}
 
-	/**
-
-	 * Validates whether an extracted inline type string belongs to the currently supported type vocabulary.
-
-	 *
-
-	 * Relationship to specs:
-
-	 * - preserves the subset and lowering rules documented for the prototype
-
-	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
-	 */
-
 	private function isTypeName(string $type): bool
 	{
-		$len = strlen($type);
+		$normalized = trim($type);
+		if ($normalized === '') {
+			return false;
+		}
+
+		$depth = 0;
+		$len = strlen($normalized);
 		for ($i = 0; $i < $len; $i++) {
-			$ch = $type[$i];
-			if (($ch >= 'A' && $ch <= 'Z') || ($ch >= 'a' && $ch <= 'z') || ($ch >= '0' && $ch <= '9') || $ch === '_' || $ch === '\\') {
+			$ch = $normalized[$i];
+			if (($ch >= 'A' && $ch <= 'Z') || ($ch >= 'a' && $ch <= 'z') || ($ch >= '0' && $ch <= '9') || $ch === '_' || $ch === '\\' || $ch === ',' || $ch === ' ') {
+				continue;
+			}
+			if ($ch === '<') {
+				$depth++;
+				continue;
+			}
+			if ($ch === '>') {
+				$depth--;
+				if ($depth < 0) {
+					return false;
+				}
 				continue;
 			}
 			return false;
 		}
 
-		$first = $type[0];
-		return ($first >= 'A' && $first <= 'Z') || ($first >= 'a' && $first <= 'z') || $first === '_';
+		$first = $normalized[0];
+		return $depth === 0 && ((($first >= 'A' && $first <= 'Z') || ($first >= 'a' && $first <= 'z') || $first === '_'));
 	}
 }

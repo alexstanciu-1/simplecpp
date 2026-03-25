@@ -16,6 +16,14 @@ Role split:
 
 If the two conflict, the conflict must be reported explicitly instead of guessed around.
 
+### Runtime/frontend boundary
+Generation must preserve a strict layering boundary:
+
+- the runtime is a semantic C++ library surface, not a validator for source-language legality
+- unsupported or invalid PHP-in-subset constructs must be rejected by analysis/lowering before runtime semantics are involved
+- generated code may rely only on documented runtime contracts, not on hidden runtime knowledge of frontend phases
+- runtime defensive checks may protect internal invariants, but they must not encode frontend policy
+
 ## Output layout
 Generation must target the project runtime root and produce files by category, not by ad-hoc manual decisions.
 

@@ -40,15 +40,16 @@ static void test_value_wrapper_behavior() {
 	assert(copy->x.native_value() == 9);
 }
 
-static void test_ref_helper_behavior() {
+static void test_native_reference_behavior() {
 	auto value = scpp::value<point>(scpp::int_t(3), scpp::int_t(4));
-	auto alias = scpp::ref(value);
-	alias->x = scpp::int_t(7);
+	auto &alias = value.get();
+	alias.x = scpp::int_t(7);
 	assert(value->x.native_value() == 7);
 
 	auto shared_reader = scpp::shared<local_reader>(scpp::int_t(11));
-	static_assert(std::is_same_v<decltype(scpp::ref(shared_reader)), scpp::shared_p<local_reader> &>);
-	assert(scpp::ref(shared_reader)->read().native_value() == 11);
+	auto &shared_alias = shared_reader;
+	static_assert(std::is_same_v<decltype(shared_alias), scpp::shared_p<local_reader> &>);
+	assert(shared_alias->read().native_value() == 11);
 }
 
 static void test_shared_upcast_behavior() {
@@ -61,7 +62,7 @@ static void test_shared_upcast_behavior() {
 
 int main() {
 	test_value_wrapper_behavior();
-	test_ref_helper_behavior();
+	test_native_reference_behavior();
 	test_shared_upcast_behavior();
 	return 0;
 }

@@ -15,7 +15,6 @@ template <typename T>
 class value_p final {
 private:
 	static_assert(!detail::is_handle_like_v<T>, "value_p<T> cannot wrap handle-like runtime wrappers");
-	static_assert(!detail::is_ref_like_v<T>, "value_p<T> cannot wrap ref_p<T>");
 
 	T value_;
 

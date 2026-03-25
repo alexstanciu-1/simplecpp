@@ -4,7 +4,6 @@
 #include "scpp/shared_p.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/value_p.hpp"
-#include "scpp/ref_p.hpp"
 #include "scpp/weak_p.hpp"
 
 namespace scpp {
@@ -56,37 +55,6 @@ weak_p<T> weak(const shared_p<T> &value) {
 template <typename T, typename... TArgs>
 value_p<T> value(TArgs &&...args) {
 	return value_p<T>(std::forward<TArgs>(args)...);
-}
-
-// Reference helper used by the future Simple C++ reference operator.
-//
-// Rules:
-// - value-like inputs become ref_p<T>
-// - existing handle-like inputs are returned unchanged so the language never
-//   grows a ref-of-handle / pointer-to-pointer layer
-template <typename T>
-T &ref(T &value)
-	requires detail::is_handle_like_v<T>
-{
-	return value;
-}
-
-template <typename T>
-ref_p<T> ref(T &value)
-	requires (!detail::is_handle_like_v<T> && !detail::is_ref_like_v<T>)
-{
-	return ref_p<T>(value);
-}
-
-template <typename T>
-ref_p<T> ref(value_p<T> &value)
-{
-	return ref_p<T>(value.get());
-}
-
-template <typename T>
-ref_p<T> ref(ref_p<T> value) noexcept {
-	return value;
 }
 
 } // namespace scpp

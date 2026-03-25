@@ -18,7 +18,7 @@ Defines the global rules the runtime expects frontends and generators to assume 
 | `default_overload_policy = forbidden` | An operator is illegal unless an overload family enables it. | `$x + $y;` | `auto z = x + y; // only when an enabled family covers it` | Operator surface area is opt-in, not inherited from underlying C++ types. |
 | `emit_deleted_for_forbidden_operations = true` | Forbidden operations should fail loudly at compile time. | `$a + $b; // where the combo is forbidden` | `auto operator+(...) = delete;` | This turns policy mistakes into local compiler errors instead of runtime surprises. |
 | `comparison_result_type = bool_t` | Comparisons standardize on one semantic boolean type. | `if ($a == $b) {}` | `::scpp::bool_t same = (a == b);` | The runtime does not leak raw native `bool` as its semantic result type. |
-| `condition_lowering.semantic_type = bool_t` | Conditions are expressed semantically as `bool_t`. | `if ($flag) {}` | `if (flag.native_value()) { ... }` | The generator first produces `bool_t`, then bridges to native C++ condition syntax. |
+| `condition_lowering.semantic_type = bool_t` | Conditions are expressed semantically as `bool_t`. | `if ($flag) {}` | `if (static_cast<bool>(flag)) { ... }` | The generator keeps `bool_t` as the semantic result, then uses an explicit native-bool bridge only at the control-flow boundary. |
 | `default_assignment_policy = forbidden` | Assignments are illegal unless covered by the assignment matrix. | `$a = $b;` | `a = b; // only when an assignment rule exists` | This keeps assignment semantics explicit, especially for wrappers and sentinels. |
 
 ## 2. Runtime Types
@@ -44,7 +44,7 @@ These wrappers provide stable semantic types over native C++ storage. They expos
 
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `bool_t -> bool` | Semantic scalar wrapper over a native C++ storage type. | `$flag = true;` | `::scpp::bool_t flag = ::scpp::bool_t(true);` | Wrapper exposes `native_value()` but keeps semantic boolean distinct from raw C++ `bool`. |
+| `bool_t -> bool` | Semantic scalar wrapper over a native C++ storage type. | `$flag = true;` | `::scpp::bool_t flag = ::scpp::bool_t(true);` | Wrapper exposes `native_value()` and an explicit `operator bool()` bridge, while remaining distinct from raw C++ `bool`. |
 | `int_t -> std::int64_t` | Semantic scalar wrapper over a native C++ storage type. | `$x = 42;` | `::scpp::int_t x = ::scpp::int_t(42);` | Standard integer wrapper for arithmetic and comparisons. |
 | `float_t -> double` | Semantic scalar wrapper over a native C++ storage type. | `$x = 3.5;` | `::scpp::float_t x = ::scpp::float_t(3.5);` | Standard floating wrapper for arithmetic and mixed numeric promotion. |
 | `string_t -> std::string` | Semantic scalar wrapper over a native C++ storage type. | `$s = "hello";` | `::scpp::string_t s = ::scpp::string_t("hello");` | String wrapper keeps construction explicit and text conversion centralized through helpers. |
@@ -58,10 +58,10 @@ These wrappers add policy on top of native C++ templates: storage, ownership, bo
 |---|---|---|---|---|
 | `vector_t<T> -> std::vector<T>` | Vector wrapper with a narrow stable API. | `$items = [];` | `::scpp::vector_t<::scpp::int_t> items;` | Only the approved vector surface is part of the runtime contract. |
 | `value_p<T> -> inline storage` | Inline value wrapper, not a heap-owning handle. | `$point = make_point();` | `::scpp::value_p<Point> point(Point{...});` | Useful for small inline aggregates while staying inside the wrapper model. |
-| `ref_p<T> -> T* (non-null borrow)` | Reference wrapper for borrowing/aliasing without ownership. | `function useThing(Thing $x): void {}` | `void useThing(::scpp::ref_p<Thing> x);` | Config marks it as non-nullable and non-owning. |
-| `shared_p<T> -> std::shared_ptr<T>` | Primary managed ownership model for PHP object-like values. | `$svc = new Service();` | `::scpp::shared_p<Service> svc = ::scpp::create<Service>();` | Supports null construction, pointer comparison rules, and covariant upcast. |
-| `unique_p<T> -> std::unique_ptr<T>` | Exclusive ownership wrapper. | `// not the primary PHP lowering model` | `::scpp::unique_p<File> file = ::scpp::unique<File>();` | Move-only by policy; copy assignment is intentionally absent. |
-| `weak_p<T> -> std::weak_ptr<T>` | Non-owning observer of shared ownership. | `// derived from a shared-owned object` | `::scpp::weak_p<Service> w = ::scpp::weak(svc);` | Explicit lock/expired flow keeps liveness checks visible. |
+| `native_ref<T> -> T* (non-null borrow)` | Reference wrapper for borrowing/aliasing without ownership. | `function useThing(Thing $x): void {}` | `void useThing(::scpp::native_ref<Thing> x);` | Config marks it as non-nullable and non-owning. |
+| `shared_p<T> -> std::shared_ptr<T>` | Primary managed ownership model for PHP object-like values. | `$svc = new Service();` | `::scpp::shared_p<Service> svc = ::scpp::create<Service>();` | Exposes shared-pointer-style surface such as bool conversion, `reset`, `swap`, `use_count`, temporary `debug_use_count`, `unique`, null reset, and covariant copy/move construction/assignment. |
+| `unique_p<T> -> std::unique_ptr<T>` | Exclusive ownership wrapper. | `// not the primary PHP lowering model` | `::scpp::unique_p<File> file = ::scpp::unique<File>();` | Move-only by policy; supports bool conversion, `reset`, `release`, `swap`, null reset, and move-upcast when `U* -> T*`. |
+| `weak_p<T> -> std::weak_ptr<T>` | Non-owning observer of shared ownership. | `// derived from a shared-owned object` | `::scpp::weak_p<Service> w = ::scpp::weak(svc);` | Supports empty reset, `use_count`, temporary `debug_use_count`, `expired`, `lock`, and covariant/shared-derived construction-assignment without becoming an owning handle. |
 | `nullable<T> -> std::optional<T>` | Optional wrapper for explicit presence/absence. | `function f(?int $x) {}` | `void f(::scpp::nullable<::scpp::int_t> x);` | The config treats nullability as an explicit wrapper, not an ambient property. |
 
 ## 3. Memory Helpers
@@ -76,8 +76,8 @@ These helpers are the stable factory/adaptation surface for object creation, own
 | `unique<T>() -> unique_p<T>` | Exclusive-ownership factory. | `// unique owner` | `auto file = ::scpp::unique<File>(...);` | Creates move-only ownership explicitly. |
 | `weak(shared_p<T>) -> weak_p<T>` | Derives a weak observer from shared ownership. | `// derived observer` | `auto w = ::scpp::weak(svc);` | Marked as non-allocating in config. |
 | `value<T>() -> value_p<T>` | Explicit inline-value creation. | `// inline stored value` | `auto p = ::scpp::value<Point>(...);` | This is the sanctioned path for inline storage. |
-| `ref(T&) / ref(value_p<T>&) / ref(ref_p<T>)` | Borrow adapter with identity and unwrap rules. | `$a = $obj; // borrowed view in lowered form` | `auto r = ::scpp::ref(obj);` | The helper is overloaded so borrowing stays explicit but ergonomic. |
-| `ref(handle_like) -> same_type` | Ownership handles pass through unchanged. | `// borrowing a shared object-like handle` | `auto same = ::scpp::ref(sharedObj);` | Config explicitly prevents wrapping handle-like values inside `ref_p`. |
+| `ref(T&) / ref(value_p<T>&) / ref(native_ref<T>)` | Borrow adapter with identity and unwrap rules. | `$a = $obj; // borrowed view in lowered form` | `auto& r = obj;` | The helper is overloaded so borrowing stays explicit but ergonomic. |
+| handle-like explicit reference lowering | Ownership handles pass through unchanged. | `// borrowing a shared object-like handle` | `auto& same = sharedObj;` | The generator must avoid wrapping handle-like values inside any extra reference layer. |
 
 ## 4. Cast Rules
 
@@ -99,7 +99,7 @@ Only the listed casts exist. The default policy is forbidden, so every allowed c
 | `nullopt_t -> nullable<T>` | Optional-empty sentinel may construct empty nullable implicitly. | `$x = null; // empty optional route` | `::scpp::nullable<T> x = ::scpp::nullopt_t();` | Keeps sentinel entry points flexible while preserving wrapper semantics. |
 | `nullptr_t -> shared_p<T> / unique_p<T> / weak_p<T>` | Pointer-empty sentinel may construct empty handle wrappers implicitly. | `$x = null; // pointer-empty route` | `::scpp::shared_p<T> x = ::scpp::nullptr_t();` | Useful when the generator wants pointer-flavored empty semantics. |
 | `T -> value_p<T>` | Inline value construction is explicit. | `$point = buildPoint();` | `auto point = ::scpp::value_p<Point>(buildPoint());` | Inline storage is opt-in, not implicit. |
-| `T& / value_p<T>& -> ref_p<T> via ref` | Borrow creation is explicit through helper. | `$tmp = $obj; // borrowed lowering path` | `auto r = ::scpp::ref(obj);` | The helper enforces the approved borrowing/adaptation surface. |
+| `T& / value_p<T>& -> native_ref<T> via ref` | Borrow creation is explicit through helper. | `$tmp = $obj; // borrowed lowering path` | `auto& r = obj;` | The helper enforces the approved borrowing/adaptation surface. |
 
 ## 5. Coercions
 
@@ -109,12 +109,12 @@ Coercions are not general casts. They describe context-driven lowering, currentl
 ### 5.1 Condition coercion
 
 #### Description
-Condition lowering is intentionally narrow: only semantic `bool_t` is accepted, and then bridged through `native_value`.
+Condition lowering remains explicit: semantic `bool_t` stays the comparison/result type, while configured scalar inputs may enter control flow only through the explicit `cast<bool>` / `static_cast<bool>` bridge path.
 
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `condition.allowed_inputs = [bool_t]` | Only `bool_t` may enter a condition directly. | `if ($flag) {}` | `if (flag.native_value()) { ... }` | No other type gets PHP-style truthiness for free. Frontends must lower to `bool_t` first. |
-| `condition.bridge = native_value` | The semantic boolean is bridged to native C++ condition syntax. | `while ($flag) {}` | `while (flag.native_value()) { ... }` | This keeps control flow legal in C++ without weakening the semantic type system. |
+| `condition.allowed_inputs = [bool_t, int_t, float_t]` | Conditions may be lowered from configured scalar inputs through explicit boolean casts. | `if ($x) {}` | `if (::scpp::cast<bool>(x)) { ... }` | Truthiness remains opt-in through the cast table instead of native implicit conversions. |
+| `condition.bridge = cast<bool>` | Conditions bridge to native C++ using the explicit native-bool cast path. | `while ($flag) {}` | `while (::scpp::cast<bool>(flag)) { ... }` | This keeps control flow legal in C++ without re-wrapping through `bool_t` just to unwrap again. |
 
 ### 5.2 Text coercion
 
@@ -128,7 +128,7 @@ Text contexts route through one result type, one helper family, and explicit nul
 | `null_t / nullopt_t / nullptr_t render as empty string` | Configured null-like sentinels print as empty text. | `echo null;` | `::scpp::print(::scpp::string_t(""));` | The config makes these three sentinels text-equivalent. |
 | `string_t is identity in text context` | Existing text stays text. | `echo $s;` | `::scpp::print(s);` | No redundant helper call is required for string identity. |
 | `bool_t / int_t / float_t use to_string` | Scalar wrappers have helper-driven text conversion. | `echo 42;` | `::scpp::print(::scpp::to_string(::scpp::int_t(42)));` | Avoids depending on native iostream formatting rules. |
-| `nullable<T> / value_p<T> / ref_p<T> / shared_p<T> / unique_p<T> / weak_p<T> use to_string` | Wrapper text conversion is helper-defined, not implicit. | `echo $obj;` | `::scpp::print(::scpp::to_string(obj));` | Important because wrapper text policy can change independently of storage representation. |
+| `nullable<T> / value_p<T> / native_ref<T> / shared_p<T> / unique_p<T> / weak_p<T> use to_string` | Wrapper text conversion is helper-defined, not implicit. | `echo $obj;` | `::scpp::print(::scpp::to_string(obj));` | Important because wrapper text policy can change independently of storage representation. |
 
 ## 6. Subtyping
 
@@ -140,8 +140,8 @@ Subtyping is wrapper-specific. The source of truth is C++ pointer convertibility
 | `object_subtype_source = cpp_pointer_convertibility` | Runtime polymorphism follows C++ pointer convertibility rules. | `interface I {} class A implements I {}` | `static_assert(std::is_convertible_v<A*, I*>);` | The config avoids inventing a parallel subtype lattice. |
 | `shared_p<U> -> shared_p<T> implicit when U* convertible to T*` | Shared handles are covariant. | `$x = new A(); $i = $x; // as interface/base` | `::scpp::shared_p<I> i = x;` | This is the core rule behind interface dispatch through shared ownership. |
 | `weak_p<U> -> weak_p<T> implicit when U* convertible to T*` | Weak observers are covariant too. | `// weak observer upcast` | `::scpp::weak_p<I> i = w;` | Keeps weak handles aligned with shared subtyping. |
-| `ref_p<U> -> ref_p<T> implicit when U* convertible to T*` | Borrowed references are covariant. | `function useBase(Base $x) {} useBase($derived);` | `void useBase(::scpp::ref_p<Base> x);` | Useful for non-owning interface/base dispatch. |
-| `unique_p<U> -> unique_p<T> forbidden` | Unique ownership upcast is not standardized here. | `// disallowed by config` | `// generator error` | Blocked because ownership transfer and deleter policy were intentionally left unstabilized. |
+| `native_ref<U> -> native_ref<T> implicit when U* convertible to T*` | Borrowed references are covariant. | `function useBase(Base $x) {} useBase($derived);` | `void useBase(::scpp::native_ref<Base> x);` | Useful for non-owning interface/base dispatch. |
+| `unique_p<U> -> unique_p<T> move-only when U* convertible to T*` | Unique ownership may upcast only through move. | `// move derived owner into base owner` | `::scpp::unique_p<Base> b = std::move(d);` | Mirrors the runtime's converting move ctor/assignment and keeps unique ownership non-copyable. |
 | `nullable<U> -> nullable<T> forbidden` | Generic inner subtyping for nullable is disabled. | `// disallowed generic optional upcast` | `// generator error` | This avoids hidden composition rules inside optionality. |
 | `value_p<U> -> value_p<T> forbidden` | Inline value wrapper is not polymorphic. | `// disallowed inline polymorphic wrapper conversion` | `// generator error` | Inline storage should not pretend to be a virtual object handle. |
 
@@ -184,16 +184,16 @@ This section controls which wrappers may nest inside which wrappers. It is one o
 |---|---|---|---|---|
 | `family_tags classify wrappers as ownership / inline_storage / reference / optionality` | Nesting rules reason in terms of family, not only concrete names. | `// type composition policy` | `// compile-time validation against family tags` | This makes the config extensible without duplicating every concrete combination. |
 | `value_p<T> must not contain ownership-family wrappers` | Inline value wrapper cannot embed `shared_p`, `unique_p`, or `weak_p`. | `// disallowed: value of handle` | `// generator error for value_p<shared_p<T>>` | Prevents “inline wrapper around heap handle” layering that adds confusion without value. |
-| `value_p<T> must not contain ref_p<U>` | Inline value wrapper cannot contain a borrow wrapper. | `// disallowed: value of ref` | `// generator error for value_p<ref_p<T>>` | Borrow semantics inside inline storage are intentionally not part of the model. |
-| `ref_p<T> must not target ownership-family wrappers` | A borrow wrapper cannot wrap a handle wrapper. | `// disallowed: borrowed handle wrapper` | `// generator error for ref_p<shared_p<T>>` | Config prefers handle passthrough instead of double-wrapping ownership in borrowing syntax. |
-| `ref_p<T> must not wrap ref_p<U>` | Borrow wrappers do not stack. | `// disallowed: ref of ref` | `// generator error for ref_p<ref_p<T>>` | Avoids meaningless alias-of-alias wrapper nests. |
+| `value_p<T> must not contain native_ref<U>` | Inline value wrapper cannot contain a borrow wrapper. | `// disallowed: value of ref` | `// generator error for value_p<native_ref<T>>` | Borrow semantics inside inline storage are intentionally not part of the model. |
+| `native_ref<T> must not target ownership-family wrappers` | A borrow wrapper cannot wrap a handle wrapper. | `// disallowed: borrowed handle wrapper` | `// generator error for native_ref<shared_p<T>>` | Config prefers handle passthrough instead of double-wrapping ownership in borrowing syntax. |
+| `native_ref<T> must not wrap native_ref<U>` | Borrow wrappers do not stack. | `// disallowed: ref of ref` | `// generator error for native_ref<native_ref<T>>` | Avoids meaningless alias-of-alias wrapper nests. |
 | `nullable<T> must not contain unique_p<U>` | Optional unique ownership is forbidden. | `// disallowed: ?unique owner` | `// generator error for nullable<unique_p<T>>` | Reason given by config: redundant and confusing null layering. |
-| `nullable<T> may contain ref_p<U> as a special allowed case` | Optional borrowed reference is allowed at runtime level. | `// runtime-level optional borrow` | `::scpp::nullable<::scpp::ref_p<T>> maybeRef;` | Config allows it, but explicitly marks it as not the primary PHP object-lowering model. |
-| `ref(ref_p<T>) -> ref_p<T>` | Borrow helper collapses identity. | `$x = $y; // already borrowed form` | `auto x = ::scpp::ref(existingRef); // same ref_p<T>` | Prevents redundant wrapper creation. |
-| `ref(value_p<T>&) -> ref_p<T>` | Borrow helper unwraps inline value to a borrow of its inner object. | `// borrow inline value` | `auto r = ::scpp::ref(inlineValue);` | This is the sanctioned bridge from inline storage to borrow semantics. |
-| `ref(handle_like) -> same_type` | Borrow helper passes ownership handles through unchanged. | `// borrow shared handle` | `auto same = ::scpp::ref(sharedObj);` | This is the reason `ref_p<shared_p<T>>` is both unnecessary and forbidden. |
+| `nullable<T> may contain native_ref<U> as a special allowed case` | Optional borrowed reference is allowed at runtime level. | `// runtime-level optional borrow` | `::scpp::nullable<::scpp::native_ref<T>> maybeRef;` | Config allows it, but explicitly marks it as not the primary PHP object-lowering model. |
+| native references are emitted directly | No helper collapse is needed. | `$x = $y; // already borrowed form` | `auto& x = existingRef;` | Prevents redundant wrapper creation. |
+| native reference to inline value | Native references bind directly to the inline value/object. | `// borrow inline value` | `auto& r = inlineValue.get();` | This is the sanctioned bridge from inline storage to borrow semantics. |
+| handle-like explicit reference lowering | Borrow helper passes ownership handles through unchanged. | `// borrow shared handle` | `auto& same = sharedObj;` | This is the reason `native_ref<shared_p<T>>` is both unnecessary and forbidden. |
 | `php_lowering_guidance.nullable_object_like = nullable<shared_p<T>>` | Nullable PHP objects should lower to nullable shared handles. | `function f(?MyClass $x) {}` | `void f(::scpp::nullable<::scpp::shared_p<MyClass>> x);` | This captures the project’s current main lowering model for PHP nullable object references. |
-| `php_lowering_guidance.disfavored_forms = nullable<ref_p<T>>, nullable<unique_p<T>>` | These forms are not the preferred PHP lowering target. | `// avoid these shapes in frontend lowering` | `// generator should choose nullable<shared_p<T>> instead` | This is guidance, not just a raw type-theory statement. |
+| `php_lowering_guidance.disfavored_forms = nullable<native_ref<T>>, nullable<unique_p<T>>` | These forms are not the preferred PHP lowering target. | `// avoid these shapes in frontend lowering` | `// generator should choose nullable<shared_p<T>> instead` | This is guidance, not just a raw type-theory statement. |
 
 ## 10. Assignment Rules
 
@@ -212,11 +212,11 @@ Assignments are explicit policy. This section says which source-target pairs are
 | `unique_p<T> <- unique_p<T>` | Unique handles assign by move, not copy. | `$a = $b; // exclusive owner transfer in lowered model` | `a = std::move(b);` | Reflects move-only ownership. |
 | `unique_p<T> <- null_t / nullptr_t / nullopt_t` | Unique handle may reset to null. | `$obj = null;` | `obj = ::scpp::null_t();` | Reset is allowed even though copy is not. |
 | `weak_p<T> <- weak_p<T>` | Weak handles copy assign. | `$a = $b; // observers` | `a = b;` | Observers are cheap copyable handles. |
-| `weak_p<T> <- shared_p<T>` | Weak observer may be assigned from shared owner. | `$weak = $shared;` | `weak = shared;` | This mirrors the cast/helper downgrade path. |
+| `weak_p<T> <- shared_p<T> / shared_p<U> when U* convertible to T*` | Weak observer may be assigned from shared owner, including covariant shared-to-weak downgrade. | `$weak = $shared;` | `weak = shared;` | This mirrors the cast/helper downgrade path and the runtime converting assignment support. |
 | `weak_p<T> <- null_t / nullptr_t / nullopt_t` | Weak observer may reset to empty. | `$weak = null;` | `weak = ::scpp::null_t();` | Empty-observer reset is explicit. |
 | `value_p<T> <- value_p<T> / T` | Inline value wrapper copies from same wrapper or copies into inner value. | `$box = $point;` | `box = point;` | Supports ordinary inline value replacement. |
-| `ref_p<T> <- ref_p<T>` | Borrow wrappers copy assign by alias copy. | `$a = $b; // borrowed refs` | `a = b;` | Copying a borrow copies the alias, not the referent. |
-| `shared_p<T> <- shared_p<U>, weak_p<T> <- weak_p<U>, ref_p<T> <- ref_p<U> when U* convertible to T*` | Assignment supports configured upcast/covariance for selected wrappers. | `$base = $derived;` | `base = derived;` | This is the assignment counterpart to the subtyping rules. |
+| `native_ref<T> <- native_ref<T>` | Borrow wrappers copy assign by alias copy. | `$a = $b; // borrowed refs` | `a = b;` | Copying a borrow copies the alias, not the referent. |
+| `shared_p<T> <- shared_p<U>, weak_p<T> <- weak_p<U>, weak_p<T> <- shared_p<U>, unique_p<T> <- unique_p<U> by move, native_ref<T> <- native_ref<U> when U* convertible to T*` | Assignment supports configured upcast/covariance for selected wrappers, with move-only semantics preserved for unique ownership. | `$base = $derived;` | `base = derived;` | This is the assignment counterpart to the subtyping rules and the current pointer-runtime API. |
 
 ## 11. Sentinel Semantics
 
@@ -227,6 +227,18 @@ Defines when distinct sentinel types should be treated as equivalent for specifi
 |---|---|---|---|---|
 | `equivalence_group = [null_t, nullopt_t, nullptr_t] with policy comparison_equivalent` | The three configured sentinels compare as equivalent emptiness. | `$x == null;` | `x == ::scpp::null_t() // and equivalent sentinel forms` | This is what allows pointer-null and nullable-null comparisons to accept multiple sentinel spellings without inventing broader implicit conversions. |
 
+## 11a. Operator Phase Addendum
+
+### Description
+The current runtime phase expands the operator surface with C++-first mutation and integer-bitwise behavior while keeping PHP-only semantics in `scpp::php` helpers.
+
+| Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
+|---|---|---|---|---|
+| `int_bitwise_and_mutation.enabled = true` | `int_t` now exposes `%`, bitwise ops, shifts, increment/decrement, and compound assignment. | `$i %= 4; $i <<= 1; ++$i;` | `i %= int_t(4); i <<= int_t(1); ++i;` | These map directly to native C++ integer semantics in this phase. |
+| `float_mutation.enabled = true` | `float_t` now exposes increment/decrement and arithmetic compound assignment. | `$f += 1; --$f;` | `f += int_t(1); --f;` | Mixed `float_t op= int_t` follows configured widening to `float_t`. |
+| `operator_phase = C++-first` | Newly added operators intentionally follow C++ behavior, not PHP coercion rules. | `$a / $b` | `a / b` | This is especially important for integer division and integer-only bitwise operations. |
+| `php-specific identity remains helper-based` | `===`, `!==`, and concatenation-assignment stay out of the generic wrapper operator surface. Strict identity uses exact type matching, except `null_t` versus empty `nullable<T>`. | `$a === $b; $s .= "x";` | `::scpp::php::identical(a, b); ::scpp::php::concat_assign(s, string_t("x"));` | This keeps PHP-only meaning isolated in the PHP helper layer while preserving object identity for pointer/reference wrappers. |
+
 ## 12. Runtime Helpers Contract
 
 ### Description
@@ -234,11 +246,12 @@ Declares the stable helper names that generators/frontends are allowed to target
 
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `stable_helpers = create, shared, unique, weak, value, ref, cast, to_string` | These helper entry points are part of the public contract. | `$x = new A(); echo $x;` | `::scpp::create<A>(); ::scpp::to_string(x);` | Anything outside this list should not become a generator dependency without contract change. |
+| `stable_helpers = create, shared, unique, weak, value, ref, cast, to_string, identical, not_identical, concat_assign` | These helper entry points are part of the public contract. | `$x = new A(); echo $x; $a === $b;` | `::scpp::create<A>(); ::scpp::to_string(x); ::scpp::php::identical(a, b);` | Anything outside this list should not become a generator dependency without contract change. |
 | `namespaces.core = scpp` | Core helpers live in `::scpp`. | `$x = 1;` | `::scpp::int_t x = ::scpp::int_t(1);` | This aligns type wrappers and helper entry points. |
 | `namespaces.php = scpp::php` | PHP-specific runtime helpers, when needed, live under a separate namespace. | `// frontend/runtime glue` | `::scpp::php::...;` | Keeps core runtime and PHP-facing glue separable. |
 | `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `$x = (bool)$n;` | `::scpp::cast<::scpp::bool_t>(n);` | Important because contract stability matters more than today’s internal implementation structure. |
 | `notes.separation_rule` | The contract lists shared knowledge helpers, not generator internals. | `// policy note` | `// no direct dependency on private helper names` | This is a governance rule: keep frontend/runtime coupling narrow and intentional. |
+| `notes.php_identity.rule = exact_type_required_except_null_nullable` | Strict identity uses exact type matching, with only null-vs-empty-nullable cross-type equality allowed. | `$a === $b;` | `::scpp::php::identical(a, b);` | Same-type values compare by value or identity depending on wrapper kind; differing exact types are non-identical. |
 
 ## 13. Scope Note
 

@@ -59,9 +59,33 @@ static void test_weak_pointer_behavior() {
 	assert(observer.lock().has_value().native_value() == false);
 }
 
+
+// Verifies the PHP-style weak_ref wrapper and weakref/weakref_get helpers.
+static void test_php_weakref_behavior() {
+	auto owner = scpp::shared<scpp_test::sample_object>(scpp::int_t(89));
+	const auto observer = scpp::php::weakref(owner);
+	assert(observer.expired().native_value() == false);
+	assert((observer != scpp::null).native_value() == true);
+
+	{
+		const auto alive = scpp::php::weakref_get(observer);
+		assert(alive.has_value().native_value() == true);
+		assert(alive.value().deref().value.native_value() == 89);
+	}
+
+	owner = scpp::shared_p<scpp_test::sample_object>(scpp::null);
+	assert(observer.expired().native_value() == true);
+	assert((observer == scpp::null).native_value() == true);
+
+	const auto expired = scpp::php::weakref_get(observer);
+	assert(expired.has_value().native_value() == false);
+	assert((scpp::php::identical(expired, scpp::null)).native_value() == true);
+}
+
 int main() {
 	test_shared_pointer_behavior();
 	test_unique_pointer_behavior();
 	test_weak_pointer_behavior();
+	test_php_weakref_behavior();
 	return 0;
 }

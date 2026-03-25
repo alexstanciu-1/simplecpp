@@ -1,5 +1,6 @@
 <?php
 
+$x = 2;
 switch ($x) {
 	case 1:
 		$y = 10;
@@ -10,3 +11,6 @@ switch ($x) {
 	default:
 		$y = 0;
 }
+
+echo $y, "
+";

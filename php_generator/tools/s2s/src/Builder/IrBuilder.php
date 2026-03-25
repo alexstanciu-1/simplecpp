@@ -25,22 +25,25 @@ use Scpp\S2S\Support\AstKind;
  */
 final class IrBuilder
 {
+	/** @var array<string, string> */
+	private array $typeCommentsByKey = [];
+
 	/**
 	 * @param array<int, array{name:string,type:string,line:int}> $typeComments
 	 */
 	public function build(ParsedInput $input, array $typeComments): PhpFile
 	{
 		$root = $input->ast;
-		if (!is_array($root) || ($root['kind'] ?? null) !== AstKind::STMT_LIST) {
+		if (!is_object($root) || ($root->kind ?? null) !== AstKind::STMT_LIST) {
 			throw new \RuntimeException('Unsupported AST root shape.');
 		}
 
-		$typeMap = [];
+		$this->typeCommentsByKey = [];
 		foreach ($typeComments as $comment) {
-			$typeMap[$comment['line'] . ':' . $comment['name']] = $comment['type'];
+			$this->typeCommentsByKey[$comment['line'] . ':' . $comment['name']] = $comment['type'];
 		}
 
-		$top = $this->collectBlock($root['children'] ?? [], null);
+		$top = $this->collectBlock($root->children ?? [], null);
 
 		return new PhpFile(
 			path: $input->path,
@@ -50,7 +53,7 @@ final class IrBuilder
 			classes: $top['classes'],
 			functions: $top['functions'],
 			rootStatements: $top['statements'],
-			localTypeCommentsByKey: $typeMap,
+			localTypeCommentsByKey: $this->typeCommentsByKey,
 		);
 	}
 
@@ -70,19 +73,19 @@ final class IrBuilder
 		$activeNamespace = $currentNamespace;
 
 		foreach ($nodes as $node) {
-			if (!is_array($node)) {
+			if (!is_object($node)) {
 				continue;
 			}
 
-			$kind = $node['kind'] ?? null;
+			$kind = $node->kind ?? null;
 			if ($kind === AstKind::NAMESPACE) {
-				$children = $node['children'] ?? [];
+				$children = $node->children ?? [];
 				$name = (string) ($children['name'] ?? '');
 				$fullName = $this->combineNamespace($currentNamespace, $name);
 				$stmtsNode = $children['stmts'] ?? null;
 
-				if (is_array($stmtsNode) && isset($stmtsNode['children'])) {
-					$collected = $this->collectBlock($stmtsNode['children'] ?? [], $fullName);
+				if (is_object($stmtsNode) && isset($stmtsNode->children) && is_array($stmtsNode->children)) {
+					$collected = $this->collectBlock($stmtsNode->children ?? [], $fullName);
 					if ($collected['uses'] !== [] || $collected['constants'] !== [] || $collected['classes'] !== [] || $collected['functions'] !== [] || $collected['statements'] !== []) {
 						$rootNamespaces[] = new NamespaceBlock(
 							name: $fullName,
@@ -222,34 +225,48 @@ final class IrBuilder
 
 	 */
 
-	private function buildClass(array $node): ClassDecl
+	private function buildClass(mixed $node): ClassDecl
 	{
-		$children = $node['children'] ?? [];
+		$children = $node->children ?? [];
 		$properties = [];
+		$constants = [];
 		$methods = [];
-		foreach (($children['stmts']['children'] ?? []) as $member) {
-			if (!is_array($member)) {
+		foreach (($children['stmts']->children ?? []) as $member) {
+			if (!is_object($member)) {
 				continue;
 			}
-			if (($member['kind'] ?? null) === AstKind::METHOD) {
+			if (($member->kind ?? null) === AstKind::METHOD) {
 				$methods[] = $this->buildMethod($member);
 				continue;
 			}
-			if (($member['kind'] ?? null) === AstKind::PROP_DECL) {
-				foreach (($member['children']['props']['children'] ?? []) as $prop) {
-					if (!is_array($prop) || ($prop['kind'] ?? null) !== AstKind::PROP_ELEM) {
+			if (($member->kind ?? null) === AstKind::CLASS_CONST_DECL) {
+				$constants = array_merge($constants, $this->buildConstants($member->children['const'] ?? null));
+				continue;
+			}
+			if (($member->kind ?? null) === AstKind::PROP_DECL) {
+				$isStatic = (((int) ($member->flags ?? 0)) & AstKind::STATIC) !== 0;
+				foreach (($member->children['props']->children ?? []) as $prop) {
+					if (!is_object($prop) || ($prop->kind ?? null) !== AstKind::PROP_ELEM) {
 						continue;
 					}
+					$default = $prop->children['default'] ?? null;
+					$propertyName = (string) ($prop->children['name'] ?? '');
+					$propertyLine = (int) ($prop->lineno ?? $member->lineno ?? 0);
 					$properties[] = new PropertyDecl(
-						name: (string) ($prop['children']['name'] ?? ''),
-						type: $this->readTypeName($member['children']['type'] ?? null),
+						name: $propertyName,
+						nativeType: $this->readTypeName($member->children['type'] ?? null),
+						docType: $this->resolveDocTypeComment($propertyLine, $propertyName, $prop->children['docComment'] ?? null),
+						default: $default,
+						hasDefault: $default !== null,
+						isStatic: $isStatic,
+						line: $propertyLine,
 					);
 				}
 			}
 		}
 
 		$interfaces = [];
-		foreach (($children['implements']['children'] ?? []) as $interfaceNode) {
+		foreach (($children['implements']->children ?? []) as $interfaceNode) {
 			$name = $this->readNameString($interfaceNode);
 			if ($name !== '') {
 				$interfaces[] = $name;
@@ -259,11 +276,12 @@ final class IrBuilder
 		return new ClassDecl(
 			name: (string) ($children['name'] ?? 'Anonymous'),
 			properties: $properties,
+			constants: $constants,
 			methods: $methods,
 			parentClass: ($name = $this->readNameString($children['extends'] ?? null)) !== '' ? $name : null,
 			interfaces: $interfaces,
-			isInterface: (((int) ($node['flags'] ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
-			isAbstract: (((int) ($node['flags'] ?? 0)) & AstKind::CLASS_ABSTRACT) !== 0,
+			isInterface: (((int) ($node->flags ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
+			isAbstract: (((int) ($node->flags ?? 0)) & AstKind::CLASS_ABSTRACT) !== 0,
 		);
 	}
 
@@ -281,16 +299,16 @@ final class IrBuilder
 
 	 */
 
-	private function buildFunction(array $node): FunctionDecl
+	private function buildFunction(mixed $node): FunctionDecl
 	{
-		$children = $node['children'] ?? [];
+		$children = $node->children ?? [];
 
 		return new FunctionDecl(
 			name: (string) ($children['name'] ?? ''),
-			params: $this->buildParams($children['params']['children'] ?? []),
+			params: $this->buildParams($children['params']->children ?? []),
 			returnType: $this->readTypeName($children['returnType'] ?? null),
-			returnsByReference: (($node['flags'] ?? 0) & AstKind::RETURN_REF) !== 0,
-			statements: $this->buildStatements($children['stmts']['children'] ?? []),
+			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
+			statements: $this->buildStatements($children['stmts']->children ?? []),
 		);
 	}
 
@@ -308,17 +326,17 @@ final class IrBuilder
 
 	 */
 
-	private function buildMethod(array $node): MethodDecl
+	private function buildMethod(mixed $node): MethodDecl
 	{
-		$children = $node['children'] ?? [];
+		$children = $node->children ?? [];
 
 		return new MethodDecl(
 			name: (string) ($children['name'] ?? ''),
-			params: $this->buildParams($children['params']['children'] ?? []),
+			params: $this->buildParams($children['params']->children ?? []),
 			returnType: $this->readTypeName($children['returnType'] ?? null),
-			returnsByReference: (($node['flags'] ?? 0) & AstKind::RETURN_REF) !== 0,
-			isStatic: (($node['flags'] ?? 0) & AstKind::STATIC) !== 0,
-			statements: $this->buildStatements($children['stmts']['children'] ?? []),
+			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
+			isStatic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
+			statements: $this->buildStatements($children['stmts']->children ?? []),
 		);
 	}
 
@@ -327,32 +345,62 @@ final class IrBuilder
 	{
 		$params = [];
 		foreach ($nodes as $node) {
-			if (!is_array($node) || ($node['kind'] ?? null) !== AstKind::PARAM) {
+			if (!is_object($node) || ($node->kind ?? null) !== AstKind::PARAM) {
 				continue;
 			}
-			$children = $node['children'] ?? [];
+			$children = $node->children ?? [];
+			$paramName = (string) ($children['name'] ?? '');
+			$paramLine = (int) ($node->lineno ?? 0);
 			$params[] = new ParamDecl(
-				name: (string) ($children['name'] ?? ''),
-				type: $this->readTypeName($children['type'] ?? null),
-				isReference: (($node['flags'] ?? 0) & AstKind::PARAM_REF) !== 0,
+				name: $paramName,
+				nativeType: $this->readTypeName($children['type'] ?? null),
+				docType: $this->resolveDocTypeComment($paramLine, $paramName, $children['docComment'] ?? null),
+				isReference: (($node->flags ?? 0) & AstKind::PARAM_REF) !== 0,
 				default: $children['default'] ?? null,
+				line: $paramLine,
 			);
 		}
 		return $params;
 	}
 
+	private function lookupTypeComment(int $line, string $name): ?string
+	{
+		$key = $line . ':' . $name;
+		return $this->typeCommentsByKey[$key] ?? null;
+	}
+
+	private function resolveDocTypeComment(int $line, string $name, mixed $docComment): ?string
+	{
+		$fromMap = $this->lookupTypeComment($line, $name);
+		if ($fromMap !== null) {
+			return $fromMap;
+		}
+
+		if (!is_string($docComment)) {
+			return null;
+		}
+
+		$inner = trim($docComment);
+		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
+			return null;
+		}
+
+		$inner = trim(substr($inner, 3, -2));
+		return $inner === '' ? null : $inner;
+	}
+
 
 	/** @return list<ConstantDecl> */
-	private function buildConstants(array $node): array
+	private function buildConstants(mixed $node): array
 	{
 		$out = [];
-		foreach (($node['children'] ?? []) as $child) {
-			if (!is_array($child) || ($child['kind'] ?? null) !== AstKind::CONST_ELEM) {
+		foreach (($node->children ?? []) as $child) {
+			if (!is_object($child) || ($child->kind ?? null) !== AstKind::CONST_ELEM) {
 				continue;
 			}
 			$out[] = new ConstantDecl(
-				name: (string) ($child['children']['name'] ?? ''),
-				value: $child['children']['value'] ?? null,
+				name: (string) ($child->children['name'] ?? ''),
+				value: $child->children['value'] ?? null,
 			);
 		}
 		return $out;
@@ -372,9 +420,9 @@ final class IrBuilder
 	}
 
 	/** @return list<UseDecl> */
-	private function buildUses(array $node): array
+	private function buildUses(mixed $node): array
 	{
-		$kind = $node['kind'] ?? null;
+		$kind = $node->kind ?? null;
 		if ($kind === AstKind::GROUP_USE) {
 			return $this->buildGroupUse($node);
 		}
@@ -385,39 +433,39 @@ final class IrBuilder
 	}
 
 	/** @return list<UseDecl> */
-	private function buildFlatUse(array $node): array
+	private function buildFlatUse(mixed $node): array
 	{
 		$uses = [];
-		$flags = (int) ($node['flags'] ?? 0);
+		$flags = (int) ($node->flags ?? 0);
 		$kind = $this->mapUseKind($flags);
-		foreach ($this->extractUseElements($node['children'] ?? []) as $element) {
-			$children = $element['children'] ?? [];
+		foreach ($this->extractUseElements($node->children ?? []) as $element) {
+			$children = $element->children ?? [];
 			$uses[] = new UseDecl(
 				kind: $kind,
 				name: $this->readNameString($children['name'] ?? null),
 				alias: $this->readAliasString($children['alias'] ?? null),
-				line: (int) ($element['lineno'] ?? $node['lineno'] ?? 0),
+				line: (int) ($element->lineno ?? $node->lineno ?? 0),
 			);
 		}
 		return $uses;
 	}
 
 	/** @return list<UseDecl> */
-	private function buildGroupUse(array $node): array
+	private function buildGroupUse(mixed $node): array
 	{
-		$children = $node['children'] ?? [];
+		$children = $node->children ?? [];
 		$prefix = $this->readNameString($children['prefix'] ?? null);
-		$kind = $this->mapUseKind((int) ($node['flags'] ?? 0));
+		$kind = $this->mapUseKind((int) ($node->flags ?? 0));
 		$uses = [];
-		foreach ($this->extractUseElements(($children['uses']['children'] ?? $children['uses'] ?? [])) as $element) {
-			$elemChildren = $element['children'] ?? [];
+		foreach ($this->extractUseElements(($children['uses']->children ?? $children['uses'] ?? [])) as $element) {
+			$elemChildren = $element->children ?? [];
 			$name = $this->readNameString($elemChildren['name'] ?? null);
 			$fullName = $prefix !== '' && $name !== '' ? $prefix . '\\' . $name : ($prefix !== '' ? $prefix : $name);
 			$uses[] = new UseDecl(
 				kind: $kind,
 				name: $fullName,
 				alias: $this->readAliasString($elemChildren['alias'] ?? null),
-				line: (int) ($element['lineno'] ?? $node['lineno'] ?? 0),
+				line: (int) ($element->lineno ?? $node->lineno ?? 0),
 				isGrouped: true,
 			);
 		}
@@ -429,7 +477,7 @@ final class IrBuilder
 	{
 		$out = [];
 		foreach ($children as $child) {
-			if (is_array($child) && ($child['kind'] ?? null) === AstKind::USE_ELEM) {
+			if (is_object($child) && ($child->kind ?? null) === AstKind::USE_ELEM) {
 				$out[] = $child;
 			}
 		}
@@ -478,16 +526,16 @@ final class IrBuilder
 		if (is_string($node)) {
 			return ltrim($node, '\\');
 		}
-		if (!is_array($node)) {
+		if (!is_object($node)) {
 			return '';
 		}
-		if (($node['kind'] ?? null) === AstKind::NAME) {
-			return ltrim((string) ($node['children']['name'] ?? ''), '\\');
+		if (($node->kind ?? null) === AstKind::NAME) {
+			return ltrim((string) ($node->children['name'] ?? ''), '\\');
 		}
-		if (($node['kind'] ?? null) === AstKind::NULLABLE_TYPE) {
-			return $this->readNameString($node['children']['type'] ?? null);
+		if (($node->kind ?? null) === AstKind::NULLABLE_TYPE) {
+			return $this->readNameString($node->children['type'] ?? null);
 		}
-		return ltrim((string) ($node['children']['name'] ?? ''), '\\');
+		return ltrim((string) ($node->children['name'] ?? ''), '\\');
 	}
 
 	/**
@@ -527,49 +575,55 @@ final class IrBuilder
 
 	 */
 
-	private function buildStatement(array $node): ?Statement
+	private function buildStatement(mixed $node): ?Statement
 	{
-		$kind = $node['kind'] ?? null;
-		$line = (int) ($node['lineno'] ?? 0);
+		$kind = $node->kind ?? null;
+		$line = (int) ($node->lineno ?? 0);
 
 		if ($kind === AstKind::ASSIGN) {
-			return new Statement('assign', $node['children'] ?? [], $line);
+			return new Statement('assign', $node->children ?? [], $line);
 		}
 
 		if ($kind === AstKind::ASSIGN_REF) {
-			return new Statement('assign_ref', $node['children'] ?? [], $line);
+			return new Statement('assign_ref', $node->children ?? [], $line);
+		}
+
+		if ($kind === AstKind::ASSIGN_OP) {
+			$payload = $node->children ?? [];
+			$payload['flags'] = (int) ($node->flags ?? 0);
+			return new Statement('assign_op', $payload, $line);
 		}
 
 		if ($kind === AstKind::STATIC_VAR) {
-			return new Statement('static_var', $node['children'] ?? [], $line);
+			return new Statement('static_var', $node->children ?? [], $line);
 		}
 
 		if ($kind === AstKind::RETURN) {
-			return new Statement('return', $node['children']['expr'] ?? null, $line);
+			return new Statement('return', $node->children['expr'] ?? null, $line);
 		}
 
 		if ($kind === AstKind::AST_ECHO) {
 			// The current php-ast exporter already splits `echo a, b` into sibling AST_ECHO nodes.
 			// Preserve the exporter shape and store the single operand only.
-			return new Statement('echo', $node['children']['expr'] ?? null, $line);
+			return new Statement('echo', $node->children['expr'] ?? null, $line);
 		}
 
 		if ($kind === AstKind::AST_UNSET) {
 			// The current php-ast exporter already splits `unset($a, $b)` into sibling AST_UNSET nodes.
 			// Preserve the exporter shape and store the single target only.
-			return new Statement('unset', $node['children']['var'] ?? null, $line);
+			return new Statement('unset', $node->children['var'] ?? null, $line);
 		}
 
 		if ($kind === AstKind::IF) {
 			$branches = [];
-			foreach (($node['children'] ?? []) as $branchNode) {
-				if (!is_array($branchNode) || ($branchNode['kind'] ?? null) !== AstKind::IF_ELEM) {
+			foreach (($node->children ?? []) as $branchNode) {
+				if (!is_object($branchNode) || ($branchNode->kind ?? null) !== AstKind::IF_ELEM) {
 					continue;
 				}
 				$branches[] = [
-					'cond' => $branchNode['children']['cond'] ?? null,
-					'stmts' => $this->buildStatements($branchNode['children']['stmts']['children'] ?? []),
-					'line' => (int) ($branchNode['lineno'] ?? $line),
+					'cond' => $branchNode->children['cond'] ?? null,
+					'stmts' => $this->buildStatements($branchNode->children['stmts']->children ?? []),
+					'line' => (int) ($branchNode->lineno ?? $line),
 				];
 			}
 			return new Statement('if', $branches, $line);
@@ -577,51 +631,69 @@ final class IrBuilder
 
 		if ($kind === AstKind::WHILE) {
 			return new Statement('while', [
-				'cond' => $node['children']['cond'] ?? null,
-				'stmts' => $this->buildStatements($node['children']['stmts']['children'] ?? []),
+				'cond' => $node->children['cond'] ?? null,
+				'stmts' => $this->buildStatements($node->children['stmts']->children ?? []),
 			], $line);
 		}
 
 		if ($kind === AstKind::DO_WHILE) {
 			return new Statement('do_while', [
-				'cond' => $node['children']['cond'] ?? null,
-				'stmts' => $this->buildStatements($node['children']['stmts']['children'] ?? []),
+				'cond' => $node->children['cond'] ?? null,
+				'stmts' => $this->buildStatements($node->children['stmts']->children ?? []),
 			], $line);
 		}
 
 		if ($kind === AstKind::FOR) {
 			return new Statement('for', [
-				'init' => array_values($node['children']['init']['children'] ?? []),
-				'cond' => array_values($node['children']['cond']['children'] ?? []),
-				'loop' => array_values($node['children']['loop']['children'] ?? []),
-				'stmts' => $this->buildStatements($node['children']['stmts']['children'] ?? []),
+				'init' => array_values($node->children['init']->children ?? []),
+				'cond' => array_values($node->children['cond']->children ?? []),
+				'loop' => array_values($node->children['loop']->children ?? []),
+				'stmts' => $this->buildStatements($node->children['stmts']->children ?? []),
+			], $line);
+		}
+
+		if ($kind === AstKind::FOREACH) {
+			$valueNode = $node->children['value'] ?? null;
+			$byRef = false;
+
+			if (is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::REF)) {
+				$byRef = true;
+				$valueNode = $valueNode->children['var'] ?? null;
+			}
+
+			return new Statement('foreach', [
+				'expr' => $node->children['expr'] ?? null,
+				'value' => $valueNode,
+				'key' => $node->children['key'] ?? null,
+				'stmts' => $this->buildStatements($node->children['stmts']->children ?? []),
+				'by_ref' => $byRef,
 			], $line);
 		}
 
 		if ($kind === AstKind::SWITCH) {
 			$cases = [];
-			foreach (($node['children']['stmts']['children'] ?? []) as $caseNode) {
-				if (!is_array($caseNode) || ($caseNode['kind'] ?? null) !== AstKind::SWITCH_CASE) {
+			foreach (($node->children['stmts']->children ?? []) as $caseNode) {
+				if (!is_object($caseNode) || ($caseNode->kind ?? null) !== AstKind::SWITCH_CASE) {
 					continue;
 				}
 				// Preserve each exported switch case as explicit IR so the generator can comment and emit each case block deterministically.
 				$cases[] = [
-					'cond' => $caseNode['children']['cond'] ?? null,
-					'stmts' => $this->buildStatements($caseNode['children']['stmts']['children'] ?? []),
+					'cond' => $caseNode->children['cond'] ?? null,
+					'stmts' => $this->buildStatements($caseNode->children['stmts']->children ?? []),
 				];
 			}
 			return new Statement('switch', [
-				'cond' => $node['children']['cond'] ?? null,
+				'cond' => $node->children['cond'] ?? null,
 				'cases' => $cases,
 			], $line);
 		}
 
 		if ($kind === AstKind::BREAK) {
-			return new Statement('break', $node['children']['depth'] ?? null, $line);
+			return new Statement('break', $node->children['depth'] ?? null, $line);
 		}
 
 		if ($kind === AstKind::CONTINUE) {
-			return new Statement('continue', $node['children']['depth'] ?? null, $line);
+			return new Statement('continue', $node->children['depth'] ?? null, $line);
 		}
 
 		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::POST_INC) {
@@ -632,22 +704,22 @@ final class IrBuilder
 	}
 
 	/** @return list<mixed> */
-	private function extractVariadicPayload(array $node): array
+	private function extractVariadicPayload(mixed $node): array
 	{
-		$children = $node['children'] ?? [];
+		$children = $node->children ?? [];
 
 		if (array_key_exists('expr', $children)) {
 			$expr = $children['expr'];
-			if (is_array($expr) && array_key_exists('children', $expr) && is_array($expr['children'])) {
-				return array_values($expr['children']);
+			if (is_object($expr) && isset($expr->children) && is_array($expr->children)) {
+				return array_values($expr->children);
 			}
 			return [$expr];
 		}
 
 		if (array_key_exists('var', $children)) {
 			$var = $children['var'];
-			if (is_array($var) && array_key_exists('children', $var) && is_array($var['children'])) {
-				return array_values($var['children']);
+			if (is_object($var) && isset($var->children) && is_array($var->children)) {
+				return array_values($var->children);
 			}
 			return [$var];
 		}
@@ -675,20 +747,20 @@ final class IrBuilder
 
 	private function readTypeName(mixed $typeNode): ?string
 	{
-		if (!is_array($typeNode)) {
+		if (!is_object($typeNode)) {
 			return null;
 		}
 
-		$flags = (int) ($typeNode['flags'] ?? 0);
-		$kind = (int) ($typeNode['kind'] ?? 0);
+		$flags = (int) ($typeNode->flags ?? 0);
+		$kind = (int) ($typeNode->kind ?? 0);
 
 		if ($kind === AstKind::NULLABLE_TYPE) {
-			$inner = $this->readTypeName($typeNode['children']['type'] ?? null);
+			$inner = $this->readTypeName($typeNode->children['type'] ?? null);
 			return $inner !== null ? '?' . ltrim($inner, '?') : null;
 		}
 
 		if ($kind === AstKind::NAME) {
-			$name = (string) ($typeNode['children']['name'] ?? '');
+			$name = (string) ($typeNode->children['name'] ?? '');
 			return $name !== '' ? $name : null;
 		}
 

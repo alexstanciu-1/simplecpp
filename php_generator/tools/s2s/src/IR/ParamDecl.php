@@ -12,6 +12,8 @@ namespace Scpp\S2S\IR;
  */
 final class ParamDecl
 {
+	public readonly ?string $type;
+
 	/**
 	 * Stores collaborators and default state for this phase object.
 	 *
@@ -21,9 +23,12 @@ final class ParamDecl
 	 */
 	public function __construct(
 		public readonly string $name,
-		public readonly ?string $type,
+		public readonly ?string $nativeType,
+		public readonly ?string $docType,
 		public readonly bool $isReference,
 		public readonly mixed $default,
+		public readonly int $line = 0,
 	) {
+		$this->type = $nativeType ?? $docType;
 	}
 }

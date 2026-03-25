@@ -8,6 +8,7 @@
 #include "scpp/nullptr_t.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/string_t.hpp"
+#include <type_traits>
 
 namespace scpp {
 
@@ -22,7 +23,11 @@ template <typename To, typename From>
 // Implements one explicit cast pair allowed by the current runtime and generator contract.
 // How: conversions are centralized here so unsupported pairs fail at compile time instead of silently converting.
 To cast(const From &value) {
-	static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+	if constexpr (std::is_same_v<To, From>) {
+		return value;
+	} else {
+		static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
+	}
 }
 
 // int_t -> bool_t
@@ -44,6 +49,29 @@ inline bool_t cast<bool_t, float_t>(const float_t &value) {
 template <>
 inline int_t cast<int_t, float_t>(const float_t &value) {
 	return int_t(static_cast<std::int64_t>(value.native_value()));
+}
+
+
+
+// int_t -> bool
+// Zero becomes false; any non-zero value becomes true.
+template <>
+inline bool cast<bool, int_t>(const int_t &value) {
+	return value.native_value() != 0;
+}
+
+// float_t -> bool
+// Zero becomes false; any non-zero value becomes true.
+template <>
+inline bool cast<bool, float_t>(const float_t &value) {
+	return value.native_value() != 0.0;
+}
+
+// bool_t -> bool
+// Explicit bridge to native bool for C++ control-flow sites generated through cast<bool>(...).
+template <>
+inline bool cast<bool, bool_t>(const bool_t &value) {
+	return static_cast<bool>(value);
 }
 
 

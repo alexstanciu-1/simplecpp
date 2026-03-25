@@ -1,5 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
+require_once __DIR__ . '/functions.php';
+
+# require_once __DIR__ . '/../generator/from_php.php';
+# require_once __DIR__ . '/../tests/public_html/index.php';
+
 const Dev_Ips = ['84.232.237.17' => true, '142.132.176.11'  => true];
 
 if (!Dev_Ips[$_SERVER['REMOTE_ADDR']]) {
@@ -8,9 +15,9 @@ if (!Dev_Ips[$_SERVER['REMOTE_ADDR']]) {
 }
 
 if ($_GET['resync_samples_ast'] ?? false) {
-	$files = glob(realpath("../simple_cpp/php_generator/samples/")."/*/*.php");
+	$files = glob(realpath("../simple_cpp/php_generator/samples/")."*/*/*.php");
 	echo "<pre>\n";
-	var_dump(realpath("../simple_cpp/php_generator/samples/"));
+	var_dump(realpath("../simple_cpp/php_generator/samples/")."*/*/*.php");
 	
 	foreach ($files as $f) {
 		
@@ -66,6 +73,45 @@ else if ($_GET['export_php_ast'] ?? false) {
 	
 	exit;
 }
+else if ($_GET['zip-it'] ?? false)
+{
+	$zipPath = realpath(sys_get_temp_dir())."/".uniqid().".zip";
+	if (file_exists($zipPath)) {
+		unlink($zipPath);
+	}
+
+	$includeDirs_def = ["../php_generator", "../public_html", "../runtime", ];
+	$excludeDirs_def = ["../php_generator/build", "../php_generator/samples_semantic", "../php_generator/tools/build", 
+					"../php_generator/samples/stage_01", "../php_generator/samples/stage_02", "../php_generator/samples/stage_03", 
+					"../runtime/build_comments", ];
+	$includeDirs = [];
+	foreach ($includeDirs_def as $d) {
+		$d = realpath(__DIR__."/".$d);
+		if ($d !== false) {
+			$includeDirs[] = $d;
+		}
+	}
+	$excludeDirs = [];
+	foreach ($excludeDirs_def as $d) {
+		$d = realpath(__DIR__."/".$d);
+		if ($d !== false) {
+			$excludeDirs[] = $d;
+		}
+	}
+	
+	createZip($includeDirs, $excludeDirs, $zipPath);
+	# var_dump($zipPath, $incl_dirs);
+	if (file_exists($zipPath) && is_file($zipPath)) {
+		header('Content-Type: application/zip');
+		header('Content-Disposition: attachment; filename="simple_cpp_'.basename($zipPath).'"');
+		header('Content-Length: ' . filesize($zipPath));
+		
+		readfile($zipPath);
+	}
+	
+	unlink($zipPath);
+	die;
+}
 else if ((substr($_GET['__or__'], 0, strlen('test/')) === 'test/') || ($_GET['__or__'] === 'test')) {
 	$ffp = __DIR__ . "/" . $_GET['__or__'];
 	$rp = realpath($ffp);
@@ -101,9 +147,6 @@ if ($_SERVER['REQUEST_URI'] === '/simple-cpp/master_specs.csv') {
 	readfile(__DIR__."/master_specs.csv");
 	exit;
 }
-
-require_once __DIR__ . '/../generator/from_php.php';
-require_once __DIR__ . '/../tests/public_html/index.php';
 
 /*
 // 1. The User's Code

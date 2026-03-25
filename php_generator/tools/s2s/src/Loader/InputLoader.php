@@ -20,25 +20,66 @@ final class InputLoader
 	 * - preserves the subset and lowering rules documented for the prototype
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 	 */
-	public function load(string $phpPath): ParsedInput
+	public function load(string $path, ?string $code = null): ParsedInput
 	{
-		if (!is_file($phpPath)) {
-			throw new \RuntimeException("Input file not found: {$phpPath}");
+		if ($code === null) {
+			$code = file_get_contents($path);
+		}
+		
+		if (extension_loaded('ast')) {
+			$version = max(\ast\get_supported_versions()); # \ast\get_latest_version();
+			$ast = \ast\parse_code($code, $version);
+
+			return new ParsedInput($path, $code, token_get_all($code), $ast);
+		}
+		
+		$json_file = $path . ".json";
+		if (!is_file($json_file)) {
+			throw new \RuntimeException('No AST source [file] available (ext-ast missing and no JSON provided)');
+		}
+		
+		$jsonSource = file_get_contents($json_file);
+
+		if ($jsonSource === false) {
+			throw new \RuntimeException('No AST source [content] available (ext-ast missing and no JSON provided)');
 		}
 
-		$jsonPath = $phpPath . '.json';
-		if (!is_file($jsonPath)) {
-			throw new \RuntimeException("Fixture JSON not found next to input file: {$jsonPath}");
+		$data = json_decode($jsonSource, false, flags: JSON_THROW_ON_ERROR);
+		$ast = $this->normalizeDecodedAstShape($data->ast);
+
+		return new ParsedInput($path, $code, $data->tokens, $ast);
+	}
+
+	/**
+	 * Normalizes decoded fixture data into the same node/children shape returned by ext-ast:
+	 * - nodes stay as objects
+	 * - lists stay as arrays
+	 * - node->children becomes an array
+	 */
+	private function normalizeDecodedAstShape(mixed $value): mixed
+	{
+		if (is_array($value)) {
+			foreach ($value as $key => $item) {
+				$value[$key] = $this->normalizeDecodedAstShape($item);
+			}
+			return $value;
 		}
 
-		$source = (string) file_get_contents($phpPath);
-		$data = json_decode((string) file_get_contents($jsonPath), true, flags: JSON_THROW_ON_ERROR);
+		if (!is_object($value)) {
+			return $value;
+		}
 
-		return new ParsedInput(
-			path: $phpPath,
-			source: $source,
-			tokens: $data['tokens'] ?? [],
-			ast: $data['ast'] ?? null,
-		);
+		foreach (get_object_vars($value) as $key => $item) {
+			$value->$key = $this->normalizeDecodedAstShape($item);
+		}
+
+		if (property_exists($value, 'children') && is_object($value->children)) {
+			$value->children = (array) $value->children;
+			foreach ($value->children as $key => $item) {
+				$value->children[$key] = $this->normalizeDecodedAstShape($item);
+			}
+		}
+
+		return $value;
 	}
 }

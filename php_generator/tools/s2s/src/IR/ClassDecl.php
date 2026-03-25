@@ -14,12 +14,14 @@ final class ClassDecl
 {
 	/**
 	 * @param list<PropertyDecl> $properties
+	 * @param list<ConstantDecl> $constants
 	 * @param list<MethodDecl> $methods
 	 * @param list<string> $interfaces
 	 */
 	public function __construct(
 		public readonly string $name,
 		public readonly array $properties,
+		public readonly array $constants,
 		public readonly array $methods,
 		public readonly ?string $parentClass = null,
 		public readonly array $interfaces = [],

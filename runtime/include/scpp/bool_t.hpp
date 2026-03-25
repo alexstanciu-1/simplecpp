@@ -60,10 +60,11 @@ public:
 		return bool_t(left.value_ != right.value_);
 	}
 
-	// Explicitly forbid native truthiness.
-	// This prevents accidental use in `if (value)` and forces the generator/runtime
-	// to make the native bridge explicit via native_value().
-	explicit operator bool() const = delete;
+	// Explicit native-bool bridge used only at generator-selected control-flow boundaries.
+	// The conversion remains explicit so the semantic wrapper does not silently degrade into native C++ bool.
+	explicit constexpr operator bool() const noexcept {
+		return value_;
+	}
 };
 
 } // namespace scpp

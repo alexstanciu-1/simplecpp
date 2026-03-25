@@ -11,7 +11,7 @@
     "comparison_result_type": "bool_t",
     "condition_lowering": {
       "semantic_type": "bool_t",
-      "cpp_bridge": "native_value"
+      "cpp_bridge": "static_cast<bool>"
     },
     "default_assignment_policy": "forbidden"
   },
@@ -196,7 +196,15 @@
         "get",
         "deref",
         "arrow"
-      ]
+      ],
+      "assignment_semantics": {
+        "copy_assign": "write_through",
+        "move_assign": "write_through",
+        "rebind_on_assignment": false,
+        "direct_value_assignment": true,
+        "copy_construction": "alias_same_target",
+        "move_construction": "alias_same_target"
+      }
     },
     "shared_p": {
       "kind": "template_wrapper",
@@ -210,8 +218,23 @@
         "default_ctor",
         "null_ctor",
         "explicit_native_ctor",
+        "element_type",
+        "copy_ctor",
+        "move_ctor",
+        "converting_copy_ctor",
+        "converting_move_ctor",
+        "copy_assign",
+        "move_assign",
+        "converting_copy_assign",
+        "converting_move_assign",
+        "null_assign",
         "has_value",
+        "bool_conversion",
         "get",
+        "use_count",
+        "unique",
+        "reset",
+        "swap",
         "deref",
         "arrow",
         "native_value"
@@ -229,10 +252,18 @@
         "default_ctor",
         "null_ctor",
         "explicit_native_ctor",
+        "element_type",
         "move_ctor",
         "move_assign",
+        "converting_move_ctor",
+        "converting_move_assign",
+        "null_assign",
         "has_value",
+        "bool_conversion",
         "get",
+        "reset",
+        "release",
+        "swap",
         "deref",
         "arrow",
         "native_value"
@@ -252,9 +283,19 @@
         "default_ctor",
         "null_ctor",
         "explicit_native_ctor",
+        "element_type",
         "explicit_from_shared",
+        "converting_from_shared",
+        "copy_ctor",
+        "copy_assign",
+        "converting_copy_ctor",
+        "converting_copy_assign",
+        "null_assign",
         "expired",
+        "use_count",
         "lock",
+        "reset",
+        "swap",
         "native_value"
       ]
     },
@@ -402,6 +443,14 @@
       "template_rule": false
     },
     {
+      "from": "bool_t",
+      "to": "bool",
+      "kind": "explicit",
+      "form": "named_cast",
+      "cast_name": "cast",
+      "template_rule": false
+    },
+    {
       "from": "int_t",
       "to": "bool_t",
       "kind": "explicit",
@@ -498,9 +547,11 @@
   "coercions": {
     "condition": {
       "semantic_type": "bool_t",
-      "bridge": "native_value",
+      "bridge": "cast<bool>",
       "allowed_inputs": [
-        "bool_t"
+        "bool_t",
+        "int_t",
+        "float_t"
       ]
     },
     "text": {
@@ -611,15 +662,17 @@
         "to": "ref_p<T>",
         "when": "U* is convertible to T*",
         "kind": "implicit"
+      },
+      {
+        "wrapper": "unique_p<T>",
+        "variance": "covariant_move_only",
+        "from": "unique_p<U>",
+        "to": "unique_p<T>",
+        "when": "U* is convertible to T*",
+        "kind": "move_only"
       }
     ],
     "forbidden_wrapper_rules": [
-      {
-        "wrapper": "unique_p<T>",
-        "from": "unique_p<U>",
-        "to": "unique_p<T>",
-        "reason": "ownership_transfer_and_deleter_policy_not_standardized"
-      },
       {
         "wrapper": "nullable<T>",
         "from": "nullable<U>",
@@ -798,6 +851,210 @@
       ]
     },
     {
+      "enabled": true,
+      "name": "int_bitwise_and_mutation",
+      "operators": [
+        {
+          "arity": 1,
+          "operands": [
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": "~"
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": "%"
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": "&"
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": "|"
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": "^"
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": "<<"
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": ">>"
+        },
+        {
+          "arity": 1,
+          "operands": [
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "++prefix",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 1,
+          "operands": [
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": "++postfix",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 1,
+          "operands": [
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "--prefix",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 1,
+          "operands": [
+            "int_t"
+          ],
+          "result": "int_t",
+          "symbol": "--postfix",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "+=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "-=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "*=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "/=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "%=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "&=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "|=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "^=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": "<<=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "int_t",
+            "int_t"
+          ],
+          "result": "int_t&",
+          "symbol": ">>=",
+          "mutates_lhs": true
+        }
+      ]
+    },
+    {
       "name": "float_arithmetic",
       "enabled": true,
       "operators": [
@@ -906,6 +1163,128 @@
             "float_t"
           ],
           "result": "bool_t"
+        }
+      ]
+    },
+    {
+      "enabled": true,
+      "name": "float_mutation",
+      "operators": [
+        {
+          "arity": 1,
+          "operands": [
+            "float_t"
+          ],
+          "result": "float_t&",
+          "symbol": "++prefix",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 1,
+          "operands": [
+            "float_t"
+          ],
+          "result": "float_t",
+          "symbol": "++postfix",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 1,
+          "operands": [
+            "float_t"
+          ],
+          "result": "float_t&",
+          "symbol": "--prefix",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 1,
+          "operands": [
+            "float_t"
+          ],
+          "result": "float_t",
+          "symbol": "--postfix",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "float_t&",
+          "symbol": "+=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "float_t&",
+          "symbol": "-=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "float_t&",
+          "symbol": "*=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "float_t"
+          ],
+          "result": "float_t&",
+          "symbol": "/=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "int_t"
+          ],
+          "result": "float_t&",
+          "symbol": "+=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "int_t"
+          ],
+          "result": "float_t&",
+          "symbol": "-=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "int_t"
+          ],
+          "result": "float_t&",
+          "symbol": "*=",
+          "mutates_lhs": true
+        },
+        {
+          "arity": 2,
+          "operands": [
+            "float_t",
+            "int_t"
+          ],
+          "result": "float_t&",
+          "symbol": "/=",
+          "mutates_lhs": true
         }
       ]
     },
@@ -1653,6 +2032,27 @@
       "kind": "copy_upcast",
       "template_rule": true,
       "when": "U* is convertible to T*"
+    },
+    {
+      "target": "weak_p<T>",
+      "source": "shared_p<U>",
+      "kind": "copy_from_shared_upcast",
+      "template_rule": true,
+      "when": "U* is convertible to T*"
+    },
+    {
+      "target": "unique_p<T>",
+      "source": "unique_p<U>",
+      "kind": "move_upcast",
+      "template_rule": true,
+      "when": "U* is convertible to T*"
+    },
+    {
+      "target": "shared_p<T>",
+      "source": "shared_p<U>",
+      "kind": "move_upcast",
+      "template_rule": true,
+      "when": "U* is convertible to T*"
     }
   ],
   "sentinel_semantics": {
@@ -1676,7 +2076,10 @@
       "value",
       "ref",
       "cast",
-      "to_string"
+      "to_string",
+      "identical",
+      "not_identical",
+      "concat_assign"
     ],
     "namespaces": {
       "core": "scpp",
@@ -1690,11 +2093,30 @@
       "value",
       "ref",
       "cast",
-      "to_string"
+      "to_string",
+      "identical",
+      "not_identical",
+      "concat_assign"
     ],
     "notes": {
       "purpose": "declares stable runtime helper entry points that frontends/generators may target directly",
-      "separation_rule": "helpers listed here are shared knowledge contracts, not generator implementation details"
+      "separation_rule": "helpers listed here are shared knowledge contracts, not generator implementation details",
+      "operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity using exact type matching except for null_t versus nullable<T>.",
+      "php_identity": {
+        "rule": "exact_type_required_except_null_nullable",
+        "exceptions": [
+          "null_t == null_t",
+          "null_t == nullable<T> when empty",
+          "nullable<T> == null_t when empty"
+        ],
+        "same_type_behavior": {
+          "scalars": "value_compare",
+          "nullable<T>": "null_state_then_recursive_identical_of_T",
+          "shared_p<T>": "managed_object_identity",
+          "unique_p<T>": "managed_object_identity",
+          "ref_p<T>": "referent_identity"
+        }
+      }
     }
   }
 }

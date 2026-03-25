@@ -1,9 +1,13 @@
 const form = document.getElementById('runner-form');
 const runButton = document.getElementById('run-button');
 const phpCodeBox = document.getElementById('php-code');
+const debugJsonBox = document.getElementById('debug-json');
+const copyDebugButton = document.getElementById('copy-debug-button');
+const cppHeaderCodeBox = document.getElementById('cpp-header-code');
 const cppCodeBox = document.getElementById('cpp-code');
 const phpOutputBox = document.getElementById('php-output');
 const cppOutputBox = document.getElementById('cpp-output');
+const timingResourcesBox = document.getElementById('timing-resources');
 const generatorStatus = document.getElementById('generator-status');
 const phpStatus = document.getElementById('php-status');
 const cppStatus = document.getElementById('cpp-status');
@@ -50,14 +54,160 @@ function updateMatchState(payload) {
 	}
 }
 
+function formatBytes(bytes) {
+	const value = Number(bytes ?? 0);
+	const negative = value < 0;
+	let abs = Math.abs(value);
+	const units = ['B', 'KB', 'MB', 'GB'];
+	let index = 0;
+	while (abs >= 1024 && index < units.length - 1) {
+		abs /= 1024;
+		index += 1;
+	}
+	const formatted = `${abs >= 100 || index === 0 ? abs.toFixed(0) : abs.toFixed(1)} ${units[index]}`;
+	return negative ? `-${formatted}` : formatted;
+}
+
+function formatKb(kb) {
+	return formatBytes(Number(kb ?? 0) * 1024);
+}
+
+function formatMs(ms) {
+	const value = Number(ms ?? 0);
+	if (!Number.isFinite(value)) {
+		return 'n/a';
+	}
+	if (Math.abs(value) >= 1000) {
+		return `${(value / 1000).toFixed(3)} s`;
+	}
+	return `${value.toFixed(3)} ms`;
+}
+
+function formatSigned(value, formatter) {
+	if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+		return 'n/a';
+	}
+	const numeric = Number(value);
+	const prefix = numeric > 0 ? '+' : '';
+	return `${prefix}${formatter(numeric)}`;
+}
+
+function readStageMemory(stage, previousExternalRssKb) {
+	if (stage.max_rss_kb !== undefined && stage.max_rss_kb !== null) {
+		return {
+			main: `max RSS ${formatKb(stage.max_rss_kb)}`,
+			diff: previousExternalRssKb === null ? null : `Δ RSS vs prev ${formatSigned(stage.max_rss_kb - previousExternalRssKb, formatKb)}`,
+			nextExternalRssKb: Number(stage.max_rss_kb),
+		};
+	}
+
+	return {
+		main: `mem ${formatSigned(stage.memory_delta_bytes ?? 0, formatBytes)}`,
+		diff: `peak ${formatSigned(stage.peak_delta_bytes ?? 0, formatBytes)}`,
+		nextExternalRssKb: previousExternalRssKb,
+	};
+}
+
+function formatStageLine(label, stage, previousExternalRssKb) {
+	if (!stage || stage.skipped === true) {
+		return {
+			text: `- ${label}: skipped${stage && stage.reason ? ` (${stage.reason})` : ''}`,
+			nextExternalRssKb: previousExternalRssKb,
+		};
+	}
+
+	const parts = [];
+	parts.push(`wall ${formatMs(stage.wall_ms)}`);
+	if (stage.user_ms !== undefined && stage.user_ms !== null) {
+		parts.push(`cpu ${formatMs((stage.user_ms || 0) + (stage.sys_ms || 0))}`);
+	}
+	const memory = readStageMemory(stage, previousExternalRssKb);
+	parts.push(memory.main);
+	if (memory.diff) {
+		parts.push(memory.diff);
+	}
+	if (stage.exit_code !== undefined && stage.exit_code !== null) {
+		parts.push(`exit ${stage.exit_code}`);
+	}
+	if (stage.timed_out === true) {
+		parts.push('timeout');
+	}
+
+	return {
+		text: `- ${label}: ${parts.join(' | ' )}`,
+		nextExternalRssKb: memory.nextExternalRssKb,
+	};
+}
+
+function formatTimingResources(metrics) {
+	if (!metrics || typeof metrics !== 'object') {
+		return '';
+	}
+
+	const groups = [
+		{
+			title: 'PHP pipeline',
+			stages: [
+				['Parse AST', metrics.parse_ast],
+				['Create C++ code', metrics.create_cpp_code],
+				['Execute PHP', metrics.execute_php],
+			],
+		},
+		{
+			title: 'C++ pipeline',
+			stages: [
+				['Compile C++', metrics.compile_cpp],
+				['Execute C++', metrics.execute_cpp],
+			],
+		},
+	];
+
+	const lines = [];
+	let previousExternalRssKb = null;
+	for (const group of groups) {
+		lines.push(group.title);
+		for (const [label, stage] of group.stages) {
+			const formatted = formatStageLine(label, stage, previousExternalRssKb);
+			lines.push(formatted.text);
+			previousExternalRssKb = formatted.nextExternalRssKb;
+		}
+		lines.push('');
+	}
+
+	const totals = [];
+	const allStages = [metrics.parse_ast, metrics.create_cpp_code, metrics.execute_php, metrics.compile_cpp, metrics.execute_cpp].filter(Boolean);
+	const totalWallMs = allStages.reduce((sum, stage) => sum + (Number(stage.wall_ms) || 0), 0);
+	const maxObservedRssKb = Math.max(0, ...allStages.map((stage) => Number(stage.max_rss_kb) || 0));
+	const totalInternalPeakDelta = (Number(metrics.parse_ast?.peak_delta_bytes) || 0) + (Number(metrics.create_cpp_code?.peak_delta_bytes) || 0);
+	totals.push(`Total wall: ${formatMs(totalWallMs)}`);
+	if (maxObservedRssKb > 0) {
+		totals.push(`Max external RSS: ${formatKb(maxObservedRssKb)}`);
+	}
+	if (totalInternalPeakDelta > 0) {
+		totals.push(`Internal peak growth: ${formatBytes(totalInternalPeakDelta)}`);
+	}
+	lines.push('Summary');
+	lines.push(`- ${totals.join(' | ' )}`);
+
+	return lines.join('\n').trim();
+}
+
+function renderDebugJson(payload) {
+	debugJsonBox.textContent = payload.debug_json || '';
+	timingResourcesBox.textContent = formatTimingResources(payload.timing_resources);
+}
+
 async function runComparison() {
 	runButton.disabled = true;
 	setStatus(generatorStatus, 'busy', 'running');
 	setStatus(phpStatus, 'busy', 'running');
 	setStatus(cppStatus, 'busy', 'running');
+	debugJsonBox.textContent = '';
+	cppHeaderCodeBox.textContent = '';
 	cppCodeBox.textContent = '';
 	phpOutputBox.textContent = '';
 	cppOutputBox.textContent = '';
+	timingResourcesBox.textContent = '';
 	phpPane.classList.remove('match-ok', 'has-error');
 	cppPane.classList.remove('match-ok', 'has-error');
 
@@ -71,12 +221,14 @@ async function runComparison() {
 		});
 
 		const payload = await response.json();
+		renderDebugJson(payload);
 
 		if (!response.ok || !payload.ok) {
 			throw new Error(payload.error || 'Request failed.');
 		}
 
-		cppCodeBox.textContent = payload.generator_display || '';
+		cppHeaderCodeBox.textContent = payload.generator_header_display || '';
+		cppCodeBox.textContent = payload.generator_source_display || '';
 		phpOutputBox.textContent = payload.php_error || payload.php_output || '';
 		cppOutputBox.textContent = payload.cpp_error || payload.cpp_output || '';
 
@@ -98,9 +250,15 @@ async function runComparison() {
 
 		updateMatchState(payload);
 	} catch (error) {
-		cppCodeBox.textContent = String(error.message || error);
+		const message = String(error.message || error);
+		cppHeaderCodeBox.textContent = message;
+		cppCodeBox.textContent = '';
 		phpOutputBox.textContent = '';
 		cppOutputBox.textContent = '';
+		timingResourcesBox.textContent = '';
+		if (debugJsonBox.textContent === '') {
+			debugJsonBox.textContent = JSON.stringify({ request_error: message }, null, '\t');
+		}
 		setStatus(generatorStatus, 'error', 'request error');
 		setStatus(phpStatus, 'error', 'n/a');
 		setStatus(cppStatus, 'error', 'n/a');
@@ -108,6 +266,25 @@ async function runComparison() {
 		runButton.disabled = false;
 	}
 }
+
+copyDebugButton.addEventListener('click', async () => {
+	const text = debugJsonBox.textContent || '';
+	if (text === '') {
+		return;
+	}
+
+	const previousText = copyDebugButton.textContent;
+	try {
+		await navigator.clipboard.writeText(text);
+		copyDebugButton.textContent = 'Copied';
+	} catch (error) {
+		copyDebugButton.textContent = 'Copy failed';
+	} finally {
+		window.setTimeout(() => {
+			copyDebugButton.textContent = previousText;
+		}, 1200);
+	}
+});
 
 form.addEventListener('submit', (event) => {
 	event.preventDefault();

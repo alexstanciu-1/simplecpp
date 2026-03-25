@@ -55,6 +55,12 @@ public:
 		value_ += value.value_;
 	}
 
+	// Implements the runtime unset hook for wrapped strings.
+	// How: the wrapper owns its storage, so unsetting it clears the current contents immediately.
+	void _unset_() noexcept {
+		value_.clear();
+	}
+
 	// Concatenation produces a new wrapped string.
 	[[nodiscard]] friend string_t operator+(const string_t &left, const string_t &right) {
 		return string_t(left.value_ + right.value_);

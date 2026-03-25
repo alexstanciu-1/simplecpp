@@ -12,6 +12,9 @@ namespace Scpp\S2S\Support;
  */
 final class AstKind
 {
+	public const ARRAY = 129;
+	public const ARG_LIST = 128;
+	public const ARRAY_ELEM = 526;
 	public const ENCAPS_LIST = 130;
 	public const STMT_LIST = 132;
 	public const IF = 133;
@@ -29,6 +32,7 @@ final class AstKind
 	public const USE_ELEM = 543;
 	public const ASSIGN = 518;
 	public const VAR = 256;
+	public const REF = 280;
 	public const CONST = 257;
 	public const AST_ISSET = 264;
 	public const AST_UNSET = 277;
@@ -37,12 +41,14 @@ final class AstKind
 	public const NAME = 2048;
 	public const BINARY_OP = 521;
 	public const ASSIGN_REF = 519;
+	public const ASSIGN_OP = 520;
 	public const DIM = 512;
 	public const PROP = 513;
 	public const STATIC_PROP = 515;
 	public const METHOD_CALL = 768;
 	public const CAST = 261;
 	public const PROP_DECL = 774;
+	public const CLASS_CONST_DECL = 776;
 	public const PROP_ELEM = 1027;
 	public const NEW = 527;
 	public const STATIC_CALL = 770;
@@ -62,15 +68,27 @@ final class AstKind
 	public const POST_INC = 272;
 	public const UNARY_OP = 269;
 	public const FOR = 1024;
+	public const FOREACH = 1025;
 	public const CONDITIONAL = 771;
+	public const MATCH = 547;
+	public const MATCH_ARM = 548;
 	public const PLUS = 1;
 	public const MINUS = 2;
+	public const MUL = 3;
+	public const DIV = 4;
+	public const MOD = 5;
+	public const SHIFT_LEFT = 6;
+	public const SHIFT_RIGHT = 7;
 	public const BINARY_CONCAT = 8;
-	public const BINARY_IS_EQUAL = 16;
-	public const BINARY_IS_IDENTICAL = 18;
+	public const BITWISE_OR = 9;
+	public const BITWISE_AND = 10;
+	public const BITWISE_XOR = 11;
+	public const BINARY_IS_IDENTICAL = 16;
+	public const BINARY_IS_NOT_EQUAL = 17;
+	public const BINARY_IS_EQUAL = 18;
+	public const BINARY_IS_NOT_IDENTICAL = 19;
 	public const BINARY_IS_SMALLER = 20;
 	public const BINARY_IS_SMALLER_OR_EQUAL = 21;
-	public const MUL = 3;
 	public const BINARY_IS_GREATER = 256;
 	public const BINARY_BOOL_OR = 258;
 	public const BINARY_BOOL_AND = 259;

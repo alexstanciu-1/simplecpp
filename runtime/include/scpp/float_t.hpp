@@ -39,6 +39,65 @@ public:
 		return value_;
 	}
 
+
+	// Implements the configured prefix increment operator for floating-point wrappers.
+	// How: the overload mutates the wrapped value in place and returns the updated wrapper by reference.
+	constexpr float_t &operator++() noexcept {
+		++value_;
+		return *this;
+	}
+
+	// Implements the configured postfix increment operator for floating-point wrappers.
+	// How: the overload preserves C++ postfix semantics by returning the pre-increment snapshot.
+	constexpr float_t operator++(int) noexcept {
+		const float_t snapshot(*this);
+		++value_;
+		return snapshot;
+	}
+
+	// Implements the configured prefix decrement operator for floating-point wrappers.
+	// How: the overload mutates the wrapped value in place and returns the updated wrapper by reference.
+	constexpr float_t &operator--() noexcept {
+		--value_;
+		return *this;
+	}
+
+	// Implements the configured postfix decrement operator for floating-point wrappers.
+	// How: the overload preserves C++ postfix semantics by returning the pre-decrement snapshot.
+	constexpr float_t operator--(int) noexcept {
+		const float_t snapshot(*this);
+		--value_;
+		return snapshot;
+	}
+
+	// Implements compound addition assignment for the floating-point wrapper.
+	// How: the overload mutates the wrapped value in place and returns the left-hand side by reference.
+	constexpr float_t &operator+=(const float_t &right) noexcept {
+		value_ += right.value_;
+		return *this;
+	}
+
+	// Implements compound subtraction assignment for the floating-point wrapper.
+	// How: the overload mutates the wrapped value in place and returns the left-hand side by reference.
+	constexpr float_t &operator-=(const float_t &right) noexcept {
+		value_ -= right.value_;
+		return *this;
+	}
+
+	// Implements compound multiplication assignment for the floating-point wrapper.
+	// How: the overload mutates the wrapped value in place and returns the left-hand side by reference.
+	constexpr float_t &operator*=(const float_t &right) noexcept {
+		value_ *= right.value_;
+		return *this;
+	}
+
+	// Implements compound division assignment for the floating-point wrapper.
+	// How: the overload follows native C++ floating-point division semantics and returns the left-hand side by reference.
+	constexpr float_t &operator/=(const float_t &right) noexcept {
+		value_ /= right.value_;
+		return *this;
+	}
+
 	// Generated arithmetic.
 	[[nodiscard]] friend constexpr float_t operator+(const float_t &value) noexcept {
 		return float_t(+value.value_);
@@ -226,6 +285,34 @@ public:
 	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
 	[[nodiscard]] friend constexpr bool_t operator>=(const float_t &left, const int_t &right) noexcept {
 		return bool_t(left.value_ >= static_cast<double>(right.native_value()));
+	}
+
+	// Implements compound addition assignment from the configured widening source int_t.
+	// How: the overload widens the right-hand side to double and mutates the wrapped value in place.
+	constexpr float_t &operator+=(const int_t &right) noexcept {
+		value_ += static_cast<double>(right.native_value());
+		return *this;
+	}
+
+	// Implements compound subtraction assignment from the configured widening source int_t.
+	// How: the overload widens the right-hand side to double and mutates the wrapped value in place.
+	constexpr float_t &operator-=(const int_t &right) noexcept {
+		value_ -= static_cast<double>(right.native_value());
+		return *this;
+	}
+
+	// Implements compound multiplication assignment from the configured widening source int_t.
+	// How: the overload widens the right-hand side to double and mutates the wrapped value in place.
+	constexpr float_t &operator*=(const int_t &right) noexcept {
+		value_ *= static_cast<double>(right.native_value());
+		return *this;
+	}
+
+	// Implements compound division assignment from the configured widening source int_t.
+	// How: the overload widens the right-hand side to double and mutates the wrapped value in place.
+	constexpr float_t &operator/=(const int_t &right) noexcept {
+		value_ /= static_cast<double>(right.native_value());
+		return *this;
 	}
 };
 

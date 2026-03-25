@@ -112,11 +112,11 @@ These model explicit inline object/value storage that must not allocate.
 Included initially:
 - `value_p<T>`
 
-### 5.5 Reference semantic types
-These model safe non-owning references for value-like storage.
+### 5.5 Reference lowering strategy
+Explicit source references lower directly to native C++ lvalue references.
 
 Included initially:
-- `ref_p<T>`
+- native `T&`
 
 ### 5.6 Optionality semantic types
 These model presence/absence of a value.
@@ -150,7 +150,8 @@ Included initially:
 - `bool_t` is the semantic boolean type of the runtime
 - runtime comparisons produce the configured semantic comparison type, not native `bool`
 - generated C++ control-flow must bridge explicitly from semantic boolean representation to native C++ condition evaluation
-- `bool_t` must not provide uncontrolled truthiness
+- the approved control-flow bridge is an explicit native-bool conversion (`static_cast<bool>(...)` or `cast<bool>(...)`), not `.native_value()` in generated conditions
+- `bool_t` must not provide uncontrolled truthiness; any native-bool bridge must remain explicit
 
 ### 6.3 `int_t` and `float_t`
 - these are semantic numeric wrappers, not aliases
@@ -168,9 +169,13 @@ Included initially:
 - iterator-surface expansion should be deferred until required by the language design
 
 ### 6.6 `shared_p<T>`, `unique_p<T>`, `weak_p<T>`
-- these are ownership wrappers, not merely aliases over STL smart pointers
+- these wrappers have the same role as `std::shared_ptr`, `std::unique_ptr`, and `std::weak_ptr`, but remain part of the project semantic API rather than raw STL leakage
 - ownership semantics must be explicit and predictable
-- `weak_p<T>` is observational/non-owning and must not dereference directly
+- `shared_p<T>` is the shared-owning handle family
+- `unique_p<T>` is the move-only exclusive-owning handle family
+- `weak_p<T>` is observational/non-owning, must not dereference directly, and must be observed through `lock()` / helper semantics
+- the runtime may expose temporary lifetime-audit helpers such as `debug_use_count()` / `php::debug_use_count()` to prove whether hidden strong owners still exist while debugging weak/shared lifetime issues
+- wrapper APIs should stay pointer-parity compatible where practical: null construction/reset, bool conversion, `get`, `reset`, `swap`, and family-appropriate observer/ownership helpers
 - ownership-changing behavior must never be inferred by ad hoc runtime rules; it must be explicitly modeled in configuration or helper semantics
 
 ### 6.7 `value_p<T>`
@@ -178,12 +183,14 @@ Included initially:
 - `value_p<T>` is the explicit runtime marker for non-heap object/value storage
 - `value_p<T>` must not wrap ownership wrappers or reference wrappers
 - `value_p<T>` exists only by explicit opt-in; it is not the default lowering for PHP objects
+- `value_p<T>` remains object-like at the usage surface and must support member access through `->` so an explicit inline-storage local such as `$x /** value MyClass */ = new MyClass();` can continue to lower member writes like `$x->property_1 = 10;` without switching to direct `.` syntax on the wrapper
 
-### 6.8 `ref_p<T>`
-- `ref_p<T>` is a safe non-owning reference to value-like storage
-- `ref_p<T>` must not wrap ownership wrappers or another `ref_p<T>`
-- `ref_p<T>` is intended for the future Simple C++ reference operator, not for raw-pointer replacement
-- references to ownership wrappers must collapse rather than nesting into `ref_p<shared_p<T>>`-like forms
+### 6.8 Native reference lowering
+- explicit reference lowering uses native C++ lvalue references (`T&`)
+- references must remain flat; the generator must never emit `&&`, `*`, or wrapper-of-wrapper reference shapes
+- object-like explicit references lower to references over the lowered handle type (for example `shared_p<T>&`)
+- the feature is a reduced alias/reference model, not full PHP reference semantics
+- rebinding, alias-preserving `unset`, and other PHP `&` edge semantics remain intentionally out of scope
 
 ### 6.9 `nullable<T>`
 - `nullable<T>` models value optionality
@@ -191,6 +198,14 @@ Included initially:
 - pointer wrappers and `nullable<T>` must remain semantically distinct even if both can represent absence
 - `nullopt_t` is the canonical semantic sentinel for constructing or resetting an empty `nullable<T>` state
 - `nullptr_t` is the canonical semantic sentinel for constructing or comparing empty pointer-like wrappers
+
+### 6.10 Reset/cleanup semantics
+- `unset` is restricted to types that can represent an empty/null state
+- in practice, `unset` is for nullable / pointer-like families, not for plain non-nullable value types
+- `unset` must not be used for native references
+- `unset` must not be used as a fake delete for stack values
+- for non-nullable value/container-like types, the current project direction is to use `clean(x)` to reset to a default/empty state instead of modeling PHP variable removal
+- `clean(x)` is a reset/cleanup operation, not a PHP-compatible symbol-table `unset`
 
 ---
 
@@ -206,13 +221,29 @@ The runtime exposes helper functions for managed allocation/reference creation.
 - `unique()` is explicit unique allocation
 - `weak()` derives a weak reference from shared ownership
 - `weak()` must not allocate
+- weak observation remains non-owning: `weak_p<T>` observations become usable objects only through `lock()` or helper paths built on top of `lock()`
 - `value()` constructs explicit inline-storage wrappers
 - `value()` must not allocate on behalf of the wrapper itself
-- `ref()` constructs `ref_p<T>` only for value-like inputs
-- `ref()` must act as a no-op boundary for `shared_p<T>`, `unique_p<T>`, and `weak_p<T>` inputs so the runtime never grows pointer-to-pointer style layers
+- explicit references lower directly in the generator; the runtime does not expose a separate `ref()` helper
 
 ### Constraint
 Policy flexibility is allowed only through configuration/version changes, not through context-sensitive ambiguity in generated code.
+
+---
+
+
+## 7a. PHP helper identity semantics
+
+- `===` and `!==` remain helper-based in `scpp::php`
+- the current rule is exact-type identity, not family identity
+- `null_t === null_t` is true
+- `null_t === nullable<T>` is true only when the nullable is empty
+- `nullable<T> === null_t` is true only when the nullable is empty
+- `nullable<T> === nullable<T>` compares null-state first, then recurses into contained-value identity
+- `shared_p<T> === shared_p<T>` compares managed object identity, not deep value equality
+- `unique_p<T> === unique_p<T>` compares managed object identity
+- native C++ references are an emission strategy, not a distinct runtime wrapper family
+- all other differing exact types are non-identical
 
 ---
 
@@ -248,6 +279,18 @@ The overload surface must also be **data-driven**.
 Value families should only receive operator families that correspond to the language semantics actually needed.
 Do not expose a broad C++-like operator surface “just in case”.
 
+### Current operator-phase decision
+The current runtime phase uses a C++-first operator policy for the newly added numeric mutation and integer-bitwise surface.
+
+Required interpretation for this phase:
+- `int_t` arithmetic uses native C++ integer semantics, including truncating `/`
+- `float_t` arithmetic uses native C++ floating-point semantics, including IEEE-style `/`
+- integer-only operators such as `%`, `&`, `|`, `^`, `~`, `<<`, and `>>` follow native C++ behavior
+- compound assignment operators such as `+=`, `/=`, and `<<=` follow the corresponding native C++ base operator
+- increment and decrement follow native C++ prefix/postfix behavior
+- PHP-specific identity and concatenation-assignment semantics remain helper-based in `scpp::php` rather than pretending to be ordinary C++ operator overloads
+- string/bitwise/coercion combinations not already representable by the runtime surface should remain unsupported for now and fail in earlier phases or at compile time
+
 ---
 
 ## 10. Generated code model
@@ -256,9 +299,16 @@ The code generator should target the runtime as a semantic backend, not as a thi
 
 ### Required rules
 - generated code should use `scpp` wrappers as the semantic boundary
-- conditions in generated C++ must bridge explicitly from the semantic boolean representation to native control-flow evaluation
+- conditions in generated C++ must bridge explicitly from the semantic boolean representation to native control-flow evaluation, using the configured explicit bool bridge rather than `.native_value()`
 - generator output must not rely on accidental native implicit conversions
 - all generated behavior that depends on casts or overloads must be derivable from configuration
+
+### Layering constraint
+- the runtime specification and runtime API must not depend on the existence of a generator
+- the runtime may expose only semantic types, helpers, and invariants that stand on their own as a C++ library surface
+- source-language legality is not a runtime concern; unsupported PHP-in-subset constructs must be rejected before runtime semantics are involved
+- the runtime may defend internal invariants, but it must not become a policy gatekeeper for frontend or lowering decisions
+- generator-facing concerns must be expressed as constraints on emitted code shape, not as hidden runtime awareness of frontend phases
 
 ---
 
@@ -286,3 +336,5 @@ The correct long-term structure is:
 - treat the runtime as a stable semantic platform and the configuration as the policy layer
 
 This keeps the system editable without letting the specification and generator drift apart.
+
+- `vector_t::at(...)` returns references for bindable element access, including native reference returns from generated code

@@ -8,106 +8,82 @@
 
 namespace scpp {
 
-// Weak observational semantic wrapper.
-//
-// Enforces:
-// - weak references never own the object
-// - conversion into weak_p is only defined from shared ownership
-// - null comparisons are currently modeled via expired()/empty weak state
 template <typename T>
-// Weak ownership observer wrapper aligned with the pointer helper rules.
-// Spec link: this type centralizes behavior so generated code follows runtime/specs/spec.md instead of raw STL semantics.
 class weak_p final {
 private:
 	std::weak_ptr<T> value_;
 
+	template <typename>
+	friend class weak_p;
+
 public:
+	using element_type = T;
+
 	weak_p() = default;
+	weak_p(null_t) noexcept : value_() {}
+	weak_p(nullptr_t) noexcept : value_() {}
+	explicit weak_p(std::weak_ptr<T> value) noexcept : value_(std::move(value)) {}
 
-	// Sentinel constructors produce an empty weak reference.
-	weak_p(null_t) noexcept
-		: value_() {
+	weak_p(const shared_p<T> &value) noexcept : value_(value.native_value()) {}
+
+	template <typename U>
+	weak_p(const shared_p<U> &value) noexcept
+		requires std::is_convertible_v<U *, T *>
+		: value_(std::static_pointer_cast<T>(value.native_value())) {}
+
+	template <typename U>
+	weak_p(const weak_p<U> &value) noexcept
+		requires std::is_convertible_v<U *, T *>
+		: value_(value.value_) {}
+
+	template <typename U>
+	weak_p &operator=(const shared_p<U> &value) noexcept
+		requires std::is_convertible_v<U *, T *>
+	{
+		value_ = std::static_pointer_cast<T>(value.native_value());
+		return *this;
 	}
 
-	weak_p(nullptr_t) noexcept
-		: value_() {
+	template <typename U>
+	weak_p &operator=(const weak_p<U> &value) noexcept
+		requires std::is_convertible_v<U *, T *>
+	{
+		value_ = value.value_;
+		return *this;
 	}
 
-	// Explicit native constructor for controlled boundary crossing.
-	explicit weak_p(std::weak_ptr<T> value) noexcept
-		: value_(std::move(value)) {
+	weak_p &operator=(null_t) noexcept {
+		value_.reset();
+		return *this;
 	}
 
-	// Shared ownership can be observed weakly without changing ownership counts permanently.
-	weak_p(const shared_p<T> &value) noexcept
-		: value_(value.native_value()) {
+	weak_p &operator=(nullptr_t) noexcept {
+		value_.reset();
+		return *this;
 	}
 
-	// Reports whether the referenced object can no longer be locked.
-	[[nodiscard]] bool_t expired() const noexcept {
-		return bool_t(value_.expired());
-	}
+	[[nodiscard]] bool_t expired() const noexcept { return bool_t(value_.expired()); }
+	[[nodiscard]] std::size_t use_count() const noexcept { return value_.use_count(); }
+	// Temporary lifetime-audit helper.
+	// How: exposes the observed strong-owner count visible through the underlying weak control block.
+	[[nodiscard]] long debug_use_count() const noexcept { return value_.use_count(); }
+	[[nodiscard]] shared_p<T> lock() const noexcept { return shared_p<T>(value_.lock()); }
+	void reset() noexcept { value_.reset(); }
+	void reset(null_t) noexcept { value_.reset(); }
+	void reset(nullptr_t) noexcept { value_.reset(); }
+	void swap(weak_p &other) noexcept { value_.swap(other.value_); }
 
-	// Reconstitutes shared ownership if the object is still alive.
-	[[nodiscard]] shared_p<T> lock() const noexcept {
-		return shared_p<T>(value_.lock());
-	}
+	[[nodiscard]] const std::weak_ptr<T> &native_value() const noexcept { return value_; }
+	[[nodiscard]] std::weak_ptr<T> &native_value() noexcept { return value_; }
 
-	// Controlled access to the native weak pointer.
-	[[nodiscard]] const std::weak_ptr<T> &native_value() const noexcept {
-		return value_;
-	}
-
-	[[nodiscard]] std::weak_ptr<T> &native_value() noexcept {
-		return value_;
-	}
-
-	// Null semantics are currently tied to expired()/empty weak state.
-	[[nodiscard]] friend bool_t operator==(const weak_p<T> &left, null_t) noexcept {
-		return bool_t(left.value_.expired());
-	}
-
-	// Implements one runtime operator overload required by the current type contract.
-	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
-	[[nodiscard]] friend bool_t operator==(null_t, const weak_p<T> &right) noexcept {
-		return bool_t(right.value_.expired());
-	}
-
-	// Implements one runtime operator overload required by the current type contract.
-	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
-	[[nodiscard]] friend bool_t operator!=(const weak_p<T> &left, null_t) noexcept {
-		return bool_t(!left.value_.expired());
-	}
-
-	// Implements one runtime operator overload required by the current type contract.
-	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
-	[[nodiscard]] friend bool_t operator!=(null_t, const weak_p<T> &right) noexcept {
-		return bool_t(!right.value_.expired());
-	}
-
-	// Implements one runtime operator overload required by the current type contract.
-	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
-	[[nodiscard]] friend bool_t operator==(const weak_p<T> &left, nullptr_t) noexcept {
-		return bool_t(left.value_.expired());
-	}
-
-	// Implements one runtime operator overload required by the current type contract.
-	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
-	[[nodiscard]] friend bool_t operator==(nullptr_t, const weak_p<T> &right) noexcept {
-		return bool_t(right.value_.expired());
-	}
-
-	// Implements one runtime operator overload required by the current type contract.
-	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
-	[[nodiscard]] friend bool_t operator!=(const weak_p<T> &left, nullptr_t) noexcept {
-		return bool_t(!left.value_.expired());
-	}
-
-	// Implements one runtime operator overload required by the current type contract.
-	// How: the overload keeps operations in wrapper space and returns wrapper results where the spec requires it.
-	[[nodiscard]] friend bool_t operator!=(nullptr_t, const weak_p<T> &right) noexcept {
-		return bool_t(!right.value_.expired());
-	}
+	[[nodiscard]] friend bool_t operator==(const weak_p<T> &left, null_t) noexcept { return bool_t(left.value_.expired()); }
+	[[nodiscard]] friend bool_t operator==(null_t, const weak_p<T> &right) noexcept { return bool_t(right.value_.expired()); }
+	[[nodiscard]] friend bool_t operator!=(const weak_p<T> &left, null_t) noexcept { return bool_t(!left.value_.expired()); }
+	[[nodiscard]] friend bool_t operator!=(null_t, const weak_p<T> &right) noexcept { return bool_t(!right.value_.expired()); }
+	[[nodiscard]] friend bool_t operator==(const weak_p<T> &left, nullptr_t) noexcept { return bool_t(left.value_.expired()); }
+	[[nodiscard]] friend bool_t operator==(nullptr_t, const weak_p<T> &right) noexcept { return bool_t(right.value_.expired()); }
+	[[nodiscard]] friend bool_t operator!=(const weak_p<T> &left, nullptr_t) noexcept { return bool_t(!left.value_.expired()); }
+	[[nodiscard]] friend bool_t operator!=(nullptr_t, const weak_p<T> &right) noexcept { return bool_t(!right.value_.expired()); }
 };
 
 } // namespace scpp

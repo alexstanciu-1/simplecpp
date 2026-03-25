@@ -41,7 +41,6 @@ template <typename T> class shared_p;
 template <typename T> class unique_p;
 template <typename T> class weak_p;
 template <typename T> class value_p;
-template <typename T> class ref_p;
 template <typename T> class nullable;
 
 // Cast helper forward declaration.
@@ -57,7 +56,7 @@ template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
 
-// Runtime wrapper classification traits used by helpers such as ref(...).
+// Runtime wrapper classification traits used by helper utilities.
 template <typename T>
 struct is_handle_like : std::false_type {};
 
@@ -71,16 +70,7 @@ template <typename T>
 struct is_handle_like<weak_p<T>> : std::true_type {};
 
 template <typename T>
-struct is_ref_like : std::false_type {};
-
-template <typename T>
-struct is_ref_like<ref_p<T>> : std::true_type {};
-
-template <typename T>
 inline constexpr bool is_handle_like_v = is_handle_like<remove_cvref_t<T>>::value;
-
-template <typename T>
-inline constexpr bool is_ref_like_v = is_ref_like<remove_cvref_t<T>>::value;
 
 // Extracts the underlying class from runtime pointer wrappers so generated
 // static calls can recover the represented class type from value carriers.
@@ -116,12 +106,6 @@ template <typename T>
 struct class_of<value_p<T>> {
 	using type = T;
 };
-
-template <typename T>
-struct class_of<ref_p<T>> {
-	using type = T;
-};
-
 template <typename T>
 using class_of_t = typename class_of<remove_cvref_t<T>>::type;
 
@@ -138,8 +122,4 @@ using class_t = detail::class_of_t<T>;
 // Public wrapper-family traits for runtime helpers and generated code.
 template <typename T>
 inline constexpr bool is_handle_like_v = detail::is_handle_like_v<T>;
-
-template <typename T>
-inline constexpr bool is_ref_like_v = detail::is_ref_like_v<T>;
-
 } // namespace scpp

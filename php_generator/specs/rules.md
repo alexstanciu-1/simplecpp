@@ -27,8 +27,9 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - `string_t`
 - `nullable<T>`
 - `shared_p<T>`
+- `unique_p<T>`
+- `weak_p<T>`
 - `value_p<T>`
-- `ref_p<T>`
 - `vector_t`
 - runtime `null` / `nullopt` support via the runtime helpers
 
@@ -36,8 +37,8 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - `string_t` uses constructor form, not `static_cast`
 - `nullable<T>` is the null carrier for nullable value types
 - object/class/interface handle types use `shared_p<T>` and are inherently nullable
+- explicit runtime handle annotations `shared<T>`, `unique<T>`, `weak<T>`, and `weakref<T>` lower directly to `shared_p<T>`, `unique_p<T>`, and `weak_p<T>`
 - `value_p<T>` is opt-in inline storage and is never the default lowering for PHP object types
-- `ref_p<T>` is reserved for explicit reference-expression lowering on value-like storage
 - runtime `null` is the canonical null literal for generated code where null is supported
 - null comparisons/checks must use the configured runtime helpers such as `php::is_null(...)` and `php::not_null(...)`
 
@@ -46,7 +47,10 @@ Object construction and ownership helpers are runtime concepts. Current generati
 ## 2. Type System
 
 ### Mandatory
-- parameters must be typed
+- function and method parameters must be typed explicitly
+- parameter typing must come from exactly one source: native PHP type or supported doc-comment type
+- native PHP type plus supported doc-comment type on the same parameter/property is an error
+- class properties must be typed explicitly
 - return types must be explicit
 
 ### Mapping
@@ -67,22 +71,36 @@ Object construction and ownership helpers are runtime concepts. Current generati
 ### Variable Typing
 - explicit PHPDoc variable types are authoritative when present
 - explicit local variable typing currently comes from PHPDoc variable annotations
-- only the strict immediate-after-variable form is supported for explicit local variable typing
-- valid form example: `$x /** string */ = "test";`
-- invalid forms include placing the type comment before the variable, after the initializer, or detached from the variable token
+- local variables keep the strict immediate-after-variable form only
+- valid local form example: `$x /** string */ = "test";`
+- parameters and properties additionally support the leading attached form such as `function f(/** vector<int> */ $list): void {}` and `public /** int */ $x;`
+- class constants support the leading attached form such as `const /** int */ X = 1;`
+- detached or non-adjacent type comments remain invalid
 - `$x /** string */ = "test";` → `string_t x("test");`
 - `$x /** ?string */ = "test";` → `nullable<string_t> x("test");`
 - `$x /** ?string */ = null;` → `nullable<string_t> x = null;`
 - `$x /** A */ = new A();` → `shared_p<A> x = create<A>();`
 - `$x /** ?A */ = null;` → `shared_p<A> x = null;`
-- `$x /** value Point */ = new Point(1, 2);` → `value_p<Point> x = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));`
-- `$x /** ref int */ = &$y;` → `ref_p<int_t> x = ref(y);`
-- `/** ref Point */` locals are allowed only when the referenced source is an explicit `value Point` local; otherwise generation must fail before producing `ref_p<shared_p<Point>>`-like shapes
+- `$x /** value<Point> */ = new Point(1, 2);` → `value_p<Point> x = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));`
+- `$x /** weak<A> */ = null;` → `weak_p<A> x = null;`
+- `$x /** weakref<A> */ = null;` → `weak_p<A> x = null;`
+- `$x /** unique<A> */ = null;` → `unique_p<A> x = null;`
+- `$x /** shared<A> */ = null;` → `shared_p<A> x = null;`
+- `$x /** ref int */ = &$y;` → `int_t& x = y;`
+- `/** ref Point */` locals lower directly to `shared_p<Point>&` when `Point` lowers to an object handle
+- `ref` lowering is intentionally a reduced write-through alias feature built on native C++ references; rebinding-through-alias and PHP-style alias-preserving `unset` are out of scope
 
-- explicit inline object/value storage is opt-in only through the local PHPDoc form `value T`
-- `value T` is currently supported for typed local variables only
-- when a `value T` local is initialized from `new T(...)`, generation must use `value<T>(...)` instead of `create<T>(...)`
-- if a future Simple C++ reference expression takes a handle-like wrapper (`shared_p<T>`, `unique_p<T>`, `weak_p<T>`), it must collapse to the original handle instead of creating nested pointer/reference layers
+- explicit inline object/value storage is opt-in only through the local PHPDoc form `value<T>`
+- object-handle local wrappers are expressed canonically as `shared<T>` and `unique<T>`
+- `value<T>`, `shared<T>`, and `unique<T>` are currently supported for typed local variables only
+- legacy `value T` is still accepted temporarily for compatibility, but `value<T>` is the canonical syntax going forward
+- strict local wrapper shortcuts are supported only for direct constructor assignment: `/** value */`, `/** shared */`, and `/** unique */` must appear on a typed local whose initializer is exactly `new ClassName(...)`; the generator must immediately normalize them to `value<ClassName>`, `shared<ClassName>`, or `unique<ClassName>`. After normalization, explicit wrapper forms such as `value<T>`, `shared<T>`, and `unique<T>` initialized from `new U(...)` must validate that `T` and `U` match exactly.
+- bare local wrapper shortcuts must be rejected when the initializer is not a direct `new ClassName(...)` expression, when the class target is not statically known, or when the assignment shape is not a normal direct local assignment
+- when a `value<T>` local is initialized from `new T(...)`, generation must use `value<T>(...)` instead of `create<T>(...)`
+- when a `unique<T>` local is initialized from `new T(...)`, generation must use `::scpp::unique<T>(...)` instead of `create<T>(...)`
+- explicit wrapper locals initialized from `new ...` must reject constructor-target mismatches; for example, `/** value<A> */ = new B()` is a generator error and must not silently default-initialize `A`
+- `value<T>` locals remain object-like at the usage surface: property and method access must continue to lower through `->`, for example `$x /** value<MyClass> */ = new MyClass(); $x->property_1 = 10;` lowers conceptually to `value_p<MyClass> x = value<MyClass>(); x->property_1 = static_cast<int_t>(10);`
+- explicit reference lowering over handle-like wrappers must emit a native handle reference (`shared_p<T>&`, `unique_p<T>&`, `weak_p<T>&`) instead of creating nested pointer/reference layers
 
 ### Untyped Variable Initialization
 - untyped variables may still lower to explicit runtime-wrapped expressions
@@ -98,6 +116,7 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - class/interface object types remain pointer-like in use (`->`)
 - user PHP classes must not be stored by value in generated code
 - runtime nullability enforcement for non-nullable object parameters/properties is deferred; current code generation keeps `T` and `?T` identical for object-handle types and relies on future injected checks
+- raw `&`, `&&`, and `*` must not appear inside source type definitions or PHPDoc type comments; explicit references are represented only by PHP reference syntax and typed local `ref T` annotations
 
 ---
 
@@ -199,14 +218,14 @@ Examples:
 - `switch` (known mismatch remains documented separately)
 
 ### Rejected
-- `foreach`
+- `foreach` over `vector_t` lowers to an indexed C++ `for` loop
 
 ---
 
 ## 10. Statements
 
 - expression statements are allowed
-- compound assignments are allowed after normalization
+- compound assignments are allowed after normalization; `.=` must normalize the right-hand side through the same explicit string cast path as `.`
 - `++` and `--` require a declared variable
 
 ---
@@ -215,7 +234,9 @@ Examples:
 
 - arrays
 - `stdClass` / object iteration
-- `foreach`
+- `foreach` by value and by reference are supported for `vector_t` only
+- foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
+- explicit function/method reference returns lower to native C++ reference signatures (`T&` or `auto&`) and must return lvalue-capable expressions without copyification
 - `include` / `require`
 - `and` / `or` / `xor`
 - untyped parameters
@@ -285,7 +306,8 @@ Rejected now:
 
 ### 14.6 Namespace-Scope Constants and Variables
 - namespace-scope constants are allowed
-- namespace-scope mutable variables are forbidden
+- namespace-scope executable bootstrap statements are allowed and are lowered into the synthetic namespace execution function
+- namespace-scope static variables are forbidden
 
 
 ## 15. File Emission Model
@@ -313,7 +335,8 @@ Rejected now:
 - source-level intent that is not yet enforced at generation time may be recorded as metadata
 - this includes, for example, non-null object intent where `T` and `?T` currently emit the same object-handle type
 - recording intent metadata must not change the current emitted C++ form unless a generation rule explicitly requires it
-- namespace-scope assignments are allowed only when they lower to constant declarations such as `const auto X = ...;`
+- namespace-scope assignments that participate in executable bootstrap code are allowed and are lowered inside the synthetic namespace execution function
+- namespace-scope static variables remain rejected
 
 ### 14.7 Namespace-Scope Executable Code
 Executable statements must not be emitted directly at namespace scope.
@@ -410,8 +433,9 @@ Null support:
 Nullable support:
 - `nullable<T>`
 - `shared_p<T>`
+- `unique_p<T>`
+- `weak_p<T>`
 - `value_p<T>`
-- `ref_p<T>`
 - `vector_t`
 - runtime `null` / `nullopt` support via the runtime helpers
 
@@ -473,6 +497,8 @@ This applies:
 - in returns
 - in function arguments
 - in conditions
+- condition lowering must use `static_cast<bool>(...)` for expressions already known to produce `bool_t`
+- condition lowering must use `cast<bool>(...)` for non-`bool_t` expressions that are allowed to enter control flow
 - in branch bodies
 - in loop bodies
 
@@ -615,8 +641,10 @@ nullable<string_t> f(const nullable<string_t>& a) { return null; }
 ## 11. Function declaration rules
 
 ### 11.1 Parameters
-- Parameters must have explicit types
+- Function and method parameters must have explicit types
 - Missing parameter type -> error
+- Parameter type fallback to `auto` is forbidden
+- If both a native PHP type and a supported doc-comment type are present, emit an error
 
 ### 11.2 Representative forms
 ```cpp
@@ -629,7 +657,8 @@ string_t f() { return string_t("x"); }
 
 These PHP semantics must go through the `php::` layer:
 
-- `unset($a)` -> `php::unset(a);`
+- `unset($a)` -> `php::unset(a);` only when the lowered target type is nullable / pointer-like / handle-like and supports an empty state
+- for non-nullable value/container-like targets, use `clean($a)` -> `php::clean(a);` as the current project direction instead of lowering to `php::unset(a);`
 - `isset($b)` -> `php::isset(b)`
 - when the exporter normalizes multi-operand forms, generation must follow the exported tree instead of reconstructing surface syntax
 - `empty($b)` -> `php::empty(b)`
@@ -838,14 +867,19 @@ A later decision must either:
 - `$this->method(...)` lowers to `this->method(...)`
 
 ### 16.6 Properties
-- properties must be typed
+- properties must be typed explicitly
+- property type fallback to `auto` is forbidden
+- if both a native PHP type and a supported doc-comment type are present, emit an error
 - instance properties are emitted in the header only
-- property initialization at declaration is not supported; constructor initialization must be used instead
+- non-static property default values are supported and lower to in-class default member initializers
 - dynamic properties are not supported
 - dynamic property names are not supported
 - object-typed fields lower to handle fields such as `shared_p<B>`
 - when needed for headers, forward declarations such as `class B;` may be emitted
 - static object-typed properties use the same handle model
+- static property fetch/read/write/increment lower to `Class::prop` storage access in generated C++
+- supported static-property class forms are `ClassName::$prop`, `self::$prop`, and `parent::$prop`
+- `static::$prop` is not supported in the current pass
 
 ### 16.7 Methods and Special Members
 - non-static methods are supported
@@ -890,3 +924,7 @@ Interpolation AST finding:
 - interpolated strings are represented as `AST_ENCAPS_LIST`, not as binary concat chains
 - generator lowering should join each part in order and cast interpolated non-string values to `string_t` explicitly
 - `samples/know_how/` remains the exporter-behavior reference folder for these checks
+
+## Wrapper nesting constraints
+
+- Ownership/value wrappers may not be nested. The following are invalid and must fail generation: `value<value<T>>`, `shared<shared<T>>`, `unique<unique<T>>`, and any mixed wrapper-inside-wrapper form such as `value<shared<T>>`.
