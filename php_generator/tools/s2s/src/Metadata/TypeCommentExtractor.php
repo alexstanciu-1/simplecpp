@@ -182,10 +182,15 @@ final class TypeCommentExtractor
 
 			if (preg_match('/^' . preg_quote($wrapper, '/') . '\s*<\s*(.+)\s*>$/', $inner, $matches) === 1) {
 				$body = trim($matches[1]);
-				if ($body === '' || preg_match('/^(?:value|shared|unique)\s*</', $body) === 1) {
-					return null;
-				}
-				return $this->isTypeName($body) ? $wrapper . '<' . $body . '>' : null;
+				# if ($body === '' || preg_match('/^(?:value|shared|unique)\s*</', $body) === 1) {
+				if ($body === '') {
+ 					return null;
+ 				}
+
+				// Preserve syntactically valid nested wrapper spellings here so the
+				// generator/type-mapper layer can reject them with an explicit
+				// diagnostic instead of silently dropping the annotation.
+ 				return $this->isTypeName($body) ? $wrapper . '<' . $body . '>' : null;
 			}
 
 			if (str_starts_with($inner, $wrapper . ' ')) {
