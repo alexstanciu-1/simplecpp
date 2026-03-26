@@ -189,10 +189,10 @@ try {
 	echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 } catch (Throwable $throwable) {
 	$errorText = formatThrowableDetails($throwable);
-	$response['error'] = $errorText;
+	$response['error'] = $errorText." | ".$throwable->getFile()." | line=".$throwable->getLine();
 	$response['generator_header_display'] = $errorText;
 	$response['generator_source_display'] = '';
-	$response['generator_error'] = $errorText;
+	$response['generator_error'] = $errorText." | ".$throwable->getFile()." | line=".$throwable->getLine();;
 	$response['timing_resources_json'] = encodePrettyJson($response['timing_resources']);
 	$response['debug_json'] = buildDebugJson($response, isset($phpCode) ? $phpCode : '', $response['php_ast_json'] ?? '');
 	http_response_code(500);

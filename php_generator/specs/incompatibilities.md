@@ -61,3 +61,80 @@ to native C++ comparison on normalized operands, which may not preserve PHP loos
 Either:
 - replace loose comparison with PHP-runtime helpers, or
 - formally restrict the supported operand/type combinations.
+
+
+## INCOMP-NS-USE-CONST-001
+**Area:** Namespace import / `use const`  
+**Status:** Open  
+**Priority:** Important
+
+**Issue**  
+`use const` is currently lowered with a C++ `using` declaration:
+
+```php
+use const A\B\X;
+```
+
+```cpp
+using ::scpp::A::B::X;
+```
+
+This diverges from PHP when the current namespace already defines a constant with the same short name.
+
+**Observed behavior**  
+PHP:
+- `const X = 1; use const A\B\X; echo X;` may resolve to the imported constant
+
+Current generated C++:
+- the local constant and imported `using` declaration conflict at compile time
+
+**Impact**  
+This is a real namespace/import mismatch bucket specific to `use const` without aliasing.
+
+**Current workaround**  
+Alias the imported constant:
+
+```php
+use const A\B\X as Y;
+```
+
+This currently lowers correctly through:
+
+```cpp
+inline constexpr auto& Y = ::scpp::A::B::X;
+```
+
+**Required later decision**  
+Either:
+- keep this as an intentional non-PHP-compatible restriction, or
+- add a dedicated constant-import lowering strategy that avoids the C++ `using` conflict.
+
+## INCOMP-EXPR-PARENS-001
+**Area:** Expression lowering  
+**Status:** Open  
+**Priority:** Important
+
+**Issue**  
+Grouped binary expressions may currently lose explicit parentheses during C++ emission.
+
+**Example**  
+PHP:
+```php
+echo ($a + $b) * $c;
+```
+
+Observed generated C++:
+```cpp
+::scpp::php::echo(a + b * c);
+```
+
+**Impact**  
+This changes evaluation order and result:
+- PHP: `(8 + 5) * 4 = 52`
+- current generated C++: `8 + 5 * 4 = 28`
+
+**Scope**  
+This is not namespace-specific. It affects general expression emission wherever the AST encodes an explicitly grouped sub-expression.
+
+**Required later decision**  
+Preserve grouped-expression structure during emission so explicit PHP grouping survives into generated C++.

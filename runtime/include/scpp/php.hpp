@@ -143,6 +143,23 @@ inline void echo(Args &&...args) {
 	(echo_one(std::forward<Args>(args)), ...);
 }
 
+template <typename Fn>
+requires requires (Fn &&fn) {
+	std::forward<Fn>(fn)();
+}
+// Evaluates one deferred echo operand and prints it.
+// How: the thunk form preserves PHP left-to-right operand evaluation when the generator wants one logical echo call.
+inline void echo_eval_one(Fn &&fn) {
+	echo_one(std::forward<Fn>(fn)());
+}
+
+template <typename... Fns>
+// Evaluates deferred echo operands left-to-right and prints them.
+// How: a comma-fold over thunk invocations preserves sequencing while still allowing the generator to emit one runtime call.
+inline void echo_eval(Fns &&...fns) {
+	(echo_eval_one(std::forward<Fns>(fns)), ...);
+}
+
 // Implements PHP strict identity for two null sentinels.
 // How: strict identity treats identical null sentinels as equal without consulting wrapper operator overloads.
 inline bool_t identical(null_t, null_t) {
@@ -247,6 +264,13 @@ inline string_t &concat_assign(string_t &left, const string_t &right) {
 	return left;
 }
 
+// Implements PHP count() for the currently supported vector wrapper subset.
+// How: returns the runtime vector size widened into the standard int_t wrapper used by generated code.
+template <typename T>
+inline int_t count(const vector_t<T> &value) {
+	return int_t(static_cast<std::int64_t>(value.size()));
+}
+
 
 // Implements the lowered isset contract across the currently supported runtime value categories.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
@@ -305,6 +329,12 @@ requires (
 	!std::is_same_v<std::remove_cvref_t<T>, null_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullopt_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
+	&& !requires (const std::remove_cvref_t<T> &value) {
+		value.has_value();
+	}
+	&& !requires (const std::remove_cvref_t<T> &value) {
+		value.expired();
+	}
 )
 // Implements one-value isset semantics used by the variadic isset helper.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.

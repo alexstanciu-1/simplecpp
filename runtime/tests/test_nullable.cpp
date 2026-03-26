@@ -54,10 +54,25 @@ static void test_nullable_equality() {
 	assert((empty != left).native_value() == true);
 }
 
+
+// Verifies nullable values can be converted to PHP string form through scpp::cast<string_t>(...).
+static void test_nullable_string_cast() {
+	const scpp::nullable<scpp::int_t> empty_int(scpp::null);
+	const scpp::nullable<scpp::int_t> value_int(scpp::int_t(42));
+	const scpp::nullable<scpp::bool_t> empty_bool(scpp::null);
+	const scpp::nullable<scpp::bool_t> value_bool(scpp::bool_t(true));
+
+	assert(scpp::cast<scpp::string_t>(empty_int).native_value() == "");
+	assert(scpp::cast<scpp::string_t>(value_int).native_value() == "42");
+	assert(scpp::cast<scpp::string_t>(empty_bool).native_value() == "");
+	assert(scpp::cast<scpp::string_t>(value_bool).native_value() == "1");
+}
+
 int main() {
 	test_empty_state();
 	test_present_value();
 	test_reset_and_value_or();
 	test_nullable_equality();
+	test_nullable_string_cast();
 	return 0;
 }

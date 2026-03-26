@@ -75,6 +75,7 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - valid local form example: `$x /** string */ = "test";`
 - parameters and properties additionally support the leading attached form such as `function f(/** vector<int> */ $list): void {}` and `public /** int */ $x;`
 - class constants support the leading attached form such as `const /** int */ X = 1;`
+- constant declarations fall back to initializer-based type deduction in emitted C++ (`const auto ... = ...`)
 - detached or non-adjacent type comments remain invalid
 - `$x /** string */ = "test";` → `string_t x("test");`
 - `$x /** ?string */ = "test";` → `nullable<string_t> x("test");`
@@ -290,22 +291,39 @@ Except for explicitly defined cases, the generator must not attempt semantic sym
 Namespace and class name lowering remains syntactic unless a rule states otherwise.
 
 ### 14.5 Namespace Imports
-`use` follows C++ `using` semantics, not PHP import semantics.
+`use` lowers through explicit namespace-local C++ declarations. The generator keeps the model structural and does not perform semantic symbol resolution beyond the import kind already present in the PHP AST.
+
+Core rules:
+- every imported path is treated as absolute when emitted from `use`
+- `using namespace` must not be emitted for PHP `use`
+- emitted import declarations are namespace-local and are placed inside the generated `namespace scpp::... {}` block
+- conflicts are delegated to PHP/C++ compile-time behavior; the generator does not try to pre-resolve them
 
 Supported now:
+- `use A\B\C;` lowers to `using ::scpp::A::B::C;`
+- `use A\B\C as D;` lowers to `using D = ::scpp::A::B::C;`
 - `use function A\B\f;` lowers to `using ::scpp::A::B::f;`
+- `use function A\B\f as g;` lowers to `inline constexpr auto g = ::scpp::A::B::f;`
 - `use const A\B\X;` lowers to `using ::scpp::A::B::X;`
-- `using namespace` must not be emitted for PHP `use`
-- emitted `using` declarations are namespace-local and are placed inside the generated `namespace scpp::... {}` block
+- `use const A\B\X as Y;` lowers to `inline constexpr auto& Y = ::scpp::A::B::X;`
+- grouped imports are supported by expanding them to one emitted declaration per imported element:
+  - `use A\B\{C, D};`
+  - `use A\B\{C as D};`
+  - `use function A\B\{f, g as h};`
+  - `use const A\B\{X, Y as Z};`
 
-Rejected now:
-- plain `use A\B\X;`
-- aliasing such as `use function A\B\f as g;`
-- grouped imports such as `use function A\B\{f, g};`
-- any behavior relying on PHP fallback import/name-resolution semantics
+Notes:
+- plain `use` is treated as a symbol import, not as a namespace-alias feature
+- fully-qualified PHP names in normal code still lower via the rooted `::scpp::...` form
+- non-root qualified names in normal code remain syntactic, for example `A\B\C` -> `A::B::C`
+- no PHP fallback import/name-resolution behavior is implemented
+
+Known semantic edge:
+- `use const A\B\X;` can still differ from PHP when the current namespace already defines `X`; PHP may prefer the imported constant while C++ `using` produces a conflict
 
 ### 14.6 Namespace-Scope Constants and Variables
 - namespace-scope constants are allowed
+- emitted constant declarations use initializer-based type deduction (`const auto`) instead of requiring an explicit mapped scalar type
 - namespace-scope executable bootstrap statements are allowed and are lowered into the synthetic namespace execution function
 - namespace-scope static variables are forbidden
 
@@ -326,6 +344,8 @@ Rejected now:
 ## 16. Expression Emission Policy
 
 - expression lowering must remain structural and simple
+- explicit grouping/parentheses must be preserved when the PHP AST encodes grouped binary expressions
+- the generator must not flatten grouped expressions in a way that changes PHP operator precedence
 - the generator must not try to behave like a semantic expression compiler
 - casts, operators, precedence-preserving grouping, wrapper-type behavior, and null checks are emitted into C++ according to the configured forms and are then handled by the runtime and the C++ compiler
 - the generator should only reject an expression when a generation rule explicitly marks that source form unsupported
@@ -768,12 +788,19 @@ auto a = php::identical(b, static_cast<int_t>(1));
 auto a = php::not_identical(b, static_cast<int_t>(1));
 ```
 
-### 15.5 Unary numeric operators
+### 15.5 Unary operators currently lowered directly
 Examples:
 ```cpp
 auto a = -b;
 auto a = +b;
+auto a = ~b;
 ```
+
+Notes:
+- unary minus lowers as `(-<expr>)`
+- unary plus lowers as `(+<expr>)`
+- unary bitwise NOT lowers as `(~<expr>)`
+- grouped unary/binary combinations must preserve AST structure, for example `(-a) * 2` and `(~a) * 2`
 
 ## 16. Null coalescing
 
@@ -793,17 +820,22 @@ Rules:
 
 ## 17. Output rules
 
-- generated code currently routes output through `::scpp::php::echo(...)`
-- lowering must preserve the exporter shape
+- generated code currently routes output through `::scpp::php::echo_eval(...)`
+- lowering must preserve the exporter shape while preserving left-to-right echo operand evaluation
 - for the current exporter:
 	- each `AST_ECHO` node carries one operand
 	- `echo a, b, c;` is exported as multiple sibling `AST_ECHO` nodes
+	- adjacent echo nodes from the same lowered statement stream may be coalesced into one `echo_eval(...)` call
+- each emitted operand must be wrapped as a thunk and evaluated inside the runtime helper in order
 
 Examples:
 ```cpp
-::scpp::php::echo(a);
-::scpp::php::echo(b);
-::scpp::php::echo(c);
+::scpp::php::echo_eval([&]() -> decltype(auto) { return a; });
+::scpp::php::echo_eval(
+	[&]() -> decltype(auto) { return a; },
+	[&]() -> decltype(auto) { return b; },
+	[&]() -> decltype(auto) { return c; }
+);
 ```
 
 ## 18. Error handling policy
@@ -867,8 +899,8 @@ A later decision must either:
 - `$this->method(...)` lowers to `this->method(...)`
 
 ### 16.6 Properties
-- properties must be typed explicitly
-- property type fallback to `auto` is forbidden
+- properties without defaults must be typed explicitly
+- properties with default values may omit the explicit type; the generator infers the emitted C++ member type from the default initializer
 - if both a native PHP type and a supported doc-comment type are present, emit an error
 - instance properties are emitted in the header only
 - non-static property default values are supported and lower to in-class default member initializers
@@ -923,8 +955,29 @@ int main() {
 Interpolation AST finding:
 - interpolated strings are represented as `AST_ENCAPS_LIST`, not as binary concat chains
 - generator lowering should join each part in order and cast interpolated non-string values to `string_t` explicitly
+- when an interpolated fragment is an expression subtree inside `{...}`, the node must be lowered by the ordinary expression renderer and then wrapped in `cast<string_t>(...)`; interpolation must not introduce a separate expression-lowering path
+- precedence is delegated to the AST / normal expression renderer; interpolation only performs string normalization around the rendered expression
 - `samples/know_how/` remains the exporter-behavior reference folder for these checks
 
 ## Wrapper nesting constraints
 
 - Ownership/value wrappers may not be nested. The following are invalid and must fail generation: `value<value<T>>`, `shared<shared<T>>`, `unique<unique<T>>`, and any mixed wrapper-inside-wrapper form such as `value<shared<T>>`.
+
+
+### String interpolation limitations
+
+Inside interpolated strings ("..."), only simple expressions are allowed.
+
+Supported:
+- `$var`
+- `$obj->prop`
+- `$arr[index]`
+- `$obj->method()`
+
+Not supported:
+- arithmetic expressions (`{$a + $b}`)
+- ternary expressions (`{$a ? $b : $c}`)
+- null coalescing expressions (`{$a ?? $b}`)
+
+This matches PHP behavior.
+

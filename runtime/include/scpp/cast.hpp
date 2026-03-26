@@ -83,6 +83,18 @@ inline To cast(const nullable<To> &value) {
 	return value.value();
 }
 
+// nullable<T> -> string_t
+// Mirrors PHP string conversion for nullable scalars: empty nullable => "", present value => stringified wrapped value.
+template <typename To, typename From>
+requires(std::is_same_v<To, string_t>)
+inline To cast(const nullable<From> &value) {
+	if (!value.has_value().native_value()) {
+		return string_t("");
+	}
+
+	return cast<string_t>(value.value());
+}
+
 // Identity cast for string_t
 // Keeps generator-emitted cast<string_t>(string_t) expressions valid and explicit.
 template <>

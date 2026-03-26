@@ -2079,7 +2079,8 @@
       "to_string",
       "identical",
       "not_identical",
-      "concat_assign"
+      "concat_assign",
+      "echo_eval"
     ],
     "namespaces": {
       "core": "scpp",
@@ -2096,7 +2097,8 @@
       "to_string",
       "identical",
       "not_identical",
-      "concat_assign"
+      "concat_assign",
+      "echo_eval"
     ],
     "notes": {
       "purpose": "declares stable runtime helper entry points that frontends/generators may target directly",

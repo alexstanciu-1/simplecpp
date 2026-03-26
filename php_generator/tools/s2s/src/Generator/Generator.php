@@ -36,6 +36,10 @@ final class Generator
 	/** @var array<string, bool> */
 	private array $predefinedConstants = [];
 	private NameRegistry $nameRegistry;
+	/** @var array<string, FunctionDecl> */
+	private array $functionDecls = [];
+	/** @var array<string, MethodDecl> */
+	private array $methodDecls = [];
 	private ?string $currentReturnType = null;
 	private ?string $currentClassName = null;
 	private ?string $currentParentClass = null;
@@ -84,6 +88,8 @@ final class Generator
 		$this->declaredLocalTypes = [];
 		$this->tempCounter = 0;
 		$this->nameRegistry = NameRegistry::fromPhpFile($file);
+		$this->functionDecls = $this->collectFunctionDecls($file);
+		$this->methodDecls = $this->collectMethodDecls($file);
 		$this->validatePhpFile($file);
 
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
@@ -133,6 +139,118 @@ final class Generator
 		}
 
 		return new CppFile($baseName, $header, $source, $this->errors);
+	}
+
+
+	/** @return array<string, FunctionDecl> */
+	private function collectFunctionDecls(PhpFile $file): array
+	{
+		$out = [];
+
+		foreach ($file->functions as $function) {
+			$out[$function->name] = $function;
+		}
+
+		foreach ($file->namespaces as $namespace) {
+			foreach ($namespace->functions as $function) {
+				$out[$namespace->name . '\\' . $function->name] = $function;
+			}
+		}
+
+		return $out;
+	}
+
+	/** @return array<string, MethodDecl> */
+	private function collectMethodDecls(PhpFile $file): array
+	{
+		$out = [];
+
+		foreach ($file->classes as $class) {
+			foreach ($class->methods as $method) {
+				$out[$class->name . '::' . $method->name] = $method;
+			}
+		}
+
+		foreach ($file->namespaces as $namespace) {
+			foreach ($namespace->classes as $class) {
+				$qualifiedClass = $namespace->name . '\\' . $class->name;
+				foreach ($class->methods as $method) {
+					$out[$qualifiedClass . '::' . $method->name] = $method;
+				}
+			}
+		}
+
+		return $out;
+	}
+
+	private function lookupFunctionDeclByCall(mixed $nameExpr, ?string $namespacePhp): ?FunctionDecl
+	{
+		if (!is_object($nameExpr) || ($nameExpr->kind ?? null) !== AstKind::NAME) {
+			return null;
+		}
+
+		$phpName = (string) ($nameExpr->children['name'] ?? '');
+		$flags = (int) ($nameExpr->flags ?? 0);
+		$resolved = $this->nameRegistry->resolveFunction($phpName, $flags, $namespacePhp);
+		if ($resolved !== null && isset($this->functionDecls[$resolved])) {
+			return $this->functionDecls[$resolved];
+		}
+
+		$trimmed = ltrim($phpName, '\\');
+		return $this->functionDecls[$trimmed] ?? null;
+	}
+
+	private function lookupMethodDeclByStaticCall(mixed $classNode, string $methodName, ?string $namespacePhp): ?MethodDecl
+	{
+		if (!is_object($classNode) || ($classNode->kind ?? null) !== AstKind::NAME) {
+			return null;
+		}
+
+		$phpClass = (string) ($classNode->children['name'] ?? '');
+		$flags = (int) ($classNode->flags ?? 0);
+		$resolvedClass = $this->nameRegistry->resolveClass($phpClass, $flags, $namespacePhp) ?? ltrim($phpClass, '\\');
+		return $this->methodDecls[$resolvedClass . '::' . $methodName] ?? null;
+	}
+
+	private function lookupMethodDeclByCurrentClass(string $methodName, ?string $namespacePhp): ?MethodDecl
+	{
+		if ($this->currentClassName === null) {
+			return null;
+		}
+
+		$qualifiedClass = $namespacePhp !== null && $namespacePhp !== ''
+			? $namespacePhp . '\\' . $this->currentClassName
+			: $this->currentClassName;
+
+		return $this->methodDecls[$qualifiedClass . '::' . $methodName] ?? $this->methodDecls[$this->currentClassName . '::' . $methodName] ?? null;
+	}
+
+	private function renderCallArgsForParams(array $params, array $args, ?string $namespacePhp): string
+	{
+		$lastParam = $params === [] ? null : $params[array_key_last($params)];
+		if (!$lastParam instanceof ParamDecl || !$lastParam->isVariadic) {
+			return $this->renderArgs($args, $namespacePhp);
+		}
+
+		$fixedCount = count($params) - 1;
+		$out = [];
+		for ($i = 0; $i < $fixedCount; ++$i) {
+			if (array_key_exists($i, $args)) {
+				$out[] = $this->renderExpr($args[$i], $namespacePhp);
+			}
+		}
+
+		$variadicType = $lastParam->type !== null
+			? $this->typeMapper->mapDeclaredType($lastParam->type)
+			: '/* ERROR missing-variadic-element-type */';
+
+		$packedValues = [];
+		for ($i = $fixedCount; $i < count($args); ++$i) {
+			$packedValues[] = $this->renderExpr($args[$i], $namespacePhp);
+		}
+
+		$out[] = '::scpp::vector_t<' . $variadicType . '>{' . implode(', ', $packedValues) . '}';
+		return implode(', ', $out);
 	}
 
 
@@ -216,8 +334,8 @@ final class Generator
 			$this->errors[] = 'Conflicting property type sources for ' . $class->name . '::$' . $property->name . ' at line ' . $property->line . ': use either a native PHP type or a doc-comment type, not both.';
 			return;
 		}
-		if ($property->type === null) {
-			$this->errors[] = 'Missing explicit property type for ' . $class->name . '::$' . $property->name . ' at line ' . $property->line . '.';
+		if ($property->type === null && !$property->hasDefault) {
+			$this->errors[] = 'Missing explicit property type for ' . $class->name . '::$' . $property->name . ' at line ' . $property->line . '. Add a type or a default value so the generator can infer one.';
 		}
 	}
 
@@ -406,14 +524,23 @@ final class Generator
 		$source[] = $this->indent(1) . 'using namespace ::scpp::php;';
 		$source[] = '';
 
-		$useLines = $this->renderUseDeclarations($uses);
-		foreach ($useLines as $useLine) {
-			$source[] = $this->indent(1) . $useLine;
+		foreach ($uses as $use) {
+			$useLine = $this->renderUseDeclaration($use);
+
+			if ($useLine === null) {
+				continue;
+			}
+			foreach (explode("\n", $useLine) as $line) {
+				if ($line === '') {
+					continue;
+				}
+				$source[] = $this->indent(1) . $line;
+			}
 		}
-		if ($useLines !== []) {
+		if ($uses !== []) {
 			$source[] = '';
 		}
-
+		
 		foreach ($constants as $constant) {
 			$this->emitConstant($header, $constant, $namespacePhp);
 		}
@@ -438,51 +565,27 @@ final class Generator
 	}
 
 	/** @param list<UseDecl> $uses @return list<string> */
-	private function renderUseDeclarations(array $uses): array
-	{
-		$out = [];
-		foreach ($uses as $use) {
-			$line = $this->renderUseDeclaration($use);
-			if ($line !== null) {
-				$out[] = $line;
-			}
-		}
-		return $out;
-	}
-
-	/**
-
-	 * Renders one lowered use declaration while rejecting PHP forms that do not map cleanly to the current prototype.
-
-	 *
-
-	 * Relationship to specs:
-
-	 * - preserves the subset and lowering rules documented for the prototype
-
-	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
-	 */
-
+	
 	private function renderUseDeclaration(UseDecl $use): ?string
 	{
-		if ($use->isGrouped) {
-			$this->errors[] = 'Grouped use imports are not supported at line ' . $use->line . '.';
-			return null;
-		}
-		if ($use->alias !== null) {
-			$this->errors[] = 'Aliased use imports are not supported at line ' . $use->line . '.';
-			return null;
-		}
-		if ($use->kind === 'normal') {
-			$this->errors[] = 'Plain use imports are not supported at line ' . $use->line . '. Only use function/use const map to C++ using declarations.';
-			return null;
-		}
-		if ($use->name === '') {
+		$name = $use->name;
+
+		if ($name === '') {
 			$this->errors[] = 'Empty use import is not supported at line ' . $use->line . '.';
 			return null;
 		}
-		return 'using ::scpp::' . str_replace('\\', '::', ltrim($use->name, '\\')) . ';';
+
+		$fq = '::scpp::' . str_replace('\\', '::', ltrim($name, '\\'));
+
+		if ($use->alias === null) {
+			return 'using ' . $fq . ';';
+		}
+
+		return match ($use->kind) {
+			'function' => 'inline constexpr auto ' . $use->alias . ' = ' . $fq . ';',
+			'const' => 'inline constexpr auto& ' . $use->alias . ' = ' . $fq . ';',
+			default => 'using ' . $use->alias . ' = ' . $fq . ';',
+		};
 	}
 
 	/**
@@ -501,8 +604,7 @@ final class Generator
 
 	private function emitConstant(array &$header, ConstantDecl $constant, ?string $namespacePhp): void
 	{
-		$type = $this->inferConstantType($constant->value, $namespacePhp);
-		$header[] = 'inline const ' . $type . ' ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
+		$header[] = 'inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
 	}
 
 	/**
@@ -531,18 +633,29 @@ final class Generator
 		$header[] = 'class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {';
 		$header[] = 'public:';
 		foreach ($class->properties as $property) {
-			$type = $property->type !== null ? $this->typeMapper->mapDeclaredType($property->type) : '/* ERROR missing-property-type */';
+			$initializer = $property->hasDefault
+				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
+				: null;
+			if ($property->type !== null) {
+				$type = $this->typeMapper->mapDeclaredType($property->type);
+			} elseif ($initializer !== null) {
+				$type = 'decltype(' . $initializer . ')';
+			} else {
+				$type = '/* ERROR missing-property-type */';
+			}
 			$line = $type . ' ' . $property->name;
 			if ($property->isStatic) {
 				$line = 'static ' . $line;
-			} elseif ($property->hasDefault) {
-				$line .= ' = ' . $this->renderInitializerExpr($property->default, $property->type, $namespacePhp);
+				if ($initializer !== null) {
+					$line .= ';';
+				}
+			} elseif ($initializer !== null) {
+				$line .= ' = ' . $initializer;
 			}
-			$header[] = $this->indent(1) . $line . ';';
+			$header[] = $this->indent(1) . rtrim($line, ';') . ';';
 		}
 		foreach ($class->constants as $constant) {
-			$type = $this->inferConstantType($constant->value, $namespacePhp);
-			$header[] = $this->indent(1) . 'static inline const ' . $type . ' ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
+			$header[] = $this->indent(1) . 'static inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
 		}
 		foreach ($class->methods as $method) {
 			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';';
@@ -554,11 +667,17 @@ final class Generator
 			if (!$property->isStatic) {
 				continue;
 			}
-			$type = $property->type !== null ? $this->typeMapper->mapDeclaredType($property->type) : '/* ERROR missing-property-type */';
 			$default = $property->hasDefault
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
-				: $type . '{}';
-			$source[] = $type . ' ' . $class->name . '::' . $property->name . ' = ' . $default . ';';
+				: null;
+			if ($property->type !== null) {
+				$type = $this->typeMapper->mapDeclaredType($property->type);
+			} elseif ($default !== null) {
+				$type = 'decltype(' . $default . ')';
+			} else {
+				$type = '/* ERROR missing-property-type */';
+			}
+			$source[] = $type . ' ' . $class->name . '::' . $property->name . ' = ' . ($default ?? ($type . '{}')) . ';';
 		}
 		if (!$class->isInterface && array_filter($class->properties, static fn ($property): bool => $property->isStatic) !== []) {
 			$source[] = '';
@@ -569,11 +688,7 @@ final class Generator
 			$prevParentClass = $this->currentParentClass;
 			$this->currentClassName = $class->name;
 			$this->currentParentClass = $class->parentClass;
-			foreach ($class->constants as $constant) {
-			$type = $this->inferConstantType($constant->value, $namespacePhp);
-			$header[] = $this->indent(1) . 'static inline const ' . $type . ' ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
-		}
-		foreach ($class->methods as $method) {
+			foreach ($class->methods as $method) {
 				if ($this->methodIsAbstract($method, $class)) {
 					continue;
 				}
@@ -629,10 +744,8 @@ final class Generator
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
 		$this->currentReturnType = 'int';
-		foreach ($statements as $statement) {
-			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
-				$source[] = $this->indent(1) . $line;
-			}
+		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
+			$source[] = $this->indent(1) . $line;
 		}
 		$source[] = $this->indent(1) . 'return 0;';
 		$source[] = '}';
@@ -824,9 +937,14 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 	{
 		$out = [];
 		foreach ($params as $param) {
-			$type = $param->type !== null ? $this->typeMapper->mapParamType($param->type, $param->isReference) : '/* ERROR missing-parameter-type */';
+			if ($param->isVariadic) {
+				$elementType = $param->type !== null ? $this->typeMapper->mapDeclaredType($param->type) : '/* ERROR missing-variadic-element-type */';
+				$type = 'const vector_t<' . $elementType . '>&';
+			} else {
+				$type = $param->type !== null ? $this->typeMapper->mapParamType($param->type, $param->isReference) : '/* ERROR missing-parameter-type */';
+			}
 			$rendered = $type . ' ' . $param->name;
-			if ($includeDefaults && $param->default !== null) {
+			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
 				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
 			}
 			$out[] = $rendered;
@@ -851,10 +969,8 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 	private function renderBody(array $statements, ?string $namespacePhp): string
 	{
 		$lines = [];
-		foreach ($statements as $statement) {
-			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
-				$lines[] = $this->indent(1) . $line;
-			}
+		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
+			$lines[] = $this->indent(1) . $line;
 		}
 		return implode("\n", $lines);
 	}
@@ -982,8 +1098,8 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		}
 
 		if ($statement->kind === 'echo') {
-			// Preserve the exporter shape: one AST_ECHO node becomes one runtime print call.
-			return ['::scpp::php::echo(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
+			// Keep the single-statement fallback lazy as well so operand evaluation order stays explicit.
+			return ['::scpp::php::echo_eval(' . $this->renderEchoThunk($statement->payload, $namespacePhp) . ');'];
 		}
 
 		if ($statement->kind === 'unset') {
@@ -1143,12 +1259,42 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 	private function renderNestedStatements(array $statements, ?string $namespacePhp): array
 	{
 		$lines = [];
-		foreach ($statements as $statement) {
-			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
-				$lines[] = $this->indent(1) . $line;
-			}
+		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
+			$lines[] = $this->indent(1) . $line;
 		}
 		return $lines;
+	}
+
+	/** @param list<Statement> $statements */
+	private function renderStatementSequence(array $statements, ?string $namespacePhp): array
+	{
+		$lines = [];
+		$count = count($statements);
+
+		for ($i = 0; $i < $count; ++$i) {
+			$statement = $statements[$i];
+			if ($statement->kind === 'echo') {
+				$thunks = [];
+				while ($i < $count && $statements[$i]->kind === 'echo') {
+					$thunks[] = $this->renderEchoThunk($statements[$i]->payload, $namespacePhp);
+					++$i;
+				}
+				--$i;
+				$lines[] = '::scpp::php::echo_eval(' . implode(', ', $thunks) . ');';
+				continue;
+			}
+
+			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
+				$lines[] = $line;
+			}
+		}
+
+		return $lines;
+	}
+
+	private function renderEchoThunk(mixed $expr, ?string $namespacePhp): string
+	{
+		return '[&]() -> decltype(auto) { return ' . $this->renderExpr($expr, $namespacePhp) . '; }';
 	}
 
 	/** @param list<mixed> $exprs */
@@ -1801,16 +1947,16 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 			$flags = (int) ($expr->flags ?? 0);
 
 			return match ($flags) {
-				AstKind::PLUS => $left . ' + ' . $right,
-				AstKind::MINUS => $left . ' - ' . $right,
-				AstKind::MUL => $left . ' * ' . $right,
-				AstKind::DIV => $left . ' / ' . $right,
-				AstKind::MOD => $left . ' % ' . $right,
-				AstKind::BITWISE_OR => $left . ' | ' . $right,
-				AstKind::BITWISE_AND => $left . ' & ' . $right,
-				AstKind::BITWISE_XOR => $left . ' ^ ' . $right,
-				AstKind::SHIFT_LEFT => $left . ' << ' . $right,
-				AstKind::SHIFT_RIGHT => $left . ' >> ' . $right,
+				AstKind::PLUS => '(' . $left . ' + ' . $right . ')',
+				AstKind::MINUS => '(' . $left . ' - ' . $right . ')',
+				AstKind::MUL => '(' . $left . ' * ' . $right . ')',
+				AstKind::DIV => '(' . $left . ' / ' . $right . ')',
+				AstKind::MOD => '(' . $left . ' % ' . $right . ')',
+				AstKind::BITWISE_OR => '(' . $left . ' | ' . $right . ')',
+				AstKind::BITWISE_AND => '(' . $left . ' & ' . $right . ')',
+				AstKind::BITWISE_XOR => '(' . $left . ' ^ ' . $right . ')',
+				AstKind::SHIFT_LEFT => '(' . $left . ' << ' . $right . ')',
+				AstKind::SHIFT_RIGHT => '(' . $left . ' >> ' . $right . ')',
 				AstKind::BINARY_CONCAT => $this->renderStringConcat($leftNode, $rightNode, $namespacePhp),
 				AstKind::BINARY_BOOL_AND => '(' . $left . ' && ' . $right . ')',
 				AstKind::BINARY_BOOL_OR => '(' . $left . ' || ' . $right . ')',
@@ -1822,7 +1968,7 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 				AstKind::BINARY_IS_IDENTICAL => '::scpp::php::identical(' . $left . ', ' . $right . ')',
 				AstKind::BINARY_IS_NOT_IDENTICAL => '::scpp::php::not_identical(' . $left . ', ' . $right . ')',
 				257 => '(' . $left . ' >= ' . $right . ')',
-				260 => '(cast<bool>(::scpp::php::isset(' . $left . ')) ? ' . $left . ' : ' . $right . ')',
+				AstKind::BINARY_COALESCE => $this->renderCoalesceExpr($leftNode, $rightNode, $namespacePhp),
 				default => '/* unsupported-binary-op-' . $flags . ' */',
 			};
 		}
@@ -1866,10 +2012,13 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		if ($kind === AstKind::STATIC_CALL) {
 			$classNode = $expr->children['class'] ?? null;
 			$method = (string) ($expr->children['method'] ?? '');
+			$args = $expr->children['args']->children ?? [];
 			$class = is_object($classNode) && ($classNode->kind ?? null) === AstKind::VAR
 				? '::scpp::class_t<decltype(' . $this->renderExpr($classNode, $namespacePhp) . ')>'
 				: $this->renderClassName($classNode, $namespacePhp);
-			return $class . '::' . $method . '(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
+			$methodDecl = $this->lookupMethodDeclByStaticCall($classNode, $method, $namespacePhp);
+			$renderedArgs = $methodDecl !== null ? $this->renderCallArgsForParams($methodDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
+			return $class . '::' . $method . '(' . $renderedArgs . ')';
 		}
 		if ($kind === AstKind::AST_ISSET) {
 			// In this exporter, multi-argument isset() is already normalized into boolean-op trees.
@@ -1879,12 +2028,21 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr->children['expr'] ?? null;
 			$name = $this->renderNameExpr($nameExpr, $namespacePhp);
-			return $name . '(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
+			$args = $expr->children['args']->children ?? [];
+			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
+			$renderedArgs = $functionDecl !== null ? $this->renderCallArgsForParams($functionDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
+			return $name . '(' . $renderedArgs . ')';
 		}
 		if ($kind === AstKind::METHOD_CALL) {
-			$base = $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp);
+			$baseExpr = $expr->children['expr'] ?? null;
+			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$method = (string) ($expr->children['method'] ?? 'call');
-			return $base . '->' . $method . '(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
+			$args = $expr->children['args']->children ?? [];
+			$methodDecl = is_object($baseExpr) && ($baseExpr->kind ?? null) === AstKind::VAR && ($baseExpr->children['name'] ?? null) === 'this'
+				? $this->lookupMethodDeclByCurrentClass($method, $namespacePhp)
+				: null;
+			$renderedArgs = $methodDecl !== null ? $this->renderCallArgsForParams($methodDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
+			return $base . '->' . $method . '(' . $renderedArgs . ')';
 		}
 		if ($kind === AstKind::ASSIGN) {
 			return $this->renderAssignmentExpr($expr->children['var'] ?? null, $expr->children['expr'] ?? null, $namespacePhp);
@@ -1894,12 +2052,27 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 			$flags = (int) ($expr->flags ?? 0);
 			return match ($flags) {
 				AstKind::UNARY_BOOL_NOT => '(!' . $inner . ')',
+				AstKind::UNARY_BITWISE_NOT => '(~' . $inner . ')',
+				AstKind::UNARY_PLUS => '(+' . $inner . ')',
+				AstKind::UNARY_MINUS => '(-' . $inner . ')',
 				default => '/* unsupported-unary-op-' . $flags . ' */',
 			};
 		}
+		if ($kind === AstKind::PRE_INC) {
+			$target = $this->renderAssignmentTarget($expr->children['var'] ?? null, $namespacePhp);
+			return '(++' . $target . ')';
+		}
+		if ($kind === AstKind::PRE_DEC) {
+			$target = $this->renderAssignmentTarget($expr->children['var'] ?? null, $namespacePhp);
+			return '(--' . $target . ')';
+		}
 		if ($kind === AstKind::POST_INC) {
 			$target = $this->renderAssignmentTarget($expr->children['var'] ?? null, $namespacePhp);
-			return $target . ' = ' . $target . ' + static_cast<int_t>(1)';
+			return '(' . $target . '++)';
+		}
+		if ($kind === AstKind::POST_DEC) {
+			$target = $this->renderAssignmentTarget($expr->children['var'] ?? null, $namespacePhp);
+			return '(' . $target . '--)';
 		}
 		if ($kind === AstKind::CONDITIONAL) {
 			$condNode = $expr->children['cond'] ?? null;
@@ -1961,6 +2134,9 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 	{
 		$parts = [];
 		foreach (($expr->children ?? []) as $child) {
+			// Interpolation fragments must reuse the ordinary expression renderer for any
+			// non-literal AST node found inside AST_ENCAPS_LIST. The interpolation layer only
+			// adds string normalization around the rendered expression subtree.
 			$parts[] = $this->renderStringOperand($child, $namespacePhp);
 		}
 
@@ -2298,6 +2474,19 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		};
 	}
 
+	private function renderVar(mixed $expr): string
+	{
+		// Reference-capable variable rendering must stay trivial here: a simple PHP local
+		// should lower to the raw C++ identifier so native reference binding and reference
+		// returns can attach to the storage location instead of to a copied temporary.
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::VAR)) {
+			return '/* unsupported-var */';
+		}
+
+		$name = (string) ($expr->children['name'] ?? 'var');
+		return $name === 'this' ? 'this' : $name;
+	}
+
 	private function inferExprType(mixed $expr): string
 	{
 		if (is_int($expr)) {
@@ -2346,6 +2535,20 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		}
 
 		return 'auto';
+	}
+
+	private function renderCoalesceExpr(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
+	{
+		$left = $this->renderExpr($leftNode, $namespacePhp);
+		$right = $this->renderExpr($rightNode, $namespacePhp);
+		$leftType = $this->inferExprType($leftNode);
+
+		if (preg_match('/^nullable<(.+)>$/', $leftType, $matches) === 1) {
+			$innerType = $matches[1];
+			return '(cast<bool>(::scpp::php::isset(' . $left . ')) ? cast<' . $innerType . '>(' . $left . ') : ' . $right . ')';
+		}
+
+		return '(cast<bool>(::scpp::php::isset(' . $left . ')) ? ' . $left . ' : ' . $right . ')';
 	}
 
 	private function inferConstantType(mixed $expr, ?string $namespacePhp): string

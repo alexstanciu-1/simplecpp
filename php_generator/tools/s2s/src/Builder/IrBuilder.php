@@ -356,6 +356,7 @@ final class IrBuilder
 				nativeType: $this->readTypeName($children['type'] ?? null),
 				docType: $this->resolveDocTypeComment($paramLine, $paramName, $children['docComment'] ?? null),
 				isReference: (($node->flags ?? 0) & AstKind::PARAM_REF) !== 0,
+				isVariadic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 				default: $children['default'] ?? null,
 				line: $paramLine,
 			);
@@ -696,7 +697,7 @@ final class IrBuilder
 			return new Statement('continue', $node->children['depth'] ?? null, $line);
 		}
 
-		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::POST_INC) {
+		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::PRE_INC || $kind === AstKind::PRE_DEC || $kind === AstKind::POST_INC || $kind === AstKind::POST_DEC) {
 			return new Statement('expr', $node, $line);
 		}
 

@@ -65,7 +65,10 @@ final class AstKind
 	public const DECLARE = 538;
 	public const WHILE = 533;
 	public const DO_WHILE = 534;
+	public const PRE_INC = 270;
+	public const PRE_DEC = 271;
 	public const POST_INC = 272;
+	public const POST_DEC = 273;
 	public const UNARY_OP = 269;
 	public const FOR = 1024;
 	public const FOREACH = 1025;
@@ -92,7 +95,11 @@ final class AstKind
 	public const BINARY_IS_GREATER = 256;
 	public const BINARY_BOOL_OR = 258;
 	public const BINARY_BOOL_AND = 259;
+	public const BINARY_COALESCE = 260;
+	public const UNARY_PLUS = 261;
+	public const UNARY_MINUS = 262;
 	public const UNARY_BOOL_NOT = 14;
+	public const UNARY_BITWISE_NOT = 13;
 	public const RETURN_REF = 4096;
 	public const PARAM_REF = 8;
 	public const TYPE_VOID = 14;

@@ -26,6 +26,7 @@ final class ParamDecl
 		public readonly ?string $nativeType,
 		public readonly ?string $docType,
 		public readonly bool $isReference,
+		public readonly bool $isVariadic,
 		public readonly mixed $default,
 		public readonly int $line = 0,
 	) {

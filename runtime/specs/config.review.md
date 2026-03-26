@@ -246,10 +246,10 @@ Declares the stable helper names that generators/frontends are allowed to target
 
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `stable_helpers = create, shared, unique, weak, value, ref, cast, to_string, identical, not_identical, concat_assign` | These helper entry points are part of the public contract. | `$x = new A(); echo $x; $a === $b;` | `::scpp::create<A>(); ::scpp::to_string(x); ::scpp::php::identical(a, b);` | Anything outside this list should not become a generator dependency without contract change. |
+| `stable_helpers = create, shared, unique, weak, value, ref, cast, to_string, identical, not_identical, concat_assign, echo_eval` | These helper entry points are part of the public contract. | `$x = new A(); echo $x; $a === $b;` | `::scpp::create<A>(); ::scpp::to_string(x); ::scpp::php::identical(a, b);` | Anything outside this list should not become a generator dependency without contract change. |
 | `namespaces.core = scpp` | Core helpers live in `::scpp`. | `$x = 1;` | `::scpp::int_t x = ::scpp::int_t(1);` | This aligns type wrappers and helper entry points. |
 | `namespaces.php = scpp::php` | PHP-specific runtime helpers, when needed, live under a separate namespace. | `// frontend/runtime glue` | `::scpp::php::...;` | Keeps core runtime and PHP-facing glue separable. |
-| `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `$x = (bool)$n;` | `::scpp::cast<::scpp::bool_t>(n);` | Important because contract stability matters more than today’s internal implementation structure. |
+| `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `echo $a, $b;` | `::scpp::php::echo_eval(...);` | Important because contract stability matters more than today’s internal implementation structure. |
 | `notes.separation_rule` | The contract lists shared knowledge helpers, not generator internals. | `// policy note` | `// no direct dependency on private helper names` | This is a governance rule: keep frontend/runtime coupling narrow and intentional. |
 | `notes.php_identity.rule = exact_type_required_except_null_nullable` | Strict identity uses exact type matching, with only null-vs-empty-nullable cross-type equality allowed. | `$a === $b;` | `::scpp::php::identical(a, b);` | Same-type values compare by value or identity depending on wrapper kind; differing exact types are non-identical. |
 

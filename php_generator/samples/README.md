@@ -35,6 +35,7 @@ Current confirmed findings:
 - `unset($a, $b, $c);` is exported as multiple sibling `AST_UNSET` nodes, not one variadic node.
 - `isset($a, $b, $c)` is exported as a boolean-expression tree combining single-operand `AST_ISSET` nodes.
 - Parentheses in the tested `echo` / `isset` cases do not introduce an important wrapper node in this exporter.
+- Arithmetic grouping must therefore be preserved from the recursive AST structure itself during C++ emission.
 
 Interpolation AST finding:
 - interpolated strings are represented as `AST_ENCAPS_LIST`, not as binary concat chains

@@ -23,19 +23,38 @@ if ($_GET['resync_samples_ast'] ?? false) {
 		
 		echo "Starting: " . $f, "\n";
 	
-		$source_code = file_get_contents($f);
-		$ast_vers_used = 120; # max(\ast\get_supported_versions());
-		$ast = \ast\parse_code($source_code, $ast_vers_used);
-		$json = 
-				[
-					'php_version' => PHP_VERSION,
-					'php_ast_extension_version' => phpversion('ast'),
-					'ast_version_used' => $ast_vers_used,
-					'supported_versions' => \ast\get_supported_versions(),
-					'tokens' => token_get_all($source_code),
-					'ast' => $ast,
-				];
-		file_put_contents($f.".json", json_encode($json));
+		try
+		{
+			$source_code = file_get_contents($f);
+			if ($source_code === false) {
+				throw new \Exception('Unable to read file: ' . $f);
+			}
+			$ast_vers_used = 120; # max(\ast\get_supported_versions());
+			$ast = \ast\parse_code($source_code, $ast_vers_used);
+			if (!$ast) {
+				throw new \Exception('Unable to parse ast');
+			}
+			$tokens = token_get_all($source_code);
+			if (!$tokens) {
+				throw new \Exception('Unable to get tokens');
+			}
+			$json = 
+					[
+						'php_version' => PHP_VERSION,
+						'php_ast_extension_version' => phpversion('ast'),
+						'ast_version_used' => $ast_vers_used,
+						'supported_versions' => \ast\get_supported_versions(),
+						'tokens' => $tokens,
+						'ast' => $ast,
+					];
+			$rc = file_put_contents($f.".json", json_encode($json));
+			if ($rc) {
+				echo "\t\tOK.\n";
+			}
+		}
+		catch (\Exception $ex) {
+			echo "\t\t", $ex->getMessage(), "\n";
+		}
 	}
 	
 	var_dump($files);
@@ -81,9 +100,13 @@ else if ($_GET['zip-it'] ?? false)
 	}
 
 	$includeDirs_def = ["../php_generator", "../public_html", "../runtime", ];
+	if (($_GET['tests'] ?? null) ?: false) {
+		$includeDirs_def[] = '../tests';
+	}
 	$excludeDirs_def = ["../php_generator/build", "../php_generator/samples_semantic", "../php_generator/tools/build", 
 					"../php_generator/samples/stage_01", "../php_generator/samples/stage_02", "../php_generator/samples/stage_03", 
-					"../runtime/build_comments", ];
+					"../runtime/build_comments", 
+					"../tests/.runtime"];
 	$includeDirs = [];
 	foreach ($includeDirs_def as $d) {
 		$d = realpath(__DIR__."/".$d);
