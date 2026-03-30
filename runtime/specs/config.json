@@ -15,6 +15,70 @@
     },
     "default_assignment_policy": "forbidden"
   },
+  "runtime_types": {
+    "table": {
+      "name": "table_t",
+      "php_mapping": "array",
+      "keys": [
+        "int",
+        "string"
+      ],
+      "ordered": true,
+      "packed_mode": true,
+      "overwrite_on_set": true,
+      "append_rule": "max_int_key_plus_one",
+      "lookup": {
+        "type": "maybe_value_t",
+        "representation": "nullable<value_t>",
+        "nullopt": true,
+        "found_null_is_distinct": true,
+        "helpers": [
+          "is_nullopt",
+          "was_found"
+        ]
+      },
+      "access": {
+        "at": "checked_no_insert",
+        "at_failure": "throw_style",
+        "operator[]": "inserting_nonconst_only"
+      },
+      "public_header": "scpp/table_t.hpp",
+      "implementation_header": "scpp/support/table_t.hpp",
+      "implementation_cpp": "scpp/support/table_t.cpp",
+      "generation_rules": {
+        "read_only_lowering": "find",
+        "checked_read_lowering": "at",
+        "forbid_nonconst_bracket_for_read": true
+      },
+            "remove": {
+                "returns": {
+                    "true": "existed_and_removed",
+                    "false": "not_present"
+                },
+                "preserve_remaining_keys": true,
+                "packed_mode": {
+                    "allow_direct_compaction_that_shifts_keys": false,
+                    "required_strategy_if_needed": [
+                        "promote_to_associative",
+                        "tombstone_preserving"
+                    ]
+                }
+            },
+            "regression_cases": [
+                {
+                    "name": "packed_remove_preserves_numeric_keys",
+                    "steps": [
+                        "append 100 -> key 0",
+                        "append 200 -> key 1",
+                        "remove key 0",
+                        "has(0) == false",
+                        "has(1) == true",
+                        "append 300 -> key 2"
+                    ]
+                }
+            ]
+    }
+  },
   "types": {
     "null_t": {
       "kind": "scalar_tag",
@@ -316,6 +380,48 @@
         "value",
         "value_or",
         "native_value"
+      ]
+    },
+    "table_t": {
+      "kind": "runtime_container",
+      "header": "scpp/table_t.hpp",
+      "template": false,
+      "semantic_role": "php_array_runtime",
+      "stable_core_api": [
+        "empty",
+        "size",
+        "is_packed",
+        "clear",
+        "append",
+        "set",
+        "has",
+        "find",
+        "at",
+        "operator[]",
+        "remove"
+      ]
+    },
+    "value_t": {
+      "kind": "runtime_value",
+      "header": "scpp/table_t.hpp",
+      "template": false,
+      "semantic_role": "table_payload",
+      "stable_core_api": [
+        "default_ctor",
+        "null_ctor",
+        "clone",
+        "kind",
+        "is_null"
+      ]
+    },
+    "maybe_value_t": {
+      "kind": "runtime_alias",
+      "header": "scpp/table_t.hpp",
+      "template": false,
+      "semantic_role": "table_lookup_result",
+      "stable_core_api": [
+        "is_nullopt",
+        "was_found"
       ]
     }
   },
@@ -2118,7 +2224,35 @@
           "unique_p<T>": "managed_object_identity",
           "ref_p<T>": "referent_identity"
         }
+      },
+      "callables": {
+        "representation": [
+          "native_lambda",
+          "std::function<R(Args...)>"
+        ],
+        "invocation_form": "direct_call_operator",
+        "supported_php_subset": [
+          "anonymous_functions",
+          "use_by_value"
+        ],
+        "unsupported_php_subset": [
+          "use_by_reference"
+        ]
       }
     }
+  },
+  "call_semantics": {
+    "invocable_types": [
+      {
+        "type": "native_callable",
+        "call_form": "operator()",
+        "null_call_policy": "forbidden",
+        "notes": [
+          "generator emits native C++ lambdas for anonymous functions",
+          "generator may emit std::function<R(Args...)> when a concrete callable signature is required",
+          "use(&$x) is not covered by this contract version"
+        ]
+      }
+    ]
   }
 }

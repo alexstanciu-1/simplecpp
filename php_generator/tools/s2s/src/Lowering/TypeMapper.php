@@ -10,6 +10,9 @@ namespace Scpp\S2S\Lowering;
  */
 final class TypeMapper
 {
+	/** @var array<string, bool> */
+	private array $enumNames = [];
+
 	/**
 	 * Maps a declared PHP property or constant-adjacent type into the canonical Simple C++ type.
 	 *
@@ -17,8 +20,19 @@ final class TypeMapper
 	 * - preserves the subset and lowering rules documented for the prototype
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 	 */
+	/** @param array<string, bool> $enumNames */
+	public function setEnumNames(array $enumNames): void
+	{
+		$this->enumNames = $enumNames;
+	}
+
 	public function mapDeclaredType(string $phpType): string
 	{
+		$normalized = trim($phpType);
+		if ($this->isFunctionType($normalized)) {
+			return $this->mapFunctionType($normalized);
+		}
+
 		$phpType = $this->guardTypeDefinitionSyntax($phpType);
 		if ($this->isInlineValueType($phpType)) {
 			return 'value_p<' . $this->mapUserTypeName($this->unwrapInlineValueType($phpType)) . '>';
@@ -30,7 +44,7 @@ final class TypeMapper
 				return $this->mapValueType($inner);
 			}
 			if ($this->isObjectType($inner)) {
-				return 'shared_p<' . $this->mapUserTypeName($inner) . '>';
+				return $this->isEnumType($inner) ? $this->mapUserTypeName($inner) : 'shared_p<' . $this->mapUserTypeName($inner) . '>';
 			}
 			return 'nullable<' . $this->mapValueType($inner) . '>';
 		}
@@ -40,7 +54,7 @@ final class TypeMapper
 		}
 
 		if ($this->isObjectType($phpType)) {
-			return 'shared_p<' . $this->mapUserTypeName($phpType) . '>';
+			return $this->isEnumType($phpType) ? $this->mapUserTypeName($phpType) : 'shared_p<' . $this->mapUserTypeName($phpType) . '>';
 		}
 
 		return $this->mapValueType($phpType);
@@ -118,6 +132,11 @@ final class TypeMapper
 
 	public function mapTypedLocalType(string $phpType): string
 	{
+		$normalized = trim($phpType);
+		if ($this->isFunctionType($normalized)) {
+			return $this->mapFunctionType($normalized);
+		}
+
 		$phpType = $this->guardTypeDefinitionSyntax($phpType);
 		if ($this->isRefLocalType($phpType)) {
 			return $this->appendLvalueReference($this->mapDeclaredType($this->unwrapRefLocalType($phpType)));
@@ -279,6 +298,89 @@ final class TypeMapper
 		return $mappedType . '&';
 	}
 
+
+	private function isFunctionType(string $phpType): bool
+	{
+		return preg_match('/^function\s*<.*>$/', trim($phpType)) === 1;
+	}
+
+	private function mapFunctionType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^function\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
+			throw new \InvalidArgumentException('Invalid function type syntax: ' . $phpType);
+		}
+
+		$inner = trim($matches[1]);
+		$open = strpos($inner, '(');
+		$close = strrpos($inner, ')');
+		if ($open === false || $close === false || $close < $open) {
+			throw new \InvalidArgumentException('Invalid function type syntax: ' . $phpType);
+		}
+
+		$returnType = trim(substr($inner, 0, $open));
+		$paramsInner = trim(substr($inner, $open + 1, $close - $open - 1));
+		if ($returnType === '') {
+			throw new \InvalidArgumentException('Function type requires an explicit return type: ' . $phpType);
+		}
+
+		$mappedReturn = $this->mapReturnType($returnType, false);
+		$mappedParams = [];
+		foreach ($this->splitTopLevelCommaList($paramsInner) as $param) {
+			$param = trim($param);
+			if ($param === '') {
+				continue;
+			}
+			$byRef = false;
+			if (str_starts_with($param, 'ref ')) {
+				$byRef = true;
+				$param = trim(substr($param, 4));
+			} elseif (str_ends_with($param, '&')) {
+				$byRef = true;
+				$param = rtrim(substr($param, 0, -1));
+			}
+			$mappedParams[] = $this->mapParamType($param, $byRef);
+		}
+
+		return 'std::function<' . $mappedReturn . '(' . implode(', ', $mappedParams) . ')>';
+	}
+
+	/** @return list<string> */
+	private function splitTopLevelCommaList(string $value): array
+	{
+		$value = trim($value);
+		if ($value === '') {
+			return [];
+		}
+
+		$out = [];
+		$current = '';
+		$angleDepth = 0;
+		$parenDepth = 0;
+		$length = strlen($value);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $value[$i];
+			if ($ch === '<') {
+				++$angleDepth;
+			} elseif ($ch === '>') {
+				--$angleDepth;
+			} elseif ($ch === '(') {
+				++$parenDepth;
+			} elseif ($ch === ')') {
+				--$parenDepth;
+			} elseif ($ch === ',' && $angleDepth == 0 && $parenDepth == 0) {
+				$out[] = trim($current);
+				$current = '';
+				continue;
+			}
+			$current .= $ch;
+		}
+		if (trim($current) !== '') {
+			$out[] = trim($current);
+		}
+		return $out;
+	}
+
 	private function guardTypeDefinitionSyntax(string $phpType): string
 	{
 		$normalized = trim($phpType);
@@ -385,6 +487,12 @@ final class TypeMapper
 
 	 */
 
+
+	private function isEnumType(string $phpType): bool
+	{
+		$trimmed = ltrim(trim($phpType), '\\');
+		return isset($this->enumNames[$trimmed]);
+	}
 	private function isObjectType(string $phpType): bool
 	{
 		if ($this->isVectorType($phpType)) {

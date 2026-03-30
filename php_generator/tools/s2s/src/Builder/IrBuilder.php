@@ -231,12 +231,20 @@ final class IrBuilder
 		$properties = [];
 		$constants = [];
 		$methods = [];
+		$enumCases = [];
 		foreach (($children['stmts']->children ?? []) as $member) {
 			if (!is_object($member)) {
 				continue;
 			}
 			if (($member->kind ?? null) === AstKind::METHOD) {
 				$methods[] = $this->buildMethod($member);
+				continue;
+			}
+			if (($member->kind ?? null) === AstKind::ENUM_CASE) {
+				$enumCases[] = new ConstantDecl(
+					name: (string) ($member->children['name'] ?? ''),
+					value: $member->children['expr'] ?? null,
+				);
 				continue;
 			}
 			if (($member->kind ?? null) === AstKind::CLASS_CONST_DECL) {
@@ -282,6 +290,9 @@ final class IrBuilder
 			interfaces: $interfaces,
 			isInterface: (((int) ($node->flags ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
 			isAbstract: (((int) ($node->flags ?? 0)) & AstKind::CLASS_ABSTRACT) !== 0,
+			isEnum: $enumCases !== [],
+			enumBackingType: $this->readTypeName($children['type'] ?? null),
+			enumCases: $enumCases,
 		);
 	}
 
@@ -695,6 +706,17 @@ final class IrBuilder
 
 		if ($kind === AstKind::CONTINUE) {
 			return new Statement('continue', $node->children['depth'] ?? null, $line);
+		}
+
+		if ($kind === AstKind::VAR) {
+			$name = (string) (($node->children ?? [])['name'] ?? '');
+			$typed = $name !== '' ? $this->lookupTypeComment($line, $name) : null;
+			if ($typed !== null) {
+				return new Statement('declare_local', [
+					'name' => $name,
+					'type' => $typed,
+				], $line);
+			}
 		}
 
 		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::PRE_INC || $kind === AstKind::PRE_DEC || $kind === AstKind::POST_INC || $kind === AstKind::POST_DEC) {

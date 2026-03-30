@@ -17,6 +17,7 @@ final class ClassDecl
 	 * @param list<ConstantDecl> $constants
 	 * @param list<MethodDecl> $methods
 	 * @param list<string> $interfaces
+	 * @param list<ConstantDecl> $enumCases
 	 */
 	public function __construct(
 		public readonly string $name,
@@ -27,6 +28,9 @@ final class ClassDecl
 		public readonly array $interfaces = [],
 		public readonly bool $isInterface = false,
 		public readonly bool $isAbstract = false,
+		public readonly bool $isEnum = false,
+		public readonly ?string $enumBackingType = null,
+		public readonly array $enumCases = [],
 	) {
 	}
 }

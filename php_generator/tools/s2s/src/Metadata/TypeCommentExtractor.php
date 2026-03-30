@@ -218,7 +218,7 @@ final class TypeCommentExtractor
 		$len = strlen($normalized);
 		for ($i = 0; $i < $len; $i++) {
 			$ch = $normalized[$i];
-			if (($ch >= 'A' && $ch <= 'Z') || ($ch >= 'a' && $ch <= 'z') || ($ch >= '0' && $ch <= '9') || $ch === '_' || $ch === '\\' || $ch === ',' || $ch === ' ') {
+			if (($ch >= 'A' && $ch <= 'Z') || ($ch >= 'a' && $ch <= 'z') || ($ch >= '0' && $ch <= '9') || $ch === '_' || $ch === '\\' || $ch === ',' || $ch === ' ' || $ch === '(' || $ch === ')' || $ch === '&') {
 				continue;
 			}
 			if ($ch === '<') {

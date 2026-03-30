@@ -1,4 +1,7 @@
 #include "scpp/runtime.hpp"
 
-// The generated runtime is currently header-only.
-// This translation unit exists to support build systems that expect a source file.
+// The generated runtime is not fully header-only anymore.
+// Keep this translation unit as the single place that pulls in
+// runtime implementation files required by generated snippets.
+
+#include "../include/scpp/support/table_t.cpp"

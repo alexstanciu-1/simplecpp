@@ -14,7 +14,10 @@ if (!Dev_Ips[$_SERVER['REMOTE_ADDR']]) {
 	exit;
 }
 
-if ($_GET['resync_samples_ast'] ?? false) {
+if ($_GET['light_map'] ?? false) {
+	require_once __DIR__ . '/../light_map.php';
+}
+else if ($_GET['resync_samples_ast'] ?? false) {
 	$files = glob(realpath("../simple_cpp/php_generator/samples/")."*/*/*.php");
 	echo "<pre>\n";
 	var_dump(realpath("../simple_cpp/php_generator/samples/")."*/*/*.php");
@@ -99,7 +102,7 @@ else if ($_GET['zip-it'] ?? false)
 		unlink($zipPath);
 	}
 
-	$includeDirs_def = ["../php_generator", "../public_html", "../runtime", ];
+	$includeDirs_def = ["../php_generator", "../public_html", "../runtime", "../mem_container",];
 	if (($_GET['tests'] ?? null) ?: false) {
 		$includeDirs_def[] = '../tests';
 	}

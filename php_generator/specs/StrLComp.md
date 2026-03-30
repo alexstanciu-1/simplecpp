@@ -361,7 +361,24 @@ Executable code in a parent namespace and executable code in a nested namespace 
 A nested namespace may appear inside a parent namespace execution region only when the nested namespace contributes declarations only.
 
 ### 14.9 Multiple Namespace Blocks
-Multiple namespace blocks in one file are deferred until file-structure and translation-unit rules are specified.
+Multiple braced namespace blocks in one file are supported when they lower into ordinary declarations and, at most, one selected synthetic execution entry point.
+
+Supported forms include:
+- `namespace A { ... } namespace B { ... }`
+- `namespace A\B { ... } namespace { ... }`
+- multiple braced namespace blocks containing declarations only
+- multiple braced namespace blocks followed by a braced global namespace block `namespace { ... }`
+
+Lowering rules:
+- each PHP namespace block lowers independently under the `scpp::...` root
+- a braced global namespace block `namespace { ... }` lowers to `namespace scpp { ... }`
+- rooted calls from the global block must lower without an empty namespace segment, for example `::scpp::__scpp_main()`
+- declarations remain in their own generated namespace blocks and are not merged by name just because they appear in the same source file
+
+Restriction:
+- executable-statement consolidation still applies only within one namespace body at a time
+- cross-namespace execution merging remains forbidden
+- this section currently covers braced namespace blocks; semicolon-form multi-block behavior remains governed by the existing execution restrictions and file-structure rules
 
 ---
 
@@ -547,7 +564,21 @@ auto d = ::scpp::A::B::LIMIT;        // user-defined constant in another generat
 
 ## 7. Null and nullable rules
 
-### 7.1 Untyped null assignment
+### 7.1 Typed local predeclaration
+
+Safe v1 supports explicit local declarations without initialization when the local has an explicit type annotation.
+
+Example:
+
+```php
+$f /** function<int(int)> */;
+```
+
+This form exists so an outer block can predeclare a local that will later be assigned inside child blocks while still respecting block-local visibility. Bare `callable` is not sufficient; use a concrete `function<return_type(arg_types)>` annotation.
+
+The same concrete `function<return_type(arg_types)>` annotation form is also accepted on closure parameters when PHP syntax cannot express a native callable signature directly, for example `function (/** function<int(int)> */ $fn, int $x): int { ... }`. For closure factories that return another closure, Safe v1 also accepts the post-signature doc-comment form `$make = function () /** function<int(int)> */ { return function (int $x): int { ... }; };`, which php-ast attaches to the returned inner closure; the generator treats that doc-comment as the outer closure's explicit return type in the simple single-return factory shape. Arrow functions (`fn (...) => expr`) are also supported in Safe v1. php-ast exposes them as `AST_ARROW_FUNC` without an explicit `use (...)` list, so the generator infers implicit by-value captures from referenced outer locals and lowers them to native C++ lambdas with value captures.
+
+### 7.2 Untyped null assignment
 Direct untyped `null` assignment is not allowed:
 ```php
 $a = null;
@@ -664,6 +695,7 @@ These PHP semantics must go through the `php::` layer:
 - `empty($b)` -> `php::empty(b)`
 - strict equality `===` -> `php::identical(...)`
 - strict inequality `!==` -> `php::not_identical(...)`
+- both helpers return `bool_t`, not native `bool`, because they are PHP-semantic runtime operations
 - predefined/runtime constants discovered from `get_defined_constants()` -> `::scpp::php::...`
 - user-defined non-class constants -> generated user namespace path (no `::scpp::php` remapping)
 

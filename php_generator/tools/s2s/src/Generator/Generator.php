@@ -40,7 +40,11 @@ final class Generator
 	private array $functionDecls = [];
 	/** @var array<string, MethodDecl> */
 	private array $methodDecls = [];
+	/** @var array<string, ClassDecl> */
+	private array $classDecls = [];
 	private ?string $currentReturnType = null;
+	/** @var null|array{returnType:?string,paramTypes:list<string>} */
+	private ?array $currentExpectedClosureSignature = null;
 	private ?string $currentClassName = null;
 	private ?string $currentParentClass = null;
 	private int $tempCounter = 0;
@@ -90,6 +94,8 @@ final class Generator
 		$this->nameRegistry = NameRegistry::fromPhpFile($file);
 		$this->functionDecls = $this->collectFunctionDecls($file);
 		$this->methodDecls = $this->collectMethodDecls($file);
+		$this->classDecls = $this->collectClassDecls($file);
+		$this->typeMapper->setEnumNames($this->collectEnumTypeNames());
 		$this->validatePhpFile($file);
 
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
@@ -105,10 +111,11 @@ final class Generator
 		$namespaceMainTargets = [];
 		foreach ($file->namespaces as $namespace) {
 			$mainName = $namespace->statements !== [] ? '__scpp_main' : null;
+			$namespaceCpp = $this->buildNamespaceCppName($namespace->name);
 			$this->emitNamespaceBlock(
 				$header,
 				$source,
-				'scpp::' . str_replace('\\', '::', $namespace->name),
+				$namespaceCpp,
 				$namespace->name,
 				$namespace->uses,
 				$namespace->constants,
@@ -118,7 +125,7 @@ final class Generator
 				$mainName,
 			);
 			if ($mainName !== null) {
-				$namespaceMainTargets[] = '::scpp::' . str_replace('\\', '::', $namespace->name) . '::' . $mainName . '()';
+				$namespaceMainTargets[] = $this->qualifyNamespaceSymbol($namespace->name, $mainName) . '()';
 			}
 		}
 
@@ -143,6 +150,24 @@ final class Generator
 
 
 	/** @return array<string, FunctionDecl> */
+	private function buildNamespaceCppName(?string $namespacePhp): string
+	{
+		if ($namespacePhp === null || $namespacePhp === '') {
+			return 'scpp';
+		}
+
+		return 'scpp::' . str_replace('\\', '::', $namespacePhp);
+	}
+
+	private function qualifyNamespaceSymbol(?string $namespacePhp, string $symbol): string
+	{
+		if ($namespacePhp === null || $namespacePhp === '') {
+			return '::scpp::' . $symbol;
+		}
+
+		return '::scpp::' . str_replace('\\', '::', $namespacePhp) . '::' . $symbol;
+	}
+
 	private function collectFunctionDecls(PhpFile $file): array
 	{
 		$out = [];
@@ -154,6 +179,25 @@ final class Generator
 		foreach ($file->namespaces as $namespace) {
 			foreach ($namespace->functions as $function) {
 				$out[$namespace->name . '\\' . $function->name] = $function;
+			}
+		}
+
+		return $out;
+	}
+
+	/** @return array<string, ClassDecl> */
+	private function collectClassDecls(PhpFile $file): array
+	{
+		$out = [];
+
+		foreach ($file->classes as $class) {
+			$out[$class->name] = $class;
+		}
+
+		foreach ($file->namespaces as $namespace) {
+			foreach ($namespace->classes as $class) {
+				$out[$namespace->name . '\\' . $class->name] = $class;
+				$out[$class->name] ??= $class;
 			}
 		}
 
@@ -178,6 +222,21 @@ final class Generator
 					$out[$qualifiedClass . '::' . $method->name] = $method;
 				}
 			}
+		}
+
+		return $out;
+	}
+
+	/** @return array<string, bool> */
+	private function collectEnumTypeNames(): array
+	{
+		$out = [];
+		foreach ($this->classDecls as $name => $class) {
+			if (!$class->isEnum) {
+				continue;
+			}
+			$out[ltrim($name, '\\')] = true;
+			$out[$class->name] = true;
 		}
 
 		return $out;
@@ -621,8 +680,132 @@ final class Generator
 
 	 */
 
+
+	private function enumStorageType(ClassDecl $class): string
+	{
+		$backingType = $class->enumBackingType !== null ? strtolower($class->enumBackingType) : null;
+		if ($backingType !== null && $backingType !== 'int') {
+			throw new \RuntimeException('Only unit enums and int-backed enums are supported in the current enum lowering');
+		}
+
+		$minValue = 0;
+		$maxValue = max(0, count($class->enumCases) - 1);
+		if ($backingType === 'int') {
+			$minValue = 0;
+			$maxValue = 0;
+			foreach ($class->enumCases as $case) {
+				$value = $this->enumCaseIntValue($case);
+				$minValue = min($minValue, $value);
+				$maxValue = max($maxValue, $value);
+			}
+		}
+
+		if ($minValue >= 0) {
+			if ($maxValue <= 0xFF) {
+				return 'std::uint8_t';
+			}
+			if ($maxValue <= 0xFFFF) {
+				return 'std::uint16_t';
+			}
+			if ($maxValue <= 0xFFFFFFFF) {
+				return 'std::uint32_t';
+			}
+			return 'std::uint64_t';
+		}
+
+		if ($minValue >= -0x80 && $maxValue <= 0x7F) {
+			return 'std::int8_t';
+		}
+		if ($minValue >= -0x8000 && $maxValue <= 0x7FFF) {
+			return 'std::int16_t';
+		}
+		if ($minValue >= -0x80000000 && $maxValue <= 0x7FFFFFFF) {
+			return 'std::int32_t';
+		}
+		return 'std::int64_t';
+	}
+
+	private function enumCaseIntValue(ConstantDecl $case): int
+	{
+		$value = $case->value;
+		if (is_int($value)) {
+			return $value;
+		}
+		if (is_object($value) && ($value->kind ?? null) === AstKind::UNARY_OP && (($value->flags ?? null) === AstKind::UNARY_MINUS)) {
+			$inner = $value->children['expr'] ?? null;
+			if (is_int($inner)) {
+				return -$inner;
+			}
+		}
+		throw new \RuntimeException('Only literal int-backed enum case values are supported in the current enum lowering');
+	}
+
+	private function renderEnumCaseValue(ConstantDecl $case): string
+	{
+		return (string) $this->enumCaseIntValue($case);
+	}
+
+	private function cppIdentifier(string $name): string
+	{
+		static $reserved = [
+			'alignas' => true, 'alignof' => true, 'and' => true, 'and_eq' => true, 'asm' => true, 'auto' => true,
+			'bitand' => true, 'bitor' => true, 'bool' => true, 'break' => true, 'case' => true, 'catch' => true,
+			'char' => true, 'char8_t' => true, 'char16_t' => true, 'char32_t' => true, 'class' => true,
+			'compl' => true, 'concept' => true, 'const' => true, 'consteval' => true, 'constexpr' => true,
+			'constinit' => true, 'const_cast' => true, 'continue' => true, 'co_await' => true, 'co_return' => true,
+			'co_yield' => true, 'decltype' => true, 'default' => true, 'delete' => true, 'do' => true,
+			'double' => true, 'dynamic_cast' => true, 'else' => true, 'enum' => true, 'explicit' => true,
+			'export' => true, 'extern' => true, 'false' => true, 'float' => true, 'for' => true, 'friend' => true,
+			'goto' => true, 'if' => true, 'inline' => true, 'int' => true, 'long' => true, 'mutable' => true,
+			'namespace' => true, 'new' => true, 'noexcept' => true, 'not' => true, 'not_eq' => true,
+			'nullptr' => true, 'operator' => true, 'or' => true, 'or_eq' => true, 'private' => true,
+			'protected' => true, 'public' => true, 'register' => true, 'reinterpret_cast' => true,
+			'requires' => true, 'return' => true, 'short' => true, 'signed' => true, 'sizeof' => true,
+			'static' => true, 'static_assert' => true, 'static_cast' => true, 'struct' => true, 'switch' => true,
+			'template' => true, 'this' => true, 'thread_local' => true, 'throw' => true, 'true' => true,
+			'try' => true, 'typedef' => true, 'typeid' => true, 'typename' => true, 'union' => true,
+			'unsigned' => true, 'using' => true, 'virtual' => true, 'void' => true, 'volatile' => true,
+			'wchar_t' => true, 'while' => true, 'xor' => true, 'xor_eq' => true,
+		];
+
+		return isset($reserved[$name]) ? $name . '_' : $name;
+	}
+
+	private function emitEnumClass(array &$header, ClassDecl $class): void
+	{
+		if ($class->parentClass !== null || $class->interfaces !== [] || $class->properties !== [] || $class->constants !== [] || $class->methods !== []) {
+			throw new \RuntimeException('Only simple enums with cases only are supported in the current enum lowering');
+		}
+		if ($class->enumBackingType === null) {
+			foreach ($class->enumCases as $case) {
+				if ($case->value !== null) {
+					throw new \RuntimeException('Unit enums must not declare backed values in the current enum lowering');
+				}
+			}
+		}
+		if ($class->enumCases === []) {
+			throw new \RuntimeException('Enums must declare at least one case in the current enum lowering');
+		}
+		$storage = $this->enumStorageType($class);
+		$header[] = 'enum class ' . $class->name . ' : ' . $storage . ' {';
+		foreach ($class->enumCases as $index => $case) {
+			$suffix = $index + 1 < count($class->enumCases) ? ',' : '';
+			$line = $this->indent(1) . $this->cppIdentifier($case->name);
+			if ($class->enumBackingType !== null) {
+				$line .= ' = ' . $this->renderEnumCaseValue($case);
+			}
+			$header[] = $line . $suffix;
+		}
+		$header[] = '};';
+		$header[] = '';
+	}
+
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
 	{
+		if ($class->isEnum) {
+			$this->emitEnumClass($header, $class);
+			return;
+		}
 		$extends = [];
 		if ($class->parentClass !== null) {
 			$extends[] = 'public ' . $this->typeMapper->mapClassName($class->parentClass);
@@ -643,7 +826,7 @@ final class Generator
 			} else {
 				$type = '/* ERROR missing-property-type */';
 			}
-			$line = $type . ' ' . $property->name;
+			$line = $type . ' ' . $this->cppIdentifier($property->name);
 			if ($property->isStatic) {
 				$line = 'static ' . $line;
 				if ($initializer !== null) {
@@ -655,7 +838,7 @@ final class Generator
 			$header[] = $this->indent(1) . rtrim($line, ';') . ';';
 		}
 		foreach ($class->constants as $constant) {
-			$header[] = $this->indent(1) . 'static inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
+			$header[] = $this->indent(1) . 'static inline const auto ' . $this->cppIdentifier($constant->name) . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
 		}
 		foreach ($class->methods as $method) {
 			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';';
@@ -677,7 +860,7 @@ final class Generator
 			} else {
 				$type = '/* ERROR missing-property-type */';
 			}
-			$source[] = $type . ' ' . $class->name . '::' . $property->name . ' = ' . ($default ?? ($type . '{}')) . ';';
+			$source[] = $type . ' ' . $class->name . '::' . $this->cppIdentifier($property->name) . ' = ' . ($default ?? ($type . '{}')) . ';';
 		}
 		if (!$class->isInterface && array_filter($class->properties, static fn ($property): bool => $property->isStatic) !== []) {
 			$source[] = '';
@@ -780,7 +963,7 @@ final class Generator
 			$prefix .= 'virtual ';
 		}
 		$returnType = $this->typeMapper->mapReturnType($method->returnType, $method->returnsByReference);
-		$declaration = $prefix . $returnType . ' ' . $method->name . '(' . $this->renderParams($method->params, true, $namespacePhp) . ')';
+		$declaration = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, true, $namespacePhp) . ')';
 		if ($classDecl instanceof ClassDecl && $this->methodIsAbstract($method, $classDecl)) {
 			$declaration .= ' = 0';
 		}
@@ -829,7 +1012,7 @@ final class Generator
 		return $expr->children['args']->children ?? [];
 	}
 
-private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
+	private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
 	{
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
@@ -858,7 +1041,7 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		} else {
 			$returnType = $this->typeMapper->mapReturnType($method->returnType, $method->returnsByReference);
 			$this->currentReturnType = $returnType;
-			$signature = $returnType . ' ' . $className . '::' . $method->name . '(' . $this->renderParams($method->params, false, $namespacePhp) . ')';
+			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp) . ')';
 		}
 		$body = $this->renderBody($statements, $namespacePhp);
 		$this->currentReturnType = null;
@@ -991,6 +1174,21 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 
 	private function renderStatement(Statement $statement, ?string $namespacePhp): array
 	{
+		if ($statement->kind === 'declare_local') {
+			$name = (string) ($statement->payload['name'] ?? '');
+			$typed = (string) ($statement->payload['type'] ?? '');
+			if ($name === '' || $typed === '') {
+				$this->errors[] = 'Typed local declaration is missing its name or type at line ' . $statement->line . '.';
+				return ['// ERROR: invalid typed local declaration'];
+			}
+			if (isset($this->declaredLocals[$name])) {
+				$this->errors[] = 'Variable $' . $name . ' is already declared in this block at line ' . $statement->line . '.';
+				return ['// ERROR: duplicate local declaration'];
+			}
+			$this->declaredLocals[$name] = true;
+			$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($typed);
+			return [$this->typeMapper->mapTypedLocalType($typed) . ' ' . $name . ';'];
+		}
 		if ($statement->kind === 'assign' || $statement->kind === 'assign_ref' || $statement->kind === 'assign_op') {
 			$varNode = $statement->payload['var'] ?? null;
 			$exprNode = $statement->payload['expr'] ?? null;
@@ -1048,7 +1246,8 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 
 			if ($name !== null && !isset($this->declaredLocals[$name])) {
 				$this->declaredLocals[$name] = true;
-				$inferredType = $effectiveTyped ?? $this->inferExprType($exprNode);
+				$closureFunctionType = $effectiveTyped === null ? $this->tryInferStdFunctionTypeFromClosureExpr($exprNode) : null;
+				$inferredType = $effectiveTyped ?? $closureFunctionType ?? $this->inferExprType($exprNode);
 				if ($inferredType !== 'auto') {
 					$this->declaredLocalTypes[$name] = $effectiveTyped !== null ? $this->normalizeStoredLocalType($effectiveTyped) : $inferredType;
 				}
@@ -1058,17 +1257,23 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 					}
 					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $name . ' = ' . $expr . ';'];
 				}
+				if ($closureFunctionType !== null) {
+					return [$closureFunctionType . ' ' . $name . ' = ' . $expr . ';'];
+				}
 				return ['auto ' . $name . ' = ' . $expr . ';'];
 			}
 			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM)) {
 				if (($varNode->children['dim'] ?? null) === null) {
-					$base = $this->renderExpr($varNode->children['expr'] ?? null, $namespacePhp);
+					$baseExpr = $varNode->children['expr'] ?? null;
+					$base = $this->renderExpr($baseExpr, $namespacePhp);
 					$value = $this->renderExpr($exprNode, $namespacePhp);
 					$tempName = $this->nextTempName('__append_value');
+					$baseType = $this->inferExprType($baseExpr);
+					$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : 'append';
 					return [
 						'{',
 							'auto ' . $tempName . ' = ' . $value . ';',
-							$base . '.push_back(' . $tempName . ');',
+							'(void) ' . $base . '.' . $appendMethod . '(' . $tempName . ');',
 						'}',
 					];
 				}
@@ -1103,7 +1308,19 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		}
 
 		if ($statement->kind === 'unset') {
-			// Preserve the exporter shape: one AST_UNSET node becomes one runtime unset call.
+			$targetNode = $statement->payload;
+			if (is_object($targetNode) && (($targetNode->kind ?? null) === AstKind::DIM) && (($targetNode->children['dim'] ?? null) !== null)) {
+				$baseExpr = $targetNode->children['expr'] ?? null;
+				$base = $this->renderExpr($baseExpr, $namespacePhp);
+				$dim = $this->renderExpr($targetNode->children['dim'] ?? null, $namespacePhp);
+				$baseType = $this->inferExprType($baseExpr);
+				if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
+					$this->errors[] = 'unset() on vector_t indexed elements is not supported yet at line ' . $statement->line . '.';
+					return ['// ERROR: unset on vector_t indexed elements is not supported yet'];
+				}
+				return [$base . '.remove(' . $dim . ');'];
+			}
+			// Preserve the generic runtime fallback for non-array/table forms.
 			return ['::scpp::php::unset(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
 		}
 
@@ -1130,6 +1347,8 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		}
 
 		if ($statement->kind === 'for') {
+			$scopedLocals = $this->declaredLocals;
+			$scopedLocalTypes = $this->declaredLocalTypes;
 			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
 			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
 			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
@@ -1138,6 +1357,8 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 				$lines[] = $line;
 			}
 			$lines[] = '}';
+			$this->declaredLocals = $scopedLocals;
+			$this->declaredLocalTypes = $scopedLocalTypes;
 			return $lines;
 		}
 
@@ -1258,10 +1479,16 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 	/** @param list<Statement> $statements @return list<string> */
 	private function renderNestedStatements(array $statements, ?string $namespacePhp): array
 	{
+		$scopedLocals = $this->declaredLocals;
+		$scopedLocalTypes = $this->declaredLocalTypes;
+
 		$lines = [];
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
 			$lines[] = $this->indent(1) . $line;
 		}
+
+		$this->declaredLocals = $scopedLocals;
+		$this->declaredLocalTypes = $scopedLocalTypes;
 		return $lines;
 	}
 
@@ -1484,29 +1711,58 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 
 	private function renderDimAccess(mixed $expr, ?string $namespacePhp): string
 	{
-		$base = $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp);
+		$baseExpr = $expr->children['expr'] ?? null;
+		$base = $this->renderExpr($baseExpr, $namespacePhp);
 		$dimNode = $expr->children['dim'] ?? null;
 		if ($dimNode === null) {
 			$this->errors[] = 'Append syntax cannot be used as a read expression.';
 			return '/* unsupported-append-read */';
 		}
 		$dim = $this->renderExpr($dimNode, $namespacePhp);
-		return $base . '.at(' . $dim . ')';
+		$baseType = $this->inferExprType($baseExpr);
+		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
+			return $base . '.at(' . $dim . ')';
+		}
+		return '::scpp::table_find_(' . $base . ', ' . $dim . ')';
+	}
+
+	private function renderDimWriteAccess(mixed $expr, ?string $namespacePhp): string
+	{
+		$baseExpr = $expr->children['expr'] ?? null;
+		$base = $this->renderExpr($baseExpr, $namespacePhp);
+		$dimNode = $expr->children['dim'] ?? null;
+		if ($dimNode === null) {
+			$this->errors[] = 'Append syntax cannot be used as an lvalue target.';
+			return '/* unsupported-append-lvalue */';
+		}
+		$dim = $this->renderExpr($dimNode, $namespacePhp);
+		$baseType = $this->inferExprType($baseExpr);
+		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
+			return $base . '.at(' . $dim . ')';
+		}
+		return $base . '[' . $dim . ']';
 	}
 
 	private function renderAssignmentExpr(mixed $varNode, mixed $valueNode, ?string $namespacePhp): string
 	{
 		if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM)) {
-			$base = $this->renderExpr($varNode->children['expr'] ?? null, $namespacePhp);
+			$baseExpr = $varNode->children['expr'] ?? null;
+			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$value = $this->renderExpr($valueNode, $namespacePhp);
+			$baseType = $this->inferExprType($baseExpr);
 			$dimNode = $varNode->children['dim'] ?? null;
 			if ($dimNode === null) {
 				// PHP append assignment must evaluate the right-hand side exactly once.
 				$tempName = $this->nextTempName('__append_value');
-				return '([&]() { auto ' . $tempName . ' = ' . $value . '; ' . $base . '.push_back(' . $tempName . '); return ' . $tempName . '; }())';
+				$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : 'append';
+				return '([&]() { auto ' . $tempName . ' = ' . $value . '; (void) ' . $base . '.' . $appendMethod . '(' . $tempName . '); return ' . $tempName . '; }())';
 			}
 			$dim = $this->renderExpr($dimNode, $namespacePhp);
-			return '(' . $base . '.at(' . $dim . ') = ' . $value . ')';
+			if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
+				return '(' . $base . '.at(' . $dim . ') = ' . $value . ')';
+			}
+			$tempName = $this->nextTempName('__set_value');
+			return '([&]() { auto ' . $tempName . ' = ' . $value . '; ' . $base . '.set(' . $dim . ', ' . $tempName . '); return ' . $tempName . '; }())';
 		}
 
 		$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
@@ -1796,6 +2052,16 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 			return $this->renderArrayLiteral($expr, $namespacePhp, $typedLocalType);
 		}
 
+		if (is_object($expr) && in_array(($expr->kind ?? null), [AstKind::CLOSURE, AstKind::ARROW_FUNC], true)) {
+			$savedExpectedClosureSignature = $this->currentExpectedClosureSignature;
+			try {
+				$this->currentExpectedClosureSignature = $this->parseExpectedClosureSignature($typedLocalType);
+				return $this->renderExpr($expr, $namespacePhp);
+			} finally {
+				$this->currentExpectedClosureSignature = $savedExpectedClosureSignature;
+			}
+		}
+
 		return $this->renderExpr($expr, $namespacePhp);
 	}
 
@@ -1856,27 +2122,46 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 			? array_values($expr->children)
 			: [];
 
-		if ($elements === []) {
-			$mappedVectorType = $typedLocalType !== null ? $this->mapTypedVectorLocalType($typedLocalType) : null;
-			if ($mappedVectorType !== null) {
+		$mappedVectorType = $typedLocalType !== null ? $this->mapTypedVectorLocalType($typedLocalType) : null;
+		if ($mappedVectorType !== null) {
+			if ($elements === []) {
 				return $mappedVectorType . '{}';
 			}
 
-			$this->errors[] = 'Empty array literals are not supported yet because the element type cannot be inferred at line ' . (int) ($expr->lineno ?? 0) . '.';
-			return '/* unsupported-empty-array-literal */';
+			$values = [];
+			foreach ($elements as $element) {
+				if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+					$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+					return '/* unsupported-array-literal */';
+				}
+
+				$key = $element->children['key'] ?? null;
+				if ($key !== null) {
+					$this->errors[] = 'Typed vector literals cannot contain explicit keys at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+					return '/* unsupported-keyed-vector-literal */';
+				}
+
+				$valueNode = $element->children['value'] ?? null;
+				if ($valueNode === null) {
+					$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+					return '/* unsupported-array-element */';
+				}
+
+				$values[] = $this->renderExpr($valueNode, $namespacePhp);
+			}
+
+			return $mappedVectorType . '{' . implode(', ', $values) . '}';
 		}
 
-		$values = [];
+		if ($elements === []) {
+			return '::scpp::table_new_()';
+		}
+
+		$items = [];
 		foreach ($elements as $element) {
 			if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
 				$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
 				return '/* unsupported-array-literal */';
-			}
-
-			$key = $element->children['key'] ?? null;
-			if ($key !== null) {
-				$this->errors[] = 'Keyed array literals are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
-				return '/* unsupported-keyed-array-literal */';
 			}
 
 			$valueNode = $element->children['value'] ?? null;
@@ -1885,11 +2170,701 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 				return '/* unsupported-array-element */';
 			}
 
-			$values[] = $this->renderExpr($valueNode, $namespacePhp);
+			$keyNode = $element->children['key'] ?? null;
+			if ($keyNode === null) {
+				$items[] = '::scpp::table_item_(' . $this->renderExpr($valueNode, $namespacePhp) . ')';
+				continue;
+			}
+
+			$items[] = '::scpp::table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
 		}
 
-		$elementType = 'decltype(' . $values[0] . ')';
-		return '::scpp::vector_t<' . $elementType . '>{' . implode(', ', $values) . '}';
+		return '::scpp::table_new_(' . implode(', ', $items) . ')';
+	}
+
+
+	private function tryInferStdFunctionTypeFromClosureExpr(mixed $exprNode): ?string
+	{
+		if (!is_object($exprNode) || !in_array(($exprNode->kind ?? null), [AstKind::CLOSURE, AstKind::ARROW_FUNC], true)) {
+			return null;
+		}
+
+		$paramsNode = $exprNode->children['params'] ?? null;
+		$returnTypeNode = $exprNode->children['returnType'] ?? null;
+		$stmtsNode = $exprNode->children['stmts'] ?? null;
+		$params = (is_object($paramsNode) && isset($paramsNode->children) && is_array($paramsNode->children))
+			? array_values($paramsNode->children)
+			: [];
+		$statements = $this->buildStatementSequenceFromMixed($stmtsNode);
+
+		$paramTypes = [];
+		foreach ($params as $param) {
+			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
+				continue;
+			}
+			if (($param->flags ?? 0) & AstKind::PARAM_VARIADIC) {
+				return null;
+			}
+			if (($param->children['default'] ?? null) !== null) {
+				return null;
+			}
+			$phpType = $this->readAstTypeName($param->children['type'] ?? null);
+			if ($phpType === null) {
+				return null;
+			}
+			$isReference = (((int) ($param->flags ?? 0)) & AstKind::PARAM_REF) !== 0;
+			$paramTypes[] = $this->typeMapper->mapParamType($phpType, $isReference);
+		}
+
+		$returnType = $this->renderClosureReturnType($returnTypeNode, $statements, $exprNode);
+		if ($returnType === '/* unsupported-closure-return-type */' || $returnType === null) {
+			return null;
+		}
+
+		return 'std::function<' . $returnType . '(' . implode(', ', $paramTypes) . ')>';
+	}
+
+	/** @return null|array{returnType:?string,paramTypes:list<string>} */
+	private function parseExpectedClosureSignature(?string $typedLocalType): ?array
+	{
+		if ($typedLocalType === null) {
+			return null;
+		}
+		$normalized = trim($typedLocalType);
+		if (preg_match('/^function\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
+			return null;
+		}
+		$inner = trim($matches[1]);
+		$open = strpos($inner, '(');
+		$close = strrpos($inner, ')');
+		if ($open === false || $close === false || $close < $open) {
+			return null;
+		}
+		$returnPhpType = trim(substr($inner, 0, $open));
+		$paramsInner = trim(substr($inner, $open + 1, $close - $open - 1));
+		$returnType = $returnPhpType !== '' ? $this->typeMapper->mapReturnType($returnPhpType, false) : null;
+		$paramTypes = [];
+		foreach ($this->splitTopLevelCommaList($paramsInner) as $param) {
+			$param = trim($param);
+			if ($param === '') {
+				continue;
+			}
+			$byRef = false;
+			if (str_starts_with($param, 'ref ')) {
+				$byRef = true;
+				$param = trim(substr($param, 4));
+			} elseif (str_ends_with($param, '&')) {
+				$byRef = true;
+				$param = rtrim(substr($param, 0, -1));
+			}
+			$paramTypes[] = $this->typeMapper->mapParamType($param, $byRef);
+		}
+		return ['returnType' => $returnType, 'paramTypes' => $paramTypes];
+	}
+
+	/** @return list<string> */
+	private function splitTopLevelCommaList(string $value): array
+	{
+		$value = trim($value);
+		if ($value === '') {
+			return [];
+		}
+		$out = [];
+		$current = '';
+		$angleDepth = 0;
+		$parenDepth = 0;
+		$length = strlen($value);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $value[$i];
+			if ($ch === '<') {
+				++$angleDepth;
+			} elseif ($ch === '>') {
+				--$angleDepth;
+			} elseif ($ch === '(') {
+				++$parenDepth;
+			} elseif ($ch === ')') {
+				--$parenDepth;
+			} elseif ($ch === ',' && $angleDepth === 0 && $parenDepth === 0) {
+				$out[] = trim($current);
+				$current = '';
+				continue;
+			}
+			$current .= $ch;
+		}
+		if (trim($current) !== '') {
+			$out[] = trim($current);
+		}
+		return $out;
+	}
+
+	/** @return list<Statement> */
+	private function buildStatementSequenceFromMixed(mixed $node): array
+	{
+		if (is_object($node) && isset($node->children) && is_array($node->children) && (($node->kind ?? null) === AstKind::STMT_LIST)) {
+			return $this->buildStatementsFromAstNodes(array_values($node->children));
+		}
+		$stmt = $this->buildStatementFromAstNode($node);
+		return $stmt !== null ? [$stmt] : [];
+	}
+
+	/** @param list<string> $paramNames @return list<string> */
+	private function collectImplicitCaptureNames(mixed $node, array $paramNames): array
+	{
+		$paramSet = [];
+		foreach ($paramNames as $name) {
+			$paramSet[$name] = true;
+		}
+		$captureSet = [];
+		$this->walkArrowCaptureCandidates($node, $paramSet, $captureSet);
+		return array_keys($captureSet);
+	}
+
+	/** @param array<string,bool> $paramSet @param array<string,bool> $captureSet */
+	private function walkArrowCaptureCandidates(mixed $node, array $paramSet, array &$captureSet): void
+	{
+		if (!is_object($node)) {
+			return;
+		}
+
+		$kind = $node->kind ?? null;
+		if ($kind === AstKind::VAR) {
+			$name = $this->extractSimpleVarName($node);
+			if ($name !== null && !isset($paramSet[$name]) && isset($this->declaredLocals[$name])) {
+				$captureSet[$name] = true;
+			}
+			return;
+		}
+
+		foreach (($node->children ?? []) as $child) {
+			if (is_array($child)) {
+				foreach ($child as $subChild) {
+					$this->walkArrowCaptureCandidates($subChild, $paramSet, $captureSet);
+				}
+				continue;
+			}
+			$this->walkArrowCaptureCandidates($child, $paramSet, $captureSet);
+		}
+	}
+
+	private function resolveAstParamDocType(object $param): ?string
+	{
+		$name = (string) ($param->children['name'] ?? '');
+		$line = (int) ($param->lineno ?? 0);
+		if ($name !== '') {
+			$key = $line . ':' . $name;
+			$fromMap = $this->localTypeComments[$key] ?? null;
+			if (is_string($fromMap) && $fromMap !== '') {
+				return $fromMap;
+			}
+		}
+
+		$docComment = $param->children['docComment'] ?? null;
+		if (!is_string($docComment)) {
+			return null;
+		}
+
+		$inner = trim($docComment);
+		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
+			return null;
+		}
+
+		$inner = trim(substr($inner, 3, -2));
+		return $inner === '' ? null : $inner;
+	}
+
+	private function appendLvalueReferenceType(string $mappedType): string
+	{
+		return str_ends_with($mappedType, '&') ? $mappedType : ($mappedType . '&');
+	}
+
+	private function mapClosureDocParamType(string $docType, bool $isReference): string
+	{
+		$mapped = $this->typeMapper->mapTypedLocalType($docType);
+		return $isReference ? $this->appendLvalueReferenceType($mapped) : $mapped;
+	}
+
+	private function renderArrowFunctionExpr(object $expr, ?string $namespacePhp): string
+	{
+		$paramsNode = $expr->children['params'] ?? null;
+		$stmtsNode = $expr->children['stmts'] ?? null;
+		$returnTypeNode = $expr->children['returnType'] ?? null;
+
+		$params = (is_object($paramsNode) && isset($paramsNode->children) && is_array($paramsNode->children))
+			? array_values($paramsNode->children)
+			: [];
+		$statements = $this->buildStatementSequenceFromMixed($stmtsNode);
+		$paramNames = [];
+		foreach ($params as $param) {
+			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
+				continue;
+			}
+			$name = (string) ($param->children['name'] ?? '');
+			if ($name !== '') {
+				$paramNames[] = $name;
+			}
+		}
+		$captureItems = $this->collectImplicitCaptureNames($stmtsNode, $paramNames);
+
+		$expectedSignature = $this->currentExpectedClosureSignature;
+		$paramIndex = 0;
+		foreach ($params as $param) {
+			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
+				continue;
+			}
+			if (($param->flags ?? 0) & AstKind::PARAM_VARIADIC) {
+				$this->errors[] = 'Arrow function variadic parameters are not supported yet at line ' . (int) ($param->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-arrow-variadic */';
+			}
+			if (($param->children['default'] ?? null) !== null) {
+				$this->errors[] = 'Arrow function default parameters are not supported yet when lowering to std::function at line ' . (int) ($param->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-arrow-default-param */';
+			}
+			$expectedParamType = $expectedSignature['paramTypes'][$paramIndex] ?? null;
+			$phpType = $this->readAstTypeName($param->children['type'] ?? null);
+			$docType = $this->resolveAstParamDocType($param);
+			if ($phpType !== null && $docType !== null) {
+				$this->errors[] = 'Conflicting arrow function parameter type sources for $' . (string) ($param->children['name'] ?? '') . ' at line ' . (int) ($param->lineno ?? $expr->lineno ?? 0) . ': use either a native PHP type or a doc-comment type, not both.';
+				return '/* unsupported-arrow-conflicting-param-type */';
+			}
+			if ($phpType === null && $docType === null && !is_string($expectedParamType)) {
+				$this->errors[] = 'Arrow function parameters require PHP signature types or explicit doc-comment types in std::function lowering at line ' . (int) ($param->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-arrow-untyped-param */';
+			}
+			$paramIndex++;
+		}
+
+		$capture = $captureItems === [] ? '[]' : '[' . implode(', ', $captureItems) . ']';
+		$paramList = $this->renderClosureParams($params, $namespacePhp);
+		$returnType = $this->renderClosureReturnType($returnTypeNode, $statements, $expr);
+		if (is_string($returnType) && str_starts_with($returnType, '/* unsupported-closure-')) {
+			return $returnType;
+		}
+
+		$savedDeclaredLocals = $this->declaredLocals;
+		$savedDeclaredLocalTypes = $this->declaredLocalTypes;
+		$savedReturnType = $this->currentReturnType;
+
+		foreach ($captureItems as $captureName) {
+			$this->declaredLocals[$captureName] = true;
+			if (isset($savedDeclaredLocalTypes[$captureName])) {
+				$this->declaredLocalTypes[$captureName] = $savedDeclaredLocalTypes[$captureName];
+			}
+		}
+		$paramIndex = 0;
+		foreach ($params as $param) {
+			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
+				continue;
+			}
+			$name = (string) ($param->children['name'] ?? '');
+			if ($name === '') {
+				continue;
+			}
+			$this->declaredLocals[$name] = true;
+			$expectedParamType = $expectedSignature['paramTypes'][$paramIndex] ?? null;
+			$storedType = $this->inferClosureParamStoredType($param, $expectedParamType);
+			if ($storedType !== null) {
+				$this->declaredLocalTypes[$name] = $storedType;
+			}
+			$paramIndex++;
+		}
+		$this->currentReturnType = $returnType !== 'void' ? $returnType : null;
+
+		$bodyLines = $this->renderStatementSequence($statements, $namespacePhp);
+
+		$this->declaredLocals = $savedDeclaredLocals;
+		$this->declaredLocalTypes = $savedDeclaredLocalTypes;
+		$this->currentReturnType = $savedReturnType;
+
+		$out = [];
+		$signature = $capture . '(' . $paramList . ')';
+		if ($captureItems !== []) {
+			$signature .= ' mutable';
+		}
+		if ($returnType !== null) {
+			$signature .= ' -> ' . $returnType;
+		}
+		$signature .= ' {';
+		$out[] = $signature;
+		foreach ($bodyLines as $line) {
+			$out[] = $this->indent(1) . $line;
+		}
+		$out[] = '}';
+
+		return implode("
+", $out);
+	}
+
+	private function renderClosureExpr(object $expr, ?string $namespacePhp): string
+	{
+		$paramsNode = $expr->children['params'] ?? null;
+		$useNode = $expr->children['uses'] ?? null;
+		$stmtsNode = $expr->children['stmts'] ?? null;
+		$returnTypeNode = $expr->children['returnType'] ?? null;
+
+		$params = (is_object($paramsNode) && isset($paramsNode->children) && is_array($paramsNode->children))
+			? array_values($paramsNode->children)
+			: [];
+		$uses = (is_object($useNode) && isset($useNode->children) && is_array($useNode->children))
+			? array_values($useNode->children)
+			: [];
+		$statements = (is_object($stmtsNode) && isset($stmtsNode->children) && is_array($stmtsNode->children))
+			? $this->buildStatementsFromAstNodes(array_values($stmtsNode->children))
+			: [];
+
+		$captureItems = [];
+		foreach ($uses as $use) {
+			if (!is_object($use)) {
+				continue;
+			}
+			$isUseByReference = false;
+			if (($use->kind ?? null) === AstKind::REF) {
+				$isUseByReference = true;
+			} elseif (($use->kind ?? null) === AstKind::CLOSURE_VAR && (((int) ($use->flags ?? 0)) & 1) !== 0) {
+				// php-ast represents `use (&$x)` as AST_CLOSURE_VAR with a by-reference flag,
+				// not as a nested AST_REF node.
+				$isUseByReference = true;
+			}
+			if ($isUseByReference) {
+				$this->errors[] = 'Closure use-by-reference is not supported yet at line ' . (int) ($use->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-closure-use-ref */';
+			}
+			$name = (string) ($use->children['name'] ?? '');
+			if ($name === '') {
+				$this->errors[] = 'Closure use-capture requires a simple variable name at line ' . (int) ($use->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-closure-use */';
+			}
+			$captureItems[] = $name;
+		}
+
+		$expectedSignature = $this->currentExpectedClosureSignature;
+		$paramIndex = 0;
+		foreach ($params as $param) {
+			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
+				continue;
+			}
+			if (($param->flags ?? 0) & AstKind::PARAM_VARIADIC) {
+				$this->errors[] = 'Closure variadic parameters are not supported yet at line ' . (int) ($param->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-closure-variadic */';
+			}
+			if (($param->children['default'] ?? null) !== null) {
+				$this->errors[] = 'Closure default parameters are not supported yet when lowering to std::function at line ' . (int) ($param->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-closure-default-param */';
+			}
+			$expectedParamType = $expectedSignature['paramTypes'][$paramIndex] ?? null;
+			$phpType = $this->readAstTypeName($param->children['type'] ?? null);
+			$docType = $this->resolveAstParamDocType($param);
+			if ($phpType !== null && $docType !== null) {
+				$this->errors[] = 'Conflicting closure parameter type sources for $' . (string) ($param->children['name'] ?? '') . ' at line ' . (int) ($param->lineno ?? $expr->lineno ?? 0) . ': use either a native PHP type or a doc-comment type, not both.';
+				return '/* unsupported-closure-conflicting-param-type */';
+			}
+			if ($phpType === null && $docType === null) {
+				$this->errors[] = 'Closure parameters require PHP signature types or explicit doc-comment types in std::function lowering at line ' . (int) ($param->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-closure-untyped-param */';
+			}
+			$paramIndex++;
+		}
+
+		$capture = $captureItems === [] ? '[]' : '[' . implode(', ', $captureItems) . ']';
+		$paramList = $this->renderClosureParams($params, $namespacePhp);
+		$returnType = $this->renderClosureReturnType($returnTypeNode, $statements, $expr);
+		if ($returnType === '/* unsupported-closure-return-type */') {
+			return $returnType;
+		}
+
+		$savedDeclaredLocals = $this->declaredLocals;
+		$savedDeclaredLocalTypes = $this->declaredLocalTypes;
+		$savedReturnType = $this->currentReturnType;
+
+		foreach ($captureItems as $captureName) {
+			$this->declaredLocals[$captureName] = true;
+			if (isset($savedDeclaredLocalTypes[$captureName])) {
+				$this->declaredLocalTypes[$captureName] = $savedDeclaredLocalTypes[$captureName];
+			}
+		}
+		$paramIndex = 0;
+		foreach ($params as $param) {
+			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
+				continue;
+			}
+			$name = (string) ($param->children['name'] ?? '');
+			if ($name === '') {
+				continue;
+			}
+			$this->declaredLocals[$name] = true;
+			$expectedParamType = $expectedSignature['paramTypes'][$paramIndex] ?? null;
+			$storedType = $this->inferClosureParamStoredType($param, $expectedParamType);
+			if ($storedType !== null) {
+				$this->declaredLocalTypes[$name] = $storedType;
+			}
+			$paramIndex++;
+		}
+		$this->currentReturnType = $returnType !== 'void' ? $returnType : null;
+
+		$bodyLines = $this->renderStatementSequence($statements, $namespacePhp);
+
+		$this->declaredLocals = $savedDeclaredLocals;
+		$this->declaredLocalTypes = $savedDeclaredLocalTypes;
+		$this->currentReturnType = $savedReturnType;
+
+		$out = [];
+		$signature = $capture . '(' . $paramList . ')';
+		if ($captureItems !== []) {
+			// PHP closures captured by value may still assign to the captured name locally.
+			// In C++, lambda operator() is const by default, so mark captured closures mutable.
+			$signature .= ' mutable';
+		}
+		if ($returnType !== null) {
+			$signature .= ' -> ' . $returnType;
+		}
+		$signature .= ' {';
+		$out[] = $signature;
+		foreach ($bodyLines as $line) {
+			$out[] = $this->indent(1) . $line;
+		}
+		$out[] = '}';
+
+		return implode("
+", $out);
+	}
+
+	/** @param list<mixed> $nodes @return list<Statement> */
+	private function buildStatementsFromAstNodes(array $nodes): array
+	{
+		$out = [];
+		foreach ($nodes as $node) {
+			$stmt = $this->buildStatementFromAstNode($node);
+			if ($stmt !== null) {
+				$out[] = $stmt;
+			}
+		}
+		return $out;
+	}
+
+	private function buildStatementFromAstNode(mixed $node): ?Statement
+	{
+		$kind = $node->kind ?? null;
+		$line = (int) ($node->lineno ?? 0);
+
+		if ($kind === AstKind::ASSIGN) {
+			return new Statement('assign', $node->children ?? [], $line);
+		}
+		if ($kind === AstKind::ASSIGN_REF) {
+			return new Statement('assign_ref', $node->children ?? [], $line);
+		}
+		if ($kind === AstKind::ASSIGN_OP) {
+			$payload = $node->children ?? [];
+			$payload['flags'] = (int) ($node->flags ?? 0);
+			return new Statement('assign_op', $payload, $line);
+		}
+		if ($kind === AstKind::RETURN) {
+			return new Statement('return', $node->children['expr'] ?? null, $line);
+		}
+		if ($kind === AstKind::AST_ECHO) {
+			return new Statement('echo', $node->children['expr'] ?? null, $line);
+		}
+		if ($kind === AstKind::AST_UNSET) {
+			return new Statement('unset', $node->children['var'] ?? null, $line);
+		}
+		if ($kind === AstKind::IF) {
+			$branches = [];
+			$children = (isset($node->children) && is_array($node->children)) ? array_values($node->children) : [];
+			foreach ($children as $ifElem) {
+				if (!is_object($ifElem) || (($ifElem->kind ?? null) !== AstKind::IF_ELEM)) {
+					continue;
+				}
+				$branchStmtsNode = $ifElem->children['stmts'] ?? null;
+				$branchStmts = (is_object($branchStmtsNode) && isset($branchStmtsNode->children) && is_array($branchStmtsNode->children))
+					? $this->buildStatementsFromAstNodes(array_values($branchStmtsNode->children))
+					: [];
+				$branches[] = [
+					'cond' => $ifElem->children['cond'] ?? null,
+					'stmts' => $branchStmts,
+					'line' => (int) ($ifElem->lineno ?? $line),
+				];
+			}
+			return new Statement('if', $branches, $line);
+		}
+		if ($kind === AstKind::WHILE) {
+			$stmtsNode = $node->children['stmts'] ?? null;
+			return new Statement('while', [
+				'cond' => $node->children['cond'] ?? null,
+				'stmts' => (is_object($stmtsNode) && isset($stmtsNode->children) && is_array($stmtsNode->children))
+					? $this->buildStatementsFromAstNodes(array_values($stmtsNode->children))
+					: [],
+			], $line);
+		}
+		if ($kind === AstKind::DO_WHILE) {
+			$stmtsNode = $node->children['stmts'] ?? null;
+			return new Statement('do_while', [
+				'cond' => $node->children['cond'] ?? null,
+				'stmts' => (is_object($stmtsNode) && isset($stmtsNode->children) && is_array($stmtsNode->children))
+					? $this->buildStatementsFromAstNodes(array_values($stmtsNode->children))
+					: [],
+			], $line);
+		}
+		if ($kind === AstKind::BREAK) {
+			return new Statement('break', $node->children['depth'] ?? null, $line);
+		}
+		if ($kind === AstKind::CONTINUE) {
+			return new Statement('continue', $node->children['depth'] ?? null, $line);
+		}
+		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::PRE_INC || $kind === AstKind::PRE_DEC || $kind === AstKind::POST_INC || $kind === AstKind::POST_DEC) {
+			return new Statement('expr', $node, $line);
+		}
+		return null;
+	}
+
+	/** @param list<mixed> $params */
+	private function renderClosureParams(array $params, ?string $namespacePhp): string
+	{
+		$out = [];
+		$paramIndex = 0;
+		foreach ($params as $param) {
+			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
+				continue;
+			}
+			$name = (string) ($param->children['name'] ?? '');
+			if ($name === '') {
+				continue;
+			}
+			$type = $this->renderClosureParamType($param, $paramIndex);
+			$rendered = $type . ' ' . $name;
+			$default = $param->children['default'] ?? null;
+			if ($default !== null) {
+				$rendered .= ' = ' . $this->renderExpr($default, $namespacePhp);
+			}
+			$out[] = $rendered;
+			$paramIndex++;
+		}
+		return implode(', ', $out);
+	}
+
+	private function renderClosureParamType(object $param, int $paramIndex): string
+	{
+		$expectedParamType = $this->currentExpectedClosureSignature['paramTypes'][$paramIndex] ?? null;
+		$phpType = $this->readAstTypeName($param->children['type'] ?? null);
+		$docType = $this->resolveAstParamDocType($param);
+		$isReference = (((int) ($param->flags ?? 0)) & AstKind::PARAM_REF) !== 0;
+		if ($phpType !== null) {
+			return $this->typeMapper->mapParamType($phpType, $isReference);
+		}
+		if ($docType !== null) {
+			return $this->mapClosureDocParamType($docType, $isReference);
+		}
+		if (is_string($expectedParamType) && $expectedParamType !== '') {
+			return $expectedParamType;
+		}
+		$default = $param->children['default'] ?? null;
+		if ($default !== null) {
+			$defaultType = $this->inferExprType($default);
+			if ($defaultType !== 'auto') {
+				return $defaultType;
+			}
+		}
+		return $isReference ? 'auto&' : 'auto';
+	}
+
+	private function inferClosureParamStoredType(object $param, ?string $expectedParamType = null): ?string
+	{
+		$phpType = $this->readAstTypeName($param->children['type'] ?? null);
+		$docType = $this->resolveAstParamDocType($param);
+		$isReference = (((int) ($param->flags ?? 0)) & AstKind::PARAM_REF) !== 0;
+		if ($phpType !== null) {
+			return $this->typeMapper->mapParamType($phpType, $isReference);
+		}
+		if ($docType !== null) {
+			return $this->normalizeStoredLocalType($docType);
+		}
+		if (is_string($expectedParamType) && $expectedParamType !== '') {
+			return $expectedParamType;
+		}
+		$default = $param->children['default'] ?? null;
+		if ($default !== null) {
+			$defaultType = $this->inferExprType($default);
+			return $defaultType !== 'auto' ? $defaultType : null;
+		}
+		return null;
+	}
+
+	/** @param list<Statement> $statements */
+	private function renderClosureReturnType(mixed $returnTypeNode, array $statements, object $expr): ?string
+	{
+		$phpType = $this->readAstTypeName($returnTypeNode);
+		$docFunctionType = $this->resolveClosureReturnDocFunctionType($statements);
+		if ($phpType !== null && $docFunctionType !== null) {
+			$this->errors[] = 'Conflicting closure return type sources at line ' . (int) ($expr->lineno ?? 0) . ': use either a native PHP return type or a doc-comment callable return type, not both.';
+			return '/* unsupported-closure-conflicting-return-type */';
+		}
+		if ($phpType !== null) {
+			return $this->typeMapper->mapReturnType($phpType, false);
+		}
+
+		if ($docFunctionType !== null) {
+			return $this->typeMapper->mapTypedLocalType($docFunctionType);
+		}
+
+		foreach ($statements as $statement) {
+			if ($statement->kind === 'return' && $statement->payload !== null) {
+				$this->errors[] = 'Closure return types must be declared explicitly in std::function lowering at line ' . (int) ($expr->lineno ?? 0) . '.';
+				return '/* unsupported-closure-return-type */';
+			}
+		}
+
+		return 'void';
+	}
+
+	/** @param list<Statement> $statements */
+	private function resolveClosureReturnDocFunctionType(array $statements): ?string
+	{
+		if (count($statements) !== 1) {
+			return null;
+		}
+		$statement = $statements[0] ?? null;
+		if (!$statement instanceof Statement || $statement->kind !== 'return' || !is_object($statement->payload)) {
+			return null;
+		}
+		$payload = $statement->payload;
+		if (($payload->kind ?? null) !== AstKind::CLOSURE) {
+			return null;
+		}
+		$docComment = $payload->children['docComment'] ?? null;
+		if (!is_string($docComment)) {
+			return null;
+		}
+		$inner = trim($docComment);
+		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
+			return null;
+		}
+		$inner = trim(substr($inner, 3, -2));
+		if ($inner === '' || preg_match('/^function\s*</', $inner) !== 1) {
+			return null;
+		}
+		return $inner;
+	}
+
+	private function readAstTypeName(mixed $typeNode): ?string
+	{
+		if (!is_object($typeNode)) {
+			return null;
+		}
+		$kind = (int) ($typeNode->kind ?? 0);
+		$flags = (int) ($typeNode->flags ?? 0);
+		if ($kind === AstKind::NULLABLE_TYPE) {
+			$inner = $this->readAstTypeName($typeNode->children['type'] ?? null);
+			return $inner !== null ? '?' . ltrim($inner, '?') : null;
+		}
+		if ($kind === AstKind::NAME) {
+			$name = (string) ($typeNode->children['name'] ?? '');
+			return $name !== '' ? $name : null;
+		}
+		return match ($flags) {
+			AstKind::TYPE_BOOL => 'bool',
+			AstKind::TYPE_LONG => 'int',
+			AstKind::TYPE_DOUBLE => 'float',
+			AstKind::TYPE_STRING => 'string',
+			AstKind::TYPE_VOID => 'void',
+			default => null,
+		};
 	}
 
 	/**
@@ -1922,12 +2897,25 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 		}
 
 		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::CLOSURE) {
+			return $this->renderClosureExpr($expr, $namespacePhp);
+		}
+		if ($kind === AstKind::ARROW_FUNC) {
+			return $this->renderArrowFunctionExpr($expr, $namespacePhp);
+		}
 		if ($kind === AstKind::ARRAY) {
 			return $this->renderArrayLiteral($expr, $namespacePhp);
 		}
 		if ($kind === AstKind::VAR) {
 			$name = (string) ($expr->children['name'] ?? 'var');
-			return $name === 'this' ? 'this' : $name;
+			if ($name === 'this') {
+				return 'this';
+			}
+			if ($name !== '' && !isset($this->declaredLocals[$name])) {
+				$this->errors[] = 'Variable $' . $name . ' is not visible in this block at line ' . (int) ($expr->lineno ?? 0) . '. Safe v1 uses block-local variable visibility; declare $' . $name . ' in the current block or an enclosing block before use.';
+				return '/* undeclared-var-' . $name . ' */';
+			}
+			return $name;
 		}
 		if ($kind === AstKind::CONST) {
 			$name = (string) ($expr->children['name']->children['name'] ?? '');
@@ -1993,16 +2981,23 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 			return $this->renderDimAccess($expr, $namespacePhp);
 		}
 		if ($kind === AstKind::PROP) {
-			$base = $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp);
-			$prop = (string) ($expr->children['prop'] ?? 'prop');
+			$baseExpr = $expr->children['expr'] ?? null;
+			$base = $this->renderExpr($baseExpr, $namespacePhp);
+			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
 			return $base === 'this' ? 'this->' . $prop : $base . '->' . $prop;
+		}
+		if ($kind === AstKind::NULLSAFE_PROP) {
+			$baseExpr = $expr->children['expr'] ?? null;
+			$base = $this->renderExpr($baseExpr, $namespacePhp);
+			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
+			return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(::scpp::php::isset(__scpp_tmp)) ? __scpp_tmp->' . $prop . ' : null; }())';
 		}
 		if ($kind === AstKind::STATIC_PROP) {
 			return $this->renderStaticPropertyAccess($expr, $namespacePhp);
 		}
 		if ($kind === AstKind::CLASS_CONST) {
 			$class = $this->renderClassName($expr->children['class'] ?? null, $namespacePhp);
-			$const = (string) ($expr->children['const'] ?? 'CONST');
+			$const = $this->cppIdentifier((string) ($expr->children['const'] ?? 'CONST'));
 			return $class . '::' . $const;
 		}
 		if ($kind === AstKind::NEW) {
@@ -2018,12 +3013,22 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 				: $this->renderClassName($classNode, $namespacePhp);
 			$methodDecl = $this->lookupMethodDeclByStaticCall($classNode, $method, $namespacePhp);
 			$renderedArgs = $methodDecl !== null ? $this->renderCallArgsForParams($methodDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
-			return $class . '::' . $method . '(' . $renderedArgs . ')';
+			return $class . '::' . $this->cppIdentifier($method) . '(' . $renderedArgs . ')';
 		}
 		if ($kind === AstKind::AST_ISSET) {
 			// In this exporter, multi-argument isset() is already normalized into boolean-op trees.
 			// AST_ISSET itself carries exactly one operand in `children['var']`.
-			return '::scpp::php::isset(' . $this->renderExpr($expr->children['var'] ?? null, $namespacePhp) . ')';
+			$varNode = $expr->children['var'] ?? null;
+			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM) && (($varNode->children['dim'] ?? null) !== null)) {
+				$baseExpr = $varNode->children['expr'] ?? null;
+				$baseType = $this->inferExprType($baseExpr);
+				if (preg_match('/^vector_t<(.+)>$/', $baseType) !== 1) {
+					$base = $this->renderExpr($baseExpr, $namespacePhp);
+					$dim = $this->renderExpr($varNode->children['dim'] ?? null, $namespacePhp);
+					return '::scpp::table_has_(' . $base . ', ' . $dim . ')';
+				}
+			}
+			return '::scpp::php::isset(' . $this->renderExpr($varNode, $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr->children['expr'] ?? null;
@@ -2042,7 +3047,7 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 				? $this->lookupMethodDeclByCurrentClass($method, $namespacePhp)
 				: null;
 			$renderedArgs = $methodDecl !== null ? $this->renderCallArgsForParams($methodDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
-			return $base . '->' . $method . '(' . $renderedArgs . ')';
+			return $base . '->' . $this->cppIdentifier($method) . '(' . $renderedArgs . ')';
 		}
 		if ($kind === AstKind::ASSIGN) {
 			return $this->renderAssignmentExpr($expr->children['var'] ?? null, $expr->children['expr'] ?? null, $namespacePhp);
@@ -2371,7 +3376,7 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 			return '/* unsupported-static-late-binding */';
 		}
 
-		return $this->renderClassName($classNode, $namespacePhp) . '::' . $prop;
+		return $this->renderClassName($classNode, $namespacePhp) . '::' . $this->cppIdentifier($prop);
 	}
 
 	/**
@@ -2468,7 +3473,7 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 
 		return match ($expr->kind ?? null) {
 			AstKind::VAR => $this->renderVar($expr),
-			AstKind::DIM => $this->renderDimAccess($expr, $namespacePhp),
+			AstKind::DIM => $this->renderDimWriteAccess($expr, $namespacePhp),
 			AstKind::PROP, AstKind::STATIC_PROP => $this->renderAssignmentTarget($expr, $namespacePhp),
 			default => $this->renderExpr($expr, $namespacePhp),
 		};
@@ -2509,27 +3514,38 @@ private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?s
 			if ($declared === null) {
 				return 'auto';
 			}
-			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<')) {
+			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || $declared === 'table_t' || $declared === '::scpp::table_t') {
 				return $declared;
 			}
 			return $this->typeMapper->mapDeclaredType($declared);
 		}
+		if ($kind === AstKind::CLASS_CONST) {
+			$classNode = $expr->children['class'] ?? null;
+			if (is_object($classNode) && ($classNode->kind ?? null) === AstKind::NAME) {
+				$phpClass = (string) ($classNode->children['name'] ?? '');
+				if ($phpClass === 'self' && $this->currentClassName !== null) {
+					$phpClass = $this->currentClassName;
+				}
+				$classDecl = $this->classDecls[$phpClass] ?? $this->classDecls[basename(str_replace('\\', '/', $phpClass))] ?? null;
+				if ($classDecl instanceof ClassDecl && $classDecl->isEnum) {
+					return $this->typeMapper->mapDeclaredType($classDecl->name);
+				}
+			}
+			return 'auto';
+		}
+		if ($kind === AstKind::STATIC_CALL) {
+			return 'auto';
+		}
 		if ($kind === AstKind::ARRAY) {
-			$elements = array_values($expr->children ?? []);
-			if ($elements === []) {
-				return 'auto';
-			}
-			$first = $elements[0]->children['value'] ?? null;
-			$elementType = $this->inferExprType($first);
-			if ($elementType === 'auto') {
-				return 'auto';
-			}
-			return 'vector_t<' . $elementType . '>';
+			return 'table_t';
 		}
 		if ($kind === AstKind::DIM) {
 			$baseType = $this->inferExprType($expr->children['expr'] ?? null);
 			if (preg_match('/^vector_t<(.+)>$/', $baseType, $matches) === 1) {
 				return $matches[1];
+			}
+			if ($baseType === 'table_t') {
+				return 'maybe_value_t';
 			}
 			return 'auto';
 		}

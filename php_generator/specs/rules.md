@@ -233,7 +233,7 @@ Examples:
 
 ## 11. Rejected Features
 
-- arrays
+- reduced PHP array subset (see catalog rows `ARR-*`)
 - `stdClass` / object iteration
 - `foreach` by value and by reference are supported for `vector_t` only
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
@@ -245,6 +245,33 @@ Examples:
 - untyped raw `null` assignment
 
 ---
+
+
+
+## 11A. Array subset (v1)
+
+Supported array lowering is intentionally narrow and split by target typing.
+
+### Untyped PHP arrays
+- untyped `[]` lowers to `::scpp::table_new_()`
+- untyped `[v1, v2, ...]` lowers to `::scpp::table_new_(::scpp::table_item_(...), ...)`
+- untyped `["k" => v]` lowers to `::scpp::table_new_(::scpp::table_kv_("k", ...))`
+- nested untyped arrays recurse through the same `table_new_ / table_item_ / table_kv_` helpers
+- PHP array reads lower to `find(...)`, not `at(...)`
+- PHP keyed writes lower to `set(...)`
+- PHP append writes lower to `append(...)`
+- `unset($a[k])` lowers to `remove(k)`
+- `isset($a[k])` lowers to `has(k)` as a documented v1 approximation
+
+### Typed vectors
+- `/** vector<T> */ []` lowers to `vector_t<T>{}`
+- `/** vector<T> */ [e1, e2, ...]` lowers to `vector_t<T>{e1, e2, ...}`
+- typed vector literals must remain positional; explicit keys are rejected
+
+### Intentional v1 deviations from PHP
+- `table_t` keeps integer keys and string keys distinct (`1` != `"1"`)
+- `isset($a[k])` lowered through `has(k)` does not implement PHP's null-sensitive `isset` behavior yet
+- `at(...)` remains a runtime checked-access API and is not used for normal PHP array reads
 
 ## 12. Incompatibilities
 
@@ -381,7 +408,24 @@ Executable code in a parent namespace and executable code in a nested namespace 
 A nested namespace may appear inside a parent namespace execution region only when the nested namespace contributes declarations only.
 
 ### 14.9 Multiple Namespace Blocks
-Multiple namespace blocks in one file are deferred until file-structure and translation-unit rules are specified.
+Multiple braced namespace blocks in one file are supported when they lower into ordinary declarations and, at most, one selected synthetic execution entry point.
+
+Supported forms include:
+- `namespace A { ... } namespace B { ... }`
+- `namespace A\B { ... } namespace { ... }`
+- multiple braced namespace blocks containing declarations only
+- multiple braced namespace blocks followed by a braced global namespace block `namespace { ... }`
+
+Lowering rules:
+- each PHP namespace block lowers independently under the `scpp::...` root
+- a braced global namespace block `namespace { ... }` lowers to `namespace scpp { ... }`
+- rooted calls from the global block must lower without an empty namespace segment, for example `::scpp::__scpp_main()`
+- declarations remain in their own generated namespace blocks and are not merged by name just because they appear in the same source file
+
+Restriction:
+- executable-statement consolidation still applies only within one namespace body at a time
+- cross-namespace execution merging remains forbidden
+- this section currently covers braced namespace blocks; semicolon-form multi-block behavior remains governed by the existing execution restrictions and file-structure rules
 
 ---
 
@@ -567,7 +611,21 @@ auto d = ::scpp::A::B::LIMIT;        // user-defined constant in another generat
 
 ## 7. Null and nullable rules
 
-### 7.1 Untyped null assignment
+### 7.1 Typed local predeclaration
+
+Safe v1 supports explicit local declarations without initialization when the local has an explicit type annotation.
+
+Example:
+
+```php
+$f /** function<int(int)> */;
+```
+
+This form exists so an outer block can predeclare a local that will later be assigned inside child blocks while still respecting block-local visibility. Bare `callable` is not sufficient; use a concrete `function<return_type(arg_types)>` annotation.
+
+The same concrete `function<return_type(arg_types)>` annotation form is also accepted on closure parameters when PHP syntax cannot express a native callable signature directly, for example `function (/** function<int(int)> */ $fn, int $x): int { ... }`. For closure factories that return another closure, Safe v1 also accepts the post-signature doc-comment form `$make = function () /** function<int(int)> */ { return function (int $x): int { ... }; };`, which php-ast attaches to the returned inner closure; the generator treats that doc-comment as the outer closure's explicit return type in the simple single-return factory shape. Arrow functions (`fn (...) => expr`) are also supported in Safe v1. php-ast exposes them as `AST_ARROW_FUNC` without an explicit `use (...)` list, so the generator infers implicit by-value captures from referenced outer locals and lowers them to native C++ lambdas with value captures.
+
+### 7.2 Untyped null assignment
 Direct untyped `null` assignment is not allowed:
 ```php
 $a = null;
@@ -684,6 +742,7 @@ These PHP semantics must go through the `php::` layer:
 - `empty($b)` -> `php::empty(b)`
 - strict equality `===` -> `php::identical(...)`
 - strict inequality `!==` -> `php::not_identical(...)`
+- both helpers return `bool_t`, not native `bool`, because they are PHP-semantic runtime operations
 - predefined/runtime constants discovered from `get_defined_constants()` -> `::scpp::php::...`
 - user-defined non-class constants -> generated user namespace path (no `::scpp::php` remapping)
 

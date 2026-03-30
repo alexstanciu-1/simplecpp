@@ -99,3 +99,17 @@ Columns:
 - This catalog intentionally reflects only the rules explicitly approved in the current session.
 - The generator remains local and syntactic: no cross-file semantic checking, no hierarchy validation, no inference of overrides or virtual dispatch beyond explicit source cues.
 - Class generation assumes a handle-like object model for user PHP classes: instance access uses `->`, and object creation uses `create<T>(...)`.
+
+
+## Array rules added in the current stage
+
+The current catalog now keeps generalized array rules instead of one row per trivial permutation.
+
+Core rule families:
+- untyped literals lower through `::scpp::table_new_`, `::scpp::table_item_`, and `::scpp::table_kv_`
+- typed `vector<T>` literals lower to `vector_t<T>{...}`
+- PHP array reads lower to `find(...)`
+- keyed writes lower to `set(...)`
+- append writes lower to `append(...)`
+- `unset($a[k])` lowers to `remove(k)`
+- `isset($a[k])` lowers to `has(k)` as the current documented approximation

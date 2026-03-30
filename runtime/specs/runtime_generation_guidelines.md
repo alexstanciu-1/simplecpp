@@ -237,3 +237,55 @@ A generation is acceptable only if all of the following are true:
 - public API matches config-owned rules
 - runtime target remains `C++23`
 - consecutive identical inputs would produce materially identical output
+
+## table_t-specific generation/update rules
+Generation and manual updates for `table_t` must preserve these constraints:
+
+- public generated/runtime-facing code must target `scpp::table_t`, never donor `mem_container` names
+- the donor storage structure may be adapted, but public `table_t` semantics own the contract
+- non-const `operator[]` is inserting and must never be emitted for read-only array access
+- read-only keyed access should lower to `find()` unless checked failure semantics are explicitly desired, in which case `at()` is allowed
+- `set()` must overwrite existing keys
+- `append()` must follow `max_existing_int_key + 1`
+- `123` and `"123"` remain distinct keys at runtime
+- code-bearing runtime files may live under `include/scpp/support/`, with forwarding public includes kept in `include/scpp/` when useful
+
+
+## table_t regeneration/update safeguards
+
+When generating, updating, or refactoring `table_t`, preserve these invariants:
+
+- `find()` must remain non-inserting
+- `at()` must remain checked and non-inserting
+- non-const `operator[]` may insert
+- `set()` must overwrite existing keys
+- `append()` must use `max_existing_int_key + 1`
+- integer keys and string keys must remain distinct
+- `null_t` is a valid stored value
+- `nullopt_t` represents lookup miss, not stored null
+
+### Removal safety rule
+
+Removal must not shift visible keys.
+
+In particular:
+
+- do not use direct packed-vector erase if it changes later numeric keys
+- do not renumber keys after removal
+- if packed storage cannot preserve key stability during removal, promote to associative mode first or use tombstones
+
+### Required regression case
+
+This case must remain true after every update:
+
+```cpp
+table_t t;
+t.append(100); // key 0
+t.append(200); // key 1
+t.remove(0);
+
+assert(!t.has(0));
+assert(t.has(1));
+assert(t.append(300) == 2);
+```
+

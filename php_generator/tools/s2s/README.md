@@ -53,3 +53,58 @@ Resolution order in the current implementation:
 - otherwise -> preserve the previous relative/unqualified fallback emission
 
 This is intentionally an implementation step, not a claim of full PHP namespace parity yet.
+
+## Enum support
+
+Current enum lowering is intentionally narrow:
+- unit enums lower to native `enum class` declarations
+- int-backed enums with literal integer case values lower to native `enum class` declarations with explicit enumerators
+- underlying storage is kept at 1 byte when possible and widened only when the case set or integral values require it
+
+Out of scope in this stage:
+- string-backed enums
+- enum methods and interfaces
+- helper APIs such as `cases()`, `from()`, `tryFrom()` on enums
+- pseudo-properties such as `->name` and `->value`
+
+
+## Enum Support (v1 – constrained subset)
+
+### Status
+PARTIAL / INTENTIONAL SUBSET
+
+### Supported
+- Enum declaration (unit enums)
+- Backed enums (int)
+- Case access: Enum::Case
+- Assignment / storage
+- Identity comparison (===)
+
+### Newly supported
+- `->name` property on enum cases
+
+### Lowering rule
+PHP:
+    Enum::Case->name
+
+C++:
+    ::scpp::php::enum_name(Enum::Case)
+
+### Not supported (explicit)
+- Enum::cases()
+- `->value`
+- Enum::from / tryFrom
+- Reflection-style enum APIs
+
+### Rationale
+Enums are currently lowered as value types (`enum class`). PHP enums are object-like.
+Full object semantics are intentionally deferred.
+
+### Design decision
+Use helper functions instead of changing enum representation.
+
+Required runtime:
+    string_t enum_name(T value);
+
+### Guarantee
+No implicit pointer/object semantics for enums in v1.

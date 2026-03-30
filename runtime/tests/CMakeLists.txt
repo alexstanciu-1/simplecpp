@@ -38,3 +38,13 @@ add_test(NAME scpp_test_value_ref COMMAND test_value_ref)
 add_executable(test_contract test_contract.cpp)
 target_link_libraries(test_contract PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_contract COMMAND test_contract)
+
+# Closure smoke coverage.
+add_executable(test_closure test_closure.cpp)
+target_link_libraries(test_closure PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_closure COMMAND test_closure)
+
+# table_t smoke coverage.
+add_executable(test_table_t test_table_t.cpp)
+target_link_libraries(test_table_t PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_table_t COMMAND test_table_t)

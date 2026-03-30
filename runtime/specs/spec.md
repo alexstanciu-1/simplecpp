@@ -112,6 +112,19 @@ These model explicit inline object/value storage that must not allocate.
 Included initially:
 - `value_p<T>`
 
+### 5.4a Callable lowering
+Closures currently lower to native C++ callable forms rather than a dedicated `scpp` wrapper type.
+
+Included initially:
+- native lambda expressions
+- `std::function<R(Args...)>` where a concrete callable signature is required
+
+Safe v1 also uses block-local local-variable visibility during generation:
+- a variable is visible only in the block where it is introduced and in child blocks
+- the first write in a block declares a new variable only when no visible outer variable with the same name exists
+- variables declared inside nested statement blocks do not escape those blocks
+- out-of-block local use must fail in the generator with an explicit error rather than leaking into a later C++ compile error
+
 ### 5.5 Reference lowering strategy
 Explicit source references lower directly to native C++ lvalue references.
 
@@ -185,27 +198,45 @@ Included initially:
 - `value_p<T>` exists only by explicit opt-in; it is not the default lowering for PHP objects
 - `value_p<T>` remains object-like at the usage surface and must support member access through `->` so an explicit inline-storage local such as `$x /** value MyClass */ = new MyClass();` can continue to lower member writes like `$x->property_1 = 10;` without switching to direct `.` syntax on the wrapper
 
-### 6.8 Native reference lowering
+### 6.8 Native callable lowering
+- anonymous functions lower to native C++ lambdas
+- when a concrete callable signature is required, the generator may emit `std::function<R(Args...)>` initialized from a lambda
+- the first implementation targets closure capture-by-value only
+- direct invocation of closure-valued variables is supported through the native C++ call surface
+- PHP `use (&$x)` semantics are intentionally out of scope for this first pass
+
+### 6.9 Native reference lowering
 - explicit reference lowering uses native C++ lvalue references (`T&`)
 - references must remain flat; the generator must never emit `&&`, `*`, or wrapper-of-wrapper reference shapes
 - object-like explicit references lower to references over the lowered handle type (for example `shared_p<T>&`)
 - the feature is a reduced alias/reference model, not full PHP reference semantics
 - rebinding, alias-preserving `unset`, and other PHP `&` edge semantics remain intentionally out of scope
 
-### 6.9 `nullable<T>`
+### 6.10 `nullable<T>`
 - `nullable<T>` models value optionality
 - it is not a substitute for pointer ownership
 - pointer wrappers and `nullable<T>` must remain semantically distinct even if both can represent absence
 - `nullopt_t` is the canonical semantic sentinel for constructing or resetting an empty `nullable<T>` state
 - `nullptr_t` is the canonical semantic sentinel for constructing or comparing empty pointer-like wrappers
 
-### 6.10 Reset/cleanup semantics
+### 6.11 Reset/cleanup semantics
 - `unset` is restricted to types that can represent an empty/null state
 - in practice, `unset` is for nullable / pointer-like families, not for plain non-nullable value types
 - `unset` must not be used for native references
 - `unset` must not be used as a fake delete for stack values
 - for non-nullable value/container-like types, the current project direction is to use `clean(x)` to reset to a default/empty state instead of modeling PHP variable removal
 - `clean(x)` is a reset/cleanup operation, not a PHP-compatible symbol-table `unset`
+
+
+### 6.11 `table_t`
+- `table_t` is the runtime semantic type used for PHP `array` lowering
+- implementation is adapted from the donor `mem_container` storage design, but generated code must target `table_t` only
+- `find()` is the non-inserting lookup API and returns `maybe_value_t`
+- `at()` is checked non-inserting access and follows throw-style semantics on miss
+- non-const `operator[]` is inserting/mutating access and must not be used for read-only lowering
+- keys are strict: `123` and `"123"` are different
+- append uses `max_existing_int_key + 1`
+
 
 ---
 
@@ -338,3 +369,15 @@ The correct long-term structure is:
 This keeps the system editable without letting the specification and generator drift apart.
 
 - `vector_t::at(...)` returns references for bindable element access, including native reference returns from generated code
+
+
+## table_t removal invariant
+
+For `table_t`, removing an entry must preserve the visible keys of all remaining entries.
+
+This is especially important for numeric keys:
+- removing key `0` must not cause former key `1` to become key `0`
+- later `append()` continues from `max_existing_int_key + 1`
+
+Packed-mode optimizations must not violate this invariant.
+

@@ -33,3 +33,12 @@ This runtime was generated from:
 - non-nullable value types, containers, and native references should not rely on `unset(...)`
 - for non-nullable reset/cleanup, use `clean(...)` as the current project-level direction
 - native C++ references are the reduced alias/reference feature and do not attempt to fully mimic PHP reference-binding semantics
+
+
+## table_t notes
+
+- `scpp::table_t` is the runtime container used for PHP `array` lowering.
+- public include stays `scpp/table_t.hpp`; implementation lives under `include/scpp/support/`.
+- `find()` is the non-inserting lookup path.
+- `at()` is checked non-inserting access with throw-style semantics.
+- non-const `operator[]` is inserting access and must not be used by the generator for read-only lookups.

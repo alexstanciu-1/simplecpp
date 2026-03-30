@@ -251,9 +251,21 @@ Declares the stable helper names that generators/frontends are allowed to target
 | `namespaces.php = scpp::php` | PHP-specific runtime helpers, when needed, live under a separate namespace. | `// frontend/runtime glue` | `::scpp::php::...;` | Keeps core runtime and PHP-facing glue separable. |
 | `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `echo $a, $b;` | `::scpp::php::echo_eval(...);` | Important because contract stability matters more than today’s internal implementation structure. |
 | `notes.separation_rule` | The contract lists shared knowledge helpers, not generator internals. | `// policy note` | `// no direct dependency on private helper names` | This is a governance rule: keep frontend/runtime coupling narrow and intentional. |
-| `notes.php_identity.rule = exact_type_required_except_null_nullable` | Strict identity uses exact type matching, with only null-vs-empty-nullable cross-type equality allowed. | `$a === $b;` | `::scpp::php::identical(a, b);` | Same-type values compare by value or identity depending on wrapper kind; differing exact types are non-identical. |
+| `notes.php_identity.rule = exact_type_required_except_null_nullable` | Strict identity uses exact type matching, with only null-vs-empty-nullable cross-type equality allowed. | `$a === $b;` | `::scpp::php::identical(a, b);` | Same-type values compare by value or identity depending on wrapper kind; differing exact types are non-identical. The helper returns `bool_t`, not native `bool`, because it is part of the PHP runtime semantic layer. |
 
 ## 13. Scope Note
 
 ### Description
 This review document is intentionally semantic and curated. It covers all major content areas present in `config.json`, but it does so by extracting the meaningful rules rather than reproducing every raw field mechanically.
+
+
+## table_t review note
+
+`table_t` is now the reviewed runtime type for PHP `array` lowering. Human review expectations:
+
+- public include remains `scpp/table_t.hpp`
+- implementation-bearing files may live in `include/scpp/support/`
+- `find()` is non-inserting and returns `maybe_value_t`
+- `at()` is checked non-inserting access
+- non-const `operator[]` is inserting access
+- generator/read-only lowering should prefer `find()` over `operator[]`

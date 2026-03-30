@@ -15,7 +15,4 @@ $c = 4;
 $obj = new Counter();
 $n /** ?int */ = null;
 
-echo "arith={$a + $b * $c}\n";
-echo "ternary={$a ? $b : $c}\n";
-echo "call={$obj->inc()}\n";
-echo "coalesce={$n ?? 10}\n";
+# not working!!!

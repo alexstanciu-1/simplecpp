@@ -6,6 +6,15 @@ This document lists the minimal missing features required to make Simple C++ usa
 
 ---
 
+## Quick ones
+
+- throw _ try/catch/finally
+- Anonymous functions / closures, plus closure binding behavior.
+- Arrow functions and first-class callable syntax, both listed in the PHP language reference.
+- Enums, which are part of modern PHP’s language surface. Named argumentsconstructor property promotion, union types, and match,
+
+---
+
 ## Gaps Table
 
 | Area | Feature | Status | Why it matters | Minimal scope for v1 |
