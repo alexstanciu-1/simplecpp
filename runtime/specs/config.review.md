@@ -246,7 +246,7 @@ Declares the stable helper names that generators/frontends are allowed to target
 
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `stable_helpers = create, shared, unique, weak, value, ref, cast, to_string, identical, not_identical, concat_assign, echo_eval` | These helper entry points are part of the public contract. | `$x = new A(); echo $x; $a === $b;` | `::scpp::create<A>(); ::scpp::to_string(x); ::scpp::php::identical(a, b);` | Anything outside this list should not become a generator dependency without contract change. |
+| `stable_helpers = create, shared, unique, weak, value, ref, cast, to_string, identical, not_identical, concat_assign, echo_eval` | These helper entry points are part of the public contract. Member APIs such as `table_t::_find_val()` are documented separately and are not part of this free-helper list. | `$x = new A(); echo $x; $a === $b;` | `::scpp::create<A>(); ::scpp::to_string(x); ::scpp::php::identical(a, b);` | Anything outside this list should not become a generator dependency without contract change. |
 | `namespaces.core = scpp` | Core helpers live in `::scpp`. | `$x = 1;` | `::scpp::int_t x = ::scpp::int_t(1);` | This aligns type wrappers and helper entry points. |
 | `namespaces.php = scpp::php` | PHP-specific runtime helpers, when needed, live under a separate namespace. | `// frontend/runtime glue` | `::scpp::php::...;` | Keeps core runtime and PHP-facing glue separable. |
 | `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `echo $a, $b;` | `::scpp::php::echo_eval(...);` | Important because contract stability matters more than today’s internal implementation structure. |
@@ -259,6 +259,19 @@ Declares the stable helper names that generators/frontends are allowed to target
 This review document is intentionally semantic and curated. It covers all major content areas present in `config.json`, but it does so by extracting the meaningful rules rather than reproducing every raw field mechanically.
 
 
+## table_t shared object-like note
+
+`table_t` is the only dynamic storage type in this phase.
+
+Authoritative runtime interpretation:
+
+- PHP-array-like lowering targets `table_t`
+- object-like lowering uses `shared_p<table_t>`
+- `stdClass` wording is explanatory only and does not introduce a separate runtime type
+- missing object-like property read lowers through `_find_val()` and therefore yields stored `value_t` or `value_t(null_t{})` on miss
+- identity for shared-owned object-like values is pointer identity
+- raw `find()` remains stricter and preserves "found vs not found"
+
 ## table_t review note
 
 `table_t` is now the reviewed runtime type for PHP `array` lowering. Human review expectations:
@@ -266,6 +279,29 @@ This review document is intentionally semantic and curated. It covers all major 
 - public include remains `scpp/table_t.hpp`
 - implementation-bearing files may live in `include/scpp/support/`
 - `find()` is non-inserting and returns `maybe_value_t`
+- `_find_val()` is non-inserting and returns `value_t`; missing key returns stored-null semantics via `value_t(null_t{})`
 - `at()` is checked non-inserting access
 - non-const `operator[]` is inserting access
-- generator/read-only lowering should prefer `find()` over `operator[]`
+- generator/plain-read lowering should prefer `_find_val()` over `operator[]`
+- explicit presence-sensitive logic should continue to use `find()`
+
+## Dynamic Runtime Rule
+
+The configuration is a strict whitelist. Any operation, cast, or behavior not explicitly defined in config.json is forbidden.
+
+Dynamic runtime types (value_t, table_t) resolve operations at runtime. Once operand types are established, the operation must follow the same rules defined in this configuration.
+
+
+## value_t dynamic dispatch note
+
+Current runtime expectations for `value_t` in the dynamic subsystem:
+
+- `cast<T>(value_t)` is the central typed bridge and must enforce the same configured cast rules after runtime kind dispatch
+- typed C++ targets may auto-bridge from `value_t` through that cast layer; invalid conversions must fail at runtime
+- arithmetic and mutation on `value_t` resolve the active runtime kind(s) first, then follow normal Simple C++ operator rules
+- if the corresponding typed Simple C++ expression would be a compile error, dynamic `value_t` dispatch must fail at runtime instead
+- `value_t::_find_val()` is the chained dynamic read helper
+- `value_t::_find_val()` forwards for owned/shared table carriers, returns `value_t(null_t{})` for `null_v`, and currently returns `value_t(null_t{})` for expired weak-table carriers
+- `shared_table_v == shared_table_v` uses pointer identity
+- `shared_table_v == weak_table_v` uses the current recommendation: compare the locked pointer when the weak carrier is still alive, otherwise `false`
+- `table_v == table_v` is intended to be deep compare, but the current implementation may raise a runtime error until that path is implemented

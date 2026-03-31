@@ -82,10 +82,11 @@ final class TypeMapper
 
 		$mapped = $this->mapDeclaredType($phpType);
 		if ($explicitRef) {
-			return $this->appendLvalueReference($mapped);
+			$refProxy = $this->mapReferenceProxyType($phpType);
+			return $refProxy ?? $this->appendLvalueReference($mapped);
 		}
 
-		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<')) {
+		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<') || $mapped === 'table_t<value_t>') {
 			return 'const ' . $mapped . '&';
 		}
 
@@ -145,6 +146,32 @@ final class TypeMapper
 		return $this->mapDeclaredType($phpType);
 	}
 
+
+	public function mapReferenceProxyType(string $phpType): ?string
+	{
+		$normalized = trim($phpType);
+		return match ($normalized) {
+			'int' => 'ref_int_t',
+			'float' => 'ref_float_t',
+			'bool' => 'ref_bool_t',
+			'string' => 'ref_string_t',
+			'array' => 'ref_table_t',
+			default => null,
+		};
+	}
+
+	public function mapReferenceProxyFactory(string $phpType): ?string
+	{
+		$normalized = trim($phpType);
+		return match ($normalized) {
+			'int' => '::scpp::ref_int',
+			'float' => '::scpp::ref_float',
+			'bool' => '::scpp::ref_bool',
+			'string' => '::scpp::ref_string',
+			'array' => '::scpp::ref_table',
+			default => null,
+		};
+	}
 	public function isVectorType(string $phpType): bool
 	{
 		$normalized = trim($phpType);
@@ -416,6 +443,7 @@ final class TypeMapper
 			'float' => 'float_t',
 			'bool' => 'bool_t',
 			'string' => 'string_t',
+			'array' => 'table_t<value_t>',
 			'void' => 'void',
 			'vector_t' => 'vector_t',
 			default => $this->mapUserTypeName($phpType),
@@ -503,6 +531,6 @@ final class TypeMapper
 			return false;
 		}
 
-		return !in_array($phpType, ['int', 'float', 'bool', 'string', 'void', 'vector_t'], true);
+		return !in_array($phpType, ['int', 'float', 'bool', 'string', 'array', 'void', 'vector_t'], true);
 	}
 }

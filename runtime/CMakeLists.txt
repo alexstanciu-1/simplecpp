@@ -6,7 +6,6 @@ enable_testing()
 
 add_library(scpp_runtime
 	src/runtime.cpp
-	include/scpp/support/table_t.cpp
 )
 
 target_include_directories(scpp_runtime

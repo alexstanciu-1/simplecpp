@@ -42,6 +42,8 @@ final class Generator
 	private array $methodDecls = [];
 	/** @var array<string, ClassDecl> */
 	private array $classDecls = [];
+	/** @var array<string, string> */
+	private array $currentParamPassModes = [];
 	private ?string $currentReturnType = null;
 	/** @var null|array{returnType:?string,paramTypes:list<string>} */
 	private ?array $currentExpectedClosureSignature = null;
@@ -87,7 +89,7 @@ final class Generator
 	public function generate(PhpFile $file): CppFile
 	{
 		$this->declaredLocals = [];
-		$this->errors = [];
+		$this->errors = $file->buildErrors;
 		$this->localTypeComments = $file->localTypeCommentsByKey;
 		$this->declaredLocalTypes = [];
 		$this->tempCounter = 0;
@@ -99,7 +101,11 @@ final class Generator
 		$this->validatePhpFile($file);
 
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
-		$header = ['#pragma once', '', '#include <scpp/runtime.hpp>', ''];
+		$header = ['#pragma once', '', '#include <scpp/runtime.hpp>'];
+		foreach ($file->prologueIncludes as $includePath) {
+			$header[] = '#include "' . $includePath . '"';
+		}
+		$header[] = '';
 		$source = ['#include "' . $baseName . '.hpp"', ''];
 
 		$hasRootNamespaceContent = ($file->rootUses !== [] || $file->constants !== [] || $file->classes !== [] || $file->functions !== [] || $file->rootStatements !== []);
@@ -288,14 +294,21 @@ final class Generator
 	{
 		$lastParam = $params === [] ? null : $params[array_key_last($params)];
 		if (!$lastParam instanceof ParamDecl || !$lastParam->isVariadic) {
-			return $this->renderArgs($args, $namespacePhp);
+			$out = [];
+			foreach ($args as $index => $arg) {
+				$param = $params[$index] ?? null;
+				$out[] = $param instanceof ParamDecl
+					? $this->renderArgForParam($param, $arg, $namespacePhp)
+					: $this->renderExpr($arg, $namespacePhp);
+			}
+			return implode(', ', $out);
 		}
 
 		$fixedCount = count($params) - 1;
 		$out = [];
 		for ($i = 0; $i < $fixedCount; ++$i) {
 			if (array_key_exists($i, $args)) {
-				$out[] = $this->renderExpr($args[$i], $namespacePhp);
+				$out[] = $this->renderArgForParam($params[$i], $args[$i], $namespacePhp);
 			}
 		}
 
@@ -310,6 +323,27 @@ final class Generator
 
 		$out[] = '::scpp::vector_t<' . $variadicType . '>{' . implode(', ', $packedValues) . '}';
 		return implode(', ', $out);
+	}
+
+	private function renderArgForParam(ParamDecl $param, mixed $arg, ?string $namespacePhp): string
+	{
+		$rendered = $this->renderExpr($arg, $namespacePhp);
+		if ($param->type === null) {
+			return $rendered;
+		}
+		if (!$param->isReference) {
+			if ($param->type === 'array') {
+				return '::scpp::table_copy(' . $rendered . ')';
+			}
+			return $rendered;
+		}
+
+		$factory = $this->typeMapper->mapReferenceProxyFactory($param->type);
+		if ($factory === null) {
+			return $rendered;
+		}
+
+		return $factory . '(' . $rendered . ')';
 	}
 
 
@@ -425,6 +459,10 @@ final class Generator
 			}
 			if ($statement->kind === 'expr' || $statement->kind === 'return' || $statement->kind === 'echo' || $statement->kind === 'unset') {
 				$this->validateExprTree($statement->payload, $namespacePhp, $localKinds, $statement->line);
+				continue;
+			}
+			if ($statement->kind === 'include_or_eval') {
+				$this->errors[] = 'Simple C++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . $statement->line . '.';
 				continue;
 			}
 			if ($statement->kind === 'if') {
@@ -897,6 +935,136 @@ final class Generator
 
 	 */
 
+	/**
+	 * @param list<ParamDecl> $params
+	 * @param list<Statement> $statements
+	 * @return array<string, string>
+	 */
+	private function analyzeParamPassModes(array $params, array $statements): array
+	{
+		$modes = [];
+		$tracked = [];
+		foreach ($params as $param) {
+			if ($param->isReference || $param->isVariadic || $param->type === null) {
+				continue;
+			}
+
+			$mapped = $this->typeMapper->mapDeclaredType($param->type);
+			if ($mapped !== 'string_t' && $mapped !== 'table_t<value_t>' && !str_starts_with($mapped, 'vector_t<')) {
+				continue;
+			}
+
+			$modes[$param->name] = 'readonly';
+			$tracked[$param->name] = true;
+		}
+
+		if ($tracked === []) {
+			return $modes;
+		}
+
+		$this->markOwnedLocalParamsFromStatements($tracked, $modes, $statements);
+		return $modes;
+	}
+
+	/**
+	 * @param array<string, bool> $tracked
+	 * @param array<string, string> $modes
+	 * @param list<Statement> $statements
+	 */
+	private function markOwnedLocalParamsFromStatements(array $tracked, array &$modes, array $statements): void
+	{
+		foreach ($statements as $statement) {
+			if (!$statement instanceof Statement) {
+				continue;
+			}
+
+			if ($statement->kind === 'assign' || $statement->kind === 'assign_ref' || $statement->kind === 'assign_op') {
+				$targetRoot = $this->extractAssignmentRootVarName($statement->payload['var'] ?? null);
+				if ($targetRoot !== null && isset($tracked[$targetRoot])) {
+					$modes[$targetRoot] = 'owned_local';
+				}
+				continue;
+			}
+
+			if ($statement->kind === 'unset') {
+				$targetRoot = $this->extractAssignmentRootVarName($statement->payload);
+				if ($targetRoot !== null && isset($tracked[$targetRoot])) {
+					$modes[$targetRoot] = 'owned_local';
+				}
+				continue;
+			}
+
+			if ($statement->kind === 'expr') {
+				$targetRoot = $this->extractMutationExprRootVarName($statement->payload);
+				if ($targetRoot !== null && isset($tracked[$targetRoot])) {
+					$modes[$targetRoot] = 'owned_local';
+				}
+				continue;
+			}
+
+			if ($statement->kind === 'foreach') {
+				if ((bool) ($statement->payload['by_ref'] ?? false)) {
+					$sourceRoot = $this->extractSimpleVarName($statement->payload['expr'] ?? null);
+					if ($sourceRoot !== null && isset($tracked[$sourceRoot])) {
+						$modes[$sourceRoot] = 'owned_local';
+					}
+				}
+				$this->markOwnedLocalParamsFromStatements($tracked, $modes, $statement->payload['stmts'] ?? []);
+				continue;
+			}
+
+			if ($statement->kind === 'if') {
+				foreach ($statement->payload as $branch) {
+					$this->markOwnedLocalParamsFromStatements($tracked, $modes, $branch['stmts'] ?? []);
+				}
+				continue;
+			}
+
+			if ($statement->kind === 'while' || $statement->kind === 'do_while' || $statement->kind === 'for') {
+				$this->markOwnedLocalParamsFromStatements($tracked, $modes, $statement->payload['stmts'] ?? []);
+				continue;
+			}
+
+			if ($statement->kind === 'switch') {
+				foreach (($statement->payload['cases'] ?? []) as $case) {
+					$this->markOwnedLocalParamsFromStatements($tracked, $modes, $case['stmts'] ?? []);
+				}
+			}
+		}
+	}
+
+	private function extractAssignmentRootVarName(mixed $target): ?string
+	{
+		if (!is_object($target)) {
+			return null;
+		}
+
+		$kind = $target->kind ?? null;
+		if ($kind === AstKind::VAR) {
+			return $this->extractSimpleVarName($target);
+		}
+
+		if ($kind === AstKind::DIM) {
+			return $this->extractAssignmentRootVarName($target->children['expr'] ?? null);
+		}
+
+		return null;
+	}
+
+	private function extractMutationExprRootVarName(mixed $expr): ?string
+	{
+		if (!is_object($expr)) {
+			return null;
+		}
+
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::PRE_INC || $kind === AstKind::PRE_DEC || $kind === AstKind::POST_INC || $kind === AstKind::POST_DEC) {
+			return $this->extractAssignmentRootVarName($expr->children['var'] ?? null);
+		}
+
+		return null;
+	}
+
 	private function emitFunction(array &$header, array &$source, FunctionDecl $function, ?string $namespacePhp): void
 	{
 		$header[] = $this->renderFunctionDeclaration($function, $namespacePhp) . ';';
@@ -952,8 +1120,9 @@ final class Generator
 	private function renderMethodDeclaration(MethodDecl $method, ClassDecl|string|null $classDecl = null, ?string $namespacePhp = null): string
 	{
 		$className = is_string($classDecl) ? $classDecl : ($classDecl?->name);
+		$paramPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
 		if ($method->name === '__construct' && $className !== null) {
-			return $className . '(' . $this->renderParams($method->params, true, $namespacePhp) . ')';
+			return $className . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
 		}
 		if ($method->name === '__destruct' && $className !== null) {
 			return '~' . $className . '()';
@@ -963,7 +1132,7 @@ final class Generator
 			$prefix .= 'virtual ';
 		}
 		$returnType = $this->typeMapper->mapReturnType($method->returnType, $method->returnsByReference);
-		$declaration = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, true, $namespacePhp) . ')';
+		$declaration = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
 		if ($classDecl instanceof ClassDecl && $this->methodIsAbstract($method, $classDecl)) {
 			$declaration .= ' = 0';
 		}
@@ -1016,6 +1185,7 @@ final class Generator
 	{
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
+		$this->currentParamPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
 		foreach ($method->params as $param) {
 			$this->declaredLocals[$param->name] = true;
 			if ($param->type !== null) {
@@ -1034,17 +1204,18 @@ final class Generator
 					array_shift($statements);
 				}
 			}
-			$signature = $className . '::' . $className . '(' . $this->renderParams($method->params, false, $namespacePhp) . ')' . $initializer;
+			$signature = $className . '::' . $className . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes) . ')' . $initializer;
 		} elseif ($method->name === '__destruct') {
 			$this->currentReturnType = null;
 			$signature = $className . '::~' . $className . '()';
 		} else {
 			$returnType = $this->typeMapper->mapReturnType($method->returnType, $method->returnsByReference);
 			$this->currentReturnType = $returnType;
-			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp) . ')';
+			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
 		}
 		$body = $this->renderBody($statements, $namespacePhp);
 		$this->currentReturnType = null;
+		$this->currentParamPassModes = [];
 		return $signature . " {
 " . $body . "
 }";
@@ -1067,7 +1238,8 @@ final class Generator
 	private function renderFunctionDeclaration(FunctionDecl $function, ?string $namespacePhp = null): string
 	{
 		$returnType = $this->typeMapper->mapReturnType($function->returnType, $function->returnsByReference);
-		return $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, true, $namespacePhp) . ')';
+		$paramPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
+		return $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, true, $namespacePhp, $paramPassModes) . ')';
 	}
 
 	/**
@@ -1088,6 +1260,7 @@ final class Generator
 	{
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
+		$this->currentParamPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
 		foreach ($function->params as $param) {
 			$this->declaredLocals[$param->name] = true;
 			if ($param->type !== null) {
@@ -1096,9 +1269,10 @@ final class Generator
 		}
 		$returnType = $this->typeMapper->mapReturnType($function->returnType, $function->returnsByReference);
 		$this->currentReturnType = $returnType;
-		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp) . ')';
+		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
 		$body = $this->renderBody($function->statements, $namespacePhp);
 		$this->currentReturnType = null;
+		$this->currentParamPassModes = [];
 		return $signature . " {\n" . $body . "\n}";
 	}
 
@@ -1116,7 +1290,7 @@ final class Generator
 
 	 */
 
-	private function renderParams(array $params, bool $includeDefaults, ?string $namespacePhp): string
+	private function renderParams(array $params, bool $includeDefaults, ?string $namespacePhp, array $paramPassModes = []): string
 	{
 		$out = [];
 		foreach ($params as $param) {
@@ -1124,7 +1298,7 @@ final class Generator
 				$elementType = $param->type !== null ? $this->typeMapper->mapDeclaredType($param->type) : '/* ERROR missing-variadic-element-type */';
 				$type = 'const vector_t<' . $elementType . '>&';
 			} else {
-				$type = $param->type !== null ? $this->typeMapper->mapParamType($param->type, $param->isReference) : '/* ERROR missing-parameter-type */';
+				$type = $param->type !== null ? $this->renderParamTypeForMode($param, $paramPassModes[$param->name] ?? 'readonly') : '/* ERROR missing-parameter-type */';
 			}
 			$rendered = $type . ' ' . $param->name;
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
@@ -1148,6 +1322,24 @@ final class Generator
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 
 	 */
+
+	private function renderParamTypeForMode(ParamDecl $param, string $mode): string
+	{
+		if ($param->type === null) {
+			return '/* ERROR missing-parameter-type */';
+		}
+
+		$mapped = $this->typeMapper->mapDeclaredType($param->type);
+		if ($param->isReference) {
+			return $this->typeMapper->mapParamType($param->type, true);
+		}
+
+		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'table_t<value_t>' || str_starts_with($mapped, 'vector_t<'))) {
+			return $mapped;
+		}
+
+		return $this->typeMapper->mapParamType($param->type, false);
+	}
 
 	private function renderBody(array $statements, ?string $namespacePhp): string
 	{
@@ -1267,13 +1459,20 @@ final class Generator
 					$baseExpr = $varNode->children['expr'] ?? null;
 					$base = $this->renderExpr($baseExpr, $namespacePhp);
 					$value = $this->renderExpr($exprNode, $namespacePhp);
-					$tempName = $this->nextTempName('__append_value');
 					$baseType = $this->inferExprType($baseExpr);
+					$appendBase = ($baseType === 'value_t' || $baseType === 'maybe_value_t') ? ($base . '.as_table_ref()') : $base;
 					$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : 'append';
+					$appendValue = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $value : ('table_value_(' . $value . ')');
+					if ($this->shouldInlineAssignmentValue($exprNode)) {
+						return ['(void) ' . $appendBase . '.' . $appendMethod . '(' . $appendValue . ');'];
+					}
+
+					$tempName = $this->nextTempName('__append_value');
+					$storedTemp = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $tempName : ('table_value_(' . $tempName . ')');
 					return [
 						'{',
 							'auto ' . $tempName . ' = ' . $value . ';',
-							'(void) ' . $base . '.' . $appendMethod . '(' . $tempName . ');',
+							'(void) ' . $appendBase . '.' . $appendMethod . '(' . $storedTemp . ');',
 						'}',
 					];
 				}
@@ -1304,7 +1503,7 @@ final class Generator
 
 		if ($statement->kind === 'echo') {
 			// Keep the single-statement fallback lazy as well so operand evaluation order stays explicit.
-			return ['::scpp::php::echo_eval(' . $this->renderEchoThunk($statement->payload, $namespacePhp) . ');'];
+			return ['echo_eval(' . $this->renderEchoThunk($statement->payload, $namespacePhp) . ');'];
 		}
 
 		if ($statement->kind === 'unset') {
@@ -1321,7 +1520,7 @@ final class Generator
 				return [$base . '.remove(' . $dim . ');'];
 			}
 			// Preserve the generic runtime fallback for non-array/table forms.
-			return ['::scpp::php::unset(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
+			return ['unset(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
 		}
 
 		if ($statement->kind === 'if') {
@@ -1404,6 +1603,12 @@ final class Generator
 			return [$this->renderExpr($statement->payload, $namespacePhp) . ';'];
 		}
 
+		if ($statement->kind === 'include_or_eval') {
+			$error = 'Simple C++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . $statement->line . '.';
+			$this->errors[] = $error;
+			return ['// ERROR: ' . $error];
+		}
+
 		return ['// Unsupported statement'];
 	}
 
@@ -1428,12 +1633,20 @@ final class Generator
 		$indexName = '__scpp_foreach_i_' . $statement->line;
 		$elementExpr = $sourceExpr . '.at(' . $indexName . ')';
 		$valuePrefix = $byRef ? 'auto &' : 'auto ';
+		$sourceType = $this->inferExprType($payload['expr'] ?? null);
+		$valueStoredType = null;
+		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
+			$valueStoredType = $matches[1];
+		} elseif ($sourceType === 'table_t<value_t>' || $sourceType === 'table_t' || $sourceType === '::scpp::table_t' || $sourceType === '::scpp::table_t<value_t>') {
+			$valueStoredType = 'value_t';
+		}
 
 		$lines = [
 			'for (int_t ' . $indexName . ' = static_cast<int_t>(0); static_cast<bool>(' . $indexName . ' < static_cast<int_t>(' . $sourceExpr . '.size())); ++' . $indexName . ') {',
 		];
 
 		$scopedLocals = $this->declaredLocals;
+		$scopedLocalTypes = $this->declaredLocalTypes;
 
 		if ($keyName !== null) {
 			// Foreach key/value bindings are always emitted as fresh loop-local variables.
@@ -1441,16 +1654,21 @@ final class Generator
 			// foreach can still lower to a native C++ reference binding on every iteration.
 			$lines[] = $this->indent(1) . 'auto ' . $keyName . ' = ' . $indexName . ';';
 			$this->declaredLocals[$keyName] = true;
+			$this->declaredLocalTypes[$keyName] = 'int_t';
 		}
 
 		$lines[] = $this->indent(1) . $valuePrefix . $valueName . ' = ' . $elementExpr . ';';
 		$this->declaredLocals[$valueName] = true;
+		if ($valueStoredType !== null) {
+			$this->declaredLocalTypes[$valueName] = $valueStoredType;
+		}
 
 		foreach ($this->renderNestedStatements($payload['stmts'] ?? [], $namespacePhp) as $line) {
 			$lines[] = $line;
 		}
 
 		$this->declaredLocals = $scopedLocals;
+		$this->declaredLocalTypes = $scopedLocalTypes;
 		$lines[] = '}';
 		return $lines;
 	}
@@ -1507,7 +1725,7 @@ final class Generator
 					++$i;
 				}
 				--$i;
-				$lines[] = '::scpp::php::echo_eval(' . implode(', ', $thunks) . ');';
+				$lines[] = 'echo_eval(' . implode(', ', $thunks) . ');';
 				continue;
 			}
 
@@ -1723,7 +1941,15 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		return '::scpp::table_find_(' . $base . ', ' . $dim . ')';
+		if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
+			return 'table_dim_(' . $base . '.as_table_ref(), ' . $dim . ')';
+		}
+		if (is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)) {
+			return $base . '[' . $dim . ']';
+		}
+		// Plain PHP array reads lower through the slot-aware helper. C++ then decides
+		// whether the use site needs a value read or a typed reference-capable slot.
+		return 'table_dim_(' . $base . ', ' . $dim . ')';
 	}
 
 	private function renderDimWriteAccess(mixed $expr, ?string $namespacePhp): string
@@ -1740,6 +1966,9 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
+		if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
+			return $base . '.as_table_ref()[' . $dim . ']';
+		}
 		return $base . '[' . $dim . ']';
 	}
 
@@ -1752,22 +1981,58 @@ final class Generator
 			$baseType = $this->inferExprType($baseExpr);
 			$dimNode = $varNode->children['dim'] ?? null;
 			if ($dimNode === null) {
-				// PHP append assignment must evaluate the right-hand side exactly once.
-				$tempName = $this->nextTempName('__append_value');
+				$appendBase = ($baseType === 'value_t' || $baseType === 'maybe_value_t') ? ($base . '.as_table_ref()') : $base;
 				$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : 'append';
-				return '([&]() { auto ' . $tempName . ' = ' . $value . '; (void) ' . $base . '.' . $appendMethod . '(' . $tempName . '); return ' . $tempName . '; }())';
+				$appendValue = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $value : ('table_value_(' . $value . ')');
+				$returnValue = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $value : ('table_value_(' . $value . ')');
+				if ($this->shouldInlineAssignmentValue($valueNode)) {
+					return '([&]() { (void) ' . $appendBase . '.' . $appendMethod . '(' . $appendValue . '); return ' . $returnValue . '; }())';
+				}
+
+				// Non-trivial append assignments still spill into a temporary so the right-hand side is named once.
+				$tempName = $this->nextTempName('__append_value');
+				$storedTemp = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $tempName : ('table_value_(' . $tempName . ')');
+				return '([&]() { auto ' . $tempName . ' = ' . $value . '; (void) ' . $appendBase . '.' . $appendMethod . '(' . $storedTemp . '); return ' . $storedTemp . '; }())';
 			}
 			$dim = $this->renderExpr($dimNode, $namespacePhp);
 			if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 				return '(' . $base . '.at(' . $dim . ') = ' . $value . ')';
 			}
 			$tempName = $this->nextTempName('__set_value');
-			return '([&]() { auto ' . $tempName . ' = ' . $value . '; ' . $base . '.set(' . $dim . ', ' . $tempName . '); return ' . $tempName . '; }())';
+			$assignBase = ($baseType === 'value_t' || $baseType === 'maybe_value_t') ? ($base . '.as_table_ref()') : $base;
+			return '([&]() { auto ' . $tempName . ' = ' . $value . '; ' . $assignBase . '[' . $dim . '] = table_value_(' . $tempName . '); return table_value_(' . $tempName . '); }())';
 		}
 
 		$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
 		$value = $this->renderExpr($valueNode, $namespacePhp);
 		return '(' . $target . ' = ' . $value . ')';
+	}
+
+	private function shouldInlineAssignmentValue(mixed $expr): bool
+	{
+		if (is_int($expr) || is_float($expr) || is_string($expr) || is_bool($expr) || $expr === null) {
+			return true;
+		}
+
+		if (!is_object($expr)) {
+			return false;
+		}
+
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::VAR
+			|| $kind === AstKind::CONST
+			|| $kind === AstKind::CLASS_CONST
+			|| $kind === AstKind::NAME
+			|| $kind === AstKind::ARRAY) {
+			return true;
+		}
+
+		$magicConstKindName = AstKind::class . '::MAGIC_CONST';
+		if (defined($magicConstKindName) && $kind === constant($magicConstKindName)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private function nextTempName(string $prefix = '__tmp'): string
@@ -1870,7 +2135,7 @@ final class Generator
 
 			$checks = [];
 			foreach ($conditions as $condition) {
-				$checks[] = 'static_cast<bool>(::scpp::php::identical(' . $subjectName . ', ' . $this->renderExpr($condition, $namespacePhp) . '))';
+				$checks[] = 'static_cast<bool>(identical(' . $subjectName . ', ' . $this->renderExpr($condition, $namespacePhp) . '))';
 			}
 			$parts[] = 'if (' . implode(' || ', $checks) . ') {';
 			$parts[] = $this->indent(1) . 'return ' . $armExpr . ';';
@@ -2062,9 +2327,29 @@ final class Generator
 			}
 		}
 
-		return $this->renderExpr($expr, $namespacePhp);
+		$rendered = $this->renderExpr($expr, $namespacePhp);
+		if ($this->shouldCopyInitializerValue($expr)) {
+			return '::scpp::php::value_copy(' . $rendered . ')';
+		}
+
+		return $rendered;
 	}
 
+
+
+	private function shouldCopyInitializerValue(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::DIM)) {
+			return false;
+		}
+
+		$baseExpr = $expr->children['expr'] ?? null;
+		$baseType = $this->inferExprType($baseExpr);
+		return $baseType === 'table_t'
+			|| $baseType === '::scpp::table_t'
+			|| $baseType === 'table_t<value_t>'
+			|| $baseType === '::scpp::table_t<value_t>';
+	}
 
 	private function validateTypedWrapperInitializerFromNew(string $typedLocalType, object $expr, ?string $namespacePhp): ?string
 	{
@@ -2379,8 +2664,7 @@ final class Generator
 
 	private function mapClosureDocParamType(string $docType, bool $isReference): string
 	{
-		$mapped = $this->typeMapper->mapTypedLocalType($docType);
-		return $isReference ? $this->appendLvalueReferenceType($mapped) : $mapped;
+		return $this->typeMapper->mapParamType($docType, $isReference);
 	}
 
 	private function renderArrowFunctionExpr(object $expr, ?string $namespacePhp): string
@@ -2953,8 +3237,8 @@ final class Generator
 				AstKind::BINARY_IS_GREATER => '(' . $left . ' > ' . $right . ')',
 				AstKind::BINARY_IS_NOT_EQUAL => '(' . $left . ' != ' . $right . ')',
 				AstKind::BINARY_IS_EQUAL => '(' . $left . ' == ' . $right . ')',
-				AstKind::BINARY_IS_IDENTICAL => '::scpp::php::identical(' . $left . ', ' . $right . ')',
-				AstKind::BINARY_IS_NOT_IDENTICAL => '::scpp::php::not_identical(' . $left . ', ' . $right . ')',
+				AstKind::BINARY_IS_IDENTICAL => 'identical(' . $left . ', ' . $right . ')',
+				AstKind::BINARY_IS_NOT_IDENTICAL => 'not_identical(' . $left . ', ' . $right . ')',
 				257 => '(' . $left . ' >= ' . $right . ')',
 				AstKind::BINARY_COALESCE => $this->renderCoalesceExpr($leftNode, $rightNode, $namespacePhp),
 				default => '/* unsupported-binary-op-' . $flags . ' */',
@@ -2990,7 +3274,7 @@ final class Generator
 			$baseExpr = $expr->children['expr'] ?? null;
 			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
-			return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(::scpp::php::isset(__scpp_tmp)) ? __scpp_tmp->' . $prop . ' : null; }())';
+			return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(isset(__scpp_tmp)) ? __scpp_tmp->' . $prop . ' : null; }())';
 		}
 		if ($kind === AstKind::STATIC_PROP) {
 			return $this->renderStaticPropertyAccess($expr, $namespacePhp);
@@ -3028,7 +3312,7 @@ final class Generator
 					return '::scpp::table_has_(' . $base . ', ' . $dim . ')';
 				}
 			}
-			return '::scpp::php::isset(' . $this->renderExpr($varNode, $namespacePhp) . ')';
+			return 'isset(' . $this->renderExpr($varNode, $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr->children['expr'] ?? null;
@@ -3401,7 +3685,7 @@ final class Generator
 		}
 
 		if (isset($this->predefinedConstants[$trimmed])) {
-			return '::scpp::php::' . str_replace('\\', '::', $trimmed);
+			return str_replace('\\', '::', $trimmed);
 		}
 
 		return $this->renderSymbolPath($name, $flags, true);
@@ -3514,7 +3798,7 @@ final class Generator
 			if ($declared === null) {
 				return 'auto';
 			}
-			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || $declared === 'table_t' || $declared === '::scpp::table_t') {
+			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'value_t' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || $declared === 'table_t' || $declared === '::scpp::table_t' || $declared === 'table_t<value_t>' || $declared === '::scpp::table_t<value_t>') {
 				return $declared;
 			}
 			return $this->typeMapper->mapDeclaredType($declared);
@@ -3544,8 +3828,8 @@ final class Generator
 			if (preg_match('/^vector_t<(.+)>$/', $baseType, $matches) === 1) {
 				return $matches[1];
 			}
-			if ($baseType === 'table_t') {
-				return 'maybe_value_t';
+			if ($baseType === 'table_t' || $baseType === '::scpp::table_t' || $baseType === 'table_t<value_t>' || $baseType === '::scpp::table_t<value_t>' || $baseType === 'value_t' || $baseType === 'maybe_value_t') {
+				return 'value_t';
 			}
 			return 'auto';
 		}
@@ -3561,10 +3845,10 @@ final class Generator
 
 		if (preg_match('/^nullable<(.+)>$/', $leftType, $matches) === 1) {
 			$innerType = $matches[1];
-			return '(cast<bool>(::scpp::php::isset(' . $left . ')) ? cast<' . $innerType . '>(' . $left . ') : ' . $right . ')';
+			return '(cast<bool>(isset(' . $left . ')) ? cast<' . $innerType . '>(' . $left . ') : ' . $right . ')';
 		}
 
-		return '(cast<bool>(::scpp::php::isset(' . $left . ')) ? ' . $left . ' : ' . $right . ')';
+		return '(cast<bool>(isset(' . $left . ')) ? ' . $left . ' : ' . $right . ')';
 	}
 
 	private function inferConstantType(mixed $expr, ?string $namespacePhp): string

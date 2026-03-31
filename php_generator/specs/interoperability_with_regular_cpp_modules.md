@@ -21,7 +21,7 @@ Keeping the using-directive in generated `.cpp` files only localizes the conveni
 ## Constant policy
 The generator snapshots `get_defined_constants()` once at startup.
 
-- names found in that predefined-runtime snapshot are treated as PHP predefined/runtime constants and lower to `::scpp::php::...`
+- names found in that predefined-runtime snapshot are treated as PHP predefined/runtime constants and lower to unqualified helper/constant names inside generated source because the source namespace block already uses `using namespace ::scpp::php;`
 - user-defined non-class constants remain in the generated user namespace model
 - class constants keep their own class-constant lowering rules
 

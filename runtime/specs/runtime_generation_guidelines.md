@@ -243,8 +243,9 @@ Generation and manual updates for `table_t` must preserve these constraints:
 
 - public generated/runtime-facing code must target `scpp::table_t`, never donor `mem_container` names
 - the donor storage structure may be adapted, but public `table_t` semantics own the contract
-- non-const `operator[]` is inserting and must never be emitted for read-only array access
-- read-only keyed access should lower to `find()` unless checked failure semantics are explicitly desired, in which case `at()` is allowed
+- read-only array access should lower through the slot-aware `table_dim_(...)` helper; plain reads must stay non-materializing even though typed-reference contexts may bind through the same expression
+- read-only keyed access should lower to `table_dim_(...)`; presence-sensitive paths still use `find()` and checked-failure paths may use `at()`
+- text output of a slot-aware dim read must keep slot access non-materializing; route echo/stringification through the slot's value read, not through mutable-ref materialization
 - `set()` must overwrite existing keys
 - `append()` must follow `max_existing_int_key + 1`
 - `123` and `"123"` remain distinct keys at runtime
@@ -257,7 +258,7 @@ When generating, updating, or refactoring `table_t`, preserve these invariants:
 
 - `find()` must remain non-inserting
 - `at()` must remain checked and non-inserting
-- non-const `operator[]` may insert
+- raw mutating `operator[]` semantics are no longer the generator-facing read contract for `table_t<value_t>`
 - `set()` must overwrite existing keys
 - `append()` must use `max_existing_int_key + 1`
 - integer keys and string keys must remain distinct

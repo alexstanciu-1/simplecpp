@@ -23,6 +23,7 @@
 #include "scpp/weak_p.hpp"
 #include "scpp/value_p.hpp"
 #include "scpp/nullable.hpp"
+#include "scpp/value_t.hpp"
 #include "scpp/table_t.hpp"
 #include "scpp/memory.hpp"
 #include "scpp/cast.hpp"

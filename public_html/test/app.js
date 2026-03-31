@@ -1,6 +1,15 @@
 const form = document.getElementById('runner-form');
 const runButton = document.getElementById('run-button');
+const refreshTreeButton = document.getElementById('refresh-tree-button');
+const newFileButton = document.getElementById('new-file-button');
+const newDirButton = document.getElementById('new-dir-button');
+const renameEntryButton = document.getElementById('rename-entry-button');
+const deleteEntryButton = document.getElementById('delete-entry-button');
 const phpCodeBox = document.getElementById('php-code');
+const sandboxTreeBox = document.getElementById('sandbox-tree');
+const treeRootPathBox = document.getElementById('tree-root-path');
+const selectedFilePathBox = document.getElementById('selected-file-path');
+const saveFileButton = document.getElementById('save-file-button');
 const debugJsonBox = document.getElementById('debug-json');
 const copyDebugButton = document.getElementById('copy-debug-button');
 const cppHeaderCodeBox = document.getElementById('cpp-header-code');
@@ -13,6 +22,119 @@ const phpStatus = document.getElementById('php-status');
 const cppStatus = document.getElementById('cpp-status');
 const phpPane = document.getElementById('php-pane');
 const cppPane = document.getElementById('cpp-pane');
+const memTestEnabledBox = document.getElementById('mem-test-enabled');
+
+let selectedSandboxPath = '';
+let selectedSandboxPathDirty = false;
+let selectedSandboxEntryType = '';
+let sandboxTreeOpenPaths = new Set();
+
+function buildNoCacheUrl(path, params = {}) {
+	const url = new URL(path, window.location.href);
+	for (const [key, value] of Object.entries(params)) {
+		url.searchParams.set(key, String(value));
+	}
+	url.searchParams.set('ts', String(Date.now()) + '_' + Math.random().toString(16).slice(2));
+	return url.toString();
+}
+
+function captureSandboxTreeOpenState() {
+	const openPaths = new Set();
+	for (const node of sandboxTreeBox.querySelectorAll('.tree-dir')) {
+		if (node.open && node.dataset.path) {
+			openPaths.add(node.dataset.path);
+		}
+	}
+	sandboxTreeOpenPaths = openPaths;
+}
+
+function replaceOpenStatePathPrefix(oldPrefix, newPrefix) {
+	if (!oldPrefix || !newPrefix || oldPrefix === newPrefix) {
+		return;
+	}
+
+	const nextOpenPaths = new Set();
+	for (const path of sandboxTreeOpenPaths) {
+		if (path === oldPrefix || path.startsWith(`${oldPrefix}/`)) {
+			nextOpenPaths.add(newPrefix + path.slice(oldPrefix.length));
+			continue;
+		}
+		nextOpenPaths.add(path);
+	}
+	sandboxTreeOpenPaths = nextOpenPaths;
+}
+
+function removeOpenStatePathPrefix(prefix) {
+	if (!prefix) {
+		return;
+	}
+
+	const nextOpenPaths = new Set();
+	for (const path of sandboxTreeOpenPaths) {
+		if (path === prefix || path.startsWith(`${prefix}/`)) {
+			continue;
+		}
+		nextOpenPaths.add(path);
+	}
+	sandboxTreeOpenPaths = nextOpenPaths;
+}
+
+function preserveOpenStateForSandboxMutation(action, data, payload) {
+	captureSandboxTreeOpenState();
+
+	if (action === 'sandbox_create_dir' && payload.path) {
+		sandboxTreeOpenPaths.add(payload.path);
+		return;
+	}
+
+	if (action === 'sandbox_create_file') {
+		if (data.parent_path) {
+			sandboxTreeOpenPaths.add(data.parent_path);
+		}
+		return;
+	}
+
+	if (action === 'sandbox_delete_file') {
+		if (data.path) {
+			const lastSlashIndex = data.path.lastIndexOf('/');
+			if (lastSlashIndex > 0) {
+				sandboxTreeOpenPaths.add(data.path.slice(0, lastSlashIndex));
+			}
+		}
+		return;
+	}
+
+	if (action === 'sandbox_delete_dir' && data.path) {
+		const lastSlashIndex = data.path.lastIndexOf('/');
+		if (lastSlashIndex > 0) {
+			sandboxTreeOpenPaths.add(data.path.slice(0, lastSlashIndex));
+		}
+		removeOpenStatePathPrefix(data.path);
+		return;
+	}
+
+	if (action === 'sandbox_rename' && payload.old_path && payload.path) {
+		replaceOpenStatePathPrefix(payload.old_path, payload.path);
+		const lastSlashIndex = payload.path.lastIndexOf('/');
+		if (lastSlashIndex > 0) {
+			sandboxTreeOpenPaths.add(payload.path.slice(0, lastSlashIndex));
+		}
+		if (payload.type === 'dir') {
+			sandboxTreeOpenPaths.add(payload.path);
+		}
+		return;
+	}
+}
+
+function shouldDirectoryBeOpen(node) {
+	if (!node.path) {
+		return true;
+	}
+	if (sandboxTreeOpenPaths.has(node.path)) {
+		return true;
+	}
+	return node.depth <= 1;
+}
 
 function setStatus(node, state, text) {
 	node.classList.remove('state-ok', 'state-error', 'state-busy');
@@ -30,6 +152,22 @@ function setStatus(node, state, text) {
 
 function normalizeOutput(value) {
 	return String(value ?? '');
+}
+
+function refreshSelectedFileLabel() {
+	if (selectedSandboxPath === '') {
+		selectedFilePathBox.textContent = '(manual input)';
+		return;
+	}
+
+	selectedFilePathBox.textContent = selectedSandboxPathDirty ? `${selectedSandboxPath} *` : selectedSandboxPath;
+}
+
+function updateSelectedFileLabel(path, entryType = 'file') {
+	selectedSandboxPath = path || '';
+	selectedSandboxEntryType = selectedSandboxPath === '' ? '' : entryType;
+	selectedSandboxPathDirty = false;
+	refreshSelectedFileLabel();
 }
 
 function updateMatchState(payload) {
@@ -134,7 +272,7 @@ function formatStageLine(label, stage, previousExternalRssKb) {
 	}
 
 	return {
-		text: `- ${label}: ${parts.join(' | ' )}`,
+		text: `- ${label}: ${parts.join(' | ')}`,
 		nextExternalRssKb: memory.nextExternalRssKb,
 	};
 }
@@ -187,7 +325,7 @@ function formatTimingResources(metrics) {
 		totals.push(`Internal peak growth: ${formatBytes(totalInternalPeakDelta)}`);
 	}
 	lines.push('Summary');
-	lines.push(`- ${totals.join(' | ' )}`);
+	lines.push(`- ${totals.join(' | ')}`);
 
 	return lines.join('\n').trim();
 }
@@ -195,6 +333,328 @@ function formatTimingResources(metrics) {
 function renderDebugJson(payload) {
 	debugJsonBox.textContent = payload.debug_json || '';
 	timingResourcesBox.textContent = formatTimingResources(payload.timing_resources);
+}
+
+
+function escapeHtml(value) {
+	return String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+function createTreeActionButton(label, title, className, onClick) {
+	const button = document.createElement('button');
+	button.type = 'button';
+	button.className = `secondary-button tree-action-button ${className}`;
+	button.textContent = label;
+	button.title = title;
+	button.addEventListener('click', (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+		onClick();
+	});
+	return button;
+}
+
+function selectSandboxEntry(path, entryType) {
+	updateSelectedFileLabel(path, entryType);
+	highlightSelectedFileButton(path);
+}
+
+async function promptAndCreateDirectory(parentPath) {
+	const directoryName = window.prompt('New directory name:', 'new_dir');
+	if (directoryName === null) {
+		return;
+	}
+
+	await mutateSandbox('sandbox_create_dir', {
+		parent_path: parentPath,
+		name: directoryName,
+	});
+}
+
+async function promptAndCreateFile(parentPath) {
+	const fileName = window.prompt('New file name:', 'new_file.php');
+	if (fileName === null) {
+		return;
+	}
+
+	const payload = await mutateSandbox('sandbox_create_file', {
+		parent_path: parentPath,
+		name: fileName,
+	});
+
+	if (payload.path) {
+		await loadSandboxFile(payload.path);
+	}
+}
+
+async function promptAndRenameEntry(path, entryType) {
+	const currentName = path.split('/').filter(Boolean).pop() || '';
+	const nextName = window.prompt(`Rename ${entryType}:`, currentName);
+	if (nextName === null) {
+		return;
+	}
+
+	await mutateSandbox('sandbox_rename', {
+		path,
+		new_name: nextName,
+	});
+}
+
+async function confirmAndDeleteEntry(path, entryType) {
+	const confirmed = window.confirm(`Delete ${entryType} "${path}"?`);
+	if (!confirmed) {
+		return;
+	}
+
+	await mutateSandbox(entryType === 'dir' ? 'sandbox_delete_dir' : 'sandbox_delete_file', { path });
+}
+
+function buildTreeEntryLabel(name, actions) {
+	const wrapper = document.createElement('span');
+	wrapper.className = 'tree-entry';
+
+	const nameBox = document.createElement('span');
+	nameBox.className = 'tree-entry-name';
+	nameBox.textContent = name;
+	wrapper.appendChild(nameBox);
+
+	const actionsBox = document.createElement('span');
+	actionsBox.className = 'tree-entry-actions';
+	for (const action of actions) {
+		actionsBox.appendChild(action);
+	}
+	wrapper.appendChild(actionsBox);
+	return wrapper;
+}
+
+function createTreeDirSummaryContent(name, actions) {
+	const inner = document.createElement('span');
+	inner.className = 'tree-dir-summary-inner';
+
+	const caret = document.createElement('span');
+	caret.className = 'tree-dir-caret';
+	caret.setAttribute('aria-hidden', 'true');
+	inner.appendChild(caret);
+
+	inner.appendChild(buildTreeEntryLabel(name, actions));
+	return inner;
+}
+
+function renderTreeNode(node) {
+	if (node.type === 'dir') {
+		const details = document.createElement('details');
+		details.className = 'tree-dir';
+		details.dataset.path = node.path || '';
+		details.open = shouldDirectoryBeOpen(node);
+		details.addEventListener('toggle', () => {
+			if (!node.path) {
+				return;
+			}
+
+			if (details.open) {
+				sandboxTreeOpenPaths.add(node.path);
+			} else {
+				sandboxTreeOpenPaths.delete(node.path);
+			}
+		});
+
+		const summary = document.createElement('summary');
+		summary.appendChild(createTreeDirSummaryContent(node.name, [
+			createTreeActionButton('+F', 'Create file', 'tree-action-create-file', () => {
+				void promptAndCreateFile(node.path || '');
+			}),
+			createTreeActionButton('+D', 'Create directory', 'tree-action-create', () => {
+				void promptAndCreateDirectory(node.path || '');
+			}),
+			...(node.path ? [createTreeActionButton('R', 'Rename directory', 'tree-action-rename', () => {
+				void promptAndRenameEntry(node.path, 'dir');
+			})] : []),
+			...(node.path ? [createTreeActionButton('D', 'Delete directory', 'tree-action-delete', () => {
+				void confirmAndDeleteEntry(node.path, 'dir');
+			})] : []),
+		]));
+		summary.addEventListener('click', () => {
+			selectSandboxEntry(node.path || '', 'dir');
+		});
+		details.appendChild(summary);
+
+		const list = document.createElement('div');
+		list.className = 'tree-children';
+		for (const child of node.children || []) {
+			list.appendChild(renderTreeNode(child));
+		}
+		details.appendChild(list);
+		return details;
+	}
+
+	const row = document.createElement('div');
+	row.className = 'tree-file-row';
+
+	const button = document.createElement('button');
+	button.type = 'button';
+	button.className = 'tree-file';
+	button.textContent = node.name;
+	button.dataset.path = node.path;
+	button.addEventListener('click', () => {
+		void loadSandboxFile(node.path, button);
+	});
+	row.appendChild(button);
+
+	const actions = document.createElement('span');
+	actions.className = 'tree-entry-actions';
+	actions.appendChild(createTreeActionButton('R', 'Rename file', 'tree-action-rename', () => {
+		void promptAndRenameEntry(node.path, 'file');
+	}));
+	actions.appendChild(createTreeActionButton('D', 'Delete file', 'tree-action-delete', () => {
+		void confirmAndDeleteEntry(node.path, 'file');
+	}));
+	row.appendChild(actions);
+	return row;
+}
+
+function highlightSelectedFileButton(path) {
+	for (const node of sandboxTreeBox.querySelectorAll('.tree-file')) {
+		node.classList.toggle('is-selected', node.dataset.path === path);
+	}
+}
+
+async function loadSandboxTree(options = {}) {
+	const preserveCurrentDomState = options.preserveCurrentDomState !== false;
+	sandboxTreeBox.innerHTML = '';
+	treeRootPathBox.textContent = 'sandbox';
+
+	try {
+		if (preserveCurrentDomState) {
+			captureSandboxTreeOpenState();
+		}
+		const response = await fetch(buildNoCacheUrl('run.php', { action: 'sandbox_tree' }));
+		const payload = await response.json();
+		if (!response.ok || !payload.ok) {
+			throw new Error(payload.error || 'Failed to load sandbox tree.');
+		}
+
+		treeRootPathBox.textContent = 'sandbox';
+		if (!payload.tree || !Array.isArray(payload.tree.children) || payload.tree.children.length === 0) {
+			sandboxTreeBox.innerHTML = '<div class="tree-empty">No folders or files found in sandbox.</div>';
+			return;
+		}
+
+		for (const child of payload.tree.children) {
+			sandboxTreeBox.appendChild(renderTreeNode(child));
+		}
+		highlightSelectedFileButton(selectedSandboxPath);
+	} catch (error) {
+		treeRootPathBox.textContent = 'sandbox';
+		sandboxTreeBox.innerHTML = `<div class="tree-empty">${error.message}</div>`;
+	}
+}
+
+async function loadSandboxFile(path, clickedNode = null) {
+	updateSelectedFileLabel(path, 'file');
+	highlightSelectedFileButton(path);
+	if (clickedNode) {
+		clickedNode.blur();
+	}
+
+	try {
+		const response = await fetch(buildNoCacheUrl('run.php', { action: 'sandbox_file', path }));
+		const payload = await response.json();
+		if (!response.ok || !payload.ok) {
+			throw new Error(payload.error || 'Failed to read sandbox file.');
+		}
+
+		phpCodeBox.value = payload.content || '';
+	} catch (error) {
+		updateSelectedFileLabel('', '');
+		highlightSelectedFileButton('');
+		debugJsonBox.textContent = JSON.stringify({ sandbox_file_error: error.message, path }, null, '	');
+	}
+}
+
+
+async function fetchJson(url, options = {}) {
+	const response = await fetch(buildNoCacheUrl(url), options);
+	const payload = await response.json();
+	if (!response.ok || !payload.ok) {
+		throw new Error(payload.error || 'Request failed.');
+	}
+	return payload;
+}
+
+async function mutateSandbox(action, data) {
+	const payload = await fetchJson(`run.php?action=${encodeURIComponent(action)}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(data),
+	});
+
+	preserveOpenStateForSandboxMutation(action, data, payload);
+
+	if (action === 'sandbox_create_file' && payload.path) {
+		updateSelectedFileLabel(payload.path, 'file');
+	}
+	if (action === 'sandbox_delete_file' && selectedSandboxPath === data.path) {
+		updateSelectedFileLabel('', '');
+		phpCodeBox.value = '';
+	}
+	if (action === 'sandbox_delete_dir' && selectedSandboxPath !== '' && (selectedSandboxPath === data.path || selectedSandboxPath.startsWith(`${data.path}/`))) {
+		updateSelectedFileLabel('', '');
+		phpCodeBox.value = '';
+	}
+	if (action === 'sandbox_rename' && selectedSandboxPath !== '' && payload.old_path) {
+		if (selectedSandboxPath === payload.old_path || selectedSandboxPath.startsWith(`${payload.old_path}/`)) {
+			const replacementPath = selectedSandboxPath === payload.old_path
+				? payload.path
+				: payload.path + selectedSandboxPath.slice(payload.old_path.length);
+				updateSelectedFileLabel(replacementPath, payload.type || selectedSandboxEntryType || 'file');
+		}
+	}
+
+	await loadSandboxTree({ preserveCurrentDomState: false });
+
+	if (payload.path && payload.type === 'file' && (action === 'sandbox_rename' || action === 'sandbox_save_file')) {
+		updateSelectedFileLabel(payload.path, 'file');
+		highlightSelectedFileButton(payload.path);
+	}
+	return payload;
+}
+
+async function saveSelectedSandboxFile() {
+	if (selectedSandboxPath === '') {
+		window.alert('Select a sandbox file first.');
+		return;
+	}
+	if (selectedSandboxEntryType !== 'file') {
+		window.alert('Only files can be saved.');
+		return;
+	}
+
+	saveFileButton.disabled = true;
+	const previousText = saveFileButton.textContent;
+	try {
+		await mutateSandbox('sandbox_save_file', {
+			path: selectedSandboxPath,
+			content: phpCodeBox.value,
+		});
+		selectedSandboxPathDirty = false;
+		refreshSelectedFileLabel();
+		saveFileButton.textContent = 'Saved';
+	} catch (error) {
+		saveFileButton.textContent = 'Save failed';
+		throw error;
+	} finally {
+		window.setTimeout(() => {
+			saveFileButton.textContent = previousText;
+			saveFileButton.disabled = false;
+		}, 1200);
+	}
 }
 
 async function runComparison() {
@@ -212,52 +672,37 @@ async function runComparison() {
 	cppPane.classList.remove('match-ok', 'has-error');
 
 	try {
-		const response = await fetch('run.php', {
+		const payload = await fetchJson('run.php', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify({ php_code: phpCodeBox.value }),
+			body: JSON.stringify({
+				php_code: phpCodeBox.value,
+				selected_sandbox_path: selectedSandboxPath,
+				mem_test_enabled: memTestEnabledBox.checked,
+			}),
 		});
-
-		const payload = await response.json();
 		renderDebugJson(payload);
-
-		if (!response.ok || !payload.ok) {
-			throw new Error(payload.error || 'Request failed.');
-		}
 
 		cppHeaderCodeBox.textContent = payload.generator_header_display || '';
 		cppCodeBox.textContent = payload.generator_source_display || '';
 		phpOutputBox.textContent = payload.php_error || payload.php_output || '';
 		cppOutputBox.textContent = payload.cpp_error || payload.cpp_output || '';
 
-		setStatus(
-			generatorStatus,
-			payload.generator_error ? 'error' : 'ok',
-			payload.generator_error ? 'generator error' : 'ok'
-		);
-		setStatus(
-			phpStatus,
-			payload.php_error ? 'error' : 'ok',
-			payload.php_error ? 'php error' : 'ok'
-		);
-		setStatus(
-			cppStatus,
-			payload.cpp_error ? 'error' : 'ok',
-			payload.cpp_error ? 'c++ error' : 'ok'
-		);
-
+		setStatus(generatorStatus, payload.generator_error ? 'error' : 'ok', payload.generator_error ? 'error' : 'ok');
+		setStatus(phpStatus, payload.php_error ? 'error' : 'ok', payload.php_error ? 'error' : 'ok');
+		setStatus(cppStatus, payload.cpp_error ? 'error' : 'ok', payload.cpp_error ? 'error' : 'ok');
 		updateMatchState(payload);
 	} catch (error) {
-		const message = String(error.message || error);
+		const message = error instanceof Error ? error.message : String(error);
 		cppHeaderCodeBox.textContent = message;
 		cppCodeBox.textContent = '';
 		phpOutputBox.textContent = '';
 		cppOutputBox.textContent = '';
 		timingResourcesBox.textContent = '';
 		if (debugJsonBox.textContent === '') {
-			debugJsonBox.textContent = JSON.stringify({ request_error: message }, null, '\t');
+			debugJsonBox.textContent = JSON.stringify({ request_error: message }, null, '	');
 		}
 		setStatus(generatorStatus, 'error', 'request error');
 		setStatus(phpStatus, 'error', 'n/a');
@@ -286,7 +731,64 @@ copyDebugButton.addEventListener('click', async () => {
 	}
 });
 
+refreshTreeButton.addEventListener('click', () => {
+	void loadSandboxTree();
+});
+
+newFileButton.addEventListener('click', () => {
+	const parentPath = selectedSandboxEntryType === 'dir' ? selectedSandboxPath : '';
+	void promptAndCreateFile(parentPath);
+});
+
+newDirButton.addEventListener('click', () => {
+	const parentPath = selectedSandboxEntryType === 'dir' ? selectedSandboxPath : '';
+	void promptAndCreateDirectory(parentPath);
+});
+
+renameEntryButton.addEventListener('click', () => {
+	if (selectedSandboxPath === '') {
+		window.alert('Select a sandbox file or directory first.');
+		return;
+	}
+	void promptAndRenameEntry(selectedSandboxPath, selectedSandboxEntryType || 'file');
+});
+
+deleteEntryButton.addEventListener('click', () => {
+	if (selectedSandboxPath === '') {
+		window.alert('Select a sandbox file or directory first.');
+		return;
+	}
+	void confirmAndDeleteEntry(selectedSandboxPath, selectedSandboxEntryType || 'file');
+});
+
+saveFileButton.addEventListener('click', () => {
+	void saveSelectedSandboxFile().catch((error) => {
+		window.alert(error instanceof Error ? error.message : String(error));
+	});
+});
+
+phpCodeBox.addEventListener('input', () => {
+	if (selectedSandboxPath === '') {
+		return;
+	}
+
+	selectedSandboxPathDirty = true;
+	refreshSelectedFileLabel();
+});
+
 form.addEventListener('submit', (event) => {
 	event.preventDefault();
 	void runComparison();
 });
+
+document.addEventListener('keydown', (event) => {
+	if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+		event.preventDefault();
+		void saveSelectedSandboxFile().catch((error) => {
+			window.alert(error instanceof Error ? error.message : String(error));
+		});
+	}
+});
+
+updateSelectedFileLabel('');
+void loadSandboxTree();

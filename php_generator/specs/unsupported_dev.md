@@ -22,6 +22,9 @@ $obj->newProp = 1; // ❌
 
 ## Include
 require "file.php"; // ❌
+include "file.php"; // ❌
+require_once __DIR__ . "/file.php"; // ❌
+require_once "file.php"; // ✅ compile-time #include subset only
 
 ## Typing
 $x = 10;

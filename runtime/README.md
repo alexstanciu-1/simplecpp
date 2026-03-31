@@ -41,4 +41,4 @@ This runtime was generated from:
 - public include stays `scpp/table_t.hpp`; implementation lives under `include/scpp/support/`.
 - `find()` is the non-inserting lookup path.
 - `at()` is checked non-inserting access with throw-style semantics.
-- non-const `operator[]` is inserting access and must not be used by the generator for read-only lookups.
+- generator-facing non-assignment dim access is slot-aware (`table_dim_(...)` / `table_t<value_t>::operator[]`), so plain reads stay null-on-miss while typed-reference contexts can still bind.

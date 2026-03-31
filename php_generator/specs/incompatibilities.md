@@ -125,7 +125,7 @@ echo ($a + $b) * $c;
 
 Observed generated C++:
 ```cpp
-::scpp::php::echo(a + b * c);
+echo(a + b * c);
 ```
 
 **Impact**  

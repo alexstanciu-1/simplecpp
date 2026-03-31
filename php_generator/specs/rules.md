@@ -231,14 +231,29 @@ Examples:
 
 ---
 
+## 10A. File Prologue `require_once` Subset
+
+- `require_once` is supported only as a static compile-time include in the file prologue
+- only the exact literal-string form is supported: `require_once "path/file.php";`
+- `require_once` is rejected after any non-prologue construct
+- before `require_once`, only comments and `declare(...);` are allowed
+- `namespace`, `use`, constants, classes, functions, and executable statements close the prologue
+- `require_once` is not allowed inside namespaces, functions, methods, classes, or executable statement blocks
+- dynamic include expressions are rejected, including `__DIR__` concatenation and any computed path form
+- the generator does not check file existence and does not read or transpile the required file
+- lowering is purely textual at generation time: `.php` suffixes map to `.hpp` and the generated header emits `#include "..."`
+
+---
+
 ## 11. Rejected Features
 
 - reduced PHP array subset (see catalog rows `ARR-*`)
 - `stdClass` / object iteration
-- `foreach` by value and by reference are supported for `vector_t` only
+- `foreach` by value and by reference are supported for `vector_t` and for the current packed `table_t<value_t>` surface
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
+- for `table_t<value_t>` foreach, the value variable binds as `value_t` / `value_t&`; when that loop variable is later indexed as an array, lowering routes through `value_t::as_table_ref()` so nested array writes inside the loop target the referenced table value
 - explicit function/method reference returns lower to native C++ reference signatures (`T&` or `auto&`) and must return lvalue-capable expressions without copyification
-- `include` / `require`
+- `include`, `include_once`, and `require`
 - `and` / `or` / `xor`
 - untyped parameters
 - function or method overloading
@@ -257,9 +272,10 @@ Supported array lowering is intentionally narrow and split by target typing.
 - untyped `[v1, v2, ...]` lowers to `::scpp::table_new_(::scpp::table_item_(...), ...)`
 - untyped `["k" => v]` lowers to `::scpp::table_new_(::scpp::table_kv_("k", ...))`
 - nested untyped arrays recurse through the same `table_new_ / table_item_ / table_kv_` helpers
-- PHP array reads lower to `find(...)`, not `at(...)`
+- PHP array reads lower to `table_dim_(...)`, not `at(...)` or raw `operator[]` mutation paths
+- native PHP `array` type declarations lower to `table_t<value_t>`; by-value parameters use a read-only analysis: proven read-only params lower to `const table_t<value_t>&`, while proven write/reassign params lower to owning `table_t<value_t>` and `array &` parameters lower to `table_t<value_t>&`
 - PHP keyed writes lower to `set(...)`
-- PHP append writes lower to `append(...)`
+- PHP append writes lower to `append(...)`; simple right-hand sides inline directly, while non-trivial right-hand sides may spill into a temporary to keep assignment-style lowering explicit
 - `unset($a[k])` lowers to `remove(k)`
 - `isset($a[k])` lowers to `has(k)` as a documented v1 approximation
 
@@ -271,7 +287,7 @@ Supported array lowering is intentionally narrow and split by target typing.
 ### Intentional v1 deviations from PHP
 - `table_t` keeps integer keys and string keys distinct (`1` != `"1"`)
 - `isset($a[k])` lowered through `has(k)` does not implement PHP's null-sensitive `isset` behavior yet
-- `at(...)` remains a runtime checked-access API and is not used for normal PHP array reads
+- `table_dim_(...)` is the slot-aware read helper: plain reads stay null-on-miss, while typed-reference contexts may bind through the returned slot. `find(...)` remains reserved for presence-sensitive logic; `at(...)` remains a runtime checked-access API and is not used for normal PHP array reads
 
 ## 12. Incompatibilities
 
@@ -599,12 +615,12 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-The generator snapshots `get_defined_constants()` once at startup. Constants found in that predefined-runtime snapshot are lowered through `::scpp::php`, while user-defined constants stay in the generated user namespace model.
+The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp::php;`. User-defined constants stay in the generated user namespace model.
 
 Examples:
 ```cpp
 auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp::php;`
-auto b = ::scpp::php::PHP_INT_MAX;   // explicit form
+auto b = ::scpp::php::PHP_INT_MAX;   // fully qualified fallback form when no using-directive is present
 auto c = LIMIT;                      // user-defined constant in the current generated namespace
 auto d = ::scpp::A::B::LIMIT;        // user-defined constant in another generated namespace
 ```
@@ -743,7 +759,7 @@ These PHP semantics must go through the `php::` layer:
 - strict equality `===` -> `php::identical(...)`
 - strict inequality `!==` -> `php::not_identical(...)`
 - both helpers return `bool_t`, not native `bool`, because they are PHP-semantic runtime operations
-- predefined/runtime constants discovered from `get_defined_constants()` -> `::scpp::php::...`
+- predefined/runtime constants discovered from `get_defined_constants()` -> unqualified `...` inside generated source (`using namespace ::scpp::php;`)
 - user-defined non-class constants -> generated user namespace path (no `::scpp::php` remapping)
 
 ## 13. Simple C++ runtime/helper boundary rules
@@ -879,7 +895,7 @@ Rules:
 
 ## 17. Output rules
 
-- generated code currently routes output through `::scpp::php::echo_eval(...)`
+- generated code currently routes output through `echo_eval(...)`
 - lowering must preserve the exporter shape while preserving left-to-right echo operand evaluation
 - for the current exporter:
 	- each `AST_ECHO` node carries one operand
@@ -889,8 +905,8 @@ Rules:
 
 Examples:
 ```cpp
-::scpp::php::echo_eval([&]() -> decltype(auto) { return a; });
-::scpp::php::echo_eval(
+echo_eval([&]() -> decltype(auto) { return a; });
+echo_eval(
 	[&]() -> decltype(auto) { return a; },
 	[&]() -> decltype(auto) { return b; },
 	[&]() -> decltype(auto) { return c; }
@@ -1040,3 +1056,36 @@ Not supported:
 
 This matches PHP behavior.
 
+
+
+## Nested table dim support
+
+- Nested table dim reads chain through slot access so `$x["inner"][0]` stays slot-aware.
+- Nested append on a table-valued slot is supported through `table_slot_t::append(...)`.
+- Table-valued assignments into table slots are wrapped with `table_value_(...)` so nested tables store as `value_t`.
+
+
+## Array argument materialization
+
+- A typed PHP `array` parameter passed **by value** must preserve PHP copy semantics.
+- The lowered function signature now uses a two-mode rule for mutable composite by-value params (`table_t`, `string_t`, `vector_t`).
+  - Proven read-only body usage lowers to `const T&`.
+  - Proven writes, nested write roots, reassignment, and `foreach (... as &...)` lower to owning `T`.
+  - Explicit PHP `&` still lowers to `T&`.
+- If the generator cannot prove a write, it keeps the param read-only and lets the C++ compiler reject downstream mutation attempts.
+- Copy isolation stays a **call-site** responsibility for read-only `const T&` params, not a hidden callee-signature responsibility.
+- When the argument expression lowers to a `table_slot_t` (for example `$x[0]`), the generator must materialize a **table copy** before the call.
+- Lowering rule:
+  - PHP: `fn(array $row)` with call `fn($x[0])`
+  - C++ signature: `void fn(const table_t<value_t>& row)`
+  - C++ call: `fn(::scpp::table_copy(table_dim_(x, 0)))`
+- Do **not** bind nested slots directly as `table_t<value_t>&` for by-value parameters.
+- Do **not** switch every by-value `array` param to pass-by-value preemptively; use pass-by-value only when the body proves that an owning local is required.
+
+## Warning: reassignment of by-value composite params
+
+- Reassigning a by-value parameter of type `array`, `string`, or `vector_t<...>` is supported, but it is **not recommended** for large values.
+- Once the function body proves a reassignment or write on that parameter, the emitted C++ signature becomes owning `T x` instead of `const T& x`.
+- That means the **entire incoming value is copied at function entry**.
+- This can be expensive for large `table_t`, `string_t`, or `vector_t` values, even if the original incoming value is used only briefly before reassignment.
+- Prefer introducing a new local variable instead of overwriting the parameter when avoiding that full copy matters.

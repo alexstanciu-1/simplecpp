@@ -52,14 +52,16 @@ final class IrBuilder
 			constants: $top['constants'],
 			classes: $top['classes'],
 			functions: $top['functions'],
+			prologueIncludes: $top['prologueIncludes'],
 			rootStatements: $top['statements'],
 			localTypeCommentsByKey: $this->typeCommentsByKey,
+			buildErrors: $top['errors'],
 		);
 	}
 
 	/**
 	 * @param array<int, mixed> $nodes
-	 * @return array{namespaces:list<NamespaceBlock>,uses:list<UseDecl>,constants:list<ConstantDecl>,classes:list<ClassDecl>,functions:list<FunctionDecl>,statements:list<Statement>}
+	 * @return array{namespaces:list<NamespaceBlock>,uses:list<UseDecl>,constants:list<ConstantDecl>,classes:list<ClassDecl>,functions:list<FunctionDecl>,prologueIncludes:list<string>,statements:list<Statement>,errors:list<string>}
 	 */
 	private function collectBlock(array $nodes, ?string $currentNamespace): array
 	{
@@ -68,9 +70,13 @@ final class IrBuilder
 		$constants = [];
 		$classes = [];
 		$functions = [];
+		$prologueIncludes = [];
 		$statements = [];
+		$errors = [];
 		$namespaceBuckets = [];
 		$activeNamespace = $currentNamespace;
+		$allowPrologueRequireOnce = $currentNamespace === null;
+		$prologueClosed = false;
 
 		foreach ($nodes as $node) {
 			if (!is_object($node)) {
@@ -78,6 +84,27 @@ final class IrBuilder
 			}
 
 			$kind = $node->kind ?? null;
+
+			if ($allowPrologueRequireOnce && !$prologueClosed && $kind === AstKind::DECLARE) {
+				continue;
+			}
+
+			if ($kind === AstKind::INCLUDE_OR_EVAL) {
+				if ($allowPrologueRequireOnce && !$prologueClosed && $activeNamespace === null) {
+					$includePath = $this->buildRequireOnceIncludePath($node, (int) ($node->lineno ?? 0), $errors);
+					if ($includePath !== null) {
+						$prologueIncludes[] = $includePath;
+					}
+					continue;
+				}
+
+				$errors[] = 'Simple C++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . (int) ($node->lineno ?? 0) . '.';
+				continue;
+			}
+			if ($allowPrologueRequireOnce && !$prologueClosed) {
+				$prologueClosed = true;
+			}
+
 			if ($kind === AstKind::NAMESPACE) {
 				$children = $node->children ?? [];
 				$name = (string) ($children['name'] ?? '');
@@ -86,6 +113,9 @@ final class IrBuilder
 
 				if (is_object($stmtsNode) && isset($stmtsNode->children) && is_array($stmtsNode->children)) {
 					$collected = $this->collectBlock($stmtsNode->children ?? [], $fullName);
+					foreach ($collected['errors'] as $error) {
+						$errors[] = $error;
+					}
 					if ($collected['uses'] !== [] || $collected['constants'] !== [] || $collected['classes'] !== [] || $collected['functions'] !== [] || $collected['statements'] !== []) {
 						$rootNamespaces[] = new NamespaceBlock(
 							name: $fullName,
@@ -182,8 +212,28 @@ final class IrBuilder
 			'constants' => $constants,
 			'classes' => $classes,
 			'functions' => $functions,
+			'prologueIncludes' => $prologueIncludes,
 			'statements' => $statements,
+			'errors' => $errors,
 		];
+	}
+
+	/** @param list<string> $errors */
+	private function buildRequireOnceIncludePath(mixed $node, int $line, array &$errors): ?string
+	{
+		$flags = (int) ($node->flags ?? 0);
+		if ($flags !== AstKind::EXEC_REQUIRE_ONCE) {
+			$errors[] = 'Simple C++ supports require_once only as a static compile-time include with a literal path at line ' . $line . '.';
+			return null;
+		}
+
+		$expr = $node->children['expr'] ?? null;
+		if (!is_string($expr) || trim($expr) === '') {
+			$errors[] = 'Simple C++ supports require_once only as a static compile-time include with a literal path at line ' . $line . '.';
+			return null;
+		}
+
+		return preg_replace('/\.php$/', '.hpp', $expr) ?? $expr;
 	}
 
 	/**
@@ -708,6 +758,13 @@ final class IrBuilder
 			return new Statement('continue', $node->children['depth'] ?? null, $line);
 		}
 
+		if ($kind === AstKind::INCLUDE_OR_EVAL) {
+			return new Statement('include_or_eval', [
+				'expr' => $node->children['expr'] ?? null,
+				'flags' => (int) ($node->flags ?? 0),
+			], $line);
+		}
+
 		if ($kind === AstKind::VAR) {
 			$name = (string) (($node->children ?? [])['name'] ?? '');
 			$typed = $name !== '' ? $this->lookupTypeComment($line, $name) : null;
@@ -793,6 +850,7 @@ final class IrBuilder
 			AstKind::TYPE_LONG => 'int',
 			AstKind::TYPE_DOUBLE => 'float',
 			AstKind::TYPE_STRING => 'string',
+			AstKind::TYPE_ARRAY => 'array',
 			default => null,
 		};
 	}

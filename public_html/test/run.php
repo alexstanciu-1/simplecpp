@@ -5,6 +5,9 @@ declare(strict_types=1);
 use Scpp\S2S\Transpiler;
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 $response = [
 	'ok' => false,
@@ -30,17 +33,20 @@ $response = [
 ];
 
 try {
+	$action = (string) ($_GET['action'] ?? '');
+	if ($action !== '') {
+		handleUtilityAction($action);
+		return;
+	}
+
 	if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 		throw new RuntimeException('POST required.');
 	}
 
-	$raw = file_get_contents('php://input');
-	$data = json_decode($raw ?: '{}', true);
-	if (!is_array($data)) {
-		throw new RuntimeException('Invalid JSON request body.');
-	}
+	$data = readJsonRequestBody();
 
 	$phpCode = trim((string) ($data['php_code'] ?? ''));
+	$memTestEnabled = (bool) ($data['mem_test_enabled'] ?? false);
 	if ($phpCode === '') {
 		throw new RuntimeException('PHP code is empty.');
 	}
@@ -143,25 +149,29 @@ try {
 		$cppBinaryPath = $tempRoot . '/snippet.out';
 		$compileInputPath = $tempRoot . '/snippet.build.cpp';
 		file_put_contents($compileInputPath, buildNaturalCompileUnit($cppFile->headerLines, $cppFile->sourceLines));
+
+		$runtimeCacheStage = measureStage(static function () use ($projectRoot, $memTestEnabled): array {
+			return ensureRuntimeArchive($projectRoot, $memTestEnabled);
+		});
+		$runtimeArchive = (string) $runtimeCacheStage['result']['archive_path'];
+		$runtimeCacheMetrics = stageMetricsFromMeasured($runtimeCacheStage, 'C++ runtime cache');
+		$runtimeCacheMetrics['cache_status'] = (string) ($runtimeCacheStage['result']['status'] ?? 'unknown');
+		$runtimeCacheMetrics['archive_path'] = $runtimeArchive;
+		$runtimeCacheMetrics['mode'] = $memTestEnabled ? 'asan' : 'default';
+		$timingResources['compile_cpp_runtime_cache'] = $runtimeCacheMetrics;
+
 		$compileRun = runCommandMeasured(
-			[
-				'g++',
-				'-std=c++23',
-				'-O3',
-				$compileInputPath,
-				$projectRoot . '/runtime/src/runtime.cpp',
-				'-I',
-				$projectRoot . '/runtime/include',
-				'-o',
-				$cppBinaryPath,
-			],
+			buildSampleCompileCommand($projectRoot, $compileInputPath, $runtimeArchive, $cppBinaryPath, $memTestEnabled),
 			$tempRoot,
 			40
 		);
 		$response['cpp_compile_output'] = normalizeCommandOutput($compileRun['stdout']);
 		$response['cpp_compile_error'] = buildProcessErrorText('C++ compile', $compileRun);
 		$response['cpp_compile_exit_code'] = $compileRun['exit_code'];
-		$timingResources['compile_cpp'] = externalMetricsFromRun('C++ compile', $compileRun);
+		$compileMetrics = externalMetricsFromRun('C++ compile', $compileRun);
+		$compileMetrics['mode'] = $memTestEnabled ? 'sample_plus_cached_runtime_archive_asan' : 'sample_plus_cached_runtime_archive';
+		$compileMetrics['mem_test_enabled'] = $memTestEnabled;
+		$timingResources['compile_cpp'] = $compileMetrics;
 
 		if ($compileRun['exit_code'] !== 0) {
 			$response['cpp_error'] = $response['cpp_compile_error'];
@@ -199,6 +209,379 @@ try {
 	echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 }
 
+function handleUtilityAction(string $action): void
+{
+	header('Content-Type: application/json; charset=utf-8');
+	header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+	header('Pragma: no-cache');
+	header('Expires: 0');
+
+	$root = getSandboxRootPath();
+	if ($action === 'sandbox_tree') {
+		$payload = [
+			'ok' => true,
+			'root_display' => $root,
+			'tree' => buildSandboxTreePayload($root),
+		];
+		echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	if ($action === 'sandbox_file') {
+		$relativePath = (string) ($_GET['path'] ?? '');
+		$absolutePath = resolveSandboxFilePath($root, $relativePath);
+		$payload = [
+			'ok' => true,
+			'root_display' => $root,
+			'path' => normalizeSandboxRelativePath($relativePath),
+			'content' => (string) file_get_contents($absolutePath),
+		];
+		echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	$input = readJsonRequestBody();
+	if ($action === 'sandbox_save_file') {
+		$relativePath = (string) ($input['path'] ?? '');
+		$absolutePath = resolveSandboxPathInsideRoot($root, $relativePath, false);
+		if (!is_file($absolutePath)) {
+			throw new RuntimeException('Sandbox file not found: ' . $relativePath);
+		}
+
+		$content = (string) ($input['content'] ?? '');
+		if (file_put_contents($absolutePath, $content) === false) {
+			throw new RuntimeException('Failed to save sandbox file: ' . $relativePath);
+		}
+
+		echo json_encode([
+			'ok' => true,
+			'path' => normalizeSandboxRelativePath($relativePath),
+			'type' => 'file',
+		], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	if ($action === 'sandbox_create_file') {
+		$parentPath = (string) ($input['parent_path'] ?? '');
+		$fileName = trim((string) ($input['name'] ?? ''));
+		assertSandboxBaseName($fileName, 'file name');
+		$parentAbsolutePath = resolveSandboxPathInsideRoot($root, $parentPath, false);
+		if (!is_dir($parentAbsolutePath)) {
+			throw new RuntimeException('Sandbox directory not found: ' . $parentPath);
+		}
+
+		$newRelativePath = joinSandboxRelativePath($parentPath, $fileName);
+		$newAbsolutePath = resolveSandboxPathInsideRoot($root, $newRelativePath, false);
+		if (file_exists($newAbsolutePath)) {
+			throw new RuntimeException('Sandbox entry already exists: ' . $newRelativePath);
+		}
+		if (file_put_contents($newAbsolutePath, '') === false) {
+			throw new RuntimeException('Failed to create sandbox file: ' . $newRelativePath);
+		}
+
+		echo json_encode([
+			'ok' => true,
+			'path' => normalizeSandboxRelativePath($newRelativePath),
+			'type' => 'file',
+		], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	if ($action === 'sandbox_create_dir') {
+		$parentPath = (string) ($input['parent_path'] ?? '');
+		$directoryName = trim((string) ($input['name'] ?? ''));
+		assertSandboxBaseName($directoryName, 'directory name');
+		$parentAbsolutePath = resolveSandboxPathInsideRoot($root, $parentPath, false);
+		if (!is_dir($parentAbsolutePath)) {
+			throw new RuntimeException('Sandbox directory not found: ' . $parentPath);
+		}
+
+		$newRelativePath = joinSandboxRelativePath($parentPath, $directoryName);
+		$newAbsolutePath = resolveSandboxPathInsideRoot($root, $newRelativePath, false);
+		if (file_exists($newAbsolutePath)) {
+			throw new RuntimeException('Sandbox entry already exists: ' . $newRelativePath);
+		}
+		if (!mkdir($newAbsolutePath, 0777, true) && !is_dir($newAbsolutePath)) {
+			throw new RuntimeException('Failed to create sandbox directory: ' . $newRelativePath);
+		}
+
+		echo json_encode([
+			'ok' => true,
+			'path' => normalizeSandboxRelativePath($newRelativePath),
+			'type' => 'dir',
+		], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	if ($action === 'sandbox_rename') {
+		$relativePath = (string) ($input['path'] ?? '');
+		$newName = trim((string) ($input['new_name'] ?? ''));
+		assertSandboxBaseName($newName, 'new name');
+		$absolutePath = resolveSandboxPathInsideRoot($root, $relativePath, false);
+		if (!file_exists($absolutePath)) {
+			throw new RuntimeException('Sandbox entry not found: ' . $relativePath);
+		}
+
+		$parentRelativePath = dirname(normalizeSandboxRelativePath($relativePath));
+		if ($parentRelativePath === '.' || $parentRelativePath === DIRECTORY_SEPARATOR) {
+			$parentRelativePath = '';
+		}
+		$newRelativePath = joinSandboxRelativePath($parentRelativePath, $newName);
+		$newAbsolutePath = resolveSandboxPathInsideRoot($root, $newRelativePath, false);
+		if (file_exists($newAbsolutePath)) {
+			throw new RuntimeException('Sandbox entry already exists: ' . $newRelativePath);
+		}
+		if (!rename($absolutePath, $newAbsolutePath)) {
+			throw new RuntimeException('Failed to rename sandbox entry: ' . $relativePath);
+		}
+
+		echo json_encode([
+			'ok' => true,
+			'old_path' => normalizeSandboxRelativePath($relativePath),
+			'path' => normalizeSandboxRelativePath($newRelativePath),
+			'type' => is_dir($newAbsolutePath) ? 'dir' : 'file',
+		], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	if ($action === 'sandbox_delete_file') {
+		$relativePath = (string) ($input['path'] ?? '');
+		$absolutePath = resolveSandboxPathInsideRoot($root, $relativePath, false);
+		if (!is_file($absolutePath)) {
+			throw new RuntimeException('Sandbox file not found: ' . $relativePath);
+		}
+		if (!unlink($absolutePath)) {
+			throw new RuntimeException('Failed to delete sandbox file: ' . $relativePath);
+		}
+
+		echo json_encode([
+			'ok' => true,
+			'path' => normalizeSandboxRelativePath($relativePath),
+			'type' => 'file',
+		], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	if ($action === 'sandbox_delete_dir') {
+		$relativePath = (string) ($input['path'] ?? '');
+		$normalizedRelativePath = normalizeSandboxRelativePath($relativePath);
+		if ($normalizedRelativePath === '') {
+			throw new RuntimeException('Refusing to delete the sandbox root directory.');
+		}
+
+		$absolutePath = resolveSandboxPathInsideRoot($root, $normalizedRelativePath, false);
+		if (!is_dir($absolutePath)) {
+			throw new RuntimeException('Sandbox directory not found: ' . $relativePath);
+		}
+		deleteSandboxDirectory($absolutePath);
+
+		echo json_encode([
+			'ok' => true,
+			'path' => $normalizedRelativePath,
+			'type' => 'dir',
+		], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	throw new RuntimeException('Unknown action: ' . $action);
+}
+
+function readJsonRequestBody(): array
+{
+	$raw = file_get_contents('php://input');
+	$data = json_decode($raw ?: '{}', true);
+	if (!is_array($data)) {
+		throw new RuntimeException('Invalid JSON request body.');
+	}
+
+	return $data;
+}
+
+function normalizeSandboxRelativePath(string $relativePath): string
+{
+	$trimmedPath = trim($relativePath);
+	if ($trimmedPath === '') {
+		return '';
+	}
+	if (str_contains($trimmedPath, "\0")) {
+		throw new RuntimeException('Sandbox path contains an invalid null byte.');
+	}
+
+	$normalized = str_replace('\\', '/', $trimmedPath);
+	$parts = [];
+	foreach (explode('/', $normalized) as $part) {
+		if ($part === '' || $part === '.') {
+			continue;
+		}
+		if ($part === '..') {
+			throw new RuntimeException('Sandbox path may not escape the sandbox root: ' . $relativePath);
+		}
+		$parts[] = $part;
+	}
+
+	return implode('/', $parts);
+}
+
+function resolveSandboxPathInsideRoot(string $root, string $relativePath, bool $mustExist = true): string
+{
+	$normalizedRoot = realpath($root);
+	if ($normalizedRoot === false || !is_dir($normalizedRoot)) {
+		throw new RuntimeException('Sandbox root directory does not exist yet.');
+	}
+
+	$normalizedRelativePath = normalizeSandboxRelativePath($relativePath);
+	$candidatePath = $normalizedRoot;
+	if ($normalizedRelativePath !== '') {
+		$candidatePath .= '/' . $normalizedRelativePath;
+	}
+
+	if (!$mustExist) {
+		return $candidatePath;
+	}
+
+	$resolvedPath = realpath($candidatePath);
+	if ($resolvedPath === false) {
+		throw new RuntimeException('Sandbox entry not found: ' . $relativePath);
+	}
+	if (!str_starts_with($resolvedPath, $normalizedRoot . DIRECTORY_SEPARATOR) && $resolvedPath !== $normalizedRoot) {
+		throw new RuntimeException('Sandbox path escapes the sandbox root: ' . $relativePath);
+	}
+
+	return $resolvedPath;
+}
+
+function assertSandboxBaseName(string $name, string $label): void
+{
+	if ($name === '' || $name === '.' || $name === '..') {
+		throw new RuntimeException('Invalid ' . $label . '.');
+	}
+	if (str_contains($name, "\0") || str_contains($name, '/') || str_contains($name, '\\')) {
+		throw new RuntimeException('Invalid ' . $label . '.');
+	}
+}
+
+function joinSandboxRelativePath(string $left, string $right): string
+{
+	$left = normalizeSandboxRelativePath($left);
+	$right = normalizeSandboxRelativePath($right);
+	if ($left === '') {
+		return $right;
+	}
+	if ($right === '') {
+		return $left;
+	}
+	return $left . '/' . $right;
+}
+
+function deleteSandboxDirectory(string $absolutePath): void
+{
+	$iterator = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($absolutePath, FilesystemIterator::SKIP_DOTS),
+		RecursiveIteratorIterator::CHILD_FIRST
+	);
+	foreach ($iterator as $fileInfo) {
+		$pathname = $fileInfo->getPathname();
+		if ($fileInfo->isDir()) {
+			if (!rmdir($pathname)) {
+				throw new RuntimeException('Failed to delete sandbox directory: ' . $pathname);
+			}
+			continue;
+		}
+		if (!unlink($pathname)) {
+			throw new RuntimeException('Failed to delete sandbox file: ' . $pathname);
+		}
+	}
+	if (!rmdir($absolutePath)) {
+		throw new RuntimeException('Failed to delete sandbox directory: ' . $absolutePath);
+	}
+}
+
+function getSandboxRootPath(): string
+{
+	$root = realpath(__DIR__ . '/../../sandbox');
+	if ($root === false) {
+		return __DIR__ . '/../../sandbox';
+	}
+
+	return $root;
+}
+
+function buildSandboxTreePayload(string $root): array
+{
+	return buildSandboxNode($root, '', 0, true);
+}
+
+function buildSandboxNode(string $absolutePath, string $relativePath, int $depth, bool $isRoot = false): array
+{
+	$name = $isRoot ? basename($absolutePath) : basename($relativePath);
+	if ($name === '' || $name === '.' || $name === '..') {
+		$name = $isRoot ? 'sandbox' : basename($absolutePath);
+	}
+
+	if (!is_dir($absolutePath)) {
+		return [
+			'type' => 'dir',
+			'name' => $name,
+			'path' => $relativePath,
+			'depth' => $depth,
+			'children' => [],
+		];
+	}
+
+	$entries = scandir($absolutePath);
+	if ($entries === false) {
+		throw new RuntimeException('Failed to read sandbox directory: ' . $absolutePath);
+	}
+
+	$directories = [];
+	$files = [];
+	foreach ($entries as $entry) {
+		if ($entry === '.' || $entry === '..') {
+			continue;
+		}
+
+		$childAbsolutePath = $absolutePath . DIRECTORY_SEPARATOR . $entry;
+		$childRelativePath = $relativePath === '' ? $entry : $relativePath . '/' . $entry;
+		if (is_dir($childAbsolutePath)) {
+			$directories[] = buildSandboxNode($childAbsolutePath, $childRelativePath, $depth + 1);
+			continue;
+		}
+
+		if (!is_file($childAbsolutePath)) {
+			continue;
+		}
+
+		$files[] = [
+			'type' => 'file',
+			'name' => $entry,
+			'path' => $childRelativePath,
+			'depth' => $depth + 1,
+		];
+	}
+
+	usort($directories, static fn(array $left, array $right): int => strcmp((string) $left['name'], (string) $right['name']));
+	usort($files, static fn(array $left, array $right): int => strcmp((string) $left['name'], (string) $right['name']));
+
+	return [
+		'type' => 'dir',
+		'name' => $name,
+		'path' => $relativePath,
+		'depth' => $depth,
+		'children' => array_merge($directories, $files),
+	];
+}
+
+function resolveSandboxFilePath(string $root, string $relativePath): string
+{
+	$resolvedPath = resolveSandboxPathInsideRoot($root, $relativePath, true);
+	if (!is_file($resolvedPath)) {
+		throw new RuntimeException('Sandbox file not found: ' . $relativePath);
+	}
+
+	return $resolvedPath;
+}
+
+
 function normalizeSourceForUi(array $sourceLines): array
 {
 	if ($sourceLines === []) {
@@ -225,6 +608,102 @@ function buildNaturalCompileUnit(array $headerLines, array $sourceLines): string
 
 	return implode("\n", array_merge($headerLines, [''], $filteredSourceLines)) . "\n";
 }
+
+function ensureRuntimeArchive(string $projectRoot, bool $memTestEnabled = false): array
+{
+	$cacheRoot = $projectRoot . '/runtime/build/test_ui_cache';
+	$cacheDir = $cacheRoot . '/' . ($memTestEnabled ? 'asan' : 'default');
+	if (!is_dir($cacheDir) && !mkdir($cacheDir, 0777, true) && !is_dir($cacheDir)) {
+		throw new RuntimeException('Failed to create runtime cache directory.');
+	}
+
+	$signature = computeRuntimeCacheSignature($projectRoot, $memTestEnabled);
+	$signaturePath = $cacheDir . '/runtime.signature';
+	$objectPath = $cacheDir . '/runtime.o';
+	$archivePath = $cacheDir . '/libruntime_test_ui.a';
+	$currentSignature = is_file($signaturePath) ? trim((string) file_get_contents($signaturePath)) : '';
+
+	if ($currentSignature === $signature && is_file($objectPath) && is_file($archivePath)) {
+		return [
+			'status' => 'reused',
+			'archive_path' => $archivePath,
+		];
+	}
+
+	$compileRun = runCommandMeasured(
+		buildRuntimeCompileCommand($projectRoot, $objectPath, $memTestEnabled),
+		$projectRoot,
+		60
+	);
+	if ($compileRun['exit_code'] !== 0) {
+		throw new RuntimeException(buildProcessErrorText('C++ runtime cache build', $compileRun));
+	}
+
+	$archiveRun = runCommandMeasured(
+		[
+			'ar',
+			'rcs',
+			$archivePath,
+			$objectPath,
+		],
+		$projectRoot,
+		20
+	);
+	if ($archiveRun['exit_code'] !== 0) {
+		throw new RuntimeException(buildProcessErrorText('C++ runtime archive build', $archiveRun));
+	}
+
+	file_put_contents($signaturePath, $signature . "
+");
+
+	return [
+		'status' => 'rebuilt',
+		'archive_path' => $archivePath,
+	];
+}
+
+function computeRuntimeCacheSignature(string $projectRoot, bool $memTestEnabled = false): string
+{
+	$runtimeRoot = $projectRoot . '/runtime';
+	$paths = [];
+	$iter = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($runtimeRoot, FilesystemIterator::SKIP_DOTS)
+	);
+	foreach ($iter as $fileInfo) {
+		if (!$fileInfo->isFile()) {
+			continue;
+		}
+		$path = $fileInfo->getPathname();
+		$normalized = str_replace('\\', '/', $path);
+		if (
+			str_ends_with($normalized, '.hpp')
+			|| str_ends_with($normalized, '.cpp')
+			|| str_ends_with($normalized, 'CMakeLists.txt')
+		) {
+			$paths[] = $path;
+		}
+	}
+	usort($paths, static fn (string $left, string $right): int => strcmp($left, $right));
+
+	$hash = hash_init('sha256');
+	hash_update($hash, $memTestEnabled ? "asan\n" : "default\n");
+	foreach ($paths as $path) {
+		$relative = substr($path, strlen($projectRoot) + 1);
+		hash_update($hash, $relative . "
+");
+		$contents = file_get_contents($path);
+		if ($contents === false) {
+			throw new RuntimeException('Failed to read runtime dependency for cache signature: ' . $relative);
+		}
+		hash_update($hash, $contents);
+		hash_update($hash, "
+--file-boundary--
+");
+	}
+
+	return hash_final($hash);
+}
+
 
 function measureStage(callable $callback): array
 {
@@ -513,4 +992,60 @@ function formatThrowableDetails(Throwable $throwable): string
 	$parts[] = "Trace:\n" . $throwable->getTraceAsString();
 
 	return implode("\n", $parts);
+}
+
+
+function buildRuntimeCompileCommand(string $projectRoot, string $objectPath, bool $memTestEnabled = false): array
+{
+	$command = [
+		'g++',
+		'-std=c++23',
+		'-O3',
+	];
+
+	if ($memTestEnabled) {
+		$command[] = '-fsanitize=address';
+	}
+
+	$command = array_merge($command, [
+		'-c',
+		$projectRoot . '/runtime/src/runtime.cpp',
+		'-I',
+		$projectRoot . '/runtime/include',
+		'-o',
+		$objectPath,
+	]);
+
+	return $command;
+}
+
+function buildSampleCompileCommand(string $projectRoot, string $compileInputPath, string $runtimeArchive, string $cppBinaryPath, bool $memTestEnabled = false): array
+{
+	$command = [
+		'g++',
+		'-std=c++23',
+		'-O3',
+	];
+
+	if ($memTestEnabled) {
+		$command[] = '-fsanitize=address';
+	}
+
+	$command = array_merge($command, [
+		$compileInputPath,
+		$runtimeArchive,
+		'-I',
+		$projectRoot . '/runtime/include',
+	]);
+
+	if (!$memTestEnabled) {
+		$command[] = '-ljemalloc';
+	}
+
+	$command = array_merge($command, [
+		'-o',
+		$cppBinaryPath,
+	]);
+
+	return $command;
 }

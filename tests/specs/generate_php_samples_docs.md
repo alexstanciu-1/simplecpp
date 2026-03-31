@@ -975,19 +975,19 @@ When there is a conflict between convenience and determinism, determinism wins.
 
 PHP test samples MUST be generated from project sources in the following precedence order:
 
-### 20.1 Tier A — Normative sources
+### 20.1 Tier A - Normative sources
 These define intended behavior and therefore create primary test obligations.
 
 1. `runtime/specs/spec.md`
 2. `php_generator/specs/rules.md`
 3. `php_generator/specs/rules_catalog.md`
 
-### 20.2 Tier B — Support and configuration sources
+### 20.2 Tier B - Support and configuration sources
 These refine support boundaries but MUST NOT invent semantics unless explicitly stated.
 
 4. `runtime/specs/config.json`
 
-### 20.3 Tier C — Implementation and history sources
+### 20.3 Tier C - Implementation and history sources
 These do not define intent first, but they MUST be used for regression coverage and mismatch detection.
 
 5. runtime implementation code

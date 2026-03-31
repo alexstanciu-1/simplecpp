@@ -1,4 +1,4 @@
-# Simple C++ Runtime/Generation Split — v1 Proposal
+# Simple C++ Runtime/Generation Split - v1 Proposal
 
 ## 1. Scope
 
@@ -228,14 +228,40 @@ Included initially:
 - `clean(x)` is a reset/cleanup operation, not a PHP-compatible symbol-table `unset`
 
 
-### 6.11 `table_t`
+### 6.12 `table_t` and `value_t` dynamic subsystem
+- `table_t` and `value_t` form the runtime dynamic fallback subsystem for quick code
+- explicit structs/classes remain the preferred programming model
+- using `table_t` reduces performance, increases memory usage, reduces compile-time issue detection and static-analysis capability, and becomes less readable as surrounding code grows
+- once runtime types are established, operations must follow normal Simple C++ rules
+- any deviation from normal Simple C++ semantics must be documented explicitly as an exception
+- conversions are explicit by default; dynamic loose coercion is not part of the model
+- if a type combination is not covered by the config, it is not defined
+
+### 6.13 `value_t`
+- `value_t` is the runtime semantic boxed value used by `table_t`
+- current stored runtime kinds are `null_v`, `bool_v`, `int_v`, `float_v`, `string_v`, `table_v`, `shared_table_v`, and `weak_table_v`
+- table presentation should be documented publicly as the three internal table forms: owned table, shared table, weak table
+- current exact scalar accessors are `bool_value()`, `int_value()`, and `float_value()`
+- these exact scalar accessors require matching runtime kind and fail at runtime otherwise
+- `string_if()`, `table_if()`, `shared_table_if()`, and `weak_table_if()` are the current probe-style accessors
+- `cast<T>(value_t)` is the central typed bridge for dynamic-to-typed use
+- `value_t` may auto-bridge into typed C++ targets through that cast layer; invalid conversions fail at runtime
+- `_find_val()` exists on `value_t` as the chained dynamic read helper
+- `_find_val()` on `value_t` forwards to owned/shared table carriers, returns `null` on `null_v`, and currently returns `null` for expired weak-table carriers
+- dynamic arithmetic, comparison, logical operators, mutation, and increment/decrement on `value_t` are enabled through runtime dispatch
+- callable dispatch and method dispatch on `value_t` are still deferred
+
+### 6.14 `table_t`
 - `table_t` is the runtime semantic type used for PHP `array` lowering
 - implementation is adapted from the donor `mem_container` storage design, but generated code must target `table_t` only
 - `find()` is the non-inserting lookup API and returns `maybe_value_t`
 - `at()` is checked non-inserting access and follows throw-style semantics on miss
-- non-const `operator[]` is inserting/mutating access and must not be used for read-only lowering
+- generator-facing non-assignment dim access is slot-aware (`table_dim_(...)` / `table_t::operator[]` on `table_t<value_t>`) so plain reads stay non-materializing while typed-reference contexts can still bind
+- echo/text coercion for slot-based dim reads must dispatch through a non-materializing `value_t` read before normal `to_string(...)` handling
 - keys are strict: `123` and `"123"` are different
 - append uses `max_existing_int_key + 1`
+- current dynamic indexing policy rejects `string_t`, `int_t`, `float_t`, `bool_t`, and `null_t` receivers for `[]`; only table receivers are valid
+- string indexing is reserved for later explicit `char_t` / `byte_t` work and is not currently defined
 
 
 ---
@@ -381,3 +407,6 @@ This is especially important for numeric keys:
 
 Packed-mode optimizations must not violate this invariant.
 
+
+
+- `php::count(const table_t<value_t>&)` is supported and returns the logical size of a lowered PHP array.

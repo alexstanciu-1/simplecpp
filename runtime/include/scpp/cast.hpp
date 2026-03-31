@@ -8,6 +8,9 @@
 #include "scpp/nullptr_t.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/value_t.hpp"
+#include "scpp/table_t.hpp"
+
 #include <type_traits>
 
 namespace scpp {
@@ -20,8 +23,6 @@ namespace scpp {
 // - cast behavior is centralized rather than scattered across constructors
 
 template <typename To, typename From>
-// Implements one explicit cast pair allowed by the current runtime and generator contract.
-// How: conversions are centralized here so unsupported pairs fail at compile time instead of silently converting.
 To cast(const From &value) {
 	if constexpr (std::is_same_v<To, From>) {
 		return value;
@@ -51,8 +52,6 @@ inline int_t cast<int_t, float_t>(const float_t &value) {
 	return int_t(static_cast<std::int64_t>(value.native_value()));
 }
 
-
-
 // int_t -> bool
 // Zero becomes false; any non-zero value becomes true.
 template <>
@@ -73,8 +72,6 @@ template <>
 inline bool cast<bool, bool_t>(const bool_t &value) {
 	return static_cast<bool>(value);
 }
-
-
 
 // nullable<T> -> T
 // Explicit unwrap used by generator-emitted return/cast sites after a non-null control-flow check.
@@ -101,6 +98,7 @@ template <>
 inline string_t cast<string_t, string_t>(const string_t &value) {
 	return value;
 }
+
 // int_t -> string_t
 // Numeric to string conversion is explicit and centralized here.
 template <>
@@ -122,6 +120,58 @@ inline string_t cast<string_t, bool_t>(const bool_t &value) {
 	return string_t(value.native_value() ? "1" : "");
 }
 
+// ref_int_t -> int_t
+// Allows generated explicit casts to unwrap stable integer ref proxies.
+template <>
+inline int_t cast<int_t, ref_int_t>(const ref_int_t &value) {
+	return static_cast<int_t>(value);
+}
+
+// ref_float_t -> float_t
+// Allows generated explicit casts to unwrap stable float ref proxies.
+template <>
+inline float_t cast<float_t, ref_float_t>(const ref_float_t &value) {
+	return static_cast<float_t>(value);
+}
+
+// ref_bool_t -> bool_t
+// Allows generated explicit casts to unwrap stable bool ref proxies.
+template <>
+inline bool_t cast<bool_t, ref_bool_t>(const ref_bool_t &value) {
+	return static_cast<bool_t>(value);
+}
+
+// ref_string_t -> string_t
+// Allows generated explicit casts to unwrap stable string ref proxies.
+template <>
+inline string_t cast<string_t, ref_string_t>(const ref_string_t &value) {
+	return static_cast<string_t>(value);
+}
+
+// ref_int_t -> string_t
+// Mirrors PHP numeric string conversion when a by-ref int is stringified.
+template <>
+inline string_t cast<string_t, ref_int_t>(const ref_int_t &value) {
+	return cast<string_t>(static_cast<int_t>(value));
+}
+
+// ref_float_t -> string_t
+// Mirrors PHP numeric string conversion when a by-ref float is stringified.
+template <>
+inline string_t cast<string_t, ref_float_t>(const ref_float_t &value) {
+	return cast<string_t>(static_cast<float_t>(value));
+}
+
+// ref_bool_t -> string_t
+// Mirrors PHP boolean string conversion when a by-ref bool is stringified.
+template <>
+inline string_t cast<string_t, ref_bool_t>(const ref_bool_t &value) {
+	return cast<string_t>(static_cast<bool_t>(value));
+}
+
+// ref_string_t -> value_t-compatible string_t
+// Keeps generator-emitted string casts explicit even when the source is a by-ref string proxy.
+
 // null-like sentinels -> string_t
 // Mirrors PHP string conversion for null-like values as the empty string.
 template <>
@@ -137,6 +187,128 @@ inline string_t cast<string_t, nullopt_t>(const nullopt_t &) {
 template <>
 inline string_t cast<string_t, nullptr_t>(const nullptr_t &) {
 	return string_t("");
+}
+
+// value_t -> bool_t
+// Applies the configured explicit conversion rules after runtime kind dispatch.
+template <>
+inline bool_t cast<bool_t, value_t>(const value_t &value) {
+	switch (value.kind()) {
+		case value_t::kind_t::bool_v:
+			return value.bool_value();
+		case value_t::kind_t::int_v:
+			return cast<bool_t>(value.int_value());
+		case value_t::kind_t::float_v:
+			return cast<bool_t>(value.float_value());
+		default:
+			throw std::runtime_error("scpp::cast<bool_t>(value_t): runtime kind is not convertible to bool_t");
+	}
+}
+
+// value_t -> bool
+// Native bool bridge for runtime-dispatched values.
+template <>
+inline bool cast<bool, value_t>(const value_t &value) {
+	return cast<bool>(cast<bool_t>(value));
+}
+
+// value_t -> int_t
+// Applies the configured explicit conversion rules after runtime kind dispatch.
+template <>
+inline int_t cast<int_t, value_t>(const value_t &value) {
+	switch (value.kind()) {
+		case value_t::kind_t::int_v:
+			return value.int_value();
+		case value_t::kind_t::float_v:
+			return cast<int_t>(value.float_value());
+		default:
+			throw std::runtime_error("scpp::cast<int_t>(value_t): runtime kind is not convertible to int_t");
+	}
+}
+
+// value_t -> float_t
+// Applies the configured explicit conversion rules after runtime kind dispatch.
+template <>
+inline float_t cast<float_t, value_t>(const value_t &value) {
+	switch (value.kind()) {
+		case value_t::kind_t::float_v:
+			return value.float_value();
+		case value_t::kind_t::int_v:
+			return float_t(value.int_value());
+		default:
+			throw std::runtime_error("scpp::cast<float_t>(value_t): runtime kind is not convertible to float_t");
+	}
+}
+
+// value_t -> string_t
+// Applies the configured explicit conversion rules after runtime kind dispatch.
+template <>
+inline string_t cast<string_t, value_t>(const value_t &value) {
+	switch (value.kind()) {
+		case value_t::kind_t::null_v:
+			return cast<string_t>(null_t{});
+		case value_t::kind_t::bool_v:
+			return cast<string_t>(value.bool_value());
+		case value_t::kind_t::int_v:
+			return cast<string_t>(value.int_value());
+		case value_t::kind_t::float_v:
+			return cast<string_t>(value.float_value());
+		case value_t::kind_t::string_v:
+			return *value.string_if();
+		default:
+			throw std::runtime_error("scpp::cast<string_t>(value_t): runtime kind is not convertible to string_t");
+	}
+}
+
+// value_t -> shared_p<table_t<value_t>>
+// Keeps object-like shared ownership explicit while still allowing value_t to auto-bridge in typed contexts.
+template <>
+inline shared_p<table_t<value_t>> cast<shared_p<table_t<value_t>>, value_t>(const value_t &value) {
+	switch (value.kind()) {
+		case value_t::kind_t::null_v:
+			return shared_p<table_t<value_t>>(null_t{});
+		case value_t::kind_t::shared_table_v:
+			return *value.shared_table_if();
+		default:
+			throw std::runtime_error("scpp::cast<shared_p<table_t<value_t>>>(value_t): runtime kind is not convertible to shared table");
+	}
+}
+
+// value_t -> weak_p<table_t<value_t>>
+// Mirrors the wrapper-level shared-to-weak downgrade and null handling.
+template <>
+inline weak_p<table_t<value_t>> cast<weak_p<table_t<value_t>>, value_t>(const value_t &value) {
+	switch (value.kind()) {
+		case value_t::kind_t::null_v:
+			return weak_p<table_t<value_t>>(null_t{});
+		case value_t::kind_t::shared_table_v:
+			return weak_p<table_t<value_t>>(*value.shared_table_if());
+		case value_t::kind_t::weak_table_v:
+			return *value.weak_table_if();
+		default:
+			throw std::runtime_error("scpp::cast<weak_p<table_t<value_t>>>(value_t): runtime kind is not convertible to weak table");
+	}
+}
+
+// value_t rvalue cast bridge
+// Keeps move-only extraction centralized while delegating copyable cases to the lvalue overloads.
+template <typename To>
+inline To cast(value_t &&value) {
+	if constexpr (std::is_same_v<To, unique_p<table_t<value_t>>>) {
+		switch (value.kind()) {
+			case value_t::kind_t::null_v:
+				return unique_p<table_t<value_t>>(null_t{});
+			case value_t::kind_t::table_v: {
+				auto extracted = std::move(value.table_value_);
+				value = null_t{};
+				return extracted;
+			}
+			default:
+				throw std::runtime_error("scpp::cast<unique_p<table_t<value_t>>>(value_t&&): runtime kind is not convertible to unique table");
+		}
+	} else {
+		return cast<To>(static_cast<const value_t &>(value));
+	}
 }
 
 } // namespace scpp

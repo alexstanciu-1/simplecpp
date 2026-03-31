@@ -13,6 +13,7 @@
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
 #include "scpp/table_t.hpp"
+#include "scpp/support/var_dump.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -131,10 +132,14 @@ inline string_t to_string(const value_t &value) {
 		case value_t::kind_t::shared_table_v:
 		case value_t::kind_t::weak_table_v:
 			return string_t("Array");
-		case value_t::kind_t::any_v:
-			return string_t("");
 	}
 	return string_t("");
+}
+
+// Converts one table slot into its PHP echo/string representation.
+// How: slot reads must stay non-materializing in echo contexts, so the slot is first read as value_t and then stringified through the normal dynamic path.
+inline string_t to_string(const table_slot_t &value) {
+	return to_string(static_cast<value_t>(value));
 }
 
 template <typename T>
@@ -315,6 +320,31 @@ inline string_t &concat_assign(string_t &left, const string_t &right) {
 template <typename T>
 inline int_t count(const vector_t<T> &value) {
 	return int_t(static_cast<std::int64_t>(value.size()));
+}
+
+// Implements PHP count() for the current table_t array wrapper.
+// How: array values lower into table_t<value_t>, so count() must mirror PHP array cardinality via table_t::size().
+inline int_t count(const table_t<value_t> &value) {
+	return int_t(static_cast<std::int64_t>(value.size()));
+}
+
+// Implements PHP by-value copy semantics for mixed runtime values.
+// How: scalars and strings already copy by value through value_t::clone, while nested arrays must detach via table_copy().
+inline value_t value_copy(const value_t &value) {
+	if (value.table_if() != nullptr) {
+		return table_value_(::scpp::table_copy(*value.table_if()));
+	}
+	if (value.shared_table_if() != nullptr) {
+		return table_value_(::scpp::table_copy(*value.shared_table_if()->get()));
+	}
+	if (value.weak_table_if() != nullptr) {
+		auto locked = value.weak_table_if()->lock();
+		if (static_cast<bool>(locked)) {
+			return table_value_(::scpp::table_copy(*locked.get()));
+		}
+		return value_t{null_t{}};
+	}
+	return value.clone();
 }
 
 

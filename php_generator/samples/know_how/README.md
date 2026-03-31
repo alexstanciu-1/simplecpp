@@ -50,3 +50,13 @@ When a construct is AST-uncertain, add a focused PHP sample here first, regenera
 ### Current mismatch worth remembering
 - `use const` without alias can diverge from PHP when a same-name constant already exists in the current namespace
 - explicit parentheses in arithmetic expressions must be preserved from the recursive AST structure; current code now emits grouped arithmetic with AST-driven parentheses
+
+
+## Pending slot-reference reconnaissance fixtures
+
+The following PHP-only fixtures were added intentionally without JSON sidecars yet.
+Generate the matching `.php.json` exports when convenient.
+
+- `slot_ref_nested_parent_same_leaf.php`
+- `slot_ref_root_mid_leaf_alias.php`
+- `slot_ref_duplicate_table_and_leaf_alias.php`

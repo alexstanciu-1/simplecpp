@@ -50,6 +50,7 @@ final class AstKind
 	public const STATIC_PROP = 515;
 	public const METHOD_CALL = 768;
 	public const CAST = 261;
+	public const INCLUDE_OR_EVAL = 268;
 	public const PROP_DECL = 774;
 	public const CLASS_CONST_DECL = 776;
 	public const ENUM_CASE = 1026;
@@ -112,11 +113,17 @@ final class AstKind
 	public const TYPE_LONG = 4;
 	public const TYPE_DOUBLE = 5;
 	public const TYPE_STRING = 6;
+	public const TYPE_ARRAY = 7;
 	public const CLOSURE_VAR = 2049;
 	public const NULLABLE_TYPE = 2050;
 	public const USE_NORMAL = 1;
 	public const USE_FUNCTION = 2;
 	public const USE_CONST = 4;
+	public const EXEC_EVAL = 1;
+	public const EXEC_INCLUDE = 2;
+	public const EXEC_INCLUDE_ONCE = 4;
+	public const EXEC_REQUIRE = 8;
+	public const EXEC_REQUIRE_ONCE = 16;
 
 	/**
 

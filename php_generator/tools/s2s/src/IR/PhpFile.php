@@ -17,8 +17,10 @@ final class PhpFile
 	 * @param list<ConstantDecl> $constants
 	 * @param list<ClassDecl> $classes
 	 * @param list<FunctionDecl> $functions
+	 * @param list<string> $prologueIncludes
 	 * @param list<Statement> $rootStatements
 	 * @param array<string, string> $localTypeCommentsByKey
+	 * @param list<string> $buildErrors
 	 */
 	public function __construct(
 		public readonly string $path,
@@ -27,8 +29,10 @@ final class PhpFile
 		public readonly array $constants,
 		public readonly array $classes,
 		public readonly array $functions,
+		public readonly array $prologueIncludes,
 		public readonly array $rootStatements,
 		public readonly array $localTypeCommentsByKey,
+		public readonly array $buildErrors = [],
 	) {
 	}
 }

@@ -552,12 +552,12 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-The generator snapshots `get_defined_constants()` once at startup. Constants found in that predefined-runtime snapshot are lowered through `::scpp::php`, while user-defined constants stay in the generated user namespace model.
+The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp::php;`. User-defined constants stay in the generated user namespace model.
 
 Examples:
 ```cpp
 auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp::php;`
-auto b = ::scpp::php::PHP_INT_MAX;   // explicit form
+auto b = ::scpp::php::PHP_INT_MAX;   // fully qualified fallback form when no using-directive is present
 auto c = LIMIT;                      // user-defined constant in the current generated namespace
 auto d = ::scpp::A::B::LIMIT;        // user-defined constant in another generated namespace
 ```
@@ -696,7 +696,7 @@ These PHP semantics must go through the `php::` layer:
 - strict equality `===` -> `php::identical(...)`
 - strict inequality `!==` -> `php::not_identical(...)`
 - both helpers return `bool_t`, not native `bool`, because they are PHP-semantic runtime operations
-- predefined/runtime constants discovered from `get_defined_constants()` -> `::scpp::php::...`
+- predefined/runtime constants discovered from `get_defined_constants()` -> unqualified `...` inside generated source (`using namespace ::scpp::php;`)
 - user-defined non-class constants -> generated user namespace path (no `::scpp::php` remapping)
 
 ## 13. Simple C++ runtime/helper boundary rules
@@ -832,7 +832,7 @@ Rules:
 
 ## 17. Output rules
 
-- generated code currently routes output through `::scpp::php::echo_eval(...)`
+- generated code currently routes output through `echo_eval(...)`
 - lowering must preserve the exporter shape while preserving left-to-right echo operand evaluation
 - for the current exporter:
 	- each `AST_ECHO` node carries one operand
@@ -842,8 +842,8 @@ Rules:
 
 Examples:
 ```cpp
-::scpp::php::echo_eval([&]() -> decltype(auto) { return a; });
-::scpp::php::echo_eval(
+echo_eval([&]() -> decltype(auto) { return a; });
+echo_eval(
 	[&]() -> decltype(auto) { return a; },
 	[&]() -> decltype(auto) { return b; },
 	[&]() -> decltype(auto) { return c; }

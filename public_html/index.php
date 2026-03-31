@@ -102,13 +102,14 @@ else if ($_GET['zip-it'] ?? false)
 		unlink($zipPath);
 	}
 
-	$includeDirs_def = ["../php_generator", "../public_html", "../runtime", "../mem_container",];
+	$includeDirs_def = ["../php_generator", "../public_html", "../runtime", "../mem_container", "../specs"];
 	if (($_GET['tests'] ?? null) ?: false) {
 		$includeDirs_def[] = '../tests';
 	}
 	$excludeDirs_def = ["../php_generator/build", "../php_generator/samples_semantic", "../php_generator/tools/build", 
 					"../php_generator/samples/stage_01", "../php_generator/samples/stage_02", "../php_generator/samples/stage_03", 
 					"../runtime/build_comments", 
+					"../runtime/build", 
 					"../tests/.runtime"];
 	$includeDirs = [];
 	foreach ($includeDirs_def as $d) {

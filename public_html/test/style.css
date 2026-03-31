@@ -160,6 +160,181 @@ button:disabled {
 	color: var(--accent);
 }
 
+.php-input-section {
+	overflow: hidden;
+}
+
+.php-input-layout {
+	display: grid;
+	grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+	flex: 1 1 auto;
+	min-height: 0;
+	min-width: 0;
+}
+
+.file-tree-panel {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	min-width: 0;
+	border-right: 1px solid var(--border-soft);
+	background: rgba(15, 23, 42, 0.28);
+}
+
+.tree-root-path {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--border-soft);
+	background: var(--panel-2);
+}
+
+.tree-root-label {
+	color: var(--muted);
+	font-size: 12px;
+	line-height: 1.4;
+	white-space: nowrap;
+}
+
+.tree-root-actions {
+	gap: 4px;
+	flex-wrap: nowrap;
+}
+
+.tree-toolbar-icon {
+	padding: 2px 6px;
+	min-width: 28px;
+	height: 26px;
+	border-radius: 6px;
+	font-size: 12px;
+	line-height: 1;
+}
+
+.file-tree {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	padding: 10px 8px 12px;
+}
+
+.tree-empty {
+	padding: 6px 8px;
+	color: var(--muted);
+	font-size: 13px;
+}
+
+.tree-dir {
+	margin: 0;
+}
+
+.tree-dir > summary {
+	cursor: pointer;
+	list-style: none;
+	padding: 6px 8px;
+	border-radius: 8px;
+	color: var(--text);
+}
+
+.tree-dir > summary::-webkit-details-marker {
+	display: none;
+}
+
+.tree-dir-summary-inner {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	width: 100%;
+}
+
+.tree-dir-caret {
+	flex: 0 0 14px;
+	width: 14px;
+	text-align: center;
+	color: var(--muted);
+	line-height: 1;
+}
+
+.tree-dir[open] > summary .tree-dir-caret {
+	content: none;
+}
+
+.tree-dir[open] > summary .tree-dir-caret::before {
+	content: '▾';
+}
+
+.tree-dir:not([open]) > summary .tree-dir-caret::before {
+	content: '▸';
+}
+
+.tree-dir > summary .tree-dir-caret {
+	font-size: 12px;
+}
+
+.tree-dir > summary:hover {
+	background: rgba(96, 165, 250, 0.12);
+}
+
+.tree-children {
+	margin-left: 10px;
+	padding-left: 8px;
+	border-left: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.tree-file {
+	display: block;
+	width: 100%;
+	text-align: left;
+	background: transparent;
+	border: 0;
+	padding: 6px 8px;
+	margin: 0;
+	border-radius: 8px;
+	font: inherit;
+	font-weight: 400;
+	color: var(--text);
+}
+
+.tree-file:hover,
+.tree-file.is-selected {
+	background: rgba(96, 165, 250, 0.16);
+	color: #bfdbfe;
+}
+
+.editor-panel {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	min-width: 0;
+}
+
+.editor-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--border-soft);
+	background: var(--panel-2);
+	color: var(--muted);
+	flex: 0 0 auto;
+}
+
+.current-file-label {
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+#selected-file-path {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 textarea,
 .code-box {
 	display: block;
@@ -224,6 +399,19 @@ textarea {
 	outline-offset: -2px;
 }
 
+.toggle-option {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.92rem;
+	color: #d6d9e0;
+	user-select: none;
+}
+
+.toggle-option input {
+	margin: 0;
+}
+
 @media (max-width: 900px) {
 	.app-shell {
 		height: auto;
@@ -256,4 +444,73 @@ textarea {
 		border-left: 0;
 		border-top: 1px solid var(--border-soft);
 	}
+
+	.php-input-layout {
+		grid-template-columns: 1fr;
+	}
+
+	.file-tree-panel {
+		border-right: 0;
+		border-bottom: 1px solid var(--border-soft);
+		max-height: 240px;
+	}
+}
+
+
+.tree-entry {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.tree-entry-name {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+	font-size: 14px;
+	line-height: 1.45;
+}
+
+.tree-entry-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	flex: 0 0 auto;
+	opacity: 0;
+}
+
+.tree-dir > summary:hover .tree-entry-actions,
+.tree-dir > summary:focus-visible .tree-entry-actions,
+.tree-file-row:hover .tree-entry-actions,
+.tree-file-row:focus-within .tree-entry-actions,
+.tree-file.is-selected + .tree-entry-actions {
+	opacity: 1;
+}
+
+.tree-file-row {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.tree-action-button {
+	padding: 2px 6px;
+	border-radius: 6px;
+	font-size: 12px;
+	line-height: 1.2;
+}
+
+.editor-toolbar {
+	justify-content: space-between;
+}
+
+.editor-toolbar-left,
+.editor-toolbar-right {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.65rem;
+	min-width: 0;
 }
