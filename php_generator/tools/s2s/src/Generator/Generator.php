@@ -950,7 +950,7 @@ final class Generator
 			}
 
 			$mapped = $this->typeMapper->mapDeclaredType($param->type);
-			if ($mapped !== 'string_t' && $mapped !== 'table_t<value_t>' && !str_starts_with($mapped, 'vector_t<')) {
+			if ($mapped !== 'string_t' && $mapped !== 'value_t' && !str_starts_with($mapped, 'vector_t<')) {
 				continue;
 			}
 
@@ -1334,7 +1334,7 @@ final class Generator
 			return $this->typeMapper->mapParamType($param->type, true);
 		}
 
-		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'table_t<value_t>' || str_starts_with($mapped, 'vector_t<'))) {
+		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'value_t' || str_starts_with($mapped, 'vector_t<'))) {
 			return $mapped;
 		}
 
@@ -1343,11 +1343,39 @@ final class Generator
 
 	private function renderBody(array $statements, ?string $namespacePhp): string
 	{
-		$lines = [];
+		$lines = $this->renderCurrentArrayParamGuards();
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
 			$lines[] = $this->indent(1) . $line;
 		}
 		return implode("\n", $lines);
+	}
+
+	/**
+	 * Emits entry guards for PHP array / ?array parameters lowered to value_t.
+	 *
+	 * @return list<string>
+	 */
+	private function renderCurrentArrayParamGuards(): array
+	{
+		$lines = [];
+		foreach ($this->declaredLocalTypes as $name => $declaredType) {
+			if (!$this->isPhpArrayLikeDeclaredType($declaredType)) {
+				continue;
+			}
+			$lines[] = '::scpp::php::expect_array_argument(' . $name . ', ' . ($this->isNullablePhpArrayDeclaredType($declaredType) ? 'true' : 'false') . ', "' . addslashes($name) . '");';
+		}
+		return $lines;
+	}
+
+	private function isPhpArrayLikeDeclaredType(string $declaredType): bool
+	{
+		$normalized = trim($declaredType);
+		return $normalized === 'array' || $normalized === '?array';
+	}
+
+	private function isNullablePhpArrayDeclaredType(string $declaredType): bool
+	{
+		return trim($declaredType) === '?array';
 	}
 
 	/**
@@ -1418,11 +1446,6 @@ final class Generator
 				: $this->renderInitializerExpr($exprNode, $effectiveTyped, $namespacePhp);
 			$typedVectorType = $effectiveTyped !== null ? $this->mapTypedVectorLocalType($effectiveTyped) : null;
 			$isTypedEmptyVectorLiteral = $statement->kind === 'assign' && $typedVectorType !== null && $this->isEmptyPositionalArrayLiteral($exprNode);
-			if ($exprNode !== null && $this->isNullExpr($exprNode) && $typed === null && $name !== null && !isset($this->declaredLocals[$name])) {
-				$this->errors[] = 'Untyped null assignment is rejected at line ' . $statement->line . '.';
-				return ['// ERROR: untyped null assignment rejected'];
-			}
-
 			if ($statement->kind === 'assign_ref') {
 				if ($name !== null && !isset($this->declaredLocals[$name])) {
 					$this->declaredLocals[$name] = true;
@@ -1949,15 +1972,15 @@ final class Generator
 			return $base . '.at(' . $dim . ')';
 		}
 		if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
-			return $base . '[' . $dim . ']';
+			return $base . '.get(' . $dim . ')';
 		}
 		if (is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)) {
-			return $base . '[' . $dim . ']';
+			return $base . '.get(' . $dim . ')';
 		}
 		if ($this->isUntypedTableType($baseType)) {
-			return $this->renderUntypedTableAccessBase($base, $baseType) . '[' . $dim . ']';
+			return $this->renderUntypedTableAccessBase($base, $baseType) . '._find_val(' . $dim . ')';
 		}
-		// Plain PHP array reads now lower directly through operator[] on table_t/value_t.
+		// Unknown dim-read fallback stays on direct indexing so non-array expressions still surface compile-time errors.
 		return $base . '[' . $dim . ']';
 	}
 
@@ -2480,7 +2503,7 @@ final class Generator
 		}
 
 		if ($elements === []) {
-			return '::scpp::table_new_()';
+			return 'table_()';
 		}
 
 		$items = [];
@@ -2505,7 +2528,7 @@ final class Generator
 			$items[] = '::scpp::table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
 		}
 
-		return '::scpp::table_new_(' . implode(', ', $items) . ')';
+		return 'table_(' . implode(', ', $items) . ')';
 	}
 
 
@@ -3862,7 +3885,7 @@ final class Generator
 			return 'auto';
 		}
 		if ($kind === AstKind::ARRAY) {
-			return 'unique_p<table_t<value_t>>';
+			return 'value_t';
 		}
 		if ($kind === AstKind::DIM) {
 			$baseType = $this->inferExprType($expr->children['expr'] ?? null);

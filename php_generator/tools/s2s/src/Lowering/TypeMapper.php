@@ -86,7 +86,7 @@ final class TypeMapper
 			return $refProxy ?? $this->appendLvalueReference($mapped);
 		}
 
-		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<') || $mapped === 'table_t<value_t>') {
+		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<')) {
 			return 'const ' . $mapped . '&';
 		}
 
@@ -155,7 +155,6 @@ final class TypeMapper
 			'float' => 'ref_float_t',
 			'bool' => 'ref_bool_t',
 			'string' => 'ref_string_t',
-			'array' => 'ref_table_t',
 			default => null,
 		};
 	}
@@ -168,7 +167,6 @@ final class TypeMapper
 			'float' => '::scpp::ref_float',
 			'bool' => '::scpp::ref_bool',
 			'string' => '::scpp::ref_string',
-			'array' => '::scpp::ref_table',
 			default => null,
 		};
 	}
@@ -443,7 +441,7 @@ final class TypeMapper
 			'float' => 'float_t',
 			'bool' => 'bool_t',
 			'string' => 'string_t',
-			'array' => 'table_t<value_t>',
+			'array' => 'value_t',
 			'void' => 'void',
 			'vector_t' => 'vector_t',
 			default => $this->mapUserTypeName($phpType),

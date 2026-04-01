@@ -315,12 +315,12 @@ void test_shared_table_in_value() {
     CHECK(v1.table_if()->at(string_t{"v"}).int_value().native_value() == 7LL);
 }
 
-// ── section 13: table_new_ builder ──────────────────────────────────────────
+// ── section 13: table_ builder ──────────────────────────────────────────
 
 void test_table_builder() {
-    printf("\n=== table_new_() builder ===\n");
+    printf("\n=== table_() builder ===\n");
 
-    auto t = table_new_(
+    auto t = table_(
         table_item_(int_t{1LL}),
         table_item_(string_t{"hello"}),
         table_kv_(string_t{"key"}, int_t{99LL}),

@@ -246,15 +246,15 @@ Included initially:
 - `string_if()`, `table_if()`, `shared_table_if()`, and `weak_table_if()` are the current probe-style accessors
 - `cast<T>(value_t)` is the central typed bridge for dynamic-to-typed use
 - `value_t` may auto-bridge into typed C++ targets through that cast layer; invalid conversions fail at runtime
-- `value_t::operator[]` is the primary chained dynamic array access helper
+- `value_t::operator[]` is the primary mutating chained dynamic array access helper
 - mutable `value_t::operator[]` autovivifies `null` into an owned `table_t<value_t>`
-- const `value_t::operator[]` follows the underlying table read path and yields the null-like fallback on miss
-- `_find_val()` remains available as an explicit non-inserting dynamic read helper
+- `value_t::get(...)` is the primary non-mutating read helper and returns a null-kind `value_t` on missing key or non-array receiver
+- `_find_val()` remains available as the non-inserting `table_t<value_t>` helper used by generator read paths
 - dynamic arithmetic, comparison, logical operators, mutation, and increment/decrement on `value_t` are enabled through runtime dispatch
 - callable dispatch and method dispatch on `value_t` are still deferred
 
 ### 6.14 `table_t`
-- `table_t` is the runtime semantic type used for PHP `array` lowering
+- `table_t` remains the underlying ordered-table container, while generator-facing PHP `array` lowering now targets `value_t` for the fat-variable path
 - implementation is adapted from the donor `mem_container` storage design, but generated code must target `table_t` only
 - `find()` is the non-inserting lookup API and returns `maybe_value_t`
 - `at()` is checked non-inserting access and follows throw-style semantics on miss

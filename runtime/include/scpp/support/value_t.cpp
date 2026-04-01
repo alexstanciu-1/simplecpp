@@ -532,6 +532,38 @@ const value_t &value_t::operator[](int native_key) const {
 }
 
 // ============================================================
+// get (non-autovivifying read-by-value)
+// ============================================================
+
+value_t value_t::get(const int_t &key) const {
+	if (const auto *t = resolve_table_const(*this)) return t->_find_val(key);
+	if (type_ == kind_t::weak_table_v) {
+		auto locked = weak_table_value_.lock();
+		if (locked) return locked->_find_val(key);
+	}
+	return value_t{null_t{}};
+}
+value_t value_t::get(const string_t &key) const {
+	if (const auto *t = resolve_table_const(*this)) return t->_find_val(key);
+	if (type_ == kind_t::weak_table_v) {
+		auto locked = weak_table_value_.lock();
+		if (locked) return locked->_find_val(key);
+	}
+	return value_t{null_t{}};
+}
+value_t value_t::get(const value_t &key) const {
+	if (key.kind() == kind_t::int_v) return get(key.int_value());
+	if (key.kind() == kind_t::string_v) return get(*key.string_if());
+	return value_t{null_t{}};
+}
+value_t value_t::get(const char *key) const {
+	return get(string_t{key});
+}
+value_t value_t::get(int native_key) const {
+	return get(int_t{static_cast<std::int64_t>(native_key)});
+}
+
+// ============================================================
 // append
 // ============================================================
 

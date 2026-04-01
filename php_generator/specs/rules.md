@@ -268,12 +268,12 @@ Examples:
 Supported array lowering is intentionally narrow and split by target typing.
 
 ### Untyped PHP arrays
-- untyped `[]` lowers to `::scpp::table_new_()`
-- untyped `[v1, v2, ...]` lowers to `::scpp::table_new_(::scpp::table_item_(...), ...)`
-- untyped `["k" => v]` lowers to `::scpp::table_new_(::scpp::table_kv_("k", ...))`
-- nested untyped arrays recurse through the same `table_new_ / table_item_ / table_kv_` helpers
-- PHP array reads now lower directly to `operator[]` on `table_t` / `value_t`, not `at(...)`
-- native PHP `array` type declarations lower to `table_t<value_t>`; by-value parameters use a read-only analysis: proven read-only params lower to `const table_t<value_t>&`, while proven write/reassign params lower to owning `table_t<value_t>` and `array &` parameters lower to `table_t<value_t>&`
+- untyped `[]` lowers to `value_t x = table_()` when it is used as an explicit array-present initializer; dynamic locals may also start as `value_t x;` / `auto x = null` and autovivify later
+- untyped `[v1, v2, ...]` lowers to `value_t x = table_(table_item_(...), ...)`
+- untyped `["k" => v]` lowers to `value_t x = table_(table_kv_("k", ...))`
+- nested untyped arrays recurse through the same `table_ / table_item_ / table_kv_` helpers
+- PHP array reads in read-only contexts lower to `get(...)` / `_find_val(...)`; mutating contexts still lower to `operator[]` / `append(...)`
+- native PHP `array` type declarations now lower to `value_t`; function-entry guards enforce `array` vs `?array` before any user code runs, and explicit PHP `&` lowers to `value_t&`
 - PHP keyed writes now lower to direct `operator[]` assignment
 - PHP append writes lower to `append(...)`; simple right-hand sides inline directly, while non-trivial right-hand sides may spill into a temporary to keep assignment-style lowering explicit
 - `unset($a[k])` lowers to `remove(k)` on `table_t`; for `value_t` receivers the generator first unwraps with `as_table_ref()`
@@ -1060,27 +1060,19 @@ This matches PHP behavior.
 
 ## Nested table dim support
 
-- Nested table dim reads chain through direct `operator[]` access so `$x["inner"][0]` follows the runtime `value_t` / `table_t` contract.
+- Nested table dim reads chain through non-mutating reads so `$x["inner"][0]` lowers via `get(...)` / `_find_val(...)` and does not autovivify the right-hand side.
 - Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `value_t` / `table_t<value_t>`.
 - Table-valued assignments into table slots now use direct `value_t` assignment through the returned `operator[]` reference.
 
 
 ## Array argument materialization
 
-- A typed PHP `array` parameter passed **by value** must preserve PHP copy semantics.
-- The lowered function signature now uses a two-mode rule for mutable composite by-value params (`table_t`, `string_t`, `vector_t`).
-  - Proven read-only body usage lowers to `const T&`.
-  - Proven writes, nested write roots, reassignment, and `foreach (... as &...)` lower to owning `T`.
-  - Explicit PHP `&` still lowers to `T&`.
-- If the generator cannot prove a write, it keeps the param read-only and lets the C++ compiler reject downstream mutation attempts.
-- Copy isolation stays a **call-site** responsibility for read-only `const T&` params, not a hidden callee-signature responsibility.
-- When the argument expression lowers to a nested table access expression (for example `$x[0]`) and the callee expects an owning `table_t<value_t>` by value, the generator must materialize a **table copy** before the call.
-- Lowering rule:
-  - PHP: `fn(array $row)` with call `fn($x[0])`
-  - C++ signature: `void fn(const table_t<value_t>& row)`
-  - C++ call: `fn(::scpp::table_copy(x[0].as_table_ref()))`
-- Do **not** bind nested slots directly as `table_t<value_t>&` for by-value parameters.
-- Do **not** switch every by-value `array` param to pass-by-value preemptively; use pass-by-value only when the body proves that an owning local is required.
+- A typed PHP `array` parameter now lowers to `value_t` (or `value_t&` for explicit PHP `&`).
+- The generator emits a function-entry guard for every `array` / `?array` parameter before user code runs.
+  - `array` accepts only table-capable `value_t` kinds.
+  - `?array` accepts table-capable kinds plus null-kind `value_t`.
+- Read-only nested argument access uses `get(...)` / `_find_val(...)`; mutating paths stay on `operator[]` / `append(...)`.
+- Example: `function touch(array $x): array { $x["name"] = "changed"; return $x; }` lowers to `value_t touch(value_t x) { ::scpp::php::expect_array_argument(x, false, "x"); x[string_t("name")] = string_t("changed"); return x; }`.
 
 ## Warning: reassignment of by-value composite params
 

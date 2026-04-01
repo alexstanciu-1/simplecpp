@@ -513,12 +513,53 @@ public:
 // Ergonomic helpers for generated literals
 // ============================================================
 
-template <typename TKey, typename TValue>
-std::pair<TKey, TValue> table_kv_(TKey &&key, TValue &&value) {
-    return {std::forward<TKey>(key), std::forward<TValue>(value)};
+struct table_build_item_t final {
+	std::variant<std::monostate, int_t, string_t> key;
+	value_t value;
+};
+
+template <typename V>
+[[nodiscard]] inline table_build_item_t table_item_(V &&value) {
+	return {std::monostate{}, value_t(std::forward<V>(value))};
+}
+
+template <typename V>
+[[nodiscard]] inline table_build_item_t table_kv_(const int_t &key, V &&value) {
+	return {key, value_t(std::forward<V>(value))};
+}
+
+template <typename V>
+[[nodiscard]] inline table_build_item_t table_kv_(int key, V &&value) {
+	return table_kv_(int_t{static_cast<std::int64_t>(key)}, std::forward<V>(value));
+}
+
+template <typename V>
+[[nodiscard]] inline table_build_item_t table_kv_(const string_t &key, V &&value) {
+	return {key, value_t(std::forward<V>(value))};
+}
+
+template <typename V>
+[[nodiscard]] inline table_build_item_t table_kv_(const char *key, V &&value) {
+	return table_kv_(string_t{key}, std::forward<V>(value));
+}
+
+inline void table_add_item_(table_t<value_t> &table, const table_build_item_t &item) {
+	if (std::holds_alternative<std::monostate>(item.key)) {
+		(void) table.append(item.value);
+		return;
+	}
+	if (std::holds_alternative<int_t>(item.key)) {
+		table.set(std::get<int_t>(item.key), item.value);
+		return;
+	}
+	table.set(std::get<string_t>(item.key), item.value);
 }
 
 template <typename... TArgs>
-unique_p<table_t<value_t>> table_new_(TArgs &&...args);
+[[nodiscard]] inline unique_p<table_t<value_t>> table_(TArgs &&...args) {
+	auto table = unique_p<table_t<value_t>>(std::make_unique<table_t<value_t>>());
+	(table_add_item_(*table, std::forward<TArgs>(args)), ...);
+	return table;
+}
 
 } // namespace scpp

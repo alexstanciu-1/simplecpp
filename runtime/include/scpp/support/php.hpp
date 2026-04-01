@@ -39,6 +39,19 @@ public:
 // PHP compatibility constants consumed by generated code.
 inline const int_t PHP_INT_MAX{static_cast<std::int64_t>(std::numeric_limits<std::int64_t>::max())};
 
+// Validates a PHP array / ?array argument that has been lowered to value_t.
+// How: reject invalid kinds before executing any user code inside the callee.
+inline void expect_array_argument(const value_t &value, bool nullable, const char *name) {
+	const auto kind = value.kind();
+	if (kind == value_t::kind_t::table_v || kind == value_t::kind_t::shared_table_v || kind == value_t::kind_t::weak_table_v) {
+		return;
+	}
+	if (nullable && kind == value_t::kind_t::null_v) {
+		return;
+	}
+	throw ValueError(std::string("Argument $") + name + (nullable ? " must be of type ?array" : " must be of type array"));
+}
+
 // Implements PHP microtime() string mode.
 // How: system_clock is sampled once, then formatted as "0.xxxxxxxx seconds" to mirror PHP's default contract.
 inline string_t microtime() {

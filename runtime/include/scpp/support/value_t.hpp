@@ -157,6 +157,12 @@ public:
 	const value_t& operator[](int native_key) const;
 
 	void append(const value_t& val);
+
+	[[nodiscard]] value_t get(const value_t& key) const;
+	[[nodiscard]] value_t get(const int_t& key) const;
+	[[nodiscard]] value_t get(const string_t& key) const;
+	[[nodiscard]] value_t get(const char* key) const;
+	[[nodiscard]] value_t get(int native_key) const;
 	
 	bool_t isset(const value_t& key) const;
 	bool_t isset(const int_t& key) const;
