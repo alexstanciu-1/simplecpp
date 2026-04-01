@@ -1,0 +1,7 @@
+<?php
+// 005_casts_5.php
+
+$a = 1;
+$b = (string)$a;
+echo $b;
+

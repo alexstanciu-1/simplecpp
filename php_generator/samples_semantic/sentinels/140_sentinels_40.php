@@ -1,0 +1,10 @@
+<?php
+// 140_sentinels_40.php
+
+$a = null;
+if ($a === null) {
+    echo "null";
+} else {
+    echo "not-null";
+}
+

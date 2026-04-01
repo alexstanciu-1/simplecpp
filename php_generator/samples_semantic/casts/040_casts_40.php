@@ -1,0 +1,7 @@
+<?php
+// 040_casts_40.php
+
+$a = 4;
+$b = (string)$a;
+echo $b;
+

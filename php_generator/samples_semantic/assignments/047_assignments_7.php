@@ -1,0 +1,8 @@
+<?php
+// 047_assignments_7.php
+
+$a = 4;
+$b = $a;
+$b = $b + 1;
+echo $b;
+

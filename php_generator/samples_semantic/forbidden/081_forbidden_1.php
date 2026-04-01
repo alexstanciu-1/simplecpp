@@ -1,0 +1,8 @@
+<?php
+// 081_forbidden_1.php
+
+$a = "test";
+$b = 5;
+// expected: invalid operation in S2S (string + int)
+echo $a + $b;
+
