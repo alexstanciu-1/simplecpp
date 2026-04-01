@@ -31,3 +31,6 @@ When enabled:
 - the sample link step also includes `-ljemalloc`
 
 The normal mode cache and the ASan cache are kept separate.
+
+The test harness compiles the runtime and generated snippets with `-DSCPP_LANGUAGE_TARGET_PHP=1` so PHP-target array-key semantics are active during browser-driven tests.
+

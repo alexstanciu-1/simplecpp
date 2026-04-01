@@ -404,16 +404,20 @@ This keeps generator read lowering simple for patterns such as chained dynamic r
 - Table-valued assignments into table slots now use direct `value_t` assignment through the returned `operator[]` reference.
 
 
-## Slot to table copy
+## Slot / value copy behavior
 
-- When a nested table access expression must be materialized as an owning `table_t<value_t>` snapshot, use `table_copy(<expr>.as_table_ref())`.
-
-- assigning a nested array element by value (for example `$copy = $x[0];`) must materialize an owning snapshot; generator/runtime lowering uses `php::value_copy(...)` so later writes to `$x[0]` do not alias `$copy`.
-- This is used for PHP by-value `array` parameter passing from DIM expressions such as `$x[0]`.
-- The target callee ABI is `const table_t<value_t>&` for proven read-only params; when the function body proves a write or reassignment on the by-value param root, the callee instead lowers to owning `table_t<value_t>` and the full value is copied at function entry.
-- This helper is intentionally copy-producing; it must not alias the original slot storage.
+- Runtime `value_t` array carriers use shared table storage plus detach-on-write semantics.
+- assigning a nested array element by value (for example `$copy = $x[0];`) may initially share the same table payload as the original slot.
+- later writes through either value must detach shared table storage before mutation so PHP by-value behavior is preserved.
+- by-value PHP `array` parameters use the same `value_t` ABI and rely on runtime detach-on-write instead of a generator-side `table_copy(...)` / `php::value_copy(...)` wrapper.
+- explicit deep snapshot helpers may still be used when a truly eager owning copy is required, but they are no longer the default lowering for DIM reads or by-value array argument passing.
 
 
 ## Runtime helpers
 
 - `php::count(const table_t<value_t>&)` is supported and returns the current logical element count of the PHP array wrapper.
+
+## PHP target key semantics
+
+When the runtime is compiled with `-DSCPP_LANGUAGE_TARGET_PHP=1`, `table_t<value_t>` normalizes decimal integer strings to integer keys at runtime through the table key path. This normalization must be shared by set/get/isset/unset/operator[] so behavior stays consistent. Append must continue from the current maximum integer key plus one.
+

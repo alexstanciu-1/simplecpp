@@ -70,7 +70,7 @@ static void test_php_weakref_behavior() {
 	{
 		const auto alive = scpp::php::weakref_get(observer);
 		assert(alive.has_value().native_value() == true);
-		assert(alive.value().deref().value.native_value() == 89);
+		assert(alive.deref().value.native_value() == 89);
 	}
 
 	owner = scpp::shared_p<scpp_test::sample_object>(scpp::null);

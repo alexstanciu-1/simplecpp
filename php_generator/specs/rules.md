@@ -252,7 +252,7 @@ Examples:
 - `foreach` by value and by reference are supported for `vector_t` and for the current packed `table_t<value_t>` surface
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
 - for `table_t<value_t>` foreach, the value variable binds as `value_t` / `value_t&`; when that loop variable is later indexed as an array, lowering routes through `value_t::as_table_ref()` so nested array writes inside the loop target the referenced table value
-- explicit function/method reference returns lower to native C++ reference signatures (`T&` or `auto&`) and must return lvalue-capable expressions without copyification
+- explicit function/method reference returns require an explicit declared PHP return type, lower to native C++ reference signatures (`T&`), and must return lvalue-capable expressions, including direct calls statically known to return by reference, without copyification
 - `include`, `include_once`, and `require`
 - `and` / `or` / `xor`
 - untyped parameters
@@ -271,6 +271,7 @@ Supported array lowering is intentionally narrow and split by target typing.
 - untyped `[]` lowers to `value_t x = value_t{table_()}` when it is used as an explicit array-present initializer; dynamic locals may also start as `value_t x;` / `value_t x = null` and autovivify later
 - untyped `[v1, v2, ...]` lowers to `value_t x = value_t{table_(table_item_(...), ...)}`
 - first assignment declaration inference is intentionally overridden for fat-value bootstrap initializers: `$x = [];`, `$x = [ ... ];`, and `$x = null;` must declare as `value_t`, never `auto`, so the variable immediately exposes the fat `value_t` API (`append`, `operator[]`, `get`) and preserves null-state autovivification
+- nested append writes are full mutating LHS chains: `$x["users"][] = $v;` must lower through mutating access on `$x["users"]` and then `append(...)` (for example `x[string_t("users")].append(...)`), never through the read-only `.get(...)` path.
 - untyped `["k" => v]` lowers to `value_t x = value_t{table_(table_kv_("k", ...))}`
 - nested untyped arrays recurse through the same `table_ / table_item_ / table_kv_` helpers
 - PHP array reads in read-only contexts lower to `get(...)` / `_find_val(...)`; mutating contexts still lower to `operator[]` / `append(...)`
@@ -1090,6 +1091,7 @@ This matches PHP behavior.
 - Nested table dim writes stay on the mutating path for the full lvalue chain, so `$x[0]["name"] = "first";` lowers through chained `operator[]` access, not through `get(...)` on intermediate segments.
 - Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `value_t` / `table_t<value_t>`.
 - Table-valued assignments into table slots now use direct `value_t` assignment through the returned `operator[]` reference.
+- Reference assignment from a direct DIM slot also stays on the mutable slot path. Example: `$inner =& $arr["inner"];` → `auto& inner = arr[string_t("inner")];`, not `arr.get(...)`.
 
 ## Assignment-expression lambda fallback
 
@@ -1115,3 +1117,17 @@ This matches PHP behavior.
 - That means the **entire incoming value is copied at function entry**.
 - This can be expensive for large `table_t`, `string_t`, or `vector_t` values, even if the original incoming value is used only briefly before reassignment.
 - Prefer introducing a new local variable instead of overwriting the parameter when avoiding that full copy matters.
+
+## Runtime language target
+
+PHP-target array-key normalization is a runtime concern. The generator must not duplicate numeric-string key normalization logic. Builds used by the project test harness are expected to compile the runtime and generated samples with `-DSCPP_LANGUAGE_TARGET_PHP=1`.
+
+
+
+## Direct DIM call arguments
+
+- Direct DIM expressions used as function-call arguments lower through the direct slot path `[]`, not `.get(...)`.
+- Example: `add($x[0])` → `add(x[0])`.
+- This rule applies regardless of whether the callee later treats the parameter as by-reference or by-value.
+- Computed expressions keep the normal read path. Example: `$x[0] + 10` remains `x.get(0) + 10` inside the larger expression.
+- This is an intentional simplification: direct DIM call arguments may autovivify/create a slot. Use an explicit read-only form such as `?? null` when that behavior is not desired.

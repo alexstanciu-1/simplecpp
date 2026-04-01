@@ -460,10 +460,26 @@ value_t &value_t::operator>>=(const value_t &right) {
 // Helper: resolve table pointer for the three ownership variants.
 // For mutable access, also autovivifies null -> unique table.
 namespace {
+void ensure_unique_table_storage(value_t &self) {
+	if (self.kind() != value_t::kind_t::shared_table_v) {
+		return;
+	}
+	auto *shared_value = self.shared_table_if();
+	if (shared_value == nullptr) {
+		return;
+	}
+	if (shared_value->use_count() <= 1) {
+		return;
+	}
+	auto detached = shared_p<table_t<value_t>>(std::make_shared<table_t<value_t>>(**shared_value));
+	self = std::move(detached);
+}
+
 table_t<value_t> *resolve_table_mut(value_t &self) {
 	if (self.kind() == value_t::kind_t::null_v) {
-		self = unique<table_t<value_t>>();
+		self = shared<table_t<value_t>>();
 	}
+	ensure_unique_table_storage(self);
 	return self.table_if();
 }
 const table_t<value_t> *resolve_table_const(const value_t &self) noexcept {

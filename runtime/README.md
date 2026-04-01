@@ -42,3 +42,9 @@ This runtime was generated from:
 - `find()` is the non-inserting lookup path.
 - `at()` is checked non-inserting access with throw-style semantics.
 - generator-facing non-assignment dim access is non-mutating and lowers through `value_t::get(...)` / `table_t<value_t>::_find_val(...)`, so plain reads stay null-on-miss without autovivification.
+
+## Language target
+
+The runtime supports a compile-time PHP language target via `-DSCPP_LANGUAGE_TARGET_PHP=1`.
+When enabled, array-key handling applies PHP-target key normalization for decimal integer strings like `"10" -> 10` and `"-3" -> -3`, while strings like `"08"`, `" 10"`, `"10 "`, and `"+10"` stay strings. Append continues from the maximum integer key.
+

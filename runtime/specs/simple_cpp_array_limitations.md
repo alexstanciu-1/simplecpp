@@ -115,8 +115,8 @@ PHP:
 - copy-on-write arrays
 
 Simple C++:
-- standard C++ container behavior
-- no zval semantics
+- `value_t` arrays now use shared storage with detach-on-write on mutation
+- this is still a runtime-level approximation, not full Zend zval semantics
 
 ---
 

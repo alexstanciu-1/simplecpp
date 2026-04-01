@@ -299,7 +299,7 @@ final class Generator
 				$param = $params[$index] ?? null;
 				$out[] = $param instanceof ParamDecl
 					? $this->renderArgForParam($param, $arg, $namespacePhp)
-					: $this->renderExpr($arg, $namespacePhp);
+					: $this->renderCallArgExpr($arg, $namespacePhp);
 			}
 			return implode(', ', $out);
 		}
@@ -318,23 +318,29 @@ final class Generator
 
 		$packedValues = [];
 		for ($i = $fixedCount; $i < count($args); ++$i) {
-			$packedValues[] = $this->renderExpr($args[$i], $namespacePhp);
+			$packedValues[] = $this->renderCallArgExpr($args[$i], $namespacePhp);
 		}
 
 		$out[] = 'vector_t<' . $variadicType . '>{' . implode(', ', $packedValues) . '}';
 		return implode(', ', $out);
 	}
 
+
+	private function renderCallArgExpr(mixed $arg, ?string $namespacePhp): string
+	{
+		if (is_object($arg) && (($arg->kind ?? null) === AstKind::DIM)) {
+			return $this->renderLvalueExpr($arg, $namespacePhp);
+		}
+
+		return $this->renderExpr($arg, $namespacePhp);
+	}
 	private function renderArgForParam(ParamDecl $param, mixed $arg, ?string $namespacePhp): string
 	{
-		$rendered = $this->renderExpr($arg, $namespacePhp);
+		$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
 		if ($param->type === null) {
 			return $rendered;
 		}
 		if (!$param->isReference) {
-			if ($param->type === 'array') {
-				return 'table_copy(' . $rendered . ')';
-			}
 			return $rendered;
 		}
 
@@ -1132,7 +1138,7 @@ final class Generator
 		if (!$method->isStatic && $classDecl instanceof ClassDecl && ($classDecl->isInterface || $classDecl->parentClass !== null || $classDecl->interfaces !== [])) {
 			$prefix .= 'virtual ';
 		}
-		$returnType = $this->typeMapper->mapReturnType($method->returnType, $method->returnsByReference);
+		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
 		$declaration = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
 		if ($classDecl instanceof ClassDecl && $this->methodIsAbstract($method, $classDecl)) {
 			$declaration .= ' = 0';
@@ -1210,7 +1216,7 @@ final class Generator
 			$this->currentReturnType = null;
 			$signature = $className . '::~' . $className . '()';
 		} else {
-			$returnType = $this->typeMapper->mapReturnType($method->returnType, $method->returnsByReference);
+			$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
 			$this->currentReturnType = $returnType;
 			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
 		}
@@ -1220,6 +1226,17 @@ final class Generator
 		return $signature . " {
 " . $body . "
 }";
+	}
+
+
+	private function resolveDeclaredReturnType(?string $phpType, bool $explicitRef, string $ownerLabel): string
+	{
+		if ($explicitRef && $phpType === null) {
+			$this->errors[] = $ownerLabel . ' returning by reference requires an explicit declared return type.';
+			return '/* unsupported-ref-return-type */';
+		}
+
+		return $this->typeMapper->mapReturnType($phpType, $explicitRef);
 	}
 
 	/**
@@ -1238,7 +1255,7 @@ final class Generator
 
 	private function renderFunctionDeclaration(FunctionDecl $function, ?string $namespacePhp = null): string
 	{
-		$returnType = $this->typeMapper->mapReturnType($function->returnType, $function->returnsByReference);
+		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$paramPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
 		return $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, true, $namespacePhp, $paramPassModes) . ')';
 	}
@@ -1268,7 +1285,7 @@ final class Generator
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
 		}
-		$returnType = $this->typeMapper->mapReturnType($function->returnType, $function->returnsByReference);
+		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$this->currentReturnType = $returnType;
 		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
 		$body = $this->renderBody($function->statements, $namespacePhp);
@@ -1443,7 +1460,7 @@ final class Generator
 			}
 
 			$expr = $statement->kind === 'assign_ref'
-				? $this->renderExpr($exprNode, $namespacePhp)
+				? $this->renderReferenceBindingExpr($exprNode, $namespacePhp)
 				: $this->renderInitializerExpr($exprNode, $effectiveTyped, $namespacePhp);
 			$typedVectorType = $effectiveTyped !== null ? $this->mapTypedVectorLocalType($effectiveTyped) : null;
 			$isTypedEmptyVectorLiteral = $statement->kind === 'assign' && $typedVectorType !== null && $this->isEmptyPositionalArrayLiteral($exprNode);
@@ -1482,7 +1499,9 @@ final class Generator
 			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM)) {
 				if (($varNode->children['dim'] ?? null) === null) {
 					$baseExpr = $varNode->children['expr'] ?? null;
-					$base = $this->renderExpr($baseExpr, $namespacePhp);
+					$base = is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)
+						? $this->renderDimWriteAccess($baseExpr, $namespacePhp)
+						: $this->renderExpr($baseExpr, $namespacePhp);
 					$value = $this->renderExpr($exprNode, $namespacePhp);
 					$baseType = $this->inferExprType($baseExpr);
 					$appendBase = $base;
@@ -2045,7 +2064,9 @@ final class Generator
 	{
 		if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM)) {
 			$baseExpr = $varNode->children['expr'] ?? null;
-			$base = $this->renderExpr($baseExpr, $namespacePhp);
+			$base = is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)
+				? $this->renderDimWriteAccess($baseExpr, $namespacePhp)
+				: $this->renderExpr($baseExpr, $namespacePhp);
 			$value = $this->renderExpr($valueNode, $namespacePhp);
 			$baseType = $this->inferExprType($baseExpr);
 			$dimNode = $varNode->children['dim'] ?? null;
@@ -2398,12 +2419,7 @@ final class Generator
 			}
 		}
 
-		$rendered = $this->renderExpr($expr, $namespacePhp);
-		if ($this->shouldCopyInitializerValue($expr)) {
-			return 'value_copy(' . $rendered . ')';
-		}
-
-		return $rendered;
+		return $this->renderExpr($expr, $namespacePhp);
 	}
 
 
@@ -2524,7 +2540,7 @@ final class Generator
 		}
 
 		if ($elements === []) {
-			return 'value_t{table_()}';
+			return 'value_t{shared_table_()}';
 		}
 
 		$items = [];
@@ -2549,7 +2565,7 @@ final class Generator
 			$items[] = 'table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
 		}
 
-		return 'value_t{table_(' . implode(', ', $items) . ')}';
+		return 'value_t{shared_table_(' . implode(', ', $items) . ')}';
 	}
 
 
@@ -3675,7 +3691,7 @@ final class Generator
 	{
 		$out = [];
 		foreach ($args as $arg) {
-			$out[] = $this->renderExpr($arg, $namespacePhp);
+			$out[] = $this->renderCallArgExpr($arg, $namespacePhp);
 		}
 		return implode(', ', $out);
 	}
@@ -3802,8 +3818,8 @@ final class Generator
 	{
 		$expected = $this->currentReturnType;
 		if ($expected !== null && str_ends_with($expected, '&')) {
-			if (!$this->isLvalueCapableExpr($expr)) {
-				$this->errors[] = 'Reference return requires an lvalue-capable expression.';
+			if (!$this->isLvalueCapableExpr($expr, $namespacePhp)) {
+				$this->errors[] = 'Reference return requires an lvalue-capable expression or a call known to return by reference.';
 				return '/* unsupported-ref-return */';
 			}
 			return $this->renderLvalueExpr($expr, $namespacePhp);
@@ -3822,13 +3838,36 @@ final class Generator
 		return $rendered;
 	}
 
-	private function isLvalueCapableExpr(mixed $expr): bool
+	private function isLvalueCapableExpr(mixed $expr, ?string $namespacePhp = null): bool
 	{
 		if (!is_object($expr)) {
 			return false;
 		}
 
-		return match ($expr->kind ?? null) {
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::CALL) {
+			$nameExpr = $expr->children['expr'] ?? null;
+			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
+			return $functionDecl !== null && $functionDecl->returnsByReference;
+		}
+
+		if ($kind === AstKind::STATIC_CALL) {
+			$classNode = $expr->children['class'] ?? null;
+			$methodName = (string) ($expr->children['method'] ?? '');
+			$methodDecl = $this->lookupMethodDeclByStaticCall($classNode, $methodName, $namespacePhp);
+			return $methodDecl !== null && $methodDecl->returnsByReference;
+		}
+
+		if ($kind === AstKind::METHOD_CALL) {
+			$baseExpr = $expr->children['expr'] ?? null;
+			$methodName = (string) ($expr->children['method'] ?? '');
+			$methodDecl = is_object($baseExpr) && ($baseExpr->kind ?? null) === AstKind::VAR && ($baseExpr->children['name'] ?? null) === 'this'
+				? $this->lookupMethodDeclByCurrentClass($methodName, $namespacePhp)
+				: null;
+			return $methodDecl !== null && $methodDecl->returnsByReference;
+		}
+
+		return match ($kind) {
 			AstKind::VAR, AstKind::DIM, AstKind::PROP, AstKind::STATIC_PROP => true,
 			default => false,
 		};
@@ -3846,6 +3885,15 @@ final class Generator
 			AstKind::PROP, AstKind::STATIC_PROP => $this->renderAssignmentTarget($expr, $namespacePhp),
 			default => $this->renderExpr($expr, $namespacePhp),
 		};
+	}
+
+	private function renderReferenceBindingExpr(mixed $expr, ?string $namespacePhp): string
+	{
+		if ($this->isLvalueCapableExpr($expr, $namespacePhp)) {
+			return $this->renderLvalueExpr($expr, $namespacePhp);
+		}
+
+		return $this->renderExpr($expr, $namespacePhp);
 	}
 
 	private function renderVar(mixed $expr): string

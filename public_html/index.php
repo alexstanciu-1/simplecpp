@@ -207,7 +207,7 @@ try
                "g++ -std=c++20 -Wshadow -Werror " . escapeshellarg($file_path) . 
                " -o " . escapeshellarg($bin_path) . " 2>&1";
 	$compile_cmd = 'export PATH=$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin && ' . 
-                "g++ -std=c++23 " . escapeshellarg($file_path) . " -o " . escapeshellarg($bin_path) . " 2>&1";
+                "g++ -std=c++23 -DSCPP_LANGUAGE_TARGET_PHP=1 " . escapeshellarg($file_path) . " -o " . escapeshellarg($bin_path) . " 2>&1";
 	exec($compile_cmd, $compile_output, $compile_status);
 
 	if ($compile_status !== 0) {

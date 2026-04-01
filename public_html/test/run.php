@@ -1001,6 +1001,7 @@ function buildRuntimeCompileCommand(string $projectRoot, string $objectPath, boo
 		'g++',
 		'-std=c++23',
 		'-O3',
+		'-DSCPP_LANGUAGE_TARGET_PHP=1',
 	];
 
 	if ($memTestEnabled) {
@@ -1025,6 +1026,7 @@ function buildSampleCompileCommand(string $projectRoot, string $compileInputPath
 		'g++',
 		'-std=c++23',
 		'-O3',
+		'-DSCPP_LANGUAGE_TARGET_PHP=1',
 	];
 
 	if ($memTestEnabled) {

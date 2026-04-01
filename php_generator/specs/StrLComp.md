@@ -236,7 +236,7 @@ Examples:
 - `stdClass` / object iteration
 - `foreach` by value and by reference are supported for `vector_t` only
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
-- explicit function/method reference returns lower to native C++ reference signatures (`T&` or `auto&`) and must return lvalue-capable expressions without copyification
+- explicit function/method reference returns require an explicit declared PHP return type, lower to native C++ reference signatures (`T&`), and must return lvalue-capable expressions without copyification
 - `include` / `require`
 - `and` / `or` / `xor`
 - untyped parameters

@@ -169,10 +169,28 @@ static void test_value_t_assignment_and_increment() {
 	assert((inc_float--).float_value().native_value() == 0.5);
 	assert(inc_float.float_value().native_value() == -0.5);
 
-	scpp_test::expect_throw<std::runtime_error>([&]() {
-		scpp::value_t bad(scpp::string_t("x"));
-		bad += scpp::value_t(scpp::string_t("y"));
-	});
+	scpp::value_t concat(scpp::string_t("x"));
+	concat += scpp::value_t(scpp::string_t("y"));
+	assert(concat.string_if()->native_value() == "xy");
+}
+
+static void test_value_t_array_copy_on_write_param_and_nested_copy() {
+	scpp::value_t root(scpp::shared<scpp::table_t<scpp::value_t>>());
+	root[scpp::string_t("name")] = scpp::value_t(scpp::string_t("outside"));
+	root[scpp::string_t("child")] = scpp::value_t(scpp::shared<scpp::table_t<scpp::value_t>>());
+	root[scpp::string_t("child")][scpp::string_t("count")] = scpp::value_t(scpp::int_t(1));
+
+	auto fill = [](scpp::value_t arr) {
+		arr[scpp::string_t("name")] = scpp::value_t(scpp::string_t("inside"));
+		assert(arr.get(scpp::string_t("name")).string_if()->native_value() == "inside");
+	};
+	fill(root);
+	assert(root.get(scpp::string_t("name")).string_if()->native_value() == "outside");
+
+	scpp::value_t child_copy = root.get(scpp::string_t("child"));
+	child_copy[scpp::string_t("count")] = scpp::value_t(scpp::int_t(99));
+	assert(root.get(scpp::string_t("child")).get(scpp::string_t("count")).int_value().native_value() == 1);
+	assert(child_copy.get(scpp::string_t("count")).int_value().native_value() == 99);
 }
 
 static void test_value_t_table_access_and_identity() {
@@ -188,12 +206,12 @@ static void test_value_t_table_access_and_identity() {
 	assert((shared_value == weak_value).native_value() == true);
 	assert((weak_value == same_shared).native_value() == true);
 	assert((weak_value == scpp::value_t(scpp::weak_p<scpp::table_t<scpp::value_t>>(shared))).native_value() == true);
-	assert(shared_value._find_val(scpp::string_t("name")).string_if()->native_value() == "Alex");
-	assert(shared_value._find_val(scpp::string_t("missing")).is_null().native_value() == true);
+	assert(shared_value.get(scpp::string_t("name")).string_if()->native_value() == "Alex");
+	assert(shared_value.get(scpp::string_t("missing")).is_null().native_value() == true);
 	assert(take_shared_table(shared_value).get() == shared.get());
 
 	scpp::value_t null_value(scpp::null_t{});
-	assert(null_value._find_val(scpp::string_t("anything")).is_null().native_value() == true);
+	assert(null_value.get(scpp::string_t("anything")).is_null().native_value() == true);
 
 	shared_value = scpp::null_t{};
 	same_shared = scpp::null_t{};
@@ -201,7 +219,7 @@ static void test_value_t_table_access_and_identity() {
 	auto other_shared = scpp::shared<scpp::table_t<scpp::value_t>>();
 	scpp::value_t other_shared_value(other_shared);
 	assert((other_shared_value == weak_value).native_value() == false);
-	assert(weak_value._find_val(scpp::string_t("name")).is_null().native_value() == true);
+	assert(weak_value.get(scpp::string_t("name")).is_null().native_value() == true);
 
 	scpp_test::expect_throw<std::runtime_error>([&]() {
 		auto owned_left = scpp::value_t(scpp::unique<scpp::table_t<scpp::value_t>>());
@@ -217,6 +235,7 @@ int main() {
 	test_value_t_operator_dispatch_numeric_and_string();
 	test_value_t_comparisons_and_logical();
 	test_value_t_assignment_and_increment();
+	test_value_t_array_copy_on_write_param_and_nested_copy();
 	test_value_t_table_access_and_identity();
 	return 0;
 }

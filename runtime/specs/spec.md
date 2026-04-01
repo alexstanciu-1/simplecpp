@@ -412,3 +412,8 @@ Packed-mode optimizations must not violate this invariant.
 
 
 - `php::count(const table_t<value_t>&)` is supported and returns the logical size of a lowered PHP array.
+
+## Compile-time language target
+
+The runtime may be built with `-DSCPP_LANGUAGE_TARGET_PHP=1`. Under that target, PHP-target array-key normalization is performed in the runtime layer, not in the generator. Decimal integer strings normalize to integer keys using PHP-style rules (`"10" -> 10`, `"-3" -> -3`, `"08"` stays string, leading/trailing whitespace stays string, `"+10"` stays string). Append uses the maximum integer key plus one.
+

@@ -12,6 +12,7 @@
 #include "scpp/value_t.hpp"
 
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
@@ -138,7 +139,34 @@ private:
         h ^= h >> 16; return h;
     }
 
+    static bool php_target_parse_non_negative_int_key(const std::string &text, std::uint32_t &out) {
+#if defined(SCPP_LANGUAGE_TARGET_PHP) && SCPP_LANGUAGE_TARGET_PHP
+        if (text.empty()) return false;
+        if (text[0] == '+') return false;
+        if (text[0] == '-') return false;
+        if (text.size() > 1 && text[0] == '0') return false;
+
+        std::uint64_t value = 0;
+        for (const unsigned char ch : text) {
+            if (ch < static_cast<unsigned char>('0') || ch > static_cast<unsigned char>('9')) return false;
+            value = (value * 10u) + static_cast<std::uint64_t>(ch - static_cast<unsigned char>('0'));
+            if (value > static_cast<std::uint64_t>(std::numeric_limits<std::uint32_t>::max())) return false;
+        }
+
+        out = static_cast<std::uint32_t>(value);
+        return true;
+#else
+        (void)text;
+        (void)out;
+        return false;
+#endif
+    }
+
     static std::uint32_t make_string_key(const string_t &k) {
+        std::uint32_t normalized_int_key = 0;
+        if (php_target_parse_non_negative_int_key(k.native_value(), normalized_int_key)) {
+            return normalized_int_key;
+        }
         return string_pool_t::instance().intern(k);
     }
 
@@ -552,6 +580,13 @@ inline void table_add_item_(table_t<value_t> &table, const table_build_item_t &i
 		return;
 	}
 	table.set(std::get<string_t>(item.key), item.value);
+}
+
+template <typename... TArgs>
+[[nodiscard]] inline shared_p<table_t<value_t>> shared_table_(TArgs &&...args) {
+	auto table = shared_p<table_t<value_t>>(std::make_shared<table_t<value_t>>());
+	(table_add_item_(*table, std::forward<TArgs>(args)), ...);
+	return table;
 }
 
 template <typename... TArgs>

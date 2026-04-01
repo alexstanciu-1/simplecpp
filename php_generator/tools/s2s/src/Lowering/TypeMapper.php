@@ -82,8 +82,7 @@ final class TypeMapper
 
 		$mapped = $this->mapDeclaredType($phpType);
 		if ($explicitRef) {
-			$refProxy = $this->mapReferenceProxyType($phpType);
-			return $refProxy ?? $this->appendLvalueReference($mapped);
+			return $this->appendLvalueReference($mapped);
 		}
 
 		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<')) {
@@ -150,25 +149,13 @@ final class TypeMapper
 	public function mapReferenceProxyType(string $phpType): ?string
 	{
 		$normalized = trim($phpType);
-		return match ($normalized) {
-			'int' => 'ref_int_t',
-			'float' => 'ref_float_t',
-			'bool' => 'ref_bool_t',
-			'string' => 'ref_string_t',
-			default => null,
-		};
+		return null;
 	}
 
 	public function mapReferenceProxyFactory(string $phpType): ?string
 	{
 		$normalized = trim($phpType);
-		return match ($normalized) {
-			'int' => 'ref_int',
-			'float' => 'ref_float',
-			'bool' => 'ref_bool',
-			'string' => 'ref_string',
-			default => null,
-		};
+		return null;
 	}
 	public function isVectorType(string $phpType): bool
 	{
