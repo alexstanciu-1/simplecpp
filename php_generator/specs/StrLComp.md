@@ -552,14 +552,13 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp::php;`. User-defined constants stay in the generated user namespace model.
+The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;` and `using namespace ::scpp::php;`. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; the only allowed rooted occurrences are the generated using-directives themselves and explicit import-lowering forms such as `use` declarations. User-defined constants stay in the generated user namespace model.
 
 Examples:
 ```cpp
-auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp::php;`
-auto b = ::scpp::php::PHP_INT_MAX;   // fully qualified fallback form when no using-directive is present
+auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp; using namespace ::scpp::php;`
 auto c = LIMIT;                      // user-defined constant in the current generated namespace
-auto d = ::scpp::A::B::LIMIT;        // user-defined constant in another generated namespace
+auto d = A::B::LIMIT;                // user-defined constant in another generated namespace
 ```
 
 ## 7. Null and nullable rules

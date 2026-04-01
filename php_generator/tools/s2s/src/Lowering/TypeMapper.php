@@ -163,10 +163,10 @@ final class TypeMapper
 	{
 		$normalized = trim($phpType);
 		return match ($normalized) {
-			'int' => '::scpp::ref_int',
-			'float' => '::scpp::ref_float',
-			'bool' => '::scpp::ref_bool',
-			'string' => '::scpp::ref_string',
+			'int' => 'ref_int',
+			'float' => 'ref_float',
+			'bool' => 'ref_bool',
+			'string' => 'ref_string',
 			default => null,
 		};
 	}
@@ -493,7 +493,7 @@ final class TypeMapper
 	{
 		$trimmed = ltrim($phpType, '\\');
 		if (str_contains($trimmed, '\\')) {
-			return '::scpp::' . str_replace('\\', '::', $trimmed);
+			return str_replace('\\', '::', $trimmed);
 		}
 
 		return $trimmed;

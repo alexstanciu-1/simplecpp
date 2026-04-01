@@ -615,14 +615,13 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp::php;`. User-defined constants stay in the generated user namespace model.
+The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;` and `using namespace ::scpp::php;`. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; the only allowed rooted occurrences are the generated using-directives themselves and explicit import-lowering forms such as `use` declarations. User-defined constants stay in the generated user namespace model.
 
 Examples:
 ```cpp
-auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp::php;`
-auto b = ::scpp::php::PHP_INT_MAX;   // fully qualified fallback form when no using-directive is present
+auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp; using namespace ::scpp::php;`
 auto c = LIMIT;                      // user-defined constant in the current generated namespace
-auto d = ::scpp::A::B::LIMIT;        // user-defined constant in another generated namespace
+auto d = A::B::LIMIT;                // user-defined constant in another generated namespace
 ```
 
 ## 7. Null and nullable rules
@@ -768,6 +767,32 @@ Helpers that are not plain PHP semantic primitives may go through the `scpp::` l
 
 Current accepted case:
 - exponentiation `**` -> `scpp::pow(...)`
+
+### 13.1 Rooted runtime qualification ban
+Generator MUST NOT emit fully-qualified names like `::scpp` or `::scpp::php` in generated expression/type code because generated source namespace blocks already inject:
+- `using namespace ::scpp;`
+- `using namespace ::scpp::php;`
+
+Examples:
+```cpp
+table_(table_item_(string_t("x")))
+expect_array_argument(x, false, "x")
+create<MyClass>()
+class_t<decltype(obj)>::make()
+A::B::LIMIT
+```
+
+Never emit these rooted runtime/helper forms inside generated expression/type code:
+```cpp
+::scpp::table_(...)
+::scpp::php::expect_array_argument(...)
+::scpp::create<MyClass>()
+::scpp::class_t<decltype(obj)>::make()
+::scpp::A::B::LIMIT
+```
+
+Allowed exception:
+- generated using-directives/import-lowering lines may still use rooted forms, for example `using namespace ::scpp;`, `using namespace ::scpp::php;`, or `using ::scpp::A::B::f;`
 
 Example:
 ```cpp

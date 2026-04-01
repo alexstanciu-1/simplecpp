@@ -42,3 +42,8 @@ Interpolation AST finding:
 - generator lowering should join each part in order and cast interpolated non-string values to `string_t` explicitly
 - `samples/know_how/` remains the exporter-behavior reference folder for these checks
 
+
+Generator namespace/import note:
+- generated `.cpp` namespace blocks inject `using namespace ::scpp;` and `using namespace ::scpp::php;`
+- generator-emitted runtime/helper references inside expression/type code must therefore stay unqualified
+- rooted `::scpp` / `::scpp::php` helper references in generated expression/type code are regressions

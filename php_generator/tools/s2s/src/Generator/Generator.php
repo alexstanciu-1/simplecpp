@@ -168,10 +168,10 @@ final class Generator
 	private function qualifyNamespaceSymbol(?string $namespacePhp, string $symbol): string
 	{
 		if ($namespacePhp === null || $namespacePhp === '') {
-			return '::scpp::' . $symbol;
+			return 'scpp::' . $symbol;
 		}
 
-		return '::scpp::' . str_replace('\\', '::', $namespacePhp) . '::' . $symbol;
+		return 'scpp::' . str_replace('\\', '::', $namespacePhp) . '::' . $symbol;
 	}
 
 	private function collectFunctionDecls(PhpFile $file): array
@@ -321,7 +321,7 @@ final class Generator
 			$packedValues[] = $this->renderExpr($args[$i], $namespacePhp);
 		}
 
-		$out[] = '::scpp::vector_t<' . $variadicType . '>{' . implode(', ', $packedValues) . '}';
+		$out[] = 'vector_t<' . $variadicType . '>{' . implode(', ', $packedValues) . '}';
 		return implode(', ', $out);
 	}
 
@@ -333,7 +333,7 @@ final class Generator
 		}
 		if (!$param->isReference) {
 			if ($param->type === 'array') {
-				return '::scpp::table_copy(' . $rendered . ')';
+				return 'table_copy(' . $rendered . ')';
 			}
 			return $rendered;
 		}
@@ -618,6 +618,7 @@ final class Generator
 		$header[] = 'namespace ' . $namespaceCpp . ' {';
 		$header[] = '';
 		$source[] = 'namespace ' . $namespaceCpp . ' {';
+		$source[] = $this->indent(1) . 'using namespace ::scpp;';
 		$source[] = $this->indent(1) . 'using namespace ::scpp::php;';
 		$source[] = '';
 
@@ -1362,7 +1363,7 @@ final class Generator
 			if (!$this->isPhpArrayLikeDeclaredType($declaredType)) {
 				continue;
 			}
-			$lines[] = '::scpp::php::expect_array_argument(' . $name . ', ' . ($this->isNullablePhpArrayDeclaredType($declaredType) ? 'true' : 'false') . ', "' . addslashes($name) . '");';
+			$lines[] = 'expect_array_argument(' . $name . ', ' . ($this->isNullablePhpArrayDeclaredType($declaredType) ? 'true' : 'false') . ', "' . addslashes($name) . '");';
 		}
 		return $lines;
 	}
@@ -2396,7 +2397,7 @@ final class Generator
 
 		$rendered = $this->renderExpr($expr, $namespacePhp);
 		if ($this->shouldCopyInitializerValue($expr)) {
-			return '::scpp::php::value_copy(' . $rendered . ')';
+			return 'value_copy(' . $rendered . ')';
 		}
 
 		return $rendered;
@@ -2459,7 +2460,7 @@ final class Generator
 		}
 
 		if (preg_match('/^unique\s*<\s*(.+)\s*>$/', trim($typedLocalType), $matches) === 1) {
-			return '::scpp::unique<' . trim($matches[1]) . '>(' . $args . ')';
+			return 'unique<' . trim($matches[1]) . '>(' . $args . ')';
 		}
 
 		return null;
@@ -2521,11 +2522,11 @@ final class Generator
 
 			$keyNode = $element->children['key'] ?? null;
 			if ($keyNode === null) {
-				$items[] = '::scpp::table_item_(' . $this->renderExpr($valueNode, $namespacePhp) . ')';
+				$items[] = 'table_item_(' . $this->renderExpr($valueNode, $namespacePhp) . ')';
 				continue;
 			}
 
-			$items[] = '::scpp::table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
+			$items[] = 'table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
 		}
 
 		return 'table_(' . implode(', ', $items) . ')';
@@ -3350,14 +3351,14 @@ final class Generator
 		}
 		if ($kind === AstKind::NEW) {
 			$class = $this->renderClassName($expr->children['class'] ?? null, $namespacePhp);
-			return '::scpp::create<' . $class . '>(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
+			return 'create<' . $class . '>(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::STATIC_CALL) {
 			$classNode = $expr->children['class'] ?? null;
 			$method = (string) ($expr->children['method'] ?? '');
 			$args = $expr->children['args']->children ?? [];
 			$class = is_object($classNode) && ($classNode->kind ?? null) === AstKind::VAR
-				? '::scpp::class_t<decltype(' . $this->renderExpr($classNode, $namespacePhp) . ')>'
+				? 'class_t<decltype(' . $this->renderExpr($classNode, $namespacePhp) . ')>'
 				: $this->renderClassName($classNode, $namespacePhp);
 			$methodDecl = $this->lookupMethodDeclByStaticCall($classNode, $method, $namespacePhp);
 			$renderedArgs = $methodDecl !== null ? $this->renderCallArgsForParams($methodDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
@@ -3373,7 +3374,7 @@ final class Generator
 				if (preg_match('/^vector_t<(.+)>$/', $baseType) !== 1) {
 					$base = $this->renderExpr($baseExpr, $namespacePhp);
 					$dim = $this->renderExpr($varNode->children['dim'] ?? null, $namespacePhp);
-					return '::scpp::table_has_(' . $base . ', ' . $dim . ')';
+					return 'table_has_(' . $base . ', ' . $dim . ')';
 				}
 			}
 			return 'isset(' . $this->renderExpr($varNode, $namespacePhp) . ')';
@@ -3711,7 +3712,7 @@ final class Generator
 		}
 
 		if (($classNode->kind ?? null) === AstKind::VAR) {
-			return '::scpp::class_t<decltype(' . $this->renderExpr($classNode, $namespacePhp) . ')>::' . $prop;
+			return 'class_t<decltype(' . $this->renderExpr($classNode, $namespacePhp) . ')>::' . $prop;
 		}
 
 		if (($classNode->kind ?? null) !== AstKind::NAME) {
@@ -3766,7 +3767,7 @@ final class Generator
 
 		$cpp = str_replace('\\', '::', $trimmed);
 		if ($flags === 0 || str_starts_with($name, '\\')) {
-			return '::scpp::' . $cpp;
+			return $cpp;
 		}
 
 		if ($rootBareIdentifiers && !str_contains($trimmed, '\\')) {
