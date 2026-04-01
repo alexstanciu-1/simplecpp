@@ -57,6 +57,8 @@ tests/**/*.php.json
 sandbox/tmp/
 sandbox/cache/
 
+mem_container/
+
 
 # =========================
 # PHP / Tooling
