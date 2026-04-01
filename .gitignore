@@ -1,0 +1,94 @@
+# =========================
+# C++ / Build Artifacts
+# =========================
+
+# Build dirs
+/build/
+/bin/
+/out/
+/cmake-build-*/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Object / binaries
+*.o
+*.obj
+*.so
+*.a
+*.dll
+*.exe
+*.out
+
+# Debug / profiling
+*.log
+*.dSYM/
+*.prof
+
+
+# =========================
+# Project-Specific (Simple C++)
+# =========================
+
+# Generated C++ (sandbox)
+sandbox/*.cpp
+sandbox/*.hpp
+sandbox/*.out
+
+# Runtime test outputs
+runtime/tests/output/
+runtime/tests/*.out
+
+tests/**/*.json.cpp
+tests/**/*.cpp.json
+tests/**/*.json.php
+tests/**/*.php.json
+
+# Generator / AST artifacts
+*.ast.json
+*.tmp.json
+*.dump
+
+# Sandbox runtime artifacts
+sandbox/tmp/
+sandbox/cache/
+
+
+# =========================
+# PHP / Tooling
+# =========================
+
+# Composer
+/vendor/
+composer.lock
+
+# IDEs
+.idea/
+.vscode/
+
+# PHP temp
+*.cache
+*.log
+
+# =========================
+# NetBeans
+# =========================
+
+# Project config (user-specific)
+nbproject/
+nbproject/private/
+
+# Build / dist (NetBeans-managed)
+nbproject/build-impl.xml
+nbbuild/
+dist/
+build/
+
+# Cache / temp
+nbproject/private/cache/
+.nb-gradle/
+
