@@ -3,6 +3,20 @@
 
 namespace scpp {
 
+template <>
+value_t table_t<value_t>::_find_val(const int_t &key) const {
+	auto [f, p] = find_int(static_cast<std::uint32_t>(key.native_value()));
+	if (!f) return value_t{null_t{}};
+	return p->clone();
+}
+
+template <>
+value_t table_t<value_t>::_find_val(const string_t &key) const {
+	auto [f, p] = find_int(make_string_key(key));
+	if (!f) return value_t{null_t{}};
+	return p->clone();
+}
+
 // Explicit instantiations one per whitelisted T_VALUE.
 // Keeps template code compiled once, not per translation unit.
 template class table_t<null_t>;

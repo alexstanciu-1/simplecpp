@@ -3,7 +3,7 @@
 Simple C++ is not PHP. Key differences:
 
 ## Null
-$x = null; // ❌
+$x = null; // ✅ first assignment lowers to value_t x = null;
 $x /** ?int */ = null; // ✅
 
 ## References

@@ -9,6 +9,7 @@
 #include "scpp/nullptr_t.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/unique_p.hpp"
+#include "scpp/value_t.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -413,16 +414,8 @@ public:
     // _find_val  — returns value_t by value (null if missing)
     //              only available for table_t<value_t>
     // --------------------------------------------------------
-    [[nodiscard]] value_t _find_val(const int_t &key) const requires std::same_as<T_VALUE, value_t> {
-        auto [f, p] = find_int(static_cast<std::uint32_t>(key.native_value()));
-        if (!f) return value_t{null_t{}};
-        return p->clone();
-    }
-    [[nodiscard]] value_t _find_val(const string_t &key) const requires std::same_as<T_VALUE, value_t> {
-        auto [f, p] = find_int(make_string_key(key));
-        if (!f) return value_t{null_t{}};
-        return p->clone();
-    }
+    [[nodiscard]] value_t _find_val(const int_t &key) const requires std::same_as<T_VALUE, value_t>;
+    [[nodiscard]] value_t _find_val(const string_t &key) const requires std::same_as<T_VALUE, value_t>;
 
     // --------------------------------------------------------
     // at  — throws if key absent
@@ -508,6 +501,12 @@ public:
         }
     }
 };
+
+template <>
+[[nodiscard]] value_t table_t<value_t>::_find_val(const int_t &key) const;
+
+template <>
+[[nodiscard]] value_t table_t<value_t>::_find_val(const string_t &key) const;
 
 // ============================================================
 // Ergonomic helpers for generated literals

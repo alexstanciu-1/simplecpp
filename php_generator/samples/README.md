@@ -47,3 +47,13 @@ Generator namespace/import note:
 - generated `.cpp` namespace blocks inject `using namespace ::scpp;` and `using namespace ::scpp::php;`
 - generator-emitted runtime/helper references inside expression/type code must therefore stay unqualified
 - rooted `::scpp` / `::scpp::php` helper references in generated expression/type code are regressions
+
+Assignment-expression note:
+- ordinary assignment statements and simple assignment expressions should lower directly without a helper lambda
+- helper lambdas are reserved for complex expression contexts where the generator must preserve PHP assignment-value semantics while guaranteeing single evaluation, especially append expressions or larger composed expressions
+- nested lvalue chains stay on mutating access for the full target path, so `$x[0]["name"] = "first";` must not lower through `get(...)` on the left-hand side
+
+
+Array literal note:
+- untyped `$x = [];` and `$x = [ ... ];` declare as `value_t x = value_t{table_(...)}`, not `auto x = table_(...)`, so generated locals expose `append(...)`, `operator[]`, and `get(...)` immediately.
+- untyped first-assignment `$x = null;` declares as `value_t x = null;`, not `auto x = null;`, so later fat-value operations such as `append(...)`, `operator[]`, and `get(...)` compile against the null-state `value_t`.

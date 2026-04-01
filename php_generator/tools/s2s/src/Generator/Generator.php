@@ -1476,7 +1476,8 @@ final class Generator
 				if ($closureFunctionType !== null) {
 					return [$closureFunctionType . ' ' . $name . ' = ' . $expr . ';'];
 				}
-				return ['auto ' . $name . ' = ' . $expr . ';'];
+				$declarationType = $this->inferFirstAssignmentDeclarationType($exprNode, $inferredType);
+				return [$declarationType . ' ' . $name . ' = ' . $expr . ';'];
 			}
 			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM)) {
 				if (($varNode->children['dim'] ?? null) === null) {
@@ -1503,8 +1504,9 @@ final class Generator
 						'}',
 					];
 				}
-				$assignment = $this->renderAssignmentExpr($varNode, $exprNode, $namespacePhp);
-				return [$assignment . ';'];
+				$target = $this->renderDimWriteAccess($varNode, $namespacePhp);
+				$value = $this->renderExpr($exprNode, $namespacePhp);
+				return [$target . ' = ' . $value . ';'];
 			}
 			if ($isTypedEmptyVectorLiteral && $name !== null) {
 				return [$name . ' = ' . $typedVectorType . '{};'];
@@ -1988,7 +1990,9 @@ final class Generator
 	private function renderDimWriteAccess(mixed $expr, ?string $namespacePhp): string
 	{
 		$baseExpr = $expr->children['expr'] ?? null;
-		$base = $this->renderExpr($baseExpr, $namespacePhp);
+		$base = is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)
+			? $this->renderDimWriteAccess($baseExpr, $namespacePhp)
+			: $this->renderExpr($baseExpr, $namespacePhp);
 		$dimNode = $expr->children['dim'] ?? null;
 		if ($dimNode === null) {
 			$this->errors[] = 'Append syntax cannot be used as an lvalue target.';
@@ -2057,18 +2061,14 @@ final class Generator
 					return '([&]() { (void) ' . $appendBase . $appendMethod . '(' . $appendValue . '); return ' . $returnValue . '; }())';
 				}
 
-				// Non-trivial append assignments still spill into a temporary so the right-hand side is named once.
+				// Complex append assignments still spill into a temporary so the right-hand side is named once.
 				$tempName = $this->nextTempName('__append_value');
 				$storedTemp = $tempName;
 				return '([&]() { auto ' . $tempName . ' = ' . $value . '; (void) ' . $appendBase . $appendMethod . '(' . $storedTemp . '); return ' . $storedTemp . '; }())';
 			}
-			$dim = $this->renderExpr($dimNode, $namespacePhp);
-			if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
-				return '(' . $base . '.at(' . $dim . ') = ' . $value . ')';
-			}
-			$tempName = $this->nextTempName('__set_value');
-			$assignBase = $this->isUntypedTableType($baseType) ? $this->renderUntypedTableAccessBase($base, $baseType) : $base;
-			return '([&]() { auto ' . $tempName . ' = ' . $value . '; ' . $assignBase . '[' . $dim . '] = ' . $tempName . '; return ' . $tempName . '; }())';
+
+			$target = $this->renderDimWriteAccess($varNode, $namespacePhp);
+			return '(' . $target . ' = ' . $value . ')';
 		}
 
 		$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
@@ -2160,7 +2160,7 @@ final class Generator
 		}
 
 		if (is_object($expr) && (($expr->kind ?? null) === AstKind::DIM)) {
-			return $this->renderDimAccess($expr, $namespacePhp);
+			return $this->renderDimWriteAccess($expr, $namespacePhp);
 		}
 
 		return $this->renderExpr($expr, $namespacePhp);
@@ -2263,9 +2263,12 @@ final class Generator
 		$rightExpr = $this->renderExpr($rightExprNode, $namespacePhp);
 		$this->declaredLocals[$rightName] = true;
 		$this->declaredLocals[$leftName] = true;
-		$leftType = $typed !== null ? $this->typeMapper->mapTypedLocalType($typed) : 'auto';
+		$rightDeclarationType = $this->inferFirstAssignmentDeclarationType($rightExprNode, null);
+		$leftType = $typed !== null
+			? $this->typeMapper->mapTypedLocalType($typed)
+			: $this->inferFirstAssignmentDeclarationType($rightExprNode, null);
 		return [
-			'auto ' . $rightName . ' = ' . $rightExpr . ';',
+			$rightDeclarationType . ' ' . $rightName . ' = ' . $rightExpr . ';',
 			$leftType . ' ' . $leftName . ' = ' . $rightName . ';',
 		];
 	}
@@ -2416,6 +2419,23 @@ final class Generator
 		return $this->isUntypedTableType($baseType);
 	}
 
+	private function inferFirstAssignmentDeclarationType(mixed $exprNode, ?string $inferredType): string
+	{
+		if (is_object($exprNode) && (($exprNode->kind ?? null) === AstKind::ARRAY)) {
+			return 'value_t';
+		}
+
+		if ($this->isNullExpr($exprNode)) {
+			return 'value_t';
+		}
+
+		if ($inferredType === 'value_t') {
+			return 'value_t';
+		}
+
+		return 'auto';
+	}
+
 	private function validateTypedWrapperInitializerFromNew(string $typedLocalType, object $expr, ?string $namespacePhp): ?string
 	{
 		$declaredInnerType = $this->extractWrappedObjectInnerType($typedLocalType);
@@ -2504,7 +2524,7 @@ final class Generator
 		}
 
 		if ($elements === []) {
-			return 'table_()';
+			return 'value_t{table_()}';
 		}
 
 		$items = [];
@@ -2529,7 +2549,7 @@ final class Generator
 			$items[] = 'table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
 		}
 
-		return 'table_(' . implode(', ', $items) . ')';
+		return 'value_t{table_(' . implode(', ', $items) . ')}';
 	}
 
 

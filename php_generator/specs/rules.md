@@ -268,9 +268,10 @@ Examples:
 Supported array lowering is intentionally narrow and split by target typing.
 
 ### Untyped PHP arrays
-- untyped `[]` lowers to `value_t x = table_()` when it is used as an explicit array-present initializer; dynamic locals may also start as `value_t x;` / `auto x = null` and autovivify later
-- untyped `[v1, v2, ...]` lowers to `value_t x = table_(table_item_(...), ...)`
-- untyped `["k" => v]` lowers to `value_t x = table_(table_kv_("k", ...))`
+- untyped `[]` lowers to `value_t x = value_t{table_()}` when it is used as an explicit array-present initializer; dynamic locals may also start as `value_t x;` / `value_t x = null` and autovivify later
+- untyped `[v1, v2, ...]` lowers to `value_t x = value_t{table_(table_item_(...), ...)}`
+- first assignment declaration inference is intentionally overridden for fat-value bootstrap initializers: `$x = [];`, `$x = [ ... ];`, and `$x = null;` must declare as `value_t`, never `auto`, so the variable immediately exposes the fat `value_t` API (`append`, `operator[]`, `get`) and preserves null-state autovivification
+- untyped `["k" => v]` lowers to `value_t x = value_t{table_(table_kv_("k", ...))}`
 - nested untyped arrays recurse through the same `table_ / table_item_ / table_kv_` helpers
 - PHP array reads in read-only contexts lower to `get(...)` / `_find_val(...)`; mutating contexts still lower to `operator[]` / `append(...)`
 - native PHP `array` type declarations now lower to `value_t`; function-entry guards enforce `array` vs `?array` before any user code runs, and explicit PHP `&` lowers to `value_t&`
@@ -1086,8 +1087,16 @@ This matches PHP behavior.
 ## Nested table dim support
 
 - Nested table dim reads chain through non-mutating reads so `$x["inner"][0]` lowers via `get(...)` / `_find_val(...)` and does not autovivify the right-hand side.
+- Nested table dim writes stay on the mutating path for the full lvalue chain, so `$x[0]["name"] = "first";` lowers through chained `operator[]` access, not through `get(...)` on intermediate segments.
 - Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `value_t` / `table_t<value_t>`.
 - Table-valued assignments into table slots now use direct `value_t` assignment through the returned `operator[]` reference.
+
+## Assignment-expression lambda fallback
+
+- Default rule: assignment statements and simple assignment expressions lower directly and do **not** use a helper lambda.
+- Example statement: `$x[0]["name"] = "first";` lowers to `x[0]["name"] = "first";`.
+- Example simple expression: `$y = ($x[0]["name"] = "first");` lowers to `value_t y = (x[0]["name"] = "first");` when native C++ assignment-expression semantics already preserve the assigned value.
+- Fallback rule: emit a helper lambda only for complex expression contexts where the generator must guarantee single evaluation and return the assigned value explicitly, especially append expressions or larger composed expressions such as function-call arguments / concatenations that would otherwise duplicate work or lose PHP assignment-value semantics.
 
 
 ## Array argument materialization
@@ -1097,7 +1106,7 @@ This matches PHP behavior.
   - `array` accepts only table-capable `value_t` kinds.
   - `?array` accepts table-capable kinds plus null-kind `value_t`.
 - Read-only nested argument access uses `get(...)` / `_find_val(...)`; mutating paths stay on `operator[]` / `append(...)`.
-- Example: `function touch(array $x): array { $x["name"] = "changed"; return $x; }` lowers to `value_t touch(value_t x) { ::scpp::php::expect_array_argument(x, false, "x"); x[string_t("name")] = string_t("changed"); return x; }`.
+- Example: `function touch(array $x): array { $x["name"] = "changed"; return $x; }` lowers to `value_t touch(value_t x) { expect_array_argument(x, false, "x"); x[string_t("name")] = string_t("changed"); return x; }`.
 
 ## Warning: reassignment of by-value composite params
 

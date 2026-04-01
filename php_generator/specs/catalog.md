@@ -15,6 +15,8 @@ Columns:
 - **Diagnostics**: generator behavior on failure
 - **Notes**: clarifications
 
+- Untyped PHP array literals are a deliberate declaration-time exception: first assignment must declare them as `value_t`, not `auto`, so the resulting local uses the fat-value runtime surface immediately.
+
 | ID | Category | Rule kind | PHP input example | Expected Simple C++ / Result | Status | Preconditions | Normalized pattern | General rule | Diagnostics | Notes |
 |----|----------|-----------|-------------------|------------------------------|--------|---------------|--------------------|--------------|-------------|-------|
 | CLASS-DECL-001 | Class | generation | `class A {}` | `class A { public: };` | supported | class declaration is syntactically valid | `class <name> {}` | A PHP class lowers to a C++ class declaration in the generated header. | Error if the class declaration cannot be normalized. | User PHP classes participate in header/source splitting. |
@@ -117,6 +119,12 @@ Core rule families:
 
 ## Nested table dim support
 
-- Nested table dim reads chain through direct `operator[]` access so `$x["inner"][0]` follows the runtime `value_t` / `table_t` contract.
+- Nested table dim reads chain through `get(...)` / `_find_val(...)` so `$x["inner"][0]` stays non-mutating on the read path.
+- Nested table dim writes keep the full lvalue chain on mutating `operator[]` access, so `$x[0]["name"] = "first";` does not route intermediate segments through `get(...)`.
 - Nested append on a table-valued slot is supported through chained mutating access plus `append(...)` on `value_t` / `table_t<value_t>`, while read-only nested access lowers through `get(...)` / `_find_val(...)`.
 - Table-valued assignments into table slots now use direct `value_t` assignment through the returned `operator[]` reference.
+
+## Assignment-expression lambda fallback
+
+- Default rule: do not emit a helper lambda for ordinary assignment statements or simple assignment expressions.
+- Fallback rule: emit a helper lambda only in complex expression contexts where the generator must preserve PHP assignment-value semantics while also guaranteeing single evaluation, especially append expressions or larger composed expressions.
