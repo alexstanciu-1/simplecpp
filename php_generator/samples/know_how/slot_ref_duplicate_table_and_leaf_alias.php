@@ -1,0 +1,25 @@
+<?php
+declare(strict_types=1);
+
+// Same nested table passed into two by-ref array params, plus a live leaf ref into that table.
+// Purpose: stress duplicate table aliases plus leaf alias under mixed writes.
+
+function cross(array &$a1, array &$a2, int &$leaf): void
+{
+	$a1["k"] = 1;
+	$a2["m"] = 2;
+	$leaf = $leaf + 10;
+	$a1["t"] = $leaf;
+	$a2["n"] = $a1["t"] + 1;
+}
+
+$a = [
+	"r" => [
+		"s" => [
+			"t" => 5,
+		],
+	],
+];
+
+cross($a["r"]["s"], $a["r"]["s"], $a["r"]["s"]["t"]);
+var_dump($a);

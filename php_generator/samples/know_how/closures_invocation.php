@@ -1,0 +1,14 @@
+<?php
+
+$w = 1;
+$z = 2;
+$x = function () { echo "ok x\n"; };
+$y = function ($a) use ($w) { echo "ok y\n"; };
+$q = function (int $a, $b = 1) use ($w, $z) { echo "ok q\n"; };
+
+$x();
+$y(10);
+$q(3);
+$q(3, 9);
+
+echo "all good";

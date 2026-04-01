@@ -1,0 +1,15 @@
+<?php
+
+$f = function (int $v) {
+	if ($v === 1) {
+		echo "one\n";
+		return;
+	}
+
+	echo "other\n";
+};
+
+$f(1);
+$f(2);
+
+echo "done\n";
