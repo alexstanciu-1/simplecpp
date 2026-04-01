@@ -246,8 +246,10 @@ Included initially:
 - `string_if()`, `table_if()`, `shared_table_if()`, and `weak_table_if()` are the current probe-style accessors
 - `cast<T>(value_t)` is the central typed bridge for dynamic-to-typed use
 - `value_t` may auto-bridge into typed C++ targets through that cast layer; invalid conversions fail at runtime
-- `_find_val()` exists on `value_t` as the chained dynamic read helper
-- `_find_val()` on `value_t` forwards to owned/shared table carriers, returns `null` on `null_v`, and currently returns `null` for expired weak-table carriers
+- `value_t::operator[]` is the primary chained dynamic array access helper
+- mutable `value_t::operator[]` autovivifies `null` into an owned `table_t<value_t>`
+- const `value_t::operator[]` follows the underlying table read path and yields the null-like fallback on miss
+- `_find_val()` remains available as an explicit non-inserting dynamic read helper
 - dynamic arithmetic, comparison, logical operators, mutation, and increment/decrement on `value_t` are enabled through runtime dispatch
 - callable dispatch and method dispatch on `value_t` are still deferred
 
@@ -256,7 +258,7 @@ Included initially:
 - implementation is adapted from the donor `mem_container` storage design, but generated code must target `table_t` only
 - `find()` is the non-inserting lookup API and returns `maybe_value_t`
 - `at()` is checked non-inserting access and follows throw-style semantics on miss
-- generator-facing non-assignment dim access is slot-aware (`table_dim_(...)` / `table_t::operator[]` on `table_t<value_t>`) so plain reads stay non-materializing while typed-reference contexts can still bind
+- generator-facing non-assignment dim access is direct (`table_t::operator[]` / `value_t::operator[]`) with mutable autovivification and const null-on-miss behavior
 - echo/text coercion for slot-based dim reads must dispatch through a non-materializing `value_t` read before normal `to_string(...)` handling
 - keys are strict: `123` and `"123"` are different
 - append uses `max_existing_int_key + 1`

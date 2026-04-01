@@ -1460,19 +1460,22 @@ final class Generator
 					$base = $this->renderExpr($baseExpr, $namespacePhp);
 					$value = $this->renderExpr($exprNode, $namespacePhp);
 					$baseType = $this->inferExprType($baseExpr);
-					$appendBase = ($baseType === 'value_t' || $baseType === 'maybe_value_t') ? ($base . '.as_table_ref()') : $base;
-					$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : 'append';
-					$appendValue = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $value : ('table_value_(' . $value . ')');
+					$appendBase = $base;
+					if ($this->isUntypedTableHandleType($baseType)) {
+						$appendBase = '(' . $base . ')';
+					}
+					$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : ($this->isUntypedTableHandleType($baseType) ? '->append' : '.append');
+					$appendValue = $value;
 					if ($this->shouldInlineAssignmentValue($exprNode)) {
-						return ['(void) ' . $appendBase . '.' . $appendMethod . '(' . $appendValue . ');'];
+						return ['(void) ' . $appendBase . $appendMethod . '(' . $appendValue . ');'];
 					}
 
 					$tempName = $this->nextTempName('__append_value');
-					$storedTemp = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $tempName : ('table_value_(' . $tempName . ')');
+					$storedTemp = $tempName;
 					return [
 						'{',
 							'auto ' . $tempName . ' = ' . $value . ';',
-							'(void) ' . $appendBase . '.' . $appendMethod . '(' . $storedTemp . ');',
+							'(void) ' . $appendBase . $appendMethod . '(' . $storedTemp . ');',
 						'}',
 					];
 				}
@@ -1516,6 +1519,9 @@ final class Generator
 				if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 					$this->errors[] = 'unset() on vector_t indexed elements is not supported yet at line ' . $statement->line . '.';
 					return ['// ERROR: unset on vector_t indexed elements is not supported yet'];
+				}
+				if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
+					return [$base . '.as_table_ref().remove(' . $dim . ');'];
 				}
 				return [$base . '.remove(' . $dim . ');'];
 			}
@@ -1631,18 +1637,19 @@ final class Generator
 		}
 
 		$indexName = '__scpp_foreach_i_' . $statement->line;
-		$elementExpr = $sourceExpr . '.at(' . $indexName . ')';
-		$valuePrefix = $byRef ? 'auto &' : 'auto ';
 		$sourceType = $this->inferExprType($payload['expr'] ?? null);
+		$sourceAccessExpr = $this->isUntypedTableHandleType($sourceType) ? '(*(' . $sourceExpr . '))' : $sourceExpr;
+		$elementExpr = $sourceAccessExpr . '.at(' . $indexName . ')';
+		$valuePrefix = $byRef ? 'auto &' : 'auto ';
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
-		} elseif ($sourceType === 'table_t<value_t>' || $sourceType === 'table_t' || $sourceType === '::scpp::table_t' || $sourceType === '::scpp::table_t<value_t>') {
+		} elseif ($this->isUntypedTableType($sourceType)) {
 			$valueStoredType = 'value_t';
 		}
 
 		$lines = [
-			'for (int_t ' . $indexName . ' = static_cast<int_t>(0); static_cast<bool>(' . $indexName . ' < static_cast<int_t>(' . $sourceExpr . '.size())); ++' . $indexName . ') {',
+			'for (int_t ' . $indexName . ' = static_cast<int_t>(0); static_cast<bool>(' . $indexName . ' < static_cast<int_t>(' . $sourceAccessExpr . '.size())); ++' . $indexName . ') {',
 		];
 
 		$scopedLocals = $this->declaredLocals;
@@ -1942,14 +1949,16 @@ final class Generator
 			return $base . '.at(' . $dim . ')';
 		}
 		if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
-			return 'table_dim_(' . $base . '.as_table_ref(), ' . $dim . ')';
+			return $base . '[' . $dim . ']';
 		}
 		if (is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)) {
 			return $base . '[' . $dim . ']';
 		}
-		// Plain PHP array reads lower through the slot-aware helper. C++ then decides
-		// whether the use site needs a value read or a typed reference-capable slot.
-		return 'table_dim_(' . $base . ', ' . $dim . ')';
+		if ($this->isUntypedTableType($baseType)) {
+			return $this->renderUntypedTableAccessBase($base, $baseType) . '[' . $dim . ']';
+		}
+		// Plain PHP array reads now lower directly through operator[] on table_t/value_t.
+		return $base . '[' . $dim . ']';
 	}
 
 	private function renderDimWriteAccess(mixed $expr, ?string $namespacePhp): string
@@ -1967,9 +1976,41 @@ final class Generator
 			return $base . '.at(' . $dim . ')';
 		}
 		if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
-			return $base . '.as_table_ref()[' . $dim . ']';
+			return $base . '[' . $dim . ']';
+		}
+		if ($this->isUntypedTableType($baseType)) {
+			return $this->renderUntypedTableAccessBase($base, $baseType) . '[' . $dim . ']';
 		}
 		return $base . '[' . $dim . ']';
+	}
+
+	private function isUntypedTableType(string $type): bool
+	{
+		return $type === 'table_t'
+			|| $type === '::scpp::table_t'
+			|| $type === 'table_t<value_t>'
+			|| $type === '::scpp::table_t<value_t>'
+			|| $type === 'unique_p<table_t<value_t>>'
+			|| $type === 'unique_p<::scpp::table_t<value_t>>'
+			|| $type === '::scpp::unique_p<table_t<value_t>>'
+			|| $type === '::scpp::unique_p<::scpp::table_t<value_t>>';
+	}
+
+	private function isUntypedTableHandleType(string $type): bool
+	{
+		return $type === 'unique_p<table_t<value_t>>'
+			|| $type === 'unique_p<::scpp::table_t<value_t>>'
+			|| $type === '::scpp::unique_p<table_t<value_t>>'
+			|| $type === '::scpp::unique_p<::scpp::table_t<value_t>>';
+	}
+
+	private function renderUntypedTableAccessBase(string $base, string $type): string
+	{
+		if ($this->isUntypedTableHandleType($type)) {
+			return '(*(' . $base . '))';
+		}
+
+		return $base;
 	}
 
 	private function renderAssignmentExpr(mixed $varNode, mixed $valueNode, ?string $namespacePhp): string
@@ -1981,26 +2022,29 @@ final class Generator
 			$baseType = $this->inferExprType($baseExpr);
 			$dimNode = $varNode->children['dim'] ?? null;
 			if ($dimNode === null) {
-				$appendBase = ($baseType === 'value_t' || $baseType === 'maybe_value_t') ? ($base . '.as_table_ref()') : $base;
-				$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : 'append';
-				$appendValue = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $value : ('table_value_(' . $value . ')');
-				$returnValue = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $value : ('table_value_(' . $value . ')');
+				$appendBase = $base;
+				if ($this->isUntypedTableHandleType($baseType)) {
+					$appendBase = '(' . $base . ')';
+				}
+				$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : ($this->isUntypedTableHandleType($baseType) ? '->append' : '.append');
+				$appendValue = $value;
+				$returnValue = $value;
 				if ($this->shouldInlineAssignmentValue($valueNode)) {
-					return '([&]() { (void) ' . $appendBase . '.' . $appendMethod . '(' . $appendValue . '); return ' . $returnValue . '; }())';
+					return '([&]() { (void) ' . $appendBase . $appendMethod . '(' . $appendValue . '); return ' . $returnValue . '; }())';
 				}
 
 				// Non-trivial append assignments still spill into a temporary so the right-hand side is named once.
 				$tempName = $this->nextTempName('__append_value');
-				$storedTemp = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? $tempName : ('table_value_(' . $tempName . ')');
-				return '([&]() { auto ' . $tempName . ' = ' . $value . '; (void) ' . $appendBase . '.' . $appendMethod . '(' . $storedTemp . '); return ' . $storedTemp . '; }())';
+				$storedTemp = $tempName;
+				return '([&]() { auto ' . $tempName . ' = ' . $value . '; (void) ' . $appendBase . $appendMethod . '(' . $storedTemp . '); return ' . $storedTemp . '; }())';
 			}
 			$dim = $this->renderExpr($dimNode, $namespacePhp);
 			if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 				return '(' . $base . '.at(' . $dim . ') = ' . $value . ')';
 			}
 			$tempName = $this->nextTempName('__set_value');
-			$assignBase = ($baseType === 'value_t' || $baseType === 'maybe_value_t') ? ($base . '.as_table_ref()') : $base;
-			return '([&]() { auto ' . $tempName . ' = ' . $value . '; ' . $assignBase . '[' . $dim . '] = table_value_(' . $tempName . '); return table_value_(' . $tempName . '); }())';
+			$assignBase = $this->isUntypedTableType($baseType) ? $this->renderUntypedTableAccessBase($base, $baseType) : $base;
+			return '([&]() { auto ' . $tempName . ' = ' . $value . '; ' . $assignBase . '[' . $dim . '] = ' . $tempName . '; return ' . $tempName . '; }())';
 		}
 
 		$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
@@ -2345,10 +2389,7 @@ final class Generator
 
 		$baseExpr = $expr->children['expr'] ?? null;
 		$baseType = $this->inferExprType($baseExpr);
-		return $baseType === 'table_t'
-			|| $baseType === '::scpp::table_t'
-			|| $baseType === 'table_t<value_t>'
-			|| $baseType === '::scpp::table_t<value_t>';
+		return $this->isUntypedTableType($baseType);
 	}
 
 	private function validateTypedWrapperInitializerFromNew(string $typedLocalType, object $expr, ?string $namespacePhp): ?string
@@ -3821,14 +3862,14 @@ final class Generator
 			return 'auto';
 		}
 		if ($kind === AstKind::ARRAY) {
-			return 'table_t';
+			return 'unique_p<table_t<value_t>>';
 		}
 		if ($kind === AstKind::DIM) {
 			$baseType = $this->inferExprType($expr->children['expr'] ?? null);
 			if (preg_match('/^vector_t<(.+)>$/', $baseType, $matches) === 1) {
 				return $matches[1];
 			}
-			if ($baseType === 'table_t' || $baseType === '::scpp::table_t' || $baseType === 'table_t<value_t>' || $baseType === '::scpp::table_t<value_t>' || $baseType === 'value_t' || $baseType === 'maybe_value_t') {
+			if ($this->isUntypedTableType($baseType) || $baseType === 'value_t' || $baseType === 'maybe_value_t') {
 				return 'value_t';
 			}
 			return 'auto';

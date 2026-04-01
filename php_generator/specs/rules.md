@@ -272,11 +272,11 @@ Supported array lowering is intentionally narrow and split by target typing.
 - untyped `[v1, v2, ...]` lowers to `::scpp::table_new_(::scpp::table_item_(...), ...)`
 - untyped `["k" => v]` lowers to `::scpp::table_new_(::scpp::table_kv_("k", ...))`
 - nested untyped arrays recurse through the same `table_new_ / table_item_ / table_kv_` helpers
-- PHP array reads lower to `table_dim_(...)`, not `at(...)` or raw `operator[]` mutation paths
+- PHP array reads now lower directly to `operator[]` on `table_t` / `value_t`, not `at(...)`
 - native PHP `array` type declarations lower to `table_t<value_t>`; by-value parameters use a read-only analysis: proven read-only params lower to `const table_t<value_t>&`, while proven write/reassign params lower to owning `table_t<value_t>` and `array &` parameters lower to `table_t<value_t>&`
-- PHP keyed writes lower to `set(...)`
+- PHP keyed writes now lower to direct `operator[]` assignment
 - PHP append writes lower to `append(...)`; simple right-hand sides inline directly, while non-trivial right-hand sides may spill into a temporary to keep assignment-style lowering explicit
-- `unset($a[k])` lowers to `remove(k)`
+- `unset($a[k])` lowers to `remove(k)` on `table_t`; for `value_t` receivers the generator first unwraps with `as_table_ref()`
 - `isset($a[k])` lowers to `has(k)` as a documented v1 approximation
 
 ### Typed vectors
@@ -287,7 +287,7 @@ Supported array lowering is intentionally narrow and split by target typing.
 ### Intentional v1 deviations from PHP
 - `table_t` keeps integer keys and string keys distinct (`1` != `"1"`)
 - `isset($a[k])` lowered through `has(k)` does not implement PHP's null-sensitive `isset` behavior yet
-- `table_dim_(...)` is the slot-aware read helper: plain reads stay null-on-miss, while typed-reference contexts may bind through the returned slot. `find(...)` remains reserved for presence-sensitive logic; `at(...)` remains a runtime checked-access API and is not used for normal PHP array reads
+- `operator[]` is now the primary read/write surface for lowered PHP array access. Mutable paths autovivify missing slots; const paths return the static null-like value on miss. `find(...)` remains reserved for presence-sensitive logic; `at(...)` remains the runtime checked-access API.
 
 ## 12. Incompatibilities
 
@@ -1060,9 +1060,9 @@ This matches PHP behavior.
 
 ## Nested table dim support
 
-- Nested table dim reads chain through slot access so `$x["inner"][0]` stays slot-aware.
-- Nested append on a table-valued slot is supported through `table_slot_t::append(...)`.
-- Table-valued assignments into table slots are wrapped with `table_value_(...)` so nested tables store as `value_t`.
+- Nested table dim reads chain through direct `operator[]` access so `$x["inner"][0]` follows the runtime `value_t` / `table_t` contract.
+- Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `value_t` / `table_t<value_t>`.
+- Table-valued assignments into table slots now use direct `value_t` assignment through the returned `operator[]` reference.
 
 
 ## Array argument materialization
@@ -1074,11 +1074,11 @@ This matches PHP behavior.
   - Explicit PHP `&` still lowers to `T&`.
 - If the generator cannot prove a write, it keeps the param read-only and lets the C++ compiler reject downstream mutation attempts.
 - Copy isolation stays a **call-site** responsibility for read-only `const T&` params, not a hidden callee-signature responsibility.
-- When the argument expression lowers to a `table_slot_t` (for example `$x[0]`), the generator must materialize a **table copy** before the call.
+- When the argument expression lowers to a nested table access expression (for example `$x[0]`) and the callee expects an owning `table_t<value_t>` by value, the generator must materialize a **table copy** before the call.
 - Lowering rule:
   - PHP: `fn(array $row)` with call `fn($x[0])`
   - C++ signature: `void fn(const table_t<value_t>& row)`
-  - C++ call: `fn(::scpp::table_copy(table_dim_(x, 0)))`
+  - C++ call: `fn(::scpp::table_copy(x[0].as_table_ref()))`
 - Do **not** bind nested slots directly as `table_t<value_t>&` for by-value parameters.
 - Do **not** switch every by-value `array` param to pass-by-value preemptively; use pass-by-value only when the body proves that an owning local is required.
 

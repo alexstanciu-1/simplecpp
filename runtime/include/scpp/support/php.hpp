@@ -136,11 +136,6 @@ inline string_t to_string(const value_t &value) {
 	return string_t("");
 }
 
-// Converts one table slot into its PHP echo/string representation.
-// How: slot reads must stay non-materializing in echo contexts, so the slot is first read as value_t and then stringified through the normal dynamic path.
-inline string_t to_string(const table_slot_t &value) {
-	return to_string(static_cast<value_t>(value));
-}
 
 template <typename T>
 // Converts one runtime value into its PHP echo/string representation.
@@ -329,18 +324,18 @@ inline int_t count(const table_t<value_t> &value) {
 }
 
 // Implements PHP by-value copy semantics for mixed runtime values.
-// How: scalars and strings already copy by value through value_t::clone, while nested arrays must detach via table_copy().
+// How: scalars and strings already copy by value through value_t::clone, while nested arrays detach by copying the underlying table into a fresh unique-owned value_t.
 inline value_t value_copy(const value_t &value) {
 	if (value.table_if() != nullptr) {
-		return table_value_(::scpp::table_copy(*value.table_if()));
+		return value_t{unique<table_t<value_t>>(*value.table_if())};
 	}
 	if (value.shared_table_if() != nullptr) {
-		return table_value_(::scpp::table_copy(*value.shared_table_if()->get()));
+		return value_t{unique<table_t<value_t>>(*value.shared_table_if()->get())};
 	}
 	if (value.weak_table_if() != nullptr) {
 		auto locked = value.weak_table_if()->lock();
 		if (static_cast<bool>(locked)) {
-			return table_value_(::scpp::table_copy(*locked.get()));
+			return value_t{unique<table_t<value_t>>(*locked.get())};
 		}
 		return value_t{null_t{}};
 	}

@@ -7,9 +7,16 @@
 #include "scpp/null_t.hpp"
 #include "scpp/nullopt_t.hpp"
 #include "scpp/nullptr_t.hpp"
+#include "scpp/shared_p.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/unique_p.hpp"
+#include "scpp/weak_p.hpp"
+
+#include <cstdint>
 
 namespace scpp {
+
+template <typename T_VALUE> class table_t;
 
 class value_t final {
 public:
@@ -51,9 +58,9 @@ public:
 	value_t(const float_t &value) noexcept;
 	value_t(const string_t &value);
 	value_t(const char *value);
-	explicit value_t(bool value) noexcept;
-	explicit value_t(std::int64_t value) noexcept;
-	explicit value_t(double value) noexcept;
+	value_t(bool value) noexcept;
+	value_t(std::int64_t value) noexcept;
+	value_t(double value) noexcept;
 	value_t(unique_p<table_t<value_t>> value) noexcept;
 	value_t(shared_p<table_t<value_t>> value) noexcept;
 	value_t(weak_p<table_t<value_t>> value) noexcept;
@@ -110,15 +117,15 @@ public:
 	[[nodiscard]] string_t &as_string_ref();
 	[[nodiscard]] table_t<value_t> &as_table_ref();
 
-	explicit operator bool_t() const;
-	explicit operator int_t() const;
-	explicit operator float_t() const;
-	explicit operator string_t() const;
-	operator string_t&(); 
+	operator bool_t() const;
+	operator int_t() const;
+	operator float_t() const;
+	operator string_t() const;
+	operator string_t&();
 
-	explicit operator bool() const;
-	explicit operator shared_p<table_t<value_t>>() const;
-	explicit operator weak_p<table_t<value_t>>() const;
+	operator bool() const;
+	operator shared_p<table_t<value_t>>() const;
+	operator weak_p<table_t<value_t>>() const;
 
 	// Compound Assignments
 	value_t &operator++();

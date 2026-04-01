@@ -108,8 +108,8 @@ The current catalog now keeps generalized array rules instead of one row per tri
 Core rule families:
 - untyped literals lower through `::scpp::table_new_`, `::scpp::table_item_`, and `::scpp::table_kv_`
 - typed `vector<T>` literals lower to `vector_t<T>{...}`
-- PHP array reads lower to `table_dim_(...)`
-- keyed writes lower to `set(...)`
+- PHP array reads lower directly to `operator[]` on `table_t` / `value_t`
+- keyed writes lower to direct `operator[]` assignment
 - append writes lower to `append(...)`; simple right-hand sides inline directly, while non-trivial right-hand sides may spill into a temporary
 - `unset($a[k])` lowers to `remove(k)`
 - `isset($a[k])` lowers to `has(k)` as the current documented approximation
@@ -117,6 +117,6 @@ Core rule families:
 
 ## Nested table dim support
 
-- Nested table dim reads chain through slot access so `$x["inner"][0]` stays slot-aware.
-- Nested append on a table-valued slot is supported through `table_slot_t::append(...)`.
-- Table-valued assignments into table slots are wrapped with `table_value_(...)` so nested tables store as `value_t`.
+- Nested table dim reads chain through direct `operator[]` access so `$x["inner"][0]` follows the runtime `value_t` / `table_t` contract.
+- Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `value_t` / `table_t<value_t>`.
+- Table-valued assignments into table slots now use direct `value_t` assignment through the returned `operator[]` reference.

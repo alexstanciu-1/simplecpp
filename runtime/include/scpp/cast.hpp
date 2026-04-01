@@ -120,57 +120,6 @@ inline string_t cast<string_t, bool_t>(const bool_t &value) {
 	return string_t(value.native_value() ? "1" : "");
 }
 
-// ref_int_t -> int_t
-// Allows generated explicit casts to unwrap stable integer ref proxies.
-template <>
-inline int_t cast<int_t, ref_int_t>(const ref_int_t &value) {
-	return static_cast<int_t>(value);
-}
-
-// ref_float_t -> float_t
-// Allows generated explicit casts to unwrap stable float ref proxies.
-template <>
-inline float_t cast<float_t, ref_float_t>(const ref_float_t &value) {
-	return static_cast<float_t>(value);
-}
-
-// ref_bool_t -> bool_t
-// Allows generated explicit casts to unwrap stable bool ref proxies.
-template <>
-inline bool_t cast<bool_t, ref_bool_t>(const ref_bool_t &value) {
-	return static_cast<bool_t>(value);
-}
-
-// ref_string_t -> string_t
-// Allows generated explicit casts to unwrap stable string ref proxies.
-template <>
-inline string_t cast<string_t, ref_string_t>(const ref_string_t &value) {
-	return static_cast<string_t>(value);
-}
-
-// ref_int_t -> string_t
-// Mirrors PHP numeric string conversion when a by-ref int is stringified.
-template <>
-inline string_t cast<string_t, ref_int_t>(const ref_int_t &value) {
-	return cast<string_t>(static_cast<int_t>(value));
-}
-
-// ref_float_t -> string_t
-// Mirrors PHP numeric string conversion when a by-ref float is stringified.
-template <>
-inline string_t cast<string_t, ref_float_t>(const ref_float_t &value) {
-	return cast<string_t>(static_cast<float_t>(value));
-}
-
-// ref_bool_t -> string_t
-// Mirrors PHP boolean string conversion when a by-ref bool is stringified.
-template <>
-inline string_t cast<string_t, ref_bool_t>(const ref_bool_t &value) {
-	return cast<string_t>(static_cast<bool_t>(value));
-}
-
-// ref_string_t -> value_t-compatible string_t
-// Keeps generator-emitted string casts explicit even when the source is a by-ref string proxy.
 
 // null-like sentinels -> string_t
 // Mirrors PHP string conversion for null-like values as the empty string.
