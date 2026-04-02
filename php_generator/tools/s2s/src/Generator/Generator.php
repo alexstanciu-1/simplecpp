@@ -887,6 +887,9 @@ final class Generator
 		}
 		foreach ($class->methods as $method) {
 			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';';
+			if (!$class->isInterface && !$this->methodIsAbstract($method, $class) && $this->functionNeedsValueRefOverload($method->params) && $method->name !== '__construct' && $method->name !== '__destruct') {
+				$header[] = $this->indent(1) . $this->renderMethodValueRefOverloadDeclaration($method, $class, $namespacePhp) . ';';
+			}
 		}
 		$header[] = '};';
 		$header[] = '';
@@ -921,6 +924,10 @@ final class Generator
 					continue;
 				}
 				$source[] = $this->renderMethodDefinition($class, $method, $namespacePhp);
+				if ($this->functionNeedsValueRefOverload($method->params) && $method->name !== '__construct' && $method->name !== '__destruct') {
+					$source[] = '';
+					$source[] = $this->renderMethodValueRefOverloadDefinition($class, $method, $namespacePhp);
+				}
 				$source[] = '';
 			}
 			$this->currentClassName = $prevClassName;
@@ -1075,8 +1082,15 @@ final class Generator
 	private function emitFunction(array &$header, array &$source, FunctionDecl $function, ?string $namespacePhp): void
 	{
 		$header[] = $this->renderFunctionDeclaration($function, $namespacePhp) . ';';
+		if ($this->functionNeedsValueRefOverload($function->params)) {
+			$header[] = $this->renderFunctionValueRefOverloadDeclaration($function, $namespacePhp) . ';';
+		}
 		$header[] = '';
 		$source[] = $this->renderFunctionDefinition($function, $namespacePhp);
+		if ($this->functionNeedsValueRefOverload($function->params)) {
+			$source[] = '';
+			$source[] = $this->renderFunctionValueRefOverloadDefinition($function, $namespacePhp);
+		}
 		$source[] = '';
 	}
 
@@ -1186,6 +1200,117 @@ final class Generator
 			return null;
 		}
 		return $expr->children['args']->children ?? [];
+	}
+
+	private function functionNeedsValueRefOverload(array $params): bool
+	{
+		foreach ($params as $param) {
+			if ($param instanceof ParamDecl && $this->isSupportedScalarValueRefOverloadParam($param)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function isSupportedScalarValueRefOverloadParam(ParamDecl $param): bool
+	{
+		if (!$param->isReference || $param->type === null || $param->isVariadic) {
+			return false;
+		}
+
+		return in_array($this->typeMapper->mapDeclaredType($param->type), ['int_t', 'float_t', 'bool_t', 'string_t'], true);
+	}
+
+	private function mapValueRefAccessorForParam(ParamDecl $param): ?string
+	{
+		if (!$this->isSupportedScalarValueRefOverloadParam($param)) {
+			return null;
+		}
+
+		return match ($this->typeMapper->mapDeclaredType($param->type ?? '')) {
+			'int_t' => 'as_int_ref',
+			'float_t' => 'as_float_ref',
+			'bool_t' => 'as_bool_ref',
+			'string_t' => 'as_string_ref',
+			default => null,
+		};
+	}
+
+	private function renderValueRefOverloadParams(array $params, bool $includeDefaults, ?string $namespacePhp, array $paramPassModes = []): string
+	{
+		$out = [];
+		foreach ($params as $param) {
+			if ($param->isVariadic) {
+				$elementType = $param->type !== null ? $this->typeMapper->mapDeclaredType($param->type) : '/* ERROR missing-variadic-element-type */';
+				$type = 'const vector_t<' . $elementType . '>&';
+			} elseif ($this->isSupportedScalarValueRefOverloadParam($param)) {
+				$type = 'value_t&';
+			} else {
+				$type = $param->type !== null ? $this->renderParamTypeForMode($param, $paramPassModes[$param->name] ?? 'readonly') : '/* ERROR missing-parameter-type */';
+			}
+			$rendered = $type . ' ' . $param->name;
+			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
+				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
+			}
+			$out[] = $rendered;
+		}
+		return implode(', ', $out);
+	}
+
+	private function renderValueRefOverloadForwardArgs(array $params): string
+	{
+		$out = [];
+		foreach ($params as $param) {
+			$accessor = $this->mapValueRefAccessorForParam($param);
+			$out[] = $accessor !== null
+				? $param->name . '.' . $accessor . '()'
+				: $param->name;
+		}
+		return implode(', ', $out);
+	}
+
+	private function renderFunctionValueRefOverloadDeclaration(FunctionDecl $function, ?string $namespacePhp = null): string
+	{
+		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
+		$paramPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
+		return $returnType . ' ' . $function->name . '(' . $this->renderValueRefOverloadParams($function->params, true, $namespacePhp, $paramPassModes) . ')';
+	}
+
+	private function renderFunctionValueRefOverloadDefinition(FunctionDecl $function, ?string $namespacePhp): string
+	{
+		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
+		$paramPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
+		$signature = $returnType . ' ' . $function->name . '(' . $this->renderValueRefOverloadParams($function->params, false, $namespacePhp, $paramPassModes) . ')';
+		$forward = $this->renderValueRefOverloadForwardArgs($function->params);
+		$body = $returnType === 'void'
+			? $this->indent(1) . $function->name . '(' . $forward . ');'
+			: $this->indent(1) . 'return ' . $function->name . '(' . $forward . ');';
+		return $signature . " {
+" . $body . "
+}";
+	}
+
+	private function renderMethodValueRefOverloadDeclaration(MethodDecl $method, ClassDecl|string|null $classDecl = null, ?string $namespacePhp = null): string
+	{
+		$paramPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$prefix = $method->isStatic ? 'static ' : '';
+		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+		return $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderValueRefOverloadParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
+	}
+
+	private function renderMethodValueRefOverloadDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
+	{
+		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+		$paramPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$signature = $returnType . ' ' . $class->name . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderValueRefOverloadParams($method->params, false, $namespacePhp, $paramPassModes) . ')';
+		$forward = $this->renderValueRefOverloadForwardArgs($method->params);
+		$body = $returnType === 'void'
+			? $this->indent(1) . $this->cppIdentifier($method->name) . '(' . $forward . ');'
+			: $this->indent(1) . 'return ' . $this->cppIdentifier($method->name) . '(' . $forward . ');';
+		return $signature . " {
+" . $body . "
+}";
 	}
 
 	private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
@@ -1465,16 +1590,25 @@ final class Generator
 			$typedVectorType = $effectiveTyped !== null ? $this->mapTypedVectorLocalType($effectiveTyped) : null;
 			$isTypedEmptyVectorLiteral = $statement->kind === 'assign' && $typedVectorType !== null && $this->isEmptyPositionalArrayLiteral($exprNode);
 			if ($statement->kind === 'assign_ref') {
-				if ($name !== null && !isset($this->declaredLocals[$name])) {
-					$this->declaredLocals[$name] = true;
-					if ($effectiveTyped !== null) {
-						$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($effectiveTyped);
-						return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $name . ' = ' . $expr . ';'];
-					}
-					return ['auto& ' . $name . ' = ' . $expr . ';'];
+				if ($name === null) {
+					$error = 'reference assignment requires a fresh simple local target at line ' . $statement->line . '.';
+					$this->errors[] = $error;
+					return ['// ERROR: ' . $error];
 				}
-				$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
-				return [$target . ' = ' . $expr . ';'];
+
+				if (isset($this->declaredLocals[$name])) {
+					$error = 'reference rebinding is not supported for $' . $name . ' at line ' . $statement->line . '.';
+					$this->errors[] = $error;
+					return ['// ERROR: ' . $error];
+				}
+
+				$this->declaredLocals[$name] = true;
+				if ($effectiveTyped !== null) {
+					$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($effectiveTyped);
+					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $name . ' = ' . $expr . ';'];
+				}
+
+				return ['auto& ' . $name . ' = ' . $expr . ';'];
 			}
 
 			if ($name !== null && !isset($this->declaredLocals[$name])) {

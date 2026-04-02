@@ -1104,6 +1104,7 @@ This matches PHP behavior.
 ## Array argument materialization
 
 - A typed PHP `array` parameter now lowers to `value_t` (or `value_t&` for explicit PHP `&`).
+- For functions / methods that have at least one typed scalar by-reference parameter among `int&`, `float&`, `bool&`, `string&`, the generator emits one companion overload where those by-reference scalar parameters become `value_t&` and forward through the matching `as_*_ref()` accessors. This is the supported bridge for passing mutable array / table slots into typed scalar by-reference parameters.
 - The generator emits a function-entry guard for every `array` / `?array` parameter before user code runs.
   - `array` accepts only table-capable `value_t` kinds.
   - `?array` accepts table-capable kinds plus null-kind `value_t`.
