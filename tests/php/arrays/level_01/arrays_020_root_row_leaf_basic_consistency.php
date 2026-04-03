@@ -1,0 +1,11 @@
+<?php
+declare(strict_types=1);
+
+// Root, row, and leaf views stay coherent in a simple non-ref flow.
+$x = [];
+$x[] = ["id" => 1, "name" => "Alex"];
+$id = $x[0]["id"];
+$x[0]["seen"] = $id;
+$x[0]["id"] = $id + 5;
+
+var_dump($x);

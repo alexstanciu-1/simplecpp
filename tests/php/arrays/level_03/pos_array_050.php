@@ -1,0 +1,28 @@
+<?php
+declare(strict_types=1);
+
+// POS-ARR-050
+// Safe positive array case within the documented reduced PHP-array subset.
+
+function bump_slot(int &$slot): void
+{
+	$slot += 50;
+}
+
+$x = [];
+$x["id"] = 50;
+$x["name"] = "row-50";
+$x["inner"] = [];
+$x["inner"]["count"] = 100;
+$x["inner"]["items"] = [];
+$x["inner"]["items"][] = 50;
+$x["inner"]["items"][] = 51;
+
+$copy = $x;
+$copy["name"] = "copy-50";
+$copy["inner"]["count"] = 150;
+
+bump_slot($x["inner"]["count"]);
+
+var_dump($x);
+var_dump($copy);

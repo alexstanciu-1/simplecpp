@@ -1,0 +1,12 @@
+<?php
+declare(strict_types=1);
+
+$x = [];
+for ($i = 0; $i < 20; $i++) {
+    $x[] = ["id" => $i, "name" => "N{$i}"];
+}
+$x[0]["name"] = "first";
+$x[19]["name"] = "last";
+
+var_dump($x[0]);
+var_dump($x[19]);

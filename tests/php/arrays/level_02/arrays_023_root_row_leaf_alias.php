@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+function arrays_touch_root_row_leaf(array &$root, array &$row, int &$id): void
+{
+    $row["left"] = 1;
+    $id = $id + 10;
+    $root[0]["name"] = "A" . $id;
+    $row["final"] = $root[0]["name"];
+}
+
+$x = [];
+$x[] = ["id" => 1, "name" => "Alex0"];
+arrays_touch_root_row_leaf($x, $x[0], $x[0]["id"]);
+
+var_dump($x);

@@ -1,0 +1,22 @@
+<?php
+declare(strict_types=1);
+
+function arrays_fanout(int &$leaf, array &$mid, array &$root, int &$again): void
+{
+    $root["r"]["s"]["a"] = 1;
+    $mid["b"] = 2;
+    $leaf = $leaf + 10;
+    $root["r"]["s"]["t"] = $root["r"]["s"]["t"] + $mid["a"];
+    $again = $again + $mid["b"];
+}
+
+$a = [
+    "r" => [
+        "s" => [
+            "t" => 5
+        ]
+    ]
+];
+
+arrays_fanout($a["r"]["s"]["t"], $a["r"]["s"], $a, $a["r"]["s"]["t"]);
+var_dump($a);

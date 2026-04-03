@@ -1,0 +1,17 @@
+<?php
+declare(strict_types=1);
+
+function arrays_duplicate_row_refs(array &$rows, array &$r1, array &$r2, int &$id): void
+{
+    $r1["left"] = 1;
+    $r2["right"] = 2;
+    $id = $id + 10;
+    $rows[0]["name"] = "A" . $id;
+    $r1["final"] = $rows[0]["name"];
+}
+
+$x = [];
+$x[] = ["id" => 1, "name" => "Alex0"];
+
+arrays_duplicate_row_refs($x, $x[0], $x[0], $x[0]["id"]);
+var_dump($x);

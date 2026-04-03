@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+// POS-ASSIGNREF-009
+
+$a = 9;
+$b =& $a;
+$c =& $b;
+$c += 9;
+
+var_dump($a);
+var_dump($b);
+var_dump($c);

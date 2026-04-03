@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+// POS-ASSIGNREF-017
+
+$a = 17;
+$b =& $a;
+$c =& $b;
+$c += 17;
+
+var_dump($a);
+var_dump($b);
+var_dump($c);

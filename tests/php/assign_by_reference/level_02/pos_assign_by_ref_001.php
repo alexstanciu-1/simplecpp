@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+// POS-ASSIGNREF-001
+
+$a = 1;
+$b =& $a;
+$c =& $b;
+$c += 1;
+
+var_dump($a);
+var_dump($b);
+var_dump($c);

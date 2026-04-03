@@ -1,0 +1,11 @@
+<?php
+declare(strict_types=1);
+
+// Rows appended in a loop remain writable afterwards.
+$x = [];
+for ($i = 0; $i < 3; $i++) {
+    $x[] = ["id" => $i, "name" => "N{$i}"];
+}
+$x[1]["name"] = "patched";
+
+var_dump($x);

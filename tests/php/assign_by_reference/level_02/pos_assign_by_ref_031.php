@@ -1,0 +1,20 @@
+<?php
+declare(strict_types=1);
+
+// POS-ASSIGNREF-031
+
+function &get_bucket(array &$root): array
+{
+	return $root["bucket"];
+}
+
+$x = [];
+$x["bucket"] = [];
+$x["bucket"]["id"] = 31;
+
+$bucket =& get_bucket($x);
+$alias =& $bucket;
+$alias["state"] = "s-31";
+
+var_dump($x);
+var_dump($bucket);

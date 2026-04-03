@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+// POS-ASSIGNREF-029
+
+$a = 29;
+$b =& $a;
+$c =& $b;
+$c += 29;
+
+var_dump($a);
+var_dump($b);
+var_dump($c);

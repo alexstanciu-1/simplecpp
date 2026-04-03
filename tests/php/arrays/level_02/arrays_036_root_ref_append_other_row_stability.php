@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+
+function arrays_grow_with_row_ref(array &$rows, array &$row): void
+{
+    $rows[] = ["id" => 2, "name" => "B"];
+    $row["name"] = "patched";
+    $row["extra"] = 7;
+}
+
+$x = [];
+$x[] = ["id" => 1, "name" => "A"];
+arrays_grow_with_row_ref($x, $x[0]);
+
+var_dump($x);

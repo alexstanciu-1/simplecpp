@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+
+function arrays_split_view(int $copy, int &$live, array &$row): void
+{
+    $row["before"] = $copy;
+    $live = $live + 5;
+    $row["after"] = $live;
+}
+
+$x = [];
+$x[] = ["id" => 1, "name" => "Alex"];
+arrays_split_view($x[0]["id"], $x[0]["id"], $x[0]);
+
+var_dump($x);

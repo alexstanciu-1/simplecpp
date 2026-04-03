@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+
+$x = [];
+$x[true] = "yes";
+$x[false] = "no";
+$x[1] = "one";
+
+var_dump($x);

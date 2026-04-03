@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+
+// Read back packed indexes after multiple appends.
+$x = [];
+$x[] = 4;
+$x[] = 5;
+$x[] = 6;
+
+echo $x[0], "
+";
+echo $x[1], "
+";
+echo $x[2], "
+";

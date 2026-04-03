@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+function arrays_patch_siblings(array &$left, array &$right): void
+{
+    $left["name"] = "L";
+    $right["name"] = "R";
+    $left["seen"] = $right["name"];
+}
+
+$x = [];
+$x[] = ["id" => 1, "name" => "A"];
+$x[] = ["id" => 2, "name" => "B"];
+arrays_patch_siblings($x[0], $x[1]);
+
+var_dump($x);

@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+// NEG-REF-029
+// Expected: reject. Property/slot rebinding is outside the model.
+
+$x = [];
+$x["left"] = 29;
+$x["right"] = 30;
+$slot =& $x["left"];
+$slot =& $x["right"];
+
+var_dump($x);

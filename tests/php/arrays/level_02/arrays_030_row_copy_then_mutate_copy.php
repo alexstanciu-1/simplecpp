@@ -1,0 +1,11 @@
+<?php
+declare(strict_types=1);
+
+$x = [];
+$x[] = ["id" => 1, "name" => "Alex"];
+$copy = $x[0];
+$copy["name"] = "Bob";
+$copy["extra"] = 9;
+
+var_dump($x);
+var_dump($copy);

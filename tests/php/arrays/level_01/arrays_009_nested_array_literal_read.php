@@ -1,0 +1,14 @@
+<?php
+declare(strict_types=1);
+
+// Nested array literals can be read through a dim chain.
+$x = [
+    "outer" => [
+        "inner" => [
+            "value" => 42
+        ]
+    ]
+];
+
+echo $x["outer"]["inner"]["value"], "
+";

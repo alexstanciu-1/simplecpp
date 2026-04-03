@@ -1,0 +1,10 @@
+<?php
+declare(strict_types=1);
+
+// A row can be appended and then updated through its nested dims.
+$x = [];
+$x[] = ["id" => 1, "name" => "Alex"];
+$x[0]["name"] = "Bob";
+$x[0]["extra"] = 5;
+
+var_dump($x);

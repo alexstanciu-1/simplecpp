@@ -1,0 +1,23 @@
+<?php
+declare(strict_types=1);
+
+function arrays_deep_alias(array &$root, array &$mid, array &$leafRow, int &$leaf): void
+{
+    $mid["x"] = 1;
+    $leaf = $leaf + 2;
+    $root["a"]["b"]["c"]["seen"] = $leaf;
+    $leafRow["final"] = $root["a"]["b"]["c"]["seen"];
+}
+
+$x = [
+    "a" => [
+        "b" => [
+            "c" => [
+                "id" => 5
+            ]
+        ]
+    ]
+];
+
+arrays_deep_alias($x, $x["a"]["b"], $x["a"]["b"]["c"], $x["a"]["b"]["c"]["id"]);
+var_dump($x);

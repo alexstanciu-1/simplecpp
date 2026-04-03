@@ -1,0 +1,11 @@
+<?php
+declare(strict_types=1);
+
+// Assigning a row into another slot snapshots it by value.
+$row = ["id" => 1, "name" => "Alex"];
+$x = [];
+$x["first"] = $row;
+$row["name"] = "Bob";
+
+var_dump($x);
+var_dump($row);

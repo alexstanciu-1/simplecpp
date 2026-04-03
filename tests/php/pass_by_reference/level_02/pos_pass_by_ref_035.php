@@ -1,0 +1,20 @@
+<?php
+declare(strict_types=1);
+
+// POS-BYREF-035
+
+function touch_row(array &$row, int &$leaf): void
+{
+	$row["seen"] = "yes-35";
+	$leaf += 35;
+	$row["leaf_after"] = $leaf;
+}
+
+$x = [];
+$x["row"] = [];
+$x["row"]["id"] = 35;
+$x["row"]["leaf"] = 350;
+
+touch_row($x["row"], $x["row"]["leaf"]);
+
+var_dump($x);

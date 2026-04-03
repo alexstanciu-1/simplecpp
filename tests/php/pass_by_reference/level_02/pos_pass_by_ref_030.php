@@ -1,0 +1,19 @@
+<?php
+declare(strict_types=1);
+
+// POS-BYREF-030
+
+function append_note(array &$root, array &$row): void
+{
+	$row["note"] = "n-30";
+	$root["count"] += 1;
+}
+
+$x = [];
+$x["count"] = 0;
+$x["row"] = [];
+$x["row"]["id"] = 30;
+
+append_note($x, $x["row"]);
+
+var_dump($x);

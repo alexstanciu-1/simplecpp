@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+// NEG-REF-016
+// Expected: reject. Rebinding through a chain is outside the model.
+
+$a = 16;
+$b = 17;
+$c = 18;
+$x =& $a;
+$y =& $x;
+$y =& $c;
+
+var_dump($a);
+var_dump($b);
+var_dump($c);

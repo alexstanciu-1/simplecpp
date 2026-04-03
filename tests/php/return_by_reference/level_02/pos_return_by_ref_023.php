@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+
+// POS-RETREF-023
+
+function &get_inner(array &$root): array
+{
+	return $root["inner"];
+}
+
+function &forward_inner(array &$root): array
+{
+	return get_inner($root);
+}
+
+$x = [];
+$x["inner"] = [];
+$x["inner"]["id"] = 23;
+
+$inner =& forward_inner($x);
+$inner["status"] = "ok-23";
+
+var_dump($x);
+var_dump($inner);

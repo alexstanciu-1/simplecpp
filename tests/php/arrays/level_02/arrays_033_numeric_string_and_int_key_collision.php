@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+
+$x = [];
+$x["5"] = "five-as-string";
+$x[5] = "five-as-int";
+$x["05"] = "five-leading";
+
+var_dump($x);

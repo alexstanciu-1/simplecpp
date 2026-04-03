@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+// POS-ASSIGNREF-026
+
+$x = [];
+$x["row"] = [];
+$x["row"]["count"] = 26;
+
+$row =& $x["row"];
+$count =& $row["count"];
+$count += 27;
+$row["mark"] = "m-26";
+
+var_dump($x);
+var_dump($row);

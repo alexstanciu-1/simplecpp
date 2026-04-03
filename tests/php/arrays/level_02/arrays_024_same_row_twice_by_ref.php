@@ -1,0 +1,14 @@
+<?php
+declare(strict_types=1);
+
+function arrays_same_twice(array &$a, array &$b): void
+{
+    $a["left"] = 1;
+    $b["right"] = 2;
+}
+
+$x = [];
+$x[] = ["id" => 1];
+arrays_same_twice($x[0], $x[0]);
+
+var_dump($x);

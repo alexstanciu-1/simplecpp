@@ -1,0 +1,18 @@
+<?php
+declare(strict_types=1);
+
+// POS-RETREF-003
+
+function &pick_name(array &$root): string
+{
+	return $root["name"];
+}
+
+$x = [];
+$x["name"] = "name-3";
+
+$name =& pick_name($x);
+$name = $name . "-updated";
+
+var_dump($x);
+var_dump($name);

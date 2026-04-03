@@ -1,0 +1,12 @@
+<?php
+declare(strict_types=1);
+
+// NEG-REF-019
+// Expected: reject. Alias rebinding is outside the Simple C++ reference model.
+
+$a = 19;
+$b = 20;
+$x =& $a;
+$x =& $b;
+
+var_dump($x);

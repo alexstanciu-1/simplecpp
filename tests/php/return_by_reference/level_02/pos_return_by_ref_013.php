@@ -1,0 +1,18 @@
+<?php
+declare(strict_types=1);
+
+// POS-RETREF-013
+
+function &pick_leaf(array &$root): int
+{
+	return $root["leaf"];
+}
+
+$x = [];
+$x["leaf"] = 13;
+
+$leaf =& pick_leaf($x);
+$leaf += 26;
+
+var_dump($x);
+var_dump($leaf);
