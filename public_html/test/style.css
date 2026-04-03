@@ -10,6 +10,7 @@
 	--ok: #22c55e;
 	--error: #ef4444;
 	--busy: #f59e0b;
+	--warning: #fbbf24;
 	--accent: #60a5fa;
 }
 
@@ -68,7 +69,7 @@ body {
 }
 
 .split-pane-left {
-	grid-template-rows: minmax(0, 4fr) minmax(0, 1fr);
+	grid-template-rows: minmax(0, 4fr) minmax(0, 1.2fr);
 }
 
 .split-pane-metrics {
@@ -92,6 +93,10 @@ body {
 	border-top: 1px solid var(--border-soft);
 }
 
+.cpp-editor-pane {
+	position: relative;
+}
+
 .split-pane-metrics .split-pane-section + .split-pane-section {
 	border-top: 0;
 	border-left: 1px solid var(--border-soft);
@@ -100,6 +105,34 @@ body {
 .debug-section .code-box {
 	font-size: 12px;
 }
+.split-pane-debug {
+	grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+	grid-template-rows: minmax(0, 1fr);
+}
+
+.split-pane-debug .split-pane-section + .split-pane-section {
+	border-top: 0;
+	border-left: 1px solid var(--border-soft);
+}
+
+.warnings-section {
+	position: relative;
+}
+
+.warnings-section .code-box {
+	font-size: 12px;
+}
+
+.warnings-section.has-warning {
+	outline: 2px solid rgba(251, 191, 36, 0.8);
+	outline-offset: -2px;
+}
+
+.warnings-section.has-error {
+	outline: 2px solid rgba(239, 68, 68, 0.7);
+	outline-offset: -2px;
+}
+
 
 .metrics-section .code-box {
 	font-size: 12px;
@@ -389,6 +422,11 @@ textarea {
 	color: #fcd34d;
 }
 
+.status-chip.state-warning {
+	border-color: rgba(251, 191, 36, 0.55);
+	color: #fde68a;
+}
+
 .result-pane.match-ok {
 	outline: 3px solid var(--ok);
 	outline-offset: -3px;
@@ -513,4 +551,56 @@ textarea {
 	align-items: center;
 	gap: 0.65rem;
 	min-width: 0;
+}
+
+
+.cpp-tabs-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--border-soft);
+	background: var(--panel-2);
+}
+
+.cpp-tab-list {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.cpp-tab {
+	background: transparent;
+	color: var(--muted);
+	border-color: var(--border);
+	padding: 7px 12px;
+}
+
+.cpp-tab.is-active {
+	background: rgba(96, 165, 250, 0.16);
+	border-color: var(--accent);
+	color: #dbeafe;
+}
+
+.cpp-tab-panels {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.cpp-tab-panel {
+	position: absolute;
+	inset: 0;
+	display: none;
+	min-height: 0;
+}
+
+.cpp-tab-panel.is-active {
+	display: flex;
+}
+
+.code-editor {
+	flex: 1 1 auto;
 }

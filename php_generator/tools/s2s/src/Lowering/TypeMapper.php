@@ -149,13 +149,18 @@ final class TypeMapper
 	public function mapReferenceProxyType(string $phpType): ?string
 	{
 		$normalized = trim($phpType);
-		return null;
+		return match ($normalized) {
+			'int' => 'int_ref',
+			'float' => 'float_ref',
+			'bool' => 'bool_ref',
+			'string' => 'string_ref',
+			default => null,
+		};
 	}
 
 	public function mapReferenceProxyFactory(string $phpType): ?string
 	{
-		$normalized = trim($phpType);
-		return null;
+		return $this->mapReferenceProxyType($phpType);
 	}
 	public function isVectorType(string $phpType): bool
 	{

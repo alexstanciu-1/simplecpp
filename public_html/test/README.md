@@ -34,3 +34,9 @@ The normal mode cache and the ASan cache are kept separate.
 
 The test harness compiles the runtime and generated snippets with `-DSCPP_LANGUAGE_TARGET_PHP=1` so PHP-target array-key semantics are active during browser-driven tests.
 
+
+
+UI updates:
+- generated C++ header and source are now editable textareas
+- the right panel uses tabs so header/source overlap in the same editor area
+- a new **Compile & run edited C++** button recompiles the edited C++ without rerunning the PHP->C++ generator

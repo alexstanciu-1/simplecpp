@@ -193,6 +193,35 @@ static void test_value_t_array_copy_on_write_param_and_nested_copy() {
 	assert(child_copy.get(scpp::string_t("count")).int_value().native_value() == 99);
 }
 
+
+static void test_value_t_boxed_table_helpers() {
+	scpp::value_t boxed = scpp::value_t{scpp::shared<scpp::table_t<scpp::value_t>>()};
+	boxed.append(scpp::value_t(scpp::int_t(10)));
+	boxed.append(scpp::value_t(scpp::int_t(20)));
+
+	assert(boxed.size().native_value() == 2);
+	assert(boxed.empty() == false);
+	assert(boxed.at(scpp::int_t(0)).int_value().native_value() == 10);
+	assert(boxed.at(scpp::int_t(1)).int_value().native_value() == 20);
+
+	boxed[scpp::string_t("name")] = scpp::value_t(scpp::string_t("Alex"));
+	assert(boxed.at(scpp::string_t("name")).string_if()->native_value() == "Alex");
+
+	scpp::value_t empty_boxed = scpp::value_t{scpp::shared<scpp::table_t<scpp::value_t>>()};
+	assert(empty_boxed.size().native_value() == 0);
+	assert(empty_boxed.empty() == true);
+
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		(void) scpp::value_t(scpp::int_t(1)).size();
+	});
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		(void) scpp::value_t(scpp::string_t("x")).empty();
+	});
+	scpp_test::expect_throw<std::out_of_range>([&]() {
+		(void) boxed.at(scpp::int_t(99));
+	});
+}
+
 static void test_value_t_table_access_and_identity() {
 	auto shared = scpp::shared<scpp::table_t<scpp::value_t>>();
 	shared->set(scpp::string_t("name"), scpp::value_t(scpp::string_t("Alex")));
@@ -236,6 +265,7 @@ int main() {
 	test_value_t_comparisons_and_logical();
 	test_value_t_assignment_and_increment();
 	test_value_t_array_copy_on_write_param_and_nested_copy();
+	test_value_t_boxed_table_helpers();
 	test_value_t_table_access_and_identity();
 	return 0;
 }

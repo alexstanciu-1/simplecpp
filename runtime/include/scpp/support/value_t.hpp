@@ -12,13 +12,17 @@
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
 
+#include <cassert>
 #include <cstdint>
 
 namespace scpp {
 
 template <typename T_VALUE> class table_t;
 
+template <typename T> class scalar_ref;
+
 class value_t final {
+	template <typename T> friend class scalar_ref;
 public:
 	enum class kind_t : std::uint8_t {
 		null_v = 0,
@@ -44,7 +48,17 @@ private:
 		weak_p<table_t<value_t>> weak_table_value_;
 	};
 
+#ifndef NDEBUG
+	mutable std::uint16_t borrow_count_ = 0;
+#else
+	mutable std::uint16_t borrow_count_ = 0;
+#endif
+
 	void destroy() noexcept;
+	void assert_kind_change_allowed(kind_t target_kind) const noexcept;
+	void assert_not_borrowed(const char *operation) const noexcept;
+	void acquire_scalar_borrow() const noexcept;
+	void release_scalar_borrow() const noexcept;
 	void move_construct(value_t &&other) noexcept;
 
 public:
@@ -121,7 +135,6 @@ public:
 	operator int_t() const;
 	operator float_t() const;
 	operator string_t() const;
-	operator string_t&();
 
 	operator bool() const;
 	operator shared_p<table_t<value_t>>() const;
@@ -157,6 +170,13 @@ public:
 	const value_t& operator[](int native_key) const;
 
 	void append(const value_t& val);
+
+	[[nodiscard]] int_t size() const;
+	[[nodiscard]] bool empty() const;
+	value_t& at(const int_t& key);
+	const value_t& at(const int_t& key) const;
+	value_t& at(const string_t& key);
+	const value_t& at(const string_t& key) const;
 
 	[[nodiscard]] value_t get(const value_t& key) const;
 	[[nodiscard]] value_t get(const int_t& key) const;
@@ -194,5 +214,95 @@ public:
 	friend bool_t operator&&(const value_t &left, const value_t &right);
 	friend bool_t operator||(const value_t &left, const value_t &right);
 };
+
+
+template <typename T>
+class scalar_ref final {
+private:
+	T *ptr_ = nullptr;
+	value_t *owner_ = nullptr;
+
+public:
+	scalar_ref(T &raw) noexcept : ptr_(&raw), owner_(nullptr) {}
+	scalar_ref(value_t &value);
+	~scalar_ref() {
+		if (owner_ != nullptr) {
+			owner_->release_scalar_borrow();
+		}
+	}
+
+	scalar_ref(const scalar_ref &) = delete;
+	scalar_ref &operator=(const scalar_ref &other) {
+		get() = other.get();
+		return *this;
+	}
+	scalar_ref(scalar_ref &&other) noexcept : ptr_(other.ptr_), owner_(other.owner_) {
+		other.ptr_ = nullptr;
+		other.owner_ = nullptr;
+	}
+	scalar_ref &operator=(scalar_ref &&) = delete;
+
+	operator T&() const {
+		assert(ptr_ != nullptr);
+		return *ptr_;
+	}
+
+	T &get() const {
+		assert(ptr_ != nullptr);
+		return *ptr_;
+	}
+
+	scalar_ref &operator=(const T &value) {
+		get() = value;
+		return *this;
+	}
+
+	scalar_ref &operator++() {
+		++get();
+		return *this;
+	}
+
+	T operator++(int) {
+		T snapshot = get();
+		++get();
+		return snapshot;
+	}
+
+	scalar_ref &operator--() {
+		--get();
+		return *this;
+	}
+
+	T operator--(int) {
+		T snapshot = get();
+		--get();
+		return snapshot;
+	}
+
+	scalar_ref &operator+=(const T &value) {
+		get() = get() + value;
+		return *this;
+	}
+
+	scalar_ref &operator-=(const T &value) {
+		get() = get() - value;
+		return *this;
+	}
+
+	scalar_ref &operator*=(const T &value) {
+		get() = get() * value;
+		return *this;
+	}
+
+	scalar_ref &operator/=(const T &value) {
+		get() = get() / value;
+		return *this;
+	}
+};
+
+using int_ref = scalar_ref<int_t>;
+using float_ref = scalar_ref<float_t>;
+using bool_ref = scalar_ref<bool_t>;
+using string_ref = scalar_ref<string_t>;
 
 } // namespace scpp

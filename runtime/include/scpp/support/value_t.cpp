@@ -83,6 +83,37 @@ namespace {
 
 } // namespace
 
+
+void value_t::assert_kind_change_allowed(const kind_t target_kind) const noexcept {
+	if (type_ == target_kind) {
+		return;
+	}
+	assert_not_borrowed("kind-change");
+}
+
+void value_t::assert_not_borrowed(const char *operation) const noexcept {
+#ifndef NDEBUG
+	assert(borrow_count_ == 0 && "value_t borrow violation: attempted kind-changing operation while a scalar_ref is alive");
+#else
+	(void) operation;
+#endif
+	(void) operation;
+}
+
+void value_t::acquire_scalar_borrow() const noexcept {
+#ifndef NDEBUG
+	assert(borrow_count_ != UINT16_MAX && "value_t borrow violation: borrow counter overflow");
+	++borrow_count_;
+#endif
+}
+
+void value_t::release_scalar_borrow() const noexcept {
+#ifndef NDEBUG
+	assert(borrow_count_ > 0 && "value_t borrow violation: release without matching borrow");
+	--borrow_count_;
+#endif
+}
+
 // ============================================================
 // Constructors
 // ============================================================
@@ -132,6 +163,7 @@ value_t::value_t(value_t &&other)      noexcept : type_(kind_t::null_v) { move_c
 
 value_t &value_t::operator=(const value_t &other) {
 	if (this == &other) return *this;
+	assert_kind_change_allowed(other.kind());
 	destroy();
 	*this = other.clone();
 	return *this;
@@ -139,25 +171,38 @@ value_t &value_t::operator=(const value_t &other) {
 
 value_t &value_t::operator=(value_t &&other) noexcept {
 	if (this == &other) return *this;
+	assert_kind_change_allowed(other.kind());
+	other.assert_not_borrowed("move-source");
 	destroy();
 	move_construct(std::move(other));
 	return *this;
 }
 
-value_t &value_t::operator=(null_t)    noexcept { destroy(); type_ = kind_t::null_v; return *this; }
-value_t &value_t::operator=(nullopt_t) noexcept { destroy(); type_ = kind_t::null_v; return *this; }
-value_t &value_t::operator=(nullptr_t) noexcept { destroy(); type_ = kind_t::null_v; return *this; }
+value_t &value_t::operator=(null_t)    noexcept { assert_kind_change_allowed(kind_t::null_v); destroy(); type_ = kind_t::null_v; return *this; }
+value_t &value_t::operator=(nullopt_t) noexcept { assert_kind_change_allowed(kind_t::null_v); destroy(); type_ = kind_t::null_v; return *this; }
+value_t &value_t::operator=(nullptr_t) noexcept { assert_kind_change_allowed(kind_t::null_v); destroy(); type_ = kind_t::null_v; return *this; }
 
 value_t &value_t::operator=(const bool_t &value) noexcept {
+	if (type_ == kind_t::bool_v) { bool_value_ = value; return *this; }
+	assert_kind_change_allowed(kind_t::bool_v);
 	destroy(); type_ = kind_t::bool_v; new (&bool_value_) bool_t(value); return *this;
 }
 value_t &value_t::operator=(const int_t &value) noexcept {
+	if (type_ == kind_t::int_v) { int_value_ = value; return *this; }
+	assert_kind_change_allowed(kind_t::int_v);
 	destroy(); type_ = kind_t::int_v; new (&int_value_) int_t(value); return *this;
 }
 value_t &value_t::operator=(const float_t &value) noexcept {
+	if (type_ == kind_t::float_v) { float_value_ = value; return *this; }
+	assert_kind_change_allowed(kind_t::float_v);
 	destroy(); type_ = kind_t::float_v; new (&float_value_) float_t(value); return *this;
 }
 value_t &value_t::operator=(const string_t &value) {
+	if (type_ == kind_t::string_v) {
+		*string_value_ = value;
+		return *this;
+	}
+	assert_kind_change_allowed(kind_t::string_v);
 	destroy(); type_ = kind_t::string_v;
 	new (&string_value_) unique_p<string_t>(unique<string_t>(value));
 	return *this;
@@ -168,16 +213,19 @@ value_t &value_t::operator=(std::int64_t value)   noexcept { return (*this = int
 value_t &value_t::operator=(double value)          noexcept { return (*this = float_t{value}); }
 
 value_t &value_t::operator=(unique_p<table_t<value_t>> value) noexcept {
+	assert_kind_change_allowed(kind_t::table_v);
 	destroy(); type_ = kind_t::table_v;
 	new (&table_value_) unique_p<table_t<value_t>>(std::move(value));
 	return *this;
 }
 value_t &value_t::operator=(shared_p<table_t<value_t>> value) noexcept {
+	assert_kind_change_allowed(kind_t::shared_table_v);
 	destroy(); type_ = kind_t::shared_table_v;
 	new (&shared_table_value_) shared_p<table_t<value_t>>(std::move(value));
 	return *this;
 }
 value_t &value_t::operator=(weak_p<table_t<value_t>> value) noexcept {
+	assert_kind_change_allowed(kind_t::weak_table_v);
 	destroy(); type_ = kind_t::weak_table_v;
 	new (&weak_table_value_) weak_p<table_t<value_t>>(std::move(value));
 	return *this;
@@ -263,7 +311,7 @@ const weak_p<table_t<value_t>> *value_t::weak_table_if() const noexcept {
 }
 
 // ============================================================
-// as_*_ref  — autovivify + coerce, return direct reference
+// as_*_ref  Â— autovivify + coerce, return direct reference
 // ============================================================
 
 int_t &value_t::as_int_ref() {
@@ -320,7 +368,6 @@ value_t::operator int_t()   const { return cast<int_t>(*this);   }
 value_t::operator float_t() const { return cast<float_t>(*this); }
 value_t::operator string_t() const { return cast<string_t>(*this); }
 
-value_t::operator string_t&() { return as_string_ref(); }
 
 value_t::operator bool() const { return cast<bool>(*this); }
 
@@ -454,7 +501,7 @@ value_t &value_t::operator>>=(const value_t &right) {
 }
 
 // ============================================================
-// Fat-variable operator[]  — autovivifying table access
+// Fat-variable operator[]  Â— autovivifying table access
 // ============================================================
 
 // Helper: resolve table pointer for the three ownership variants.
@@ -484,7 +531,7 @@ table_t<value_t> *resolve_table_mut(value_t &self) {
 }
 const table_t<value_t> *resolve_table_const(const value_t &self) noexcept {
 	if (self.kind() == value_t::kind_t::weak_table_v) {
-		// weak_table_if() returns pointer to the weak_p — we cannot dereference
+		// weak_table_if() returns pointer to the weak_p Â— we cannot dereference
 		// without locking, and we cannot store a locked copy here.
 		// Return nullptr so const operator[] safely returns the static null.
 		return nullptr;
@@ -587,6 +634,50 @@ void value_t::append(const value_t &val) {
 	auto *t = resolve_table_mut(*this);
 	if (t) { (void)t->append(val); return; }
 	throw runtime_error_unary("append", *this);
+}
+
+int_t value_t::size() const {
+	if (const auto *t = resolve_table_const(*this)) {
+		return int_t{static_cast<std::int64_t>(t->size())};
+	}
+	throw runtime_error_unary("size", *this);
+}
+
+bool value_t::empty() const {
+	if (const auto *t = resolve_table_const(*this)) {
+		return t->size() == 0;
+	}
+	throw runtime_error_unary("empty", *this);
+}
+
+value_t &value_t::at(const int_t &key) {
+	auto *t = resolve_table_mut(*this);
+	if (t != nullptr) {
+		return t->at(key);
+	}
+	throw runtime_error_unary("at", *this);
+}
+
+const value_t &value_t::at(const int_t &key) const {
+	if (const auto *t = resolve_table_const(*this)) {
+		return t->at(key);
+	}
+	throw runtime_error_unary("at", *this);
+}
+
+value_t &value_t::at(const string_t &key) {
+	auto *t = resolve_table_mut(*this);
+	if (t != nullptr) {
+		return t->at(key);
+	}
+	throw runtime_error_unary("at", *this);
+}
+
+const value_t &value_t::at(const string_t &key) const {
+	if (const auto *t = resolve_table_const(*this)) {
+		return t->at(key);
+	}
+	throw runtime_error_unary("at", *this);
 }
 
 // ============================================================
@@ -815,6 +906,7 @@ bool_t operator||(const value_t &left, const value_t &right) {
 // ============================================================
 
 void value_t::destroy() noexcept {
+	assert_not_borrowed("destroy");
 	switch (type_) {
 		case kind_t::bool_v:         bool_value_.~bool_t();                            break;
 		case kind_t::int_v:          int_value_.~int_t();                              break;
@@ -829,6 +921,7 @@ void value_t::destroy() noexcept {
 }
 
 void value_t::move_construct(value_t &&other) noexcept {
+	other.assert_not_borrowed("move-construct-source");
 	type_ = other.type_;
 	switch (other.type_) {
 		case kind_t::null_v:         break;
@@ -845,6 +938,27 @@ void value_t::move_construct(value_t &&other) noexcept {
 			new (&weak_table_value_) weak_p<table_t<value_t>>(std::move(other.weak_table_value_)); break;
 	}
 	other.type_ = kind_t::null_v;
+}
+
+
+template <>
+scalar_ref<int_t>::scalar_ref(value_t &value) : ptr_(&value.as_int_ref()), owner_(&value) {
+	owner_->acquire_scalar_borrow();
+}
+
+template <>
+scalar_ref<float_t>::scalar_ref(value_t &value) : ptr_(&value.as_float_ref()), owner_(&value) {
+	owner_->acquire_scalar_borrow();
+}
+
+template <>
+scalar_ref<bool_t>::scalar_ref(value_t &value) : ptr_(&value.as_bool_ref()), owner_(&value) {
+	owner_->acquire_scalar_borrow();
+}
+
+template <>
+scalar_ref<string_t>::scalar_ref(value_t &value) : ptr_(&value.as_string_ref()), owner_(&value) {
+	owner_->acquire_scalar_borrow();
 }
 
 } // namespace scpp

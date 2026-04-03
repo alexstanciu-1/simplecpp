@@ -251,6 +251,7 @@ Examples:
 - `stdClass` / object iteration
 - `foreach` by value and by reference are supported for `vector_t` and for the current packed `table_t<value_t>` surface
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
+- for boxed-array foreach over `value_t`, indexed loop lowering uses the generator-facing `value_t::size()` / `value_t::at(...)` surface instead of reaching through to raw table internals
 - for `table_t<value_t>` foreach, the value variable binds as `value_t` / `value_t&`; when that loop variable is later indexed as an array, lowering routes through `value_t::as_table_ref()` so nested array writes inside the loop target the referenced table value
 - explicit function/method reference returns require an explicit declared PHP return type, lower to native C++ reference signatures (`T&`), and must return lvalue-capable expressions, including direct calls statically known to return by reference, without copyification
 - `include`, `include_once`, and `require`
@@ -1104,7 +1105,7 @@ This matches PHP behavior.
 ## Array argument materialization
 
 - A typed PHP `array` parameter now lowers to `value_t` (or `value_t&` for explicit PHP `&`).
-- For functions / methods that have at least one typed scalar by-reference parameter among `int&`, `float&`, `bool&`, `string&`, the generator emits one companion overload where those by-reference scalar parameters become `value_t&` and forward through the matching `as_*_ref()` accessors. This is the supported bridge for passing mutable array / table slots into typed scalar by-reference parameters.
+- For functions / methods that have a typed scalar by-reference parameter among `int&`, `float&`, `bool&`, `string&`, the generator lowers that parameter to a runtime proxy view (`int_ref`, `float_ref`, `bool_ref`, `string_ref`). The proxy view may be constructed from either a native typed wrapper reference or a mutable `value_t&` slot and forwards reads / writes to the underlying storage while debug builds assert on kind-changing operations during the borrow lifetime. The lowered function / method keeps only that proxy-view signature; no secondary `value_t&` forwarding overload is generated. Call-site lowering constructs the proxy view explicitly when needed. Inside the lowered function / method body, the generator immediately aliases each proxy parameter back to a native typed reference (for example `int_t& a = static_cast<int_t&>(_a);`) so ordinary expression lowering continues to work with native scalar references while the proxy object remains alive for the full call.
 - The generator emits a function-entry guard for every `array` / `?array` parameter before user code runs.
   - `array` accepts only table-capable `value_t` kinds.
   - `?array` accepts table-capable kinds plus null-kind `value_t`.
@@ -1132,3 +1133,9 @@ PHP-target array-key normalization is a runtime concern. The generator must not 
 - This rule applies regardless of whether the callee later treats the parameter as by-reference or by-value.
 - Computed expressions keep the normal read path. Example: `$x[0] + 10` remains `x.get(0) + 10` inside the larger expression.
 - This is an intentional simplification: direct DIM call arguments may autovivify/create a slot. Use an explicit read-only form such as `?? null` when that behavior is not desired.
+
+
+## Return-by-reference warnings
+
+- Return-by-reference is not recommended in Simple C++ and must always surface a generator warning even when generation is still allowed.
+- The generator must also warn for local copy-after-alias patterns rooted in a by-reference call result, for example `$inner =& get_inner($arr); $copy = $arr;`, because Simple C++ may not preserve PHP alias semantics for that flow.

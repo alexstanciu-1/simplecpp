@@ -26,7 +26,7 @@ declare(strict_types=1);
 						</div>
 					</div>
 					<div class="php-input-layout">
-							<aside class="file-tree-panel">
+						<aside class="file-tree-panel">
 							<div class="tree-root-path">
 								<span id="tree-root-path" class="tree-root-label">sandbox</span>
 								<div class="pane-actions tree-root-actions">
@@ -63,29 +63,48 @@ echo add(10, 20), "\n";');
 					</div>
 				</div>
 				<div class="split-pane-section debug-section">
-					<div class="pane-header">
-						<h2>Debug JSON</h2>
-						<div class="pane-actions">
-							<button type="button" id="copy-debug-button" class="secondary-button">Copy</button>
+					<div class="split-pane split-pane-debug">
+						<div class="split-pane-section debug-json-section">
+							<div class="pane-header">
+								<h2>Debug JSON</h2>
+								<div class="pane-actions">
+									<button type="button" id="copy-debug-button" class="secondary-button">Copy</button>
+								</div>
+							</div>
+							<pre id="debug-json" class="code-box"></pre>
+						</div>
+						<div class="split-pane-section warnings-section" id="warnings-section">
+							<div class="pane-header">
+								<h2>Warnings / s2s generator</h2>
+								<span class="status-chip" id="warnings-status">clear</span>
+							</div>
+							<pre id="warnings-output" class="code-box"></pre>
 						</div>
 					</div>
-					<pre id="debug-json" class="code-box"></pre>
 				</div>
 			</section>
 
-			<section class="pane split-pane">
-				<div class="split-pane-section">
-					<div class="pane-header">
-						<h2>Generated C++ header / generator error</h2>
+			<section class="pane cpp-editor-pane">
+				<div class="pane-header">
+					<h2>Generated C++ / editable</h2>
+					<div class="pane-actions">
+						<button type="button" id="compile-run-button">Compile &amp; run edited C++</button>
 						<span class="status-chip" id="generator-status">idle</span>
 					</div>
-					<pre id="cpp-header-code" class="code-box"></pre>
 				</div>
-				<div class="split-pane-section">
-					<div class="pane-header">
-						<h2>Generated C++ source</h2>
+				<div class="cpp-tabs-toolbar">
+					<div class="cpp-tab-list" role="tablist" aria-label="Generated C++ tabs">
+						<button type="button" id="cpp-tab-header" class="cpp-tab is-active" data-target="header" role="tab" aria-selected="true">Generated C++ header</button>
+						<button type="button" id="cpp-tab-source" class="cpp-tab" data-target="source" role="tab" aria-selected="false">Generated C++ source</button>
 					</div>
-					<pre id="cpp-code" class="code-box"></pre>
+				</div>
+				<div class="cpp-tab-panels">
+					<div class="cpp-tab-panel is-active" data-panel="header">
+						<textarea id="cpp-header-code" class="code-editor" spellcheck="false"></textarea>
+					</div>
+					<div class="cpp-tab-panel" data-panel="source">
+						<textarea id="cpp-code" class="code-editor" spellcheck="false"></textarea>
+					</div>
 				</div>
 			</section>
 

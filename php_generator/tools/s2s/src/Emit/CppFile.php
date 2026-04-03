@@ -12,12 +12,14 @@ final class CppFile
 	 * @param list<string> $headerLines
 	 * @param list<string> $sourceLines
 	 * @param list<string> $errors
+	 * @param list<string> $warnings
 	 */
 	public function __construct(
 		public readonly string $baseName,
 		public readonly array $headerLines,
 		public readonly array $sourceLines,
 		public readonly array $errors,
+		public readonly array $warnings = [],
 	) {
 	}
 }

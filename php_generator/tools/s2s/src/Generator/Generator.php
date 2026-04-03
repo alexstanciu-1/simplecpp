@@ -29,6 +29,8 @@ final class Generator
 	private array $declaredLocals = [];
 	/** @var list<string> */
 	private array $errors = [];
+	/** @var list<string> */
+	private array $warnings = [];
 	/** @var array<string, string> */
 	private array $localTypeComments = [];
 	/** @var array<string, string> */
@@ -44,6 +46,8 @@ final class Generator
 	private array $classDecls = [];
 	/** @var array<string, string> */
 	private array $currentParamPassModes = [];
+	/** @var list<string> */
+	private array $currentScalarRefParamAliasLines = [];
 	private ?string $currentReturnType = null;
 	/** @var null|array{returnType:?string,paramTypes:list<string>} */
 	private ?array $currentExpectedClosureSignature = null;
@@ -90,6 +94,7 @@ final class Generator
 	{
 		$this->declaredLocals = [];
 		$this->errors = $file->buildErrors;
+		$this->warnings = [];
 		$this->localTypeComments = $file->localTypeCommentsByKey;
 		$this->declaredLocalTypes = [];
 		$this->tempCounter = 0;
@@ -151,7 +156,7 @@ final class Generator
 			$source[] = '';
 		}
 
-		return new CppFile($baseName, $header, $source, $this->errors);
+		return new CppFile($baseName, $header, $source, $this->errors, $this->warnings);
 	}
 
 
@@ -384,6 +389,7 @@ final class Generator
 		$this->validateStatementList($file->rootStatements, null);
 		foreach ($file->functions as $function) {
 			$this->validateFunctionLikeParameters($function->params, 'function ' . $function->name);
+			$this->validateReferenceRulesForFunctionLike($function->statements, $function->returnsByReference, 'function ' . $function->name, null);
 			$this->validateStatementList($function->statements, null);
 		}
 		foreach ($file->classes as $class) {
@@ -392,6 +398,7 @@ final class Generator
 			}
 			foreach ($class->methods as $method) {
 				$this->validateFunctionLikeParameters($method->params, 'method ' . $class->name . '::' . $method->name);
+				$this->validateReferenceRulesForFunctionLike($method->statements, $method->returnsByReference, 'method ' . $class->name . '::' . $method->name, null);
 				$this->validateStatementList($method->statements, null);
 			}
 		}
@@ -399,6 +406,7 @@ final class Generator
 			$this->validateStatementList($namespace->statements, $namespace->name);
 			foreach ($namespace->functions as $function) {
 				$this->validateFunctionLikeParameters($function->params, 'function ' . $function->name);
+				$this->validateReferenceRulesForFunctionLike($function->statements, $function->returnsByReference, 'function ' . $function->name, $namespace->name);
 				$this->validateStatementList($function->statements, $namespace->name);
 			}
 			foreach ($namespace->classes as $class) {
@@ -407,6 +415,7 @@ final class Generator
 				}
 				foreach ($class->methods as $method) {
 					$this->validateFunctionLikeParameters($method->params, 'method ' . $class->name . '::' . $method->name);
+					$this->validateReferenceRulesForFunctionLike($method->statements, $method->returnsByReference, 'method ' . $class->name . '::' . $method->name, $namespace->name);
 					$this->validateStatementList($method->statements, $namespace->name);
 				}
 			}
@@ -425,6 +434,195 @@ final class Generator
 				$this->errors[] = 'Missing explicit parameter type for ' . $owner . '::$' . $param->name . ' at line ' . $param->line . '.';
 			}
 		}
+	}
+
+
+	/** @param list<Statement> $statements */
+	private function validateReferenceRulesForFunctionLike(array $statements, bool $returnsByReference, string $owner, ?string $namespacePhp): void
+	{
+		$refBindings = [];
+		$refReturnAliasOwners = [];
+		if ($returnsByReference) {
+			$this->warnings[] = ucfirst($owner) . ' returns by reference. Return-by-reference is not recommended and only partially supported in Simple C++.';
+		}
+		$this->validateReferenceRulesInStatements($statements, $returnsByReference, $owner, $namespacePhp, false, $refBindings, $refReturnAliasOwners);
+		if ($returnsByReference) {
+			$returnCount = $this->countReturnStatements($statements);
+			if ($returnCount > 1) {
+				$this->errors[] = ucfirst($owner) . ' returning by reference must use a single return statement in the current subset.';
+			}
+		}
+	}
+
+	/**
+	 * @param list<Statement> $statements
+	 * @param array<string, string> $refBindings
+	 */
+	private function validateReferenceRulesInStatements(array $statements, bool $returnsByReference, string $owner, ?string $namespacePhp, bool $insideControlFlow, array &$refBindings, array &$refReturnAliasOwners): void
+	{
+		foreach ($statements as $statement) {
+			if ($statement->kind === 'assign_ref') {
+				$name = $this->extractSimpleVarName($statement->payload['var'] ?? null);
+				if ($insideControlFlow) {
+					$this->errors[] = 'Conditional or loop-scoped reference binding is not supported for ' . $owner . ' at line ' . $statement->line . '.';
+				}
+				$expr = $statement->payload['expr'] ?? null;
+				if ($name !== null) {
+					$refBindings[$name] = $this->classifyReferenceBindingSource($expr);
+					$rootVars = $this->extractSimpleVarArgsFromByRefCall($expr, $namespacePhp);
+					if ($rootVars !== []) {
+						$refReturnAliasOwners[$name] = $rootVars;
+					}
+				}
+			}
+			if ($statement->kind === 'assign') {
+				$copiedFrom = $this->extractSimpleVarName($statement->payload['expr'] ?? null);
+				if ($copiedFrom !== null) {
+					foreach ($refReturnAliasOwners as $aliasName => $ownerVars) {
+						if (in_array($copiedFrom, $ownerVars, true)) {
+							$this->warnings[] = 'Copy-after-alias warning in ' . $owner . ' at line ' . $statement->line . ': $' . $aliasName . ' is bound from a by-reference return rooted in $' . $copiedFrom . ', and copying $' . $copiedFrom . ' may not preserve PHP alias semantics in Simple C++.';
+						}
+					}
+				}
+			}
+			if ($statement->kind === 'return' && $returnsByReference) {
+				$expr = $statement->payload;
+				if ($this->isUnsupportedDirectReferenceReturnExpr($expr)) {
+					$this->errors[] = ucfirst($owner) . ' returning by reference supports only a simple direct array/property slot chain rooted in a local or parameter variable at line ' . $statement->line . '.';
+				} else {
+					$local = $this->extractSimpleVarName($expr);
+					if ($local !== null) {
+						$bindingKind = $refBindings[$local] ?? null;
+						if ($bindingKind === 'slot') {
+							$this->errors[] = ucfirst($owner) . ' returning by reference does not support returning a local alias created from an array or property slot at line ' . $statement->line . '.';
+						}
+					}
+				}
+			}
+			if ($statement->kind === 'if') {
+				foreach ($statement->payload as $branch) {
+					$branchBindings = $refBindings;
+					$this->validateReferenceRulesInStatements($branch['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $branchBindings, $refReturnAliasOwners);
+				}
+				continue;
+			}
+			if ($statement->kind === 'while' || $statement->kind === 'do_while' || $statement->kind === 'for' || $statement->kind === 'foreach') {
+				$nested = $refBindings;
+				$this->validateReferenceRulesInStatements($statement->payload['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $nested, $refReturnAliasOwners);
+				continue;
+			}
+			if ($statement->kind === 'switch') {
+				foreach (($statement->payload['cases'] ?? []) as $case) {
+					$caseBindings = $refBindings;
+					$this->validateReferenceRulesInStatements($case['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $caseBindings);
+				}
+			}
+		}
+	}
+
+	/** @param list<Statement> $statements */
+	private function countReturnStatements(array $statements): int
+	{
+		$count = 0;
+		foreach ($statements as $statement) {
+			if ($statement->kind === 'return') {
+				++$count;
+				continue;
+			}
+			if ($statement->kind === 'if') {
+				foreach ($statement->payload as $branch) {
+					$count += $this->countReturnStatements($branch['stmts'] ?? []);
+				}
+				continue;
+			}
+			if ($statement->kind === 'while' || $statement->kind === 'do_while' || $statement->kind === 'for' || $statement->kind === 'foreach') {
+				$count += $this->countReturnStatements($statement->payload['stmts'] ?? []);
+				continue;
+			}
+			if ($statement->kind === 'switch') {
+				foreach (($statement->payload['cases'] ?? []) as $case) {
+					$count += $this->countReturnStatements($case['stmts'] ?? []);
+				}
+			}
+		}
+		return $count;
+	}
+
+	private function classifyReferenceBindingSource(mixed $expr): string
+	{
+		if ($this->containsReferenceSlotExpr($expr)) {
+			return 'slot';
+		}
+		return 'other';
+	}
+
+	/** @return list<string> */
+	private function extractSimpleVarArgsFromByRefCall(mixed $expr, ?string $namespacePhp): array
+	{
+		if (!is_object($expr)) {
+			return [];
+		}
+
+		$kind = $expr->kind ?? null;
+		if ($kind !== AstKind::CALL) {
+			return [];
+		}
+
+		$decl = $this->lookupFunctionDeclByCall($expr->children['expr'] ?? null, $namespacePhp);
+		if ($decl === null || !$decl->returnsByReference) {
+			return [];
+		}
+
+		$args = $expr->children['args']->children ?? [];
+		$out = [];
+		foreach ($args as $arg) {
+			$name = $this->extractSimpleVarName($arg);
+			if ($name !== null) {
+				$out[] = $name;
+			}
+		}
+
+		return array_values(array_unique($out));
+	}
+
+	private function isUnsupportedDirectReferenceReturnExpr(mixed $expr): bool
+	{
+		return $this->containsReferenceSlotExpr($expr) && !$this->isSimpleDirectReferenceReturnExpr($expr);
+	}
+
+	private function containsReferenceSlotExpr(mixed $expr): bool
+	{
+		if (!is_object($expr)) {
+			return false;
+		}
+		$kind = $expr->kind ?? null;
+		if (in_array($kind, [AstKind::DIM, AstKind::PROP, AstKind::NULLSAFE_PROP, AstKind::STATIC_PROP], true)) {
+			return true;
+		}
+		foreach ($this->childNodesOf($expr) as $child) {
+			if ($this->containsReferenceSlotExpr($child)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private function isSimpleDirectReferenceReturnExpr(mixed $expr): bool
+	{
+		if (!is_object($expr)) {
+			return false;
+		}
+
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::DIM || $kind === AstKind::PROP) {
+			$baseExpr = $expr->children['expr'] ?? null;
+			if ($this->extractSimpleVarName($baseExpr) !== null) {
+				return true;
+			}
+			return $this->isSimpleDirectReferenceReturnExpr($baseExpr);
+		}
+
+		return false;
 	}
 
 	private function validatePropertyDeclaration(ClassDecl $class, PropertyDecl $property): void
@@ -887,9 +1085,6 @@ final class Generator
 		}
 		foreach ($class->methods as $method) {
 			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';';
-			if (!$class->isInterface && !$this->methodIsAbstract($method, $class) && $this->functionNeedsValueRefOverload($method->params) && $method->name !== '__construct' && $method->name !== '__destruct') {
-				$header[] = $this->indent(1) . $this->renderMethodValueRefOverloadDeclaration($method, $class, $namespacePhp) . ';';
-			}
 		}
 		$header[] = '};';
 		$header[] = '';
@@ -924,10 +1119,6 @@ final class Generator
 					continue;
 				}
 				$source[] = $this->renderMethodDefinition($class, $method, $namespacePhp);
-				if ($this->functionNeedsValueRefOverload($method->params) && $method->name !== '__construct' && $method->name !== '__destruct') {
-					$source[] = '';
-					$source[] = $this->renderMethodValueRefOverloadDefinition($class, $method, $namespacePhp);
-				}
 				$source[] = '';
 			}
 			$this->currentClassName = $prevClassName;
@@ -1082,15 +1273,8 @@ final class Generator
 	private function emitFunction(array &$header, array &$source, FunctionDecl $function, ?string $namespacePhp): void
 	{
 		$header[] = $this->renderFunctionDeclaration($function, $namespacePhp) . ';';
-		if ($this->functionNeedsValueRefOverload($function->params)) {
-			$header[] = $this->renderFunctionValueRefOverloadDeclaration($function, $namespacePhp) . ';';
-		}
 		$header[] = '';
 		$source[] = $this->renderFunctionDefinition($function, $namespacePhp);
-		if ($this->functionNeedsValueRefOverload($function->params)) {
-			$source[] = '';
-			$source[] = $this->renderFunctionValueRefOverloadDefinition($function, $namespacePhp);
-		}
 		$source[] = '';
 	}
 
@@ -1249,7 +1433,7 @@ final class Generator
 			} else {
 				$type = $param->type !== null ? $this->renderParamTypeForMode($param, $paramPassModes[$param->name] ?? 'readonly') : '/* ERROR missing-parameter-type */';
 			}
-			$rendered = $type . ' ' . $param->name;
+			$rendered = $type . ' ' . $this->renderParamName($param, $useStorageNames);
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
 				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
 			}
@@ -1324,6 +1508,7 @@ final class Generator
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
 		}
+		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($method->params);
 		$className = $class->name;
 		$statements = $method->statements;
 		$initializer = '';
@@ -1336,18 +1521,19 @@ final class Generator
 					array_shift($statements);
 				}
 			}
-			$signature = $className . '::' . $className . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes) . ')' . $initializer;
+			$signature = $className . '::' . $className . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')' . $initializer;
 		} elseif ($method->name === '__destruct') {
 			$this->currentReturnType = null;
 			$signature = $className . '::~' . $className . '()';
 		} else {
 			$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
 			$this->currentReturnType = $returnType;
-			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
+			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
 		}
 		$body = $this->renderBody($statements, $namespacePhp);
 		$this->currentReturnType = null;
 		$this->currentParamPassModes = [];
+		$this->currentScalarRefParamAliasLines = [];
 		return $signature . " {
 " . $body . "
 }";
@@ -1410,9 +1596,10 @@ final class Generator
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
 		}
+		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($function->params);
 		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$this->currentReturnType = $returnType;
-		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
+		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
 		$body = $this->renderBody($function->statements, $namespacePhp);
 		$this->currentReturnType = null;
 		$this->currentParamPassModes = [];
@@ -1433,7 +1620,7 @@ final class Generator
 
 	 */
 
-	private function renderParams(array $params, bool $includeDefaults, ?string $namespacePhp, array $paramPassModes = []): string
+	private function renderParams(array $params, bool $includeDefaults, ?string $namespacePhp, array $paramPassModes = [], bool $useStorageNames = false): string
 	{
 		$out = [];
 		foreach ($params as $param) {
@@ -1443,7 +1630,7 @@ final class Generator
 			} else {
 				$type = $param->type !== null ? $this->renderParamTypeForMode($param, $paramPassModes[$param->name] ?? 'readonly') : '/* ERROR missing-parameter-type */';
 			}
-			$rendered = $type . ' ' . $param->name;
+			$rendered = $type . ' ' . $this->renderParamName($param, $useStorageNames);
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
 				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
 			}
@@ -1474,6 +1661,10 @@ final class Generator
 
 		$mapped = $this->typeMapper->mapDeclaredType($param->type);
 		if ($param->isReference) {
+			$proxyType = $this->typeMapper->mapReferenceProxyType($param->type);
+			if ($proxyType !== null) {
+				return $proxyType;
+			}
 			return $this->typeMapper->mapParamType($param->type, true);
 		}
 
@@ -1486,7 +1677,7 @@ final class Generator
 
 	private function renderBody(array $statements, ?string $namespacePhp): string
 	{
-		$lines = $this->renderCurrentArrayParamGuards();
+		$lines = array_merge($this->renderCurrentScalarRefParamAliases(), $this->renderCurrentArrayParamGuards());
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
 			$lines[] = $this->indent(1) . $line;
 		}
@@ -1498,6 +1689,41 @@ final class Generator
 	 *
 	 * @return list<string>
 	 */
+	private function renderCurrentScalarRefParamAliases(): array
+	{
+		return $this->currentScalarRefParamAliasLines;
+	}
+
+	private function buildScalarRefParamAliasLines(array $params): array
+	{
+		$lines = [];
+		foreach ($params as $param) {
+			if (!$param instanceof ParamDecl || !$param->isReference || $param->type === null) {
+				continue;
+			}
+			$proxyType = $this->typeMapper->mapReferenceProxyType($param->type);
+			if ($proxyType === null) {
+				continue;
+			}
+			$mapped = $this->typeMapper->mapDeclaredType($param->type);
+			$lines[] = $mapped . '& ' . $param->name . ' = static_cast<' . $mapped . '&>(' . $this->renderParamStorageName($param) . ');';
+		}
+		return $lines;
+	}
+
+	private function renderParamName(ParamDecl $param, bool $useStorageNames): string
+	{
+		return $useStorageNames ? $this->renderParamStorageName($param) : $param->name;
+	}
+
+	private function renderParamStorageName(ParamDecl $param): string
+	{
+		if ($param->isReference && $param->type !== null && $this->typeMapper->mapReferenceProxyType($param->type) !== null) {
+			return '_' . $param->name;
+		}
+		return $param->name;
+	}
+
 	private function renderCurrentArrayParamGuards(): array
 	{
 		$lines = [];

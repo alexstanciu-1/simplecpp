@@ -1,5 +1,6 @@
 const form = document.getElementById('runner-form');
 const runButton = document.getElementById('run-button');
+const compileRunButton = document.getElementById('compile-run-button');
 const refreshTreeButton = document.getElementById('refresh-tree-button');
 const newFileButton = document.getElementById('new-file-button');
 const newDirButton = document.getElementById('new-dir-button');
@@ -12,6 +13,9 @@ const selectedFilePathBox = document.getElementById('selected-file-path');
 const saveFileButton = document.getElementById('save-file-button');
 const debugJsonBox = document.getElementById('debug-json');
 const copyDebugButton = document.getElementById('copy-debug-button');
+const warningsOutputBox = document.getElementById('warnings-output');
+const warningsSection = document.getElementById('warnings-section');
+const warningsStatus = document.getElementById('warnings-status');
 const cppHeaderCodeBox = document.getElementById('cpp-header-code');
 const cppCodeBox = document.getElementById('cpp-code');
 const phpOutputBox = document.getElementById('php-output');
@@ -23,6 +27,8 @@ const cppStatus = document.getElementById('cpp-status');
 const phpPane = document.getElementById('php-pane');
 const cppPane = document.getElementById('cpp-pane');
 const memTestEnabledBox = document.getElementById('mem-test-enabled');
+const cppTabButtons = Array.from(document.querySelectorAll('.cpp-tab'));
+const cppTabPanels = Array.from(document.querySelectorAll('.cpp-tab-panel'));
 
 let selectedSandboxPath = '';
 let selectedSandboxPathDirty = false;
@@ -136,8 +142,20 @@ function shouldDirectoryBeOpen(node) {
 	return node.depth <= 1;
 }
 
+
+function setActiveCppTab(target) {
+	for (const button of cppTabButtons) {
+		const isActive = button.dataset.target === target;
+		button.classList.toggle('is-active', isActive);
+		button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+	}
+	for (const panel of cppTabPanels) {
+		panel.classList.toggle('is-active', panel.dataset.panel === target);
+	}
+}
+
 function setStatus(node, state, text) {
-	node.classList.remove('state-ok', 'state-error', 'state-busy');
+	node.classList.remove('state-ok', 'state-error', 'state-busy', 'state-warning');
 	if (state === 'ok') {
 		node.classList.add('state-ok');
 	}
@@ -146,6 +164,9 @@ function setStatus(node, state, text) {
 	}
 	if (state === 'busy') {
 		node.classList.add('state-busy');
+	}
+	if (state === 'warning') {
+		node.classList.add('state-warning');
 	}
 	node.textContent = text;
 }
@@ -330,9 +351,51 @@ function formatTimingResources(metrics) {
 	return lines.join('\n').trim();
 }
 
+function buildWarningsText(payload) {
+	const parts = [];
+	const generatorWarnings = normalizeOutput(payload.s2s_generator_output).trim();
+	const generatorErrors = normalizeOutput(payload.generator_error).trim();
+
+	if (generatorWarnings !== '') {
+		parts.push(`Warnings\n${generatorWarnings}`);
+	}
+	if (generatorErrors !== '') {
+		parts.push(`Generator errors\n${generatorErrors}`);
+	}
+
+	return parts.join('\n\n');
+}
+
+function renderWarnings(payload) {
+	const warningsText = buildWarningsText(payload);
+	warningsOutputBox.textContent = warningsText;
+	warningsSection.classList.remove('has-warning', 'has-error');
+
+	const hasWarnings = normalizeOutput(payload.s2s_generator_output).trim() !== '';
+	const hasErrors = normalizeOutput(payload.generator_error).trim() !== '';
+
+	if (hasWarnings) {
+		warningsSection.classList.add('has-warning');
+	}
+	if (!hasWarnings && hasErrors) {
+		warningsSection.classList.add('has-error');
+	}
+
+	if (hasWarnings) {
+		setStatus(warningsStatus, 'warning', hasErrors ? 'warn+err' : 'warning');
+		return;
+	}
+	if (hasErrors) {
+		setStatus(warningsStatus, 'error', 'error');
+		return;
+	}
+	setStatus(warningsStatus, 'ok', 'clear');
+}
+
 function renderDebugJson(payload) {
 	debugJsonBox.textContent = payload.debug_json || '';
 	timingResourcesBox.textContent = formatTimingResources(payload.timing_resources);
+	renderWarnings(payload);
 }
 
 
@@ -663,8 +726,11 @@ async function runComparison() {
 	setStatus(phpStatus, 'busy', 'running');
 	setStatus(cppStatus, 'busy', 'running');
 	debugJsonBox.textContent = '';
-	cppHeaderCodeBox.textContent = '';
-	cppCodeBox.textContent = '';
+	warningsOutputBox.textContent = '';
+	warningsSection.classList.remove('has-warning', 'has-error');
+	setStatus(warningsStatus, 'busy', 'running');
+	cppHeaderCodeBox.value = '';
+	cppCodeBox.value = '';
 	phpOutputBox.textContent = '';
 	cppOutputBox.textContent = '';
 	timingResourcesBox.textContent = '';
@@ -685,19 +751,22 @@ async function runComparison() {
 		});
 		renderDebugJson(payload);
 
-		cppHeaderCodeBox.textContent = payload.generator_header_display || '';
-		cppCodeBox.textContent = payload.generator_source_display || '';
+		cppHeaderCodeBox.value = payload.generator_header_display || '';
+		cppCodeBox.value = payload.generator_source_display || '';
 		phpOutputBox.textContent = payload.php_error || payload.php_output || '';
 		cppOutputBox.textContent = payload.cpp_error || payload.cpp_output || '';
 
-		setStatus(generatorStatus, payload.generator_error ? 'error' : 'ok', payload.generator_error ? 'error' : 'ok');
+		const hasGeneratorWarnings = normalizeOutput(payload.s2s_generator_output).trim() !== '';
+		const generatorState = payload.generator_error ? 'error' : (hasGeneratorWarnings ? 'warning' : 'ok');
+		const generatorText = payload.generator_error ? 'error' : (hasGeneratorWarnings ? 'warning' : 'ok');
+		setStatus(generatorStatus, generatorState, generatorText);
 		setStatus(phpStatus, payload.php_error ? 'error' : 'ok', payload.php_error ? 'error' : 'ok');
 		setStatus(cppStatus, payload.cpp_error ? 'error' : 'ok', payload.cpp_error ? 'error' : 'ok');
 		updateMatchState(payload);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		cppHeaderCodeBox.textContent = message;
-		cppCodeBox.textContent = '';
+		cppHeaderCodeBox.value = message;
+		cppCodeBox.value = '';
 		phpOutputBox.textContent = '';
 		cppOutputBox.textContent = '';
 		timingResourcesBox.textContent = '';
@@ -707,8 +776,58 @@ async function runComparison() {
 		setStatus(generatorStatus, 'error', 'request error');
 		setStatus(phpStatus, 'error', 'n/a');
 		setStatus(cppStatus, 'error', 'n/a');
+		setStatus(warningsStatus, 'error', 'request error');
 	} finally {
 		runButton.disabled = false;
+	}
+}
+
+async function compileAndRunEditedCpp() {
+	compileRunButton.disabled = true;
+	setStatus(cppStatus, 'busy', 'compiling');
+	setStatus(warningsStatus, 'busy', 'idle');
+	warningsOutputBox.textContent = '';
+	warningsSection.classList.remove('has-warning', 'has-error');
+	cppOutputBox.textContent = '';
+	timingResourcesBox.textContent = '';
+	cppPane.classList.remove('match-ok', 'has-error');
+
+	try {
+		const payload = await fetchJson('run.php?action=compile_edited_cpp', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				cpp_header_code: cppHeaderCodeBox.value,
+				cpp_source_code: cppCodeBox.value,
+				mem_test_enabled: memTestEnabledBox.checked,
+			}),
+		});
+
+		cppHeaderCodeBox.value = payload.generator_header_display || cppHeaderCodeBox.value;
+		cppCodeBox.value = payload.generator_source_display || cppCodeBox.value;
+		cppOutputBox.textContent = payload.cpp_error || payload.cpp_output || '';
+		timingResourcesBox.textContent = formatTimingResources(payload.timing_resources);
+		debugJsonBox.textContent = payload.debug_json || '';
+		renderWarnings(payload);
+		setStatus(cppStatus, payload.cpp_error ? 'error' : 'ok', payload.cpp_error ? 'error' : 'ok');
+		cppPane.classList.toggle('has-error', normalizeOutput(payload.cpp_error) !== '');
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		cppOutputBox.textContent = message;
+		timingResourcesBox.textContent = '';
+		cppPane.classList.add('has-error');
+		setStatus(cppStatus, 'error', 'request error');
+		if (debugJsonBox.textContent === '') {
+			debugJsonBox.textContent = JSON.stringify({ request_error: message, mode: 'compile_edited_cpp' }, null, '	');
+		}
+		warningsOutputBox.textContent = '';
+		warningsSection.classList.remove('has-warning');
+		warningsSection.classList.add('has-error');
+		setStatus(warningsStatus, 'error', 'request error');
+	} finally {
+		compileRunButton.disabled = false;
 	}
 }
 
@@ -789,6 +908,18 @@ document.addEventListener('keydown', (event) => {
 		});
 	}
 });
+
+for (const button of cppTabButtons) {
+	button.addEventListener('click', () => {
+		setActiveCppTab(button.dataset.target || 'header');
+	});
+}
+
+compileRunButton.addEventListener('click', () => {
+	void compileAndRunEditedCpp();
+});
+
+setActiveCppTab('header');
 
 updateSelectedFileLabel('');
 void loadSandboxTree();

@@ -53,3 +53,8 @@ add_test(NAME scpp_test_table_t COMMAND test_table_t)
 add_executable(test_value_t_dynamic test_value_t_dynamic.cpp)
 target_link_libraries(test_value_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_value_t_dynamic COMMAND test_value_t_dynamic)
+
+# scalar_ref typed by-reference bridge coverage.
+add_executable(test_scalar_ref test_scalar_ref.cpp)
+target_link_libraries(test_scalar_ref PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_scalar_ref COMMAND test_scalar_ref)

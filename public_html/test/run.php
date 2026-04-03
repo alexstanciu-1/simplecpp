@@ -15,6 +15,7 @@ $response = [
 	'generator_header_display' => '',
 	'generator_source_display' => '',
 	'generator_error' => '',
+	's2s_generator_output' => '',
 	'generator_include_directive' => '',
 	'php_output' => '',
 	'php_error' => '',
@@ -114,7 +115,9 @@ try {
 	$response['generator_include_directive'] = extractIncludeDirective($sourceDisplay, $headerDisplay);
 
 	$generatorErrors = implode("\n", $cppFile->errors);
+	$generatorWarnings = implode("\n", $cppFile->warnings);
 	$response['generator_error'] = $generatorErrors;
+	$response['s2s_generator_output'] = $generatorWarnings;
 	$response['generator_header_display'] = $generatorErrors !== '' ? $generatorErrors : $headerDisplay;
 	$response['generator_source_display'] = $generatorErrors !== '' ? '' : $sourceDisplay;
 
@@ -236,6 +239,15 @@ function handleUtilityAction(string $action): void
 			'path' => normalizeSandboxRelativePath($relativePath),
 			'content' => (string) file_get_contents($absolutePath),
 		];
+		echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return;
+	}
+
+	$input = readJsonRequestBody();
+
+	if ($action === 'compile_edited_cpp') {
+		$input = readJsonRequestBody();
+		$payload = compileEditedCppPayload($input);
 		echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		return;
 	}
@@ -914,7 +926,7 @@ function buildDebugJson(array $response, string $phpCode, string $phpAstJson): s
 		'source_php_code' => $phpCode,
 		'php_ast_source' => $response['php_ast_source'],
 		'php_ast_json' => $phpAstJson,
-		's2s_generator_output' => '',
+		's2s_generator_output' => $response['s2s_generator_output'],
 		's2s_generator_error' => buildErrorObjectFromText($response['generator_error']),
 		'generated_cpp_code' => [
 			'include_directive' => $response['generator_include_directive'],
@@ -976,6 +988,121 @@ function extractIncludeDirective(string $sourceDisplay, string $headerDisplay): 
 	}
 
 	return '';
+}
+
+function buildNaturalCompileUnitFromText(string $headerText, string $sourceText): string
+{
+	$headerLines = preg_split('/\R/', str_replace("
+", "
+", $headerText)) ?: [];
+	$sourceLines = preg_split('/\R/', str_replace("
+", "
+", $sourceText)) ?: [];
+	return buildNaturalCompileUnit($headerLines, $sourceLines);
+}
+
+function compileEditedCppPayload(array $input): array
+{
+	$response = [
+		'ok' => false,
+		'generator_header_display' => (string) ($input['cpp_header_code'] ?? ''),
+		'generator_source_display' => (string) ($input['cpp_source_code'] ?? ''),
+		'cpp_output' => '',
+		'cpp_error' => '',
+		'cpp_exit_code' => null,
+		'cpp_compile_output' => '',
+		'cpp_compile_error' => '',
+		'cpp_compile_exit_code' => null,
+		's2s_generator_output' => '',
+		'generator_error' => '',
+		'timing_resources' => [],
+		'timing_resources_json' => '',
+		'debug_json' => '',
+		'error' => '',
+	];
+
+	$headerText = (string) ($input['cpp_header_code'] ?? '');
+	$sourceText = (string) ($input['cpp_source_code'] ?? '');
+	$memTestEnabled = (bool) ($input['mem_test_enabled'] ?? false);
+	if (trim($headerText) === '' && trim($sourceText) === '') {
+		throw new RuntimeException('Edited C++ header/source is empty.');
+	}
+
+	$projectRoot = dirname(__DIR__, 2);
+	if (!is_dir($projectRoot)) {
+		throw new RuntimeException('Project root not found.');
+	}
+
+	$tempRoot = sys_get_temp_dir() . '/simplecpp_test_ui_cpp_' . bin2hex(random_bytes(8));
+	if (!mkdir($tempRoot, 0777, true) && !is_dir($tempRoot)) {
+		throw new RuntimeException('Failed to create temporary directory.');
+	}
+
+	try {
+		$headerPath = $tempRoot . '/snippet.hpp';
+		$sourcePath = $tempRoot . '/snippet.cpp';
+		file_put_contents($headerPath, $headerText);
+		file_put_contents($sourcePath, $sourceText);
+
+		$runtimeCacheStage = measureStage(static function () use ($projectRoot, $memTestEnabled): array {
+			return ensureRuntimeArchive($projectRoot, $memTestEnabled);
+		});
+		$runtimeArchive = (string) $runtimeCacheStage['result']['archive_path'];
+		$runtimeCacheMetrics = stageMetricsFromMeasured($runtimeCacheStage, 'C++ runtime cache');
+		$runtimeCacheMetrics['cache_status'] = (string) ($runtimeCacheStage['result']['status'] ?? 'unknown');
+		$runtimeCacheMetrics['archive_path'] = $runtimeArchive;
+		$runtimeCacheMetrics['mode'] = $memTestEnabled ? 'asan' : 'default';
+		$response['timing_resources']['compile_cpp_runtime_cache'] = $runtimeCacheMetrics;
+
+		$compileInputPath = $tempRoot . '/snippet.build.cpp';
+		file_put_contents($compileInputPath, buildNaturalCompileUnitFromText($headerText, $sourceText));
+		$cppBinaryPath = $tempRoot . '/snippet.out';
+
+		$compileRun = runCommandMeasured(
+			buildSampleCompileCommand($projectRoot, $compileInputPath, $runtimeArchive, $cppBinaryPath, $memTestEnabled),
+			$tempRoot,
+			40
+		);
+		$response['cpp_compile_output'] = normalizeCommandOutput($compileRun['stdout']);
+		$response['cpp_compile_error'] = buildProcessErrorText('C++ compile', $compileRun);
+		$response['cpp_compile_exit_code'] = $compileRun['exit_code'];
+		$compileMetrics = externalMetricsFromRun('C++ compile', $compileRun);
+		$compileMetrics['mode'] = $memTestEnabled ? 'edited_cpp_plus_cached_runtime_archive_asan' : 'edited_cpp_plus_cached_runtime_archive';
+		$compileMetrics['mem_test_enabled'] = $memTestEnabled;
+		$response['timing_resources']['compile_cpp'] = $compileMetrics;
+
+		if ($compileRun['exit_code'] !== 0) {
+			$response['cpp_error'] = $response['cpp_compile_error'];
+			$response['timing_resources']['execute_cpp'] = [
+				'label' => 'C++ execute',
+				'skipped' => true,
+				'reason' => 'compile_failed',
+			];
+		} else {
+			$cppRun = runCommandMeasured([$cppBinaryPath], $tempRoot, 20);
+			$response['cpp_output'] = normalizeCommandOutput($cppRun['stdout']);
+			$response['cpp_error'] = buildProcessErrorText('C++ execution', $cppRun);
+			$response['cpp_exit_code'] = $cppRun['exit_code'];
+			$response['timing_resources']['execute_cpp'] = externalMetricsFromRun('C++ execute', $cppRun);
+		}
+
+		$response['timing_resources_json'] = encodePrettyJson($response['timing_resources']);
+		$response['debug_json'] = encodePrettyJson([
+			'mode' => 'compile_edited_cpp',
+			'mem_test_enabled' => $memTestEnabled,
+			'cpp_compile_exit_code' => $response['cpp_compile_exit_code'],
+			'cpp_exit_code' => $response['cpp_exit_code'],
+			'cpp_compile_error' => $response['cpp_compile_error'],
+			'cpp_error' => $response['cpp_error'],
+			's2s_generator_output' => '',
+			'generator_error' => '',
+			'timing_resources' => $response['timing_resources'],
+		]);
+		$response['ok'] = true;
+		return $response;
+	} finally {
+		cleanupDirectory($tempRoot);
+	}
 }
 
 function encodePrettyJson(array $data): string

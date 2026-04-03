@@ -248,6 +248,8 @@ Included initially:
 - `value_t` may auto-bridge into typed C++ targets through that cast layer; invalid conversions fail at runtime
 - `value_t::operator[]` is the primary mutating chained dynamic array access helper
 - mutable `value_t::operator[]` autovivifies `null` into an owned `table_t<value_t>`
+- `value_t::size()`, `value_t::empty()`, and `value_t::at(...)` are the current generator-facing indexed container helpers on boxed arrays/tables
+- `value_t::at(...)` is checked non-inserting access and follows the underlying `table_t<value_t>::at(...)` miss semantics
 - `value_t::get(...)` is the primary non-mutating read helper and returns a null-kind `value_t` on missing key or non-array receiver
 - `_find_val()` remains available as the non-inserting `table_t<value_t>` helper used by generator read paths
 - dynamic arithmetic, comparison, logical operators, mutation, and increment/decrement on `value_t` are enabled through runtime dispatch
