@@ -1,0 +1,15 @@
+<?php
+function f(bool $x): int {
+    try {
+        if ($x) {
+            return 10;
+        }
+        throw new Exception();
+    } catch (Exception $e) {
+        return 20;
+    } finally {
+        echo "F\n";
+    }
+}
+var_dump(f(true));
+var_dump(f(false));

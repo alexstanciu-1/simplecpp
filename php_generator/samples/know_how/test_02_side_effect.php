@@ -1,0 +1,12 @@
+<?php
+function f(): int {
+    $a = 1;
+    try {
+        $a = 2;
+        return $a;
+    } finally {
+        $a = 3;
+        echo "F:$a\n";
+    }
+}
+var_dump(f());

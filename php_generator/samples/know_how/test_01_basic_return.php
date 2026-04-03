@@ -1,0 +1,9 @@
+<?php
+function f(): int {
+    try {
+        return 10;
+    } finally {
+        echo "F\n";
+    }
+}
+var_dump(f());

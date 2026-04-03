@@ -1,0 +1,11 @@
+<?php
+function f(): int {
+    try {
+        throw new Exception("x");
+    } catch (Exception $e) {
+        return 20;
+    } finally {
+        echo "F\n";
+    }
+}
+var_dump(f());

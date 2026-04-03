@@ -1,0 +1,8 @@
+<?php
+while (true) {
+    try {
+        break 2;
+    } finally {
+        echo "F\n";
+    }
+}

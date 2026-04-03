@@ -1,0 +1,17 @@
+<?php
+function f(): int {
+    try {
+        try {
+            try {
+                return 1;
+            } finally {
+                echo "F3\n";
+            }
+        } finally {
+            echo "F2\n";
+        }
+    } finally {
+        echo "F1\n";
+    }
+}
+var_dump(f());
