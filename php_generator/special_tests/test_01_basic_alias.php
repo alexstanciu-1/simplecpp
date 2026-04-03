@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+
+function &get_inner(array &$arr):array {
+    return $arr["inner"];
+}
+
+$x = [];
+$x["inner"] = ["k" => "orig"];
+
+$y =& get_inner($x);
+$y["k"] = "changed";
+
+var_dump($x);
+var_dump($y);

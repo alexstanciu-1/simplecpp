@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+
+function bump_slot(int &$slot): void
+{
+	$slot += 1;
+}
+
+$x = [];
+$x["inner"] = [];
+$x["inner"]["count"] = 2;
+
+bump_slot($x["inner"]["count"]);
+
+var_dump($x);

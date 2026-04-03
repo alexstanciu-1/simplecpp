@@ -1,0 +1,14 @@
+<?php
+function f(): void {
+	try {
+		while (true) {
+			echo "inner-before\n";
+			break;
+		}
+		echo "after-inner\n";
+	} finally {
+		echo "finally\n";
+	}
+}
+
+f();

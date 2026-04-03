@@ -1,0 +1,19 @@
+<?php
+declare(strict_types=1);
+
+class MyEx extends Exception {}
+
+function cleanup(): void {
+	echo "cleanup\n";
+}
+
+function ok(bool $flag): int {
+	try {
+		if ($flag) {
+			return 10;
+		}
+		throw new MyEx("x");
+	} finally {
+		cleanup();
+	}
+}

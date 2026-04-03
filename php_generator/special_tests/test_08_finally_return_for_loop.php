@@ -1,0 +1,15 @@
+<?php
+function f(): int {
+	for ($i = 0; $i < 3; $i++) {
+		try {
+			return $i;
+		} finally {
+			// Delayed return must not allow the for-loop post expression to run once more.
+			echo "F:$i\n";
+		}
+	}
+
+	return -1;
+}
+
+var_dump(f());
