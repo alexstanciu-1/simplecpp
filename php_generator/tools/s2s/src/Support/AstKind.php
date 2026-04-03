@@ -26,6 +26,7 @@ final class AstKind
 	public const ARROW_FUNC = 72;
 	public const RETURN = 278;
 	public const AST_ECHO = 282;
+	public const THROW = 283;
 	public const NAMESPACE = 542;
 	public const USE = 143;
 	public const GROUP_USE = 545;
@@ -78,6 +79,8 @@ final class AstKind
 	public const FOR = 1024;
 	public const FOREACH = 1025;
 	public const CONDITIONAL = 771;
+	public const TRY = 772;
+	public const CATCH = 773;
 	public const MATCH = 547;
 	public const MATCH_ARM = 548;
 	public const PLUS = 1;
@@ -114,6 +117,7 @@ final class AstKind
 	public const TYPE_DOUBLE = 5;
 	public const TYPE_STRING = 6;
 	public const TYPE_ARRAY = 7;
+	public const TYPE_MIXED = 16;
 	public const CLOSURE_VAR = 2049;
 	public const NULLABLE_TYPE = 2050;
 	public const USE_NORMAL = 1;

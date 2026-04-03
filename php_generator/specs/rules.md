@@ -1,3 +1,5 @@
+See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
+
 # Simple C++ – General Rules (Authoritative, Normalized)
 
 This document is the single source of truth for the supported subset.
@@ -249,10 +251,10 @@ Examples:
 
 - reduced PHP array subset (see catalog rows `ARR-*`)
 - `stdClass` / object iteration
-- `foreach` by value and by reference are supported for `vector_t` and for the current packed `table_t<value_t>` surface
+- `foreach` by value and by reference are supported for `vector_t` and for the current packed `hash_t<mixed_t>` surface
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
-- for boxed-array foreach over `value_t`, indexed loop lowering uses the generator-facing `value_t::size()` / `value_t::at(...)` surface instead of reaching through to raw table internals
-- for `table_t<value_t>` foreach, the value variable binds as `value_t` / `value_t&`; when that loop variable is later indexed as an array, lowering routes through `value_t::as_table_ref()` so nested array writes inside the loop target the referenced table value
+- for boxed-array foreach over `mixed_t`, indexed loop lowering uses the generator-facing `mixed_t::size()` / `mixed_t::at(...)` surface instead of reaching through to raw table internals
+- for `hash_t<mixed_t>` foreach, the value variable binds as `mixed_t` / `mixed_t&`; when that loop variable is later indexed as an array, lowering routes through `mixed_t::as_table_ref()` so nested array writes inside the loop target the referenced table value
 - explicit function/method reference returns require an explicit declared PHP return type, lower to native C++ reference signatures (`T&`), and must return lvalue-capable expressions, including direct calls statically known to return by reference, without copyification
 - `include`, `include_once`, and `require`
 - `and` / `or` / `xor`
@@ -268,18 +270,23 @@ Examples:
 
 Supported array lowering is intentionally narrow and split by target typing.
 
+Priority note:
+- `../../specs/dynamic_types.md` sections **1.2 Visible Intention** and **1.3 Technical Compromises to Achieve Visible Intention in v1** govern current typed-destination lowering from `mixed_t`
+- until symbol resolution/static analysis is strong enough to inject every required explicit cast at the exact site, generated/runtime-visible behavior must continue to preserve those v1 bridges
+- generator cleanup must therefore not assume that removing runtime bridge casts is safe merely because the long-term model prefers explicit emitted casts
+
 ### Untyped PHP arrays
-- untyped `[]` lowers to `value_t x = value_t{table_()}` when it is used as an explicit array-present initializer; dynamic locals may also start as `value_t x;` / `value_t x = null` and autovivify later
-- untyped `[v1, v2, ...]` lowers to `value_t x = value_t{table_(table_item_(...), ...)}`
-- first assignment declaration inference is intentionally overridden for fat-value bootstrap initializers: `$x = [];`, `$x = [ ... ];`, and `$x = null;` must declare as `value_t`, never `auto`, so the variable immediately exposes the fat `value_t` API (`append`, `operator[]`, `get`) and preserves null-state autovivification
+- untyped `[]` lowers to `mixed_t x = mixed_t{table_()}` when it is used as an explicit array-present initializer; dynamic locals may also start as `mixed_t x;` / `mixed_t x = null` and autovivify later
+- untyped `[v1, v2, ...]` lowers to `mixed_t x = mixed_t{table_(table_item_(...), ...)}`
+- first assignment declaration inference is intentionally overridden for fat-value bootstrap initializers: `$x = [];`, `$x = [ ... ];`, and `$x = null;` must declare as `mixed_t`, never `auto`, so the variable immediately exposes the fat `mixed_t` API (`append`, `operator[]`, `get`) and preserves null-state autovivification
 - nested append writes are full mutating LHS chains: `$x["users"][] = $v;` must lower through mutating access on `$x["users"]` and then `append(...)` (for example `x[string_t("users")].append(...)`), never through the read-only `.get(...)` path.
-- untyped `["k" => v]` lowers to `value_t x = value_t{table_(table_kv_("k", ...))}`
+- untyped `["k" => v]` lowers to `mixed_t x = mixed_t{table_(table_kv_("k", ...))}`
 - nested untyped arrays recurse through the same `table_ / table_item_ / table_kv_` helpers
 - PHP array reads in read-only contexts lower to `get(...)` / `_find_val(...)`; mutating contexts still lower to `operator[]` / `append(...)`
-- native PHP `array` type declarations now lower to `value_t`; function-entry guards enforce `array` vs `?array` before any user code runs, and explicit PHP `&` lowers to `value_t&`
+- native PHP `array` type declarations now lower to `mixed_t`; function-entry guards enforce `array` vs `?array` before any user code runs, and explicit PHP `&` lowers to `mixed_t&`
 - PHP keyed writes now lower to direct `operator[]` assignment
 - PHP append writes lower to `append(...)`; simple right-hand sides inline directly, while non-trivial right-hand sides may spill into a temporary to keep assignment-style lowering explicit
-- `unset($a[k])` lowers to `remove(k)` on `table_t`; for `value_t` receivers the generator first unwraps with `as_table_ref()`
+- `unset($a[k])` lowers to `remove(k)` on `hash_t`; for `mixed_t` receivers the generator first unwraps with `as_table_ref()`
 - `isset($a[k])` lowers to `has(k)` as a documented v1 approximation
 
 ### Typed vectors
@@ -288,7 +295,7 @@ Supported array lowering is intentionally narrow and split by target typing.
 - typed vector literals must remain positional; explicit keys are rejected
 
 ### Intentional v1 deviations from PHP
-- `table_t` keeps integer keys and string keys distinct (`1` != `"1"`)
+- `hash_t` keeps integer keys and string keys distinct (`1` != `"1"`)
 - `isset($a[k])` lowered through `has(k)` does not implement PHP's null-sensitive `isset` behavior yet
 - `operator[]` is now the primary read/write surface for lowered PHP array access. Mutable paths autovivify missing slots; const paths return the static null-like value on miss. `find(...)` remains reserved for presence-sensitive logic; `at(...)` remains the runtime checked-access API.
 
@@ -1090,34 +1097,34 @@ This matches PHP behavior.
 
 - Nested table dim reads chain through non-mutating reads so `$x["inner"][0]` lowers via `get(...)` / `_find_val(...)` and does not autovivify the right-hand side.
 - Nested table dim writes stay on the mutating path for the full lvalue chain, so `$x[0]["name"] = "first";` lowers through chained `operator[]` access, not through `get(...)` on intermediate segments.
-- Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `value_t` / `table_t<value_t>`.
-- Table-valued assignments into table slots now use direct `value_t` assignment through the returned `operator[]` reference.
+- Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `mixed_t` / `hash_t<mixed_t>`.
+- Table-valued assignments into table slots now use direct `mixed_t` assignment through the returned `operator[]` reference.
 - Reference assignment from a direct DIM slot also stays on the mutable slot path. Example: `$inner =& $arr["inner"];` → `auto& inner = arr[string_t("inner")];`, not `arr.get(...)`.
 
 ## Assignment-expression lambda fallback
 
 - Default rule: assignment statements and simple assignment expressions lower directly and do **not** use a helper lambda.
 - Example statement: `$x[0]["name"] = "first";` lowers to `x[0]["name"] = "first";`.
-- Example simple expression: `$y = ($x[0]["name"] = "first");` lowers to `value_t y = (x[0]["name"] = "first");` when native C++ assignment-expression semantics already preserve the assigned value.
+- Example simple expression: `$y = ($x[0]["name"] = "first");` lowers to `mixed_t y = (x[0]["name"] = "first");` when native C++ assignment-expression semantics already preserve the assigned value.
 - Fallback rule: emit a helper lambda only for complex expression contexts where the generator must guarantee single evaluation and return the assigned value explicitly, especially append expressions or larger composed expressions such as function-call arguments / concatenations that would otherwise duplicate work or lose PHP assignment-value semantics.
 
 
 ## Array argument materialization
 
-- A typed PHP `array` parameter now lowers to `value_t` (or `value_t&` for explicit PHP `&`).
-- For functions / methods that have a typed scalar by-reference parameter among `int&`, `float&`, `bool&`, `string&`, the generator lowers that parameter to a runtime proxy view (`int_ref`, `float_ref`, `bool_ref`, `string_ref`). The proxy view may be constructed from either a native typed wrapper reference or a mutable `value_t&` slot and forwards reads / writes to the underlying storage while debug builds assert on kind-changing operations during the borrow lifetime. The lowered function / method keeps only that proxy-view signature; no secondary `value_t&` forwarding overload is generated. Call-site lowering constructs the proxy view explicitly when needed. Inside the lowered function / method body, the generator immediately aliases each proxy parameter back to a native typed reference (for example `int_t& a = static_cast<int_t&>(_a);`) so ordinary expression lowering continues to work with native scalar references while the proxy object remains alive for the full call.
+- A typed PHP `array` parameter now lowers to `mixed_t` (or `mixed_t&` for explicit PHP `&`).
+- For functions / methods that have a typed scalar by-reference parameter among `int&`, `float&`, `bool&`, `string&`, the historical proxy-view lowering (`int_ref`, `float_ref`, `bool_ref`, `string_ref`) is no longer generated by the S2S layer. Keep the runtime helper types only as legacy implementation baggage for now; unsupported by-reference shapes may currently fail later during generation or C++ compilation.
 - The generator emits a function-entry guard for every `array` / `?array` parameter before user code runs.
-  - `array` accepts only table-capable `value_t` kinds.
-  - `?array` accepts table-capable kinds plus null-kind `value_t`.
+  - `array` accepts only table-capable `mixed_t` kinds.
+  - `?array` accepts table-capable kinds plus null-kind `mixed_t`.
 - Read-only nested argument access uses `get(...)` / `_find_val(...)`; mutating paths stay on `operator[]` / `append(...)`.
-- Example: `function touch(array $x): array { $x["name"] = "changed"; return $x; }` lowers to `value_t touch(value_t x) { expect_array_argument(x, false, "x"); x[string_t("name")] = string_t("changed"); return x; }`.
+- Example: `function touch(array $x): array { $x["name"] = "changed"; return $x; }` lowers to `mixed_t touch(mixed_t x) { expect_array_argument(x, false, "x"); x[string_t("name")] = string_t("changed"); return x; }`.
 
 ## Warning: reassignment of by-value composite params
 
 - Reassigning a by-value parameter of type `array`, `string`, or `vector_t<...>` is supported, but it is **not recommended** for large values.
 - Once the function body proves a reassignment or write on that parameter, the emitted C++ signature becomes owning `T x` instead of `const T& x`.
 - That means the **entire incoming value is copied at function entry**.
-- This can be expensive for large `table_t`, `string_t`, or `vector_t` values, even if the original incoming value is used only briefly before reassignment.
+- This can be expensive for large `hash_t`, `string_t`, or `vector_t` values, even if the original incoming value is used only briefly before reassignment.
 - Prefer introducing a new local variable instead of overwriting the parameter when avoiding that full copy matters.
 
 ## Runtime language target
@@ -1139,3 +1146,7 @@ PHP-target array-key normalization is a runtime concern. The generator must not 
 
 - Return-by-reference is not recommended in Simple C++ and must always surface a generator warning even when generation is still allowed.
 - The generator must also warn for local copy-after-alias patterns rooted in a by-reference call result, for example `$inner =& get_inner($arr); $copy = $arr;`, because Simple C++ may not preserve PHP alias semantics for that flow.
+
+## Historical note — typed scalar by-reference proxy lowering
+
+The runtime still contains `int_ref`, `float_ref`, `bool_ref`, and `string_ref`, but the S2S generator no longer emits proxy-based function or method signatures/call-site adapters for them. This note is temporary and should be removed once the legacy runtime helpers are deleted.

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Scpp\S2S\Loader;
 
+use Scpp\S2S\Support\InputException;
+
 /**
  * Loads a PHP input file together with its sidecar JSON fixture.
  *
@@ -20,28 +22,32 @@ final class InputLoader
 	 * - preserves the subset and lowering rules documented for the prototype
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 	 */
-	public function load(string $path, ?string $code = null): ParsedInput
+	public function load(string $path, ?string $code = null, bool $save_ast_to_json = false): ParsedInput
 	{
 		if ($code === null) {
 			$code = file_get_contents($path);
 		}
+		$json_file = $path . ".json";
 		
 		if (extension_loaded('ast')) {
 			$version = max(\ast\get_supported_versions()); # \ast\get_latest_version();
 			$ast = \ast\parse_code($code, $version);
+			
+			if ($save_ast_to_json) {
+				file_put_contents($json_file, json_encode($ast));
+			}
 
 			return new ParsedInput($path, $code, token_get_all($code), $ast);
 		}
 		
-		$json_file = $path . ".json";
 		if (!is_file($json_file)) {
-			throw new \RuntimeException('No AST source [file] available (ext-ast missing and no JSON provided)');
+			throw new InputException('No AST source [file] available (ext-ast missing and no JSON provided)');
 		}
 		
 		$jsonSource = file_get_contents($json_file);
 
 		if ($jsonSource === false) {
-			throw new \RuntimeException('No AST source [content] available (ext-ast missing and no JSON provided)');
+			throw new InputException('No AST source [content] available (ext-ast missing and no JSON provided)');
 		}
 
 		$data = json_decode($jsonSource, false, flags: JSON_THROW_ON_ERROR);

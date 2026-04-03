@@ -43,9 +43,9 @@ template <typename T> class weak_p;
 template <typename T> class value_p;
 template <typename T> class nullable;
 
-// table_t and value types full declarations in scpp/support/table_t.hpp
-class value_t;
-template <typename T_VALUE = value_t> class table_t;
+// hash_t and value types full declarations in scpp/support/hash_t.hpp
+class mixed_t;
+template <typename T_VALUE = mixed_t> class hash_t;
 
 // Cast helper forward declaration.
 template <typename To, typename From>

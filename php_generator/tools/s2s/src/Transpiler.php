@@ -8,6 +8,7 @@ use Scpp\S2S\Emit\CppFile;
 use Scpp\S2S\Generator\Generator;
 use Scpp\S2S\Loader\InputLoader;
 use Scpp\S2S\Metadata\TypeCommentExtractor;
+use Scpp\S2S\Support\InputException;
 
 /**
  * Coordinates the generator pipeline for one file.
@@ -36,16 +37,16 @@ final class Transpiler
 	 * - preserves the subset and lowering rules documented for the prototype
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 	 */
-	public function transpile(string $phpPath): CppFile
+	public function transpile(string $phpPath, bool $save_ast_to_json = false): CppFile
 	{
 		$source = file_get_contents($phpPath);
 		if ($source === false) {
-			throw new \RuntimeException('Failed to read PHP input: ' . $phpPath);
+			throw new InputException('Failed to read PHP input: ' . $phpPath);
 		}
 
 		$this->assertNoSimpleReferenceRebinding($source);
 
-		$input = $this->loader->load($phpPath, $source);
+		$input = $this->loader->load($phpPath, $source, $save_ast_to_json);
 
 		$typeComments = $this->typeComments->extract($input->tokens);
 		$ir = $this->builder->build($input, $typeComments);
@@ -81,7 +82,7 @@ final class Transpiler
 			$name = substr($token[1], 1);
 			$bindings[$name] = ($bindings[$name] ?? 0) + 1;
 			if ($bindings[$name] > 1) {
-				throw new \RuntimeException('Reference rebinding is not supported for $' . $name . '.');
+				throw new InputException('Reference rebinding is not supported for $' . $name . '.');
 			}
 		}
 	}

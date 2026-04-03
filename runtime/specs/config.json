@@ -16,8 +16,8 @@
         "default_assignment_policy": "forbidden",
         "dynamic_runtime_policy": {
             "status": "authoritative_current_policy",
-            "purpose": "table_t and value_t form the dynamic fallback subsystem for quick code; explicit data structures remain preferred",
-            "tradeoffs": "using table_t reduces performance, increases memory usage, reduces compile-time issue detection and static analysis capability, and becomes less readable as surrounding code grows",
+            "purpose": "hash_t and mixed_t form the dynamic fallback subsystem for quick code; explicit data structures remain preferred",
+            "tradeoffs": "using hash_t reduces performance, increases memory usage, reduces compile-time issue detection and static analysis capability, and becomes less readable as surrounding code grows",
             "evaluation_rule": "once types are established, follow normal Simple C++ rules",
             "exceptions_rule": "exceptions must be documented separately and explicitly",
             "runtime_error_payload_minimum": [
@@ -36,31 +36,31 @@
         },
         "dynamic_v1_operation_scope": {
             "enabled_now": [
-                "table_t.find",
-                "table_t.at",
-                "table_t.nonconst_operator_square_brackets",
-                "value_t.exact_scalar_accessors",
-                "value_t.string_if",
-                "value_t.table_if",
-                "value_t.shared_table_if",
-                "value_t.weak_table_if",
-                "table_t._find_val",
-                "value_t._find_val",
-                "value_t.shared_table_storage",
-                "value_t.cast_dispatch",
-                "value_t.operator_dispatch"
+                "hash_t.find",
+                "hash_t.at",
+                "hash_t.nonconst_operator_square_brackets",
+                "mixed_t.exact_scalar_accessors",
+                "mixed_t.string_if",
+                "mixed_t.table_if",
+                "mixed_t.shared_table_if",
+                "mixed_t.weak_table_if",
+                "hash_t._find_val",
+                "mixed_t._find_val",
+                "mixed_t.shared_table_storage",
+                "mixed_t.cast_dispatch",
+                "mixed_t.operator_dispatch"
             ],
             "explicit_only": [
                 "casts"
             ],
             "deferred": [
-                "value_t callable behavior"
+                "mixed_t callable behavior"
             ]
         }
     },
     "runtime_types": {
         "table": {
-            "name": "table_t",
+            "name": "hash_t",
             "php_mapping": "array",
             "keys": [
                 "int",
@@ -72,7 +72,7 @@
             "append_rule": "max_int_key_plus_one",
             "lookup": {
                 "type": "maybe_value_t",
-                "representation": "nullable<value_t>",
+                "representation": "nullable<mixed_t>",
                 "nullopt": true,
                 "found_null_is_distinct": true,
                 "helpers": [
@@ -85,9 +85,9 @@
                 "at_failure": "throw_style",
                 "operator[]": "inserting_nonconst_only"
             },
-            "public_header": "scpp/table_t.hpp",
-            "implementation_header": "scpp/support/table_t.hpp",
-            "implementation_cpp": "scpp/support/table_t.cpp",
+            "public_header": "scpp/hash_t.hpp",
+            "implementation_header": "scpp/support/hash_t.hpp",
+            "implementation_cpp": "scpp/support/hash_t.cpp",
             "generation_rules": {
                 "read_only_lowering": "find",
                 "checked_read_lowering": "at",
@@ -95,7 +95,7 @@
                 "plain_dynamic_read_lowering": "_find_val",
                 "presence_sensitive_read_lowering": "find",
                 "object_like_read_lowering": "_find_val",
-                "object_like_miss_value": "value_t(null_t{})"
+                "object_like_miss_value": "mixed_t(null_t{})"
             },
             "remove": {
                 "returns": {
@@ -127,8 +127,8 @@
             "dynamic_access_policy": {
                 "current_receiver_rules": {
                     "table_t_receiver": "allowed",
-                    "value_t_table_receiver": "allowed through value_t runtime dispatch",
-                    "value_t_null_receiver_for__find_val": "returns value_t(null_t{})",
+                    "value_t_table_receiver": "allowed through mixed_t runtime dispatch",
+                    "value_t_null_receiver_for__find_val": "returns mixed_t(null_t{})",
                     "string_t_receiver": "runtime error for operator[] in current policy",
                     "int_float_bool_null_receiver": "runtime error for operator[] in current policy"
                 },
@@ -137,15 +137,15 @@
                     "at": "checked access, no insertion, failure on miss",
                     "nonconst_operator_square_brackets_int": "inserting access",
                     "nonconst_operator_square_brackets_string": "inserting access",
-                    "_find_val": "returns value_t(null_t{})"
+                    "_find_val": "returns mixed_t(null_t{})"
                 },
                 "future_reserved": {
                     "string_indexing": "reserved for later char_t/byte_t based design"
                 }
             },
             "object_like_form": {
-                "storage_type": "table_t",
-                "carrier_type": "shared_p<table_t>",
+                "storage_type": "hash_t",
+                "carrier_type": "shared_p<hash_t>",
                 "informative_term_only": "stdClass",
                 "missing_property_read": "null_via__find_val",
                 "identity": "pointer_identity",
@@ -457,9 +457,9 @@
                 "native_value"
             ]
         },
-        "table_t": {
+        "hash_t": {
             "kind": "runtime_container",
-            "header": "scpp/table_t.hpp",
+            "header": "scpp/hash_t.hpp",
             "template": false,
             "semantic_role": "php_array_runtime",
             "stable_core_api": [
@@ -476,9 +476,9 @@
                 "remove"
             ]
         },
-        "value_t": {
+        "mixed_t": {
             "kind": "runtime_value",
-            "header": "scpp/value_t.hpp",
+            "header": "scpp/mixed_t.hpp",
             "template": false,
             "semantic_role": "table_payload",
             "stable_core_api": [
@@ -511,15 +511,15 @@
                 },
                 {
                     "name": "table_v",
-                    "public_meaning": "owned table_t<value_t>"
+                    "public_meaning": "owned hash_t<mixed_t>"
                 },
                 {
                     "name": "shared_table_v",
-                    "public_meaning": "shared table_t<value_t>"
+                    "public_meaning": "shared hash_t<mixed_t>"
                 },
                 {
                     "name": "weak_table_v",
-                    "public_meaning": "weak table_t<value_t>"
+                    "public_meaning": "weak hash_t<mixed_t>"
                 }
             ],
             "current_accessors": {
@@ -530,7 +530,7 @@
                 },
                 "probe_accessors": {
                     "string_if": "returns const string_t* or nullptr",
-                    "table_if": "returns table_t<value_t>* / const table_t<value_t>* for owned/shared table; otherwise nullptr"
+                    "table_if": "returns hash_t<mixed_t>* / const hash_t<mixed_t>* for owned/shared table; otherwise nullptr"
                 },
                 "clone_policy": {
                     "null_bool_int_float_string": "cloned by value",
@@ -549,8 +549,8 @@
                     "operation dispatch only where explicitly documented"
                 ],
                 "not_yet_enabled": [
-                    "dynamic arithmetic operators on value_t",
-                    "dynamic comparison operators on value_t",
+                    "dynamic arithmetic operators on mixed_t",
+                    "dynamic comparison operators on mixed_t",
                     "dynamic callable dispatch",
                     "dynamic method dispatch"
                 ]
@@ -558,7 +558,7 @@
         },
         "maybe_value_t": {
             "kind": "runtime_alias",
-            "header": "scpp/table_t.hpp",
+            "header": "scpp/hash_t.hpp",
             "template": false,
             "semantic_role": "table_lookup_result",
             "stable_core_api": [

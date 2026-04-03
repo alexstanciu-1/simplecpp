@@ -1,11 +1,14 @@
 # Array Behavior Differences in Simple C++ (PHP → Simple C++)
 
-This document outlines the known behavioral differences between PHP arrays and the current `table_t` implementation in Simple C++.
+This document outlines the known behavioral differences between PHP arrays and the current `hash_t` implementation in Simple C++.
 This document is non-authoritative.
+
+For current language/S2S compromises around typed destinations reached from dynamic array reads (assignment, call, property, return), see `../../specs/dynamic_types.md` under Visible Intention and Technical Compromises.
+
 
 ## Overview
 
-`table_t` is not a full PHP array implementation. It supports a practical subset of behaviors but diverges in several important areas.
+`hash_t` is not a full PHP array implementation. It supports a practical subset of behaviors but diverges in several important areas.
 
 ---
 
@@ -115,7 +118,7 @@ PHP:
 - copy-on-write arrays
 
 Simple C++:
-- `value_t` arrays now use shared storage with detach-on-write on mutation
+- `mixed_t` arrays now use shared storage with detach-on-write on mutation
 - this is still a runtime-level approximation, not full Zend zval semantics
 
 ---

@@ -15,6 +15,7 @@ use Scpp\S2S\IR\Statement;
 use Scpp\S2S\IR\UseDecl;
 use Scpp\S2S\Loader\ParsedInput;
 use Scpp\S2S\Support\AstKind;
+use Scpp\S2S\Support\BuildException;
 
 /**
  * Normalizes php-ast JSON into the smaller IR consumed by the generator. This is the main implementation of the lowering rules captured in rules_catalog.md.
@@ -35,7 +36,7 @@ final class IrBuilder
 	{
 		$root = $input->ast;
 		if (!is_object($root) || ($root->kind ?? null) !== AstKind::STMT_LIST) {
-			throw new \RuntimeException('Unsupported AST root shape.');
+			throw new BuildException('Unsupported AST root shape.');
 		}
 
 		$this->typeCommentsByKey = [];
@@ -664,6 +665,34 @@ final class IrBuilder
 			return new Statement('return', $node->children['expr'] ?? null, $line);
 		}
 
+		if ($kind === AstKind::THROW) {
+			return new Statement('throw', $node->children['expr'] ?? null, $line);
+		}
+
+		if ($kind === AstKind::TRY) {
+			$catches = [];
+			foreach (($node->children['catches']->children ?? []) as $catchNode) {
+				if (!is_object($catchNode) || ($catchNode->kind ?? null) !== AstKind::CATCH) {
+					continue;
+				}
+				$classNode = $catchNode->children['class'] ?? null;
+				$classKinds = is_object($classNode) && isset($classNode->children) && is_array($classNode->children)
+					? array_values($classNode->children)
+					: [$classNode];
+				$catches[] = [
+					'classes' => $classKinds,
+					'var' => $catchNode->children['var'] ?? null,
+					'stmts' => $this->buildStatements($catchNode->children['stmts']->children ?? []),
+					'line' => (int) ($catchNode->lineno ?? $line),
+				];
+			}
+			return new Statement('try', [
+				'try' => $this->buildStatements($node->children['try']->children ?? []),
+				'catches' => $catches,
+				'finally' => $this->buildStatements($node->children['finally']->children ?? []),
+			], $line);
+		}
+
 		if ($kind === AstKind::AST_ECHO) {
 			// The current php-ast exporter already splits `echo a, b` into sibling AST_ECHO nodes.
 			// Preserve the exporter shape and store the single operand only.
@@ -851,6 +880,7 @@ final class IrBuilder
 			AstKind::TYPE_DOUBLE => 'float',
 			AstKind::TYPE_STRING => 'string',
 			AstKind::TYPE_ARRAY => 'array',
+			AstKind::TYPE_MIXED => 'mixed',
 			default => null,
 		};
 	}

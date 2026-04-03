@@ -55,8 +55,8 @@ Assignment-expression note:
 
 
 Array literal note:
-- untyped `$x = [];` and `$x = [ ... ];` declare as `value_t x = value_t{table_(...)}`, not `auto x = table_(...)`, so generated locals expose `append(...)`, `operator[]`, and `get(...)` immediately.
-- untyped first-assignment `$x = null;` declares as `value_t x = null;`, not `auto x = null;`, so later fat-value operations such as `append(...)`, `operator[]`, and `get(...)` compile against the null-state `value_t`.
+- untyped `$x = [];` and `$x = [ ... ];` declare as `mixed_t x = mixed_t{table_(...)}`, not `auto x = table_(...)`, so generated locals expose `append(...)`, `operator[]`, and `get(...)` immediately.
+- untyped first-assignment `$x = null;` declares as `mixed_t x = null;`, not `auto x = null;`, so later fat-value operations such as `append(...)`, `operator[]`, and `get(...)` compile against the null-state `mixed_t`.
 - nested append writes keep the whole left-hand-side chain mutating: `$x["users"][] = ["name" => "Alice"];` lowers through `x[string_t("users")].append(...)`, never `x.get(string_t("users")).append(...)`.
 
 

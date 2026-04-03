@@ -12,7 +12,7 @@
 #include "scpp/shared_p.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
-#include "scpp/table_t.hpp"
+#include "scpp/hash_t.hpp"
 #include "scpp/support/var_dump.hpp"
 
 #include <chrono>
@@ -39,14 +39,14 @@ public:
 // PHP compatibility constants consumed by generated code.
 inline const int_t PHP_INT_MAX{static_cast<std::int64_t>(std::numeric_limits<std::int64_t>::max())};
 
-// Validates a PHP array / ?array argument that has been lowered to value_t.
+// Validates a PHP array / ?array argument that has been lowered to mixed_t.
 // How: reject invalid kinds before executing any user code inside the callee.
-inline void expect_array_argument(const value_t &value, bool nullable, const char *name) {
+inline void expect_array_argument(const mixed_t &value, bool nullable, const char *name) {
 	const auto kind = value.kind();
-	if (kind == value_t::kind_t::table_v || kind == value_t::kind_t::shared_table_v || kind == value_t::kind_t::weak_table_v) {
+	if (kind == mixed_t::kind_t::table_v || kind == mixed_t::kind_t::shared_table_v || kind == mixed_t::kind_t::weak_table_v) {
 		return;
 	}
-	if (nullable && kind == value_t::kind_t::null_v) {
+	if (nullable && kind == mixed_t::kind_t::null_v) {
 		return;
 	}
 	throw ValueError(std::string("Argument $") + name + (nullable ? " must be of type ?array" : " must be of type array"));
@@ -127,23 +127,23 @@ inline string_t to_string(nullptr_t) {
 
 // Converts one dynamic table value into its PHP echo/string representation.
 // How: scalar branches delegate to the existing overloads; missing-like branches stringify to empty string.
-inline string_t to_string(const value_t &value) {
+inline string_t to_string(const mixed_t &value) {
 	switch (value.kind()) {
-		case value_t::kind_t::null_v:
+		case mixed_t::kind_t::null_v:
 			return string_t("");
-		case value_t::kind_t::bool_v:
+		case mixed_t::kind_t::bool_v:
 			return to_string(value.bool_value());
-		case value_t::kind_t::int_v:
+		case mixed_t::kind_t::int_v:
 			return to_string(value.int_value());
-		case value_t::kind_t::float_v:
+		case mixed_t::kind_t::float_v:
 			return to_string(value.float_value());
-		case value_t::kind_t::string_v: {
+		case mixed_t::kind_t::string_v: {
 			const auto *s = value.string_if();
 			return s == nullptr ? string_t("") : to_string(*s);
 		}
-		case value_t::kind_t::table_v:
-		case value_t::kind_t::shared_table_v:
-		case value_t::kind_t::weak_table_v:
+		case mixed_t::kind_t::table_v:
+		case mixed_t::kind_t::shared_table_v:
+		case mixed_t::kind_t::weak_table_v:
 			return string_t("Array");
 	}
 	return string_t("");
@@ -330,27 +330,27 @@ inline int_t count(const vector_t<T> &value) {
 	return int_t(static_cast<std::int64_t>(value.size()));
 }
 
-// Implements PHP count() for the current table_t array wrapper.
-// How: array values lower into table_t<value_t>, so count() must mirror PHP array cardinality via table_t::size().
-inline int_t count(const table_t<value_t> &value) {
+// Implements PHP count() for the current hash_t array wrapper.
+// How: array values lower into hash_t<mixed_t>, so count() must mirror PHP array cardinality via hash_t::size().
+inline int_t count(const hash_t<mixed_t> &value) {
 	return int_t(static_cast<std::int64_t>(value.size()));
 }
 
 // Implements PHP by-value copy semantics for mixed runtime values.
-// How: scalars and strings already copy by value through value_t::clone, while nested arrays detach by copying the underlying table into a fresh unique-owned value_t.
-inline value_t value_copy(const value_t &value) {
+// How: scalars and strings already copy by value through mixed_t::clone, while nested arrays detach by copying the underlying table into a fresh unique-owned mixed_t.
+inline mixed_t value_copy(const mixed_t &value) {
 	if (value.table_if() != nullptr) {
-		return value_t{unique<table_t<value_t>>(*value.table_if())};
+		return mixed_t{unique<hash_t<mixed_t>>(*value.table_if())};
 	}
 	if (value.shared_table_if() != nullptr) {
-		return value_t{unique<table_t<value_t>>(*value.shared_table_if()->get())};
+		return mixed_t{unique<hash_t<mixed_t>>(*value.shared_table_if()->get())};
 	}
 	if (value.weak_table_if() != nullptr) {
 		auto locked = value.weak_table_if()->lock();
 		if (static_cast<bool>(locked)) {
-			return value_t{unique<table_t<value_t>>(*locked.get())};
+			return mixed_t{unique<hash_t<mixed_t>>(*locked.get())};
 		}
-		return value_t{null_t{}};
+		return mixed_t{null_t{}};
 	}
 	return value.clone();
 }

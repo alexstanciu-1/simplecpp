@@ -4,6 +4,6 @@
 // Keep this translation unit as the single place that pulls in
 // runtime implementation files required by generated snippets.
 
-#include "../include/scpp/support/value_t.cpp"
-#include "../include/scpp/support/table_t.cpp"
+#include "../include/scpp/support/mixed_t.cpp"
+#include "../include/scpp/support/hash_t.cpp"
 #include "../include/scpp/support/var_dump.cpp"

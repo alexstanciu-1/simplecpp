@@ -8,8 +8,8 @@
 #include "scpp/nullptr_t.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/string_t.hpp"
-#include "scpp/value_t.hpp"
-#include "scpp/table_t.hpp"
+#include "scpp/mixed_t.hpp"
+#include "scpp/hash_t.hpp"
 
 #include <type_traits>
 
@@ -138,125 +138,125 @@ inline string_t cast<string_t, nullptr_t>(const nullptr_t &) {
 	return string_t("");
 }
 
-// value_t -> bool_t
+// mixed_t -> bool_t
 // Applies the configured explicit conversion rules after runtime kind dispatch.
 template <>
-inline bool_t cast<bool_t, value_t>(const value_t &value) {
+inline bool_t cast<bool_t, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
-		case value_t::kind_t::bool_v:
+		case mixed_t::kind_t::bool_v:
 			return value.bool_value();
-		case value_t::kind_t::int_v:
+		case mixed_t::kind_t::int_v:
 			return cast<bool_t>(value.int_value());
-		case value_t::kind_t::float_v:
+		case mixed_t::kind_t::float_v:
 			return cast<bool_t>(value.float_value());
 		default:
-			throw std::runtime_error("scpp::cast<bool_t>(value_t): runtime kind is not convertible to bool_t");
+			throw std::runtime_error("scpp::cast<bool_t>(mixed_t): runtime kind is not convertible to bool_t");
 	}
 }
 
-// value_t -> bool
+// mixed_t -> bool
 // Native bool bridge for runtime-dispatched values.
 template <>
-inline bool cast<bool, value_t>(const value_t &value) {
+inline bool cast<bool, mixed_t>(const mixed_t &value) {
 	return cast<bool>(cast<bool_t>(value));
 }
 
-// value_t -> int_t
+// mixed_t -> int_t
 // Applies the configured explicit conversion rules after runtime kind dispatch.
 template <>
-inline int_t cast<int_t, value_t>(const value_t &value) {
+inline int_t cast<int_t, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
-		case value_t::kind_t::int_v:
+		case mixed_t::kind_t::int_v:
 			return value.int_value();
-		case value_t::kind_t::float_v:
+		case mixed_t::kind_t::float_v:
 			return cast<int_t>(value.float_value());
 		default:
-			throw std::runtime_error("scpp::cast<int_t>(value_t): runtime kind is not convertible to int_t");
+			throw std::runtime_error("scpp::cast<int_t>(mixed_t): runtime kind is not convertible to int_t");
 	}
 }
 
-// value_t -> float_t
+// mixed_t -> float_t
 // Applies the configured explicit conversion rules after runtime kind dispatch.
 template <>
-inline float_t cast<float_t, value_t>(const value_t &value) {
+inline float_t cast<float_t, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
-		case value_t::kind_t::float_v:
+		case mixed_t::kind_t::float_v:
 			return value.float_value();
-		case value_t::kind_t::int_v:
+		case mixed_t::kind_t::int_v:
 			return float_t(value.int_value());
 		default:
-			throw std::runtime_error("scpp::cast<float_t>(value_t): runtime kind is not convertible to float_t");
+			throw std::runtime_error("scpp::cast<float_t>(mixed_t): runtime kind is not convertible to float_t");
 	}
 }
 
-// value_t -> string_t
+// mixed_t -> string_t
 // Applies the configured explicit conversion rules after runtime kind dispatch.
 template <>
-inline string_t cast<string_t, value_t>(const value_t &value) {
+inline string_t cast<string_t, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
-		case value_t::kind_t::null_v:
+		case mixed_t::kind_t::null_v:
 			return cast<string_t>(null_t{});
-		case value_t::kind_t::bool_v:
+		case mixed_t::kind_t::bool_v:
 			return cast<string_t>(value.bool_value());
-		case value_t::kind_t::int_v:
+		case mixed_t::kind_t::int_v:
 			return cast<string_t>(value.int_value());
-		case value_t::kind_t::float_v:
+		case mixed_t::kind_t::float_v:
 			return cast<string_t>(value.float_value());
-		case value_t::kind_t::string_v:
+		case mixed_t::kind_t::string_v:
 			return *value.string_if();
 		default:
-			throw std::runtime_error("scpp::cast<string_t>(value_t): runtime kind is not convertible to string_t");
+			throw std::runtime_error("scpp::cast<string_t>(mixed_t): runtime kind is not convertible to string_t");
 	}
 }
 
-// value_t -> shared_p<table_t<value_t>>
-// Keeps object-like shared ownership explicit while still allowing value_t to auto-bridge in typed contexts.
+// mixed_t -> shared_p<hash_t<mixed_t>>
+// Keeps object-like shared ownership explicit while still allowing mixed_t to auto-bridge in typed contexts.
 template <>
-inline shared_p<table_t<value_t>> cast<shared_p<table_t<value_t>>, value_t>(const value_t &value) {
+inline shared_p<hash_t<mixed_t>> cast<shared_p<hash_t<mixed_t>>, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
-		case value_t::kind_t::null_v:
-			return shared_p<table_t<value_t>>(null_t{});
-		case value_t::kind_t::shared_table_v:
+		case mixed_t::kind_t::null_v:
+			return shared_p<hash_t<mixed_t>>(null_t{});
+		case mixed_t::kind_t::shared_table_v:
 			return *value.shared_table_if();
 		default:
-			throw std::runtime_error("scpp::cast<shared_p<table_t<value_t>>>(value_t): runtime kind is not convertible to shared table");
+			throw std::runtime_error("scpp::cast<shared_p<hash_t<mixed_t>>>(mixed_t): runtime kind is not convertible to shared table");
 	}
 }
 
-// value_t -> weak_p<table_t<value_t>>
+// mixed_t -> weak_p<hash_t<mixed_t>>
 // Mirrors the wrapper-level shared-to-weak downgrade and null handling.
 template <>
-inline weak_p<table_t<value_t>> cast<weak_p<table_t<value_t>>, value_t>(const value_t &value) {
+inline weak_p<hash_t<mixed_t>> cast<weak_p<hash_t<mixed_t>>, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
-		case value_t::kind_t::null_v:
-			return weak_p<table_t<value_t>>(null_t{});
-		case value_t::kind_t::shared_table_v:
-			return weak_p<table_t<value_t>>(*value.shared_table_if());
-		case value_t::kind_t::weak_table_v:
+		case mixed_t::kind_t::null_v:
+			return weak_p<hash_t<mixed_t>>(null_t{});
+		case mixed_t::kind_t::shared_table_v:
+			return weak_p<hash_t<mixed_t>>(*value.shared_table_if());
+		case mixed_t::kind_t::weak_table_v:
 			return *value.weak_table_if();
 		default:
-			throw std::runtime_error("scpp::cast<weak_p<table_t<value_t>>>(value_t): runtime kind is not convertible to weak table");
+			throw std::runtime_error("scpp::cast<weak_p<hash_t<mixed_t>>>(mixed_t): runtime kind is not convertible to weak table");
 	}
 }
 
-// value_t rvalue cast bridge
+// mixed_t rvalue cast bridge
 // Keeps move-only extraction centralized while delegating copyable cases to the lvalue overloads.
 template <typename To>
-inline To cast(value_t &&value) {
-	if constexpr (std::is_same_v<To, unique_p<table_t<value_t>>>) {
+inline To cast(mixed_t &&value) {
+	if constexpr (std::is_same_v<To, unique_p<hash_t<mixed_t>>>) {
 		switch (value.kind()) {
-			case value_t::kind_t::null_v:
-				return unique_p<table_t<value_t>>(null_t{});
-			case value_t::kind_t::table_v: {
+			case mixed_t::kind_t::null_v:
+				return unique_p<hash_t<mixed_t>>(null_t{});
+			case mixed_t::kind_t::table_v: {
 				auto extracted = std::move(value.table_value_);
 				value = null_t{};
 				return extracted;
 			}
 			default:
-				throw std::runtime_error("scpp::cast<unique_p<table_t<value_t>>>(value_t&&): runtime kind is not convertible to unique table");
+				throw std::runtime_error("scpp::cast<unique_p<hash_t<mixed_t>>>(mixed_t&&): runtime kind is not convertible to unique table");
 		}
 	} else {
-		return cast<To>(static_cast<const value_t &>(value));
+		return cast<To>(static_cast<const mixed_t &>(value));
 	}
 }
 

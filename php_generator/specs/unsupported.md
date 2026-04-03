@@ -23,7 +23,7 @@ This section defines behaviors that are intentionally unsupported or differ from
 - Supported: typed trailing variadics, lowered as `const vector_t<T>&`
 - Supported: calls to typed trailing variadics, lowered by packing trailing arguments into `vector_t<T>{...}`
 - Not supported: untyped variadics such as `function f(...$values)`
-- Not supported: mixed/dynamic variadics that would require a `value_t`-style payload
+- Not supported: mixed/dynamic variadics that would require a `mixed_t`-style payload
 - Constraint: the variadic parameter must be the trailing parameter
 
 ## Reduced Semantics
@@ -32,6 +32,7 @@ This section defines behaviors that are intentionally unsupported or differ from
 - Loose comparisons differ from PHP
 - Division semantics may differ
 - switch behavior may differ
+- `finally` now supports delayed `return` from the protected `try` / `catch` region, but it still rejects `break` / `continue` leaving the protected region and also rejects `return` / `break` / `continue` inside the `finally` block itself
 
 See incompatibilities.md for more.
 

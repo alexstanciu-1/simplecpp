@@ -5,8 +5,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../tools/s2s/bin/bootstrap.php';
 
 use Scpp\S2S\Transpiler;
+use Scpp\S2S\Support\S2SException;
 
-// --- validate input ---
 if ($argc < 2) {
 	fwrite(STDERR, "Usage: run.php <input.php>\n");
 	exit(1);
@@ -21,22 +21,14 @@ if (!is_file($inputFile)) {
 
 try {
 	$transpiler = new Transpiler();
-
 	$cppFile = $transpiler->transpile($inputFile);
-
-	if ($cppFile->errors !== []) {
-		foreach ($cppFile->errors as $error) {
-			fwrite(STDERR, $error . PHP_EOL);
-		}
-		exit(4);
-	}
-
 	echo implode(PHP_EOL, $cppFile->sourceLines) . PHP_EOL;
-
-} catch (Throwable $e) {
-	fwrite(STDERR, "Generation error: " . $e->getMessage() . " | line ". $e->getLine() ." | ".$e->getFile()."\n");
-	fwrite(STDERR, "Generation error: " . $e->getTraceAsString() . "\n");
+} catch (S2SException $e) {
+	fwrite(STDERR, $e->getMessage() . PHP_EOL);
 	exit(3);
+} catch (Throwable $e) {
+	fwrite(STDERR, 'internal error: ' . $e->getMessage() . PHP_EOL);
+	exit(4);
 }
 
 exit(0);

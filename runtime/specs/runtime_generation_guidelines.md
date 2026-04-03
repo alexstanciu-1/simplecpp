@@ -1,3 +1,5 @@
+See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
+
 # Simple C++ Runtime Generation Guidelines
 
 ## Purpose
@@ -17,6 +19,8 @@ Role split:
 If the two conflict, the conflict must be reported explicitly instead of guessed around.
 
 ### Runtime/frontend boundary
+When generator behavior must temporarily diverge from the long-term runtime ideal for language-usability reasons, the divergence must be documented in `../../specs/dynamic_types.md` (Visible Intention / Technical Compromises) rather than hidden in runtime prose. For v1, those sections are normative priority rules: runtime cleanup must not remove required typed-destination bridges until generator parity exists.
+
 Generation must preserve a strict layering boundary:
 
 - the runtime is a semantic C++ library surface, not a validator for source-language legality
@@ -238,12 +242,12 @@ A generation is acceptable only if all of the following are true:
 - runtime target remains `C++23`
 - consecutive identical inputs would produce materially identical output
 
-## table_t-specific generation/update rules
-Generation and manual updates for `table_t` must preserve these constraints:
+## hash_t-specific generation/update rules
+Generation and manual updates for `hash_t` must preserve these constraints:
 
-- public generated/runtime-facing code must target `scpp::table_t`, never donor `mem_container` names
-- the donor storage structure may be adapted, but public `table_t` semantics own the contract
-- read-only array access should lower through the direct `operator[]` path on `table_t` / `value_t`; plain reads must stay non-materializing even though typed-reference contexts may bind through the same expression
+- public generated/runtime-facing code must target `scpp::hash_t`, never donor `mem_container` names
+- the donor storage structure may be adapted, but public `hash_t` semantics own the contract
+- read-only array access should lower through the direct `operator[]` path on `hash_t` / `mixed_t`; plain reads must stay non-materializing even though typed-reference contexts may bind through the same expression
 - normal keyed access should lower to `operator[]`; presence-sensitive paths still use `find()` / `has()`, and checked-failure paths may use `at()`
 - text output of a slot-aware dim read must keep slot access non-materializing; route echo/stringification through the slot's value read, not through mutable-ref materialization
 - `set()` must overwrite existing keys
@@ -252,13 +256,13 @@ Generation and manual updates for `table_t` must preserve these constraints:
 - code-bearing runtime files may live under `include/scpp/support/`, with forwarding public includes kept in `include/scpp/` when useful
 
 
-## table_t regeneration/update safeguards
+## hash_t regeneration/update safeguards
 
-When generating, updating, or refactoring `table_t`, preserve these invariants:
+When generating, updating, or refactoring `hash_t`, preserve these invariants:
 
 - `find()` must remain non-inserting
 - `at()` must remain checked and non-inserting
-- raw mutating `operator[]` semantics are no longer the generator-facing read contract for `table_t<value_t>`
+- raw mutating `operator[]` semantics are no longer the generator-facing read contract for `hash_t<mixed_t>`
 - `set()` must overwrite existing keys
 - `append()` must use `max_existing_int_key + 1`
 - integer keys and string keys must remain distinct
@@ -280,7 +284,7 @@ In particular:
 This case must remain true after every update:
 
 ```cpp
-table_t t;
+hash_t t;
 t.append(100); // key 0
 t.append(200); // key 1
 t.remove(0);

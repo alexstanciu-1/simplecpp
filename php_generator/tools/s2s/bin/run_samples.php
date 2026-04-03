@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use Scpp\S2S\Transpiler;
+use Scpp\S2S\Support\S2SException;
 
 require_once __DIR__ . '/bootstrap.php';
 
@@ -18,16 +19,20 @@ foreach ($files as $file) {
 	$base = pathinfo($file, PATHINFO_FILENAME);
 	$targetDir = $outDir . '/' . $base;
 	@mkdir($targetDir, 0777, true);
-
-	$result = $transpiler->transpile($file);
-	file_put_contents($targetDir . '/' . $base . '.hpp', implode("\n", $result->headerLines) . "\n");
-	file_put_contents($targetDir . '/' . $base . '.cpp', implode("\n", $result->sourceLines) . "\n");
 	copy($file, $targetDir . '/' . basename($file));
-	if ($result->errors !== []) {
-		file_put_contents($targetDir . '/' . $base . '.errors.txt', implode("\n", $result->errors) . "\n");
-	}
 
-	$report[] = $base . ': ' . ($result->errors === [] ? 'ok' : ('notes=' . count($result->errors)));
+	try {
+		$result = $transpiler->transpile($file, true);
+		file_put_contents($targetDir . '/' . $base . '.hpp', implode("\n", $result->headerLines) . "\n");
+		file_put_contents($targetDir . '/' . $base . '.cpp', implode("\n", $result->sourceLines) . "\n");
+		$report[] = $base . ': ok';
+	} catch (S2SException $e) {
+		file_put_contents($targetDir . '/' . $base . '.errors.txt', $e->getMessage() . "\n");
+		$report[] = $base . ': error';
+	} catch (Throwable $e) {
+		file_put_contents($targetDir . '/' . $base . '.errors.txt', 'internal error: ' . $e->getMessage() . "\n");
+		$report[] = $base . ': internal-error';
+	}
 }
 
 file_put_contents($outDir . '/report.txt', implode("\n", $report) . "\n");

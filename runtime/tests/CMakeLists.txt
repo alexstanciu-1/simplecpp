@@ -44,15 +44,15 @@ add_executable(test_closure test_closure.cpp)
 target_link_libraries(test_closure PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_closure COMMAND test_closure)
 
-# table_t smoke coverage.
-add_executable(test_table_t test_table_t.cpp)
-target_link_libraries(test_table_t PRIVATE scpp_runtime scpp_runtime_test_support)
-add_test(NAME scpp_test_table_t COMMAND test_table_t)
+# hash_t smoke coverage.
+add_executable(test_hash_t test_hash_t.cpp)
+target_link_libraries(test_hash_t PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_hash_t COMMAND test_hash_t)
 
-# value_t dynamic dispatch coverage.
-add_executable(test_value_t_dynamic test_value_t_dynamic.cpp)
-target_link_libraries(test_value_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
-add_test(NAME scpp_test_value_t_dynamic COMMAND test_value_t_dynamic)
+# mixed_t dynamic dispatch coverage.
+add_executable(test_mixed_t_dynamic test_mixed_t_dynamic.cpp)
+target_link_libraries(test_mixed_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_mixed_t_dynamic COMMAND test_mixed_t_dynamic)
 
 # scalar_ref typed by-reference bridge coverage.
 add_executable(test_scalar_ref test_scalar_ref.cpp)

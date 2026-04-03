@@ -15,6 +15,7 @@ use Scpp\S2S\IR\Statement;
 use Scpp\S2S\IR\UseDecl;
 use Scpp\S2S\Lowering\TypeMapper;
 use Scpp\S2S\Support\AstKind;
+use Scpp\S2S\Support\GenerationException;
 
 /**
  * Emits Simple C++ declarations and statements from the IR. This file is where the catalog rules are turned into concrete header/source text.
@@ -49,6 +50,8 @@ final class Generator
 	/** @var list<string> */
 	private array $currentScalarRefParamAliasLines = [];
 	private ?string $currentReturnType = null;
+	/** @var null|array{flag:string,value:?string,type:?string} */
+	private ?array $currentFinallyReturnContext = null;
 	/** @var null|array{returnType:?string,paramTypes:list<string>} */
 	private ?array $currentExpectedClosureSignature = null;
 	private ?string $currentClassName = null;
@@ -97,6 +100,7 @@ final class Generator
 		$this->warnings = [];
 		$this->localTypeComments = $file->localTypeCommentsByKey;
 		$this->declaredLocalTypes = [];
+		$this->currentFinallyReturnContext = null;
 		$this->tempCounter = 0;
 		$this->nameRegistry = NameRegistry::fromPhpFile($file);
 		$this->functionDecls = $this->collectFunctionDecls($file);
@@ -104,6 +108,7 @@ final class Generator
 		$this->classDecls = $this->collectClassDecls($file);
 		$this->typeMapper->setEnumNames($this->collectEnumTypeNames());
 		$this->validatePhpFile($file);
+		$this->throwIfErrors();
 
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
 		$header = ['#pragma once', '', '#include <scpp/runtime.hpp>'];
@@ -141,7 +146,7 @@ final class Generator
 		}
 
 		if ($file->rootStatements !== [] && $namespaceMainTargets !== []) {
-			$this->errors[] = 'Root executable statements and namespace executable statements are not mixed in the current pass.';
+			$this->fail('Root executable statements and namespace executable statements are not mixed in the current pass.');
 		}
 
 		if ($file->rootStatements !== []) {
@@ -156,9 +161,32 @@ final class Generator
 			$source[] = '';
 		}
 
+		$this->throwIfErrors();
+
 		return new CppFile($baseName, $header, $source, $this->errors, $this->warnings);
 	}
 
+
+	private function addError(string $message): void
+	{
+		$this->errors[] = $message;
+	}
+
+	private function fail(string $message): never
+	{
+		$this->addError($message);
+		throw new GenerationException($message);
+	}
+
+	private function throwIfErrors(): void
+	{
+		if ($this->errors === []) {
+			return;
+		}
+
+		$messages = array_values(array_unique($this->errors));
+		throw new GenerationException(implode(PHP_EOL, $messages));
+	}
 
 	/** @return array<string, FunctionDecl> */
 	private function buildNamespaceCppName(?string $namespacePhp): string
@@ -331,6 +359,24 @@ final class Generator
 	}
 
 
+
+	private function wrapExprForExpectedType(string $renderedExpr, string $exprType, ?string $expectedType): string
+	{
+		if ($expectedType === null || $expectedType === '' || $expectedType === 'mixed_t') {
+			return $renderedExpr;
+		}
+
+		if ($exprType === 'mixed_t') {
+			return 'cast<' . $expectedType . '>(' . $renderedExpr . ')';
+		}
+
+		if ($exprType === 'nullable<' . $expectedType . '>') {
+			return 'cast<' . $expectedType . '>(' . $renderedExpr . ')';
+		}
+
+		return $renderedExpr;
+	}
+
 	private function renderCallArgExpr(mixed $arg, ?string $namespacePhp): string
 	{
 		if (is_object($arg) && (($arg->kind ?? null) === AstKind::DIM)) {
@@ -341,20 +387,16 @@ final class Generator
 	}
 	private function renderArgForParam(ParamDecl $param, mixed $arg, ?string $namespacePhp): string
 	{
+		// The S2S generator no longer synthesizes typed scalar reference proxy
+		// arguments (int_ref/float_ref/bool_ref/string_ref) at call sites.
+		// Keep argument rendering direct and let unsupported by-reference shapes
+		// fail later until the reference model is redesigned.
 		$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
-		if ($param->type === null) {
-			return $rendered;
-		}
-		if (!$param->isReference) {
+		if ($param->isReference || $param->type === null) {
 			return $rendered;
 		}
 
-		$factory = $this->typeMapper->mapReferenceProxyFactory($param->type);
-		if ($factory === null) {
-			return $rendered;
-		}
-
-		return $factory . '(' . $rendered . ')';
+		return $this->wrapExprForExpectedType($rendered, $this->inferExprType($arg), $this->typeMapper->mapDeclaredType($param->type));
 	}
 
 
@@ -1155,7 +1197,7 @@ final class Generator
 			}
 
 			$mapped = $this->typeMapper->mapDeclaredType($param->type);
-			if ($mapped !== 'string_t' && $mapped !== 'value_t' && !str_starts_with($mapped, 'vector_t<')) {
+			if ($mapped !== 'string_t' && $mapped !== 'mixed_t' && !str_starts_with($mapped, 'vector_t<')) {
 				continue;
 			}
 
@@ -1429,7 +1471,7 @@ final class Generator
 				$elementType = $param->type !== null ? $this->typeMapper->mapDeclaredType($param->type) : '/* ERROR missing-variadic-element-type */';
 				$type = 'const vector_t<' . $elementType . '>&';
 			} elseif ($this->isSupportedScalarValueRefOverloadParam($param)) {
-				$type = 'value_t&';
+				$type = 'mixed_t&';
 			} else {
 				$type = $param->type !== null ? $this->renderParamTypeForMode($param, $paramPassModes[$param->name] ?? 'readonly') : '/* ERROR missing-parameter-type */';
 			}
@@ -1532,6 +1574,7 @@ final class Generator
 		}
 		$body = $this->renderBody($statements, $namespacePhp);
 		$this->currentReturnType = null;
+		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
 		$this->currentScalarRefParamAliasLines = [];
 		return $signature . " {
@@ -1602,6 +1645,7 @@ final class Generator
 		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
 		$body = $this->renderBody($function->statements, $namespacePhp);
 		$this->currentReturnType = null;
+		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
 		return $signature . " {\n" . $body . "\n}";
 	}
@@ -1668,7 +1712,7 @@ final class Generator
 			return $this->typeMapper->mapParamType($param->type, true);
 		}
 
-		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'value_t' || str_starts_with($mapped, 'vector_t<'))) {
+		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'mixed_t' || str_starts_with($mapped, 'vector_t<'))) {
 			return $mapped;
 		}
 
@@ -1685,7 +1729,7 @@ final class Generator
 	}
 
 	/**
-	 * Emits entry guards for PHP array / ?array parameters lowered to value_t.
+	 * Emits entry guards for PHP array / ?array parameters lowered to mixed_t.
 	 *
 	 * @return list<string>
 	 */
@@ -1696,19 +1740,9 @@ final class Generator
 
 	private function buildScalarRefParamAliasLines(array $params): array
 	{
-		$lines = [];
-		foreach ($params as $param) {
-			if (!$param instanceof ParamDecl || !$param->isReference || $param->type === null) {
-				continue;
-			}
-			$proxyType = $this->typeMapper->mapReferenceProxyType($param->type);
-			if ($proxyType === null) {
-				continue;
-			}
-			$mapped = $this->typeMapper->mapDeclaredType($param->type);
-			$lines[] = $mapped . '& ' . $param->name . ' = static_cast<' . $mapped . '&>(' . $this->renderParamStorageName($param) . ');';
-		}
-		return $lines;
+		// Typed scalar by-reference proxy lowering has been disabled in the S2S
+		// generator. Do not synthesize entry aliases back from proxy storage.
+		return [];
 	}
 
 	private function renderParamName(ParamDecl $param, bool $useStorageNames): string
@@ -1767,12 +1801,10 @@ final class Generator
 			$name = (string) ($statement->payload['name'] ?? '');
 			$typed = (string) ($statement->payload['type'] ?? '');
 			if ($name === '' || $typed === '') {
-				$this->errors[] = 'Typed local declaration is missing its name or type at line ' . $statement->line . '.';
-				return ['// ERROR: invalid typed local declaration'];
+				$this->fail('Typed local declaration is missing its name or type at line ' . $statement->line . '.');
 			}
 			if (isset($this->declaredLocals[$name])) {
-				$this->errors[] = 'Variable $' . $name . ' is already declared in this block at line ' . $statement->line . '.';
-				return ['// ERROR: duplicate local declaration'];
+				$this->fail('Variable $' . $name . ' is already declared in this block at line ' . $statement->line . '.');
 			}
 			$this->declaredLocals[$name] = true;
 			$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($typed);
@@ -1800,13 +1832,11 @@ final class Generator
 			if ($typed !== null) {
 				[$effectiveTyped, $validationError] = $this->resolveTypedLocalTypeForAssignment($typed, $statement->kind, $exprNode, $statement->line);
 				if ($validationError !== null) {
-					$this->errors[] = $validationError;
-					return ['// ERROR: ' . $validationError];
+					$this->fail($validationError);
 				}
 				$validationError = $this->validateTypedLocalAssignment($effectiveTyped, $statement->kind, $exprNode, $statement->line);
 				if ($validationError !== null) {
-					$this->errors[] = $validationError;
-					return ['// ERROR: ' . $validationError];
+					$this->fail($validationError);
 				}
 			}
 
@@ -1818,14 +1848,12 @@ final class Generator
 			if ($statement->kind === 'assign_ref') {
 				if ($name === null) {
 					$error = 'reference assignment requires a fresh simple local target at line ' . $statement->line . '.';
-					$this->errors[] = $error;
-					return ['// ERROR: ' . $error];
+					$this->fail($error);
 				}
 
 				if (isset($this->declaredLocals[$name])) {
 					$error = 'reference rebinding is not supported for $' . $name . ' at line ' . $statement->line . '.';
-					$this->errors[] = $error;
-					return ['// ERROR: ' . $error];
+					$this->fail($error);
 				}
 
 				$this->declaredLocals[$name] = true;
@@ -1903,10 +1931,21 @@ final class Generator
 		}
 
 		if ($statement->kind === 'return') {
+			if ($this->currentFinallyReturnContext !== null) {
+				return $this->renderFinallyAwareReturnStatement($statement, $namespacePhp);
+			}
 			if ($statement->payload === null) {
 				return ['return;'];
 			}
 			return ['return ' . $this->renderReturnExpr($statement->payload, $namespacePhp) . ';'];
+		}
+
+		if ($statement->kind === 'throw') {
+			return ['throw ::scpp::php::make_thrown(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
+		}
+
+		if ($statement->kind === 'try') {
+			return $this->renderTryStatement($statement, $namespacePhp);
 		}
 
 		if ($statement->kind === 'echo') {
@@ -1922,10 +1961,9 @@ final class Generator
 				$dim = $this->renderExpr($targetNode->children['dim'] ?? null, $namespacePhp);
 				$baseType = $this->inferExprType($baseExpr);
 				if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
-					$this->errors[] = 'unset() on vector_t indexed elements is not supported yet at line ' . $statement->line . '.';
-					return ['// ERROR: unset on vector_t indexed elements is not supported yet'];
+					$this->fail('unset() on vector_t indexed elements is not supported yet at line ' . $statement->line . '.');
 				}
-				if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
+				if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 					return [$base . '.as_table_ref().remove(' . $dim . ');'];
 				}
 				return [$base . '.remove(' . $dim . ');'];
@@ -1994,18 +2032,16 @@ final class Generator
 
 		if ($statement->kind === 'break') {
 			$depth = $statement->payload;
-			if ($depth !== null && $depth !== 1) {
-				$this->errors[] = 'break depth > 1 is not supported at line ' . $statement->line . '.';
-				return ['// ERROR: unsupported break depth'];
+			if (!$this->isSimpleUnitLoopDepth($depth)) {
+				$this->fail('Only break 1 is supported; break depth expressions and depths greater than 1 are not supported at line ' . $statement->line . '.');
 			}
 			return ['break;'];
 		}
 
 		if ($statement->kind === 'continue') {
 			$depth = $statement->payload;
-			if ($depth !== null && $depth !== 1) {
-				$this->errors[] = 'continue depth > 1 is not supported at line ' . $statement->line . '.';
-				return ['// ERROR: unsupported continue depth'];
+			if (!$this->isSimpleUnitLoopDepth($depth)) {
+				$this->fail('Only continue 1 is supported; continue depth expressions and depths greater than 1 are not supported at line ' . $statement->line . '.');
 			}
 			return ['continue;'];
 		}
@@ -2016,14 +2052,375 @@ final class Generator
 
 		if ($statement->kind === 'include_or_eval') {
 			$error = 'Simple C++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . $statement->line . '.';
-			$this->errors[] = $error;
-			return ['// ERROR: ' . $error];
+			$this->fail($error);
 		}
 
-		return ['// Unsupported statement'];
+		$this->fail('Unsupported statement kind ' . $statement->kind . ' at line ' . $statement->line . '.');
 	}
 
-	private function renderForeachStatement(Statement $statement, ?string $namespacePhp): array
+	private function renderTryStatement(Statement $statement, ?string $namespacePhp): array
+	{
+		$payload = is_array($statement->payload) ? $statement->payload : [];
+		$tryStatements = is_array($payload['try'] ?? null) ? $payload['try'] : [];
+		$catches = is_array($payload['catches'] ?? null) ? $payload['catches'] : [];
+		$finallyStatements = is_array($payload['finally'] ?? null) ? $payload['finally'] : [];
+
+		if ($finallyStatements !== [] && $this->statementsContainUnsupportedFinallyExit($tryStatements, true)) {
+			$error = 'finally lowering does not support break/continue leaving the protected try region yet at line ' . $statement->line . '.';
+			$this->fail($error);
+		}
+		if ($finallyStatements !== [] && $this->catchesContainUnsupportedFinallyExit($catches, true)) {
+			$error = 'finally lowering does not support break/continue leaving catch handlers yet at line ' . $statement->line . '.';
+			$this->fail($error);
+		}
+		if ($finallyStatements !== [] && $this->statementsContainUnsupportedFinallyExit($finallyStatements, false)) {
+			$error = 'finally lowering does not support return/break/continue inside finally blocks yet at line ' . $statement->line . '.';
+			$this->fail($error);
+		}
+
+		$lines = ['{'];
+		$pendingName = $this->nextTempName('__scpp_pending_exception');
+		$returnContext = $finallyStatements !== [] ? $this->createFinallyReturnContext() : null;
+		$lines[] = $this->indent(1) . 'std::exception_ptr ' . $pendingName . ';';
+		if ($returnContext !== null) {
+			if ($returnContext['value'] !== null && $returnContext['type'] !== null) {
+				$lines[] = $this->indent(1) . 'std::optional<' . $returnContext['type'] . '> ' . $returnContext['value'] . ';';
+			}
+			$lines[] = $this->indent(1) . 'bool ' . $returnContext['flag'] . ' = false;';
+		}
+		$lines[] = $this->indent(1) . 'try {';
+		$tryBody = $returnContext !== null
+			? $this->renderFinallyAwareStatementSequence($tryStatements, $namespacePhp, $returnContext)
+			: $this->renderNestedStatements($tryStatements, $namespacePhp);
+		foreach ($tryBody as $line) {
+			$lines[] = $this->indent(1) . $line;
+		}
+		$lines[] = $this->indent(1) . '}';
+
+		foreach ($catches as $catchSpec) {
+			$lines = array_merge($lines, $this->renderCatchChainArm($catchSpec, $namespacePhp, 1, $returnContext));
+		}
+
+		$lines[] = $this->indent(1) . 'catch (...) {';
+		$lines[] = $this->indent(2) . $pendingName . ' = std::current_exception();';
+		$lines[] = $this->indent(1) . '}';
+
+		if ($finallyStatements !== []) {
+			$lines[] = '';
+			$lines[] = $this->indent(1) . '{';
+			foreach ($this->renderNestedStatements($finallyStatements, $namespacePhp) as $line) {
+				$lines[] = $this->indent(1) . $line;
+			}
+			$lines[] = $this->indent(1) . '}';
+			$lines[] = '';
+		}
+
+		$lines[] = $this->indent(1) . 'if (' . $pendingName . ') {';
+		$lines[] = $this->indent(2) . 'std::rethrow_exception(' . $pendingName . ');';
+		$lines[] = $this->indent(1) . '}';
+		if ($returnContext !== null) {
+			$lines[] = $this->indent(1) . 'if (' . $returnContext['flag'] . ') {';
+			if ($returnContext['value'] === null) {
+				$lines[] = $this->indent(2) . 'return;';
+			} else {
+				$lines[] = $this->indent(2) . 'return *' . $returnContext['value'] . ';';
+			}
+			$lines[] = $this->indent(1) . '}';
+		}
+		$lines[] = '}';
+		return $lines;
+	}
+
+	/** @param array{classes:list<mixed>,var:mixed,stmts:list<Statement>,line:int} $catchSpec */
+	private function renderCatchChainArm(array $catchSpec, ?string $namespacePhp, int $baseIndentLevel, ?array $returnContext = null): array
+	{
+		$catchLine = (int) ($catchSpec['line'] ?? 0);
+		$varName = $this->extractSimpleVarName($catchSpec['var'] ?? null);
+		if ($varName === null) {
+			$error = 'catch handlers require a simple variable name at line ' . $catchLine . '.';
+			$this->errors[] = $error;
+			return [$this->indent($baseIndentLevel) . '// ERROR: ' . $error];
+		}
+
+		$classes = is_array($catchSpec['classes'] ?? null) ? $catchSpec['classes'] : [];
+		if ($classes === []) {
+			$error = 'catch handlers require an explicit exception class at line ' . $catchLine . '.';
+			$this->errors[] = $error;
+			return [$this->indent($baseIndentLevel) . '// ERROR: ' . $error];
+		}
+
+		$throwVar = $this->nextTempName('__scpp_thrown');
+		$lines = [$this->indent($baseIndentLevel) . 'catch (const ::scpp::php::thrown_object& ' . $throwVar . ') {'];
+		$matched = false;
+		foreach ($classes as $classNode) {
+			if (!is_object($classNode) || (($classNode->kind ?? null) !== AstKind::NAME)) {
+				$error = 'Only named catch types are supported in v1 at line ' . $catchLine . '.';
+				$this->errors[] = $error;
+				$lines[] = $this->indent($baseIndentLevel + 1) . '// ERROR: ' . $error;
+				continue;
+			}
+			$classType = $this->renderClassName($classNode, $namespacePhp);
+			$caughtVar = $this->nextTempName('__scpp_caught');
+			$prefix = $matched ? 'else if' : 'if';
+			$lines[] = $this->indent($baseIndentLevel + 1) . $prefix . ' (auto ' . $caughtVar . ' = ::scpp::php::catch_as<' . $classType . '>(' . $throwVar . '); static_cast<bool>(' . $caughtVar . ')) {';
+			$scopedLocals = $this->declaredLocals;
+			$scopedLocalTypes = $this->declaredLocalTypes;
+			$this->declaredLocals[$varName] = true;
+			$this->declaredLocalTypes[$varName] = 'shared_p<' . $classType . '>' ;
+			$lines[] = $this->indent($baseIndentLevel + 1) . 'auto ' . $varName . ' = ' . $caughtVar . ';';
+			$bodyLines = $returnContext !== null
+				? $this->renderFinallyAwareStatementSequence($catchSpec['stmts'] ?? [], $namespacePhp, $returnContext)
+				: $this->renderNestedStatements($catchSpec['stmts'] ?? [], $namespacePhp);
+			foreach ($bodyLines as $line) {
+				$lines[] = $this->indent($baseIndentLevel) . $line;
+			}
+			$this->declaredLocals = $scopedLocals;
+			$this->declaredLocalTypes = $scopedLocalTypes;
+			$lines[] = $this->indent($baseIndentLevel + 1) . '}';
+			$matched = true;
+		}
+
+		if ($matched) {
+			$lines[] = $this->indent($baseIndentLevel + 1) . 'else {';
+			$lines[] = $this->indent($baseIndentLevel + 2) . 'throw;';
+			$lines[] = $this->indent($baseIndentLevel + 1) . '}';
+		} else {
+			$lines[] = $this->indent($baseIndentLevel + 1) . 'throw;';
+		}
+		$lines[] = $this->indent($baseIndentLevel) . '}';
+		return $lines;
+	}
+
+	/** @param list<Statement> $statements */
+	private function statementsContainUnsupportedFinallyExit(array $statements, bool $allowReturn, int $loopDepth = 0, int $switchDepth = 0): bool
+	{
+		foreach ($statements as $statement) {
+			if (!$statement instanceof Statement) {
+				continue;
+			}
+			if ($statement->kind === 'break') {
+				if ($loopDepth === 0 && $switchDepth === 0) {
+					return true;
+				}
+				continue;
+			}
+			if ($statement->kind === 'continue') {
+				if ($loopDepth === 0) {
+					return true;
+				}
+				continue;
+			}
+			if (!$allowReturn && $statement->kind === 'return') {
+				return true;
+			}
+			if ($statement->kind === 'if') {
+				foreach (($statement->payload ?? []) as $branch) {
+					if ($this->statementsContainUnsupportedFinallyExit($branch['stmts'] ?? [], $allowReturn, $loopDepth, $switchDepth)) {
+						return true;
+					}
+				}
+				continue;
+			}
+			if ($statement->kind === 'while' || $statement->kind === 'do_while' || $statement->kind === 'for' || $statement->kind === 'foreach') {
+				if ($this->statementsContainUnsupportedFinallyExit($statement->payload['stmts'] ?? [], $allowReturn, $loopDepth + 1, $switchDepth)) {
+					return true;
+				}
+				continue;
+			}
+			if ($statement->kind === 'switch') {
+				foreach (($statement->payload['cases'] ?? []) as $case) {
+					if ($this->statementsContainUnsupportedFinallyExit($case['stmts'] ?? [], $allowReturn, $loopDepth, $switchDepth + 1)) {
+						return true;
+					}
+				}
+				continue;
+			}
+			if ($statement->kind === 'try') {
+				$payload = is_array($statement->payload) ? $statement->payload : [];
+				if ($this->statementsContainUnsupportedFinallyExit($payload['try'] ?? [], $allowReturn, $loopDepth, $switchDepth)) {
+					return true;
+				}
+				if ($this->catchesContainUnsupportedFinallyExit($payload['catches'] ?? [], $allowReturn, $loopDepth, $switchDepth)) {
+					return true;
+				}
+				if ($this->statementsContainUnsupportedFinallyExit($payload['finally'] ?? [], $allowReturn, $loopDepth, $switchDepth)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/** @param list<array<string,mixed>> $catches */
+	private function catchesContainUnsupportedFinallyExit(array $catches, bool $allowReturn, int $loopDepth = 0, int $switchDepth = 0): bool
+	{
+		foreach ($catches as $catchSpec) {
+			if ($this->statementsContainUnsupportedFinallyExit($catchSpec['stmts'] ?? [], $allowReturn, $loopDepth, $switchDepth)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private function createFinallyReturnContext(): ?array
+	{
+		if ($this->currentReturnType === null) {
+			return null;
+		}
+
+		return [
+			'flag' => $this->nextTempName('__scpp_pending_return'),
+			'value' => $this->currentReturnType === 'void' ? null : $this->nextTempName('__scpp_return_value'),
+			'type' => $this->currentReturnType === 'void' ? null : $this->currentReturnType,
+		];
+	}
+
+	private function renderFinallyAwareReturnStatement(Statement $statement, ?string $namespacePhp): array
+	{
+		$context = $this->currentFinallyReturnContext;
+		if ($context === null) {
+			return ['return;'];
+		}
+
+		if ($context['value'] === null) {
+			return [
+				$context['flag'] . ' = true;',
+			];
+		}
+
+		return [
+			$context['value'] . ' = ' . $this->renderReturnExpr($statement->payload, $namespacePhp) . ';',
+			$context['flag'] . ' = true;',
+		];
+	}
+
+	private function renderFinallyAwareStatementSequence(array $statements, ?string $namespacePhp, array $returnContext): array
+	{
+		$previousContext = $this->currentFinallyReturnContext;
+		$this->currentFinallyReturnContext = $returnContext;
+		try {
+			$lines = [];
+			foreach ($statements as $statement) {
+				foreach ($this->wrapWithReturnGuard($this->renderFinallyAwareStatement($statement, $namespacePhp, $returnContext), $returnContext['flag']) as $line) {
+					$lines[] = $line;
+				}
+			}
+			return $lines;
+		} finally {
+			$this->currentFinallyReturnContext = $previousContext;
+		}
+	}
+
+	private function renderFinallyAwareStatement(Statement $statement, ?string $namespacePhp, array $returnContext): array
+	{
+		if ($statement->kind === 'if') {
+			$lines = [];
+			$branches = is_array($statement->payload) ? $statement->payload : [];
+			$first = true;
+			foreach ($branches as $branch) {
+				if (($branch['cond'] ?? null) !== null) {
+					$lines[] = ($first ? 'if' : 'else if') . ' (' . $this->renderConditionExpr($branch['cond'], $namespacePhp) . ') {';
+				} else {
+					$lines[] = 'else {';
+				}
+				foreach ($this->renderFinallyAwareStatementSequence($branch['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+					$lines[] = $this->indent(1) . $line;
+				}
+				$lines[] = '}';
+				$first = false;
+			}
+			return $lines;
+		}
+
+		if ($statement->kind === 'while') {
+			$lines = ['while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ')) {'];
+			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+				$lines[] = $this->indent(1) . $line;
+			}
+			$lines[] = '}';
+			return $lines;
+		}
+
+		if ($statement->kind === 'do_while') {
+			$lines = ['do {'];
+			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+				$lines[] = $this->indent(1) . $line;
+			}
+			$lines[] = '} while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . '));';
+			return $lines;
+		}
+
+		if ($statement->kind === 'for') {
+			$scopedLocals = $this->declaredLocals;
+			$scopedLocalTypes = $this->declaredLocalTypes;
+			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
+			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
+			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
+			$lines = ['{'];
+			if ($init !== '') {
+				$lines[] = $this->indent(1) . $init . ';';
+			}
+			$lines[] = $this->indent(1) . 'while (!' . $returnContext['flag'] . ' && (' . $cond . ')) {';
+			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+				$lines[] = $this->indent(2) . $line;
+			}
+			if ($loop !== '') {
+				$lines[] = $this->indent(2) . 'if (!' . $returnContext['flag'] . ') {';
+				$lines[] = $this->indent(3) . $loop . ';';
+				$lines[] = $this->indent(2) . '}';
+			}
+			$lines[] = $this->indent(1) . '}';
+			$lines[] = '}';
+			$this->declaredLocals = $scopedLocals;
+			$this->declaredLocalTypes = $scopedLocalTypes;
+			return $lines;
+		}
+
+		if ($statement->kind === 'foreach') {
+			return $this->renderForeachStatement($statement, $namespacePhp, $returnContext);
+		}
+
+		if ($statement->kind === 'switch') {
+			$lines = ['switch (' . $this->renderSwitchExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {'];
+			foreach (($statement->payload['cases'] ?? []) as $case) {
+				$caseCond = $case['cond'] ?? null;
+				$lines[] = $caseCond === null
+					? $this->indent(1) . 'default:'
+					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':';
+				foreach ($this->renderFinallyAwareStatementSequence($case['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+					$lines[] = $this->indent(1) . $line;
+				}
+			}
+			$lines[] = '}';
+			return $lines;
+		}
+
+		if ($statement->kind === 'try') {
+			return $this->renderTryStatement($statement, $namespacePhp);
+		}
+
+		return $this->renderStatement($statement, $namespacePhp);
+	}
+
+	private function wrapWithReturnGuard(array $lines, string $returnFlag): array
+	{
+		if ($lines === []) {
+			return [];
+		}
+		$out = ['if (!' . $returnFlag . ') {'];
+		foreach ($lines as $line) {
+			$out[] = $this->indent(1) . $line;
+		}
+		$out[] = '}';
+		return $out;
+	}
+
+	private function isSimpleUnitLoopDepth(mixed $depth): bool
+	{
+		return $depth === null || $depth === 1;
+	}
+
+	private function renderForeachStatement(Statement $statement, ?string $namespacePhp, ?array $returnContext = null): array
 	{
 		$payload = is_array($statement->payload) ? $statement->payload : [];
 		$sourceExpr = $this->renderExpr($payload['expr'] ?? null, $namespacePhp);
@@ -2050,7 +2447,7 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
 		} elseif ($this->isUntypedTableType($sourceType)) {
-			$valueStoredType = 'value_t';
+			$valueStoredType = 'mixed_t';
 		}
 
 		$lines = [
@@ -2075,8 +2472,18 @@ final class Generator
 			$this->declaredLocalTypes[$valueName] = $valueStoredType;
 		}
 
-		foreach ($this->renderNestedStatements($payload['stmts'] ?? [], $namespacePhp) as $line) {
-			$lines[] = $line;
+		if ($returnContext !== null) {
+			$bodyLines = $this->renderFinallyAwareStatementSequence($payload['stmts'] ?? [], $namespacePhp, $returnContext);
+			$lines[] = $this->indent(1) . 'if (' . $returnContext['flag'] . ') {';
+			$lines[] = $this->indent(2) . 'break;';
+			$lines[] = $this->indent(1) . '}';
+			foreach ($bodyLines as $line) {
+				$lines[] = $this->indent(1) . $line;
+			}
+		} else {
+			foreach ($this->renderNestedStatements($payload['stmts'] ?? [], $namespacePhp) as $line) {
+				$lines[] = $line;
+			}
 		}
 
 		$this->declaredLocals = $scopedLocals;
@@ -2353,7 +2760,7 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
+		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '.get(' . $dim . ')';
 		}
 		if (is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)) {
@@ -2382,7 +2789,7 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if ($baseType === 'value_t' || $baseType === 'maybe_value_t') {
+		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '[' . $dim . ']';
 		}
 		if ($this->isUntypedTableType($baseType)) {
@@ -2393,22 +2800,22 @@ final class Generator
 
 	private function isUntypedTableType(string $type): bool
 	{
-		return $type === 'table_t'
-			|| $type === '::scpp::table_t'
-			|| $type === 'table_t<value_t>'
-			|| $type === '::scpp::table_t<value_t>'
-			|| $type === 'unique_p<table_t<value_t>>'
-			|| $type === 'unique_p<::scpp::table_t<value_t>>'
-			|| $type === '::scpp::unique_p<table_t<value_t>>'
-			|| $type === '::scpp::unique_p<::scpp::table_t<value_t>>';
+		return $type === 'hash_t'
+			|| $type === '::scpp::hash_t'
+			|| $type === 'hash_t<mixed_t>'
+			|| $type === '::scpp::hash_t<mixed_t>'
+			|| $type === 'unique_p<hash_t<mixed_t>>'
+			|| $type === 'unique_p<::scpp::hash_t<mixed_t>>'
+			|| $type === '::scpp::unique_p<hash_t<mixed_t>>'
+			|| $type === '::scpp::unique_p<::scpp::hash_t<mixed_t>>';
 	}
 
 	private function isUntypedTableHandleType(string $type): bool
 	{
-		return $type === 'unique_p<table_t<value_t>>'
-			|| $type === 'unique_p<::scpp::table_t<value_t>>'
-			|| $type === '::scpp::unique_p<table_t<value_t>>'
-			|| $type === '::scpp::unique_p<::scpp::table_t<value_t>>';
+		return $type === 'unique_p<hash_t<mixed_t>>'
+			|| $type === 'unique_p<::scpp::hash_t<mixed_t>>'
+			|| $type === '::scpp::unique_p<hash_t<mixed_t>>'
+			|| $type === '::scpp::unique_p<::scpp::hash_t<mixed_t>>';
 	}
 
 	private function renderUntypedTableAccessBase(string $base, string $type): string
@@ -2779,7 +3186,12 @@ final class Generator
 			}
 		}
 
-		return $this->renderExpr($expr, $namespacePhp);
+		$rendered = $this->renderExpr($expr, $namespacePhp);
+		if ($typedLocalType !== null) {
+			return $this->wrapExprForExpectedType($rendered, $this->inferExprType($expr), $this->typeMapper->mapTypedLocalType($typedLocalType));
+		}
+
+		return $rendered;
 	}
 
 
@@ -2798,15 +3210,15 @@ final class Generator
 	private function inferFirstAssignmentDeclarationType(mixed $exprNode, ?string $inferredType): string
 	{
 		if (is_object($exprNode) && (($exprNode->kind ?? null) === AstKind::ARRAY)) {
-			return 'value_t';
+			return 'mixed_t';
 		}
 
 		if ($this->isNullExpr($exprNode)) {
-			return 'value_t';
+			return 'mixed_t';
 		}
 
-		if ($inferredType === 'value_t') {
-			return 'value_t';
+		if ($inferredType === 'mixed_t') {
+			return 'mixed_t';
 		}
 
 		return 'auto';
@@ -2900,7 +3312,7 @@ final class Generator
 		}
 
 		if ($elements === []) {
-			return 'value_t{shared_table_()}';
+			return 'mixed_t{shared_table_()}';
 		}
 
 		$items = [];
@@ -2925,7 +3337,7 @@ final class Generator
 			$items[] = 'table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
 		}
 
-		return 'value_t{shared_table_(' . implode(', ', $items) . ')}';
+		return 'mixed_t{shared_table_(' . implode(', ', $items) . ')}';
 	}
 
 
@@ -3404,6 +3816,41 @@ final class Generator
 		if ($kind === AstKind::RETURN) {
 			return new Statement('return', $node->children['expr'] ?? null, $line);
 		}
+		if ($kind === AstKind::THROW) {
+			return new Statement('throw', $node->children['expr'] ?? null, $line);
+		}
+		if ($kind === AstKind::TRY) {
+			$catches = [];
+			foreach (($node->children['catches']->children ?? []) as $catchNode) {
+				if (!is_object($catchNode) || (($catchNode->kind ?? null) !== AstKind::CATCH)) {
+					continue;
+				}
+				$classNode = $catchNode->children['class'] ?? null;
+				$classKinds = is_object($classNode) && isset($classNode->children) && is_array($classNode->children)
+					? array_values($classNode->children)
+					: [$classNode];
+				$stmtsNode = $catchNode->children['stmts'] ?? null;
+				$catches[] = [
+					'classes' => $classKinds,
+					'var' => $catchNode->children['var'] ?? null,
+					'stmts' => (is_object($stmtsNode) && isset($stmtsNode->children) && is_array($stmtsNode->children))
+						? $this->buildStatementsFromAstNodes(array_values($stmtsNode->children))
+						: [],
+					'line' => (int) ($catchNode->lineno ?? $line),
+				];
+			}
+			$tryNode = $node->children['try'] ?? null;
+			$finallyNode = $node->children['finally'] ?? null;
+			return new Statement('try', [
+				'try' => (is_object($tryNode) && isset($tryNode->children) && is_array($tryNode->children))
+					? $this->buildStatementsFromAstNodes(array_values($tryNode->children))
+					: [],
+				'catches' => $catches,
+				'finally' => (is_object($finallyNode) && isset($finallyNode->children) && is_array($finallyNode->children))
+					? $this->buildStatementsFromAstNodes(array_values($finallyNode->children))
+					: [],
+			], $line);
+		}
 		if ($kind === AstKind::AST_ECHO) {
 			return new Statement('echo', $node->children['expr'] ?? null, $line);
 		}
@@ -3608,6 +4055,7 @@ final class Generator
 			AstKind::TYPE_DOUBLE => 'float',
 			AstKind::TYPE_STRING => 'string',
 			AstKind::TYPE_VOID => 'void',
+			AstKind::TYPE_MIXED => 'mixed',
 			default => null,
 		};
 	}
@@ -3833,6 +4281,9 @@ final class Generator
 		}
 		if ($kind === AstKind::MATCH) {
 			return $this->renderMatchExpr($expr, $namespacePhp);
+		}
+		if ($kind === AstKind::THROW) {
+			$this->fail('throw used as an expression is not supported yet at line ' . (int) ($expr->lineno ?? 0) . '.');
 		}
 
 		return '/* unsupported-expr-kind-' . $kind . ' */';
@@ -4191,11 +4642,7 @@ final class Generator
 		}
 
 		$exprType = $this->inferExprType($expr);
-		if ($exprType === 'nullable<' . $expected . '>') {
-			return 'cast<' . $expected . '>(' . $rendered . ')';
-		}
-
-		return $rendered;
+		return $this->wrapExprForExpectedType($rendered, $exprType, $expected);
 	}
 
 	private function isLvalueCapableExpr(mixed $expr, ?string $namespacePhp = null): bool
@@ -4291,7 +4738,7 @@ final class Generator
 			if ($declared === null) {
 				return 'auto';
 			}
-			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'value_t' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || $declared === 'table_t' || $declared === '::scpp::table_t' || $declared === 'table_t<value_t>' || $declared === '::scpp::table_t<value_t>') {
+			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
 				return $declared;
 			}
 			return $this->typeMapper->mapDeclaredType($declared);
@@ -4314,15 +4761,15 @@ final class Generator
 			return 'auto';
 		}
 		if ($kind === AstKind::ARRAY) {
-			return 'value_t';
+			return 'mixed_t';
 		}
 		if ($kind === AstKind::DIM) {
 			$baseType = $this->inferExprType($expr->children['expr'] ?? null);
 			if (preg_match('/^vector_t<(.+)>$/', $baseType, $matches) === 1) {
 				return $matches[1];
 			}
-			if ($this->isUntypedTableType($baseType) || $baseType === 'value_t' || $baseType === 'maybe_value_t') {
-				return 'value_t';
+			if ($this->isUntypedTableType($baseType) || $baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
+				return 'mixed_t';
 			}
 			return 'auto';
 		}
