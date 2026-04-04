@@ -64,8 +64,6 @@ public:
 
 	[[nodiscard]] bool_t expired() const noexcept { return bool_t(value_.expired()); }
 	[[nodiscard]] std::size_t use_count() const noexcept { return value_.use_count(); }
-	// Temporary lifetime-audit helper.
-	// How: exposes the observed strong-owner count visible through the underlying weak control block.
 	[[nodiscard]] long debug_use_count() const noexcept { return value_.use_count(); }
 	[[nodiscard]] shared_p<T> lock() const noexcept { return shared_p<T>(value_.lock()); }
 	void reset() noexcept { value_.reset(); }
@@ -76,14 +74,7 @@ public:
 	[[nodiscard]] const std::weak_ptr<T> &native_value() const noexcept { return value_; }
 	[[nodiscard]] std::weak_ptr<T> &native_value() noexcept { return value_; }
 
-	[[nodiscard]] friend bool_t operator==(const weak_p<T> &left, null_t) noexcept { return bool_t(left.value_.expired()); }
-	[[nodiscard]] friend bool_t operator==(null_t, const weak_p<T> &right) noexcept { return bool_t(right.value_.expired()); }
-	[[nodiscard]] friend bool_t operator!=(const weak_p<T> &left, null_t) noexcept { return bool_t(!left.value_.expired()); }
-	[[nodiscard]] friend bool_t operator!=(null_t, const weak_p<T> &right) noexcept { return bool_t(!right.value_.expired()); }
-	[[nodiscard]] friend bool_t operator==(const weak_p<T> &left, nullptr_t) noexcept { return bool_t(left.value_.expired()); }
-	[[nodiscard]] friend bool_t operator==(nullptr_t, const weak_p<T> &right) noexcept { return bool_t(right.value_.expired()); }
-	[[nodiscard]] friend bool_t operator!=(const weak_p<T> &left, nullptr_t) noexcept { return bool_t(!left.value_.expired()); }
-	[[nodiscard]] friend bool_t operator!=(nullptr_t, const weak_p<T> &right) noexcept { return bool_t(!right.value_.expired()); }
+	[[nodiscard]] explicit operator bool() const noexcept { return !value_.expired(); }
 };
 
 } // namespace scpp

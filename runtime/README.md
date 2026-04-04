@@ -19,6 +19,7 @@ This runtime was generated from:
 ## Layout
 
 - `include/scpp/runtime.hpp` umbrella include
+- `include/scpp/runtime.hpp` is the mandatory public entry point for generated operator availability
 - one header per runtime type
 - `src/runtime.cpp` placeholder translation unit
 
@@ -48,3 +49,20 @@ This runtime was generated from:
 The runtime supports a compile-time PHP language target via `-DSCPP_LANGUAGE_TARGET_PHP=1`.
 When enabled, array-key handling applies PHP-target key normalization for decimal integer strings like `"10" -> 10` and `"-3" -> -3`, while strings like `"08"`, `" 10"`, `"10 "`, and `"+10"` stay strings. Append continues from the maximum integer key.
 
+
+## Operator generation notes
+
+The runtime now has a generated operator-surface direction.
+
+Current procedure and rationale are documented in:
+
+- `runtime/specs/operator_generation_flow.md`
+
+Current intent:
+
+- operator families are provisioned by a PHP generation tool from `runtime/specs/config.json`
+- generated public operators live under `include/scpp/generated/`
+- individual wrapper headers are no longer expected to remain operator-complete after migration
+- handwritten concepts provide stable operand-category buckets
+- internal `detail::...` helpers implement the native-wrapper and mixed runtime paths
+- competing public operators elsewhere should be removed only after the generated family fully covers them

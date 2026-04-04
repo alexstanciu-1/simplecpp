@@ -8,6 +8,7 @@
 #include "scpp/nullopt_t.hpp"
 #include "scpp/nullptr_t.hpp"
 #include "scpp/shared_p.hpp"
+#include "scpp/dynamic_t.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
@@ -32,6 +33,7 @@ public:
 		string_v,
 		hash_v,
 		shared_hash_v,
+		dynamic_v,
 		weak_hash_v
 	};
 
@@ -43,6 +45,7 @@ public:
 		string_v,
 		table_v,
 		shared_table_v,
+		dynamic_v,
 		weak_table_v
 	};
 
@@ -56,6 +59,7 @@ private:
 		unique_p<string_t> string_value_;
 		unique_p<hash_t<mixed_t>> table_value_;
 		shared_p<hash_t<mixed_t>> shared_table_value_;
+		dynamic_t dynamic_value_;
 		weak_p<hash_t<mixed_t>> weak_table_value_;
 	};
 
@@ -88,6 +92,7 @@ public:
 	mixed_t(double value) noexcept;
 	mixed_t(unique_p<hash_t<mixed_t>> value) noexcept;
 	mixed_t(shared_p<hash_t<mixed_t>> value) noexcept;
+	mixed_t(dynamic_init_t value) noexcept;
 	mixed_t(weak_p<hash_t<mixed_t>> value) noexcept;
 	explicit mixed_t(std::unique_ptr<hash_t<mixed_t>> value) noexcept;
 	explicit mixed_t(std::shared_ptr<hash_t<mixed_t>> value) noexcept;
@@ -112,6 +117,7 @@ public:
 	mixed_t &operator=(double value) noexcept;
 	mixed_t &operator=(unique_p<hash_t<mixed_t>> value) noexcept;
 	mixed_t &operator=(shared_p<hash_t<mixed_t>> value) noexcept;
+	mixed_t &operator=(dynamic_init_t value) noexcept;
 	mixed_t &operator=(weak_p<hash_t<mixed_t>> value) noexcept;
 	mixed_t &operator=(std::unique_ptr<hash_t<mixed_t>> value) noexcept;
 	mixed_t &operator=(std::shared_ptr<hash_t<mixed_t>> value) noexcept;
@@ -155,6 +161,8 @@ public:
 	[[nodiscard]] const hash_t<mixed_t> *table_if() const noexcept;
 	[[nodiscard]] shared_p<hash_t<mixed_t>> *shared_table_if() noexcept;
 	[[nodiscard]] const shared_p<hash_t<mixed_t>> *shared_table_if() const noexcept;
+	[[nodiscard]] dynamic_t *dynamic_if() noexcept;
+	[[nodiscard]] const dynamic_t *dynamic_if() const noexcept;
 	[[nodiscard]] weak_p<hash_t<mixed_t>> *weak_table_if() noexcept;
 	[[nodiscard]] const weak_p<hash_t<mixed_t>> *weak_table_if() const noexcept;
 

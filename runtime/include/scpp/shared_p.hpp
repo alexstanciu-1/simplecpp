@@ -19,33 +19,38 @@ public:
 	using element_type = T;
 
 	shared_p() = default;
-	shared_p(null_t) noexcept : value_(nullptr) {}
-	shared_p(nullptr_t) noexcept : value_(nullptr) {}
+	shared_p(null_t) noexcept : value_() {}
+	shared_p(nullptr_t) noexcept : value_() {}
 	explicit shared_p(std::shared_ptr<T> value) noexcept : value_(std::move(value)) {}
 
 	template <typename U>
-	shared_p(const shared_p<U> &other) noexcept
+	explicit shared_p(std::shared_ptr<U> value) noexcept
 		requires std::is_convertible_v<U *, T *>
-		: value_(std::static_pointer_cast<T>(other.value_)) {}
+		: value_(std::static_pointer_cast<T>(std::move(value))) {}
 
 	template <typename U>
-	shared_p(shared_p<U> &&other) noexcept
+	shared_p(const shared_p<U> &value) noexcept
 		requires std::is_convertible_v<U *, T *>
-		: value_(std::static_pointer_cast<T>(std::move(other.value_))) {}
+		: value_(std::static_pointer_cast<T>(value.value_)) {}
 
 	template <typename U>
-	shared_p &operator=(const shared_p<U> &other) noexcept
+	shared_p(shared_p<U> &&value) noexcept
+		requires std::is_convertible_v<U *, T *>
+		: value_(std::static_pointer_cast<T>(std::move(value.value_))) {}
+
+	template <typename U>
+	shared_p &operator=(const shared_p<U> &value) noexcept
 		requires std::is_convertible_v<U *, T *>
 	{
-		value_ = std::static_pointer_cast<T>(other.value_);
+		value_ = std::static_pointer_cast<T>(value.value_);
 		return *this;
 	}
 
 	template <typename U>
-	shared_p &operator=(shared_p<U> &&other) noexcept
+	shared_p &operator=(shared_p<U> &&value) noexcept
 		requires std::is_convertible_v<U *, T *>
 	{
-		value_ = std::static_pointer_cast<T>(std::move(other.value_));
+		value_ = std::static_pointer_cast<T>(std::move(value.value_));
 		return *this;
 	}
 
@@ -60,14 +65,9 @@ public:
 	}
 
 	[[nodiscard]] bool_t has_value() const noexcept { return bool_t(static_cast<bool>(value_)); }
-	[[nodiscard]] explicit operator bool() const noexcept { return static_cast<bool>(value_); }
-	[[nodiscard]] T *get() const noexcept { return value_.get(); }
 	[[nodiscard]] std::size_t use_count() const noexcept { return value_.use_count(); }
-	// Temporary lifetime-audit helper.
-	// How: mirrors the underlying control-block strong count so runtime tests can prove whether a hidden owning alias still exists.
-	[[nodiscard]] long debug_use_count() const noexcept { return value_.use_count(); }
-	[[nodiscard]] bool_t unique() const noexcept { return bool_t(value_.unique()); }
-
+	[[nodiscard]] bool_t unique() const noexcept { return bool_t(value_.use_count() == 1U); }
+	[[nodiscard]] long debug_use_count() const noexcept { return static_cast<long>(value_.use_count()); }
 	void reset() noexcept { value_.reset(); }
 	void reset(null_t) noexcept { value_.reset(); }
 	void reset(nullptr_t) noexcept { value_.reset(); }
@@ -87,17 +87,8 @@ public:
 	[[nodiscard]] const std::shared_ptr<T> &native_value() const noexcept { return value_; }
 	[[nodiscard]] std::shared_ptr<T> &native_value() noexcept { return value_; }
 
-	[[nodiscard]] friend bool_t operator==(const shared_p<T> &left, null_t) noexcept { return bool_t(left.value_ == nullptr); }
-	[[nodiscard]] friend bool_t operator==(null_t, const shared_p<T> &right) noexcept { return bool_t(right.value_ == nullptr); }
-	[[nodiscard]] friend bool_t operator!=(const shared_p<T> &left, null_t) noexcept { return bool_t(left.value_ != nullptr); }
-	[[nodiscard]] friend bool_t operator!=(null_t, const shared_p<T> &right) noexcept { return bool_t(right.value_ != nullptr); }
-	[[nodiscard]] friend bool_t operator==(const shared_p<T> &left, nullptr_t) noexcept { return bool_t(left.value_ == nullptr); }
-	[[nodiscard]] friend bool_t operator==(nullptr_t, const shared_p<T> &right) noexcept { return bool_t(right.value_ == nullptr); }
-	[[nodiscard]] friend bool_t operator!=(const shared_p<T> &left, nullptr_t) noexcept { return bool_t(left.value_ != nullptr); }
-	[[nodiscard]] friend bool_t operator!=(nullptr_t, const shared_p<T> &right) noexcept { return bool_t(right.value_ != nullptr); }
-
-	[[nodiscard]] friend bool_t operator==(const shared_p<T> &left, const shared_p<T> &right) noexcept { return bool_t(left.value_ == right.value_); }
-	[[nodiscard]] friend bool_t operator!=(const shared_p<T> &left, const shared_p<T> &right) noexcept { return bool_t(left.value_ != right.value_); }
+	[[nodiscard]] T *get() const noexcept { return value_.get(); }
+	[[nodiscard]] explicit operator bool() const noexcept { return static_cast<bool>(value_); }
 };
 
 } // namespace scpp

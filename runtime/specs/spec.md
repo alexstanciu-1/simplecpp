@@ -44,12 +44,30 @@ The Markdown may describe the category of that fact, but must not restate the co
 
 ---
 
+## 2a. Operator-surface generation model
+
+The runtime operator surface is moving to a generated canonical free-operator model.
+
+Under this model:
+
+- `config.json` remains the machine authority for which operator families and operand-kind combinations exist
+- handwritten concepts remain small, stable compile-time category labels
+- a PHP tool provisions generated operator definitions into `include/scpp/generated/operators.hpp`
+- `include/scpp/runtime.hpp` is the mandatory public entry point for the generated operator surface
+- individual wrapper headers are not required to remain operator-complete once a family has migrated
+- internal `detail::...` helpers remain the implementation targets for the generated operators
+
+The procedural flow for this is defined in `operator_generation_flow.md`.
+
+This split is deliberate. The concepts do not become a second semantic authority. They are a stable compile-time vocabulary used by the generated operator surface.
+
 ## 3. Runtime design goals
 
 The runtime exists to give generated Simple C++ code a **closed semantic surface** inside C++.
 
 ### Core goals
 - avoid interference with native C++ overloads and implicit conversions
+- reduce ambiguity by centralizing migrated operator families into one generated public surface
 - keep all semantic types under `namespace scpp`
 - keep the surface deterministic and generator-friendly
 - allow casts and overloads to be changed through configuration
@@ -57,6 +75,23 @@ The runtime exists to give generated Simple C++ code a **closed semantic surface
 - separate ownership semantics from value optionality
 
 ---
+
+## 3a. Canonical operator-route rule
+
+For operator families that have been migrated to the generated surface, the intended public route is:
+
+- one generated free-operator family
+- no overlapping public member/free bridge operators elsewhere
+- internal helpers allowed behind that surface
+
+For current migration work, this means:
+
+- native-wrapper combinations stay on a compile-time-selected helper path
+- combinations involving `mixed_t` use the dynamic mixed runtime path when the config says `mixed_t` participates for that operator kind
+- invalid native-wrapper combinations should fail at compile time rather than silently falling into dynamic behavior
+- invalid dynamic combinations remain runtime-handled behavior
+
+This rule exists to make overload participation deliberate and reviewable.
 
 ## 4. Stable API philosophy
 
@@ -245,7 +280,7 @@ Included initially:
 
 ### 6.13 `mixed_t`
 - `mixed_t` is the runtime semantic boxed value used by `hash_t`
-- current stored runtime kinds are `null_v`, `bool_v`, `int_v`, `float_v`, `string_v`, `table_v`, `shared_table_v`, and `weak_table_v`
+- current stored runtime kinds are `null_v`, `bool_v`, `int_v`, `float_v`, `string_v`, `table_v`, `shared_table_v`, `dynamic_v`, and `weak_table_v`
 - table presentation should be documented publicly as the three internal table forms: owned table, shared table, weak table
 - current exact scalar accessors are `bool_value()`, `int_value()`, and `float_value()`
 - these exact scalar accessors require matching runtime kind and fail at runtime otherwise
@@ -257,7 +292,13 @@ Included initially:
 - mutable `mixed_t::operator[]` autovivifies `null` into an owned `hash_t<mixed_t>`
 - `mixed_t::get(...)` is the primary non-mutating read helper and returns a null-kind `mixed_t` on missing key or non-array receiver
 - `_find_val()` remains available as the non-inserting `hash_t<mixed_t>` helper used by generator read paths
-- dynamic arithmetic, comparison, logical operators, mutation, and increment/decrement on `mixed_t` are enabled through runtime dispatch
+- dynamic arithmetic, comparison, logical operators, mutation, compound assignment, and increment/decrement on `mixed_t` are enabled through runtime-kind dispatch that delegates to the native wrapper rules already defined elsewhere in the config
+- the delegation format is semantic-tuple based: once runtime kinds are established, the runtime resolves the operation as the corresponding native rule such as `int_t + int_t`, `int_t + float_t`, `float_t++`, `string_t += string_t`, or `bool_t && bool_t`
+- `mixed_t` does not define an independent concat operator family; PHP `.` / `.=` must be lowered by the generator into explicit text conversion plus primitive `string_t` concat
+- implicit `mixed_t -> native` extraction is temporarily accepted only at v1 Visible Intention typed boundaries (initialization/assignment, by-value arg passing, return); operator resolution must not use that bridge to create extra candidates
+- compound assignment on `mixed_t` is allowed only when the delegated native binary operator exists and assignment back into the stored lhs kind remains valid
+- table carriers are excluded from arithmetic dispatch; table comparison currently supports only identity-style `==` / `!=` for shared/weak carriers as documented in the runtime config, while owned `table_v` direct comparison is currently an error
+- expired weak-table `_find_val` returns null-kind `mixed_t`, `find` returns not-found, and `at` / write-through access are runtime errors
 - callable dispatch and method dispatch on `mixed_t` are still deferred
 
 ### 6.14 `hash_t`

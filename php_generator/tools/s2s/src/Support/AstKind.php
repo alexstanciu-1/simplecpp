@@ -117,6 +117,7 @@ final class AstKind
 	public const TYPE_DOUBLE = 5;
 	public const TYPE_STRING = 6;
 	public const TYPE_ARRAY = 7;
+	public const TYPE_OBJECT = 8;
 	public const TYPE_MIXED = 16;
 	public const CLOSURE_VAR = 2049;
 	public const NULLABLE_TYPE = 2050;

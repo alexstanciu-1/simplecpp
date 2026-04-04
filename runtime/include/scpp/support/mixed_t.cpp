@@ -18,6 +18,7 @@ namespace {
 		case mixed_t::kind_t::string_v:       return "string_t";
 		case mixed_t::kind_t::table_v:        return "hash_t";
 		case mixed_t::kind_t::shared_table_v: return "shared_hash_t";
+		case mixed_t::kind_t::dynamic_v:      return "dynamic_t";
 		case mixed_t::kind_t::weak_table_v:   return "weak_hash_t";
 	}
 	return "unknown";
@@ -65,6 +66,59 @@ namespace {
 	return left_locked == right_locked;
 }
 
+[[nodiscard]] bool is_condition_compatible_kind(const mixed_t::kind_t kind) noexcept {
+	switch (kind) {
+		case mixed_t::kind_t::bool_v:
+		case mixed_t::kind_t::int_v:
+		case mixed_t::kind_t::float_v:
+			return true;
+		default:
+			return false;
+	}
+}
+
+[[nodiscard]] bool_t to_condition_bool(const mixed_t &value, const char *operation) {
+	switch (value.kind()) {
+		case mixed_t::kind_t::bool_v:
+			return value.bool_value();
+		case mixed_t::kind_t::int_v:
+			return cast<bool_t>(value.int_value());
+		case mixed_t::kind_t::float_v:
+			return cast<bool_t>(value.float_value());
+		default:
+			throw runtime_error_unary(operation, value);
+	}
+}
+
+[[nodiscard]] mixed_t &apply_compound_assignment(mixed_t &left, const mixed_t &right, const char *operation) {
+	mixed_t result;
+	if (std::string_view(operation) == "+=") {
+		result = left + right;
+	} else if (std::string_view(operation) == "-=") {
+		result = left - right;
+	} else if (std::string_view(operation) == "*=") {
+		result = left * right;
+	} else if (std::string_view(operation) == "/=") {
+		result = left / right;
+	} else if (std::string_view(operation) == "%=") {
+		result = left % right;
+	} else if (std::string_view(operation) == "&=") {
+		result = left & right;
+	} else if (std::string_view(operation) == "|=") {
+		result = left | right;
+	} else if (std::string_view(operation) == "^=") {
+		result = left ^ right;
+	} else if (std::string_view(operation) == "<<=") {
+		result = left << right;
+	} else if (std::string_view(operation) == ">>=") {
+		result = left >> right;
+	} else {
+		throw std::runtime_error("mixed_t runtime error: unknown compound assignment operation");
+	}
+	left = std::move(result);
+	return left;
+}
+
 [[nodiscard]] bool_t compare_with_null_eq(const mixed_t &value) {
 	switch (value.kind()) {
 		case mixed_t::kind_t::null_v:
@@ -75,6 +129,8 @@ namespace {
 			return bool_t{value.table_if() == nullptr};
 		case mixed_t::kind_t::shared_table_v:
 			return *value.shared_table_if() == null_t{};
+		case mixed_t::kind_t::dynamic_v:
+			return *value.dynamic_if() == null_t{};
 		case mixed_t::kind_t::weak_table_v:
 			return *value.weak_table_if() == null_t{};
 		case mixed_t::kind_t::bool_v:
@@ -149,6 +205,9 @@ mixed_t::mixed_t(unique_p<hash_t<mixed_t>> value) noexcept : type_(kind_t::table
 }
 mixed_t::mixed_t(shared_p<hash_t<mixed_t>> value) noexcept : type_(kind_t::shared_table_v) {
 	new (&shared_table_value_) shared_p<hash_t<mixed_t>>(std::move(value));
+}
+mixed_t::mixed_t(dynamic_init_t value) noexcept : type_(kind_t::dynamic_v) {
+	new (&dynamic_value_) dynamic_t(std::move(value.value));
 }
 mixed_t::mixed_t(weak_p<hash_t<mixed_t>> value) noexcept : type_(kind_t::weak_table_v) {
 	new (&weak_table_value_) weak_p<hash_t<mixed_t>>(std::move(value));
@@ -261,6 +320,7 @@ mixed_t mixed_t::clone() const {
 		case kind_t::string_v:       return mixed_t{*string_value_};
 		case kind_t::table_v:        return mixed_t{unique<hash_t<mixed_t>>(*table_value_)};
 		case kind_t::shared_table_v: return mixed_t{shared_table_value_};
+		case kind_t::dynamic_v:      return mixed_t{dynamic_box(dynamic_value_)};
 		case kind_t::weak_table_v:   return mixed_t{weak_table_value_};
 	}
 	return mixed_t{null_t{}};
@@ -279,6 +339,7 @@ mixed_t::mixed_type mixed_t::type() const noexcept {
 		case kind_t::string_v:       return mixed_type::string_v;
 		case kind_t::table_v:        return mixed_type::hash_v;
 		case kind_t::shared_table_v: return mixed_type::shared_hash_v;
+		case kind_t::dynamic_v:      return mixed_type::dynamic_v;
 		case kind_t::weak_table_v:   return mixed_type::weak_hash_v;
 	}
 	return mixed_type::null_v;
@@ -290,7 +351,7 @@ bool_t mixed_t::is_bool() const noexcept { return bool_t{type_ == kind_t::bool_v
 bool_t mixed_t::is_int() const noexcept { return bool_t{type_ == kind_t::int_v}; }
 bool_t mixed_t::is_float() const noexcept { return bool_t{type_ == kind_t::float_v}; }
 bool_t mixed_t::is_string() const noexcept { return bool_t{type_ == kind_t::string_v}; }
-bool_t mixed_t::is_hash() const noexcept { return bool_t{type_ == kind_t::table_v || type_ == kind_t::shared_table_v}; }
+bool_t mixed_t::is_hash() const noexcept { return bool_t{type_ == kind_t::table_v || type_ == kind_t::shared_table_v || type_ == kind_t::dynamic_v}; }
 
 const bool_t *mixed_t::try_get_bool() const noexcept { return type_ == kind_t::bool_v ? &bool_value_ : nullptr; }
 bool_t *mixed_t::try_get_bool() noexcept { return type_ == kind_t::bool_v ? &bool_value_ : nullptr; }
@@ -366,11 +427,13 @@ const string_t *mixed_t::string_if() const noexcept {
 hash_t<mixed_t> *mixed_t::table_if() noexcept {
 	if (type_ == kind_t::table_v)        return table_value_.get();
 	if (type_ == kind_t::shared_table_v) return shared_table_value_.get();
+	if (type_ == kind_t::dynamic_v)      return dynamic_value_.get();
 	return nullptr;
 }
 const hash_t<mixed_t> *mixed_t::table_if() const noexcept {
 	if (type_ == kind_t::table_v)        return table_value_.get();
 	if (type_ == kind_t::shared_table_v) return shared_table_value_.get();
+	if (type_ == kind_t::dynamic_v)      return dynamic_value_.get();
 	return nullptr;
 }
 
@@ -379,6 +442,12 @@ shared_p<hash_t<mixed_t>> *mixed_t::shared_table_if() noexcept {
 }
 const shared_p<hash_t<mixed_t>> *mixed_t::shared_table_if() const noexcept {
 	return (type_ == kind_t::shared_table_v) ? &shared_table_value_ : nullptr;
+}
+dynamic_t *mixed_t::dynamic_if() noexcept {
+	return (type_ == kind_t::dynamic_v) ? &dynamic_value_ : nullptr;
+}
+const dynamic_t *mixed_t::dynamic_if() const noexcept {
+	return (type_ == kind_t::dynamic_v) ? &dynamic_value_ : nullptr;
 }
 
 weak_p<hash_t<mixed_t>> *mixed_t::weak_table_if() noexcept {
@@ -485,102 +554,25 @@ mixed_t mixed_t::operator--(int) { mixed_t snap = clone(); --(*this); return sna
 // ============================================================
 // Compound assignment operators
 // ============================================================
+//
+// Contract: compound assignment follows the derived rule
+//
+// 	lhs op= rhs  <=>  lhs = lhs op rhs
+//
+// for mixed_t. The binary operator establishes legality and result kind. Assignment back then
+// stores the resulting mixed_t value. This keeps compound assignment behavior aligned with the
+// corresponding binary operator instead of maintaining a second independent dispatch matrix.
 
-mixed_t &mixed_t::operator+=(const mixed_t &right) {
-	switch (type_) {
-		case kind_t::int_v:
-			if (right.kind() == kind_t::int_v)   { int_value_   += right.int_value_;   return *this; }
-			break;
-		case kind_t::float_v:
-			if (right.kind() == kind_t::float_v) { float_value_ += right.float_value_; return *this; }
-			if (right.kind() == kind_t::int_v)   { float_value_ += right.int_value_;   return *this; }
-			break;
-		case kind_t::string_v:
-			if (right.kind() == kind_t::string_v) { *string_value_ = *string_value_ + *right.string_value_; return *this; }
-			break;
-		default: break;
-	}
-	throw runtime_error_binary("+=", *this, right);
-}
-
-mixed_t &mixed_t::operator-=(const mixed_t &right) {
-	switch (type_) {
-		case kind_t::int_v:
-			if (right.kind() == kind_t::int_v)   { int_value_   -= right.int_value_;   return *this; }
-			break;
-		case kind_t::float_v:
-			if (right.kind() == kind_t::float_v) { float_value_ -= right.float_value_; return *this; }
-			if (right.kind() == kind_t::int_v)   { float_value_ -= right.int_value_;   return *this; }
-			break;
-		default: break;
-	}
-	throw runtime_error_binary("-=", *this, right);
-}
-
-mixed_t &mixed_t::operator*=(const mixed_t &right) {
-	switch (type_) {
-		case kind_t::int_v:
-			if (right.kind() == kind_t::int_v)   { int_value_   *= right.int_value_;   return *this; }
-			break;
-		case kind_t::float_v:
-			if (right.kind() == kind_t::float_v) { float_value_ *= right.float_value_; return *this; }
-			if (right.kind() == kind_t::int_v)   { float_value_ *= right.int_value_;   return *this; }
-			break;
-		default: break;
-	}
-	throw runtime_error_binary("*=", *this, right);
-}
-
-mixed_t &mixed_t::operator/=(const mixed_t &right) {
-	switch (type_) {
-		case kind_t::int_v:
-			if (right.kind() == kind_t::int_v)   { int_value_   /= right.int_value_;   return *this; }
-			break;
-		case kind_t::float_v:
-			if (right.kind() == kind_t::float_v) { float_value_ /= right.float_value_; return *this; }
-			if (right.kind() == kind_t::int_v)   { float_value_ /= right.int_value_;   return *this; }
-			break;
-		default: break;
-	}
-	throw runtime_error_binary("/=", *this, right);
-}
-
-mixed_t &mixed_t::operator%=(const mixed_t &right) {
-	if (type_ == kind_t::int_v && right.kind() == kind_t::int_v) {
-		int_value_ %= right.int_value_; return *this;
-	}
-	throw runtime_error_binary("%=", *this, right);
-}
-mixed_t &mixed_t::operator&=(const mixed_t &right) {
-	if (type_ == kind_t::int_v && right.kind() == kind_t::int_v) {
-		int_value_ &= right.int_value_; return *this;
-	}
-	throw runtime_error_binary("&=", *this, right);
-}
-mixed_t &mixed_t::operator|=(const mixed_t &right) {
-	if (type_ == kind_t::int_v && right.kind() == kind_t::int_v) {
-		int_value_ |= right.int_value_; return *this;
-	}
-	throw runtime_error_binary("|=", *this, right);
-}
-mixed_t &mixed_t::operator^=(const mixed_t &right) {
-	if (type_ == kind_t::int_v && right.kind() == kind_t::int_v) {
-		int_value_ ^= right.int_value_; return *this;
-	}
-	throw runtime_error_binary("^=", *this, right);
-}
-mixed_t &mixed_t::operator<<=(const mixed_t &right) {
-	if (type_ == kind_t::int_v && right.kind() == kind_t::int_v) {
-		int_value_ <<= right.int_value_; return *this;
-	}
-	throw runtime_error_binary("<<=", *this, right);
-}
-mixed_t &mixed_t::operator>>=(const mixed_t &right) {
-	if (type_ == kind_t::int_v && right.kind() == kind_t::int_v) {
-		int_value_ >>= right.int_value_; return *this;
-	}
-	throw runtime_error_binary(">>=", *this, right);
-}
+mixed_t &mixed_t::operator+=(const mixed_t &right) { return apply_compound_assignment(*this, right, "+="); }
+mixed_t &mixed_t::operator-=(const mixed_t &right) { return apply_compound_assignment(*this, right, "-="); }
+mixed_t &mixed_t::operator*=(const mixed_t &right) { return apply_compound_assignment(*this, right, "*="); }
+mixed_t &mixed_t::operator/=(const mixed_t &right) { return apply_compound_assignment(*this, right, "/="); }
+mixed_t &mixed_t::operator%=(const mixed_t &right) { return apply_compound_assignment(*this, right, "%="); }
+mixed_t &mixed_t::operator&=(const mixed_t &right) { return apply_compound_assignment(*this, right, "&="); }
+mixed_t &mixed_t::operator|=(const mixed_t &right) { return apply_compound_assignment(*this, right, "|="); }
+mixed_t &mixed_t::operator^=(const mixed_t &right) { return apply_compound_assignment(*this, right, "^="); }
+mixed_t &mixed_t::operator<<=(const mixed_t &right) { return apply_compound_assignment(*this, right, "<<="); }
+mixed_t &mixed_t::operator>>=(const mixed_t &right) { return apply_compound_assignment(*this, right, ">>="); }
 
 // ============================================================
 // Fat-variable operator[]   autovivifying table access
@@ -607,6 +599,10 @@ void ensure_unique_table_storage(mixed_t &self) {
 hash_t<mixed_t> *resolve_table_mut(mixed_t &self) {
 	if (self.kind() == mixed_t::kind_t::null_v) {
 		self = shared<hash_t<mixed_t>>();
+	}
+	if (self.kind() == mixed_t::kind_t::dynamic_v) {
+		auto *dynamic_value = self.dynamic_if();
+		return dynamic_value == nullptr ? nullptr : dynamic_value->get();
 	}
 	ensure_unique_table_storage(self);
 	return self.table_if();
@@ -813,8 +809,7 @@ mixed_t operator-(const mixed_t &value) {
 	}
 }
 bool_t operator!(const mixed_t &value) {
-	if (value.kind() == mixed_t::kind_t::bool_v) return !value.bool_value_;
-	throw runtime_error_unary("!", value);
+	return !to_condition_bool(value, "!");
 }
 mixed_t operator~(const mixed_t &value) {
 	if (value.kind() == mixed_t::kind_t::int_v) return mixed_t{~value.int_value_};
@@ -915,6 +910,8 @@ bool_t operator==(const mixed_t &left, const mixed_t &right) {
 		return *left.string_value_ == *right.string_value_;
 	if (left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::shared_table_v)
 		return left.shared_table_value_ == right.shared_table_value_;
+	if (left.kind() == mixed_t::kind_t::dynamic_v && right.kind() == mixed_t::kind_t::dynamic_v)
+		return left.dynamic_value_ == right.dynamic_value_;
 	if (left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::weak_table_v)
 		return compare_shared_to_weak_identity(left.shared_table_value_, right.weak_table_value_);
 	if (left.kind() == mixed_t::kind_t::weak_table_v && right.kind() == mixed_t::kind_t::shared_table_v)
@@ -973,14 +970,16 @@ bool_t operator>=(const mixed_t &left, const mixed_t &right) {
 	throw runtime_error_binary(">=", left, right);
 }
 bool_t operator&&(const mixed_t &left, const mixed_t &right) {
-	if (left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::bool_v)
-		return left.bool_value_ && right.bool_value_;
-	throw runtime_error_binary("&&", left, right);
+	if (!is_condition_compatible_kind(left.kind()) || !is_condition_compatible_kind(right.kind())) {
+		throw runtime_error_binary("&&", left, right);
+	}
+	return to_condition_bool(left, "&&") && to_condition_bool(right, "&&");
 }
 bool_t operator||(const mixed_t &left, const mixed_t &right) {
-	if (left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::bool_v)
-		return left.bool_value_ || right.bool_value_;
-	throw runtime_error_binary("||", left, right);
+	if (!is_condition_compatible_kind(left.kind()) || !is_condition_compatible_kind(right.kind())) {
+		throw runtime_error_binary("||", left, right);
+	}
+	return to_condition_bool(left, "||") || to_condition_bool(right, "||");
 }
 
 // ============================================================
@@ -996,6 +995,7 @@ void mixed_t::destroy() noexcept {
 		case kind_t::string_v:       string_value_.~unique_p<string_t>();              break;
 		case kind_t::table_v:        table_value_.~unique_p<hash_t<mixed_t>>();       break;
 		case kind_t::shared_table_v: shared_table_value_.~shared_p<hash_t<mixed_t>>(); break;
+		case kind_t::dynamic_v:      dynamic_value_.~dynamic_t();                      break;
 		case kind_t::weak_table_v:   weak_table_value_.~weak_p<hash_t<mixed_t>>();    break;
 		case kind_t::null_v:         break;
 	}
@@ -1016,6 +1016,8 @@ void mixed_t::move_construct(mixed_t &&other) noexcept {
 			new (&table_value_) unique_p<hash_t<mixed_t>>(std::move(other.table_value_)); break;
 		case kind_t::shared_table_v:
 			new (&shared_table_value_) shared_p<hash_t<mixed_t>>(std::move(other.shared_table_value_)); break;
+		case kind_t::dynamic_v:
+			new (&dynamic_value_) dynamic_t(std::move(other.dynamic_value_)); break;
 		case kind_t::weak_table_v:
 			new (&weak_table_value_) weak_p<hash_t<mixed_t>>(std::move(other.weak_table_value_)); break;
 	}

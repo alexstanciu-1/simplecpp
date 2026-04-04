@@ -267,7 +267,7 @@ Authoritative runtime interpretation:
 
 - PHP-array-like lowering targets `hash_t`
 - object-like lowering uses `shared_p<hash_t>`
-- `stdClass` wording is explanatory only and does not introduce a separate runtime type
+- `dynamic_t/stdClass` wording is explanatory only and does not introduce a separate runtime type
 - missing object-like property read lowers through `_find_val()` and therefore yields stored `mixed_t` or `mixed_t(null_t{})` on miss
 - identity for shared-owned object-like values is pointer identity
 - raw `find()` remains stricter and preserves "found vs not found"
@@ -305,3 +305,9 @@ Current runtime expectations for `mixed_t` in the dynamic subsystem:
 - `shared_table_v == shared_table_v` uses pointer identity
 - `shared_table_v == weak_table_v` uses the current recommendation: compare the locked pointer when the weak carrier is still alive, otherwise `false`
 - `table_v == table_v` is intended to be deep compare, but the current implementation may raise a runtime error until that path is implemented
+
+
+## dynamic_v note
+
+`dynamic_t` is now a separate public runtime form backed by shared `hash_t<mixed_t>` storage.
+It is carried in `mixed_t` via `dynamic_v`. Shared storage does not imply semantic equivalence with `hash_t`.

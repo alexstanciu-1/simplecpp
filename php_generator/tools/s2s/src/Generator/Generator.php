@@ -4154,13 +4154,15 @@ final class Generator
 			};
 		}
 		if ($kind === AstKind::CAST) {
-			$inner = $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp);
+			$innerNode = $expr->children['expr'] ?? null;
+			$inner = $this->renderExpr($innerNode, $namespacePhp);
 			$flags = (int) ($expr->flags ?? 0);
 			return match ($flags) {
 				AstKind::TYPE_STRING => 'cast<string_t>(' . $inner . ')',
 				AstKind::TYPE_LONG => 'static_cast<int_t>(' . $inner . ')',
 				AstKind::TYPE_DOUBLE => 'static_cast<float_t>(' . $inner . ')',
 				AstKind::TYPE_BOOL => 'static_cast<bool_t>(' . $inner . ')',
+				AstKind::TYPE_OBJECT => $this->renderObjectCastExpr($innerNode, $namespacePhp),
 				default => '/* unsupported-cast */',
 			};
 		}
@@ -4194,6 +4196,9 @@ final class Generator
 			return $class . '::' . $const;
 		}
 		if ($kind === AstKind::NEW) {
+			if ($this->isStdClassNewExpr($expr)) {
+				return 'mixed_t{dynamic_()}';
+			}
 			$class = $this->renderClassName($expr->children['class'] ?? null, $namespacePhp);
 			return 'create<' . $class . '>(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
 		}
@@ -4760,7 +4765,13 @@ final class Generator
 		if ($kind === AstKind::STATIC_CALL) {
 			return 'auto';
 		}
+		if ($kind === AstKind::NEW && $this->isStdClassNewExpr($expr)) {
+			return 'mixed_t';
+		}
 		if ($kind === AstKind::ARRAY) {
+			return 'mixed_t';
+		}
+		if ($kind === AstKind::CAST && ((int) ($expr->flags ?? 0) === AstKind::TYPE_OBJECT)) {
 			return 'mixed_t';
 		}
 		if ($kind === AstKind::DIM) {
@@ -4776,6 +4787,70 @@ final class Generator
 
 		return 'auto';
 	}
+
+private function isStdClassNameNode(mixed $classNode): bool
+{
+	if (!is_object($classNode) || (($classNode->kind ?? null) !== AstKind::NAME)) {
+		return false;
+	}
+
+	$name = strtolower(ltrim((string) ($classNode->children['name'] ?? ''), '\\'));
+	return $name === 'stdclass';
+}
+
+private function isStdClassNewExpr(mixed $expr): bool
+{
+	if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NEW)) {
+		return false;
+	}
+
+	$argsNode = $expr->children['args'] ?? null;
+	$args = (is_object($argsNode) && isset($argsNode->children) && is_array($argsNode->children))
+		? array_values($argsNode->children)
+		: [];
+
+	return $args === [] && $this->isStdClassNameNode($expr->children['class'] ?? null);
+}
+
+private function renderObjectCastExpr(mixed $expr, ?string $namespacePhp): string
+{
+	if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::ARRAY)) {
+		$this->errors[] = 'Only (object)[...] is supported in the current pass.';
+		return '/* unsupported-object-cast */';
+	}
+
+	$elements = isset($expr->children) && is_array($expr->children)
+		? array_values($expr->children)
+		: [];
+
+	if ($elements === []) {
+		return 'mixed_t{dynamic_()}';
+	}
+
+	$items = [];
+	foreach ($elements as $element) {
+		if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+			$this->errors[] = 'Unsupported object-cast array element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+			return '/* unsupported-object-cast */';
+		}
+
+		$valueNode = $element->children['value'] ?? null;
+		if ($valueNode === null) {
+			$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+			return '/* unsupported-object-cast */';
+		}
+
+		$keyNode = $element->children['key'] ?? null;
+		if ($keyNode === null) {
+			$items[] = 'table_item_(' . $this->renderExpr($valueNode, $namespacePhp) . ')';
+			continue;
+		}
+
+		$items[] = 'table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
+	}
+
+	return 'mixed_t{dynamic_(' . implode(', ', $items) . ')}';
+}
 
 	private function renderCoalesceExpr(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
 	{
@@ -4822,6 +4897,7 @@ final class Generator
 				AstKind::TYPE_LONG => 'int_t',
 				AstKind::TYPE_DOUBLE => 'float_t',
 				AstKind::TYPE_BOOL => 'bool_t',
+				AstKind::TYPE_OBJECT => 'mixed_t',
 				default => 'auto',
 			};
 		}

@@ -18,7 +18,7 @@ It is a specialized ordered key/value container with:
 `hash_t` is the only dynamic storage type in this phase.
 PHP-array-like lowering targets `hash_t` directly.
 Object-like lowering uses `shared_p<hash_t>`.
-`stdClass` wording is explanatory only and does not introduce a separate runtime type.
+`dynamic_t/stdClass` wording is explanatory only and does not introduce a separate runtime type.
 
 The donor implementation is `mem_container`, but generated/runtime-facing code must target `hash_t` only.
 
@@ -428,3 +428,9 @@ This keeps generator read lowering simple for patterns such as chained dynamic r
 
 When the runtime is compiled with `-DSCPP_LANGUAGE_TARGET_PHP=1`, `hash_t<mixed_t>` normalizes decimal integer strings to integer keys at runtime through the table key path. This normalization must be shared by set/get/isset/unset/operator[] so behavior stays consistent. Append must continue from the current maximum integer key plus one.
 
+
+
+## `dynamic_t` relation
+
+`dynamic_t` reuses `hash_t<mixed_t>` as its v1 payload, but it remains a distinct runtime form.
+Explicit conversion is required between `hash_t` and `dynamic_t`.

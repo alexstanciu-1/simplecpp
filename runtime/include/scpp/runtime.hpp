@@ -19,6 +19,7 @@
 #include "scpp/string_t.hpp"
 #include "scpp/vector_t.hpp"
 #include "scpp/shared_p.hpp"
+#include "scpp/dynamic_t.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
 #include "scpp/value_p.hpp"
@@ -29,3 +30,4 @@
 #include "scpp/cast.hpp"
 #include "scpp/php_exceptions.hpp"
 #include "scpp/php.hpp"
+#include "scpp/generated/operators.hpp"

@@ -8,8 +8,9 @@ This document defines how the runtime code must be generated so that repeated ge
 ## Inputs
 Generation must use these inputs as the canonical sources:
 
-- `scpp_runtime_spec.md`
-- `scpp_runtime_config.json`
+- `spec.md`
+- `config.json`
+- `operator_generation_flow.md` for the generated canonical operator-surface procedure
 
 Role split:
 
@@ -51,6 +52,8 @@ Use these rules for file creation:
   - container wrappers
 - create shared support headers only when multiple generated headers depend on the same reusable logic
 - keep `runtime.hpp` as the stable umbrella include that pulls in the generated public headers
+- treat `runtime.hpp` as the mandatory public entry point for generated operator availability
+- do not require individual wrapper headers to remain operator-complete after operator-surface migration
 - do not collapse unrelated types into one large header unless the config explicitly models them as one unit
 
 ### File production logic
@@ -60,11 +63,25 @@ Generation should work from categories:
 2. generate scalar wrappers
 3. generate template wrappers
 4. generate helper functions (memory helpers, cast helpers)
-5. generate cross-type operators from config matrices
+5. generate the canonical public operator surface from config-owned operator rules
 6. generate umbrella include
 7. generate or update tests from config-owned semantics
 
 This order should be kept stable unless the generator itself is intentionally revised.
+
+
+## Generated operator-surface rule
+The runtime now has an explicit operator-generation procedure captured in `operator_generation_flow.md`.
+
+Generation for migrated operator families must follow these rules:
+
+- generate the public operator entry points centrally under `include/scpp/generated/`
+- use stable handwritten concepts only as operand-category filters
+- dispatch native-wrapper combinations to internal `detail::...` helpers
+- dispatch `mixed_t`-participating combinations to dedicated mixed runtime helpers
+- do not keep overlapping public operator definitions in multiple runtime locations once the generated family is fully migrated
+
+This means operator generation is no longer an ad-hoc byproduct of wrapper generation. It is a first-class generated surface with its own migration and cleanup discipline.
 
 ## Source-of-truth rules
 To keep generations consistent:

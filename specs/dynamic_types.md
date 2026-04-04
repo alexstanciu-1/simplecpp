@@ -69,6 +69,7 @@ If Visible Intention exists, a **non-explicit conversion** from `mixed` to the t
 | By-reference arguments | `f($v); // f(int& $x)` | ✖ |
 | Untyped assignment | `$x = $v;` | ✖ |
 | Expressions without typed destination | `$x = $v + 1;` | ✖ |
+| Operator candidate expansion via implicit mixed extraction | `f($v + 1);` or overload-created operator paths | ✖ |
 | Overload resolution | `f($v); // multiple overloads` | ✖ |
 | Intermediate expressions | `$z = foo($v) + 1;` | ✖ |
 
@@ -135,6 +136,23 @@ The current implementation may therefore accept some non-explicit `mixed → nat
 
 ---
 
+
+## 1.3A Generator-owned string concatenation
+
+PHP string concatenation (`.` and `.=`) is resolved at generator level.
+
+The generator must lower:
+- `$a . $b`
+- `$a .= $b`
+
+into explicit string-context conversion plus primitive `string_t` concatenation.
+
+Normative rules:
+- the runtime does **not** define `mixed_t` concat dispatch
+- the runtime supplies primitive `string_t` concatenation and text-conversion helpers only
+- concat semantics must not be modeled as `mixed_t + mixed_t`
+- any generated concat must reach the runtime already lowered into explicit text conversion plus `string_t` concat
+
 ## 1.4 Destination-Cast Matrix (Language Intention)
 
 | Source | Destination | Allowed | Meaning |
@@ -150,73 +168,51 @@ The current implementation may therefore accept some non-explicit `mixed → nat
 
 ---
 
+
 ## 1.5 Operator Matrix (Language Intention)
+
+`mixed_t` does not define an independent flat operator matrix. Instead, operator behavior is resolved by **runtime kind dispatch** and then delegated to the already-defined native wrapper rule.
+
+Examples:
+- `mixed(kind=int) + mixed(kind=int)` → same rule as `int_t + int_t`
+- `mixed(kind=int) + mixed(kind=float)` → same rule as `int_t + float_t`
+- `mixed(kind=float)++` → same rule as `float_t++`
+- `mixed(kind=string) += string_t` → same rule as `string_t += string_t`
+- `mixed(kind=table) + ...` → error for now
+
+Global rules:
+- implicit `mixed -> native` extraction is allowed only at approved Visible Intention typed boundaries (assignment/init, by-value arg passing, return)
+- operator resolution must **not** use implicit `mixed` extraction to manufacture extra overload candidates
+- compound assignment is valid only when the delegated native binary op exists **and** assignment back into the stored lhs kind also remains valid
+- table carriers are excluded from arithmetic dispatch
+- direct table comparison supports only `==` and `!=`, with identity-only semantics
 
 | Expression | Allowed | Meaning | Result |
 |---|---|---|---|
-| mixed + mixed | ✔ | dynamic op | mixed |
-| mixed + native | ✔ | dynamic op | mixed |
-| native + mixed | ✔ | dynamic op | mixed |
-| mixed - mixed | ✔ | dynamic op | mixed |
-| mixed - native | ✔ | dynamic op | mixed |
-| native - mixed | ✔ | dynamic op | mixed |
-| mixed * mixed | ✔ | dynamic op | mixed |
-| mixed * native | ✔ | dynamic op | mixed |
-| native * mixed | ✔ | dynamic op | mixed |
-| mixed / mixed | ✔ | dynamic op | mixed |
-| mixed / native | ✔ | dynamic op | mixed |
-| native / mixed | ✔ | dynamic op | mixed |
-| mixed % mixed | ✔ | dynamic op | mixed |
-| mixed % native | ✔ | dynamic op | mixed |
-| native % mixed | ✔ | dynamic op | mixed |
-| mixed . mixed | ✔ | concat | string |
-| string . mixed | ✔ | concat | string |
-| literal . mixed | ✔ | concat | string |
-| mixed . string | ✔ | concat | string |
-| mixed == mixed | ✔ | comparison | bool |
-| mixed == native | ✔ | comparison | bool |
-| native == mixed | ✔ | comparison | bool |
-| mixed === mixed | ✔ | strict comparison | bool |
-| mixed === native | ✔ | strict comparison | bool |
-| native === mixed | ✔ | strict comparison | bool |
-| mixed != mixed | ✔ | comparison | bool |
-| mixed != native | ✔ | comparison | bool |
-| native != mixed | ✔ | comparison | bool |
-| mixed !== mixed | ✔ | strict comparison | bool |
-| mixed !== native | ✔ | strict comparison | bool |
-| native !== mixed | ✔ | strict comparison | bool |
-| mixed < mixed | ✔ | comparison | bool |
-| mixed < native | ✔ | comparison | bool |
-| native < mixed | ✔ | comparison | bool |
-| mixed <= mixed | ✔ | comparison | bool |
-| mixed <= native | ✔ | comparison | bool |
-| native <= mixed | ✔ | comparison | bool |
-| mixed > mixed | ✔ | comparison | bool |
-| mixed > native | ✔ | comparison | bool |
-| native > mixed | ✔ | comparison | bool |
-| mixed >= mixed | ✔ | comparison | bool |
-| mixed >= native | ✔ | comparison | bool |
-| native >= mixed | ✔ | comparison | bool |
-| mixed && mixed | ✔ | logical op | bool |
-| mixed && native | ✔ | logical op | bool |
-| native && mixed | ✔ | logical op | bool |
-| mixed || mixed | ✔ | logical op | bool |
-| mixed || native | ✔ | logical op | bool |
-| native || mixed | ✔ | logical op | bool |
-| !mixed | ✔ | logical negation | bool |
-| +mixed | ✔ | unary numeric op | mixed |
-| -mixed | ✔ | unary numeric op | mixed |
+| mixed + mixed | ✔ | dispatch by kinds, then delegate to native rule | mixed |
+| mixed + native | ✔ | box native if needed, dispatch by kinds | mixed |
+| native + mixed | ✔ | box native if needed, dispatch by kinds | mixed |
+| mixed - / * / / / % | ✔ | same delegation model | mixed |
+| mixed == / != / < / <= / > / >= | ✔ | dispatch by kinds, then delegate to native comparison rule | bool |
+| mixed && / || / !mixed | ✔ | dispatch by kinds, then delegate to native logical rule | bool |
+| +mixed / -mixed | ✔ | unary numeric dispatch by kind | mixed |
+| ++mixed / --mixed | ✔ | delegate to native increment/decrement rule of contained kind | mixed |
 | mixed[index] | ✔ | indexing | mixed |
-| mixed = native | ✔ | assign boxed | mixed |
-| typed = mixed | ✔ | convert | typed |
-| mixed += native | ✔ | dynamic op + assign | mixed |
-| mixed -= native | ✔ | dynamic op + assign | mixed |
-| mixed *= native | ✔ | dynamic op + assign | mixed |
-| mixed /= native | ✔ | dynamic op + assign | mixed |
-| mixed %= native | ✔ | dynamic op + assign | mixed |
-| mixed .= native | ✔ | concat + assign | string/mixed |
+| typed = mixed | ✔ | Visible Intention boundary conversion | typed |
+| mixed += native | ✔ | delegated op + assign-back check | mixed |
+| mixed .= native | ✔ | generator-owned concat lowering, not runtime mixed concat dispatch | string/mixed |
 
----
+Additional runtime-kind rules:
+- `mixed(kind=null)` delegates to `null_t`
+- `mixed(kind=bool)` delegates to `bool_t`
+- `mixed(kind=int)` delegates to `int_t`
+- `mixed(kind=float)` delegates to `float_t`
+- `mixed(kind=string)` delegates to `string_t`
+- `mixed(kind=table/shared_table/weak_table)` never participates in arithmetic dispatch
+- shared-table equality/inequality is pointer identity
+- weak-table equality/inequality compares locked target identity and returns `false` if either side is expired
+- owned direct `table_v` equality/inequality is an error for now
+
 
 ## 1.6 Array / Indexing Matrix (Language Intention)
 
@@ -294,6 +290,11 @@ Typed extraction from `mixed_t` must go through explicit helpers such as:
 
 `mixed_t` does not create new conversion rights. It may only expose conversions that already exist in the Simple C++ native cast rules.
 
+Current v1 typed-boundary bridge rule:
+- non-explicit `mixed -> native` use is accepted only at Visible Intention sites for initialization/assignment, by-value arg passing, and typed returns
+- operator resolution must not use implicit extraction to create extra candidates
+- failed typed extraction remains a runtime error
+
 ### Indexing / write context
 
 `mixed_t` indexing remains context-sensitive:
@@ -332,71 +333,35 @@ For v1, failed exact access or failed typed extraction uses one generic runtime 
 
 ## 2.3 Operator Matrix (Runtime)
 
+Runtime operator behavior for `mixed_t` is **dispatch-table based**:
+- establish the runtime kind(s) of the operand(s)
+- look up the matching native rule tuple
+- execute that native rule
+- box the result back into `mixed_t` where required
+
+The runtime does **not** define PHP concat semantics for `mixed_t`. PHP `.` and `.=` are already lowered by the generator into explicit text conversion plus primitive `string_t` concat.
+
 | Expression | Generator | Runtime | Result |
 |---|---|---|---|
-| mixed + mixed | dynamic op helper | runtime dispatch | mixed |
-| mixed + native | box native if needed | runtime dispatch | mixed |
-| native + mixed | box native if needed | runtime dispatch | mixed |
-| mixed - mixed | dynamic op helper | runtime dispatch | mixed |
-| mixed - native | box native if needed | runtime dispatch | mixed |
-| native - mixed | box native if needed | runtime dispatch | mixed |
-| mixed * mixed | dynamic op helper | runtime dispatch | mixed |
-| mixed * native | box native if needed | runtime dispatch | mixed |
-| native * mixed | box native if needed | runtime dispatch | mixed |
-| mixed / mixed | dynamic op helper | runtime dispatch | mixed |
-| mixed / native | box native if needed | runtime dispatch | mixed |
-| native / mixed | box native if needed | runtime dispatch | mixed |
-| mixed % mixed | dynamic op helper | runtime dispatch | mixed |
-| mixed % native | box native if needed | runtime dispatch | mixed |
-| native % mixed | box native if needed | runtime dispatch | mixed |
-| mixed . mixed | string-context conversion on both operands | concat | string |
-| string . mixed | string-context conversion on mixed operand | concat | string |
-| literal . mixed | string-context conversion on mixed operand | concat | string |
-| mixed . string | string-context conversion on mixed operand | concat | string |
-| mixed == mixed | compare helper | runtime compare | bool |
-| mixed == native | box native if needed, compare helper | runtime compare | bool |
-| native == mixed | box native if needed, compare helper | runtime compare | bool |
-| mixed === mixed | strict compare helper | runtime compare | bool |
-| mixed === native | box native if needed, strict compare helper | runtime compare | bool |
-| native === mixed | box native if needed, strict compare helper | runtime compare | bool |
-| mixed != mixed | compare helper + negate | runtime compare | bool |
-| mixed != native | box native if needed, compare helper + negate | runtime compare | bool |
-| native != mixed | box native if needed, compare helper + negate | runtime compare | bool |
-| mixed !== mixed | strict compare helper + negate | runtime compare | bool |
-| mixed !== native | box native if needed, strict compare helper + negate | runtime compare | bool |
-| native !== mixed | box native if needed, strict compare helper + negate | runtime compare | bool |
-| mixed < mixed | compare helper | runtime compare | bool |
-| mixed < native | box native if needed, compare helper | runtime compare | bool |
-| native < mixed | box native if needed, compare helper | runtime compare | bool |
-| mixed <= mixed | compare helper | runtime compare | bool |
-| mixed <= native | box native if needed, compare helper | runtime compare | bool |
-| native <= mixed | box native if needed, compare helper | runtime compare | bool |
-| mixed > mixed | compare helper | runtime compare | bool |
-| mixed > native | box native if needed, compare helper | runtime compare | bool |
-| native > mixed | box native if needed, compare helper | runtime compare | bool |
-| mixed >= mixed | compare helper | runtime compare | bool |
-| mixed >= native | box native if needed, compare helper | runtime compare | bool |
-| native >= mixed | box native if needed, compare helper | runtime compare | bool |
-| mixed && mixed | truthiness helper | runtime truthiness + logical op | bool |
-| mixed && native | truthiness helper | runtime truthiness + logical op | bool |
-| native && mixed | truthiness helper | runtime truthiness + logical op | bool |
-| mixed || mixed | truthiness helper | runtime truthiness + logical op | bool |
-| mixed || native | truthiness helper | runtime truthiness + logical op | bool |
-| native || mixed | truthiness helper | runtime truthiness + logical op | bool |
-| !mixed | truthiness helper | runtime truthiness + negate | bool |
-| +mixed | unary numeric helper | runtime dispatch | mixed |
-| -mixed | unary numeric helper | runtime dispatch | mixed |
+| mixed + mixed | dynamic op helper | dispatch by kinds, delegate to native numeric rule | mixed |
+| mixed + native | box native if needed | dispatch by kinds, delegate to native numeric rule | mixed |
+| mixed == / != / < / <= / > / >= | compare helper | dispatch by kinds, delegate to native comparison rule | bool |
+| mixed && / || / !mixed | truthiness helper | dispatch by kinds, delegate to native logical rule | bool |
+| +mixed / -mixed | unary numeric helper | dispatch by kind, delegate to native unary rule | mixed |
+| ++mixed / --mixed | mutation helper | dispatch by kind, delegate to native increment/decrement rule | mixed |
 | mixed[index] | dynamic index helper | runtime lookup/access | mixed |
-| mixed = native | box | store dynamic | mixed |
-| typed = mixed | cast_*() (long-term); v1 may use non-explicit conversion | checked conversion / current implementation bridge | typed |
-| mixed += native | dynamic op + assign | runtime dispatch then store | mixed |
-| mixed -= native | dynamic op + assign | runtime dispatch then store | mixed |
-| mixed *= native | dynamic op + assign | runtime dispatch then store | mixed |
-| mixed /= native | dynamic op + assign | runtime dispatch then store | mixed |
-| mixed %= native | dynamic op + assign | runtime dispatch then store | mixed |
-| mixed .= native | string-context conversion + assign | concat then store | string/mixed |
+| typed = mixed | cast_*() (long-term); v1 may use non-explicit conversion at Visible Intention boundaries | checked conversion / current implementation bridge | typed |
+| mixed += native | dynamic op + assign | delegated op followed by assign-back validity check | mixed |
+| mixed .= native | explicit `to_string(...)` lowering + primitive `string_t` concat | no `mixed_t` concat dispatch | string/mixed |
 
----
+Table-carrier exceptions:
+- arithmetic on table carriers is an error
+- ordering comparisons on table carriers are an error
+- direct owned `table_v` `==` / `!=` is an error for now
+- shared-table `==` / `!=` is identity-only by shared target pointer
+- weak-table `==` / `!=` compares locked target identity and returns `false` if either side is expired
+- expired weak-table `_find_val` returns `null`, `find` returns not-found, `at`/writes are runtime errors
+
 
 ## 2.4 Array / Indexing Matrix (Runtime)
 
@@ -435,3 +400,21 @@ For v1, failed exact access or failed typed extraction uses one generic runtime 
 - indexing returns mixed
 - failed casts throw exception
 - long-term goal remains explicit S2S-emitted casts at visible-intention sites
+- PHP concat remains generator-owned and is not a `mixed_t` runtime operator family
+
+## 1.4 `dynamic_t` v1
+
+`dynamic_t` is the runtime dynamic-object form used for shared property-bag semantics.
+
+- public runtime handle: `using dynamic_t = shared_p<hash_t<mixed_t>>;`
+- `mixed_t` stores it under a dedicated `dynamic_v` kind
+- storage is shared
+- plain copy preserves shared identity
+- dynamic/native inheritance or structural mixing is forbidden
+- explicit conversion only:
+	- `to_dynamic(const hash_t<mixed_t>&)`
+	- `to_hash(const dynamic_t&)`
+- v1 source lowering currently supported:
+	- `new stdClass()`
+	- `(object)[ ... ]`
+- current generator does not lower dynamic-property syntax yet; runtime-side property/index access remains available through the existing mixed/hash access surface

@@ -19,8 +19,8 @@ public:
 	using element_type = T;
 
 	unique_p() = default;
-	unique_p(null_t) noexcept : value_(nullptr) {}
-	unique_p(nullptr_t) noexcept : value_(nullptr) {}
+	unique_p(null_t) noexcept : value_() {}
+	unique_p(nullptr_t) noexcept : value_() {}
 	explicit unique_p(std::unique_ptr<T> value) noexcept : value_(std::move(value)) {}
 
 	unique_p(unique_p &&) noexcept = default;
@@ -30,15 +30,6 @@ public:
 	unique_p(unique_p<U> &&other) noexcept
 		requires std::is_convertible_v<U *, T *>
 		: value_(std::move(other.value_)) {}
-
-	template <typename U>
-	unique_p &operator=(unique_p<U> &&other) noexcept
-		requires std::is_convertible_v<U *, T *>
-	{
-		value_ = std::move(other.value_);
-		return *this;
-	}
-
 	unique_p(const unique_p &) = delete;
 	unique_p &operator=(const unique_p &) = delete;
 
@@ -52,15 +43,19 @@ public:
 		return *this;
 	}
 
-	[[nodiscard]] bool_t has_value() const noexcept { return bool_t(static_cast<bool>(value_)); }
-	[[nodiscard]] explicit operator bool() const noexcept { return static_cast<bool>(value_); }
-	[[nodiscard]] T *get() const noexcept { return value_.get(); }
+	template <typename U>
+	unique_p &operator=(unique_p<U> &&other) noexcept
+		requires std::is_convertible_v<U *, T *>
+	{
+		value_ = std::move(other.value_);
+		return *this;
+	}
 
+	[[nodiscard]] bool_t has_value() const noexcept { return bool_t(static_cast<bool>(value_)); }
 	void reset() noexcept { value_.reset(); }
+	void reset(T *ptr) noexcept { value_.reset(ptr); }
 	void reset(null_t) noexcept { value_.reset(); }
 	void reset(nullptr_t) noexcept { value_.reset(); }
-	void reset(T *value) noexcept { value_.reset(value); }
-	[[nodiscard]] T *release() noexcept { return value_.release(); }
 	void swap(unique_p &other) noexcept { value_.swap(other.value_); }
 
 	T &deref() const {
@@ -77,14 +72,9 @@ public:
 	[[nodiscard]] const std::unique_ptr<T> &native_value() const noexcept { return value_; }
 	[[nodiscard]] std::unique_ptr<T> &native_value() noexcept { return value_; }
 
-	[[nodiscard]] friend bool_t operator==(const unique_p<T> &left, null_t) noexcept { return bool_t(left.value_ == nullptr); }
-	[[nodiscard]] friend bool_t operator==(null_t, const unique_p<T> &right) noexcept { return bool_t(right.value_ == nullptr); }
-	[[nodiscard]] friend bool_t operator!=(const unique_p<T> &left, null_t) noexcept { return bool_t(left.value_ != nullptr); }
-	[[nodiscard]] friend bool_t operator!=(null_t, const unique_p<T> &right) noexcept { return bool_t(right.value_ != nullptr); }
-	[[nodiscard]] friend bool_t operator==(const unique_p<T> &left, nullptr_t) noexcept { return bool_t(left.value_ == nullptr); }
-	[[nodiscard]] friend bool_t operator==(nullptr_t, const unique_p<T> &right) noexcept { return bool_t(right.value_ == nullptr); }
-	[[nodiscard]] friend bool_t operator!=(const unique_p<T> &left, nullptr_t) noexcept { return bool_t(left.value_ != nullptr); }
-	[[nodiscard]] friend bool_t operator!=(nullptr_t, const unique_p<T> &right) noexcept { return bool_t(right.value_ != nullptr); }
+	[[nodiscard]] T *get() const noexcept { return value_.get(); }
+	[[nodiscard]] T *release() noexcept { return value_.release(); }
+	[[nodiscard]] explicit operator bool() const noexcept { return static_cast<bool>(value_); }
 };
 
 } // namespace scpp

@@ -10,6 +10,7 @@
 #include "scpp/string_t.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/dynamic_t.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -593,6 +594,13 @@ template <typename... TArgs>
 	auto table = shared_p<hash_t<mixed_t>>(std::make_shared<hash_t<mixed_t>>());
 	(table_add_item_(*table, std::forward<TArgs>(args)), ...);
 	return table;
+}
+
+template <typename... TArgs>
+[[nodiscard]] inline dynamic_init_t dynamic_(TArgs &&...args) {
+	auto table = dynamic_t(std::make_shared<hash_t<mixed_t>>());
+	(table_add_item_(*table, std::forward<TArgs>(args)), ...);
+	return dynamic_box(std::move(table));
 }
 
 template <typename... TArgs>

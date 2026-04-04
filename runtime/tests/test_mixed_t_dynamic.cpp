@@ -1,5 +1,7 @@
 #include "test_common.hpp"
 
+#include <sstream>
+
 namespace {
 
 scpp::int_t take_int(scpp::int_t value) {
@@ -122,6 +124,9 @@ static void test_value_t_comparisons_and_logical() {
 	assert((b1 && b2).native_value() == false);
 	assert((b1 || b2).native_value() == true);
 	assert((!b2).native_value() == true);
+	assert((i1 && i2).native_value() == true);
+	assert((scpp::mixed_t(scpp::int_t(0)) || scpp::mixed_t(scpp::float_t(1.0))).native_value() == true);
+	assert((!scpp::mixed_t(scpp::int_t(0))).native_value() == true);
 	assert((n1 == scpp::mixed_t(scpp::null_t{})).native_value() == true);
 	assert((n1 == s1).native_value() == true);
 
@@ -129,7 +134,7 @@ static void test_value_t_comparisons_and_logical() {
 		(void)(b1 == i1);
 	});
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		(void)(i1 && b1);
+		(void)(scpp::mixed_t(scpp::string_t("x")) && b1);
 	});
 }
 
@@ -161,6 +166,10 @@ static void test_value_t_assignment_and_increment() {
 
 	f1 += scpp::mixed_t(scpp::int_t(2));
 	assert(f1.float_value().native_value() == 7.5);
+	scpp::mixed_t widening(scpp::int_t(4));
+	widening += scpp::mixed_t(scpp::float_t(1.5));
+	assert(widening.kind() == scpp::mixed_t::kind_t::float_v);
+	assert(widening.float_value().native_value() == 5.5);
 	f1 -= scpp::mixed_t(scpp::float_t(0.5));
 	assert(f1.float_value().native_value() == 7.0);
 	f1 *= scpp::mixed_t(scpp::int_t(2));
@@ -267,6 +276,47 @@ static void test_value_t_table_access_and_identity() {
 
 } // namespace
 
+
+static void test_dynamic_t_identity_and_explicit_conversion() {
+	scpp::dynamic_t payload = scpp::dynamic_(scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1))).value;
+	scpp::mixed_t left(scpp::dynamic_box(payload));
+	scpp::mixed_t right(scpp::dynamic_box(payload));
+
+	assert(left.kind() == scpp::mixed_t::kind_t::dynamic_v);
+	assert(right.kind() == scpp::mixed_t::kind_t::dynamic_v);
+	assert((left == right).native_value() == true);
+
+	auto copied_hash = scpp::php::to_hash(payload);
+	copied_hash[scpp::string_t("id")] = scpp::mixed_t(scpp::int_t(99));
+	assert(left[scpp::string_t("id")].int_value().native_value() == 1);
+
+	auto rebuilt_dynamic = scpp::php::to_dynamic(copied_hash);
+	scpp::mixed_t rebuilt(scpp::dynamic_box(rebuilt_dynamic));
+	assert(rebuilt.kind() == scpp::mixed_t::kind_t::dynamic_v);
+	assert(rebuilt[scpp::string_t("id")].int_value().native_value() == 99);
+	assert((left == rebuilt).native_value() == false);
+
+	left[scpp::string_t("name")] = scpp::mixed_t(scpp::string_t("Alex"));
+	assert(right[scpp::string_t("name")].string_if()->native_value() == "Alex");
+}
+
+static void test_dynamic_t_var_dump() {
+	scpp::mixed_t value(scpp::dynamic_(
+		scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1)),
+		scpp::table_kv_(scpp::string_t("name"), scpp::string_t("Alex"))
+	));
+
+	std::ostringstream buffer;
+	auto *previous = std::cout.rdbuf(buffer.rdbuf());
+	scpp::php::var_dump(value);
+	std::cout.rdbuf(previous);
+
+	const std::string dumped = buffer.str();
+	assert(dumped.find("object(dynamic_t)(2)") != std::string::npos);
+	assert(dumped.find('"' + std::string("id") + '"') != std::string::npos);
+	assert(dumped.find('"' + std::string("name") + '"') != std::string::npos);
+}
+
 int main() {
 	test_value_t_cast_bridge_and_exact_accessors();
 	test_value_t_operator_dispatch_numeric_and_string();
@@ -274,6 +324,8 @@ int main() {
 	test_value_t_assignment_and_increment();
 	test_value_t_array_copy_on_write_param_and_nested_copy();
 	test_value_t_boxed_table_helpers();
+	test_dynamic_t_identity_and_explicit_conversion();
+	test_dynamic_t_var_dump();
 	test_value_t_table_access_and_identity();
 	return 0;
 }

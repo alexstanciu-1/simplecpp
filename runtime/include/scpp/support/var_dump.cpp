@@ -16,7 +16,7 @@ static std::string float_to_php_string(double value) {
     return oss.str();
 }
 
-static void dump_table_ptr(const hash_t<mixed_t>* t, const void* identity, int indent_lvl, std::unordered_set<const void*>& seen) {
+static void dump_table_ptr(const hash_t<mixed_t>* t, const void* identity, int indent_lvl, std::unordered_set<const void*>& seen, const char* label = "array") {
     if (t == nullptr) {
         std::cout << "NULL\n";
         return;
@@ -27,7 +27,7 @@ static void dump_table_ptr(const hash_t<mixed_t>* t, const void* identity, int i
     }
     seen.insert(identity);
 
-    std::cout << "array(" << t->size() << ") {\n";
+    std::cout << label << "(" << t->size() << ") {\n";
     t->debug_visit_entries([&](const auto& key, const mixed_t& val) {
         print_indent(indent_lvl + 1);
         std::cout << "[";
@@ -76,6 +76,12 @@ static void dump_value(const mixed_t& v, int indent_lvl, std::unordered_set<cons
             const auto* shared = v.shared_table_if();
             const auto* ptr = (shared == nullptr) ? nullptr : shared->get();
             dump_table_ptr(ptr, ptr, indent_lvl, seen);
+            break;
+        }
+        case mixed_t::kind_t::dynamic_v: {
+            const auto* dynamic = v.dynamic_if();
+            const auto* ptr = (dynamic == nullptr) ? nullptr : dynamic->get();
+            dump_table_ptr(ptr, ptr, indent_lvl, seen, "object(dynamic_t)");
             break;
         }
         case mixed_t::kind_t::weak_table_v: {

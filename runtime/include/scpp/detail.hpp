@@ -114,7 +114,7 @@ template <typename T>
 using class_of_t = typename class_of<remove_cvref_t<T>>::type;
 
 // Helper used in dependent static_asserts so unsupported templates fail cleanly.
-template <typename T>
+template <typename... T>
 constexpr bool always_false_v = false;
 
 } // namespace detail

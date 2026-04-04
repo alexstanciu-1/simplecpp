@@ -30,7 +30,7 @@ This document lists the minimal missing features required to make Simple C++ usa
 | | `exit` / `die` | 🔴 missing | Control termination | simple exit(int/string) |
 | **Data structures** | Typed map/dictionary | 🔴 missing | Needed before full PHP array | map<string, T>-like |
 | | php-like-array | 🟡 optional | Needed for PHP parity, not first use | defer |
-| | `stdClass` | 🟡 optional | Dynamic object use | simple key→value object |
+| | `dynamic_t/stdClass` | 🟡 optional | Dynamic object use | simple key→value object |
 | | variants | 🟡 optional | Flex typing convenience | defer if strict typing ok |
 | **Interop / utility** | Reflection-lite | 🟡 missing | Common patterns depend on it | class_exists, method_exists |
 | | Basic path utilities | 🔴 missing | Avoid manual string hacks | join / normalize paths |
@@ -44,7 +44,7 @@ This document lists the minimal missing features required to make Simple C++ usa
 3. Typed map/dictionary
 4. Exceptions (try/catch)
 5. exit / die
-6. Optional: stdClass, variants, php-array
+6. Optional: dynamic_t/stdClass, variants, php-array
 
 ---
 
@@ -110,7 +110,7 @@ My compact ranking for first practical use:
 	typed map/dictionary support
 	throw / try-catch
 	exit / die
-	stdClass
+	dynamic_t/stdClass
 	variants
 	full php-like-array
 

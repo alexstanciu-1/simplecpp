@@ -145,6 +145,8 @@ inline string_t to_string(const mixed_t &value) {
 		case mixed_t::kind_t::shared_table_v:
 		case mixed_t::kind_t::weak_table_v:
 			return string_t("Array");
+		case mixed_t::kind_t::dynamic_v:
+			return string_t("Object");
 	}
 	return string_t("");
 }
@@ -334,6 +336,21 @@ inline int_t count(const vector_t<T> &value) {
 // How: array values lower into hash_t<mixed_t>, so count() must mirror PHP array cardinality via hash_t::size().
 inline int_t count(const hash_t<mixed_t> &value) {
 	return int_t(static_cast<std::int64_t>(value.size()));
+}
+
+// Creates a shared dynamic-object carrier by copying one hash payload into shared storage.
+// How: dynamic_t stays semantically distinct even though v1 storage is backed by hash_t<mixed_t>.
+inline dynamic_t to_dynamic(const hash_t<mixed_t> &value) {
+	return dynamic_t(std::make_shared<hash_t<mixed_t>>(value));
+}
+
+// Materializes one dynamic-object payload into a plain hash copy.
+// How: the copy is explicit so array/hash semantics are not implied by shared dynamic storage.
+inline hash_t<mixed_t> to_hash(const dynamic_t &value) {
+	if (!static_cast<bool>(value)) {
+		return hash_t<mixed_t>{};
+	}
+	return *value;
 }
 
 // Implements PHP by-value copy semantics for mixed runtime values.

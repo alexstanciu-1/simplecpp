@@ -36,19 +36,25 @@
         },
         "dynamic_v1_operation_scope": {
             "enabled_now": [
-                "hash_t.find",
-                "hash_t.at",
-                "hash_t.nonconst_operator_square_brackets",
-                "mixed_t.exact_scalar_accessors",
-                "mixed_t.string_if",
-                "mixed_t.table_if",
-                "mixed_t.shared_table_if",
-                "mixed_t.weak_table_if",
                 "hash_t._find_val",
+                "hash_t.at",
+                "hash_t.find",
+                "hash_t.nonconst_operator_square_brackets",
                 "mixed_t._find_val",
-                "mixed_t.shared_table_storage",
+                "mixed_t.assignment_boundary_dispatch",
                 "mixed_t.cast_dispatch",
-                "mixed_t.operator_dispatch"
+                "mixed_t.condition_dispatch",
+                "mixed_t.exact_scalar_accessors",
+                "mixed_t.increment_decrement_dispatch",
+                "mixed_t.logical_dispatch",
+                "mixed_t.mutation_dispatch",
+                "mixed_t.operator_dispatch",
+                "mixed_t.shared_table_if",
+                "mixed_t.shared_table_storage",
+                "mixed_t.string_if",
+                "mixed_t.table_identity_comparison_dispatch",
+                "mixed_t.table_if",
+                "mixed_t.weak_table_if"
             ],
             "explicit_only": [
                 "casts"
@@ -146,7 +152,7 @@
             "object_like_form": {
                 "storage_type": "hash_t",
                 "carrier_type": "shared_p<hash_t>",
-                "informative_term_only": "stdClass",
+                "public_runtime_type": "dynamic_t",
                 "missing_property_read": "null_via__find_val",
                 "identity": "pointer_identity",
                 "weak_identity_recommendation": "shared_vs_weak_compare_locked_pointer_or_false_if_expired",
@@ -526,16 +532,20 @@
                 "exact_scalar_accessors": {
                     "bool_value": "requires kind bool_v, else runtime error",
                     "int_value": "requires kind int_v, else runtime error",
-                    "float_value": "requires kind float_v, else runtime error"
+                    "float_value": "requires kind float_v, else runtime error",
+                    "string_exact_access": "preferred runtime contract is exact string extraction via the explicit mixed_t/string_t bridge; probe access remains string_if()"
                 },
                 "probe_accessors": {
                     "string_if": "returns const string_t* or nullptr",
-                    "table_if": "returns hash_t<mixed_t>* / const hash_t<mixed_t>* for owned/shared table; otherwise nullptr"
+                    "table_if": "returns hash_t<mixed_t>* / const hash_t<mixed_t>* for owned/shared table; otherwise nullptr",
+                    "shared_table_if": "returns shared table handle probe or nullptr",
+                    "weak_table_if": "returns weak table handle probe or nullptr"
                 },
                 "clone_policy": {
                     "null_bool_int_float_string": "cloned by value",
                     "table_v": "deep copies owned table payload",
                     "shared_table_v": "copies shared handle",
+                    "dynamic_v": "copies shared dynamic handle",
                     "weak_table_v": "copies weak handle"
                 }
             },
@@ -549,11 +559,127 @@
                     "operation dispatch only where explicitly documented"
                 ],
                 "not_yet_enabled": [
-                    "dynamic arithmetic operators on mixed_t",
-                    "dynamic comparison operators on mixed_t",
                     "dynamic callable dispatch",
                     "dynamic method dispatch"
-                ]
+                ],
+                "operator_resolution_rule": "implicit mixed_t to native extraction must not participate in overload candidate expansion; any operator involving mixed_t resolves through mixed_t runtime-kind dispatch only",
+                "typed_boundary_bridge_rule": "implicit mixed_t to native extraction is temporarily accepted only for initialization/assignment, by-value argument passing, and typed return; failed extraction is a runtime error",
+                "concat_rule": "PHP string concatenation (.) and (.=) is generator-owned and must be lowered into explicit text conversion plus primitive string_t concatenation; mixed_t has no independent concat dispatch family"
+            },
+            "dispatch_contract": {
+                "model": "runtime_kind_dispatch_delegates_to_native_rules",
+                "delegate_reference_format": {
+                    "delegate_to_native_rule": {
+                        "lhs": "<native type>",
+                        "op": "<operator>",
+                        "rhs": "<native type>"
+                    }
+                },
+                "implicit_extraction": {
+                    "allowed_contexts": [
+                        "initialization",
+                        "assignment",
+                        "by_value_argument",
+                        "typed_return"
+                    ],
+                    "forbidden_contexts": [
+                        "operator_overload_resolution",
+                        "overload_disambiguation",
+                        "by_reference_parameter_adaptation"
+                    ]
+                },
+                "kinds_delegate_as": {
+                    "null_v": "null_t",
+                    "bool_v": "bool_t",
+                    "int_v": "int_t",
+                    "float_v": "float_t",
+                    "string_v": "string_t",
+                    "table_v": "hash_t<mixed_t> owned table carrier",
+                    "shared_table_v": "shared_p<hash_t<mixed_t>> carrier",
+                    "dynamic_v": "dynamic_t carrier",
+                    "weak_table_v": "weak_p<hash_t<mixed_t>> carrier"
+                },
+                "operator_surface": {
+                    "binary_arithmetic": [
+                        "+",
+                        "-",
+                        "*",
+                        "/",
+                        "%"
+                    ],
+                    "binary_comparison": [
+                        "==",
+                        "!=",
+                        "<",
+                        "<=",
+                        ">",
+                        ">="
+                    ],
+                    "binary_logical": [
+                        "&&",
+                        "||"
+                    ],
+                    "unary": [
+                        "+",
+                        "-",
+                        "!",
+                        "++prefix",
+                        "++postfix",
+                        "--prefix",
+                        "--postfix"
+                    ],
+                    "compound": [
+                        "+=",
+                        "-=",
+                        "*=",
+                        "/=",
+                        "%="
+                    ]
+                },
+                "delegation_rule": "if the established runtime kinds map to an allowed native rule, execute that native rule and box the result when needed; otherwise raise a runtime error",
+                "compound_assignment_rule": "compound assignment is allowed only when the delegated native binary operator exists and assignment back into the stored lhs kind is valid",
+                "table_carrier_policy": {
+                    "arithmetic": "runtime_error",
+                    "ordering_comparison": "runtime_error",
+                    "equality_inequality": {
+                        "table_v": "runtime_error",
+                        "shared_table_v": "identity_by_shared_target_pointer",
+                        "dynamic_v": "identity_by_shared_target_pointer",
+                        "weak_table_v": "identity_by_locked_target_pointer_or_false_if_either_expired"
+                    }
+                },
+                "weak_table_policy": {
+                    "_find_val": "returns mixed_t(null_t{}) when expired",
+                    "find": "returns not_found when expired",
+                    "at": "runtime_error when expired",
+                    "write_or_index_assign": "runtime_error when expired"
+                },
+                "generator_owned_operations": {
+                    "concat": [
+                        ".",
+                        ".="
+                    ]
+                },
+                "boundary_bridges": {
+                    "rule_id": "mbb_001",
+                    "initialization": true,
+                    "assignment": true,
+                    "by_value_argument": true,
+                    "typed_return": true,
+                    "operator_overload_resolution": false,
+                    "overload_disambiguation": false,
+                    "by_reference_parameter_adaptation": false,
+                    "const_reference_parameter_adaptation": false
+                }
+            },
+            "boundary_bridges": {
+                "assignment": true,
+                "function_argument_by_value": true,
+                "return": true,
+                "operator_resolution": false,
+                "by_reference_argument": false,
+                "const_reference_argument": false,
+                "overload_resolution": false
             }
         },
         "maybe_value_t": {
@@ -790,6 +916,106 @@
             "form": "helper",
             "helper_name": "ref",
             "template_rule": true
+        },
+        {
+            "from": "null_t",
+            "to": "mixed_t",
+            "kind": "implicit",
+            "form": "constructor",
+            "template_rule": false,
+            "policy_role": "box_into_mixed_runtime_value"
+        },
+        {
+            "from": "bool_t",
+            "to": "mixed_t",
+            "kind": "implicit",
+            "form": "constructor",
+            "template_rule": false,
+            "policy_role": "box_into_mixed_runtime_value"
+        },
+        {
+            "from": "int_t",
+            "to": "mixed_t",
+            "kind": "implicit",
+            "form": "constructor",
+            "template_rule": false,
+            "policy_role": "box_into_mixed_runtime_value"
+        },
+        {
+            "from": "float_t",
+            "to": "mixed_t",
+            "kind": "implicit",
+            "form": "constructor",
+            "template_rule": false,
+            "policy_role": "box_into_mixed_runtime_value"
+        },
+        {
+            "from": "string_t",
+            "to": "mixed_t",
+            "kind": "implicit",
+            "form": "constructor",
+            "template_rule": false,
+            "policy_role": "box_into_mixed_runtime_value"
+        },
+        {
+            "from": "hash_t",
+            "to": "mixed_t",
+            "kind": "implicit",
+            "form": "constructor",
+            "template_rule": false,
+            "policy_role": "box_into_mixed_runtime_value"
+        },
+        {
+            "from": "shared_p<hash_t>",
+            "to": "mixed_t",
+            "kind": "implicit",
+            "form": "constructor",
+            "template_rule": false,
+            "policy_role": "box_into_mixed_runtime_value"
+        },
+        {
+            "from": "weak_p<hash_t>",
+            "to": "mixed_t",
+            "kind": "implicit",
+            "form": "constructor",
+            "template_rule": false,
+            "policy_role": "box_into_mixed_runtime_value"
+        },
+        {
+            "from": "mixed_t",
+            "to": "bool_t",
+            "kind": "boundary_implicit_v1_visible_intention",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false,
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+        },
+        {
+            "from": "mixed_t",
+            "to": "int_t",
+            "kind": "boundary_implicit_v1_visible_intention",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false,
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+        },
+        {
+            "from": "mixed_t",
+            "to": "float_t",
+            "kind": "boundary_implicit_v1_visible_intention",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false,
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+        },
+        {
+            "from": "mixed_t",
+            "to": "string_t",
+            "kind": "boundary_implicit_v1_visible_intention",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false,
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
         }
     ],
     "coercions": {
@@ -799,8 +1025,10 @@
             "allowed_inputs": [
                 "bool_t",
                 "int_t",
-                "float_t"
-            ]
+                "float_t",
+                "mixed_t"
+            ],
+            "mixed_t_rule": "establish runtime kind and delegate to the corresponding native condition rule; string_t, null_t, and table carriers remain errors under the current policy"
         },
         "text": {
             "result_type": "string_t",
@@ -880,6 +1108,12 @@
                     "kind": "helper",
                     "helper_name": "to_string",
                     "template_rule": true
+                },
+                {
+                    "from": "mixed_t",
+                    "kind": "helper",
+                    "helper_name": "to_string",
+                    "policy_role": "explicit_text_conversion_after_runtime_kind_dispatch"
                 }
             ]
         }
@@ -1199,106 +1433,6 @@
                     "result": "int_t",
                     "symbol": "--postfix",
                     "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "+=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "-=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "*=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "/=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "%=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "&=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "|=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "^=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "<<=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": ">>=",
-                    "mutates_lhs": true
                 }
             ]
         },
@@ -1453,86 +1587,6 @@
                     "result": "float_t",
                     "symbol": "--postfix",
                     "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "+=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "-=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "*=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "/=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "int_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "+=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "int_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "-=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "int_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "*=",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "int_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "/=",
-                    "mutates_lhs": true
                 }
             ]
         },
@@ -1581,60 +1635,6 @@
                         "float_t"
                     ],
                     "result": "float_t"
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "<",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "<=",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": ">",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": ">=",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
                 }
             ]
         },
@@ -1653,6 +1653,42 @@
                 },
                 {
                     "symbol": "!=",
+                    "arity": 2,
+                    "operands": [
+                        "string_t",
+                        "string_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": "<",
+                    "arity": 2,
+                    "operands": [
+                        "string_t",
+                        "string_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": "<=",
+                    "arity": 2,
+                    "operands": [
+                        "string_t",
+                        "string_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": ">",
+                    "arity": 2,
+                    "operands": [
+                        "string_t",
+                        "string_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": ">=",
                     "arity": 2,
                     "operands": [
                         "string_t",
@@ -1802,6 +1838,170 @@
                 "null_t",
                 "nullopt_t",
                 "nullptr_t"
+            ]
+        },
+        {
+            "name": "int_logical",
+            "enabled": true,
+            "operators": [
+                {
+                    "symbol": "!",
+                    "arity": 1,
+                    "operands": [
+                        "int_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": "&&",
+                    "arity": 2,
+                    "operands": [
+                        "int_t",
+                        "int_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": "||",
+                    "arity": 2,
+                    "operands": [
+                        "int_t",
+                        "int_t"
+                    ],
+                    "result": "bool_t"
+                }
+            ]
+        },
+        {
+            "name": "float_logical",
+            "enabled": true,
+            "operators": [
+                {
+                    "symbol": "!",
+                    "arity": 1,
+                    "operands": [
+                        "float_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": "&&",
+                    "arity": 2,
+                    "operands": [
+                        "float_t",
+                        "float_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": "||",
+                    "arity": 2,
+                    "operands": [
+                        "float_t",
+                        "float_t"
+                    ],
+                    "result": "bool_t"
+                }
+            ]
+        },
+        {
+            "name": "mixed_numeric_logical",
+            "enabled": true,
+            "promotion": {
+                "left": "int_t",
+                "right": "float_t",
+                "promote_to": "float_t"
+            },
+            "symmetric": true,
+            "operators": [
+                {
+                    "symbol": "&&",
+                    "arity": 2,
+                    "operands": [
+                        "int_t",
+                        "float_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": "||",
+                    "arity": 2,
+                    "operands": [
+                        "int_t",
+                        "float_t"
+                    ],
+                    "result": "bool_t"
+                }
+            ]
+        },
+        {
+            "name": "null_comparisons",
+            "enabled": true,
+            "operators": [
+                {
+                    "symbol": "==",
+                    "arity": 2,
+                    "operands": [
+                        "null_t",
+                        "null_t"
+                    ],
+                    "result": "bool_t"
+                },
+                {
+                    "symbol": "!=",
+                    "arity": 2,
+                    "operands": [
+                        "null_t",
+                        "null_t"
+                    ],
+                    "result": "bool_t"
+                }
+            ]
+        },
+        {
+            "name": "table_identity_comparisons",
+            "enabled": true,
+            "operators": [
+                {
+                    "symbol": "==",
+                    "arity": 2,
+                    "operands": [
+                        "shared_p<hash_t>",
+                        "shared_p<hash_t>"
+                    ],
+                    "result": "bool_t",
+                    "policy_role": "identity_by_shared_target_pointer"
+                },
+                {
+                    "symbol": "!=",
+                    "arity": 2,
+                    "operands": [
+                        "shared_p<hash_t>",
+                        "shared_p<hash_t>"
+                    ],
+                    "result": "bool_t",
+                    "policy_role": "identity_by_shared_target_pointer"
+                },
+                {
+                    "symbol": "==",
+                    "arity": 2,
+                    "operands": [
+                        "weak_p<hash_t>",
+                        "weak_p<hash_t>"
+                    ],
+                    "result": "bool_t",
+                    "policy_role": "identity_by_locked_target_pointer_or_false_if_either_expired"
+                },
+                {
+                    "symbol": "!=",
+                    "arity": 2,
+                    "operands": [
+                        "weak_p<hash_t>",
+                        "weak_p<hash_t>"
+                    ],
+                    "result": "bool_t",
+                    "policy_role": "identity_by_locked_target_pointer_or_false_if_either_expired"
+                }
             ]
         }
     ],
@@ -2030,6 +2230,17 @@
                     "null_t"
                 ]
             ]
+        },
+        {
+            "name": "mixed_operator_candidate_expansion",
+            "patterns": [
+                [
+                    "mixed_t",
+                    "implicit_extract_for_operator_resolution",
+                    "*"
+                ]
+            ],
+            "reason": "mixed_t extraction is allowed only at visible-intention typed boundaries, not for overload candidate creation"
         }
     ],
     "composition_constraints": {
@@ -2301,6 +2512,75 @@
             "kind": "move_upcast",
             "template_rule": true,
             "when": "U* is convertible to T*"
+        },
+        {
+            "target": "mixed_t",
+            "source": "mixed_t",
+            "kind": "copy"
+        },
+        {
+            "target": "mixed_t",
+            "source": "null_t",
+            "kind": "box"
+        },
+        {
+            "target": "mixed_t",
+            "source": "bool_t",
+            "kind": "box"
+        },
+        {
+            "target": "mixed_t",
+            "source": "int_t",
+            "kind": "box"
+        },
+        {
+            "target": "mixed_t",
+            "source": "float_t",
+            "kind": "box"
+        },
+        {
+            "target": "mixed_t",
+            "source": "string_t",
+            "kind": "box"
+        },
+        {
+            "target": "mixed_t",
+            "source": "hash_t",
+            "kind": "box_owned_table"
+        },
+        {
+            "target": "mixed_t",
+            "source": "shared_p<hash_t>",
+            "kind": "box_shared_table"
+        },
+        {
+            "target": "mixed_t",
+            "source": "weak_p<hash_t>",
+            "kind": "box_weak_table"
+        },
+        {
+            "target": "bool_t",
+            "source": "mixed_t",
+            "kind": "visible_intention_boundary_extract",
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
+        },
+        {
+            "target": "int_t",
+            "source": "mixed_t",
+            "kind": "visible_intention_boundary_extract",
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
+        },
+        {
+            "target": "float_t",
+            "source": "mixed_t",
+            "kind": "visible_intention_boundary_extract",
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
+        },
+        {
+            "target": "string_t",
+            "source": "mixed_t",
+            "kind": "visible_intention_boundary_extract",
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
         }
     ],
     "sentinel_semantics": {
@@ -2395,6 +2675,81 @@
                     "use(&$x) is not covered by this contract version"
                 ]
             }
+        ]
+    },
+    "validation_requirements": {
+        "schema_rule_ids": {
+            "vr_001": "operator_resolution_uniqueness",
+            "vr_002": "assignment_resolution_uniqueness",
+            "vr_003": "compound_assignment_derivation_consistency",
+            "vr_004": "function_argument_boundary_uniqueness",
+            "vr_005": "return_boundary_uniqueness",
+            "vr_006": "cast_graph_no_duplicate_paths",
+            "vr_007": "condition_resolution_uniqueness",
+            "vr_008": "comparison_resolution_uniqueness",
+            "vr_009": "indexing_context_uniqueness",
+            "vr_010": "weak_table_expiry_behavior_uniqueness",
+            "vr_011": "generator_runtime_boundary_non_overlap",
+            "vr_012": "runtime_compile_surface_ambiguity_audit_required"
+        },
+        "must_check_after_change": [
+            "operator_resolution_uniqueness",
+            "assignment_resolution_uniqueness",
+            "compound_assignment_derivation_consistency",
+            "function_argument_boundary_uniqueness",
+            "return_boundary_uniqueness",
+            "cast_graph_no_duplicate_paths",
+            "condition_resolution_uniqueness",
+            "comparison_resolution_uniqueness",
+            "indexing_context_uniqueness",
+            "weak_table_expiry_behavior_uniqueness",
+            "generator_runtime_boundary_non_overlap",
+            "runtime_compile_surface_ambiguity_audit_required"
+        ],
+        "pipeline_policy": {
+            "ambiguity": "fail",
+            "config_inconsistency": "fail",
+            "unused_rules": "warn",
+            "auto_resolution": "forbidden"
+        },
+        "tooling": {
+            "primary_validator": "tools/runtime_config/bin/validate_config.php",
+            "runtime_audit": "tools/runtime_config/bin/audit_runtime_vs_config.php",
+            "audit_default_exit": 0,
+            "audit_strict_option": "--strict"
+        },
+        "runtime_audit_requirements": {
+            "default_exit": 0,
+            "strict_option": "--strict",
+            "must_probe": [
+                "mixed_t + int_t",
+                "mixed_t + float_t",
+                "mixed_t == int_t",
+                "mixed_t && int_t",
+                "mixed_t += int_t"
+            ],
+            "must_detect": [
+                "native conversion out of mixed_t",
+                "native conversion into mixed_t",
+                "shared operator symbol on both dynamic and native families"
+            ]
+        }
+    },
+    "compound_assignment_policy": {
+        "rule_id": "cap_001",
+        "model": "derived_from_binary_op_then_assign_back",
+        "rule": "lhs op= rhs is valid iff lhs op rhs is valid and the result type is assignable back to lhs under assignment rules",
+        "supported_symbols": [
+            "+=",
+            "-=",
+            "*=",
+            "/=",
+            "%=",
+            "&=",
+            "|=",
+            "^=",
+            "<<=",
+            ">>="
         ]
     }
 }
