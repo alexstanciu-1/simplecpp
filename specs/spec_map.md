@@ -187,6 +187,14 @@ Role:
 Authority:
 - normative for generator behavior, but subordinate to higher-level documents
 
+### `php_generator/specs/primary_type_normalized_parameters.md`
+Role:
+- normative generator/language-side contract for primary-type normalized PHP union parameters
+- documents `@arg.<param>.from(Type) = ...` metadata and the current implementation boundary
+
+Authority:
+- normative for this feature, but subordinate to higher-level documents
+
 ### `php_generator/specs/rules_catalog.md`
 Role:
 - catalog of normalized generator rules and examples

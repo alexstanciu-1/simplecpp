@@ -13,6 +13,7 @@ use Scpp\S2S\IR\PropertyDecl;
 use Scpp\S2S\IR\PhpFile;
 use Scpp\S2S\IR\Statement;
 use Scpp\S2S\IR\UseDecl;
+use Scpp\S2S\Metadata\ArgNormalizationCommentParser;
 use Scpp\S2S\Loader\ParsedInput;
 use Scpp\S2S\Support\AstKind;
 use Scpp\S2S\Support\BuildException;
@@ -28,6 +29,13 @@ final class IrBuilder
 {
 	/** @var array<string, string> */
 	private array $typeCommentsByKey = [];
+	private ArgNormalizationCommentParser $argNormalizationCommentParser;
+
+
+	public function __construct(?ArgNormalizationCommentParser $argNormalizationCommentParser = null)
+	{
+		$this->argNormalizationCommentParser = $argNormalizationCommentParser ?? new ArgNormalizationCommentParser();
+	}
 
 	/**
 	 * @param array<int, array{name:string,type:string,line:int}> $typeComments
@@ -365,12 +373,16 @@ final class IrBuilder
 	{
 		$children = $node->children ?? [];
 
+		$params = $this->buildParams($children['params']->children ?? []);
+		$argRuleParse = $this->parseArgNormalizationRules($children['docComment'] ?? null, 'function ' . (string) ($children['name'] ?? ''));
+
 		return new FunctionDecl(
 			name: (string) ($children['name'] ?? ''),
-			params: $this->buildParams($children['params']->children ?? []),
+			params: $params,
 			returnType: $this->readTypeName($children['returnType'] ?? null),
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
+			argNormalizationRules: $this->validateArgNormalizationRules($argRuleParse['rules'], $params, 'function ' . (string) ($children['name'] ?? '')),
 		);
 	}
 
@@ -392,14 +404,70 @@ final class IrBuilder
 	{
 		$children = $node->children ?? [];
 
+		$params = $this->buildParams($children['params']->children ?? []);
+		$owner = 'method ' . (string) ($children['name'] ?? '');
+
 		return new MethodDecl(
 			name: (string) ($children['name'] ?? ''),
-			params: $this->buildParams($children['params']->children ?? []),
+			params: $params,
 			returnType: $this->readTypeName($children['returnType'] ?? null),
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			isStatic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
+			argNormalizationRules: $this->validateArgNormalizationRules($this->parseArgNormalizationRules($children['docComment'] ?? null, $owner)['rules'], $params, $owner),
 		);
+	}
+
+	/**
+	 * @return array{rules:list<\Scpp\S2S\IR\ArgNormalizationRule>,errors:list<string>}
+	 */
+	private function parseArgNormalizationRules(mixed $docComment, string $owner): array
+	{
+		$parsed = $this->argNormalizationCommentParser->parse($docComment, $owner);
+		foreach ($parsed['errors'] as $error) {
+			$this->errors[] = $error;
+		}
+		return $parsed;
+	}
+
+	/**
+	 * @param list<\Scpp\S2S\IR\ArgNormalizationRule> $rules
+	 * @param list<ParamDecl> $params
+	 * @return list<\Scpp\S2S\IR\ArgNormalizationRule>
+	 */
+	private function validateArgNormalizationRules(array $rules, array $params, string $owner): array
+	{
+		if ($rules === []) {
+			return [];
+		}
+
+		$paramMap = [];
+		foreach ($params as $param) {
+			$paramMap[$param->name] = $param;
+		}
+
+		$seen = [];
+		$out = [];
+		foreach ($rules as $rule) {
+			$param = $paramMap[$rule->paramName] ?? null;
+			if (!$param instanceof ParamDecl) {
+				$this->errors[] = 'Unknown @arg normalization parameter $' . $rule->paramName . ' in ' . $owner . '.';
+				continue;
+			}
+			if (!in_array($rule->sourceType, $param->unionTypes, true)) {
+				$this->errors[] = 'Unsupported @arg normalization source type ' . $rule->sourceType . ' for ' . $owner . '::$' . $param->name . '. The type must be present in the declared union.';
+				continue;
+			}
+			$key = $param->name . '|' . $rule->sourceType;
+			if (isset($seen[$key])) {
+				$this->errors[] = 'Duplicate @arg normalization source type ' . $rule->sourceType . ' for ' . $owner . '::$' . $param->name . '.';
+				continue;
+			}
+			$seen[$key] = true;
+			$out[] = $rule;
+		}
+
+		return $out;
 	}
 
 	/** @param array<int, mixed> $nodes @return list<ParamDecl> */
@@ -871,6 +939,19 @@ final class IrBuilder
 		if ($kind === AstKind::NAME) {
 			$name = (string) ($typeNode->children['name'] ?? '');
 			return $name !== '' ? $name : null;
+		}
+
+		if (isset($typeNode->children) && is_array($typeNode->children) && $typeNode->children !== []) {
+			$parts = [];
+			foreach ($typeNode->children as $child) {
+				$part = $this->readTypeName($child);
+				if ($part !== null && $part !== '') {
+					$parts[] = $part;
+				}
+			}
+			if ($parts !== []) {
+				return implode('|', $parts);
+			}
 		}
 
 		return match ($flags) {

@@ -208,6 +208,9 @@ Examples:
 - references are supported for functions and methods when explicit in source
 - reference semantics are emitted literally and are never inferred
 - default parameter values are allowed and belong to declarations only
+- primary-type normalized PHP union parameters are supported by design; see `primary_type_normalized_parameters.md`
+- for a union parameter, the first listed type is the primary type and later types are secondary source types
+- current generator lowering extracts the primary type as the emitted callable-body type while annotation parsing and validation are handled centrally
 
 ---
 

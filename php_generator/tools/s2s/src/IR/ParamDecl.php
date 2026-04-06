@@ -13,6 +13,9 @@ namespace Scpp\S2S\IR;
 final class ParamDecl
 {
 	public readonly ?string $type;
+	public readonly ?string $primaryType;
+	/** @var list<string> */
+	public readonly array $unionTypes;
 
 	/**
 	 * Stores collaborators and default state for this phase object.
@@ -31,5 +34,17 @@ final class ParamDecl
 		public readonly int $line = 0,
 	) {
 		$this->type = $nativeType ?? $docType;
+		$this->unionTypes = self::splitUnionTypes($this->type);
+		$this->primaryType = $this->unionTypes[0] ?? $this->type;
+	}
+
+	private static function splitUnionTypes(?string $type): array
+	{
+		if ($type === null) {
+			return [];
+		}
+
+		$parts = array_values(array_filter(array_map(static fn (string $part): string => trim($part), explode('|', $type)), static fn (string $part): bool => $part !== ''));
+		return $parts === [] ? [] : $parts;
 	}
 }

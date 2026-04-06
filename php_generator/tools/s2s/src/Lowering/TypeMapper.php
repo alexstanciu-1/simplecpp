@@ -26,8 +26,26 @@ final class TypeMapper
 		$this->enumNames = $enumNames;
 	}
 
+	/** @return list<string> */
+	public function splitUnionTypes(string $phpType): array
+	{
+		$normalized = trim($phpType);
+		if ($normalized === '' || !str_contains($normalized, '|')) {
+			return $normalized === '' ? [] : [$normalized];
+		}
+
+		return array_values(array_filter(array_map(static fn (string $part): string => trim($part), explode('|', $normalized)), static fn (string $part): bool => $part !== ''));
+	}
+
+	public function getPrimaryDeclaredType(string $phpType): string
+	{
+		$parts = $this->splitUnionTypes($phpType);
+		return $parts[0] ?? trim($phpType);
+	}
+
 	public function mapDeclaredType(string $phpType): string
 	{
+		$phpType = $this->getPrimaryDeclaredType($phpType);
 		$normalized = trim($phpType);
 		if ($this->isFunctionType($normalized)) {
 			return $this->mapFunctionType($normalized);

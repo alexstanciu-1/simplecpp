@@ -15,6 +15,7 @@ final class MethodDecl
 	/**
 	 * @param list<ParamDecl> $params
 	 * @param list<Statement> $statements
+	 * @param list<ArgNormalizationRule> $argNormalizationRules
 	 */
 	public function __construct(
 		public readonly string $name,
@@ -23,6 +24,7 @@ final class MethodDecl
 		public readonly bool $returnsByReference,
 		public readonly bool $isStatic,
 		public readonly array $statements,
+		public readonly array $argNormalizationRules = [],
 	) {
 	}
 }

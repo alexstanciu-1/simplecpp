@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Scpp\S2S\Generator;
 
 use Scpp\S2S\Emit\CppFile;
+use Scpp\S2S\IR\ArgNormalizationRule;
 use Scpp\S2S\IR\ClassDecl;
 use Scpp\S2S\IR\ConstantDecl;
 use Scpp\S2S\IR\FunctionDecl;
@@ -49,6 +50,11 @@ final class Generator
 	private array $currentParamPassModes = [];
 	/** @var list<string> */
 	private array $currentScalarRefParamAliasLines = [];
+	/** @var list<string> */
+	private array $currentParamEntryAliasLines = [];
+	/** @var array<string, ArgNormalizationRule> */
+	private array $currentArgNormalizationRulesByKey = [];
+	private ?string $currentNormalizationCallableName = null;
 	private ?string $currentReturnType = null;
 	/** @var null|array{flag:string,value:?string,type:?string} */
 	private ?array $currentFinallyReturnContext = null;
@@ -111,7 +117,7 @@ final class Generator
 		$this->throwIfErrors();
 
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
-		$header = ['#pragma once', '', '#include <scpp/runtime.hpp>'];
+		$header = ['#pragma once', '', '#include <scpp/runtime.hpp>', '#include <type_traits>', '#include <utility>'];
 		foreach ($file->prologueIncludes as $includePath) {
 			$header[] = '#include "' . $includePath . '"';
 		}
@@ -396,7 +402,40 @@ final class Generator
 			return $rendered;
 		}
 
+		if ($this->paramNeedsTemplateNormalization($param)) {
+			return $rendered;
+		}
+
 		return $this->wrapExprForExpectedType($rendered, $this->inferExprType($arg), $this->typeMapper->mapDeclaredType($param->type));
+	}
+
+	private function paramNeedsTemplateNormalization(ParamDecl $param): bool
+	{
+		if ($param->isReference || $param->isVariadic || count($param->unionTypes) < 2) {
+			return false;
+		}
+
+		foreach ($param->unionTypes as $unionType) {
+			if (!$this->isScalarLikeUnionType($unionType)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private function isScalarLikeUnionType(string $phpType): bool
+	{
+		$normalized = trim($phpType);
+		if ($normalized === '') {
+			return false;
+		}
+
+		if (str_starts_with($normalized, '?')) {
+			$normalized = substr($normalized, 1);
+		}
+
+		return in_array($normalized, ['null', 'bool', 'int', 'float', 'string'], true);
 	}
 
 
@@ -1126,6 +1165,12 @@ final class Generator
 			$header[] = $this->indent(1) . 'static inline const auto ' . $this->cppIdentifier($constant->name) . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
 		}
 		foreach ($class->methods as $method) {
+			if ($this->methodNeedsNormalizedTemplate($method)) {
+				foreach ($this->renderInlineTemplateMethodArtifacts($class, $method, $namespacePhp) as $line) {
+					$header[] = $this->indent(1) . $line;
+				}
+				continue;
+			}
 			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';';
 		}
 		$header[] = '};';
@@ -1157,7 +1202,7 @@ final class Generator
 			$this->currentClassName = $class->name;
 			$this->currentParentClass = $class->parentClass;
 			foreach ($class->methods as $method) {
-				if ($this->methodIsAbstract($method, $class)) {
+				if ($this->methodIsAbstract($method, $class) || $this->methodNeedsNormalizedTemplate($method)) {
 					continue;
 				}
 				$source[] = $this->renderMethodDefinition($class, $method, $namespacePhp);
@@ -1314,6 +1359,13 @@ final class Generator
 
 	private function emitFunction(array &$header, array &$source, FunctionDecl $function, ?string $namespacePhp): void
 	{
+		if ($this->functionLikeNeedsNormalizedTemplate($function->params)) {
+			foreach ($this->renderFunctionTemplateArtifacts($function, $namespacePhp) as $line) {
+				$header[] = $line;
+			}
+			$header[] = '';
+			return;
+		}
 		$header[] = $this->renderFunctionDeclaration($function, $namespacePhp) . ';';
 		$header[] = '';
 		$source[] = $this->renderFunctionDefinition($function, $namespacePhp);
@@ -1550,6 +1602,9 @@ final class Generator
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
 		}
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($method->argNormalizationRules);
+		$this->currentNormalizationCallableName = $this->methodNeedsNormalizedTemplate($method) ? $method->name : null;
+		$this->currentParamEntryAliasLines = $this->buildParamEntryAliasLines($method->params);
 		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($method->params);
 		$className = $class->name;
 		$statements = $method->statements;
@@ -1577,6 +1632,9 @@ final class Generator
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
 		$this->currentScalarRefParamAliasLines = [];
+		$this->currentParamEntryAliasLines = [];
+		$this->currentArgNormalizationRulesByKey = [];
+		$this->currentNormalizationCallableName = null;
 		return $signature . " {
 " . $body . "
 }";
@@ -1606,6 +1664,210 @@ final class Generator
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 
 	 */
+
+
+	private function functionLikeNeedsNormalizedTemplate(array $params): bool
+	{
+		foreach ($params as $param) {
+			if ($this->paramNeedsTemplateNormalization($param)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private function methodNeedsNormalizedTemplate(MethodDecl $method): bool
+	{
+		if ($method->name === '__construct' || $method->name === '__destruct') {
+			return false;
+		}
+		return $this->functionLikeNeedsNormalizedTemplate($method->params);
+	}
+
+	private function renderTemplateLineForParams(array $params): string
+	{
+		$templateParams = [];
+		foreach ($params as $param) {
+			if ($this->paramNeedsTemplateNormalization($param)) {
+				$templateParams[] = 'typename ' . $this->renderTemplateTypeName($param);
+			}
+		}
+		return 'template <' . implode(', ', $templateParams) . '>';
+	}
+
+	private function renderTemplateTypeName(ParamDecl $param): string
+	{
+		return 'T_' . $param->name;
+	}
+
+	private function renderNormalizationHelperName(string $callableName, ParamDecl $param): string
+	{
+		return '_norm_' . $this->cppIdentifier($callableName) . '__' . $param->name;
+	}
+
+	private function renderNormalizationRuleExpression(ArgNormalizationRule $rule, ParamDecl $param, string $sourceAlias): string
+	{
+		$expression = $rule->expression;
+		$expression = preg_replace('/\$' . preg_quote($param->name, '/') . '\b/', $sourceAlias, $expression) ?? $expression;
+		$expression = preg_replace('/\b' . preg_quote($param->name, '/') . '\b/', $sourceAlias, $expression) ?? $expression;
+		return $expression;
+	}
+
+	private function renderNormalizationDirectBranchLines(ParamDecl $param, string $unionType, bool $sourceIsMixed = false): array
+	{
+		$mappedPrimaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
+		$mappedSourceType = $this->typeMapper->mapDeclaredType($unionType);
+		$sourceExpr = '_' . $param->name;
+		$rule = $this->lookupArgNormalizationRule($param, $unionType);
+		if ($rule === null) {
+			if (($param->primaryType ?? $param->type) === $unionType) {
+				if ($sourceIsMixed) {
+					return ['return cast<' . $mappedPrimaryType . '>(' . $sourceExpr . ');'];
+				}
+				return ['return ' . $sourceExpr . ';'];
+			}
+			return ['return cast<' . $mappedPrimaryType . '>(' . $sourceExpr . ');'];
+		}
+		$expr = $this->renderNormalizationRuleExpression($rule, $param, $param->name);
+		return [
+			$mappedSourceType . ' ' . $param->name . ' = cast<' . $mappedSourceType . '>(' . $sourceExpr . ');',
+			'return ' . $expr . ';',
+		];
+	}
+
+	private function renderNormalizationMixedBranchLines(ParamDecl $param): array
+	{
+		$mappedPrimaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
+		$lines = [];
+		$first = true;
+		foreach ($param->unionTypes as $unionType) {
+			$condition = $this->renderUnionSourceKindCheck('_' . $param->name, $unionType);
+			if ($condition === null) {
+				continue;
+			}
+			$prefix = $first ? 'if' : 'else if';
+			$first = false;
+			$lines[] = $prefix . ' (' . $condition . ') {';
+			foreach ($this->renderNormalizationDirectBranchLines($param, $unionType, true) as $line) {
+				$lines[] = $this->indent(1) . $line;
+			}
+			$lines[] = '}';
+		}
+		$lines[] = 'throw std::runtime_error("Unsupported runtime kind for normalized parameter $' . addslashes($param->name) . '");';
+		return $lines;
+	}
+
+	private function renderNormalizationHelperDefinition(string $callableName, ParamDecl $param, bool $classInline = false): string
+	{
+		$primaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
+		$templateType = $this->renderTemplateTypeName($param);
+		$helperName = $this->renderNormalizationHelperName($callableName, $param);
+		$prefix = $classInline ? 'static ' : '';
+		$lines = [];
+		$lines[] = 'template <typename ' . $templateType . '>';
+		$lines[] = $prefix . $primaryType . ' ' . $helperName . '(' . $templateType . '&& _' . $param->name . ') {';
+		$lines[] = $this->indent(1) . 'using _norm_arg_t = std::remove_cv_t<std::remove_reference_t<' . $templateType . '>>;';
+		$first = true;
+		foreach ($param->unionTypes as $unionType) {
+			$mappedSourceType = $this->typeMapper->mapDeclaredType($unionType);
+			$prefixCond = $first ? 'if constexpr' : 'else if constexpr';
+			$first = false;
+			$lines[] = $this->indent(1) . $prefixCond . ' (std::is_same_v<_norm_arg_t, ' . $mappedSourceType . '>) {';
+			foreach ($this->renderNormalizationDirectBranchLines($param, $unionType, true) as $line) {
+				$lines[] = $this->indent(2) . $line;
+			}
+			$lines[] = $this->indent(1) . '}';
+		}
+		$lines[] = $this->indent(1) . 'else if constexpr (std::is_same_v<_norm_arg_t, mixed_t>) {';
+		foreach ($this->renderNormalizationMixedBranchLines($param) as $line) {
+			$lines[] = $this->indent(2) . $line;
+		}
+		$lines[] = $this->indent(1) . '} else {';
+		$lines[] = $this->indent(2) . 'static_assert(!std::is_same_v<_norm_arg_t, _norm_arg_t>, "Unsupported type for normalized parameter");';
+		$lines[] = $this->indent(1) . '}';
+		$lines[] = '}';
+		return implode("\n", $lines);
+	}
+
+	private function renderFunctionTemplateArtifacts(FunctionDecl $function, ?string $namespacePhp): array
+	{
+		$prevRules = $this->currentArgNormalizationRulesByKey;
+		$prevCallable = $this->currentNormalizationCallableName;
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($function->argNormalizationRules);
+		$this->currentNormalizationCallableName = $function->name;
+
+		$lines = [];
+		foreach ($function->params as $param) {
+			if ($this->paramNeedsTemplateNormalization($param)) {
+				$lines[] = $this->renderNormalizationHelperDefinition($function->name, $param, false);
+				$lines[] = '';
+			}
+		}
+		$lines[] = $this->renderTemplateLineForParams($function->params);
+		$lines[] = $this->renderFunctionDefinition($function, $namespacePhp);
+
+		$this->currentArgNormalizationRulesByKey = $prevRules;
+		$this->currentNormalizationCallableName = $prevCallable;
+		return $lines;
+	}
+
+	private function renderInlineTemplateMethodArtifacts(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): array
+	{
+		$prevRules = $this->currentArgNormalizationRulesByKey;
+		$prevCallable = $this->currentNormalizationCallableName;
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($method->argNormalizationRules);
+		$this->currentNormalizationCallableName = $method->name;
+
+		$lines = [];
+		foreach ($method->params as $param) {
+			if ($this->paramNeedsTemplateNormalization($param)) {
+				foreach (explode("\n", $this->renderNormalizationHelperDefinition($method->name, $param, true)) as $line) {
+					$lines[] = $line;
+				}
+				$lines[] = '';
+			}
+		}
+		foreach (explode("\n", $this->renderTemplateLineForParams($method->params)) as $line) {
+			$lines[] = $line;
+		}
+		foreach (explode("\n", $this->renderInlineMethodDefinition($class, $method, $namespacePhp)) as $line) {
+			$lines[] = $line;
+		}
+
+		$this->currentArgNormalizationRulesByKey = $prevRules;
+		$this->currentNormalizationCallableName = $prevCallable;
+		return $lines;
+	}
+
+	private function renderInlineMethodDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
+	{
+		$this->declaredLocals = [];
+		$this->declaredLocalTypes = [];
+		$this->currentParamPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		foreach ($method->params as $param) {
+			$this->declaredLocals[$param->name] = true;
+			if ($param->type !== null) {
+				$this->declaredLocalTypes[$param->name] = $param->type;
+			}
+		}
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($method->argNormalizationRules);
+		$this->currentNormalizationCallableName = $method->name;
+		$this->currentParamEntryAliasLines = $this->buildParamEntryAliasLines($method->params);
+		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($method->params);
+		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+		$this->currentReturnType = $returnType;
+		$prefix = $method->isStatic ? 'static ' : '';
+		$signature = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
+		$body = $this->renderBody($method->statements, $namespacePhp);
+		$this->currentReturnType = null;
+		$this->currentFinallyReturnContext = null;
+		$this->currentParamPassModes = [];
+		$this->currentScalarRefParamAliasLines = [];
+		$this->currentParamEntryAliasLines = [];
+		$this->currentArgNormalizationRulesByKey = [];
+		$this->currentNormalizationCallableName = null;
+		return $signature . " {\n" . $body . "\n}";
+	}
 
 	private function renderFunctionDeclaration(FunctionDecl $function, ?string $namespacePhp = null): string
 	{
@@ -1639,6 +1901,9 @@ final class Generator
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
 		}
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($function->argNormalizationRules);
+		$this->currentNormalizationCallableName = $this->functionLikeNeedsNormalizedTemplate($function->params) ? $function->name : null;
+		$this->currentParamEntryAliasLines = $this->buildParamEntryAliasLines($function->params);
 		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($function->params);
 		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$this->currentReturnType = $returnType;
@@ -1647,6 +1912,10 @@ final class Generator
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
+		$this->currentScalarRefParamAliasLines = [];
+		$this->currentParamEntryAliasLines = [];
+		$this->currentArgNormalizationRulesByKey = [];
+		$this->currentNormalizationCallableName = null;
 		return $signature . " {\n" . $body . "\n}";
 	}
 
@@ -1674,7 +1943,11 @@ final class Generator
 			} else {
 				$type = $param->type !== null ? $this->renderParamTypeForMode($param, $paramPassModes[$param->name] ?? 'readonly') : '/* ERROR missing-parameter-type */';
 			}
-			$rendered = $type . ' ' . $this->renderParamName($param, $useStorageNames);
+			$name = $this->renderParamName($param, $useStorageNames);
+			if ($this->paramNeedsTemplateNormalization($param) && !$useStorageNames) {
+				$name = '_' . $param->name;
+			}
+			$rendered = $type . ' ' . $name;
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
 				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
 			}
@@ -1703,6 +1976,10 @@ final class Generator
 			return '/* ERROR missing-parameter-type */';
 		}
 
+		if ($this->paramNeedsTemplateNormalization($param)) {
+			return $this->renderTemplateTypeName($param) . '&&';
+		}
+
 		$mapped = $this->typeMapper->mapDeclaredType($param->type);
 		if ($param->isReference) {
 			$proxyType = $this->typeMapper->mapReferenceProxyType($param->type);
@@ -1721,11 +1998,17 @@ final class Generator
 
 	private function renderBody(array $statements, ?string $namespacePhp): string
 	{
-		$lines = array_merge($this->renderCurrentScalarRefParamAliases(), $this->renderCurrentArrayParamGuards());
+		$lines = array_merge($this->renderCurrentParamEntryAliases(), $this->renderCurrentScalarRefParamAliases(), $this->renderCurrentArrayParamGuards());
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
 			$lines[] = $this->indent(1) . $line;
 		}
 		return implode("\n", $lines);
+	}
+
+	/** @return list<string> */
+	private function renderCurrentParamEntryAliases(): array
+	{
+		return $this->currentParamEntryAliasLines;
 	}
 
 	/**
@@ -1745,6 +2028,27 @@ final class Generator
 		return [];
 	}
 
+	/** @param list<ParamDecl> $params @return list<string> */
+	private function buildParamEntryAliasLines(array $params): array
+	{
+		$lines = [];
+		foreach ($params as $param) {
+			$storageName = $this->renderParamStorageName($param);
+			if ($this->paramNeedsTemplateNormalization($param)) {
+				$primaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
+				$callableName = $this->currentNormalizationCallableName ?? 'callable';
+				$lines[] = $primaryType . ' ' . $param->name . ' = ' . $this->renderNormalizationHelperName($callableName, $param) . '(std::forward<' . $this->renderTemplateTypeName($param) . '>(' . $storageName . '));';
+				continue;
+			}
+			if ($storageName === $param->name) {
+				continue;
+			}
+			$binding = $param->isReference ? 'auto&' : 'auto';
+			$lines[] = $binding . ' ' . $param->name . ' = ' . $storageName . ';';
+		}
+		return $lines;
+	}
+
 	private function renderParamName(ParamDecl $param, bool $useStorageNames): string
 	{
 		return $useStorageNames ? $this->renderParamStorageName($param) : $param->name;
@@ -1752,10 +2056,82 @@ final class Generator
 
 	private function renderParamStorageName(ParamDecl $param): string
 	{
-		if ($param->isReference && $param->type !== null && $this->typeMapper->mapReferenceProxyType($param->type) !== null) {
-			return '_' . $param->name;
+		if (!$this->paramNeedsGeneratedStorageName($param)) {
+			return $param->name;
 		}
-		return $param->name;
+
+		return '_' . $param->name;
+	}
+
+
+	/** @param list<ArgNormalizationRule> $rules @return array<string, ArgNormalizationRule> */
+	private function indexArgNormalizationRules(array $rules): array
+	{
+		$indexed = [];
+		foreach ($rules as $rule) {
+			$indexed[$rule->paramName . '|' . $rule->sourceType] = $rule;
+		}
+		return $indexed;
+	}
+
+	private function lookupArgNormalizationRule(ParamDecl $param, string $sourceType): ?ArgNormalizationRule
+	{
+		return $this->currentArgNormalizationRulesByKey[$param->name . '|' . $sourceType] ?? null;
+	}
+
+	private function paramNeedsGeneratedStorageName(ParamDecl $param): bool
+	{
+		return $this->paramNeedsTemplateNormalization($param);
+	}
+
+	private function renderUnionSourceKindCheck(string $storageName, string $sourceType): ?string
+	{
+		$normalized = ltrim(trim($sourceType), '?');
+		return match ($normalized) {
+			'null' => $storageName . '.kind() == mixed_t::kind_t::null_v',
+			'bool' => 'static_cast<bool>(' . $storageName . '.is_bool())',
+			'int' => 'static_cast<bool>(' . $storageName . '.is_int())',
+			'float' => 'static_cast<bool>(' . $storageName . '.is_float())',
+			'string' => 'static_cast<bool>(' . $storageName . '.is_string())',
+			default => null,
+		};
+	}
+
+	private function renderForwardedNormalizationExpression(ArgNormalizationRule $rule, ParamDecl $param, string $storageName): string
+	{
+		$expression = $rule->expression;
+		$sourceAlias = '_gen_' . $param->name . '_from_' . (preg_replace('/[^A-Za-z0-9_]+/', '_', $rule->sourceType) ?? 'value');
+		$mappedSourceType = $this->typeMapper->mapDeclaredType($rule->sourceType);
+		$expression = preg_replace('/\$' . preg_quote($param->name, '/') . '\b/', $sourceAlias, $expression) ?? $expression;
+		$expression = preg_replace('/\b' . preg_quote($param->name, '/') . '\b/', $sourceAlias, $expression) ?? $expression;
+		return '([&]() -> ' . $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type) . ' { ' . $mappedSourceType . ' ' . $sourceAlias . ' = cast<' . $mappedSourceType . '>(' . $storageName . '); return ' . $expression . '; })()';
+	}
+
+	private function buildMixedCarrierNormalizationLines(ParamDecl $param, string $storageName): array
+	{
+		$primaryType = $param->primaryType ?? $param->type;
+		$mappedPrimaryType = $primaryType !== null ? $this->typeMapper->mapDeclaredType($primaryType) : 'mixed_t';
+		$lines = [$mappedPrimaryType . ' ' . $param->name . ';'];
+		$firstBranch = true;
+		foreach ($param->unionTypes as $unionType) {
+			$condition = $this->renderUnionSourceKindCheck($storageName, $unionType);
+			if ($condition === null) {
+				continue;
+			}
+			$branchPrefix = $firstBranch ? 'if' : 'else if';
+			$firstBranch = false;
+			$rule = $this->lookupArgNormalizationRule($param, $unionType);
+			$assignmentExpr = $rule !== null
+				? $this->renderForwardedNormalizationExpression($rule, $param, $storageName)
+				: 'cast<' . $mappedPrimaryType . '>(' . $storageName . ')';
+			$lines[] = $branchPrefix . ' (' . $condition . ') {';
+			$lines[] = $this->indent(1) . $param->name . ' = ' . $assignmentExpr . ';';
+			$lines[] = '}';
+		}
+		$lines[] = 'else {';
+		$lines[] = $this->indent(1) . 'throw std::runtime_error("Unsupported runtime kind for normalized parameter $' . addslashes($param->name) . '");';
+		$lines[] = '}';
+		return $lines;
 	}
 
 	private function renderCurrentArrayParamGuards(): array
