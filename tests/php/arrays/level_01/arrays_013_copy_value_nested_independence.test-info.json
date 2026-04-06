@@ -1,0 +1,51 @@
+{
+    "id": "arrays_013_copy_value_nested_independence",
+    "feature": "arrays",
+    "level": "level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "array(1) {\n  [\"row\"]=>\n  array(2) {\n    [\"id\"]=>\n    int(1)\n    [\"name\"]=>\n    string(3) \"Bob\"\n  }\n}\narray(1) {\n  [\"row\"]=>\n  array(2) {\n    [\"id\"]=>\n    int(1)\n    [\"name\"]=>\n    string(4) \"Alex\"\n  }\n}\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "array(1) {\n  [\"row\"]=>\n  array(2) {\n    [\"id\"]=>\n    int(1)\n    [\"name\"]=>\n    string(3) \"Bob\"\n  }\n}\narray(1) {\n  [\"row\"]=>\n  array(2) {\n    [\"id\"]=>\n    int(1)\n    [\"name\"]=>\n    string(4) \"Alex\"\n  }\n}\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "arrays",
+        "copy",
+        "nested"
+    ],
+    "notes": "Nested rows remain independent after array copy-by-value.",
+    "build": {
+        "sanitizers": null
+    }
+}

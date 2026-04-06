@@ -1,0 +1,49 @@
+{
+    "id": "control_flow_014_foreach_outer_name_shadow_kept",
+    "feature": "control_flow",
+    "level": "level_02",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "1\n2\n2\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "1\n2\n2\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "control_flow"
+    ],
+    "notes": "Simple C++ policy: if the foreach value variable already exists before the loop, the loop reuses that outer binding and the final iterated value remains visible after the loop.",
+    "build": {
+        "sanitizers": null
+    }
+}

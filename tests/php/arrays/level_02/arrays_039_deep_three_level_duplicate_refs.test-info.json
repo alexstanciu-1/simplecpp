@@ -1,0 +1,51 @@
+{
+    "id": "arrays_039_deep_three_level_duplicate_refs",
+    "feature": "arrays",
+    "level": "level_02",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "array(1) {\n  [\"a\"]=>\n  array(1) {\n    [\"b\"]=>\n    array(2) {\n      [\"c\"]=>\n      array(3) {\n        [\"id\"]=>\n        int(7)\n        [\"seen\"]=>\n        int(7)\n        [\"final\"]=>\n        int(7)\n      }\n      [\"x\"]=>\n      int(1)\n    }\n  }\n}\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "array(1) {\n  [\"a\"]=>\n  array(1) {\n    [\"b\"]=>\n    array(2) {\n      [\"c\"]=>\n      array(3) {\n        [\"id\"]=>\n        int(7)\n        [\"seen\"]=>\n        int(7)\n        [\"final\"]=>\n        int(7)\n      }\n      [\"x\"]=>\n      int(1)\n    }\n  }\n}\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "arrays",
+        "deep",
+        "alias"
+    ],
+    "notes": "Deep parent and leaf aliases should remain coherent across three levels.",
+    "build": {
+        "sanitizers": null
+    }
+}

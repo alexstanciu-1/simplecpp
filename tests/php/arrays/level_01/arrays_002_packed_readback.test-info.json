@@ -1,0 +1,51 @@
+{
+    "id": "arrays_002_packed_readback",
+    "feature": "arrays",
+    "level": "level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "4\n5\n6\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "4\n5\n6\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "arrays",
+        "packed",
+        "read"
+    ],
+    "notes": "Read back packed indexes after multiple appends.",
+    "build": {
+        "sanitizers": null
+    }
+}

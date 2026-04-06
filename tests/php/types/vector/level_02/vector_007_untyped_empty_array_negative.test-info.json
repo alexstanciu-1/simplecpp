@@ -1,0 +1,54 @@
+{
+    "id": "vector_007_untyped_empty_array_negative",
+    "feature": "vector",
+    "level": "level_02",
+    "outcome": "negative_generate",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "0\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": false,
+            "error_contains": [
+                "count",
+                "mixed_t"
+            ]
+        },
+        "run": {
+            "success": false,
+            "exit_code": 1,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "types",
+        "vector",
+        "negative_generate"
+    ],
+    "notes": "Untyped empty arrays currently fail at compile time because count() has no mixed_t overload on this path.",
+    "build": {
+        "sanitizers": null
+    }
+}

@@ -1,0 +1,52 @@
+{
+    "id": "vector_004_vector_append_basic",
+    "feature": "vector",
+    "level": "level_02",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "10\n20\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": false,
+            "error_contains": [
+                "vpush_back"
+            ]
+        },
+        "run": {
+            "success": false,
+            "exit_code": 1,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "types",
+        "vector"
+    ],
+    "notes": "Vector append generation currently reaches a compile-stage vpush_back emission failure.",
+    "build": {
+        "sanitizers": null
+    }
+}

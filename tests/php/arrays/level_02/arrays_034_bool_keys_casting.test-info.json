@@ -1,0 +1,51 @@
+{
+    "id": "arrays_034_bool_keys_casting",
+    "feature": "arrays",
+    "level": "level_02",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "array(2) {\n  [1]=>\n  string(3) \"one\"\n  [0]=>\n  string(2) \"no\"\n}\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "array(2) {\n  [1]=>\n  string(3) \"one\"\n  [0]=>\n  string(2) \"no\"\n}\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "arrays",
+        "key_cast",
+        "bool"
+    ],
+    "notes": "Boolean keys should follow PHP key casting rules.",
+    "build": {
+        "sanitizers": null
+    }
+}

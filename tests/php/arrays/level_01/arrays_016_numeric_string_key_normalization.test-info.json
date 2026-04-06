@@ -1,0 +1,51 @@
+{
+    "id": "arrays_016_numeric_string_key_normalization",
+    "feature": "arrays",
+    "level": "level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "array(3) {\n  [0]=>\n  string(4) \"zero\"\n  [\"01\"]=>\n  string(7) \"leading\"\n  [1]=>\n  string(3) \"one\"\n}\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "array(3) {\n  [0]=>\n  string(4) \"zero\"\n  [\"01\"]=>\n  string(7) \"leading\"\n  [1]=>\n  string(3) \"one\"\n}\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "arrays",
+        "key_cast",
+        "numeric_string"
+    ],
+    "notes": "Numeric string keys should follow PHP array key normalization.",
+    "build": {
+        "sanitizers": null
+    }
+}

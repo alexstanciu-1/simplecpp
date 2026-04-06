@@ -1,0 +1,51 @@
+{
+    "id": "arrays_036_root_ref_append_other_row_stability",
+    "feature": "arrays",
+    "level": "level_02",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "array(2) {\n  [0]=>\n  array(3) {\n    [\"id\"]=>\n    int(1)\n    [\"name\"]=>\n    string(7) \"patched\"\n    [\"extra\"]=>\n    int(7)\n  }\n  [1]=>\n  array(2) {\n    [\"id\"]=>\n    int(2)\n    [\"name\"]=>\n    string(1) \"B\"\n  }\n}\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "array(2) {\n  [0]=>\n  array(3) {\n    [\"id\"]=>\n    int(1)\n    [\"name\"]=>\n    string(7) \"patched\"\n    [\"extra\"]=>\n    int(7)\n  }\n  [1]=>\n  array(2) {\n    [\"id\"]=>\n    int(2)\n    [\"name\"]=>\n    string(1) \"B\"\n  }\n}\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "arrays",
+        "growth",
+        "row_ref"
+    ],
+    "notes": "Appending a different row while holding a row ref should not corrupt the live alias.",
+    "build": {
+        "sanitizers": null
+    }
+}
