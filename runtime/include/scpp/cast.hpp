@@ -12,6 +12,8 @@
 #include "scpp/hash_t.hpp"
 
 #include <type_traits>
+#include <sstream>
+#include <iomanip>
 
 namespace scpp {
 
@@ -107,10 +109,13 @@ inline string_t cast<string_t, int_t>(const int_t &value) {
 }
 
 // float_t -> string_t
-// Numeric to string conversion is explicit and centralized here.
+// Numeric to string conversion follows PHP-like display formatting for scalar string coercion.
+// This intentionally avoids std::to_string(), which forces six trailing fractional digits.
 template <>
 inline string_t cast<string_t, float_t>(const float_t &value) {
-	return string_t(std::to_string(value.native_value()));
+	std::ostringstream stream;
+	stream << std::setprecision(14) << std::defaultfloat << value.native_value();
+	return string_t(stream.str());
 }
 
 // bool_t -> string_t

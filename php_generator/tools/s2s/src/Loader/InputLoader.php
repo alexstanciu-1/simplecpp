@@ -18,6 +18,10 @@ final class InputLoader
 	/**
 	 * Loads exported AST and token data for one PHP source file and validates the expected JSON sidecar shape.
 	 *
+	 * Accepted JSON sidecars:
+	 * - legacy wrapper object with {ast, tokens}
+	 * - raw AST JSON emitted directly from ext-ast/json_encode($ast)
+	 *
 	 * Relationship to specs:
 	 * - preserves the subset and lowering rules documented for the prototype
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
@@ -51,9 +55,16 @@ final class InputLoader
 		}
 
 		$data = json_decode($jsonSource, false, flags: JSON_THROW_ON_ERROR);
-		$ast = $this->normalizeDecodedAstShape($data->ast);
 
-		return new ParsedInput($path, $code, $data->tokens, $ast);
+		if (is_object($data) && property_exists($data, 'ast')) {
+			$ast = $this->normalizeDecodedAstShape($data->ast);
+			$tokens = is_array($data->tokens ?? null) ? $data->tokens : token_get_all($code);
+
+			return new ParsedInput($path, $code, $tokens, $ast);
+		}
+
+		$ast = $this->normalizeDecodedAstShape($data);
+		return new ParsedInput($path, $code, token_get_all($code), $ast);
 	}
 
 	/**

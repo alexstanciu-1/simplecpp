@@ -2458,18 +2458,25 @@ final class Generator
 		$scopedLocalTypes = $this->declaredLocalTypes;
 
 		if ($keyName !== null) {
-			// Foreach key/value bindings are always emitted as fresh loop-local variables.
-			// We intentionally shadow any outer local with the same PHP name so a by-reference
-			// foreach can still lower to a native C++ reference binding on every iteration.
+			// Foreach key bindings remain loop-local in the current model.
+			// They do not declare or update an outer name after the loop exits.
 			$lines[] = $this->indent(1) . 'auto ' . $keyName . ' = ' . $indexName . ';';
 			$this->declaredLocals[$keyName] = true;
 			$this->declaredLocalTypes[$keyName] = 'int_t';
 		}
 
-		$lines[] = $this->indent(1) . $valuePrefix . $valueName . ' = ' . $elementExpr . ';';
-		$this->declaredLocals[$valueName] = true;
-		if ($valueStoredType !== null) {
-			$this->declaredLocalTypes[$valueName] = $valueStoredType;
+		$hasOuterValueBinding = isset($scopedLocals[$valueName]);
+		if ($hasOuterValueBinding) {
+			// Simple C++ policy: foreach reuses an existing outer value variable if one was
+			// already declared before the loop. Otherwise the foreach value target is scoped
+			// to the loop body and is not visible after the loop exits.
+			$lines[] = $this->indent(1) . $valueName . ' = ' . $elementExpr . ';';
+		} else {
+			$lines[] = $this->indent(1) . $valuePrefix . $valueName . ' = ' . $elementExpr . ';';
+			$this->declaredLocals[$valueName] = true;
+			if ($valueStoredType !== null) {
+				$this->declaredLocalTypes[$valueName] = $valueStoredType;
+			}
 		}
 
 		if ($returnContext !== null) {

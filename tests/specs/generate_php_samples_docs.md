@@ -58,7 +58,7 @@ tests/
 		<feature>/
 			level_01/
 				<feature>_<nnn>_<slug>.php
-				<feature>_<nnn>_<slug>.php.json
+				<feature>_<nnn>_<slug>.test-info.json
 			level_02/
 				...
 			level_03/
@@ -73,15 +73,15 @@ tests/
 		echo/
 			level_01/
 				echo_001_basic.php
-				echo_001_basic.php.json
+				echo_001_basic.test-info.json
 		nullable/
 			level_02/
 				nullable_004_coalesce_guard.php
-				nullable_004_coalesce_guard.php.json
+				nullable_004_coalesce_guard.test-info.json
 		integration/
 			level_03/
 				integration_002_loop_and_nullable.php
-				integration_002_loop_and_nullable.php.json
+				integration_002_loop_and_nullable.test-info.json
 ```
 
 Rules:
@@ -91,6 +91,17 @@ Rules:
 
 ---
 
+
+## 3.1 Test JSON split
+
+Each test stem now has two runner JSON files:
+
+- `<stem>.test-info.json` — checked-in static test definition
+- `<stem>.test-results.json` — regenerated volatile execution results
+
+The source extension is intentionally **not** part of those filenames. This keeps `<stem>.php.json` free for the generator AST export used by `php_generator/tools/s2s`.
+
+A directory MUST NOT contain both `<stem>.php` and `<stem>.cpp`, because they would collide on the shared `<stem>.test-info.json` / `<stem>.test-results.json` names.
 ## 4. Test Levels
 
 ## 4.1 `level_01`
@@ -250,9 +261,9 @@ Unless that dependency is itself the explicit subject of the test, such tests ar
 
 ## 8. Required Metadata Format
 
-Every PHP sample MUST have a sidecar JSON file.
+Every PHP sample MUST have a test definition JSON (`*.test-info.json`) file.
 
-The sidecar JSON MUST be valid UTF-8 encoded JSON object.
+The test definition JSON (`*.test-info.json`) MUST be valid UTF-8 encoded JSON object.
 
 ## 8.1 Required Keys
 
@@ -1177,7 +1188,7 @@ Unsupported obligations MUST NOT disappear silently.
 
 Every concrete PHP test case MUST be traceable back to its source obligations.
 
-The sidecar JSON in v2 does not yet require provenance fields, but generation tooling and future specs SHOULD preserve them.
+The test definition JSON (`*.test-info.json`) in v2 does not yet require provenance fields, but generation tooling and future specs SHOULD preserve them.
 
 Recommended provenance fields for future-compatible metadata:
 - `origin_type`

@@ -101,7 +101,7 @@ static void test_named_casts() {
 	assert(scpp::cast<scpp::bool_t>(scpp::float_t(-1.25)).native_value() == true);
 	assert(scpp::cast<scpp::int_t>(scpp::float_t(3.75)).native_value() == 3);
 	assert(scpp::cast<scpp::string_t>(scpp::int_t(42)).native_value() == "42");
-	assert(scpp::cast<scpp::string_t>(scpp::float_t(3.5)).native_value().starts_with("3.500000"));
+	assert(scpp::cast<scpp::string_t>(scpp::float_t(3.5)).native_value() == "3.5");
 }
 
 // Verifies the PHP coercion layer used by php::echo.
@@ -113,6 +113,8 @@ static void test_php_to_string_coercions() {
 	assert(scpp::php::to_string(scpp::null).native_value() == "");
 	assert(scpp::php::to_string(scpp::nullopt).native_value() == "");
 	assert(scpp::php::to_string(scpp::null_ptr).native_value() == "");
+	assert(scpp::php::to_string(scpp::float_t(2.5)).native_value() == "2.5");
+	assert(scpp::php::to_string(scpp::float_t(3.0)).native_value() == "3");
 
 	const scpp::nullable<scpp::int_t> present_int(scpp::int_t(7));
 	const scpp::nullable<scpp::int_t> empty_int(scpp::null);
@@ -127,6 +129,12 @@ static void test_php_to_string_coercions() {
 	assert(scpp::php::identical(scpp::int_t(7), scpp::float_t(7.0)).native_value() == false);
 	assert(scpp::php::not_identical(scpp::int_t(7), scpp::float_t(7.0)).native_value() == true);
 	assert(scpp::php::identical(scpp::null, scpp::null).native_value() == true);
+	scpp::mixed_t empty_mixed(scpp::null);
+	scpp::mixed_t int_mixed(scpp::int_t(7));
+	assert(scpp::php::identical(empty_mixed, scpp::null).native_value() == true);
+	assert(scpp::php::identical(scpp::null, empty_mixed).native_value() == true);
+	assert(scpp::php::identical(int_mixed, scpp::null).native_value() == false);
+	assert(scpp::php::identical(scpp::null, int_mixed).native_value() == false);
 	assert(scpp::php::identical(empty_int, scpp::null).native_value() == true);
 	assert(scpp::php::identical(scpp::null, empty_int).native_value() == true);
 	assert(scpp::php::identical(present_int, scpp::null).native_value() == false);

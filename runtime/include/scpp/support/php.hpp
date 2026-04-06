@@ -296,6 +296,18 @@ inline bool_t identical(const unique_p<T> &left, const unique_p<T> &right) {
 	return bool_t(left.get() == right.get());
 }
 
+// Implements PHP strict identity between a dynamic mixed_t and null.
+// How: mixed_t is a tagged PHP value container, so strict identity must inspect the active kind rather than reject the comparison as a generic cross-type mismatch.
+inline bool_t identical(const mixed_t &left, null_t) {
+	return bool_t(left.kind() == mixed_t::kind_t::null_v);
+}
+
+// Implements PHP strict identity between null and a dynamic mixed_t.
+// How: this is the symmetric form of the mixed_t-null identity rule so overload resolution never falls through to the generic cross-type false path.
+inline bool_t identical(null_t, const mixed_t &right) {
+	return bool_t(right.kind() == mixed_t::kind_t::null_v);
+}
+
 // Implements PHP strict identity for same-type runtime values not needing special object/null handling.
 // How: the helper keeps strict comparison in the PHP helper layer and delegates exact-type value equality to the runtime operator surface.
 template <typename T>

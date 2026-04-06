@@ -8,13 +8,14 @@ use Scpp\S2S\Transpiler;
  * Phase-1 PHP test runner.
  *
  * Main modes:
- * - reset: clear volatile execution state from test JSON sidecars
+ * - reset: regenerate volatile execution state in *.test-results.json files
  * - run:   execute matching tests with proc_open() workers, up to N in parallel
  * - worker: internal single-test executor used by the parent coordinator
  *
  * Notes:
- * - keeps static test metadata intact
- * - writes only volatile execution data into "last_run"
+ * - reads static test metadata from *.test-info.json
+ * - writes only volatile execution data into *.test-results.json
+ * - preserves source.php.json for generator AST fixtures
  * - supports --level and --test filters
  */
 final class Phase1TestRunner
@@ -157,11 +158,11 @@ TXT;
 		$resetCount = 0;
 
 		foreach ($tests as $test) {
-			$this->resetOneJson($test['json_path']);
+			$this->resetOneTestResults($test['info_path'], $test['results_path'], $test['source_path']);
 			++$resetCount;
 		}
 
-		echo "Reset {$resetCount} test JSON file(s).\n";
+		echo "Reset {$resetCount} test result file(s).\n";
 		return 0;
 	}
 
@@ -221,7 +222,7 @@ TXT;
 		while ($queue !== [] || $active !== []) {
 			while ($queue !== [] && count($active) < $jobs) {
 				$test = array_shift($queue);
-				$handle = $this->startWorkerProcess($test['json_path'], (string) ($options['san'] ?? ''));
+				$handle = $this->startWorkerProcess($test['info_path'], (string) ($options['san'] ?? ''));
 				$active[] = [
 					'test' => $test,
 					'proc' => $handle['proc'],
@@ -282,18 +283,18 @@ TXT;
 	/**
 	 * Internal worker entrypoint.
 	 *
-	 * This mode executes exactly one test JSON sidecar and writes the results back into it.
+	 * This mode executes exactly one test definition file and writes the results into its paired results file.
 	 */
 	private function runWorker(array $options): int
 	{
-		$jsonPath = $options['json_path'];
-		if (!is_string($jsonPath) || $jsonPath === '') {
+		$infoPath = $options['json_path'];
+		if (!is_string($infoPath) || $infoPath === '') {
 			throw new RuntimeException('Worker mode requires --json=...');
 		}
 
-		$jsonPath = $this->normalizePath($jsonPath);
+		$infoPath = $this->normalizePath($infoPath);
 		$sanitizers = (string) ($options['san'] ?? '');
-		$this->runSingleTest($jsonPath, $sanitizers);
+		$this->runSingleTest($infoPath, $sanitizers);
 		return 0;
 	}
 
@@ -324,12 +325,14 @@ TXT;
 			}
 
 			$sourcePath = $fileInfo->getPathname();
-			$jsonPath = $sourcePath . '.json';
-			if (!is_file($jsonPath)) {
+			$this->assertNoCrossSuiteBasenameOverlap($sourcePath);
+
+			$infoPath = $this->buildTestInfoPath($sourcePath);
+			if (!is_file($infoPath)) {
 				continue;
 			}
 
-			$meta = $this->readJsonFile($jsonPath);
+			$meta = $this->readJsonFile($infoPath);
 			if (!is_array($meta)) {
 				continue;
 			}
@@ -361,7 +364,8 @@ TXT;
 				'level' => $level,
 				'suite' => $suite,
 				'source_path' => $sourcePath,
-				'json_path' => $jsonPath,
+				'info_path' => $infoPath,
+				'results_path' => $this->buildTestResultsPath($sourcePath),
 				'relative_source_path' => $relativeSourcePath,
 			];
 		}
@@ -374,68 +378,62 @@ TXT;
 		return $tests;
 	}
 
-	private function resetOneJson(string $jsonPath): void
+	private function resetOneTestResults(string $infoPath, string $resultsPath, string $sourcePath): void
 	{
-		$data = $this->readJsonFile($jsonPath);
+		$data = $this->readJsonFile($infoPath);
 		if (!is_array($data)) {
-			throw new RuntimeException('Invalid JSON sidecar: ' . $jsonPath);
+			throw new RuntimeException('Invalid test definition JSON: ' . $infoPath);
 		}
 
-		$data['last_run'] = $this->buildEmptyLastRunState();
-		$this->writeJsonFile($jsonPath, $data);
+		$this->writeJsonFile($resultsPath, $this->buildEmptyResultsDocument($data, $sourcePath, $infoPath, $resultsPath));
 	}
 
 	/**
 	 * Executes one end-to-end test.
 	 */
-	private function runSingleTest(string $jsonPath, string $sanitizers = ''): void
+	private function runSingleTest(string $infoPath, string $sanitizers = ''): void
 	{
-		$sourcePath = substr($jsonPath, 0, -5);
+		$sourcePath = $this->sourcePathFromTestInfoPath($infoPath);
 		if (str_ends_with($sourcePath, '.cpp')) {
-			$this->runSingleRuntimeTest($jsonPath, $sourcePath, $sanitizers);
+			$this->runSingleRuntimeTest($infoPath, $sourcePath, $sanitizers);
 			return;
 		}
 
-		$this->runSinglePhpFlowTest($jsonPath, $sourcePath);
+		$this->runSinglePhpFlowTest($infoPath, $sourcePath);
 	}
 
-	private function runSinglePhpFlowTest(string $jsonPath, string $phpPath): void
+	private function runSinglePhpFlowTest(string $infoPath, string $phpPath): void
 	{
-		$meta = $this->readJsonFile($jsonPath);
+		$meta = $this->readJsonFile($infoPath);
 		if (!is_array($meta)) {
-			throw new RuntimeException('Invalid JSON sidecar: ' . $jsonPath);
+			throw new RuntimeException('Invalid test definition JSON: ' . $infoPath);
 		}
 		if (!is_file($phpPath)) {
 			throw new RuntimeException('Missing PHP test file: ' . $phpPath);
 		}
 
-		if ($sanitizers !== '') {
-			$meta['build'] = is_array($meta['build'] ?? null) ? $meta['build'] : [];
-			$meta['build']['sanitizers'] = $sanitizers;
-		}
-
-		$meta['last_run'] = $this->buildEmptyLastRunState();
-		$meta['last_run']['started_at'] = gmdate('c');
-		$meta['last_run']['worker'] = [
+		$resultsPath = $this->buildTestResultsPath($phpPath);
+		$results = $this->buildEmptyResultsDocument($meta, $phpPath, $infoPath, $resultsPath);
+		$results['last_run']['started_at'] = gmdate('c');
+		$results['last_run']['worker'] = [
 			'pid' => getmypid(),
 			'host' => php_uname('n'),
 		];
-		$meta['last_run']['paths'] = [
+		$results['last_run']['paths'] = [
 			'php' => $this->relativePath($phpPath),
-			'json' => $this->relativePath($jsonPath),
+			'test_info_json' => $this->relativePath($infoPath),
+			'test_results_json' => $this->relativePath($resultsPath),
+			'ast_json' => $this->relativePath($phpPath . '.json'),
 		];
 
 		$tempDir = $this->createTempDirForTest($meta, $phpPath);
-		$phpCode = (string) file_get_contents($phpPath);
-		$phpCopyPath = $tempDir . '/input.php';
-		file_put_contents($phpCopyPath, $phpCode);
 
 		try {
 			$expect = is_array($meta['expect'] ?? null) ? $meta['expect'] : [];
 			$compare = is_array($meta['compare'] ?? null) ? $meta['compare'] : [];
 
 			$phpRun = $this->runCommand(['php', $phpPath], $this->projectRoot, self::PHP_TIMEOUT_SECONDS);
-			$meta['last_run']['stages']['php'] = [
+			$results['last_run']['stages']['php'] = [
 				'command' => ['php', $this->relativePath($phpPath)],
 				'exit_code' => $phpRun['exit_code'],
 				'stdout' => $this->normalizeOutput((string) $phpRun['stdout'], $compare, 'stdout'),
@@ -449,13 +447,13 @@ TXT;
 
 			$phpExpect = is_array($expect['php'] ?? null) ? $expect['php'] : [];
 			if (($phpExpect['run'] ?? false) === true) {
-				$phpComparison = $this->compareStageRun($phpExpect, $meta['last_run']['stages']['php'], $compare);
-				$meta['last_run']['stages']['php']['comparison_ok'] = $phpComparison['ok'];
-				$meta['last_run']['stages']['php']['comparison_notes'] = $phpComparison['notes'];
+				$phpComparison = $this->compareStageRun($phpExpect, $results['last_run']['stages']['php'], $compare);
+				$results['last_run']['stages']['php']['comparison_ok'] = $phpComparison['ok'];
+				$results['last_run']['stages']['php']['comparison_notes'] = $phpComparison['notes'];
 			}
 
-			$generatorResult = $this->runGeneratorStage($phpCopyPath);
-			$meta['last_run']['stages']['generate'] = [
+			$generatorResult = $this->runGeneratorStage($phpPath, $tempDir);
+			$results['last_run']['stages']['generate'] = [
 				'success' => $generatorResult['success'],
 				'errors' => $generatorResult['errors'],
 				'duration_ms' => $generatorResult['duration_ms'],
@@ -474,12 +472,12 @@ TXT;
 				(bool) ($compare['case_sensitive_errors'] ?? true),
 				'generate'
 			);
-			$meta['last_run']['stages']['generate']['comparison_ok'] = $generateComparison['ok'];
-			$meta['last_run']['stages']['generate']['comparison_notes'] = $generateComparison['notes'];
+			$results['last_run']['stages']['generate']['comparison_ok'] = $generateComparison['ok'];
+			$results['last_run']['stages']['generate']['comparison_notes'] = $generateComparison['notes'];
 
 			if ($generatorResult['success'] === true) {
 				$compileRun = $this->runCompileStage((string) $generatorResult['compile_unit_path'], $tempDir);
-				$meta['last_run']['stages']['compile'] = [
+				$results['last_run']['stages']['compile'] = [
 					'success' => ($compileRun['exit_code'] === 0 && $compileRun['timed_out'] === false),
 					'exit_code' => $compileRun['exit_code'],
 					'stdout' => $this->normalizeOutput((string) $compileRun['stdout'], $compare, 'stdout'),
@@ -493,18 +491,18 @@ TXT;
 				$compileExpect = is_array($expect['compile'] ?? null) ? $expect['compile'] : [];
 				$compileComparison = $this->compareBooleanStage(
 					(bool) ($compileExpect['success'] ?? false),
-					$meta['last_run']['stages']['compile']['success'],
+					$results['last_run']['stages']['compile']['success'],
 					(array) ($compileExpect['error_contains'] ?? []),
-					$meta['last_run']['stages']['compile']['stderr'],
+					$results['last_run']['stages']['compile']['stderr'],
 					(bool) ($compare['case_sensitive_errors'] ?? true),
 					'compile'
 				);
-				$meta['last_run']['stages']['compile']['comparison_ok'] = $compileComparison['ok'];
-				$meta['last_run']['stages']['compile']['comparison_notes'] = $compileComparison['notes'];
+				$results['last_run']['stages']['compile']['comparison_ok'] = $compileComparison['ok'];
+				$results['last_run']['stages']['compile']['comparison_notes'] = $compileComparison['notes'];
 
-				if ($meta['last_run']['stages']['compile']['success'] === true) {
+				if ($results['last_run']['stages']['compile']['success'] === true) {
 					$cppRun = $this->runCommand([(string) $compileRun['binary_path']], $tempDir, self::RUN_TIMEOUT_SECONDS);
-					$meta['last_run']['stages']['run'] = [
+					$results['last_run']['stages']['run'] = [
 						'success' => ($cppRun['exit_code'] === 0 && $cppRun['timed_out'] === false),
 						'exit_code' => $cppRun['exit_code'],
 						'stdout' => $this->normalizeOutput((string) $cppRun['stdout'], $compare, 'stdout'),
@@ -515,11 +513,11 @@ TXT;
 						'comparison_notes' => [],
 					];
 					$runExpect = is_array($expect['run'] ?? null) ? $expect['run'] : [];
-					$runComparison = $this->compareStageRun($runExpect, $meta['last_run']['stages']['run'], $compare);
-					$meta['last_run']['stages']['run']['comparison_ok'] = $runComparison['ok'];
-					$meta['last_run']['stages']['run']['comparison_notes'] = $runComparison['notes'];
+					$runComparison = $this->compareStageRun($runExpect, $results['last_run']['stages']['run'], $compare);
+					$results['last_run']['stages']['run']['comparison_ok'] = $runComparison['ok'];
+					$results['last_run']['stages']['run']['comparison_notes'] = $runComparison['notes'];
 				} else {
-					$meta['last_run']['stages']['run'] = [
+					$results['last_run']['stages']['run'] = [
 						'skipped' => true,
 						'reason' => 'compile_failed',
 						'comparison_ok' => (($expect['run']['success'] ?? null) === false),
@@ -527,13 +525,13 @@ TXT;
 					];
 				}
 			} else {
-				$meta['last_run']['stages']['compile'] = [
+				$results['last_run']['stages']['compile'] = [
 					'skipped' => true,
 					'reason' => 'generate_failed',
 					'comparison_ok' => (($expect['compile']['success'] ?? null) === false),
 					'comparison_notes' => [],
 				];
-				$meta['last_run']['stages']['run'] = [
+				$results['last_run']['stages']['run'] = [
 					'skipped' => true,
 					'reason' => 'generate_failed',
 					'comparison_ok' => (($expect['run']['success'] ?? null) === false),
@@ -541,54 +539,56 @@ TXT;
 				];
 			}
 
-			$meta['last_run']['summary'] = $this->buildSummary($meta, $expect);
-			$meta['last_run']['finished_at'] = gmdate('c');
-			$this->writeJsonFile($jsonPath, $meta);
+			$results['last_run']['summary'] = $this->buildSummary($results, $expect);
+			$results['last_run']['finished_at'] = gmdate('c');
+			$this->writeJsonFile($resultsPath, $results);
 
-			if (($meta['last_run']['summary']['pass'] ?? false) !== true) {
-				throw new RuntimeException((string) ($meta['last_run']['summary']['message'] ?? 'Test failed.'));
+			if (($results['last_run']['summary']['pass'] ?? false) !== true) {
+				throw new RuntimeException((string) ($results['last_run']['summary']['message'] ?? 'Test failed.'));
 			}
 		} catch (Throwable $throwable) {
-			$meta['last_run']['summary'] = [
+			$results['last_run']['summary'] = [
 				'pass' => false,
 				'message' => $throwable->getMessage(),
 				'outcome' => 'exception',
 			];
-			$meta['last_run']['exception'] = $this->formatThrowable($throwable);
-			$meta['last_run']['finished_at'] = gmdate('c');
-			$this->writeJsonFile($jsonPath, $meta);
+			$results['last_run']['exception'] = $this->formatThrowable($throwable);
+			$results['last_run']['finished_at'] = gmdate('c');
+			$this->writeJsonFile($resultsPath, $results);
 			throw $throwable;
 		}
 	}
 
-	private function runSingleRuntimeTest(string $jsonPath, string $sourcePath, string $sanitizers = ''): void
+	private function runSingleRuntimeTest(string $infoPath, string $sourcePath, string $sanitizers = ''): void
 	{
-		$meta = $this->readJsonFile($jsonPath);
+		$meta = $this->readJsonFile($infoPath);
 		if (!is_array($meta)) {
-			throw new RuntimeException('Invalid JSON sidecar: ' . $jsonPath);
+			throw new RuntimeException('Invalid test definition JSON: ' . $infoPath);
 		}
 		if (!is_file($sourcePath)) {
 			throw new RuntimeException('Missing runtime test file: ' . $sourcePath);
 		}
 
-		$meta['last_run'] = $this->buildEmptyLastRunState();
-		$meta['last_run']['started_at'] = gmdate('c');
-		$meta['last_run']['worker'] = [
+		$resultsPath = $this->buildTestResultsPath($sourcePath);
+		$results = $this->buildEmptyResultsDocument($meta, $sourcePath, $infoPath, $resultsPath);
+		$results['last_run']['started_at'] = gmdate('c');
+		$results['last_run']['worker'] = [
 			'pid' => getmypid(),
 			'host' => php_uname('n'),
 		];
-		$meta['last_run']['paths'] = [
+		$results['last_run']['paths'] = [
 			'source' => $this->relativePath($sourcePath),
-			'json' => $this->relativePath($jsonPath),
+			'test_info_json' => $this->relativePath($infoPath),
+			'test_results_json' => $this->relativePath($resultsPath),
 		];
-		$meta['last_run']['sanitizers'] = $this->parseSanitizers((string) ($meta['build']['sanitizers'] ?? ''));
-		$meta['last_run']['stages']['php'] = [
+		$results['last_run']['sanitizers'] = $this->parseSanitizers((string) ($meta['build']['sanitizers'] ?? ''));
+		$results['last_run']['stages']['php'] = [
 			'skipped' => true,
 			'reason' => 'runtime_suite',
 			'comparison_ok' => true,
 			'comparison_notes' => [],
 		];
-		$meta['last_run']['stages']['generate'] = [
+		$results['last_run']['stages']['generate'] = [
 			'skipped' => true,
 			'reason' => 'runtime_suite',
 			'comparison_ok' => true,
@@ -602,7 +602,7 @@ TXT;
 			$build = is_array($meta['build'] ?? null) ? $meta['build'] : [];
 
 			$compileRun = $this->runRuntimeCompileStage($sourcePath, $tempDir, $build);
-			$meta['last_run']['stages']['compile'] = [
+			$results['last_run']['stages']['compile'] = [
 				'success' => ($compileRun['exit_code'] === 0 && $compileRun['timed_out'] === false),
 				'exit_code' => $compileRun['exit_code'],
 				'stdout' => $this->normalizeOutput((string) $compileRun['stdout'], $compare, 'stdout'),
@@ -618,16 +618,16 @@ TXT;
 			$compileExpect = is_array($expect['compile'] ?? null) ? $expect['compile'] : [];
 			$compileComparison = $this->compareBooleanStage(
 				(bool) ($compileExpect['success'] ?? false),
-				$meta['last_run']['stages']['compile']['success'],
+				$results['last_run']['stages']['compile']['success'],
 				(array) ($compileExpect['error_contains'] ?? []),
-				$meta['last_run']['stages']['compile']['stderr'],
+				$results['last_run']['stages']['compile']['stderr'],
 				(bool) ($compare['case_sensitive_errors'] ?? true),
 				'compile'
 			);
-			$meta['last_run']['stages']['compile']['comparison_ok'] = $compileComparison['ok'];
-			$meta['last_run']['stages']['compile']['comparison_notes'] = $compileComparison['notes'];
+			$results['last_run']['stages']['compile']['comparison_ok'] = $compileComparison['ok'];
+			$results['last_run']['stages']['compile']['comparison_notes'] = $compileComparison['notes'];
 
-			if ($meta['last_run']['stages']['compile']['success'] === true) {
+			if ($results['last_run']['stages']['compile']['success'] === true) {
 				$runCommand = [(string) $compileRun['binary_path']];
 				foreach ((array) ($build['run_args'] ?? []) as $arg) {
 					$runCommand[] = (string) $arg;
@@ -635,7 +635,7 @@ TXT;
 				$runTimeout = (int) ($build['run_timeout_seconds'] ?? self::RUN_TIMEOUT_SECONDS);
 				$runtimeEnv = array_merge($this->buildSanitizerRunEnvironment((string) ($build['sanitizers'] ?? '')), (array) ($build['env'] ?? []));
 				$cppRun = $this->runCommand($runCommand, $tempDir, $runTimeout, $runtimeEnv);
-				$meta['last_run']['stages']['run'] = [
+				$results['last_run']['stages']['run'] = [
 					'success' => ($cppRun['exit_code'] === 0 && $cppRun['timed_out'] === false),
 					'exit_code' => $cppRun['exit_code'],
 					'stdout' => $this->normalizeOutput((string) $cppRun['stdout'], $compare, 'stdout'),
@@ -648,11 +648,11 @@ TXT;
 					'comparison_notes' => [],
 				];
 				$runExpect = is_array($expect['run'] ?? null) ? $expect['run'] : [];
-				$runComparison = $this->compareStageRun($runExpect, $meta['last_run']['stages']['run'], $compare);
-				$meta['last_run']['stages']['run']['comparison_ok'] = $runComparison['ok'];
-				$meta['last_run']['stages']['run']['comparison_notes'] = $runComparison['notes'];
+				$runComparison = $this->compareStageRun($runExpect, $results['last_run']['stages']['run'], $compare);
+				$results['last_run']['stages']['run']['comparison_ok'] = $runComparison['ok'];
+				$results['last_run']['stages']['run']['comparison_notes'] = $runComparison['notes'];
 			} else {
-				$meta['last_run']['stages']['run'] = [
+				$results['last_run']['stages']['run'] = [
 					'skipped' => true,
 					'reason' => 'compile_failed',
 					'comparison_ok' => (($expect['run']['success'] ?? null) === false),
@@ -660,38 +660,38 @@ TXT;
 				];
 			}
 
-			$meta['last_run']['summary'] = $this->buildSummary($meta, $expect);
-			$meta['last_run']['finished_at'] = gmdate('c');
-			$this->writeJsonFile($jsonPath, $meta);
+			$results['last_run']['summary'] = $this->buildSummary($results, $expect);
+			$results['last_run']['finished_at'] = gmdate('c');
+			$this->writeJsonFile($resultsPath, $results);
 
-			if (($meta['last_run']['summary']['pass'] ?? false) !== true) {
-				throw new RuntimeException((string) ($meta['last_run']['summary']['message'] ?? 'Test failed.'));
+			if (($results['last_run']['summary']['pass'] ?? false) !== true) {
+				throw new RuntimeException((string) ($results['last_run']['summary']['message'] ?? 'Test failed.'));
 			}
 		} catch (Throwable $throwable) {
-			$meta['last_run']['summary'] = [
+			$results['last_run']['summary'] = [
 				'pass' => false,
 				'message' => $throwable->getMessage(),
 				'outcome' => 'exception',
 			];
-			$meta['last_run']['exception'] = $this->formatThrowable($throwable);
-			$meta['last_run']['finished_at'] = gmdate('c');
-			$this->writeJsonFile($jsonPath, $meta);
+			$results['last_run']['exception'] = $this->formatThrowable($throwable);
+			$results['last_run']['finished_at'] = gmdate('c');
+			$this->writeJsonFile($resultsPath, $results);
 			throw $throwable;
 		}
 	}
 
-	private function runGeneratorStage(string $phpPath): array
+	private function runGeneratorStage(string $phpPath, string $outputDir): array
 	{
 		require_once $this->projectRoot . '/php_generator/tools/s2s/bin/bootstrap.php';
 
 		$started = microtime(true);
 		$transpiler = new Transpiler();
-		$cppFile = $transpiler->transpile($phpPath);
+		$cppFile = $transpiler->transpile($phpPath, true);
 		$durationMs = (int) round((microtime(true) - $started) * 1000);
 
-		$headerPath = dirname($phpPath) . '/generated.hpp';
-		$sourcePath = dirname($phpPath) . '/generated.cpp';
-		$compileUnitPath = dirname($phpPath) . '/generated.build.cpp';
+		$headerPath = $outputDir . '/generated.hpp';
+		$sourcePath = $outputDir . '/generated.cpp';
+		$compileUnitPath = $outputDir . '/generated.build.cpp';
 		file_put_contents($headerPath, implode("\n", $cppFile->headerLines) . "\n");
 		file_put_contents($sourcePath, implode("\n", $cppFile->sourceLines) . "\n");
 		file_put_contents($compileUnitPath, $this->buildNaturalCompileUnit($cppFile->headerLines, $cppFile->sourceLines));
@@ -872,12 +872,12 @@ TXT;
 			$notes[] = sprintf('exit_code mismatch: expected=%d actual=%d', (int) $expect['exit_code'], (int) ($actual['exit_code'] ?? -99999));
 		}
 
-		if (array_key_exists('stdout', $expect) && (string) $expect['stdout'] !== (string) ($actual['stdout'] ?? '')) {
+		if (array_key_exists('stdout', $expect) && $this->normalizeOutput((string) $expect['stdout'], $compare, 'stdout') !== (string) ($actual['stdout'] ?? '')) {
 			$ok = false;
 			$notes[] = 'stdout mismatch';
 		}
 
-		if (array_key_exists('stderr', $expect) && (string) $expect['stderr'] !== (string) ($actual['stderr'] ?? '')) {
+		if (array_key_exists('stderr', $expect) && $this->normalizeOutput((string) $expect['stderr'], $compare, 'stderr') !== (string) ($actual['stderr'] ?? '')) {
 			$ok = false;
 			$notes[] = 'stderr mismatch';
 		}
@@ -1033,6 +1033,68 @@ private function buildSanitizerRunEnvironment(string $sanValue): array
 		$dir = $stateRoot . '/' . $testId . '_' . bin2hex(random_bytes(4));
 		$this->ensureDirectory($dir);
 		return $dir;
+	}
+
+
+	private function buildTestInfoPath(string $sourcePath): string
+	{
+		return $this->buildSharedTestStem($sourcePath) . '.test-info.json';
+	}
+
+	private function buildTestResultsPath(string $sourcePath): string
+	{
+		return $this->buildSharedTestStem($sourcePath) . '.test-results.json';
+	}
+
+	private function buildSharedTestStem(string $sourcePath): string
+	{
+		$info = pathinfo($sourcePath);
+		return $info['dirname'] . '/' . $info['filename'];
+	}
+
+	private function sourcePathFromTestInfoPath(string $infoPath): string
+	{
+		if (!str_ends_with($infoPath, '.test-info.json')) {
+			throw new RuntimeException('Invalid test definition path: ' . $infoPath);
+		}
+
+		$stem = substr($infoPath, 0, -strlen('.test-info.json'));
+		$phpPath = $stem . '.php';
+		$cppPath = $stem . '.cpp';
+		$hasPhp = is_file($phpPath);
+		$hasCpp = is_file($cppPath);
+		if ($hasPhp && $hasCpp) {
+			throw new RuntimeException('Basename overlap detected for test definition: ' . $stem . ' (.php and .cpp both exist in the same folder).');
+		}
+		if ($hasPhp) {
+			return $phpPath;
+		}
+		if ($hasCpp) {
+			return $cppPath;
+		}
+
+		throw new RuntimeException('Missing source file for test definition: ' . $infoPath);
+	}
+
+	private function assertNoCrossSuiteBasenameOverlap(string $sourcePath): void
+	{
+		$stem = $this->buildSharedTestStem($sourcePath);
+		$extension = pathinfo($sourcePath, PATHINFO_EXTENSION);
+		$otherPath = $stem . ($extension === 'php' ? '.cpp' : '.php');
+		if (is_file($otherPath)) {
+			throw new RuntimeException('Basename overlap detected: ' . $sourcePath . ' conflicts with ' . $otherPath . '. Keep PHP and runtime tests in separate folders when they share the same basename.');
+		}
+	}
+
+	private function buildEmptyResultsDocument(array $meta, string $sourcePath, string $infoPath, string $resultsPath): array
+	{
+		return [
+			'id' => (string) ($meta['id'] ?? basename($sourcePath)),
+			'source_path' => $this->relativePath($sourcePath),
+			'test_info_json' => $this->relativePath($infoPath),
+			'test_results_json' => $this->relativePath($resultsPath),
+			'last_run' => $this->buildEmptyLastRunState(),
+		];
 	}
 
 	private function ensureDirectory(string $path): void

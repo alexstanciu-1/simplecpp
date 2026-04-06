@@ -10,7 +10,7 @@ This file is a focused workflow companion to `generate_php_samples_docs.md`.
 4. normalize and deduplicate
 5. classify by origin and obligation type
 6. map to levels and outcome classes
-7. generate concrete PHP files and sidecar JSON
+7. generate concrete PHP files and test definition JSON (`*.test-info.json`)
 8. review for gaps, regressions, and filler
 
 ## Minimum mapping
