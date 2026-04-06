@@ -7,13 +7,13 @@ Replaces: dynamic_types.md (v1)
 
 ---
 
-## Simple C++ — Dynamic Type (`mixed_t`)
+## Prism++ — Dynamic Type (`mixed_t`)
 
 ### Intro (User View)
 
 ### Dynamic Type (`mixed`)
 
-Simple C++ allows you to opt into a **dynamic type** when flexibility is needed.
+Prism++ allows you to opt into a **dynamic type** when flexibility is needed.
 
 By default, values are **native and statically known**:
 
@@ -288,7 +288,7 @@ Typed extraction from `mixed_t` must go through explicit helpers such as:
 
 - `cast<T>(mixed_t)`
 
-`mixed_t` does not create new conversion rights. It may only expose conversions that already exist in the Simple C++ native cast rules.
+`mixed_t` does not create new conversion rights. It may only expose conversions that already exist in the Prism++ native cast rules.
 
 Current v1 typed-boundary bridge rule:
 - non-explicit `mixed -> native` use is accepted only at Visible Intention sites for initialization/assignment, by-value arg passing, and typed returns
@@ -308,7 +308,7 @@ For v1, failed exact access or failed typed extraction uses one generic runtime 
 
 - the stored runtime type
 - the requested target type
-- that the conversion / extraction is not allowed under Simple C++ rules
+- that the conversion / extraction is not allowed under Prism++ rules
 
 ### Public type inspection
 

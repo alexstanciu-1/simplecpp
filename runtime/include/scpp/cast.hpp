@@ -11,9 +11,16 @@
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
 
-#include <type_traits>
-#include <sstream>
+#include <cctype>
+#include <cerrno>
+#include <charconv>
+#include <cmath>
+#include <cstdlib>
 #include <iomanip>
+#include <limits>
+#include <sstream>
+#include <string>
+#include <type_traits>
 
 namespace scpp {
 
@@ -33,11 +40,216 @@ To cast(const From &value) {
 	}
 }
 
+template <typename To, typename From>
+requires(std::is_integral_v<detail::remove_cvref_t<From>> && !std::is_same_v<detail::remove_cvref_t<From>, bool> && std::is_same_v<To, bool_t>)
+inline To cast(const From &value) {
+	return bool_t(static_cast<std::int64_t>(value) != 0);
+}
+
+template <typename To, typename From>
+requires(std::is_integral_v<detail::remove_cvref_t<From>> && !std::is_same_v<detail::remove_cvref_t<From>, bool> && std::is_same_v<To, int_t>)
+inline To cast(const From &value) {
+	return int_t(static_cast<std::int64_t>(value));
+}
+
+template <typename To, typename From>
+requires(std::is_integral_v<detail::remove_cvref_t<From>> && !std::is_same_v<detail::remove_cvref_t<From>, bool> && std::is_same_v<To, float_t>)
+inline To cast(const From &value) {
+	return float_t(static_cast<double>(value));
+}
+
+template <typename To, typename From>
+requires(std::is_integral_v<detail::remove_cvref_t<From>> && !std::is_same_v<detail::remove_cvref_t<From>, bool> && std::is_same_v<To, string_t>)
+inline To cast(const From &value) {
+	return string_t(std::to_string(static_cast<std::int64_t>(value)));
+}
+
+template <typename To, typename From>
+requires(std::is_floating_point_v<detail::remove_cvref_t<From>> && std::is_same_v<To, bool_t>)
+inline To cast(const From &value) {
+	return bool_t(static_cast<double>(value) != 0.0);
+}
+
+template <typename To, typename From>
+requires(std::is_floating_point_v<detail::remove_cvref_t<From>> && std::is_same_v<To, int_t>)
+inline To cast(const From &value) {
+	return int_t(static_cast<std::int64_t>(value));
+}
+
+template <typename To, typename From>
+requires(std::is_floating_point_v<detail::remove_cvref_t<From>> && std::is_same_v<To, float_t>)
+inline To cast(const From &value) {
+	return float_t(static_cast<double>(value));
+}
+
+template <typename To, typename From>
+requires(std::is_floating_point_v<detail::remove_cvref_t<From>> && std::is_same_v<To, string_t>)
+inline To cast(const From &value) {
+	return cast<string_t>(static_cast<double>(value));
+}
+
+namespace detail {
+
+[[noreturn]] inline void throw_invalid_cast_string(const char *target, const std::string &value) {
+	throw std::runtime_error(
+		std::string("scpp::cast<") + target + ">(string_t): invalid strict string literal: \"" + value + "\""
+	);
+}
+
+inline bool parse_bool_string_strict(const std::string &value, bool &out) {
+	if (value == "0" || value == "false" || value == "FALSE" || value == "False") {
+		out = false;
+		return true;
+	}
+	if (value == "1" || value == "true" || value == "TRUE" || value == "True") {
+		out = true;
+		return true;
+	}
+	return false;
+}
+
+inline bool parse_int64_string_strict(const std::string &value, std::int64_t &out) {
+	if (value.empty()) {
+		return false;
+	}
+
+	const char *begin = value.data();
+	const char *end = begin + value.size();
+	std::int64_t parsed = 0;
+	const auto result = std::from_chars(begin, end, parsed, 10);
+	if (result.ec != std::errc() || result.ptr != end) {
+		return false;
+	}
+
+	out = parsed;
+	return true;
+}
+
+inline bool parse_double_string_strict(const std::string &value, double &out) {
+	if (value.empty()) {
+		return false;
+	}
+	for (const unsigned char ch : value) {
+		if (std::isspace(ch) != 0) {
+			return false;
+		}
+	}
+
+	char *parse_end = nullptr;
+	errno = 0;
+	const double parsed = std::strtod(value.c_str(), &parse_end);
+	if (parse_end == nullptr || parse_end != value.c_str() + value.size()) {
+		return false;
+	}
+	if (errno == ERANGE || !std::isfinite(parsed)) {
+		return false;
+	}
+
+	std::string lower;
+	lower.reserve(value.size());
+	for (const unsigned char ch : value) {
+		lower.push_back(static_cast<char>(std::tolower(ch)));
+	}
+	if (lower == "nan" || lower == "+nan" || lower == "-nan" || lower == "inf" || lower == "+inf" || lower == "-inf" || lower == "infinity" || lower == "+infinity" || lower == "-infinity") {
+		return false;
+	}
+
+	out = parsed;
+	return true;
+}
+
+} // namespace detail
+
+// Native bool -> wrappers
+// Native values are accepted at explicit cast boundaries so generator/runtime helpers can reuse the same surface.
+template <>
+inline bool_t cast<bool_t, bool>(const bool &value) {
+	return bool_t(value);
+}
+
+template <>
+inline int_t cast<int_t, bool>(const bool &value) {
+	return int_t(value ? 1 : 0);
+}
+
+template <>
+inline float_t cast<float_t, bool>(const bool &value) {
+	return float_t(value ? 1.0 : 0.0);
+}
+
+template <>
+inline string_t cast<string_t, bool>(const bool &value) {
+	return string_t(value ? "1" : "");
+}
+
+// Native integer -> wrappers
+template <>
+inline bool_t cast<bool_t, std::int64_t>(const std::int64_t &value) {
+	return bool_t(value != 0);
+}
+
+template <>
+inline int_t cast<int_t, std::int64_t>(const std::int64_t &value) {
+	return int_t(value);
+}
+
+template <>
+inline float_t cast<float_t, std::int64_t>(const std::int64_t &value) {
+	return float_t(static_cast<double>(value));
+}
+
+template <>
+inline string_t cast<string_t, std::int64_t>(const std::int64_t &value) {
+	return string_t(std::to_string(value));
+}
+
+// Native float -> wrappers
+template <>
+inline bool_t cast<bool_t, double>(const double &value) {
+	return bool_t(value != 0.0);
+}
+
+template <>
+inline int_t cast<int_t, double>(const double &value) {
+	return int_t(static_cast<std::int64_t>(value));
+}
+
+template <>
+inline float_t cast<float_t, double>(const double &value) {
+	return float_t(value);
+}
+
+template <>
+inline string_t cast<string_t, double>(const double &value) {
+	std::ostringstream stream;
+	stream << std::setprecision(14) << std::defaultfloat << value;
+	return string_t(stream.str());
+}
+
+// bool_t -> scalar wrappers
+// Boolean to numeric remains explicit and centralized.
+template <>
+inline int_t cast<int_t, bool_t>(const bool_t &value) {
+	return int_t(value.native_value() ? 1 : 0);
+}
+
+template <>
+inline float_t cast<float_t, bool_t>(const bool_t &value) {
+	return float_t(value.native_value() ? 1.0 : 0.0);
+}
+
 // int_t -> bool_t
 // Zero becomes false; any non-zero value becomes true.
 template <>
 inline bool_t cast<bool_t, int_t>(const int_t &value) {
 	return bool_t(value.native_value() != 0);
+}
+
+// int_t -> float_t
+// Widening remains explicit through the named-cast surface even though the wrapper also has a constructor path.
+template <>
+inline float_t cast<float_t, int_t>(const int_t &value) {
+	return float_t(static_cast<double>(value.native_value()));
 }
 
 // float_t -> bool_t
@@ -48,10 +260,43 @@ inline bool_t cast<bool_t, float_t>(const float_t &value) {
 }
 
 // float_t -> int_t
-// This is an explicit narrowing conversion and truncates via static_cast.
+// This is an explicit narrowing conversion and truncates toward zero.
 template <>
 inline int_t cast<int_t, float_t>(const float_t &value) {
 	return int_t(static_cast<std::int64_t>(value.native_value()));
+}
+
+// string_t -> bool_t
+// String-to-bool is strict in this project: only a small approved literal set is accepted.
+template <>
+inline bool_t cast<bool_t, string_t>(const string_t &value) {
+	bool parsed = false;
+	if (!detail::parse_bool_string_strict(value.native_value(), parsed)) {
+		detail::throw_invalid_cast_string("bool_t", value.native_value());
+	}
+	return bool_t(parsed);
+}
+
+// string_t -> int_t
+// String-to-int is strict: the whole string must be a valid base-10 integer literal.
+template <>
+inline int_t cast<int_t, string_t>(const string_t &value) {
+	std::int64_t parsed = 0;
+	if (!detail::parse_int64_string_strict(value.native_value(), parsed)) {
+		detail::throw_invalid_cast_string("int_t", value.native_value());
+	}
+	return int_t(parsed);
+}
+
+// string_t -> float_t
+// String-to-float is strict: the whole string must parse as a finite decimal floating literal.
+template <>
+inline float_t cast<float_t, string_t>(const string_t &value) {
+	double parsed = 0.0;
+	if (!detail::parse_double_string_strict(value.native_value(), parsed)) {
+		detail::throw_invalid_cast_string("float_t", value.native_value());
+	}
+	return float_t(parsed);
 }
 
 // int_t -> bool
@@ -113,9 +358,7 @@ inline string_t cast<string_t, int_t>(const int_t &value) {
 // This intentionally avoids std::to_string(), which forces six trailing fractional digits.
 template <>
 inline string_t cast<string_t, float_t>(const float_t &value) {
-	std::ostringstream stream;
-	stream << std::setprecision(14) << std::defaultfloat << value.native_value();
-	return string_t(stream.str());
+	return cast<string_t>(value.native_value());
 }
 
 // bool_t -> string_t
@@ -124,7 +367,6 @@ template <>
 inline string_t cast<string_t, bool_t>(const bool_t &value) {
 	return string_t(value.native_value() ? "1" : "");
 }
-
 
 // null-like sentinels -> string_t
 // Mirrors PHP string conversion for null-like values as the empty string.
@@ -154,6 +396,8 @@ inline bool_t cast<bool_t, mixed_t>(const mixed_t &value) {
 			return cast<bool_t>(value.int_value());
 		case mixed_t::kind_t::float_v:
 			return cast<bool_t>(value.float_value());
+		case mixed_t::kind_t::string_v:
+			return cast<bool_t>(*value.string_if());
 		default:
 			throw std::runtime_error("scpp::cast<bool_t>(mixed_t): runtime kind is not convertible to bool_t");
 	}
@@ -171,10 +415,14 @@ inline bool cast<bool, mixed_t>(const mixed_t &value) {
 template <>
 inline int_t cast<int_t, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
+		case mixed_t::kind_t::bool_v:
+			return cast<int_t>(value.bool_value());
 		case mixed_t::kind_t::int_v:
 			return value.int_value();
 		case mixed_t::kind_t::float_v:
 			return cast<int_t>(value.float_value());
+		case mixed_t::kind_t::string_v:
+			return cast<int_t>(*value.string_if());
 		default:
 			throw std::runtime_error("scpp::cast<int_t>(mixed_t): runtime kind is not convertible to int_t");
 	}
@@ -185,10 +433,14 @@ inline int_t cast<int_t, mixed_t>(const mixed_t &value) {
 template <>
 inline float_t cast<float_t, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
+		case mixed_t::kind_t::bool_v:
+			return cast<float_t>(value.bool_value());
+		case mixed_t::kind_t::int_v:
+			return cast<float_t>(value.int_value());
 		case mixed_t::kind_t::float_v:
 			return value.float_value();
-		case mixed_t::kind_t::int_v:
-			return float_t(value.int_value());
+		case mixed_t::kind_t::string_v:
+			return cast<float_t>(*value.string_if());
 		default:
 			throw std::runtime_error("scpp::cast<float_t>(mixed_t): runtime kind is not convertible to float_t");
 	}

@@ -1,8 +1,8 @@
-# References in Simple C++
+# References in Prism++
 
 ## Overview
 
-Simple C++ uses a simplified and predictable reference model.
+Prism++ uses a simplified and predictable reference model.
 
 References are:
 - single-binding
@@ -109,7 +109,7 @@ A variable may be bound by reference (&) at most once.
 Violations may result in compile-time errors.
 
 
-## Historical note — typed scalar by-reference proxy parameters (deprecated / no longer generated)
+## Historical note - typed scalar by-reference proxy parameters (deprecated / no longer generated)
 
 The runtime still contains the scalar proxy helper types:
 
@@ -137,8 +137,8 @@ Additional conservative generator rejects in the current subset:
 
 ## Return-by-reference warnings
 
-- Return-by-reference is not recommended in Simple C++ and must always surface a generator warning even when generation is still allowed.
-- The generator must also warn for local copy-after-alias patterns rooted in a by-reference call result, for example `$inner =& get_inner($arr); $copy = $arr;`, because Simple C++ may not preserve PHP alias semantics for that flow.
+- Return-by-reference is not recommended in Prism++ and must always surface a generator warning even when generation is still allowed.
+- The generator must also warn for local copy-after-alias patterns rooted in a by-reference call result, for example `$inner =& get_inner($arr); $copy = $arr;`, because Prism++ may not preserve PHP alias semantics for that flow.
 
 
 For mixed/native by-reference boundaries and the current prohibition on by-reference auto-casts, see `specs/dynamic_types.md`.

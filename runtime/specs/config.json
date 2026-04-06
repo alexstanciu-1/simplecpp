@@ -18,7 +18,7 @@
             "status": "authoritative_current_policy",
             "purpose": "hash_t and mixed_t form the dynamic fallback subsystem for quick code; explicit data structures remain preferred",
             "tradeoffs": "using hash_t reduces performance, increases memory usage, reduces compile-time issue detection and static analysis capability, and becomes less readable as surrounding code grows",
-            "evaluation_rule": "once types are established, follow normal Simple C++ rules",
+            "evaluation_rule": "once types are established, follow normal Prism++ rules",
             "exceptions_rule": "exceptions must be documented separately and explicitly",
             "runtime_error_payload_minimum": [
                 "message",
@@ -551,7 +551,7 @@
             },
             "dynamic_policy": {
                 "status": "current_implemented_behavior_plus_authoritative_policy",
-                "principle": "once runtime operand types are established, follow normal Simple C++ rules; exceptions must be listed explicitly",
+                "principle": "once runtime operand types are established, follow normal Prism++ rules; exceptions must be listed explicitly",
                 "implicit_conversions": "forbidden unless an operation or cast rule explicitly allows them",
                 "dynamic_dispatch_scope": [
                     "runtime type establishment",
@@ -988,7 +988,7 @@
             "form": "named_cast",
             "cast_name": "cast",
             "template_rule": false,
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_literals"
         },
         {
             "from": "mixed_t",
@@ -997,7 +997,7 @@
             "form": "named_cast",
             "cast_name": "cast",
             "template_rule": false,
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_parse"
         },
         {
             "from": "mixed_t",
@@ -1006,7 +1006,7 @@
             "form": "named_cast",
             "cast_name": "cast",
             "template_rule": false,
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_parse"
         },
         {
             "from": "mixed_t",
@@ -1016,6 +1016,97 @@
             "cast_name": "cast",
             "template_rule": false,
             "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+        },
+        {
+            "from": "bool_t",
+            "to": "int_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false
+        },
+        {
+            "from": "bool_t",
+            "to": "float_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false
+        },
+        {
+            "from": "int_t",
+            "to": "float_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false
+        },
+        {
+            "from": "string_t",
+            "to": "bool_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false,
+            "policy_role": "strict_string_bool_literal_set"
+        },
+        {
+            "from": "string_t",
+            "to": "int_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false,
+            "policy_role": "strict_full_string_base10_parse"
+        },
+        {
+            "from": "string_t",
+            "to": "float_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false,
+            "policy_role": "strict_full_string_finite_decimal_parse"
+        },
+        {
+            "from": "int_t",
+            "to": "string_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false
+        },
+        {
+            "from": "float_t",
+            "to": "string_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false
+        },
+        {
+            "from": "bool_t",
+            "to": "string_t",
+            "kind": "explicit",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false
+        },
+        {
+            "from": "mixed_t",
+            "to": "shared_p<hash_t<mixed_t>>",
+            "kind": "boundary_implicit_v1_visible_intention",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false
+        },
+        {
+            "from": "mixed_t",
+            "to": "weak_p<hash_t<mixed_t>>",
+            "kind": "boundary_implicit_v1_visible_intention",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": false
         }
     ],
     "coercions": {

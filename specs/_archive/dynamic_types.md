@@ -1,10 +1,10 @@
-## Simple C++ — Dynamic Type (`mixed_t`)
+## Prism++ — Dynamic Type (`mixed_t`)
 
 ### Intro (User View)
 
 ### Dynamic Type (`mixed`)
 
-Simple C++ allows you to opt into a **dynamic type** when flexibility is needed.
+Prism++ allows you to opt into a **dynamic type** when flexibility is needed.
 
 By default, values are **native and statically known**:
 

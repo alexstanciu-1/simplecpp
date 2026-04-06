@@ -50,7 +50,7 @@ public:
 		if (static_cast<bool>(value_)) {
 			return value_->what();
 		}
-		return "Simple C++ throwable";
+		return "Prism++ throwable";
 	}
 
 private:

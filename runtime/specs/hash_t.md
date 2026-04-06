@@ -4,7 +4,7 @@ See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict
 
 ## 1. Purpose
 
-`scpp::hash_t` is the Simple C++ runtime type used to represent the PHP surface concept of `array`.
+`scpp::hash_t` is the Prism++ runtime type used to represent the PHP surface concept of `array`.
 
 It is a specialized ordered key/value container with:
 
@@ -331,7 +331,7 @@ The following are intentionally deferred:
 
 And most importantly:
 
-**Simple C++ targets `hash_t`, not `mem_container` directly.**
+**Prism++ targets `hash_t`, not `mem_container` directly.**
 
 
 ## Key Stability Guarantees

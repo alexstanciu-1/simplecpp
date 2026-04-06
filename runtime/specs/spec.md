@@ -1,10 +1,10 @@
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
-# Simple C++ Runtime/Generation Split - v1 Proposal
+# Prism++ Runtime/Generation Split - v1 Proposal
 
 ## 1. Scope
 
-This document defines the non-redundant, human-readable specification for the **Simple C++ runtime/library** and its relationship to the **runtime configuration**.
+This document defines the non-redundant, human-readable specification for the **Prism++ runtime/library** and its relationship to the **runtime configuration**.
 
 It does **not** duplicate machine-defined lists of:
 - types
@@ -63,7 +63,7 @@ This split is deliberate. The concepts do not become a second semantic authority
 
 ## 3. Runtime design goals
 
-The runtime exists to give generated Simple C++ code a **closed semantic surface** inside C++.
+The runtime exists to give generated Prism++ code a **closed semantic surface** inside C++.
 
 ### Core goals
 - avoid interference with native C++ overloads and implicit conversions
@@ -117,7 +117,7 @@ The runtime class families should remain structurally stable even when cast and 
 The runtime is organized into five semantic families:
 
 ### 5.1 Scalar semantic types
-These represent Simple C++ scalar values rather than native C++ primitives.
+These represent Prism++ scalar values rather than native C++ primitives.
 Their purpose is semantic isolation.
 
 Included initially:
@@ -271,8 +271,8 @@ Included initially:
 - `hash_t` and `mixed_t` form the runtime dynamic fallback subsystem for quick code
 - explicit structs/classes remain the preferred programming model
 - using `hash_t` reduces performance, increases memory usage, reduces compile-time issue detection and static-analysis capability, and becomes less readable as surrounding code grows
-- once runtime types are established, operations must follow normal Simple C++ rules
-- any deviation from normal Simple C++ semantics must be documented explicitly as an exception
+- once runtime types are established, operations must follow normal Prism++ rules
+- any deviation from normal Prism++ semantics must be documented explicitly as an exception
 - conversions are explicit by default; dynamic loose coercion is not part of the model
 - the runtime does not infer source-level Visible Intention; language/S2S compromises are documented in `../../specs/dynamic_types.md`
 - for current v1 behavior, `../../specs/dynamic_types.md` sections **1.2 Visible Intention** and **1.3 Technical Compromises to Achieve Visible Intention in v1** take precedence over stricter long-term runtime cleanup choices
@@ -286,6 +286,8 @@ Included initially:
 - these exact scalar accessors require matching runtime kind and fail at runtime otherwise
 - `string_if()`, `table_if()`, `shared_table_if()`, and `weak_table_if()` are the current probe-style accessors
 - `cast<T>(mixed_t)` is the central typed bridge for dynamic-to-typed use
+- project-level explicit casts should normalize through `cast<T>(...)` rather than direct wrapper-to-wrapper `static_cast` chains
+- strict string explicit casts are part of the current policy: `string_t -> bool_t` accepts only `"0"`, `"1"`, `"true"`, `"false"` and the approved case variants, while `string_t -> int_t` and `string_t -> float_t` require whole-string successful parses with no trailing characters
 - long-term runtime intent is explicit bridge use at typed boundaries; current v1 non-explicit acceptance at some language/S2S sites is documented in `../../specs/dynamic_types.md` under Visible Intention and Technical Compromises
 - until generator parity exists, runtime/operator/cast surface must preserve those v1-visible typed-destination bridges instead of removing them for API purity alone
 - `mixed_t::operator[]` is the primary mutating chained dynamic array access helper

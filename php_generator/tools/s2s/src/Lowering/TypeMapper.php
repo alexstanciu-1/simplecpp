@@ -14,7 +14,7 @@ final class TypeMapper
 	private array $enumNames = [];
 
 	/**
-	 * Maps a declared PHP property or constant-adjacent type into the canonical Simple C++ type.
+	 * Maps a declared PHP property or constant-adjacent type into the canonical Prism++ type.
 	 *
 	 * Relationship to specs:
 	 * - preserves the subset and lowering rules documented for the prototype
@@ -299,7 +299,7 @@ final class TypeMapper
 
 	/**
 
-	 * Maps one scalar/object PHP type name into its runtime-backed Simple C++ counterpart.
+	 * Maps one scalar/object PHP type name into its runtime-backed Prism++ counterpart.
 
 	 *
 

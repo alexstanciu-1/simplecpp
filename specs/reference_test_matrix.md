@@ -13,7 +13,7 @@ The goal is to expand source coverage around:
 
 ## Critical rule
 
-The matrix follows the **Simple C++** model, not full PHP semantics.
+The matrix follows the **Prism++** model, not full PHP semantics.
 
 That means:
 

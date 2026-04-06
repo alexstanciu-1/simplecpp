@@ -1,4 +1,4 @@
-# Simple C++ Specification Map (v1)
+# Prism++ Specification Map (v1)
 
 Status: Active  
 Purpose: document hierarchy, authority, and interpretation rules for the current project.

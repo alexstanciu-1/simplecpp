@@ -1,4 +1,4 @@
-# Simple C++ – Incompatibilities / Semantic Mismatch Notes
+# Prism++ – Incompatibilities / Semantic Mismatch Notes
 
 This document tracks known or expected incompatibilities between PHP semantics and emitted C++ semantics, 
 to be handled later by explicit rules, runtime helpers, or rejection rules.

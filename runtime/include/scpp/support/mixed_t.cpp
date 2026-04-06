@@ -28,7 +28,7 @@ namespace {
 	std::ostringstream out;
 	out << "mixed_t::" << accessor << " failed: stored type is "
 	    << kind_name(value.kind()) << " but requested " << target_type
-	    << ". This extraction is not allowed in Simple C++.";
+	    << ". This extraction is not allowed in Prism++.";
 	return std::runtime_error(out.str());
 }
 

@@ -100,8 +100,26 @@ static void test_named_casts() {
 	assert(scpp::cast<scpp::bool_t>(scpp::float_t(0.0)).native_value() == false);
 	assert(scpp::cast<scpp::bool_t>(scpp::float_t(-1.25)).native_value() == true);
 	assert(scpp::cast<scpp::int_t>(scpp::float_t(3.75)).native_value() == 3);
+	assert(scpp::cast<scpp::int_t>(scpp::bool_t(true)).native_value() == 1);
+	assert(scpp::cast<scpp::float_t>(scpp::bool_t(true)).native_value() == 1.0);
+	assert(scpp::cast<scpp::float_t>(scpp::int_t(42)).native_value() == 42.0);
+	assert(scpp::cast<scpp::bool_t>(scpp::string_t("true")).native_value() == true);
+	assert(scpp::cast<scpp::bool_t>(scpp::string_t("False")).native_value() == false);
+	assert(scpp::cast<scpp::int_t>(scpp::string_t("-42")).native_value() == -42);
+	assert(scpp::cast<scpp::float_t>(scpp::string_t("3.5")).native_value() == 3.5);
 	assert(scpp::cast<scpp::string_t>(scpp::int_t(42)).native_value() == "42");
 	assert(scpp::cast<scpp::string_t>(scpp::float_t(3.5)).native_value() == "3.5");
+	assert(scpp::cast<scpp::string_t>(scpp::bool_t(true)).native_value() == "1");
+
+	scpp_test::expect_throw<std::runtime_error>([]() {
+		(void)scpp::cast<scpp::bool_t>(scpp::string_t("yes"));
+	});
+	scpp_test::expect_throw<std::runtime_error>([]() {
+		(void)scpp::cast<scpp::int_t>(scpp::string_t("12x"));
+	});
+	scpp_test::expect_throw<std::runtime_error>([]() {
+		(void)scpp::cast<scpp::float_t>(scpp::string_t("1.2x"));
+	});
 }
 
 // Verifies the PHP coercion layer used by php::echo.

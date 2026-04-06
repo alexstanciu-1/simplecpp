@@ -1,7 +1,7 @@
 # Interoperability with regular C++ modules
 
 ## Goal
-Generated Simple C++ code should remain linkable from ordinary handwritten C++ modules without leaking PHP-runtime convenience imports through generated headers.
+Generated Prism++ code should remain linkable from ordinary handwritten C++ modules without leaking PHP-runtime convenience imports through generated headers.
 
 ## Current rule
 - generated `.cpp` namespace blocks may contain:

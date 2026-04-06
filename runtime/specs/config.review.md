@@ -90,11 +90,14 @@ Only the listed casts exist. The default policy is forbidden, so every allowed c
 | `null_t -> nullable<T>` | Null sentinel may construct an empty nullable implicitly. | `$x = null; // assigned to ?int` | `::scpp::nullable<::scpp::int_t> x = ::scpp::null_t();` | Keeps nullable construction uniform with handle-null construction. |
 | `T -> nullable<T>` | A present value may construct a nullable implicitly. | `$x = 7; $y = $x; // into ?int slot` | `::scpp::nullable<::scpp::int_t> y = x;` | This is the normal “wrap present value” path. |
 | `shared_p<T> -> weak_p<T>` | Shared ownership may downgrade to weak observer implicitly. | `// derive observer from shared object` | `::scpp::weak_p<Service> w = svc;` | Weak-from-shared is considered safe and non-owning. |
-| `int_t -> float_t` | Integer widens to float implicitly. | `$x = 1; $y = 2.5; $z = $x + $y;` | `::scpp::float_t z = x + y;` | Supports mixed numeric families without requiring manual casts. |
-| `bool_t -> int_t / float_t` | Boolean to numeric is explicit only. | `$x = (int)$flag;` | `auto x = ::scpp::int_t(flag.native_value() ? 1 : 0);` | Config keeps this out of implicit conversion to avoid accidental arithmetic on booleans. |
+| `int_t -> float_t` | Integer widening is available both as an implicit runtime relation and as the canonical explicit named cast surface. | `$x = (float)$n;` | `auto x = ::scpp::cast<::scpp::float_t>(n);` | Explicit frontend casts should still normalize through `cast<T>(...)` even when the runtime also has a constructor-level widening path. |
+| `bool_t -> int_t / float_t` | Boolean to numeric is explicit only and lowers through named casts. | `$x = (int)$flag;` | `auto x = ::scpp::cast<::scpp::int_t>(flag);` | Explicit conversions are centralized in `cast<T>(...)` instead of being scattered across wrapper constructors. |
 | `int_t / float_t -> bool_t` | Numeric to boolean uses explicit named cast. | `$x = (bool)$n;` | `auto x = ::scpp::cast<::scpp::bool_t>(n);` | Boolean semantics are centralized through `cast` rather than native implicit conversion. |
 | `float_t -> int_t` | Float to integer narrowing is explicit named cast. | `$x = (int)$f;` | `auto x = ::scpp::cast<::scpp::int_t>(f);` | Makes narrowing a policy decision instead of a silent C++ conversion. |
 | `string_t -> string_t` | Identity cast exists explicitly. | `$x = (string)$s;` | `auto x = ::scpp::cast<::scpp::string_t>(s);` | This avoids special-casing identity in the frontend. |
+| `string_t -> bool_t / int_t / float_t` | String-to-scalar explicit casts are strict. | `$x = (int)$s;` | `auto x = ::scpp::cast<::scpp::int_t>(s);` | `bool_t` accepts only `"0"`, `"1"`, and the approved true/false spellings; numeric casts require full-string parses with no trailing junk. |
+| `mixed_t -> bool_t / int_t / float_t / string_t` | Dynamic explicit casts dispatch by runtime kind and then reuse the corresponding static cast rule. | `$x = (int)$m;` | `auto x = ::scpp::cast<::scpp::int_t>(m);` | Unsupported runtime kinds fail at runtime; supported string payloads use the same strict string rules as direct `string_t` casts. |
+
 | `nullable<T> -> T` | Unwrapping a present nullable is explicit. | `$x = $maybe; // after presence check` | `auto x = ::scpp::cast<T>(maybe);` | Config labels this as `unwrap_present_value`, so the generator must only use it when presence is guaranteed. |
 | `nullopt_t -> nullable<T>` | Optional-empty sentinel may construct empty nullable implicitly. | `$x = null; // empty optional route` | `::scpp::nullable<T> x = ::scpp::nullopt_t();` | Keeps sentinel entry points flexible while preserving wrapper semantics. |
 | `nullptr_t -> shared_p<T> / unique_p<T> / weak_p<T>` | Pointer-empty sentinel may construct empty handle wrappers implicitly. | `$x = null; // pointer-empty route` | `::scpp::shared_p<T> x = ::scpp::nullptr_t();` | Useful when the generator wants pointer-flavored empty semantics. |
@@ -298,8 +301,8 @@ Current runtime expectations for `mixed_t` in the dynamic subsystem:
 
 - `cast<T>(mixed_t)` is the central typed bridge and must enforce the same configured cast rules after runtime kind dispatch
 - typed C++ targets may currently auto-bridge from `mixed_t` through that cast layer in some v1 paths; see `../../specs/dynamic_types.md` for Visible Intention and Technical Compromises
-- arithmetic and mutation on `mixed_t` resolve the active runtime kind(s) first, then follow normal Simple C++ operator rules
-- if the corresponding typed Simple C++ expression would be a compile error, dynamic `mixed_t` dispatch must fail at runtime instead
+- arithmetic and mutation on `mixed_t` resolve the active runtime kind(s) first, then follow normal Prism++ operator rules
+- if the corresponding typed Prism++ expression would be a compile error, dynamic `mixed_t` dispatch must fail at runtime instead
 - `mixed_t::_find_val()` is the chained dynamic read helper
 - `mixed_t::_find_val()` forwards for owned/shared table carriers, returns `mixed_t(null_t{})` for `null_v`, and currently returns `mixed_t(null_t{})` for expired weak-table carriers
 - `shared_table_v == shared_table_v` uses pointer identity

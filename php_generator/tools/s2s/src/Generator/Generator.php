@@ -15,11 +15,12 @@ use Scpp\S2S\IR\PropertyDecl;
 use Scpp\S2S\IR\Statement;
 use Scpp\S2S\IR\UseDecl;
 use Scpp\S2S\Lowering\TypeMapper;
+use Scpp\S2S\Support\AnnotationExpressionParser;
 use Scpp\S2S\Support\AstKind;
 use Scpp\S2S\Support\GenerationException;
 
 /**
- * Emits Simple C++ declarations and statements from the IR. This file is where the catalog rules are turned into concrete header/source text.
+ * Emits Prism++ declarations and statements from the IR. This file is where the catalog rules are turned into concrete header/source text.
  *
  * Relationship to specs:
  * - this type exists to keep the implementation aligned with php_generator/specs/rules.md and rules_catalog.md
@@ -63,6 +64,7 @@ final class Generator
 	private ?string $currentClassName = null;
 	private ?string $currentParentClass = null;
 	private int $tempCounter = 0;
+	private AnnotationExpressionParser $annotationExpressionParser;
 
 	/**
 
@@ -83,6 +85,7 @@ final class Generator
 	) {
 		$this->predefinedConstants = $this->loadPredefinedConstants();
 		$this->nameRegistry = new NameRegistry();
+		$this->annotationExpressionParser = new AnnotationExpressionParser();
 	}
 
 	/**
@@ -524,7 +527,7 @@ final class Generator
 		$refBindings = [];
 		$refReturnAliasOwners = [];
 		if ($returnsByReference) {
-			$this->warnings[] = ucfirst($owner) . ' returns by reference. Return-by-reference is not recommended and only partially supported in Simple C++.';
+			$this->warnings[] = ucfirst($owner) . ' returns by reference. Return-by-reference is not recommended and only partially supported in Prism++.';
 		}
 		$this->validateReferenceRulesInStatements($statements, $returnsByReference, $owner, $namespacePhp, false, $refBindings, $refReturnAliasOwners);
 		if ($returnsByReference) {
@@ -561,7 +564,7 @@ final class Generator
 				if ($copiedFrom !== null) {
 					foreach ($refReturnAliasOwners as $aliasName => $ownerVars) {
 						if (in_array($copiedFrom, $ownerVars, true)) {
-							$this->warnings[] = 'Copy-after-alias warning in ' . $owner . ' at line ' . $statement->line . ': $' . $aliasName . ' is bound from a by-reference return rooted in $' . $copiedFrom . ', and copying $' . $copiedFrom . ' may not preserve PHP alias semantics in Simple C++.';
+							$this->warnings[] = 'Copy-after-alias warning in ' . $owner . ' at line ' . $statement->line . ': $' . $aliasName . ' is bound from a by-reference return rooted in $' . $copiedFrom . ', and copying $' . $copiedFrom . ' may not preserve PHP alias semantics in Prism++.';
 						}
 					}
 				}
@@ -747,7 +750,7 @@ final class Generator
 				continue;
 			}
 			if ($statement->kind === 'include_or_eval') {
-				$this->errors[] = 'Simple C++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . $statement->line . '.';
+				$this->errors[] = 'Prism++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . $statement->line . '.';
 				continue;
 			}
 			if ($statement->kind === 'if') {
@@ -1705,15 +1708,26 @@ final class Generator
 		return '_norm_' . $this->cppIdentifier($callableName) . '__' . $param->name;
 	}
 
-	private function renderNormalizationRuleExpression(ArgNormalizationRule $rule, ParamDecl $param, string $sourceAlias): string
+	private function renderNormalizationRuleExpression(ArgNormalizationRule $rule, ParamDecl $param, string $sourceType, ?string $namespacePhp): string
 	{
-		$expression = $rule->expression;
-		$expression = preg_replace('/\$' . preg_quote($param->name, '/') . '\b/', $sourceAlias, $expression) ?? $expression;
-		$expression = preg_replace('/\b' . preg_quote($param->name, '/') . '\b/', $sourceAlias, $expression) ?? $expression;
-		return $expression;
+		try {
+			$exprAst = $this->annotationExpressionParser->parse($rule->expression);
+		} catch (\Throwable $e) {
+			$this->errors[] = 'Failed to parse @arg normalization expression for $' . $param->name . ' from ' . $rule->sourceType . ' near doc line ' . $rule->line . ': ' . $e->getMessage();
+			return '/* invalid-arg-normalization-expression */';
+		}
+
+		$prevDeclaredLocals = $this->declaredLocals;
+		$prevDeclaredLocalTypes = $this->declaredLocalTypes;
+		$this->declaredLocals[$param->name] = true;
+		$this->declaredLocalTypes[$param->name] = $sourceType;
+		$rendered = $this->renderExpr($exprAst, $namespacePhp);
+		$this->declaredLocals = $prevDeclaredLocals;
+		$this->declaredLocalTypes = $prevDeclaredLocalTypes;
+		return $rendered;
 	}
 
-	private function renderNormalizationDirectBranchLines(ParamDecl $param, string $unionType, bool $sourceIsMixed = false): array
+	private function renderNormalizationDirectBranchLines(ParamDecl $param, string $unionType, ?string $namespacePhp, bool $sourceIsMixed = false): array
 	{
 		$mappedPrimaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
 		$mappedSourceType = $this->typeMapper->mapDeclaredType($unionType);
@@ -1728,14 +1742,14 @@ final class Generator
 			}
 			return ['return cast<' . $mappedPrimaryType . '>(' . $sourceExpr . ');'];
 		}
-		$expr = $this->renderNormalizationRuleExpression($rule, $param, $param->name);
+		$expr = $this->renderNormalizationRuleExpression($rule, $param, $unionType, $namespacePhp);
 		return [
 			$mappedSourceType . ' ' . $param->name . ' = cast<' . $mappedSourceType . '>(' . $sourceExpr . ');',
 			'return ' . $expr . ';',
 		];
 	}
 
-	private function renderNormalizationMixedBranchLines(ParamDecl $param): array
+	private function renderNormalizationMixedBranchLines(ParamDecl $param, ?string $namespacePhp): array
 	{
 		$mappedPrimaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
 		$lines = [];
@@ -1748,7 +1762,7 @@ final class Generator
 			$prefix = $first ? 'if' : 'else if';
 			$first = false;
 			$lines[] = $prefix . ' (' . $condition . ') {';
-			foreach ($this->renderNormalizationDirectBranchLines($param, $unionType, true) as $line) {
+			foreach ($this->renderNormalizationDirectBranchLines($param, $unionType, $namespacePhp, true) as $line) {
 				$lines[] = $this->indent(1) . $line;
 			}
 			$lines[] = '}';
@@ -1757,7 +1771,7 @@ final class Generator
 		return $lines;
 	}
 
-	private function renderNormalizationHelperDefinition(string $callableName, ParamDecl $param, bool $classInline = false): string
+	private function renderNormalizationHelperDefinition(string $callableName, ParamDecl $param, ?string $namespacePhp, bool $classInline = false): string
 	{
 		$primaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
 		$templateType = $this->renderTemplateTypeName($param);
@@ -1773,13 +1787,13 @@ final class Generator
 			$prefixCond = $first ? 'if constexpr' : 'else if constexpr';
 			$first = false;
 			$lines[] = $this->indent(1) . $prefixCond . ' (std::is_same_v<_norm_arg_t, ' . $mappedSourceType . '>) {';
-			foreach ($this->renderNormalizationDirectBranchLines($param, $unionType, true) as $line) {
+			foreach ($this->renderNormalizationDirectBranchLines($param, $unionType, $namespacePhp, true) as $line) {
 				$lines[] = $this->indent(2) . $line;
 			}
 			$lines[] = $this->indent(1) . '}';
 		}
 		$lines[] = $this->indent(1) . 'else if constexpr (std::is_same_v<_norm_arg_t, mixed_t>) {';
-		foreach ($this->renderNormalizationMixedBranchLines($param) as $line) {
+		foreach ($this->renderNormalizationMixedBranchLines($param, $namespacePhp) as $line) {
 			$lines[] = $this->indent(2) . $line;
 		}
 		$lines[] = $this->indent(1) . '} else {';
@@ -1799,7 +1813,7 @@ final class Generator
 		$lines = [];
 		foreach ($function->params as $param) {
 			if ($this->paramNeedsTemplateNormalization($param)) {
-				$lines[] = $this->renderNormalizationHelperDefinition($function->name, $param, false);
+				$lines[] = $this->renderNormalizationHelperDefinition($function->name, $param, $namespacePhp, false);
 				$lines[] = '';
 			}
 		}
@@ -1821,7 +1835,7 @@ final class Generator
 		$lines = [];
 		foreach ($method->params as $param) {
 			if ($this->paramNeedsTemplateNormalization($param)) {
-				foreach (explode("\n", $this->renderNormalizationHelperDefinition($method->name, $param, true)) as $line) {
+				foreach (explode("\n", $this->renderNormalizationHelperDefinition($method->name, $param, $namespacePhp, true)) as $line) {
 					$lines[] = $line;
 				}
 				$lines[] = '';
@@ -2097,17 +2111,14 @@ final class Generator
 		};
 	}
 
-	private function renderForwardedNormalizationExpression(ArgNormalizationRule $rule, ParamDecl $param, string $storageName): string
+	private function renderForwardedNormalizationExpression(ArgNormalizationRule $rule, ParamDecl $param, string $storageName, ?string $namespacePhp): string
 	{
-		$expression = $rule->expression;
-		$sourceAlias = '_gen_' . $param->name . '_from_' . (preg_replace('/[^A-Za-z0-9_]+/', '_', $rule->sourceType) ?? 'value');
 		$mappedSourceType = $this->typeMapper->mapDeclaredType($rule->sourceType);
-		$expression = preg_replace('/\$' . preg_quote($param->name, '/') . '\b/', $sourceAlias, $expression) ?? $expression;
-		$expression = preg_replace('/\b' . preg_quote($param->name, '/') . '\b/', $sourceAlias, $expression) ?? $expression;
-		return '([&]() -> ' . $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type) . ' { ' . $mappedSourceType . ' ' . $sourceAlias . ' = cast<' . $mappedSourceType . '>(' . $storageName . '); return ' . $expression . '; })()';
+		$expression = $this->renderNormalizationRuleExpression($rule, $param, $rule->sourceType, $namespacePhp);
+		return '([&]() -> ' . $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type) . ' { ' . $mappedSourceType . ' ' . $param->name . ' = cast<' . $mappedSourceType . '>(' . $storageName . '); return ' . $expression . '; })()';
 	}
 
-	private function buildMixedCarrierNormalizationLines(ParamDecl $param, string $storageName): array
+	private function buildMixedCarrierNormalizationLines(ParamDecl $param, string $storageName, ?string $namespacePhp): array
 	{
 		$primaryType = $param->primaryType ?? $param->type;
 		$mappedPrimaryType = $primaryType !== null ? $this->typeMapper->mapDeclaredType($primaryType) : 'mixed_t';
@@ -2122,7 +2133,7 @@ final class Generator
 			$firstBranch = false;
 			$rule = $this->lookupArgNormalizationRule($param, $unionType);
 			$assignmentExpr = $rule !== null
-				? $this->renderForwardedNormalizationExpression($rule, $param, $storageName)
+				? $this->renderForwardedNormalizationExpression($rule, $param, $storageName, $namespacePhp)
 				: 'cast<' . $mappedPrimaryType . '>(' . $storageName . ')';
 			$lines[] = $branchPrefix . ' (' . $condition . ') {';
 			$lines[] = $this->indent(1) . $param->name . ' = ' . $assignmentExpr . ';';
@@ -2427,7 +2438,7 @@ final class Generator
 		}
 
 		if ($statement->kind === 'include_or_eval') {
-			$error = 'Simple C++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . $statement->line . '.';
+			$error = 'Prism++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . $statement->line . '.';
 			$this->fail($error);
 		}
 
@@ -2843,7 +2854,7 @@ final class Generator
 
 		$hasOuterValueBinding = isset($scopedLocals[$valueName]);
 		if ($hasOuterValueBinding) {
-			// Simple C++ policy: foreach reuses an existing outer value variable if one was
+			// Prism++ policy: foreach reuses an existing outer value variable if one was
 			// already declared before the loop. Otherwise the foreach value target is scoped
 			// to the loop body and is not visible after the loop exits.
 			$lines[] = $this->indent(1) . $valueName . ' = ' . $elementExpr . ';';
@@ -2991,17 +3002,11 @@ final class Generator
 	}
 
 	/**
-
-	 * Renders any condition expression with the bool conversion required by the current Simple C++ runtime contract.
-
+	 * Renders any condition expression with the bool conversion required by the current Prism++ runtime contract.
 	 *
-
 	 * Relationship to specs:
-
 	 * - preserves the subset and lowering rules documented for the prototype
-
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
 	 */
 
 	private function renderConditionExpr(mixed $expr, ?string $namespacePhp): string
@@ -4444,19 +4449,12 @@ final class Generator
 	}
 
 	/**
-
-	 * Renders one expression node from php-ast into the current Simple C++ expression subset.
-
+	 * Renders one expression node from php-ast into the current Prism++ expression subset.
 	 *
-
 	 * Relationship to specs:
-
 	 * - preserves the subset and lowering rules documented for the prototype
-
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
 	 */
-
 	private function renderExpr(mixed $expr, ?string $namespacePhp): string
 	{
 		if (is_int($expr)) {
@@ -4542,9 +4540,9 @@ final class Generator
 			$flags = (int) ($expr->flags ?? 0);
 			return match ($flags) {
 				AstKind::TYPE_STRING => 'cast<string_t>(' . $inner . ')',
-				AstKind::TYPE_LONG => 'static_cast<int_t>(' . $inner . ')',
-				AstKind::TYPE_DOUBLE => 'static_cast<float_t>(' . $inner . ')',
-				AstKind::TYPE_BOOL => 'static_cast<bool_t>(' . $inner . ')',
+				AstKind::TYPE_LONG => 'cast<int_t>(' . $inner . ')',
+				AstKind::TYPE_DOUBLE => 'cast<float_t>(' . $inner . ')',
+				AstKind::TYPE_BOOL => 'cast<bool_t>(' . $inner . ')',
 				AstKind::TYPE_OBJECT => $this->renderObjectCastExpr($innerNode, $namespacePhp),
 				default => '/* unsupported-cast */',
 			};

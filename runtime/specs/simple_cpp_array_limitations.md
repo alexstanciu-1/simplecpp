@@ -1,6 +1,6 @@
-# Array Behavior Differences in Simple C++ (PHP → Simple C++)
+# Array Behavior Differences in Prism++ (PHP → Prism++)
 
-This document outlines the known behavioral differences between PHP arrays and the current `hash_t` implementation in Simple C++.
+This document outlines the known behavioral differences between PHP arrays and the current `hash_t` implementation in Prism++.
 This document is non-authoritative.
 
 For current language/S2S compromises around typed destinations reached from dynamic array reads (assignment, call, property, return), see `../../specs/dynamic_types.md` under Visible Intention and Technical Compromises.
@@ -29,7 +29,7 @@ unset($x[1]);
 $x[] = 'c'; // usually key 2
 ```
 
-Simple C++:
+Prism++:
 - Likely reuses max+1 logic → may become key 1
 
 ---
@@ -49,7 +49,7 @@ $x["missing"] == null
 PHP:
 - `isset($x["a"])` is false if value is null
 
-Simple C++:
+Prism++:
 - behaves like key existence check (true if key exists)
 
 ---
@@ -117,7 +117,7 @@ $r =& $x[2];
 PHP:
 - copy-on-write arrays
 
-Simple C++:
+Prism++:
 - `mixed_t` arrays now use shared storage with detach-on-write on mutation
 - this is still a runtime-level approximation, not full Zend zval semantics
 
@@ -147,7 +147,7 @@ Recommended:
 
 ## Summary
 
-Simple C++ arrays are:
+Prism++ arrays are:
 
 - suitable for structured data and basic usage
 - not a full PHP semantic match

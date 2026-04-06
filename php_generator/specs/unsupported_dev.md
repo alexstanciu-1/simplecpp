@@ -1,6 +1,6 @@
 # What is NOT PHP (Important Differences)
 
-Simple C++ is not PHP. Key differences:
+Prism++ is not PHP. Key differences:
 
 ## Null
 $x = null; // ✅ first assignment lowers to mixed_t x = null;

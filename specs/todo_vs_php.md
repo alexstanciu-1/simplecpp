@@ -1,4 +1,4 @@
-# Simple C++ vs PHP - Language Feature Gap Analysis
+# Prism++ vs PHP - Language Feature Gap Analysis
 
 ## Scope
 Language-level features only (no functions/helpers/runtime APIs).
@@ -12,7 +12,7 @@ Based on PHP language reference + project evidence.
 
 ## Gap Table
 
-| Area | PHP language feature | Status in Simple C++ | Confidence | Note |
+| Area | PHP language feature | Status in Prism++ | Confidence | Note |
 |---|---|---:|---:|---|
 | File/program model | include / require | Confirmed missing | High | Core PHP file structure |
 | Namespaces | Multiple namespace blocks per file | Confirmed missing | High | |

@@ -24,7 +24,7 @@ shared_p<T> create(TArgs &&...args) {
 // Explicit shared creation helper.
 // Use this when shared ownership is intended by the source semantics.
 template <typename T, typename... TArgs>
-// Implements `shared` as part of the runtime surface consumed by generated Simple C++ code.
+// Implements `shared` as part of the runtime surface consumed by generated Prism++ code.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 shared_p<T> shared(TArgs &&...args) {
 	return shared_p<T>(std::make_shared<T>(std::forward<TArgs>(args)...));
@@ -33,7 +33,7 @@ shared_p<T> shared(TArgs &&...args) {
 // Explicit unique creation helper.
 // Use this when single ownership is required.
 template <typename T, typename... TArgs>
-// Implements `unique` as part of the runtime surface consumed by generated Simple C++ code.
+// Implements `unique` as part of the runtime surface consumed by generated Prism++ code.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 unique_p<T> unique(TArgs &&...args) {
 	return unique_p<T>(std::make_unique<T>(std::forward<TArgs>(args)...));
@@ -42,7 +42,7 @@ unique_p<T> unique(TArgs &&...args) {
 // Weak reference derivation helper.
 // This helper must not allocate and can only be created from shared ownership.
 template <typename T>
-// Implements `weak` as part of the runtime surface consumed by generated Simple C++ code.
+// Implements `weak` as part of the runtime surface consumed by generated Prism++ code.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 weak_p<T> weak(const shared_p<T> &value) {
 	return weak_p<T>(value);

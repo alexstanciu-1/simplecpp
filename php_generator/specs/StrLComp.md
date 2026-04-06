@@ -1,4 +1,4 @@
-# Simple C++ – General Rules (Authoritative, Normalized)
+# Prism++ – General Rules (Authoritative, Normalized)
 
 This document is the single source of truth for the supported subset.
 
@@ -152,7 +152,7 @@ Applies to:
 - use-before-declare is an error
 
 ### Overloading
-- function and method overloading are forbidden by Simple C++ design
+- function and method overloading are forbidden by Prism++ design
 - the generator must reject same-name overload sets rather than attempting overload-based lowering
 
 ---
@@ -411,7 +411,7 @@ If the emitted C++ is invalid, it must fail at C++ compile time rather than bein
 
 # Appendix: Full Original Rules (verbatim)
 
-# Simple C++ – rules.md
+# Prism++ – rules.md
 
 This is the single source of truth for generation rules and runtime assumptions.
 
@@ -698,7 +698,7 @@ These PHP semantics must go through the `php::` layer:
 - predefined/runtime constants discovered from `get_defined_constants()` -> unqualified `...` inside generated source (`using namespace ::scpp::php;`)
 - user-defined non-class constants -> generated user namespace path (no `::scpp::php` remapping)
 
-## 13. Simple C++ runtime/helper boundary rules
+## 13. Prism++ runtime/helper boundary rules
 
 Helpers that are not plain PHP semantic primitives may go through the `scpp::` layer.
 

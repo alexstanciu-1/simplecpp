@@ -1,8 +1,8 @@
 
-# Simple C++ – First Practical Use Roadmap
+# Prism++ – First Practical Use Roadmap
 
 ## Scope
-This document lists the minimal missing features required to make Simple C++ usable for a first real project.
+This document lists the minimal missing features required to make Prism++ usable for a first real project.
 
 ---
 

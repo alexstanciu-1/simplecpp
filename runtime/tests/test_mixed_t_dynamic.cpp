@@ -41,6 +41,9 @@ static void test_value_t_cast_bridge_and_exact_accessors() {
 	assert(scpp::cast<scpp::string_t>(bool_value).native_value() == "1");
 	assert(scpp::cast<scpp::string_t>(null_value).native_value().empty());
 	assert(scpp::cast<scpp::string_t>(string_value).native_value() == "Alex");
+	assert(scpp::cast<scpp::bool_t>(scpp::mixed_t(scpp::string_t("true"))).native_value() == true);
+	assert(scpp::cast<scpp::int_t>(scpp::mixed_t(scpp::string_t("15"))).native_value() == 15);
+	assert(scpp::cast<scpp::float_t>(scpp::mixed_t(scpp::string_t("2.75"))).native_value() == 2.75);
 
 	assert(take_int(scpp::cast<scpp::int_t>(int_value)).native_value() == 7);
 	assert(take_float(scpp::cast<scpp::float_t>(int_value)).native_value() == 7.0);
@@ -61,6 +64,9 @@ static void test_value_t_cast_bridge_and_exact_accessors() {
 	});
 	scpp_test::expect_throw<std::runtime_error>([&]() {
 		(void)take_int(scpp::cast<scpp::int_t>(scpp::mixed_t(scpp::string_t("oops"))));
+	});
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		(void)take_bool(scpp::cast<scpp::bool_t>(scpp::mixed_t(scpp::string_t("yes"))));
 	});
 }
 

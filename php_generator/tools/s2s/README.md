@@ -1,4 +1,4 @@
-# Fixture-driven PHP -> Simple C++ generator starter
+# Fixture-driven PHP -> Prism++ generator starter
 
 This is a first code pass built against the sample fixtures in `samples/`.
 
@@ -68,7 +68,7 @@ Out of scope in this stage:
 - pseudo-properties such as `->name` and `->value`
 
 
-## Enum Support (v1 – constrained subset)
+## Enum Support (v1 - constrained subset)
 
 ### Status
 PARTIAL / INTENTIONAL SUBSET

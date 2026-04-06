@@ -1,6 +1,6 @@
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
-# Simple C++ Runtime Generation Guidelines
+# Prism++ Runtime Generation Guidelines
 
 ## Purpose
 This document defines how the runtime code must be generated so that repeated generations remain structurally consistent, reviewable, and aligned with the project spec and config.

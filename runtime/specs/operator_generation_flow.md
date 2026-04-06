@@ -1,6 +1,6 @@
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
-# Simple C++ Operator Generation Flow
+# Prism++ Operator Generation Flow
 
 ## Purpose
 This document captures the current operator-generation flow introduced for the runtime operator-surface cleanup. It exists for two reasons:

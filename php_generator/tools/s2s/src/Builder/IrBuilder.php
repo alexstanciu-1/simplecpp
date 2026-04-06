@@ -107,7 +107,7 @@ final class IrBuilder
 					continue;
 				}
 
-				$errors[] = 'Simple C++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . (int) ($node->lineno ?? 0) . '.';
+				$errors[] = 'Prism++ supports require_once only as a static compile-time include with a literal path in the file prologue at line ' . (int) ($node->lineno ?? 0) . '.';
 				continue;
 			}
 			if ($allowPrologueRequireOnce && !$prologueClosed) {
@@ -232,13 +232,13 @@ final class IrBuilder
 	{
 		$flags = (int) ($node->flags ?? 0);
 		if ($flags !== AstKind::EXEC_REQUIRE_ONCE) {
-			$errors[] = 'Simple C++ supports require_once only as a static compile-time include with a literal path at line ' . $line . '.';
+			$errors[] = 'Prism++ supports require_once only as a static compile-time include with a literal path at line ' . $line . '.';
 			return null;
 		}
 
 		$expr = $node->children['expr'] ?? null;
 		if (!is_string($expr) || trim($expr) === '') {
-			$errors[] = 'Simple C++ supports require_once only as a static compile-time include with a literal path at line ' . $line . '.';
+			$errors[] = 'Prism++ supports require_once only as a static compile-time include with a literal path at line ' . $line . '.';
 			return null;
 		}
 

@@ -11,7 +11,7 @@ namespace scpp {
 // - participates in configured equality with null_t and nullopt_t
 class nullptr_t final {
 public:
-	// Implements `nullptr_t` as part of the runtime surface consumed by generated Simple C++ code.
+	// Implements `nullptr_t` as part of the runtime surface consumed by generated Prism++ code.
 	// How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 	constexpr nullptr_t() noexcept = default;
 };

@@ -1,14 +1,14 @@
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
-# Simple C++ – Primary-Type Normalized Parameters
+# Prism++ – Primary-Type Normalized Parameters
 
 Status: Active v1 design + template-wrapper implementation slice.
 
 ## 1. Purpose
 
-This document defines the Simple C++ interpretation of PHP union parameters used as normalized inputs.
+This document defines the Prism++ interpretation of PHP union parameters used as normalized inputs.
 
-This is a Simple C++ language concept by design. It does not attempt to match standard PHP union semantics, traditional C++ overload semantics, or full C++ template semantics.
+This is a Prism++ language concept by design. It does not attempt to match standard PHP union semantics, traditional C++ overload semantics, or full C++ template semantics.
 
 ## 2. Core rule
 
@@ -18,7 +18,7 @@ For a parameter declared with a PHP union type:
 function add(int|float $left, int $right): int {}
 ```
 
-Simple C++ interprets the first listed type as the **primary type**.
+Prism++ interprets the first listed type as the **primary type**.
 All later listed types are **secondary source types**.
 The callable body works with the primary type only.
 
@@ -57,16 +57,16 @@ Preferred path:
 - explicit normalization rule from docblock metadata
 
 Fallback path:
-- emit the configured cast utility blindly
-- the generator does not validate whether the resulting cast is semantically valid
-- invalid generated casts are expected to fail later in C++ compilation
+- emit the configured cast utility in canonical form, currently `cast<T>(...)` for project explicit scalar casts
+- the generator does not validate whether the resulting cast is semantically valid beyond the configured lowering route
+- invalid generated casts are expected to fail later in C++ compilation or at runtime for `mixed_t` dispatch cases
 
 ## 5. Annotation grammar
 
 Supported docblock line form:
 
 ```php
-@arg.left.from(float) = (int_t)$left
+@arg.left.from(float) = (int)$left
 ```
 
 Rules:
@@ -75,7 +75,10 @@ Rules:
 - source type names may be namespaced
 - multiple `@arg.<param>.from(Type)` lines are allowed for the same parameter when the source `Type` differs
 - duplicate source `Type` rules for the same parameter are a generator error
-- the generator currently parses the right-hand-side expression and lowers it into helper-local generated C++ form; it does not yet validate semantic correctness of that expression
+- the right-hand-side is real PHP expression code, not a mini DSL
+- the generator parses that right-hand-side into php-ast and lowers it through the normal expression codegen path
+- the expression is evaluated in a helper-local scope where the annotated parameter name is bound to the current source-typed input value
+- semantic validity is still governed by the normal generator/runtime rules for the emitted expression
 
 ## 6. Accepted routes inside normalization
 
@@ -144,7 +147,7 @@ Current generator implementation includes:
 - template-wrapper lowering for scalar-like normalized parameters
 - one generated normalization helper per normalized parameter
 - plain single-type parameters kept unchanged in the generated signature
-- explicit `@arg.<param>.from(Type)` lowering into normalization helper branches
+- explicit `@arg.<param>.from(Type)` lowering into normalization helper branches via real PHP expression parsing and normal expression lowering
 - cast-utility fallback when no explicit normalization rule exists
 
 Non-scalar union members and by-reference normalized parameters remain follow-up work.

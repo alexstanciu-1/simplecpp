@@ -1,92 +1,108 @@
-# Simple C++
+# Prism++
 
-Simple C++ is a programming language concept that combines the ease of scripting languages with the performance and control of compiled C++.
+<sub><i>Too old to compromise. Still young enough to build it.</i></sub>
 
-It allows writing code in familiar languages (starting with PHP 8.4+, with JavaScript and Python planned) while targeting regular C++ code compiled Ahead-Of-Time using standard compilers like GCC, Clang, and MSVC.
+Prism++ compiles simple, high-level languages into controlled, deterministic C++.
 
-## Core Idea
+It is designed for developers who want:
+- the simplicity of scripting languages
+- the performance and ecosystem of C++
+- and fine-grained control over memory, data, and execution
 
-- write in a familiar language  
-- generate regular C++ code  
-- compile with existing toolchains  
-- keep dynamic capabilities, but within controlled boundaries  
+without being exposed directly to the complexity and risks of raw C++.
 
-## Design Goals
+---
 
-- familiarity (reuse existing languages)  
-- compilation (Ahead-Of-Time binaries)  
-- implicit strictness (no unsafe implicit behavior)  
-- controlled dynamic typing  
-- leverage existing compiler ecosystems  
-- efficient memory usage through compilation  
+## Overview
 
-## What Simple C++ Brings Over Scripting Languages
+Prism++ is not a virtual machine, not a JIT, and not a full reimplementation of existing languages.
 
-- controllable memory size for data  
-- efficient multithreading without data-copy constraints  
-- error detection at compile time  
-- performance of AOT binaries via GCC, Clang, MSVC  
-- predictable and explicit behavior (no hidden type juggling)  
+Instead, it defines a **constrained execution model** that maps high-level code into a predictable subset of C++.
 
-## What Simple C++ Brings to the C++ Model
+This model focuses on:
+- explicit and controlled data types
+- well-defined memory behavior
+- predictable runtime semantics
+- gradual access to low-level capabilities
 
-- higher-level authoring (less low-level concerns)  
-- structured dynamic layer (`mixed_t`, `hash_t`)  
-- spec-driven behavior (JSON-defined rules)  
-- no implicit overload surprises  
-- generator-enforced discipline  
+The result is code that remains easy to write and reason about, while compiling down to efficient native binaries.
 
-## Documentation
+---
 
-- Getting Started → docs/getting_started.md  
-- Installation → docs/installation.md  
-- Examples → docs/examples.md  
+## Goals
 
-## Architecture Overview
+- Provide a simple and expressive surface syntax
+- Preserve access to C++ capabilities (memory, threads, system APIs)
+- Reduce exposure to undefined behavior through controlled abstractions (ongoing effort, continuously improving)
+- Enable gradual refinement from high-level code to low-level control
+- Keep runtime behavior predictable and inspectable
 
-### Language Frontend
-- parses source language (PHP for now)  
-- applies lowering rules  
-- generates regular C++ code  
+---
 
-### Runtime (Simple C++)
-- encapsulates generated code in a controlled namespace  
-- ensures interaction with regular C++ is explicit  
-- defines operator behavior based on spec  
-- provides dynamic types (`mixed_t`, `hash_t`)  
+## Non-Goals
 
-## Repository Structure
+Prism++ is intentionally not:
 
-- runtime/ → C++ runtime and specs  
-- php_generator/ → PHP parsing and lowering  
-- specs/ → design and rule definitions  
-- public_html/test/ → test interface  
+- a virtual machine
+- a JIT compiler
+- a drop-in replacement for PHP or any other language runtime
+- a full safety guarantee system
 
-## Spec Model
+---
 
-- Markdown → human-readable intent  
-- JSON → machine-enforced rules  
+## Safety Model
 
-If a behavior is not defined → it is not allowed.
+Prism++ improves safety by constraining how programs interact with C++:
 
-## Current Status
+- Memory is accessed through controlled abstractions
+- Type interactions are explicit and predictable
+- Undefined behavior is minimized by design (ongoing effort, continuously improving)
+- Runtime checks are used where compile-time guarantees are not possible
 
-- PHP frontend: in progress  
-- runtime: active development  
-- operator semantics: under refinement  
-- JavaScript / Python: planned  
+This results in a system that is **safer than raw C++**, while still allowing low-level control when needed.
 
-## Roadmap
+---
 
-- stabilize runtime and config alignment  
-- complete operator coverage  
-- formalize edge cases  
-- improve generator guarantees  
-- expand test coverage  
+## Example
 
-## Summary
+```php
+<?php
 
-Simple C++ brings scripting-style development into a compiled, strict, and predictable model using standard C++ as the execution target.
+function add(int|float $a, int $b): float {
+	return $a + $b;
+}
+
+echo add(10, 20), "\n";
+```
+
+Compiled C++ output is structured around:
+- explicit types
+- controlled conversions
+- predictable execution
+
+---
+
+## Philosophy
+
+Prism++ is built on a simple idea:
+
+> High-level code and low-level control should not be mutually exclusive.
+
+Developers should be able to start simple and progressively gain control,
+without rewriting everything or switching ecosystems.
+
+---
+
+## Status
+
+Prism++ is under active development.
+
+The current focus is:
+- defining the execution model
+- refining type and memory semantics
+- improving correctness and predictability
+
+---
 
 ## Installer Scripts
 
@@ -97,3 +113,14 @@ Starter installer scripts are available in:
 - `install/ubuntu.sh`
 
 They install the required toolchain, create the user launcher directory (`~/.d-app` or `%USERPROFILE%\.d-app`), and run the project installer.
+
+## Name
+
+“Prism” reflects the idea of transforming simple input into structured, precise output,
+while preserving clarity and control.
+
+---
+
+## License
+
+[To be defined]
