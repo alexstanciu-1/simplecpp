@@ -15,30 +15,39 @@ brew update
 brew install git php gcc
 
 echo
+echo "Verifying PHP 8.4+..."
+php -r 'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);'
+
+echo
 echo "Ensuring php-ast is installed..."
 if ! php -m | grep -qi '^ast$'; then
-	pecl install ast
+	printf "\n" | pecl install ast || true
 fi
 
-PHP_INI="$(php --ini | awk -F': ' '/Loaded Configuration File/ {print $2}')"
-if [ -z "${PHP_INI:-}" ] || [ "${PHP_INI}" = "(none)" ]; then
-	PHP_INI="$(php --ini | awk -F': ' '/Scan for additional \.ini files in/ {print $2}')/99-simple-cpp.ini"
-	echo "extension=ast" | tee "$PHP_INI" >/dev/null
-elif ! php -m | grep -qi '^ast$'; then
-	if ! grep -Eq '^extension *= *ast$' "$PHP_INI"; then
+if ! php -m | grep -qi '^ast$'; then
+	PHP_INI="$(php --ini | awk -F': ' '/Loaded Configuration File/ {print $2}')"
+	if [ -z "${PHP_INI:-}" ] || [ "${PHP_INI}" = "(none)" ]; then
+		SCAN_DIR="$(php --ini | awk -F': ' '/Scan for additional \.ini files in/ {print $2}')"
+		mkdir -p "$SCAN_DIR"
+		PHP_INI="$SCAN_DIR/99-simple-cpp.ini"
+	fi
+
+	if ! grep -Eq '^extension *= *ast$' "$PHP_INI" 2>/dev/null; then
 		printf "\nextension=ast\n" >> "$PHP_INI"
 	fi
 fi
 
+php -m | grep -qi '^ast$'
+
 echo
-echo "Creating user bin directory..."
+echo "Creating user launcher directory..."
 mkdir -p "$HOME/.d-app"
 
 echo
 echo "Running project installer..."
 cd "$(dirname "$0")/.."
-php "install.php"
+php "install/install.php"
 
 echo
 echo "Installation finished."
-echo "If needed, restart your terminal session."
+echo "Restart your terminal session if needed."

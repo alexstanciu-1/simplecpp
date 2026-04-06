@@ -14,17 +14,21 @@ sudo apt update
 sudo apt install -y software-properties-common curl git php php-dev php-pear php-ast g++-13
 
 echo
+echo "Verifying PHP 8.4+..."
+php -r 'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);'
+
+echo
 echo "Verifying php-ast..."
 php -m | grep -i '^ast$' >/dev/null
 
 echo
-echo "Creating user bin directory..."
+echo "Creating user launcher directory..."
 mkdir -p "$HOME/.d-app"
 
 echo
 echo "Running project installer..."
 cd "$(dirname "$0")/.."
-php "install.php"
+php "install/install.php"
 
 echo
 echo "Installation finished."

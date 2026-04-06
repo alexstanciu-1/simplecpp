@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- PHP 8.5
+- PHP 8.4+ (PHP 8.5 preferred)
 - PHP extension: `php-ast`
 - C++23-compatible compiler:
   - GCC 13+
@@ -40,6 +40,16 @@ Then enable it in `php.ini` if needed:
 extension=ast
 ```
 
+### Windows
+
+On Windows, install a matching `php-ast` DLL for the installed PHP version and enable it in `php.ini`:
+
+```ini
+extension=php_ast.dll
+```
+
+The provided Windows installer handles this automatically.
+
 ### Verify PHP setup
 
 ```bash
@@ -67,6 +77,12 @@ sudo apt install -y php php-ast g++-13
 
 ```bash
 g++-13 --version
+```
+
+(Optional) verify PHP version:
+
+```bash
+php -r "echo PHP_MAJOR_VERSION,'.',PHP_MINOR_VERSION,PHP_EOL;"
 ```
 
 ---
@@ -105,17 +121,18 @@ Example:
 
 ---
 
-## Notes
-
-- Simple C++ runs directly from the repository
-- No global install step is required
-- The PHP generator requires `php-ast`
-- Future installer scripts may simplify setup
-
----
-
 ## Installer Scripts
 
 - Windows 11: `install/windows.cmd`
 - macOS: `install/macos.sh`
 - Ubuntu: `install/ubuntu.sh`
+
+---
+
+## Notes
+
+- Simple C++ runs directly from the repository
+- No global install step is required
+- The PHP generator requires `php-ast`
+- Installer scripts create the `s++` launcher in the user bin directory
+- Windows installs and enables `php-ast` automatically

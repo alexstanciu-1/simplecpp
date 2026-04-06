@@ -17,7 +17,15 @@ winget install --accept-package-agreements --accept-source-agreements Git.Git
 winget install --accept-package-agreements --accept-source-agreements PHP.PHP.8.5
 
 echo.
-echo Creating user bin directory...
+echo Verifying PHP 8.4+...
+php -r "exit(version_compare(PHP_VERSION, '8.4.0', '>=') ? 0 : 1);"
+if errorlevel 1 (
+	echo ERROR: PHP 8.4 or newer is required.
+	goto :end_fail
+)
+
+echo.
+echo Creating user launcher directory...
 if not exist "C:\Users\%USERNAME%\.d-app" mkdir "C:\Users\%USERNAME%\.d-app"
 
 echo Updating PATH...
@@ -26,7 +34,16 @@ setx PATH "%PATH%;C:\Users\%USERNAME%\.d-app" >nul
 echo.
 echo Running project installer...
 cd /D "%~dp0.."
-php "install.php"
+php "install/install.php"
+if errorlevel 1 goto :end_fail
+
+echo.
+echo Verifying php-ast in a new PHP process...
+php -m | findstr /I /R "^ast$" >nul
+if errorlevel 1 (
+	echo ERROR: php-ast is not enabled.
+	goto :end_fail
+)
 
 echo.
 echo Installation finished.

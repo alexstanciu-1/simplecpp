@@ -2,7 +2,7 @@
 
 Simple C++ is a programming language concept that combines the ease of scripting languages with the performance and control of compiled C++.
 
-It allows writing code in familiar languages (starting with PHP, with JavaScript and Python planned) while targeting regular C++ code compiled Ahead-Of-Time using standard compilers like GCC, Clang, and MSVC.
+It allows writing code in familiar languages (starting with PHP 8.4+, with JavaScript and Python planned) while targeting regular C++ code compiled Ahead-Of-Time using standard compilers like GCC, Clang, and MSVC.
 
 ## Core Idea
 
@@ -87,3 +87,13 @@ If a behavior is not defined → it is not allowed.
 ## Summary
 
 Simple C++ brings scripting-style development into a compiled, strict, and predictable model using standard C++ as the execution target.
+
+## Installer Scripts
+
+Starter installer scripts are available in:
+
+- `install/windows.cmd`
+- `install/macos.sh`
+- `install/ubuntu.sh`
+
+They install the required toolchain, create the user launcher directory (`~/.d-app` or `%USERPROFILE%\.d-app`), and run the project installer.
