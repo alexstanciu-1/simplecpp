@@ -715,6 +715,7 @@ TXT;
 				'g++',
 				'-std=c++23',
 				'-O3',
+				'-DSCPP_LANGUAGE_TARGET_PHP=1',
 				$compileUnitPath,
 				$this->projectRoot . '/runtime/src/runtime.cpp',
 				'-I',

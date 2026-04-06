@@ -111,3 +111,11 @@ Example:
 - No global install step is required
 - The PHP generator requires `php-ast`
 - Future installer scripts may simplify setup
+
+---
+
+## Installer Scripts
+
+- Windows 11: `install/windows.cmd`
+- macOS: `install/macos.sh`
+- Ubuntu: `install/ubuntu.sh`
