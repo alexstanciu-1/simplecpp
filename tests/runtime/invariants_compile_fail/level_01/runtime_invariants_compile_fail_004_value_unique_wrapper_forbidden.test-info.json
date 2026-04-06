@@ -1,0 +1,46 @@
+{
+    "id": "runtime_invariants_compile_fail_004_value_unique_wrapper_forbidden",
+    "suite": "runtime",
+    "group": "invariants_compile_fail",
+    "level": "level_01",
+    "outcome": "negative",
+    "enabled": true,
+    "status": "active",
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "build": {
+        "compiler": "g++",
+        "language_standard": "c++23",
+        "flags": [
+            "-O3"
+        ]
+    },
+    "expect": {
+        "compile": {
+            "success": false,
+            "error_contains": [
+                "value_p<T> cannot wrap handle-like runtime wrappers"
+            ]
+        },
+        "run": {
+            "success": false
+        }
+    },
+    "tags": [
+        "runtime",
+        "invariants",
+        "compile_fail",
+        "compile_fail",
+        "value_p",
+        "unique_p"
+    ],
+    "notes": "value_p must reject handle-like unique_p wrappers via static_assert."
+}

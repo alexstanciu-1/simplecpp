@@ -53,6 +53,8 @@ tests/**/*.php.json
 *.tmp.json
 *.dump
 
+*.test-results.json
+
 # Sandbox runtime artifacts
 sandbox/tmp/
 sandbox/cache/

@@ -1,0 +1,48 @@
+{
+    "id": "runtime_invariants_compile_fail_001_unique_copy_construct_forbidden",
+    "suite": "runtime",
+    "group": "invariants_compile_fail",
+    "level": "level_01",
+    "outcome": "negative",
+    "enabled": true,
+    "status": "active",
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "build": {
+        "compiler": "g++",
+        "language_standard": "c++23",
+        "flags": [
+            "-O3"
+        ]
+    },
+    "expect": {
+        "compile": {
+            "success": false,
+            "error_contains": [
+                "use of deleted function",
+                "unique_p(const unique_p &) = delete"
+            ]
+        },
+        "run": {
+            "success": false
+        }
+    },
+    "tags": [
+        "runtime",
+        "invariants",
+        "compile_fail",
+        "compile_fail",
+        "unique_p",
+        "copy",
+        "ctor"
+    ],
+    "notes": "Deleted unique_p copy construction must stay forbidden."
+}
