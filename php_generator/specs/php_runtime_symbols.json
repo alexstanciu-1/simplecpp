@@ -1,0 +1,11 @@
+{
+    "php_runtime_relative_symbols": [
+        "count",
+        "expect_array_argument",
+        "isset",
+        "var_dump",
+        "echo_eval",
+        "identical",
+        "not_identical"
+    ]
+}
