@@ -23,10 +23,11 @@ That means:
 
 - PHP 8.4+ (`PHP 8.5` preferred)
 - PHP extension: `php-ast`
+- Ninja
 - C++23-compatible compiler:
 	- GCC 13+
 	- Clang 16+
-	- MSVC (latest)
+	- MSVC-compatible environment or another compiler explicitly configured in `prism.json`
 
 Prism++ targets modern toolchains. Older compilers are not supported.
 
@@ -72,12 +73,16 @@ install\windows.cmd
 
 What it does:
 
-- installs common prerequisites with `winget`
+- installs Microsoft Visual C++ Redistributable, Ninja, and PHP with `winget`
+- installs Git with `winget` only when `git` is not already on PATH
 - checks PHP version
 - runs `install/install.php`
 - verifies `php-ast`
-- installs `scpp.cmd`, `scpp.php`, and `scpp.json`
+- installs `scpp.cmd`, `scpp` (for Git Bash / MinGW), `scpp.php`, and `scpp.json`
 - ensures the user PATH contains the user-local install directory
+- on Windows, if PHP cURL cannot validate the TLS chain for the php-ast download, the installer retries through PowerShell using the Windows certificate store
+- on Windows, the final php-ast verification now uses `extension_loaded('ast')` in a fresh PHP process rather than parsing `php -m`, so unrelated startup warnings from other extensions are less likely to cause a false failure
+- Windows PATH updates are applied through a temporary PowerShell script and fall back to `setx` if the first attempt fails
 
 ### Ubuntu / Debian
 
@@ -89,7 +94,7 @@ Run:
 
 What it does:
 
-- installs prerequisites with `apt`
+- installs prerequisites with `apt`, including `ninja-build`
 - verifies `php-ast`
 - runs `install/install.php`
 - installs `scpp`, `scpp.php`, and `scpp.json`
@@ -105,7 +110,7 @@ Run:
 
 What it does:
 
-- installs prerequisites with Homebrew
+- installs prerequisites with Homebrew, including `ninja`
 - installs/enables `php-ast`
 - runs `install/install.php`
 - installs `scpp`, `scpp.php`, and `scpp.json`
@@ -137,11 +142,23 @@ scpp --doctor
 Expected:
 
 - `--version` prints the current CLI version
-- `--doctor` prints PHP binary, PHP version, ini path, `php-ast` status, repo root, and CLI entrypoint
+- `--doctor` prints PHP binary, PHP version, ini path, `php-ast` status, repo root, CLI entrypoint, detected project config, Ninja path, and default compiler
 
 ---
 
 ## Basic usage
+
+Initialize a project in the current directory:
+
+```bash
+scpp init
+```
+
+Build the configured entrypoint from `prism.json`:
+
+```bash
+scpp build
+```
 
 Transpile one PHP file to generated C++ printed on stdout:
 
@@ -181,3 +198,20 @@ The repository checkout itself is not removed.
 - Multi-file compilation semantics are **not** part of the installer itself.
 - The current launcher name is `scpp`.
 - The old `d-app` and `s++` names are obsolete.
+
+## Windows troubleshooting
+
+- a startup warning for another extension, such as a missing `php_yaml_*.dll`, is a separate local PHP environment issue; it should be fixed, but it is not treated as a php-ast installation failure if the fresh-process `extension_loaded('ast')` check succeeds
+
+
+- Windows installer resolves relative `extension_dir` values such as `ext` against the active PHP installation directory before copying `php_ast.dll`.
+
+## Ninja install notes
+
+Minimal install commands:
+
+- Windows: `winget install Ninja-build.Ninja`
+- Ubuntu/Debian: `sudo apt update && sudo apt install ninja-build`
+- macOS: `brew install ninja`
+
+`scpp build` treats missing Ninja as a hard error and prints a platform-specific install hint.

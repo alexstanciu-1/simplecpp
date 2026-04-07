@@ -135,6 +135,7 @@ Result:
 Normative summary:
 - `isset($a[k])` is null-sensitive in the current intended subset
 - it must not collapse into pure key-existence semantics
+- the normative cross-runtime contract now lives in `specs/count_empty_isset_contract.md`
 
 ## 5. `empty($a[k])`
 
@@ -163,6 +164,8 @@ Result:
 - any non-empty array/table
 
 This is a deliberate Prism++ subset rule and is not full PHP falsiness.
+
+The normative cross-runtime contract now lives in `specs/count_empty_isset_contract.md`.
 
 ## 6. Top-level keyed write
 

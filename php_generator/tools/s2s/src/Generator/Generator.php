@@ -107,7 +107,7 @@ final class Generator
 
 	 */
 
-	public function generate(PhpFile $file): CppFile
+	public function generate(PhpFile $file, bool $emitProgramEntry = true): CppFile
 	{
 		$this->declaredLocals = [];
 		$this->errors = $file->buildErrors;
@@ -134,14 +134,15 @@ final class Generator
 		$source = ['#include "' . $baseName . '.hpp"', ''];
 
 		$hasRootNamespaceContent = ($file->rootUses !== [] || $file->constants !== [] || $file->classes !== [] || $file->functions !== [] || $file->rootStatements !== []);
-		$rootMainName = $file->rootStatements !== [] ? '__scpp_main' : null;
+		$unitMainName = $this->buildUnitMainName($file, $emitProgramEntry);
+		$rootMainName = $file->rootStatements !== [] ? $unitMainName : null;
 		if ($hasRootNamespaceContent) {
 			$this->emitNamespaceBlock($header, $source, 'scpp', null, $file->rootUses, $file->constants, $file->classes, $file->functions, $file->rootStatements, $rootMainName);
 		}
 
 		$namespaceMainTargets = [];
 		foreach ($file->namespaces as $namespace) {
-			$mainName = $namespace->statements !== [] ? '__scpp_main' : null;
+			$mainName = $namespace->statements !== [] ? $unitMainName : null;
 			$namespaceCpp = $this->buildNamespaceCppName($namespace->name);
 			$this->emitNamespaceBlock(
 				$header,
@@ -164,12 +165,12 @@ final class Generator
 			$this->fail('Root executable statements and namespace executable statements are not mixed in the current pass.');
 		}
 
-		if ($file->rootStatements !== []) {
+		if ($emitProgramEntry && $file->rootStatements !== []) {
 			$source[] = 'int main() {';
-			$source[] = $this->indent(1) . 'return scpp::__scpp_main();';
+			$source[] = $this->indent(1) . 'return scpp::' . $unitMainName . '();';
 			$source[] = '}';
 			$source[] = '';
-		} elseif ($namespaceMainTargets !== []) {
+		} elseif ($emitProgramEntry && $namespaceMainTargets !== []) {
 			$source[] = 'int main() {';
 			$source[] = $this->indent(1) . 'return ' . $namespaceMainTargets[0] . ';';
 			$source[] = '}';
@@ -181,6 +182,17 @@ final class Generator
 		return new CppFile($baseName, $header, $source, $this->errors, $this->warnings);
 	}
 
+
+
+	private function buildUnitMainName(PhpFile $file, bool $emitProgramEntry): string
+	{
+		if ($emitProgramEntry) {
+			return '__scpp_main';
+		}
+
+		$hash = substr(md5($file->path), 0, 12);
+		return '__scpp_unit_' . $hash;
+	}
 
 	private function addError(string $message): void
 	{
@@ -4751,16 +4763,8 @@ final class Generator
 		if ($kind === AstKind::AST_ISSET) {
 			// In this exporter, multi-argument isset() is already normalized into boolean-op trees.
 			// AST_ISSET itself carries exactly one operand in `children['var']`.
+			// Keyed reads must stay on the runtime helper path so missing and existing-null do not collapse into pure key-existence semantics.
 			$varNode = $expr->children['var'] ?? null;
-			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM) && (($varNode->children['dim'] ?? null) !== null)) {
-				$baseExpr = $varNode->children['expr'] ?? null;
-				$baseType = $this->inferExprType($baseExpr);
-				if (preg_match('/^vector_t<(.+)>$/', $baseType) !== 1) {
-					$base = $this->renderExpr($baseExpr, $namespacePhp);
-					$dim = $this->renderExpr($varNode->children['dim'] ?? null, $namespacePhp);
-					return 'table_has_(' . $base . ', ' . $dim . ')';
-				}
-			}
 			return $this->qualifyKnownPhpRuntimeSymbol('isset') . '(' . $this->renderExpr($varNode, $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::CALL) {

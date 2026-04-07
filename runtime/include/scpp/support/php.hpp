@@ -340,11 +340,27 @@ inline string_t &concat_assign(string_t &left, const string_t &right) {
 
 namespace detail {
 
+enum class probe_state : std::uint8_t {
+	invalid,
+	missing,
+	present_null,
+	present_value,
+};
+
+template <typename T>
+struct probe_result final {
+	probe_state state;
+	const T *value;
+};
+
 // Formalizes the runtime countable contract for hash-compatible mixed_t carriers.
 // How: only one unwrap step is performed, so nested mixed_t values that themselves hold hashes are handled by the caller explicitly without accidental recursive unwrapping.
 inline const hash_t<mixed_t> &countable_hash_or_throw(const mixed_t &value, const char *operation) {
 	if (const auto *table = value.table_if()) {
 		return *table;
+	}
+	if (const auto *shared_table = value.shared_table_if()) {
+		return *shared_table->get();
 	}
 	if (const auto *weak_table = value.weak_table_if()) {
 		auto locked = weak_table->lock();
@@ -354,6 +370,168 @@ inline const hash_t<mixed_t> &countable_hash_or_throw(const mixed_t &value, cons
 		throw std::runtime_error(std::string("php::") + operation + "(mixed_t) expects live hash-compatible mixed_t");
 	}
 	throw std::runtime_error(std::string("php::") + operation + "(mixed_t) expects hash-compatible mixed_t");
+}
+
+// Centralizes the narrowed Prism++ emptiness contract for plain one-value checks.
+// How: this stays intentionally smaller than PHP falsiness; only null, empty string, and empty countables are empty.
+inline bool_t empty_scalar(null_t) {
+	return bool_t(true);
+}
+
+inline bool_t empty_scalar(nullopt_t) {
+	return bool_t(true);
+}
+
+inline bool_t empty_scalar(nullptr_t) {
+	return bool_t(true);
+}
+
+inline bool_t empty_scalar(const string_t &value) {
+	return value.empty();
+}
+
+inline bool_t empty_scalar(const bool_t &) {
+	return bool_t(false);
+}
+
+inline bool_t empty_scalar(const int_t &) {
+	return bool_t(false);
+}
+
+inline bool_t empty_scalar(const float_t &) {
+	return bool_t(false);
+}
+
+template <typename T>
+inline bool_t empty_scalar(const nullable<T> &value) {
+	if (!value.has_value().native_value()) {
+		return bool_t(true);
+	}
+	return empty_scalar(value.value());
+}
+
+template <typename T>
+inline bool_t empty_scalar(const shared_p<T> &value) {
+	return bool_t(!value.has_value().native_value());
+}
+
+template <typename T>
+inline bool_t empty_scalar(const unique_p<T> &value) {
+	return bool_t(!value.has_value().native_value());
+}
+
+template <typename T>
+inline bool_t empty_scalar(const weak_p<T> &value) {
+	return bool_t(value.expired().native_value());
+}
+
+template <typename T>
+requires (
+	!std::is_same_v<std::remove_cvref_t<T>, null_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, nullopt_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, string_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, bool_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, int_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, float_t>
+	&& !requires (const std::remove_cvref_t<T> &value) {
+		value.has_value();
+	}
+	&& !requires (const std::remove_cvref_t<T> &value) {
+		value.expired();
+	}
+)
+inline bool_t empty_scalar(T &&) {
+	return bool_t(false);
+}
+
+// Centralizes the narrowed Prism++ probe contract for mixed_t values.
+// How: missing and invalid are only possible for keyed probes; one-value probes classify null vs non-null without exposing storage internals.
+inline probe_result<mixed_t> probe_value(const mixed_t &value) {
+	if (value.kind() == mixed_t::kind_t::null_v) {
+		return {probe_state::present_null, &value};
+	}
+	return {probe_state::present_value, &value};
+}
+
+template <typename T>
+inline probe_result<T> probe_value(const T &value) {
+	return {probe_state::present_value, &value};
+}
+
+inline probe_result<null_t> probe_value(null_t) {
+	return {probe_state::present_null, nullptr};
+}
+
+inline probe_result<nullopt_t> probe_value(nullopt_t) {
+	return {probe_state::present_null, nullptr};
+}
+
+inline probe_result<nullptr_t> probe_value(nullptr_t) {
+	return {probe_state::present_null, nullptr};
+}
+
+template <typename T>
+inline probe_result<nullable<T>> probe_value(const nullable<T> &value) {
+	if (!value.has_value().native_value()) {
+		return {probe_state::present_null, &value};
+	}
+	return {probe_state::present_value, &value};
+}
+
+template <typename T>
+inline probe_result<shared_p<T>> probe_value(const shared_p<T> &value) {
+	if (!value.has_value().native_value()) {
+		return {probe_state::present_null, &value};
+	}
+	return {probe_state::present_value, &value};
+}
+
+template <typename T>
+inline probe_result<unique_p<T>> probe_value(const unique_p<T> &value) {
+	if (!value.has_value().native_value()) {
+		return {probe_state::present_null, &value};
+	}
+	return {probe_state::present_value, &value};
+}
+
+template <typename T>
+inline probe_result<weak_p<T>> probe_value(const weak_p<T> &value) {
+	if (value.expired().native_value()) {
+		return {probe_state::present_null, &value};
+	}
+	return {probe_state::present_value, &value};
+}
+
+inline bool_t isset_from_probe(probe_state state) {
+	return bool_t(state == probe_state::present_value);
+}
+
+inline bool_t empty_from_probe(const probe_state state, const mixed_t *value) {
+	if (state == probe_state::invalid || state == probe_state::missing || state == probe_state::present_null) {
+		return bool_t(true);
+	}
+	if (value == nullptr) {
+		return bool_t(false);
+	}
+	if (const auto *string_value = value->string_if()) {
+		return string_value->empty();
+	}
+	if (const auto *table_value = value->table_if()) {
+		return table_value->empty();
+	}
+	if (const auto *shared_table_value = value->shared_table_if()) {
+		return shared_table_value->get()->empty();
+	}
+	if (const auto *weak_table_value = value->weak_table_if()) {
+		auto locked = weak_table_value->lock();
+		if (static_cast<bool>(locked)) {
+			return locked.get()->empty();
+		}
+		return bool_t(true);
+	}
+	return bool_t(false);
 }
 
 // Centralizes integer-key normalization for countable helper overloads.
@@ -418,72 +596,276 @@ inline bool_t empty(const hash_t<T> &value) {
 	return value.empty();
 }
 
-// Implements PHP empty() for dynamic values that currently hold an array/hash payload.
-// How: the same countable contract as count() is reused so non-countable mixed_t values fail explicitly.
+// Implements the narrowed Prism++ empty() contract for one-value scalar and wrapper inputs.
+// How: only null, empty string, and empty countables are empty; numeric zero, false, and "0" are intentionally not empty.
+inline bool_t empty(null_t value) {
+	return detail::empty_scalar(value);
+}
+
+inline bool_t empty(nullopt_t value) {
+	return detail::empty_scalar(value);
+}
+
+inline bool_t empty(nullptr_t value) {
+	return detail::empty_scalar(value);
+}
+
+inline bool_t empty(const bool_t &value) {
+	return detail::empty_scalar(value);
+}
+
+inline bool_t empty(const int_t &value) {
+	return detail::empty_scalar(value);
+}
+
+inline bool_t empty(const float_t &value) {
+	return detail::empty_scalar(value);
+}
+
+inline bool_t empty(const string_t &value) {
+	return detail::empty_scalar(value);
+}
+
+template <typename T>
+inline bool_t empty(const nullable<T> &value) {
+	return detail::empty_scalar(value);
+}
+
+template <typename T>
+inline bool_t empty(const shared_p<T> &value) {
+	return detail::empty_scalar(value);
+}
+
+template <typename T>
+inline bool_t empty(const unique_p<T> &value) {
+	return detail::empty_scalar(value);
+}
+
+template <typename T>
+inline bool_t empty(const weak_p<T> &value) {
+	return detail::empty_scalar(value);
+}
+
+// Implements PHP empty() for dynamic values under the narrowed Prism++ contract.
+// How: mixed_t no longer reuses the strict countable contract; it treats missing/null/string-empty/empty-countable as empty and everything else as non-empty.
 inline bool_t empty(const mixed_t &value) {
-	return empty(detail::countable_hash_or_throw(value, "empty"));
+	const auto probe = detail::probe_value(value);
+	return detail::empty_from_probe(probe.state, probe.value);
 }
 
 // Implements container-key isset() for vector wrappers.
-// How: index existence is reduced to a bounds check so generated code can query sequence containers without materializing sentinels.
+// How: index existence is reduced to a bounds check, then mixed_t payloads get the extra null-sensitive check required by Prism++.
 template <typename T>
 inline bool_t isset(const vector_t<T> &value, const int_t &key) {
-	return bool_t(detail::vector_has_index(value.size(), key));
+	if (!detail::vector_has_index(value.size(), key)) {
+		return bool_t(false);
+	}
+	if constexpr (std::is_same_v<T, mixed_t>) {
+		return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
+	}
+	return bool_t(true);
 }
 
 template <typename T>
 inline bool_t isset(const vector_t<T> &value, const int key) {
-	return bool_t(detail::vector_has_index(value.size(), key));
+	return isset(value, int_t{static_cast<std::int64_t>(key)});
 }
 
 // Implements container-key isset() for hash wrappers.
-// How: hash_t already exposes key-presence checks, so the helper forwards directly into that contract.
+// How: mixed_t payloads stay null-sensitive, while typed payloads treat key presence as value presence because they cannot represent PHP null by default construction.
 template <typename T>
 inline bool_t isset(const hash_t<T> &value, const int_t &key) {
-	return value.has(key);
+	if (!value.has(key).native_value()) {
+		return bool_t(false);
+	}
+	if constexpr (std::is_same_v<T, mixed_t>) {
+		return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
+	}
+	return bool_t(true);
 }
 
 template <typename T>
 inline bool_t isset(const hash_t<T> &value, const string_t &key) {
-	return value.has(key);
+	if (!value.has(key).native_value()) {
+		return bool_t(false);
+	}
+	if constexpr (std::is_same_v<T, mixed_t>) {
+		return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
+	}
+	return bool_t(true);
 }
 
 template <typename T>
 inline bool_t isset(const hash_t<T> &value, const char *key) {
-	return value.has(string_t{key});
+	return isset(value, string_t{key});
 }
 
 template <typename T>
 inline bool_t isset(const hash_t<T> &value, const int key) {
-	return value.has(int_t{static_cast<std::int64_t>(key)});
+	return isset(value, int_t{static_cast<std::int64_t>(key)});
+}
+
+// Implements container-key empty() for vector wrappers.
+// How: missing or invalid indices are empty, and mixed_t payloads reuse the narrowed one-value empty contract without mutating the container.
+template <typename T>
+inline bool_t empty(const vector_t<T> &value, const int_t &key) {
+	if (!detail::vector_has_index(value.size(), key)) {
+		return bool_t(true);
+	}
+	if constexpr (std::is_same_v<T, mixed_t>) {
+		const auto probe = detail::probe_value(value.at(key));
+		return detail::empty_from_probe(probe.state, probe.value);
+	}
+	return empty(value.at(key));
+}
+
+template <typename T>
+inline bool_t empty(const vector_t<T> &value, const int key) {
+	return empty(value, int_t{static_cast<std::int64_t>(key)});
+}
+
+// Implements container-key empty() for hash wrappers.
+// How: missing keys are empty, mixed_t payloads keep null-sensitive and narrowed-string/countable behavior, and typed payloads defer to one-value empty() only when the key exists.
+template <typename T>
+inline bool_t empty(const hash_t<T> &value, const int_t &key) {
+	if (!value.has(key).native_value()) {
+		return bool_t(true);
+	}
+	if constexpr (std::is_same_v<T, mixed_t>) {
+		const auto probe = detail::probe_value(value.at(key));
+		return detail::empty_from_probe(probe.state, probe.value);
+	}
+	return empty(value.at(key));
+}
+
+template <typename T>
+inline bool_t empty(const hash_t<T> &value, const string_t &key) {
+	if (!value.has(key).native_value()) {
+		return bool_t(true);
+	}
+	if constexpr (std::is_same_v<T, mixed_t>) {
+		const auto probe = detail::probe_value(value.at(key));
+		return detail::empty_from_probe(probe.state, probe.value);
+	}
+	return empty(value.at(key));
+}
+
+template <typename T>
+inline bool_t empty(const hash_t<T> &value, const char *key) {
+	return empty(value, string_t{key});
+}
+
+template <typename T>
+inline bool_t empty(const hash_t<T> &value, const int key) {
+	return empty(value, int_t{static_cast<std::int64_t>(key)});
 }
 
 // Implements container-key isset() for hash-compatible mixed_t carriers.
-// How: the helper unwraps one countable layer, then reuses the concrete hash overloads so nested mixed payloads are not recursively unwrapped by mistake.
+// How: invalid key kinds and non-countable bases are non-throwing here by policy, while present-null still resolves to false through the shared probe rules.
 inline bool_t isset(const mixed_t &value, const mixed_t &key) {
 	if (key.kind() == mixed_t::kind_t::int_v) {
-		return isset(detail::countable_hash_or_throw(value, "isset"), key.int_value());
+		return isset(value, key.int_value());
 	}
 	if (key.kind() == mixed_t::kind_t::string_v) {
-		return isset(detail::countable_hash_or_throw(value, "isset"), *key.string_if());
+		return isset(value, *key.string_if());
 	}
 	return bool_t(false);
 }
 
 inline bool_t isset(const mixed_t &value, const int_t &key) {
-	return isset(detail::countable_hash_or_throw(value, "isset"), key);
+	const auto *table = value.table_if();
+	if (table == nullptr) {
+		if (const auto *shared_table = value.shared_table_if()) {
+			return isset(*shared_table->get(), key);
+		}
+		if (const auto *weak_table = value.weak_table_if()) {
+			auto locked = weak_table->lock();
+			if (static_cast<bool>(locked)) {
+				return isset(*locked.get(), key);
+			}
+		}
+		return bool_t(false);
+	}
+	return isset(*table, key);
 }
 
 inline bool_t isset(const mixed_t &value, const string_t &key) {
-	return isset(detail::countable_hash_or_throw(value, "isset"), key);
+	const auto *table = value.table_if();
+	if (table == nullptr) {
+		if (const auto *shared_table = value.shared_table_if()) {
+			return isset(*shared_table->get(), key);
+		}
+		if (const auto *weak_table = value.weak_table_if()) {
+			auto locked = weak_table->lock();
+			if (static_cast<bool>(locked)) {
+				return isset(*locked.get(), key);
+			}
+		}
+		return bool_t(false);
+	}
+	return isset(*table, key);
 }
 
 inline bool_t isset(const mixed_t &value, const char *key) {
-	return isset(detail::countable_hash_or_throw(value, "isset"), key);
+	return isset(value, string_t{key});
 }
 
 inline bool_t isset(const mixed_t &value, const int key) {
-	return isset(detail::countable_hash_or_throw(value, "isset"), key);
+	return isset(value, int_t{static_cast<std::int64_t>(key)});
+}
+
+// Implements container-key empty() for hash-compatible mixed_t carriers.
+// How: invalid key kinds and non-countable bases are empty by policy, while valid lookups stay non-mutating and reuse the narrowed one-value empty contract.
+inline bool_t empty(const mixed_t &value, const mixed_t &key) {
+	if (key.kind() == mixed_t::kind_t::int_v) {
+		return empty(value, key.int_value());
+	}
+	if (key.kind() == mixed_t::kind_t::string_v) {
+		return empty(value, *key.string_if());
+	}
+	return bool_t(true);
+}
+
+inline bool_t empty(const mixed_t &value, const int_t &key) {
+	const auto *table = value.table_if();
+	if (table == nullptr) {
+		if (const auto *shared_table = value.shared_table_if()) {
+			return empty(*shared_table->get(), key);
+		}
+		if (const auto *weak_table = value.weak_table_if()) {
+			auto locked = weak_table->lock();
+			if (static_cast<bool>(locked)) {
+				return empty(*locked.get(), key);
+			}
+		}
+		return bool_t(true);
+	}
+	return empty(*table, key);
+}
+
+inline bool_t empty(const mixed_t &value, const string_t &key) {
+	const auto *table = value.table_if();
+	if (table == nullptr) {
+		if (const auto *shared_table = value.shared_table_if()) {
+			return empty(*shared_table->get(), key);
+		}
+		if (const auto *weak_table = value.weak_table_if()) {
+			auto locked = weak_table->lock();
+			if (static_cast<bool>(locked)) {
+				return empty(*locked.get(), key);
+			}
+		}
+		return bool_t(true);
+	}
+	return empty(*table, key);
+}
+
+inline bool_t empty(const mixed_t &value, const char *key) {
+	return empty(value, string_t{key});
+}
+
+inline bool_t empty(const mixed_t &value, const int key) {
+	return empty(value, int_t{static_cast<std::int64_t>(key)});
 }
 
 // Creates a shared dynamic-object carrier by copying one hash payload into shared storage.
@@ -545,6 +927,12 @@ inline bool_t isset_one(nullptr_t) {
 	return bool_t(false);
 }
 
+// Implements one-value isset semantics used by the variadic isset helper.
+// How: mixed_t must preserve the null-sensitive contract for lowered array/property reads that return a dynamic value.
+inline bool_t isset_one(const mixed_t &value) {
+	return detail::isset_from_probe(detail::probe_value(value).state);
+}
+
 template <typename T>
 // Implements one-value isset semantics used by the variadic isset helper.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
@@ -578,6 +966,7 @@ requires (
 	!std::is_same_v<std::remove_cvref_t<T>, null_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullopt_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, mixed_t>
 	&& !requires (const std::remove_cvref_t<T> &value) {
 		value.has_value();
 	}

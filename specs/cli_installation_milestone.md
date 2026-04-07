@@ -1,16 +1,20 @@
-# Prism++ CLI Installation Milestone
+# Prism++ CLI Installation and Project Bootstrap Milestone
 
-Status: Active for the current first-binary milestone.
+Status: Active for the current first-binary and first-project-bootstrap milestone.
 
 ---
 
 ## 1. Goal
 
-This milestone defines what it means for Prism++ to have a usable binary before the deliberate multi-file model is implemented.
+This milestone defines what it means for Prism++ to have:
 
-The goal is narrow:
+- a usable installed `scpp` binary
+- a stable project bootstrap command
+- a first practical build command shape
 
-> A current user can install a stable `scpp` command and invoke it from a normal shell without having to cd into the repository.
+The goal is still narrow:
+
+> A current user can install `scpp`, create `prism.json`, and run `scpp build` from a normal shell without manually wiring Ninja invocation.
 
 This milestone is intentionally separate from:
 
@@ -80,6 +84,7 @@ The installer writes a small launcher set into the user-local bin directory:
 ### Windows
 
 - `scpp.cmd`
+- `scpp` on Windows too, so Git Bash / MinGW can run `scpp` directly
 - `scpp.php`
 - `scpp.json`
 
@@ -90,11 +95,13 @@ The installer writes a small launcher set into the user-local bin directory:
 - `scpp.json`
 
 `scpp.php` is the installed shim.
-It reads sibling config and forwards execution to the repo CLI entrypoint.
+It reads sibling launcher config and forwards execution to the repo CLI entrypoint.
 
 `scpp.json` must contain at least:
 
 - `repo_root`
+
+This launcher config is separate from the project config `prism.json`.
 
 ---
 
@@ -103,11 +110,31 @@ It reads sibling config and forwards execution to the repo CLI entrypoint.
 Required commands:
 
 - `scpp <input.php>`
+- `scpp init`
+- `scpp build`
 - `scpp --help`
 - `scpp --version`
 - `scpp --doctor`
 
-`--doctor` must report enough information to debug install failures quickly, including:
+`scpp init` must:
+
+- create `prism.json` in the current directory
+- create `.prism/build`, `.prism/generated`, and `.prism/cache`
+- guess a common entrypoint when possible
+- otherwise write a placeholder entrypoint the user edits
+
+`scpp build` must:
+
+- discover `prism.json` by walking upward from the current directory
+- use one entrypoint first
+- keep generated C++ on disk
+- emit a Ninja build file under `.prism/build/`
+- invoke Ninja directly
+- produce one executable first
+- use project-root-relative normalized forward-slash paths in the emitted Ninja file
+- compile the runtime directly from the repo checkout
+
+`--doctor` must report enough information to debug install and build failures quickly, including:
 
 - PHP binary
 - PHP version
@@ -115,10 +142,46 @@ Required commands:
 - whether `php-ast` is loaded
 - repo root
 - CLI entrypoint path
+- detected project config path when present
+- Ninja path when present
+- detected default compiler when present
 
 ---
 
-## 7. Installer requirements
+## 7. Project config contract
+
+The project config filename for this milestone is:
+
+- `prism.json`
+
+Minimum shape:
+
+```json
+{
+  "config_version": 1,
+  "project_name": "my_project",
+  "entrypoint": "main.php",
+  "build_dir": ".prism/build",
+  "generated_dir": ".prism/generated",
+  "cache_dir": ".prism/cache",
+  "build": {
+    "backend": "ninja",
+    "cxx": null
+  }
+}
+```
+
+The default project shape is not web-first. `scpp init` should prefer a conventional CLI-style entrypoint such as `main.php` before any index-based candidate.
+
+Compiler policy for this milestone:
+
+- detect a sane default compiler
+- allow override in config
+- fail clearly if none is found
+
+---
+
+## 8. Installer requirements
 
 The installer must be:
 
@@ -130,13 +193,17 @@ It must also:
 
 - verify minimum PHP version
 - verify or install `php-ast` according to platform capabilities
+- provision Ninja on supported platform installers
+- on Windows, do not attempt a Git install or upgrade when `git` is already available on PATH
 - ensure the launcher directory is reachable via PATH or shell profile
 - perform post-install verification with `scpp --version`
 - warn clearly that repo moves require reinstall
 
+This milestone does not require the installer itself to bootstrap Ninja. Missing Ninja remains a build-time hard error with a platform-specific install hint.
+
 ---
 
-## 8. Uninstall requirements
+## 9. Uninstall requirements
 
 A minimal uninstall path must exist.
 
@@ -149,14 +216,15 @@ It does not remove the repository checkout.
 
 ---
 
-## 9. Non-goals
+## 10. Non-goals
 
-This milestone does not define:
+This milestone does not yet define:
 
-- include resolution semantics
-- `__DIR__` execution semantics across multiple source units
-- symbol merge rules across files
+- full include resolution semantics
+- the final `__DIR__` static-expression subset
+- cross-file symbol merge rules
 - `_once` identity rules
-- duplicate-definition policy across source files
+- final duplicate-definition policy across source files
+- the full project graph algorithm
 
 Those belong to the deliberate multi-file model milestone.

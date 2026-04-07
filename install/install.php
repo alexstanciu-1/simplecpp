@@ -46,9 +46,25 @@ function ensure_php_version(): void
 
 function ensure_windows_php_ast(): void
 {
+	$extDirIni = trim((string) ini_get('extension_dir'));
+	$resolvedExtDir = resolve_active_php_extension_dir();
+	$dllTarget = rtrim($resolvedExtDir, "\/") . DIRECTORY_SEPARATOR . 'php_ast.dll';
+	$repoLocalDll = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'ext' . DIRECTORY_SEPARATOR . 'php_ast.dll';
+
+	echo "php.ini extension_dir: " . ($extDirIni === '' ? '(empty)' : $extDirIni) . "\n";
+	echo "Resolved PHP extension dir: {$resolvedExtDir}\n";
+	echo "Expected php_ast.dll target: {$dllTarget}\n";
+	if (is_file($repoLocalDll)) {
+		echo "Note: repo-local php_ast.dll exists at: {$repoLocalDll}\n";
+	}
+
 	if (extension_loaded('ast')) {
-		echo "php-ast already enabled\n";
-		return;
+		if (is_file($dllTarget)) {
+			echo "php-ast already enabled and present in the active PHP extension dir\n";
+			return;
+		}
+
+		echo "php-ast appears loaded in the current process, but php_ast.dll is missing from the active PHP extension dir. Continuing with install to fix a likely cwd-relative false positive.\n";
 	}
 
 	$phpVersion = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
@@ -84,24 +100,32 @@ function ensure_windows_php_ast(): void
 	if ($res !== true) {
 		throw new RuntimeException("Unable to open php-ast zip: {$zipFile}");
 	}
-	$zip->extractTo($extractDir);
+
+	if ($zip->extractTo($extractDir) !== true) {
+		$zip->close();
+		throw new RuntimeException("Failed to extract php-ast zip: {$zipFile}");
+	}
 	$zip->close();
 
-	$dllSource = find_file_recursive($extractDir, 'php_ast.dll');
+	$dllSource = find_windows_php_ast_dll($extractDir);
 	if ($dllSource === null) {
-		throw new RuntimeException('php_ast.dll was not found in the downloaded package.');
+		$files = list_relative_files_recursive($extractDir);
+		$preview = array_slice($files, 0, 20);
+		$details = $preview === [] ? '(archive extracted no files)' : implode(PHP_EOL, $preview);
+		throw new RuntimeException("No suitable php-ast DLL was found in the downloaded package. Extracted files:
+{$details}");
 	}
 
-	$extDir = (string) ini_get('extension_dir');
-	if ($extDir === '') {
-		$extDir = dirname(PHP_BINARY) . DIRECTORY_SEPARATOR . 'ext';
-	}
+	$extDir = $resolvedExtDir;
 	ensure_dir($extDir);
 
 	$dllTarget = rtrim($extDir, "\\/") . DIRECTORY_SEPARATOR . 'php_ast.dll';
+	echo "Copying php_ast.dll to: {$dllTarget}\n";
 	if (!@copy($dllSource, $dllTarget) && !is_file($dllTarget)) {
 		throw new RuntimeException("Failed to copy php_ast.dll to: {$dllTarget}");
 	}
+
+	echo "Copied php_ast.dll size: " . filesize($dllTarget) . " bytes\n";
 
 	$phpIni = locate_php_ini_windows();
 	ensure_windows_php_ini_has_ast($phpIni);
@@ -180,21 +204,27 @@ PHP;
 function write_launcher(string $binDir): void
 {
 	if (PHP_OS_FAMILY === 'Windows') {
-		$launcherPath = $binDir . DIRECTORY_SEPARATOR . 'scpp.cmd';
-		$content = "@echo off\r\n" .
+		$cmdLauncherPath = $binDir . DIRECTORY_SEPARATOR . 'scpp.cmd';
+		$cmdContent = "@echo off\r\n" .
 			"php \"%~dp0scpp.php\" %*\r\n";
+		file_put_contents_or_throw($cmdLauncherPath, $cmdContent);
+		echo "Launcher installed: {$cmdLauncherPath}\n";
+
+		$bashLauncherPath = $binDir . DIRECTORY_SEPARATOR . 'scpp';
+		$bashContent = "#!/usr/bin/env sh\n" .
+			"php \"$(dirname \"$0\")/scpp.php\" \"$@\"\n";
+		file_put_contents_or_throw($bashLauncherPath, $bashContent);
+		@chmod($bashLauncherPath, 0755);
+		echo "Launcher installed: {$bashLauncherPath} (Git Bash / MinGW)\n";
+		return;
 	}
-	else {
-		$launcherPath = $binDir . DIRECTORY_SEPARATOR . 'scpp';
-		$content = "#!/usr/bin/env sh\n" .
-			"php \"\$(CDPATH= cd -- \"\$(dirname -- \"\$0\")\" && pwd)/scpp.php\" \"\$@\"\n";
-	}
+
+	$launcherPath = $binDir . DIRECTORY_SEPARATOR . 'scpp';
+	$content = "#!/usr/bin/env sh\n" .
+		"php \"$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)/scpp.php\" \"$@\"\n";
 
 	file_put_contents_or_throw($launcherPath, $content);
-
-	if (PHP_OS_FAMILY !== 'Windows') {
-		@chmod($launcherPath, 0755);
-	}
+	@chmod($launcherPath, 0755);
 
 	echo "Launcher installed: {$launcherPath}\n";
 }
@@ -235,26 +265,63 @@ function ensure_windows_user_path_entry(string $binDir): void
 		echo "PATH already contains launcher directory in current process\n";
 	}
 
-	$psDir = windows_path_for_powershell($binDir);
-	$script = '$target = ' . single_quote_ps($psDir) . '; ' .
-		'$existing = [Environment]::GetEnvironmentVariable("Path", "User"); ' .
-		'if ([string]::IsNullOrWhiteSpace($existing)) { ' .
-			'[Environment]::SetEnvironmentVariable("Path", $target, "User") ' .
-		'} else { ' .
-			'$parts = $existing -split ";" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }; ' .
-			'$normalizedTarget = $target.TrimEnd("\\"); ' .
-			'$exists = $false; ' .
-			'foreach ($part in $parts) { if ($part.TrimEnd("\\") -ieq $normalizedTarget) { $exists = $true; break } } ' .
-			'if (-not $exists) { [Environment]::SetEnvironmentVariable("Path", ($existing.TrimEnd(";") + ";" + $target), "User") } ' .
-		'}';
-
-	$command = 'powershell -NoProfile -ExecutionPolicy Bypass -Command ' . escapeshellarg($script);
-	exec($command, $output, $code);
-	if ($code !== 0) {
-		throw new RuntimeException('Failed to update the user PATH on Windows.');
+	$userPath = read_windows_user_path();
+	if ($userPath !== null && path_contains_dir($userPath, $binDir)) {
+		echo "User PATH already contains launcher directory\n";
+		return;
 	}
 
-	echo "User PATH ensured: {$binDir}\n";
+	$psDir = windows_path_for_powershell($binDir);
+	$script = <<<'PS'
+$ErrorActionPreference = 'Stop'
+$target = __TARGET__
+$existing = [Environment]::GetEnvironmentVariable('Path', 'User')
+if ([string]::IsNullOrWhiteSpace($existing)) {
+	[Environment]::SetEnvironmentVariable('Path', $target, 'User')
+	exit 0
+}
+$parts = $existing -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
+$normalizedTarget = $target.TrimEnd('\')
+$exists = $false
+foreach ($part in $parts) {
+	if ($part.TrimEnd('\') -ieq $normalizedTarget) {
+		$exists = $true
+		break
+	}
+}
+if (-not $exists) {
+	[Environment]::SetEnvironmentVariable('Path', ($existing.TrimEnd(';') + ';' + $target), 'User')
+}
+PS;
+	$script = str_replace('__TARGET__', single_quote_ps($psDir), $script);
+
+	$result = run_powershell_script($script);
+	if ($result['code'] === 0) {
+		$verified = read_windows_user_path();
+		if ($verified !== null && path_contains_dir($verified, $binDir)) {
+			echo "User PATH ensured: {$binDir}\n";
+			return;
+		}
+	}
+
+	if (try_set_windows_user_path_entry_via_registry($binDir)) {
+		echo "User PATH ensured via registry fallback: {$binDir}\n";
+		return;
+	}
+
+	if (try_setx_windows_user_path_entry($binDir)) {
+		echo "User PATH ensured via setx fallback: {$binDir}\n";
+		return;
+	}
+
+	$details = [];
+	if (!empty($result['output'])) {
+		$details[] = "PowerShell output:\n" . implode(PHP_EOL, $result['output']);
+	}
+	throw new RuntimeException(
+		"Failed to update the user PATH on Windows." .
+		($details !== [] ? "\n" . implode("\n\n", $details) : '')
+	);
 }
 
 function ensure_posix_profile_path_entry(string $binDir): void
@@ -299,6 +366,109 @@ function ensure_posix_profile_path_entry(string $binDir): void
 	}
 }
 
+function try_set_windows_user_path_entry_via_registry(string $binDir): bool
+{
+	$currentUserPath = read_windows_user_path();
+	if ($currentUserPath === null) {
+		$currentUserPath = '';
+	}
+
+	if (path_contains_dir($currentUserPath, $binDir)) {
+		return true;
+	}
+
+	$updated = trim_path_list($currentUserPath, ';');
+	if ($updated !== '') {
+		$updated .= ';';
+	}
+	$updated .= windows_path_for_powershell($binDir);
+
+	$command = 'reg add HKCU\Environment /v Path /t REG_EXPAND_SZ /d ' . escapeshellarg($updated) . ' /f';
+	exec($command . ' 2>&1', $output, $code);
+	if ($code !== 0) {
+		return false;
+	}
+
+	$verified = read_windows_user_path();
+	return $verified !== null && path_contains_dir($verified, $binDir);
+}
+
+function try_setx_windows_user_path_entry(string $binDir): bool
+{
+	$currentUserPath = read_windows_user_path();
+	if ($currentUserPath === null) {
+		return false;
+	}
+
+	if (path_contains_dir($currentUserPath, $binDir)) {
+		return true;
+	}
+
+	$updated = trim_path_list($currentUserPath, ';');
+	if ($updated !== '') {
+		$updated .= ';';
+	}
+	$updated .= windows_path_for_powershell($binDir);
+
+	$command = 'setx PATH ' . escapeshellarg($updated);
+	exec($command . ' 2>&1', $output, $code);
+	if ($code !== 0) {
+		return false;
+	}
+
+	$verified = read_windows_user_path();
+	return $verified !== null && path_contains_dir($verified, $binDir);
+}
+
+function read_windows_user_path(): ?string
+{
+	$script = <<<'PS'
+$ErrorActionPreference = 'Stop'
+$value = [Environment]::GetEnvironmentVariable('Path', 'User')
+if ($null -eq $value) {
+	$value = ''
+}
+Write-Output $value
+PS;
+	$result = run_powershell_script($script);
+	if ($result['code'] !== 0) {
+		return null;
+	}
+
+	return implode(PHP_EOL, $result['output']);
+}
+
+function run_powershell_script(string $script): array
+{
+	$tempFile = tempnam(sys_get_temp_dir(), 'scpp_ps_');
+	if ($tempFile === false) {
+		throw new RuntimeException('Failed to create a temporary PowerShell script file.');
+	}
+
+	$psFile = $tempFile . '.ps1';
+	if (!@rename($tempFile, $psFile)) {
+		@unlink($tempFile);
+		$psFile = $tempFile . '.ps1';
+	}
+
+	file_put_contents_or_throw($psFile, $script . PHP_EOL);
+	$command = 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ' . escapeshellarg($psFile);
+	exec($command . ' 2>&1', $output, $code);
+	@unlink($psFile);
+
+	return [
+		'output' => $output,
+		'code' => $code,
+	];
+}
+
+function trim_path_list(string $value, string $separator): string
+{
+	return trim($value, " 	
+
+ " . $separator);
+}
+
 function verify_install(string $binDir): void
 {
 	$commandPath = $binDir . DIRECTORY_SEPARATOR . (PHP_OS_FAMILY === 'Windows' ? 'scpp.cmd' : 'scpp');
@@ -328,6 +498,42 @@ function print_success_notes(string $repoRoot, string $binDir): void
 	else {
 		echo "Open a new shell, or run: source ~/.profile\n";
 	}
+}
+
+
+function resolve_active_php_extension_dir(): string
+{
+	$extDir = trim((string) ini_get('extension_dir'));
+	if ($extDir === '') {
+		return dirname(PHP_BINARY) . DIRECTORY_SEPARATOR . 'ext';
+	}
+
+	if (is_absolute_path($extDir)) {
+		return $extDir;
+	}
+
+	return dirname(PHP_BINARY) . DIRECTORY_SEPARATOR . $extDir;
+}
+
+function is_absolute_path(string $path): bool
+{
+	if ($path === '') {
+		return false;
+	}
+
+	if (preg_match('/^[A-Za-z]:[\\\/]/', $path) === 1) {
+		return true;
+	}
+
+	if (str_starts_with($path, '\\')) {
+		return true;
+	}
+
+	if ($path[0] === '/' || $path[0] === '\\') {
+		return true;
+	}
+
+	return false;
 }
 
 function detect_windows_php_thread_safety(): bool
@@ -416,6 +622,12 @@ function download_file(string $url): string
 	if ($data === false) {
 		$error = curl_error($ch);
 		curl_close($ch);
+
+		if (PHP_OS_FAMILY === 'Windows' && is_windows_tls_chain_error($error)) {
+			echo "cURL TLS verification failed because PHP could not validate the certificate chain. Retrying with PowerShell and the Windows certificate store...\n";
+			return download_file_with_powershell($url);
+		}
+
 		throw new RuntimeException("Download failed: {$error}");
 	}
 
@@ -424,6 +636,51 @@ function download_file(string $url): string
 
 	if ($status < 200 || $status >= 300) {
 		throw new RuntimeException("Download failed with HTTP {$status}: {$url}");
+	}
+
+	return $data;
+}
+
+function is_windows_tls_chain_error(string $error): bool
+{
+	$error = strtolower($error);
+	return str_contains($error, 'unable to get local issuer certificate')
+		|| str_contains($error, 'certificate')
+		|| str_contains($error, 'schannel');
+}
+
+function download_file_with_powershell(string $url): string
+{
+	$tempFile = tempnam(sys_get_temp_dir(), 'scpp_dl_');
+	if ($tempFile === false) {
+		throw new RuntimeException('Failed to create a temporary file for PowerShell download fallback.');
+	}
+
+	$psFile = windows_path_for_powershell($tempFile);
+	$psUrl = $url;
+	$script = <<<'PS'
+$ErrorActionPreference = 'Stop'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$url = __SCPP_URL__
+$out = __SCPP_OUT__
+Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $out
+PS;
+	$script = str_replace(
+		['__SCPP_URL__', '__SCPP_OUT__'],
+		[single_quote_ps($psUrl), single_quote_ps($psFile)],
+		$script
+	);
+	$result = run_powershell_script($script);
+	if ($result['code'] !== 0 || !is_file($tempFile)) {
+		@unlink($tempFile);
+		$details = $result['output'] === [] ? 'PowerShell download failed.' : implode(PHP_EOL, $result['output']);
+		throw new RuntimeException("Download failed after PowerShell fallback: {$details}");
+	}
+
+	$data = file_get_contents($tempFile);
+	@unlink($tempFile);
+	if ($data === false) {
+		throw new RuntimeException('PowerShell download fallback succeeded, but the temporary file could not be read.');
 	}
 
 	return $data;
@@ -442,6 +699,84 @@ function find_file_recursive(string $baseDir, string $fileName): ?string
 	}
 
 	return null;
+}
+
+
+function find_windows_php_ast_dll(string $baseDir): ?string
+{
+	$exact = find_file_recursive($baseDir, 'php_ast.dll');
+	if ($exact !== null) {
+		return $exact;
+	}
+
+	$candidates = [];
+	$iterator = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($baseDir, FilesystemIterator::SKIP_DOTS)
+	);
+
+	foreach ($iterator as $fileInfo) {
+		if (!$fileInfo->isFile()) {
+			continue;
+		}
+
+		$filename = $fileInfo->getFilename();
+		if (!str_ends_with(strtolower($filename), '.dll')) {
+			continue;
+		}
+
+		$normalized = strtolower($filename);
+		$score = 0;
+		if (str_contains($normalized, 'php_ast')) {
+			$score += 100;
+		}
+		if (str_contains($normalized, 'ast')) {
+			$score += 20;
+		}
+		if (str_contains($normalized, 'php')) {
+			$score += 10;
+		}
+
+		$candidates[] = [
+			'path' => $fileInfo->getPathname(),
+			'filename' => $filename,
+			'score' => $score,
+		];
+	}
+
+	if ($candidates === []) {
+		return null;
+	}
+
+	usort(
+		$candidates,
+		static function (array $left, array $right): int {
+			if ($left['score'] !== $right['score']) {
+				return $right['score'] <=> $left['score'];
+			}
+
+			return strcasecmp((string) $left['filename'], (string) $right['filename']);
+		}
+	);
+
+	return (string) $candidates[0]['path'];
+}
+
+function list_relative_files_recursive(string $baseDir): array
+{
+	$files = [];
+	$baseDir = rtrim($baseDir, "\/");
+	$prefixLen = strlen($baseDir) + 1;
+	$iterator = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($baseDir, FilesystemIterator::SKIP_DOTS)
+	);
+
+	foreach ($iterator as $fileInfo) {
+		$path = $fileInfo->getPathname();
+		$files[] = substr($path, $prefixLen);
+	}
+
+	sort($files, SORT_NATURAL | SORT_FLAG_CASE);
+	return $files;
 }
 
 function ensure_dir(string $dir): void

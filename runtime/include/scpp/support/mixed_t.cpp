@@ -777,18 +777,38 @@ bool_t mixed_t::isset(const mixed_t &key) const {
 	return bool_t{false};
 }
 bool_t mixed_t::isset(const int_t &key) const {
-	if (const auto *t = table_if()) return t->has(key);
+	if (const auto *t = table_if()) {
+		if (!t->has(key).native_value()) return bool_t{false};
+		return bool_t{t->at(key).kind() != kind_t::null_v};
+	}
+	if (type_ == kind_t::shared_table_v) {
+		if (!shared_table_value_->has(key).native_value()) return bool_t{false};
+		return bool_t{shared_table_value_->at(key).kind() != kind_t::null_v};
+	}
 	if (type_ == kind_t::weak_table_v) {
 		auto locked = weak_table_value_.lock();
-		if (locked) return locked->has(key);
+		if (locked) {
+			if (!locked->has(key).native_value()) return bool_t{false};
+			return bool_t{locked->at(key).kind() != kind_t::null_v};
+		}
 	}
 	return bool_t{false};
 }
 bool_t mixed_t::isset(const string_t &key) const {
-	if (const auto *t = table_if()) return t->has(key);
+	if (const auto *t = table_if()) {
+		if (!t->has(key).native_value()) return bool_t{false};
+		return bool_t{t->at(key).kind() != kind_t::null_v};
+	}
+	if (type_ == kind_t::shared_table_v) {
+		if (!shared_table_value_->has(key).native_value()) return bool_t{false};
+		return bool_t{shared_table_value_->at(key).kind() != kind_t::null_v};
+	}
 	if (type_ == kind_t::weak_table_v) {
 		auto locked = weak_table_value_.lock();
-		if (locked) return locked->has(key);
+		if (locked) {
+			if (!locked->has(key).native_value()) return bool_t{false};
+			return bool_t{locked->at(key).kind() != kind_t::null_v};
+		}
 	}
 	return bool_t{false};
 }

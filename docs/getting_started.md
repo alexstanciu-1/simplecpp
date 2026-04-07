@@ -15,31 +15,55 @@ scpp --version
 scpp --doctor
 ```
 
-## 2. Transpile one file
+## 2. Start a project
+
+From the project root:
+
+```bash
+scpp init
+```
+
+This creates:
+
+- `prism.json`
+- `.prism/build/`
+- `.prism/generated/`
+- `.prism/cache/`
+
+`scpp init` first looks for a common non-web-first entrypoint such as:
+
+- `main.php`
+- `src/main.php`
+- `app/main.php`
+- `index.php`
+- `src/index.php`
+
+If none is found, it writes a placeholder entrypoint and you must edit `prism.json` before building.
+
+## 3. Build the configured entrypoint
+
+```bash
+scpp build
+```
+
+Current public build shape:
+
+- one project config: `prism.json`
+- one entrypoint first
+- generated C++ kept on disk
+- Ninja invoked automatically by `scpp build`
+- output executable written under `.prism/build/`
+- recursive S2S generation for all project `*.php` files
+- cached S2S state in `.prism/cache/s2s_state.php` using file size + mtime
+
+## 4. Single-file transpile remains available
 
 ```bash
 scpp input.php
 ```
 
-The current CLI prints generated C++ to stdout.
+This still prints generated C++ to stdout and remains useful for narrow fixture work.
 
-## 3. Example
+## 5. Current boundary
 
-Create `hello.php`:
-
-```php
-<?php
-
-echo "Hello from Prism++\n";
-```
-
-Run:
-
-```bash
-scpp hello.php
-```
-
-## 4. Current boundary
-
-This first CLI milestone gives you a stable repo-based user-local binary.
-It does **not** yet solve the deliberate multi-file model.
+The project command shape is now fixed around `scpp init` + `scpp build`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` now recursively transpiles project PHP files and uses cached file metadata, while still relying on the configured single entrypoint and the repo runtime directly.

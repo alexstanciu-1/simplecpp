@@ -118,6 +118,7 @@ Core rule families:
 - `unset($a[k])` lowers to `remove(k)` and remains a no-op on missing keys
 - `isset($a[k])` lowers through the runtime `isset(...)` helper with null-sensitive behavior
 - `empty($a[k])` lowers through the runtime `empty(...)` helper for the resulting value under the reduced Prism++ emptiness rule
+- the normative cross-runtime contract is defined in `specs/count_empty_isset_contract.md`
 
 
 ## Nested table dim support

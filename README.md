@@ -101,6 +101,7 @@ The current focus is:
 - defining the execution model
 - refining type and memory semantics
 - improving correctness and predictability
+- establishing a deliberate project-rooted Ninja build path
 
 ---
 
@@ -112,7 +113,7 @@ Starter installer scripts are available in:
 - `install/macos.sh`
 - `install/ubuntu.sh`
 
-They install the required toolchain, create a normal user-local launcher install (`%LOCALAPPDATA%\Programs\scpp\bin` on Windows, `~/.local/bin` on Linux/macOS), and run the repo-based installer. The installed CLI command is `scpp`.
+They install the required toolchain, create a normal user-local launcher install (`%LOCALAPPDATA%\Programs\scpp\bin` on Windows, `~/.local/bin` on Linux/macOS), and run the repo-based installer. The installed CLI command is `scpp`. On Windows, the installer now applies user PATH updates through PowerShell and falls back to `setx` if needed.
 
 ## Name
 
@@ -124,3 +125,21 @@ while preserving clarity and control.
 ## License
 
 [To be defined]
+
+## Installation
+
+Platform installers now provision Ninja as part of the first-binary setup.
+On Windows, the installer skips Git installation or upgrade when `git` is already available on PATH to avoid unnecessary conflicts with open Git shells.
+
+
+## Current project build direction
+
+Prism++ now has an explicit project-mode staging contract:
+
+- `scpp init` creates `prism.json` and a local `.prism/` work tree
+- `scpp build` is the first public build command
+- build output is rooted under `.prism/build` and `.prism/generated`
+- Ninja is the default backend
+- the first public build target is one configured entrypoint -> one executable
+
+The full deliberate multi-file model is still in progress, but the command shape and project layout are now fixed.

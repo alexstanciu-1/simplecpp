@@ -103,22 +103,115 @@ function remove_windows_user_path_entry(): void
 
 	$binDir = $localAppData . DIRECTORY_SEPARATOR . 'Programs' . DIRECTORY_SEPARATOR . 'scpp' . DIRECTORY_SEPARATOR . 'bin';
 	$psDir = str_replace('/', '\\', $binDir);
-	$script = '$target = ' . single_quote_ps($psDir) . '; ' .
-		'$existing = [Environment]::GetEnvironmentVariable("Path", "User"); ' .
-		'if ([string]::IsNullOrWhiteSpace($existing)) { exit 0 } ' .
-		'$parts = $existing -split ";" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }; ' .
-		'$normalizedTarget = $target.TrimEnd("\\"); ' .
-		'$filtered = @(); ' .
-		'foreach ($part in $parts) { if ($part.TrimEnd("\\") -ine $normalizedTarget) { $filtered += $part } } ' .
-		'[Environment]::SetEnvironmentVariable("Path", ($filtered -join ";"), "User")';
+	$script = <<<'PS'
+$ErrorActionPreference = 'Stop'
+$target = __TARGET__
+$existing = [Environment]::GetEnvironmentVariable('Path', 'User')
+if ([string]::IsNullOrWhiteSpace($existing)) {
+	exit 0
+}
+$parts = $existing -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
+$normalizedTarget = $target.TrimEnd('\\')
+$filtered = @()
+foreach ($part in $parts) {
+	if ($part.TrimEnd('\\') -ine $normalizedTarget) {
+		$filtered += $part
+	}
+}
+[Environment]::SetEnvironmentVariable('Path', ($filtered -join ';'), 'User')
+PS;
+	$script = str_replace('__TARGET__', single_quote_ps($psDir), $script);
 
-	$command = 'powershell -NoProfile -ExecutionPolicy Bypass -Command ' . escapeshellarg($script);
-	exec($command, $output, $code);
-	if ($code !== 0) {
-		throw new RuntimeException('Failed to remove the user PATH entry on Windows.');
+	$result = run_powershell_script($script);
+	if ($result['code'] === 0) {
+		echo "User PATH cleaned: {$binDir}\n";
+		return;
 	}
 
-	echo "User PATH cleaned: {$binDir}\n";
+	$currentUserPath = read_windows_user_path();
+	if ($currentUserPath === null) {
+		$currentUserPath = '';
+	}
+	$parts = preg_split('/;/', $currentUserPath) ?: [];
+	$filtered = [];
+	foreach ($parts as $part) {
+		$part = trim($part);
+		if ($part === '') {
+			continue;
+		}
+		if (rtrim(str_replace('/', '\\', $part), '\\') === rtrim($psDir, '\\')) {
+			continue;
+		}
+		$filtered[] = $part;
+	}
+
+	$updated = implode(';', $filtered);
+	$command = 'reg add HKCU\\Environment /v Path /t REG_EXPAND_SZ /d ' . escapeshellarg($updated) . ' /f';
+	exec($command . ' 2>&1', $output, $code);
+	if ($code !== 0) {
+		$details = [];
+		if (!empty($result['output'])) {
+			$details[] = "PowerShell output:\n" . implode(PHP_EOL, $result['output']);
+		}
+		if (!empty($output)) {
+			$details[] = "reg.exe output:\n" . implode(PHP_EOL, $output);
+		}
+		throw new RuntimeException(
+			'Failed to remove the user PATH entry on Windows.' .
+			($details !== [] ? "\n" . implode("\n\n", $details) : '')
+		);
+	}
+
+		echo "User PATH cleaned via registry fallback: {$binDir}\n";
+}
+
+function read_windows_user_path(): ?string
+{
+	$script = <<<'PS'
+$ErrorActionPreference = 'Stop'
+$value = [Environment]::GetEnvironmentVariable('Path', 'User')
+if ($null -eq $value) {
+	$value = ''
+}
+Write-Output $value
+PS;
+	$result = run_powershell_script($script);
+	if ($result['code'] !== 0) {
+		return null;
+	}
+
+	return implode(PHP_EOL, $result['output']);
+}
+
+function run_powershell_script(string $script): array
+{
+	$tempFile = tempnam(sys_get_temp_dir(), 'scpp_ps_');
+	if ($tempFile === false) {
+		throw new RuntimeException('Failed to create a temporary PowerShell script file.');
+	}
+
+	$psFile = $tempFile . '.ps1';
+	if (!@rename($tempFile, $psFile)) {
+		@unlink($tempFile);
+		$psFile = $tempFile . '.ps1';
+	}
+
+	file_put_contents_or_throw($psFile, $script . PHP_EOL);
+	$command = 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ' . escapeshellarg($psFile);
+	exec($command . ' 2>&1', $output, $code);
+	@unlink($psFile);
+
+	return [
+		'output' => $output,
+		'code' => $code,
+	];
+}
+
+function file_put_contents_or_throw(string $path, string $content): void
+{
+	if (file_put_contents($path, $content) === false) {
+		throw new RuntimeException("Failed to write file: {$path}");
+	}
 }
 
 function single_quote_ps(string $value): string

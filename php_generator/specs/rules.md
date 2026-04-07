@@ -294,6 +294,7 @@ Priority note:
 - `unset($a[k])` lowers to `remove(k)`; missing-key `unset` remains a no-op
 - `isset($a[k])` lowers through the runtime `isset(...)` helper and must preserve null-sensitive semantics (`missing` → `false`, existing `null` → `false`)
 - `empty($a[k])` lowers through the runtime `empty(...)` helper for the resulting value; under the current supported subset it is true only for `null`, `""`, and empty array/table values
+- the normative cross-runtime contract is defined in `specs/count_empty_isset_contract.md`
 
 ### Typed vectors
 - `/** vector<T> */ []` lowers to `vector_t<T>{}`

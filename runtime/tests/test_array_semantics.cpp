@@ -111,6 +111,25 @@ void test_nested_unset_with_missing_parent_is_noop_via_guarded_pattern() {
 	assert(root.get("keep").int_value().native_value() == 9);
 }
 
+
+void test_php_probe_helpers_preserve_null_sensitive_non_mutating_contract() {
+	scpp::mixed_t root = make_table_value();
+	root["child"] = make_table_value();
+	root["child"]["name"] = scpp::mixed_t(scpp::string_t("Alex"));
+	root["child"]["maybe"] = scpp::mixed_t(scpp::null_t{});
+
+	const auto before_root_size = root.size().native_value();
+	const auto before_child_size = root.get("child").size().native_value();
+
+	assert(scpp::php::isset(root.get("child").get("name")).native_value() == true);
+	assert(scpp::php::isset(root.get("child").get("maybe")).native_value() == false);
+	assert(scpp::php::isset(root.get("child").get("missing")).native_value() == false);
+	assert(scpp::php::empty(root.get("child").get("maybe")).native_value() == true);
+	assert(scpp::php::empty(root.get("child").get("missing")).native_value() == true);
+	assert(root.size().native_value() == before_root_size);
+	assert(root.get("child").size().native_value() == before_child_size);
+}
+
 void test_try_ref_shared_pointer_handle_copy_visibility() {
 	scpp::hash_t<scpp::shared_p<scpp_test::sample_object>> shared_table;
 	auto shared_object = scpp::shared<scpp_test::sample_object>(scpp::int_t(11));
@@ -132,6 +151,7 @@ int main() {
 	test_append_on_table_carrier_and_null_bootstrap();
 	test_unset_missing_is_noop_and_existing_remove_preserves_other_keys();
 	test_nested_unset_with_missing_parent_is_noop_via_guarded_pattern();
+	test_php_probe_helpers_preserve_null_sensitive_non_mutating_contract();
 	test_try_ref_shared_pointer_handle_copy_visibility();
 	return 0;
 }

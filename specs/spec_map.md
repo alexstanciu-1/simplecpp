@@ -259,3 +259,8 @@ Role:
 
 Authority:
 - supporting/spec-planning authority for installation and launcher behavior in this milestone
+
+- `specs/count_empty_isset_contract.md`
+  - defines the single runtime contract for `count(...)`, `empty(...)`, and `isset(...)`, including narrowed emptiness and non-mutating probe rules
+
+- `project_build_v1.md` — first practical project build contract (`scpp init`, `prism.json`, `.prism/`, Ninja-backed `scpp build`)

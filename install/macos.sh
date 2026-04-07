@@ -12,7 +12,7 @@ fi
 
 echo "Installing dependencies..."
 brew update
-brew install git php gcc
+brew install git php gcc ninja
 
 echo
 echo "Verifying PHP 8.4+..."

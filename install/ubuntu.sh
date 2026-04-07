@@ -11,7 +11,7 @@ fi
 
 echo "Installing dependencies..."
 sudo apt update
-sudo apt install -y software-properties-common curl git php php-dev php-pear php-ast g++
+sudo apt install -y software-properties-common curl git php php-dev php-pear php-ast g++ ninja-build
 
 echo
 echo "Verifying PHP 8.4+..."

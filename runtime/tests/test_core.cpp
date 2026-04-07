@@ -229,12 +229,22 @@ static void test_php_countable_contract_helpers() {
 	scpp_test::expect_throw<std::runtime_error>([]() {
 		(void)scpp::php::count(scpp::mixed_t(scpp::int_t(42)));
 	});
-	scpp_test::expect_throw<std::runtime_error>([]() {
-		(void)scpp::php::empty(scpp::mixed_t(scpp::int_t(42)));
-	});
-	scpp_test::expect_throw<std::runtime_error>([]() {
-		(void)scpp::php::isset(scpp::mixed_t(scpp::int_t(42)), scpp::string_t("id"));
-	});
+	assert(scpp::php::empty(scpp::mixed_t(scpp::int_t(42))).native_value() == false);
+	assert(scpp::php::empty(scpp::mixed_t(scpp::null_t{})).native_value() == true);
+	assert(scpp::php::empty(scpp::string_t("")).native_value() == true);
+	assert(scpp::php::empty(scpp::string_t("0")).native_value() == false);
+	assert(scpp::php::empty(scpp::bool_t(false)).native_value() == false);
+	assert(scpp::php::empty(scpp::int_t(0)).native_value() == false);
+	assert(scpp::php::isset(scpp::mixed_t(scpp::int_t(42)), scpp::string_t("id")).native_value() == false);
+
+	scpp::mixed_t mixed_with_null(scpp::shared_table_(
+		scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1)),
+		scpp::table_kv_(scpp::string_t("maybe"), scpp::null_t{})
+	));
+	assert(scpp::php::isset(mixed_with_null, scpp::string_t("id")).native_value() == true);
+	assert(scpp::php::isset(mixed_with_null, scpp::string_t("maybe")).native_value() == false);
+	assert(scpp::php::empty(mixed_with_null, scpp::string_t("missing")).native_value() == true);
+	assert(scpp::php::empty(mixed_with_null, scpp::string_t("maybe")).native_value() == true);
 }
 
 int main() {

@@ -1,6 +1,7 @@
 {
     "php_runtime_relative_symbols": [
         "count",
+        "empty",
         "expect_array_argument",
         "isset",
         "var_dump",

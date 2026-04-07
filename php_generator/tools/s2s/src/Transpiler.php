@@ -37,7 +37,7 @@ final class Transpiler
 	 * - preserves the subset and lowering rules documented for the prototype
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 	 */
-	public function transpile(string $phpPath, bool $save_ast_to_json = false): CppFile
+	public function transpile(string $phpPath, bool $save_ast_to_json = false, bool $emitProgramEntry = true): CppFile
 	{
 		$source = file_get_contents($phpPath);
 		if ($source === false) {
@@ -50,7 +50,7 @@ final class Transpiler
 
 		$typeComments = $this->typeComments->extract($input->tokens);
 		$ir = $this->builder->build($input, $typeComments);
-		return $this->generator->generate($ir);
+		return $this->generator->generate($ir, $emitProgramEntry);
 	}
 
 	private function assertNoSimpleReferenceRebinding(string $sourcePhp): void
