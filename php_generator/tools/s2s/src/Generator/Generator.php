@@ -39,6 +39,8 @@ final class Generator
 	/** @var array<string, string> */
 	private array $declaredLocalTypes = [];
 	/** @var array<string, bool> */
+	private array $predefinedReferenceLocals = [];
+	/** @var array<string, bool> */
 	private array $predefinedConstants = [];
 	private NameRegistry $nameRegistry;
 	/** @var array<string, FunctionDecl> */
@@ -109,6 +111,7 @@ final class Generator
 		$this->warnings = [];
 		$this->localTypeComments = $file->localTypeCommentsByKey;
 		$this->declaredLocalTypes = [];
+		$this->predefinedReferenceLocals = [];
 		$this->currentFinallyReturnContext = null;
 		$this->tempCounter = 0;
 		$this->nameRegistry = NameRegistry::fromPhpFile($file);
@@ -398,8 +401,9 @@ final class Generator
 	{
 		// The S2S generator no longer synthesizes typed scalar reference proxy
 		// arguments (int_ref/float_ref/bool_ref/string_ref) at call sites.
-		// Keep argument rendering direct and let unsupported by-reference shapes
-		// fail later until the reference model is redesigned.
+		// Keep argument rendering direct. Scalar typed by-reference cases are
+		// handled by the normalized template path instead of proxy wrappers or
+		// sibling mixed_t& bridge overloads.
 		$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
 		if ($param->isReference || $param->type === null) {
 			return $rendered;
@@ -414,6 +418,10 @@ final class Generator
 
 	private function paramNeedsTemplateNormalization(ParamDecl $param): bool
 	{
+		if ($this->isSupportedScalarTemplateRefParam($param)) {
+			return true;
+		}
+
 		if ($param->isReference || $param->isVariadic || count($param->unionTypes) < 2) {
 			return false;
 		}
@@ -425,6 +433,15 @@ final class Generator
 		}
 
 		return true;
+	}
+
+	private function isSupportedScalarTemplateRefParam(ParamDecl $param): bool
+	{
+		if (!$param->isReference || $param->type === null || $param->isVariadic) {
+			return false;
+		}
+
+		return in_array($this->typeMapper->mapDeclaredType($param->type), ['int_t', 'float_t', 'bool_t', 'string_t'], true);
 	}
 
 	private function isScalarLikeUnionType(string $phpType): bool
@@ -490,7 +507,7 @@ final class Generator
 			$this->validateStatementList($namespace->statements, $namespace->name);
 			foreach ($namespace->functions as $function) {
 				$this->validateFunctionLikeParameters($function->params, 'function ' . $function->name);
-				$this->validateReferenceRulesForFunctionLike($function->statements, $function->returnsByReference, 'function ' . $function->name, $namespace->name);
+				$this->validateReferenceRulesForFunctionLike($function->params, $function->statements, $function->returnsByReference, 'function ' . $function->name, $namespace->name);
 				$this->validateStatementList($function->statements, $namespace->name);
 			}
 			foreach ($namespace->classes as $class) {
@@ -499,7 +516,7 @@ final class Generator
 				}
 				foreach ($class->methods as $method) {
 					$this->validateFunctionLikeParameters($method->params, 'method ' . $class->name . '::' . $method->name);
-					$this->validateReferenceRulesForFunctionLike($method->statements, $method->returnsByReference, 'method ' . $class->name . '::' . $method->name, $namespace->name);
+					$this->validateReferenceRulesForFunctionLike($method->params, $method->statements, $method->returnsByReference, 'method ' . $class->name . '::' . $method->name, $namespace->name);
 					$this->validateStatementList($method->statements, $namespace->name);
 				}
 			}
@@ -521,15 +538,17 @@ final class Generator
 	}
 
 
+	/** @param list<ParamDecl> $params */
 	/** @param list<Statement> $statements */
-	private function validateReferenceRulesForFunctionLike(array $statements, bool $returnsByReference, string $owner, ?string $namespacePhp): void
+	private function validateReferenceRulesForFunctionLike(array $params, array $statements, bool $returnsByReference, string $owner, ?string $namespacePhp): void
 	{
 		$refBindings = [];
 		$refReturnAliasOwners = [];
+		$stableRoots = $this->buildStableReferenceRootsForFunctionLike($params);
 		if ($returnsByReference) {
 			$this->warnings[] = ucfirst($owner) . ' returns by reference. Return-by-reference is not recommended and only partially supported in Prism++.';
 		}
-		$this->validateReferenceRulesInStatements($statements, $returnsByReference, $owner, $namespacePhp, false, $refBindings, $refReturnAliasOwners);
+		$this->validateReferenceRulesInStatements($statements, $returnsByReference, $owner, $namespacePhp, false, $refBindings, $refReturnAliasOwners, $stableRoots);
 		if ($returnsByReference) {
 			$returnCount = $this->countReturnStatements($statements);
 			if ($returnCount > 1) {
@@ -542,7 +561,7 @@ final class Generator
 	 * @param list<Statement> $statements
 	 * @param array<string, string> $refBindings
 	 */
-	private function validateReferenceRulesInStatements(array $statements, bool $returnsByReference, string $owner, ?string $namespacePhp, bool $insideControlFlow, array &$refBindings, array &$refReturnAliasOwners): void
+	private function validateReferenceRulesInStatements(array $statements, bool $returnsByReference, string $owner, ?string $namespacePhp, bool $insideControlFlow, array &$refBindings, array &$refReturnAliasOwners, array $stableRoots): void
 	{
 		foreach ($statements as $statement) {
 			if ($statement->kind === 'assign_ref') {
@@ -553,6 +572,9 @@ final class Generator
 				$expr = $statement->payload['expr'] ?? null;
 				if ($name !== null) {
 					$refBindings[$name] = $this->classifyReferenceBindingSource($expr);
+					if ($this->isStableAliasableReferenceExpr($expr, $stableRoots, $namespacePhp)) {
+						$stableRoots[$name] = true;
+					}
 					$rootVars = $this->extractSimpleVarArgsFromByRefCall($expr, $namespacePhp);
 					if ($rootVars !== []) {
 						$refReturnAliasOwners[$name] = $rootVars;
@@ -571,34 +593,26 @@ final class Generator
 			}
 			if ($statement->kind === 'return' && $returnsByReference) {
 				$expr = $statement->payload;
-				if ($this->isUnsupportedDirectReferenceReturnExpr($expr)) {
-					$this->errors[] = ucfirst($owner) . ' returning by reference supports only a simple direct array/property slot chain rooted in a local or parameter variable at line ' . $statement->line . '.';
-				} else {
-					$local = $this->extractSimpleVarName($expr);
-					if ($local !== null) {
-						$bindingKind = $refBindings[$local] ?? null;
-						if ($bindingKind === 'slot') {
-							$this->errors[] = ucfirst($owner) . ' returning by reference does not support returning a local alias created from an array or property slot at line ' . $statement->line . '.';
-						}
-					}
+				if (!$this->isStableAliasableReferenceExpr($expr, $stableRoots, $namespacePhp)) {
+					$this->errors[] = ucfirst($owner) . ' returning by reference requires a stable aliasable expression rooted in a by-reference parameter, $this, or another reference derived from stable storage at line ' . $statement->line . '.';
 				}
 			}
 			if ($statement->kind === 'if') {
 				foreach ($statement->payload as $branch) {
 					$branchBindings = $refBindings;
-					$this->validateReferenceRulesInStatements($branch['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $branchBindings, $refReturnAliasOwners);
+					$this->validateReferenceRulesInStatements($branch['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $branchBindings, $refReturnAliasOwners, $stableRoots);
 				}
 				continue;
 			}
 			if ($statement->kind === 'while' || $statement->kind === 'do_while' || $statement->kind === 'for' || $statement->kind === 'foreach') {
 				$nested = $refBindings;
-				$this->validateReferenceRulesInStatements($statement->payload['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $nested, $refReturnAliasOwners);
+				$this->validateReferenceRulesInStatements($statement->payload['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $nested, $refReturnAliasOwners, $stableRoots);
 				continue;
 			}
 			if ($statement->kind === 'switch') {
 				foreach (($statement->payload['cases'] ?? []) as $case) {
 					$caseBindings = $refBindings;
-					$this->validateReferenceRulesInStatements($case['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $caseBindings);
+					$this->validateReferenceRulesInStatements($case['stmts'] ?? [], $returnsByReference, $owner, $namespacePhp, true, $caseBindings, $refReturnAliasOwners, $stableRoots);
 				}
 			}
 		}
@@ -630,6 +644,48 @@ final class Generator
 			}
 		}
 		return $count;
+	}
+
+
+	/** @param list<ParamDecl> $params
+	 *  @return array<string, bool>
+	 */
+	private function buildStableReferenceRootsForFunctionLike(array $params): array
+	{
+		$roots = [];
+		foreach ($params as $param) {
+			if ($param->isReference) {
+				$roots[$param->name] = true;
+			}
+		}
+		if ($this->currentClassName !== null) {
+			$roots['this'] = true;
+		}
+		return $roots;
+	}
+
+	/** @param array<string, bool> $stableRoots */
+	private function isStableAliasableReferenceExpr(mixed $expr, array $stableRoots, ?string $namespacePhp): bool
+	{
+		if (!is_object($expr)) {
+			return false;
+		}
+
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::VAR) {
+			$name = (string) ($expr->children['name'] ?? '');
+			return isset($stableRoots[$name]);
+		}
+
+		if ($kind === AstKind::DIM || $kind === AstKind::PROP) {
+			return $this->isStableAliasableReferenceExpr($expr->children['expr'] ?? null, $stableRoots, $namespacePhp);
+		}
+
+		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::NULLSAFE_PROP || $kind === AstKind::STATIC_PROP) {
+			return false;
+		}
+
+		return false;
 	}
 
 	private function classifyReferenceBindingSource(mixed $expr): string
@@ -1175,6 +1231,14 @@ final class Generator
 				continue;
 			}
 			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';';
+			if ($this->methodNeedsValueRefOverload($method, $class)) {
+				$overload = $this->methodRequiresInlineValueRefOverload($method, $class)
+					? $this->renderInlineMethodValueRefOverloadDefinition($class, $method, $namespacePhp)
+					: $this->renderMethodValueRefOverloadDeclaration($method, $class, $namespacePhp) . ';';
+				foreach (explode("\n", $overload) as $line) {
+					$header[] = $this->indent(1) . $line;
+				}
+			}
 		}
 		$header[] = '};';
 		$header[] = '';
@@ -1210,6 +1274,10 @@ final class Generator
 				}
 				$source[] = $this->renderMethodDefinition($class, $method, $namespacePhp);
 				$source[] = '';
+				if ($this->methodNeedsValueRefOverload($method, $class) && !$this->methodRequiresInlineValueRefOverload($method, $class)) {
+					$source[] = $this->renderMethodValueRefOverloadDefinition($class, $method, $namespacePhp);
+					$source[] = '';
+				}
 			}
 			$this->currentClassName = $prevClassName;
 			$this->currentParentClass = $prevParentClass;
@@ -1370,9 +1438,16 @@ final class Generator
 			return;
 		}
 		$header[] = $this->renderFunctionDeclaration($function, $namespacePhp) . ';';
+		if ($this->functionNeedsValueRefOverload($function->params)) {
+			$header[] = $this->renderFunctionValueRefOverloadDeclaration($function, $namespacePhp) . ';';
+		}
 		$header[] = '';
 		$source[] = $this->renderFunctionDefinition($function, $namespacePhp);
 		$source[] = '';
+		if ($this->functionNeedsValueRefOverload($function->params)) {
+			$source[] = $this->renderFunctionValueRefOverloadDefinition($function, $namespacePhp);
+			$source[] = '';
+		}
 	}
 
 	/**
@@ -1396,6 +1471,7 @@ final class Generator
 		$source[] = 'int ' . $name . '() {';
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
+		$this->predefinedReferenceLocals = [];
 		$this->currentReturnType = 'int';
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
 			$source[] = $this->indent(1) . $line;
@@ -1485,27 +1561,31 @@ final class Generator
 
 	private function functionNeedsValueRefOverload(array $params): bool
 	{
-		foreach ($params as $param) {
-			if ($param instanceof ParamDecl && $this->isSupportedScalarValueRefOverloadParam($param)) {
-				return true;
-			}
+		return false;
+	}
+
+	private function methodNeedsValueRefOverload(MethodDecl $method, ClassDecl $class): bool
+	{
+		if ($method->name === '__construct' || $method->name === '__destruct') {
+			return false;
 		}
 
-		return false;
+		return $this->functionNeedsValueRefOverload($method->params);
+	}
+
+	private function methodRequiresInlineValueRefOverload(MethodDecl $method, ClassDecl $class): bool
+	{
+		return $this->methodIsAbstract($method, $class);
 	}
 
 	private function isSupportedScalarValueRefOverloadParam(ParamDecl $param): bool
 	{
-		if (!$param->isReference || $param->type === null || $param->isVariadic) {
-			return false;
-		}
-
-		return in_array($this->typeMapper->mapDeclaredType($param->type), ['int_t', 'float_t', 'bool_t', 'string_t'], true);
+		return false;
 	}
 
 	private function mapValueRefAccessorForParam(ParamDecl $param): ?string
 	{
-		if (!$this->isSupportedScalarValueRefOverloadParam($param)) {
+		if (!$this->isSupportedScalarTemplateRefParam($param) && !$this->isSupportedScalarValueRefOverloadParam($param)) {
 			return null;
 		}
 
@@ -1530,7 +1610,7 @@ final class Generator
 			} else {
 				$type = $param->type !== null ? $this->renderParamTypeForMode($param, $paramPassModes[$param->name] ?? 'readonly') : '/* ERROR missing-parameter-type */';
 			}
-			$rendered = $type . ' ' . $this->renderParamName($param, $useStorageNames);
+			$rendered = $type . ' ' . $this->renderParamName($param, false);
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
 				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
 			}
@@ -1594,13 +1674,30 @@ final class Generator
 }";
 	}
 
+	private function renderInlineMethodValueRefOverloadDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
+	{
+		$paramPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$prefix = $method->isStatic ? 'static ' : '';
+		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+		$signature = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderValueRefOverloadParams($method->params, false, $namespacePhp, $paramPassModes) . ')';
+		$forward = $this->renderValueRefOverloadForwardArgs($method->params);
+		$body = $returnType === 'void'
+			? $this->indent(1) . $this->cppIdentifier($method->name) . '(' . $forward . ');'
+			: $this->indent(1) . 'return ' . $this->cppIdentifier($method->name) . '(' . $forward . ');';
+		return $signature . " {\n" . $body . "\n}";
+	}
+
 	private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
 	{
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
+		$this->predefinedReferenceLocals = [];
 		$this->currentParamPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
 		foreach ($method->params as $param) {
 			$this->declaredLocals[$param->name] = true;
+			if ($param->isReference) {
+				$this->predefinedReferenceLocals[$param->name] = true;
+			}
 			if ($param->type !== null) {
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
@@ -1719,11 +1816,13 @@ final class Generator
 
 		$prevDeclaredLocals = $this->declaredLocals;
 		$prevDeclaredLocalTypes = $this->declaredLocalTypes;
+		$prevReferenceLocals = $this->predefinedReferenceLocals;
 		$this->declaredLocals[$param->name] = true;
 		$this->declaredLocalTypes[$param->name] = $sourceType;
 		$rendered = $this->renderExpr($exprAst, $namespacePhp);
 		$this->declaredLocals = $prevDeclaredLocals;
 		$this->declaredLocalTypes = $prevDeclaredLocalTypes;
+		$this->predefinedReferenceLocals = $prevReferenceLocals;
 		return $rendered;
 	}
 
@@ -1732,6 +1831,22 @@ final class Generator
 		$mappedPrimaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
 		$mappedSourceType = $this->typeMapper->mapDeclaredType($unionType);
 		$sourceExpr = '_' . $param->name;
+		if ($this->isSupportedScalarTemplateRefParam($param)) {
+			if ($sourceIsMixed) {
+				$accessor = $this->mapValueRefAccessorForParam($param);
+				if ($accessor === null) {
+					return ['throw std::runtime_error("Unsupported runtime kind for normalized parameter $' . addslashes($param->name) . '");'];
+				}
+				return ['return ' . $sourceExpr . '.' . $accessor . '();'];
+			}
+
+			if ($mappedPrimaryType === $mappedSourceType) {
+				return ['return ' . $sourceExpr . ';'];
+			}
+
+			return ['throw std::runtime_error("Unsupported type for normalized parameter $' . addslashes($param->name) . '");'];
+		}
+
 		$rule = $this->lookupArgNormalizationRule($param, $unionType);
 		if ($rule === null) {
 			if (($param->primaryType ?? $param->type) === $unionType) {
@@ -1776,18 +1891,22 @@ final class Generator
 		$primaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
 		$templateType = $this->renderTemplateTypeName($param);
 		$helperName = $this->renderNormalizationHelperName($callableName, $param);
+		$returnType = $this->isSupportedScalarTemplateRefParam($param) ? ($primaryType . '&') : $primaryType;
 		$prefix = $classInline ? 'static ' : '';
 		$lines = [];
 		$lines[] = 'template <typename ' . $templateType . '>';
-		$lines[] = $prefix . $primaryType . ' ' . $helperName . '(' . $templateType . '&& _' . $param->name . ') {';
+		$lines[] = $prefix . $returnType . ' ' . $helperName . '(' . $templateType . '&& _' . $param->name . ') {';
 		$lines[] = $this->indent(1) . 'using _norm_arg_t = std::remove_cv_t<std::remove_reference_t<' . $templateType . '>>;';
 		$first = true;
-		foreach ($param->unionTypes as $unionType) {
+		$directTypes = $this->isSupportedScalarTemplateRefParam($param)
+			? [$param->primaryType ?? $param->type]
+			: $param->unionTypes;
+		foreach ($directTypes as $unionType) {
 			$mappedSourceType = $this->typeMapper->mapDeclaredType($unionType);
 			$prefixCond = $first ? 'if constexpr' : 'else if constexpr';
 			$first = false;
 			$lines[] = $this->indent(1) . $prefixCond . ' (std::is_same_v<_norm_arg_t, ' . $mappedSourceType . '>) {';
-			foreach ($this->renderNormalizationDirectBranchLines($param, $unionType, $namespacePhp, true) as $line) {
+			foreach ($this->renderNormalizationDirectBranchLines($param, $unionType, $namespacePhp, false) as $line) {
 				$lines[] = $this->indent(2) . $line;
 			}
 			$lines[] = $this->indent(1) . '}';
@@ -1860,6 +1979,9 @@ final class Generator
 		$this->currentParamPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
 		foreach ($method->params as $param) {
 			$this->declaredLocals[$param->name] = true;
+			if ($param->isReference) {
+				$this->predefinedReferenceLocals[$param->name] = true;
+			}
 			if ($param->type !== null) {
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
@@ -1908,9 +2030,13 @@ final class Generator
 	{
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
+		$this->predefinedReferenceLocals = [];
 		$this->currentParamPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
 		foreach ($function->params as $param) {
 			$this->declaredLocals[$param->name] = true;
+			if ($param->isReference) {
+				$this->predefinedReferenceLocals[$param->name] = true;
+			}
 			if ($param->type !== null) {
 				$this->declaredLocalTypes[$param->name] = $param->type;
 			}
@@ -2037,8 +2163,8 @@ final class Generator
 
 	private function buildScalarRefParamAliasLines(array $params): array
 	{
-		// Typed scalar by-reference proxy lowering has been disabled in the S2S
-		// generator. Do not synthesize entry aliases back from proxy storage.
+		// Scalar typed by-reference parameters now normalize through the template
+		// entry aliases instead of proxy storage or sibling bridge overloads.
 		return [];
 	}
 
@@ -2050,8 +2176,9 @@ final class Generator
 			$storageName = $this->renderParamStorageName($param);
 			if ($this->paramNeedsTemplateNormalization($param)) {
 				$primaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
+				$binding = $param->isReference ? ($primaryType . '&') : $primaryType;
 				$callableName = $this->currentNormalizationCallableName ?? 'callable';
-				$lines[] = $primaryType . ' ' . $param->name . ' = ' . $this->renderNormalizationHelperName($callableName, $param) . '(std::forward<' . $this->renderTemplateTypeName($param) . '>(' . $storageName . '));';
+				$lines[] = $binding . ' ' . $param->name . ' = ' . $this->renderNormalizationHelperName($callableName, $param) . '(std::forward<' . $this->renderTemplateTypeName($param) . '>(' . $storageName . '));';
 				continue;
 			}
 			if ($storageName === $param->name) {
@@ -2244,6 +2371,7 @@ final class Generator
 				}
 
 				$this->declaredLocals[$name] = true;
+				$this->predefinedReferenceLocals[$name] = true;
 				if ($effectiveTyped !== null) {
 					$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($effectiveTyped);
 					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $name . ' = ' . $expr . ';'];
@@ -2384,6 +2512,7 @@ final class Generator
 		if ($statement->kind === 'for') {
 			$scopedLocals = $this->declaredLocals;
 			$scopedLocalTypes = $this->declaredLocalTypes;
+			$scopedReferenceLocals = $this->predefinedReferenceLocals;
 			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
 			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
 			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
@@ -2394,6 +2523,7 @@ final class Generator
 			$lines[] = '}';
 			$this->declaredLocals = $scopedLocals;
 			$this->declaredLocalTypes = $scopedLocalTypes;
+			$this->predefinedReferenceLocals = $scopedReferenceLocals;
 			return $lines;
 		}
 
@@ -2552,6 +2682,7 @@ final class Generator
 			$lines[] = $this->indent($baseIndentLevel + 1) . $prefix . ' (auto ' . $caughtVar . ' = ::scpp::php::catch_as<' . $classType . '>(' . $throwVar . '); static_cast<bool>(' . $caughtVar . ')) {';
 			$scopedLocals = $this->declaredLocals;
 			$scopedLocalTypes = $this->declaredLocalTypes;
+			$scopedReferenceLocals = $this->predefinedReferenceLocals;
 			$this->declaredLocals[$varName] = true;
 			$this->declaredLocalTypes[$varName] = 'shared_p<' . $classType . '>' ;
 			$lines[] = $this->indent($baseIndentLevel + 1) . 'auto ' . $varName . ' = ' . $caughtVar . ';';
@@ -2563,6 +2694,7 @@ final class Generator
 			}
 			$this->declaredLocals = $scopedLocals;
 			$this->declaredLocalTypes = $scopedLocalTypes;
+			$this->predefinedReferenceLocals = $scopedReferenceLocals;
 			$lines[] = $this->indent($baseIndentLevel + 1) . '}';
 			$matched = true;
 		}
@@ -2740,6 +2872,7 @@ final class Generator
 		if ($statement->kind === 'for') {
 			$scopedLocals = $this->declaredLocals;
 			$scopedLocalTypes = $this->declaredLocalTypes;
+			$scopedReferenceLocals = $this->predefinedReferenceLocals;
 			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
 			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
 			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
@@ -2760,6 +2893,7 @@ final class Generator
 			$lines[] = '}';
 			$this->declaredLocals = $scopedLocals;
 			$this->declaredLocalTypes = $scopedLocalTypes;
+			$this->predefinedReferenceLocals = $scopedReferenceLocals;
 			return $lines;
 		}
 
@@ -2843,6 +2977,7 @@ final class Generator
 
 		$scopedLocals = $this->declaredLocals;
 		$scopedLocalTypes = $this->declaredLocalTypes;
+		$scopedReferenceLocals = $this->predefinedReferenceLocals;
 
 		if ($keyName !== null) {
 			// Foreach key bindings remain loop-local in the current model.
@@ -2882,6 +3017,7 @@ final class Generator
 
 		$this->declaredLocals = $scopedLocals;
 		$this->declaredLocalTypes = $scopedLocalTypes;
+		$this->predefinedReferenceLocals = $scopedReferenceLocals;
 		$lines[] = '}';
 		return $lines;
 	}
@@ -2912,6 +3048,7 @@ final class Generator
 	{
 		$scopedLocals = $this->declaredLocals;
 		$scopedLocalTypes = $this->declaredLocalTypes;
+		$scopedReferenceLocals = $this->predefinedReferenceLocals;
 
 		$lines = [];
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
@@ -2920,6 +3057,7 @@ final class Generator
 
 		$this->declaredLocals = $scopedLocals;
 		$this->declaredLocalTypes = $scopedLocalTypes;
+		$this->predefinedReferenceLocals = $scopedReferenceLocals;
 		return $lines;
 	}
 
@@ -3987,6 +4125,7 @@ final class Generator
 
 		$savedDeclaredLocals = $this->declaredLocals;
 		$savedDeclaredLocalTypes = $this->declaredLocalTypes;
+		$savedReferenceLocals = $this->predefinedReferenceLocals;
 		$savedReturnType = $this->currentReturnType;
 
 		foreach ($captureItems as $captureName) {
@@ -4018,6 +4157,7 @@ final class Generator
 
 		$this->declaredLocals = $savedDeclaredLocals;
 		$this->declaredLocalTypes = $savedDeclaredLocalTypes;
+		$this->predefinedReferenceLocals = $savedReferenceLocals;
 		$this->currentReturnType = $savedReturnType;
 
 		$out = [];
@@ -4118,6 +4258,7 @@ final class Generator
 
 		$savedDeclaredLocals = $this->declaredLocals;
 		$savedDeclaredLocalTypes = $this->declaredLocalTypes;
+		$savedReferenceLocals = $this->predefinedReferenceLocals;
 		$savedReturnType = $this->currentReturnType;
 
 		foreach ($captureItems as $captureName) {
@@ -4149,6 +4290,7 @@ final class Generator
 
 		$this->declaredLocals = $savedDeclaredLocals;
 		$this->declaredLocalTypes = $savedDeclaredLocalTypes;
+		$this->predefinedReferenceLocals = $savedReferenceLocals;
 		$this->currentReturnType = $savedReturnType;
 
 		$out = [];
@@ -5011,12 +5153,32 @@ final class Generator
 	}
 
 
+
+	/** @return array<string, bool> */
+	private function buildStableReferenceRootsForCurrentScope(): array
+	{
+		$roots = [];
+		foreach ($this->predefinedReferenceLocals as $name => $_enabled) {
+			$roots[$name] = true;
+		}
+		foreach ($this->declaredLocalTypes as $name => $_type) {
+			if (str_ends_with($_type, '&')) {
+				$roots[$name] = true;
+			}
+		}
+		if ($this->currentClassName !== null) {
+			$roots['this'] = true;
+		}
+		return $roots;
+	}
+
 	private function renderReturnExpr(mixed $expr, ?string $namespacePhp): string
 	{
 		$expected = $this->currentReturnType;
 		if ($expected !== null && str_ends_with($expected, '&')) {
-			if (!$this->isLvalueCapableExpr($expr, $namespacePhp)) {
-				$this->errors[] = 'Reference return requires an lvalue-capable expression or a call known to return by reference.';
+			$stableRoots = $this->buildStableReferenceRootsForCurrentScope();
+			if (!$this->isStableAliasableReferenceExpr($expr, $stableRoots, $namespacePhp) || !$this->isLvalueCapableExpr($expr, $namespacePhp)) {
+				$this->errors[] = 'Reference return requires a stable aliasable expression rooted in a by-reference parameter, $this, or another reference derived from stable storage.';
 				return '/* unsupported-ref-return */';
 			}
 			return $this->renderLvalueExpr($expr, $namespacePhp);

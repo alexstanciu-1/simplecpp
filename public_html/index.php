@@ -102,7 +102,7 @@ else if ($_GET['zip-it'] ?? false)
 		unlink($zipPath);
 	}
 
-	$includeDirs_def = ["../php_generator", "../public_html", "../runtime", "../mem_container", "../specs"];
+	$includeDirs_def = ["../php_generator", "../public_html", "../runtime", "../mem_container", "../specs", "../README.md", "../docs", "../install"];
 	if (($_GET['tests'] ?? null) ?: false) {
 		$includeDirs_def[] = '../tests';
 	}

@@ -193,6 +193,50 @@ static void test_containers_and_strings() {
 	assert(values.index(1).native_value() == 9);
 }
 
+static void test_php_countable_contract_helpers() {
+	scpp::vector_t<scpp::int_t> values;
+	values.append(scpp::int_t(4));
+	values.append(scpp::int_t(9));
+	assert(scpp::php::count(values).native_value() == 2);
+	assert(scpp::php::empty(values).native_value() == false);
+	assert(scpp::php::isset(values, scpp::int_t(0)).native_value() == true);
+	assert(scpp::php::isset(values, scpp::int_t(2)).native_value() == false);
+
+	scpp::hash_t<scpp::int_t> typed_hash;
+	typed_hash.set(scpp::string_t("a"), scpp::int_t(1));
+	typed_hash.set(scpp::string_t("b"), scpp::int_t(2));
+	assert(scpp::php::count(typed_hash).native_value() == 2);
+	assert(scpp::php::empty(typed_hash).native_value() == false);
+	assert(scpp::php::isset(typed_hash, scpp::string_t("a")).native_value() == true);
+	assert(scpp::php::isset(typed_hash, scpp::string_t("missing")).native_value() == false);
+
+	scpp::mixed_t mixed_hash(scpp::shared_table_(
+		scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1)),
+		scpp::table_kv_(scpp::string_t("name"), scpp::string_t("Alex")),
+		scpp::table_kv_(
+			scpp::string_t("child"),
+			scpp::mixed_t(scpp::shared_table_(scpp::table_kv_(scpp::string_t("nested"), scpp::int_t(1))))
+		)
+	));
+	assert(scpp::php::count(mixed_hash).native_value() == 3);
+	assert(scpp::php::empty(mixed_hash).native_value() == false);
+	assert(scpp::php::isset(mixed_hash, scpp::string_t("id")).native_value() == true);
+	assert(scpp::php::isset(mixed_hash, scpp::string_t("missing")).native_value() == false);
+	assert(scpp::php::count(mixed_hash.get(scpp::string_t("child"))).native_value() == 1);
+	assert(scpp::php::empty(mixed_hash.get(scpp::string_t("child"))).native_value() == false);
+	assert(scpp::php::isset(mixed_hash.get(scpp::string_t("child")), scpp::string_t("nested")).native_value() == true);
+
+	scpp_test::expect_throw<std::runtime_error>([]() {
+		(void)scpp::php::count(scpp::mixed_t(scpp::int_t(42)));
+	});
+	scpp_test::expect_throw<std::runtime_error>([]() {
+		(void)scpp::php::empty(scpp::mixed_t(scpp::int_t(42)));
+	});
+	scpp_test::expect_throw<std::runtime_error>([]() {
+		(void)scpp::php::isset(scpp::mixed_t(scpp::int_t(42)), scpp::string_t("id"));
+	});
+}
+
 int main() {
 	test_bool_operations();
 	test_int_operations();
@@ -201,5 +245,6 @@ int main() {
 	test_php_to_string_coercions();
 	test_php_identity_helpers();
 	test_containers_and_strings();
+	test_php_countable_contract_helpers();
 	return 0;
 }

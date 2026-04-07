@@ -119,21 +119,25 @@ The runtime still contains the scalar proxy helper types:
 - `string_ref`
 
 The S2S generator no longer lowers typed scalar by-reference parameters through these proxy views.
-This behavior is no longer supported by the current generator and is planned to be removed from the specs entirely in a future cleanup.
-
 Current rule:
 
-- typed scalar by-reference parameters must no longer rely on generator-emitted proxy adaptation
-- calls must not be rewritten to construct proxy arguments automatically
-- unsupported shapes may currently fail later during generation or C++ compilation
+- **Normative rule — native-equivalent by-reference parameter normalization:** all native-equivalent typed by-reference parameters are normalized through template dispatch
+- in the current supported set, `int&`, `float&`, `bool&`, and `string&` accept the semantic domain `(T|mixed)&`
+- native `T&` binds directly
+- `mixed_t&` is accepted only through the normalized template path and must be runtime-validated before user code runs
+- on a matching runtime kind, the callee normalizes through the exact `as_*_ref()` accessor and then operates on the native `T&` view
+- on a non-matching runtime kind, normalization fails with a runtime error; no value-conversion fallback is allowed on the by-reference boundary
+- typed scalar by-reference parameters must no longer rely on generator-emitted proxy adaptation, sibling `mixed_t&` bridge overloads, or implicit typed reference casts on `mixed_t`
 
 `mixed_t` must not expose implicit typed reference casts. In particular, `operator int_t&()`, `operator float_t&()`, `operator bool_t&()`, and `operator string_t&()` must not exist.
 
 Additional conservative generator rejects in the current subset:
 - reference binding inside `if` / `switch` / loops is rejected
 - by-reference functions / methods may use only one `return` statement
-- by-reference returns of array / property slot expressions are allowed only for a simple direct chain rooted in a local / parameter variable (for example `$arr["inner"]` and `$arr["inner"]["k"]`)
-- complex slot-return expressions remain rejected (for example call-rooted or branch-selected storage expressions)
+- by-reference returns are allowed only for stable aliasable expressions rooted in a by-reference parameter, `$this`, or another reference derived from stable storage
+- allowed stable chains include direct or indirect array/property access rooted in those stable bases, for example `$a[0]`, `$a[0]["k"]`, `$this->x`, and `$this->child->id`
+- returning a local alias variable is allowed only when that alias was created via `=&` from another stable root
+- rejected roots include by-value parameters, plain locals, temporaries, computed values, call-rooted storage expressions, and any path that would require value normalization/coercion before returning by reference
 
 ## Return-by-reference warnings
 
@@ -141,4 +145,4 @@ Additional conservative generator rejects in the current subset:
 - The generator must also warn for local copy-after-alias patterns rooted in a by-reference call result, for example `$inner =& get_inner($arr); $copy = $arr;`, because Prism++ may not preserve PHP alias semantics for that flow.
 
 
-For mixed/native by-reference boundaries and the current prohibition on by-reference auto-casts, see `specs/dynamic_types.md`.
+For mixed/native by-reference boundaries and the current runtime-validated template normalization rule, see `specs/dynamic_types.md`.

@@ -24,6 +24,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <tuple>
 #include <utility>
 #if defined(__unix__) || defined(__APPLE__)
 #include <sys/resource.h>
@@ -337,6 +338,52 @@ inline string_t &concat_assign(string_t &left, const string_t &right) {
 	return left;
 }
 
+namespace detail {
+
+// Formalizes the runtime countable contract for hash-compatible mixed_t carriers.
+// How: only one unwrap step is performed, so nested mixed_t values that themselves hold hashes are handled by the caller explicitly without accidental recursive unwrapping.
+inline const hash_t<mixed_t> &countable_hash_or_throw(const mixed_t &value, const char *operation) {
+	if (const auto *table = value.table_if()) {
+		return *table;
+	}
+	if (const auto *weak_table = value.weak_table_if()) {
+		auto locked = weak_table->lock();
+		if (static_cast<bool>(locked)) {
+			return *locked;
+		}
+		throw std::runtime_error(std::string("php::") + operation + "(mixed_t) expects live hash-compatible mixed_t");
+	}
+	throw std::runtime_error(std::string("php::") + operation + "(mixed_t) expects hash-compatible mixed_t");
+}
+
+// Centralizes integer-key normalization for countable helper overloads.
+// How: callers can accept either native ints or int_t without duplicating negative-index handling logic.
+inline bool vector_has_index(const std::size_t size, const int_t &key) {
+	const auto native = key.native_value();
+	if (native < 0) {
+		return false;
+	}
+	return static_cast<std::size_t>(native) < size;
+}
+
+inline bool vector_has_index(const std::size_t size, const int key) {
+	return key >= 0 && static_cast<std::size_t>(key) < size;
+}
+
+template <typename T>
+struct is_countable_lookup_target : std::false_type {};
+
+template <typename T>
+struct is_countable_lookup_target<vector_t<T>> : std::true_type {};
+
+template <typename T>
+struct is_countable_lookup_target<hash_t<T>> : std::true_type {};
+
+template <>
+struct is_countable_lookup_target<mixed_t> : std::true_type {};
+
+} // namespace detail
+
 // Implements PHP count() for the currently supported vector wrapper subset.
 // How: returns the runtime vector size widened into the standard int_t wrapper used by generated code.
 template <typename T>
@@ -344,10 +391,99 @@ inline int_t count(const vector_t<T> &value) {
 	return int_t(static_cast<std::int64_t>(value.size()));
 }
 
-// Implements PHP count() for the current hash_t array wrapper.
-// How: array values lower into hash_t<mixed_t>, so count() must mirror PHP array cardinality via hash_t::size().
-inline int_t count(const hash_t<mixed_t> &value) {
+// Implements PHP count() for any concrete hash_t payload.
+// How: count() is a cardinality query on the wrapper itself, so the element payload type does not affect the logical size.
+template <typename T>
+inline int_t count(const hash_t<T> &value) {
 	return int_t(static_cast<std::int64_t>(value.size()));
+}
+
+// Implements PHP count() for dynamic values that currently hold an array/hash payload.
+// How: generated code may still keep arrays inside mixed_t, so count() unwraps exactly one dynamic layer and rejects non-countable payloads explicitly.
+inline int_t count(const mixed_t &value) {
+	return count(detail::countable_hash_or_throw(value, "count"));
+}
+
+// Implements PHP empty() for the current vector wrapper subset.
+// How: emptiness is derived from the stable wrapper cardinality instead of exposing STL semantics directly to generated code.
+template <typename T>
+inline bool_t empty(const vector_t<T> &value) {
+	return value.empty();
+}
+
+// Implements PHP empty() for any concrete hash_t payload.
+// How: emptiness is derived from the wrapper cardinality, independent of payload type.
+template <typename T>
+inline bool_t empty(const hash_t<T> &value) {
+	return value.empty();
+}
+
+// Implements PHP empty() for dynamic values that currently hold an array/hash payload.
+// How: the same countable contract as count() is reused so non-countable mixed_t values fail explicitly.
+inline bool_t empty(const mixed_t &value) {
+	return empty(detail::countable_hash_or_throw(value, "empty"));
+}
+
+// Implements container-key isset() for vector wrappers.
+// How: index existence is reduced to a bounds check so generated code can query sequence containers without materializing sentinels.
+template <typename T>
+inline bool_t isset(const vector_t<T> &value, const int_t &key) {
+	return bool_t(detail::vector_has_index(value.size(), key));
+}
+
+template <typename T>
+inline bool_t isset(const vector_t<T> &value, const int key) {
+	return bool_t(detail::vector_has_index(value.size(), key));
+}
+
+// Implements container-key isset() for hash wrappers.
+// How: hash_t already exposes key-presence checks, so the helper forwards directly into that contract.
+template <typename T>
+inline bool_t isset(const hash_t<T> &value, const int_t &key) {
+	return value.has(key);
+}
+
+template <typename T>
+inline bool_t isset(const hash_t<T> &value, const string_t &key) {
+	return value.has(key);
+}
+
+template <typename T>
+inline bool_t isset(const hash_t<T> &value, const char *key) {
+	return value.has(string_t{key});
+}
+
+template <typename T>
+inline bool_t isset(const hash_t<T> &value, const int key) {
+	return value.has(int_t{static_cast<std::int64_t>(key)});
+}
+
+// Implements container-key isset() for hash-compatible mixed_t carriers.
+// How: the helper unwraps one countable layer, then reuses the concrete hash overloads so nested mixed payloads are not recursively unwrapped by mistake.
+inline bool_t isset(const mixed_t &value, const mixed_t &key) {
+	if (key.kind() == mixed_t::kind_t::int_v) {
+		return isset(detail::countable_hash_or_throw(value, "isset"), key.int_value());
+	}
+	if (key.kind() == mixed_t::kind_t::string_v) {
+		return isset(detail::countable_hash_or_throw(value, "isset"), *key.string_if());
+	}
+	return bool_t(false);
+}
+
+inline bool_t isset(const mixed_t &value, const int_t &key) {
+	return isset(detail::countable_hash_or_throw(value, "isset"), key);
+}
+
+inline bool_t isset(const mixed_t &value, const string_t &key) {
+	return isset(detail::countable_hash_or_throw(value, "isset"), key);
+}
+
+inline bool_t isset(const mixed_t &value, const char *key) {
+	return isset(detail::countable_hash_or_throw(value, "isset"), key);
+}
+
+inline bool_t isset(const mixed_t &value, const int key) {
+	return isset(detail::countable_hash_or_throw(value, "isset"), key);
 }
 
 // Creates a shared dynamic-object carrier by copying one hash payload into shared storage.
@@ -456,6 +592,12 @@ inline bool_t isset_one(T &&) {
 }
 
 template <typename... Args>
+requires (
+	!(
+		sizeof...(Args) == 2
+		&& detail::is_countable_lookup_target<std::remove_cvref_t<std::tuple_element_t<0, std::tuple<Args...>>>>::value
+	)
+)
 // Implements the lowered isset contract across the currently supported runtime value categories.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 inline bool_t isset(Args &&...args) {

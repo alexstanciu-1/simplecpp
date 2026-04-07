@@ -136,4 +136,4 @@ Core rule families:
 
 ## Historical note — typed scalar by-reference proxy lowering
 
-The runtime still contains `int_ref`, `float_ref`, `bool_ref`, and `string_ref`, but the S2S generator no longer emits proxy-based function or method signatures/call-site adapters for them. This note is temporary and should be removed once the legacy runtime helpers are deleted.
+The runtime still contains `int_ref`, `float_ref`, `bool_ref`, and `string_ref`, but the current S2S reference model no longer emits those proxy types in generated signatures. Scalar typed by-reference parameters are handled through normalized template emission rather than sibling `mixed_t&` bridge overloads.

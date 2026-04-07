@@ -164,10 +164,21 @@ Normative rules:
 | mixed | typed property | ✔ | convert |
 | mixed | untyped | ✔ | stays mixed |
 | mixed | overload selection | ✖ | no implicit disambiguation |
-| mixed | typed by-reference parameter | ✖ | no by-ref auto-conversion |
+| mixed | typed by-reference parameter | limited ✔ | native-equivalent typed refs use template-normalized `(T|mixed)&` with runtime validation; no implicit by-ref auto-conversion outside that rule |
 
 ---
 
+
+### Native-equivalent by-reference normalization rule
+
+Normative exception to the general no-by-ref-auto-conversion policy:
+- all native-equivalent typed by-reference parameters are normalized through template dispatch
+- in the current supported set, this applies to `int&`, `float&`, `bool&`, and `string&`
+- the accepted semantic domain is `(T|mixed)&`
+- native `T&` binds directly
+- `mixed_t&` must be runtime-validated and, on success, normalized through the exact `as_*_ref()` accessor
+- non-matching runtime kinds fail at runtime
+- sibling `mixed_t&` bridge overloads and implicit typed reference casts are not part of the contract
 
 ## 1.5 Operator Matrix (Language Intention)
 
@@ -327,7 +338,7 @@ For v1, failed exact access or failed typed extraction uses one generic runtime 
 | mixed | typed property | explicit `cast<T>(...)` generation preferred; v1 may still contain compromise sites | checked conversion via explicit bridge |
 | mixed | untyped | none | stays dynamic |
 | mixed | overload selection | none | not a cast site |
-| mixed | typed by-reference parameter | none | not allowed |
+| mixed | typed by-reference parameter | normalized template dispatch for native-equivalent refs only | runtime-validated reference normalization via exact `as_*_ref()` accessors; otherwise not allowed |
 
 ---
 
@@ -395,7 +406,7 @@ Table-carrier exceptions:
 
 ## 2.6 Guarantees
 
-- no by-reference auto casts
+- no unrestricted by-reference auto casts; the only approved v1 exception is native-equivalent typed by-reference parameter normalization through template dispatch with runtime validation
 - arrays are dynamic structures
 - indexing returns mixed
 - failed casts throw exception
