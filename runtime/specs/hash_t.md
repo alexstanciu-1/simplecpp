@@ -125,8 +125,8 @@ Rules:
 ## 8. Public API surface (v1)
 
 Priority note:
-- `hash_t` and `mixed_t` runtime-facing behavior must be read together with `../../specs/dynamic_types.md` sections **1.2 Visible Intention** and **1.3 Technical Compromises to Achieve Visible Intention in v1**
-- when current generated/user-visible behavior depends on a temporary dynamic-to-typed bridge at a valid Visible Intention site, that bridge remains part of the v1 contract until the generator can materialize the explicit cast itself
+- `hash_t` and `mixed_t` runtime-facing behavior must be read together with `../../specs/dynamic_types.md` sections **1.2 Explicit Typed Boundaries** and **1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1**
+- when current generated/user-visible behavior depends on a temporary dynamic-to-typed bridge at a valid explicit typed boundary site, that bridge remains part of the v1 contract until the generator can materialize the explicit cast itself
 
 
 ```cpp
@@ -434,3 +434,8 @@ When the runtime is compiled with `-DSCPP_LANGUAGE_TARGET_PHP=1`, `hash_t<mixed_
 
 `dynamic_t` reuses `hash_t<mixed_t>` as its v1 payload, but it remains a distinct runtime form.
 Explicit conversion is required between `hash_t` and `dynamic_t`.
+
+
+## `try_ref(...)` in the current safe subset
+
+`hash_t<T_VALUE>::try_ref(...)` is a restricted escape hatch. It currently succeeds only when `T_VALUE` is `shared_p<T>` and returns a copy of that handle. All other element types throw. This preserves memory/lifetime safety without exposing native references or pointers to table interior storage.

@@ -2,6 +2,8 @@ See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict
 
 # Prism++ Runtime/Generation Split - v1 Proposal
 
+> Transitional implementation note: see `../../specs/mixed_boundary_transitional.md`.
+
 ## 1. Scope
 
 This document defines the non-redundant, human-readable specification for the **Prism++ runtime/library** and its relationship to the **runtime configuration**.
@@ -245,9 +247,10 @@ Included initially:
 - PHP `use (&$x)` semantics are intentionally out of scope for this first pass
 
 ### 6.9 Native reference lowering
-- explicit reference lowering uses native C++ lvalue references (`T&`)
+- explicit reference lowering uses native C++ lvalue references (`T&`) only for directly stable objects
 - references must remain flat; the generator must never emit `&&`, `*`, or wrapper-of-wrapper reference shapes
-- object-like explicit references lower to references over the lowered handle type (for example `shared_p<T>&`)
+- object-like explicit references lower to references over the lowered handle type (for example `shared_p<T>&`) only when the handle object itself is directly stable
+- no API may expose a native C++ reference or pointer to heap-backed interior storage whose lifetime or stability is owned by another object
 - the feature is a reduced alias/reference model, not full PHP reference semantics
 - rebinding, alias-preserving `unset`, and other PHP `&` edge semantics remain intentionally out of scope
 
@@ -274,8 +277,8 @@ Included initially:
 - once runtime types are established, operations must follow normal Prism++ rules
 - any deviation from normal Prism++ semantics must be documented explicitly as an exception
 - conversions are explicit by default; dynamic loose coercion is not part of the model
-- the runtime does not infer source-level Visible Intention; language/S2S compromises are documented in `../../specs/dynamic_types.md`
-- for current v1 behavior, `../../specs/dynamic_types.md` sections **1.2 Visible Intention** and **1.3 Technical Compromises to Achieve Visible Intention in v1** take precedence over stricter long-term runtime cleanup choices
+- the runtime does not infer source-level explicit typed boundaries from `mixed_t` alone; language/S2S compromises are documented in `../../specs/dynamic_types.md`
+- for current v1 behavior, `../../specs/dynamic_types.md` sections **1.2 Explicit Typed Boundaries** and **1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1** take precedence over stricter long-term runtime cleanup choices
 - if a type combination is not covered by the config, it is not defined
 
 ### 6.13 `mixed_t`
@@ -288,7 +291,7 @@ Included initially:
 - `cast<T>(mixed_t)` is the central typed bridge for dynamic-to-typed use
 - project-level explicit casts should normalize through `cast<T>(...)` rather than direct wrapper-to-wrapper `static_cast` chains
 - strict string explicit casts are part of the current policy: `string_t -> bool_t` accepts only `"0"`, `"1"`, `"true"`, `"false"` and the approved case variants, while `string_t -> int_t` and `string_t -> float_t` require whole-string successful parses with no trailing characters
-- long-term runtime intent is explicit bridge use at typed boundaries; current v1 non-explicit acceptance at some language/S2S sites is documented in `../../specs/dynamic_types.md` under Visible Intention and Technical Compromises
+- long-term runtime intent is explicit bridge use at typed boundaries; current v1 non-explicit acceptance at some language/S2S sites is documented in `../../specs/dynamic_types.md` under Explicit Typed Boundaries and Technical Compromises
 - until generator parity exists, runtime/operator/cast surface must preserve those v1-visible typed-destination bridges instead of removing them for API purity alone
 - `mixed_t::operator[]` is the primary mutating chained dynamic array access helper
 - mutable `mixed_t::operator[]` autovivifies `null` into an owned `hash_t<mixed_t>`
@@ -297,15 +300,14 @@ Included initially:
 - dynamic arithmetic, comparison, logical operators, mutation, compound assignment, and increment/decrement on `mixed_t` are enabled through runtime-kind dispatch that delegates to the native wrapper rules already defined elsewhere in the config
 - the delegation format is semantic-tuple based: once runtime kinds are established, the runtime resolves the operation as the corresponding native rule such as `int_t + int_t`, `int_t + float_t`, `float_t++`, `string_t += string_t`, or `bool_t && bool_t`
 - `mixed_t` does not define an independent concat operator family; PHP `.` / `.=` must be lowered by the generator into explicit text conversion plus primitive `string_t` concat
-- implicit `mixed_t -> native` extraction is temporarily accepted only at v1 Visible Intention typed boundaries (initialization/assignment, by-value arg passing, return); operator resolution must not use that bridge to create extra candidates
+- implicit `mixed_t -> native` extraction is temporarily accepted only at v1 explicit typed boundaries (typed initialization/assignment, typed property write, typed by-value arg passing, typed return); operator resolution must not use that bridge to create extra candidates
 - compound assignment on `mixed_t` is allowed only when the delegated native binary operator exists and assignment back into the stored lhs kind remains valid
 - table carriers are excluded from arithmetic dispatch; table comparison currently supports only identity-style `==` / `!=` for shared/weak carriers as documented in the runtime config, while owned `table_v` direct comparison is currently an error
 - expired weak-table `_find_val` returns null-kind `mixed_t`, `find` returns not-found, and `at` / write-through access are runtime errors
 - callable dispatch and method dispatch on `mixed_t` are still deferred
 
 ### 6.14 `hash_t`
-- typed reads/writes/calls originating from dynamic table/value access must follow the compromise notes in `../../specs/dynamic_types.md` when current v1 behavior accepts non-explicit conversion at visible-intention sites
-- typed reads/writes/calls originating from dynamic table/value access must follow the compromise notes in `../../specs/dynamic_types.md` when current v1 behavior accepts non-explicit conversion at visible-intention sites
+- typed reads/writes/calls originating from dynamic table/value access must follow the compromise notes in `../../specs/dynamic_types.md` when current v1 behavior accepts non-explicit conversion at explicit typed boundary sites
 - `hash_t` remains the underlying ordered-table container, while generator-facing PHP `array` lowering now targets `mixed_t` for the fat-variable path
 - implementation is adapted from the donor `mem_container` storage design, but generated code must target `hash_t` only
 - `find()` is the non-inserting lookup API and returns `maybe_value_t`
@@ -448,7 +450,8 @@ The correct long-term structure is:
 
 This keeps the system editable without letting the specification and generator drift apart.
 
-- `vector_t::at(...)` returns references for bindable element access, including native reference returns from generated code
+- `vector_t::at(...)` is retained for ordinary runtime access, but it is not an approved native-reference escape hatch in the current safe subset
+- `vector_t::try_ref(...)` is the restricted escape hatch and currently succeeds only for `shared_p<T>` elements, returning a copied handle
 
 
 ## hash_t removal invariant

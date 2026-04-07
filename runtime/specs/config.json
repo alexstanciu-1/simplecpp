@@ -2331,7 +2331,7 @@
                     "*"
                 ]
             ],
-            "reason": "mixed_t extraction is allowed only at visible-intention typed boundaries, not for overload candidate creation"
+            "reason": "mixed_t extraction is allowed only at explicit typed boundaries, not for overload candidate creation"
         }
     ],
     "composition_constraints": {

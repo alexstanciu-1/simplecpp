@@ -91,6 +91,40 @@ public:
 		return at(index_value);
 	}
 
+	// Restricted escape hatch for copy-stable handle-like element extraction.
+	// Current safe subset: only shared_p<T> elements are allowed and the handle is returned by copy.
+	template <typename U = T>
+	[[nodiscard]] U try_ref(std::size_t index) const
+		requires(detail::is_shared_p_v<U>)
+	{
+		return value_.at(index);
+	}
+
+	template <typename U = T>
+	[[nodiscard]] U try_ref(const int_t &index) const
+		requires(detail::is_shared_p_v<U>)
+	{
+		const auto native = index.native_value();
+		if (native < 0) {
+			throw std::out_of_range("vector_t negative index");
+		}
+		return value_.at(static_cast<std::size_t>(native));
+	}
+
+	template <typename U = T>
+	[[nodiscard]] U try_ref(std::size_t) const
+		requires(!detail::is_shared_p_v<U>)
+	{
+		throw std::runtime_error("vector_t::try_ref is supported only for shared_p<T> elements in the current safe subset");
+	}
+
+	template <typename U = T>
+	[[nodiscard]] U try_ref(const int_t &) const
+		requires(!detail::is_shared_p_v<U>)
+	{
+		throw std::runtime_error("vector_t::try_ref is supported only for shared_p<T> elements in the current safe subset");
+	}
+
 	// Append by copy or move.
 	void append(const T &value) {
 		value_.push_back(value);

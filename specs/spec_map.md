@@ -1,5 +1,7 @@
 # Prism++ Specification Map (v1)
 
+> Transitional implementation note: see `specs/mixed_boundary_transitional.md`.
+
 Status: Active  
 Purpose: document hierarchy, authority, and interpretation rules for the current project.
 
@@ -31,22 +33,31 @@ If a new implementation pass, review, or chat session starts, this document shou
 2. `specs/dynamic_types.md`
    - authoritative for dynamic-type user-visible behavior
    - especially authoritative for:
-     - `## 1.2 Visible Intention`
-     - `## 1.3 Technical Compromises to Achieve Visible Intention in v1`
+     - `## 1.2 Explicit Typed Boundaries`
+     - `## 1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1`
+
+3. `specs/array_semantics.md`
+   - authoritative for the current supported array/table subset
+   - especially authoritative for:
+     - read/write/missing-key behavior
+     - nested mutation
+     - append semantics
+     - `isset` / `empty` / `unset` on array/table carriers
+     - the rule that typed value destinations do not change array-read missing-key behavior
 
 ### Level 2 — Subsystem normative rules
 
-3. `php_generator/specs/rules.md`
+4. `php_generator/specs/rules.md`
    - authoritative for generator lowering rules
    - must follow `specs/dynamic_types.md`
-   - must not silently narrow valid v1 Visible Intention sites
+   - must not silently narrow valid v1 explicit typed boundary sites
 
-4. `runtime/specs/spec.md`
+5. `runtime/specs/spec.md`
    - authoritative for runtime semantics and runtime/generation relationship
    - must follow `specs/dynamic_types.md`
-   - runtime cleanup must not remove bridges still required by valid v1 Visible Intention sites
+   - runtime cleanup must not remove bridges still required by valid v1 explicit typed boundary sites
 
-5. other subsystem spec files under:
+6. other subsystem spec files under:
    - `php_generator/specs/`
    - `runtime/specs/`
    - may refine local behavior
@@ -54,14 +65,14 @@ If a new implementation pass, review, or chat session starts, this document shou
 
 ### Level 3 — Audit / planning / supporting documents
 
-6. audit, todo, and reference documents under `specs/`
-   - examples: `dynamic_types_impl_audit.md`, `todo*.md`, `references.md`
+7. audit, todo, and reference documents under `specs/`
+   - examples: `dynamic_types_impl_audit.md`, `mixed_boundary_transitional.md`, `todo*.md`, `references.md`
    - useful for planning and consistency checks
    - not higher authority than the normative specs above
 
 ### Level 4 — Implementation
 
-7. source code and tests
+8. source code and tests
    - runtime implementation
    - generator implementation
    - tests
@@ -74,12 +85,12 @@ If a new implementation pass, review, or chat session starts, this document shou
 For v1, the following rule is normative:
 
 > If a stricter long-term runtime or API-purity preference conflicts with
-> `specs/dynamic_types.md` section `1.2 Visible Intention` or section
-> `1.3 Technical Compromises to Achieve Visible Intention in v1`, then
+> `specs/dynamic_types.md` section `1.2 Explicit Typed Boundaries` or section
+> `1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1`, then
 > sections 1.2 and 1.3 take priority for current user-visible behavior.
 
 This means:
-- a valid visible-intention site must continue to work in v1
+- a valid explicit typed boundary site must continue to work in v1
 - temporary runtime bridges are allowed when the generator does not yet provide full explicit-cast coverage
 - such bridges must not be removed merely because they are not the desired long-term design
 
@@ -87,7 +98,7 @@ This means:
 
 ## 4. Interpretation rules
 
-### 4.1 Visible Intention sites are normative in v1
+### 4.1 Explicit typed boundary sites are normative in v1
 
 If the destination type is clearly visible and the site is allowed by `specs/dynamic_types.md`, that behavior is part of the v1 contract.
 
@@ -108,10 +119,11 @@ However, until the generator is capable of doing that reliably for all valid sit
 
 `mixed_t` runtime cleanup must be reviewed against:
 - `specs/dynamic_types.md`
-- especially sections `1.2` and `1.3`
+- `specs/array_semantics.md` when the behavior depends on array/table access
+- especially dynamic-types sections `1.2` and `1.3`
 - current generator capability
 
-Do not apply a pure “strict runtime only” interpretation if that breaks a valid v1 visible-intention site.
+Do not apply a pure “strict runtime only” interpretation if that breaks a valid v1 explicit typed boundary site.
 
 ### 4.4 Do not silently upgrade temporary rules into permanent doctrine
 
@@ -125,7 +137,7 @@ They should be removed only after equivalent generator behavior exists and tests
 
 Before changing generator or runtime behavior in areas touched by dynamic typing, check all of the following:
 
-1. Is this a valid Visible Intention site under `specs/dynamic_types.md`?
+1. Is this a valid explicit typed boundary site under `specs/dynamic_types.md`?
 2. Does section `1.3` allow a temporary v1 compromise here?
 3. Does the generator already emit an explicit bridge/cast for this exact site?
 4. If not, is the runtime still required to support it?
@@ -153,6 +165,14 @@ Do not do the following without checking `specs/dynamic_types.md` sections 1.2 a
 ### `specs/dynamic_types.md`
 Role:
 - primary language/spec authority for dynamic typing
+
+Authority:
+- normative
+
+### `specs/array_semantics.md`
+Role:
+- primary language/spec authority for the current supported array/table subset
+- defines current value-read, write-path, nested-mutation, append, and `isset` / `empty` / `unset` behavior
 
 Authority:
 - normative
@@ -215,7 +235,8 @@ Authority:
 
 1. `specs/spec_map.md`
 2. `specs/dynamic_types.md`
-3. relevant subsystem spec:
+3. `specs/array_semantics.md` when arrays/tables are involved
+4. relevant subsystem spec:
    - `php_generator/specs/rules.md`
    - `runtime/specs/spec.md`
 4. relevant local supporting docs

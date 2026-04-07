@@ -1,28 +1,107 @@
 # Array Behavior Differences in Prism++ (PHP → Prism++)
 
-This document outlines the known behavioral differences between PHP arrays and the current `hash_t` implementation in Prism++.
-This document is non-authoritative.
+This document outlines the current reduced Prism++ array/table subset and the remaining known differences from PHP.
 
-For current language/S2S compromises around typed destinations reached from dynamic array reads (assignment, call, property, return), see `../../specs/dynamic_types.md` under Visible Intention and Technical Compromises.
-
-
-## Overview
-
-`hash_t` is not a full PHP array implementation. It supports a practical subset of behaviors but diverges in several important areas.
+This document is **non-authoritative**.
+Authoritative sources:
+- `../../specs/array_semantics.md`
+- `../../specs/dynamic_types.md`
+- `../../specs/native_reference_safety.md`
 
 ---
 
-## Known Differences
+## 1. Current Subset (Authoritative-Aligned Summary)
 
-### 1. Negative integer keys
-- Not reliably supported
-- May be reinterpreted as large unsigned integers
+The current intended Prism++ array/table model is:
 
-### 2. Large integer keys
-- Keys beyond 32-bit range are not safe
-- May lead to incorrect behavior
+- missing-key value read returns `null`
+- pure reads do **not** create storage
+- top-level keyed writes create missing keys
+- nested writes autovivify missing intermediate table/hash nodes
+- nested writes **throw** if an existing intermediate has the wrong kind
+- append is allowed on:
+	- array/hash carriers
+	- `mixed(kind=null)` (bootstrap → creates array/table)
+- `isset($a[k])` is null-sensitive:
+	- missing → `false`
+	- existing `null` → `false`
+- `empty($a[k])` is **reduced**:
+	- `true` only for:
+		- `null`
+		- `""`
+		- empty array/table
+- `unset($a[k])` is a **no-op** on missing keys
+- array/property paths remain **outside the supported native by-reference subset**
+- `.try_ref()`:
+	- may be attempted on resulting values
+	- succeeds **only for `shared_p<T>`**
+	- returns a **copy of the handle**, not slot aliasing
 
-### 3. Append after unset
+---
+
+## 2. Key Differences from PHP
+
+### 2.1 Missing vs Null Collapse
+
+```php
+$x["missing"] == null
+```
+
+- Missing key and stored `null` are indistinguishable in value context
+- This is **intentional in the reduced model**
+
+---
+
+### 2.2 `isset(...)` Behavior (Now Defined)
+
+PHP:
+- `isset($x["a"])` is false if value is null
+
+Prism++:
+- **same behavior now enforced**
+	- missing → false
+	- null → false
+
+---
+
+### 2.3 Reduced `empty(...)` Semantics
+
+Prism++ does **not** implement full PHP falsiness.
+
+Only considered empty:
+- `null`
+- `""`
+- empty array/table
+
+Not empty:
+- `0`
+- `0.0`
+- `"0"`
+- `false`
+
+---
+
+### 2.4 Key Coercion Differences
+
+Not supported:
+- numeric string → int conversion
+- bool/null/float → key coercion
+
+Only valid keys:
+- exact `int`
+- exact `string`
+
+---
+
+### 2.5 Negative / Large Integer Keys
+
+- negative keys → not reliable
+- large keys (beyond safe range) → not guaranteed
+
+---
+
+### 2.6 Append After Unset
+
 PHP:
 ```php
 unset($x[1]);
@@ -30,77 +109,40 @@ $x[] = 'c'; // usually key 2
 ```
 
 Prism++:
-- Likely reuses max+1 logic → may become key 1
+- append uses internal max+1 logic
+- may reuse earlier gaps differently
 
 ---
 
-### 4. Missing vs null collapse
+### 2.7 Nested Auto-Growth (Now Defined)
 
-```php
-$x["missing"] == null
-```
-
-- Missing key and stored null are indistinguishable in value context
-
----
-
-### 5. isset behavior mismatch
-
-PHP:
-- `isset($x["a"])` is false if value is null
-
-Prism++:
-- behaves like key existence check (true if key exists)
-
----
-
-### 6. Key coercion differences
-
-Not supported:
-- numeric string → int conversion
-- bool/null/float coercion
-
-Only:
-- exact int
-- exact string
-
----
-
-### 7. Nested auto-growth
-
-Not fully supported:
+Prism++ supports controlled autovivification:
 
 ```php
 $x["a"]["b"] = 1;
 ```
 
-- May fail or behave inconsistently
+Behavior:
+- missing `"a"` → created as table
+- `"a"` exists but not table → **throw**
+
+This is stricter than PHP and **intentional**.
 
 ---
 
-### 8. By-ref materialization
+### 2.8 Read vs Write Separation
 
-```php
-add($x[999], 1);
-```
+- read paths:
+	- never create storage
+- write paths:
+	- may create storage
+	- may autovivify
 
-- May create slot if missing
-- read-only access does NOT create slot
-
----
-
-### 9. Typed by-ref coercion
-
-```php
-add(int &$a)
-```
-
-- May coerce underlying value
-- may change stored type
+This is a **core invariant** of the model.
 
 ---
 
-### 10. Reference alias semantics
+### 2.9 By-Reference Behavior
 
 Not equivalent to PHP:
 
@@ -108,48 +150,90 @@ Not equivalent to PHP:
 $r =& $x[2];
 ```
 
-- Full PHP aliasing not supported
+Prism++:
+- array/property slots are **not valid native reference sources**
+- no slot aliasing
+- no rebinding semantics
+
+`.try_ref()`:
+- runtime attempt on resulting value
+- only works for `shared_p<T>`
+- does **not** expose container interior
 
 ---
 
-### 11. Copy-on-write differences
+### 2.10 Typed By-Reference Coercion
+
+Not supported:
+
+```php
+function f(int &$x) {}
+f($a["k"]);
+```
+
+- dynamic slot → native ref conversion is **outside the supported subset**
+
+---
+
+### 2.11 Copy-on-Write Differences
 
 PHP:
-- copy-on-write arrays
+- Zend zval copy-on-write
 
 Prism++:
-- `mixed_t` arrays now use shared storage with detach-on-write on mutation
-- this is still a runtime-level approximation, not full Zend zval semantics
+- shared storage + detach-on-write
+- not full PHP semantics
 
 ---
 
-### 12. Unsupported key types
+### 2.12 Unsupported Key Types
 
 Keys must be:
-- int
-- string
+- `int`
+- `string`
 
-Other types:
-- undefined / unsupported
+All others:
+- unsupported / undefined
 
 ---
 
-## Safe Use Guidelines
+## 3. Historical / Transitional Notes (Preserved Context)
+
+These behaviors may still appear in older code/tests but are no longer part of the supported model:
+
+- `.as_*_ref()` accessors → removed from safe surface
+- dynamic interior native references → forbidden
+- implicit slot creation via read paths → no longer allowed
+- by-ref coercion from `mixed_t` → removed
+
+---
+
+## 4. Safe Use Guidelines
 
 Recommended:
-- single-level array access
-- int/string keys only
-- no reliance on isset(null) behavior
-- avoid negative/large keys
-- avoid deep nested writes
+
+- use only `int` / `string` keys
+- treat missing reads as `null`
+- rely on read/write separation
+- use nested writes only where autovivification is intended
+- never rely on PHP alias semantics
+- use `.try_ref()` only for `shared_p<T>` scenarios
+
+Avoid:
+
+- deep alias chains
+- mixed-type key usage
+- relying on PHP falsy semantics
+- assuming slot identity stability
 
 ---
 
-## Summary
+## 5. Summary
 
-Prism++ arrays are:
+Prism++ arrays/tables are now:
 
-- suitable for structured data and basic usage
-- not a full PHP semantic match
+- **semantically consistent**
+- **memory-safe**
+- **intentionally reduced**
 
-Expect differences in edge cases and advanced behaviors.
+They are **not a full PHP match**, but they are now a **stable, well-defined subset suitable for further language expansion**.

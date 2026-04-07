@@ -65,6 +65,12 @@ template <typename T>
 struct is_handle_like : std::false_type {};
 
 template <typename T>
+struct is_shared_p : std::false_type {};
+
+template <typename T>
+struct is_shared_p<shared_p<T>> : std::true_type {};
+
+template <typename T>
 struct is_handle_like<shared_p<T>> : std::true_type {};
 
 template <typename T>
@@ -72,6 +78,9 @@ struct is_handle_like<unique_p<T>> : std::true_type {};
 
 template <typename T>
 struct is_handle_like<weak_p<T>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_shared_p_v = is_shared_p<remove_cvref_t<T>>::value;
 
 template <typename T>
 inline constexpr bool is_handle_like_v = is_handle_like<remove_cvref_t<T>>::value;

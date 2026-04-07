@@ -1,46 +1,52 @@
 # References in Prism++
 
+See `specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
+See also `specs/native_reference_safety.md` for the normative native-reference safety boundary.
+
 ## Overview
 
-Prism++ uses a simplified and predictable reference model.
+Prism++ uses a conservative and predictable reference model.
 
 References are:
+- explicit
 - single-binding
-- stable (never rebind)
-- equivalent to native C++ references for explicit local / property aliases
+- conservative by design
+- allowed only when the source storage is directly stable under the current safe subset
 
-## Advantages
+The current goal is not to emulate full PHP reference behavior. The goal is to preserve a safe subset that maps cleanly to generated C++ without exposing unsafe native references or pointers to dynamic interior storage.
 
-- Deterministic behavior
-- No hidden alias switching
-- Safe mapping to C++ (no pointer-to-slot model)
-- Better performance (no indirection layer)
-- Easier reasoning and debugging
+## Core rules
+
+### 1. Single binding
+A variable may be bound by reference (`&`) at most once.
+
+### 2. No native references to dynamic interior storage
+Any source-language construct whose lowering would require a native C++ reference or pointer to heap-backed interior storage is rejected in the current safe subset.
+
+This includes array/vector/string element-style interior reference binding and similar dynamic slot/property paths.
+
+### 3. Explicit syntax only
+Prism++ never infers native reference semantics. A native reference exists only when explicit source syntax is accepted by the current rules and can be lowered safely.
 
 ## Supported behavior
 
-### 1. Single binding
+### 1. Stable local alias
 ```php
-$x =& $a;
-$x = 10;
+$a = 1;
+$b =& $a;
 ```
 
-### 2. Function reference (no rebinding)
-```php
-function &id(&$x) { return $x; }
-$b =& id($a);
-```
-
-### 3. Property reference (no rebinding)
-```php
-$x =& $obj->v;
-```
-
-### 4. Static alias chains
+### 2. Stable alias chains without rebinding
 ```php
 $a = 1;
 $b =& $a;
 $c =& $b;
+```
+
+### 3. Reference parameter / return syntax, when the referenced storage is directly stable and the declaration is otherwise valid
+```php
+function f(int &$a): void {}
+function &id(int &$x): int { return $x; }
 ```
 
 ## Unsupported behavior
@@ -51,30 +57,12 @@ $x =& $a;
 $x =& $b;
 ```
 
-### 2. Property rebinding
-```php
-$x =& $a->v;
-$x =& $b->v;
-```
-
-### 3. Array rebinding
-```php
-$x =& $arr[0];
-$x =& $arr[1];
-```
-
-### 4. Conditional binding
+### 2. Conditional binding
 ```php
 if ($c) { $x =& $a; } else { $x =& $b; }
 ```
 
-### 5. Rebinding through chains
-```php
-$c =& $b;
-$c =& $other;
-```
-
-### 6. Conditional or loop-scoped reference binding
+### 3. Conditional or loop-scoped reference binding
 ```php
 if ($cond) {
     $x =& $a;
@@ -85,16 +73,29 @@ while ($cond) {
 }
 ```
 
-### 7. By-reference returns of array/property slots
+### 4. Array / vector / string slot binding
+```php
+$x =& $arr[0];
+$x =& $vec[0];
+$x =& $str[0];
+```
+
+### 5. Property / slot binding rooted in dynamic storage
+```php
+$x =& $obj->items[0];
+$x =& $data["user"];
+```
+
+### 6. By-reference returns of array/property/slot chains
 ```php
 function &get_inner(array &$arr): array {
     return $arr["inner"];
 }
 ```
 
-### 8. By-reference returns with multiple return statements
+### 7. By-reference returns with multiple return statements
 ```php
-function &pick(bool $cond, array &$a, array &$b): array {
+function &pick(bool $cond, int &$a, int &$b): int {
     if ($cond) {
         return $a;
     }
@@ -102,47 +103,39 @@ function &pick(bool $cond, array &$a, array &$b): array {
 }
 ```
 
-## Rule
+## Current safe subset guidance
 
-A variable may be bound by reference (&) at most once.
+### Allowed native-reference sources
+Native references are currently intended only for directly stable objects such as:
+- locals
+- parameters
+- direct stable fields
+- whole-object wrappers/handles such as `string_t`, `vector_t`, and `shared_p<T>` when the reference is to the wrapper/handle object itself
 
-Violations may result in compile-time errors.
+### Forbidden native-reference sources
+The following are not native-reference bindable in the current safe subset:
+- any `[]`-rooted expression
+- dynamic property / slot access rooted in dynamic storage
+- any path that would require `mixed_t::as_*_ref()`
+- any path that would require exposing a native reference or pointer to interior dynamic storage
 
+## Runtime note
 
-## Historical note - typed scalar by-reference proxy parameters (deprecated / no longer generated)
+The current safe subset treats typed native-reference extraction from `mixed_t` as disabled runtime surface. The legacy `.as_*_ref()` helpers may remain present temporarily for transition purposes, but they are not part of the supported safe reference model.
 
-The runtime still contains the scalar proxy helper types:
+## `try_ref(...)`
 
-- `int_ref`
-- `float_ref`
-- `bool_ref`
-- `string_ref`
+For the only approved copy-stable handle-like escape hatch in the current runtime, see `specs/native_reference_safety.md`.
 
-The S2S generator no longer lowers typed scalar by-reference parameters through these proxy views.
-Current rule:
-
-- **Normative rule — native-equivalent by-reference parameter normalization:** all native-equivalent typed by-reference parameters are normalized through template dispatch
-- in the current supported set, `int&`, `float&`, `bool&`, and `string&` accept the semantic domain `(T|mixed)&`
-- native `T&` binds directly
-- `mixed_t&` is accepted only through the normalized template path and must be runtime-validated before user code runs
-- on a matching runtime kind, the callee normalizes through the exact `as_*_ref()` accessor and then operates on the native `T&` view
-- on a non-matching runtime kind, normalization fails with a runtime error; no value-conversion fallback is allowed on the by-reference boundary
-- typed scalar by-reference parameters must no longer rely on generator-emitted proxy adaptation, sibling `mixed_t&` bridge overloads, or implicit typed reference casts on `mixed_t`
-
-`mixed_t` must not expose implicit typed reference casts. In particular, `operator int_t&()`, `operator float_t&()`, `operator bool_t&()`, and `operator string_t&()` must not exist.
-
-Additional conservative generator rejects in the current subset:
-- reference binding inside `if` / `switch` / loops is rejected
-- by-reference functions / methods may use only one `return` statement
-- by-reference returns are allowed only for stable aliasable expressions rooted in a by-reference parameter, `$this`, or another reference derived from stable storage
-- allowed stable chains include direct or indirect array/property access rooted in those stable bases, for example `$a[0]`, `$a[0]["k"]`, `$this->x`, and `$this->child->id`
-- returning a local alias variable is allowed only when that alias was created via `=&` from another stable root
-- rejected roots include by-value parameters, plain locals, temporaries, computed values, call-rooted storage expressions, and any path that would require value normalization/coercion before returning by reference
+In short:
+- generated code may call `try_ref(...)` on the resulting value as a restricted runtime attempt
+- array/property paths themselves are not approved native by-reference targets
+- `try_ref(...)` currently has value only for `shared_p<T>`
+- it succeeds only for `shared_p<T>`
+- it returns a copy
+- it does not provide slot write-back aliasing
 
 ## Return-by-reference warnings
 
-- Return-by-reference is not recommended in Prism++ and must always surface a generator warning even when generation is still allowed.
-- The generator must also warn for local copy-after-alias patterns rooted in a by-reference call result, for example `$inner =& get_inner($arr); $copy = $arr;`, because Prism++ may not preserve PHP alias semantics for that flow.
-
-
-For mixed/native by-reference boundaries and the current runtime-validated template normalization rule, see `specs/dynamic_types.md`.
+- Return-by-reference is not recommended in Prism++ and should surface a generator warning even when generation is still allowed.
+- Reference-returning flows remain deliberately narrower than PHP and should be treated as a conservative subset feature.

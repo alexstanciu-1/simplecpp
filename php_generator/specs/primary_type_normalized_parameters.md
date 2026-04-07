@@ -136,7 +136,7 @@ This feature applies to:
 - instance methods
 - static methods
 
-The mechanism now extends to native-equivalent typed by-reference parameters. In the current supported set, `int&`, `float&`, `bool&`, and `string&` are normalized through template dispatch and accept the semantic domain `(T|mixed)&` with runtime validation before user code runs.
+The current safe subset does not extend this mechanism to by-reference normalization from `mixed_t`. Typed by-reference parameters remain limited to cases where the source expression is already directly stable and native-reference bindable under `specs/native_reference_safety.md`.
 
 ## 11. Current implementation status
 
@@ -150,4 +150,4 @@ Current generator implementation includes:
 - explicit `@arg.<param>.from(Type)` lowering into normalization helper branches via real PHP expression parsing and normal expression lowering
 - cast-utility fallback when no explicit normalization rule exists
 
-Non-scalar union members remain follow-up work. By-reference normalization is now supported for the native-equivalent scalar set `int&`, `float&`, `bool&`, and `string&`; broader by-reference normalization remains follow-up work.
+Non-scalar union members remain follow-up work. By-reference normalization from `mixed_t` is not part of the current safe subset; broader future work may revisit this only if it can preserve the native-reference safety rule.

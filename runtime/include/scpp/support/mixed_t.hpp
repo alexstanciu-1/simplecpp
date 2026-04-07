@@ -170,7 +170,7 @@ public:
 	//
 	// Contract split:
 	// - get_* / try_get_* are exact accessors only
-	// - as_*_ref are mutating/autovivifying helpers where documented
+	// - as_*_ref are transitional legacy hooks and are disabled in the current safe subset
 	// - conversion operators remain in v1 only to preserve valid Visible Intention sites
 	//   from specs/dynamic_types.md sections 1.2 and 1.3 until generator parity exists
 	[[nodiscard]] int_t &as_int_ref();
@@ -221,6 +221,9 @@ public:
 	const mixed_t& operator[](int native_key) const;
 
 	void append(const mixed_t& val);
+	[[nodiscard]] bool remove(const int_t& key);
+	[[nodiscard]] bool remove(const string_t& key);
+	[[nodiscard]] bool remove(const mixed_t& key);
 
 	[[nodiscard]] int_t size() const;
 	[[nodiscard]] bool empty() const;

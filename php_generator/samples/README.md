@@ -62,5 +62,5 @@ Array literal note:
 
 Direct DIM call arguments
 - `add($x[0])` lowers as `add(x[0])`.
-- This applies even when the generator does not reason about whether the callee is by-reference.
+- This applies only to ordinary value passing. Direct DIM call arguments are not native-reference bindable by virtue of being direct DIM expressions.
 - For read-only intent, prefer an explicit safe-read form in PHP, such as `($x[0] ?? null)`.

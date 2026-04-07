@@ -1,6 +1,9 @@
 See `specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
+See also `specs/array_semantics.md` for the authoritative current array/table subset.
 
-# Dynamic Types Specification (v2.1)
+# Dynamic Types Specification (v2.2)
+
+> Transitional implementation note: see `specs/mixed_boundary_transitional.md`.
 
 Status: Active  
 Replaces: dynamic_types.md (v1)
@@ -15,7 +18,13 @@ Replaces: dynamic_types.md (v1)
 
 Prism++ allows you to opt into a **dynamic type** when flexibility is needed.
 
-By default, values are **native and statically known**:
+Dynamic expressions remain `mixed_t` by default. They become native only at:
+- explicit typed boundaries
+- explicit user/runtime narrowing points
+
+A typed function or method call counts as an explicit boundary.
+
+By default, values are **native and statically known** when the source directly establishes a native contract:
 
 ```php
 $v = 5;               // native / compiler-known
@@ -38,21 +47,25 @@ Dynamic values are useful for:
 
 ## 1.1 Core Rule
 
-> If the intended type is clearly stated, the system may accept a non-explicit conversion.
+> Dynamic expressions remain `mixed_t` by default. They become native only at explicit typed boundaries or explicit user/runtime narrowing points.
 
-This is a **language / S2S rule**, not a runtime rule.
+A typed function or method call counts as an explicit typed boundary.
+
+This is a **language / S2S rule**, not a runtime inference rule.
+
+For accepted current implementation fallback behavior, see `specs/mixed_boundary_transitional.md`.
 
 ---
 
-## 1.2 Visible Intention
+## 1.2 Explicit Typed Boundaries
 
 ### Definition
 
-> A conversion has **Visible Intention** when the destination type is explicitly identifiable at the conversion site in source code.
+> A conversion crosses an **Explicit Typed Boundary** when the destination type is explicitly identifiable at the conversion site in source code or by an immediately-applicable callable/property contract.
 
-If Visible Intention exists, a **non-explicit conversion** from `mixed` to the target type is allowed and may be performed by the current implementation.
+If an Explicit Typed Boundary exists, a `mixed` value may be normalized to the target native type there. Long-term, the generator should materialize that boundary explicitly in emitted C++; current v1 behavior may still rely on approved implementation bridges.
 
-### Valid Visible Intention sites
+### Valid Explicit Typed Boundary sites
 
 | Case | Example | Allowed |
 |---|---|---|
@@ -61,8 +74,10 @@ If Visible Intention exists, a **non-explicit conversion** from `mixed` to the t
 | Typed function argument (by-value) | `f($v); // f(int $x)` | ✔ |
 | Typed method argument (by-value) | `$obj->f($v); // f(int $x)` | ✔ |
 | Typed return | `return $v; // function(): int` | ✔ |
+| Explicit user cast | `$x = (int)$v;` | ✔ |
+| Explicit runtime narrowing guard | `if (is_int($v)) { takesInt($v); }` | ✔ |
 
-### Not Visible Intention
+### Not Explicit Typed Boundaries
 
 | Case | Example | Allowed |
 |---|---|---|
@@ -75,17 +90,17 @@ If Visible Intention exists, a **non-explicit conversion** from `mixed` to the t
 
 ---
 
-## 1.3 Technical Compromises to Achieve Visible Intention in v1
+## 1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1
 
 ### Normative priority for v1
 
-For **current v1 user-visible behavior**, **Section 1.2 Visible Intention** and **Section 1.3 Technical Compromises to Achieve Visible Intention in v1** are **normative priority rules**.
+For **current v1 user-visible behavior**, **Section 1.2 Explicit Typed Boundaries** and **Section 1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1** are **normative priority rules**.
 
 If they conflict with a stricter long-term runtime preference such as "all dynamic-to-native bridges should already be explicit in generated C++", then **Section 1.2** and **Section 1.3** take precedence until the generator can actually materialize those explicit bridges (or another approved mechanism replaces them).
 
 This means:
 - implementations must not remove currently-required v1 bridges merely because they are not the preferred long-term runtime shape
-- runtime/spec/generator cleanup must preserve the valid Visible Intention sites listed in **Section 1.2**
+- runtime/spec/generator cleanup must preserve the valid Explicit Typed Boundary sites listed in **Section 1.2**
 - any future removal of a v1 compromise requires generator parity (or an explicitly documented replacement path)
 
 ### Context
@@ -93,7 +108,7 @@ This means:
 The long-term model is:
 
 - the runtime remains strict
-- the S2S generator emits explicit `cast_*()` calls when Visible Intention exists
+- the S2S generator emits explicit `cast_*()` calls when an Explicit Typed Boundary exists
 
 Current implementation limits prevent full realization of that model.
 
@@ -107,7 +122,7 @@ Current implementation limits prevent full realization of that model.
 
 ### v1 compromise conversions
 
-These are accepted in v1 when Visible Intention exists, even though the long-term model prefers S2S-emitted explicit casts:
+These are accepted in v1 when an Explicit Typed Boundary exists, even though the long-term model prefers S2S-emitted explicit casts:
 
 | Case | Example | Why accepted in v1 |
 |---|---|---|
@@ -129,10 +144,10 @@ These are accepted in v1 when Visible Intention exists, even though the long-ter
 
 ### Important clarification
 
-> The explicit-boundary model is a **runtime rule**.  
-> Visible Intention and its v1 compromises belong to the **language / S2S layer**.
+> The explicit-boundary model is a **language / S2S rule enforced through the runtime boundary layer**.  
+> Explicit Typed Boundaries and their v1 compromises belong to the **language / S2S layer**; `mixed_t` by itself does not reveal enough compile-time information to invent those boundaries.
 
-The current implementation may therefore accept some non-explicit `mixed → native` conversions that the long-term runtime model would prefer to see as generator-emitted explicit casts.
+The current implementation may therefore accept some non-explicit `mixed → native` conversions at approved boundary sites that the long-term model would prefer to see as generator-emitted explicit casts.
 
 ---
 
@@ -164,21 +179,23 @@ Normative rules:
 | mixed | typed property | ✔ | convert |
 | mixed | untyped | ✔ | stays mixed |
 | mixed | overload selection | ✖ | no implicit disambiguation |
-| mixed | typed by-reference parameter | limited ✔ | native-equivalent typed refs use template-normalized `(T|mixed)&` with runtime validation; no implicit by-ref auto-conversion outside that rule |
+| mixed | typed by-reference parameter | ✖ | by-reference normalization from `mixed_t` is not part of the current safe subset |
 
 ---
 
 
-### Native-equivalent by-reference normalization rule
+### By-reference boundary rule
 
-Normative exception to the general no-by-ref-auto-conversion policy:
-- all native-equivalent typed by-reference parameters are normalized through template dispatch
-- in the current supported set, this applies to `int&`, `float&`, `bool&`, and `string&`
-- the accepted semantic domain is `(T|mixed)&`
-- native `T&` binds directly
-- `mixed_t&` must be runtime-validated and, on success, normalized through the exact `as_*_ref()` accessor
-- non-matching runtime kinds fail at runtime
-- sibling `mixed_t&` bridge overloads and implicit typed reference casts are not part of the contract
+There is no approved `mixed_t` to native by-reference normalization rule in the current safe subset. Array/property reads may still feed typed **value** destinations under the ordinary explicit typed-boundary rules, but they do not become approved by-reference sources.
+
+Normative rule:
+- by-reference boundaries do not create an explicit typed boundary for `mixed_t`
+- a missing array/table read still yields its ordinary read result before typed value-boundary handling is considered
+- `mixed_t&` must not be normalized into native `T&` through `.as_*_ref()` in the supported safe subset
+- native references are allowed only when the referenced source is already directly stable and native-reference bindable
+- any source-language form that would require a native reference or pointer into dynamic interior storage is rejected
+
+See `specs/native_reference_safety.md` and `specs/references.md`.
 
 ## 1.5 Operator Matrix (Language Intention)
 
@@ -192,7 +209,7 @@ Examples:
 - `mixed(kind=table) + ...` → error for now
 
 Global rules:
-- implicit `mixed -> native` extraction is allowed only at approved Visible Intention typed boundaries (assignment/init, by-value arg passing, return)
+- implicit `mixed -> native` extraction is allowed only at approved Explicit Typed Boundaries (typed initialization/assignment, typed by-value arg passing, typed return, typed property write)
 - operator resolution must **not** use implicit `mixed` extraction to manufacture extra overload candidates
 - compound assignment is valid only when the delegated native binary op exists **and** assignment back into the stored lhs kind also remains valid
 - table carriers are excluded from arithmetic dispatch
@@ -209,7 +226,7 @@ Global rules:
 | +mixed / -mixed | ✔ | unary numeric dispatch by kind | mixed |
 | ++mixed / --mixed | ✔ | delegate to native increment/decrement rule of contained kind | mixed |
 | mixed[index] | ✔ | indexing | mixed |
-| typed = mixed | ✔ | Visible Intention boundary conversion | typed |
+| typed = mixed | ✔ | Explicit Typed Boundary conversion | typed |
 | mixed += native | ✔ | delegated op + assign-back check | mixed |
 | mixed .= native | ✔ | generator-owned concat lowering, not runtime mixed concat dispatch | string/mixed |
 
@@ -262,13 +279,13 @@ Additional runtime-kind rules:
 
 The runtime model is intentionally stricter than the current v1 language surface:
 
-- runtime does not infer Visible Intention
+- runtime does not infer boundary intent from `mixed_t` alone
 - runtime should prefer explicit typed bridges such as `cast<T>(mixed_t)`
 - current non-explicit acceptance in some call/assignment/property/return cases is a language/S2S compromise, not a runtime feature goal
 
 For the rationale and allowed compromise cases, see:
-- **Section 1.2 Visible Intention**
-- **Section 1.3 Technical Compromises to Achieve Visible Intention in v1**
+- **Section 1.2 Explicit Typed Boundaries**
+- **Section 1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1**
 
 For v1, those two sections are not advisory commentary; they are the governing compatibility rules for current user-visible behavior. Runtime cleanup must therefore defer to them until generator parity exists.
 
@@ -301,8 +318,10 @@ Typed extraction from `mixed_t` must go through explicit helpers such as:
 
 `mixed_t` does not create new conversion rights. It may only expose conversions that already exist in the Prism++ native cast rules.
 
+A typed function or method parameter contract counts as an explicit typed boundary even when the PHP user does not write a source-level cast. In that case, the call boundary itself is the explicit normalization site from the language-design point of view.
+
 Current v1 typed-boundary bridge rule:
-- non-explicit `mixed -> native` use is accepted only at Visible Intention sites for initialization/assignment, by-value arg passing, and typed returns
+- non-explicit `mixed -> native` use is accepted only at Explicit Typed Boundary sites for typed initialization/assignment, typed property write, typed by-value arg passing, and typed returns
 - operator resolution must not use implicit extraction to create extra candidates
 - failed typed extraction remains a runtime error
 
@@ -311,7 +330,7 @@ Current v1 typed-boundary bridge rule:
 `mixed_t` indexing remains context-sensitive:
 
 - read path: no autovivification
-- write path: v1 may autovivify `null` into `hash_t` to preserve visible intention for generated code
+- write path: v1 may autovivify `null` into `hash_t` to preserve the current explicit-boundary language behavior for generated code
 
 ### Failure model
 
@@ -338,7 +357,7 @@ For v1, failed exact access or failed typed extraction uses one generic runtime 
 | mixed | typed property | explicit `cast<T>(...)` generation preferred; v1 may still contain compromise sites | checked conversion via explicit bridge |
 | mixed | untyped | none | stays dynamic |
 | mixed | overload selection | none | not a cast site |
-| mixed | typed by-reference parameter | normalized template dispatch for native-equivalent refs only | runtime-validated reference normalization via exact `as_*_ref()` accessors; otherwise not allowed |
+| mixed | typed by-reference parameter | none | not supported in the current safe subset |
 
 ---
 
@@ -361,7 +380,7 @@ The runtime does **not** define PHP concat semantics for `mixed_t`. PHP `.` and 
 | +mixed / -mixed | unary numeric helper | dispatch by kind, delegate to native unary rule | mixed |
 | ++mixed / --mixed | mutation helper | dispatch by kind, delegate to native increment/decrement rule | mixed |
 | mixed[index] | dynamic index helper | runtime lookup/access | mixed |
-| typed = mixed | cast_*() (long-term); v1 may use non-explicit conversion at Visible Intention boundaries | checked conversion / current implementation bridge | typed |
+| typed = mixed | cast_*() (long-term); v1 may use non-explicit conversion at Explicit Typed Boundaries | checked conversion / current implementation bridge | typed |
 | mixed += native | dynamic op + assign | delegated op followed by assign-back validity check | mixed |
 | mixed .= native | explicit `to_string(...)` lowering + primitive `string_t` concat | no `mixed_t` concat dispatch | string/mixed |
 
@@ -396,21 +415,21 @@ Table-carrier exceptions:
 
 | Case | Behavior |
 |---|---|
-| mixed& | aliases dynamic slot |
-| native → mixed& | not supported |
-| typed& mismatch | no cast, may fail |
-| foreach by-ref | generator-dependent |
-| invalid by-ref | may fail in C++ compile |
+| native stable source → native `T&` | allowed |
+| `mixed_t` → native `T&` | not supported in the current safe subset |
+| dynamic slot / element / property → native `T&` | forbidden |
+| `try_ref(...)` on `shared_p<T>` element | allowed; returns a copy |
+| `try_ref(...)` on any other element type | throws |
 
 ---
 
 ## 2.6 Guarantees
 
-- no unrestricted by-reference auto casts; the only approved v1 exception is native-equivalent typed by-reference parameter normalization through template dispatch with runtime validation
+- no by-reference auto casts from `mixed_t` to native references in the current safe subset
 - arrays are dynamic structures
 - indexing returns mixed
 - failed casts throw exception
-- long-term goal remains explicit S2S-emitted casts at visible-intention sites
+- long-term goal remains explicit S2S-emitted casts at Explicit Typed Boundaries
 - PHP concat remains generator-owned and is not a `mixed_t` runtime operator family
 
 ## 1.4 `dynamic_t` v1

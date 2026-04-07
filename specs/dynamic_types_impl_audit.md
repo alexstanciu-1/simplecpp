@@ -1,5 +1,7 @@
 # Audit — implementation vs `specs/dynamic_types.md`
 
+> Transitional implementation note: see `specs/mixed_boundary_transitional.md`.
+
 Project used as source of truth: attached ZIP project.  
 Scope: current implementation vs current `specs/dynamic_types.md`.
 
@@ -11,7 +13,7 @@ Scope: current implementation vs current `specs/dynamic_types.md`.
 | 4 | Typed by-value parameter casts | Generator should emit explicit cast at call site | By-value params are passed through unchanged; only by-ref params get special handling | High | `Generator.php:342-357` |
 | 5 | Typed return casts | Generator should emit explicit cast on typed return | Return path only inserts cast for `nullable<T> -> T`; no general `mixed_t -> native` cast insertion | High | `Generator.php:4177-4198` |
 | 6 | Typed property assignment casts | Spec treats typed property assignment as a cast site | Generic assignment path emits raw `target = expr;`; no dedicated cast insertion for typed property targets | High | `Generator.php:1813-1815`, `1888-1893`; property access rendered raw in `Generator.php:3728-3738` |
-| 7 | No implicit `mixed -> native` conversion | Boundary should stay explicit | `mixed_t` exposes implicit conversion operators to `bool_t`, `int_t`, `float_t`, `string_t`, and `bool`; C++ can convert without generator-emitted `cast<...>()` | High | `support/mixed_t.hpp:127-141`; `support/mixed_t.cpp:366-372` |
+| 7 | `mixed -> native` escape control | Dynamic values should become native only at explicit typed boundaries or explicit narrowing points | `mixed_t` exposes implicit conversion operators to `bool_t`, `int_t`, `float_t`, `string_t`, and `bool`; C++ can convert outside generator-owned boundary rendering | High | `support/mixed_t.hpp:127-141`; `support/mixed_t.cpp:366-372` |
 | 8 | No auto-cast on any by-ref boundary | Spec forbids automatic cast insertion for by-ref | Scalar typed by-ref params are auto-wrapped via `int_ref` / `float_ref` / `bool_ref` / `string_ref`; runtime then coerces/borrows through `mixed_t::as_*_ref()` | High | `TypeMapper.php:149-163`; `Generator.php:342-357`, `1698-1709`; `support/mixed_t.cpp:317-352`, `944-962` |
 | 9 | Array-read typed destinations | `$a[$k]` is runtime `mixed`; typed destinations should get generated explicit casts | Array reads infer as `mixed_t`, but typed assignment/call/return still rely on raw assignment/passing, not injected casts | High | `Generator.php:4272-4315`; plus rows 3/4/5 above |
 | 10 | `foreach` by-reference policy | Spec says generator-dependent / evolving; explicit cast logic still to be defined | Current lowering always emits `auto& value = elementExpr;` with no cast/type-disambiguation step; behavior is fixed, not policy-driven | Medium | `Generator.php:2044-2073` |
@@ -29,6 +31,6 @@ Scope: current implementation vs current `specs/dynamic_types.md`.
 
 ## Practical reading
 
-- The largest mismatch is the typed-destination rule: the spec wants generator-emitted explicit casts, while the implementation still leans heavily on implicit C++ conversions from `mixed_t`.
+- The largest mismatch is still typed-destination enforcement: the clarified spec allows typed call / return / property / local boundaries, but the implementation still leans heavily on implicit C++ conversions from `mixed_t` instead of generator-owned explicit boundary rendering.
 - The second largest mismatch is by-reference: the spec now forbids auto-cast on by-ref boundaries, but the implementation still auto-wraps scalar by-ref cases.
 - Arrays are closer to spec than references, but typed destinations from array reads are still affected by the missing cast-injection logic above.

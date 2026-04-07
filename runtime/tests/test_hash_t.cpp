@@ -97,9 +97,9 @@ static void test_value_t_table_read_write_contract() {
 	assert(root.get(scpp::string_t("child")).get(scpp::int_t(1)).int_value().native_value() == 20);
 	assert(root.get(scpp::string_t("missing")).is_null().native_value() == true);
 
-	const auto before_missing_nested = root.get(scpp::string_t("child")).as_table_ref().size();
+	const auto before_missing_nested = root.get(scpp::string_t("child")).size().native_value();
 	assert(root.get(scpp::string_t("child")).get(scpp::string_t("unknown")).is_null().native_value() == true);
-	assert(root.get(scpp::string_t("child")).as_table_ref().size() == before_missing_nested);
+	assert(root.get(scpp::string_t("child")).size().native_value() == before_missing_nested);
 }
 
 // Verifies shared-owned hash_t remains the object-like carrier form and works with _find_val().

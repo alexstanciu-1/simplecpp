@@ -67,6 +67,8 @@ final class Generator
 	private ?string $currentParentClass = null;
 	private int $tempCounter = 0;
 	private AnnotationExpressionParser $annotationExpressionParser;
+	/** @var array<string, bool> */
+	private array $phpRuntimeRelativeSymbols = [];
 
 	/**
 
@@ -86,6 +88,7 @@ final class Generator
 		private readonly TypeMapper $typeMapper = new TypeMapper(),
 	) {
 		$this->predefinedConstants = $this->loadPredefinedConstants();
+		$this->phpRuntimeRelativeSymbols = $this->loadPhpRuntimeRelativeSymbols();
 		$this->nameRegistry = new NameRegistry();
 		$this->annotationExpressionParser = new AnnotationExpressionParser();
 	}
@@ -405,7 +408,14 @@ final class Generator
 		// handled by the normalized template path instead of proxy wrappers or
 		// sibling mixed_t& bridge overloads.
 		$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
-		if ($param->isReference || $param->type === null) {
+		if ($param->isReference) {
+			if (!$this->isLvalueCapableExpr($arg, $namespacePhp)) {
+				$this->errors[] = 'By-reference argument requires directly stable native-reference-bindable storage in the current safe subset.';
+				return '/* unsupported-by-ref-arg */';
+			}
+			return $this->renderReferenceBindingExpr($arg, $namespacePhp);
+		}
+		if ($param->type === null) {
 			return $rendered;
 		}
 
@@ -490,18 +500,21 @@ final class Generator
 		$this->validateStatementList($file->rootStatements, null);
 		foreach ($file->functions as $function) {
 			$this->validateFunctionLikeParameters($function->params, 'function ' . $function->name);
-			$this->validateReferenceRulesForFunctionLike($function->statements, $function->returnsByReference, 'function ' . $function->name, null);
+			$this->validateReferenceRulesForFunctionLike($function->params, $function->statements, $function->returnsByReference, 'function ' . $function->name, null);
 			$this->validateStatementList($function->statements, null);
 		}
 		foreach ($file->classes as $class) {
 			foreach ($class->properties as $property) {
 				$this->validatePropertyDeclaration($class, $property);
 			}
+			$prevClassName = $this->currentClassName;
+			$this->currentClassName = $class->name;
 			foreach ($class->methods as $method) {
 				$this->validateFunctionLikeParameters($method->params, 'method ' . $class->name . '::' . $method->name);
-				$this->validateReferenceRulesForFunctionLike($method->statements, $method->returnsByReference, 'method ' . $class->name . '::' . $method->name, null);
+				$this->validateReferenceRulesForFunctionLike($method->params, $method->statements, $method->returnsByReference, 'method ' . $class->name . '::' . $method->name, null);
 				$this->validateStatementList($method->statements, null);
 			}
+			$this->currentClassName = $prevClassName;
 		}
 		foreach ($file->namespaces as $namespace) {
 			$this->validateStatementList($namespace->statements, $namespace->name);
@@ -514,11 +527,14 @@ final class Generator
 				foreach ($class->properties as $property) {
 					$this->validatePropertyDeclaration($class, $property);
 				}
+				$prevClassName = $this->currentClassName;
+				$this->currentClassName = $class->name;
 				foreach ($class->methods as $method) {
 					$this->validateFunctionLikeParameters($method->params, 'method ' . $class->name . '::' . $method->name);
 					$this->validateReferenceRulesForFunctionLike($method->params, $method->statements, $method->returnsByReference, 'method ' . $class->name . '::' . $method->name, $namespace->name);
 					$this->validateStatementList($method->statements, $namespace->name);
 				}
+				$this->currentClassName = $prevClassName;
 			}
 		}
 	}
@@ -677,9 +693,6 @@ final class Generator
 			return isset($stableRoots[$name]);
 		}
 
-		if ($kind === AstKind::DIM || $kind === AstKind::PROP) {
-			return $this->isStableAliasableReferenceExpr($expr->children['expr'] ?? null, $stableRoots, $namespacePhp);
-		}
 
 		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::NULLSAFE_PROP || $kind === AstKind::STATIC_PROP) {
 			return false;
@@ -777,8 +790,11 @@ final class Generator
 	}
 
 	/** @param list<Statement> $statements */
-	private function validateStatementList(array $statements, ?string $namespacePhp): void
+	private function validateStatementList(mixed $statements, ?string $namespacePhp): void
 	{
+		if (!is_array($statements)) {
+			$statements = [];
+		}
 		$localKinds = [];
 		foreach ($statements as $statement) {
 			if ($statement->kind === 'assign') {
@@ -963,7 +979,6 @@ final class Generator
 		$header[] = '';
 		$source[] = 'namespace ' . $namespaceCpp . ' {';
 		$source[] = $this->indent(1) . 'using namespace ::scpp;';
-		$source[] = $this->indent(1) . 'using namespace ::scpp::php;';
 		$source[] = '';
 
 		foreach ($uses as $use) {
@@ -2279,7 +2294,7 @@ final class Generator
 			if (!$this->isPhpArrayLikeDeclaredType($declaredType)) {
 				continue;
 			}
-			$lines[] = 'expect_array_argument(' . $name . ', ' . ($this->isNullablePhpArrayDeclaredType($declaredType) ? 'true' : 'false') . ', "' . addslashes($name) . '");';
+			$lines[] = 'php::expect_array_argument(' . $name . ', ' . ($this->isNullablePhpArrayDeclaredType($declaredType) ? 'true' : 'false') . ', "' . addslashes($name) . '");';
 		}
 		return $lines;
 	}
@@ -2465,7 +2480,7 @@ final class Generator
 
 		if ($statement->kind === 'echo') {
 			// Keep the single-statement fallback lazy as well so operand evaluation order stays explicit.
-			return ['echo_eval(' . $this->renderEchoThunk($statement->payload, $namespacePhp) . ');'];
+			return [$this->qualifyKnownPhpRuntimeSymbol('echo_eval') . '(' . $this->renderEchoThunk($statement->payload, $namespacePhp) . ');'];
 		}
 
 		if ($statement->kind === 'unset') {
@@ -2477,9 +2492,6 @@ final class Generator
 				$baseType = $this->inferExprType($baseExpr);
 				if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 					$this->fail('unset() on vector_t indexed elements is not supported yet at line ' . $statement->line . '.');
-				}
-				if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
-					return [$base . '.as_table_ref().remove(' . $dim . ');'];
 				}
 				return [$base . '.remove(' . $dim . ');'];
 			}
@@ -3076,7 +3088,7 @@ final class Generator
 					++$i;
 				}
 				--$i;
-				$lines[] = 'echo_eval(' . implode(', ', $thunks) . ');';
+				$lines[] = $this->qualifyKnownPhpRuntimeSymbol('echo_eval') . '(' . implode(', ', $thunks) . ');';
 				continue;
 			}
 
@@ -3517,7 +3529,7 @@ final class Generator
 
 			$checks = [];
 			foreach ($conditions as $condition) {
-				$checks[] = 'static_cast<bool>(identical(' . $subjectName . ', ' . $this->renderExpr($condition, $namespacePhp) . '))';
+				$checks[] = 'static_cast<bool>(' . $this->qualifyKnownPhpRuntimeSymbol('identical') . '(' . $subjectName . ', ' . $this->renderExpr($condition, $namespacePhp) . '))';
 			}
 			$parts[] = 'if (' . implode(' || ', $checks) . ') {';
 			$parts[] = $this->indent(1) . 'return ' . $armExpr . ';';
@@ -4669,8 +4681,8 @@ final class Generator
 				AstKind::BINARY_IS_GREATER => '(' . $left . ' > ' . $right . ')',
 				AstKind::BINARY_IS_NOT_EQUAL => '(' . $left . ' != ' . $right . ')',
 				AstKind::BINARY_IS_EQUAL => '(' . $left . ' == ' . $right . ')',
-				AstKind::BINARY_IS_IDENTICAL => 'identical(' . $left . ', ' . $right . ')',
-				AstKind::BINARY_IS_NOT_IDENTICAL => 'not_identical(' . $left . ', ' . $right . ')',
+				AstKind::BINARY_IS_IDENTICAL => $this->qualifyKnownPhpRuntimeSymbol('identical') . '(' . $left . ', ' . $right . ')',
+				AstKind::BINARY_IS_NOT_IDENTICAL => $this->qualifyKnownPhpRuntimeSymbol('not_identical') . '(' . $left . ', ' . $right . ')',
 				257 => '(' . $left . ' >= ' . $right . ')',
 				AstKind::BINARY_COALESCE => $this->renderCoalesceExpr($leftNode, $rightNode, $namespacePhp),
 				default => '/* unsupported-binary-op-' . $flags . ' */',
@@ -4749,13 +4761,15 @@ final class Generator
 					return 'table_has_(' . $base . ', ' . $dim . ')';
 				}
 			}
-			return 'isset(' . $this->renderExpr($varNode, $namespacePhp) . ')';
+			return $this->qualifyKnownPhpRuntimeSymbol('isset') . '(' . $this->renderExpr($varNode, $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr->children['expr'] ?? null;
-			$name = $this->renderNameExpr($nameExpr, $namespacePhp);
 			$args = $expr->children['args']->children ?? [];
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
+			$name = $functionDecl !== null
+				? $this->renderNameExpr($nameExpr, $namespacePhp)
+				: $this->renderRuntimeAwareCallNameExpr($nameExpr, $namespacePhp);
 			$renderedArgs = $functionDecl !== null ? $this->renderCallArgsForParams($functionDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
 			return $name . '(' . $renderedArgs . ')';
 		}
@@ -4978,6 +4992,61 @@ final class Generator
 			return $this->renderSymbolPath($name, $flags, true);
 		}
 		return $this->renderExpr($expr, $namespacePhp);
+	}
+
+	private function renderRuntimeAwareCallNameExpr(mixed $expr, ?string $namespacePhp): string
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return $this->renderNameExpr($expr, $namespacePhp);
+		}
+
+		$name = (string) ($expr->children['name'] ?? 'call');
+		$trimmed = ltrim($name, '\\');
+		if ($trimmed !== '' && !str_contains($trimmed, '\\') && $this->isKnownPhpRuntimeRelativeSymbol($trimmed)) {
+			return $this->qualifyKnownPhpRuntimeSymbol($trimmed);
+		}
+
+		return $this->renderNameExpr($expr, $namespacePhp);
+	}
+
+	/** @return array<string, bool> */
+	private function loadPhpRuntimeRelativeSymbols(): array
+	{
+		$path = dirname(__DIR__, 4) . '/specs/php_runtime_symbols.json';
+		if (!is_file($path)) {
+			return [];
+		}
+
+		try {
+			$data = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+		} catch (\Throwable) {
+			return [];
+		}
+
+		$symbols = $data['php_runtime_relative_symbols'] ?? null;
+		if (!is_array($symbols)) {
+			return [];
+		}
+
+		$out = [];
+		foreach ($symbols as $symbol) {
+			if (!is_string($symbol) || $symbol === '') {
+				continue;
+			}
+			$out[strtolower($symbol)] = true;
+		}
+
+		return $out;
+	}
+
+	private function isKnownPhpRuntimeRelativeSymbol(string $symbol): bool
+	{
+		return isset($this->phpRuntimeRelativeSymbols[strtolower($symbol)]);
+	}
+
+	private function qualifyKnownPhpRuntimeSymbol(string $symbol): string
+	{
+		return $this->isKnownPhpRuntimeRelativeSymbol($symbol) ? 'php::' . $symbol : $symbol;
 	}
 
 	/**
@@ -5223,7 +5292,7 @@ final class Generator
 		}
 
 		return match ($kind) {
-			AstKind::VAR, AstKind::DIM, AstKind::PROP, AstKind::STATIC_PROP => true,
+			AstKind::VAR => true,
 			default => false,
 		};
 	}
@@ -5236,14 +5305,20 @@ final class Generator
 
 		return match ($expr->kind ?? null) {
 			AstKind::VAR => $this->renderVar($expr),
-			AstKind::DIM => $this->renderDimWriteAccess($expr, $namespacePhp),
-			AstKind::PROP, AstKind::STATIC_PROP => $this->renderAssignmentTarget($expr, $namespacePhp),
 			default => $this->renderExpr($expr, $namespacePhp),
 		};
 	}
 
 	private function renderReferenceBindingExpr(mixed $expr, ?string $namespacePhp): string
 	{
+		if (is_object($expr)) {
+			$kind = $expr->kind ?? null;
+			if ($kind === AstKind::DIM || $kind === AstKind::PROP || $kind === AstKind::STATIC_PROP || $kind === AstKind::NULLSAFE_PROP) {
+				$this->errors[] = 'Reference binding from dynamic or interior access is not supported in the current safe subset.';
+				return '/* unsupported-ref-binding */';
+			}
+		}
+
 		if ($this->isLvalueCapableExpr($expr, $namespacePhp)) {
 			return $this->renderLvalueExpr($expr, $namespacePhp);
 		}
@@ -5401,12 +5476,14 @@ private function renderObjectCastExpr(mixed $expr, ?string $namespacePhp): strin
 		$right = $this->renderExpr($rightNode, $namespacePhp);
 		$leftType = $this->inferExprType($leftNode);
 
+		$issetFn = $this->qualifyKnownPhpRuntimeSymbol('isset');
+
 		if (preg_match('/^nullable<(.+)>$/', $leftType, $matches) === 1) {
 			$innerType = $matches[1];
-			return '(cast<bool>(isset(' . $left . ')) ? cast<' . $innerType . '>(' . $left . ') : ' . $right . ')';
+			return '(cast<bool>(' . $issetFn . '(' . $left . ')) ? cast<' . $innerType . '>(' . $left . ') : ' . $right . ')';
 		}
 
-		return '(cast<bool>(isset(' . $left . ')) ? ' . $left . ' : ' . $right . ')';
+		return '(cast<bool>(' . $issetFn . '(' . $left . ')) ? ' . $left . ' : ' . $right . ')';
 	}
 
 	private function inferConstantType(mixed $expr, ?string $namespacePhp): string

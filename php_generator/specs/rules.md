@@ -2,6 +2,8 @@ See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict
 
 # Prism++ – General Rules (Authoritative, Normalized)
 
+> Transitional implementation note: see `../../specs/mixed_boundary_transitional.md`.
+
 This document is the single source of truth for the supported subset.
 
 ---
@@ -254,11 +256,11 @@ Examples:
 
 - reduced PHP array subset (see catalog rows `ARR-*`)
 - `stdClass` / object iteration
-- `foreach` by value and by reference are supported for `vector_t` and for the current packed `hash_t<mixed_t>` surface
-- foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
+- `foreach` by value is supported for `vector_t` and for the current packed `hash_t<mixed_t>` surface
+- foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body
+- by-reference foreach over dynamic/container interior storage is outside the current safe subset
 - for boxed-array foreach over `mixed_t`, indexed loop lowering uses the generator-facing `mixed_t::size()` / `mixed_t::at(...)` surface instead of reaching through to raw table internals
-- for `hash_t<mixed_t>` foreach, the value variable binds as `mixed_t` / `mixed_t&`; when that loop variable is later indexed as an array, lowering routes through `mixed_t::as_table_ref()` so nested array writes inside the loop target the referenced table value
-- explicit function/method reference returns require an explicit declared PHP return type, lower to native C++ reference signatures (`T&`), and must return lvalue-capable expressions, including direct calls statically known to return by reference, without copyification
+- explicit function/method reference returns require an explicit declared PHP return type and must still satisfy the native-reference safety rule; dynamic interior slot/property returns are not allowed
 - `include`, `include_once`, and `require`
 - `and` / `or` / `xor`
 - untyped parameters
@@ -274,7 +276,7 @@ Examples:
 Supported array lowering is intentionally narrow and split by target typing.
 
 Priority note:
-- `../../specs/dynamic_types.md` sections **1.2 Visible Intention** and **1.3 Technical Compromises to Achieve Visible Intention in v1** govern current typed-destination lowering from `mixed_t`
+- `../../specs/dynamic_types.md` sections **1.2 Explicit Typed Boundaries** and **1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1** govern current typed-destination lowering from `mixed_t`
 - until symbol resolution/static analysis is strong enough to inject every required explicit cast at the exact site, generated/runtime-visible behavior must continue to preserve those v1 bridges
 - generator cleanup must therefore not assume that removing runtime bridge casts is safe merely because the long-term model prefers explicit emitted casts
 
@@ -289,8 +291,9 @@ Priority note:
 - native PHP `array` type declarations now lower to `mixed_t`; function-entry guards enforce `array` vs `?array` before any user code runs, and explicit PHP `&` lowers to `mixed_t&`
 - PHP keyed writes now lower to direct `operator[]` assignment
 - PHP append writes lower to `append(...)`; simple right-hand sides inline directly, while non-trivial right-hand sides may spill into a temporary to keep assignment-style lowering explicit
-- `unset($a[k])` lowers to `remove(k)` on `hash_t`; for `mixed_t` receivers the generator first unwraps with `as_table_ref()`
-- `isset($a[k])` lowers to `has(k)` as a documented v1 approximation
+- `unset($a[k])` lowers to `remove(k)`; missing-key `unset` remains a no-op
+- `isset($a[k])` lowers through the runtime `isset(...)` helper and must preserve null-sensitive semantics (`missing` → `false`, existing `null` → `false`)
+- `empty($a[k])` lowers through the runtime `empty(...)` helper for the resulting value; under the current supported subset it is true only for `null`, `""`, and empty array/table values
 
 ### Typed vectors
 - `/** vector<T> */ []` lowers to `vector_t<T>{}`
@@ -299,8 +302,10 @@ Priority note:
 
 ### Intentional v1 deviations from PHP
 - `hash_t` keeps integer keys and string keys distinct (`1` != `"1"`)
-- `isset($a[k])` lowered through `has(k)` does not implement PHP's null-sensitive `isset` behavior yet
 - `operator[]` is now the primary read/write surface for lowered PHP array access. Mutable paths autovivify missing slots; const paths return the static null-like value on miss. `find(...)` remains reserved for presence-sensitive logic; `at(...)` remains the runtime checked-access API.
+- typed value destinations reached from array reads keep the same missing-key read semantics first, then apply the ordinary typed-boundary rules from `../../specs/dynamic_types.md`
+
+See also `../../specs/array_semantics.md` for the authoritative current subset.
 
 ## 12. Incompatibilities
 
@@ -628,11 +633,11 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;` and `using namespace ::scpp::php;`. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; the only allowed rooted occurrences are the generated using-directives themselves and explicit import-lowering forms such as `use` declarations. User-defined constants stay in the generated user namespace model.
+The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;``. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; the only allowed rooted occurrences are the generated using-directives themselves and explicit import-lowering forms such as `use` declarations. User-defined constants stay in the generated user namespace model.
 
 Examples:
 ```cpp
-auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp; using namespace ::scpp::php;`
+auto a = PHP_INT_MAX;                // inside generated `.cpp` namespace blocks with `using namespace ::scpp;`
 auto c = LIMIT;                      // user-defined constant in the current generated namespace
 auto d = A::B::LIMIT;                // user-defined constant in another generated namespace
 ```
@@ -771,7 +776,7 @@ These PHP semantics must go through the `php::` layer:
 - strict equality `===` -> `php::identical(...)`
 - strict inequality `!==` -> `php::not_identical(...)`
 - both helpers return `bool_t`, not native `bool`, because they are PHP-semantic runtime operations
-- predefined/runtime constants discovered from `get_defined_constants()` -> unqualified `...` inside generated source (`using namespace ::scpp::php;`)
+- predefined/runtime constants discovered from `get_defined_constants()` -> unqualified `...` inside generated source namespace blocks
 - user-defined non-class constants -> generated user namespace path (no `::scpp::php` remapping)
 
 ## 13. Prism++ runtime/helper boundary rules
@@ -784,7 +789,6 @@ Current accepted case:
 ### 13.1 Rooted runtime qualification ban
 Generator MUST NOT emit fully-qualified names like `::scpp` or `::scpp::php` in generated expression/type code because generated source namespace blocks already inject:
 - `using namespace ::scpp;`
-- `using namespace ::scpp::php;`
 
 Examples:
 ```cpp
@@ -798,14 +802,14 @@ A::B::LIMIT
 Never emit these rooted runtime/helper forms inside generated expression/type code:
 ```cpp
 ::scpp::table_(...)
-::scpp::php::expect_array_argument(...)
+php::expect_array_argument(...)
 ::scpp::create<MyClass>()
 ::scpp::class_t<decltype(obj)>::make()
 ::scpp::A::B::LIMIT
 ```
 
 Allowed exception:
-- generated using-directives/import-lowering lines may still use rooted forms, for example `using namespace ::scpp;`, `using namespace ::scpp::php;`, or `using ::scpp::A::B::f;`
+- generated using-directives/import-lowering lines may still use rooted forms, for example `using namespace ::scpp;` or `using ::scpp::A::B::f;`
 
 Example:
 ```cpp
@@ -1101,8 +1105,8 @@ This matches PHP behavior.
 - Nested table dim reads chain through non-mutating reads so `$x["inner"][0]` lowers via `get(...)` / `_find_val(...)` and does not autovivify the right-hand side.
 - Nested table dim writes stay on the mutating path for the full lvalue chain, so `$x[0]["name"] = "first";` lowers through chained `operator[]` access, not through `get(...)` on intermediate segments.
 - Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `mixed_t` / `hash_t<mixed_t>`.
-- Table-valued assignments into table slots now use direct `mixed_t` assignment through the returned `operator[]` reference.
-- Reference assignment from a direct DIM slot also stays on the mutable slot path. Example: `$inner =& $arr["inner"];` → `auto& inner = arr[string_t("inner")];`, not `arr.get(...)`.
+- Table-valued assignments into table slots now use direct `mixed_t` assignment through the mutating container API.
+- Reference assignment from a direct DIM slot is not part of the current safe subset.
 
 ## Assignment-expression lambda fallback
 
@@ -1114,18 +1118,16 @@ This matches PHP behavior.
 
 ## Array argument materialization
 
-- A typed PHP `array` parameter now lowers to `mixed_t` (or `mixed_t&` for explicit PHP `&`).
-- **Normative rule — native-equivalent by-reference parameter normalization:** all native-equivalent typed by-reference parameters are normalized through template dispatch. In the current supported set this means `int&`, `float&`, `bool&`, and `string&` are treated as accepting the semantic domain `(T|mixed)&`.
-- Native references bind directly as `T&`.
-- `mixed_t&` is accepted at the callee boundary and must be runtime-validated before user code runs.
-- On a matching runtime kind, normalization yields the exact native reference view through `as_int_ref()`, `as_float_ref()`, `as_bool_ref()`, or `as_string_ref()`.
-- On a non-matching runtime kind, normalization must fail with a runtime error; the generator/runtime must not silently coerce the reference through a value conversion path.
-- The S2S layer must implement this rule through the normalized template path, not through sibling `mixed_t&` bridge overloads and not through generator-emitted proxy parameter types.
+- A typed PHP `array` parameter now lowers to `mixed_t` (or `mixed_t&` for explicit PHP `&` when the source expression is otherwise valid under the current safe subset).
+- There is no approved `mixed_t` to native typed by-reference normalization rule in the current safe subset.
+- Native references bind directly only from already-stable native-reference-bindable sources.
+- Any by-reference source rooted in `[]`, dynamic slot/property access, or `.as_*_ref()`-style interior extraction is rejected by design.
 - The generator emits a function-entry guard for every `array` / `?array` parameter before user code runs.
   - `array` accepts only table-capable `mixed_t` kinds.
   - `?array` accepts table-capable kinds plus null-kind `mixed_t`.
-- Read-only nested argument access uses `get(...)` / `_find_val(...)`; mutating paths stay on `operator[]` / `append(...)`.
+- Read-only nested argument access uses `get(...)` / `_find_val(...)`; mutating by-value array paths stay on the mutating container API.
 - Example: `function touch(array $x): array { $x["name"] = "changed"; return $x; }` lowers to `mixed_t touch(mixed_t x) { expect_array_argument(x, false, "x"); x[string_t("name")] = string_t("changed"); return x; }`.
+- See `../../specs/native_reference_safety.md` and `../../specs/references.md`.
 
 ## Warning: reassignment of by-value composite params
 
@@ -1145,7 +1147,7 @@ PHP-target array-key normalization is a runtime concern. The generator must not 
 
 - Direct DIM expressions used as function-call arguments lower through the direct slot path `[]`, not `.get(...)`.
 - Example: `add($x[0])` → `add(x[0])`.
-- This rule applies regardless of whether the callee later treats the parameter as by-reference or by-value.
+- Direct DIM call arguments are valid only for ordinary value passing. They are not native-reference bindable by virtue of being direct DIM expressions.
 - Computed expressions keep the normal read path. Example: `$x[0] + 10` remains `x.get(0) + 10` inside the larger expression.
 - This is an intentional simplification: direct DIM call arguments may autovivify/create a slot. Use an explicit read-only form such as `?? null` when that behavior is not desired.
 
@@ -1157,4 +1159,28 @@ PHP-target array-key normalization is a runtime concern. The generator must not 
 
 ## Historical note — typed scalar by-reference proxy lowering
 
-The runtime still contains `int_ref`, `float_ref`, `bool_ref`, and `string_ref`, but the current S2S reference model no longer emits those proxy types in generated signatures. Scalar typed by-reference parameters are now handled through normalized template emission rather than sibling `mixed_t&` bridge overloads.
+The runtime may still contain legacy helper/proxy infrastructure, but that legacy path is not part of the supported safe subset. The current design direction is the native-reference safety rule documented in `../../specs/native_reference_safety.md`.
+
+
+## PHP runtime relative symbol registry
+
+Generator-emitted calls that are known Prism++ runtime intrinsics may be emitted as `php::name(...)` inside `namespace scpp { ... }`. The allow-list is stored in `php_generator/specs/php_runtime_symbols.json`. User-defined functions must not be rewritten through this registry when the generator has already resolved them as user declarations.
+
+
+## Runtime Symbol Registry (scpp::php)
+
+Any runtime function defined under `scpp::php` that is intended to be callable from transpiled PHP code **must be registered** in:
+
+`php_generator/specs/php_runtime_symbols.json`
+
+The S2S generator uses this registry to qualify calls as:
+
+    php::function_name(...)
+
+### Precedence
+User-defined PHP functions take precedence over runtime symbols with the same name.  
+The registry is only applied when no user-defined function is resolved.
+
+### Important
+If a symbol is not present in the registry, the generator will **not** qualify it with `php::`, even if it exists in the runtime.
+

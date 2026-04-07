@@ -235,7 +235,7 @@ Examples:
 - arrays
 - `stdClass` / object iteration
 - `foreach` by value and by reference are supported for `vector_t` only
-- foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body, and a by-reference foreach binding does not leak outside the emitted loop body
+- foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body
 - explicit function/method reference returns require an explicit declared PHP return type, lower to native C++ reference signatures (`T&`), and must return lvalue-capable expressions without copyification
 - `include` / `require`
 - `and` / `or` / `xor`
@@ -552,11 +552,11 @@ string_t(...)
 ```
 
 ### 6.4 Constant normalization
-The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;` and `using namespace ::scpp::php;`. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; the only allowed rooted occurrences are the generated using-directives themselves and explicit import-lowering forms such as `use` declarations. User-defined constants stay in the generated user namespace model.
+The generator snapshots `get_defined_constants()` once at startup. Inside generated source namespace blocks, predefined/runtime constants lower to unqualified names because the source already uses `using namespace ::scpp;``. Generator-emitted runtime/helper references inside generated expression/type code MUST NOT use rooted `::scpp` or `::scpp::php` qualifiers; the only allowed rooted occurrences are the generated using-directives themselves and explicit import-lowering forms such as `use` declarations. User-defined constants stay in the generated user namespace model.
 
 Examples:
 ```cpp
-auto a = PHP_INT_MAX;                // inside generated .cpp namespace blocks with `using namespace ::scpp; using namespace ::scpp::php;`
+auto a = PHP_INT_MAX;                // inside generated `.cpp` namespace blocks with `using namespace ::scpp;`
 auto c = LIMIT;                      // user-defined constant in the current generated namespace
 auto d = A::B::LIMIT;                // user-defined constant in another generated namespace
 ```
@@ -695,7 +695,7 @@ These PHP semantics must go through the `php::` layer:
 - strict equality `===` -> `php::identical(...)`
 - strict inequality `!==` -> `php::not_identical(...)`
 - both helpers return `bool_t`, not native `bool`, because they are PHP-semantic runtime operations
-- predefined/runtime constants discovered from `get_defined_constants()` -> unqualified `...` inside generated source (`using namespace ::scpp::php;`)
+- predefined/runtime constants discovered from `get_defined_constants()` -> unqualified `...` inside generated source namespace blocks
 - user-defined non-class constants -> generated user namespace path (no `::scpp::php` remapping)
 
 ## 13. Prism++ runtime/helper boundary rules

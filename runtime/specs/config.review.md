@@ -300,7 +300,7 @@ Dynamic runtime types (mixed_t, hash_t) resolve operations at runtime. Once oper
 Current runtime expectations for `mixed_t` in the dynamic subsystem:
 
 - `cast<T>(mixed_t)` is the central typed bridge and must enforce the same configured cast rules after runtime kind dispatch
-- typed C++ targets may currently auto-bridge from `mixed_t` through that cast layer in some v1 paths; see `../../specs/dynamic_types.md` for Visible Intention and Technical Compromises
+- typed C++ targets may currently auto-bridge from `mixed_t` through that cast layer in some v1 paths; see `../../specs/dynamic_types.md` for Explicit Typed Boundaries and Technical Compromises
 - arithmetic and mutation on `mixed_t` resolve the active runtime kind(s) first, then follow normal Prism++ operator rules
 - if the corresponding typed Prism++ expression would be a compile error, dynamic `mixed_t` dispatch must fail at runtime instead
 - `mixed_t::_find_val()` is the chained dynamic read helper

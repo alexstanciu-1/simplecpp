@@ -20,7 +20,7 @@ Role split:
 If the two conflict, the conflict must be reported explicitly instead of guessed around.
 
 ### Runtime/frontend boundary
-When generator behavior must temporarily diverge from the long-term runtime ideal for language-usability reasons, the divergence must be documented in `../../specs/dynamic_types.md` (Visible Intention / Technical Compromises) rather than hidden in runtime prose. For v1, those sections are normative priority rules: runtime cleanup must not remove required typed-destination bridges until generator parity exists.
+When generator behavior must temporarily diverge from the long-term runtime ideal for language-usability reasons, the divergence must be documented in `../../specs/dynamic_types.md` (Explicit Typed Boundaries / Technical Compromises) rather than hidden in runtime prose. For v1, those sections are normative priority rules: runtime cleanup must not remove required typed-destination bridges until generator parity exists.
 
 Generation must preserve a strict layering boundary:
 

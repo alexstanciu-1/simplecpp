@@ -458,50 +458,33 @@ const weak_p<hash_t<mixed_t>> *mixed_t::weak_table_if() const noexcept {
 }
 
 // ============================================================
-// as_*_ref   autovivify + coerce, return direct reference
+// as_*_ref  — disabled legacy bridges in the current safe subset
 // ============================================================
 
+namespace {
+[[noreturn]] void throw_disabled_native_ref_bridge(const char *name) {
+	throw std::runtime_error(std::string("mixed_t::") + name + " is disabled in the current safe subset: native references to dynamic/interior storage are not supported");
+}
+}
+
 int_t &mixed_t::as_int_ref() {
-	switch (type_) {
-		case kind_t::int_v:   return int_value_;
-		case kind_t::null_v:  *this = int_t{};                    return int_value_;
-		case kind_t::float_v: *this = cast<int_t>(float_value_);  return int_value_;
-		default: throw runtime_error_unary("as_int_ref", *this);
-	}
+	throw_disabled_native_ref_bridge("as_int_ref");
 }
 
 float_t &mixed_t::as_float_ref() {
-	switch (type_) {
-		case kind_t::float_v: return float_value_;
-		case kind_t::null_v:  *this = float_t{};                                               return float_value_;
-		case kind_t::int_v:   *this = float_t(static_cast<double>(int_value_.native_value())); return float_value_;
-		default: throw runtime_error_unary("as_float_ref", *this);
-	}
+	throw_disabled_native_ref_bridge("as_float_ref");
 }
 
 bool_t &mixed_t::as_bool_ref() {
-	switch (type_) {
-		case kind_t::bool_v:  return bool_value_;
-		case kind_t::null_v:  *this = bool_t{};                  return bool_value_;
-		case kind_t::int_v:   *this = cast<bool_t>(int_value_);  return bool_value_;
-		case kind_t::float_v: *this = cast<bool_t>(float_value_); return bool_value_;
-		default: throw runtime_error_unary("as_bool_ref", *this);
-	}
+	throw_disabled_native_ref_bridge("as_bool_ref");
 }
 
 string_t &mixed_t::as_string_ref() {
-	switch (type_) {
-		case kind_t::string_v: return *string_value_;
-		case kind_t::null_v:   *this = string_t{};                    return *string_value_;
-		case kind_t::bool_v:   *this = cast<string_t>(bool_value_);   return *string_value_;
-		case kind_t::int_v:    *this = cast<string_t>(int_value_);    return *string_value_;
-		case kind_t::float_v:  *this = cast<string_t>(float_value_);  return *string_value_;
-		default: throw runtime_error_unary("as_string_ref", *this);
-	}
+	throw_disabled_native_ref_bridge("as_string_ref");
 }
 
 hash_t<mixed_t> &mixed_t::as_table_ref() {
-	return get_hash();
+	throw_disabled_native_ref_bridge("as_table_ref");
 }
 
 // ============================================================
@@ -712,6 +695,32 @@ void mixed_t::append(const mixed_t &val) {
 	auto *t = resolve_table_mut(*this);
 	if (t) { (void)t->append(val); return; }
 	throw runtime_error_unary("append", *this);
+}
+
+bool mixed_t::remove(const int_t &key) {
+	auto *t = resolve_table_mut(*this);
+	if (t != nullptr) {
+		return t->remove(key);
+	}
+	throw runtime_error_unary("remove", *this);
+}
+
+bool mixed_t::remove(const string_t &key) {
+	auto *t = resolve_table_mut(*this);
+	if (t != nullptr) {
+		return t->remove(key);
+	}
+	throw runtime_error_unary("remove", *this);
+}
+
+bool mixed_t::remove(const mixed_t &key) {
+	if (key.kind() == kind_t::int_v) {
+		return remove(key.int_value());
+	}
+	if (key.kind() == kind_t::string_v) {
+		return remove(*key.string_if());
+	}
+	throw runtime_error_unary("remove", *this);
 }
 
 int_t mixed_t::size() const {
@@ -1026,23 +1035,27 @@ void mixed_t::move_construct(mixed_t &&other) noexcept {
 
 
 template <>
-scalar_ref<int_t>::scalar_ref(mixed_t &value) : ptr_(&value.as_int_ref()), owner_(&value) {
-	owner_->acquire_scalar_borrow();
+scalar_ref<int_t>::scalar_ref(mixed_t &value) : ptr_(nullptr), owner_(&value) {
+	(void) value;
+	throw std::runtime_error("scalar_ref<int_t>(mixed_t&) is disabled in the current safe subset");
 }
 
 template <>
-scalar_ref<float_t>::scalar_ref(mixed_t &value) : ptr_(&value.as_float_ref()), owner_(&value) {
-	owner_->acquire_scalar_borrow();
+scalar_ref<float_t>::scalar_ref(mixed_t &value) : ptr_(nullptr), owner_(&value) {
+	(void) value;
+	throw std::runtime_error("scalar_ref<float_t>(mixed_t&) is disabled in the current safe subset");
 }
 
 template <>
-scalar_ref<bool_t>::scalar_ref(mixed_t &value) : ptr_(&value.as_bool_ref()), owner_(&value) {
-	owner_->acquire_scalar_borrow();
+scalar_ref<bool_t>::scalar_ref(mixed_t &value) : ptr_(nullptr), owner_(&value) {
+	(void) value;
+	throw std::runtime_error("scalar_ref<bool_t>(mixed_t&) is disabled in the current safe subset");
 }
 
 template <>
-scalar_ref<string_t>::scalar_ref(mixed_t &value) : ptr_(&value.as_string_ref()), owner_(&value) {
-	owner_->acquire_scalar_borrow();
+scalar_ref<string_t>::scalar_ref(mixed_t &value) : ptr_(nullptr), owner_(&value) {
+	(void) value;
+	throw std::runtime_error("scalar_ref<string_t>(mixed_t&) is disabled in the current safe subset");
 }
 
 } // namespace scpp

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "scpp/detail.hpp"
 #include "scpp/bool_t.hpp"
 #include "scpp/float_t.hpp"
 #include "scpp/int_t.hpp"
@@ -451,6 +452,34 @@ public:
     // --------------------------------------------------------
     [[nodiscard]] mixed_t _find_val(const int_t &key) const requires std::same_as<T_VALUE, mixed_t>;
     [[nodiscard]] mixed_t _find_val(const string_t &key) const requires std::same_as<T_VALUE, mixed_t>;
+
+    // --------------------------------------------------------
+    // try_ref   restricted escape hatch, returns a copied shared_p<T>
+    // --------------------------------------------------------
+    template <typename U = T_VALUE>
+    [[nodiscard]] U try_ref(const int_t &key) const
+        requires(detail::is_shared_p_v<U> && std::copyable<U>)
+    {
+        return at(key);
+    }
+    template <typename U = T_VALUE>
+    [[nodiscard]] U try_ref(const string_t &key) const
+        requires(detail::is_shared_p_v<U> && std::copyable<U>)
+    {
+        return at(key);
+    }
+    template <typename U = T_VALUE>
+    [[nodiscard]] U try_ref(const int_t &) const
+        requires((!detail::is_shared_p_v<U>) && std::copyable<U>)
+    {
+        throw std::runtime_error("hash_t::try_ref is supported only for shared_p<T> values in the current safe subset");
+    }
+    template <typename U = T_VALUE>
+    [[nodiscard]] U try_ref(const string_t &) const
+        requires((!detail::is_shared_p_v<U>) && std::copyable<U>)
+    {
+        throw std::runtime_error("hash_t::try_ref is supported only for shared_p<T> values in the current safe subset");
+    }
 
     // --------------------------------------------------------
     // at   throws if key absent
