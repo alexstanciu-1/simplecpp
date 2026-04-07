@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Simple C++ installer for macOS"
+echo "Prism++ installer for macOS"
 echo
 
 if ! command -v brew >/dev/null 2>&1; then
@@ -29,7 +29,7 @@ if ! php -m | grep -qi '^ast$'; then
 	if [ -z "${PHP_INI:-}" ] || [ "${PHP_INI}" = "(none)" ]; then
 		SCAN_DIR="$(php --ini | awk -F': ' '/Scan for additional \.ini files in/ {print $2}')"
 		mkdir -p "$SCAN_DIR"
-		PHP_INI="$SCAN_DIR/99-simple-cpp.ini"
+		PHP_INI="$SCAN_DIR/99-prismpp.ini"
 	fi
 
 	if ! grep -Eq '^extension *= *ast$' "$PHP_INI" 2>/dev/null; then
@@ -40,14 +40,10 @@ fi
 php -m | grep -qi '^ast$'
 
 echo
-echo "Creating user launcher directory..."
-mkdir -p "$HOME/.d-app"
-
-echo
-echo "Running project installer..."
+echo "Running repo-based user-local installer..."
 cd "$(dirname "$0")/.."
 php "install/install.php"
 
 echo
 echo "Installation finished."
-echo "Restart your terminal session if needed."
+echo "Open a new shell or run: source ~/.profile"

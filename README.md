@@ -112,7 +112,7 @@ Starter installer scripts are available in:
 - `install/macos.sh`
 - `install/ubuntu.sh`
 
-They install the required toolchain, create the user launcher directory (`~/.d-app` or `%USERPROFILE%\.d-app`), and run the project installer.
+They install the required toolchain, create a normal user-local launcher install (`%LOCALAPPDATA%\Programs\scpp\bin` on Windows, `~/.local/bin` on Linux/macOS), and run the repo-based installer. The installed CLI command is `scpp`.
 
 ## Name
 

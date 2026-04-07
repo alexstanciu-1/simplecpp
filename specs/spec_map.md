@@ -69,6 +69,7 @@ If a new implementation pass, review, or chat session starts, this document shou
    - examples: `dynamic_types_impl_audit.md`, `mixed_boundary_transitional.md`, `todo*.md`, `references.md`
    - useful for planning and consistency checks
    - not higher authority than the normative specs above
+   - includes `cli_installation_milestone.md` for the current first-binary installer/CLI contract
 
 ### Level 4 — Implementation
 
@@ -250,3 +251,11 @@ When in doubt:
 - start from `specs/spec_map.md`
 - then read `specs/dynamic_types.md`
 - and for current v1 dynamic-type behavior, let sections `1.2` and `1.3` decide before applying cleanup instincts
+
+### `specs/cli_installation_milestone.md`
+Role:
+- installer and public CLI contract for the current first-binary milestone
+- defines repo-based current-user install model and `scpp` command surface
+
+Authority:
+- supporting/spec-planning authority for installation and launcher behavior in this milestone

@@ -1,13 +1,12 @@
-\
 @echo off
 setlocal
 
-echo Simple C++ installer for Windows 11
+echo Prism++ installer for Windows
 echo.
 
 where winget >nul 2>nul
 if errorlevel 1 (
-	echo ERROR: winget is required on Windows 11.
+	echo ERROR: winget is required.
 	goto :end_fail
 )
 
@@ -15,6 +14,7 @@ echo Installing dependencies...
 winget install --accept-package-agreements --accept-source-agreements Microsoft.VCRedist.2015+.x64
 winget install --accept-package-agreements --accept-source-agreements Git.Git
 winget install --accept-package-agreements --accept-source-agreements PHP.PHP.8.5
+if errorlevel 1 goto :end_fail
 
 echo.
 echo Verifying PHP 8.4+...
@@ -25,14 +25,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Creating user launcher directory...
-if not exist "C:\Users\%USERNAME%\.d-app" mkdir "C:\Users\%USERNAME%\.d-app"
-
-echo Updating PATH...
-setx PATH "%PATH%;C:\Users\%USERNAME%\.d-app" >nul
-
-echo.
-echo Running project installer...
+echo Running repo-based user-local installer...
 cd /D "%~dp0.."
 php "install/install.php"
 if errorlevel 1 goto :end_fail
