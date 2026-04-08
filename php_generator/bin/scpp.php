@@ -152,6 +152,7 @@ function print_doctor(): void
 	$phpIni = php_ini_loaded_file();
 	$astLoaded = extension_loaded('ast') ? 'yes' : 'no';
 	$ninja = find_command_path(['ninja']);
+	$compilerLauncher = detect_compiler_launcher();
 	$compiler = detect_default_compiler();
 	$projectConfig = find_project_config(getcwd() === false ? $repoRoot : getcwd());
 
@@ -168,7 +169,8 @@ function print_doctor(): void
 	echo 'config_path: ' . (is_file($configPath) ? $configPath : '(none)') . PHP_EOL;
 	echo 'project_config: ' . ($projectConfig['config_path'] ?? '(none)') . PHP_EOL;
 	echo 'ninja: ' . ($ninja ?? '(not found)') . PHP_EOL;
-	echo 'default_cxx: ' . ($compiler['command'] ?? '(not found)') . PHP_EOL;
+	echo 'sccache: ' . ($compilerLauncher ?? '(not found)') . PHP_EOL;
+	echo 'default_cxx: ' . ($compiler !== null ? compiler_display_command($compiler) : '(not found)') . PHP_EOL;
 }
 
 function resolve_repo_root(): string
@@ -260,10 +262,10 @@ function handle_build(string $cwd): void
 		$meta = build_file_meta($phpPathAbs);
 		$previous = is_array($state['files'][$relativePhp] ?? null) ? $state['files'][$relativePhp] : null;
 		$needsTranspile = !is_array($previous)
-			|| !isset($previous['size'], $previous['mtime'], $previous['generator_signature'])
+			|| !isset($previous['size'], $previous['mtime'], $previous['content_hash'], $previous['generator_signature'])
 			|| (string) $previous['generator_signature'] !== $generatorSignature
 			|| (int) $previous['size'] !== $meta['size']
-			|| (int) $previous['mtime'] !== $meta['mtime']
+			|| (string) $previous['content_hash'] !== $meta['content_hash']
 			|| !is_file($generatedHeader)
 			|| !is_file($generatedCpp);
 
@@ -293,6 +295,7 @@ function handle_build(string $cwd): void
 		$state['files'][$relativePhp] = [
 			'size' => $meta['size'],
 			'mtime' => $meta['mtime'],
+			'content_hash' => $meta['content_hash'],
 			'generator_signature' => $generatorSignature,
 			'generated_base' => normalize_config_path(relative_path($projectRoot, $generatedBase)),
 		];
@@ -304,13 +307,17 @@ function handle_build(string $cwd): void
 	$state['updated_at'] = time();
 	save_s2s_state($statePath, $state);
 
+	if (supports_compiler_pch($compiler)) {
+		write_text_file(build_runtime_pch_header_path($buildDir), render_runtime_pch_header());
+	}
+
 	$outputName = build_output_name($entrypointAbs);
 	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $outputName, $compiler);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
-	echo 'Using compiler: ' . $compiler['command'] . ' (' . $compiler['kind'] . ')' . PHP_EOL;
+	echo 'Using compiler: ' . compiler_display_command($compiler) . ' (' . $compiler['kind'] . ')' . PHP_EOL;
 	echo 'Using repo root: ' . normalize_config_path($repoRoot) . PHP_EOL;
 
 	$command = [
@@ -420,6 +427,12 @@ function write_text_file(string $path, string $contents): void
 	if (!is_dir($dir)) {
 		ensure_directory($dir);
 	}
+	if (is_file($path)) {
+		$existing = file_get_contents($path);
+		if (is_string($existing) && $existing === $contents) {
+			return;
+		}
+	}
 	if (file_put_contents($path, $contents) === false) {
 		fwrite(STDERR, 'Failed to write file: ' . $path . PHP_EOL);
 		exit(2);
@@ -447,18 +460,46 @@ function build_output_name(string $entrypointAbs): string
 	return $base;
 }
 
-/** @return array{size:int,mtime:int} */
+function build_runtime_pch_header_path(string $buildDir): string
+{
+	return $buildDir . '/runtime_pch.hpp';
+}
+
+function build_runtime_pch_artifact_path(string $buildDir, string $compilerKind): string
+{
+	$headerPath = build_runtime_pch_header_path($buildDir);
+	if ($compilerKind === 'msvc') {
+		return $buildDir . '/runtime_pch.pch';
+	}
+
+	return $headerPath . '.gch';
+}
+
+function render_runtime_pch_header(): string
+{
+	return "#pragma once\n\n#include <scpp/runtime.hpp>\n";
+}
+
+/** @param array{command:string,kind:string,launcher?:?string} $compiler */
+function supports_compiler_pch(array $compiler): bool
+{
+	return $compiler['kind'] === 'gnu_like';
+}
+
+/** @return array{size:int,mtime:int,content_hash:string} */
 function build_file_meta(string $path): array
 {
 	$size = filesize($path);
 	$mtime = filemtime($path);
-	if ($size === false || $mtime === false) {
+	$contentHash = hash_file('sha256', $path);
+	if ($size === false || $mtime === false || $contentHash === false) {
 		fwrite(STDERR, 'Failed to stat file: ' . $path . PHP_EOL);
 		exit(2);
 	}
 	return [
 		'size' => (int) $size,
 		'mtime' => (int) $mtime,
+		'content_hash' => $contentHash,
 	];
 }
 
@@ -572,7 +613,7 @@ function build_object_path(string $buildDir, string $relativePhp, string $compil
 	return $buildDir . '/' . $trimmed . '.' . object_extension($compilerKind);
 }
 
-/** @return array{command:string,kind:string}|null */
+/** @return array{command:string,kind:string,launcher:?string}|null */
 function resolve_compiler(array $config): ?array
 {
 	$override = $config['build']['cxx'] ?? null;
@@ -586,13 +627,14 @@ function resolve_compiler(array $config): ?array
 		return [
 			'command' => $command,
 			'kind' => strcasecmp(basename(str_replace('\\', '/', $command)), 'cl') === 0 ? 'msvc' : 'gnu_like',
+			'launcher' => detect_compiler_launcher(),
 		];
 	}
 
 	return detect_default_compiler();
 }
 
-/** @return array{command:string,kind:string}|null */
+/** @return array{command:string,kind:string,launcher:?string}|null */
 function detect_default_compiler(): ?array
 {
 	$candidates = match (PHP_OS_FAMILY) {
@@ -609,10 +651,28 @@ function detect_default_compiler(): ?array
 		return [
 			'command' => $candidate,
 			'kind' => strcasecmp($candidate, 'cl') === 0 ? 'msvc' : 'gnu_like',
+			'launcher' => detect_compiler_launcher(),
 		];
 	}
 
 	return null;
+}
+
+function detect_compiler_launcher(): ?string
+{
+	return find_command_path(['sccache']);
+}
+
+/** @param array{command:string,kind:string,launcher?:?string} $compiler */
+function compiler_display_command(array $compiler): string
+{
+	$launcher = $compiler['launcher'] ?? null;
+	if (!is_string($launcher) || $launcher === '') {
+		return $compiler['command'];
+	}
+
+	$launcherName = basename(str_replace('\\', '/', $launcher));
+	return $launcherName . ' ' . $compiler['command'];
 }
 
 /**
@@ -625,46 +685,77 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$runtimeIncludeDir = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include'));
 	$runtimeObj = normalize_config_path(relative_path($projectRoot, $buildDir . '/runtime.' . object_extension($compiler['kind'])));
 	$output = normalize_config_path(relative_path($projectRoot, $buildDir . '/' . $outputName));
+	$runtimePchHeader = normalize_config_path(relative_path($projectRoot, build_runtime_pch_header_path($buildDir)));
+	$runtimePchArtifact = normalize_config_path(relative_path($projectRoot, build_runtime_pch_artifact_path($buildDir, $compiler['kind'])));
+	$compilerCommand = $compiler['command'];
+	$compilerLauncher = $compiler['launcher'] ?? null;
 
 	$lines = [];
-	$lines[] = 'cxx = ' . $compiler['command'];
+	$lines[] = 'cxx = ' . $compilerCommand;
+	if (is_string($compilerLauncher) && $compilerLauncher !== '') {
+		$lines[] = 'cxx_launcher = ' . $compilerLauncher;
+	}
 	if ($compiler['kind'] === 'msvc') {
 		$lines[] = 'cxxflags = /nologo /std:c++latest /EHsc /Zc:__cplusplus /I' . $runtimeIncludeDir . ' /I' . $generatedIncludeDir;
 	} else {
 		$lines[] = 'cxxflags = -std=c++23 -Wall -Wextra -I' . $runtimeIncludeDir . ' -I' . $generatedIncludeDir;
 	}
+	if (supports_compiler_pch($compiler)) {
+		$lines[] = 'pch_header = ' . $runtimePchHeader;
+		$lines[] = 'pchflags = -Winvalid-pch -include $pch_header';
+	}
 	$lines[] = '';
+	if (supports_compiler_pch($compiler)) {
+		$lines[] = 'rule compile_pch';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags -x c++-header $in -o $out';
+		$lines[] = '  description = PCH $out';
+		$lines[] = '';
+	}
 	$lines[] = 'rule compile';
 	if ($compiler['kind'] === 'msvc') {
-		$lines[] = '  command = $cxx $cxxflags /c $in /Fo$out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags /c $in /Fo$out';
 	} else {
-		$lines[] = '  command = $cxx $cxxflags -c $in -o $out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags' . (supports_compiler_pch($compiler) ? ' $pchflags' : '') . ' -c $in -o $out';
 	}
 	$lines[] = '  description = CXX $out';
 	$lines[] = '';
 	$lines[] = 'rule link';
 	if ($compiler['kind'] === 'msvc') {
-		$lines[] = '  command = $cxx /nologo $in /Fe$out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx /nologo $in /Fe$out';
 	} else {
-		$lines[] = '  command = $cxx $in -o $out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $in -o $out';
 	}
 	$lines[] = '  description = LINK $out';
 	$lines[] = '';
 
 	$objectPaths = [];
+	if (supports_compiler_pch($compiler)) {
+		$lines[] = 'build ' . $runtimePchArtifact . ': compile_pch ' . $runtimePchHeader;
+	}
 	foreach ($generatedUnits as $unit) {
 		$generatedCpp = normalize_config_path(relative_path($projectRoot, $unit['generated_cpp']));
 		$objectPath = normalize_config_path(relative_path($projectRoot, $unit['object_path']));
-		$lines[] = 'build ' . $objectPath . ': compile ' . $generatedCpp;
+		$lines[] = 'build ' . $objectPath . ': compile ' . $generatedCpp . (supports_compiler_pch($compiler) ? ' | ' . $runtimePchArtifact : '');
 		$objectPaths[] = $objectPath;
 	}
-	$lines[] = 'build ' . $runtimeObj . ': compile ' . $runtimeCpp;
+	$lines[] = 'build ' . $runtimeObj . ': compile ' . $runtimeCpp . (supports_compiler_pch($compiler) ? ' | ' . $runtimePchArtifact : '');
 	$objectPaths[] = $runtimeObj;
 	$lines[] = '';
 	$lines[] = 'build ' . $output . ': link ' . implode(' ', $objectPaths);
 	$lines[] = '';
 	$lines[] = 'default ' . $output;
 	return implode(PHP_EOL, $lines) . PHP_EOL;
+}
+
+/** @param array{command:string,kind:string,launcher?:?string} $compiler */
+function compiler_invocation_prefix(array $compiler): string
+{
+	$launcher = $compiler['launcher'] ?? null;
+	if (!is_string($launcher) || $launcher === '') {
+		return '';
+	}
+
+	return '$cxx_launcher ';
 }
 
 function object_extension(string $kind): string

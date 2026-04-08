@@ -14,6 +14,14 @@ sudo apt update
 sudo apt install -y software-properties-common curl git php php-dev php-pear php-ast g++ ninja-build
 
 echo
+echo "Ensuring sccache..."
+if apt-cache show sccache >/dev/null 2>&1; then
+	sudo apt install -y sccache
+else
+	echo "WARNING: sccache is not available from the configured apt sources. Continuing without it."
+fi
+
+echo
 echo "Verifying PHP 8.4+..."
 php -r 'exit(version_compare(PHP_VERSION, "8.4.0", ">=") ? 0 : 1);'
 

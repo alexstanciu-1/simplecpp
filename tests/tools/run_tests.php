@@ -718,19 +718,26 @@ TXT;
 	private function runCompileStage(string $compileUnitPath, string $workDir): array
 	{
 		$binaryPath = $workDir . '/test.out';
+		$runtimeObject = $this->ensureCachedRuntimeObject(
+			'g++',
+			'c++23',
+			['-O3'],
+			['-DSCPP_LANGUAGE_TARGET_PHP=1'],
+			[]
+		);
 		$result = $this->runCommand(
-			[
+			$this->withCompilerLauncher([
 				'g++',
 				'-std=c++23',
 				'-O3',
 				'-DSCPP_LANGUAGE_TARGET_PHP=1',
 				$compileUnitPath,
-				$this->projectRoot . '/runtime/src/runtime.cpp',
+				$runtimeObject['object_path'],
 				'-I',
 				$this->projectRoot . '/runtime/include',
 				'-o',
 				$binaryPath,
-			],
+			]),
 			$workDir,
 			self::COMPILE_TIMEOUT_SECONDS
 		);
@@ -753,12 +760,20 @@ TXT;
 		if ($sanitizers !== []) {
 			$flags = array_merge($flags, ['-g', '-fno-omit-frame-pointer', '-fsanitize=' . implode(',', $sanitizers)]);
 		}
+		$compileEnv = array_merge($this->buildSanitizerRunEnvironment((string) ($build['sanitizers'] ?? '')), (array) ($build['env'] ?? []));
+		$runtimeObject = $this->ensureCachedRuntimeObject(
+			$compiler,
+			$languageStandard,
+			$flags,
+			[],
+			$compileEnv
+		);
 		$command = array_merge(
 			[$compiler, '-std=' . $languageStandard],
 			$flags,
 			[
 				$sourcePath,
-				$this->projectRoot . '/runtime/src/runtime.cpp',
+				$runtimeObject['object_path'],
 				'-I',
 				$this->projectRoot,
 				'-I',
@@ -768,12 +783,180 @@ TXT;
 			]
 		);
 		$compileTimeout = (int) ($build['compile_timeout_seconds'] ?? self::COMPILE_TIMEOUT_SECONDS);
-		$compileEnv = array_merge($this->buildSanitizerRunEnvironment((string) ($build['sanitizers'] ?? '')), (array) ($build['env'] ?? []));
-		$result = $this->runCommand($command, $workDir, $compileTimeout, $compileEnv);
+		$result = $this->runCommand($this->withCompilerLauncher($command), $workDir, $compileTimeout, $compileEnv);
 		$result['binary_path'] = $binaryPath;
-		$result['command'] = array_map('strval', $command);
+		$result['command'] = array_map('strval', $this->withCompilerLauncher($command));
 		$result['env'] = $compileEnv;
 		return $result;
+	}
+
+	private function ensureCachedRuntimeObject(
+		string $compiler,
+		string $languageStandard,
+		array $flags,
+		array $defines,
+		array $env
+	): array {
+		$cacheRoot = $this->projectRoot . '/tests/.runtime/cache/runtime_objects';
+		$this->ensureDirectory($cacheRoot);
+
+		$cacheKey = sha1(json_encode([
+			'compiler' => $compiler,
+			'language_standard' => $languageStandard,
+			'flags' => array_values($flags),
+			'defines' => array_values($defines),
+			'runtime_version' => $this->computeRuntimeCacheVersion(),
+		], JSON_THROW_ON_ERROR));
+		$objectPath = $cacheRoot . '/runtime_' . $cacheKey . '.o';
+		$lockPath = $objectPath . '.lock';
+		$lockHandle = fopen($lockPath, 'c+');
+		if ($lockHandle === false) {
+			throw new RuntimeException('Failed to create runtime object cache lock: ' . $lockPath);
+		}
+
+		try {
+			if (!flock($lockHandle, LOCK_EX)) {
+				throw new RuntimeException('Failed to lock runtime object cache: ' . $lockPath);
+			}
+
+			if (!$this->isRuntimeObjectFresh($objectPath)) {
+				$tmpObjectPath = $objectPath . '.tmp.' . bin2hex(random_bytes(4));
+				$command = array_merge(
+					[$compiler, '-std=' . $languageStandard],
+					$flags,
+					$defines,
+					[
+						'-c',
+						$this->projectRoot . '/runtime/src/runtime.cpp',
+						'-I',
+						$this->projectRoot,
+						'-I',
+						$this->projectRoot . '/runtime/include',
+						'-o',
+						$tmpObjectPath,
+					]
+				);
+				$result = $this->runCommand($this->withCompilerLauncher($command), $this->projectRoot, self::COMPILE_TIMEOUT_SECONDS, $env);
+				if ($result['exit_code'] !== 0 || $result['timed_out'] === true) {
+					if (is_file($tmpObjectPath)) {
+						@unlink($tmpObjectPath);
+					}
+					throw new RuntimeException('Failed to build cached runtime object: ' . trim((string) ($result['stderr'] !== '' ? $result['stderr'] : $result['stdout'])));
+				}
+
+				if (is_file($objectPath) && !@unlink($objectPath)) {
+					@unlink($tmpObjectPath);
+					throw new RuntimeException('Failed to replace cached runtime object: ' . $objectPath);
+				}
+				if (!@rename($tmpObjectPath, $objectPath)) {
+					@unlink($tmpObjectPath);
+					throw new RuntimeException('Failed to publish cached runtime object: ' . $objectPath);
+				}
+			}
+
+			return ['object_path' => $objectPath];
+		} finally {
+			flock($lockHandle, LOCK_UN);
+			fclose($lockHandle);
+		}
+	}
+
+	private function isRuntimeObjectFresh(string $objectPath): bool
+	{
+		if (!is_file($objectPath)) {
+			return false;
+		}
+
+		$objectMTime = filemtime($objectPath);
+		if ($objectMTime === false) {
+			return false;
+		}
+
+		return $objectMTime >= $this->latestRuntimeSourceMTime();
+	}
+
+	private function computeRuntimeCacheVersion(): array
+	{
+		return [
+			'latest_runtime_mtime' => $this->latestRuntimeSourceMTime(),
+		];
+	}
+
+	private function latestRuntimeSourceMTime(): int
+	{
+		$latest = 0;
+		foreach ([$this->projectRoot . '/runtime/src', $this->projectRoot . '/runtime/include'] as $dir) {
+			if (!is_dir($dir)) {
+				continue;
+			}
+			$iterator = new RecursiveIteratorIterator(
+				new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)
+			);
+			foreach ($iterator as $fileInfo) {
+				if (!$fileInfo->isFile()) {
+					continue;
+				}
+				$mtime = $fileInfo->getMTime();
+				if ($mtime > $latest) {
+					$latest = $mtime;
+				}
+			}
+		}
+
+		return $latest;
+	}
+
+	private function withCompilerLauncher(array $command): array
+	{
+		$launcher = $this->detectCompilerLauncher();
+		if ($launcher === null || $command === []) {
+			return $command;
+		}
+
+		if ((string) $command[0] === $launcher) {
+			return $command;
+		}
+
+		array_unshift($command, $launcher);
+		return $command;
+	}
+
+	private function detectCompilerLauncher(): ?string
+	{
+		return $this->commandExistsOnPath('sccache') ? 'sccache' : null;
+	}
+
+	private function commandExistsOnPath(string $command): bool
+	{
+		$pathEnv = getenv('PATH');
+		if (!is_string($pathEnv) || $pathEnv === '') {
+			return false;
+		}
+
+		$dirs = array_filter(explode(PATH_SEPARATOR, $pathEnv), static fn (string $dir): bool => $dir !== '');
+		$extensions = [''];
+		if (DIRECTORY_SEPARATOR === '\\') {
+			$pathext = getenv('PATHEXT');
+			$extensions = $pathext === false || $pathext === ''
+				? ['.exe', '.cmd', '.bat', '.com', '']
+				: array_merge(explode(';', strtolower((string) $pathext)), ['']);
+			$extensions = array_values(array_unique($extensions));
+		}
+
+		foreach ($dirs as $dir) {
+			$dir = rtrim($dir, "\\/");
+			foreach ($extensions as $extension) {
+				$candidate = $dir . DIRECTORY_SEPARATOR . $command;
+				if ($extension !== '' && !str_ends_with(strtolower($candidate), $extension)) {
+					$candidate .= $extension;
+				}
+				if (is_file($candidate)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private function startWorkerProcess(string $jsonPath, string $sanitizers = ''): array

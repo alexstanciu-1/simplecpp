@@ -20,6 +20,9 @@ if errorlevel 1 goto :end_fail
 call :ensure_winget_package Ninja-build.Ninja Ninja required
 if errorlevel 1 goto :end_fail
 
+call :ensure_winget_package Mozilla.sccache sccache optional
+if errorlevel 1 goto :end_fail
+
 call :ensure_winget_package PHP.PHP.8.5 "PHP 8.5" required
 if errorlevel 1 goto :end_fail
 

@@ -114,6 +114,7 @@ Starter installer scripts are available in:
 - `install/ubuntu.sh`
 
 They install the required toolchain, create a normal user-local launcher install (`%LOCALAPPDATA%\Programs\scpp\bin` on Windows, `~/.local/bin` on Linux/macOS), and run the repo-based installer. The installed CLI command is `scpp`. On Windows, the installer now applies user PATH updates through PowerShell and falls back to `setx` if needed.
+When `sccache` is installed, Prism++ build and test flows use it automatically as a compiler launcher.
 
 ## Name
 
@@ -128,7 +129,7 @@ while preserving clarity and control.
 
 ## Installation
 
-Platform installers now provision Ninja as part of the first-binary setup.
+Platform installers now provision Ninja as part of the first-binary setup and attempt to provision `sccache` as well.
 On Windows, the installer skips Git installation or upgrade when `git` is already available on PATH to avoid unnecessary conflicts with open Git shells.
 
 

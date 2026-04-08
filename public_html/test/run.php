@@ -1121,6 +1121,48 @@ function formatThrowableDetails(Throwable $throwable): string
 	return implode("\n", $parts);
 }
 
+function commandExistsOnPath(string $command): bool
+{
+	$pathEnv = getenv('PATH');
+	if (!is_string($pathEnv) || $pathEnv === '') {
+		return false;
+	}
+
+	$dirs = array_filter(explode(PATH_SEPARATOR, $pathEnv), static fn (string $dir): bool => $dir !== '');
+	$extensions = [''];
+	if (DIRECTORY_SEPARATOR === '\\') {
+		$pathext = getenv('PATHEXT');
+		$extensions = $pathext === false || $pathext === ''
+			? ['.exe', '.cmd', '.bat', '.com', '']
+			: array_merge(explode(';', strtolower((string) $pathext)), ['']);
+		$extensions = array_values(array_unique($extensions));
+	}
+
+	foreach ($dirs as $dir) {
+		$dir = rtrim($dir, "\\/");
+		foreach ($extensions as $extension) {
+			$candidate = $dir . DIRECTORY_SEPARATOR . $command;
+			if ($extension !== '' && !str_ends_with(strtolower($candidate), $extension)) {
+				$candidate .= $extension;
+			}
+			if (is_file($candidate)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+function withCompilerLauncher(array $command): array
+{
+	if (!commandExistsOnPath('sccache')) {
+		return $command;
+	}
+
+	array_unshift($command, 'sccache');
+	return $command;
+}
 
 function buildRuntimeCompileCommand(string $projectRoot, string $objectPath, bool $memTestEnabled = false): array
 {
@@ -1144,7 +1186,7 @@ function buildRuntimeCompileCommand(string $projectRoot, string $objectPath, boo
 		$objectPath,
 	]);
 
-	return $command;
+	return withCompilerLauncher($command);
 }
 
 function buildSampleCompileCommand(string $projectRoot, string $compileInputPath, string $runtimeArchive, string $cppBinaryPath, bool $memTestEnabled = false): array
@@ -1176,5 +1218,5 @@ function buildSampleCompileCommand(string $projectRoot, string $compileInputPath
 		$cppBinaryPath,
 	]);
 
-	return $command;
+	return withCompilerLauncher($command);
 }

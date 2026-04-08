@@ -29,6 +29,7 @@ function main(): void
 	ensure_dir($binDir);
 	write_php_shim($binDir);
 	write_launcher($binDir);
+	write_optional_windows_sccache_shim($binDir);
 	write_config($repoRoot, $binDir);
 	ensure_user_path_entry($binDir);
 	verify_install($binDir);
@@ -229,6 +230,32 @@ function write_launcher(string $binDir): void
 	echo "Launcher installed: {$launcherPath}\n";
 }
 
+function write_optional_windows_sccache_shim(string $binDir): void
+{
+	if (PHP_OS_FAMILY !== 'Windows') {
+		return;
+	}
+
+	$sccacheExe = find_windows_winget_sccache_executable();
+	if ($sccacheExe === null) {
+		echo "sccache not found in the Winget package cache. Skipping sccache launcher shim.\n";
+		return;
+	}
+
+	$cmdShimPath = $binDir . DIRECTORY_SEPARATOR . 'sccache.cmd';
+	$cmdContent = "@echo off\r\n" .
+		"\"" . str_replace('"', '""', $sccacheExe) . "\" %*\r\n";
+	file_put_contents_or_throw($cmdShimPath, $cmdContent);
+	echo "Launcher installed: {$cmdShimPath}\n";
+
+	$bashShimPath = $binDir . DIRECTORY_SEPARATOR . 'sccache';
+	$bashContent = "#!/usr/bin/env sh\n" .
+		"exec \"" . str_replace('\\', '/', $sccacheExe) . "\" \"$@\"\n";
+	file_put_contents_or_throw($bashShimPath, $bashContent);
+	@chmod($bashShimPath, 0755);
+	echo "Launcher installed: {$bashShimPath} (Git Bash / MinGW)\n";
+}
+
 function write_config(string $repoRoot, string $binDir): void
 {
 	$configPath = $binDir . DIRECTORY_SEPARATOR . 'scpp.json';
@@ -322,6 +349,28 @@ PS;
 		"Failed to update the user PATH on Windows." .
 		($details !== [] ? "\n" . implode("\n\n", $details) : '')
 	);
+}
+
+function find_windows_winget_sccache_executable(): ?string
+{
+	$localAppData = (string) (getenv('LOCALAPPDATA') ?: '');
+	if ($localAppData === '') {
+		return null;
+	}
+
+	$packageRoot = $localAppData . DIRECTORY_SEPARATOR . 'Microsoft' . DIRECTORY_SEPARATOR . 'WinGet' . DIRECTORY_SEPARATOR . 'Packages' . DIRECTORY_SEPARATOR . 'Mozilla.sccache_Microsoft.Winget.Source_8wekyb3d8bbwe';
+	if (!is_dir($packageRoot)) {
+		return null;
+	}
+
+	$matches = glob($packageRoot . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'sccache.exe');
+	if (!is_array($matches) || $matches === []) {
+		return null;
+	}
+
+	usort($matches, static fn (string $a, string $b): int => strcmp($b, $a));
+	$resolved = realpath($matches[0]);
+	return $resolved === false ? $matches[0] : $resolved;
 }
 
 function ensure_posix_profile_path_entry(string $binDir): void
@@ -491,6 +540,7 @@ function print_success_notes(string $repoRoot, string $binDir): void
 	echo "User-local bin: {$binDir}\n";
 	echo "This is a repo-based install for the current user only.\n";
 	echo "If you move or delete the repo, run the installer again.\n";
+	echo "If sccache is installed and on PATH, Prism++ build and test flows will use it automatically.\n";
 
 	if (PHP_OS_FAMILY === 'Windows') {
 		echo "Open a new terminal so updated PATH entries are picked up.\n";
@@ -521,7 +571,7 @@ function is_absolute_path(string $path): bool
 		return false;
 	}
 
-	if (preg_match('/^[A-Za-z]:[\\\/]/', $path) === 1) {
+	if (strlen($path) >= 3 && ctype_alpha($path[0]) && $path[1] === ':' && ($path[2] === '\\' || $path[2] === '/')) {
 		return true;
 	}
 

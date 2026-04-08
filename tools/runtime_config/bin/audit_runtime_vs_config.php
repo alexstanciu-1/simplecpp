@@ -39,6 +39,45 @@ function hasOperator(array $operatorIndex, string $symbol, array $operands): boo
 	return false;
 }
 
+function compilerCommand(array $command): array {
+	if (commandExistsOnPath('sccache')) {
+		array_unshift($command, 'sccache');
+	}
+	return $command;
+}
+
+function commandExistsOnPath(string $command): bool {
+	$pathEnv = getenv('PATH');
+	if (!is_string($pathEnv) || $pathEnv === '') {
+		return false;
+	}
+
+	$dirs = array_filter(explode(PATH_SEPARATOR, $pathEnv), static fn(string $dir): bool => $dir !== '');
+	$extensions = [''];
+	if (DIRECTORY_SEPARATOR === '\\') {
+		$pathext = getenv('PATHEXT');
+		$extensions = $pathext === false || $pathext === ''
+			? ['.exe', '.cmd', '.bat', '.com', '']
+			: array_merge(explode(';', strtolower((string) $pathext)), ['']);
+		$extensions = array_values(array_unique($extensions));
+	}
+
+	foreach ($dirs as $dir) {
+		$dir = rtrim($dir, "\\/");
+		foreach ($extensions as $extension) {
+			$candidate = $dir . DIRECTORY_SEPARATOR . $command;
+			if ($extension !== '' && !str_ends_with(strtolower($candidate), $extension)) {
+				$candidate .= $extension;
+			}
+			if (is_file($candidate)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 function compileProbe(string $projectRoot, string $name, string $body): array {
 	$tmpDir = sys_get_temp_dir() . '/scpp_audit_' . bin2hex(random_bytes(6));
 	if (!mkdir($tmpDir, 0777, true) && !is_dir($tmpDir)) {
@@ -56,13 +95,13 @@ int main() {
 }
 CPP;
 	file_put_contents($file, $code);
-	$cmd = [
+	$cmd = compilerCommand([
 		'g++',
 		'-std=c++23',
 		'-fsyntax-only',
 		'-I', $projectRoot . '/runtime/include',
 		$file,
-	];
+	]);
 	$desc = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
 	$proc = proc_open($cmd, $desc, $pipes, $projectRoot);
 	if (!is_resource($proc)) {

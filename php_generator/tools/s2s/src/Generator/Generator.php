@@ -190,8 +190,18 @@ final class Generator
 			return '__scpp_main';
 		}
 
-		$hash = substr(md5($file->path), 0, 12);
+		$hash = substr($this->buildStableUnitHash($file), 0, 12);
 		return '__scpp_unit_' . $hash;
+	}
+
+	private function buildStableUnitHash(PhpFile $file): string
+	{
+		$contents = @file_get_contents($file->path);
+		if (is_string($contents)) {
+			return hash('sha256', $contents);
+		}
+
+		return hash('sha256', str_replace('\\', '/', $file->path));
 	}
 
 	private function addError(string $message): void
