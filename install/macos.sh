@@ -12,7 +12,7 @@ fi
 
 echo "Installing dependencies..."
 brew update
-brew install git php gcc ninja sccache
+brew install git php gcc ninja sccache lld
 
 echo
 echo "Verifying PHP 8.4+..."
