@@ -685,26 +685,34 @@ TXT;
 		require_once $this->projectRoot . '/php_generator/tools/s2s/bin/bootstrap.php';
 
 		$started = microtime(true);
-		$transpiler = new Transpiler();
-		$cppFile = $transpiler->transpile($phpPath, true);
-		$durationMs = (int) round((microtime(true) - $started) * 1000);
+		try {
+			$transpiler = new Transpiler();
+			$cppFile = $transpiler->transpile($phpPath, true);
+			$durationMs = (int) round((microtime(true) - $started) * 1000);
 
-		$headerPath = $outputDir . '/generated.hpp';
-		$sourcePath = $outputDir . '/generated.cpp';
-		$compileUnitPath = $outputDir . '/generated.build.cpp';
-		file_put_contents($headerPath, implode("\n", $cppFile->headerLines) . "\n");
-		file_put_contents($sourcePath, implode("\n", $cppFile->sourceLines) . "\n");
-		file_put_contents($compileUnitPath, $this->buildNaturalCompileUnit($cppFile->headerLines, $cppFile->sourceLines));
+			$headerPath = $outputDir . '/generated.hpp';
+			$sourcePath = $outputDir . '/generated.cpp';
+			$compileUnitPath = $outputDir . '/generated.build.cpp';
+			file_put_contents($headerPath, implode("\n", $cppFile->headerLines) . "\n");
+			file_put_contents($sourcePath, implode("\n", $cppFile->sourceLines) . "\n");
+			file_put_contents($compileUnitPath, $this->buildNaturalCompileUnit($cppFile->headerLines, $cppFile->sourceLines));
 
-		$errors = implode("\n", $cppFile->errors);
-		return [
-			'success' => ($errors === ''),
-			'errors' => $errors,
-			'duration_ms' => $durationMs,
-			'header_path' => $headerPath,
-			'source_path' => $sourcePath,
-			'compile_unit_path' => $compileUnitPath,
-		];
+			$errors = implode("\n", $cppFile->errors);
+			return [
+				'success' => ($errors === ''),
+				'errors' => $errors,
+				'duration_ms' => $durationMs,
+				'header_path' => $headerPath,
+				'source_path' => $sourcePath,
+				'compile_unit_path' => $compileUnitPath,
+			];
+		} catch (Throwable $throwable) {
+			return [
+				'success' => false,
+				'errors' => $throwable->getMessage(),
+				'duration_ms' => (int) round((microtime(true) - $started) * 1000),
+			];
+		}
 	}
 
 	private function runCompileStage(string $compileUnitPath, string $workDir): array

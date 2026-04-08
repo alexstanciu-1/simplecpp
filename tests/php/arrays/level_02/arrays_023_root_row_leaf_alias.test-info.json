@@ -1,54 +1,57 @@
 {
-    "id": "arrays_023_root_row_leaf_alias",
-    "feature": "arrays",
-    "level": "level_02",
-    "outcome": "negative",
-    "enabled": true,
-    "status": "active",
-    "php_as_oracle": true,
-    "compare": {
-        "stdout": "exact",
-        "stderr": "exact",
-        "generator_error": "substring_all",
-        "compile_error": "substring_all",
-        "normalize_stdout_newlines": true,
-        "normalize_stderr_newlines": true,
-        "trim_final_stdout_newline": true,
-        "trim_final_stderr_newline": false,
-        "case_sensitive_errors": true
-    },
-    "expect": {
-        "php": {
-            "run": true,
-            "exit_code": 0,
-            "stdout": "array(1) {\n  [0]=>\n  array(4) {\n    [\"id\"]=>\n    int(11)\n    [\"name\"]=>\n    string(3) \"A11\"\n    [\"left\"]=>\n    int(1)\n    [\"final\"]=>\n    string(3) \"A11\"\n  }\n}\n",
-            "stderr": ""
-        },
-        "generate": {
-            "success": true,
-            "error_contains": []
-        },
-        "compile": {
-            "success": false,
-            "error_contains": [
-                "cannot bind non-const lvalue reference of type",
-                "int_t&"
-            ]
-        },
-        "run": {
-            "success": false,
-            "exit_code": null,
-            "stdout": "",
-            "stderr": ""
-        }
-    },
-    "tags": [
-        "arrays",
-        "alias",
-        "root_row_leaf"
-    ],
-    "notes": "Typed native by-ref leaf alias from a dynamic array/hash slot is not supported under the current Simple C++ contract; compilation failure is expected.",
-    "build": {
-        "sanitizers": null
-    }
+    "id":  "arrays_023_root_row_leaf_alias",
+    "feature":  "arrays",
+    "level":  "level_02",
+    "outcome":  "negative_generate",
+    "enabled":  true,
+    "status":  "active",
+    "php_as_oracle":  true,
+    "compare":  {
+                    "stdout":  "exact",
+                    "stderr":  "exact",
+                    "generator_error":  "substring_all",
+                    "compile_error":  "substring_all",
+                    "normalize_stdout_newlines":  true,
+                    "normalize_stderr_newlines":  true,
+                    "trim_final_stdout_newline":  true,
+                    "trim_final_stderr_newline":  false,
+                    "case_sensitive_errors":  true
+                },
+    "expect":  {
+                   "php":  {
+                               "run":  true,
+                               "exit_code":  0,
+                               "stdout":  "array(1) {\n  [0]=\u003e\n  array(4) {\n    [\"id\"]=\u003e\n    int(11)\n    [\"name\"]=\u003e\n    string(3) \"A11\"\n    [\"left\"]=\u003e\n    int(1)\n    [\"final\"]=\u003e\n    string(3) \"A11\"\n  }\n}\n",
+                               "stderr":  ""
+                           },
+                   "generate":  {
+                                    "success":  false,
+                                    "error_contains":  [
+                                                           "By-reference argument requires directly stable native-reference-bindable storage in the current safe subset."
+                                                       ]
+                                },
+                   "compile":  {
+                                   "success":  false,
+                                   "error_contains":  [
+
+                                                      ]
+                               },
+                   "run":  {
+                               "success":  false,
+                               "exit_code":  null,
+                               "stdout":  "",
+                               "stderr":  ""
+                           }
+               },
+    "tags":  [
+                 "arrays",
+                 "alias",
+                 "root_row_leaf",
+                 "negative_generate",
+                 "stable_storage"
+             ],
+    "notes":  "This shape now fails during generation because by-reference array slot arguments require directly stable native-reference-bindable storage in the current safe subset.",
+    "build":  {
+                  "sanitizers":  null
+              }
 }

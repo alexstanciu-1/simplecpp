@@ -1,5 +1,7 @@
 # Reference Matrix Catalog
 
+Historical snapshot only. Entries here are not guaranteed to match the current supported reference subset or the active metadata-driven test harness.
+
 | File | Class | Topic | Purpose |
 |---|---|---|---|
 | `tests/php/arrays/layer_02/pos_array_001.php` | positive | arrays | append + nested update + by-value copy isolation |

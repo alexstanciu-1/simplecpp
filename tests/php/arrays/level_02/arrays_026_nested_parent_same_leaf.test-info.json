@@ -1,51 +1,57 @@
 {
-    "id": "arrays_026_nested_parent_same_leaf",
-    "feature": "arrays",
-    "level": "level_02",
-    "outcome": "positive",
-    "enabled": true,
-    "status": "active",
-    "php_as_oracle": true,
-    "compare": {
-        "stdout": "exact",
-        "stderr": "exact",
-        "generator_error": "substring_all",
-        "compile_error": "substring_all",
-        "normalize_stdout_newlines": true,
-        "normalize_stderr_newlines": true,
-        "trim_final_stdout_newline": true,
-        "trim_final_stderr_newline": false,
-        "case_sensitive_errors": true
-    },
-    "expect": {
-        "php": {
-            "run": true,
-            "exit_code": 0,
-            "stdout": "array(1) {\n  [\"r\"]=>\n  array(1) {\n    [\"s\"]=>\n    array(3) {\n      [\"t\"]=>\n      int(8)\n      [\"x\"]=>\n      int(100)\n      [\"y\"]=>\n      int(200)\n    }\n  }\n}\n",
-            "stderr": ""
-        },
-        "generate": {
-            "success": true,
-            "error_contains": []
-        },
-        "compile": {
-            "success": true,
-            "error_contains": []
-        },
-        "run": {
-            "success": true,
-            "exit_code": 0,
-            "stdout": "array(1) {\n  [\"r\"]=>\n  array(1) {\n    [\"s\"]=>\n    array(3) {\n      [\"t\"]=>\n      int(8)\n      [\"x\"]=>\n      int(100)\n      [\"y\"]=>\n      int(200)\n    }\n  }\n}\n",
-            "stderr": ""
-        }
-    },
-    "tags": [
-        "arrays",
-        "alias",
-        "nested_parent_leaf"
-    ],
-    "notes": "A parent row and the same nested leaf should survive in-call growth.",
-    "build": {
-        "sanitizers": null
-    }
+    "id":  "arrays_026_nested_parent_same_leaf",
+    "feature":  "arrays",
+    "level":  "level_02",
+    "outcome":  "negative_generate",
+    "enabled":  true,
+    "status":  "active",
+    "php_as_oracle":  true,
+    "compare":  {
+                    "stdout":  "exact",
+                    "stderr":  "exact",
+                    "generator_error":  "substring_all",
+                    "compile_error":  "substring_all",
+                    "normalize_stdout_newlines":  true,
+                    "normalize_stderr_newlines":  true,
+                    "trim_final_stdout_newline":  true,
+                    "trim_final_stderr_newline":  false,
+                    "case_sensitive_errors":  true
+                },
+    "expect":  {
+                   "php":  {
+                               "run":  true,
+                               "exit_code":  0,
+                               "stdout":  "array(1) {\n  [\"r\"]=\u003e\n  array(1) {\n    [\"s\"]=\u003e\n    array(3) {\n      [\"t\"]=\u003e\n      int(8)\n      [\"x\"]=\u003e\n      int(100)\n      [\"y\"]=\u003e\n      int(200)\n    }\n  }\n}\n",
+                               "stderr":  ""
+                           },
+                   "generate":  {
+                                    "success":  false,
+                                    "error_contains":  [
+                                                           "By-reference argument requires directly stable native-reference-bindable storage in the current safe subset."
+                                                       ]
+                                },
+                   "compile":  {
+                                   "success":  false,
+                                   "error_contains":  [
+
+                                                      ]
+                               },
+                   "run":  {
+                               "success":  false,
+                               "exit_code":  null,
+                               "stdout":  "",
+                               "stderr":  ""
+                           }
+               },
+    "tags":  [
+                 "arrays",
+                 "alias",
+                 "nested_parent_leaf",
+                 "negative_generate",
+                 "stable_storage"
+             ],
+    "notes":  "This shape now fails during generation because by-reference array slot arguments require directly stable native-reference-bindable storage in the current safe subset.",
+    "build":  {
+                  "sanitizers":  null
+              }
 }
