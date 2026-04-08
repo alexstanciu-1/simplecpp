@@ -749,20 +749,20 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 
 	$objectPaths = [];
 	if (supports_compiler_pch($compiler)) {
-		$lines[] = 'build ' . $runtimePchArtifact . ': compile_pch ' . $runtimePchHeader;
+		$lines[] = 'build ' . ninja_escape_path($runtimePchArtifact) . ': compile_pch ' . ninja_escape_path($runtimePchHeader);
 	}
 	foreach ($generatedUnits as $unit) {
 		$generatedCpp = normalize_config_path(relative_path($projectRoot, $unit['generated_cpp']));
 		$objectPath = normalize_config_path(relative_path($projectRoot, $unit['object_path']));
-		$lines[] = 'build ' . $objectPath . ': compile ' . $generatedCpp . (supports_compiler_pch($compiler) ? ' | ' . $runtimePchArtifact : '');
-		$objectPaths[] = $objectPath;
+		$lines[] = 'build ' . ninja_escape_path($objectPath) . ': compile ' . ninja_escape_path($generatedCpp) . (supports_compiler_pch($compiler) ? ' | ' . ninja_escape_path($runtimePchArtifact) : '');
+		$objectPaths[] = ninja_escape_path($objectPath);
 	}
-	$lines[] = 'build ' . $runtimeObj . ': compile ' . $runtimeCpp . (supports_compiler_pch($compiler) ? ' | ' . $runtimePchArtifact : '');
-	$objectPaths[] = $runtimeObj;
+	$lines[] = 'build ' . ninja_escape_path($runtimeObj) . ': compile ' . ninja_escape_path($runtimeCpp) . (supports_compiler_pch($compiler) ? ' | ' . ninja_escape_path($runtimePchArtifact) : '');
+	$objectPaths[] = ninja_escape_path($runtimeObj);
 	$lines[] = '';
-	$lines[] = 'build ' . $output . ': link ' . implode(' ', $objectPaths);
+	$lines[] = 'build ' . ninja_escape_path($output) . ': link ' . implode(' ', $objectPaths);
 	$lines[] = '';
-	$lines[] = 'default ' . $output;
+	$lines[] = 'default ' . ninja_escape_path($output);
 	return implode(PHP_EOL, $lines) . PHP_EOL;
 }
 
@@ -914,6 +914,14 @@ function normalize_path(string $path): string
 function normalize_config_path(string $path): string
 {
 	return ltrim(str_replace('\\', '/', trim($path)), '/');
+}
+
+function ninja_escape_path(string $path): string
+{
+	// Ninja uses ':' as a separator in build/default statements.
+	// Windows absolute paths contain a drive-letter colon (e.g., "D:/foo")
+	// which must be escaped as "D$:/foo".
+	return preg_replace('/^([A-Za-z]):/', '$1$:', $path);
 }
 
 function relative_path(string $from, string $to): string
