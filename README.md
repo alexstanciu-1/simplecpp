@@ -141,6 +141,7 @@ Prism++ now has an explicit project-mode staging contract:
 - `scpp build` is the first public build command
 - build output is rooted under `.prism/build` and `.prism/generated`
 - Ninja is the default backend
+- `scpp build` defaults to `build.mode = "debug"` for faster iteration
 - the first public build target is one configured entrypoint -> one executable
 
 The full deliberate multi-file model is still in progress, but the command shape and project layout are now fixed.

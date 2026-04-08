@@ -55,6 +55,7 @@ final class ProjectInitCommand
 			'cache_dir' => '.prism/cache',
 			'build' => [
 				'backend' => 'ninja',
+				'mode' => 'debug',
 				'cxx' => null,
 			],
 		];
@@ -236,6 +237,7 @@ function handle_build(string $cwd): void
 		fwrite(STDERR, install_hint_for_compiler() . PHP_EOL);
 		exit(1);
 	}
+	$buildMode = resolve_build_mode($config);
 
 	$buildDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['build_dir'] ?? '.prism/build')));
 	$generatedDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['generated_dir'] ?? '.prism/generated')));
@@ -312,13 +314,14 @@ function handle_build(string $cwd): void
 	}
 
 	$outputName = build_output_name($entrypointAbs);
-	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $outputName, $compiler);
+	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $outputName, $compiler, $buildMode);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
 	echo 'Using compiler: ' . compiler_display_command($compiler) . ' (' . $compiler['kind'] . ')' . PHP_EOL;
-	echo 'Using repo root: ' . normalize_config_path($repoRoot) . PHP_EOL;
+	echo 'Using build mode: ' . $buildMode . PHP_EOL;
+	echo 'Using repo root: ' . normalize_path($repoRoot) . PHP_EOL;
 
 	$command = [
 		$ninjaPath,
@@ -634,6 +637,26 @@ function resolve_compiler(array $config): ?array
 	return detect_default_compiler();
 }
 
+function resolve_build_mode(array $config): string
+{
+	$mode = $config['build']['mode'] ?? 'debug';
+	if (!is_string($mode)) {
+		fwrite(STDERR, 'Invalid build.mode in ' . SCPP_PROJECT_CONFIG . '; expected a string.' . PHP_EOL);
+		exit(1);
+	}
+
+	$normalized = strtolower(trim($mode));
+	if ($normalized === '') {
+		return 'debug';
+	}
+	if (in_array($normalized, ['debug', 'release'], true)) {
+		return $normalized;
+	}
+
+	fwrite(STDERR, 'Unsupported build.mode `' . $mode . '` in ' . SCPP_PROJECT_CONFIG . '; expected `debug` or `release`.' . PHP_EOL);
+	exit(1);
+}
+
 /** @return array{command:string,kind:string,launcher:?string}|null */
 function detect_default_compiler(): ?array
 {
@@ -678,7 +701,7 @@ function compiler_display_command(array $compiler): string
 /**
  * @param list<array{relative_php:string,generated_cpp:string,object_path:string}> $generatedUnits
  */
-function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, string $outputName, array $compiler): string
+function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, string $outputName, array $compiler, string $buildMode): string
 {
 	$generatedIncludeDir = normalize_config_path(relative_path($projectRoot, $generatedDir));
 	$runtimeCpp = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/src/runtime.cpp'));
@@ -695,11 +718,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	if (is_string($compilerLauncher) && $compilerLauncher !== '') {
 		$lines[] = 'cxx_launcher = ' . $compilerLauncher;
 	}
-	if ($compiler['kind'] === 'msvc') {
-		$lines[] = 'cxxflags = /nologo /std:c++latest /EHsc /Zc:__cplusplus /I' . $runtimeIncludeDir . ' /I' . $generatedIncludeDir;
-	} else {
-		$lines[] = 'cxxflags = -std=c++23 -Wall -Wextra -I' . $runtimeIncludeDir . ' -I' . $generatedIncludeDir;
-	}
+	$lines[] = 'cxxflags = ' . build_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir, $generatedIncludeDir);
 	if (supports_compiler_pch($compiler)) {
 		$lines[] = 'pch_header = ' . $runtimePchHeader;
 		$lines[] = 'pchflags = -Winvalid-pch -include $pch_header';
@@ -745,6 +764,48 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$lines[] = '';
 	$lines[] = 'default ' . $output;
 	return implode(PHP_EOL, $lines) . PHP_EOL;
+}
+
+function build_compiler_flags(string $compilerKind, string $buildMode, string $runtimeIncludeDir, string $generatedIncludeDir): string
+{
+	if ($compilerKind === 'msvc') {
+		$flags = [
+			'/nologo',
+			'/std:c++latest',
+			'/EHsc',
+			'/Zc:__cplusplus',
+			'/W4',
+		];
+		if ($buildMode === 'release') {
+			$flags[] = '/O2';
+			$flags[] = '/DNDEBUG';
+		} else {
+			// Favor faster iteration in the default debug mode.
+			$flags[] = '/Od';
+			$flags[] = '/Z7';
+		}
+		$flags[] = '/I' . $runtimeIncludeDir;
+		$flags[] = '/I' . $generatedIncludeDir;
+		return implode(' ', $flags);
+	}
+
+	$flags = [
+		'-std=c++23',
+		'-Wall',
+		'-Wextra',
+	];
+	if ($buildMode === 'release') {
+		$flags[] = '-O3';
+		$flags[] = '-DNDEBUG';
+	} else {
+		// Favor fast compile times while still keeping basic debug info.
+		$flags[] = '-O0';
+		$flags[] = '-g1';
+		$flags[] = '-pipe';
+	}
+	$flags[] = '-I' . $runtimeIncludeDir;
+	$flags[] = '-I' . $generatedIncludeDir;
+	return implode(' ', $flags);
 }
 
 /** @param array{command:string,kind:string,launcher?:?string} $compiler */
