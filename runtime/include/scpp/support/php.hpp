@@ -15,7 +15,10 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/support/var_dump.hpp"
 
+#include <algorithm>
+#include <array>
 #include <chrono>
+#include <cctype>
 #include <cstdint>
 #include <iomanip>
 #include <fstream>
@@ -23,12 +26,20 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <tuple>
 #include <utility>
 #if defined(__unix__) || defined(__APPLE__)
 #include <sys/resource.h>
 #endif
+
+namespace scpp {
+inline const int_t PHP_INT_MAX{static_cast<std::int64_t>(std::numeric_limits<std::int64_t>::max())};
+inline const int_t STR_PAD_LEFT{0};
+inline const int_t STR_PAD_RIGHT{1};
+inline const int_t STR_PAD_BOTH{2};
+}
 
 namespace scpp::php {
 
@@ -38,7 +49,10 @@ public:
 };
 
 // PHP compatibility constants consumed by generated code.
-inline const int_t PHP_INT_MAX{static_cast<std::int64_t>(std::numeric_limits<std::int64_t>::max())};
+using ::scpp::PHP_INT_MAX;
+using ::scpp::STR_PAD_LEFT;
+using ::scpp::STR_PAD_RIGHT;
+using ::scpp::STR_PAD_BOTH;
 
 // Validates a PHP array / ?array argument that has been lowered to mixed_t.
 // How: reject invalid kinds before executing any user code inside the callee.
@@ -51,6 +65,532 @@ inline void expect_array_argument(const mixed_t &value, bool nullable, const cha
 		return;
 	}
 	throw ValueError(std::string("Argument $") + name + (nullable ? " must be of type ?array" : " must be of type array"));
+}
+
+inline std::size_t normalize_substr_start(std::size_t size, std::int64_t offset) {
+	// Normalizes a PHP-like offset into a bounded zero-based start index.
+	// How: negative offsets count from the end; all outcomes are clamped into [0, size].
+	if (offset >= 0) {
+		const auto start = static_cast<std::uint64_t>(offset);
+		return start < size ? static_cast<std::size_t>(start) : size;
+	}
+
+	const auto distance_from_end = static_cast<std::uint64_t>(-(offset + 1)) + 1;
+	if (distance_from_end >= size) {
+		return 0;
+	}
+	return size - static_cast<std::size_t>(distance_from_end);
+}
+
+inline std::size_t normalize_substr_end(std::size_t size, std::size_t start, std::int64_t length) {
+	// Normalizes a PHP-like length into a bounded half-open end index.
+	// How: negative lengths trim from the end; any underflowing result collapses to the start index.
+	if (length >= 0) {
+		const auto remaining = size - start;
+		const auto requested = static_cast<std::uint64_t>(length);
+		const auto used = requested < remaining ? requested : remaining;
+		return start + static_cast<std::size_t>(used);
+	}
+
+	const auto distance_from_end = static_cast<std::uint64_t>(-(length + 1)) + 1;
+	if (distance_from_end >= size) {
+		return start;
+	}
+	const auto end = size - static_cast<std::size_t>(distance_from_end);
+	return end > start ? end : start;
+}
+
+inline bool normalize_string_window(std::size_t size, std::int64_t offset, bool &has_start, std::size_t &start) {
+	// Normalizes a PHP-like offset into a string window start.
+	// How: negative offsets count from the end; positive offsets beyond the end yield an empty window marker.
+	has_start = true;
+	if (offset >= 0) {
+		const auto unsigned_offset = static_cast<std::uint64_t>(offset);
+		if (unsigned_offset > size) {
+			has_start = false;
+			start = size;
+			return false;
+		}
+		start = static_cast<std::size_t>(unsigned_offset);
+		return true;
+	}
+
+	const auto distance_from_end = static_cast<std::uint64_t>(-(offset + 1)) + 1;
+	if (distance_from_end > size) {
+		has_start = false;
+		start = size;
+		return false;
+	}
+	start = size - static_cast<std::size_t>(distance_from_end);
+	return true;
+}
+
+inline bool normalize_string_window_end(std::size_t size, std::size_t start, std::int64_t length, std::size_t &end) {
+	// Normalizes a PHP-like length into a string window end.
+	// How: positive lengths clamp to the available range; negative lengths trim from the end and may invalidate the window.
+	if (length >= 0) {
+		const auto remaining = size - start;
+		const auto requested = static_cast<std::uint64_t>(length);
+		const auto used = requested < remaining ? requested : remaining;
+		end = start + static_cast<std::size_t>(used);
+		return true;
+	}
+
+	const auto distance_from_end = static_cast<std::uint64_t>(-(length + 1)) + 1;
+	if (distance_from_end > size) {
+		end = start;
+		return false;
+	}
+	end = size - static_cast<std::size_t>(distance_from_end);
+	return end >= start;
+}
+
+inline unsigned char ascii_tolower_byte(unsigned char value) {
+	return static_cast<unsigned char>(std::tolower(value));
+}
+
+inline int ascii_compare_sensitive(std::string_view left, std::string_view right) {
+	const auto shared = left.size() < right.size() ? left.size() : right.size();
+	for (std::size_t index = 0; index < shared; ++index) {
+		const auto left_byte = static_cast<unsigned char>(left[index]);
+		const auto right_byte = static_cast<unsigned char>(right[index]);
+		if (left_byte != right_byte) {
+			return static_cast<int>(left_byte) - static_cast<int>(right_byte);
+		}
+	}
+	if (left.size() == right.size()) {
+		return 0;
+	}
+	return left.size() < right.size() ? -1 : 1;
+}
+
+inline int ascii_compare_insensitive(std::string_view left, std::string_view right) {
+	const auto shared = left.size() < right.size() ? left.size() : right.size();
+	for (std::size_t index = 0; index < shared; ++index) {
+		const auto left_byte = ascii_tolower_byte(static_cast<unsigned char>(left[index]));
+		const auto right_byte = ascii_tolower_byte(static_cast<unsigned char>(right[index]));
+		if (left_byte != right_byte) {
+			return static_cast<int>(left_byte) - static_cast<int>(right_byte);
+		}
+	}
+	if (left.size() == right.size()) {
+		return 0;
+	}
+	return left.size() < right.size() ? -1 : 1;
+}
+
+
+inline constexpr std::array<unsigned char, 6> default_trim_mask = {
+	static_cast<unsigned char>(' '),
+	static_cast<unsigned char>('\n'),
+	static_cast<unsigned char>('\r'),
+	static_cast<unsigned char>('\t'),
+	static_cast<unsigned char>('\v'),
+	static_cast<unsigned char>('\0')
+};
+
+inline bool ascii_is_in_default_trim_mask(unsigned char value) {
+	for (const auto candidate : default_trim_mask) {
+		if (candidate == value) {
+			return true;
+		}
+	}
+	return false;
+}
+
+inline bool ascii_is_in_trim_mask(unsigned char value, const string_t &mask) {
+	if (mask.size() == 0) {
+		return false;
+	}
+	for (const unsigned char candidate : mask.native_value()) {
+		if (candidate == value) {
+			return true;
+		}
+	}
+	return false;
+}
+
+inline std::size_t find_trim_left_index(const string_t &value, const string_t *mask) {
+	const auto &native = value.native_value();
+	std::size_t index = 0;
+	while (index < native.size()) {
+		const auto byte = static_cast<unsigned char>(native[index]);
+		const auto should_trim = mask == nullptr
+			? ascii_is_in_default_trim_mask(byte)
+			: ascii_is_in_trim_mask(byte, *mask);
+		if (!should_trim) {
+			break;
+		}
+		++index;
+	}
+	return index;
+}
+
+inline std::size_t find_trim_right_index(const string_t &value, const string_t *mask) {
+	const auto &native = value.native_value();
+	std::size_t index = native.size();
+	while (index > 0) {
+		const auto byte = static_cast<unsigned char>(native[index - 1]);
+		const auto should_trim = mask == nullptr
+			? ascii_is_in_default_trim_mask(byte)
+			: ascii_is_in_trim_mask(byte, *mask);
+		if (!should_trim) {
+			break;
+		}
+		--index;
+	}
+	return index;
+}
+
+inline std::size_t normalize_php_forward_search_offset(std::size_t size, std::int64_t offset, const char *function_name) {
+	if (offset >= 0) {
+		const auto unsigned_offset = static_cast<std::uint64_t>(offset);
+		if (unsigned_offset > size) {
+			throw ValueError(std::string(function_name) + "(): Argument #3 ($offset) must be contained in argument #1 ($haystack)");
+		}
+		return static_cast<std::size_t>(unsigned_offset);
+	}
+
+	const auto distance_from_end = static_cast<std::uint64_t>(-(offset + 1)) + 1;
+	if (distance_from_end > size) {
+		throw ValueError(std::string(function_name) + "(): Argument #3 ($offset) must be contained in argument #1 ($haystack)");
+	}
+	return size - static_cast<std::size_t>(distance_from_end);
+}
+
+inline std::size_t normalize_php_reverse_search_limit(std::size_t size, std::int64_t offset, const char *function_name) {
+	if (offset >= 0) {
+		const auto unsigned_offset = static_cast<std::uint64_t>(offset);
+		if (unsigned_offset > size) {
+			throw ValueError(std::string(function_name) + "(): Argument #3 ($offset) must be contained in argument #1 ($haystack)");
+		}
+		return static_cast<std::size_t>(unsigned_offset);
+	}
+
+	const auto distance_from_end = static_cast<std::uint64_t>(-(offset + 1)) + 1;
+	if (distance_from_end > size) {
+		throw ValueError(std::string(function_name) + "(): Argument #3 ($offset) must be contained in argument #1 ($haystack)");
+	}
+	return size - static_cast<std::size_t>(distance_from_end);
+}
+
+inline char ascii_to_lower(char value) {
+	return static_cast<char>(std::tolower(static_cast<unsigned char>(value)));
+}
+
+inline char ascii_to_upper(char value) {
+	return static_cast<char>(std::toupper(static_cast<unsigned char>(value)));
+}
+
+inline string_t trim_slice(const string_t &value, std::size_t start, std::size_t end) {
+	if (end < start) {
+		end = start;
+	}
+	return value.slice(start, end);
+}
+
+inline int_t strlen(const string_t &value) {
+	return int_t(static_cast<std::int64_t>(value.size()));
+}
+
+inline mixed_t strpos(const string_t &haystack, const string_t &needle) {
+	const auto position = haystack.native_value().find(needle.native_value());
+	if (position == std::string::npos) {
+		return mixed_t(bool_t(false));
+	}
+	return mixed_t(int_t(static_cast<std::int64_t>(position)));
+}
+
+inline mixed_t strpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
+	const auto start = normalize_php_forward_search_offset(haystack.size(), offset.native_value(), "strpos");
+	const auto position = haystack.native_value().find(needle.native_value(), static_cast<std::size_t>(start));
+	if (position == std::string::npos) {
+		return mixed_t(bool_t(false));
+	}
+	return mixed_t(int_t(static_cast<std::int64_t>(position)));
+}
+
+inline mixed_t strrpos(const string_t &haystack, const string_t &needle) {
+	const auto position = haystack.native_value().rfind(needle.native_value());
+	if (position == std::string::npos) {
+		return mixed_t(bool_t(false));
+	}
+	return mixed_t(int_t(static_cast<std::int64_t>(position)));
+}
+
+inline mixed_t strrpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
+	const auto limit = normalize_php_reverse_search_limit(haystack.size(), offset.native_value(), "strrpos");
+	const auto &native = haystack.native_value();
+	const auto &needle_native = needle.native_value();
+	if (offset.native_value() >= 0) {
+		const auto position = native.rfind(needle_native);
+		if (position == std::string::npos || position < limit) {
+			return mixed_t(bool_t(false));
+		}
+		return mixed_t(int_t(static_cast<std::int64_t>(position)));
+	}
+	const auto position = native.rfind(needle_native, limit);
+	if (position == std::string::npos) {
+		return mixed_t(bool_t(false));
+	}
+	return mixed_t(int_t(static_cast<std::int64_t>(position)));
+}
+
+inline string_t strtolower(const string_t &value) {
+	std::string out = value.native_value();
+	std::transform(out.begin(), out.end(), out.begin(), ascii_to_lower);
+	return string_t(std::move(out));
+}
+
+inline string_t strtoupper(const string_t &value) {
+	std::string out = value.native_value();
+	std::transform(out.begin(), out.end(), out.begin(), ascii_to_upper);
+	return string_t(std::move(out));
+}
+
+inline string_t lcfirst(const string_t &value) {
+	if (value.size() == 0) {
+		return value;
+	}
+	std::string out = value.native_value();
+	out[0] = ascii_to_lower(out[0]);
+	return string_t(std::move(out));
+}
+
+inline string_t ucfirst(const string_t &value) {
+	if (value.size() == 0) {
+		return value;
+	}
+	std::string out = value.native_value();
+	out[0] = ascii_to_upper(out[0]);
+	return string_t(std::move(out));
+}
+
+inline bool_t str_starts_with(const string_t &haystack, const string_t &needle) {
+	const auto &left = haystack.native_value();
+	const auto &right = needle.native_value();
+	if (right.size() > left.size()) {
+		return bool_t(false);
+	}
+	return bool_t(left.compare(0, right.size(), right) == 0);
+}
+
+inline bool_t str_ends_with(const string_t &haystack, const string_t &needle) {
+	const auto &left = haystack.native_value();
+	const auto &right = needle.native_value();
+	if (right.size() > left.size()) {
+		return bool_t(false);
+	}
+	return bool_t(left.compare(left.size() - right.size(), right.size(), right) == 0);
+}
+
+inline string_t ltrim(const string_t &value) {
+	const auto start = find_trim_left_index(value, nullptr);
+	return trim_slice(value, start, value.size());
+}
+
+inline string_t ltrim(const string_t &value, const string_t &mask) {
+	const auto start = find_trim_left_index(value, &mask);
+	return trim_slice(value, start, value.size());
+}
+
+inline string_t rtrim(const string_t &value) {
+	const auto end = find_trim_right_index(value, nullptr);
+	return trim_slice(value, 0, end);
+}
+
+inline string_t rtrim(const string_t &value, const string_t &mask) {
+	const auto end = find_trim_right_index(value, &mask);
+	return trim_slice(value, 0, end);
+}
+
+inline string_t trim(const string_t &value) {
+	const auto start = find_trim_left_index(value, nullptr);
+	const auto end = find_trim_right_index(value, nullptr);
+	return trim_slice(value, start, end);
+}
+
+inline string_t trim(const string_t &value, const string_t &mask) {
+	const auto start = find_trim_left_index(value, &mask);
+	const auto end = find_trim_right_index(value, &mask);
+	return trim_slice(value, start, end);
+}
+
+inline string_t substr(const string_t &value, const int_t &offset, const int_t &length) {
+	// Implements the practical PHP-like substr(string, offset, length) wrapper.
+	// How: the wrapper translates PHP offset/length rules into a bounded half-open slice on the runtime string type.
+	const auto size = value.size();
+	const auto start = normalize_substr_start(size, offset.native_value());
+	const auto end = normalize_substr_end(size, start, length.native_value());
+	return value.slice(start, end);
+}
+
+inline string_t substr(const string_t &value, const int_t &offset) {
+	// Implements the practical PHP-like substr(string, offset) wrapper.
+	// How: the wrapper reuses the same normalized start handling and slices through the end of the string.
+	const auto start = normalize_substr_start(value.size(), offset.native_value());
+	return value.slice(start, value.size());
+}
+
+inline int_t substr_compare(const string_t &main_str, const string_t &str, const int_t &offset) {
+	bool has_start = false;
+	std::size_t start = 0;
+	const auto has_valid_start = normalize_string_window(main_str.size(), offset.native_value(), has_start, start);
+	const std::string_view left = has_valid_start
+		? std::string_view(main_str.native_value()).substr(start)
+		: std::string_view();
+	const std::string_view right = str.native_value();
+	return int_t(static_cast<std::int64_t>(ascii_compare_sensitive(left, right)));
+}
+
+inline int_t substr_compare(const string_t &main_str, const string_t &str, const int_t &offset, const int_t &length) {
+	bool has_start = false;
+	std::size_t start = 0;
+	const auto has_valid_start = normalize_string_window(main_str.size(), offset.native_value(), has_start, start);
+	std::size_t end = start;
+	const auto has_valid_window = has_valid_start && normalize_string_window_end(main_str.size(), start, length.native_value(), end);
+	const std::string_view left = has_valid_window
+		? std::string_view(main_str.native_value()).substr(start, end - start)
+		: std::string_view();
+	const auto requested = length.native_value() >= 0 ? static_cast<std::size_t>(length.native_value()) : left.size();
+	const std::string_view right = std::string_view(str.native_value()).substr(0, requested);
+	return int_t(static_cast<std::int64_t>(ascii_compare_sensitive(left, right)));
+}
+
+inline int_t substr_compare(const string_t &main_str, const string_t &str, const int_t &offset, const int_t &length, const bool_t &case_insensitive) {
+	bool has_start = false;
+	std::size_t start = 0;
+	const auto has_valid_start = normalize_string_window(main_str.size(), offset.native_value(), has_start, start);
+	std::size_t end = start;
+	const auto has_valid_window = has_valid_start && normalize_string_window_end(main_str.size(), start, length.native_value(), end);
+	const std::string_view left = has_valid_window
+		? std::string_view(main_str.native_value()).substr(start, end - start)
+		: std::string_view();
+	const auto requested = length.native_value() >= 0 ? static_cast<std::size_t>(length.native_value()) : left.size();
+	const std::string_view right = std::string_view(str.native_value()).substr(0, requested);
+	const auto compare_result = case_insensitive.native_value()
+		? ascii_compare_insensitive(left, right)
+		: ascii_compare_sensitive(left, right);
+	return int_t(static_cast<std::int64_t>(compare_result));
+}
+
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t &offset) {
+	const auto size = subject.size();
+	const auto start = normalize_substr_start(size, offset.native_value());
+	std::string out;
+	out.reserve(start + replacement.size());
+	out.append(subject.native_value(), 0, start);
+	out += replacement.native_value();
+	return string_t(std::move(out));
+}
+
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t &offset, const int_t &length) {
+	const auto size = subject.size();
+	const auto start = normalize_substr_start(size, offset.native_value());
+	std::size_t end = start;
+	if (length.native_value() < 0) {
+		const auto distance_from_end = static_cast<std::uint64_t>(-(length.native_value() + 1)) + 1;
+		if (distance_from_end >= size) {
+			end = start;
+		} else {
+			end = size - static_cast<std::size_t>(distance_from_end);
+			if (end < start) {
+				end = start;
+			}
+		}
+	} else {
+		const auto remaining = size - start;
+		const auto requested = static_cast<std::uint64_t>(length.native_value());
+		const auto used = requested < remaining ? requested : remaining;
+		end = start + static_cast<std::size_t>(used);
+	}
+	std::string out;
+	out.reserve(start + replacement.size() + (size - end));
+	out.append(subject.native_value(), 0, start);
+	out += replacement.native_value();
+	out.append(subject.native_value(), end, size - end);
+	return string_t(std::move(out));
+}
+
+inline string_t str_replace(const string_t &search, const string_t &replace, const string_t &subject) {
+	if (search.size() == 0) {
+		return subject;
+	}
+	const auto &source = subject.native_value();
+	const auto &needle = search.native_value();
+	const auto &replacement = replace.native_value();
+	std::string out;
+	std::size_t cursor = 0;
+	while (cursor < source.size()) {
+		const auto found = source.find(needle, cursor);
+		if (found == std::string::npos) {
+			out.append(source, cursor, source.size() - cursor);
+			break;
+		}
+		out.append(source, cursor, found - cursor);
+		out += replacement;
+		cursor = found + needle.size();
+	}
+	return string_t(std::move(out));
+}
+
+inline std::string make_pad_bytes(const std::string &pad_string, std::size_t size) {
+	std::string out;
+	out.reserve(size);
+	while (out.size() < size) {
+		const auto remaining = size - out.size();
+		if (pad_string.size() <= remaining) {
+			out += pad_string;
+		} else {
+			out.append(pad_string, 0, remaining);
+		}
+	}
+	return out;
+}
+
+
+inline string_t str_pad(const string_t &input, const int_t &pad_length, const string_t &pad_string, const int_t &pad_type) {
+	if (pad_string.size() == 0) {
+		throw ValueError("str_pad(): Argument #3 ($pad_string) must not be empty");
+	}
+	const auto pad_type_value = pad_type.native_value();
+	if (pad_type_value != STR_PAD_LEFT.native_value() && pad_type_value != STR_PAD_RIGHT.native_value() && pad_type_value != STR_PAD_BOTH.native_value()) {
+		throw ValueError("str_pad(): Argument #4 ($pad_type) must be STR_PAD_LEFT, STR_PAD_RIGHT, or STR_PAD_BOTH");
+	}
+	const auto target = pad_length.native_value();
+	if (target <= 0) {
+		return input;
+	}
+	const auto input_size = input.size();
+	const auto target_size = static_cast<std::size_t>(target);
+	if (target_size <= input_size) {
+		return input;
+	}
+	const auto total_pad = target_size - input_size;
+	std::size_t left_pad = 0;
+	std::size_t right_pad = 0;
+	if (pad_type_value == STR_PAD_LEFT.native_value()) {
+		left_pad = total_pad;
+	} else if (pad_type_value == STR_PAD_RIGHT.native_value()) {
+		right_pad = total_pad;
+	} else {
+		left_pad = total_pad / 2;
+		right_pad = total_pad - left_pad;
+	}
+	std::string out;
+	out.reserve(target_size);
+	out += make_pad_bytes(pad_string.native_value(), left_pad);
+	out += input.native_value();
+	out += make_pad_bytes(pad_string.native_value(), right_pad);
+	return string_t(std::move(out));
+}
+
+inline string_t str_pad(const string_t &input, const int_t &pad_length, const string_t &pad_string) {
+	return str_pad(input, pad_length, pad_string, STR_PAD_RIGHT);
+}
+
+inline string_t str_pad(const string_t &input, const int_t &pad_length) {
+	return str_pad(input, pad_length, string_t(" "), STR_PAD_RIGHT);
 }
 
 // Implements PHP microtime() string mode.

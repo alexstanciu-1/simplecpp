@@ -46,3 +46,6 @@ The registry is only applied when no user-defined function is resolved.
 ### Important
 If a symbol is not present in the registry, the generator will **not** qualify it with `php::`, even if it exists in the runtime.
 
+
+
+See: module_inclusion_model.md

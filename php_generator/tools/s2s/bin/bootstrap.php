@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../src/Support/AstKindPhp84.php';
+require_once __DIR__ . '/../src/Support/AstKindPhp85.php';
 require_once __DIR__ . '/../src/Support/AstKind.php';
 require_once __DIR__ . '/../src/Support/AnnotationExpressionParser.php';
 require_once __DIR__ . '/../src/Support/S2SException.php';

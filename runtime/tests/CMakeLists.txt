@@ -59,3 +59,8 @@ add_executable(test_array_semantics test_array_semantics.cpp)
 target_link_libraries(test_array_semantics PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_array_semantics COMMAND test_array_semantics)
 
+# PHP string builtin wrapper coverage.
+add_executable(test_php_string test_php_string.cpp)
+target_link_libraries(test_php_string PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_php_string COMMAND test_php_string)
+

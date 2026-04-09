@@ -48,6 +48,17 @@ scpp build
 
 Current public build shape:
 
+Compiler selection:
+
+- persistent project setting in `prism.json`:
+  - `"build": { "cxx": "clang++" }`
+  - `"build": { "cxx": "g++" }`
+- one-off override for a single build:
+  - `SCPP_CXX=clang++ scpp build`
+  - `SCPP_CXX=g++ scpp build`
+
+`SCPP_CXX` takes precedence over `prism.json`.
+
 - one project config: `prism.json`
 - one entrypoint first
 - generated C++ kept on disk

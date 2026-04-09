@@ -61,8 +61,10 @@ The default backend is:
 Compiler selection policy:
 
 - detect a sane default compiler
-- allow override in `prism.json`
-- fail clearly if none is available
+- allow persistent override in `prism.json` via `build.cxx`
+- allow one-off environment override via `SCPP_CXX`
+- allow launcher override via `SCPP_CXX_LAUNCHER`
+- fail clearly if a requested compiler or launcher is not available
 
 ### Output artifact
 

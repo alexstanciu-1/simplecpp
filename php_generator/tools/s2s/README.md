@@ -108,3 +108,17 @@ Required runtime:
 
 ### Guarantee
 No implicit pointer/object semantics for enums in v1.
+
+## Current variable-name normalization
+
+- PHP variable names are preserved unless the raw name is a reserved C++ keyword
+- reserved keyword names lower deterministically to `<name>__`
+- if that collides in the same function-like scope, the generator continues with `<name>__1`, `<name>__2`, and so on until a free name is found
+- the chosen remapped name must be used consistently across declarations, definitions, helper templates, and local uses
+
+## Current foreach by-reference lowering
+
+- `foreach ($items as &$item)` lowers via a hidden-key slot rewrite
+- `foreach ($items as $key => &$item)` lowers via an explicit-key slot rewrite
+- loop-body uses of the foreach value variable are rewritten to the source slot expression instead of creating a standalone alias local
+- this behavior is provisional and subject to future improvement

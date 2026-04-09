@@ -505,7 +505,7 @@ inline To cast(mixed_t &&value) {
 			case mixed_t::kind_t::null_v:
 				return unique_p<hash_t<mixed_t>>(null_t{});
 			case mixed_t::kind_t::table_v: {
-				auto extracted = std::move(value.table_value_);
+				auto extracted = value.take_table_value();
 				value = null_t{};
 				return extracted;
 			}

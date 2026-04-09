@@ -69,6 +69,16 @@ final class Generator
 	private AnnotationExpressionParser $annotationExpressionParser;
 	/** @var array<string, bool> */
 	private array $phpRuntimeRelativeSymbols = [];
+	/** @var array<string, string> */
+	private array $currentPhpVarToCpp = [];
+	/** @var array<string, bool> */
+	private array $currentUsedCppVarNames = [];
+	/** @var array<string, string> */
+	private array $currentLocalArrayShapes = [];
+	/** @var list<array<string, string>> */
+	private array $foreachReferenceSlotStack = [];
+	/** @var list<array<string, bool>> */
+	private array $foreachReferenceSuppressedNamesStack = [];
 
 	/**
 
@@ -116,6 +126,11 @@ final class Generator
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
 		$this->currentFinallyReturnContext = null;
+		$this->currentPhpVarToCpp = [];
+		$this->currentUsedCppVarNames = [];
+		$this->currentLocalArrayShapes = [];
+		$this->foreachReferenceSlotStack = [];
+		$this->foreachReferenceSuppressedNamesStack = [];
 		$this->tempCounter = 0;
 		$this->nameRegistry = NameRegistry::fromPhpFile($file);
 		$this->functionDecls = $this->collectFunctionDecls($file);
@@ -1165,7 +1180,222 @@ final class Generator
 		return (string) $this->enumCaseIntValue($case);
 	}
 
-	private function cppIdentifier(string $name): string
+
+	/** @param list<ParamDecl> $params @param list<Statement> $statements */
+	private function beginFunctionLikeVariableMapping(array $params, array $statements): void
+	{
+		$this->currentPhpVarToCpp = [];
+		$this->currentUsedCppVarNames = [];
+		$this->foreachReferenceSlotStack = [];
+
+		$orderedNames = [];
+		$originalNames = [];
+		foreach ($params as $param) {
+			if (!isset($originalNames[$param->name])) {
+				$orderedNames[] = $param->name;
+				$originalNames[$param->name] = true;
+			}
+		}
+		foreach ($this->collectSimpleVarNamesFromStatements($statements) as $name) {
+			if (!isset($originalNames[$name])) {
+				$orderedNames[] = $name;
+				$originalNames[$name] = true;
+			}
+		}
+
+		foreach ($orderedNames as $name) {
+			if ($name === 'this') {
+				$this->currentPhpVarToCpp[$name] = 'this';
+				continue;
+			}
+			$candidate = $name;
+			if ($this->isCppReservedIdentifier($name)) {
+				$base = $name . '__';
+				$candidate = $base;
+				$suffix = 1;
+				while ((isset($originalNames[$candidate]) && $candidate !== $name) || isset($this->currentUsedCppVarNames[$candidate])) {
+					$candidate = $base . $suffix;
+					++$suffix;
+				}
+			}
+			$this->currentPhpVarToCpp[$name] = $candidate;
+			$this->currentUsedCppVarNames[$candidate] = true;
+		}
+	}
+
+	private function endFunctionLikeVariableMapping(): void
+	{
+		$this->currentPhpVarToCpp = [];
+		$this->currentUsedCppVarNames = [];
+		$this->currentLocalArrayShapes = [];
+		$this->foreachReferenceSlotStack = [];
+		$this->foreachReferenceSuppressedNamesStack = [];
+	}
+
+	private function localCppName(string $phpName): string
+	{
+		if ($phpName === 'this') {
+			return 'this';
+		}
+
+		return $this->currentPhpVarToCpp[$phpName] ?? $phpName;
+	}
+
+	private function hasForeachReferenceSlotAlias(string $name): bool
+	{
+		for ($i = count($this->foreachReferenceSlotStack) - 1; $i >= 0; --$i) {
+			if (isset($this->foreachReferenceSlotStack[$i][$name])) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function isForeachReferenceSlotSuppressed(string $name): bool
+	{
+		for ($i = count($this->foreachReferenceSuppressedNamesStack) - 1; $i >= 0; --$i) {
+			if (isset($this->foreachReferenceSuppressedNamesStack[$i][$name])) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function renderClosureCaptureItem(string $name, bool $byReference): string
+	{
+		for ($i = count($this->foreachReferenceSlotStack) - 1; $i >= 0; --$i) {
+			if (!isset($this->foreachReferenceSlotStack[$i][$name])) {
+				continue;
+			}
+
+			$slotExpr = $this->foreachReferenceSlotStack[$i][$name];
+			if ($byReference) {
+				return '&' . $this->localCppName($name) . ' = ' . $slotExpr;
+			}
+
+			return $this->localCppName($name) . ' = ' . $slotExpr;
+		}
+
+		return $byReference ? '&' . $this->localCppName($name) : $this->localCppName($name);
+	}
+
+	private function inferForeachByRefSourceShape(mixed $expr): string
+	{
+		if (!is_object($expr)) {
+			return 'unknown';
+		}
+
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::VAR) {
+			$name = $this->extractSimpleVarName($expr);
+			if ($name === null) {
+				return 'unknown';
+			}
+			return $this->currentLocalArrayShapes[$name] ?? 'unknown';
+		}
+
+		if ($kind !== AstKind::ARRAY) {
+			return 'unknown';
+		}
+
+		$hasExplicitKey = false;
+		foreach (($expr->children ?? []) as $element) {
+			if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+				return 'unknown';
+			}
+			if (($element->children['key'] ?? null) !== null) {
+				$hasExplicitKey = true;
+				break;
+			}
+		}
+
+		return $hasExplicitKey ? 'non_vector' : 'vector';
+	}
+
+	private function trackAssignedArrayShape(?string $name, mixed $exprNode, ?string $effectiveTyped): void
+	{
+		if ($name === null) {
+			return;
+		}
+
+		if ($effectiveTyped !== null && $this->mapTypedVectorLocalType($effectiveTyped) !== null) {
+			$this->currentLocalArrayShapes[$name] = 'vector';
+			return;
+		}
+
+		$shape = $this->inferForeachByRefSourceShape($exprNode);
+		if ($shape !== 'unknown') {
+			$this->currentLocalArrayShapes[$name] = $shape;
+		}
+	}
+
+	private function parameterCppName(ParamDecl $param): string
+	{
+		return $this->localCppName($param->name);
+	}
+
+	private function allocateGeneratedLocalName(string $preferredName): string
+	{
+		$candidate = $preferredName;
+		$suffix = 1;
+		while (isset($this->currentUsedCppVarNames[$candidate])) {
+			$candidate = $preferredName . $suffix;
+			++$suffix;
+		}
+		$this->currentUsedCppVarNames[$candidate] = true;
+		return $candidate;
+	}
+
+	/** @param list<Statement> $statements @return list<string> */
+	private function collectSimpleVarNamesFromStatements(array $statements): array
+	{
+		$names = [];
+		foreach ($statements as $statement) {
+			foreach ($this->collectSimpleVarNamesFromExpr($statement->payload) as $name) {
+				if (!isset($names[$name])) {
+					$names[$name] = true;
+				}
+			}
+		}
+		return array_keys($names);
+	}
+
+	/** @return list<string> */
+	private function collectSimpleVarNamesFromExpr(mixed $expr): array
+	{
+		$names = [];
+		if (is_array($expr)) {
+			foreach ($expr as $value) {
+				foreach ($this->collectSimpleVarNamesFromExpr($value) as $name) {
+					if (!isset($names[$name])) {
+						$names[$name] = true;
+					}
+				}
+			}
+			return array_keys($names);
+		}
+		if (!is_object($expr)) {
+			return [];
+		}
+		if (($expr->kind ?? null) === AstKind::VAR) {
+			$name = (string) ($expr->children['name'] ?? '');
+			if ($name !== '' && $name !== 'this') {
+				$names[$name] = true;
+			}
+		}
+		foreach ($this->childNodesOf($expr) as $child) {
+			foreach ($this->collectSimpleVarNamesFromExpr($child) as $name) {
+				if (!isset($names[$name])) {
+					$names[$name] = true;
+				}
+			}
+		}
+		return array_keys($names);
+	}
+
+	private function isCppReservedIdentifier(string $name): bool
 	{
 		static $reserved = [
 			'alignas' => true, 'alignof' => true, 'and' => true, 'and_eq' => true, 'asm' => true, 'auto' => true,
@@ -1188,7 +1418,12 @@ final class Generator
 			'wchar_t' => true, 'while' => true, 'xor' => true, 'xor_eq' => true,
 		];
 
-		return isset($reserved[$name]) ? $name . '_' : $name;
+		return isset($reserved[$name]);
+	}
+
+	private function cppIdentifier(string $name): string
+	{
+		return $this->isCppReservedIdentifier($name) ? $name . '_' : $name;
 	}
 
 	private function emitEnumClass(array &$header, ClassDecl $class): void
@@ -1536,22 +1771,27 @@ final class Generator
 	{
 		$className = is_string($classDecl) ? $classDecl : ($classDecl?->name);
 		$paramPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
-		if ($method->name === '__construct' && $className !== null) {
-			return $className . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
+		$this->beginFunctionLikeVariableMapping($method->params, $method->statements);
+		try {
+			if ($method->name === '__construct' && $className !== null) {
+				return $className . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
+			}
+			if ($method->name === '__destruct' && $className !== null) {
+				return '~' . $className . '()';
+			}
+			$prefix = $method->isStatic ? 'static ' : '';
+			if (!$method->isStatic && $classDecl instanceof ClassDecl && ($classDecl->isInterface || $classDecl->parentClass !== null || $classDecl->interfaces !== [])) {
+				$prefix .= 'virtual ';
+			}
+			$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+			$declaration = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
+			if ($classDecl instanceof ClassDecl && $this->methodIsAbstract($method, $classDecl)) {
+				$declaration .= ' = 0';
+			}
+			return $declaration;
+		} finally {
+			$this->endFunctionLikeVariableMapping();
 		}
-		if ($method->name === '__destruct' && $className !== null) {
-			return '~' . $className . '()';
-		}
-		$prefix = $method->isStatic ? 'static ' : '';
-		if (!$method->isStatic && $classDecl instanceof ClassDecl && ($classDecl->isInterface || $classDecl->parentClass !== null || $classDecl->interfaces !== [])) {
-			$prefix .= 'virtual ';
-		}
-		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
-		$declaration = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, true, $namespacePhp, $paramPassModes) . ')';
-		if ($classDecl instanceof ClassDecl && $this->methodIsAbstract($method, $classDecl)) {
-			$declaration .= ' = 0';
-		}
-		return $declaration;
 	}
 
 	/**
@@ -1662,8 +1902,8 @@ final class Generator
 		foreach ($params as $param) {
 			$accessor = $this->mapValueRefAccessorForParam($param);
 			$out[] = $accessor !== null
-				? $param->name . '.' . $accessor . '()'
-				: $param->name;
+				? $this->parameterCppName($param) . '.' . $accessor . '()'
+				: $this->parameterCppName($param);
 		}
 		return implode(', ', $out);
 	}
@@ -1672,7 +1912,12 @@ final class Generator
 	{
 		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$paramPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
-		return $returnType . ' ' . $function->name . '(' . $this->renderValueRefOverloadParams($function->params, true, $namespacePhp, $paramPassModes) . ')';
+		$this->beginFunctionLikeVariableMapping($function->params, $function->statements);
+		try {
+			return $returnType . ' ' . $function->name . '(' . $this->renderValueRefOverloadParams($function->params, true, $namespacePhp, $paramPassModes) . ')';
+		} finally {
+			$this->endFunctionLikeVariableMapping();
+		}
 	}
 
 	private function renderFunctionValueRefOverloadDefinition(FunctionDecl $function, ?string $namespacePhp): string
@@ -1730,6 +1975,7 @@ final class Generator
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
 		$this->currentParamPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$this->beginFunctionLikeVariableMapping($method->params, $method->statements);
 		foreach ($method->params as $param) {
 			$this->declaredLocals[$param->name] = true;
 			if ($param->isReference) {
@@ -1772,6 +2018,7 @@ final class Generator
 		$this->currentParamEntryAliasLines = [];
 		$this->currentArgNormalizationRulesByKey = [];
 		$this->currentNormalizationCallableName = null;
+		$this->endFunctionLikeVariableMapping();
 		return $signature . " {
 " . $body . "
 }";
@@ -1834,12 +2081,12 @@ final class Generator
 
 	private function renderTemplateTypeName(ParamDecl $param): string
 	{
-		return 'T_' . $param->name;
+		return 'T_' . $this->parameterCppName($param);
 	}
 
 	private function renderNormalizationHelperName(string $callableName, ParamDecl $param): string
 	{
-		return '_norm_' . $this->cppIdentifier($callableName) . '__' . $param->name;
+		return '_norm_' . $this->cppIdentifier($callableName) . '__' . $this->parameterCppName($param);
 	}
 
 	private function renderNormalizationRuleExpression(ArgNormalizationRule $rule, ParamDecl $param, string $sourceType, ?string $namespacePhp): string
@@ -1867,7 +2114,7 @@ final class Generator
 	{
 		$mappedPrimaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
 		$mappedSourceType = $this->typeMapper->mapDeclaredType($unionType);
-		$sourceExpr = '_' . $param->name;
+		$sourceExpr = '_' . $this->parameterCppName($param);
 		if ($this->isSupportedScalarTemplateRefParam($param)) {
 			if ($sourceIsMixed) {
 				$accessor = $this->mapValueRefAccessorForParam($param);
@@ -1896,7 +2143,7 @@ final class Generator
 		}
 		$expr = $this->renderNormalizationRuleExpression($rule, $param, $unionType, $namespacePhp);
 		return [
-			$mappedSourceType . ' ' . $param->name . ' = cast<' . $mappedSourceType . '>(' . $sourceExpr . ');',
+			$mappedSourceType . ' ' . $this->parameterCppName($param) . ' = cast<' . $mappedSourceType . '>(' . $sourceExpr . ');',
 			'return ' . $expr . ';',
 		];
 	}
@@ -1932,7 +2179,7 @@ final class Generator
 		$prefix = $classInline ? 'static ' : '';
 		$lines = [];
 		$lines[] = 'template <typename ' . $templateType . '>';
-		$lines[] = $prefix . $returnType . ' ' . $helperName . '(' . $templateType . '&& _' . $param->name . ') {';
+		$lines[] = $prefix . $returnType . ' ' . $helperName . '(' . $templateType . '&& _' . $this->parameterCppName($param) . ') {';
 		$lines[] = $this->indent(1) . 'using _norm_arg_t = std::remove_cv_t<std::remove_reference_t<' . $templateType . '>>;';
 		$first = true;
 		$directTypes = $this->isSupportedScalarTemplateRefParam($param)
@@ -2014,6 +2261,7 @@ final class Generator
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
 		$this->currentParamPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$this->beginFunctionLikeVariableMapping($method->params, $method->statements);
 		foreach ($method->params as $param) {
 			$this->declaredLocals[$param->name] = true;
 			if ($param->isReference) {
@@ -2039,6 +2287,7 @@ final class Generator
 		$this->currentParamEntryAliasLines = [];
 		$this->currentArgNormalizationRulesByKey = [];
 		$this->currentNormalizationCallableName = null;
+		$this->endFunctionLikeVariableMapping();
 		return $signature . " {\n" . $body . "\n}";
 	}
 
@@ -2046,7 +2295,12 @@ final class Generator
 	{
 		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$paramPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
-		return $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, true, $namespacePhp, $paramPassModes) . ')';
+		$this->beginFunctionLikeVariableMapping($function->params, $function->statements);
+		try {
+			return $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, true, $namespacePhp, $paramPassModes) . ')';
+		} finally {
+			$this->endFunctionLikeVariableMapping();
+		}
 	}
 
 	/**
@@ -2069,6 +2323,7 @@ final class Generator
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
 		$this->currentParamPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
+		$this->beginFunctionLikeVariableMapping($function->params, $function->statements);
 		foreach ($function->params as $param) {
 			$this->declaredLocals[$param->name] = true;
 			if ($param->isReference) {
@@ -2093,6 +2348,7 @@ final class Generator
 		$this->currentParamEntryAliasLines = [];
 		$this->currentArgNormalizationRulesByKey = [];
 		$this->currentNormalizationCallableName = null;
+		$this->endFunctionLikeVariableMapping();
 		return $signature . " {\n" . $body . "\n}";
 	}
 
@@ -2122,7 +2378,7 @@ final class Generator
 			}
 			$name = $this->renderParamName($param, $useStorageNames);
 			if ($this->paramNeedsTemplateNormalization($param) && !$useStorageNames) {
-				$name = '_' . $param->name;
+				$name = '_' . $this->localCppName($param->name);
 			}
 			$rendered = $type . ' ' . $name;
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
@@ -2215,30 +2471,30 @@ final class Generator
 				$primaryType = $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type);
 				$binding = $param->isReference ? ($primaryType . '&') : $primaryType;
 				$callableName = $this->currentNormalizationCallableName ?? 'callable';
-				$lines[] = $binding . ' ' . $param->name . ' = ' . $this->renderNormalizationHelperName($callableName, $param) . '(std::forward<' . $this->renderTemplateTypeName($param) . '>(' . $storageName . '));';
+				$lines[] = $binding . ' ' . $this->localCppName($param->name) . ' = ' . $this->renderNormalizationHelperName($callableName, $param) . '(std::forward<' . $this->renderTemplateTypeName($param) . '>(' . $storageName . '));';
 				continue;
 			}
-			if ($storageName === $param->name) {
+			if ($storageName === $this->localCppName($param->name)) {
 				continue;
 			}
 			$binding = $param->isReference ? 'auto&' : 'auto';
-			$lines[] = $binding . ' ' . $param->name . ' = ' . $storageName . ';';
+			$lines[] = $binding . ' ' . $this->localCppName($param->name) . ' = ' . $storageName . ';';
 		}
 		return $lines;
 	}
 
 	private function renderParamName(ParamDecl $param, bool $useStorageNames): string
 	{
-		return $useStorageNames ? $this->renderParamStorageName($param) : $param->name;
+		return $useStorageNames ? $this->renderParamStorageName($param) : $this->localCppName($param->name);
 	}
 
 	private function renderParamStorageName(ParamDecl $param): string
 	{
 		if (!$this->paramNeedsGeneratedStorageName($param)) {
-			return $param->name;
+			return $this->localCppName($param->name);
 		}
 
-		return '_' . $param->name;
+		return '_' . $this->localCppName($param->name);
 	}
 
 
@@ -2279,14 +2535,14 @@ final class Generator
 	{
 		$mappedSourceType = $this->typeMapper->mapDeclaredType($rule->sourceType);
 		$expression = $this->renderNormalizationRuleExpression($rule, $param, $rule->sourceType, $namespacePhp);
-		return '([&]() -> ' . $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type) . ' { ' . $mappedSourceType . ' ' . $param->name . ' = cast<' . $mappedSourceType . '>(' . $storageName . '); return ' . $expression . '; })()';
+		return '([&]() -> ' . $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type) . ' { ' . $mappedSourceType . ' ' . $this->parameterCppName($param) . ' = cast<' . $mappedSourceType . '>(' . $storageName . '); return ' . $expression . '; })()';
 	}
 
 	private function buildMixedCarrierNormalizationLines(ParamDecl $param, string $storageName, ?string $namespacePhp): array
 	{
 		$primaryType = $param->primaryType ?? $param->type;
 		$mappedPrimaryType = $primaryType !== null ? $this->typeMapper->mapDeclaredType($primaryType) : 'mixed_t';
-		$lines = [$mappedPrimaryType . ' ' . $param->name . ';'];
+		$lines = [$mappedPrimaryType . ' ' . $this->parameterCppName($param) . ';'];
 		$firstBranch = true;
 		foreach ($param->unionTypes as $unionType) {
 			$condition = $this->renderUnionSourceKindCheck($storageName, $unionType);
@@ -2300,7 +2556,7 @@ final class Generator
 				? $this->renderForwardedNormalizationExpression($rule, $param, $storageName, $namespacePhp)
 				: 'cast<' . $mappedPrimaryType . '>(' . $storageName . ')';
 			$lines[] = $branchPrefix . ' (' . $condition . ') {';
-			$lines[] = $this->indent(1) . $param->name . ' = ' . $assignmentExpr . ';';
+			$lines[] = $this->indent(1) . $this->parameterCppName($param) . ' = ' . $assignmentExpr . ';';
 			$lines[] = '}';
 		}
 		$lines[] = 'else {';
@@ -2359,7 +2615,7 @@ final class Generator
 			}
 			$this->declaredLocals[$name] = true;
 			$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($typed);
-			return [$this->typeMapper->mapTypedLocalType($typed) . ' ' . $name . ';'];
+			return [$this->typeMapper->mapTypedLocalType($typed) . ' ' . $this->localCppName($name) . ';'];
 		}
 		if ($statement->kind === 'assign' || $statement->kind === 'assign_ref' || $statement->kind === 'assign_op') {
 			$varNode = $statement->payload['var'] ?? null;
@@ -2372,7 +2628,7 @@ final class Generator
 				return $this->renderCompoundAssignmentStatement($statement, $varNode, $exprNode, $name, $namespacePhp);
 			}
 
-			if ($statement->kind === 'assign' && $name !== null && !isset($this->declaredLocals[$name])) {
+			if ($statement->kind === 'assign' && $name !== null && !isset($this->declaredLocals[$name]) && !$this->hasForeachReferenceSlotAlias($name)) {
 				$chainLines = $this->tryRenderDeclarationAssignChain($varNode, $exprNode, $typed, $namespacePhp);
 				if ($chainLines !== null) {
 					return $chainLines;
@@ -2411,14 +2667,15 @@ final class Generator
 				$this->predefinedReferenceLocals[$name] = true;
 				if ($effectiveTyped !== null) {
 					$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($effectiveTyped);
-					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $name . ' = ' . $expr . ';'];
+					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
 				}
 
-				return ['auto& ' . $name . ' = ' . $expr . ';'];
+				return ['auto& ' . $this->localCppName($name) . ' = ' . $expr . ';'];
 			}
 
-			if ($name !== null && !isset($this->declaredLocals[$name])) {
+			if ($name !== null && !isset($this->declaredLocals[$name]) && !$this->hasForeachReferenceSlotAlias($name)) {
 				$this->declaredLocals[$name] = true;
+				$this->trackAssignedArrayShape($name, $exprNode, $effectiveTyped);
 				$closureFunctionType = $effectiveTyped === null ? $this->tryInferStdFunctionTypeFromClosureExpr($exprNode) : null;
 				$inferredType = $effectiveTyped ?? $closureFunctionType ?? $this->inferExprType($exprNode);
 				if ($inferredType !== 'auto') {
@@ -2426,15 +2683,15 @@ final class Generator
 				}
 				if ($effectiveTyped !== null) {
 					if ($isTypedEmptyVectorLiteral) {
-						return [$typedVectorType . ' ' . $name . ' = {};'];
+						return [$typedVectorType . ' ' . $this->localCppName($name) . ' = {};'];
 					}
-					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $name . ' = ' . $expr . ';'];
+					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
 				}
 				if ($closureFunctionType !== null) {
-					return [$closureFunctionType . ' ' . $name . ' = ' . $expr . ';'];
+					return [$closureFunctionType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
 				}
 				$declarationType = $this->inferFirstAssignmentDeclarationType($exprNode, $inferredType);
-				return [$declarationType . ' ' . $name . ' = ' . $expr . ';'];
+				return [$declarationType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
 			}
 			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM)) {
 				if (($varNode->children['dim'] ?? null) === null) {
@@ -2468,7 +2725,7 @@ final class Generator
 				return [$target . ' = ' . $value . ';'];
 			}
 			if ($isTypedEmptyVectorLiteral && $name !== null) {
-				return [$name . ' = ' . $typedVectorType . '{};'];
+				return [$this->localCppName($name) . ' = ' . $typedVectorType . '{};'];
 			}
 			$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
 			return [$target . ' = ' . $expr . ';'];
@@ -2479,7 +2736,7 @@ final class Generator
 			$name = (string) (($varNode->children['name'] ?? '') ?: 'tmp');
 			$default = $this->renderExpr($statement->payload['default'] ?? null, $namespacePhp);
 			$this->declaredLocals[$name] = true;
-			return ['static int_t ' . $name . ' = ' . $default . ';'];
+			return ['static int_t ' . $this->localCppName($name) . ' = ' . $default . ';'];
 		}
 
 		if ($statement->kind === 'return') {
@@ -2997,12 +3254,17 @@ final class Generator
 		$sourceType = $this->inferExprType($payload['expr'] ?? null);
 		$sourceAccessExpr = $this->isUntypedTableHandleType($sourceType) ? '(*(' . $sourceExpr . '))' : $sourceExpr;
 		$elementExpr = $sourceAccessExpr . '.at(' . $indexName . ')';
-		$valuePrefix = $byRef ? 'auto &' : 'auto ';
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
 		} elseif ($this->isUntypedTableType($sourceType)) {
 			$valueStoredType = 'mixed_t';
+		}
+
+		$foreachByRefSourceShape = $this->inferForeachByRefSourceShape($payload['expr'] ?? null);
+		if ($byRef && $foreachByRefSourceShape === 'non_vector') {
+			$this->errors[] = 'foreach by reference is currently supported for vector-like arrays only at line ' . $statement->line . '.';
+			return ['// ERROR: foreach by reference currently rejects non-vector arrays'];
 		}
 
 		$lines = [
@@ -3013,45 +3275,61 @@ final class Generator
 		$scopedLocalTypes = $this->declaredLocalTypes;
 		$scopedReferenceLocals = $this->predefinedReferenceLocals;
 
+		$keyCppName = null;
+		$keyAccessExpr = $indexName;
 		if ($keyName !== null) {
-			// Foreach key bindings remain loop-local in the current model.
-			// They do not declare or update an outer name after the loop exits.
-			$lines[] = $this->indent(1) . 'auto ' . $keyName . ' = ' . $indexName . ';';
+			$keyCppName = $this->localCppName($keyName);
+			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
 			$this->declaredLocals[$keyName] = true;
 			$this->declaredLocalTypes[$keyName] = 'int_t';
+			$keyAccessExpr = $keyCppName;
+		} elseif ($byRef) {
+			$keyCppName = $this->allocateGeneratedLocalName('_' . $valueName . '_key_');
+			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
+			$keyAccessExpr = $keyCppName;
 		}
 
-		$hasOuterValueBinding = isset($scopedLocals[$valueName]);
-		if ($hasOuterValueBinding) {
-			// Prism++ policy: foreach reuses an existing outer value variable if one was
-			// already declared before the loop. Otherwise the foreach value target is scoped
-			// to the loop body and is not visible after the loop exits.
-			$lines[] = $this->indent(1) . $valueName . ' = ' . $elementExpr . ';';
+		if ($byRef) {
+			$this->foreachReferenceSlotStack[] = [
+				$valueName => $sourceAccessExpr . '.at(' . $keyAccessExpr . ')',
+			];
 		} else {
-			$lines[] = $this->indent(1) . $valuePrefix . $valueName . ' = ' . $elementExpr . ';';
-			$this->declaredLocals[$valueName] = true;
-			if ($valueStoredType !== null) {
-				$this->declaredLocalTypes[$valueName] = $valueStoredType;
+			$valueCppName = $this->localCppName($valueName);
+			$hasOuterValueBinding = isset($scopedLocals[$valueName]);
+			if ($hasOuterValueBinding) {
+				$lines[] = $this->indent(1) . $valueCppName . ' = ' . $elementExpr . ';';
+			} else {
+				$lines[] = $this->indent(1) . 'auto ' . $valueCppName . ' = ' . $elementExpr . ';';
+				$this->declaredLocals[$valueName] = true;
+				if ($valueStoredType !== null) {
+					$this->declaredLocalTypes[$valueName] = $valueStoredType;
+				}
 			}
 		}
 
-		if ($returnContext !== null) {
-			$bodyLines = $this->renderFinallyAwareStatementSequence($payload['stmts'] ?? [], $namespacePhp, $returnContext);
-			$lines[] = $this->indent(1) . 'if (' . $returnContext['flag'] . ') {';
-			$lines[] = $this->indent(2) . 'break;';
-			$lines[] = $this->indent(1) . '}';
-			foreach ($bodyLines as $line) {
-				$lines[] = $this->indent(1) . $line;
+		try {
+			if ($returnContext !== null) {
+				$bodyLines = $this->renderFinallyAwareStatementSequence($payload['stmts'] ?? [], $namespacePhp, $returnContext);
+				$lines[] = $this->indent(1) . 'if (' . $returnContext['flag'] . ') {';
+				$lines[] = $this->indent(2) . 'break;';
+				$lines[] = $this->indent(1) . '}';
+				foreach ($bodyLines as $line) {
+					$lines[] = $this->indent(1) . $line;
+				}
+			} else {
+				foreach ($this->renderNestedStatements($payload['stmts'] ?? [], $namespacePhp) as $line) {
+					$lines[] = $line;
+				}
 			}
-		} else {
-			foreach ($this->renderNestedStatements($payload['stmts'] ?? [], $namespacePhp) as $line) {
-				$lines[] = $line;
+		} finally {
+			if ($byRef) {
+				array_pop($this->foreachReferenceSlotStack);
 			}
+			$this->declaredLocals = $scopedLocals;
+			$this->declaredLocalTypes = $scopedLocalTypes;
+			$this->predefinedReferenceLocals = $scopedReferenceLocals;
 		}
 
-		$this->declaredLocals = $scopedLocals;
-		$this->declaredLocalTypes = $scopedLocalTypes;
-		$this->predefinedReferenceLocals = $scopedReferenceLocals;
 		$lines[] = '}';
 		return $lines;
 	}
@@ -3139,9 +3417,9 @@ final class Generator
 			if (is_object($expr) && ($expr->kind ?? null) === AstKind::ASSIGN) {
 				$varNode = $expr->children['var'] ?? null;
 				$name = $this->extractSimpleVarName($varNode);
-				if ($name !== null && !isset($this->declaredLocals[$name])) {
+				if ($name !== null && !isset($this->declaredLocals[$name]) && !$this->hasForeachReferenceSlotAlias($name)) {
 					$this->declaredLocals[$name] = true;
-					$out[] = 'auto ' . $name . ' = ' . $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp);
+					$out[] = 'auto ' . $this->localCppName($name) . ' = ' . $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp);
 					continue;
 				}
 			}
@@ -3467,7 +3745,7 @@ final class Generator
 			return ['// ERROR: ' . $error];
 		}
 
-		if ($name !== null && !isset($this->declaredLocals[$name])) {
+		if ($name !== null && !isset($this->declaredLocals[$name]) && !$this->hasForeachReferenceSlotAlias($name)) {
 			$error = 'Compound assignment requires a previously declared variable $' . $name . ' at line ' . $statement->line . '.';
 			$this->errors[] = $error;
 			return ['// ERROR: ' . $error];
@@ -4150,7 +4428,11 @@ final class Generator
 			$paramIndex++;
 		}
 
-		$capture = $captureItems === [] ? '[]' : '[' . implode(', ', $captureItems) . ']';
+		$captureRenderItems = [];
+		foreach ($captureItems as $captureName) {
+			$captureRenderItems[] = $this->renderClosureCaptureItem($captureName, false);
+		}
+		$capture = $captureRenderItems === [] ? '[]' : '[' . implode(', ', $captureRenderItems) . ']';
 		$paramList = $this->renderClosureParams($params, $namespacePhp);
 		$returnType = $this->renderClosureReturnType($returnTypeNode, $statements, $expr);
 		if (is_string($returnType) && str_starts_with($returnType, '/* unsupported-closure-')) {
@@ -4168,6 +4450,20 @@ final class Generator
 				$this->declaredLocalTypes[$captureName] = $savedDeclaredLocalTypes[$captureName];
 			}
 		}
+		$captureShadowNames = [];
+		foreach ($captureItems as $captureName) {
+			if ($this->hasForeachReferenceSlotAlias($captureName)) {
+				$captureShadowNames[$captureName] = true;
+			}
+		}
+		$this->foreachReferenceSuppressedNamesStack[] = $captureShadowNames;
+		$captureShadowNames = [];
+		foreach ($captureItems as $captureName) {
+			if ($this->hasForeachReferenceSlotAlias($captureName)) {
+				$captureShadowNames[$captureName] = true;
+			}
+		}
+		$this->foreachReferenceSuppressedNamesStack[] = $captureShadowNames;
 		$paramIndex = 0;
 		foreach ($params as $param) {
 			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
@@ -4189,6 +4485,8 @@ final class Generator
 
 		$bodyLines = $this->renderStatementSequence($statements, $namespacePhp);
 
+		array_pop($this->foreachReferenceSuppressedNamesStack);
+		array_pop($this->foreachReferenceSuppressedNamesStack);
 		$this->declaredLocals = $savedDeclaredLocals;
 		$this->declaredLocalTypes = $savedDeclaredLocalTypes;
 		$this->predefinedReferenceLocals = $savedReferenceLocals;
@@ -4231,6 +4529,7 @@ final class Generator
 			: [];
 
 		$captureItems = [];
+		$captureByReference = [];
 		foreach ($uses as $use) {
 			if (!is_object($use)) {
 				continue;
@@ -4243,16 +4542,13 @@ final class Generator
 				// not as a nested AST_REF node.
 				$isUseByReference = true;
 			}
-			if ($isUseByReference) {
-				$this->errors[] = 'Closure use-by-reference is not supported yet at line ' . (int) ($use->lineno ?? $expr->lineno ?? 0) . '.';
-				return '/* unsupported-closure-use-ref */';
-			}
 			$name = (string) ($use->children['name'] ?? '');
 			if ($name === '') {
 				$this->errors[] = 'Closure use-capture requires a simple variable name at line ' . (int) ($use->lineno ?? $expr->lineno ?? 0) . '.';
 				return '/* unsupported-closure-use */';
 			}
 			$captureItems[] = $name;
+			$captureByReference[$name] = $isUseByReference;
 		}
 
 		$expectedSignature = $this->currentExpectedClosureSignature;
@@ -4283,7 +4579,11 @@ final class Generator
 			$paramIndex++;
 		}
 
-		$capture = $captureItems === [] ? '[]' : '[' . implode(', ', $captureItems) . ']';
+		$captureRenderItems = [];
+		foreach ($captureItems as $captureName) {
+			$captureRenderItems[] = $this->renderClosureCaptureItem($captureName, $captureByReference[$captureName] ?? false);
+		}
+		$capture = $captureRenderItems === [] ? '[]' : '[' . implode(', ', $captureRenderItems) . ']';
 		$paramList = $this->renderClosureParams($params, $namespacePhp);
 		$returnType = $this->renderClosureReturnType($returnTypeNode, $statements, $expr);
 		if ($returnType === '/* unsupported-closure-return-type */') {
@@ -4301,6 +4601,13 @@ final class Generator
 				$this->declaredLocalTypes[$captureName] = $savedDeclaredLocalTypes[$captureName];
 			}
 		}
+		$captureShadowNames = [];
+		foreach ($captureItems as $captureName) {
+			if ($this->hasForeachReferenceSlotAlias($captureName)) {
+				$captureShadowNames[$captureName] = true;
+			}
+		}
+		$this->foreachReferenceSuppressedNamesStack[] = $captureShadowNames;
 		$paramIndex = 0;
 		foreach ($params as $param) {
 			if (!is_object($param) || (($param->kind ?? null) !== AstKind::PARAM)) {
@@ -4322,6 +4629,7 @@ final class Generator
 
 		$bodyLines = $this->renderStatementSequence($statements, $namespacePhp);
 
+		array_pop($this->foreachReferenceSuppressedNamesStack);
 		$this->declaredLocals = $savedDeclaredLocals;
 		$this->declaredLocalTypes = $savedDeclaredLocalTypes;
 		$this->predefinedReferenceLocals = $savedReferenceLocals;
@@ -4661,11 +4969,12 @@ final class Generator
 			if ($name === 'this') {
 				return 'this';
 			}
-			if ($name !== '' && !isset($this->declaredLocals[$name])) {
+			$hasForeachByRefAlias = $this->hasForeachReferenceSlotAlias($name);
+			if ($name !== '' && !isset($this->declaredLocals[$name]) && !$hasForeachByRefAlias) {
 				$this->errors[] = 'Variable $' . $name . ' is not visible in this block at line ' . (int) ($expr->lineno ?? 0) . '. Safe v1 uses block-local variable visibility; declare $' . $name . ' in the current block or an enclosing block before use.';
 				return '/* undeclared-var-' . $name . ' */';
 			}
-			return $name;
+			return $this->renderVar($expr);
 		}
 		if ($kind === AstKind::CONST) {
 			$name = (string) ($expr->children['name']->children['name'] ?? '');
@@ -4776,6 +5085,12 @@ final class Generator
 			// Keyed reads must stay on the runtime helper path so missing and existing-null do not collapse into pure key-existence semantics.
 			$varNode = $expr->children['var'] ?? null;
 			return $this->qualifyKnownPhpRuntimeSymbol('isset') . '(' . $this->renderExpr($varNode, $namespacePhp) . ')';
+		}
+		if ($kind === AstKind::AST_EMPTY) {
+			// empty() must evaluate the operand expression through the runtime helper so missing keyed reads,
+			// existing null, empty string, and countable-empty values follow the unified narrowed contract.
+			$exprNode = $expr->children['expr'] ?? null;
+			return $this->qualifyKnownPhpRuntimeSymbol('empty') . '(' . $this->renderExpr($exprNode, $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr->children['expr'] ?? null;
@@ -4972,6 +5287,7 @@ final class Generator
 			AstKind::CALL,
 			AstKind::STATIC_CALL,
 			AstKind::AST_ISSET,
+			AstKind::AST_EMPTY,
 			AstKind::CAST,
 			AstKind::BINARY_OP,
 			AstKind::ASSIGN,
@@ -5350,7 +5666,17 @@ final class Generator
 		}
 
 		$name = (string) ($expr->children['name'] ?? 'var');
-		return $name === 'this' ? 'this' : $name;
+		if ($name === 'this') {
+			return 'this';
+		}
+		if (!$this->isForeachReferenceSlotSuppressed($name)) {
+			for ($i = count($this->foreachReferenceSlotStack) - 1; $i >= 0; --$i) {
+				if (isset($this->foreachReferenceSlotStack[$i][$name])) {
+					return $this->foreachReferenceSlotStack[$i][$name];
+				}
+			}
+		}
+		return $this->localCppName($name);
 	}
 
 	private function inferExprType(mixed $expr): string

@@ -7,6 +7,23 @@
         "var_dump",
         "echo_eval",
         "identical",
-        "not_identical"
+        "not_identical",
+        "substr",
+        "substr_compare",
+        "substr_replace",
+        "str_pad",
+        "str_replace",
+        "strlen",
+        "strpos",
+        "strrpos",
+        "strtolower",
+        "strtoupper",
+        "lcfirst",
+        "ucfirst",
+        "str_starts_with",
+        "str_ends_with",
+        "trim",
+        "ltrim",
+        "rtrim"
     ]
 }

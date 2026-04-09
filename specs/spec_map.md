@@ -63,6 +63,11 @@ If a new implementation pass, review, or chat session starts, this document shou
    - may refine local behavior
    - must not contradict Level 1 documents
 
+6A. `specs/builtin_intake_procedure.md`
+   - authoritative for new builtin intake workflow
+   - authoritative for mandatory folder organization and compile-plan requirements for builtin work
+   - must not contradict Level 1 documents
+
 ### Level 3 — Audit / planning / supporting documents
 
 7. audit, todo, and reference documents under `specs/`
@@ -200,6 +205,14 @@ Role:
 Authority:
 - normative for generation workflow, but subordinate to higher-level documents
 
+### `specs/builtin_intake_procedure.md`
+Role:
+- mandatory procedure for new builtin intake
+- defines contract freeze, folder placement, compile planning, registration discipline, and sandbox-test completion requirements for builtin work
+
+Authority:
+- normative for builtin workflow, but subordinate to higher-level documents
+
 ### `php_generator/specs/rules.md`
 Role:
 - main generator lowering rules
@@ -264,3 +277,6 @@ Authority:
   - defines the single runtime contract for `count(...)`, `empty(...)`, and `isset(...)`, including narrowed emptiness and non-mutating probe rules
 
 - `project_build_v1.md` — first practical project build contract (`scpp init`, `prism.json`, `.prism/`, Ninja-backed `scpp build`)
+
+
+See: module_inclusion_model.md

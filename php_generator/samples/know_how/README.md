@@ -60,3 +60,11 @@ Generate the matching `.php.json` exports when convenient.
 - `slot_ref_nested_parent_same_leaf.php`
 - `slot_ref_root_mid_leaf_alias.php`
 - `slot_ref_duplicate_table_and_leaf_alias.php`
+
+## Focused foreach by-reference fixtures
+
+- `04_foreach_by_ref_value_only.php` isolates `foreach ($data as &$v)`
+- `04_foreach_by_ref_with_key.php` isolates `foreach ($data as $k => &$v)`
+- current lowering is source-slot rewriting, not a standalone alias local
+- value-only form synthesizes a hidden key local; explicit-key form preserves the PHP key variable
+- this behavior is provisional and subject to future improvement

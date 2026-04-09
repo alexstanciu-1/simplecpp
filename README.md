@@ -142,7 +142,8 @@ Prism++ now has an explicit project-mode staging contract:
 - build output is rooted under `.prism/build` and `.prism/generated`
 - Ninja is the default backend
 - `scpp build` defaults to `build.mode = "debug"` for faster iteration
-- on Linux/macOS, `scpp build` prefers `lld` automatically when it is installed
+- on Linux/macOS, `scpp build` prefers `mold`, then `lld`, then the system default linker
+- compiler selection can be pinned in `prism.json` with `build.cxx` or overridden per-build with `SCPP_CXX`
 - the runtime is built as a reusable cached artifact and only rebuilt when runtime inputs change
 - the first public build target is one configured entrypoint -> one executable
 

@@ -27,10 +27,12 @@ function main(): void
 	$binDir = get_user_bin_dir();
 
 	ensure_dir($binDir);
+	$launcherPhpBin = get_launcher_php_bin();
+	echo "Launcher PHP binary: {$launcherPhpBin}\n";
 	write_php_shim($binDir);
-	write_launcher($binDir);
+	write_launcher($binDir, $launcherPhpBin);
 	write_optional_windows_sccache_shim($binDir);
-	write_config($repoRoot, $binDir);
+	write_config($repoRoot, $binDir, $launcherPhpBin);
 	ensure_user_path_entry($binDir);
 	verify_install($binDir);
 	print_success_notes($repoRoot, $binDir);
@@ -164,6 +166,68 @@ function get_user_bin_dir(): string
 	return $home . DIRECTORY_SEPARATOR . '.local' . DIRECTORY_SEPARATOR . 'bin';
 }
 
+
+function get_launcher_php_bin(): string
+{
+	$requested = trim((string) (getenv('SCPP_INSTALL_PHP_BIN') ?: ''));
+	if ($requested !== '') {
+		$resolved = resolve_command_path($requested);
+		if ($resolved === null) {
+			throw new RuntimeException("Requested launcher PHP binary was not found on PATH: {$requested}");
+		}
+
+		return $resolved;
+	}
+
+	$phpBinary = PHP_BINARY;
+	if ($phpBinary === '') {
+		throw new RuntimeException('Unable to determine the PHP binary for the launcher.');
+	}
+
+	return $phpBinary;
+}
+
+function resolve_command_path(string $command): ?string
+{
+	if ($command === '') {
+		return null;
+	}
+
+	if (strpbrk($command, '/\\') !== false) {
+		$real = realpath($command);
+		if ($real !== false && is_file($real)) {
+			return $real;
+		}
+
+		return is_file($command) ? $command : null;
+	}
+
+	$path = (string) getenv('PATH');
+	foreach (explode(PATH_SEPARATOR, $path) as $dir) {
+		if ($dir === '') {
+			continue;
+		}
+
+		$candidate = $dir . DIRECTORY_SEPARATOR . $command;
+		if (is_file($candidate) && is_executable($candidate)) {
+			$real = realpath($candidate);
+			return $real === false ? $candidate : $real;
+		}
+	}
+
+	return null;
+}
+
+function escape_posix_sh_arg(string $value): string
+{
+	return escapeshellarg($value);
+}
+
+function escape_windows_cmd_arg(string $value): string
+{
+	return str_replace('"', '""', $value);
+}
+
 function write_php_shim(string $binDir): void
 {
 	$shimPath = $binDir . DIRECTORY_SEPARATOR . 'scpp.php';
@@ -202,18 +266,18 @@ PHP;
 	file_put_contents_or_throw($shimPath, $content . PHP_EOL);
 }
 
-function write_launcher(string $binDir): void
+function write_launcher(string $binDir, string $launcherPhpBin): void
 {
 	if (PHP_OS_FAMILY === 'Windows') {
 		$cmdLauncherPath = $binDir . DIRECTORY_SEPARATOR . 'scpp.cmd';
 		$cmdContent = "@echo off\r\n" .
-			"php \"%~dp0scpp.php\" %*\r\n";
+			'"' . escape_windows_cmd_arg($launcherPhpBin) . '" "%~dp0scpp.php" %*' . "\r\n";
 		file_put_contents_or_throw($cmdLauncherPath, $cmdContent);
 		echo "Launcher installed: {$cmdLauncherPath}\n";
 
 		$bashLauncherPath = $binDir . DIRECTORY_SEPARATOR . 'scpp';
 		$bashContent = "#!/usr/bin/env sh\n" .
-			"php \"$(dirname \"$0\")/scpp.php\" \"$@\"\n";
+			'exec ' . escape_posix_sh_arg($launcherPhpBin) . ' "$(dirname "$0")/scpp.php" "$@"' . "\n";
 		file_put_contents_or_throw($bashLauncherPath, $bashContent);
 		@chmod($bashLauncherPath, 0755);
 		echo "Launcher installed: {$bashLauncherPath} (Git Bash / MinGW)\n";
@@ -222,7 +286,7 @@ function write_launcher(string $binDir): void
 
 	$launcherPath = $binDir . DIRECTORY_SEPARATOR . 'scpp';
 	$content = "#!/usr/bin/env sh\n" .
-		"php \"$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)/scpp.php\" \"$@\"\n";
+		'exec ' . escape_posix_sh_arg($launcherPhpBin) . ' "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/scpp.php" "$@"' . "\n";
 
 	file_put_contents_or_throw($launcherPath, $content);
 	@chmod($launcherPath, 0755);
@@ -256,7 +320,7 @@ function write_optional_windows_sccache_shim(string $binDir): void
 	echo "Launcher installed: {$bashShimPath} (Git Bash / MinGW)\n";
 }
 
-function write_config(string $repoRoot, string $binDir): void
+function write_config(string $repoRoot, string $binDir, string $launcherPhpBin): void
 {
 	$configPath = $binDir . DIRECTORY_SEPARATOR . 'scpp.json';
 	$config = [
@@ -264,6 +328,7 @@ function write_config(string $repoRoot, string $binDir): void
 		'installed_at' => date(DATE_ATOM),
 		'install_mode' => 'repo-based-user-local',
 		'version' => SCPP_VERSION,
+		'php_bin' => $launcherPhpBin,
 	];
 
 	$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

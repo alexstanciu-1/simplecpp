@@ -77,6 +77,9 @@ private:
 	void move_construct(mixed_t &&other) noexcept;
 
 public:
+
+	// Transfer ownership of table value (used by runtime internals)
+	unique_p<hash_t<mixed_t>> take_table_value();
 	// Lifecycle
 	mixed_t() noexcept;
 	mixed_t(null_t) noexcept;

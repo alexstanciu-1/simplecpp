@@ -3,148 +3,62 @@ declare(strict_types=1);
 
 namespace Scpp\S2S\Support;
 
+require_once __DIR__ . '/AstKindPhp84.php';
+require_once __DIR__ . '/AstKindPhp85.php';
+
 /**
- * Centralizes the php-ast numeric kind/flag constants that the loader, IR builder, and generator interpret.
+ * Selects the php-ast numeric kind/flag table that matches the active PHP minor.
  *
- * Relationship to specs:
- * - this type exists to keep the implementation aligned with php_generator/specs/rules.md and rules_catalog.md
- * - the implementation favors explicit normalized data over ad-hoc AST access during emission
+ * Prism++ intentionally treats these numeric values as version-specific.
+ * Supported runtime families are PHP 8.4.x and PHP 8.5.x only.
  */
-final class AstKind
-{
-	public const ARRAY = 129;
-	public const ARG_LIST = 128;
-	public const ARRAY_ELEM = 526;
-	public const ENCAPS_LIST = 130;
-	public const STMT_LIST = 132;
-	public const IF = 133;
-	public const SWITCH_LIST = 134;
-	public const FUNC_DECL = 68;
-	public const CLOSURE = 69;
-	public const METHOD = 70;
-	public const CLASS_ = 71;
-	public const ARROW_FUNC = 72;
-	public const RETURN = 278;
-	public const AST_ECHO = 282;
-	public const THROW = 283;
-	public const NAMESPACE = 542;
-	public const USE = 143;
-	public const GROUP_USE = 545;
-	public const CONST_DECL = 139;
-	public const CONST_ELEM = 775;
-	public const USE_ELEM = 543;
-	public const ASSIGN = 518;
-	public const VAR = 256;
-	public const REF = 280;
-	public const CONST = 257;
-	public const AST_ISSET = 264;
-	public const AST_UNSET = 277;
-	public const BREAK = 285;
-	public const CONTINUE = 286;
-	public const NAME = 2048;
-	public const BINARY_OP = 521;
-	public const ASSIGN_REF = 519;
-	public const ASSIGN_OP = 520;
-	public const DIM = 512;
-	public const PROP = 513;
-	public const NULLSAFE_PROP = 514;
-	public const STATIC_PROP = 515;
-	public const METHOD_CALL = 768;
-	public const CAST = 261;
-	public const INCLUDE_OR_EVAL = 268;
-	public const PROP_DECL = 774;
-	public const CLASS_CONST_DECL = 776;
-	public const ENUM_CASE = 1026;
-	public const PROP_ELEM = 1027;
-	public const NEW = 527;
-	public const STATIC_CALL = 770;
-	public const CALL = 516;
-	public const CLASS_CONST = 517;
-	public const PARAM = 1536;
-	public const STATIC_VAR = 532;
-	public const STATIC = 16;
-	public const CLASS_INTERFACE = 1;
-	public const CLASS_ABSTRACT = 64;
-	public const IF_ELEM = 535;
-	public const SWITCH = 536;
-	public const SWITCH_CASE = 537;
-	public const DECLARE = 538;
-	public const WHILE = 533;
-	public const DO_WHILE = 534;
-	public const PRE_INC = 270;
-	public const PRE_DEC = 271;
-	public const POST_INC = 272;
-	public const POST_DEC = 273;
-	public const UNARY_OP = 269;
-	public const FOR = 1024;
-	public const FOREACH = 1025;
-	public const CONDITIONAL = 771;
-	public const TRY = 772;
-	public const CATCH = 773;
-	public const MATCH = 547;
-	public const MATCH_ARM = 548;
-	public const PLUS = 1;
-	public const MINUS = 2;
-	public const MUL = 3;
-	public const DIV = 4;
-	public const MOD = 5;
-	public const SHIFT_LEFT = 6;
-	public const SHIFT_RIGHT = 7;
-	public const BINARY_CONCAT = 8;
-	public const BITWISE_OR = 9;
-	public const BITWISE_AND = 10;
-	public const BITWISE_XOR = 11;
-	public const BINARY_IS_IDENTICAL = 16;
-	public const BINARY_IS_NOT_EQUAL = 17;
-	public const BINARY_IS_EQUAL = 18;
-	public const BINARY_IS_NOT_IDENTICAL = 19;
-	public const BINARY_IS_SMALLER = 20;
-	public const BINARY_IS_SMALLER_OR_EQUAL = 21;
-	public const BINARY_IS_GREATER = 256;
-	public const BINARY_BOOL_OR = 258;
-	public const BINARY_BOOL_AND = 259;
-	public const BINARY_COALESCE = 260;
-	public const UNARY_PLUS = 261;
-	public const UNARY_MINUS = 262;
-	public const UNARY_BOOL_NOT = 14;
-	public const UNARY_BITWISE_NOT = 13;
-	public const RETURN_REF = 4096;
-	public const PARAM_REF = 8;
-	public const PARAM_VARIADIC = 16;
-	public const TYPE_VOID = 14;
-	public const TYPE_BOOL = 18;
-	public const TYPE_LONG = 4;
-	public const TYPE_DOUBLE = 5;
-	public const TYPE_STRING = 6;
-	public const TYPE_ARRAY = 7;
-	public const TYPE_OBJECT = 8;
-	public const TYPE_MIXED = 16;
-	public const CLOSURE_VAR = 2049;
-	public const NULLABLE_TYPE = 2050;
-	public const USE_NORMAL = 1;
-	public const USE_FUNCTION = 2;
-	public const USE_CONST = 4;
-	public const EXEC_EVAL = 1;
-	public const EXEC_INCLUDE = 2;
-	public const EXEC_INCLUDE_ONCE = 4;
-	public const EXEC_REQUIRE = 8;
-	public const EXEC_REQUIRE_ONCE = 16;
-
-	/**
-
-	 * Stores collaborators and default state for this phase object.
-
-	 *
-
-	 * Relationship to specs:
-
-	 * - preserves the subset and lowering rules documented for the prototype
-
-	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
-
-	 */
-
-	private function __construct()
+if (PHP_VERSION_ID >= 80400 && PHP_VERSION_ID < 80500) {
+	final class AstKind extends AstKindPhp84
 	{
+	}
+} elseif (PHP_VERSION_ID >= 80500 && PHP_VERSION_ID < 80600) {
+	final class AstKind extends AstKindPhp85
+	{
+	}
+} else {
+	throw new \RuntimeException('Unsupported PHP version for AST numeric mapping: ' . PHP_VERSION . ' (expected 8.4.x or 8.5.x)');
+}
+
+if (extension_loaded('ast')) {
+	$version = max(\ast\get_supported_versions());
+	$probe = <<<'PHP'
+<?php
+function __scpp_ast_probe($a, $b) {
+	return $a + $b;
+}
+echo __scpp_ast_probe(1, 2), "\n";
+PHP;
+	$root = \ast\parse_code($probe, $version);
+	$children = is_object($root) && is_array($root->children ?? null) ? $root->children : [];
+	$funcNode = $children[0] ?? null;
+	$returnNode = is_object($funcNode) ? (($funcNode->children['stmts']->children[0] ?? null) ?: null) : null;
+	$echoNodeA = $children[1] ?? null;
+	$echoNodeB = $children[2] ?? null;
+
+	$checks = [
+		'STMT_LIST' => [$root->kind ?? null, AstKind::STMT_LIST],
+		'FUNC_DECL' => [is_object($funcNode) ? ($funcNode->kind ?? null) : null, AstKind::FUNC_DECL],
+		'RETURN' => [is_object($returnNode) ? ($returnNode->kind ?? null) : null, AstKind::RETURN],
+		'AST_ECHO#1' => [is_object($echoNodeA) ? ($echoNodeA->kind ?? null) : null, AstKind::AST_ECHO],
+		'AST_ECHO#2' => [is_object($echoNodeB) ? ($echoNodeB->kind ?? null) : null, AstKind::AST_ECHO],
+	];
+
+	$failures = [];
+	foreach ($checks as $label => [$actual, $expected]) {
+		if ($actual !== $expected) {
+			$failures[] = $label . ': expected ' . (string) $expected . ', got ' . var_export($actual, true);
+		}
+	}
+
+	if ($failures !== []) {
+		throw new \RuntimeException(
+			'php-ast numeric mapping mismatch for PHP ' . PHP_VERSION . ' and AST version ' . $version . '. ' .
+			'Run Prism++ with an explicit supported PHP binary. Details: ' . implode('; ', $failures)
+		);
 	}
 }

@@ -139,6 +139,10 @@ function print_help(): void
 	echo "  scpp --help\n";
 	echo "  scpp --version\n";
 	echo "  scpp --doctor\n";
+	echo "\n";
+	echo "Compiler selection:\n";
+	echo "  prism.json: build.cxx = \"clang++\" or \"g++\"\n";
+	echo "  env: SCPP_CXX=clang++ scpp build\n";
 }
 
 function print_version(): void
@@ -153,8 +157,8 @@ function print_doctor(): void
 	$phpIni = php_ini_loaded_file();
 	$astLoaded = extension_loaded('ast') ? 'yes' : 'no';
 	$ninja = find_command_path(['ninja']);
-	$compilerLauncher = detect_compiler_launcher();
-	$compiler = detect_default_compiler();
+	$compilerLauncher = resolve_compiler_launcher();
+	$compiler = resolve_compiler(['build' => []]);
 	$projectConfig = find_project_config(getcwd() === false ? $repoRoot : getcwd());
 
 	echo "scpp doctor\n";
@@ -170,8 +174,10 @@ function print_doctor(): void
 	echo 'config_path: ' . (is_file($configPath) ? $configPath : '(none)') . PHP_EOL;
 	echo 'project_config: ' . ($projectConfig['config_path'] ?? '(none)') . PHP_EOL;
 	echo 'ninja: ' . ($ninja ?? '(not found)') . PHP_EOL;
-	echo 'sccache: ' . ($compilerLauncher ?? '(not found)') . PHP_EOL;
-	echo 'default_cxx: ' . ($compiler !== null ? compiler_display_command($compiler) : '(not found)') . PHP_EOL;
+	echo 'cxx_launcher: ' . ($compilerLauncher ?? '(not found)') . PHP_EOL;
+	echo 'resolved_cxx: ' . ($compiler !== null ? compiler_display_command($compiler) : '(not found)') . PHP_EOL;
+	echo 'env_SCPP_CXX: ' . (getenv('SCPP_CXX') !== false ? (string) getenv('SCPP_CXX') : '(unset)') . PHP_EOL;
+	echo 'env_SCPP_CXX_LAUNCHER: ' . (getenv('SCPP_CXX_LAUNCHER') !== false ? (string) getenv('SCPP_CXX_LAUNCHER') : '(unset)') . PHP_EOL;
 }
 
 function resolve_repo_root(): string
@@ -312,6 +318,7 @@ function handle_build(string $cwd): void
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
 
 	if (supports_compiler_pch($compiler)) {
+		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
 		write_text_file(build_runtime_pch_header_path($buildDir), render_runtime_pch_header());
 	}
 
@@ -319,6 +326,8 @@ function handle_build(string $cwd): void
 	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $outputName, $compiler, $buildMode);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
+	$buildOutputs = collect_build_output_paths($generatedUnits, build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode), $buildDir, $compiler['kind'], $outputName);
+	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
 	echo 'Using compiler: ' . compiler_display_command($compiler) . ' (' . $compiler['kind'] . ')' . PHP_EOL;
@@ -330,6 +339,9 @@ function handle_build(string $cwd): void
 		'-f',
 		normalize_config_path(relative_path($projectRoot, $buildNinjaPath)),
 	];
+	if (build_ninja_verbose_requested()) {
+		$command[] = '-v';
+	}
 	$descriptor = [
 		0 => ['file', 'php://stdin', 'r'],
 		1 => ['file', 'php://stdout', 'w'],
@@ -350,7 +362,83 @@ function handle_build(string $cwd): void
 		exit($status);
 	}
 
+	$buildOutputMtimesAfter = capture_file_mtimes($buildOutputs);
+	$rebuiltOutputs = detect_rebuilt_outputs($buildOutputMtimesBefore, $buildOutputMtimesAfter);
+	if ($rebuiltOutputs !== []) {
+		echo 'Rebuilt outputs: ' . implode(', ', array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)) . PHP_EOL;
+	} else {
+		echo 'Rebuilt outputs: none (up-to-date)' . PHP_EOL;
+	}
+	if (!build_ninja_verbose_requested()) {
+		echo 'Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.' . PHP_EOL;
+	}
 	echo 'Build completed: ' . normalize_config_path(relative_path($projectRoot, $buildDir . '/' . $outputName)) . PHP_EOL;
+}
+
+
+/**
+ * @param list<array{relative_php:string,generated_cpp:string,object_path:string}> $generatedUnits
+ * @param array{kind:string,source_path:string,artifact_path:string,object_path:?string,archiver:?string,link_flags?:list<string>,rpath_dir?:?string} $runtimeBuild
+ * @return list<string>
+ */
+function collect_build_output_paths(array $generatedUnits, array $runtimeBuild, string $buildDir, string $compilerKind, string $outputName): array
+{
+	$paths = [];
+	foreach ($generatedUnits as $unit) {
+		$paths[] = normalize_path($unit['object_path']);
+	}
+	$runtimeObjectPath = $runtimeBuild['object_path'] ?? null;
+	if (is_string($runtimeObjectPath) && $runtimeObjectPath !== '') {
+		$paths[] = normalize_path($runtimeObjectPath);
+	}
+	$paths[] = normalize_path($runtimeBuild['artifact_path']);
+	if (supports_compiler_pch(['kind' => $compilerKind])) {
+		$paths[] = normalize_path(build_app_pch_artifact_path($buildDir, $compilerKind));
+		$paths[] = normalize_path(build_runtime_pch_artifact_path($buildDir, $compilerKind));
+	}
+	$paths[] = normalize_path($buildDir . '/' . $outputName);
+	return array_values(array_unique($paths));
+}
+
+/** @param list<string> $paths @return array<string,int|null> */
+function capture_file_mtimes(array $paths): array
+{
+	$result = [];
+	foreach ($paths as $path) {
+		$mtime = is_file($path) ? filemtime($path) : false;
+		$result[$path] = is_int($mtime) ? $mtime : null;
+	}
+	return $result;
+}
+
+/** @param array<string,int|null> $before @param array<string,int|null> $after @return list<string> */
+function detect_rebuilt_outputs(array $before, array $after): array
+{
+	$rebuilt = [];
+	foreach ($after as $path => $afterMtime) {
+		$beforeMtime = $before[$path] ?? null;
+		if ($afterMtime === null) {
+			continue;
+		}
+		if ($beforeMtime === null || $afterMtime > $beforeMtime) {
+			$rebuilt[] = $path;
+		}
+	}
+	sort($rebuilt, SORT_STRING);
+	return $rebuilt;
+}
+
+function build_ninja_verbose_requested(): bool
+{
+	$value = getenv('SCPP_NINJA_VERBOSE');
+	if (!is_string($value)) {
+		return false;
+	}
+	$value = trim($value);
+	if ($value === '') {
+		return false;
+	}
+	return !in_array(strtolower($value), ['0', 'false', 'no', 'off'], true);
 }
 
 /** @return array{project_root:string,config_path:string}|null */
@@ -463,6 +551,29 @@ function build_output_name(string $entrypointAbs): string
 		return $base . '.exe';
 	}
 	return $base;
+}
+
+function build_app_pch_header_path(string $buildDir): string
+{
+	return $buildDir . '/app_pch.hpp';
+}
+
+function build_app_pch_artifact_path(string $buildDir, string $compilerKind): string
+{
+	$headerPath = build_app_pch_header_path($buildDir);
+	if ($compilerKind === 'msvc') {
+		return $buildDir . '/app_pch.pch';
+	}
+
+	return $headerPath . '.gch';
+}
+
+function render_app_pch_header(): string
+{
+	return "#pragma once
+
+#include <scpp/runtime.hpp>
+";
 }
 
 function build_runtime_pch_header_path(string $buildDir): string
@@ -618,25 +729,13 @@ function build_object_path(string $buildDir, string $relativePhp, string $compil
 	return $buildDir . '/' . $trimmed . '.' . object_extension($compilerKind);
 }
 
+
 /** @return array{command:string,kind:string,launcher:?string,linker_flags:list<string>,archiver:?string}|null */
 function resolve_compiler(array $config): ?array
 {
-	$override = $config['build']['cxx'] ?? null;
-	if (is_string($override) && trim($override) !== '') {
-		$command = trim($override);
-		$path = find_command_path([$command]);
-		if ($path === null && !preg_match('/[\\\/]/', $command)) {
-			fwrite(STDERR, 'Configured compiler not found in PATH: ' . $command . PHP_EOL);
-			exit(1);
-		}
-		$kind = strcasecmp(basename(str_replace('\\', '/', $command)), 'cl') === 0 ? 'msvc' : 'gnu_like';
-		return [
-			'command' => $command,
-			'kind' => $kind,
-			'launcher' => detect_compiler_launcher(),
-			'linker_flags' => detect_fast_linker_flags($kind),
-			'archiver' => detect_archiver_command($kind),
-		];
+	$override = resolve_compiler_command_override($config);
+	if ($override !== null) {
+		return build_compiler_spec($override);
 	}
 
 	return detect_default_compiler();
@@ -654,12 +753,78 @@ function resolve_build_mode(array $config): string
 	if ($normalized === '') {
 		return 'debug';
 	}
-	if (in_array($normalized, ['debug', 'release'], true)) {
-		return $normalized;
+	if (in_array($normalized, ['debug', 'dev', 'development'], true)) {
+		return 'debug';
+	}
+	if ($normalized === 'release') {
+		return 'release';
 	}
 
-	fwrite(STDERR, 'Unsupported build.mode `' . $mode . '` in ' . SCPP_PROJECT_CONFIG . '; expected `debug` or `release`.' . PHP_EOL);
+	fwrite(STDERR, 'Unsupported build.mode `' . $mode . '` in ' . SCPP_PROJECT_CONFIG . '; expected `debug`, `dev`, `development`, or `release`.' . PHP_EOL);
 	exit(1);
+}
+
+
+function resolve_compiler_command_override(array $config): ?string
+{
+	$envOverride = getenv('SCPP_CXX');
+	if ($envOverride !== false && trim((string) $envOverride) !== '') {
+		return trim((string) $envOverride);
+	}
+
+	$configOverride = $config['build']['cxx'] ?? null;
+	if (is_string($configOverride) && trim($configOverride) !== '') {
+		return trim($configOverride);
+	}
+
+	return null;
+}
+
+/** @return array{command:string,kind:string,launcher:?string,linker_flags:list<string>,archiver:?string} */
+function build_compiler_spec(string $command): array
+{
+	$path = find_command_path([$command]);
+	if ($path === null && !preg_match('/[\\\/]/', $command)) {
+		fwrite(STDERR, 'Configured compiler not found in PATH: ' . $command . PHP_EOL);
+		exit(1);
+	}
+
+	$kind = compiler_kind_from_command($command);
+	return [
+		'command' => $command,
+		'kind' => $kind,
+		'launcher' => resolve_compiler_launcher(),
+		'linker_flags' => detect_fast_linker_flags($kind),
+		'archiver' => detect_archiver_command($kind),
+	];
+}
+
+function compiler_kind_from_command(string $command): string
+{
+	$base = strtolower(basename(str_replace('\\', '/', $command)));
+	if (preg_match('/^cl(\.exe)?$/', $base) === 1) {
+		return 'msvc';
+	}
+	return 'gnu_like';
+}
+
+function resolve_compiler_launcher(): ?string
+{
+	$envOverride = getenv('SCPP_CXX_LAUNCHER');
+	if ($envOverride !== false) {
+		$trimmed = trim((string) $envOverride);
+		if ($trimmed === '') {
+			return null;
+		}
+		$path = find_command_path([$trimmed]);
+		if ($path === null && !preg_match('/[\\\/]/', $trimmed)) {
+			fwrite(STDERR, 'Configured compiler launcher not found in PATH: ' . $trimmed . PHP_EOL);
+			exit(1);
+		}
+		return $trimmed;
+	}
+
+	return detect_compiler_launcher();
 }
 
 /** @return array{command:string,kind:string,launcher:?string,linker_flags:list<string>,archiver:?string}|null */
@@ -676,14 +841,7 @@ function detect_default_compiler(): ?array
 		if ($path === null) {
 			continue;
 		}
-		$kind = strcasecmp($candidate, 'cl') === 0 ? 'msvc' : 'gnu_like';
-		return [
-			'command' => $candidate,
-			'kind' => $kind,
-			'launcher' => detect_compiler_launcher(),
-			'linker_flags' => detect_fast_linker_flags($kind),
-			'archiver' => detect_archiver_command($kind),
-		];
+		return build_compiler_spec($candidate);
 	}
 
 	return null;
@@ -708,6 +866,10 @@ function detect_fast_linker_flags(string $compilerKind): array
 {
 	if ($compilerKind !== 'gnu_like' || PHP_OS_FAMILY === 'Windows') {
 		return [];
+	}
+
+	if (PHP_OS_FAMILY === 'Linux' && find_command_path(['mold']) !== null) {
+		return ['-fuse-ld=mold'];
 	}
 
 	if (find_command_path(['ld.lld']) !== null) {
@@ -741,6 +903,8 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$generatedIncludeDir = normalize_config_path(relative_path($projectRoot, $generatedDir));
 	$runtimeIncludeDir = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include'));
 	$output = normalize_config_path(relative_path($projectRoot, $buildDir . '/' . $outputName));
+	$appPchHeader = normalize_config_path(relative_path($projectRoot, build_app_pch_header_path($buildDir)));
+	$appPchArtifact = normalize_config_path(relative_path($projectRoot, build_app_pch_artifact_path($buildDir, $compiler['kind'])));
 	$runtimePchHeader = normalize_config_path(relative_path($projectRoot, build_runtime_pch_header_path($buildDir)));
 	$runtimePchArtifact = normalize_config_path(relative_path($projectRoot, build_runtime_pch_artifact_path($buildDir, $compiler['kind'])));
 	$compilerCommand = $compiler['command'];
@@ -748,26 +912,43 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$linkerFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode);
 	$runtimeSignatureStamp = normalize_config_path(relative_path($projectRoot, $buildDir . '/runtime_signature.txt'));
+	$runtimeLinkFlags = is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
+	$baseLinkFlags = $linkerFlags;
+	$binaryLinkFlags = $baseLinkFlags;
+	if ($runtimeBuild['kind'] === 'shared' && is_string($runtimeBuild['rpath_dir'] ?? null) && $runtimeBuild['rpath_dir'] !== '') {
+		$binaryLinkFlags[] = '-Wl,-rpath,' . ninja_escape_path($runtimeBuild['rpath_dir']);
+	}
 
 	$lines = [];
 	$lines[] = 'cxx = ' . $compilerCommand;
 	if (is_string($compilerLauncher) && $compilerLauncher !== '') {
 		$lines[] = 'cxx_launcher = ' . $compilerLauncher;
 	}
-	if ($runtimeBuild['archiver'] !== null) {
-		$lines[] = 'ar = ' . $runtimeBuild['archiver'];
-	}
 	$lines[] = 'cxxflags = ' . build_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir, $generatedIncludeDir);
 	$lines[] = 'runtime_cxxflags = ' . build_runtime_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir);
-	$lines[] = 'ldflags = ' . implode(' ', $linkerFlags);
+	$lines[] = 'base_ldflags = ' . implode(' ', $baseLinkFlags);
+	$lines[] = 'ldflags = ' . implode(' ', $binaryLinkFlags);
+	if ($runtimeLinkFlags !== []) {
+		$lines[] = 'runtime_ldflags = ' . implode(' ', $runtimeLinkFlags);
+	}
 	if (supports_compiler_pch($compiler)) {
-		$lines[] = 'pch_header = ' . $runtimePchHeader;
-		$lines[] = 'pchflags = -Winvalid-pch -include $pch_header';
+		$lines[] = 'app_pch_header = ' . $appPchHeader;
+		$lines[] = 'app_pchflags = -Winvalid-pch -include $app_pch_header';
+		$lines[] = 'runtime_pch_header = ' . $runtimePchHeader;
+		$lines[] = 'runtime_pchflags = -Winvalid-pch -include $runtime_pch_header';
 	}
 	$lines[] = '';
 	if (supports_compiler_pch($compiler)) {
-		$lines[] = 'rule compile_pch';
-		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags -x c++-header $in -o $out';
+		$lines[] = 'rule compile_pch_app';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags -MMD -MF $out.d -x c++-header $in -o $out';
+		$lines[] = '  depfile = $out.d';
+		$lines[] = '  deps = gcc';
+		$lines[] = '  description = PCH $out';
+		$lines[] = '';
+		$lines[] = 'rule compile_pch_runtime';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $runtime_cxxflags -MMD -MF $out.d -x c++-header $in -o $out';
+		$lines[] = '  depfile = $out.d';
+		$lines[] = '  deps = gcc';
 		$lines[] = '  description = PCH $out';
 		$lines[] = '';
 	}
@@ -775,25 +956,31 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	if ($compiler['kind'] === 'msvc') {
 		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $runtime_cxxflags /c $in /Fo$out';
 	} else {
-		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $runtime_cxxflags -c $in -o $out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $runtime_cxxflags' . (supports_compiler_pch($compiler) ? ' $runtime_pchflags' : '') . ' -MMD -MF $out.d -c $in -o $out';
+		$lines[] = '  depfile = $out.d';
+		$lines[] = '  deps = gcc';
 	}
 	$lines[] = '  description = CXX $out';
 	$lines[] = '';
-	if ($runtimeBuild['kind'] === 'archive') {
+	if ($runtimeBuild['kind'] === 'shared') {
 		$lines[] = 'rule compile_runtime';
-		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $runtime_cxxflags -c $in -o $out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $runtime_cxxflags' . (supports_compiler_pch($compiler) ? ' $runtime_pchflags' : '') . ' -MMD -MF $out.d -c $in -o $out';
+		$lines[] = '  depfile = $out.d';
+		$lines[] = '  deps = gcc';
 		$lines[] = '  description = CXX $out';
 		$lines[] = '';
-		$lines[] = 'rule archive_runtime';
-		$lines[] = '  command = $ar rcs $out $in';
-		$lines[] = '  description = AR $out';
+		$lines[] = 'rule link_runtime_shared';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $base_ldflags $runtime_ldflags $in -o $out';
+		$lines[] = '  description = LINK $out';
 		$lines[] = '';
 	}
 	$lines[] = 'rule compile';
 	if ($compiler['kind'] === 'msvc') {
 		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags /c $in /Fo$out';
 	} else {
-		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags' . (supports_compiler_pch($compiler) ? ' $pchflags' : '') . ' -c $in -o $out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags' . (supports_compiler_pch($compiler) ? ' $app_pchflags' : '') . ' -MMD -MF $out.d -c $in -o $out';
+		$lines[] = '  depfile = $out.d';
+		$lines[] = '  deps = gcc';
 	}
 	$lines[] = '  description = CXX $out';
 	$lines[] = '';
@@ -808,24 +995,33 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 
 	$objectPaths = [];
 	if (supports_compiler_pch($compiler)) {
-		$lines[] = 'build ' . ninja_escape_path($runtimePchArtifact) . ': compile_pch ' . ninja_escape_path($runtimePchHeader);
+		$lines[] = 'build ' . ninja_escape_path($appPchArtifact) . ': compile_pch_app ' . ninja_escape_path($appPchHeader);
+		$lines[] = 'build ' . ninja_escape_path($runtimePchArtifact) . ': compile_pch_runtime ' . ninja_escape_path($runtimePchHeader);
 	}
 	foreach ($generatedUnits as $unit) {
 		$generatedCpp = normalize_config_path(relative_path($projectRoot, $unit['generated_cpp']));
 		$objectPath = normalize_config_path(relative_path($projectRoot, $unit['object_path']));
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if (supports_compiler_pch($compiler)) {
-			$implicitDeps[] = ninja_escape_path($runtimePchArtifact);
+			$implicitDeps[] = ninja_escape_path($appPchArtifact);
 		}
 		$lines[] = 'build ' . ninja_escape_path($objectPath) . ': compile ' . ninja_escape_path($generatedCpp) . ' | ' . implode(' ', $implicitDeps);
 		$objectPaths[] = ninja_escape_path($objectPath);
 	}
-	if ($runtimeBuild['kind'] === 'archive') {
-		$lines[] = 'build ' . ninja_escape_path($runtimeBuild['object_path']) . ': compile_runtime ' . ninja_escape_path($runtimeBuild['source_path']) . ' | ' . ninja_escape_path($runtimeSignatureStamp);
-		$lines[] = 'build ' . ninja_escape_path($runtimeBuild['artifact_path']) . ': archive_runtime ' . ninja_escape_path($runtimeBuild['object_path']);
+	if ($runtimeBuild['kind'] === 'shared') {
+		$runtimeImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
+		if (supports_compiler_pch($compiler)) {
+			$runtimeImplicitDeps[] = ninja_escape_path($runtimePchArtifact);
+		}
+		$lines[] = 'build ' . ninja_escape_path($runtimeBuild['object_path']) . ': compile_runtime ' . ninja_escape_path($runtimeBuild['source_path']) . ' | ' . implode(' ', $runtimeImplicitDeps);
+		$lines[] = 'build ' . ninja_escape_path($runtimeBuild['artifact_path']) . ': link_runtime_shared ' . ninja_escape_path($runtimeBuild['object_path']);
 		$objectPaths[] = ninja_escape_path($runtimeBuild['artifact_path']);
 	} else {
-		$lines[] = 'build ' . ninja_escape_path($runtimeBuild['artifact_path']) . ': compile_runtime_fallback ' . ninja_escape_path($runtimeBuild['source_path']) . ' | ' . ninja_escape_path($runtimeSignatureStamp);
+		$runtimeImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
+		if (supports_compiler_pch($compiler)) {
+			$runtimeImplicitDeps[] = ninja_escape_path($runtimePchArtifact);
+		}
+		$lines[] = 'build ' . ninja_escape_path($runtimeBuild['artifact_path']) . ': compile_runtime_fallback ' . ninja_escape_path($runtimeBuild['source_path']) . ' | ' . implode(' ', $runtimeImplicitDeps);
 		$objectPaths[] = ninja_escape_path($runtimeBuild['artifact_path']);
 	}
 	$lines[] = '';
@@ -860,13 +1056,18 @@ function build_runtime_compiler_flags(string $compilerKind, string $buildMode, s
 		'-std=c++23',
 		'-Wall',
 		'-Wextra',
+		'-fPIC',
 	];
 	if ($buildMode === 'release') {
 		$flags[] = '-O3';
 		$flags[] = '-DNDEBUG';
 	} else {
 		$flags[] = '-O0';
-		$flags[] = '-g1';
+		$flags[] = '-fno-inline';
+		$flags[] = '-g';
+		if (PHP_OS_FAMILY === 'Linux') {
+			$flags[] = '-gsplit-dwarf';
+		}
 		$flags[] = '-pipe';
 	}
 	$flags[] = '-I' . $runtimeIncludeDir;
@@ -884,13 +1085,21 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	ensure_directory($runtimeCacheDir);
 
 	$sourcePath = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/src/runtime.cpp'));
-	if ($compiler['kind'] === 'gnu_like' && is_string($compiler['archiver'] ?? null) && $compiler['archiver'] !== '') {
+	if ($compiler['kind'] === 'gnu_like') {
+		$libraryName = PHP_OS_FAMILY === 'Darwin' ? 'libruntime.dylib' : 'libruntime.so';
+		$linkFlags = ['-shared'];
+		if (PHP_OS_FAMILY === 'Darwin') {
+			$linkFlags[] = '-Wl,-install_name,@rpath/' . $libraryName;
+		}
+
 		return [
-			'kind' => 'archive',
+			'kind' => 'shared',
 			'source_path' => $sourcePath,
-			'artifact_path' => normalize_config_path(relative_path($projectRoot, $runtimeCacheDir . '/libruntime.a')),
+			'artifact_path' => normalize_config_path(relative_path($projectRoot, $runtimeCacheDir . '/' . $libraryName)),
 			'object_path' => normalize_config_path(relative_path($projectRoot, $runtimeCacheDir . '/runtime.o')),
-			'archiver' => basename(str_replace('\\', '/', $compiler['archiver'])),
+			'archiver' => null,
+			'link_flags' => $linkFlags,
+			'rpath_dir' => $runtimeCacheDir,
 		];
 	}
 
@@ -900,6 +1109,8 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		'artifact_path' => normalize_config_path(relative_path($projectRoot, $runtimeCacheDir . '/runtime.' . object_extension($compiler['kind']))),
 		'object_path' => null,
 		'archiver' => null,
+		'link_flags' => [],
+		'rpath_dir' => null,
 	];
 }
 
@@ -909,7 +1120,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 function compute_runtime_build_signature(string $repoRoot, array $compiler, string $buildMode): string
 {
 	$parts = [
-		'runtime-v1',
+		'runtime-v2',
 		'kind:' . $compiler['kind'],
 		'command:' . $compiler['command'],
 		'mode:' . $buildMode,
@@ -958,7 +1169,6 @@ function build_compiler_flags(string $compilerKind, string $buildMode, string $r
 			$flags[] = '/O2';
 			$flags[] = '/DNDEBUG';
 		} else {
-			// Favor faster iteration in the default debug mode.
 			$flags[] = '/Od';
 			$flags[] = '/Z7';
 		}
@@ -971,14 +1181,18 @@ function build_compiler_flags(string $compilerKind, string $buildMode, string $r
 		'-std=c++23',
 		'-Wall',
 		'-Wextra',
+		'-fPIC',
 	];
 	if ($buildMode === 'release') {
 		$flags[] = '-O3';
 		$flags[] = '-DNDEBUG';
 	} else {
-		// Favor fast compile times while still keeping basic debug info.
 		$flags[] = '-O0';
-		$flags[] = '-g1';
+		$flags[] = '-fno-inline';
+		$flags[] = '-g';
+		if (PHP_OS_FAMILY === 'Linux') {
+			$flags[] = '-gsplit-dwarf';
+		}
 		$flags[] = '-pipe';
 	}
 	$flags[] = '-I' . $runtimeIncludeDir;

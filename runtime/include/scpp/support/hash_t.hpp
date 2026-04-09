@@ -439,19 +439,29 @@ public:
     // --------------------------------------------------------
     [[nodiscard]] nullable<T_VALUE> find(const int_t &key) const requires std::copyable<T_VALUE> {
         auto [f, p] = find_int(static_cast<std::uint32_t>(key.native_value()));
-        if (!f) return nullable<T_VALUE>(nullopt); nullable<T_VALUE> r; r.native_value() = *p; return r;
+        if (!f) {
+            return nullable<T_VALUE>(nullopt);
+        }
+        nullable<T_VALUE> r;
+        r.native_value() = *p;
+        return r;
     }
     [[nodiscard]] nullable<T_VALUE> find(const string_t &key) const requires std::copyable<T_VALUE> {
         auto [f, p] = find_int(make_string_key(key));
-        if (!f) return nullable<T_VALUE>(nullopt); nullable<T_VALUE> r; r.native_value() = *p; return r;
+        if (!f) {
+            return nullable<T_VALUE>(nullopt);
+        }
+        nullable<T_VALUE> r;
+        r.native_value() = *p;
+        return r;
     }
 
     // --------------------------------------------------------
     // _find_val   returns mixed_t by value (null if missing)
     //              only available for hash_t<mixed_t>
     // --------------------------------------------------------
-    [[nodiscard]] mixed_t _find_val(const int_t &key) const requires std::same_as<T_VALUE, mixed_t>;
-    [[nodiscard]] mixed_t _find_val(const string_t &key) const requires std::same_as<T_VALUE, mixed_t>;
+    [[nodiscard]] mixed_t _find_val(const int_t &key) const;
+    [[nodiscard]] mixed_t _find_val(const string_t &key) const;
 
     // --------------------------------------------------------
     // try_ref   restricted escape hatch, returns a copied shared_p<T>
@@ -566,12 +576,6 @@ public:
     }
 };
 
-template <>
-[[nodiscard]] mixed_t hash_t<mixed_t>::_find_val(const int_t &key) const;
-
-template <>
-[[nodiscard]] mixed_t hash_t<mixed_t>::_find_val(const string_t &key) const;
-
 // ============================================================
 // Ergonomic helpers for generated literals
 // ============================================================
@@ -637,6 +641,10 @@ template <typename... TArgs>
 	auto table = unique_p<hash_t<mixed_t>>(std::make_unique<hash_t<mixed_t>>());
 	(table_add_item_(*table, std::forward<TArgs>(args)), ...);
 	return table;
+}
+
+inline unique_p<hash_t<mixed_t>> mixed_t::take_table_value() {
+	return std::move(table_value_);
 }
 
 } // namespace scpp

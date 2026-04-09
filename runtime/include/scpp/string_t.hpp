@@ -41,6 +41,18 @@ public:
 		return bool_t(value_.empty());
 	}
 
+	[[nodiscard]] string_t slice(std::size_t start, std::size_t end_exclusive) const {
+		// Produces a bounded half-open substring view for runtime/internal helpers.
+		// How: the bounds are clamped once here so wrapper code can normalize indices without duplicating std::string details.
+		const auto size = value_.size();
+		const auto clamped_start = start < size ? start : size;
+		auto clamped_end = end_exclusive < size ? end_exclusive : size;
+		if (clamped_end < clamped_start) {
+			clamped_end = clamped_start;
+		}
+		return string_t(value_.substr(clamped_start, clamped_end - clamped_start));
+	}
+
 	void append(const string_t &value) {
 		value_ += value.value_;
 	}

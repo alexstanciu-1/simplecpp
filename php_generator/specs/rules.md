@@ -258,7 +258,10 @@ Examples:
 - `stdClass` / object iteration
 - `foreach` by value is supported for `vector_t` and for the current packed `hash_t<mixed_t>` surface
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body
-- by-reference foreach over dynamic/container interior storage is outside the current safe subset
+- by-reference foreach is currently lowered through source-slot rewriting rather than a standalone alias local
+- value-only form synthesizes a hidden key local such as `_<value>_key_`
+- explicit-key form preserves the PHP key variable and rewrites the foreach value variable through the source slot keyed by that variable
+- this lowering is provisional and subject to future improvement
 - for boxed-array foreach over `mixed_t`, indexed loop lowering uses the generator-facing `mixed_t::size()` / `mixed_t::at(...)` surface instead of reaching through to raw table internals
 - explicit function/method reference returns require an explicit declared PHP return type and must still satisfy the native-reference safety rule; dynamic interior slot/property returns are not allowed
 - `include`, `include_once`, and `require`
@@ -271,7 +274,16 @@ Examples:
 
 
 
-## 11A. Array subset (v1)
+## 11A. Variable naming normalization
+
+- PHP variable names are preserved unless the raw name is a reserved C++ keyword
+- reserved keyword names lower to `<name>__`
+- if that candidate already exists in the same function-like scope, the generator must try `<name>__1`, `<name>__2`, and so on until a free identifier is found
+- the chosen remapped identifier must be used consistently in declarations, headers, source definitions, helpers, and all uses within that function-like scope
+
+---
+
+## 11B. Array subset (v1)
 
 Supported array lowering is intentionally narrow and split by target typing.
 
