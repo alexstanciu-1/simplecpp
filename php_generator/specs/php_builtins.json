@@ -1,0 +1,43 @@
+{
+	"schema_version": "0.1.0",
+	"artifact": "php_builtins_manifest",
+	"status": "planning",
+	"authoritative_source_policy": {
+		"rule": "expand_or_derive_from_existing_authoritative_metadata",
+		"no_redundancy": true,
+		"notes": [
+			"This manifest is a planning scaffold until the project finishes the authoritative metadata expansion/derivation path.",
+			"Existing php:: runtime-relative symbol metadata must not be duplicated in parallel with conflicting values.",
+			"Optional builtin-library symbols must participate in the same authoritative registration flow."
+		]
+	},
+	"config_visibility_policy": {
+		"implicit_examples": [
+			"string",
+			"array_or_hash",
+			"vector"
+		],
+		"explicit_project_config_examples": [
+			"json",
+			"filesystem",
+			"env",
+			"process"
+		],
+		"notes": [
+			"Examples are current planning examples, not a forever-closed list.",
+			"Exact project-config naming remains intentionally generic until frozen by the project."
+		]
+	},
+	"builtin_status_values": [
+		"proposed",
+		"experimental",
+		"stable",
+		"deprecated"
+	],
+	"compatibility_levels": [
+		"narrow",
+		"practical",
+		"high"
+	],
+	"builtins": []
+}

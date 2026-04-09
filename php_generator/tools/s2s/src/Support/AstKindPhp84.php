@@ -1,0 +1,135 @@
+<?php
+declare(strict_types=1);
+
+namespace Scpp\S2S\Support;
+
+/**
+ * PHP 8.4 numeric php-ast kind/flag map.
+ *
+ * These values are intentionally version-specific. Do not reuse across PHP minors.
+ */
+class AstKindPhp84
+{
+	public const ARRAY = 129;
+	public const ARG_LIST = 128;
+	public const ARRAY_ELEM = 526;
+	public const ENCAPS_LIST = 130;
+	public const STMT_LIST = 132;
+	public const IF = 133;
+	public const SWITCH_LIST = 134;
+	public const FUNC_DECL = 67;
+	public const CLOSURE = 68;
+	public const METHOD = 69;
+	public const CLASS_ = 70;
+	public const ARROW_FUNC = 71;
+	public const RETURN = 279;
+	public const AST_ECHO = 283;
+	public const THROW = 284;
+	public const NAMESPACE = 542;
+	public const USE = 143;
+	public const GROUP_USE = 545;
+	public const CONST_DECL = 139;
+	public const CONST_ELEM = 775;
+	public const USE_ELEM = 543;
+	public const ASSIGN = 518;
+	public const VAR = 256;
+	public const REF = 281;
+	public const CONST = 257;
+	public const AST_EMPTY = 262;
+	public const AST_ISSET = 263;
+	public const AST_UNSET = 278;
+	public const BREAK = 286;
+	public const CONTINUE = 287;
+	public const NAME = 2048;
+	public const BINARY_OP = 521;
+	public const ASSIGN_REF = 519;
+	public const ASSIGN_OP = 520;
+	public const DIM = 512;
+	public const PROP = 513;
+	public const NULLSAFE_PROP = 514;
+	public const STATIC_PROP = 515;
+	public const METHOD_CALL = 768;
+	public const CAST = 261;
+	public const INCLUDE_OR_EVAL = 269;
+	public const PROP_DECL = 774;
+	public const CLASS_CONST_DECL = 776;
+	public const ENUM_CASE = 1026;
+	public const PROP_ELEM = 1027;
+	public const NEW = 527;
+	public const STATIC_CALL = 770;
+	public const CALL = 516;
+	public const CLASS_CONST = 517;
+	public const PARAM = 1536;
+	public const STATIC_VAR = 532;
+	public const STATIC = 16;
+	public const CLASS_INTERFACE = 1;
+	public const CLASS_ABSTRACT = 64;
+	public const IF_ELEM = 535;
+	public const SWITCH = 536;
+	public const SWITCH_CASE = 537;
+	public const DECLARE = 538;
+	public const WHILE = 533;
+	public const DO_WHILE = 534;
+	public const PRE_INC = 271;
+	public const PRE_DEC = 272;
+	public const POST_INC = 273;
+	public const POST_DEC = 274;
+	public const UNARY_OP = 270;
+	public const FOR = 1024;
+	public const FOREACH = 1025;
+	public const CONDITIONAL = 771;
+	public const TRY = 772;
+	public const CATCH = 773;
+	public const MATCH = 547;
+	public const MATCH_ARM = 548;
+	public const PLUS = 1;
+	public const MINUS = 2;
+	public const MUL = 3;
+	public const DIV = 4;
+	public const MOD = 5;
+	public const SHIFT_LEFT = 6;
+	public const SHIFT_RIGHT = 7;
+	public const BINARY_CONCAT = 8;
+	public const BITWISE_OR = 9;
+	public const BITWISE_AND = 10;
+	public const BITWISE_XOR = 11;
+	public const BINARY_IS_IDENTICAL = 16;
+	public const BINARY_IS_NOT_EQUAL = 17;
+	public const BINARY_IS_EQUAL = 18;
+	public const BINARY_IS_NOT_IDENTICAL = 19;
+	public const BINARY_IS_SMALLER = 20;
+	public const BINARY_IS_SMALLER_OR_EQUAL = 21;
+	public const BINARY_IS_GREATER = 256;
+	public const BINARY_BOOL_OR = 258;
+	public const BINARY_BOOL_AND = 259;
+	public const BINARY_COALESCE = 260;
+	public const UNARY_PLUS = 261;
+	public const UNARY_MINUS = 262;
+	public const UNARY_BOOL_NOT = 14;
+	public const UNARY_BITWISE_NOT = 13;
+	public const RETURN_REF = 4096;
+	public const PARAM_REF = 8;
+	public const PARAM_VARIADIC = 16;
+	public const TYPE_VOID = 14;
+	public const TYPE_BOOL = 18;
+	public const TYPE_LONG = 4;
+	public const TYPE_DOUBLE = 5;
+	public const TYPE_STRING = 6;
+	public const TYPE_ARRAY = 7;
+	public const TYPE_OBJECT = 8;
+	public const TYPE_MIXED = 16;
+	public const CLOSURE_VAR = 2049;
+	public const NULLABLE_TYPE = 2050;
+	public const USE_NORMAL = 1;
+	public const USE_FUNCTION = 2;
+	public const USE_CONST = 4;
+	public const EXEC_EVAL = 1;
+	public const EXEC_INCLUDE = 2;
+	public const EXEC_INCLUDE_ONCE = 4;
+	public const EXEC_REQUIRE = 8;
+	public const EXEC_REQUIRE_ONCE = 16;
+
+	protected function __construct()
+	{
+	}
+}
