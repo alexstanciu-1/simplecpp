@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+
+function demo(int $int__1, int $int, int $while): int {
+	$int__ = $int + $while;
+	return $int__ + $int__1;
+}
+
+echo demo(5, 6, 7), "\n";

@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+
+/** @var array<int,int> */
+$data = [1, 2, 3];
+
+foreach ($data as $k => &$v) {
+	if ($k > 0) {
+		$v = $v + $k;
+	}
+}
+
+foreach ($data as $value) {
+	echo $value, "\n";
+}
