@@ -102,6 +102,46 @@ static void test_value_t_table_read_write_contract() {
 	assert(root.get(scpp::string_t("child")).size().native_value() == before_missing_nested);
 }
 
+
+// Verifies entry iteration preserves associative keys, skips tombstones, and exposes mutable value refs.
+static void test_table_entry_iteration_contract() {
+	scpp::hash_t t;
+	t.set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t(1)));
+	t.set(scpp::string_t("b"), scpp::mixed_t(scpp::int_t(2)));
+	t.set(scpp::int_t(7), scpp::mixed_t(scpp::int_t(3)));
+	assert(t.remove(scpp::string_t("b")) == true);
+
+	int seen = 0;
+	bool saw_a = false;
+	bool saw_7 = false;
+	for (auto it = t.begin_entries(); it != t.end_entries(); ++it) {
+		auto entry = *it;
+		auto key = entry.key();
+		auto &value = entry.value_ref();
+		++seen;
+		if (key.string_if() != nullptr && key.string_if()->native_value() == "a") {
+			saw_a = true;
+			assert(value.int_value().native_value() == 1);
+			value = scpp::mixed_t(scpp::int_t(11));
+			continue;
+		}
+		if (key.kind() == scpp::mixed_t::kind_t::int_v && key.int_value().native_value() == 7) {
+			saw_7 = true;
+			assert(value.int_value().native_value() == 3);
+			value = scpp::mixed_t(scpp::int_t(13));
+			continue;
+		}
+		assert(false && "unexpected entry key during hash_t entry iteration");
+	}
+
+	assert(seen == 2);
+	assert(saw_a == true);
+	assert(saw_7 == true);
+	assert(t._find_val(scpp::string_t("a")).int_value().native_value() == 11);
+	assert(t._find_val(scpp::int_t(7)).int_value().native_value() == 13);
+	assert(t.has(scpp::string_t("b")).native_value() == false);
+}
+
 // Verifies shared-owned hash_t remains the object-like carrier form and works with _find_val().
 static void test_table_shared_object_like_contract() {
 	auto shared = std::make_shared<scpp::hash_t<>>();
@@ -125,6 +165,7 @@ int main() {
 	test_table_find_val_contract();
 	test_table_operator_index_contract();
 	test_value_t_table_read_write_contract();
+	test_table_entry_iteration_contract();
 	test_table_shared_object_like_contract();
 	return 0;
 }

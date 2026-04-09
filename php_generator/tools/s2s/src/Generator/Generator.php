@@ -3251,25 +3251,37 @@ final class Generator
 		}
 
 		$indexName = '__scpp_foreach_i_' . $statement->line;
+		$entryName = '__scpp_foreach_entry_' . $statement->line;
 		$sourceType = $this->inferExprType($payload['expr'] ?? null);
-		$sourceAccessExpr = $this->isUntypedTableHandleType($sourceType) ? '(*(' . $sourceExpr . '))' : $sourceExpr;
+		$foreachByRefSourceShape = $this->inferForeachByRefSourceShape($payload['expr'] ?? null);
+		$isMixedTableForeach = $sourceType === 'mixed_t' && $foreachByRefSourceShape !== 'unknown';
+		$sourceAccessExpr = $this->isUntypedTableHandleType($sourceType)
+			? '(*(' . $sourceExpr . '))'
+			: ($isMixedTableForeach ? '(' . $sourceExpr . ').get_hash()' : $sourceExpr);
+		$isUntypedTableForeach = $this->isUntypedTableType($sourceType) || $isMixedTableForeach;
 		$elementExpr = $sourceAccessExpr . '.at(' . $indexName . ')';
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
-		} elseif ($this->isUntypedTableType($sourceType)) {
+		} elseif ($isUntypedTableForeach) {
 			$valueStoredType = 'mixed_t';
 		}
 
-		$foreachByRefSourceShape = $this->inferForeachByRefSourceShape($payload['expr'] ?? null);
-		if ($byRef && $foreachByRefSourceShape === 'non_vector') {
+		if ($byRef && !$isUntypedTableForeach && $foreachByRefSourceShape === 'non_vector') {
 			$this->errors[] = 'foreach by reference is currently supported for vector-like arrays only at line ' . $statement->line . '.';
 			return ['// ERROR: foreach by reference currently rejects non-vector arrays'];
 		}
 
-		$lines = [
-			'for (int_t ' . $indexName . ' = static_cast<int_t>(0); static_cast<bool>(' . $indexName . ' < static_cast<int_t>(' . $sourceAccessExpr . '.size())); ++' . $indexName . ') {',
-		];
+		if ($isUntypedTableForeach) {
+			$lines = [
+				'for (auto ' . $entryName . ' = ' . $sourceAccessExpr . '.begin_entries(); ' . $entryName . ' != ' . $sourceAccessExpr . '.end_entries(); ++' . $entryName . ') {',
+				$this->indent(1) . 'auto __scpp_foreach_entry_view = *' . $entryName . ';',
+			];
+		} else {
+			$lines = [
+				'for (int_t ' . $indexName . ' = static_cast<int_t>(0); static_cast<bool>(' . $indexName . ' < static_cast<int_t>(' . $sourceAccessExpr . '.size())); ++' . $indexName . ') {',
+			];
+		}
 
 		$scopedLocals = $this->declaredLocals;
 		$scopedLocalTypes = $this->declaredLocalTypes;
@@ -3279,11 +3291,16 @@ final class Generator
 		$keyAccessExpr = $indexName;
 		if ($keyName !== null) {
 			$keyCppName = $this->localCppName($keyName);
-			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
+			if ($isUntypedTableForeach) {
+				$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = __scpp_foreach_entry_view.key();';
+				$this->declaredLocalTypes[$keyName] = 'mixed_t';
+			} else {
+				$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
+				$this->declaredLocalTypes[$keyName] = 'int_t';
+			}
 			$this->declaredLocals[$keyName] = true;
-			$this->declaredLocalTypes[$keyName] = 'int_t';
 			$keyAccessExpr = $keyCppName;
-		} elseif ($byRef) {
+		} elseif ($byRef && !$isUntypedTableForeach) {
 			$keyCppName = $this->allocateGeneratedLocalName('_' . $valueName . '_key_');
 			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
 			$keyAccessExpr = $keyCppName;
@@ -3291,15 +3308,16 @@ final class Generator
 
 		if ($byRef) {
 			$this->foreachReferenceSlotStack[] = [
-				$valueName => $sourceAccessExpr . '.at(' . $keyAccessExpr . ')',
+				$valueName => $isUntypedTableForeach ? '__scpp_foreach_entry_view.value_ref()' : ($sourceAccessExpr . '.at(' . $keyAccessExpr . ')'),
 			];
 		} else {
 			$valueCppName = $this->localCppName($valueName);
 			$hasOuterValueBinding = isset($scopedLocals[$valueName]);
+			$currentElementExpr = $isUntypedTableForeach ? '__scpp_foreach_entry_view.value_copy()' : $elementExpr;
 			if ($hasOuterValueBinding) {
-				$lines[] = $this->indent(1) . $valueCppName . ' = ' . $elementExpr . ';';
+				$lines[] = $this->indent(1) . $valueCppName . ' = ' . $currentElementExpr . ';';
 			} else {
-				$lines[] = $this->indent(1) . 'auto ' . $valueCppName . ' = ' . $elementExpr . ';';
+				$lines[] = $this->indent(1) . 'auto ' . $valueCppName . ' = ' . $currentElementExpr . ';';
 				$this->declaredLocals[$valueName] = true;
 				if ($valueStoredType !== null) {
 					$this->declaredLocalTypes[$valueName] = $valueStoredType;

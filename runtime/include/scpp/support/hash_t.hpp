@@ -13,8 +13,10 @@
 #include "scpp/mixed_t.hpp"
 #include "scpp/dynamic_t.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
@@ -362,6 +364,43 @@ private:
         return have ? (max_k + 1) : 0;
     }
 
+    [[nodiscard]] bool is_live_physical_index(std::uint32_t index) const noexcept {
+        if (std::holds_alternative<std::monostate>(keys_)) {
+            return index < values_.size();
+        }
+        const auto &ks = std::get<native_keys_t>(keys_);
+        return index < ks.size() && ks[index] != TOMBSTONE_KEY;
+    }
+
+    [[nodiscard]] mixed_t key_from_physical_index(std::uint32_t index) const {
+        if (std::holds_alternative<std::monostate>(keys_)) {
+            return mixed_t(int_t{static_cast<std::int64_t>(index)});
+        }
+        const auto &ks = std::get<native_keys_t>(keys_);
+        if (index >= ks.size() || ks[index] == TOMBSTONE_KEY) {
+            throw std::out_of_range("hash_t::key_from_physical_index: invalid entry index");
+        }
+        const auto key = ks[index];
+        if (string_pool_t::is_string_id(key)) {
+            return mixed_t(string_pool_t::instance().resolve(key));
+        }
+        return mixed_t(int_t{static_cast<std::int64_t>(key)});
+    }
+
+    [[nodiscard]] T_VALUE &value_from_physical_index(std::uint32_t index) {
+        if (!is_live_physical_index(index)) {
+            throw std::out_of_range("hash_t::value_from_physical_index: invalid entry index");
+        }
+        return values_[index];
+    }
+
+    [[nodiscard]] const T_VALUE &value_from_physical_index(std::uint32_t index) const {
+        if (!is_live_physical_index(index)) {
+            throw std::out_of_range("hash_t::value_from_physical_index const: invalid entry index");
+        }
+        return values_[index];
+    }
+
 public:
     hash_t() : keys_(std::monostate{}), hash_index_(std::monostate{}) {}
 
@@ -401,6 +440,150 @@ public:
     }
 
     void clear() noexcept { values_.clear(); keys_ = std::monostate{}; hash_index_ = std::monostate{}; }
+
+
+    // --------------------------------------------------------
+    // entry iteration helpers
+    // --------------------------------------------------------
+    class entry_view final {
+    public:
+        entry_view(hash_t *owner, std::uint32_t index) noexcept
+            : owner_(owner), index_(index) {}
+
+        [[nodiscard]] mixed_t key() const {
+            return owner_->key_from_physical_index(index_);
+        }
+
+        [[nodiscard]] T_VALUE value_copy() const requires std::copyable<T_VALUE> {
+            return owner_->value_from_physical_index(index_);
+        }
+
+        [[nodiscard]] T_VALUE &value_ref() const {
+            return owner_->value_from_physical_index(index_);
+        }
+
+    private:
+        hash_t *owner_;
+        std::uint32_t index_;
+    };
+
+    class const_entry_view final {
+    public:
+        const_entry_view(const hash_t *owner, std::uint32_t index) noexcept
+            : owner_(owner), index_(index) {}
+
+        [[nodiscard]] mixed_t key() const {
+            return owner_->key_from_physical_index(index_);
+        }
+
+        [[nodiscard]] T_VALUE value_copy() const requires std::copyable<T_VALUE> {
+            return owner_->value_from_physical_index(index_);
+        }
+
+        [[nodiscard]] const T_VALUE &value_ref() const {
+            return owner_->value_from_physical_index(index_);
+        }
+
+    private:
+        const hash_t *owner_;
+        std::uint32_t index_;
+    };
+
+    class entry_iterator final {
+    public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = entry_view;
+        using iterator_category = std::forward_iterator_tag;
+
+        entry_iterator(hash_t *owner, std::uint32_t index) noexcept
+            : owner_(owner), index_(index) {
+            skip_dead_entries();
+        }
+
+        [[nodiscard]] entry_view operator*() const noexcept {
+            return entry_view(owner_, index_);
+        }
+
+        entry_iterator &operator++() noexcept {
+            ++index_;
+            skip_dead_entries();
+            return *this;
+        }
+
+        [[nodiscard]] bool operator==(const entry_iterator &other) const noexcept {
+            return owner_ == other.owner_ && index_ == other.index_;
+        }
+
+        [[nodiscard]] bool operator!=(const entry_iterator &other) const noexcept {
+            return !(*this == other);
+        }
+
+    private:
+        void skip_dead_entries() noexcept {
+            while (index_ < owner_->values_.size() && !owner_->is_live_physical_index(index_)) {
+                ++index_;
+            }
+        }
+
+        hash_t *owner_;
+        std::uint32_t index_;
+    };
+
+    class const_entry_iterator final {
+    public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = const_entry_view;
+        using iterator_category = std::forward_iterator_tag;
+
+        const_entry_iterator(const hash_t *owner, std::uint32_t index) noexcept
+            : owner_(owner), index_(index) {
+            skip_dead_entries();
+        }
+
+        [[nodiscard]] const_entry_view operator*() const noexcept {
+            return const_entry_view(owner_, index_);
+        }
+
+        const_entry_iterator &operator++() noexcept {
+            ++index_;
+            skip_dead_entries();
+            return *this;
+        }
+
+        [[nodiscard]] bool operator==(const const_entry_iterator &other) const noexcept {
+            return owner_ == other.owner_ && index_ == other.index_;
+        }
+
+        [[nodiscard]] bool operator!=(const const_entry_iterator &other) const noexcept {
+            return !(*this == other);
+        }
+
+    private:
+        void skip_dead_entries() noexcept {
+            while (index_ < owner_->values_.size() && !owner_->is_live_physical_index(index_)) {
+                ++index_;
+            }
+        }
+
+        const hash_t *owner_;
+        std::uint32_t index_;
+    };
+
+    [[nodiscard]] entry_iterator begin_entries() noexcept {
+        return entry_iterator(this, 0);
+    }
+
+    [[nodiscard]] entry_iterator end_entries() noexcept {
+        return entry_iterator(this, static_cast<std::uint32_t>(values_.size()));
+    }
+
+    [[nodiscard]] const_entry_iterator begin_entries() const noexcept {
+        return const_entry_iterator(this, 0);
+    }
+
+    [[nodiscard]] const_entry_iterator end_entries() const noexcept {
+        return const_entry_iterator(this, static_cast<std::uint32_t>(values_.size()));
+    }
 
     // --------------------------------------------------------
     // append   PHP-style push (next integer key)
