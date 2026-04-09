@@ -34,6 +34,9 @@ compile_commands.json
 # Project-Specific (Simple C++)
 # =========================
 
+# scpp project build output
+.prism/
+
 # Generated C++ (sandbox)
 sandbox/*.cpp
 sandbox/*.hpp
