@@ -13,6 +13,8 @@
         "substr_replace",
         "str_pad",
         "str_replace",
+        "explode",
+        "implode",
         "strlen",
         "strpos",
         "strrpos",

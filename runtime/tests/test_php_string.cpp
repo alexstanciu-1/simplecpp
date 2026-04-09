@@ -88,6 +88,63 @@ static void test_prefix_suffix_helpers() {
 }
 
 
+static void test_explode() {
+	const auto split_default = scpp::php::explode(scpp::string_t(","), scpp::string_t("a,b,c"));
+	const auto &split_default_table = split_default.get_hash();
+	assert(split_default_table.size() == 3);
+	assert(split_default_table.at(scpp::int_t(0)).get_string().native_value() == "a");
+	assert(split_default_table.at(scpp::int_t(1)).get_string().native_value() == "b");
+	assert(split_default_table.at(scpp::int_t(2)).get_string().native_value() == "c");
+
+	const auto split_zero = scpp::php::explode(scpp::string_t(","), scpp::string_t("a,b,c"), scpp::int_t(0));
+	assert(split_zero.get_hash().size() == 1);
+	assert(split_zero.get_hash().at(scpp::int_t(0)).get_string().native_value() == "a,b,c");
+
+	const auto split_two = scpp::php::explode(scpp::string_t(","), scpp::string_t("a,b,c"), scpp::int_t(2));
+	assert(split_two.get_hash().size() == 2);
+	assert(split_two.get_hash().at(scpp::int_t(0)).get_string().native_value() == "a");
+	assert(split_two.get_hash().at(scpp::int_t(1)).get_string().native_value() == "b,c");
+
+	const auto split_negative = scpp::php::explode(scpp::string_t(","), scpp::string_t("a,b,c"), scpp::int_t(-1));
+	assert(split_negative.get_hash().size() == 2);
+	assert(split_negative.get_hash().at(scpp::int_t(0)).get_string().native_value() == "a");
+	assert(split_negative.get_hash().at(scpp::int_t(1)).get_string().native_value() == "b");
+
+	const auto split_negative_empty = scpp::php::explode(scpp::string_t(","), scpp::string_t("abc"), scpp::int_t(-1));
+	assert(split_negative_empty.get_hash().size() == 0);
+
+	bool separator_error = false;
+	try {
+		static_cast<void>(scpp::php::explode(scpp::string_t(""), scpp::string_t("abc")));
+	} catch (const scpp::php::ValueError &) {
+		separator_error = true;
+	}
+	assert(separator_error);
+}
+
+static void test_implode() {
+	scpp::hash_t<scpp::string_t> table;
+	table.append(scpp::string_t("a"));
+	table.append(scpp::string_t("b"));
+	table.append(scpp::string_t("c"));
+	assert(scpp::php::implode(scpp::string_t(","), table).native_value() == "a,b,c");
+
+	scpp::hash_t<scpp::string_t> assoc;
+	assoc.set(scpp::string_t("first"), scpp::string_t("red"));
+	assoc.set(scpp::string_t("second"), scpp::string_t("green"));
+	assoc.set(scpp::int_t(7), scpp::string_t("blue"));
+	assert(scpp::php::implode(scpp::string_t("|"), assoc).native_value() == "red|green|blue");
+
+	scpp::vector_t<scpp::string_t> pieces;
+	pieces.append(scpp::string_t("x"));
+	pieces.append(scpp::string_t("y"));
+	pieces.append(scpp::string_t("z"));
+	assert(scpp::php::implode(scpp::string_t("-"), pieces).native_value() == "x-y-z");
+
+	scpp::hash_t<scpp::string_t> empty_table;
+	assert(scpp::php::implode(scpp::string_t(","), empty_table).native_value() == "");
+}
+
 static void test_str_replace() {
 	assert(scpp::php::str_replace(scpp::string_t("a"), scpp::string_t("X"), scpp::string_t("banana")).native_value() == "bXnXnX");
 	assert(scpp::php::str_replace(scpp::string_t("na"), scpp::string_t("_"), scpp::string_t("banana")).native_value() == "ba__");
@@ -164,6 +221,8 @@ int main() {
 	test_strrpos();
 	test_case_helpers();
 	test_prefix_suffix_helpers();
+	test_explode();
+	test_implode();
 	test_str_replace();
 	test_str_pad();
 	test_trim_family_default_mask();

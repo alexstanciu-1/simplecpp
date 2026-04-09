@@ -593,6 +593,89 @@ inline string_t str_pad(const string_t &input, const int_t &pad_length) {
 	return str_pad(input, pad_length, string_t(" "), STR_PAD_RIGHT);
 }
 
+
+inline mixed_t explode(const string_t &separator, const string_t &string, const int_t &limit) {
+	if (separator.size() == 0) {
+		throw ValueError("explode(): Argument #1 ($separator) must not be empty");
+	}
+
+	auto parts = hash_t<mixed_t>{};
+	const auto &source = string.native_value();
+	const auto &needle = separator.native_value();
+	const auto limit_value = limit.native_value();
+
+	if (limit_value == 0) {
+		static_cast<void>(parts.append(mixed_t(string)));
+		return mixed_t(unique<hash_t<mixed_t>>(std::move(parts)));
+	}
+
+	if (limit_value > 0) {
+		const auto max_parts = static_cast<std::size_t>(limit_value);
+		std::size_t cursor = 0;
+		std::size_t produced = 0;
+		while (produced + 1 < max_parts) {
+			const auto found = source.find(needle, cursor);
+			if (found == std::string::npos) {
+				break;
+			}
+			static_cast<void>(parts.append(mixed_t(string_t(source.substr(cursor, found - cursor)))));
+			cursor = found + needle.size();
+			++produced;
+		}
+		static_cast<void>(parts.append(mixed_t(string_t(source.substr(cursor)))));
+		return mixed_t(unique<hash_t<mixed_t>>(std::move(parts)));
+	}
+
+	std::vector<string_t> tokens;
+	std::size_t cursor = 0;
+	while (true) {
+		const auto found = source.find(needle, cursor);
+		if (found == std::string::npos) {
+			tokens.emplace_back(source.substr(cursor));
+			break;
+		}
+		tokens.emplace_back(source.substr(cursor, found - cursor));
+		cursor = found + needle.size();
+	}
+
+	const auto drop_count = static_cast<std::size_t>(-limit_value);
+	if (drop_count >= tokens.size()) {
+		return mixed_t(unique<hash_t<mixed_t>>(std::move(parts)));
+	}
+	for (std::size_t index = 0; index + drop_count < tokens.size(); ++index) {
+		static_cast<void>(parts.append(mixed_t(tokens[index])));
+	}
+	return mixed_t(unique<hash_t<mixed_t>>(std::move(parts)));
+}
+
+inline mixed_t explode(const string_t &separator, const string_t &string) {
+	return explode(separator, string, PHP_INT_MAX);
+}
+
+inline string_t implode(const string_t &separator, const hash_t<string_t> &pieces) {
+	std::string out;
+	bool first = true;
+	pieces.debug_visit_entries([&](const auto &, const string_t &value) {
+		if (!first) {
+			out += separator.native_value();
+		}
+		out += value.native_value();
+		first = false;
+	});
+	return string_t(std::move(out));
+}
+
+inline string_t implode(const string_t &separator, const vector_t<string_t> &pieces) {
+	std::string out;
+	for (std::size_t index = 0; index < pieces.size(); ++index) {
+		if (index != 0) {
+			out += separator.native_value();
+		}
+		out += pieces.native_value()[index].native_value();
+	}
+	return string_t(std::move(out));
+}
+
 // Implements PHP microtime() string mode.
 // How: system_clock is sampled once, then formatted as "0.xxxxxxxx seconds" to mirror PHP's default contract.
 inline string_t microtime() {
