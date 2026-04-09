@@ -175,6 +175,22 @@ function normalizeOutput(value) {
 	return String(value ?? '');
 }
 
+
+async function parseJsonResponse(response) {
+	const rawText = await response.text();
+	const trimmed = rawText.trim();
+	if (trimmed === '') {
+		throw new Error(`Empty response body (HTTP ${response.status})`);
+	}
+
+	try {
+		return JSON.parse(trimmed);
+	} catch (error) {
+		const preview = trimmed.length > 1200 ? `${trimmed.slice(0, 1200)}
+...` : trimmed;
+		throw new Error(`Invalid JSON response (HTTP ${response.status}): ${preview}`);
+	}
+}
 function refreshSelectedFileLabel() {
 	if (selectedSandboxPath === '') {
 		selectedFilePathBox.textContent = '(manual input)';
@@ -596,7 +612,7 @@ async function loadSandboxTree(options = {}) {
 			captureSandboxTreeOpenState();
 		}
 		const response = await fetch(buildNoCacheUrl('run.php', { action: 'sandbox_tree' }));
-		const payload = await response.json();
+		const payload = await parseJsonResponse(response);
 		if (!response.ok || !payload.ok) {
 			throw new Error(payload.error || 'Failed to load sandbox tree.');
 		}
@@ -626,7 +642,7 @@ async function loadSandboxFile(path, clickedNode = null) {
 
 	try {
 		const response = await fetch(buildNoCacheUrl('run.php', { action: 'sandbox_file', path }));
-		const payload = await response.json();
+		const payload = await parseJsonResponse(response);
 		if (!response.ok || !payload.ok) {
 			throw new Error(payload.error || 'Failed to read sandbox file.');
 		}
@@ -642,7 +658,7 @@ async function loadSandboxFile(path, clickedNode = null) {
 
 async function fetchJson(url, options = {}) {
 	const response = await fetch(buildNoCacheUrl(url), options);
-	const payload = await response.json();
+	const payload = await parseJsonResponse(response);
 	if (!response.ok || !payload.ok) {
 		throw new Error(payload.error || 'Request failed.');
 	}

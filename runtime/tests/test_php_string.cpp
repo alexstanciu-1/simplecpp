@@ -47,6 +47,39 @@ static void test_substr_with_combined_negative_inputs() {
 	assert(scpp::php::substr(scpp::string_t("hello"), scpp::int_t(-4), scpp::int_t(-1)).native_value() == "ell");
 }
 
+
+static void test_utf8_lengths_and_substrings() {
+	const auto globe = scpp::string_t("A🌍é");
+	assert(globe.byte_size() == 7);
+	assert(globe.length_cp() == 3);
+	assert(globe.is_valid_utf8());
+	assert(scpp::php::strlen(globe).native_value() == 3);
+	assert(scpp::php::substr(globe, scpp::int_t(0), scpp::int_t(1)).native_value() == "A");
+	assert(scpp::php::substr(globe, scpp::int_t(1), scpp::int_t(1)).native_value() == "🌍");
+	assert(scpp::php::substr(globe, scpp::int_t(2), scpp::int_t(1)).native_value() == "é");
+	assert(scpp::php::substr(globe, scpp::int_t(-2)).native_value() == "🌍é");
+}
+
+static void test_utf8_search_positions() {
+	const auto value = scpp::string_t("A🌍é🌍");
+	assert_mixed_int(scpp::php::strpos(value, scpp::string_t("🌍")), 1);
+	assert_mixed_int(scpp::php::strpos(value, scpp::string_t("🌍"), scpp::int_t(2)), 3);
+	assert_mixed_int(scpp::php::strrpos(value, scpp::string_t("🌍")), 3);
+	assert_mixed_int(scpp::php::strrpos(value, scpp::string_t("🌍"), scpp::int_t(-2)), 1);
+}
+
+static void test_invalid_utf8_falls_back_to_bytes() {
+	std::string raw;
+	raw.push_back('A');
+	raw.push_back(static_cast<char>(0xff));
+	raw.push_back('B');
+	const auto value = scpp::string_t(raw);
+	assert(value.is_valid_utf8() == false);
+	assert(value.length_cp() == 3);
+	assert(scpp::php::strlen(value).native_value() == 3);
+	assert(scpp::php::substr(value, scpp::int_t(1), scpp::int_t(1)).native_value() == std::string(1, static_cast<char>(0xff)));
+}
+
 static void test_strlen() {
 	assert(scpp::php::strlen(scpp::string_t("")).native_value() == 0);
 	assert(scpp::php::strlen(scpp::string_t("hello")).native_value() == 5);
@@ -260,7 +293,10 @@ int main() {
 	test_substr_with_negative_offset();
 	test_substr_with_negative_length();
 	test_substr_with_combined_negative_inputs();
+	test_utf8_lengths_and_substrings();
+	test_invalid_utf8_falls_back_to_bytes();
 	test_strlen();
+	test_utf8_search_positions();
 	test_strpos();
 	test_strrpos();
 	test_case_helpers();

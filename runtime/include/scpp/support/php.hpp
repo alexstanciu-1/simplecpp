@@ -376,7 +376,14 @@ inline string_t trim_slice(const string_t &value, std::size_t start, std::size_t
 }
 
 inline int_t strlen(const string_t &value) {
-	return int_t(static_cast<std::int64_t>(value.size()));
+	return int_t(static_cast<std::int64_t>(value.length_cp()));
+}
+
+inline int_t strlen(const nullable<string_t> &value) {
+	if (!value.has_value().native_value()) {
+		throw std::runtime_error("strlen(): nullable string is null");
+	}
+	return php::strlen(value.value());
 }
 
 inline mixed_t strpos(const string_t &haystack, const string_t &needle) {
@@ -384,16 +391,17 @@ inline mixed_t strpos(const string_t &haystack, const string_t &needle) {
 	if (position == std::string::npos) {
 		return mixed_t(bool_t(false));
 	}
-	return mixed_t(int_t(static_cast<std::int64_t>(position)));
+	return mixed_t(int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position))));
 }
 
 inline mixed_t strpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
-	const auto start = normalize_php_forward_search_offset(haystack.size(), offset.native_value(), "strpos");
-	const auto position = haystack.native_value().find(needle.native_value(), static_cast<std::size_t>(start));
+	const auto start = normalize_php_forward_search_offset(haystack.length_cp(), offset.native_value(), "strpos");
+	const auto start_byte = utf8::cp_to_byte_index(haystack.native_value(), start);
+	const auto position = haystack.native_value().find(needle.native_value(), static_cast<std::size_t>(start_byte));
 	if (position == std::string::npos) {
 		return mixed_t(bool_t(false));
 	}
-	return mixed_t(int_t(static_cast<std::int64_t>(position)));
+	return mixed_t(int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position))));
 }
 
 inline mixed_t strrpos(const string_t &haystack, const string_t &needle) {
@@ -401,25 +409,26 @@ inline mixed_t strrpos(const string_t &haystack, const string_t &needle) {
 	if (position == std::string::npos) {
 		return mixed_t(bool_t(false));
 	}
-	return mixed_t(int_t(static_cast<std::int64_t>(position)));
+	return mixed_t(int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position))));
 }
 
 inline mixed_t strrpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
-	const auto limit = normalize_php_reverse_search_limit(haystack.size(), offset.native_value(), "strrpos");
+	const auto limit = normalize_php_reverse_search_limit(haystack.length_cp(), offset.native_value(), "strrpos");
+	const auto limit_byte = utf8::cp_to_byte_index(haystack.native_value(), limit);
 	const auto &native = haystack.native_value();
 	const auto &needle_native = needle.native_value();
 	if (offset.native_value() >= 0) {
 		const auto position = native.rfind(needle_native);
-		if (position == std::string::npos || position < limit) {
+		if (position == std::string::npos || position < limit_byte) {
 			return mixed_t(bool_t(false));
 		}
-		return mixed_t(int_t(static_cast<std::int64_t>(position)));
+		return mixed_t(int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position))));
 	}
-	const auto position = native.rfind(needle_native, limit);
+	const auto position = native.rfind(needle_native, limit_byte);
 	if (position == std::string::npos) {
 		return mixed_t(bool_t(false));
 	}
-	return mixed_t(int_t(static_cast<std::int64_t>(position)));
+	return mixed_t(int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position))));
 }
 
 inline string_t strtolower(const string_t &value) {
@@ -505,17 +514,18 @@ inline string_t trim(const string_t &value, const string_t &mask) {
 inline string_t substr(const string_t &value, const int_t &offset, const int_t &length) {
 	// Implements the practical PHP-like substr(string, offset, length) wrapper.
 	// How: the wrapper translates PHP offset/length rules into a bounded half-open slice on the runtime string type.
-	const auto size = value.size();
+	const auto size = value.length_cp();
 	const auto start = normalize_substr_start(size, offset.native_value());
 	const auto end = normalize_substr_end(size, start, length.native_value());
-	return value.slice(start, end);
+	return value.substr_cp(start, end - start);
 }
 
 inline string_t substr(const string_t &value, const int_t &offset) {
 	// Implements the practical PHP-like substr(string, offset) wrapper.
 	// How: the wrapper reuses the same normalized start handling and slices through the end of the string.
-	const auto start = normalize_substr_start(value.size(), offset.native_value());
-	return value.slice(start, value.size());
+	const auto size = value.length_cp();
+	const auto start = normalize_substr_start(size, offset.native_value());
+	return value.substr_cp(start);
 }
 
 inline int_t substr_compare(const string_t &main_str, const string_t &str, const int_t &offset) {

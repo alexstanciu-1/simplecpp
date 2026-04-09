@@ -68,11 +68,52 @@ static void test_nullable_string_cast() {
 	assert(scpp::cast<scpp::string_t>(value_bool).native_value() == "1");
 }
 
+
+// Verifies relational operators on nullable values unwrap present operands and throw on missing operands.
+static void test_nullable_relational_ops() {
+	const scpp::nullable<scpp::int_t> smaller(scpp::int_t(10));
+	const scpp::nullable<scpp::int_t> bigger(scpp::int_t(20));
+	const scpp::nullable<scpp::int_t> empty(scpp::null);
+
+	assert((smaller < bigger).native_value() == true);
+	assert((smaller <= bigger).native_value() == true);
+	assert((bigger > smaller).native_value() == true);
+	assert((bigger >= smaller).native_value() == true);
+	assert((smaller >= smaller).native_value() == true);
+
+	bool threw = false;
+	try {
+		(void)(empty >= smaller);
+	} catch (const std::runtime_error &) {
+		threw = true;
+	}
+	assert(threw == true);
+}
+
+
+// Verifies PHP string helpers can accept present nullable strings and reject nulls.
+static void test_nullable_strlen() {
+	const scpp::nullable<scpp::string_t> value(scpp::string_t("hello"));
+	const scpp::nullable<scpp::string_t> empty(scpp::null);
+
+	assert(scpp::php::strlen(value).native_value() == 5);
+
+	bool threw = false;
+	try {
+		(void)scpp::php::strlen(empty);
+	} catch (const std::runtime_error &) {
+		threw = true;
+	}
+	assert(threw == true);
+}
+
 int main() {
 	test_empty_state();
 	test_present_value();
 	test_reset_and_value_or();
 	test_nullable_equality();
 	test_nullable_string_cast();
+	test_nullable_relational_ops();
+	test_nullable_strlen();
 	return 0;
 }

@@ -436,6 +436,41 @@ template <typename T>
 	return detail::generated_operator_detail::nullable_ne_same(lhs, rhs);
 }
 
+// Nullable relational comparisons are allowed only when both operands are present.
+// This matches the narrowed runtime contract: operational failure is represented as
+// null, but using a missing value in a numeric/string comparison is a programmer error.
+template <typename T>
+[[nodiscard]] inline auto operator<(const nullable<T> &lhs, const nullable<T> &rhs) {
+	if (!lhs.has_value().native_value() || !rhs.has_value().native_value()) {
+		throw std::runtime_error("nullable operator< requires both operands to have values");
+	}
+	return lhs.value() < rhs.value();
+}
+
+template <typename T>
+[[nodiscard]] inline auto operator<=(const nullable<T> &lhs, const nullable<T> &rhs) {
+	if (!lhs.has_value().native_value() || !rhs.has_value().native_value()) {
+		throw std::runtime_error("nullable operator<= requires both operands to have values");
+	}
+	return lhs.value() <= rhs.value();
+}
+
+template <typename T>
+[[nodiscard]] inline auto operator>(const nullable<T> &lhs, const nullable<T> &rhs) {
+	if (!lhs.has_value().native_value() || !rhs.has_value().native_value()) {
+		throw std::runtime_error("nullable operator> requires both operands to have values");
+	}
+	return lhs.value() > rhs.value();
+}
+
+template <typename T>
+[[nodiscard]] inline auto operator>=(const nullable<T> &lhs, const nullable<T> &rhs) {
+	if (!lhs.has_value().native_value() || !rhs.has_value().native_value()) {
+		throw std::runtime_error("nullable operator>= requires both operands to have values");
+	}
+	return lhs.value() >= rhs.value();
+}
+
 template <typename T>
 [[nodiscard]] inline bool_t operator==(const shared_p<T> &value, null_t) noexcept {
 	return detail::generated_operator_detail::ptr_eq_null(value);

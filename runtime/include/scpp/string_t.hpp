@@ -2,6 +2,7 @@
 
 #include "scpp/detail.hpp"
 #include "scpp/bool_t.hpp"
+#include "scpp/support/utf8.hpp"
 
 namespace scpp {
 
@@ -37,6 +38,18 @@ public:
 		return value_.size();
 	}
 
+	[[nodiscard]] std::size_t byte_size() const noexcept {
+		return value_.size();
+	}
+
+	[[nodiscard]] bool is_valid_utf8() const {
+		return utf8::is_valid(value_);
+	}
+
+	[[nodiscard]] std::size_t length_cp() const {
+		return utf8::length_cp(value_);
+	}
+
 	[[nodiscard]] bool_t empty() const noexcept {
 		return bool_t(value_.empty());
 	}
@@ -51,6 +64,18 @@ public:
 			clamped_end = clamped_start;
 		}
 		return string_t(value_.substr(clamped_start, clamped_end - clamped_start));
+	}
+
+	[[nodiscard]] string_t substr_cp(std::size_t start, std::size_t length) const {
+		// Produces one substring in codepoint space when the bytes are valid UTF-8.
+		// How: valid text uses utf8cpp boundaries; invalid bytes fall back to byte slicing so source data is preserved.
+		return string_t(utf8::substr_cp(value_, start, length));
+	}
+
+	[[nodiscard]] string_t substr_cp(std::size_t start) const {
+		// Produces one substring from the requested codepoint through the end of the current value.
+		// How: valid UTF-8 walks codepoints; invalid input falls back to byte slicing.
+		return string_t(utf8::substr_cp_to_end(value_, start));
 	}
 
 	void append(const string_t &value) {
