@@ -1,6 +1,7 @@
 #pragma once
 #include "scpp/hash_t.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/nullable.hpp"
 #include <iostream>
 
 namespace scpp::php {
@@ -21,6 +22,15 @@ inline void var_dump(std::int64_t v) { var_dump(mixed_t{v}); }
 inline void var_dump(double v) { var_dump(mixed_t{v}); }
 inline void var_dump(const shared_p<hash_t<mixed_t>>& v) { var_dump(mixed_t{v}); }
 inline void var_dump(const weak_p<hash_t<mixed_t>>& v) { var_dump(mixed_t{v}); }
+
+template <typename T>
+inline void var_dump(const nullable<T>& v) {
+	if (!v.has_value().native_value()) {
+		var_dump(null_t{});
+		return;
+	}
+	var_dump(v.value());
+}
 
 template <typename First, typename... Rest>
 inline void var_dump(const First& first, const Rest&... rest) {

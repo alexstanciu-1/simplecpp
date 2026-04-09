@@ -30,4 +30,7 @@
 #include "scpp/cast.hpp"
 #include "scpp/php_exceptions.hpp"
 #include "scpp/php.hpp"
+#include "scpp/php_resource.hpp"
+#include "scpp/php_stdio.hpp"
+#include "scpp/php_filesystem.hpp"
 #include "scpp/generated/operators.hpp"

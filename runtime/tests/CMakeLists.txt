@@ -64,3 +64,8 @@ add_executable(test_php_string test_php_string.cpp)
 target_link_libraries(test_php_string PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_php_string COMMAND test_php_string)
 
+
+# PHP filesystem and stdio builtin coverage.
+add_executable(test_php_filesystem test_php_filesystem.cpp)
+target_link_libraries(test_php_filesystem PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_php_filesystem COMMAND test_php_filesystem)

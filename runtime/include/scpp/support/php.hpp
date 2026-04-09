@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
+#include <cstdlib>
 #include <cctype>
 #include <cstdint>
 #include <iomanip>
@@ -46,6 +48,11 @@ namespace scpp::php {
 class ValueError : public std::runtime_error {
 public:
 	explicit ValueError(const std::string &message) : std::runtime_error(message) {}
+};
+
+class TypeError : public std::runtime_error {
+public:
+	explicit TypeError(const std::string &message) : std::runtime_error(message) {}
 };
 
 // PHP compatibility constants consumed by generated code.
@@ -177,6 +184,85 @@ inline int ascii_compare_insensitive(std::string_view left, std::string_view rig
 		return 0;
 	}
 	return left.size() < right.size() ? -1 : 1;
+}
+
+
+inline std::string insert_thousands_grouping(std::string digits, const std::string &separator) {
+	// Applies fixed 3-digit grouping to the integer part of a decimal string.
+	// How: walk left-to-right and inject the separator before each trailing 3-digit block.
+	if (digits.size() <= 3 || separator.empty()) {
+		return digits;
+	}
+	std::string out;
+	out.reserve(digits.size() + ((digits.size() - 1) / 3) * separator.size());
+	const auto first_group = digits.size() % 3;
+	std::size_t index = 0;
+	if (first_group != 0) {
+		out.append(digits, 0, first_group);
+		index = first_group;
+		if (index < digits.size()) {
+			out += separator;
+		}
+	}
+	while (index < digits.size()) {
+		out.append(digits, index, 3);
+		index += 3;
+		if (index < digits.size()) {
+			out += separator;
+		}
+	}
+	return out;
+}
+
+inline string_t number_format_from_double(double value, std::int64_t decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	// Formats one numeric value using the current Prism++ number_format contract.
+	// How: use half-up rounding, with negative decimals rounding digits before the decimal point, then inject 3-digit grouping.
+	const auto negative = value < 0.0;
+	const auto abs_value = std::fabs(value);
+	double rounded = abs_value;
+	int precision = 0;
+	if (decimals >= 0) {
+		precision = static_cast<int>(decimals);
+		const auto scale = std::pow(10.0, static_cast<double>(precision));
+		rounded = scale > 0.0 ? std::round(abs_value * scale) / scale : abs_value;
+	} else {
+		const auto left_scale = std::pow(10.0, static_cast<double>(-decimals));
+		rounded = left_scale > 0.0 ? std::round(abs_value / left_scale) * left_scale : abs_value;
+	}
+	std::ostringstream stream;
+	stream << std::fixed << std::setprecision(precision) << rounded;
+	std::string rendered = stream.str();
+	std::string integer_part;
+	std::string fraction_part;
+	const auto dot = rendered.find('.');
+	if (dot == std::string::npos) {
+		integer_part = rendered;
+	} else {
+		integer_part = rendered.substr(0, dot);
+		fraction_part = rendered.substr(dot + 1);
+	}
+	std::string out;
+	if (negative && (rounded != 0.0 || value < 0.0)) {
+		out.push_back('-');
+	}
+	out += insert_thousands_grouping(integer_part, thousands_separator.native_value());
+	if (precision > 0) {
+		out += decimal_separator.native_value();
+		out += fraction_part;
+	}
+	return string_t(std::move(out));
+}
+
+
+inline int hex_nibble_value(unsigned char value) {
+	if (value >= static_cast<unsigned char>('0') && value <= static_cast<unsigned char>('9')) {
+		return static_cast<int>(value - static_cast<unsigned char>('0'));
+	}
+	const auto lower = ascii_tolower_byte(value);
+	if (lower >= static_cast<unsigned char>('a') && lower <= static_cast<unsigned char>('f')) {
+		return 10 + static_cast<int>(lower - static_cast<unsigned char>('a'));
+	}
+	return -1;
 }
 
 
@@ -674,6 +760,111 @@ inline string_t implode(const string_t &separator, const vector_t<string_t> &pie
 		out += pieces.native_value()[index].native_value();
 	}
 	return string_t(std::move(out));
+}
+
+inline mixed_t hex2bin(const string_t &value) {
+	const auto &source = value.native_value();
+	if ((source.size() % 2) != 0) {
+		return mixed_t(bool_t(false));
+	}
+	std::string out;
+	out.reserve(source.size() / 2);
+	for (std::size_t index = 0; index < source.size(); index += 2) {
+		const auto high = hex_nibble_value(static_cast<unsigned char>(source[index]));
+		const auto low = hex_nibble_value(static_cast<unsigned char>(source[index + 1]));
+		if (high < 0 || low < 0) {
+			return mixed_t(bool_t(false));
+		}
+		const auto byte = static_cast<char>((high << 4) | low);
+		out.push_back(byte);
+	}
+	return mixed_t(string_t(std::move(out)));
+}
+
+inline string_t bin2hex(const string_t &value) {
+	static constexpr char digits[] = "0123456789abcdef";
+	const auto &source = value.native_value();
+	std::string out;
+	out.reserve(source.size() * 2);
+	for (unsigned char byte : source) {
+		out.push_back(digits[(byte >> 4) & 0x0f]);
+		out.push_back(digits[byte & 0x0f]);
+	}
+	return string_t(std::move(out));
+}
+
+
+inline string_t number_format(const int_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	return number_format_from_double(static_cast<double>(value.native_value()), decimals.native_value(), decimal_separator, thousands_separator);
+}
+
+inline string_t number_format(const int_t &value, const int_t &decimals) {
+	return number_format(value, decimals, string_t("."), string_t(","));
+}
+
+inline string_t number_format(const int_t &value) {
+	return number_format(value, int_t(0));
+}
+
+inline string_t number_format(const float_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	return number_format_from_double(value.native_value(), decimals.native_value(), decimal_separator, thousands_separator);
+}
+
+inline string_t number_format(const float_t &value, const int_t &decimals) {
+	return number_format(value, decimals, string_t("."), string_t(","));
+}
+
+inline string_t number_format(const float_t &value) {
+	return number_format(value, int_t(0));
+}
+
+inline string_t number_format(const string_t &, const int_t &, const string_t &, const string_t &) {
+	throw TypeError("number_format(): Argument #1 ($num) must be of type int|float, string given");
+}
+
+inline string_t number_format(const string_t &value, const int_t &decimals) {
+	return number_format(value, decimals, string_t("."), string_t(","));
+}
+
+inline string_t number_format(const string_t &value) {
+	return number_format(value, int_t(0));
+}
+
+inline string_t number_format(const bool_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	return number_format_from_double(value.native_value() ? 1.0 : 0.0, decimals.native_value(), decimal_separator, thousands_separator);
+}
+
+inline string_t number_format(const bool_t &value, const int_t &decimals) {
+	return number_format(value, decimals, string_t("."), string_t(","));
+}
+
+inline string_t number_format(const bool_t &value) {
+	return number_format(value, int_t(0));
+}
+
+inline string_t number_format(const mixed_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+	switch (value.kind()) {
+		case mixed_t::kind_t::null_v:
+			return number_format_from_double(0.0, decimals.native_value(), decimal_separator, thousands_separator);
+		case mixed_t::kind_t::bool_v:
+			return number_format(value.bool_value(), decimals, decimal_separator, thousands_separator);
+		case mixed_t::kind_t::int_v:
+			return number_format(value.int_value(), decimals, decimal_separator, thousands_separator);
+		case mixed_t::kind_t::float_v:
+			return number_format(value.float_value(), decimals, decimal_separator, thousands_separator);
+		case mixed_t::kind_t::string_v:
+			throw TypeError("number_format(): Argument #1 ($num) must be of type int|float, string given");
+		default:
+			return number_format_from_double(0.0, decimals.native_value(), decimal_separator, thousands_separator);
+	}
+}
+
+inline string_t number_format(const mixed_t &value, const int_t &decimals) {
+	return number_format(value, decimals, string_t("."), string_t(","));
+}
+
+inline string_t number_format(const mixed_t &value) {
+	return number_format(value, int_t(0));
 }
 
 // Implements PHP microtime() string mode.
