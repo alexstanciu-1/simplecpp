@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/functions.php';
 
+// Cache the raw request body once at the front controller level.
+// Some environments and include/routing setups are fragile around repeated
+// php://input reads, so downstream scripts should reuse this cached copy.
+if (!array_key_exists('__simple_cpp_raw_request_body', $GLOBALS)) {
+	$rawRequestBody = file_get_contents('php://input');
+	$GLOBALS['__simple_cpp_raw_request_body'] = ($rawRequestBody === false) ? '' : $rawRequestBody;
+}
+
 # require_once __DIR__ . '/../generator/from_php.php';
 # require_once __DIR__ . '/../tests/public_html/index.php';
 
@@ -65,7 +73,7 @@ else if ($_GET['resync_samples_ast'] ?? false) {
 }
 else if ($_GET['export_php_ast'] ?? false) {
 	
-	$source_code = file_get_contents("php://input") ?: '<?php echo "works";';
+	$source_code = ($GLOBALS['__simple_cpp_raw_request_body'] ?? '') ?: '<?php echo "works";';
 	// echo "ok!";
 	
 	$ast_vers_used = 120; # max(\ast\get_supported_versions());

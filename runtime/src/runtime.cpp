@@ -7,3 +7,5 @@
 #include "../include/scpp/support/hash_t.cpp"
 #include "../include/scpp/support/mixed_t.cpp"
 #include "../include/scpp/support/var_dump.cpp"
+
+#include "../include/scpp/support/php_json.cpp"

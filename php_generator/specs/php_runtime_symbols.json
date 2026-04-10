@@ -58,6 +58,8 @@
         "rename",
         "realpath",
         "dirname",
-        "basename"
+        "basename",
+        "json_decode",
+        "json_encode"
     ]
 }

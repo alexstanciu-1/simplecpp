@@ -90,7 +90,6 @@ static void test_nullable_relational_ops() {
 	assert(threw == true);
 }
 
-
 // Verifies PHP string helpers can accept present nullable strings and reject nulls.
 static void test_nullable_strlen() {
 	const scpp::nullable<scpp::string_t> value(scpp::string_t("hello"));
