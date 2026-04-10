@@ -13,7 +13,7 @@ Use the dedicated header instead:
 
 - `json_decode()` parses one full JSON document into `mixed_t`
 - decoded scalars stay inline in `mixed_t`
-- decoded arrays and objects become `shared_p<hash_t<mixed_t>>`
+- decoded arrays and objects both become `dynamic_t`
 - packed `hash_t` encodes as a JSON array
 - non-packed `hash_t` encodes as a JSON object
 - object-vs-array differentiation follows the same internal model as hand-written Prism++ / Simple C++ code

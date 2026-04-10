@@ -110,7 +110,12 @@ else if ($_GET['zip-it'] ?? false)
 		unlink($zipPath);
 	}
 
-	$includeDirs_def = ["../php_generator", "../public_html", "../ext", "../runtime", "../mem_container", "../specs", "../README.md", "../PROJECT_CHATGPT_BOOTSTRAP.md", "../docs", "../install",
+	$includeDirs_def = ["../php_generator", "../public_html", "../ext", "../runtime", "../mem_container", "../specs", "../docs", "../install",
+						"../bridge",
+						"../tools",
+						"../.gitignore",
+						"../PROJECT_CHATGPT_BOOTSTRAP.md",
+						"../README.md",
 							// "../test_prism",
 							];
 	if (($_GET['tests'] ?? null) ?: false) {

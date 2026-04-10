@@ -74,3 +74,8 @@ add_test(NAME scpp_test_php_filesystem COMMAND test_php_filesystem)
 add_executable(test_php_json test_php_json.cpp)
 target_link_libraries(test_php_json PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_php_json COMMAND test_php_json)
+
+# mysqli connect/close smoke coverage for the first vertical slice.
+add_executable(test_mysqli_connect test_mysqli_connect.cpp)
+target_link_libraries(test_mysqli_connect PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_mysqli_connect COMMAND test_mysqli_connect)

@@ -3,11 +3,17 @@ cmake_minimum_required(VERSION 3.20)
 project(scpp_runtime LANGUAGES CXX)
 
 option(SCPP_LANGUAGE_TARGET_PHP "Build runtime with PHP-target array semantics" ON)
+option(SCPP_WITH_MYSQLI "Build runtime with the optional mysqli module enabled" ON)
+
+include(CheckIncludeFileCXX)
+include(FindPkgConfig)
 
 enable_testing()
 
 add_library(scpp_runtime
 	src/runtime.cpp
+	src/php_mysqli.cpp
+	src/modules/mysql_module.cpp
 )
 
 target_include_directories(scpp_runtime
@@ -19,6 +25,52 @@ target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 
 if(SCPP_LANGUAGE_TARGET_PHP)
 	target_compile_definitions(scpp_runtime PUBLIC SCPP_LANGUAGE_TARGET_PHP=1)
+endif()
+
+if(SCPP_WITH_MYSQLI)
+	set(SCPP_MYSQLI_PKG_NAME "")
+
+	if(PKG_CONFIG_FOUND)
+		# Prefer the pkg-config name used by Ubuntu 24.04 / Debian dev packages.
+		pkg_check_modules(MARIADB_LIB QUIET IMPORTED_TARGET libmariadb)
+		if(TARGET PkgConfig::MARIADB_LIB)
+			set(SCPP_MYSQLI_PKG_NAME "libmariadb")
+		endif()
+
+		# Fall back to alternative package names used by some distributions.
+		if(SCPP_MYSQLI_PKG_NAME STREQUAL "")
+			pkg_check_modules(MARIADB QUIET IMPORTED_TARGET mariadb)
+			if(TARGET PkgConfig::MARIADB)
+				set(SCPP_MYSQLI_PKG_NAME "mariadb")
+			endif()
+		endif()
+
+		if(SCPP_MYSQLI_PKG_NAME STREQUAL "")
+			pkg_check_modules(MYSQLCLIENT QUIET IMPORTED_TARGET mysqlclient)
+			if(TARGET PkgConfig::MYSQLCLIENT)
+				set(SCPP_MYSQLI_PKG_NAME "mysqlclient")
+			endif()
+		endif()
+	endif()
+
+	if(SCPP_MYSQLI_PKG_NAME STREQUAL "libmariadb")
+		target_link_libraries(scpp_runtime PUBLIC PkgConfig::MARIADB_LIB)
+		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=1)
+		message(STATUS "SCPP mysqli module: using pkg-config package libmariadb")
+	elseif(SCPP_MYSQLI_PKG_NAME STREQUAL "mariadb")
+		target_link_libraries(scpp_runtime PUBLIC PkgConfig::MARIADB)
+		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=1)
+		message(STATUS "SCPP mysqli module: using pkg-config package mariadb")
+	elseif(SCPP_MYSQLI_PKG_NAME STREQUAL "mysqlclient")
+		target_link_libraries(scpp_runtime PUBLIC PkgConfig::MYSQLCLIENT)
+		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=1)
+		message(STATUS "SCPP mysqli module: using pkg-config package mysqlclient")
+	else()
+		message(WARNING "SCPP_WITH_MYSQLI=ON but no supported MariaDB/MySQL Connector/C pkg-config package was found (tried: libmariadb, mariadb, mysqlclient). Building mysqli wrappers in disabled-stub mode.")
+		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=0)
+	endif()
+else()
+	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=0)
 endif()
 
 add_subdirectory(tests)

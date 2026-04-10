@@ -15,8 +15,8 @@ Parses one complete JSON document and returns a `mixed_t` in the normal Prism++ 
 - integer numbers -> `mixed_t(int_t(...))`
 - fractional/exponent numbers -> `mixed_t(float_t(...))`
 - strings -> `mixed_t(string_t(...))`
-- arrays -> `mixed_t(shared_p<hash_t<mixed_t>>)` with packed storage
-- objects -> `mixed_t(shared_p<hash_t<mixed_t>>)` with associative storage
+- arrays -> `mixed_t(dynamic_t)` backed by shared packed storage
+- objects -> `mixed_t(dynamic_t)` backed by shared associative storage
 
 ## Notes
 

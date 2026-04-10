@@ -93,6 +93,7 @@ Paths emitted into `build.ninja` are:
   "build_dir": ".prism/build",
   "generated_dir": ".prism/generated",
   "cache_dir": ".prism/cache",
+  "native_cpp_dir": "native_cpp",
   "build": {
     "backend": "ninja",
     "cxx": null
@@ -147,3 +148,8 @@ This is not the final deliberate multi-file semantic model. It does not yet free
 - file-init execution order across multiple source units
 
 Those belong to the dedicated multi-file model spec.
+
+## FastCGI companion build
+
+When `prism.json` contains `fastcgi.enabled = true`, `scpp build` also emits a FastCGI companion executable.
+The FastCGI host expects a handwritten `scpp::fcgi::http_handle(const scpp::fcgi::request_t&)` definition from `native_cpp/`.

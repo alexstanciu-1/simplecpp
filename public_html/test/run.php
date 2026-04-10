@@ -696,6 +696,74 @@ function buildNaturalCompileUnit(array $headerLines, array $sourceLines): string
 	return implode("\n", array_merge($headerLines, [''], $filteredSourceLines)) . "\n";
 }
 
+function getRuntimeSourceFilesForUi(string $projectRoot): array
+{
+	$runtimeSrcRoot = $projectRoot . '/runtime/src';
+	$paths = [];
+	$iter = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($runtimeSrcRoot, FilesystemIterator::SKIP_DOTS)
+	);
+	foreach ($iter as $fileInfo) {
+		if (!$fileInfo->isFile()) {
+			continue;
+		}
+
+		$path = $fileInfo->getPathname();
+		$normalized = str_replace('\\', '/', $path);
+		if (!str_ends_with($normalized, '.cpp')) {
+			continue;
+		}
+		if (str_ends_with($normalized, '/fastcgi_main.cpp')) {
+			continue;
+		}
+		$paths[] = $path;
+	}
+
+	sort($paths);
+	return $paths;
+}
+
+function getRuntimeUiMysqliPkgConfig(string $projectRoot): array
+{
+	static $cache = [];
+	$key = realpath($projectRoot) ?: $projectRoot;
+	if (isset($cache[$key])) {
+		return $cache[$key];
+	}
+
+	foreach (["libmariadb", "mariadb", "mysqlclient"] as $packageName) {
+		$existsRun = runCommandMeasured(['pkg-config', '--exists', $packageName], $projectRoot, 10);
+		if ($existsRun['exit_code'] !== 0) {
+			continue;
+		}
+
+		$cflagsRun = runCommandMeasured(['pkg-config', '--cflags', $packageName], $projectRoot, 10);
+		$libsRun = runCommandMeasured(['pkg-config', '--libs', $packageName], $projectRoot, 10);
+		if ($cflagsRun['exit_code'] !== 0 || $libsRun['exit_code'] !== 0) {
+			continue;
+		}
+
+		$cflags = preg_split('/\s+/', trim($cflagsRun['stdout'])) ?: [];
+		$libs = preg_split('/\s+/', trim($libsRun['stdout'])) ?: [];
+		$cflags = array_values(array_filter($cflags, static fn (string $value): bool => $value !== ''));
+		$libs = array_values(array_filter($libs, static fn (string $value): bool => $value !== ''));
+
+		return $cache[$key] = [
+			'enabled' => true,
+			'pkg_name' => $packageName,
+			'cflags' => $cflags,
+			'libs' => $libs,
+		];
+	}
+
+	return $cache[$key] = [
+		'enabled' => false,
+		'pkg_name' => '',
+		'cflags' => [],
+		'libs' => [],
+	];
+}
+
 function ensureRuntimeArchive(string $projectRoot, bool $memTestEnabled = false): array
 {
 	$cacheRoot = $projectRoot . '/runtime/build/test_ui_cache';
@@ -706,36 +774,51 @@ function ensureRuntimeArchive(string $projectRoot, bool $memTestEnabled = false)
 
 	$signature = computeRuntimeCacheSignature($projectRoot, $memTestEnabled);
 	$signaturePath = $cacheDir . '/runtime.signature';
-	$objectPath = $cacheDir . '/runtime.o';
 	$archivePath = $cacheDir . '/libruntime_test_ui.a';
+	$objectsRoot = $cacheDir . '/objects';
 	$currentSignature = is_file($signaturePath) ? trim((string) file_get_contents($signaturePath)) : '';
 
-	if ($currentSignature === $signature && is_file($objectPath) && is_file($archivePath)) {
+	if ($currentSignature === $signature && is_file($archivePath)) {
 		return [
 			'status' => 'reused',
 			'archive_path' => $archivePath,
 		];
 	}
 
-	$compileRun = runCommandMeasured(
-		buildRuntimeCompileCommand($projectRoot, $objectPath, $memTestEnabled),
-		$projectRoot,
-		60
-	);
-	if ($compileRun['exit_code'] !== 0) {
-		throw new RuntimeException(buildProcessErrorText('C++ runtime cache build', $compileRun));
+	if (is_dir($objectsRoot)) {
+		deleteSandboxDirectory($objectsRoot);
+	}
+	if (!mkdir($objectsRoot, 0777, true) && !is_dir($objectsRoot)) {
+		throw new RuntimeException('Failed to create runtime cache objects directory.');
 	}
 
-	$archiveRun = runCommandMeasured(
-		[
-			'ar',
-			'rcs',
-			$archivePath,
-			$objectPath,
-		],
-		$projectRoot,
-		20
-	);
+	$sourceFiles = getRuntimeSourceFilesForUi($projectRoot);
+	if ($sourceFiles === []) {
+		throw new RuntimeException('No runtime source files were found for the test UI archive build.');
+	}
+
+	$objectFiles = [];
+	foreach ($sourceFiles as $sourcePath) {
+		$relative = substr($sourcePath, strlen($projectRoot . '/runtime/src/'));
+		$objectPath = $objectsRoot . '/' . preg_replace('/\.cpp$/', '.o', $relative);
+		$objectDir = dirname($objectPath);
+		if (!is_dir($objectDir) && !mkdir($objectDir, 0777, true) && !is_dir($objectDir)) {
+			throw new RuntimeException('Failed to create runtime object directory: ' . $objectDir);
+		}
+
+		$compileRun = runCommandMeasured(
+			buildRuntimeCompileCommand($projectRoot, $sourcePath, $objectPath, $memTestEnabled),
+			$projectRoot,
+			60
+		);
+		if ($compileRun['exit_code'] !== 0) {
+			throw new RuntimeException(buildProcessErrorText('C++ runtime cache build', $compileRun));
+		}
+		$objectFiles[] = $objectPath;
+	}
+
+	$archiveCommand = array_merge(['ar', 'rcs', $archivePath], $objectFiles);
+	$archiveRun = runCommandMeasured($archiveCommand, $projectRoot, 20);
 	if ($archiveRun['exit_code'] !== 0) {
 		throw new RuntimeException(buildProcessErrorText('C++ runtime archive build', $archiveRun));
 	}
@@ -1239,13 +1322,15 @@ function withCompilerLauncher(array $command): array
 	return $command;
 }
 
-function buildRuntimeCompileCommand(string $projectRoot, string $objectPath, bool $memTestEnabled = false): array
+function buildRuntimeCompileCommand(string $projectRoot, string $sourcePath, string $objectPath, bool $memTestEnabled = false): array
 {
+	$mysqliConfig = getRuntimeUiMysqliPkgConfig($projectRoot);
 	$command = [
 		'g++',
 		'-std=c++23',
 		'-O3',
 		'-DSCPP_LANGUAGE_TARGET_PHP=1',
+		'-DSCPP_HAS_MYSQLI=' . ($mysqliConfig['enabled'] ? '1' : '0'),
 	];
 
 	if ($memTestEnabled) {
@@ -1254,9 +1339,10 @@ function buildRuntimeCompileCommand(string $projectRoot, string $objectPath, boo
 
 	$command = array_merge($command, [
 		'-c',
-		$projectRoot . '/runtime/src/runtime.cpp',
+		$sourcePath,
 		'-I',
 		$projectRoot . '/runtime/include',
+	], $mysqliConfig['cflags'], [
 		'-o',
 		$objectPath,
 	]);
@@ -1266,11 +1352,13 @@ function buildRuntimeCompileCommand(string $projectRoot, string $objectPath, boo
 
 function buildSampleCompileCommand(string $projectRoot, string $compileInputPath, string $runtimeArchive, string $cppBinaryPath, bool $memTestEnabled = false): array
 {
+	$mysqliConfig = getRuntimeUiMysqliPkgConfig($projectRoot);
 	$command = [
 		'g++',
 		'-std=c++23',
 		'-O3',
 		'-DSCPP_LANGUAGE_TARGET_PHP=1',
+		'-DSCPP_HAS_MYSQLI=' . ($mysqliConfig['enabled'] ? '1' : '0'),
 	];
 
 	if ($memTestEnabled) {
@@ -1288,7 +1376,7 @@ function buildSampleCompileCommand(string $projectRoot, string $compileInputPath
 		$command[] = '-ljemalloc';
 	}
 
-	$command = array_merge($command, [
+	$command = array_merge($command, $mysqliConfig['libs'], [
 		'-o',
 		$cppBinaryPath,
 	]);

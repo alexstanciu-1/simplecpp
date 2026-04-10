@@ -34,4 +34,6 @@
 #include "scpp/php_stdio.hpp"
 #include "scpp/php_filesystem.hpp"
 #include "scpp/php_json.hpp"
+#include "scpp/php_mysqli.hpp"
+#include "scpp/fastcgi.hpp"
 #include "scpp/generated/operators.hpp"

@@ -29,8 +29,8 @@ That means:
 - integers -> inline `int_t`
 - fractional/exponent numbers -> inline `float_t`
 - strings -> inline `string_t`
-- arrays -> `shared_p<hash_t<mixed_t>>` in packed mode
-- objects -> `shared_p<hash_t<mixed_t>>` in non-packed mode
+- arrays -> `dynamic_t` backed by shared packed `hash_t<mixed_t>` storage
+- objects -> `dynamic_t` backed by shared associative `hash_t<mixed_t>` storage
 
 This deliberately avoids a separate JSON-only AST or separate array/object container classes.
 

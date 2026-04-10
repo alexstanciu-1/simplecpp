@@ -53,10 +53,17 @@ final class ProjectInitCommand
 			'build_dir' => '.prism/build',
 			'generated_dir' => '.prism/generated',
 			'cache_dir' => '.prism/cache',
+			'native_cpp_dir' => 'native_cpp',
 			'build' => [
 				'backend' => 'ninja',
 				'mode' => 'debug',
 				'cxx' => null,
+			],
+			'fastcgi' => [
+				'enabled' => false,
+				'workers' => 1,
+				'max_body_size' => 4 * 1024 * 1024,
+				'max_requests' => 0,
 			],
 		];
 
@@ -136,6 +143,7 @@ function print_help(): void
 	echo "  scpp <input.php>\n";
 	echo "  scpp init\n";
 	echo "  scpp build\n";
+	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp --help\n";
 	echo "  scpp --version\n";
 	echo "  scpp --doctor\n";
@@ -248,6 +256,10 @@ function handle_build(string $cwd): void
 	$buildDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['build_dir'] ?? '.prism/build')));
 	$generatedDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['generated_dir'] ?? '.prism/generated')));
 	$cacheDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['cache_dir'] ?? '.prism/cache')));
+	$nativeCppDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['native_cpp_dir'] ?? 'native_cpp')));
+	$repoRoot = resolve_repo_root();
+	$fastcgiConfig = resolve_fastcgi_config($config);
+	$fastcgiBuild = $fastcgiConfig['enabled'] ? resolve_fastcgi_build_spec($projectRoot, $repoRoot, $buildDir, $generatedDir, $entrypointAbs, $compiler, $fastcgiConfig) : null;
 	ensure_directory($buildDir);
 	ensure_directory($generatedDir);
 	ensure_directory($cacheDir);
@@ -255,11 +267,11 @@ function handle_build(string $cwd): void
 	$statePath = $cacheDir . '/' . SCPP_STATE_FILE;
 	$state = load_s2s_state($statePath);
 	$phpFiles = collect_project_php_files($projectRoot);
-	$repoRoot = resolve_repo_root();
 	$runtimeBuildSignature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode);
 	$transpiler = new Transpiler();
 	$generatorSignature = compute_s2s_generator_signature($repoRoot);
 	$generatedUnits = [];
+	$nativeCppFiles = collect_project_native_cpp_files($nativeCppDir);
 	$transpiledCount = 0;
 	$skippedCount = 0;
 
@@ -300,7 +312,25 @@ function handle_build(string $cwd): void
 			'relative_php' => $relativePhp,
 			'generated_cpp' => $generatedCpp,
 			'object_path' => build_object_path($buildDir, $relativePhp, $compiler['kind']),
+			'is_entrypoint' => $phpPathAbs === $entrypointAbs,
 		];
+
+		if ($fastcgiBuild !== null && $phpPathAbs === $entrypointAbs) {
+			try {
+				$fcgiCppFile = $transpiler->transpile($phpPathAbs, false, false);
+			} catch (S2SException $e) {
+				fwrite(STDERR, $e->getMessage() . PHP_EOL);
+				exit(3);
+			} catch (Throwable $e) {
+				fwrite(STDERR, 'internal error: ' . $e->getMessage() . PHP_EOL);
+				exit(4);
+			}
+			$fcgiBase = build_generated_fcgi_base($generatedDir, $relativePhp);
+			write_text_file($fcgiBase . '.hpp', implode(PHP_EOL, $fcgiCppFile->headerLines) . PHP_EOL);
+			write_text_file($fcgiBase . '.cpp', implode(PHP_EOL, $fcgiCppFile->sourceLines) . PHP_EOL);
+			$fastcgiBuild['entrypoint_generated_cpp'] = normalize_config_path(relative_path($projectRoot, $fcgiBase . '.cpp'));
+			$fastcgiBuild['entrypoint_object_path'] = normalize_config_path(relative_path($projectRoot, build_fcgi_object_path($buildDir, $relativePhp, $compiler['kind'])));
+		}
 		$state['files'][$relativePhp] = [
 			'size' => $meta['size'],
 			'mtime' => $meta['mtime'],
@@ -323,10 +353,10 @@ function handle_build(string $cwd): void
 	}
 
 	$outputName = build_output_name($entrypointAbs);
-	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $outputName, $compiler, $buildMode);
+	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppFiles, $outputName, $compiler, $buildMode, $fastcgiBuild);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
-	$buildOutputs = collect_build_output_paths($generatedUnits, build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode), $buildDir, $compiler['kind'], $outputName);
+	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppFiles, build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode), $buildDir, $compiler['kind'], $outputName, $fastcgiBuild);
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
@@ -373,6 +403,9 @@ function handle_build(string $cwd): void
 		echo 'Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.' . PHP_EOL;
 	}
 	echo 'Build completed: ' . normalize_config_path(relative_path($projectRoot, $buildDir . '/' . $outputName)) . PHP_EOL;
+	if ($fastcgiBuild !== null) {
+		echo 'FastCGI build completed: ' . normalize_config_path(relative_path($projectRoot, $fastcgiBuild['output_path'])) . PHP_EOL;
+	}
 }
 
 
@@ -381,11 +414,15 @@ function handle_build(string $cwd): void
  * @param array{kind:string,source_path:string,artifact_path:string,object_path:?string,archiver:?string,link_flags?:list<string>,rpath_dir?:?string} $runtimeBuild
  * @return list<string>
  */
-function collect_build_output_paths(array $generatedUnits, array $runtimeBuild, string $buildDir, string $compilerKind, string $outputName): array
+function collect_build_output_paths(array $generatedUnits, array $nativeCppFiles, array $runtimeBuild, string $buildDir, string $compilerKind, string $outputName, ?array $fastcgiBuild = null): array
 {
 	$paths = [];
 	foreach ($generatedUnits as $unit) {
 		$paths[] = normalize_path($unit['object_path']);
+	}
+	foreach ($nativeCppFiles as $nativeCpp) {
+		$nativeRelative = normalize_config_path(relative_path(dirname($buildDir), $nativeCpp));
+		$paths[] = normalize_path(build_native_object_path($buildDir, $nativeRelative, $compilerKind));
 	}
 	$runtimeObjectPath = $runtimeBuild['object_path'] ?? null;
 	if (is_string($runtimeObjectPath) && $runtimeObjectPath !== '') {
@@ -397,6 +434,13 @@ function collect_build_output_paths(array $generatedUnits, array $runtimeBuild, 
 		$paths[] = normalize_path(build_runtime_pch_artifact_path($buildDir, $compilerKind));
 	}
 	$paths[] = normalize_path($buildDir . '/' . $outputName);
+	if (is_array($fastcgiBuild)) {
+		if (is_string($fastcgiBuild['entrypoint_object_path'] ?? null) && $fastcgiBuild['entrypoint_object_path'] !== '') {
+			$paths[] = normalize_path($fastcgiBuild['entrypoint_object_path']);
+		}
+		$paths[] = normalize_path($fastcgiBuild['main_object_path']);
+		$paths[] = normalize_path($fastcgiBuild['output_path']);
+	}
 	return array_values(array_unique($paths));
 }
 
@@ -729,6 +773,128 @@ function build_object_path(string $buildDir, string $relativePhp, string $compil
 	return $buildDir . '/' . $trimmed . '.' . object_extension($compilerKind);
 }
 
+function build_generated_fcgi_base(string $generatedDir, string $relativePhp): string
+{
+	$trimmed = preg_replace('/\.php$/i', '', $relativePhp);
+	if (!is_string($trimmed) || $trimmed === '') {
+		$trimmed = 'entry';
+	}
+	return $generatedDir . '/' . $trimmed . '__fcgi';
+}
+
+function build_fcgi_object_path(string $buildDir, string $relativePhp, string $compilerKind): string
+{
+	$trimmed = preg_replace('/\.php$/i', '', $relativePhp);
+	if (!is_string($trimmed) || $trimmed === '') {
+		$trimmed = 'entry';
+	}
+	return $buildDir . '/' . $trimmed . '__fcgi.' . object_extension($compilerKind);
+}
+
+function build_native_object_path(string $buildDir, string $nativeCppPath, string $compilerKind): string
+{
+	$sanitized = preg_replace('/[^A-Za-z0-9_.\/-]+/', '_', normalize_config_path($nativeCppPath));
+	$sanitized = str_replace(['../', '..\\'], '', (string) $sanitized);
+	return $buildDir . '/native/' . preg_replace('/\.cpp$/i', '', $sanitized) . '.' . object_extension($compilerKind);
+}
+
+/** @return list<string> */
+function collect_project_native_cpp_files(string $nativeCppDir): array
+{
+	if (!is_dir($nativeCppDir)) {
+		return [];
+	}
+	$files = [];
+	$iterator = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator($nativeCppDir, FilesystemIterator::SKIP_DOTS)
+	);
+	foreach ($iterator as $fileInfo) {
+		if (!$fileInfo instanceof SplFileInfo || !$fileInfo->isFile()) {
+			continue;
+		}
+		if (strcasecmp($fileInfo->getExtension(), 'cpp') !== 0) {
+			continue;
+		}
+		$files[] = normalize_path($fileInfo->getPathname());
+	}
+	sort($files, SORT_STRING);
+	return $files;
+}
+
+/** @return array{enabled:bool,workers:int,max_body_size:int,max_requests:int} */
+function resolve_fastcgi_config(array $config): array
+{
+	$fcgi = is_array($config['fastcgi'] ?? null) ? $config['fastcgi'] : [];
+	$enabled = (bool) ($fcgi['enabled'] ?? false);
+	$workers = max(1, (int) ($fcgi['workers'] ?? 1));
+	$maxBodySize = max(1, (int) ($fcgi['max_body_size'] ?? (4 * 1024 * 1024)));
+	$maxRequests = max(0, (int) ($fcgi['max_requests'] ?? 0));
+	return [
+		'enabled' => $enabled,
+		'workers' => $workers,
+		'max_body_size' => $maxBodySize,
+		'max_requests' => $maxRequests,
+	];
+}
+
+/** @return array{source_path:string,main_object_path:string,output_path:string,cxxflags:list<string>,ldflags:list<string>,entrypoint_generated_cpp:string,entrypoint_object_path:string} */
+function resolve_fastcgi_build_spec(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, string $entrypointAbs, array $compiler, array $fastcgiConfig): array
+{
+	$cxxflags = [];
+	$ldflags = [];
+	$pkgConfig = find_command_path(['pkg-config']);
+	if ($pkgConfig !== null) {
+		$cflagsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --cflags fcgi 2>/dev/null');
+		$libsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --libs fcgi 2>/dev/null');
+		if (is_string($cflagsOutput) && trim($cflagsOutput) !== '') {
+			$cxxflags = split_shell_tokens($cflagsOutput);
+		}
+		if (is_string($libsOutput) && trim($libsOutput) !== '') {
+			$ldflags = split_shell_tokens($libsOutput);
+		}
+	}
+	if ($ldflags === []) {
+		$ldflags = ['-lfcgi', '-lpthread'];
+	}
+	$cxxflags[] = '-DSCPP_FCGI_DEFAULT_WORKERS=' . max(1, (int) $fastcgiConfig['workers']);
+	$cxxflags[] = '-DSCPP_FCGI_DEFAULT_MAX_BODY_SIZE=' . max(1, (int) $fastcgiConfig['max_body_size']);
+	$cxxflags[] = '-DSCPP_FCGI_DEFAULT_MAX_REQUESTS=' . max(0, (int) $fastcgiConfig['max_requests']);
+	return [
+		'source_path' => normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/src/fastcgi_main.cpp')),
+		'main_object_path' => normalize_config_path(relative_path($projectRoot, $buildDir . '/fastcgi_main.' . object_extension($compiler['kind']))),
+		'output_path' => normalize_path($buildDir . '/' . build_fastcgi_output_name($entrypointAbs)),
+		'cxxflags' => $cxxflags,
+		'ldflags' => $ldflags,
+		'entrypoint_generated_cpp' => '',
+		'entrypoint_object_path' => '',
+	];
+}
+
+/** @return list<string> */
+function split_shell_tokens(string $value): array
+{
+	$value = trim($value);
+	if ($value === '') {
+		return [];
+	}
+	$parts = preg_split('/\s+/', $value);
+	if (!is_array($parts)) {
+		return [];
+	}
+	return array_values(array_filter(array_map('trim', $parts), static fn (string $part): bool => $part !== ''));
+}
+
+function build_fastcgi_output_name(string $entrypointAbs): string
+{
+	$base = pathinfo($entrypointAbs, PATHINFO_FILENAME);
+	if ($base === '') {
+		$base = 'app';
+	}
+	if (PHP_OS_FAMILY === 'Windows') {
+		return $base . '_fcgi.exe';
+	}
+	return $base . '_fcgi';
+}
 
 /** @return array{command:string,kind:string,launcher:?string,linker_flags:list<string>,archiver:?string}|null */
 function resolve_compiler(array $config): ?array
@@ -868,12 +1034,16 @@ function detect_fast_linker_flags(string $compilerKind): array
 		return [];
 	}
 
-	if (PHP_OS_FAMILY === 'Linux' && find_command_path(['mold']) !== null) {
-		return ['-fuse-ld=mold'];
+	if (PHP_OS_FAMILY === 'Linux') {
+		$moldPath = find_command_path(['ld.mold', 'mold']);
+		if ($moldPath !== null) {
+			return ['-fuse-ld=' . $moldPath];
+		}
 	}
 
-	if (find_command_path(['ld.lld']) !== null) {
-		return ['-fuse-ld=lld'];
+	$lldPath = find_command_path(['ld.lld']);
+	if ($lldPath !== null) {
+		return ['-fuse-ld=' . $lldPath];
 	}
 
 	return [];
@@ -898,7 +1068,7 @@ function compiler_display_command(array $compiler): string
 /**
  * @param list<array{relative_php:string,generated_cpp:string,object_path:string}> $generatedUnits
  */
-function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, string $outputName, array $compiler, string $buildMode): string
+function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppFiles, string $outputName, array $compiler, string $buildMode, ?array $fastcgiBuild = null): string
 {
 	$generatedIncludeDir = normalize_config_path(relative_path($projectRoot, $generatedDir));
 	$runtimeIncludeDir = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include'));
@@ -913,6 +1083,8 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode);
 	$runtimeSignatureStamp = normalize_config_path(relative_path($projectRoot, $buildDir . '/runtime_signature.txt'));
 	$runtimeLinkFlags = is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
+	$fastcgiCxxFlags = is_array($fastcgiBuild['cxxflags'] ?? null) ? $fastcgiBuild['cxxflags'] : [];
+	$fastcgiLdFlags = is_array($fastcgiBuild['ldflags'] ?? null) ? $fastcgiBuild['ldflags'] : [];
 	$baseLinkFlags = $linkerFlags;
 	$binaryLinkFlags = $baseLinkFlags;
 	if ($runtimeBuild['kind'] === 'shared' && is_string($runtimeBuild['rpath_dir'] ?? null) && $runtimeBuild['rpath_dir'] !== '') {
@@ -928,6 +1100,10 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$lines[] = 'runtime_cxxflags = ' . build_runtime_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir);
 	$lines[] = 'base_ldflags = ' . implode(' ', $baseLinkFlags);
 	$lines[] = 'ldflags = ' . implode(' ', $binaryLinkFlags);
+	if ($fastcgiBuild !== null) {
+		$lines[] = 'fcgi_cxxflags = ' . implode(' ', $fastcgiCxxFlags);
+		$lines[] = 'fcgi_ldflags = ' . implode(' ', array_merge($binaryLinkFlags, $fastcgiLdFlags));
+	}
 	if ($runtimeLinkFlags !== []) {
 		$lines[] = 'runtime_ldflags = ' . implode(' ', $runtimeLinkFlags);
 	}
@@ -992,6 +1168,18 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	}
 	$lines[] = '  description = LINK $out';
 	$lines[] = '';
+	if ($fastcgiBuild !== null) {
+		$lines[] = 'rule compile_fcgi';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags $fcgi_cxxflags' . (supports_compiler_pch($compiler) ? ' $app_pchflags' : '') . ' -MMD -MF $out.d -c $in -o $out';
+		$lines[] = '  depfile = $out.d';
+		$lines[] = '  deps = gcc';
+		$lines[] = '  description = CXX $out';
+		$lines[] = '';
+		$lines[] = 'rule link_fcgi';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $fcgi_ldflags $in -o $out';
+		$lines[] = '  description = LINK $out';
+		$lines[] = '';
+	}
 
 	$objectPaths = [];
 	if (supports_compiler_pch($compiler)) {
@@ -1007,6 +1195,16 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		}
 		$lines[] = 'build ' . ninja_escape_path($objectPath) . ': compile ' . ninja_escape_path($generatedCpp) . ' | ' . implode(' ', $implicitDeps);
 		$objectPaths[] = ninja_escape_path($objectPath);
+	}
+	foreach ($nativeCppFiles as $nativeCppPath) {
+		$nativeRelative = normalize_config_path(relative_path($projectRoot, $nativeCppPath));
+		$nativeObject = normalize_config_path(relative_path($projectRoot, build_native_object_path($buildDir, $nativeRelative, $compiler['kind'])));
+		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
+		if (supports_compiler_pch($compiler)) {
+			$implicitDeps[] = ninja_escape_path($appPchArtifact);
+		}
+		$lines[] = 'build ' . ninja_escape_path($nativeObject) . ': compile ' . ninja_escape_path($nativeRelative) . ' | ' . implode(' ', $implicitDeps);
+		$objectPaths[] = ninja_escape_path($nativeObject);
 	}
 	if ($runtimeBuild['kind'] === 'shared') {
 		$runtimeImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
@@ -1026,8 +1224,45 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	}
 	$lines[] = '';
 	$lines[] = 'build ' . ninja_escape_path($output) . ': link ' . implode(' ', $objectPaths);
+	if ($fastcgiBuild !== null) {
+		$fcgiObjects = [];
+		foreach ($generatedUnits as $unit) {
+			if (($unit['is_entrypoint'] ?? false) === true && ($fastcgiBuild['entrypoint_generated_cpp'] ?? '') !== '' && ($fastcgiBuild['entrypoint_object_path'] ?? '') !== '') {
+				continue;
+			}
+			$fcgiObjects[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $unit['object_path'])));
+		}
+		foreach ($nativeCppFiles as $nativeCppPath) {
+			$nativeRelative = normalize_config_path(relative_path($projectRoot, $nativeCppPath));
+			$fcgiObjects[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, build_native_object_path($buildDir, $nativeRelative, $compiler['kind']))));
+		}
+		if (($fastcgiBuild['entrypoint_generated_cpp'] ?? '') !== '' && ($fastcgiBuild['entrypoint_object_path'] ?? '') !== '') {
+			$fcgiGeneratedCpp = normalize_config_path($fastcgiBuild['entrypoint_generated_cpp']);
+			$fcgiGeneratedObject = normalize_config_path($fastcgiBuild['entrypoint_object_path']);
+			$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
+			if (supports_compiler_pch($compiler)) {
+				$implicitDeps[] = ninja_escape_path($appPchArtifact);
+			}
+			$lines[] = 'build ' . ninja_escape_path($fcgiGeneratedObject) . ': compile ' . ninja_escape_path($fcgiGeneratedCpp) . ' | ' . implode(' ', $implicitDeps);
+			$fcgiObjects[] = ninja_escape_path($fcgiGeneratedObject);
+		}
+		$fcgiMainSource = normalize_config_path($fastcgiBuild['source_path']);
+		$fcgiMainObject = normalize_config_path($fastcgiBuild['main_object_path']);
+		$fcgiMainImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
+		if (supports_compiler_pch($compiler)) {
+			$fcgiMainImplicitDeps[] = ninja_escape_path($appPchArtifact);
+		}
+		$lines[] = 'build ' . ninja_escape_path($fcgiMainObject) . ': compile_fcgi ' . ninja_escape_path($fcgiMainSource) . ' | ' . implode(' ', $fcgiMainImplicitDeps);
+		$fcgiObjects[] = ninja_escape_path($fcgiMainObject);
+		$fcgiObjects[] = ninja_escape_path($runtimeBuild['artifact_path']);
+		$lines[] = 'build ' . ninja_escape_path(normalize_config_path(relative_path($projectRoot, $fastcgiBuild['output_path']))) . ': link_fcgi ' . implode(' ', $fcgiObjects);
+	}
 	$lines[] = '';
-	$lines[] = 'default ' . ninja_escape_path($output);
+	$defaults = [ninja_escape_path($output)];
+	if ($fastcgiBuild !== null) {
+		$defaults[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $fastcgiBuild['output_path'])));
+	}
+	$lines[] = 'default ' . implode(' ', $defaults);
 	return implode(PHP_EOL, $lines) . PHP_EOL;
 }
 
@@ -1054,8 +1289,6 @@ function build_runtime_compiler_flags(string $compilerKind, string $buildMode, s
 
 	$flags = [
 		'-std=c++23',
-		'-Wall',
-		'-Wextra',
 		'-fPIC',
 	];
 	if ($buildMode === 'release') {
@@ -1063,10 +1296,9 @@ function build_runtime_compiler_flags(string $compilerKind, string $buildMode, s
 		$flags[] = '-DNDEBUG';
 	} else {
 		$flags[] = '-O0';
-		$flags[] = '-fno-inline';
-		$flags[] = '-g';
+		$flags[] = '-g0';
 		if (PHP_OS_FAMILY === 'Linux') {
-			$flags[] = '-gsplit-dwarf';
+			// No split dwarf output when debug info is disabled.
 		}
 		$flags[] = '-pipe';
 	}
@@ -1179,8 +1411,6 @@ function build_compiler_flags(string $compilerKind, string $buildMode, string $r
 
 	$flags = [
 		'-std=c++23',
-		'-Wall',
-		'-Wextra',
 		'-fPIC',
 	];
 	if ($buildMode === 'release') {
@@ -1188,10 +1418,9 @@ function build_compiler_flags(string $compilerKind, string $buildMode, string $r
 		$flags[] = '-DNDEBUG';
 	} else {
 		$flags[] = '-O0';
-		$flags[] = '-fno-inline';
-		$flags[] = '-g';
+		$flags[] = '-g0';
 		if (PHP_OS_FAMILY === 'Linux') {
-			$flags[] = '-gsplit-dwarf';
+			// No split dwarf output when debug info is disabled.
 		}
 		$flags[] = '-pipe';
 	}
