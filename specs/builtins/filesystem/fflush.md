@@ -9,16 +9,16 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `fflush(resource $stream): nullable<bool>`
-- Accepted argument types: nullable resource handle
+- Supported form: `fflush(resource $stream): bool`
+- Accepted argument types: `result_or_false<resource_handle_t>` / file-stream resource handle
 
 ## Behavior
 - Flushes an open file-stream resource.
 - Success returns `true`.
-- Operational flush failure returns `null`.
+- Operational flush failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` → Prism++ returns `true`/`null` → modified
+- PHP returns `true`/`false` → Prism++ now returns `true`/`false` at the PHP exposure layer → aligned
 
 ## Error policy
 - Null resource, wrong resource kind, and closed-resource use throw runtime errors.

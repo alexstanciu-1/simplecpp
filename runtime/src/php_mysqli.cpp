@@ -27,10 +27,10 @@ mysqli::mysqli(
 	apply_runtime_status(status_value);
 }
 
-shared_p<mysqli_result> mysqli::query(const string_t &sql) {
+result_or_bool<shared_p<mysqli_result>> mysqli::query(const string_t &sql) {
 	if (handle_ == nullptr) {
 		apply_runtime_status({1, "mysqli::query on disconnected connection"});
-		return null;
+		return false_sentinel;
 	}
 
 	const auto outcome = handle_->query(sql.native_value());
@@ -38,27 +38,27 @@ shared_p<mysqli_result> mysqli::query(const string_t &sql) {
 	affected_rows = int_t(outcome.affected_rows);
 	insert_id = int_t(outcome.insert_id);
 	if (!outcome.has_result) {
-		return null;
+		return bool_t(true);
 	}
 
 	auto result_handle = handle_->take_last_result();
 	if (result_handle == nullptr) {
 		apply_runtime_status({1, "mysqli::query did not surface a buffered result"});
-		return null;
+		return false_sentinel;
 	}
 	return create<mysqli_result>(std::move(result_handle));
 }
 
-shared_p<mysqli_stmt> mysqli::prepare(const string_t &sql) {
+result_or_false<shared_p<mysqli_stmt>> mysqli::prepare(const string_t &sql) {
 	if (handle_ == nullptr) {
 		apply_runtime_status({1, "mysqli::prepare on disconnected connection"});
-		return null;
+		return false_sentinel;
 	}
 
 	auto stmt_handle = handle_->prepare(sql.native_value());
 	apply_runtime_status(handle_->last_status());
 	if (stmt_handle == nullptr) {
-		return null;
+		return false_sentinel;
 	}
 	return create<mysqli_stmt>(std::move(stmt_handle), this);
 }
@@ -72,46 +72,50 @@ void mysqli::close() {
 	error = string_t("");
 }
 
-void mysqli::set_charset(const string_t &charset) {
+bool_t mysqli::set_charset(const string_t &charset) {
 	if (handle_ == nullptr) {
 		apply_runtime_status({1, "mysqli::set_charset on disconnected connection"});
-		return;
+		return bool_t(false);
 	}
-	static_cast<void>(handle_->set_charset(charset.native_value()));
+	const bool ok = handle_->set_charset(charset.native_value());
 	apply_runtime_status(handle_->last_status());
+	return bool_t(ok);
 }
 
-void mysqli::begin_transaction() {
+bool_t mysqli::begin_transaction() {
 	if (handle_ == nullptr) {
 		apply_runtime_status({1, "mysqli::begin_transaction on disconnected connection"});
-		return;
+		return bool_t(false);
 	}
-	static_cast<void>(handle_->begin_transaction());
+	const bool ok = handle_->begin_transaction();
 	apply_runtime_status(handle_->last_status());
 	affected_rows = int_t(handle_->affected_rows());
 	insert_id = int_t(handle_->insert_id());
+	return bool_t(ok);
 }
 
-void mysqli::commit() {
+bool_t mysqli::commit() {
 	if (handle_ == nullptr) {
 		apply_runtime_status({1, "mysqli::commit on disconnected connection"});
-		return;
+		return bool_t(false);
 	}
-	static_cast<void>(handle_->commit());
+	const bool ok = handle_->commit();
 	apply_runtime_status(handle_->last_status());
 	affected_rows = int_t(handle_->affected_rows());
 	insert_id = int_t(handle_->insert_id());
+	return bool_t(ok);
 }
 
-void mysqli::rollback() {
+bool_t mysqli::rollback() {
 	if (handle_ == nullptr) {
 		apply_runtime_status({1, "mysqli::rollback on disconnected connection"});
-		return;
+		return bool_t(false);
 	}
-	static_cast<void>(handle_->rollback());
+	const bool ok = handle_->rollback();
 	apply_runtime_status(handle_->last_status());
 	affected_rows = int_t(handle_->affected_rows());
 	insert_id = int_t(handle_->insert_id());
+	return bool_t(ok);
 }
 
 void mysqli::apply_connect_status(const db::mysql_module::status &status_value) {
@@ -150,13 +154,13 @@ mysqli_stmt::mysqli_stmt(
 	mysqli *owner)
 	: handle_(std::move(handle)), owner_(owner) {}
 
-void mysqli_stmt::execute() {
+bool_t mysqli_stmt::execute() {
 	if (handle_ == nullptr) {
 		set_local_error(1, "mysqli_stmt::execute on closed statement");
-		return;
+		return bool_t(false);
 	}
 	if (errno_code.native_value() != 0) {
-		return;
+		return bool_t(false);
 	}
 
 	std::vector<db::mysql_module::bound_value> values;
@@ -174,12 +178,13 @@ void mysqli_stmt::execute() {
 		owner_->affected_rows = affected_rows;
 		owner_->insert_id = insert_id;
 	}
+	return bool_t(errno_code.native_value() == 0);
 }
 
-shared_p<mysqli_result> mysqli_stmt::get_result() {
+result_or_false<shared_p<mysqli_result>> mysqli_stmt::get_result() {
 	if (handle_ == nullptr) {
 		set_local_error(1, "mysqli_stmt::get_result on closed statement");
-		return null;
+		return false_sentinel;
 	}
 
 	auto result_handle = handle_->get_result();
@@ -188,7 +193,7 @@ shared_p<mysqli_result> mysqli_stmt::get_result() {
 		owner_->apply_runtime_status(handle_->last_status());
 	}
 	if (result_handle == nullptr) {
-		return null;
+		return false_sentinel;
 	}
 	return create<mysqli_result>(std::move(result_handle));
 }

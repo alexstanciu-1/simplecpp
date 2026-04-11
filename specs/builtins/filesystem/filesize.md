@@ -9,7 +9,7 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `filesize(string $path): nullable<int>`
+- Supported form: `filesize(string $path): result_or_false<int>`
 - Accepted argument types: string_t
 
 ## Behavior
@@ -17,7 +17,7 @@
 - Failure returns `null`.
 
 ## Compatibility table
-- PHP returns size or `false` → Prism++ returns size or `null` → modified
+- PHP returns size or `false` → Prism++ returns size or `false` → modified
 
 ## Error policy
 - Does not throw for ordinary lookup failure.
@@ -36,4 +36,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 
 ## Test matrix
 - known-size file
-- missing path returns null
+- missing path returns false

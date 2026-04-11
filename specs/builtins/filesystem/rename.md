@@ -9,15 +9,15 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `rename(string $source, string $dest): nullable<bool>`
+- Supported form: `rename(string $source, string $dest): bool`
 - Accepted argument types: string_t, string_t
 
 ## Behavior
 - Renames or moves a filesystem entry.
-- Success returns `true`; failure returns `null`.
+- Success returns `true`; failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` → Prism++ returns `true`/`null` → modified
+- PHP returns `true`/`false` → Prism++ returns `true`/`false` → modified
 
 ## Error policy
 - Does not throw for ordinary rename failure.
@@ -37,4 +37,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 ## Test matrix
 - rename existing file
 - old path missing afterward
-- missing source returns null
+- missing source returns false

@@ -458,10 +458,97 @@
                 "value_ctor",
                 "has_value",
                 "reset",
+                "require_value",
                 "value",
                 "value_or",
+                "implicit_typed_boundary_bridge",
+                "operator_arrow",
                 "native_value"
-            ]
+            ],
+            "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; empty state is a runtime error; the current required-value cast wording is \"cast<To>(nullable) cannot convert an empty nullable to a required value\"; this bridge must not widen operator candidate sets",
+            "cast_lifting_rule": "centralized cast lifting may unwrap nullable<U> to any configured explicit target T through require_value and cast<T>(U); string_t remains the configured PHP-style empty-string exception for empty nullable values",
+            "operator_lifting_rule": "centralized generated operators, not the temporary typed-boundary bridge, define nullable participation in unary, binary, logical, relational, mutation, and compound-assignment families; empty nullable operands fail through runtime errors except explicit sentinel comparisons and equality/inequality against non-sentinel values",
+            "arrow_rule": "nullable<T>::operator->() is part of the stable wrapper surface; it must require a present value, forward to wrapped T::operator->() when T already exposes it, and otherwise return the address of the wrapped object for direct-object member access"
+        },
+        "result_or_false": {
+            "kind": "template_wrapper",
+            "header": "scpp/result_or_false.hpp",
+            "template": true,
+            "template_params": ["T"],
+            "cpp_underlying": "detail::result_core<T, false, false>",
+            "stable_core_api": [
+                "default_ctor",
+                "false_ctor",
+                "value_ctor",
+                "has_value",
+                "is_false",
+                "reset",
+                "require_value",
+                "value",
+                "implicit_typed_boundary_bridge",
+                "operator_arrow"
+            ],
+            "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the false-like empty state is a runtime error for required-value conversions",
+            "cast_lifting_rule": "centralized cast lifting may unwrap result_or_false<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the false-like empty state",
+            "operator_lifting_rule": "centralized generated operators define result_or_false participation through the same guarded-value lifting surface used by nullable; the false-like empty state fails through runtime errors except explicit false-sentinel comparisons",
+            "sentinel_rule": "the public PHP-facing comparison surface remains == false while the runtime implementation uses false_sentinel_t / false_sentinel internally"
+        },
+        "result_or_bool": {
+            "kind": "template_wrapper",
+            "header": "scpp/result_or_bool.hpp",
+            "template": true,
+            "template_params": ["T"],
+            "cpp_underlying": "detail::result_core<T, false, true>",
+            "stable_core_api": [
+                "default_ctor",
+                "false_ctor",
+                "true_ctor",
+                "value_ctor",
+                "has_value",
+                "is_false",
+                "is_true",
+                "reset",
+                "require_value",
+                "value",
+                "implicit_typed_boundary_bridge",
+                "operator_arrow"
+            ],
+            "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the bool states are runtime errors for required-value conversions",
+            "cast_lifting_rule": "centralized cast lifting may unwrap result_or_bool<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the bool states, while a true-state stringifies as the PHP boolean true contract",
+            "operator_lifting_rule": "centralized generated operators define result_or_bool participation through the same guarded-value lifting surface used by nullable; the non-value bool states fail through runtime errors except explicit bool/false-sentinel comparisons",
+            "sentinel_rule": "the public PHP-facing comparison surface remains == false and == true while the runtime implementation uses false_sentinel_t / false_sentinel and bool_t(true) internally"
+        },
+        "error_t": {
+            "kind": "runtime_value",
+            "header": "scpp/error_t.hpp",
+            "template": false,
+            "semantic_role": "structured_in_band_failure_payload",
+            "stable_core_api": ["default_ctor", "message_line_file_ctor", "get_message", "get_line", "get_file"],
+            "minimum_payload": ["message", "line", "file"]
+        },
+        "result": {
+            "kind": "template_wrapper",
+            "header": "scpp/result.hpp",
+            "template": true,
+            "template_params": ["T"],
+            "cpp_underlying": "std::variant<T, error_t>",
+            "stable_core_api": [
+                "default_ctor",
+                "value_ctor",
+                "error_ctor",
+                "has_value",
+                "has_error",
+                "require_value",
+                "require_error",
+                "value",
+                "error",
+                "implicit_typed_boundary_bridge",
+                "operator_arrow"
+            ],
+            "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the error state is a runtime error for required-value conversions",
+            "cast_lifting_rule": "centralized cast lifting may unwrap result<U> to any configured explicit target T through require_value and cast<T>(U); the error state never silently converts to a value",
+            "operator_lifting_rule": "centralized generated operators define result participation through the same guarded-value lifting surface used by nullable; the error state fails through runtime errors except explicit error-sentinel comparisons",
+            "error_access_rule": "wrapper error inspection is explicit through error(); the value path stays on operator->() and the generator lowers $result->error()->... to the wrapper method instead of treating error as a real payload property"
         },
         "hash_t": {
             "kind": "runtime_container",
@@ -864,7 +951,9 @@
             "form": "named_cast",
             "cast_name": "cast",
             "template_rule": true,
-            "policy_role": "unwrap_present_value"
+            "policy_role": "unwrap_present_value_or_runtime_error",
+            "typed_boundary_implicit_bridge": true,
+            "note": "the same centralized lifting rule also applies to nullable<U> -> T for any configured explicit cast pair by unwrapping first; string_t remains the empty-string exception"
         },
         {
             "from": "nullopt_t",
@@ -2093,6 +2182,29 @@
                     "result": "bool_t",
                     "policy_role": "identity_by_locked_target_pointer_or_false_if_either_expired"
                 }
+            ]
+        },
+        {
+            "name": "nullable_lifted_ops",
+            "enabled": true,
+            "template_rule": true,
+            "status": "authoritative_current_policy",
+            "policy_role": "checked_unwrap_then_delegate_to_wrapped_operator_family",
+            "covers": [
+                "unary",
+                "binary",
+                "logical",
+                "relational",
+                "mutation",
+                "compound_assignment"
+            ],
+            "operands": [
+                "nullable<T> with nullable<U> or plain U where the wrapped-value operator family is defined"
+            ],
+            "empty_operand_policy": "runtime_error_except_explicit_null_sentinel_comparisons_and_nullable_equality_with_non_sentinel_values",
+            "notes": [
+                "temporary typed-boundary implicit conversion is not the intended operator participation mechanism",
+                "operator lifting must stay centralized to keep generated code and overload review deterministic"
             ]
         }
     ],

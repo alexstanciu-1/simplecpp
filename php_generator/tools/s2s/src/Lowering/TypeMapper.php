@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Scpp\S2S\Lowering;
 
+use Scpp\S2S\Support\GenerationException;
+
 /**
  * Centralized type mapping.
  *
@@ -54,6 +56,22 @@ final class TypeMapper
 		$phpType = $this->guardTypeDefinitionSyntax($phpType);
 		if ($this->isInlineValueType($phpType)) {
 			return 'value_p<' . $this->mapUserTypeName($this->unwrapInlineValueType($phpType)) . '>';
+		}
+
+		if ($this->isNullableInlineValueType($phpType)) {
+			return 'nullable<' . $this->mapUserTypeName($this->unwrapNullableInlineValueType($phpType)) . '>';
+		}
+
+		if ($this->isOrFalseType($phpType)) {
+			return 'result_or_false<' . $this->mapDeclaredType($this->unwrapOrFalseType($phpType)) . '>';
+		}
+
+		if ($this->isOrBoolType($phpType)) {
+			return 'result_or_bool<' . $this->mapDeclaredType($this->unwrapOrBoolType($phpType)) . '>';
+		}
+
+		if ($this->isOrErrorType($phpType)) {
+			return 'result<' . $this->mapDeclaredType($this->unwrapOrErrorType($phpType)) . '>';
 		}
 
 		if (str_starts_with($phpType, '?')) {
@@ -197,7 +215,11 @@ final class TypeMapper
 	{
 		$normalized = trim($phpType);
 		if (str_starts_with($normalized, 'value ')) {
-			return $this->isObjectType(trim(substr($normalized, strlen('value '))));
+			$inner = trim(substr($normalized, strlen('value ')));
+			if (str_starts_with($inner, '?')) {
+				return false;
+			}
+			return $this->isObjectType($inner);
 		}
 
 		if (preg_match('/^value\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
@@ -205,7 +227,22 @@ final class TypeMapper
 		}
 
 		$inner = trim($matches[1]);
-		if ($inner === '' || str_starts_with($inner, 'value<') || str_starts_with($inner, 'value <')) {
+		if ($inner === '' || str_starts_with($inner, '?') || str_starts_with($inner, 'value<') || str_starts_with($inner, 'value <')) {
+			return false;
+		}
+
+		return $this->isObjectType($inner);
+	}
+
+	public function isNullableInlineValueType(string $phpType): bool
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^value\s*<\s*\?\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
+			return false;
+		}
+
+		$inner = trim($matches[1]);
+		if ($inner === '' || preg_match('/^(?:value|shared|unique|weak|weakref|shared_p|unique_p|weak_p)\s*(?:<|$)/', $inner) === 1) {
 			return false;
 		}
 
@@ -226,21 +263,89 @@ final class TypeMapper
 		return $normalized;
 	}
 
+	public function unwrapNullableInlineValueType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^value\s*<\s*\?\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+			return trim($matches[1]);
+		}
+
+		return $normalized;
+	}
+
+	public function isOrFalseType(string $phpType): bool
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^result_or_false\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
+			return false;
+		}
+		$inner = trim($matches[1]);
+		return $inner !== '' && preg_match('/^(?:value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*(?:<|$)/', $inner) !== 1;
+	}
+
+	public function unwrapOrFalseType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^result_or_false\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+			return trim($matches[1]);
+		}
+		return $normalized;
+	}
+
+
+	public function isOrBoolType(string $phpType): bool
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^result_or_bool\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
+			return false;
+		}
+		$inner = trim($matches[1]);
+		return $inner !== '' && preg_match('/^(?:value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*(?:<|$)/', $inner) !== 1;
+	}
+
+	public function unwrapOrBoolType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^result_or_bool\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+			return trim($matches[1]);
+		}
+		return $normalized;
+	}
+
+	public function isOrErrorType(string $phpType): bool
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^result\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
+			return false;
+		}
+		$inner = trim($matches[1]);
+		return $inner !== '' && preg_match('/^(?:value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*(?:<|$)/', $inner) !== 1;
+	}
+
+	public function unwrapOrErrorType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^result\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+			return trim($matches[1]);
+		}
+		return $normalized;
+	}
+
 	public function isBareObjectWrapperShortcut(string $phpType): bool
 	{
-		return in_array(trim($phpType), ['value', 'shared', 'unique'], true);
+		return in_array(trim($phpType), ['value', 'shared', 'unique', 'result_or_false', 'result_or_bool', 'result'], true);
 	}
 
 	public function specializeBareObjectWrapperShortcut(string $wrapper, string $phpType): string
 	{
 		$normalizedWrapper = trim($wrapper);
 		if (!$this->isBareObjectWrapperShortcut($normalizedWrapper)) {
-			throw new \InvalidArgumentException('Unsupported bare object-wrapper shortcut: ' . $wrapper);
+			throw new GenerationException('Unsupported bare object-wrapper shortcut: ' . $wrapper);
 		}
 
 		$normalizedType = $this->guardTypeDefinitionSyntax($phpType);
 		if (!$this->isObjectType($normalizedType)) {
-			throw new \InvalidArgumentException('Bare object-wrapper shortcuts require a user object type: ' . $phpType);
+			throw new GenerationException('Bare object-wrapper shortcuts require a user object type: ' . $phpType);
 		}
 
 		return $normalizedWrapper . '<' . $normalizedType . '>';
@@ -251,7 +356,7 @@ final class TypeMapper
 	public function hasInvalidNestedWrapperType(string $phpType): bool
 	{
 		$normalized = $this->guardTypeDefinitionSyntax($phpType);
-		foreach (['value', 'shared', 'unique'] as $wrapper) {
+		foreach (['value', 'shared', 'unique', 'result_or_false', 'result_or_bool', 'result'] as $wrapper) {
 			if (preg_match('/^' . preg_quote($wrapper, '/') . '\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
 				continue;
 			}
@@ -320,10 +425,10 @@ final class TypeMapper
 	private function appendLvalueReference(string $mappedType): string
 	{
 		if (str_contains($mappedType, '&&') || str_contains($mappedType, '*')) {
-			throw new \InvalidArgumentException('Unsupported C++ type form in reference lowering: ' . $mappedType);
+			throw new GenerationException('Unsupported C++ type form in reference lowering: ' . $mappedType);
 		}
 		if (str_contains($mappedType, '&')) {
-			throw new \InvalidArgumentException('Type mapping attempted to create a nested or pre-existing reference type: ' . $mappedType);
+			throw new GenerationException('Type mapping attempted to create a nested or pre-existing reference type: ' . $mappedType);
 		}
 
 		return $mappedType . '&';
@@ -339,20 +444,20 @@ final class TypeMapper
 	{
 		$normalized = trim($phpType);
 		if (preg_match('/^function\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
-			throw new \InvalidArgumentException('Invalid function type syntax: ' . $phpType);
+			throw new GenerationException('Invalid function type syntax: ' . $phpType);
 		}
 
 		$inner = trim($matches[1]);
 		$open = strpos($inner, '(');
 		$close = strrpos($inner, ')');
 		if ($open === false || $close === false || $close < $open) {
-			throw new \InvalidArgumentException('Invalid function type syntax: ' . $phpType);
+			throw new GenerationException('Invalid function type syntax: ' . $phpType);
 		}
 
 		$returnType = trim(substr($inner, 0, $open));
 		$paramsInner = trim(substr($inner, $open + 1, $close - $open - 1));
 		if ($returnType === '') {
-			throw new \InvalidArgumentException('Function type requires an explicit return type: ' . $phpType);
+			throw new GenerationException('Function type requires an explicit return type: ' . $phpType);
 		}
 
 		$mappedReturn = $this->mapReturnType($returnType, false);
@@ -416,13 +521,34 @@ final class TypeMapper
 	{
 		$normalized = trim($phpType);
 		if (str_contains($normalized, '&&')) {
-			throw new \InvalidArgumentException('Rvalue references (&&) are not supported in type definitions: ' . $phpType);
+			throw new GenerationException('Rvalue references (&&) are not supported in type definitions: ' . $phpType);
 		}
 		if (str_contains($normalized, '*')) {
-			throw new \InvalidArgumentException('Pointer syntax (*) is not supported in type definitions: ' . $phpType);
+			throw new GenerationException('Pointer syntax (*) is not supported in type definitions: ' . $phpType);
 		}
 		if (str_contains($normalized, '&')) {
-			throw new \InvalidArgumentException('Reference syntax (&) must not appear inside type definitions. Use explicit PHP reference forms instead: ' . $phpType);
+			throw new GenerationException('Reference syntax (&) must not appear inside type definitions. Use explicit PHP reference forms instead: ' . $phpType);
+		}
+		if (substr_count($normalized, '?') > 1) {
+			throw new GenerationException('Nullable marker (?) appears more than once in type definition: ' . $phpType);
+		}
+		if (str_contains($normalized, '?') && !str_starts_with($normalized, '?') && preg_match('/^value\s*<\s*\?\s*.+\s*>$/', $normalized) !== 1) {
+			throw new GenerationException('Nullable marker (?) is only supported as a leading type marker or in value<?T>: ' . $phpType);
+		}
+		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:value|shared|unique|weak|weakref|function|vector|vector_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
+			throw new GenerationException('Unsupported explicit type syntax: ' . $phpType);
+		}
+		if (preg_match('/^value\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+			$body = trim($matches[1]);
+			if (str_starts_with($body, '?')) {
+				$body = trim(substr($body, 1));
+			}
+			if ($body === '') {
+				throw new GenerationException('Invalid value<T> type syntax: ' . $phpType);
+			}
+			if (preg_match('/^(?:value|shared|unique|weak|weakref|shared_p|unique_p|weak_p)\s*(?:<|$)/', $body) === 1) {
+				throw new GenerationException('Invalid nested wrapper type: ' . $phpType . ' is not allowed.');
+			}
 		}
 
 		return $normalized;

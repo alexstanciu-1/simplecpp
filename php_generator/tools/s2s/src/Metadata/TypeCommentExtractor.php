@@ -175,14 +175,13 @@ final class TypeCommentExtractor
 			return $this->isTypeName($body) ? $inner : null;
 		}
 
-		foreach (['value', 'shared', 'unique'] as $wrapper) {
+		foreach (['value', 'shared', 'unique', 'result_or_false', 'result_or_bool', 'result'] as $wrapper) {
 			if ($inner === $wrapper) {
 				return $wrapper;
 			}
 
 			if (preg_match('/^' . preg_quote($wrapper, '/') . '\s*<\s*(.+)\s*>$/', $inner, $matches) === 1) {
 				$body = trim($matches[1]);
-				# if ($body === '' || preg_match('/^(?:value|shared|unique)\s*</', $body) === 1) {
 				if ($body === '') {
  					return null;
  				}
@@ -190,12 +189,12 @@ final class TypeCommentExtractor
 				// Preserve syntactically valid nested wrapper spellings here so the
 				// generator/type-mapper layer can reject them with an explicit
 				// diagnostic instead of silently dropping the annotation.
- 				return $this->isTypeName($body) ? $wrapper . '<' . $body . '>' : null;
+ 				return $this->isWrappedTypeBody($body) ? $wrapper . '<' . $body . '>' : null;
 			}
 
 			if (str_starts_with($inner, $wrapper . ' ')) {
 				$body = trim(substr($inner, strlen($wrapper . ' ')));
-				return $this->isTypeName($body) ? $wrapper . '<' . $body . '>' : null;
+				return $this->isWrappedTypeBody($body) ? $wrapper . '<' . $body . '>' : null;
 			}
 		}
 
@@ -205,6 +204,22 @@ final class TypeCommentExtractor
 		}
 
 		return $this->isTypeName($inner) ? $inner : null;
+	}
+
+
+	private function isWrappedTypeBody(string $type): bool
+	{
+		$normalized = trim($type);
+		if ($normalized === '') {
+			return false;
+		}
+
+		if ($normalized[0] === '?') {
+			$inner = substr($normalized, 1);
+			return $inner !== '' && $this->isTypeName($inner);
+		}
+
+		return $this->isTypeName($normalized);
 	}
 
 	private function isTypeName(string $type): bool

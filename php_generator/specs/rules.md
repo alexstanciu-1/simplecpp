@@ -95,16 +95,20 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - `/** ref Point */` locals lower directly to `shared_p<Point>&` when `Point` lowers to an object handle
 - `ref` lowering is intentionally a reduced write-through alias feature built on native C++ references; rebinding-through-alias and PHP-style alias-preserving `unset` are out of scope
 
-- explicit inline object/value storage is opt-in only through the local PHPDoc form `value<T>`
+- explicit inline object/value storage is opt-in only through the PHPDoc forms `value<T>` and `value<?T>`
 - object-handle local wrappers are expressed canonically as `shared<T>` and `unique<T>`
-- `value<T>`, `shared<T>`, and `unique<T>` are currently supported for typed local variables only
-- legacy `value T` is still accepted temporarily for compatibility, but `value<T>` is the canonical syntax going forward
+- `value<T>`, `value<?T>`, `shared<T>`, and `unique<T>` are currently supported for typed local variables only
+- legacy `value T` is still accepted temporarily for compatibility, but `value<T>` and `value<?T>` are the canonical forms going forward
 - strict local wrapper shortcuts are supported only for direct constructor assignment: `/** value */`, `/** shared */`, and `/** unique */` must appear on a typed local whose initializer is exactly `new ClassName(...)`; the generator must immediately normalize them to `value<ClassName>`, `shared<ClassName>`, or `unique<ClassName>`. After normalization, explicit wrapper forms such as `value<T>`, `shared<T>`, and `unique<T>` initialized from `new U(...)` must validate that `T` and `U` match exactly.
 - bare local wrapper shortcuts must be rejected when the initializer is not a direct `new ClassName(...)` expression, when the class target is not statically known, or when the assignment shape is not a normal direct local assignment
 - when a `value<T>` local is initialized from `new T(...)`, generation must use `value<T>(...)` instead of `create<T>(...)`
+- when a `value<?T>` local is initialized from `new T(...)`, generation must lower to `nullable<T>{T(...)}`; this is the canonical nullable inline-object lowering and must not silently degrade to `mixed_t`
 - when a `unique<T>` local is initialized from `new T(...)`, generation must use `::scpp::unique<T>(...)` instead of `create<T>(...)`
 - explicit wrapper locals initialized from `new ...` must reject constructor-target mismatches; for example, `/** value<A> */ = new B()` is a generator error and must not silently default-initialize `A`
 - `value<T>` locals remain object-like at the usage surface: property and method access must continue to lower through `->`, for example `$x /** value<MyClass> */ = new MyClass(); $x->property_1 = 10;` lowers conceptually to `value_p<MyClass> x = value<MyClass>(); x->property_1 = static_cast<int_t>(10);`
+- `value<?T>` locals remain object-like at the usage surface through nullable dereference: for example `$x /** value<?MyClass> */ = null; $y /** value<?MyClass> */ = new MyClass();` lowers conceptually to `nullable<MyClass> x = null; nullable<MyClass> y{MyClass()};`, and `$x->prop` must fail at runtime while `$y->prop` must behave like `MyClass`
+- `shared_p<MyClass> x = null` is not a valid nullable-wrapper test because it exercises handle-null semantics, not `nullable<T>` semantics
+- explicit type intent must never silently fall back to `mixed_t`; unsupported or malformed explicit type syntax such as an unknown wrapper form must fail generation with a diagnostic
 - explicit reference lowering over handle-like wrappers must emit a native handle reference (`shared_p<T>&`, `unique_p<T>&`, `weak_p<T>&`) instead of creating nested pointer/reference layers
 
 ### Untyped Variable Initialization
@@ -1197,3 +1201,11 @@ The registry is only applied when no user-defined function is resolved.
 ### Important
 If a symbol is not present in the registry, the generator will **not** qualify it with `php::`, even if it exists in the runtime.
 
+
+
+## Explicit result_or_false<T> and result<T> type intent
+
+- `result_or_false<T>`, `result_or_bool<T>`, and `result<T>` are explicit type-intent wrappers only; the generator must not infer them from PHP unions automatically in this pass.
+- explicit type intent must never silently degrade to `mixed_t`; unsupported or malformed `result_or_false<T>` / `result_or_bool<T>` / `result<T>` syntax is a generator error.
+- wrapper lowering uses the canonical mapped inner runtime type, so `result_or_false<MyBox>` lowers to `result_or_false<shared_p<MyBox>>`, `result_or_bool<MyBox>` lowers to `result_or_bool<shared_p<MyBox>>`, while `result<int>` lowers to `result<int_t>`.
+- `$result->error()->...` is the supported error-access surface for `result<T>` and must lower to the wrapper method rather than a payload property named `error`.

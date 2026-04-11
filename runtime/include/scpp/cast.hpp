@@ -7,6 +7,9 @@
 #include "scpp/nullopt_t.hpp"
 #include "scpp/nullptr_t.hpp"
 #include "scpp/nullable.hpp"
+#include "scpp/result_or_false.hpp"
+#include "scpp/result_or_bool.hpp"
+#include "scpp/result.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
@@ -320,23 +323,58 @@ inline bool cast<bool, bool_t>(const bool_t &value) {
 	return static_cast<bool>(value);
 }
 
-// nullable<T> -> T
-// Explicit unwrap used by generator-emitted return/cast sites after a non-null control-flow check.
-template <typename To>
-inline To cast(const nullable<To> &value) {
-	return value.value();
+// nullable<T> -> U
+// Centralized nullable cast lifting: empty nullable fails for value-required targets and present nullable delegates to the wrapped-value cast path.
+// string_t remains the configured PHP-style exception where an empty nullable stringifies to the empty string.
+template <typename To, typename From>
+inline To cast(const nullable<From> &value) {
+	if constexpr (std::is_same_v<To, string_t>) {
+		if (!value.has_value().native_value()) {
+			return string_t("");
+		}
+		return cast<string_t>(value.require_value("cast<string_t>(nullable): present value required for wrapped conversion"));
+	} else {
+		return cast<To>(value.require_value("cast<To>(nullable) cannot convert an empty nullable to a required value"));
+	}
 }
 
-// nullable<T> -> string_t
-// Mirrors PHP string conversion for nullable scalars: empty nullable => "", present value => stringified wrapped value.
+// result_or_false<T> -> U
+// Centralized false-able cast lifting mirrors nullable: the false-like empty state fails for required-value targets and present values delegate to wrapped casts.
 template <typename To, typename From>
-requires(std::is_same_v<To, string_t>)
-inline To cast(const nullable<From> &value) {
-	if (!value.has_value().native_value()) {
-		return string_t("");
+inline To cast(const result_or_false<From> &value) {
+	if constexpr (std::is_same_v<To, string_t>) {
+		if (!value.has_value().native_value()) {
+			return string_t("");
+		}
+		return cast<string_t>(value.require_value("cast<string_t>(result_or_false): present value required for wrapped conversion"));
+	} else {
+		return cast<To>(value.require_value("cast<To>(result_or_false) cannot convert a false-like empty state to a required value"));
 	}
+}
 
-	return cast<string_t>(value.value());
+// result_or_bool<T> -> U
+// Centralized bool-able cast lifting mirrors nullable: only the wrapped value participates in required-value casts.
+template <typename To, typename From>
+inline To cast(const result_or_bool<From> &value) {
+	if constexpr (std::is_same_v<To, string_t>) {
+		if (!value.has_value().native_value()) {
+			return string_t("");
+		}
+		return cast<string_t>(value.require_value("cast<string_t>(result_or_bool): present value required for wrapped conversion"));
+	} else {
+		return cast<To>(value.require_value("cast<To>(result_or_bool) cannot convert a bool-state wrapper to a required value"));
+	}
+}
+
+// result<T> -> U
+// Centralized error-able cast lifting mirrors nullable: the error state fails for required-value targets and present values delegate to wrapped casts.
+template <typename To, typename From>
+inline To cast(const result<From> &value) {
+	if constexpr (std::is_same_v<To, string_t>) {
+		return cast<string_t>(value.require_value("cast<string_t>(result): present value required for wrapped conversion"));
+	} else {
+		return cast<To>(value.require_value("cast<To>(result) cannot convert an error state to a required value"));
+	}
 }
 
 // Identity cast for string_t

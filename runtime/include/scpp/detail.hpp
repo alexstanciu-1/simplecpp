@@ -42,6 +42,11 @@ template <typename T> class unique_p;
 template <typename T> class weak_p;
 template <typename T> class value_p;
 template <typename T> class nullable;
+template <typename T> class result_or_false;
+template <typename T> class result_or_bool;
+class error_t;
+struct error_sentinel_t;
+template <typename T> class result;
 
 // hash_t and value types full declarations in scpp/support/hash_t.hpp
 class mixed_t;
@@ -59,6 +64,15 @@ namespace detail {
 template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
+
+template <typename T, template <typename...> class Template>
+struct is_specialization_of : std::false_type {};
+
+template <template <typename...> class Template, typename... Args>
+struct is_specialization_of<Template<Args...>, Template> : std::true_type {};
+
+template <typename T, template <typename...> class Template>
+inline constexpr bool is_specialization_of_v = is_specialization_of<remove_cvref_t<T>, Template>::value;
 
 // Runtime wrapper classification traits used by helper utilities.
 template <typename T>
@@ -84,6 +98,16 @@ inline constexpr bool is_shared_p_v = is_shared_p<remove_cvref_t<T>>::value;
 
 template <typename T>
 inline constexpr bool is_handle_like_v = is_handle_like<remove_cvref_t<T>>::value;
+
+// Detects whether a runtime type exposes operator-> so wrapper types can forward dereference safely.
+template <typename T, typename = void>
+struct has_arrow_operator : std::false_type {};
+
+template <typename T>
+struct has_arrow_operator<T, std::void_t<decltype(std::declval<T &>().operator->())>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool has_arrow_operator_v = has_arrow_operator<remove_cvref_t<T>>::value;
 
 // Extracts the underlying class from runtime pointer wrappers so generated
 // static calls can recover the represented class type from value carriers.

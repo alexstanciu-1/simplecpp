@@ -9,17 +9,17 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `fopen(string $path, string $mode): nullable<resource<file_stream>>`
+- Supported form: `fopen(string $path, string $mode): result_or_false<resource<file_stream>>`
 - Accepted argument types: string_t, string_t
 
 ## Behavior
 - Parses a narrowed fopen mode set: `r`, `rb`, `r+`, `rb+`, `r+b`, `w`, `wb`, `w+`, `wb+`, `w+b`, `a`, `ab`, `a+`, `ab+`, `a+b`.
-- Returns a nullable file-stream resource on success.
-- Open failure returns `null`.
+- Returns a file-stream resource handle on success.
+- Open failure returns `false`.
 - The resource wrapper stores explicit `kind`, path, mode, readable/writable flags, and closed state.
 
 ## Compatibility table
-- PHP returns `false` on ordinary open failure → Prism++ returns `null` → modified
+- PHP returns `false` on ordinary open failure → Prism++ now returns `false` at the PHP exposure layer → aligned
 - PHP accepts a broader mode surface → Prism++ supports the narrowed first-pass mode set above → modified
 
 ## Error policy
@@ -39,6 +39,6 @@ Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
 
 ## Test matrix
 - successful open in read/write mode
-- open failure returns null
+- open failure returns false
 - unsupported mode throws
 - resource kind is `file_stream` through the wrapper contract

@@ -26,6 +26,11 @@ target_link_libraries(test_sentinels PRIVATE scpp_runtime scpp_runtime_test_supp
 enable_testing()
 add_test(NAME scpp_test_core COMMAND test_core)
 add_test(NAME scpp_test_nullable COMMAND test_nullable)
+
+# false-able / error-able wrapper smoke coverage.
+add_executable(test_or_wrappers test_or_wrappers.cpp)
+target_link_libraries(test_or_wrappers PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_or_wrappers COMMAND test_or_wrappers)
 add_test(NAME scpp_test_pointers COMMAND test_pointers)
 add_test(NAME scpp_test_sentinels COMMAND test_sentinels)
 
@@ -76,6 +81,10 @@ target_link_libraries(test_php_json PRIVATE scpp_runtime scpp_runtime_test_suppo
 add_test(NAME scpp_test_php_json COMMAND test_php_json)
 
 # mysqli connect/close smoke coverage for the first vertical slice.
-add_executable(test_mysqli_connect test_mysqli_connect.cpp)
-target_link_libraries(test_mysqli_connect PRIVATE scpp_runtime scpp_runtime_test_support)
-add_test(NAME scpp_test_mysqli_connect COMMAND test_mysqli_connect)
+# Disabled by default because many local/sandbox builds do not have a runnable MariaDB/MySQL test target.
+option(SCPP_ENABLE_MYSQLI_TESTS "Build and register mysqli runtime smoke tests" OFF)
+if(SCPP_ENABLE_MYSQLI_TESTS)
+	add_executable(test_mysqli_connect test_mysqli_connect.cpp)
+	target_link_libraries(test_mysqli_connect PRIVATE scpp_runtime scpp_runtime_test_support)
+	add_test(NAME scpp_test_mysqli_connect COMMAND test_mysqli_connect)
+endif()

@@ -53,11 +53,15 @@ Provide one optional runtime module with thin PHP-facing wrappers and a separate
 
 ## Important deviations / notes
 
-1. PHP-style `false` returns are intentionally not cloned here.
-   - row-producing success returns a result object
-   - non-row success returns `null`
-   - failure also returns `null`
-   - callers must inspect error state
+1. PHP-style sentinel/bool contracts are restored at the PHP exposure layer for the methods implemented here.
+   - `query()` returns `result_or_bool<shared_p<mysqli_result>>`
+     - `false` on error
+     - `true` on successful non-result statements
+     - `mysqli_result` on successful result-producing statements
+   - `prepare()` returns `result_or_false<shared_p<mysqli_stmt>>`
+   - `set_charset()`, `begin_transaction()`, `commit()`, `rollback()`, `bind_param()`, and `execute()` return `bool`
+   - `get_result()` returns `result_or_false<shared_p<mysqli_result>>`
+   - `fetch_assoc()` and `fetch_row()` remain intentionally excluded from this correction pass
 
 2. Fetch methods currently return `dynamic_t` for both row styles.
    - `fetch_row()` => packed dynamic row

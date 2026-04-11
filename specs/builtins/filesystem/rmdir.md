@@ -9,15 +9,15 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `rmdir(string $path): nullable<bool>`
+- Supported form: `rmdir(string $path): bool`
 - Accepted argument types: string_t
 
 ## Behavior
 - Removes an empty directory.
-- Success returns `true`; failure returns `null`.
+- Success returns `true`; failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` → Prism++ returns `true`/`null` → modified
+- PHP returns `true`/`false` → Prism++ returns `true`/`false` → modified
 
 ## Error policy
 - Does not throw for ordinary remove failure.
@@ -35,5 +35,5 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 - Registered in `php_generator/specs/php_runtime_symbols.json`.
 
 ## Test matrix
-- non-empty directory returns null
+- non-empty directory returns false
 - empty directory removal succeeds

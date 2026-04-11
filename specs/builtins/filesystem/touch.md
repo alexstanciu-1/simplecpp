@@ -9,16 +9,16 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `touch(string $path): nullable<bool>`
+- Supported form: `touch(string $path): bool`
 - Accepted argument types: string_t
 
 ## Behavior
 - Updates last-write time when the path exists.
 - Creates an empty file when the path does not exist and the parent directory exists.
-- Success returns `true`; failure returns `null`.
+- Success returns `true`; failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` and supports timestamp arguments → Prism++ currently supports the zero-argument time-now form with `true`/`null` → modified
+- PHP returns `true`/`false` and supports timestamp arguments → Prism++ currently supports the zero-argument time-now form with `true`/`false` → partially aligned
 
 ## Error policy
 - Does not throw for ordinary create/update failure.
@@ -38,4 +38,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 ## Test matrix
 - create missing file
 - update existing file timestamp
-- missing parent returns null
+- missing parent returns false

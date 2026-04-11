@@ -9,6 +9,10 @@
 #include "scpp/string_t.hpp"
 #include "scpp/vector_t.hpp"
 #include "scpp/nullable.hpp"
+#include "scpp/result_or_false.hpp"
+#include "scpp/result_or_bool.hpp"
+#include "scpp/result.hpp"
+#include "scpp/error_t.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
@@ -987,6 +991,33 @@ inline string_t to_string(const nullable<T> &value) {
 	return to_string(value.value());
 }
 
+template <typename T>
+inline string_t to_string(const result_or_false<T> &value) {
+	if (!value.has_value().native_value()) {
+		return string_t("");
+	}
+	return to_string(value.value());
+}
+
+template <typename T>
+inline string_t to_string(const result_or_bool<T> &value) {
+	if (value.has_value().native_value()) {
+		return to_string(value.value());
+	}
+	if (value.is_true().native_value()) {
+		return to_string(bool_t(true));
+	}
+	return string_t("");
+}
+
+template <typename T>
+inline string_t to_string(const result<T> &value) {
+	if (!value.has_value().native_value()) {
+		return value.error()->get_message();
+	}
+	return to_string(value.value());
+}
+
 // Prints one runtime value according to the PHP echo contract implemented by the prototype.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 inline void echo_one(const string_t &value) {
@@ -1235,6 +1266,30 @@ inline bool_t empty_scalar(const nullable<T> &value) {
 }
 
 template <typename T>
+inline bool_t empty_scalar(const result_or_false<T> &value) {
+	if (!value.has_value().native_value()) {
+		return bool_t(true);
+	}
+	return empty_scalar(value.value());
+}
+
+template <typename T>
+inline bool_t empty_scalar(const result_or_bool<T> &value) {
+	if (!value.has_value().native_value()) {
+		return bool_t(!value.is_true().native_value());
+	}
+	return empty_scalar(value.value());
+}
+
+template <typename T>
+inline bool_t empty_scalar(const result<T> &value) {
+	if (!value.has_value().native_value()) {
+		return bool_t(true);
+	}
+	return empty_scalar(value.value());
+}
+
+template <typename T>
 inline bool_t empty_scalar(const shared_p<T> &value) {
 	return bool_t(!value.has_value().native_value());
 }
@@ -1298,6 +1353,30 @@ inline probe_result<nullptr_t> probe_value(nullptr_t) {
 
 template <typename T>
 inline probe_result<nullable<T>> probe_value(const nullable<T> &value) {
+	if (!value.has_value().native_value()) {
+		return {probe_state::present_null, &value};
+	}
+	return {probe_state::present_value, &value};
+}
+
+template <typename T>
+inline probe_result<result_or_false<T>> probe_value(const result_or_false<T> &value) {
+	if (!value.has_value().native_value()) {
+		return {probe_state::present_null, &value};
+	}
+	return {probe_state::present_value, &value};
+}
+
+template <typename T>
+inline probe_result<result_or_bool<T>> probe_value(const result_or_bool<T> &value) {
+	if (!value.has_value().native_value()) {
+		return value.is_true().native_value() ? probe_result<result_or_bool<T>>{probe_state::present_value, &value} : probe_result<result_or_bool<T>>{probe_state::present_null, &value};
+	}
+	return {probe_state::present_value, &value};
+}
+
+template <typename T>
+inline probe_result<result<T>> probe_value(const result<T> &value) {
 	if (!value.has_value().native_value()) {
 		return {probe_state::present_null, &value};
 	}
@@ -1452,6 +1531,21 @@ inline bool_t empty(const string_t &value) {
 
 template <typename T>
 inline bool_t empty(const nullable<T> &value) {
+	return detail::empty_scalar(value);
+}
+
+template <typename T>
+inline bool_t empty(const result_or_false<T> &value) {
+	return detail::empty_scalar(value);
+}
+
+template <typename T>
+inline bool_t empty(const result_or_bool<T> &value) {
+	return detail::empty_scalar(value);
+}
+
+template <typename T>
+inline bool_t empty(const result<T> &value) {
 	return detail::empty_scalar(value);
 }
 
@@ -1761,6 +1855,21 @@ template <typename T>
 // Implements one-value isset semantics used by the variadic isset helper.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 inline bool_t isset_one(const nullable<T> &value) {
+	return value.has_value();
+}
+
+template <typename T>
+inline bool_t isset_one(const result_or_false<T> &value) {
+	return value.has_value();
+}
+
+template <typename T>
+inline bool_t isset_one(const result_or_bool<T> &value) {
+	return bool_t(value.has_value().native_value() || value.is_true().native_value());
+}
+
+template <typename T>
+inline bool_t isset_one(const result<T> &value) {
 	return value.has_value();
 }
 

@@ -9,18 +9,18 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `file_put_contents(string $path, string $data): nullable<int>`
+- Supported form: `file_put_contents(string $path, string $data): result_or_false<int>`
 - Accepted argument types: string_t, string_t
 
 ## Behavior
 - Writes the full byte contents to `path` in overwrite/truncate mode.
 - Creates the file when the parent directory exists.
 - Returns written byte count on success.
-- Operational open/write failure returns `null`.
+- Operational open/write failure returns `false`.
 - Append and flags are out of scope in this first pass.
 
 ## Compatibility table
-- PHP returns bytes written or `false` → Prism++ returns bytes written or `null` → modified
+- PHP returns bytes written or `false` → Prism++ returns bytes written or `false` → modified
 - PHP supports flags and broader input coercions → Prism++ currently supports overwrite-only string writes → modified
 
 ## Error policy
@@ -41,4 +41,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 ## Test matrix
 - successful write
 - overwrite existing file
-- missing parent returns null
+- missing parent returns false

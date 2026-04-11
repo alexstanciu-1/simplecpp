@@ -28,6 +28,10 @@ Generation must preserve a strict layering boundary:
 - unsupported or invalid PHP-in-subset constructs must be rejected by analysis/lowering before runtime semantics are involved
 - generated code may rely only on documented runtime contracts, not on hidden runtime knowledge of frontend phases
 - runtime defensive checks may protect internal invariants, but they must not encode frontend policy
+- temporary typed-boundary bridges preserved for generator-compatibility, such as `nullable<T>` satisfying a typed destination while empty state still fails at runtime, must stay documented in spec/config and must not be expanded into general operator-candidate behavior implicitly
+- when wrapper families need operator participation, generation must prefer one centralized lifted operator surface over relying on native C++ conversion operators; for current nullable work this means lifted unary/binary/logical/relational/mutation operators that unwrap through a checked helper and then delegate to the wrapped-value operator family
+- when wrapper families need cast participation, generation must prefer one centralized lifted cast surface over scattered ad hoc unwraps; for current nullable work this means `cast<T>(nullable<U>)` must route through a checked present-value requirement before delegating to `cast<T>(U)`, and empty nullable failure should use the standardized wording `cast<To>(nullable) cannot convert an empty nullable to a required value`
+- when nullable values need object/property or method dereference, generation must rely on the stable `nullable<T>::operator->()` surface instead of scattering manual unwraps; nullable arrow access must check present-value state first, then forward to wrapped `T::operator->()` when available or expose the address of the wrapped object for direct-object member access
 
 ## Output layout
 Generation must target the project runtime root and produce files by category, not by ad-hoc manual decisions.
@@ -314,3 +318,16 @@ assert(t.append(300) == 2);
 
 
 See: module_inclusion_model.md
+
+
+## result_or_false<T>, result_or_bool<T>, and result<T>
+
+- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`.
+- `result<T>` is the explicit structured-failure wrapper. Value-required casts, typed-boundary conversions, and operator participation unwrap only the success value; the error state is never silently converted into a usable value.
+- `result<T>` error inspection is explicit through `error()`. The generator must lower `$result->error()->...` to the wrapper method rather than treating `error` as a real payload property.
+- `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, but its non-value states are the PHP boolean sentinels `false` and `true`.
+
+
+## PHP exposure return contracts
+
+When changing the `php::*` support surface, preserve the documented PHP return contract at that boundary. Do not silently replace PHP false-sentinel returns with `null`; use `result_or_false<T>` for `T|false` contracts, and use plain `bool_t` for PHP boolean success/failure APIs.

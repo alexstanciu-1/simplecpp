@@ -3,6 +3,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/nullable.hpp"
+#include "scpp/result_or_false.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/support/php_resource.hpp"
 
@@ -47,17 +48,17 @@ struct fopen_mode_info final {
 	throw std::runtime_error("fopen(): unsupported mode \"" + native + "\"");
 }
 
-[[nodiscard]] inline nullable_resource_handle_t fopen(const string_t &path, const string_t &mode) {
+[[nodiscard]] inline falseable_resource_handle_t fopen(const string_t &path, const string_t &mode) {
 	const auto mode_info = parse_fopen_mode(mode);
 	FILE *fp = std::fopen(path.native_value().c_str(), mode_info.native_mode);
 	if (fp == nullptr) {
-		return null;
+		return false_sentinel;
 	}
 	auto native = std::make_shared<file_resource_t>(fp, path, mode, mode_info.readable, mode_info.writable, mode_info.append);
 	return resource_handle_t(std::move(native));
 }
 
-[[nodiscard]] inline nullable<int_t> fseek(const nullable_resource_handle_t &resource, const int_t &offset, const int_t &whence = int_t(SEEK_SET)) {
+[[nodiscard]] inline nullable<int_t> fseek(const falseable_resource_handle_t &resource, const int_t &offset, const int_t &whence = int_t(SEEK_SET)) {
 	auto &file = require_file_resource(resource, "fseek");
 	const auto status = std::fseek(file.native_handle(), static_cast<long>(offset.native_value()), static_cast<int>(whence.native_value()));
 	if (status != 0) {
@@ -67,16 +68,16 @@ struct fopen_mode_info final {
 	return int_t(0);
 }
 
-[[nodiscard]] inline nullable<int_t> ftell(const nullable_resource_handle_t &resource) {
+[[nodiscard]] inline result_or_false<int_t> ftell(const falseable_resource_handle_t &resource) {
 	auto &file = require_file_resource(resource, "ftell");
 	const auto position = std::ftell(file.native_handle());
 	if (position < 0L) {
-		return null;
+		return false_sentinel;
 	}
 	return int_t(static_cast<std::int64_t>(position));
 }
 
-[[nodiscard]] inline nullable<string_t> fgets(const nullable_resource_handle_t &resource, const nullable<int_t> &length = null) {
+[[nodiscard]] inline result_or_false<string_t> fgets(const falseable_resource_handle_t &resource, const nullable<int_t> &length = null) {
 	auto &file = require_file_resource(resource, "fgets");
 	if (!file.readable) {
 		throw std::runtime_error("fgets(): file resource is not readable");
@@ -89,7 +90,7 @@ struct fopen_mode_info final {
 		std::vector<char> buffer(static_cast<std::size_t>(requested));
 		char *result = std::fgets(buffer.data(), static_cast<int>(buffer.size()), file.native_handle());
 		if (result == nullptr) {
-			return null;
+			return false_sentinel;
 		}
 		return string_t(std::string(result));
 	}
@@ -100,7 +101,7 @@ struct fopen_mode_info final {
 		char *result = std::fgets(buffer.data(), static_cast<int>(buffer.size()), file.native_handle());
 		if (result == nullptr) {
 			if (out.empty()) {
-				return null;
+				return false_sentinel;
 			}
 			break;
 		}
@@ -115,7 +116,7 @@ struct fopen_mode_info final {
 	return string_t(std::move(out));
 }
 
-[[nodiscard]] inline nullable<string_t> fread(const nullable_resource_handle_t &resource, const int_t &length) {
+[[nodiscard]] inline result_or_false<string_t> fread(const falseable_resource_handle_t &resource, const int_t &length) {
 	auto &file = require_file_resource(resource, "fread");
 	if (!file.readable) {
 		throw std::runtime_error("fread(): file resource is not readable");
@@ -130,13 +131,13 @@ struct fopen_mode_info final {
 	std::string out(static_cast<std::size_t>(requested), '\0');
 	const auto bytes_read = std::fread(out.data(), 1, out.size(), file.native_handle());
 	if (bytes_read == 0 && std::ferror(file.native_handle()) != 0) {
-		return null;
+		return false_sentinel;
 	}
 	out.resize(bytes_read);
 	return string_t(std::move(out));
 }
 
-[[nodiscard]] inline nullable<int_t> fwrite(const nullable_resource_handle_t &resource, const string_t &data) {
+[[nodiscard]] inline result_or_false<int_t> fwrite(const falseable_resource_handle_t &resource, const string_t &data) {
 	auto &file = require_file_resource(resource, "fwrite");
 	if (!file.writable) {
 		throw std::runtime_error("fwrite(): file resource is not writable");
@@ -144,40 +145,37 @@ struct fopen_mode_info final {
 	const auto &native = data.native_value();
 	const auto bytes_written = std::fwrite(native.data(), 1, native.size(), file.native_handle());
 	if (bytes_written == 0 && !native.empty() && std::ferror(file.native_handle()) != 0) {
-		return null;
+		return false_sentinel;
 	}
 	return int_t(static_cast<std::int64_t>(bytes_written));
 }
 
-[[nodiscard]] inline nullable<int_t> fputs(const nullable_resource_handle_t &resource, const string_t &data) {
+[[nodiscard]] inline result_or_false<int_t> fputs(const falseable_resource_handle_t &resource, const string_t &data) {
 	return fwrite(resource, data);
 }
 
-[[nodiscard]] inline nullable<bool_t> rewind(const nullable_resource_handle_t &resource) {
+[[nodiscard]] inline bool_t rewind(const falseable_resource_handle_t &resource) {
 	auto &file = require_file_resource(resource, "rewind");
 	std::rewind(file.native_handle());
 	std::clearerr(file.native_handle());
 	return bool_t(true);
 }
 
-[[nodiscard]] inline nullable<bool_t> fflush(const nullable_resource_handle_t &resource) {
+[[nodiscard]] inline bool_t fflush(const falseable_resource_handle_t &resource) {
 	auto &file = require_file_resource(resource, "fflush");
-	return std::fflush(file.native_handle()) == 0 ? nullable<bool_t>(bool_t(true)) : nullable<bool_t>(null);
+	return bool_t(std::fflush(file.native_handle()) == 0);
 }
 
-[[nodiscard]] inline bool_t feof(const nullable_resource_handle_t &resource) {
+[[nodiscard]] inline bool_t feof(const falseable_resource_handle_t &resource) {
 	auto &file = require_file_resource(resource, "feof");
 	return bool_t(std::feof(file.native_handle()) != 0);
 }
 
-[[nodiscard]] inline nullable<bool_t> fclose(const nullable_resource_handle_t &resource) {
+[[nodiscard]] inline bool_t fclose(const falseable_resource_handle_t &resource) {
 	auto &file = require_file_resource(resource, "fclose");
 	const auto status = std::fclose(file.native_handle());
 	file.mark_closed();
-	if (status != 0) {
-		return null;
-	}
-	return bool_t(true);
+	return bool_t(status == 0);
 }
 
 } // namespace scpp::php

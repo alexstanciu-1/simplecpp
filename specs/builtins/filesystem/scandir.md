@@ -9,18 +9,18 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `scandir(string $path): nullable<hash_t<mixed_t>>`
+- Supported form: `scandir(string $path): result_or_false<hash_t<mixed_t>>`
 - Accepted argument types: string_t
 
 ## Behavior
 - Returns actual entry names only for the target directory.
 - Entry names are sorted lexicographically ascending.
 - `.` and `..` are excluded by design.
-- Failure returns `null`.
+- Failure returns `false`.
 
 ## Compatibility table
 - PHP includes `.` and `..` in the default result → Prism++ excludes them deliberately → modified
-- PHP returns array or `false` → Prism++ returns packed `hash_t<mixed_t>` or `null` → modified
+- PHP returns array or `false` → Prism++ now returns packed `hash_t<mixed_t>` or `false` at the PHP exposure layer → aligned
 
 ## Error policy
 - Does not throw for ordinary missing-path or not-a-directory failures.
@@ -40,4 +40,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 ## Test matrix
 - sorted names
 - excludes dot entries by construction
-- missing path returns null
+- missing path returns false

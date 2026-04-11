@@ -418,11 +418,15 @@ final class Generator
 			return $renderedExpr;
 		}
 
+		if (str_starts_with($expectedType, 'result_or_false<') && $renderedExpr === 'static_cast<bool_t>(false)') {
+			return 'false_sentinel';
+		}
+
 		if ($exprType === 'mixed_t') {
 			return 'cast<' . $expectedType . '>(' . $renderedExpr . ')';
 		}
 
-		if ($exprType === 'nullable<' . $expectedType . '>') {
+		if ($exprType === 'nullable<' . $expectedType . '>' || $exprType === 'result_or_false<' . $expectedType . '>' || $exprType === 'result_or_bool<' . $expectedType . '>' || $exprType === 'result<' . $expectedType . '>') {
 			return 'cast<' . $expectedType . '>(' . $renderedExpr . ')';
 		}
 
@@ -1497,7 +1501,10 @@ final class Generator
 		}
 		foreach ($class->methods as $method) {
 			if ($this->methodNeedsNormalizedTemplate($method)) {
-				foreach ($this->renderInlineTemplateMethodArtifacts($class, $method, $namespacePhp) as $line) {
+				$artifacts = $this->functionLikeUsesExecBodySplit($method->params, $method->statements)
+					? $this->renderInlineTemplateMethodArtifactsWithExecSplit($class, $method, $namespacePhp)
+					: $this->renderInlineTemplateMethodArtifacts($class, $method, $namespacePhp);
+				foreach ($artifacts as $line) {
 					$header[] = $this->indent(1) . $line;
 				}
 				continue;
@@ -1541,7 +1548,14 @@ final class Generator
 			$this->currentClassName = $class->name;
 			$this->currentParentClass = $class->parentClass;
 			foreach ($class->methods as $method) {
-				if ($this->methodIsAbstract($method, $class) || $this->methodNeedsNormalizedTemplate($method)) {
+				if ($this->methodIsAbstract($method, $class)) {
+					continue;
+				}
+				if ($this->methodNeedsNormalizedTemplate($method)) {
+					if ($this->functionLikeUsesExecBodySplit($method->params, $method->statements)) {
+						$source[] = $this->renderMethodExecDefinition($class, $method, $namespacePhp);
+						$source[] = '';
+					}
 					continue;
 				}
 				$source[] = $this->renderMethodDefinition($class, $method, $namespacePhp);
@@ -1703,10 +1717,17 @@ final class Generator
 	private function emitFunction(array &$header, array &$source, FunctionDecl $function, ?string $namespacePhp): void
 	{
 		if ($this->functionLikeNeedsNormalizedTemplate($function->params)) {
-			foreach ($this->renderFunctionTemplateArtifacts($function, $namespacePhp) as $line) {
+			$artifacts = $this->functionLikeUsesExecBodySplit($function->params, $function->statements)
+				? $this->renderFunctionTemplateArtifactsWithExecSplit($function, $namespacePhp)
+				: $this->renderFunctionTemplateArtifacts($function, $namespacePhp);
+			foreach ($artifacts as $line) {
 				$header[] = $line;
 			}
 			$header[] = '';
+			if ($this->functionLikeUsesExecBodySplit($function->params, $function->statements)) {
+				$source[] = $this->renderFunctionExecDefinition($function, $namespacePhp);
+				$source[] = '';
+			}
 			return;
 		}
 		$header[] = $this->renderFunctionDeclaration($function, $namespacePhp) . ';';
@@ -2068,6 +2089,69 @@ final class Generator
 		return $this->functionLikeNeedsNormalizedTemplate($method->params);
 	}
 
+	private function functionLikeUsesExecBodySplit(array $params, array $statements): bool
+	{
+		return $this->functionLikeNeedsNormalizedTemplate($params) && count($statements) > 2;
+	}
+
+	private function renderExecCallableName(string $callableName): string
+	{
+		return $this->cppIdentifier($callableName) . '__exec';
+	}
+
+	private function renderCanonicalParamTypeForExec(ParamDecl $param, string $mode): string
+	{
+		if ($param->type === null) {
+			return '/* ERROR missing-parameter-type */';
+		}
+
+		if ($this->paramNeedsTemplateNormalization($param)) {
+			$primaryType = $param->primaryType ?? $param->type;
+			$mapped = $this->typeMapper->mapDeclaredType($primaryType);
+			if ($param->isReference) {
+				return $mapped . '&';
+			}
+			return $this->typeMapper->mapParamType($primaryType, false);
+		}
+
+		return $this->renderParamTypeForMode($param, $mode);
+	}
+
+	private function renderCanonicalParamsForExec(array $params, bool $includeDefaults, ?string $namespacePhp, array $paramPassModes = []): string
+	{
+		$out = [];
+		foreach ($params as $param) {
+			if ($param->isVariadic) {
+				$elementType = $param->type !== null ? $this->typeMapper->mapDeclaredType($param->type) : '/* ERROR missing-variadic-element-type */';
+				$type = 'const vector_t<' . $elementType . '>&';
+			} else {
+				$type = $param->type !== null ? $this->renderCanonicalParamTypeForExec($param, $paramPassModes[$param->name] ?? 'readonly') : '/* ERROR missing-parameter-type */';
+			}
+			$rendered = $type . ' ' . $this->localCppName($param->name);
+			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
+				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
+			}
+			$out[] = $rendered;
+		}
+		return implode(', ', $out);
+	}
+
+	private function renderExecForwardArgs(array $params): string
+	{
+		return implode(', ', array_map(fn (ParamDecl $param): string => $this->localCppName($param->name), $params));
+	}
+
+	private function declaredTypeForExecParam(ParamDecl $param): ?string
+	{
+		if ($param->type === null) {
+			return null;
+		}
+		if ($this->paramNeedsTemplateNormalization($param)) {
+			return $param->primaryType ?? $param->type;
+		}
+		return $param->type;
+	}
+
 	private function renderTemplateLineForParams(array $params): string
 	{
 		$templateParams = [];
@@ -2204,6 +2288,242 @@ final class Generator
 		$lines[] = $this->indent(1) . '}';
 		$lines[] = '}';
 		return implode("\n", $lines);
+	}
+
+
+	private function renderFunctionExecDeclaration(FunctionDecl $function, ?string $namespacePhp = null): string
+	{
+		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
+		$paramPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
+		$this->beginFunctionLikeVariableMapping($function->params, $function->statements);
+		try {
+			return $returnType . ' ' . $this->renderExecCallableName($function->name) . '(' . $this->renderCanonicalParamsForExec($function->params, false, $namespacePhp, $paramPassModes) . ')';
+		} finally {
+			$this->endFunctionLikeVariableMapping();
+		}
+	}
+
+	private function renderFunctionExecDefinition(FunctionDecl $function, ?string $namespacePhp): string
+	{
+		$this->declaredLocals = [];
+		$this->declaredLocalTypes = [];
+		$this->predefinedReferenceLocals = [];
+		$this->currentParamPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
+		$this->beginFunctionLikeVariableMapping($function->params, $function->statements);
+		foreach ($function->params as $param) {
+			$this->declaredLocals[$param->name] = true;
+			if ($param->isReference) {
+				$this->predefinedReferenceLocals[$param->name] = true;
+			}
+			$declaredType = $this->declaredTypeForExecParam($param);
+			if ($declaredType !== null) {
+				$this->declaredLocalTypes[$param->name] = $declaredType;
+			}
+		}
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($function->argNormalizationRules);
+		$this->currentNormalizationCallableName = null;
+		$this->currentParamEntryAliasLines = [];
+		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($function->params);
+		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
+		$this->currentReturnType = $returnType;
+		$signature = $returnType . ' ' . $this->renderExecCallableName($function->name) . '(' . $this->renderCanonicalParamsForExec($function->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
+		$body = $this->renderBody($function->statements, $namespacePhp);
+		$this->currentReturnType = null;
+		$this->currentFinallyReturnContext = null;
+		$this->currentParamPassModes = [];
+		$this->currentScalarRefParamAliasLines = [];
+		$this->currentParamEntryAliasLines = [];
+		$this->currentArgNormalizationRulesByKey = [];
+		$this->currentNormalizationCallableName = null;
+		$this->endFunctionLikeVariableMapping();
+		return $signature . " {
+" . $body . "
+}";
+	}
+
+	private function renderFunctionTemplateWrapperDefinition(FunctionDecl $function, ?string $namespacePhp): string
+	{
+		$this->declaredLocals = [];
+		$this->declaredLocalTypes = [];
+		$this->predefinedReferenceLocals = [];
+		$this->currentParamPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
+		$this->beginFunctionLikeVariableMapping($function->params, $function->statements);
+		foreach ($function->params as $param) {
+			$this->declaredLocals[$param->name] = true;
+			if ($param->isReference) {
+				$this->predefinedReferenceLocals[$param->name] = true;
+			}
+			if ($param->type !== null) {
+				$this->declaredLocalTypes[$param->name] = $param->type;
+			}
+		}
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($function->argNormalizationRules);
+		$this->currentNormalizationCallableName = $function->name;
+		$this->currentParamEntryAliasLines = $this->buildParamEntryAliasLines($function->params);
+		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($function->params);
+		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
+		$this->currentReturnType = $returnType;
+		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
+		$lines = array_merge($this->renderCurrentParamEntryAliases(), $this->renderCurrentScalarRefParamAliases());
+		$execCall = $this->renderExecCallableName($function->name) . '(' . $this->renderExecForwardArgs($function->params) . ')';
+		$lines[] = $this->indent(1) . ($returnType === 'void' ? $execCall . ';' : 'return ' . $execCall . ';');
+		$body = implode("
+", $lines);
+		$this->currentReturnType = null;
+		$this->currentFinallyReturnContext = null;
+		$this->currentParamPassModes = [];
+		$this->currentScalarRefParamAliasLines = [];
+		$this->currentParamEntryAliasLines = [];
+		$this->currentArgNormalizationRulesByKey = [];
+		$this->currentNormalizationCallableName = null;
+		$this->endFunctionLikeVariableMapping();
+		return $signature . " {
+" . $body . "
+}";
+	}
+
+	private function renderFunctionTemplateArtifactsWithExecSplit(FunctionDecl $function, ?string $namespacePhp): array
+	{
+		$prevRules = $this->currentArgNormalizationRulesByKey;
+		$prevCallable = $this->currentNormalizationCallableName;
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($function->argNormalizationRules);
+		$this->currentNormalizationCallableName = $function->name;
+
+		$lines = [];
+		foreach ($function->params as $param) {
+			if ($this->paramNeedsTemplateNormalization($param)) {
+				$lines[] = $this->renderNormalizationHelperDefinition($function->name, $param, $namespacePhp, false);
+				$lines[] = '';
+			}
+		}
+		$lines[] = $this->renderFunctionExecDeclaration($function, $namespacePhp) . ';';
+		$lines[] = '';
+		$lines[] = $this->renderTemplateLineForParams($function->params);
+		$lines[] = $this->renderFunctionTemplateWrapperDefinition($function, $namespacePhp);
+
+		$this->currentArgNormalizationRulesByKey = $prevRules;
+		$this->currentNormalizationCallableName = $prevCallable;
+		return $lines;
+	}
+
+	private function renderMethodExecDeclaration(ClassDecl $class, MethodDecl $method, ?string $namespacePhp = null): string
+	{
+		$paramPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+		$prefix = $method->isStatic ? 'static ' : '';
+		return $prefix . $returnType . ' ' . $this->renderExecCallableName($method->name) . '(' . $this->renderCanonicalParamsForExec($method->params, false, $namespacePhp, $paramPassModes) . ')';
+	}
+
+	private function renderMethodExecDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
+	{
+		$this->declaredLocals = [];
+		$this->declaredLocalTypes = [];
+		$this->predefinedReferenceLocals = [];
+		$this->currentParamPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$this->beginFunctionLikeVariableMapping($method->params, $method->statements);
+		foreach ($method->params as $param) {
+			$this->declaredLocals[$param->name] = true;
+			if ($param->isReference) {
+				$this->predefinedReferenceLocals[$param->name] = true;
+			}
+			$declaredType = $this->declaredTypeForExecParam($param);
+			if ($declaredType !== null) {
+				$this->declaredLocalTypes[$param->name] = $declaredType;
+			}
+		}
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($method->argNormalizationRules);
+		$this->currentNormalizationCallableName = null;
+		$this->currentParamEntryAliasLines = [];
+		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($method->params);
+		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+		$this->currentReturnType = $returnType;
+		$signature = $returnType . ' ' . $class->name . '::' . $this->renderExecCallableName($method->name) . '(' . $this->renderCanonicalParamsForExec($method->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
+		$body = $this->renderBody($method->statements, $namespacePhp);
+		$this->currentReturnType = null;
+		$this->currentFinallyReturnContext = null;
+		$this->currentParamPassModes = [];
+		$this->currentScalarRefParamAliasLines = [];
+		$this->currentParamEntryAliasLines = [];
+		$this->currentArgNormalizationRulesByKey = [];
+		$this->currentNormalizationCallableName = null;
+		$this->endFunctionLikeVariableMapping();
+		return $signature . " {
+" . $body . "
+}";
+	}
+
+	private function renderInlineTemplateMethodArtifactsWithExecSplit(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): array
+	{
+		$prevRules = $this->currentArgNormalizationRulesByKey;
+		$prevCallable = $this->currentNormalizationCallableName;
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($method->argNormalizationRules);
+		$this->currentNormalizationCallableName = $method->name;
+
+		$lines = [];
+		foreach ($method->params as $param) {
+			if ($this->paramNeedsTemplateNormalization($param)) {
+				foreach (explode("
+", $this->renderNormalizationHelperDefinition($method->name, $param, $namespacePhp, true)) as $line) {
+					$lines[] = $line;
+				}
+				$lines[] = '';
+			}
+		}
+		$lines[] = $this->renderMethodExecDeclaration($class, $method, $namespacePhp) . ';';
+		$lines[] = '';
+		foreach (explode("
+", $this->renderTemplateLineForParams($method->params)) as $line) {
+			$lines[] = $line;
+		}
+		foreach (explode("
+", $this->renderInlineMethodDefinitionWithExecSplit($class, $method, $namespacePhp)) as $line) {
+			$lines[] = $line;
+		}
+
+		$this->currentArgNormalizationRulesByKey = $prevRules;
+		$this->currentNormalizationCallableName = $prevCallable;
+		return $lines;
+	}
+
+	private function renderInlineMethodDefinitionWithExecSplit(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
+	{
+		$this->declaredLocals = [];
+		$this->declaredLocalTypes = [];
+		$this->currentParamPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$this->beginFunctionLikeVariableMapping($method->params, $method->statements);
+		foreach ($method->params as $param) {
+			$this->declaredLocals[$param->name] = true;
+			if ($param->isReference) {
+				$this->predefinedReferenceLocals[$param->name] = true;
+			}
+			if ($param->type !== null) {
+				$this->declaredLocalTypes[$param->name] = $param->type;
+			}
+		}
+		$this->currentArgNormalizationRulesByKey = $this->indexArgNormalizationRules($method->argNormalizationRules);
+		$this->currentNormalizationCallableName = $method->name;
+		$this->currentParamEntryAliasLines = $this->buildParamEntryAliasLines($method->params);
+		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($method->params);
+		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+		$this->currentReturnType = $returnType;
+		$prefix = $method->isStatic ? 'static ' : '';
+		$signature = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
+		$lines = array_merge($this->renderCurrentParamEntryAliases(), $this->renderCurrentScalarRefParamAliases());
+		$execCall = $this->renderExecCallableName($method->name) . '(' . $this->renderExecForwardArgs($method->params) . ')';
+		$lines[] = $this->indent(1) . ($returnType === 'void' ? $execCall . ';' : 'return ' . $execCall . ';');
+		$body = implode("
+", $lines);
+		$this->currentReturnType = null;
+		$this->currentFinallyReturnContext = null;
+		$this->currentParamPassModes = [];
+		$this->currentScalarRefParamAliasLines = [];
+		$this->currentParamEntryAliasLines = [];
+		$this->currentArgNormalizationRulesByKey = [];
+		$this->currentNormalizationCallableName = null;
+		$this->endFunctionLikeVariableMapping();
+		return $signature . " {
+" . $body . "
+}";
 	}
 
 	private function renderFunctionTemplateArtifacts(FunctionDecl $function, ?string $namespacePhp): array
@@ -3943,7 +4263,7 @@ final class Generator
 
 		try {
 			return [$this->typeMapper->specializeBareObjectWrapperShortcut($typedLocalType, $className), null];
-		} catch (\InvalidArgumentException $exception) {
+		} catch (\Throwable $exception) {
 			return [$typedLocalType, $exception->getMessage() . ' at line ' . $line . '.'];
 		}
 	}
@@ -4108,6 +4428,10 @@ final class Generator
 			return $this->typeMapper->unwrapInlineValueType($normalized);
 		}
 
+		if ($this->typeMapper->isNullableInlineValueType($normalized)) {
+			return $this->typeMapper->unwrapNullableInlineValueType($normalized);
+		}
+
 		if (preg_match('/^(?:shared|unique)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			return trim($matches[1]);
 		}
@@ -4121,6 +4445,11 @@ final class Generator
 		if ($this->typeMapper->isInlineValueType($typedLocalType)) {
 			$innerType = $this->typeMapper->unwrapInlineValueType($typedLocalType);
 			return 'value<' . $innerType . '>(' . $args . ')';
+		}
+
+		if ($this->typeMapper->isNullableInlineValueType($typedLocalType)) {
+			$innerType = $this->typeMapper->unwrapNullableInlineValueType($typedLocalType);
+			return 'nullable<' . $innerType . '>{' . $innerType . '(' . $args . ')}';
 		}
 
 		if (preg_match('/^unique\s*<\s*(.+)\s*>$/', trim($typedLocalType), $matches) === 1) {
@@ -5125,6 +5454,10 @@ final class Generator
 			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$method = (string) ($expr->children['method'] ?? 'call');
 			$args = $expr->children['args']->children ?? [];
+			$baseType = $this->inferExprType($baseExpr);
+			if (str_starts_with($baseType, 'result<') && $method === 'error' && count($args) === 0) {
+				return $base . '.error()';
+			}
 			$methodDecl = is_object($baseExpr) && ($baseExpr->kind ?? null) === AstKind::VAR && ($baseExpr->children['name'] ?? null) === 'this'
 				? $this->lookupMethodDeclByCurrentClass($method, $namespacePhp)
 				: null;
@@ -5719,7 +6052,7 @@ final class Generator
 			if ($declared === null) {
 				return 'auto';
 			}
-			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
+			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
 				return $declared;
 			}
 			return $this->typeMapper->mapDeclaredType($declared);

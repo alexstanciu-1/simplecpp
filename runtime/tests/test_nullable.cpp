@@ -69,6 +69,64 @@ static void test_nullable_string_cast() {
 }
 
 
+// Verifies centralized cast lifting for nullable values.
+static void test_nullable_cast_lifting() {
+	const scpp::nullable<scpp::int_t> value_int(scpp::int_t(42));
+	const scpp::nullable<scpp::int_t> empty_int(scpp::null);
+	const scpp::nullable<scpp::string_t> value_string(scpp::string_t("15"));
+
+	assert(scpp::cast<scpp::int_t>(value_int).native_value() == 42);
+	assert(scpp::cast<scpp::float_t>(value_int).native_value() == 42.0);
+	assert(scpp::cast<scpp::bool_t>(value_int).native_value() == true);
+	assert(scpp::cast<scpp::int_t>(value_string).native_value() == 15);
+
+	bool threw = false;
+	try {
+		(void)scpp::cast<scpp::int_t>(empty_int);
+	} catch (const std::runtime_error &) {
+		threw = true;
+	}
+	assert(threw == true);
+}
+
+// Verifies centralized operator lifting for nullable values against plain and nullable operands.
+static void test_nullable_operator_lifting() {
+	scpp::nullable<scpp::int_t> value(scpp::int_t(10));
+	const scpp::nullable<scpp::int_t> rhs_nullable(scpp::int_t(5));
+	const scpp::nullable<scpp::int_t> empty(scpp::null);
+
+	assert((value + scpp::int_t(2)).native_value() == 12);
+	assert((scpp::int_t(2) + value).native_value() == 12);
+	assert((value + rhs_nullable).native_value() == 15);
+	assert((value == scpp::int_t(10)).native_value() == true);
+	assert((empty == scpp::int_t(10)).native_value() == false);
+	assert((empty != scpp::int_t(10)).native_value() == true);
+	assert((value && scpp::int_t(1)).native_value() == true);
+
+	value += scpp::int_t(3);
+	assert(value.value().native_value() == 13);
+	++value;
+	assert(value.value().native_value() == 14);
+	value++;
+	assert(value.value().native_value() == 15);
+
+	bool threw = false;
+	try {
+		(void)(empty + scpp::int_t(1));
+	} catch (const std::runtime_error &) {
+		threw = true;
+	}
+	assert(threw == true);
+
+	threw = false;
+	try {
+		(void)(empty < rhs_nullable);
+	} catch (const std::runtime_error &) {
+		threw = true;
+	}
+	assert(threw == true);
+}
+
 // Verifies relational operators on nullable values unwrap present operands and throw on missing operands.
 static void test_nullable_relational_ops() {
 	const scpp::nullable<scpp::int_t> smaller(scpp::int_t(10));
@@ -89,6 +147,27 @@ static void test_nullable_relational_ops() {
 	}
 	assert(threw == true);
 }
+
+// Verifies nullable<T> can cross typed by-value boundaries while the generator remains symbol/type-blind.
+static void test_nullable_typed_boundary_bridge() {
+	auto takes_int = [](scpp::int_t value) {
+		return value.native_value();
+	};
+
+	const scpp::nullable<scpp::int_t> value(scpp::int_t(10));
+	const scpp::nullable<scpp::int_t> empty(scpp::null);
+
+	assert(takes_int(value) == 10);
+
+	bool threw = false;
+	try {
+		(void)takes_int(empty);
+	} catch (const std::runtime_error &) {
+		threw = true;
+	}
+	assert(threw == true);
+}
+
 
 // Verifies PHP string helpers can accept present nullable strings and reject nulls.
 static void test_nullable_strlen() {
@@ -112,7 +191,10 @@ int main() {
 	test_reset_and_value_or();
 	test_nullable_equality();
 	test_nullable_string_cast();
+	test_nullable_cast_lifting();
+	test_nullable_operator_lifting();
 	test_nullable_relational_ops();
+	test_nullable_typed_boundary_bridge();
 	test_nullable_strlen();
 	return 0;
 }

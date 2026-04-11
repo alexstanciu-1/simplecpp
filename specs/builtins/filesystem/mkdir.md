@@ -9,16 +9,16 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `mkdir(string $path): nullable<bool>`
+- Supported form: `mkdir(string $path): bool`
 - Accepted argument types: string_t
 
 ## Behavior
 - Creates one directory at the target path.
 - Success returns `true`.
-- Operational failure, including already-existing target, returns `null`.
+- Operational failure, including already-existing target, returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` and has richer mode/recursive options → Prism++ currently supports only a narrowed single-directory form with `true`/`null` → modified
+- PHP returns `true`/`false` and has richer mode/recursive options → Prism++ currently supports only a narrowed single-directory form with `true`/`false` → modified
 
 ## Error policy
 - Does not throw for ordinary create failure.
@@ -37,4 +37,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 
 ## Test matrix
 - create new directory
-- existing directory returns null
+- existing directory returns false

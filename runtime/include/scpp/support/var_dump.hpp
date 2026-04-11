@@ -2,6 +2,9 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/nullable.hpp"
+#include "scpp/result_or_false.hpp"
+#include "scpp/result_or_bool.hpp"
+#include "scpp/result.hpp"
 #include <iostream>
 
 namespace scpp::php {
@@ -25,6 +28,34 @@ inline void var_dump(const weak_p<hash_t<mixed_t>>& v) { var_dump(mixed_t{v}); }
 
 template <typename T>
 inline void var_dump(const nullable<T>& v) {
+	if (!v.has_value().native_value()) {
+		var_dump(null_t{});
+		return;
+	}
+	var_dump(v.value());
+}
+
+
+template <typename T>
+inline void var_dump(const result_or_false<T>& v) {
+	if (!v.has_value().native_value()) {
+		var_dump(bool_t(false));
+		return;
+	}
+	var_dump(v.value());
+}
+
+template <typename T>
+inline void var_dump(const result_or_bool<T>& v) {
+	if (!v.has_value().native_value()) {
+		var_dump(bool_t(v.is_true().native_value()));
+		return;
+	}
+	var_dump(v.value());
+}
+
+template <typename T>
+inline void var_dump(const result<T>& v) {
 	if (!v.has_value().native_value()) {
 		var_dump(null_t{});
 		return;

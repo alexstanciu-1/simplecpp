@@ -9,21 +9,21 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `filemtime(string $path): nullable<int>`
+- Supported form: `filemtime(string $path): result_or_false<int>`
 - Accepted argument types: string_t
 
 ## Behavior
 - Returns the last-write timestamp as Unix seconds.
-- Failure returns `null`.
+- Failure returns `false`.
 
 ## Compatibility table
-- PHP returns timestamp or `false` → Prism++ returns timestamp or `null` → modified
+- PHP returns timestamp or `false` → Prism++ returns timestamp or `false` → modified
 
 ## Error policy
 - Does not throw for ordinary lookup failure.
 
 ## Runtime and wrapper split
-Runtime: call `std::filesystem::last_write_time`, convert to Unix seconds, and return `null` on failure.
+Runtime: call `std::filesystem::last_write_time`, convert to Unix seconds, and return `false` on failure.
 - Wrapper: expose PHP-visible name only.
 
 ## Configuration visibility

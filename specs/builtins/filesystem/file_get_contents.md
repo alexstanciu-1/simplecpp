@@ -9,22 +9,22 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `file_get_contents(string $path): nullable<string>`
+- Supported form: `file_get_contents(string $path): result_or_false<string>`
 - Accepted argument types: string_t
 
 ## Behavior
 - Reads the full file contents as a byte-preserving string.
 - Empty file returns the empty string.
-- Operational open/read failure returns `null`.
+- Operational open/read failure returns `false`.
 
 ## Compatibility table
-- PHP returns string or `false` → Prism++ returns string or `null` → modified
+- PHP returns string or `false` → Prism++ now returns string or `false` at the PHP exposure layer → aligned
 
 ## Error policy
 - Does not throw for ordinary missing-path or open failures.
 
 ## Runtime and wrapper split
-Runtime: open a binary input stream, read the full file payload, and return `null` on open/bad failures.
+Runtime: open a binary input stream, read the full file payload, and return `false` on open/bad failures.
 - Wrapper: expose PHP-visible name only.
 
 ## Configuration visibility
@@ -38,4 +38,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 ## Test matrix
 - non-empty file
 - empty file
-- missing file returns null
+- missing file returns false

@@ -3,6 +3,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/nullable.hpp"
+#include "scpp/result_or_false.hpp"
 #include "scpp/string_t.hpp"
 
 #include <cstdio>
@@ -77,8 +78,10 @@ public:
 
 using resource_handle_t = shared_p<php_resource_t>;
 using nullable_resource_handle_t = nullable<resource_handle_t>;
+using falseable_resource_handle_t = result_or_false<resource_handle_t>;
 
-[[nodiscard]] inline file_resource_t &require_file_resource(const nullable_resource_handle_t &resource, const char *function_name) {
+template <typename TResourceWrapper>
+[[nodiscard]] inline file_resource_t &require_file_resource_impl(const TResourceWrapper &resource, const char *function_name) {
 	if (!resource.has_value().native_value()) {
 		throw std::runtime_error(std::string(function_name) + "(): file resource is null");
 	}
@@ -101,6 +104,14 @@ using nullable_resource_handle_t = nullable<resource_handle_t>;
 		throw std::runtime_error(std::string(function_name) + "(): file resource is closed");
 	}
 	return *file;
+}
+
+[[nodiscard]] inline file_resource_t &require_file_resource(const nullable_resource_handle_t &resource, const char *function_name) {
+	return require_file_resource_impl(resource, function_name);
+}
+
+[[nodiscard]] inline file_resource_t &require_file_resource(const falseable_resource_handle_t &resource, const char *function_name) {
+	return require_file_resource_impl(resource, function_name);
 }
 
 } // namespace scpp::php

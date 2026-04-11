@@ -37,7 +37,7 @@ When a function or method contains one or more normalized parameters, the genera
 - ordinary non-normalized parameters unchanged in the callable signature
 - the original PHP parameter name inside the callable body after normalization
 
-Conceptual shape:
+Baseline conceptual shape:
 
 ```cpp
 template <typename T_left>
@@ -47,7 +47,21 @@ int_t add(T_left&& _left, int_t right) {
 }
 ```
 
-The generator should not create a separate `_impl` function unless there is a concrete later need.
+For larger lowered bodies, the generator may split execution into a canonical typed executor so the heavy body lives in the `.cpp` file while normalization stays inline in the header.
+
+Conceptual split shape:
+
+```cpp
+int_t add__exec(int_t left, int_t right);
+
+template <typename T_left>
+int_t add(T_left&& _left, int_t right) {
+	int_t left = _norm_add__left(std::forward<T_left>(_left));
+	return add__exec(left, right);
+}
+```
+
+Current generator heuristic: use the canonical executor split when the callable needs normalized template lowering and its lowered statement body has more than 2 statements.
 
 ## 4. Normalization rules
 
@@ -146,6 +160,7 @@ Current generator implementation includes:
 - primary-type extraction from union declarations
 - template-wrapper lowering for scalar-like normalized parameters
 - one generated normalization helper per normalized parameter
+- optional `__exec` body split for non-trivial normalized callables so the canonical typed body can live in the source file
 - plain single-type parameters kept unchanged in the generated signature
 - explicit `@arg.<param>.from(Type)` lowering into normalization helper branches via real PHP expression parsing and normal expression lowering
 - cast-utility fallback when no explicit normalization rule exists

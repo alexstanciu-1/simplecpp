@@ -4,7 +4,7 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/mixed_t.hpp"
-#include "scpp/nullable.hpp"
+#include "scpp/result_or_false.hpp"
 #include "scpp/string_t.hpp"
 
 #include <algorithm>
@@ -60,50 +60,47 @@ namespace filesystem_detail {
 	return bool_t(std::filesystem::exists(filesystem_detail::to_path(path), error));
 }
 
-[[nodiscard]] inline nullable<string_t> file_get_contents(const string_t &path) {
+[[nodiscard]] inline result_or_false<string_t> file_get_contents(const string_t &path) {
 	std::ifstream input(filesystem_detail::to_path(path), std::ios::binary);
 	if (!input.is_open()) {
-		return null;
+		return false_sentinel;
 	}
 	std::string contents((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
 	if (input.bad()) {
-		return null;
+		return false_sentinel;
 	}
 	return string_t(std::move(contents));
 }
 
-[[nodiscard]] inline nullable<int_t> file_put_contents(const string_t &path, const string_t &data) {
+[[nodiscard]] inline result_or_false<int_t> file_put_contents(const string_t &path, const string_t &data) {
 	std::ofstream output(filesystem_detail::to_path(path), std::ios::binary | std::ios::trunc);
 	if (!output.is_open()) {
-		return null;
+		return false_sentinel;
 	}
 	const auto &native = data.native_value();
 	output.write(native.data(), static_cast<std::streamsize>(native.size()));
 	if (!output.good()) {
-		return null;
+		return false_sentinel;
 	}
 	return int_t(static_cast<std::int64_t>(native.size()));
 }
 
-[[nodiscard]] inline nullable<bool_t> mkdir(const string_t &path) {
+[[nodiscard]] inline bool_t mkdir(const string_t &path) {
 	std::error_code error;
 	const auto created = std::filesystem::create_directory(filesystem_detail::to_path(path), error);
-	if (error || !created) {
-		return null;
-	}
-	return bool_t(true);
+	return bool_t(!error && created);
 }
 
-[[nodiscard]] inline nullable<hash_t<mixed_t>> scandir(const string_t &path) {
+[[nodiscard]] inline result_or_false<hash_t<mixed_t>> scandir(const string_t &path) {
 	std::error_code error;
 	const auto native_path = filesystem_detail::to_path(path);
 	if (!std::filesystem::is_directory(native_path, error) || error) {
-		return null;
+		return false_sentinel;
 	}
 	std::vector<std::string> names;
 	for (const auto &entry : std::filesystem::directory_iterator(native_path, error)) {
 		if (error) {
-			return null;
+			return false_sentinel;
 		}
 		names.push_back(entry.path().filename().string());
 	}
@@ -111,90 +108,72 @@ namespace filesystem_detail {
 	return filesystem_detail::names_to_php_array(std::move(names));
 }
 
-[[nodiscard]] inline nullable<int_t> filesize(const string_t &path) {
+[[nodiscard]] inline result_or_false<int_t> filesize(const string_t &path) {
 	std::error_code error;
 	const auto size = std::filesystem::file_size(filesystem_detail::to_path(path), error);
 	if (error) {
-		return null;
+		return false_sentinel;
 	}
 	return int_t(static_cast<std::int64_t>(size));
 }
 
-[[nodiscard]] inline nullable<int_t> filemtime(const string_t &path) {
+[[nodiscard]] inline result_or_false<int_t> filemtime(const string_t &path) {
 	std::error_code error;
 	const auto native_path = filesystem_detail::to_path(path);
 	if (!std::filesystem::exists(native_path, error) || error) {
-		return null;
+		return false_sentinel;
 	}
 	const auto time = std::filesystem::last_write_time(native_path, error);
 	if (error) {
-		return null;
+		return false_sentinel;
 	}
 	return int_t(filesystem_detail::file_time_to_unix_seconds(time));
 }
 
-[[nodiscard]] inline nullable<bool_t> touch(const string_t &path) {
+[[nodiscard]] inline bool_t touch(const string_t &path) {
 	std::error_code error;
 	const auto native_path = filesystem_detail::to_path(path);
 	if (std::filesystem::exists(native_path, error) && !error) {
 		std::filesystem::last_write_time(native_path, std::filesystem::file_time_type::clock::now(), error);
-		if (error) {
-			return null;
-		}
-		return bool_t(true);
+		return bool_t(!error);
 	}
 	std::ofstream output(native_path, std::ios::binary | std::ios::app);
 	if (!output.is_open()) {
-		return null;
+		return bool_t(false);
 	}
 	output.close();
-	if (!output) {
-		return null;
-	}
-	return bool_t(true);
+	return bool_t(static_cast<bool>(output));
 }
 
-[[nodiscard]] inline nullable<bool_t> rmdir(const string_t &path) {
+[[nodiscard]] inline bool_t rmdir(const string_t &path) {
 	std::error_code error;
 	const auto removed = std::filesystem::remove(filesystem_detail::to_path(path), error);
-	if (error || !removed) {
-		return null;
-	}
-	return bool_t(true);
+	return bool_t(!error && removed);
 }
 
-[[nodiscard]] inline nullable<bool_t> unlink(const string_t &path) {
+[[nodiscard]] inline bool_t unlink(const string_t &path) {
 	std::error_code error;
 	const auto removed = std::filesystem::remove(filesystem_detail::to_path(path), error);
-	if (error || !removed) {
-		return null;
-	}
-	return bool_t(true);
+	return bool_t(!error && removed);
 }
 
-[[nodiscard]] inline nullable<bool_t> copy(const string_t &source, const string_t &dest) {
+[[nodiscard]] inline bool_t copy(const string_t &source, const string_t &dest) {
 	std::error_code error;
 	const auto copied = std::filesystem::copy_file(filesystem_detail::to_path(source), filesystem_detail::to_path(dest), std::filesystem::copy_options::overwrite_existing, error);
-	if (error || !copied) {
-		return null;
-	}
-	return bool_t(true);
+	return bool_t(!error && copied);
 }
 
-[[nodiscard]] inline nullable<bool_t> rename(const string_t &source, const string_t &dest) {
+[[nodiscard]] inline bool_t rename(const string_t &source, const string_t &dest) {
 	std::error_code error;
 	std::filesystem::rename(filesystem_detail::to_path(source), filesystem_detail::to_path(dest), error);
-	if (error) {
-		return null;
-	}
-	return bool_t(true);
+	return bool_t(!error);
 }
 
-[[nodiscard]] inline nullable<string_t> realpath(const string_t &path) {
+[[nodiscard]] inline result_or_false<string_t> realpath(const string_t &path) {
 	std::error_code error;
 	const auto canonical = std::filesystem::canonical(filesystem_detail::to_path(path), error);
 	if (error) {
-		return null;
+		return false_sentinel;
 	}
 	return string_t(canonical.string());
 }

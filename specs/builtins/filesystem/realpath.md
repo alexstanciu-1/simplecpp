@@ -9,23 +9,23 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `realpath(string $path): nullable<string>`
+- Supported form: `realpath(string $path): result_or_false<string>`
 - Accepted argument types: string_t
 
 ## Behavior
 - Returns the absolute canonical path string.
 - The path must exist in this first pass.
-- Failure returns `null`.
+- Failure returns `false`.
 
 ## Compatibility table
-- PHP returns canonical path or `false` → Prism++ returns canonical path or `null` → modified
+- PHP returns canonical path or `false` → Prism++ now returns canonical path or `false` at the PHP exposure layer → aligned
 - PHP can vary in edge handling by platform → Prism++ keeps strict existing-path canonicalization → modified
 
 ## Error policy
 - Does not throw for ordinary missing-path failure.
 
 ## Runtime and wrapper split
-Runtime: call `std::filesystem::canonical` with `std::error_code`.
+Runtime: call `std::filesystem::canonical` with `std::error_code` and return `false` on failure.
 - Wrapper: expose PHP-visible name only.
 
 ## Configuration visibility
@@ -38,4 +38,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 
 ## Test matrix
 - existing path canonicalizes
-- missing path returns null
+- missing path returns false

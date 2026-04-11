@@ -9,15 +9,15 @@
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `unlink(string $path): nullable<bool>`
+- Supported form: `unlink(string $path): bool`
 - Accepted argument types: string_t
 
 ## Behavior
 - Removes a file-system entry through `remove`.
-- Success returns `true`; failure returns `null`.
+- Success returns `true`; failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` → Prism++ returns `true`/`null` → modified
+- PHP returns `true`/`false` → Prism++ returns `true`/`false` → modified
 
 ## Error policy
 - Does not throw for ordinary remove failure.
@@ -36,4 +36,4 @@ Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
 
 ## Test matrix
 - remove existing file
-- missing path returns null
+- missing path returns false

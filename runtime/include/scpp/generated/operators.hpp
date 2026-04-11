@@ -12,6 +12,10 @@
 #include "scpp/nullopt_t.hpp"
 #include "scpp/nullptr_t.hpp"
 #include "scpp/nullable.hpp"
+#include "scpp/result_or_false.hpp"
+#include "scpp/result_or_bool.hpp"
+#include "scpp/error_t.hpp"
+#include "scpp/result.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
@@ -50,6 +54,157 @@ concept is_mixed_compatible =
 	is_native_float<T> ||
 	is_string_like<T> ||
 	is_mixed<T>;
+
+template <typename T>
+concept is_nullable = detail::is_specialization_of_v<detail::remove_cvref_t<T>, nullable>;
+
+template <typename T>
+concept is_result_or_false = detail::is_specialization_of_v<detail::remove_cvref_t<T>, result_or_false>;
+
+template <typename T>
+concept is_result_or_bool = detail::is_specialization_of_v<detail::remove_cvref_t<T>, result_or_bool>;
+
+template <typename T>
+concept is_result = detail::is_specialization_of_v<detail::remove_cvref_t<T>, result>;
+
+template <typename T>
+concept is_guarded_value = is_nullable<T> || is_result_or_false<T> || is_result_or_bool<T> || is_result<T>;
+
+template <typename T>
+struct unwrap_nullable_type {
+	using type = detail::remove_cvref_t<T>;
+};
+
+template <typename T>
+struct unwrap_nullable_type<nullable<T>> {
+	using type = T;
+};
+
+template <typename T>
+struct unwrap_nullable_type<result_or_false<T>> {
+	using type = T;
+};
+
+template <typename T>
+struct unwrap_nullable_type<result_or_bool<T>> {
+	using type = T;
+};
+
+template <typename T>
+struct unwrap_nullable_type<result<T>> {
+	using type = T;
+};
+
+template <typename T>
+using unwrap_nullable_type_t = typename unwrap_nullable_type<detail::remove_cvref_t<T>>::type;
+
+template <typename T>
+[[nodiscard]] inline decltype(auto) require_nullable_lifted_value(T &&value, const char *context) {
+	if constexpr (is_guarded_value<T>) {
+		return std::forward<T>(value).require_value(context);
+	} else {
+		return std::forward<T>(value);
+	}
+}
+
+template <typename T>
+concept nullable_unary_plus_operand = is_guarded_value<T> && requires(const unwrap_nullable_type_t<T> &value) { +value; };
+
+template <typename T>
+concept nullable_unary_minus_operand = is_guarded_value<T> && requires(const unwrap_nullable_type_t<T> &value) { -value; };
+
+template <typename T>
+concept nullable_logical_not_operand = is_guarded_value<T> && requires(const unwrap_nullable_type_t<T> &value) { !value; };
+
+template <typename T>
+concept nullable_bitwise_not_operand = is_guarded_value<T> && requires(const unwrap_nullable_type_t<T> &value) { ~value; };
+
+template <typename T>
+concept nullable_preincrement_operand = is_guarded_value<T> && requires(unwrap_nullable_type_t<T> &value) { ++value; };
+
+template <typename T>
+concept nullable_predecrement_operand = is_guarded_value<T> && requires(unwrap_nullable_type_t<T> &value) { --value; };
+
+template <typename L, typename R>
+concept nullable_binary_plus_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs + rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_minus_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs - rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_mul_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs * rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_div_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs / rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_mod_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs % rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_bitand_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs & rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_bitor_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs | rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_bitxor_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs ^ rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_shl_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs << rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_shr_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs >> rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_eq_operand = (is_guarded_value<L> || is_guarded_value<R>) && !(std::same_as<unwrap_nullable_type_t<L>, null_t> || std::same_as<unwrap_nullable_type_t<R>, null_t> || std::same_as<unwrap_nullable_type_t<L>, nullopt_t> || std::same_as<unwrap_nullable_type_t<R>, nullopt_t>);
+
+template <typename L, typename R>
+concept nullable_binary_lt_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs < rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_le_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs <= rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_gt_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs > rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_ge_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs >= rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_land_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs && rhs; };
+
+template <typename L, typename R>
+concept nullable_binary_lor_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs || rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_add_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs += rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_sub_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs -= rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_mul_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs *= rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_div_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs /= rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_mod_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs %= rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_bitand_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs &= rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_bitor_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs |= rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_bitxor_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs ^= rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_shl_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs <<= rhs; };
+
+template <typename L, typename R>
+concept nullable_compound_shr_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs >>= rhs; };
 
 template <typename T>
 	requires (is_native_number<T> || is_mixed<T>)
@@ -387,6 +542,255 @@ template <typename T1, typename T2>
 
 
 template <typename T>
+	requires nullable_unary_plus_operand<T>
+[[nodiscard]] inline auto operator+(const T &value) {
+	return +require_nullable_lifted_value(value, "nullable unary operator+ requires a present value");
+}
+
+template <typename T>
+	requires nullable_unary_minus_operand<T>
+[[nodiscard]] inline auto operator-(const T &value) {
+	return -require_nullable_lifted_value(value, "nullable unary operator- requires a present value");
+}
+
+template <typename T>
+	requires nullable_logical_not_operand<T>
+[[nodiscard]] inline auto operator!(const T &value) {
+	return !require_nullable_lifted_value(value, "nullable operator! requires a present value");
+}
+
+template <typename T>
+	requires nullable_bitwise_not_operand<T>
+[[nodiscard]] inline auto operator~(const T &value) {
+	return ~require_nullable_lifted_value(value, "nullable operator~ requires a present value");
+}
+
+template <typename T>
+	requires nullable_preincrement_operand<T>
+inline auto &operator++(T &value) {
+	++value.require_value("nullable prefix operator++ requires a present value");
+	return value;
+}
+
+template <typename T>
+	requires nullable_preincrement_operand<T>
+inline auto operator++(T &value, int) {
+	auto before = value.require_value("nullable postfix operator++ requires a present value");
+	value.require_value("nullable postfix operator++ requires a present value")++;
+	return before;
+}
+
+template <typename T>
+	requires nullable_predecrement_operand<T>
+inline auto &operator--(T &value) {
+	--value.require_value("nullable prefix operator-- requires a present value");
+	return value;
+}
+
+template <typename T>
+	requires nullable_predecrement_operand<T>
+inline auto operator--(T &value, int) {
+	auto before = value.require_value("nullable postfix operator-- requires a present value");
+	value.require_value("nullable postfix operator-- requires a present value")--;
+	return before;
+}
+
+template <typename L, typename R>
+	requires nullable_binary_plus_operand<L, R>
+[[nodiscard]] inline auto operator+(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator+ requires a present left operand") + require_nullable_lifted_value(rhs, "nullable operator+ requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_minus_operand<L, R>
+[[nodiscard]] inline auto operator-(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator- requires a present left operand") - require_nullable_lifted_value(rhs, "nullable operator- requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_mul_operand<L, R>
+[[nodiscard]] inline auto operator*(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator* requires a present left operand") * require_nullable_lifted_value(rhs, "nullable operator* requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_div_operand<L, R>
+[[nodiscard]] inline auto operator/(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator/ requires a present left operand") / require_nullable_lifted_value(rhs, "nullable operator/ requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_mod_operand<L, R>
+[[nodiscard]] inline auto operator%(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator% requires a present left operand") % require_nullable_lifted_value(rhs, "nullable operator% requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_bitand_operand<L, R>
+[[nodiscard]] inline auto operator&(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator& requires a present left operand") & require_nullable_lifted_value(rhs, "nullable operator& requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_bitor_operand<L, R>
+[[nodiscard]] inline auto operator|(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator| requires a present left operand") | require_nullable_lifted_value(rhs, "nullable operator| requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_bitxor_operand<L, R>
+[[nodiscard]] inline auto operator^(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator^ requires a present left operand") ^ require_nullable_lifted_value(rhs, "nullable operator^ requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_shl_operand<L, R>
+[[nodiscard]] inline auto operator<<(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator<< requires a present left operand") << require_nullable_lifted_value(rhs, "nullable operator<< requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_shr_operand<L, R>
+[[nodiscard]] inline auto operator>>(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator>> requires a present left operand") >> require_nullable_lifted_value(rhs, "nullable operator>> requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_eq_operand<L, R>
+[[nodiscard]] inline bool_t operator==(const L &lhs, const R &rhs) {
+	const bool lhs_is_present = [&]() {
+		if constexpr (is_guarded_value<L>) {
+			return lhs.has_value().native_value();
+		} else {
+			return true;
+		}
+	}();
+	const bool rhs_is_present = [&]() {
+		if constexpr (is_guarded_value<R>) {
+			return rhs.has_value().native_value();
+		} else {
+			return true;
+		}
+	}();
+	if (!lhs_is_present || !rhs_is_present) {
+		return bool_t(lhs_is_present == rhs_is_present);
+	}
+	return require_nullable_lifted_value(lhs, "nullable operator== requires a present left operand") == require_nullable_lifted_value(rhs, "nullable operator== requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_eq_operand<L, R>
+[[nodiscard]] inline bool_t operator!=(const L &lhs, const R &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename L, typename R>
+	requires nullable_binary_lt_operand<L, R>
+[[nodiscard]] inline auto operator<(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator< requires a present left operand") < require_nullable_lifted_value(rhs, "nullable operator< requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_le_operand<L, R>
+[[nodiscard]] inline auto operator<=(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator<= requires a present left operand") <= require_nullable_lifted_value(rhs, "nullable operator<= requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_gt_operand<L, R>
+[[nodiscard]] inline auto operator>(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator> requires a present left operand") > require_nullable_lifted_value(rhs, "nullable operator> requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_ge_operand<L, R>
+[[nodiscard]] inline auto operator>=(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator>= requires a present left operand") >= require_nullable_lifted_value(rhs, "nullable operator>= requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_land_operand<L, R>
+[[nodiscard]] inline auto operator&&(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator&& requires a present left operand") && require_nullable_lifted_value(rhs, "nullable operator&& requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_binary_lor_operand<L, R>
+[[nodiscard]] inline auto operator||(const L &lhs, const R &rhs) {
+	return require_nullable_lifted_value(lhs, "nullable operator|| requires a present left operand") || require_nullable_lifted_value(rhs, "nullable operator|| requires a present right operand");
+}
+
+template <typename L, typename R>
+	requires nullable_compound_add_operand<L, R>
+inline L &operator+=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator+= requires a present left operand") += require_nullable_lifted_value(rhs, "nullable operator+= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_sub_operand<L, R>
+inline L &operator-=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator-= requires a present left operand") -= require_nullable_lifted_value(rhs, "nullable operator-= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_mul_operand<L, R>
+inline L &operator*=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator*= requires a present left operand") *= require_nullable_lifted_value(rhs, "nullable operator*= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_div_operand<L, R>
+inline L &operator/=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator/= requires a present left operand") /= require_nullable_lifted_value(rhs, "nullable operator/= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_mod_operand<L, R>
+inline L &operator%=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator%= requires a present left operand") %= require_nullable_lifted_value(rhs, "nullable operator%= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_bitand_operand<L, R>
+inline L &operator&=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator&= requires a present left operand") &= require_nullable_lifted_value(rhs, "nullable operator&= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_bitor_operand<L, R>
+inline L &operator|=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator|= requires a present left operand") |= require_nullable_lifted_value(rhs, "nullable operator|= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_bitxor_operand<L, R>
+inline L &operator^=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator^= requires a present left operand") ^= require_nullable_lifted_value(rhs, "nullable operator^= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_shl_operand<L, R>
+inline L &operator<<=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator<<= requires a present left operand") <<= require_nullable_lifted_value(rhs, "nullable operator<<= requires a present right operand");
+	return lhs;
+}
+
+template <typename L, typename R>
+	requires nullable_compound_shr_operand<L, R>
+inline L &operator>>=(L &lhs, const R &rhs) {
+	lhs.require_value("nullable operator>>= requires a present left operand") >>= require_nullable_lifted_value(rhs, "nullable operator>>= requires a present right operand");
+	return lhs;
+}
+
+template <typename T>
 [[nodiscard]] inline bool_t operator==(const nullable<T> &value, null_t) noexcept {
 	return detail::generated_operator_detail::nullable_eq_null(value);
 }
@@ -426,50 +830,107 @@ template <typename T>
 	return detail::generated_operator_detail::nullable_ne_null(value);
 }
 
+
 template <typename T>
-[[nodiscard]] inline bool_t operator==(const nullable<T> &lhs, const nullable<T> &rhs) {
-	return detail::generated_operator_detail::nullable_eq_same(lhs, rhs);
+[[nodiscard]] inline bool_t operator==(const result_or_false<T> &value, false_sentinel_t) noexcept {
+	return value.is_false();
 }
 
 template <typename T>
-[[nodiscard]] inline bool_t operator!=(const nullable<T> &lhs, const nullable<T> &rhs) {
-	return detail::generated_operator_detail::nullable_ne_same(lhs, rhs);
-}
-
-// Nullable relational comparisons are allowed only when both operands are present.
-// This matches the narrowed runtime contract: operational failure is represented as
-// null, but using a missing value in a numeric/string comparison is a programmer error.
-template <typename T>
-[[nodiscard]] inline auto operator<(const nullable<T> &lhs, const nullable<T> &rhs) {
-	if (!lhs.has_value().native_value() || !rhs.has_value().native_value()) {
-		throw std::runtime_error("nullable operator< requires both operands to have values");
-	}
-	return lhs.value() < rhs.value();
+[[nodiscard]] inline bool_t operator==(false_sentinel_t, const result_or_false<T> &value) noexcept {
+	return value.is_false();
 }
 
 template <typename T>
-[[nodiscard]] inline auto operator<=(const nullable<T> &lhs, const nullable<T> &rhs) {
-	if (!lhs.has_value().native_value() || !rhs.has_value().native_value()) {
-		throw std::runtime_error("nullable operator<= requires both operands to have values");
-	}
-	return lhs.value() <= rhs.value();
+[[nodiscard]] inline bool_t operator!=(const result_or_false<T> &value, false_sentinel_t) noexcept {
+	return bool_t(!value.is_false().native_value());
 }
 
 template <typename T>
-[[nodiscard]] inline auto operator>(const nullable<T> &lhs, const nullable<T> &rhs) {
-	if (!lhs.has_value().native_value() || !rhs.has_value().native_value()) {
-		throw std::runtime_error("nullable operator> requires both operands to have values");
-	}
-	return lhs.value() > rhs.value();
+[[nodiscard]] inline bool_t operator!=(false_sentinel_t, const result_or_false<T> &value) noexcept {
+	return bool_t(!value.is_false().native_value());
 }
 
 template <typename T>
-[[nodiscard]] inline auto operator>=(const nullable<T> &lhs, const nullable<T> &rhs) {
-	if (!lhs.has_value().native_value() || !rhs.has_value().native_value()) {
-		throw std::runtime_error("nullable operator>= requires both operands to have values");
-	}
-	return lhs.value() >= rhs.value();
+[[nodiscard]] inline bool_t operator==(const result_or_false<T> &value, const bool_t &rhs) noexcept {
+	return rhs.native_value() ? bool_t(false) : value.is_false();
 }
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const bool_t &lhs, const result_or_false<T> &value) noexcept {
+	return lhs.native_value() ? bool_t(false) : value.is_false();
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_false<T> &value, const bool_t &rhs) noexcept {
+	return bool_t(!static_cast<bool>((value == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const bool_t &lhs, const result_or_false<T> &value) noexcept {
+	return bool_t(!static_cast<bool>((lhs == value).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &value, false_sentinel_t) noexcept {
+	return value.is_false();
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(false_sentinel_t, const result_or_bool<T> &value) noexcept {
+	return value.is_false();
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &value, false_sentinel_t) noexcept {
+	return bool_t(!value.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(false_sentinel_t, const result_or_bool<T> &value) noexcept {
+	return bool_t(!value.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &value, const bool_t &rhs) noexcept {
+	return rhs.native_value() ? value.is_true() : value.is_false();
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const bool_t &lhs, const result_or_bool<T> &value) noexcept {
+	return lhs.native_value() ? value.is_true() : value.is_false();
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &value, const bool_t &rhs) noexcept {
+	return bool_t(!static_cast<bool>((value == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const bool_t &lhs, const result_or_bool<T> &value) noexcept {
+	return bool_t(!static_cast<bool>((lhs == value).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result<T> &value, error_sentinel_t) noexcept {
+	return bool_t(!value.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(error_sentinel_t, const result<T> &value) noexcept {
+	return bool_t(!value.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result<T> &value, error_sentinel_t) noexcept {
+	return bool_t(value.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(error_sentinel_t, const result<T> &value) noexcept {
+	return bool_t(value.has_value().native_value());
+}
+
 
 template <typename T>
 [[nodiscard]] inline bool_t operator==(const shared_p<T> &value, null_t) noexcept {

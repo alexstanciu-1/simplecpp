@@ -19,7 +19,7 @@ The goal is to keep filesystem and stdio out of the generic `php.hpp` surface so
 
 ## Resource model
 
-`fopen()` returns a nullable resource handle.
+`fopen()` returns an `result_or_false<resource_handle_t>` file-stream handle.
 
 The resource wrapper has an explicit `kind`.
 Current first-pass kind set:
@@ -27,15 +27,15 @@ Current first-pass kind set:
 - `file_stream`
 
 Invalid resource kind, closed-resource use, and similar programmer errors throw runtime errors.
-Operational failures return `null` where PHP would traditionally return `false`.
+Operational failures now return PHP-shaped `false` at the PHP exposure layer where PHP uses `false` as the sentinel.
 
 ## Contract narrowing
 
-This first pass intentionally does **not** aim for 1:1 PHP parity.
+This first pass keeps narrowed behavior where documented, but ordinary filesystem and stdio failure sentinels now match PHP more closely.
 
 Key decisions:
 
-- ordinary open/read/write/path failures return `null`
+- ordinary open/read/write/path failures use PHP-shaped `false` sentinels or plain `bool false` depending on the PHP contract
 - `scandir()` returns actual entries only
 - `scandir()` sorts entry names ascending
 - `scandir()` excludes `.` and `..`

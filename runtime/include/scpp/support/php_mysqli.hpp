@@ -8,6 +8,8 @@
 #include "scpp/dynamic_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/memory.hpp"
+#include "scpp/result_or_false.hpp"
+#include "scpp/result_or_bool.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/support/db/mysql_module.hpp"
 
@@ -40,13 +42,13 @@ public:
 		int_t port = int_t(3306),
 		string_t socket = string_t(""));
 
-	shared_p<mysqli_result> query(const string_t &sql);
-	shared_p<mysqli_stmt> prepare(const string_t &sql);
+	result_or_bool<shared_p<mysqli_result>> query(const string_t &sql);
+	result_or_false<shared_p<mysqli_stmt>> prepare(const string_t &sql);
 	void close();
-	void set_charset(const string_t &charset);
-	void begin_transaction();
-	void commit();
-	void rollback();
+	bool_t set_charset(const string_t &charset);
+	bool_t begin_transaction();
+	bool_t commit();
+	bool_t rollback();
 
 private:
 	std::shared_ptr<db::mysql_module::connection_handle> handle_;
@@ -82,22 +84,23 @@ public:
 	int_t affected_rows = int_t(0);
 
 	template <typename... TArgs>
-	void bind_param(const string_t &types, TArgs &...args) {
+	bool_t bind_param(const string_t &types, TArgs &...args) {
 		clear_local_error();
 		const auto native_types = types.native_value();
 		if (native_types.size() != sizeof...(args)) {
 			set_local_error(1, "mysqli_stmt::bind_param type count does not match bound argument count");
-			return;
+			return bool_t(false);
 		}
 
 		bound_types_ = native_types;
 		bound_getters_.clear();
 		bound_getters_.reserve(sizeof...(args));
 		bind_param_impl(native_types, 0U, args...);
+		return bool_t(true);
 	}
 
-	void execute();
-	shared_p<mysqli_result> get_result();
+	bool_t execute();
+	result_or_false<shared_p<mysqli_result>> get_result();
 	void close();
 
 private:

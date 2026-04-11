@@ -121,6 +121,16 @@ This path should:
 
 This split preserves a reviewable fast/static path for wrapper-native combinations while keeping dynamic behavior explicit.
 
+Typed-boundary bridges such as the temporary `nullable<T> -> T` generator-compatibility unwrap are not part of the intended public operator candidate surface. They exist only so explicit typed destinations keep working while the current frontend remains symbol/type-blind.
+
+When a wrapper family needs operator participation before the frontend can emit explicit unwraps, the operator generator must add a centralized lifted operator layer instead of relying on those conversion bridges. For current nullable work, that lifted layer is responsible for:
+- requiring present values for unary/binary/logical/relational/mutation participation
+- preserving explicit sentinel comparisons against `null_t`/`nullopt_t`
+- keeping equality with non-sentinel values well-defined without inventing SQL-style null propagation
+- delegating real work to the wrapped-value operator family after the checked unwrap
+
+Nullable arrow dereference is intentionally not part of the generated arithmetic/logical operator matrix. It lives on the stable `nullable<T>` wrapper surface itself so object/property and method access can use ordinary `x->member` lowering while still going through one centralized present-value check. The wrapper must forward to wrapped `T::operator->()` when the payload type is already pointer-like and otherwise return the address of the wrapped object for direct-object member access.
+
 ---
 
 ## 6. Procedure: how operator generation should be extended or regenerated
@@ -301,3 +311,11 @@ The current operator-generation flow is:
 6. overlapping public operator surfaces are removed after verified migration
 
 That is the current procedural and informational model for the operator-generation work.
+
+
+## result_or_false<T>, result_or_bool<T>, and result<T>
+
+- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`.
+- `result<T>` is the explicit structured-failure wrapper. Value-required casts, typed-boundary conversions, and operator participation unwrap only the success value; the error state is never silently converted into a usable value.
+- `result<T>` error inspection is explicit through `error()`. The generator must lower `$result->error()->...` to the wrapper method rather than treating `error` as a real payload property.
+- `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, but its non-value states are the PHP boolean sentinels `false` and `true`.

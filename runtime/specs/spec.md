@@ -260,6 +260,15 @@ Included initially:
 - pointer wrappers and `nullable<T>` must remain semantically distinct even if both can represent absence
 - `nullopt_t` is the canonical semantic sentinel for constructing or resetting an empty `nullable<T>` state
 - `nullptr_t` is the canonical semantic sentinel for constructing or comparing empty pointer-like wrappers
+- explicit unwrap/cast remains `cast<T>(nullable<T>)` when generated code can emit it directly
+- the centralized cast surface may also lift `nullable<U>` into any configured explicit target `T` by first requiring a present value and then delegating to `cast<T>(U)`; `string_t` remains the configured PHP-style exception where empty nullable stringifies to `""`
+- until the current symbol/type-blind generator reaches typed-boundary parity, `nullable<T>` may also provide a temporary implicit bridge to wrapped `T` only for explicit typed destinations such as typed by-value argument passing and typed return
+- the temporary typed-boundary bridge must throw a runtime error when the nullable is empty; for centralized cast lifting the required wording is `cast<To>(nullable) cannot convert an empty nullable to a required value`
+- the centralized generated operator surface is the authoritative way `nullable<T>` participates in unary, binary, logical, relational, mutation, and compound-assignment families; each participating operator must require present wrapped values and then delegate to the wrapped-value operator family
+- `nullable<T>::operator->()` is part of the stable nullable runtime surface for object-like use; it must require a present wrapped value and then either forward to wrapped `T::operator->()` when `T` already exposes it or return the address of the wrapped object when direct-object member access is needed
+- empty nullable dereference through `operator->()` must throw a project-shaped runtime error with explicit arrow-context wording so the user can quickly identify null object/property or method access
+- equality/inequality remain the narrow null-aware exception: `nullable<T> == null_t/nullopt_t` is allowed explicitly, `nullable<T> == value` returns false when empty, and relational/arithmetic/logical use of an empty nullable remains a runtime error
+- the temporary typed-boundary bridge is not a general operator-resolution escape hatch and must not be relied on to define operator participation outside the centralized operator surface
 
 ### 6.11 Reset/cleanup semantics
 - `unset` is restricted to types that can represent an empty/null state
@@ -475,3 +484,16 @@ The runtime may be built with `-DSCPP_LANGUAGE_TARGET_PHP=1`. Under that target,
 
 
 See: module_inclusion_model.md
+
+
+## result_or_false<T>, result_or_bool<T>, and result<T>
+
+- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`.
+- `result<T>` is the explicit structured-failure wrapper. Value-required casts, typed-boundary conversions, and operator participation unwrap only the success value; the error state is never silently converted into a usable value.
+- `result<T>` error inspection is explicit through `error()`. The generator must lower `$result->error()->...` to the wrapper method rather than treating `error` as a real payload property.
+- `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, but its non-value states are the PHP boolean sentinels `false` and `true`.
+
+
+## PHP false-sentinel exposure rule
+
+At the PHP exposure layer, functions documented as PHP `T|false` must surface `result_or_false<T>` rather than substituting `null`. Functions documented as PHP `T|bool` should surface `result_or_bool<T>` when the success contract includes both `true` and `T`. Functions documented as PHP `bool` success/failure APIs must return plain `bool_t`, not `nullable<bool_t>`.
