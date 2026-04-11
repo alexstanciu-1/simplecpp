@@ -1,0 +1,10 @@
+<?php
+
+class MyBox {
+	public int $value = 10;
+}
+
+$x /** value<?MyBox> */ = null;
+$y /** value<?MyBox> */ = new MyBox();
+
+var_dump($y->value);

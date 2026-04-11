@@ -1,0 +1,6 @@
+<?php
+
+$x /** result_or_false<int> */ = false;
+$y /** result_or_false<int> */ = 12;
+var_dump($x == false);
+var_dump((int)$y);

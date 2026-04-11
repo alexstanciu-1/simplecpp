@@ -1,0 +1,6 @@
+<?php
+
+$r /** result<int> */ = error;
+$ok /** result<int> */ = 7;
+var_dump($ok + 1);
+var_dump($r == error);
