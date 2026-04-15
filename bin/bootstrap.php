@@ -1,0 +1,29 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../generators/php/src/Support/AstKindPhp84.php';
+require_once __DIR__ . '/../generators/php/src/Support/AstKindPhp85.php';
+require_once __DIR__ . '/../generators/php/src/Support/AstKind.php';
+require_once __DIR__ . '/../generators/php/src/Support/AnnotationExpressionParser.php';
+require_once __DIR__ . '/../generators/php/src/Support/S2SException.php';
+require_once __DIR__ . '/../generators/php/src/Loader/ParsedInput.php';
+require_once __DIR__ . '/../generators/php/src/Loader/InputLoader.php';
+require_once __DIR__ . '/../generators/php/src/Metadata/TypeCommentExtractor.php';
+require_once __DIR__ . '/../generators/php/src/Metadata/ArgNormalizationCommentParser.php';
+require_once __DIR__ . '/../generators/php/src/IR/PhpFile.php';
+require_once __DIR__ . '/../generators/php/src/IR/NamespaceBlock.php';
+require_once __DIR__ . '/../generators/php/src/IR/UseDecl.php';
+require_once __DIR__ . '/../generators/php/src/IR/ConstantDecl.php';
+require_once __DIR__ . '/../generators/php/src/IR/ClassDecl.php';
+require_once __DIR__ . '/../generators/php/src/IR/PropertyDecl.php';
+require_once __DIR__ . '/../generators/php/src/IR/ArgNormalizationRule.php';
+require_once __DIR__ . '/../generators/php/src/IR/FunctionDecl.php';
+require_once __DIR__ . '/../generators/php/src/IR/MethodDecl.php';
+require_once __DIR__ . '/../generators/php/src/IR/ParamDecl.php';
+require_once __DIR__ . '/../generators/php/src/IR/Statement.php';
+require_once __DIR__ . '/../generators/php/src/Builder/IrBuilder.php';
+require_once __DIR__ . '/../generators/php/src/Lowering/TypeMapper.php';
+require_once __DIR__ . '/../generators/php/src/Emit/CppFile.php';
+require_once __DIR__ . '/../generators/php/src/Generator/NameRegistry.php';
+require_once __DIR__ . '/../generators/php/src/Generator/Generator.php';
+require_once __DIR__ . '/../generators/php/src/Transpiler.php';

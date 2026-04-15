@@ -209,7 +209,7 @@ function resolve_repo_root(): string
 		}
 	}
 
-	return normalize_path(dirname(__DIR__, 2));
+	return normalize_path(dirname(__DIR__));
 }
 
 function handle_init(string $cwd): void
@@ -740,7 +740,7 @@ function compute_s2s_generator_signature(string $repoRoot): string
 	];
 
 	$files = [
-		$repoRoot . '/generators/php/bin/scpp.php',
+		$repoRoot . '/bin/scpp.php',
 		$repoRoot . '/generators/php/src/Transpiler.php',
 		$repoRoot . '/generators/php/src/Generator/Generator.php',
 	];

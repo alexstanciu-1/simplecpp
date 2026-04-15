@@ -254,7 +254,7 @@ if (!is_array($config) || !isset($config['repo_root']) || !is_string($config['re
 	exit(2);
 }
 
-$entry = rtrim($config['repo_root'], "\\/") . DIRECTORY_SEPARATOR . 'generators/php' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'scpp.php';
+$entry = rtrim($config['repo_root'], "\\/") . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'scpp.php';
 if (!is_file($entry)) {
 	fwrite(STDERR, "Entrypoint not found: {$entry}\n");
 	fwrite(STDERR, "This is a repo-based install. If the repo moved, run the installer again.\n");
