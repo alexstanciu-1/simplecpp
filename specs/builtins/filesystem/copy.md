@@ -32,7 +32,7 @@ Runtime: call `std::filesystem::copy_file` with `overwrite_existing`.
 - Filesystem wrappers are available when the dedicated filesystem/stdio module is included by project policy.
 
 ## Compile plan summary
-Implemented in `runtime/include/scpp/support/php_filesystem.hpp`.
+Implemented in `runtime/include/scpp/support/filesystem module (scpp::filesystem).hpp`.
 - Registered in `php_generator/specs/php_runtime_symbols.json`.
 
 ## Test matrix

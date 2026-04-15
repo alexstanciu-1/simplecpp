@@ -9,7 +9,7 @@ Use the dedicated headers instead:
 
 - `runtime/include/scpp/php_resource.hpp`
 - `runtime/include/scpp/php_stdio.hpp`
-- `runtime/include/scpp/php_filesystem.hpp`
+- `runtime/include/scpp/filesystem module (scpp::filesystem).hpp`
 
 ## First-pass contract shape
 

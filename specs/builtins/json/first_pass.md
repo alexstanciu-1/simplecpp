@@ -9,12 +9,12 @@ See also:
 
 ## Module split
 
-- `runtime/include/scpp/php_json.hpp`
+- `runtime/include/scpp/json module (scpp::json).hpp`
 
 Support implementation lives in:
 
-- `runtime/include/scpp/support/php_json.hpp`
-- `runtime/include/scpp/support/php_json.cpp`
+- `runtime/include/scpp/support/json module (scpp::json).hpp`
+- `runtime/include/scpp/support/json module (scpp::json).cpp`
 
 The goal is to keep JSON isolated from generic `php.hpp` growth, similar to filesystem and stdio.
 
@@ -50,4 +50,4 @@ Key decisions:
 
 ## Testing note
 
-Runtime smoke coverage lives in `runtime/tests/test_php_json.cpp`.
+Runtime smoke coverage lives in `runtime/tests/test_json module (scpp::json).cpp`.

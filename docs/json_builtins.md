@@ -7,7 +7,7 @@ This page summarizes the first-pass Prism++ / Simple C++ JSON builtin surface.
 JSON support is intentionally kept out of the generic `php.cpp` / `php.hpp` area.
 Use the dedicated header instead:
 
-- `runtime/include/scpp/php_json.hpp`
+- `runtime/include/scpp/json module (scpp::json).hpp`
 
 ## First-pass contract shape
 

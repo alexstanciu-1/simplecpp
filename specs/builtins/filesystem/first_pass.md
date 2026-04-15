@@ -11,7 +11,7 @@ See also:
 
 - `runtime/include/scpp/php_resource.hpp`
 - `runtime/include/scpp/php_stdio.hpp`
-- `runtime/include/scpp/php_filesystem.hpp`
+- `runtime/include/scpp/filesystem module (scpp::filesystem).hpp`
 
 Support implementations live in matching `runtime/include/scpp/support/*` files.
 
@@ -83,5 +83,5 @@ Key decisions:
 
 ## Testing note
 
-Runtime smoke coverage lives in `runtime/tests/test_php_filesystem.cpp`.
+Runtime smoke coverage lives in `runtime/tests/test_filesystem module (scpp::filesystem).cpp`.
 That test file intentionally covers both the stdio and filesystem first-pass contracts.
