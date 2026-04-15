@@ -992,23 +992,31 @@ TXT;
 
 	private function buildPhpWorkerEnvironment(): array
 	{
-		$env = [];
-		foreach (array_merge($_ENV, $_SERVER) as $key => $value) {
-			if (!is_string($key) || $key == '') {
-				continue;
-			}
-			if (is_array($value) || is_object($value) || $value === null) {
-				continue;
-			}
-			$env[$key] = (string) $value;
-		}
-
+		$env = $this->buildProcessEnvironment();
 		$astSoPath = $this->projectRoot . '/ext/8.4-deb/ast.so';
 		if (is_file($astSoPath)) {
 			$flag = '-dextension=' . $astSoPath;
 			$env['PHP_AST_SO'] = $astSoPath;
 			$env['PHP_AST_EXTENSION_FLAG'] = $flag;
 			$env['PHP_WORKER_AST_SO'] = $astSoPath;
+		}
+		return $env;
+	}
+
+	private function buildProcessEnvironment(array $extra = []): array
+	{
+		$env = [];
+		foreach (array_merge($_ENV, $_SERVER, $extra) as $key => $value) {
+			if (!is_string($key) || $key == '') {
+				continue;
+			}
+			if (is_array($value) || is_object($value)) {
+				continue;
+			}
+			if ($value === null) {
+				continue;
+			}
+			$env[$key] = (string) $value;
 		}
 		return $env;
 	}
@@ -1021,7 +1029,7 @@ TXT;
 			2 => ['pipe', 'w'],
 		];
 		$commandString = $this->buildShellCommand($command);
-		$procEnv = $env === [] ? null : array_merge($_ENV, $_SERVER, $env);
+		$procEnv = $env === [] ? null : $this->buildProcessEnvironment($env);
 		$proc = proc_open($commandString, $descriptors, $pipes, $cwd, $procEnv);
 		if (!is_resource($proc)) {
 			throw new RuntimeException('Failed to start command: ' . $commandString);
