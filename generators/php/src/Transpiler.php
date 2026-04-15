@@ -55,7 +55,7 @@ final class Transpiler
 
 	private function assertNoSimpleReferenceRebinding(string $sourcePhp): void
 	{
-		$tokens = token_get_all($sourcePhp);
+		$tokens = \token_get_all($sourcePhp);
 		$bindings = [];
 		$count = count($tokens);
 

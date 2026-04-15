@@ -41,7 +41,7 @@ final class InputLoader
 				file_put_contents($json_file, json_encode($ast));
 			}
 
-			return new ParsedInput($path, $code, token_get_all($code), $ast);
+			return new ParsedInput($path, $code, \token_get_all($code), $ast);
 		}
 		
 		if (!is_file($json_file)) {
@@ -58,13 +58,13 @@ final class InputLoader
 
 		if (is_object($data) && property_exists($data, 'ast')) {
 			$ast = $this->normalizeDecodedAstShape($data->ast);
-			$tokens = is_array($data->tokens ?? null) ? $data->tokens : token_get_all($code);
+			$tokens = is_array($data->tokens ?? null) ? $data->tokens : \token_get_all($code);
 
 			return new ParsedInput($path, $code, $tokens, $ast);
 		}
 
 		$ast = $this->normalizeDecodedAstShape($data);
-		return new ParsedInput($path, $code, token_get_all($code), $ast);
+		return new ParsedInput($path, $code, \token_get_all($code), $ast);
 	}
 
 	/**

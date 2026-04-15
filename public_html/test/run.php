@@ -148,7 +148,7 @@ try {
 			'php_ast_extension_version' => phpversion('ast'),
 			'ast_version_used' => $astVersion,
 			'supported_versions' => ast\get_supported_versions(),
-			'tokens' => token_get_all($phpCode),
+			'tokens' => \token_get_all($phpCode),
 			'ast' => ast\parse_code($phpCode, $astVersion),
 		];
 

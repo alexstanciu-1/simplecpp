@@ -45,7 +45,7 @@ else if ($_GET['resync_samples_ast'] ?? false) {
 			if (!$ast) {
 				throw new \Exception('Unable to parse ast');
 			}
-			$tokens = token_get_all($source_code);
+			$tokens = \token_get_all($source_code);
 			if (!$tokens) {
 				throw new \Exception('Unable to get tokens');
 			}
@@ -97,7 +97,7 @@ else if ($_GET['export_php_ast'] ?? false) {
 		'php_ast_extension_version' => phpversion('ast'),
 		'ast_version_used' => $ast_vers_used,
 		'supported_versions' => \ast\get_supported_versions(),
-		'tokens' => token_get_all($source_code),
+		'tokens' => \token_get_all($source_code),
 		'ast' => $ast,
 	]);
 	

@@ -5693,26 +5693,35 @@ final class Generator
 	/** @return array<string, bool> */
 	private function loadPhpRuntimeRelativeSymbols(): array
 	{
-		$path = dirname(__DIR__, 4) . '/specs/php_runtime_symbols.json';
+		$path = dirname(__DIR__, 2) . '/specs/php_runtime_symbols.json';
 		if (!is_file($path)) {
-			return [];
+			throw new \RuntimeException('Missing mandatory PHP runtime symbols registry: ' . $path);
+		}
+
+		$content = file_get_contents($path);
+		if ($content === false) {
+			throw new \RuntimeException('Failed to read mandatory PHP runtime symbols registry: ' . $path);
 		}
 
 		try {
-			$data = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-		} catch (\Throwable) {
-			return [];
+			$data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+		} catch (\Throwable $e) {
+			throw new \RuntimeException('Invalid JSON in mandatory PHP runtime symbols registry: ' . $path . ' (' . $e->getMessage() . ')', 0, $e);
+		}
+
+		if (!is_array($data)) {
+			throw new \RuntimeException('Mandatory PHP runtime symbols registry must decode to an object: ' . $path);
 		}
 
 		$symbols = $data['php_runtime_relative_symbols'] ?? null;
 		if (!is_array($symbols)) {
-			return [];
+			throw new \RuntimeException('Mandatory PHP runtime symbols registry must contain array key php_runtime_relative_symbols: ' . $path);
 		}
 
 		$out = [];
-		foreach ($symbols as $symbol) {
+		foreach ($symbols as $index => $symbol) {
 			if (!is_string($symbol) || $symbol === '') {
-				continue;
+				throw new \RuntimeException('Invalid symbol entry in mandatory PHP runtime symbols registry at index ' . $index . ': ' . $path);
 			}
 			$out[strtolower($symbol)] = true;
 		}

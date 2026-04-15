@@ -977,7 +977,8 @@ TXT;
 			2 => ['pipe', 'w'],
 		];
 
-		$proc = proc_open($commandString, $descriptors, $pipes, $this->projectRoot);
+		$procEnv = $this->buildPhpWorkerEnvironment();
+		$proc = proc_open($commandString, $descriptors, $pipes, $this->projectRoot, $procEnv);
 		if (!is_resource($proc)) {
 			throw new RuntimeException('Failed to start worker process.');
 		}
@@ -987,6 +988,20 @@ TXT;
 		stream_set_blocking($pipes[2], false);
 
 		return ['proc' => $proc, 'pipes' => $pipes];
+	}
+
+	private function buildPhpWorkerEnvironment(): array
+	{
+		$env = array_merge($_ENV, $_SERVER);
+		$astSoPath = $this->projectRoot . '/ext/8.4-deb/ast.so';
+		if (is_file($astSoPath)) {
+			$flag = '-dextension=' . $astSoPath;
+			$existing = trim((string) ($env['PHP_INI_SCAN_DIR'] ?? ''));
+			$env['PHP_AST_SO'] = $astSoPath;
+			$env['PHP_AST_EXTENSION_FLAG'] = $flag;
+			$env['PHP_WORKER_AST_SO'] = $astSoPath;
+		}
+		return $env;
 	}
 
 	private function runCommand(array $command, string $cwd, int $timeoutSeconds, array $env = []): array
