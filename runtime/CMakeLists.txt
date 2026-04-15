@@ -10,8 +10,20 @@ include(FindPkgConfig)
 
 enable_testing()
 
+add_library(scpp_json SHARED
+	include/modules/json/json.cpp
+)
+
+target_include_directories(scpp_json
+PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_compile_features(scpp_json PUBLIC cxx_std_23)
+
 add_library(scpp_runtime
 	include/core/runtime.cpp
+	include/lang/php/php_json.cpp
 	include/lang/php/php_mysqli.cpp
 	include/modules/mysql/mysql_module.cpp
 )
@@ -22,6 +34,8 @@ PUBLIC
 )
 
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
+
+target_link_libraries(scpp_runtime PUBLIC scpp_json)
 
 if(SCPP_LANGUAGE_TARGET_PHP)
 	target_compile_definitions(scpp_runtime PUBLIC SCPP_LANGUAGE_TARGET_PHP=1)

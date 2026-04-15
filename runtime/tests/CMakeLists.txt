@@ -76,9 +76,9 @@ target_link_libraries(test_php_filesystem PRIVATE scpp_runtime scpp_runtime_test
 add_test(NAME scpp_test_php_filesystem COMMAND test_php_filesystem)
 
 # PHP JSON builtin coverage.
-add_executable(test_php_json test_php_json.cpp)
-target_link_libraries(test_php_json PRIVATE scpp_runtime scpp_runtime_test_support)
-add_test(NAME scpp_test_php_json COMMAND test_php_json)
+add_executable(test_json test_json.cpp)
+target_link_libraries(test_json PRIVATE scpp_json scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_json COMMAND test_json)
 
 # mysqli connect/close smoke coverage for the first vertical slice.
 # Disabled by default because many local/sandbox builds do not have a runnable MariaDB/MySQL test target.

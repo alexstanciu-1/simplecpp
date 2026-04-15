@@ -8,4 +8,3 @@
 #include "../scpp/support/mixed_t.cpp"
 #include "../scpp/support/var_dump.cpp"
 
-#include "../lang/php/support/php_json.cpp"
