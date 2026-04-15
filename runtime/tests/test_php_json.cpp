@@ -1,6 +1,6 @@
 #include "test_common.hpp"
 
-#include "scpp/php_json.hpp"
+#include "lang/php/php_json.hpp"
 #include "scpp/runtime.hpp"
 
 #include <cmath>

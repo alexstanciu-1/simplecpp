@@ -1,7 +1,7 @@
-#include "scpp/support/php_json.hpp"
+#include "lang/php/support/php_json.hpp"
 
 #include "scpp/memory.hpp"
-#include "scpp/php.hpp"
+#include "lang/php/php.hpp"
 
 #include <charconv>
 #include <cmath>

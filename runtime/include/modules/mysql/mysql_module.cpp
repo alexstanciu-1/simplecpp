@@ -7,7 +7,7 @@
 #include "scpp/memory.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/string_t.hpp"
-#include "scpp/support/php.hpp"
+#include "lang/php/support/php.hpp"
 
 #include <algorithm>
 #include <cctype>

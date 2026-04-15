@@ -16,7 +16,7 @@
 
 #include <fcgiapp.h>
 
-#include "scpp/fastcgi.hpp"
+#include "hosts/fastcgi/fastcgi.hpp"
 
 #ifndef SCPP_FCGI_DEFAULT_WORKERS
 #define SCPP_FCGI_DEFAULT_WORKERS 1

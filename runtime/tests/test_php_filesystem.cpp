@@ -1,6 +1,6 @@
 #include "test_common.hpp"
 
-#include "scpp/support/php_resource.hpp"
+#include "lang/php/support/php_resource.hpp"
 
 #include <chrono>
 #include <filesystem>

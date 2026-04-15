@@ -1,5 +1,5 @@
-#include "scpp/support/php_mysqli.hpp"
-#include "scpp/support/php.hpp"
+#include "lang/php/support/php_mysqli.hpp"
+#include "lang/php/support/php.hpp"
 
 #include <cstdint>
 #include <utility>

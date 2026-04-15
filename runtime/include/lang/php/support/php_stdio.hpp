@@ -5,7 +5,7 @@
 #include "scpp/nullable.hpp"
 #include "scpp/result_or_false.hpp"
 #include "scpp/string_t.hpp"
-#include "scpp/support/php_resource.hpp"
+#include "lang/php/support/php_resource.hpp"
 
 #include <array>
 #include <cerrno>
