@@ -41,5 +41,5 @@
         "nullable",
         "exceptions"
     ],
-    "notes": "Covers bad_optional_access propagation for empty nullable value()."
+    "notes": "Covers project-shaped runtime_error propagation for empty nullable value()."
 }

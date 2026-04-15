@@ -2,7 +2,7 @@
 
 int main() {
 	const scpp::nullable<scpp::int_t> empty(scpp::null);
-	runtime_test::expect_throw<std::bad_optional_access>([&empty]() {
+	runtime_test::expect_throw<std::runtime_error>([&empty]() {
 		(void) empty.value();
 	});
 
