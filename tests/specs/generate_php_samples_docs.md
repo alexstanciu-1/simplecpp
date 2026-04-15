@@ -99,7 +99,7 @@ Each test stem now has two runner JSON files:
 - `<stem>.test-info.json` — checked-in static test definition
 - `<stem>.test-results.json` — regenerated volatile execution results
 
-The source extension is intentionally **not** part of those filenames. This keeps `<stem>.php.json` free for the generator AST export used by `php_generator/tools/s2s`.
+The source extension is intentionally **not** part of those filenames. This keeps `<stem>.php.json` free for the generator AST export used by `generators/php`.
 
 A directory MUST NOT contain both `<stem>.php` and `<stem>.cpp`, because they would collide on the shared `<stem>.test-info.json` / `<stem>.test-results.json` names.
 ## 4. Test Levels
@@ -990,8 +990,8 @@ PHP test samples MUST be generated from project sources in the following precede
 These define intended behavior and therefore create primary test obligations.
 
 1. `runtime/specs/spec.md`
-2. `php_generator/specs/rules.md`
-3. `php_generator/specs/rules_catalog.md`
+2. `generators/php/specs/rules.md`
+3. `generators/php/specs/rules_catalog.md`
 
 ### 20.2 Tier B - Support and configuration sources
 These refine support boundaries but MUST NOT invent semantics unless explicitly stated.
@@ -1058,7 +1058,7 @@ Typical obligation outputs:
 - `negative_runtime`
 - `integration_behavior`
 
-#### `php_generator/specs/rules.md`
+#### `generators/php/specs/rules.md`
 Extract obligations for:
 - lowering rules
 - emitted shapes
@@ -1074,7 +1074,7 @@ Typical obligation outputs:
 - `negative_rejection`
 - `compile_constraint`
 
-#### `php_generator/specs/rules_catalog.md`
+#### `generators/php/specs/rules_catalog.md`
 Treat as the feature inventory and rule index.
 
 Extract obligations for:

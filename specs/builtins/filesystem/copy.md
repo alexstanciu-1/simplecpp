@@ -33,7 +33,7 @@ Runtime: call `std::filesystem::copy_file` with `overwrite_existing`.
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/filesystem module (scpp::filesystem).hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - copy file and verify destination exists

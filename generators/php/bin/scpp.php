@@ -10,7 +10,7 @@
  */
 declare(strict_types=1);
 
-require_once __DIR__ . '/../tools/s2s/bin/bootstrap.php';
+require_once __DIR__ . '/bootstrap.php';
 
 use Scpp\S2S\Transpiler;
 use Scpp\S2S\Support\S2SException;
@@ -740,9 +740,9 @@ function compute_s2s_generator_signature(string $repoRoot): string
 	];
 
 	$files = [
-		$repoRoot . '/php_generator/bin/scpp.php',
-		$repoRoot . '/php_generator/tools/s2s/src/Transpiler.php',
-		$repoRoot . '/php_generator/tools/s2s/src/Generator/Generator.php',
+		$repoRoot . '/generators/php/bin/scpp.php',
+		$repoRoot . '/generators/php/src/Transpiler.php',
+		$repoRoot . '/generators/php/src/Generator/Generator.php',
 	];
 
 	foreach ($files as $file) {

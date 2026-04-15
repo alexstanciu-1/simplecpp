@@ -307,11 +307,11 @@ Exact subpaths may evolve, but wrapper code must remain identifiable as wrapper-
 ### 10.5 Builtin registration metadata
 Builtin metadata belongs under generator/spec metadata.
 Current planned path:
-- `php_generator/specs/php_builtins.json`
+- `generators/php/specs/php_builtins.json`
 
 ### 10.6 Tests
 Runtime/unit tests:
-- `runtime/tests/<module>/...`
+- `tests/runtime/native/<module>/...`
 
 Integration/transpiler tests:
 - `tests/integration/builtins/<module>/...`
@@ -358,7 +358,7 @@ That existing metadata must be reused, expanded, or derived from rather than dup
 
 ### Current planning direction
 A richer builtin manifest may exist at:
-- `php_generator/specs/php_builtins.json`
+- `generators/php/specs/php_builtins.json`
 
 But it must expand or derive from existing authoritative metadata, avoiding duplication.
 The procedure does not prematurely force one migration shape as long as the no-redundancy rule is preserved.

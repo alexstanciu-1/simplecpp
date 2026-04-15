@@ -32,7 +32,7 @@ Runtime: call `std::filesystem::is_directory` with `std::error_code`.
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/filesystem module (scpp::filesystem).hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - directory true

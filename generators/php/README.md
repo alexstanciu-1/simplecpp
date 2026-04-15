@@ -28,13 +28,13 @@ Unsupported or not-yet-cleanly-lowered cases are surfaced as notes/errors rather
 Generate one sample:
 
 ```bash
-php tools/s2s/bin/transpile_fixture.php samples/01_literals_and_assignments.php build/out
+php bin/transpile_fixture.php samples/01_literals_and_assignments.php build/out
 ```
 
 Run all sample fixtures:
 
 ```bash
-php tools/s2s/bin/run_samples.php
+php bin/run_samples.php
 ```
 
 ## No Composer needed

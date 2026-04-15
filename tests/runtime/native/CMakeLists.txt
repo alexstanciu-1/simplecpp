@@ -1,5 +1,5 @@
 if(NOT TARGET scpp_runtime)
-	message(FATAL_ERROR "tests/CMakeLists.txt expects the scpp_runtime target to exist")
+	message(FATAL_ERROR "tests/runtime/native/CMakeLists.txt expects the scpp_runtime target to exist")
 endif()
 
 # Defines the shared helper type used by multiple runtime smoke tests.

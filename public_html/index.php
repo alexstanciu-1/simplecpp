@@ -26,9 +26,9 @@ if ($_GET['light_map'] ?? false) {
 	require_once __DIR__ . '/../light_map.php';
 }
 else if ($_GET['resync_samples_ast'] ?? false) {
-	$files = glob(realpath("../simple_cpp/php_generator/samples/")."*/*/*.php");
+	$files = glob(realpath("../simple_cpp/generators/php/samples/")."*/*/*.php");
 	echo "<pre>\n";
-	var_dump(realpath("../simple_cpp/php_generator/samples/")."*/*/*.php");
+	var_dump(realpath("../simple_cpp/generators/php/samples/")."*/*/*.php");
 	
 	foreach ($files as $f) {
 		
@@ -110,19 +110,19 @@ else if ($_GET['zip-it'] ?? false)
 		unlink($zipPath);
 	}
 
-	$includeDirs_def = ["../php_generator", "../public_html", "../ext", "../runtime", "../mem_container", "../specs", "../docs", "../install",
-						"../bridge",
+	$includeDirs_def = ["../generators/php", "../public_html", "../ext", "../runtime", "../specs", "../docs", "../install",
+						"../integrations",
 						"../tools",
 						"../.gitignore",
 						"../PROJECT_CHATGPT_BOOTSTRAP.md",
 						"../README.md",
-							// "../test_prism",
+							// "../examples/basic",
 							];
 	if (($_GET['tests'] ?? null) ?: false) {
 		$includeDirs_def[] = '../tests';
 	}
-	$excludeDirs_def = ["../php_generator/build", "../php_generator/samples_semantic", "../php_generator/tools/build", 
-					"../php_generator/samples/stage_01", "../php_generator/samples/stage_02", "../php_generator/samples/stage_03", 
+	$excludeDirs_def = ["../generators/php/build", "../tests/generators/php/samples_semantic", 
+					"../generators/php/samples/stage_01", "../generators/php/samples/stage_02", "../generators/php/samples/stage_03", 
 					"../runtime/build_comments", 
 					"../runtime/build", 
 					"../tests/.runtime"];

@@ -1181,14 +1181,14 @@ The runtime may still contain legacy helper/proxy infrastructure, but that legac
 
 ## PHP runtime relative symbol registry
 
-Generator-emitted calls that are known Prism++ runtime intrinsics may be emitted as `php::name(...)` inside `namespace scpp { ... }`. The allow-list is stored in `php_generator/specs/php_runtime_symbols.json`. User-defined functions must not be rewritten through this registry when the generator has already resolved them as user declarations.
+Generator-emitted calls that are known Prism++ runtime intrinsics may be emitted as `php::name(...)` inside `namespace scpp { ... }`. The allow-list is stored in `generators/php/specs/php_runtime_symbols.json`. User-defined functions must not be rewritten through this registry when the generator has already resolved them as user declarations.
 
 
 ## Runtime Symbol Registry (scpp::php)
 
 Any runtime function defined under `scpp::php` that is intended to be callable from transpiled PHP code **must be registered** in:
 
-`php_generator/specs/php_runtime_symbols.json`
+`generators/php/specs/php_runtime_symbols.json`
 
 The S2S generator uses this registry to qualify calls as:
 

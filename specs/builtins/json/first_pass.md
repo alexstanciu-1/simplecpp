@@ -50,4 +50,4 @@ Key decisions:
 
 ## Testing note
 
-Runtime smoke coverage lives in `runtime/tests/test_json module (scpp::json).cpp`.
+Runtime smoke coverage lives in `tests/runtime/native/test_json module (scpp::json).cpp`.

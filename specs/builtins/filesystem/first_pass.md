@@ -83,5 +83,5 @@ Key decisions:
 
 ## Testing note
 
-Runtime smoke coverage lives in `runtime/tests/test_filesystem module (scpp::filesystem).cpp`.
+Runtime smoke coverage lives in `tests/runtime/native/test_filesystem module (scpp::filesystem).cpp`.
 That test file intentionally covers both the stdio and filesystem first-pass contracts.

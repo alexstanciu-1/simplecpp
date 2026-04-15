@@ -119,4 +119,4 @@ else()
 	target_compile_definitions(scpp_lang_php PUBLIC SCPP_HAS_MYSQLI=0)
 endif()
 
-add_subdirectory(tests)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tests/runtime/native ${CMAKE_CURRENT_BINARY_DIR}/tests_runtime_native)

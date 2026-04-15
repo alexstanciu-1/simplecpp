@@ -32,7 +32,7 @@ Runtime: call `std::filesystem::symlink_status` and `is_symlink` with `std::erro
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/filesystem module (scpp::filesystem).hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - non-link false

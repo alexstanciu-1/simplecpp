@@ -33,7 +33,7 @@ Runtime: validate resource and call `std::fflush`.
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - flush after write returns true

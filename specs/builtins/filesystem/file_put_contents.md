@@ -36,7 +36,7 @@ Runtime: open a binary output stream with truncate mode, write bytes, and return
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/filesystem module (scpp::filesystem).hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - successful write

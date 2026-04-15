@@ -37,7 +37,7 @@
 
 ## Compile plan summary
 - Implemented in `runtime/include/scpp/support/php.hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - default whitespace trimming

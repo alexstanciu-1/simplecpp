@@ -43,8 +43,8 @@ sandbox/*.hpp
 sandbox/*.out
 
 # Runtime test outputs
-runtime/tests/output/
-runtime/tests/*.out
+tests/runtime/native/output/
+tests/runtime/native/*.out
 
 tests/**/*.json.cpp
 tests/**/*.cpp.json

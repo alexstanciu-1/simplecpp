@@ -23,7 +23,7 @@ use Scpp\S2S\Support\GenerationException;
  * Emits Prism++ declarations and statements from the IR. This file is where the catalog rules are turned into concrete header/source text.
  *
  * Relationship to specs:
- * - this type exists to keep the implementation aligned with php_generator/specs/rules.md and rules_catalog.md
+ * - this type exists to keep the implementation aligned with generators/php/specs/rules.md and rules_catalog.md
  * - the implementation favors explicit normalized data over ad-hoc AST access during emission
  */
 final class Generator

@@ -682,7 +682,7 @@ TXT;
 
 	private function runGeneratorStage(string $phpPath, string $outputDir): array
 	{
-		require_once $this->projectRoot . '/php_generator/tools/s2s/bin/bootstrap.php';
+		require_once $this->projectRoot . '/generators/php/bin/bootstrap.php';
 
 		$started = microtime(true);
 		try {

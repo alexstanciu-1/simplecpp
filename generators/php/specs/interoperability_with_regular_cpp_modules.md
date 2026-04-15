@@ -22,7 +22,7 @@ Keeping that `using namespace ::scpp;` directive in generated `.cpp` files local
 The generator snapshots `get_defined_constants()` once at startup.
 
 - names found in that predefined-runtime snapshot are treated as PHP predefined/runtime constants and lower to unqualified helper/constant names inside generated source because the source namespace block already uses `using namespace ::scpp;``
-- generator-emitted runtime/helper references inside generated expression/type code must use the relative `php::...` form when they are listed in `php_generator/specs/php_runtime_symbols.json`, and must not use rooted `::scpp` / `::scpp::php` forms
+- generator-emitted runtime/helper references inside generated expression/type code must use the relative `php::...` form when they are listed in `generators/php/specs/php_runtime_symbols.json`, and must not use rooted `::scpp` / `::scpp::php` forms
 - user-defined non-class constants remain in the generated user namespace model
 - class constants keep their own class-constant lowering rules
 
@@ -33,7 +33,7 @@ This means constant classification depends on the PHP runtime/version used to ex
 
 Any runtime function defined under `scpp::php` that is intended to be callable from transpiled PHP code **must be registered** in:
 
-`php_generator/specs/php_runtime_symbols.json`
+`generators/php/specs/php_runtime_symbols.json`
 
 The S2S generator uses this registry to qualify calls as:
 

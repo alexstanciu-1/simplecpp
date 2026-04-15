@@ -129,7 +129,7 @@ try {
 		throw new RuntimeException('Project root not found.');
 	}
 
-	require_once $projectRoot . '/php_generator/tools/s2s/bin/bootstrap.php';
+	require_once $projectRoot . '/generators/php/bin/bootstrap.php';
 
 	$tempRoot = sys_get_temp_dir() . '/simplecpp_test_ui_' . bin2hex(random_bytes(8));
 	if (!mkdir($tempRoot, 0777, true) && !is_dir($tempRoot)) {

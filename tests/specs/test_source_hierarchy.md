@@ -7,8 +7,8 @@ This file is a focused companion to `generate_php_samples_docs.md`.
 Use this precedence order when deciding what tests should exist:
 
 1. `runtime/specs/spec.md`
-2. `php_generator/specs/rules.md`
-3. `php_generator/specs/rules_catalog.md`
+2. `generators/php/specs/rules.md`
+3. `generators/php/specs/rules_catalog.md`
 4. `runtime/specs/config.json`
 5. implementation code
 6. regression history

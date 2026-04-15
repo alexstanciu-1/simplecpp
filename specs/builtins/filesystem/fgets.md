@@ -40,7 +40,7 @@ Runtime: validate readable file resource and use `std::fgets` in one-shot or chu
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - line with newline

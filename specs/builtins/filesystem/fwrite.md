@@ -35,7 +35,7 @@ Runtime: validate writable file resource and call `std::fwrite`.
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - round-trip write and read-back

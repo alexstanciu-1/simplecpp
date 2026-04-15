@@ -7,7 +7,7 @@ namespace Scpp\S2S\IR;
  * IR node representing one `use`, `use function`, or `use const` declaration.
  *
  * Relationship to specs:
- * - this type exists to keep the implementation aligned with php_generator/specs/rules.md and rules_catalog.md
+ * - this type exists to keep the implementation aligned with generators/php/specs/rules.md and rules_catalog.md
  * - the implementation favors explicit normalized data over ad-hoc AST access during emission
  */
 final class UseDecl

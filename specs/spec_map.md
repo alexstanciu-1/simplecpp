@@ -47,7 +47,7 @@ If a new implementation pass, review, or chat session starts, this document shou
 
 ### Level 2 — Subsystem normative rules
 
-4. `php_generator/specs/rules.md`
+4. `generators/php/specs/rules.md`
    - authoritative for generator lowering rules
    - must follow `specs/dynamic_types.md`
    - must not silently narrow valid v1 explicit typed boundary sites
@@ -58,7 +58,7 @@ If a new implementation pass, review, or chat session starts, this document shou
    - runtime cleanup must not remove bridges still required by valid v1 explicit typed boundary sites
 
 6. other subsystem spec files under:
-   - `php_generator/specs/`
+   - `generators/php/specs/`
    - `runtime/specs/`
    - may refine local behavior
    - must not contradict Level 1 documents
@@ -227,7 +227,7 @@ Role:
 Authority:
 - normative for runtime/language/module layering, but subordinate to higher-level documents
 
-### `php_generator/specs/rules.md`
+### `generators/php/specs/rules.md`
 Role:
 - main generator lowering rules
 - includes the authoritative lowering model for `throw` / `try` / `catch` / `finally` in the current supported subset
@@ -235,7 +235,7 @@ Role:
 Authority:
 - normative for generator behavior, but subordinate to higher-level documents
 
-### `php_generator/specs/primary_type_normalized_parameters.md`
+### `generators/php/specs/primary_type_normalized_parameters.md`
 Role:
 - normative generator/language-side contract for primary-type normalized PHP union parameters
 - documents `@arg.<param>.from(Type) = ...` metadata and the current implementation boundary
@@ -243,7 +243,7 @@ Role:
 Authority:
 - normative for this feature, but subordinate to higher-level documents
 
-### `php_generator/specs/rules_catalog.md`
+### `generators/php/specs/rules_catalog.md`
 Role:
 - catalog of normalized generator rules and examples
 
@@ -265,7 +265,7 @@ Authority:
 2. `specs/dynamic_types.md`
 3. `specs/array_semantics.md` when arrays/tables are involved
 4. relevant subsystem spec:
-   - `php_generator/specs/rules.md`
+   - `generators/php/specs/rules.md`
    - `runtime/specs/spec.md`
 4. relevant local supporting docs
 5. implementation files

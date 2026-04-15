@@ -32,7 +32,7 @@ Runtime: call `std::filesystem::last_write_time`, convert to Unix seconds, and r
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/filesystem module (scpp::filesystem).hpp`.
-- Registered in `php_generator/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols.json`.
 
 ## Test matrix
 - existing file returns positive timestamp
