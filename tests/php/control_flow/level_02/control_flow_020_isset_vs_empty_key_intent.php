@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+// isset() and empty() answer different questions for keyed lookups.
+$row = [];
+$row["name"] = "";
+$row["maybe"] = null;
+
+
+echo isset($row["name"]) ? "isset-name\n" : "missing-name\n";
+echo empty($row["name"]) ? "empty-name\n" : "filled-name\n";
+echo isset($row["maybe"]) ? "isset-maybe\n" : "missing-maybe\n";
+echo empty($row["maybe"]) ? "empty-maybe\n" : "filled-maybe\n";
