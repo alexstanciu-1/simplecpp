@@ -68,6 +68,11 @@ If a new implementation pass, review, or chat session starts, this document shou
    - authoritative for mandatory folder organization and compile-plan requirements for builtin work
    - must not contradict Level 1 documents
 
+6B. `specs/architecture/runtime_layering.md`
+   - authoritative for runtime/core/module/language dependency direction
+   - authoritative for `scpp/runtime.hpp` versus per-language umbrella intent
+   - authoritative for the current multi-language / multi-module build-composition direction
+
 ### Level 3 — Audit / planning / supporting documents
 
 7. audit, todo, and reference documents under `specs/`
@@ -212,6 +217,15 @@ Role:
 
 Authority:
 - normative for builtin workflow, but subordinate to higher-level documents
+
+### `specs/architecture/runtime_layering.md`
+Role:
+- normative architecture rule for runtime/core/module/language layering
+- fixes dependency direction and public umbrella-header intent
+- fixes the current multi-language / multi-module build-composition direction
+
+Authority:
+- normative for runtime/language/module layering, but subordinate to higher-level documents
 
 ### `php_generator/specs/rules.md`
 Role:

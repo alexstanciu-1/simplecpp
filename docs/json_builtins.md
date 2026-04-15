@@ -2,12 +2,15 @@
 
 This page summarizes the first-pass Prism++ / Simple C++ JSON builtin surface.
 
+JSON is now runtime-owned and lives under `namespace scpp::json`. The PHP layer keeps only a thin wrapper in `namespace scpp::php`.
+
 ## Header split
 
 JSON support is intentionally kept out of the generic `php.cpp` / `php.hpp` area.
 Use the dedicated header instead:
 
-- `runtime/include/scpp/json module (scpp::json).hpp`
+- runtime module header: `runtime/include/modules/json/json.hpp`
+- PHP wrapper header: `runtime/include/lang/php/php_json.hpp`
 
 ## First-pass contract shape
 

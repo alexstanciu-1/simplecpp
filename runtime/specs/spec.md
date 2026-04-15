@@ -63,6 +63,25 @@ The procedural flow for this is defined in `operator_generation_flow.md`.
 
 This split is deliberate. The concepts do not become a second semantic authority. They are a stable compile-time vocabulary used by the generated operator surface.
 
+## 2b. Runtime layering and umbrella-header model
+
+The runtime is no longer treated as one language-coupled umbrella.
+
+Layering intent:
+
+- `scpp/runtime.hpp` is the non-language runtime umbrella
+- each language gets its own explicit umbrella, starting with `scpp/lang/php.hpp`
+- reusable subsystems should move into runtime-owned `core/` or `modules/` code
+- language layers should wrap reusable runtime functionality thinly instead of owning its primary implementation
+
+Required dependency direction:
+
+- non-language runtime code must not depend on `lang/*`
+- runtime modules must not depend on `lang/*`
+- language runtime layers may depend on non-language runtime code and runtime modules
+
+This rule exists to support future `scpp build` composition from selected language targets and selected runtime modules. See `../../specs/architecture/runtime_layering.md` for the dedicated architecture rule.
+
 ## 3. Runtime design goals
 
 The runtime exists to give generated Prism++ code a **closed semantic surface** inside C++.

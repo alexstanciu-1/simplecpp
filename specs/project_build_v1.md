@@ -76,6 +76,14 @@ The first output artifact is:
 
 The runtime is compiled directly from the repository checkout.
 
+The current architecture direction is layered composition rather than one monolithic language-coupled runtime target:
+
+- `scpp_runtime` = non-language runtime core
+- `scpp_lang_php` = PHP runtime layer
+- runtime modules such as `scpp_json` and `scpp_filesystem` are linked explicitly
+
+Future `scpp build` composition must be able to select language layers and runtime modules deliberately rather than assuming one fixed all-in-one runtime surface.
+
 ### Path policy
 
 Paths emitted into `build.ninja` are:

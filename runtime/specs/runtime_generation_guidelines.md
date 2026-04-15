@@ -40,7 +40,8 @@ Expected layout logic:
 
 - `include/scpp/`
   - one header per generated runtime type or focused component
-  - one aggregation header: `runtime.hpp`
+  - one non-language aggregation header: `runtime.hpp`
+- separate language umbrellas when a frontend requires language-owned wrappers
 - `tests/`
   - generated or maintained tests grouped by purpose
 - root build files
@@ -55,8 +56,9 @@ Use these rules for file creation:
   - pointer wrappers
   - container wrappers
 - create shared support headers only when multiple generated headers depend on the same reusable logic
-- keep `runtime.hpp` as the stable umbrella include that pulls in the generated public headers
-- treat `runtime.hpp` as the mandatory public entry point for generated operator availability
+- keep `runtime.hpp` as the stable non-language umbrella include that pulls in the generated public runtime headers
+- treat `runtime.hpp` as the mandatory public entry point for generated operator availability on the non-language runtime surface
+- place language-owned wrappers behind explicit language umbrellas such as `scpp/lang/php.hpp` rather than re-coupling them into `runtime.hpp`
 - do not require individual wrapper headers to remain operator-complete after operator-surface migration
 - do not collapse unrelated types into one large header unless the config explicitly models them as one unit
 

@@ -64,3 +64,13 @@ The v1 response includes:
 - Worker count is fixed from config unless overridden by CLI args.
 - Logging is plain stdout/stderr in v1.
 - `SCPP_DEBUG=1` enables extra host logging.
+
+## Include model
+
+For PHP-target FastCGI projects, handwritten helper code should normally include:
+
+```cpp
+#include <scpp/lang/php.hpp>
+```
+
+Use `scpp/runtime.hpp` only when you intentionally want the non-language runtime surface without PHP wrappers.

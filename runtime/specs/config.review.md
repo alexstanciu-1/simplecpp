@@ -12,7 +12,7 @@ Defines the global rules the runtime expects frontends and generators to assume 
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
 | `namespace = scpp` | All public runtime wrappers and helpers live under one namespace. | `$x = 1;` | `::scpp::int_t x = ::scpp::int_t(1);` | The generated code should target the configured runtime namespace directly. |
-| `umbrella_header = scpp/runtime.hpp` | One umbrella include is the default integration point. | `echo 1;` | `#include <scpp/runtime.hpp>` | Keeps generated translation units stable even when internal headers evolve. |
+| `umbrella_header = scpp/runtime.hpp` | The non-language runtime umbrella is the default integration point for core runtime code. Language frontends may define their own explicit umbrellas above it. | `echo 1;` | `#include <scpp/lang/php.hpp>` | Keeps non-language runtime layering clean while still giving each language a stable include surface. |
 | `create_default_owner = shared` | Default managed object creation uses shared ownership. | `$x = new Service();` | `auto x = ::scpp::create<Service>();` | This matches the current PHP object-lowering model. |
 | `default_cast_policy = forbidden` | A cast is illegal unless it is explicitly listed in the cast table. | `$x = (bool)$value;` | `auto x = ::scpp::cast<::scpp::bool_t>(value);` | Prevents accidental C++ implicit conversions from becoming part of the language model. |
 | `default_overload_policy = forbidden` | An operator is illegal unless an overload family enables it. | `$x + $y;` | `auto z = x + y; // only when an enabled family covers it` | Operator surface area is opt-in, not inherited from underlying C++ types. |

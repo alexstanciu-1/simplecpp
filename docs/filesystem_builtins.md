@@ -2,14 +2,16 @@
 
 This page summarizes the first-pass Prism++ / Simple C++ filesystem and stdio builtin surface.
 
+Filesystem is now runtime-owned and lives under `namespace scpp::filesystem`. The PHP layer keeps only a thin wrapper in `namespace scpp::php`. PHP resource/stdio behavior remains PHP-owned for now.
+
 ## Header split
 
 Filesystem and stdio support are intentionally kept out of the generic `php.cpp` / `php.hpp` area.
 Use the dedicated headers instead:
 
-- `runtime/include/scpp/php_resource.hpp`
-- `runtime/include/scpp/php_stdio.hpp`
-- `runtime/include/scpp/filesystem module (scpp::filesystem).hpp`
+- runtime module header: `runtime/include/modules/filesystem/filesystem.hpp`
+- PHP wrapper header: `runtime/include/lang/php/php_filesystem.hpp`
+- PHP-owned resource/stdio headers remain under `runtime/include/lang/php/`
 
 ## First-pass contract shape
 

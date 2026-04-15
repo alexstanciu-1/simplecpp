@@ -73,7 +73,8 @@ The concept layer is not intended to encode the full config semantics by itself.
 The current target model is:
 
 - one generated public operator surface under `runtime/include/scpp/generated/operators.hpp`
-- the mandatory public include entry point is `scpp/runtime.hpp`; individual type headers are no longer required to remain operator-complete
+- the mandatory public include entry point for the non-language runtime operator surface is `scpp/runtime.hpp`; language umbrellas may include it and add language-owned wrappers above it
+- individual type headers are no longer required to remain operator-complete
 - generated free operators become the canonical public entry points for covered operator families
 - wrapper/member/free operators elsewhere that compete with the generated surface should be removed once coverage is complete and validated
 - internal `detail::...` helpers remain allowed and are the preferred implementation targets for generated operators
@@ -215,7 +216,7 @@ The current target location is:
 
 The umbrella include should expose it consistently.
 
-Direct consumers should treat `scpp/runtime.hpp` as the mandatory public entry point for generated operator availability. Code that includes only individual wrapper headers should not rely on those headers remaining operator-complete.
+Direct consumers of the non-language runtime should treat `scpp/runtime.hpp` as the mandatory public entry point for generated operator availability. Language-specific generated code may instead include a language umbrella such as `scpp/lang/php.hpp`, which in turn includes `scpp/runtime.hpp`. Code that includes only individual wrapper headers should not rely on those headers remaining operator-complete.
 
 ### Step 8 — remove overlapping public operators only after coverage is verified
 After generation is updated and validated, remove overlapping public operator definitions from wrapper/member/free-operator code.
