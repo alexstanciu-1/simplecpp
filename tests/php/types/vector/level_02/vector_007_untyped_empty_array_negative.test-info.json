@@ -2,10 +2,10 @@
     "id": "vector_007_untyped_empty_array_negative",
     "feature": "vector",
     "level": "level_02",
-    "outcome": "negative_generate",
+    "outcome": "positive",
     "enabled": true,
     "status": "active",
-    "php_as_oracle": false,
+    "php_as_oracle": true,
     "compare": {
         "stdout": "exact",
         "stderr": "exact",
@@ -29,25 +29,21 @@
             "error_contains": []
         },
         "compile": {
-            "success": false,
-            "error_contains": [
-                "count",
-                "mixed_t"
-            ]
+            "success": true,
+            "error_contains": []
         },
         "run": {
-            "success": false,
-            "exit_code": 1,
-            "stdout": "",
+            "success": true,
+            "exit_code": 0,
+            "stdout": "0\n",
             "stderr": ""
         }
     },
     "tags": [
         "types",
-        "vector",
-        "negative_generate"
+        "vector"
     ],
-    "notes": "Untyped empty arrays currently fail at compile time because count() has no mixed_t overload on this path.",
+    "notes": "Untyped empty arrays are supported on this path and lower to mixed_t-backed tables; count() must return 0.",
     "build": {
         "sanitizers": null
     }

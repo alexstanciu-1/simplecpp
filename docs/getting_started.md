@@ -40,10 +40,24 @@ This creates:
 
 If none is found, it writes a placeholder entrypoint and you must edit `prism.json` before building.
 
-## 3. Build the configured entrypoint
+## 3. Build or run the configured entrypoint
+
+Build only:
 
 ```bash
 scpp build
+```
+
+Build then run:
+
+```bash
+scpp run
+```
+
+Pass program arguments after `--`:
+
+```bash
+scpp run -- arg1 arg2
 ```
 
 Current public build shape:
@@ -62,7 +76,7 @@ Compiler selection:
 - one project config: `prism.json`
 - one entrypoint first
 - generated C++ kept on disk
-- Ninja invoked automatically by `scpp build`
+- Ninja invoked automatically by `scpp build` and `scpp run`
 - output executable written under `.prism/build/`
 - recursive S2S generation for all project `*.php` files
 - cached S2S state in `.prism/cache/s2s_state.php` using file size + mtime
@@ -77,4 +91,4 @@ This still prints generated C++ to stdout and remains useful for narrow fixture 
 
 ## 5. Current boundary
 
-The project command shape is now fixed around `scpp init` + `scpp build`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` now recursively transpiles project PHP files and uses cached file metadata, while still relying on the configured single entrypoint and the repo runtime directly.
+The project command shape is now fixed around `scpp init` + `scpp build` / `scpp run`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` and `scpp run` recursively transpile project PHP files and use cached file metadata, while still relying on the configured single entrypoint and the repo runtime directly.

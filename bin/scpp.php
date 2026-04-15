@@ -7,6 +7,7 @@
  * - single-file transpile to stdout
  * - project init scaffold
  * - one-entrypoint build scaffold backed by Ninja
+ * - run command that builds then executes the primary output
  */
 declare(strict_types=1);
 
@@ -121,6 +122,11 @@ function main(array $argv): void
 		return;
 	}
 
+	if ($args[0] === 'run') {
+		handle_run(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
 	$inputFile = $args[0];
 	if (!is_file($inputFile)) {
 		fwrite(STDERR, "Input file not found: {$inputFile}\n");
@@ -147,7 +153,9 @@ function print_help(): void
 	echo "  scpp <input.php>\n";
 	echo "  scpp init\n";
 	echo "  scpp build\n";
+	echo "  scpp run [-- <args...>]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
+	echo "  scpp run builds first, then executes the primary output\n";
 	echo "  scpp --help\n";
 	echo "  scpp --version\n";
 	echo "  scpp --doctor\n";
@@ -218,6 +226,41 @@ function handle_init(string $cwd): void
 	$command->run();
 }
 
+function handle_run(string $cwd, array $args): void
+{
+	$project = find_project_config($cwd);
+	if ($project === null) {
+		fwrite(STDERR, 'No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL);
+		fwrite(STDERR, 'Run `scpp init` in the project root first.' . PHP_EOL);
+		exit(1);
+	}
+
+	$runArgs = normalize_run_arguments($args);
+	$buildResult = execute_build($project['project_root'], $project['config_path']);
+	$command = [$buildResult['output_path']];
+	foreach ($runArgs as $arg) {
+		$command[] = $arg;
+	}
+
+	echo 'Running: ' . normalize_config_path(relative_path($project['project_root'], $buildResult['output_path'])) . PHP_EOL;
+	$descriptor = [
+		0 => ['file', 'php://stdin', 'r'],
+		1 => ['file', 'php://stdout', 'w'],
+		2 => ['file', 'php://stderr', 'w'],
+	];
+	$process = proc_open($command, $descriptor, $pipes, $project['project_root']);
+	if (!is_resource($process)) {
+		fwrite(STDERR, 'Failed to start built program.' . PHP_EOL);
+		exit(4);
+	}
+	$status = proc_close($process);
+	if (!is_int($status)) {
+		fwrite(STDERR, 'Failed to read program exit status.' . PHP_EOL);
+		exit(4);
+	}
+	exit($status);
+}
+
 function handle_build(string $cwd): void
 {
 	$project = find_project_config($cwd);
@@ -227,8 +270,12 @@ function handle_build(string $cwd): void
 		exit(1);
 	}
 
-	$projectRoot = $project['project_root'];
-	$configPath = $project['config_path'];
+	execute_build($project['project_root'], $project['config_path']);
+}
+
+/** @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string} */
+function execute_build(string $projectRoot, string $configPath): array
+{
 	$config = load_project_config($configPath);
 	$entrypoint = normalize_config_path((string) ($config['entrypoint'] ?? ''));
 	if ($entrypoint === '') {
@@ -244,14 +291,16 @@ function handle_build(string $cwd): void
 
 	$ninjaPath = find_command_path(['ninja']);
 	if ($ninjaPath === null) {
-		fwrite(STDERR, "Ninja not found. Install it and retry.\n");
+		fwrite(STDERR, "Ninja not found. Install it and retry.
+");
 		fwrite(STDERR, install_hint_for_ninja() . PHP_EOL);
 		exit(1);
 	}
 
 	$compiler = resolve_compiler($config);
 	if ($compiler === null) {
-		fwrite(STDERR, "No supported C++ compiler found.\n");
+		fwrite(STDERR, "No supported C++ compiler found.
+");
 		fwrite(STDERR, install_hint_for_compiler() . PHP_EOL);
 		exit(1);
 	}
@@ -384,7 +433,8 @@ function handle_build(string $cwd): void
 	];
 	$process = proc_open($command, $descriptor, $pipes, $projectRoot);
 	if (!is_resource($process)) {
-		fwrite(STDERR, "Failed to start Ninja.\n");
+		fwrite(STDERR, "Failed to start Ninja.
+");
 		exit(4);
 	}
 	$status = proc_close($process);
@@ -407,10 +457,33 @@ function handle_build(string $cwd): void
 	if (!build_ninja_verbose_requested()) {
 		echo 'Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.' . PHP_EOL;
 	}
-	echo 'Build completed: ' . normalize_config_path(relative_path($projectRoot, $buildDir . '/' . $outputName)) . PHP_EOL;
+	$outputPath = normalize_path($buildDir . '/' . $outputName);
+	echo 'Build completed: ' . normalize_config_path(relative_path($projectRoot, $outputPath)) . PHP_EOL;
+	$fastcgiOutputPath = null;
 	if ($fastcgiBuild !== null) {
-		echo 'FastCGI build completed: ' . normalize_config_path(relative_path($projectRoot, $fastcgiBuild['output_path'])) . PHP_EOL;
+		$fastcgiOutputPath = normalize_path($fastcgiBuild['output_path']);
+		echo 'FastCGI build completed: ' . normalize_config_path(relative_path($projectRoot, $fastcgiOutputPath)) . PHP_EOL;
 	}
+
+	return [
+		'project_root' => $projectRoot,
+		'build_dir' => $buildDir,
+		'output_name' => $outputName,
+		'output_path' => $outputPath,
+		'fastcgi_output_path' => $fastcgiOutputPath,
+	];
+}
+
+function normalize_run_arguments(array $args): array
+{
+	if ($args === []) {
+		return [];
+	}
+	$separatorIndex = array_search('--', $args, true);
+	if ($separatorIndex === false) {
+		return $args;
+	}
+	return array_slice($args, $separatorIndex + 1);
 }
 
 

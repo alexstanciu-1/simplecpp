@@ -2,10 +2,10 @@
     "id": "arrays_034_bool_keys_casting",
     "feature": "arrays",
     "level": "level_02",
-    "outcome": "negative_run",
+    "outcome": "negative_generate",
     "enabled": true,
     "status": "active",
-    "php_as_oracle": true,
+    "php_as_oracle": false,
     "compare": {
         "stdout": "exact",
         "stderr": "exact",
@@ -25,26 +25,30 @@
             "stderr": ""
         },
         "generate": {
-            "success": true,
-            "error_contains": []
+            "success": false,
+            "error_contains": [
+                "Boolean PHP array keys",
+                "not supported"
+            ]
         },
         "compile": {
-            "success": true,
+            "success": false,
             "error_contains": []
         },
         "run": {
             "success": false,
-            "exit_code": 134,
+            "exit_code": 1,
             "stdout": "",
-            "stderr": "terminate called after throwing an instance of 'std::runtime_error'\n  what():  mixed_t runtime error: operation 'operator[]' is not supported for kind 'shared_hash_t'\nAborted\n"
+            "stderr": ""
         }
     },
     "tags": [
         "arrays",
         "key_cast",
-        "bool"
+        "bool",
+        "negative_generate"
     ],
-    "notes": "Boolean keys are outside the current supported array-key subset and are expected to fail at runtime in the current implementation.",
+    "notes": "Boolean array keys are outside the current supported Prism++ array-key subset and must be rejected during generation.",
     "build": {
         "sanitizers": null
     }

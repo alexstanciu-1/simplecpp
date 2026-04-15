@@ -160,6 +160,18 @@ Build the configured entrypoint from `prism.json`:
 scpp build
 ```
 
+Build then run the configured entrypoint:
+
+```bash
+scpp run
+```
+
+Pass program arguments after `--` when needed:
+
+```bash
+scpp run -- arg1 arg2
+```
+
 Transpile one PHP file to generated C++ printed on stdout:
 
 ```bash

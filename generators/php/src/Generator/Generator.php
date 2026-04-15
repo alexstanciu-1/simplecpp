@@ -734,6 +734,13 @@ final class Generator
 			return isset($stableRoots[$name]);
 		}
 
+		if ($kind === AstKind::PROP) {
+			$baseExpr = $expr->children['expr'] ?? null;
+			$baseName = $this->extractSimpleVarName($baseExpr);
+			if ($baseName === 'this') {
+				return true;
+			}
+		}
 
 		if ($kind === AstKind::CALL || $kind === AstKind::STATIC_CALL || $kind === AstKind::METHOD_CALL || $kind === AstKind::NULLSAFE_PROP || $kind === AstKind::STATIC_PROP) {
 			return false;
@@ -3960,6 +3967,11 @@ final class Generator
 			$this->errors[] = 'Append syntax cannot be used as an lvalue target.';
 			return '/* unsupported-append-lvalue */';
 		}
+		$unsupportedKeyMessage = $this->unsupportedPhpArrayKeyMessage($dimNode);
+		if ($unsupportedKeyMessage !== null) {
+			$this->errors[] = $unsupportedKeyMessage;
+			return '/* unsupported-array-key */';
+		}
 		$dim = $this->renderExpr($dimNode, $namespacePhp);
 		$baseType = $this->inferExprType($baseExpr);
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
@@ -4038,6 +4050,36 @@ final class Generator
 		$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
 		$value = $this->renderExpr($valueNode, $namespacePhp);
 		return '(' . $target . ' = ' . $value . ')';
+	}
+
+
+	private function unsupportedPhpArrayKeyMessage(mixed $keyNode): ?string
+	{
+		if (is_bool($keyNode)) {
+			return 'Boolean PHP array keys are not supported in the current subset.';
+		}
+
+		if ($keyNode === null) {
+			return 'Null PHP array keys are not supported in the current subset.';
+		}
+
+		if (is_object($keyNode) && (($keyNode->kind ?? null) === AstKind::CONST)) {
+			$nameNode = $keyNode->children['name'] ?? null;
+			$constName = null;
+			if (is_object($nameNode) && (($nameNode->kind ?? null) === AstKind::NAME)) {
+				$constName = strtolower((string) ($nameNode->children['name'] ?? ''));
+			}
+
+			if ($constName === 'true' || $constName === 'false') {
+				return 'Boolean PHP array keys are not supported in the current subset.';
+			}
+
+			if ($constName === 'null') {
+				return 'Null PHP array keys are not supported in the current subset.';
+			}
+		}
+
+		return null;
 	}
 
 	private function shouldInlineAssignmentValue(mixed $expr): bool
@@ -4517,6 +4559,12 @@ final class Generator
 			if ($keyNode === null) {
 				$items[] = 'table_item_(' . $this->renderExpr($valueNode, $namespacePhp) . ')';
 				continue;
+			}
+
+			$unsupportedKeyMessage = $this->unsupportedPhpArrayKeyMessage($keyNode);
+			if ($unsupportedKeyMessage !== null) {
+				$this->errors[] = $unsupportedKeyMessage;
+				return '/* unsupported-array-key */';
 			}
 
 			$items[] = 'table_kv_(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $this->renderExpr($valueNode, $namespacePhp) . ')';
@@ -5983,6 +6031,7 @@ final class Generator
 
 		return match ($kind) {
 			AstKind::VAR => true,
+			AstKind::PROP => $this->extractSimpleVarName($expr->children['expr'] ?? null) === 'this',
 			default => false,
 		};
 	}

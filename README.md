@@ -139,6 +139,7 @@ Prism++ now has an explicit project-mode staging contract:
 
 - `scpp init` creates `prism.json` and a local `.prism/` work tree
 - `scpp build` is the first public build command
+- `scpp run` builds the configured entrypoint and then executes it
 - build output is rooted under `.prism/build` and `.prism/generated`
 - Ninja is the default backend
 - `scpp build` defaults to `build.mode = "debug"` for faster iteration
@@ -147,5 +148,5 @@ Prism++ now has an explicit project-mode staging contract:
 - the runtime is built as a reusable cached artifact and only rebuilt when runtime inputs change
 - the first public build target is one configured entrypoint -> one executable
 
-The full deliberate multi-file model is still in progress, but the command shape and project layout are now fixed.
+The full deliberate multi-file model is still in progress, but the command shape and project layout are now fixed around `scpp init` + `scpp build` / `scpp run`.
 - optional FastCGI companion builds are now available through `prism.json` fastcgi settings and a handwritten `native_cpp/` handler
