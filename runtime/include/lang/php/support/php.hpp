@@ -18,6 +18,7 @@
 #include "scpp/weak_p.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/support/var_dump.hpp"
+#include "core/dynamic_helpers.hpp"
 
 #include <algorithm>
 #include <array>
@@ -1786,20 +1787,8 @@ inline bool_t empty(const mixed_t &value, const int key) {
 	return empty(value, int_t{static_cast<std::int64_t>(key)});
 }
 
-// Creates a shared dynamic-object carrier by copying one hash payload into shared storage.
-// How: dynamic_t stays semantically distinct even though v1 storage is backed by hash_t<mixed_t>.
-inline dynamic_t to_dynamic(const hash_t<mixed_t> &value) {
-	return dynamic_t(std::make_shared<hash_t<mixed_t>>(value));
-}
-
-// Materializes one dynamic-object payload into a plain hash copy.
-// How: the copy is explicit so array/hash semantics are not implied by shared dynamic storage.
-inline hash_t<mixed_t> to_hash(const dynamic_t &value) {
-	if (!static_cast<bool>(value)) {
-		return hash_t<mixed_t>{};
-	}
-	return *value;
-}
+using ::scpp::to_dynamic;
+using ::scpp::to_hash;
 
 // Implements PHP by-value copy semantics for mixed runtime values.
 // How: scalars and strings already copy by value through mixed_t::clone, while nested arrays detach by copying the underlying table into a fresh unique-owned mixed_t.

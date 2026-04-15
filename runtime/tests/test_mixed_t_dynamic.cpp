@@ -292,11 +292,11 @@ static void test_dynamic_t_identity_and_explicit_conversion() {
 	assert(right.kind() == scpp::mixed_t::kind_t::dynamic_v);
 	assert((left == right).native_value() == true);
 
-	auto copied_hash = scpp::php::to_hash(payload);
+	auto copied_hash = scpp::to_hash(payload);
 	copied_hash[scpp::string_t("id")] = scpp::mixed_t(scpp::int_t(99));
 	assert(left[scpp::string_t("id")].int_value().native_value() == 1);
 
-	auto rebuilt_dynamic = scpp::php::to_dynamic(copied_hash);
+	auto rebuilt_dynamic = scpp::to_dynamic(copied_hash);
 	scpp::mixed_t rebuilt(scpp::dynamic_box(rebuilt_dynamic));
 	assert(rebuilt.kind() == scpp::mixed_t::kind_t::dynamic_v);
 	assert(rebuilt[scpp::string_t("id")].int_value().native_value() == 99);

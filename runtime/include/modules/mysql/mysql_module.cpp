@@ -7,7 +7,7 @@
 #include "scpp/memory.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/string_t.hpp"
-#include "lang/php/support/php.hpp"
+#include "core/dynamic_helpers.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -52,7 +52,7 @@ bound_value bound_value::make_string(std::string value) {
 namespace {
 
 [[nodiscard]] inline dynamic_t make_empty_dynamic() {
-	return ::scpp::php::to_dynamic(hash_t<mixed_t>{});
+	return ::scpp::to_dynamic(hash_t<mixed_t>{});
 }
 
 [[nodiscard]] inline mixed_t cell_to_mixed_from_text(
@@ -168,7 +168,7 @@ private:
 			}
 		}
 		last_status_ = {};
-		return ::scpp::php::to_dynamic(out);
+		return ::scpp::to_dynamic(out);
 	}
 };
 
@@ -301,7 +301,7 @@ private:
 			}
 		}
 		last_status_ = {};
-		return ::scpp::php::to_dynamic(out);
+		return ::scpp::to_dynamic(out);
 	}
 };
 
