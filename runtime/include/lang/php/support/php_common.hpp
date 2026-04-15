@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scpp/bool_t.hpp"
+#include "scpp/detail.hpp"
 #include "scpp/float_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/null_t.hpp"

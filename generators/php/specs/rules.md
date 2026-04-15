@@ -936,21 +936,61 @@ Notes:
 - unary bitwise NOT lowers as `(~<expr>)`
 - grouped unary/binary combinations must preserve AST structure, for example `(-a) * 2` and `(~a) * 2`
 
-## 16. Null coalescing
+## 16. Null coalescing and ternary-family lowering
 
-Accepted lowering:
+Accepted lowering for null coalescing:
 ```php
 $b ?? 1
 ```
 
 becomes:
 ```cpp
-(b != null) ? b : static_cast<int_t>(1)
+php::coalesce_eval(
+	[&]() -> decltype(auto) { return b; },
+	[&]() -> decltype(auto) { return static_cast<int_t>(1); }
+)
+```
+
+Accepted lowering for ternary:
+```php
+$a ? $b : 0
+```
+
+becomes:
+```cpp
+php::ternary_eval(
+	[&]() -> decltype(auto) { return a; },
+	[&]() -> decltype(auto) { return b; },
+	[&]() -> decltype(auto) { return static_cast<int_t>(0); }
+)
+```
+
+Accepted lowering for elvis:
+```php
+$a ?: 0
+```
+
+becomes:
+```cpp
+([&]() -> auto {
+	auto __scpp_cond_value = a;
+	return php::ternary_eval(
+		[&]() -> decltype(auto) { return __scpp_cond_value; },
+		[&]() -> decltype(auto) { return __scpp_cond_value; },
+		[&]() -> decltype(auto) { return static_cast<int_t>(0); }
+	);
+}())
 ```
 
 Rules:
-- `null` is emitted directly
+- the generator must stay structurally simple and type-blind here; it emits helper calls rather than solving branch/result typing inline
+- `??` and `?:` use different runtime matrices; they do not share one universal normalization rule
+- helper lambdas preserve lazy right/branch evaluation
+- elvis lowering must evaluate the left operand exactly once
+- unsupported operand/branch combinations must fail deterministically at compile time in the runtime helper layer
 - fallback literals still follow normal literal conversion rules
+
+See also: `specs/conditional_expression_matrix.md`.
 
 ## 17. Output rules
 

@@ -857,6 +857,114 @@ inline bool_t isset(Args &&...args) {
 	return bool_t(result);
 }
 
+
+namespace detail {
+
+template <typename T>
+struct conditional_nullable_info {
+	static constexpr bool value = false;
+};
+
+template <typename T>
+struct conditional_nullable_info<nullable<T>> {
+	static constexpr bool value = true;
+	using inner_type = T;
+};
+
+template <typename T>
+inline constexpr bool conditional_nullable_info_v = conditional_nullable_info<std::remove_cvref_t<T>>::value;
+
+template <typename Left, typename Right>
+struct coalesce_result;
+
+template <typename T>
+struct coalesce_result<T, T> {
+	using type = T;
+};
+
+template <typename T, typename Right>
+requires (!conditional_nullable_info_v<Right>)
+struct coalesce_result<nullable<T>, Right> {
+	using type = T;
+};
+
+template <typename Then, typename Else>
+struct ternary_result;
+
+template <typename T>
+struct ternary_result<T, T> {
+	using type = T;
+};
+
+template <typename T>
+struct ternary_result<nullable<T>, T> {
+	using type = nullable<T>;
+};
+
+template <typename T>
+struct ternary_result<T, nullable<T>> {
+	using type = nullable<T>;
+};
+
+template <typename Value>
+inline bool_t ternary_condition_truthy(Value &&value) {
+	using value_t = std::remove_cvref_t<Value>;
+	if constexpr (conditional_nullable_info_v<value_t>) {
+		if (!value.has_value().native_value()) {
+			return bool_t(false);
+		}
+		using inner_t = typename conditional_nullable_info<value_t>::inner_type;
+		return bool_t(cast<bool>(cast<inner_t>(value)));
+	}
+	return bool_t(cast<bool>(std::forward<Value>(value)));
+}
+
+template <typename Result, typename Value>
+inline Result normalize_ternary_branch(Value &&value) {
+	using result_t = std::remove_cvref_t<Result>;
+	using value_t = std::remove_cvref_t<Value>;
+	if constexpr (std::is_same_v<result_t, value_t>) {
+		return std::forward<Value>(value);
+	} else if constexpr (
+		conditional_nullable_info_v<result_t>
+		&& std::is_same_v<typename conditional_nullable_info<result_t>::inner_type, value_t>
+	) {
+		return result_t(std::forward<Value>(value));
+	} else {
+		static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported php::ternary_eval branch combination");
+	}
+}
+
+} // namespace detail
+
+// Implements runtime-directed lowering for PHP null coalescing so code generation can stay structurally simple and type-blind.
+// How: the helper evaluates the left operand once, resolves a strict supported result type matrix at compile time, and only evaluates the fallback when needed.
+template <typename LeftFn, typename RightFn>
+inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
+	auto &&left = left_fn();
+	using left_t = std::remove_cvref_t<decltype(left)>;
+	using right_t = std::remove_cvref_t<decltype(right_fn())>;
+	using result_t = typename detail::coalesce_result<left_t, right_t>::type;
+	if (static_cast<bool>(isset(left))) {
+		return cast<result_t>(left);
+	}
+	return cast<result_t>(right_fn());
+}
+
+// Implements runtime-directed lowering for PHP ternary / elvis expressions so branch compatibility is enforced consistently in one place.
+// How: the helper evaluates the condition once, applies wrapper-aware truthiness for supported inputs, and normalizes supported branch pairs through an explicit compile-time matrix.
+template <typename CondFn, typename ThenFn, typename ElseFn>
+inline auto ternary_eval(CondFn &&cond_fn, ThenFn &&then_fn, ElseFn &&else_fn) {
+	auto &&cond = cond_fn();
+	using then_t = std::remove_cvref_t<decltype(then_fn())>;
+	using else_t = std::remove_cvref_t<decltype(else_fn())>;
+	using result_t = typename detail::ternary_result<then_t, else_t>::type;
+	if (static_cast<bool>(detail::ternary_condition_truthy(cond))) {
+		return detail::normalize_ternary_branch<result_t>(then_fn());
+	}
+	return detail::normalize_ternary_branch<result_t>(else_fn());
+}
+
 // Implements the lowered unset helper for the currently supported mutable wrappers.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 inline void unset() {

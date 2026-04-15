@@ -77,6 +77,7 @@ If a new implementation pass, review, or chat session starts, this document shou
 
 7. audit, todo, and reference documents under `specs/`
    - examples: `dynamic_types_impl_audit.md`, `mixed_boundary_transitional.md`, `todo*.md`, `references.md`
+   - conditional helpers and matrices: `conditional_expression_matrix.md`
    - useful for planning and consistency checks
    - not higher authority than the normative specs above
    - includes `cli_installation_milestone.md` for the current first-binary installer/CLI contract

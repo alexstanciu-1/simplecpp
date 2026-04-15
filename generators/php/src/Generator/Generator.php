@@ -5546,8 +5546,7 @@ final class Generator
 			$condNode = $expr->children['cond'] ?? null;
 			$trueNode = $expr->children['true'] ?? null;
 			$falseNode = $expr->children['false'] ?? null;
-			$trueExpr = $trueNode === null ? $this->renderExpr($condNode, $namespacePhp) : $this->renderExpr($trueNode, $namespacePhp);
-			return '(' . $this->renderConditionExpr($condNode, $namespacePhp) . ' ? ' . $trueExpr . ' : ' . $this->renderExpr($falseNode, $namespacePhp) . ')';
+			return $this->renderConditionalExpr($condNode, $trueNode, $falseNode, $namespacePhp);
 		}
 		if ($kind === AstKind::MATCH) {
 			return $this->renderMatchExpr($expr, $namespacePhp);
@@ -6219,20 +6218,26 @@ private function renderObjectCastExpr(mixed $expr, ?string $namespacePhp): strin
 	return 'mixed_t{dynamic_(' . implode(', ', $items) . ')}';
 }
 
-	private function renderCoalesceExpr(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
+	private function renderConditionalExpr(mixed $condNode, mixed $trueNode, mixed $falseNode, ?string $namespacePhp): string
 	{
-		$left = $this->renderExpr($leftNode, $namespacePhp);
-		$right = $this->renderExpr($rightNode, $namespacePhp);
-		$leftType = $this->inferExprType($leftNode);
+		$ternaryFn = $this->qualifyKnownPhpRuntimeSymbol('ternary_eval');
+		$falseExpr = $this->renderExpr($falseNode, $namespacePhp);
 
-		$issetFn = $this->qualifyKnownPhpRuntimeSymbol('isset');
-
-		if (preg_match('/^nullable<(.+)>$/', $leftType, $matches) === 1) {
-			$innerType = $matches[1];
-			return '(cast<bool>(' . $issetFn . '(' . $left . ')) ? cast<' . $innerType . '>(' . $left . ') : ' . $right . ')';
+		if ($trueNode === null) {
+			$condExpr = $this->renderExpr($condNode, $namespacePhp);
+			return '([&]() -> auto { auto __scpp_cond_value = ' . $condExpr . '; return ' . $ternaryFn
+				. '([&]() -> decltype(auto) { return __scpp_cond_value; }, [&]() -> decltype(auto) { return __scpp_cond_value; }, [&]() -> decltype(auto) { return ' . $falseExpr . '; }); }())';
 		}
 
-		return '(cast<bool>(' . $issetFn . '(' . $left . ')) ? ' . $left . ' : ' . $right . ')';
+		return $ternaryFn
+			. '([&]() -> decltype(auto) { return ' . $this->renderExpr($condNode, $namespacePhp) . '; }, [&]() -> decltype(auto) { return ' . $this->renderExpr($trueNode, $namespacePhp) . '; }, [&]() -> decltype(auto) { return ' . $falseExpr . '; })';
+	}
+
+	private function renderCoalesceExpr(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
+	{
+		$coalesceFn = $this->qualifyKnownPhpRuntimeSymbol('coalesce_eval');
+		return $coalesceFn
+			. '([&]() -> decltype(auto) { return ' . $this->renderExpr($leftNode, $namespacePhp) . '; }, [&]() -> decltype(auto) { return ' . $this->renderExpr($rightNode, $namespacePhp) . '; })';
 	}
 
 	private function inferConstantType(mixed $expr, ?string $namespacePhp): string

@@ -4,6 +4,8 @@
         "empty",
         "expect_array_argument",
         "isset",
+        "coalesce_eval",
+        "ternary_eval",
         "var_dump",
         "echo_eval",
         "identical",
