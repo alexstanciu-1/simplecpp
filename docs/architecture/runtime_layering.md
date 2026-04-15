@@ -41,3 +41,19 @@ Current examples:
 - JSON implementation lives in `modules/json/` and `namespace scpp::json`
 - filesystem implementation lives in `modules/filesystem/` and `namespace scpp::filesystem`
 - PHP keeps wrapper headers in `lang/php/`
+
+
+## Runtime build composition
+
+`scpp build` now reads runtime composition from `prism.json` under:
+
+```json
+{
+  "runtime": {
+    "languages": ["php"],
+    "modules": ["json", "filesystem", "mysqli"]
+  }
+}
+```
+
+Current default behavior keeps all known runtime modules active. Unsupported language or module names must fail clearly during build configuration.

@@ -149,3 +149,19 @@ When reorganizing runtime code:
 2. keep only thin wrappers or truly language-owned behavior in `lang/`
 3. do not reintroduce `lang/*` dependencies into non-language runtime code
 4. update specs/docs whenever the layering model changes
+
+
+## Runtime build composition
+
+`scpp build` now reads runtime composition from `prism.json` under:
+
+```json
+{
+  "runtime": {
+    "languages": ["php"],
+    "modules": ["json", "filesystem", "mysqli"]
+  }
+}
+```
+
+Current default behavior keeps all known runtime modules active. Unsupported language or module names must fail clearly during build configuration.

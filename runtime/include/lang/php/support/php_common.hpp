@@ -258,12 +258,11 @@ inline int hex_nibble_value(unsigned char value) {
 
 inline constexpr std::array<unsigned char, 6> default_trim_mask = {
 	static_cast<unsigned char>(' '),
-	static_cast<unsigned char>('
-'),
-	static_cast<unsigned char>(''),
-	static_cast<unsigned char>('	'),
-	static_cast<unsigned char>(''),
-	static_cast<unsigned char>(' ')
+	static_cast<unsigned char>('\n'),
+	static_cast<unsigned char>('\r'),
+	static_cast<unsigned char>('\t'),
+	static_cast<unsigned char>('\v'),
+	static_cast<unsigned char>('\0')
 };
 
 inline bool ascii_is_in_default_trim_mask(unsigned char value) {

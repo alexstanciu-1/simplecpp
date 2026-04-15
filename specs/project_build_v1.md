@@ -161,3 +161,19 @@ Those belong to the dedicated multi-file model spec.
 
 When `prism.json` contains `fastcgi.enabled = true`, `scpp build` also emits a FastCGI companion executable.
 The FastCGI host expects a handwritten `scpp::fcgi::http_handle(const scpp::fcgi::request_t&)` definition from `native_cpp/`.
+
+
+## Runtime build composition
+
+`scpp build` now reads runtime composition from `prism.json` under:
+
+```json
+{
+  "runtime": {
+    "languages": ["php"],
+    "modules": ["json", "filesystem", "mysqli"]
+  }
+}
+```
+
+Current default behavior keeps all known runtime modules active. Unsupported language or module names must fail clearly during build configuration.

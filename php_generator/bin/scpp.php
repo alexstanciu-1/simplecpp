@@ -65,6 +65,10 @@ final class ProjectInitCommand
 				'max_body_size' => 4 * 1024 * 1024,
 				'max_requests' => 0,
 			],
+			'runtime' => [
+				'languages' => ['php'],
+				'modules' => ['json', 'filesystem', 'mysqli'],
+			],
 		];
 
 		$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
@@ -252,6 +256,7 @@ function handle_build(string $cwd): void
 		exit(1);
 	}
 	$buildMode = resolve_build_mode($config);
+	$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
 
 	$buildDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['build_dir'] ?? '.prism/build')));
 	$generatedDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['generated_dir'] ?? '.prism/generated')));
@@ -267,7 +272,7 @@ function handle_build(string $cwd): void
 	$statePath = $cacheDir . '/' . SCPP_STATE_FILE;
 	$state = load_s2s_state($statePath);
 	$phpFiles = collect_project_php_files($projectRoot);
-	$runtimeBuildSignature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode);
+	$runtimeBuildSignature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode, $runtimeConfig);
 	$transpiler = new Transpiler();
 	$generatorSignature = compute_s2s_generator_signature($repoRoot);
 	$generatedUnits = [];
@@ -353,10 +358,10 @@ function handle_build(string $cwd): void
 	}
 
 	$outputName = build_output_name($entrypointAbs);
-	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppFiles, $outputName, $compiler, $buildMode, $fastcgiBuild);
+	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppFiles, $outputName, $compiler, $buildMode, $runtimeConfig, $fastcgiBuild);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
-	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppFiles, build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode), $buildDir, $compiler['kind'], $outputName, $fastcgiBuild);
+	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppFiles, build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig), $buildDir, $compiler['kind'], $outputName, $fastcgiBuild);
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
@@ -527,7 +532,46 @@ function load_project_config(string $configPath): array
 		exit(2);
 	}
 
+	$config['runtime'] = resolve_runtime_build_config($config);
 	return $config;
+}
+
+/** @return array{languages:list<string>,modules:list<string>} */
+function resolve_runtime_build_config(array $config): array
+{
+	$runtime = is_array($config['runtime'] ?? null) ? $config['runtime'] : [];
+	$languages = $runtime['languages'] ?? ['php'];
+	$modules = $runtime['modules'] ?? ['json', 'filesystem', 'mysqli'];
+	if (!is_array($languages) || !is_array($modules)) {
+		fwrite(STDERR, 'Invalid runtime config in ' . SCPP_PROJECT_CONFIG . '; expected arrays for runtime.languages and runtime.modules.' . PHP_EOL);
+		exit(2);
+	}
+	$languages = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $languages)));
+	$modules = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $modules)));
+	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
+	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
+	$allowedLanguages = ['php'];
+	$allowedModules = ['json', 'filesystem', 'mysqli'];
+	foreach ($languages as $language) {
+		if (!in_array($language, $allowedLanguages, true)) {
+			fwrite(STDERR, 'Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL);
+			exit(2);
+		}
+	}
+	foreach ($modules as $module) {
+		if (!in_array($module, $allowedModules, true)) {
+			fwrite(STDERR, 'Unsupported runtime module `' . $module . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL);
+			exit(2);
+		}
+	}
+	if (!in_array('php', $languages, true)) {
+		fwrite(STDERR, 'Current scpp build requires runtime.languages to include `php` because PHP is the active source language.' . PHP_EOL);
+		exit(2);
+	}
+	return [
+		'languages' => $languages,
+		'modules' => $modules,
+	];
 }
 
 function guess_entrypoint(string $projectRoot): ?string
@@ -616,7 +660,7 @@ function render_app_pch_header(): string
 {
 	return "#pragma once
 
-#include <scpp/lang/php.hpp>
+#include <scpp/runtime.hpp>
 ";
 }
 
@@ -1037,13 +1081,13 @@ function detect_fast_linker_flags(string $compilerKind): array
 	if (PHP_OS_FAMILY === 'Linux') {
 		$moldPath = find_command_path(['ld.mold', 'mold']);
 		if ($moldPath !== null) {
-			return ['-fuse-ld=' . $moldPath];
+			return ['-fuse-ld=mold'];
 		}
 	}
 
-	$lldPath = find_command_path(['ld.lld']);
+	$lldPath = find_command_path(['ld.lld', 'lld']);
 	if ($lldPath !== null) {
-		return ['-fuse-ld=' . $lldPath];
+		return ['-fuse-ld=lld'];
 	}
 
 	return [];
@@ -1068,7 +1112,7 @@ function compiler_display_command(array $compiler): string
 /**
  * @param list<array{relative_php:string,generated_cpp:string,object_path:string}> $generatedUnits
  */
-function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppFiles, string $outputName, array $compiler, string $buildMode, ?array $fastcgiBuild = null): string
+function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppFiles, string $outputName, array $compiler, string $buildMode, array $runtimeConfig, ?array $fastcgiBuild = null): string
 {
 	$generatedIncludeDir = normalize_config_path(relative_path($projectRoot, $generatedDir));
 	$runtimeIncludeDir = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include'));
@@ -1080,9 +1124,10 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$compilerCommand = $compiler['command'];
 	$compilerLauncher = $compiler['launcher'] ?? null;
 	$linkerFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
-	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode);
+	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig);
 	$runtimeSignatureStamp = normalize_config_path(relative_path($projectRoot, $buildDir . '/runtime_signature.txt'));
 	$runtimeLinkFlags = is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
+	$runtimeExtraCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
 	$fastcgiCxxFlags = is_array($fastcgiBuild['cxxflags'] ?? null) ? $fastcgiBuild['cxxflags'] : [];
 	$fastcgiLdFlags = is_array($fastcgiBuild['ldflags'] ?? null) ? $fastcgiBuild['ldflags'] : [];
 	$baseLinkFlags = $linkerFlags;
@@ -1097,7 +1142,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		$lines[] = 'cxx_launcher = ' . $compilerLauncher;
 	}
 	$lines[] = 'cxxflags = ' . build_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir, $generatedIncludeDir);
-	$lines[] = 'runtime_cxxflags = ' . build_runtime_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir);
+	$lines[] = 'runtime_cxxflags = ' . build_runtime_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir) . ($runtimeExtraCxxFlags !== [] ? ' ' . implode(' ', $runtimeExtraCxxFlags) : '');
 	$lines[] = 'base_ldflags = ' . implode(' ', $baseLinkFlags);
 	$lines[] = 'ldflags = ' . implode(' ', $binaryLinkFlags);
 	if ($fastcgiBuild !== null) {
@@ -1266,6 +1311,69 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	return implode(PHP_EOL, $lines) . PHP_EOL;
 }
 
+function render_runtime_composition_source(array $runtimeConfig): string
+{
+	$languages = is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'];
+	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'mysqli'];
+	$lines = [
+		'#include "core/runtime.cpp"',
+	];
+	if (in_array('json', $modules, true)) {
+		$lines[] = '#include "modules/json/json.cpp"';
+	}
+	if (in_array('filesystem', $modules, true)) {
+		$lines[] = '#include "modules/filesystem/filesystem.cpp"';
+	}
+	if (in_array('mysqli', $modules, true)) {
+		$lines[] = '#include "modules/mysql/mysql_module.cpp"';
+	}
+	if (in_array('php', $languages, true)) {
+		if (in_array('filesystem', $modules, true)) {
+			$lines[] = '#include "lang/php/php_filesystem.cpp"';
+		}
+		if (in_array('json', $modules, true)) {
+			$lines[] = '#include "lang/php/php_json.cpp"';
+		}
+		if (in_array('mysqli', $modules, true)) {
+			$lines[] = '#include "lang/php/php_mysqli.cpp"';
+		}
+	}
+	return implode(PHP_EOL, $lines) . PHP_EOL;
+}
+
+/** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
+function resolve_runtime_mysqli_build_spec(): array
+{
+	$pkgConfig = find_command_path(['pkg-config']);
+	if ($pkgConfig === null) {
+		return [
+			'enabled' => false,
+			'cflags' => [],
+			'ldflags' => [],
+			'compile_defines' => ['-DSCPP_HAS_MYSQLI=0'],
+		];
+	}
+	foreach (['libmariadb', 'mariadb', 'mysqlclient'] as $packageName) {
+		$cflagsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --cflags ' . escapeshellarg($packageName) . ' 2>/dev/null');
+		$libsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --libs ' . escapeshellarg($packageName) . ' 2>/dev/null');
+		if (!is_string($libsOutput) || trim($libsOutput) === '') {
+			continue;
+		}
+		return [
+			'enabled' => true,
+			'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
+			'ldflags' => split_shell_tokens($libsOutput),
+			'compile_defines' => ['-DSCPP_HAS_MYSQLI=1'],
+		];
+	}
+	return [
+		'enabled' => false,
+		'cflags' => [],
+		'ldflags' => [],
+		'compile_defines' => ['-DSCPP_HAS_MYSQLI=0'],
+	];
+}
+
 function build_runtime_compiler_flags(string $compilerKind, string $buildMode, string $runtimeIncludeDir): string
 {
 	if ($compilerKind === 'msvc') {
@@ -1310,19 +1418,40 @@ function build_runtime_compiler_flags(string $compilerKind, string $buildMode, s
  * @param array{command:string,kind:string,launcher?:?string,linker_flags?:list<string>,archiver?:?string} $compiler
  * @return array{kind:string,source_path:string,artifact_path:string,object_path:?string,archiver:?string}
  */
-function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, array $compiler, string $buildMode): array
+function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, array $compiler, string $buildMode, array $runtimeConfig): array
 {
-	$signature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode);
+	$signature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode, $runtimeConfig);
 	$runtimeCacheDir = normalize_path($repoRoot . '/.prism/runtime/' . $signature);
 	ensure_directory($runtimeCacheDir);
 
-	$sourcePath = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include/core/runtime.cpp'));
+	$compositionSource = $runtimeCacheDir . '/runtime_build.cpp';
+	write_text_file($compositionSource, render_runtime_composition_source($runtimeConfig));
+	$sourcePath = normalize_config_path(relative_path($projectRoot, $compositionSource));
+	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'mysqli'];
+	$extraCxxFlags = [];
+	$extraLinkFlags = [];
+	if (in_array('php', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'], true)) {
+		$extraCxxFlags[] = '-DSCPP_LANGUAGE_TARGET_PHP=1';
+	}
+	if (in_array('mysqli', $modules, true)) {
+		$mysqliBuild = resolve_runtime_mysqli_build_spec();
+		if (!$mysqliBuild['enabled']) {
+			fwrite(STDERR, 'Runtime module `mysqli` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported MariaDB/MySQL Connector/C pkg-config package was found (tried: libmariadb, mariadb, mysqlclient).' . PHP_EOL);
+			exit(1);
+		}
+		$extraCxxFlags = array_merge($extraCxxFlags, $mysqliBuild['compile_defines'], $mysqliBuild['cflags']);
+		$extraLinkFlags = array_merge($extraLinkFlags, $mysqliBuild['ldflags']);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_HAS_MYSQLI=0';
+	}
+
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = PHP_OS_FAMILY === 'Darwin' ? 'libruntime.dylib' : 'libruntime.so';
 		$linkFlags = ['-shared'];
 		if (PHP_OS_FAMILY === 'Darwin') {
 			$linkFlags[] = '-Wl,-install_name,@rpath/' . $libraryName;
 		}
+		$linkFlags = array_merge($linkFlags, $extraLinkFlags);
 
 		return [
 			'kind' => 'shared',
@@ -1332,6 +1461,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 			'archiver' => null,
 			'link_flags' => $linkFlags,
 			'rpath_dir' => $runtimeCacheDir,
+			'extra_cxxflags' => $extraCxxFlags,
 		];
 	}
 
@@ -1341,24 +1471,27 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		'artifact_path' => normalize_config_path(relative_path($projectRoot, $runtimeCacheDir . '/runtime.' . object_extension($compiler['kind']))),
 		'object_path' => null,
 		'archiver' => null,
-		'link_flags' => [],
+		'link_flags' => $extraLinkFlags,
 		'rpath_dir' => null,
+		'extra_cxxflags' => $extraCxxFlags,
 	];
 }
 
 /**
  * @param array{command:string,kind:string,launcher?:?string,linker_flags?:list<string>,archiver?:?string} $compiler
  */
-function compute_runtime_build_signature(string $repoRoot, array $compiler, string $buildMode): string
+function compute_runtime_build_signature(string $repoRoot, array $compiler, string $buildMode, array $runtimeConfig): string
 {
 	$parts = [
-		'runtime-v2',
+		'runtime-v3',
 		'kind:' . $compiler['kind'],
 		'command:' . $compiler['command'],
 		'mode:' . $buildMode,
 		'launcher:' . (is_string($compiler['launcher'] ?? null) ? basename(str_replace('\\', '/', $compiler['launcher'])) : ''),
 		'archiver:' . (is_string($compiler['archiver'] ?? null) ? basename(str_replace('\\', '/', $compiler['archiver'])) : ''),
 		'linker_flags:' . implode(' ', is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : []),
+		'runtime_languages:' . implode(',', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : []),
+		'runtime_modules:' . implode(',', is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : []),
 	];
 
 	$paths = [

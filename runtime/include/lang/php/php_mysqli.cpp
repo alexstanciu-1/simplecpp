@@ -137,14 +137,14 @@ mysqli_result::mysqli_result(std::shared_ptr<db::mysql_module::result_handle> ha
 
 dynamic_t mysqli_result::fetch_assoc() {
 	if (handle_ == nullptr) {
-		return ::scpp::php::to_dynamic(hash_t<mixed_t>{});
+		return ::scpp::to_dynamic(hash_t<mixed_t>{});
 	}
 	return handle_->fetch_assoc();
 }
 
 dynamic_t mysqli_result::fetch_row() {
 	if (handle_ == nullptr) {
-		return ::scpp::php::to_dynamic(hash_t<mixed_t>{});
+		return ::scpp::to_dynamic(hash_t<mixed_t>{});
 	}
 	return handle_->fetch_row();
 }
