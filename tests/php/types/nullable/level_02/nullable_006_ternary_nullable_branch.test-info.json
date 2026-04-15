@@ -1,0 +1,51 @@
+{
+    "id": "nullable_006_ternary_nullable_branch",
+    "feature": "nullable",
+    "level": "level_02",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "99\n0\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "99\n0\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "types",
+        "nullable",
+        "ternary"
+    ],
+    "notes": "Nullable ternary branch normalization through runtime helper.",
+    "build": {
+        "sanitizers": null
+    }
+}
