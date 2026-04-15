@@ -1,0 +1,19 @@
+{
+    "version": 1,
+    "artifacts_root": "tests/generated/usability_harness",
+    "work_root": "tests/generated/usability_harness/_work",
+    "passing_root": "tests/generated/usability_harness/passing",
+    "quarantine_root": "tests/generated/usability_harness/quarantine",
+    "templates_path": "tools/usability_harness/templates/tests.json",
+    "max_attempts": 20,
+    "stop_after_unique_bug_failures": 20,
+    "compare_with_php_when_deterministic": true,
+    "enabled_kinds": [
+        "micro"
+    ],
+    "timeouts": {
+        "init_seconds": 30,
+        "php_seconds": 30,
+        "run_seconds": 180
+    }
+}

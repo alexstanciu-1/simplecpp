@@ -1,0 +1,135 @@
+{
+    "version": 1,
+    "templates": [
+        {
+            "id": "micro_typed_add_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Typed function boundary and scalar echo.",
+            "features": [
+                "typed_function",
+                "scalar_output"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "42\n",
+            "files": {
+                "main.php": "<?php\n\n// Stable typed function boundary.\nfunction add(int $left, int $right): int {\n\treturn $left + $right;\n}\n\n// Deterministic scalar output.\necho add(10, 32), \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_strict_if_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Strict scalar comparison in a simple branch.",
+            "features": [
+                "strict_comparison",
+                "if_else"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "ok\n",
+            "files": {
+                "main.php": "<?php\n\n// Stable scalar assignment.\n$x = 10;\n\n// Preferred strict comparison.\nif ($x === 10) {\n\techo \"ok\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_array_foreach_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Array append followed by foreach iteration.",
+            "features": [
+                "array_append",
+                "foreach"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "1\n2\n3\n",
+            "files": {
+                "main.php": "<?php\n\n// Predictable append sequence.\n$items = [];\n$items[] = 1;\n$items[] = 2;\n$items[] = 3;\n\n// Stable foreach iteration.\nforeach ($items as $item) {\n\techo $item, \"\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_mixed_array_keys_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Mixed array with explicit string keys.",
+            "features": [
+                "mixed_array",
+                "string_keys"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "Alex 30\n",
+            "files": {
+                "main.php": "<?php\n\n// Explicit dynamic map construction.\n$data = [];\n$data[\"name\"] = \"Alex\";\n$data[\"age\"] = 30;\n\n// Deterministic keyed lookup.\necho $data[\"name\"], \" \", $data[\"age\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_nullable_guard_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Explicit nullable result handling with a typed boundary.",
+            "features": [
+                "nullable_return",
+                "null_check"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "missing\n",
+            "files": {
+                "main.php": "<?php\n\n// Stable nullable boundary.\nfunction maybe_name(int $id): ?string {\n\tif ($id === 1) {\n\t\treturn \"Alex\";\n\t}\n\n\treturn null;\n}\n\n// Explicit null handling.\n$name = maybe_name(2);\nif ($name === null) {\n\techo \"missing\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_sum_loop_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for typed accumulation over a foreach loop.",
+            "features": [
+                "scenario",
+                "typed_function",
+                "foreach",
+                "accumulation"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "10\n",
+            "files": {
+                "main.php": "<?php\n\n// Stable typed aggregation.\nfunction sum_all(array $items): int {\n\t$total = 0;\n\tforeach ($items as $item) {\n\t\t$total = $total + $item;\n\t}\n\n\treturn $total;\n}\n\n// Deterministic aggregate output.\necho sum_all([1, 2, 3, 4]), \"\\n\";\n"
+            }
+        },
+        {
+            "id": "scenario_cli_summary_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for a small CLI-style summary flow.",
+            "features": [
+                "scenario",
+                "multi_step"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "3\n",
+            "files": {
+                "main.php": "<?php\n\n// Scenario skeleton: count small deterministic rows.\n$rows = [];\n$rows[] = \"a\";\n$rows[] = \"b\";\n$rows[] = \"c\";\n\necho count($rows), \"\\n\";\n"
+            }
+        },
+        {
+            "id": "scenario_config_echo_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for a config-like keyed structure.",
+            "features": [
+                "scenario",
+                "mixed_array"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "debug\n",
+            "files": {
+                "main.php": "<?php\n\n// Scenario skeleton: config-like lookup.\n$config = [];\n$config[\"mode\"] = \"debug\";\n\necho $config[\"mode\"], \"\\n\";\n"
+            }
+        }
+    ]
+}
