@@ -992,11 +992,20 @@ TXT;
 
 	private function buildPhpWorkerEnvironment(): array
 	{
-		$env = array_merge($_ENV, $_SERVER);
+		$env = [];
+		foreach (array_merge($_ENV, $_SERVER) as $key => $value) {
+			if (!is_string($key) || $key == '') {
+				continue;
+			}
+			if (is_array($value) || is_object($value) || $value === null) {
+				continue;
+			}
+			$env[$key] = (string) $value;
+		}
+
 		$astSoPath = $this->projectRoot . '/ext/8.4-deb/ast.so';
 		if (is_file($astSoPath)) {
 			$flag = '-dextension=' . $astSoPath;
-			$existing = trim((string) ($env['PHP_INI_SCAN_DIR'] ?? ''));
 			$env['PHP_AST_SO'] = $astSoPath;
 			$env['PHP_AST_EXTENSION_FLAG'] = $flag;
 			$env['PHP_WORKER_AST_SO'] = $astSoPath;
