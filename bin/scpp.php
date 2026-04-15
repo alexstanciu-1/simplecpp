@@ -8,6 +8,7 @@
  * - project init scaffold
  * - one-entrypoint build scaffold backed by Ninja
  * - run command that builds then executes the primary output
+ * - usability harness command for deterministic first-user validation
  */
 declare(strict_types=1);
 
@@ -127,6 +128,11 @@ function main(array $argv): void
 		return;
 	}
 
+	if ($args[0] === 'usability-harness') {
+		handle_usability_harness(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
 	$inputFile = $args[0];
 	if (!is_file($inputFile)) {
 		fwrite(STDERR, "Input file not found: {$inputFile}\n");
@@ -154,8 +160,10 @@ function print_help(): void
 	echo "  scpp init\n";
 	echo "  scpp build\n";
 	echo "  scpp run [-- <args...>]\n";
+	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp run builds first, then executes the primary output\n";
+	echo "  scpp usability-harness generates deterministic spec-driven trial projects\n";
 	echo "  scpp --help\n";
 	echo "  scpp --version\n";
 	echo "  scpp --doctor\n";
@@ -259,6 +267,59 @@ function handle_run(string $cwd, array $args): void
 		exit(4);
 	}
 	exit($status);
+}
+
+
+function handle_usability_harness(string $cwd, array $args): void
+{
+	$repoRoot = resolve_repo_root();
+	$scriptPath = normalize_path($repoRoot . '/tools/usability_harness/run.php');
+	if (!is_file($scriptPath)) {
+		fwrite(STDERR, 'Usability harness script not found: ' . $scriptPath . PHP_EOL);
+		exit(1);
+	}
+
+	$command = build_php_script_command($repoRoot, $scriptPath, $args, true);
+	$descriptor = [
+		0 => ['file', 'php://stdin', 'r'],
+		1 => ['file', 'php://stdout', 'w'],
+		2 => ['file', 'php://stderr', 'w'],
+	];
+	$process = proc_open($command, $descriptor, $pipes, $cwd);
+	if (!is_resource($process)) {
+		fwrite(STDERR, 'Failed to start usability harness.' . PHP_EOL);
+		exit(4);
+	}
+	$status = proc_close($process);
+	if (!is_int($status)) {
+		fwrite(STDERR, 'Failed to read usability harness exit status.' . PHP_EOL);
+		exit(4);
+	}
+	exit($status);
+}
+
+function build_php_script_command(string $repoRoot, string $scriptPath, array $args, bool $needsAst): array
+{
+	$phpBinary = resolve_php_cli_binary();
+	$command = [$phpBinary];
+	$astSoPath = normalize_path($repoRoot . '/ext/8.4-deb/ast.so');
+	if ($needsAst && !extension_loaded('ast') && is_file($astSoPath)) {
+		$command[] = '-dextension=' . $astSoPath;
+	}
+	$command[] = $scriptPath;
+	foreach ($args as $arg) {
+		$command[] = $arg;
+	}
+	return $command;
+}
+
+function resolve_php_cli_binary(): string
+{
+	$php84 = find_command_path(['php8.4']);
+	if ($php84 !== null) {
+		return $php84;
+	}
+	return PHP_BINARY;
 }
 
 function handle_build(string $cwd): void

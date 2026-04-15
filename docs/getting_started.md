@@ -60,6 +60,12 @@ Pass program arguments after `--`:
 scpp run -- arg1 arg2
 ```
 
+Run the deterministic usability harness:
+
+```bash
+scpp usability-harness
+```
+
 Current public build shape:
 
 Compiler selection:

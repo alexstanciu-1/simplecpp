@@ -172,6 +172,12 @@ Pass program arguments after `--` when needed:
 scpp run -- arg1 arg2
 ```
 
+Run the deterministic usability harness:
+
+```bash
+scpp usability-harness
+```
+
 Transpile one PHP file to generated C++ printed on stdout:
 
 ```bash
