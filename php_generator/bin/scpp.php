@@ -860,7 +860,7 @@ function resolve_fastcgi_build_spec(string $projectRoot, string $repoRoot, strin
 	$cxxflags[] = '-DSCPP_FCGI_DEFAULT_MAX_BODY_SIZE=' . max(1, (int) $fastcgiConfig['max_body_size']);
 	$cxxflags[] = '-DSCPP_FCGI_DEFAULT_MAX_REQUESTS=' . max(0, (int) $fastcgiConfig['max_requests']);
 	return [
-		'source_path' => normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/src/fastcgi_main.cpp')),
+		'source_path' => normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include/hosts/fastcgi/fastcgi_main.cpp')),
 		'main_object_path' => normalize_config_path(relative_path($projectRoot, $buildDir . '/fastcgi_main.' . object_extension($compiler['kind']))),
 		'output_path' => normalize_path($buildDir . '/' . build_fastcgi_output_name($entrypointAbs)),
 		'cxxflags' => $cxxflags,
@@ -1316,7 +1316,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	$runtimeCacheDir = normalize_path($repoRoot . '/.prism/runtime/' . $signature);
 	ensure_directory($runtimeCacheDir);
 
-	$sourcePath = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/src/runtime.cpp'));
+	$sourcePath = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include/core/runtime.cpp'));
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = PHP_OS_FAMILY === 'Darwin' ? 'libruntime.dylib' : 'libruntime.so';
 		$linkFlags = ['-shared'];
@@ -1362,7 +1362,6 @@ function compute_runtime_build_signature(string $repoRoot, array $compiler, stri
 	];
 
 	$paths = [
-		$repoRoot . '/runtime/src',
 		$repoRoot . '/runtime/include',
 	];
 	foreach ($paths as $root) {

@@ -11,9 +11,9 @@ include(FindPkgConfig)
 enable_testing()
 
 add_library(scpp_runtime
-	src/runtime.cpp
-	src/php_mysqli.cpp
-	src/modules/mysql_module.cpp
+	include/core/runtime.cpp
+	include/lang/php/php_mysqli.cpp
+	include/modules/mysql/mysql_module.cpp
 )
 
 target_include_directories(scpp_runtime

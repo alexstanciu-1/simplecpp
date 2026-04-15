@@ -698,7 +698,7 @@ function buildNaturalCompileUnit(array $headerLines, array $sourceLines): string
 
 function getRuntimeSourceFilesForUi(string $projectRoot): array
 {
-	$runtimeSrcRoot = $projectRoot . '/runtime/src';
+	$runtimeSrcRoot = $projectRoot . '/runtime/include';
 	$paths = [];
 	$iter = new RecursiveIteratorIterator(
 		new RecursiveDirectoryIterator($runtimeSrcRoot, FilesystemIterator::SKIP_DOTS)
@@ -713,7 +713,7 @@ function getRuntimeSourceFilesForUi(string $projectRoot): array
 		if (!str_ends_with($normalized, '.cpp')) {
 			continue;
 		}
-		if (str_ends_with($normalized, '/fastcgi_main.cpp')) {
+		if (str_contains($normalized, '/scpp/support/') || str_ends_with($normalized, '/fastcgi_main.cpp')) {
 			continue;
 		}
 		$paths[] = $path;
@@ -799,7 +799,7 @@ function ensureRuntimeArchive(string $projectRoot, bool $memTestEnabled = false)
 
 	$objectFiles = [];
 	foreach ($sourceFiles as $sourcePath) {
-		$relative = substr($sourcePath, strlen($projectRoot . '/runtime/src/'));
+		$relative = substr($sourcePath, strlen($projectRoot . '/runtime/include/'));
 		$objectPath = $objectsRoot . '/' . preg_replace('/\.cpp$/', '.o', $relative);
 		$objectDir = dirname($objectPath);
 		if (!is_dir($objectDir) && !mkdir($objectDir, 0777, true) && !is_dir($objectDir)) {

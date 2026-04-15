@@ -827,7 +827,7 @@ TXT;
 					$defines,
 					[
 						'-c',
-						$this->projectRoot . '/runtime/src/runtime.cpp',
+						$this->projectRoot . '/runtime/include/core/runtime.cpp',
 						'-I',
 						$this->projectRoot,
 						'-I',
@@ -885,7 +885,7 @@ TXT;
 	private function latestRuntimeSourceMTime(): int
 	{
 		$latest = 0;
-		foreach ([$this->projectRoot . '/runtime/src', $this->projectRoot . '/runtime/include'] as $dir) {
+		foreach ([$this->projectRoot . '/runtime/include'] as $dir) {
 			if (!is_dir($dir)) {
 				continue;
 			}
