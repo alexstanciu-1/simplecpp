@@ -141,7 +141,7 @@ final class Generator
 		$this->throwIfErrors();
 
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
-		$header = ['#pragma once', '', '#include <scpp/runtime.hpp>', '#include <type_traits>', '#include <utility>'];
+		$header = ['#pragma once', '', '#include <scpp/lang/php.hpp>', '#include <type_traits>', '#include <utility>'];
 		foreach ($file->prologueIncludes as $includePath) {
 			$header[] = '#include "' . $includePath . '"';
 		}

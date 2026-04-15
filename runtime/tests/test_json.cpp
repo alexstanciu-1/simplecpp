@@ -1,7 +1,7 @@
 #include "test_common.hpp"
 
 #include "modules/json/json.hpp"
-#include "scpp/runtime.hpp"
+#include "scpp/lang/php.hpp"
 
 #include <cmath>
 #include <stdexcept>

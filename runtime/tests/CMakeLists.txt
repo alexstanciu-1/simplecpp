@@ -8,7 +8,7 @@ target_include_directories(scpp_runtime_test_support INTERFACE ${CMAKE_CURRENT_S
 
 # Core wrapper smoke coverage.
 add_executable(test_core test_core.cpp)
-target_link_libraries(test_core PRIVATE scpp_runtime scpp_runtime_test_support)
+target_link_libraries(test_core PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)
 
 # nullable<T> smoke coverage.
 add_executable(test_nullable test_nullable.cpp)
@@ -61,23 +61,23 @@ add_test(NAME scpp_test_mixed_t_dynamic COMMAND test_mixed_t_dynamic)
 
 # Array semantics conformance coverage for the reduced Prism++ subset.
 add_executable(test_array_semantics test_array_semantics.cpp)
-target_link_libraries(test_array_semantics PRIVATE scpp_runtime scpp_runtime_test_support)
+target_link_libraries(test_array_semantics PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_array_semantics COMMAND test_array_semantics)
 
 # PHP string builtin wrapper coverage.
 add_executable(test_php_string test_php_string.cpp)
-target_link_libraries(test_php_string PRIVATE scpp_runtime scpp_runtime_test_support)
+target_link_libraries(test_php_string PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_php_string COMMAND test_php_string)
 
 
 # PHP filesystem and stdio builtin coverage.
 add_executable(test_php_filesystem test_php_filesystem.cpp)
-target_link_libraries(test_php_filesystem PRIVATE scpp_filesystem scpp_runtime scpp_runtime_test_support)
+target_link_libraries(test_php_filesystem PRIVATE scpp_lang_php scpp_filesystem scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_php_filesystem COMMAND test_php_filesystem)
 
 # PHP JSON builtin coverage.
 add_executable(test_json test_json.cpp)
-target_link_libraries(test_json PRIVATE scpp_json scpp_runtime scpp_runtime_test_support)
+target_link_libraries(test_json PRIVATE scpp_lang_php scpp_json scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_json COMMAND test_json)
 
 # mysqli connect/close smoke coverage for the first vertical slice.
@@ -85,6 +85,6 @@ add_test(NAME scpp_test_json COMMAND test_json)
 option(SCPP_ENABLE_MYSQLI_TESTS "Build and register mysqli runtime smoke tests" OFF)
 if(SCPP_ENABLE_MYSQLI_TESTS)
 	add_executable(test_mysqli_connect test_mysqli_connect.cpp)
-	target_link_libraries(test_mysqli_connect PRIVATE scpp_runtime scpp_runtime_test_support)
+	target_link_libraries(test_mysqli_connect PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)
 	add_test(NAME scpp_test_mysqli_connect COMMAND test_mysqli_connect)
 endif()

@@ -616,7 +616,7 @@ function render_app_pch_header(): string
 {
 	return "#pragma once
 
-#include <scpp/runtime.hpp>
+#include <scpp/lang/php.hpp>
 ";
 }
 
@@ -637,7 +637,7 @@ function build_runtime_pch_artifact_path(string $buildDir, string $compilerKind)
 
 function render_runtime_pch_header(): string
 {
-	return "#pragma once\n\n#include <scpp/runtime.hpp>\n";
+	return "#pragma once\n\n#include <scpp/lang/php.hpp>\n";
 }
 
 /** @param array{command:string,kind:string,launcher?:?string} $compiler */
