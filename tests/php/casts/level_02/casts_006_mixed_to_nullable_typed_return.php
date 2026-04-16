@@ -1,0 +1,19 @@
+<?php
+declare(strict_types=1);
+
+// mixed_t to nullable<T> boundary cast through a typed return.
+function maybe_label(array $row): ?string {
+	if ($row["label"] === null) {
+		return null;
+	}
+
+	return $row["label"];
+}
+
+$row = [];
+$row["label"] = null;
+
+$label = maybe_label($row);
+if ($label === null) {
+	echo "missing\n";
+}
