@@ -130,16 +130,49 @@ try {
 	}
 
 	require_once $projectRoot . '/bin/bootstrap.php';
+	require_once $projectRoot . '/bin/project_services.php';
 
-	$tempRoot = sys_get_temp_dir() . '/simplecpp_test_ui_' . bin2hex(random_bytes(8));
-	if (!mkdir($tempRoot, 0777, true) && !is_dir($tempRoot)) {
-		throw new RuntimeException('Failed to create temporary directory.');
+	$sandboxRoot = getSandboxRootPath();
+	ensureSandboxRootExists($sandboxRoot);
+	$selectedSandboxPath = (string) ($data['selected_sandbox_path'] ?? '');
+	$entrypointRelativePath = resolveUiEntrypointRelativePath($sandboxRoot, $selectedSandboxPath);
+	$entrypointAbsolutePath = resolveSandboxPathInsideRoot($sandboxRoot, $entrypointRelativePath, false);
+	ensureDirectoryExists(dirname($entrypointAbsolutePath));
+	if (file_put_contents($entrypointAbsolutePath, $phpCode) === false) {
+		throw new RuntimeException('Failed to save sandbox entrypoint: ' . $entrypointRelativePath);
 	}
 
-	$phpPath = $tempRoot . '/snippet.php';
-	file_put_contents($phpPath, $phpCode);
-
 	$timingResources = [];
+	$response['project_root'] = $sandboxRoot;
+	$response['project_entrypoint'] = $entrypointRelativePath;
+
+	$projectConfig = find_project_config($sandboxRoot);
+	if ($projectConfig === null) {
+		$initStage = measureStage(static function () use ($sandboxRoot): array {
+			return scpp_run_init_service($sandboxRoot);
+		});
+		$initResult = $initStage['result'];
+		$timingResources['init_project'] = stageMetricsFromMeasured($initStage, 'scpp init');
+		$timingResources['init_project']['exit_code'] = $initResult['exit_code'];
+		$response['project_init_output'] = normalizeCommandOutput((string) $initResult['output']);
+		$response['project_init_error'] = trim((string) $initResult['error']);
+		if (!$initResult['ok']) {
+			throw new RuntimeException(trim((string) $initResult['error']));
+		}
+		$projectConfig = find_project_config($sandboxRoot);
+	}
+	if ($projectConfig === null) {
+		throw new RuntimeException('Failed to resolve sandbox project config after initialization.');
+	}
+	$buildConfigPath = prepareUiBuildConfigPath($projectConfig['project_root'], $projectConfig['config_path'], $entrypointRelativePath);
+	$buildConfig = load_project_config($buildConfigPath);
+	$timingResources['project_config'] = [
+		'label' => 'Project config',
+		'config_path' => normalizeConfigPathForUi(relative_path($projectConfig['project_root'], $buildConfigPath)),
+		'entrypoint' => normalizeConfigPathForUi((string) ($buildConfig['entrypoint'] ?? 'main.php')),
+	];
+
+	$phpPath = $entrypointAbsolutePath;
 
 	$astVersion = max(ast\get_supported_versions());
 	$astStage = measureStage(static function () use ($phpCode, $astVersion): array {
@@ -170,12 +203,8 @@ try {
 	$cppFile = $generatorStage['result']['cpp_file'];
 	$timingResources['create_cpp_code'] = stageMetricsFromMeasured($generatorStage, 'S2S generate C++');
 
-	$headerPath = $tempRoot . '/snippet.hpp';
-	$sourcePath = $tempRoot . '/snippet.cpp';
 	$headerDisplay = implode("\n", $cppFile->headerLines) . "\n";
 	$sourceDisplay = implode("\n", normalizeSourceForUi($cppFile->sourceLines)) . "\n";
-	file_put_contents($headerPath, $headerDisplay);
-	file_put_contents($sourcePath, implode("\n", $cppFile->sourceLines) . "\n");
 	$response['generator_include_directive'] = extractIncludeDirective($sourceDisplay, $headerDisplay);
 
 	$generatorErrors = implode("\n", $cppFile->errors);
@@ -203,58 +232,69 @@ try {
 		$response['cpp_error'] = $generatorErrors;
 		$response['cpp_exit_code'] = null;
 		$timingResources['compile_cpp'] = [
-			'label' => 'C++ compile',
+			'label' => 'scpp build',
 			'skipped' => true,
 			'reason' => 'generator_failed',
 		];
 		$timingResources['execute_cpp'] = [
-			'label' => 'C++ execute',
+			'label' => 'scpp run',
 			'skipped' => true,
 			'reason' => 'generator_failed',
 		];
 	} else {
-		$cppBinaryPath = $tempRoot . '/snippet.out';
-		$compileInputPath = $tempRoot . '/snippet.build.cpp';
-		file_put_contents($compileInputPath, buildNaturalCompileUnit($cppFile->headerLines, $cppFile->sourceLines));
-
-		$runtimeCacheStage = measureStage(static function () use ($projectRoot, $memTestEnabled): array {
-			return ensureRuntimeArchive($projectRoot, $memTestEnabled);
+		$buildStage = measureStage(static function () use ($projectConfig, $buildConfigPath): array {
+			return scpp_run_build_service($projectConfig['project_root'], $buildConfigPath);
 		});
-		$runtimeArchive = (string) $runtimeCacheStage['result']['archive_path'];
-		$runtimeCacheMetrics = stageMetricsFromMeasured($runtimeCacheStage, 'C++ runtime cache');
-		$runtimeCacheMetrics['cache_status'] = (string) ($runtimeCacheStage['result']['status'] ?? 'unknown');
-		$runtimeCacheMetrics['archive_path'] = $runtimeArchive;
-		$runtimeCacheMetrics['mode'] = $memTestEnabled ? 'asan' : 'default';
-		$timingResources['compile_cpp_runtime_cache'] = $runtimeCacheMetrics;
-
-		$compileRun = runCommandMeasured(
-			buildSampleCompileCommand($projectRoot, $compileInputPath, $runtimeArchive, $cppBinaryPath, $memTestEnabled),
-			$tempRoot,
-			40
-		);
-		$response['cpp_compile_output'] = normalizeCommandOutput($compileRun['stdout']);
-		$response['cpp_compile_error'] = buildProcessErrorText('C++ compile', $compileRun);
-		$response['cpp_compile_exit_code'] = $compileRun['exit_code'];
-		$compileMetrics = externalMetricsFromRun('C++ compile', $compileRun);
-		$compileMetrics['mode'] = $memTestEnabled ? 'sample_plus_cached_runtime_archive_asan' : 'sample_plus_cached_runtime_archive';
-		$compileMetrics['mem_test_enabled'] = $memTestEnabled;
+		$buildResult = $buildStage['result'];
+		$response['cpp_compile_output'] = normalizeCommandOutput((string) $buildResult['output']);
+		$response['cpp_compile_error'] = trim((string) $buildResult['error']);
+		$response['cpp_compile_exit_code'] = $buildResult['exit_code'];
+		$compileMetrics = stageMetricsFromMeasured($buildStage, 'scpp build');
+		$compileMetrics['exit_code'] = $buildResult['exit_code'];
+		$compileMetrics['mode'] = (string) (($buildConfig['build']['mode'] ?? 'debug'));
+		$compileMetrics['entrypoint'] = normalizeConfigPathForUi((string) ($buildConfig['entrypoint'] ?? 'main.php'));
 		$timingResources['compile_cpp'] = $compileMetrics;
 
-		if ($compileRun['exit_code'] !== 0) {
+		if (!$buildResult['ok'] || !is_array($buildResult['result'])) {
 			$response['cpp_error'] = $response['cpp_compile_error'];
 			$response['cpp_output'] = '';
 			$response['cpp_exit_code'] = null;
 			$timingResources['execute_cpp'] = [
-				'label' => 'C++ execute',
+				'label' => 'scpp run',
 				'skipped' => true,
-				'reason' => 'compile_failed',
+				'reason' => 'build_failed',
 			];
 		} else {
-			$cppRun = runCommandMeasured([$cppBinaryPath], $tempRoot, 20);
-			$response['cpp_output'] = normalizeCommandOutput($cppRun['stdout']);
-			$response['cpp_error'] = buildProcessErrorText('C++ execution', $cppRun);
+			$buildPayload = $buildResult['result'];
+			$generatedBase = build_generated_base(
+				normalize_path($projectConfig['project_root'] . '/' . normalize_config_path((string) ($buildConfig['generated_dir'] ?? '.prism/generated'))),
+				normalize_config_path((string) ($buildConfig['entrypoint'] ?? 'main.php'))
+			);
+			$generatedHeaderPath = $generatedBase . '.hpp';
+			$generatedSourcePath = $generatedBase . '.cpp';
+			if (is_file($generatedHeaderPath)) {
+				$response['generator_header_display'] = (string) file_get_contents($generatedHeaderPath);
+			}
+			if (is_file($generatedSourcePath)) {
+				$generatedSourceText = (string) file_get_contents($generatedSourcePath);
+				$generatedSourceLines = preg_split('/\R/', $generatedSourceText) ?: [];
+				$response['generator_source_display'] = implode("
+", normalizeSourceForUi($generatedSourceLines)) . "
+";
+			}
+			$response['generator_include_directive'] = extractIncludeDirective($response['generator_source_display'], $response['generator_header_display']);
+
+			$runStage = measureStage(static function () use ($projectConfig, $buildPayload): array {
+				return scpp_run_binary_service($projectConfig['project_root'], (string) $buildPayload['output_path']);
+			});
+			$cppRun = $runStage['result'];
+			$response['cpp_output'] = normalizeCommandOutput((string) $cppRun['stdout']);
+			$response['cpp_error'] = trim((string) $cppRun['stderr']);
 			$response['cpp_exit_code'] = $cppRun['exit_code'];
-			$timingResources['execute_cpp'] = externalMetricsFromRun('C++ execute', $cppRun);
+			$executeMetrics = stageMetricsFromMeasured($runStage, 'scpp run');
+			$executeMetrics['exit_code'] = $cppRun['exit_code'];
+			$executeMetrics['command'] = $cppRun['command'];
+			$timingResources['execute_cpp'] = $executeMetrics;
 		}
 	}
 
@@ -262,7 +302,6 @@ try {
 	$response['timing_resources_json'] = encodePrettyJson($timingResources);
 	$response['debug_json'] = buildDebugJson($response, $phpCode, $response['php_ast_json']);
 	$response['ok'] = true;
-	cleanupDirectory($tempRoot);
 	emitJsonResponse($response);
 } catch (Throwable $throwable) {
 	$errorText = formatThrowableDetails($throwable);
@@ -581,6 +620,77 @@ function deleteSandboxDirectory(string $absolutePath): void
 	if (!rmdir($absolutePath)) {
 		throw new RuntimeException('Failed to delete sandbox directory: ' . $absolutePath);
 	}
+}
+
+function ensureSandboxRootExists(string $root): void
+{
+	if (is_dir($root)) {
+		return;
+	}
+	if (!mkdir($root, 0777, true) && !is_dir($root)) {
+		throw new RuntimeException('Failed to create sandbox root: ' . $root);
+	}
+}
+
+function ensureDirectoryExists(string $directory): void
+{
+	if (is_dir($directory)) {
+		return;
+	}
+	if (!mkdir($directory, 0777, true) && !is_dir($directory)) {
+		throw new RuntimeException('Failed to create directory: ' . $directory);
+	}
+}
+
+function normalizeConfigPathForUi(string $path): string
+{
+	return str_replace('\\', '/', $path);
+}
+
+function resolveUiEntrypointRelativePath(string $root, string $selectedSandboxPath): string
+{
+	$selected = normalizeSandboxRelativePath($selectedSandboxPath);
+	if ($selected !== '') {
+		if (!str_ends_with(strtolower($selected), '.php')) {
+			throw new RuntimeException('Run expects a PHP file selection or no selection. Selected: ' . $selected);
+		}
+		return $selected;
+	}
+
+	$project = find_project_config($root);
+	if ($project !== null) {
+		$config = load_project_config($project['config_path']);
+		$entrypoint = normalize_config_path((string) ($config['entrypoint'] ?? 'main.php'));
+		if ($entrypoint !== '') {
+			return $entrypoint;
+		}
+	}
+
+	return 'main.php';
+}
+
+function prepareUiBuildConfigPath(string $projectRoot, string $configPath, string $entrypointRelativePath): string
+{
+	$config = load_project_config($configPath);
+	$currentEntrypoint = normalize_config_path((string) ($config['entrypoint'] ?? 'main.php'));
+	$targetEntrypoint = normalize_config_path($entrypointRelativePath);
+	if ($currentEntrypoint === $targetEntrypoint) {
+		return $configPath;
+	}
+
+	$config['entrypoint'] = $targetEntrypoint;
+	$cacheDirRelative = normalize_config_path((string) ($config['cache_dir'] ?? '.prism/cache'));
+	$cacheDirAbsolute = normalize_path($projectRoot . '/' . $cacheDirRelative);
+	ensureDirectoryExists($cacheDirAbsolute);
+	$overridePath = $cacheDirAbsolute . '/ui_run_prism.json';
+	$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if (!is_string($json) || $json === '') {
+		throw new RuntimeException('Failed to encode temporary UI build config.');
+	}
+	if (file_put_contents($overridePath, $json . PHP_EOL) === false) {
+		throw new RuntimeException('Failed to write temporary UI build config.');
+	}
+	return $overridePath;
 }
 
 function getSandboxRootPath(): string
@@ -1263,8 +1373,7 @@ function compileEditedCppPayload(array $input): array
 		$response['ok'] = true;
 		return $response;
 	} finally {
-		cleanupDirectory($tempRoot);
-	}
+		}
 }
 
 function encodePrettyJson(array $data): string

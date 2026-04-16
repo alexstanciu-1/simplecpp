@@ -26,6 +26,42 @@ scpp::shared_p<scpp::hash_t<scpp::mixed_t>> take_shared_table(
 	return value;
 }
 
+
+static void test_value_t_basic_storage_contract() {
+	scpp::mixed_t null_value;
+	assert(null_value.kind() == scpp::mixed_t::kind_t::null_v);
+	assert(null_value.is_null().native_value() == true);
+
+	scpp::mixed_t nullopt_value(scpp::nullopt_t{});
+	scpp::mixed_t nullptr_value(scpp::nullptr_t{});
+	assert(nullopt_value.kind() == scpp::mixed_t::kind_t::null_v);
+	assert(nullptr_value.kind() == scpp::mixed_t::kind_t::null_v);
+
+	scpp::mixed_t bool_value(scpp::bool_t(true));
+	scpp::mixed_t int_value(scpp::int_t(42));
+	scpp::mixed_t float_value(scpp::float_t(3.14));
+	scpp::mixed_t string_value(scpp::string_t("hello"));
+	assert(bool_value.kind() == scpp::mixed_t::kind_t::bool_v);
+	assert(bool_value.bool_value().native_value() == true);
+	assert(int_value.kind() == scpp::mixed_t::kind_t::int_v);
+	assert(int_value.int_value().native_value() == 42);
+	assert(float_value.kind() == scpp::mixed_t::kind_t::float_v);
+	assert(string_value.kind() == scpp::mixed_t::kind_t::string_v);
+	assert(string_value.string_if() != nullptr);
+	assert(string_value.string_if()->native_value() == "hello");
+	static_assert(sizeof(scpp::mixed_t) == 24);
+
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		(void)int_value.bool_value();
+	});
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		(void)bool_value.int_value();
+	});
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		(void)string_value.float_value();
+	});
+}
+
 static void test_value_t_cast_bridge_and_exact_accessors() {
 	scpp::mixed_t int_value(scpp::int_t(7));
 	scpp::mixed_t float_value(scpp::float_t(2.5));
@@ -324,6 +360,7 @@ static void test_dynamic_t_var_dump() {
 }
 
 int main() {
+	test_value_t_basic_storage_contract();
 	test_value_t_cast_bridge_and_exact_accessors();
 	test_value_t_operator_dispatch_numeric_and_string();
 	test_value_t_comparisons_and_logical();

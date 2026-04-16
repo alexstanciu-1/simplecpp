@@ -159,6 +159,73 @@ static void test_table_shared_object_like_contract() {
 	assert(missing.is_null().native_value() == true);
 }
 
+
+// Verifies typed hash_t specializations, clear(), and builder helpers remain usable.
+static void test_typed_table_and_builder_contract() {
+	scpp::hash_t<scpp::int_t> ints;
+	(void)ints.append(scpp::int_t(10));
+	(void)ints.append(scpp::int_t(20));
+	ints.set(scpp::string_t("x"), scpp::int_t(99));
+	assert(ints.size() == 3);
+	assert(ints.at(scpp::int_t(0)).native_value() == 10);
+	assert(ints.at(scpp::int_t(1)).native_value() == 20);
+	assert(ints.at(scpp::string_t("x")).native_value() == 99);
+	assert(scpp::was_found(ints.find(scpp::int_t(1))).native_value() == true);
+	assert(scpp::is_nullopt(ints.find(scpp::int_t(99))).native_value() == true);
+
+	scpp::hash_t<scpp::string_t> strings;
+	(void)strings.append(scpp::string_t("alpha"));
+	(void)strings.append(scpp::string_t("beta"));
+	strings.set(scpp::string_t("key"), scpp::string_t("gamma"));
+	assert(strings.at(scpp::int_t(0)).native_value() == "alpha");
+	assert(strings.at(scpp::int_t(1)).native_value() == "beta");
+	assert(strings.at(scpp::string_t("key")).native_value() == "gamma");
+
+	auto built = scpp::table_(
+		scpp::table_item_(scpp::int_t(1)),
+		scpp::table_item_(scpp::string_t("hello")),
+		scpp::table_kv_(scpp::string_t("key"), scpp::int_t(99)),
+		scpp::table_kv_(2, scpp::bool_t(true))
+	);
+	assert(built->has(scpp::int_t(0)).native_value() == true);
+	assert(built->has(scpp::int_t(1)).native_value() == true);
+	assert(built->has(scpp::string_t("key")).native_value() == true);
+	assert(built->has(scpp::int_t(2)).native_value() == true);
+	assert(built->at(scpp::string_t("key")).int_value().native_value() == 99);
+
+	scpp::hash_t<> clearable;
+	(void)clearable.append(scpp::mixed_t(scpp::int_t(1)));
+	(void)clearable.append(scpp::mixed_t(scpp::int_t(2)));
+	clearable.set(scpp::string_t("k"), scpp::mixed_t(scpp::bool_t(true)));
+	assert(clearable.size() == 3);
+	clearable.clear();
+	assert(clearable.empty().native_value() == true);
+	assert(clearable.size() == 0);
+	assert(clearable.is_packed().native_value() == true);
+	(void)clearable.append(scpp::mixed_t(scpp::int_t(42)));
+	assert(clearable.at(scpp::int_t(0)).int_value().native_value() == 42);
+}
+
+// Verifies table_find_ chaining stays null-safe across table and nullable hops.
+static void test_table_find_chain_contract() {
+	auto inner = scpp::unique<scpp::hash_t<scpp::mixed_t>>();
+	inner->set(scpp::string_t("leaf"), scpp::mixed_t(scpp::int_t(123)));
+
+	scpp::hash_t<> outer;
+	outer.set(scpp::string_t("child"), scpp::mixed_t(std::move(inner)));
+
+	auto child = scpp::table_find_(outer, scpp::string_t("child"));
+	assert(scpp::was_found(child).native_value() == true);
+
+	auto leaf = scpp::table_find_(child, scpp::string_t("leaf"));
+	assert(scpp::was_found(leaf).native_value() == true);
+	assert(leaf.value().int_value().native_value() == 123);
+
+	auto missing = scpp::table_find_(child, scpp::string_t("nope"));
+	assert(scpp::is_nullopt(missing).native_value() == true);
+	assert(scpp::is_nullopt(scpp::table_find_(missing, scpp::string_t("anything"))).native_value() == true);
+}
+
 int main() {
 	test_table_basic_contract();
 	test_table_remove_preserves_numeric_keys();
@@ -167,5 +234,7 @@ int main() {
 	test_value_t_table_read_write_contract();
 	test_table_entry_iteration_contract();
 	test_table_shared_object_like_contract();
+	test_typed_table_and_builder_contract();
+	test_table_find_chain_contract();
 	return 0;
 }
