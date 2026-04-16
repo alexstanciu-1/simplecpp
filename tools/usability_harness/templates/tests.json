@@ -1,5 +1,5 @@
 {
-    "version": 1,
+    "version": 2,
     "templates": [
         {
             "id": "micro_typed_add_001",
@@ -82,12 +82,141 @@
             }
         },
         {
-            "id": "micro_sum_loop_001",
-            "kind": "scenario",
-            "enabled_by_default": false,
-            "intent": "Scenario skeleton for typed accumulation over a foreach loop.",
+            "id": "micro_array_readback_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Packed array append followed by deterministic indexed reads.",
             "features": [
-                "scenario",
+                "array_append",
+                "int_keys",
+                "indexed_read"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "4\n5\n6\n",
+            "files": {
+                "main.php": "<?php\n\n// Append a small packed sequence.\n$values = [];\n$values[] = 4;\n$values[] = 5;\n$values[] = 6;\n\n// Read back each deterministic slot.\necho $values[0], \"\\n\";\necho $values[1], \"\\n\";\necho $values[2], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_array_overwrite_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Explicit string-key overwrite preserves last assigned value.",
+            "features": [
+                "string_keys",
+                "overwrite"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "Grace\n",
+            "files": {
+                "main.php": "<?php\n\n// Overwrite the same explicit key.\n$row = [];\n$row[\"name\"] = \"Alex\";\n$row[\"name\"] = \"Grace\";\n\n// The last value must be visible.\necho $row[\"name\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_append_after_high_key_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Append after a high explicit integer key advances to the next slot.",
+            "features": [
+                "int_keys",
+                "append_after_explicit_int"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "seven\neight\n",
+            "files": {
+                "main.php": "<?php\n\n// Set a high explicit integer key first.\n$data = [];\n$data[7] = \"seven\";\n$data[] = \"eight\";\n\n// Verify the next append slot is stable.\necho $data[7], \"\\n\";\necho $data[8], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_append_after_string_keys_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Append after string-only keys starts the numeric side at zero.",
+            "features": [
+                "string_keys",
+                "append_after_string_keys"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "debug\nentry\n",
+            "files": {
+                "main.php": "<?php\n\n// Start with string-only keys.\n$config = [];\n$config[\"mode\"] = \"debug\";\n$config[] = \"entry\";\n\n// The first numeric append should land at zero.\necho $config[\"mode\"], \"\\n\";\necho $config[0], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_nested_literal_read_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Nested array literal read through an explicit dim chain.",
+            "features": [
+                "nested_arrays",
+                "dim_read"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "42\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a nested literal with explicit structure.\n$data = [\n\t\"outer\" => [\n\t\t\"inner\" => [\n\t\t\t\"value\" => 42\n\t\t]\n\t]\n];\n\n// Read the deepest value deterministically.\necho $data[\"outer\"][\"inner\"][\"value\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_nested_dim_write_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Nested array writes followed by explicit readback.",
+            "features": [
+                "nested_arrays",
+                "nested_write"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "ok\n",
+            "files": {
+                "main.php": "<?php\n\n// Grow a nested row explicitly.\n$data = [];\n$data[\"user\"] = [];\n$data[\"user\"][\"name\"] = \"Alex\";\n$data[\"user\"][\"status\"] = \"ok\";\n\n// Read the nested status field.\necho $data[\"user\"][\"status\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_top_level_copy_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Top-level array copy preserves snapshot semantics for later mutation.",
+            "features": [
+                "array_copy",
+                "snapshot"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "1\n2\n",
+            "files": {
+                "main.php": "<?php\n\n// Copy a small top-level row by value.\n$left = [];\n$left[\"id\"] = 1;\n$right = $left;\n$right[\"id\"] = 2;\n\n// The original and copy must diverge.\necho $left[\"id\"], \"\\n\";\necho $right[\"id\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_foreach_rows_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Foreach over rows with nested keyed reads.",
+            "features": [
+                "foreach",
+                "nested_arrays",
+                "row_iteration"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "1:A\n2:B\n",
+            "files": {
+                "main.php": "<?php\n\n// Build two small rows.\n$rows = [];\n$rows[] = [\"id\" => 1, \"name\" => \"A\"];\n$rows[] = [\"id\" => 2, \"name\" => \"B\"];\n\n// Iterate each row deterministically.\nforeach ($rows as $row) {\n\techo $row[\"id\"], \":\", $row[\"name\"], \"\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_function_sum_foreach_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Typed aggregation function over a foreach loop.",
+            "features": [
                 "typed_function",
                 "foreach",
                 "accumulation"
@@ -96,39 +225,223 @@
             "execution_mode": "run",
             "expected_stdout": "10\n",
             "files": {
-                "main.php": "<?php\n\n// Stable typed aggregation.\nfunction sum_all(array $items): int {\n\t$total = 0;\n\tforeach ($items as $item) {\n\t\t$total = $total + $item;\n\t}\n\n\treturn $total;\n}\n\n// Deterministic aggregate output.\necho sum_all([1, 2, 3, 4]), \"\\n\";\n"
+                "main.php": "<?php\n\n// Aggregate a packed integer row.\nfunction sum_all(array $items): int {\n\t$total = 0;\n\tforeach ($items as $item) {\n\t\t$total = $total + $item;\n\t}\n\n\treturn $total;\n}\n\n// Deterministic aggregate output.\necho sum_all([1, 2, 3, 4]), \"\\n\";\n"
             }
         },
         {
-            "id": "scenario_cli_summary_001",
-            "kind": "scenario",
-            "enabled_by_default": false,
-            "intent": "Scenario skeleton for a small CLI-style summary flow.",
+            "id": "micro_function_two_calls_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "A typed helper can be reused across two deterministic calls.",
             "features": [
-                "scenario",
-                "multi_step"
+                "typed_function",
+                "multiple_calls"
             ],
             "deterministic": true,
             "execution_mode": "run",
-            "expected_stdout": "3\n",
+            "expected_stdout": "7\n11\n",
             "files": {
-                "main.php": "<?php\n\n// Scenario skeleton: count small deterministic rows.\n$rows = [];\n$rows[] = \"a\";\n$rows[] = \"b\";\n$rows[] = \"c\";\n\necho count($rows), \"\\n\";\n"
+                "main.php": "<?php\n\n// Reusable typed helper.\nfunction add_pair(int $left, int $right): int {\n\treturn $left + $right;\n}\n\n// Call the helper twice with stable inputs.\necho add_pair(3, 4), \"\\n\";\necho add_pair(5, 6), \"\\n\";\n"
             }
         },
         {
-            "id": "scenario_config_echo_001",
-            "kind": "scenario",
-            "enabled_by_default": false,
-            "intent": "Scenario skeleton for a config-like keyed structure.",
+            "id": "micro_nullable_present_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Explicit non-null branch for a nullable typed result.",
             "features": [
-                "scenario",
-                "mixed_array"
+                "nullable_return",
+                "non_null_branch"
             ],
             "deterministic": true,
             "execution_mode": "run",
-            "expected_stdout": "debug\n",
+            "expected_stdout": "Alex\n",
             "files": {
-                "main.php": "<?php\n\n// Scenario skeleton: config-like lookup.\n$config = [];\n$config[\"mode\"] = \"debug\";\n\necho $config[\"mode\"], \"\\n\";\n"
+                "main.php": "<?php\n\n// Return a present nullable value.\nfunction maybe_name(int $id): ?string {\n\tif ($id === 1) {\n\t\treturn \"Alex\";\n\t}\n\n\treturn null;\n}\n\n// Read the present path explicitly.\n$name = maybe_name(1);\nif ($name !== null) {\n\techo $name, \"\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_bool_branch_true_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Typed bool return handled with an explicit strict true check.",
+            "features": [
+                "bool_return",
+                "strict_comparison"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "yes\n",
+            "files": {
+                "main.php": "<?php\n\n// Stable typed bool boundary.\nfunction is_ready(int $value): bool {\n\treturn $value === 1;\n}\n\n// Explicit strict bool handling.\n$ready = is_ready(1);\nif ($ready === true) {\n\techo \"yes\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_bool_branch_false_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Typed bool return handled with an explicit strict false check.",
+            "features": [
+                "bool_return",
+                "strict_comparison"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "no\n",
+            "files": {
+                "main.php": "<?php\n\n// Stable typed bool boundary.\nfunction is_ready(int $value): bool {\n\treturn $value === 1;\n}\n\n// Explicit strict bool handling.\n$ready = is_ready(2);\nif ($ready === false) {\n\techo \"no\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_branch_return_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Typed function with explicit branch-local returns.",
+            "features": [
+                "typed_function",
+                "branch_return"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "large\nsmall\n",
+            "files": {
+                "main.php": "<?php\n\n// Return one of two explicit string states.\nfunction classify_size(int $value): string {\n\tif ($value > 10) {\n\t\treturn \"large\";\n\t}\n\n\treturn \"small\";\n}\n\n// Exercise both deterministic paths.\necho classify_size(20), \"\\n\";\necho classify_size(2), \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_nested_snapshot_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Nested row copy preserves snapshot behavior across later source mutation.",
+            "features": [
+                "nested_arrays",
+                "snapshot",
+                "copy"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "1\n99\n",
+            "files": {
+                "main.php": "<?php\n\n// Copy one nested row out of a parent structure.\n$root = [];\n$root[\"row\"] = [\"id\" => 1];\n$copy = $root[\"row\"];\n$root[\"row\"][\"id\"] = 99;\n\n// The extracted copy should remain stable.\necho $copy[\"id\"], \"\\n\";\necho $root[\"row\"][\"id\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_foreach_key_value_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Foreach key and value iteration over explicit string keys.",
+            "features": [
+                "foreach",
+                "key_value_iteration",
+                "string_keys"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "a:10\nb:20\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a small explicit map.\n$data = [];\n$data[\"a\"] = 10;\n$data[\"b\"] = 20;\n\n// Iterate both keys and values deterministically.\nforeach ($data as $key => $value) {\n\techo $key, \":\", $value, \"\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_scalar_reassign_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Scalar reassignment through a simple deterministic flow.",
+            "features": [
+                "scalar_assignment",
+                "reassignment"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "12\n",
+            "files": {
+                "main.php": "<?php\n\n// Reassign a scalar through a simple flow.\n$total = 5;\n$total = $total + 7;\n\n// The final scalar value should be stable.\necho $total, \"\\n\";\n"
+            }
+        },
+        {
+            "id": "scenario_profile_rows_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for building and iterating small profile rows.",
+            "features": [
+                "scenario",
+                "nested_arrays",
+                "foreach"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "Ann:admin\nBob:user\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a small deterministic profile set.\n$profiles = [];\n$profiles[] = [\"name\" => \"Ann\", \"role\" => \"admin\"];\n$profiles[] = [\"name\" => \"Bob\", \"role\" => \"user\"];\n\n// Iterate the rows in a normal user-facing flow.\nforeach ($profiles as $profile) {\n\techo $profile[\"name\"], \":\", $profile[\"role\"], \"\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "scenario_nullable_lookup_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for a typed lookup with explicit missing handling.",
+            "features": [
+                "scenario",
+                "nullable_return",
+                "null_check"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "alpha\nmissing\n",
+            "files": {
+                "main.php": "<?php\n\n// Small typed lookup helper.\nfunction find_label(int $id): ?string {\n\tif ($id === 1) {\n\t\treturn \"alpha\";\n\t}\n\n\treturn null;\n}\n\n// Exercise both present and missing paths.\n$first = find_label(1);\nif ($first !== null) {\n\techo $first, \"\\n\";\n}\n\n$second = find_label(2);\nif ($second === null) {\n\techo \"missing\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "scenario_manual_grouping_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for grouping rows under explicit named buckets.",
+            "features": [
+                "scenario",
+                "nested_arrays",
+                "string_keys"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "2\nA\nB\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a small grouped structure with explicit keys.\n$groups = [];\n$groups[\"primary\"] = [];\n$groups[\"primary\"][] = \"A\";\n$groups[\"primary\"][] = \"B\";\n\n// Read the grouped rows deterministically.\necho $groups[\"primary\"][0] !== null ? 2 : 0, \"\\n\";\necho $groups[\"primary\"][0], \"\\n\";\necho $groups[\"primary\"][1], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "scenario_two_step_transform_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for building rows then projecting a single field.",
+            "features": [
+                "scenario",
+                "nested_arrays",
+                "foreach",
+                "append"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "x\ny\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a small source row set.\n$rows = [];\n$rows[] = [\"code\" => \"x\"];\n$rows[] = [\"code\" => \"y\"];\n\n// Project one field into a new packed array.\n$codes = [];\nforeach ($rows as $row) {\n\t$codes[] = $row[\"code\"];\n}\n\n// Emit the projected sequence.\nforeach ($codes as $code) {\n\techo $code, \"\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "scenario_indexed_checkpoint_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for indexed checkpoints in a small pipeline.",
+            "features": [
+                "scenario",
+                "array_append",
+                "indexed_read"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "start\nready\ndone\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a tiny pipeline state list.\n$steps = [];\n$steps[] = \"start\";\n$steps[] = \"ready\";\n$steps[] = \"done\";\n\n// Read each checkpoint deterministically.\necho $steps[0], \"\\n\";\necho $steps[1], \"\\n\";\necho $steps[2], \"\\n\";\n"
             }
         }
     ]

@@ -713,6 +713,10 @@ function getRuntimeSourceFilesForUi(string $projectRoot): array
 		if (!str_ends_with($normalized, '.cpp')) {
 			continue;
 		}
+		$basename = basename($normalized);
+		if (str_starts_with($basename, 'test_')) {
+			continue;
+		}
 		if (str_contains($normalized, '/scpp/support/') || str_ends_with($normalized, '/fastcgi_main.cpp')) {
 			continue;
 		}
