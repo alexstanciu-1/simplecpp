@@ -43,8 +43,8 @@ Semantic boolean wrapper.
 
 Contract:
 - MUST represent runtime boolean values
-- MUST not introduce uncontrolled implicit truthiness in generated logic
-- SHOULD be explicitly bridged at native C++ condition boundaries
+- MUST not introduce implicit string or dynamic truthiness in generated logic
+- MUST be explicitly bridged at native C++ condition boundaries only after the input has been reduced to the approved condition subset
 
 ### `int_t` — Stable
 Semantic integer wrapper.

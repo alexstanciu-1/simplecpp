@@ -47,10 +47,17 @@ The helpers are intentionally separate because the semantic target differs:
 
 The ternary condition is evaluated once inside the runtime helper.
 
-Initial supported truthiness path:
-- plain scalar inputs continue through the existing explicit boolean bridge
-- `mixed_t` in ternary / elvis condition context uses PHP-style truthiness inside the helper (`null`, `0`, `0.0`, `""`, and `"0"` are false; non-empty arrays are true; dynamic object handles are true when present)
-- `nullable<T>` is false when empty, otherwise it reuses the truthiness rule of the contained `T`, including the `mixed_t` helper path when applicable
+Current approved condition domain:
+- direct condition inputs are limited to the configured explicit condition subset
+- no implicit string truthiness is supported
+- no helper-owned PHP-style `mixed_t` truthiness is supported
+- `string_t`, `mixed_t`, `null_t`, and table/object-like carriers must not silently participate in condition evaluation
+- if boolean intent is required, the source must already be boolean/numeric in the approved subset or be normalized explicitly before the condition site
+
+Practical implication:
+- `"0" ? ... : ...` is not an approved implicit condition form
+- `"yes" ? ... : ...` is not an approved implicit condition form
+- `$mixed ?: $fallback` is only valid when `$mixed` is already in the approved condition subset or has been normalized explicitly
 
 ## Elvis rule
 

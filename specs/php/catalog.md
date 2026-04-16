@@ -80,6 +80,8 @@ if ($x > 0) {
 Contract:
 - Conditions should be explicit
 - Avoid ambiguous truthiness
+- Do not rely on implicit string truthiness such as `if ($text)` when the intent is boolean
+- Normalize mixed/dynamic values before control-flow use
 
 ---
 
@@ -193,7 +195,7 @@ Contract:
 - Use strict comparisons
 - Check failure explicitly
 - Separate null and false
-- Avoid implicit truthiness
+- Avoid implicit truthiness, especially string or mixed-in-condition forms
 - Prefer predictable structures
 
 ---

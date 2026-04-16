@@ -221,7 +221,7 @@ Included initially:
 - `bool_t` is the semantic boolean type of the runtime
 - runtime comparisons produce the configured semantic comparison type, not native `bool`
 - generated C++ control-flow must bridge explicitly from semantic boolean representation to native C++ condition evaluation
-- the approved control-flow bridge is an explicit native-bool conversion (`static_cast<bool>(...)` or `cast<bool>(...)`), not `.native_value()` in generated conditions
+- the approved control-flow bridge is an explicit native-bool conversion (`static_cast<bool>(...)` or `cast<bool>(...)`), not `.native_value()` in generated conditions; this bridge applies only after the value has already been reduced to the approved condition subset
 - `bool_t` must not provide uncontrolled truthiness; any native-bool bridge must remain explicit
 
 ### 6.3 `int_t` and `float_t`
@@ -441,7 +441,7 @@ The code generator should target the runtime as a semantic backend, not as a thi
 
 ### Required rules
 - generated code should use `scpp` wrappers as the semantic boundary
-- conditions in generated C++ must bridge explicitly from the semantic boolean representation to native control-flow evaluation, using the configured explicit bool bridge rather than `.native_value()`
+- conditions in generated C++ must bridge explicitly from the semantic boolean representation to native control-flow evaluation, using the configured explicit bool bridge rather than `.native_value()`; generators must not treat strings or dynamic carriers as implicitly truthy/falsy condition values
 - generator output must not rely on accidental native implicit conversions
 - all generated behavior that depends on casts or overloads must be derivable from configuration
 

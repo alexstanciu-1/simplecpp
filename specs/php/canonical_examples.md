@@ -159,6 +159,32 @@ echo $row["id"];
 - Avoid collapsing empty/dynamic/null states into one branch
 
 ---
+## Example 5a — Do not use strings or mixed values directly as conditions
+
+**Preferred**
+```php
+$status = get_status_text();
+
+if ($status === "ready") {
+	start_job();
+}
+```
+
+**Avoid**
+```php
+$status = get_status_text();
+
+if ($status) {
+	start_job();
+}
+```
+
+**Notes**
+- String-to-bool intent must be made explicit
+- Do not rely on `"0"`, `""`, or arbitrary non-empty strings as implicit condition values
+- The same rule applies to `mixed` values: normalize first, then branch
+
+---
 
 ## Example 6 — Array append with predictable intent
 
