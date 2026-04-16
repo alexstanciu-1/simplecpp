@@ -221,7 +221,7 @@ Included initially:
 - `bool_t` is the semantic boolean type of the runtime
 - runtime comparisons produce the configured semantic comparison type, not native `bool`
 - generated C++ control-flow must bridge explicitly from semantic boolean representation to native C++ condition evaluation
-- the approved control-flow bridge is an explicit native-bool conversion (`static_cast<bool>(...)` or `cast<bool>(...)`), not `.native_value()` in generated conditions; this bridge applies only after the value has already been reduced to the approved condition subset
+- the approved control-flow bridge is an explicit native-bool conversion (`static_cast<bool>(...)` or `cast<bool>(...)`), not `.native_value()` in generated conditions
 - `bool_t` must not provide uncontrolled truthiness; any native-bool bridge must remain explicit
 
 ### 6.3 `int_t` and `float_t`
@@ -377,15 +377,18 @@ Policy flexibility is allowed only through configuration/version changes, not th
 ## 7a. PHP helper identity semantics
 
 - `===` and `!==` remain helper-based in `scpp::php`
-- the current rule is exact-type identity, not family identity
-- `null_t === null_t` is true
-- `null_t === nullable<T>` is true only when the nullable is empty
-- `nullable<T> === null_t` is true only when the nullable is empty
-- `nullable<T> === nullable<T>` compares null-state first, then recurses into contained-value identity
+- strict identity is defined over **PHP-visible values**, not raw wrapper/storage types
+- wrapper carriers normalize before comparison:
+	- `nullable<T>` normalizes to either PHP `null` or wrapped `T`
+	- `result_or_false<T>` normalizes to either PHP `false` or wrapped `T`
+	- `result_or_bool<T>` normalizes to PHP `false`, PHP `true`, or wrapped `T`
+	- `result<T>` compares success payloads by wrapped-value identity and error states by structured `error_t` payload equality
+	- `mixed_t` compares by active runtime kind first, then by the exact payload of that kind
+- `null_t`, `nullopt_t`, and `nullptr_t` all normalize to PHP `null`
 - `shared_p<T> === shared_p<T>` compares managed object identity, not deep value equality
 - `unique_p<T> === unique_p<T>` compares managed object identity
 - native C++ references are an emission strategy, not a distinct runtime wrapper family
-- all other differing exact types are non-identical
+- after wrapper normalization, differing PHP-visible kinds remain non-identical
 
 ---
 
@@ -441,7 +444,7 @@ The code generator should target the runtime as a semantic backend, not as a thi
 
 ### Required rules
 - generated code should use `scpp` wrappers as the semantic boundary
-- conditions in generated C++ must bridge explicitly from the semantic boolean representation to native control-flow evaluation, using the configured explicit bool bridge rather than `.native_value()`; generators must not treat strings or dynamic carriers as implicitly truthy/falsy condition values
+- conditions in generated C++ must bridge explicitly from the semantic boolean representation to native control-flow evaluation, using the configured explicit bool bridge rather than `.native_value()`
 - generator output must not rely on accidental native implicit conversions
 - all generated behavior that depends on casts or overloads must be derivable from configuration
 
@@ -508,10 +511,10 @@ See: module_inclusion_model.md
 
 ## result_or_false<T>, result_or_bool<T>, and result<T>
 
-- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`.
-- `result<T>` is the explicit structured-failure wrapper. Value-required casts, typed-boundary conversions, and operator participation unwrap only the success value; the error state is never silently converted into a usable value.
+- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`, and PHP helper operators must normalize that state as the visible PHP `false` value.
+- `result<T>` is the explicit structured-failure wrapper. Value-required casts and typed-boundary conversions unwrap only the success value; PHP helper identity may compare either the success payload or the structured `error_t` payload, but the error state is never silently converted into a usable value.
 - `result<T>` error inspection is explicit through `error()`. The generator must lower `$result->error()->...` to the wrapper method rather than treating `error` as a real payload property.
-- `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, but its non-value states are the PHP boolean sentinels `false` and `true`.
+- `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, and its non-value states must normalize to the visible PHP boolean sentinels `false` and `true` for helper-owned operators and conditions.
 
 
 ## PHP false-sentinel exposure rule

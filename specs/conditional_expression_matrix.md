@@ -14,8 +14,9 @@ Keep the generator structurally simple and mostly type-blind while ensuring that
 ## Runtime helper split
 
 The helpers are intentionally separate because the semantic target differs:
-- `??` produces the first defined value and usually unwraps `nullable<T>` to `T`, except for explicit `mixed_t` result-matrix entries that preserve the dynamic carrier
-- `?:` chooses between two branches and may preserve wrapper shape such as `nullable<T>`
+- `??` produces the first non-null PHP-visible value and usually unwraps `nullable<T>` to `T`, except for explicit carrier-preserving entries such as `mixed_t` and guarded-result wrappers
+- `?:` chooses between two branches using PHP-visible truthiness and may preserve wrapper shape such as `nullable<T>` or guarded-result wrappers
+- both helpers share the same wrapper normalization rules for PHP null-ness / truthiness even though their result matrices remain separate
 
 ## Initial `??` matrix
 
@@ -27,6 +28,9 @@ The helpers are intentionally separate because the semantic target differs:
 | `mixed_t` | `T` | `mixed_t` | supported | preserves dynamic carrier and applies PHP null fallback semantics |
 | `T` | `mixed_t` | `mixed_t` | supported | fallback is normalized into `mixed_t` explicitly |
 | `nullable<T>` | `mixed_t` | `mixed_t` | supported | unwrap left when set; otherwise use dynamic fallback |
+| `result_or_false<T>` | `T` | `result_or_false<T>` | supported | PHP `false` is not null, so coalesce preserves the guarded wrapper |
+| `result_or_bool<T>` | `T` | `result_or_bool<T>` | supported | PHP bool sentinels are not null, so coalesce preserves the guarded wrapper |
+| `result<T>` | `T` | `result<T>` | supported | structured result wrappers are not null and preserve their wrapper identity |
 | `nullable<T>` | `nullable<T>` | n/a | rejected for now | would require a distinct result policy |
 | other mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
 
@@ -41,6 +45,12 @@ The helpers are intentionally separate because the semantic target differs:
 | `nullable<T>` | `nullable<T>` | `nullable<T>` | supported | exact same wrapper type |
 | `nullable<T>` | `T` | `nullable<T>` | supported | else branch is wrapped into `nullable<T>` |
 | `T` | `nullable<T>` | `nullable<T>` | supported | then branch is wrapped into `nullable<T>` |
+| `result_or_false<T>` | `T` | `result_or_false<T>` | supported | fallback `T` is wrapped into the guarded PHP `T|false` carrier |
+| `T` | `result_or_false<T>` | `result_or_false<T>` | supported | present branch is wrapped into the guarded PHP `T|false` carrier |
+| `result_or_bool<T>` | `T` | `result_or_bool<T>` | supported | fallback `T` is wrapped into the guarded PHP `T|bool` carrier |
+| `T` | `result_or_bool<T>` | `result_or_bool<T>` | supported | present branch is wrapped into the guarded PHP `T|bool` carrier |
+| `result<T>` | `T` | `result<T>` | supported | fallback `T` is wrapped into the structured result carrier |
+| `T` | `result<T>` | `result<T>` | supported | present branch is wrapped into the structured result carrier |
 | mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
 
 ## Condition rule for ternary
@@ -59,6 +69,12 @@ Practical implication:
 - `"yes" ? ... : ...` is not an approved implicit condition form
 - `$mixed ?: $fallback` is only valid when `$mixed` is already in the approved condition subset or has been normalized explicitly
 
+Initial supported truthiness path:
+- plain scalar inputs continue through the existing explicit boolean bridge
+- `mixed_t` in ternary / elvis condition context uses PHP-style truthiness inside the helper (`null`, `0`, `0.0`, `""`, and `"0"` are false; non-empty arrays are true; dynamic object handles are true when present)
+- `nullable<T>` is false when empty, otherwise it reuses the truthiness rule of the contained `T`, including the `mixed_t` helper path when applicable
+
+
 ## Elvis rule
 
 `$x ?: $y` lowers through a temporary plus `php::ternary_eval(...)` so `$x` is evaluated exactly once.
@@ -71,3 +87,13 @@ Seed tests should prove that the helper path behaves identically for:
 - ternary / elvis over the same runtime types
 
 As new combinations are approved, extend this matrix first, then add fixtures.
+
+
+## Shared wrapper normalization rule
+
+The conditional helpers reuse one PHP-visible wrapper normalization rule:
+- `nullable<T>` is null when empty and otherwise delegates to the wrapped payload
+- `result_or_false<T>` is never null; its empty state is PHP `false`
+- `result_or_bool<T>` is never null; its non-value states are PHP `false` and `true`
+- `result<T>` is never null; non-success states remain wrapper states
+- `mixed_t` uses its active runtime kind (`null`, `bool`, `int`, `float`, `string`, table/object carriers)

@@ -1230,9 +1230,10 @@
 			"allowed_inputs": [
 				"bool_t",
 				"int_t",
-				"float_t"
+				"float_t",
+				"mixed_t"
 			],
-			"mixed_t_rule": "not allowed in generic condition coercion; dynamic or string-backed condition semantics must be made explicit before the control-flow boundary"
+			"mixed_t_rule": "for generic condition coercion the bridge remains explicit, but php::ternary_eval uses helper-owned PHP-style mixed_t truthiness for condition evaluation: null, 0, 0.0, \"\", and \"0\" are false; non-empty arrays are true; present dynamic object handles are true"
 		},
 		"text": {
 			"result_type": "string_t",
@@ -2892,7 +2893,7 @@
 				"coalesce_exact_match_priority": "coalesce_result resolves exact same-type pairs first; mixed_t ?? mixed_t is an explicit supported exact-match cell",
 				"ternary_exact_match_priority": "ternary_result keeps an explicit mixed_t ?: mixed_t same-type cell for symmetry with coalesce and future-proofing",
 				"ternary_mixed_cross_type": "ternary_result supports mixed_t ?: T and T ?: mixed_t by normalizing the non-dynamic branch into mixed_t",
-				"ternary_condition_truthiness": "php::ternary_eval does not provide a generic PHP-style mixed_t truthiness escape hatch; condition inputs must already satisfy the configured explicit condition subset or be normalized before lowering",
+				"ternary_condition_truthiness": "php::ternary_eval uses helper-owned PHP-style truthiness for mixed_t condition values instead of the strict cast<bool_t>(mixed_t) narrowing path",
 				"matrix_source": "specs/conditional_expression_matrix.md"
 			}
 		}

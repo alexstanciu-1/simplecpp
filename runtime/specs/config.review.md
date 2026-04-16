@@ -99,7 +99,7 @@ Only the listed casts exist. The default policy is forbidden, so every allowed c
 | `mixed_t -> bool_t / int_t / float_t / string_t` | Dynamic explicit casts dispatch by runtime kind and then reuse the corresponding static cast rule. | `$x = (int)$m;` | `auto x = ::scpp::cast<::scpp::int_t>(m);` | Unsupported runtime kinds fail at runtime; supported string payloads use the same strict string rules as direct `string_t` casts. |
 | `mixed_t -> nullable<T>` | Dynamic explicit cast may lift runtime null into empty nullable and otherwise reuse the configured `mixed_t -> T` rule for the wrapped target. | `function f(array $row): ?string { return $row["label"]; }` | `return ::scpp::cast<::scpp::nullable<::scpp::string_t>>(row.get(::scpp::string_t("label")));` | This keeps typed-boundary normalization centralized in `cast` instead of spreading null checks and unwrap logic across generator sites. |
 
-| `php::ternary_eval` condition policy | Ternary / elvis condition evaluation must stay inside the same explicit condition subset used elsewhere; it is not a generic PHP-style truthiness escape hatch. | `$flag ?: 7;` | `::scpp::php::ternary_eval(...);` | `string_t`, `mixed_t`, `null_t`, and table/object-like carriers are not implicitly accepted as conditions; normalize intent explicitly first. |
+| `php::ternary_eval` mixed condition truthiness | Ternary / elvis condition evaluation on `mixed_t` uses helper-owned PHP truthiness rather than strict `cast<bool_t>(mixed_t)` narrowing. | `$x ?: 7;` where `$x` is `mixed` | `::scpp::php::ternary_eval(...);` | `null`, `0`, `0.0`, `""`, and `"0"` are false; non-empty arrays are true; present dynamic object handles are true. |
 
 | `nullable<T> -> T` | Unwrapping a present nullable is explicit. | `$x = $maybe; // after presence check` | `auto x = ::scpp::cast<T>(maybe);` | Config labels this as `unwrap_present_value`, so the generator must only use it when presence is guaranteed. |
 | `nullopt_t -> nullable<T>` | Optional-empty sentinel may construct empty nullable implicitly. | `$x = null; // empty optional route` | `::scpp::nullable<T> x = ::scpp::nullopt_t();` | Keeps sentinel entry points flexible while preserving wrapper semantics. |
@@ -115,12 +115,12 @@ Coercions are not general casts. They describe context-driven lowering, currentl
 ### 5.1 Condition coercion
 
 #### Description
-Condition lowering remains explicit: semantic `bool_t` stays the comparison/result type, while only the approved condition subset may enter control flow through the explicit `cast<bool>` / `static_cast<bool>` bridge path.
+Condition lowering remains explicit: semantic `bool_t` stays the comparison/result type, while configured scalar inputs may enter control flow only through the explicit `cast<bool>` / `static_cast<bool>` bridge path.
 
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `condition.allowed_inputs = [bool_t, int_t, float_t]` | Generic condition lowering is intentionally narrow and excludes implicit string/dynamic truthiness. | `if ($flag) {}` / `if ($count) {}` | `if (::scpp::cast<bool>(flag)) { ... }` / `if (::scpp::cast<bool>(count)) { ... }` | `string_t`, `mixed_t`, `null_t`, and table/object-like carriers must be normalized explicitly before control flow. |
-| `condition.bridge = cast<bool>` | Conditions bridge to native C++ using the explicit native-bool cast path after the input has already been restricted to the approved condition subset. | `while ($flag) {}` | `while (::scpp::cast<bool>(flag)) { ... }` | This keeps control flow legal in C++ without turning strings or dynamic values into implicit truthy/falsy conditions. |
+| `condition.allowed_inputs = [bool_t, int_t, float_t, mixed_t]` | Generic condition lowering keeps the explicit boolean bridge, while helper-owned PHP condition sites may apply a dedicated `mixed_t` truthiness path. | `if ($x) {}` / `$x ?: 7` | `if (::scpp::cast<bool>(x)) { ... }` / `::scpp::php::ternary_eval(...);` | The strict cast path remains available, but ternary / elvis on `mixed_t` now uses helper-owned PHP truthiness instead of narrowing through `cast<bool_t>(mixed_t)`. |
+| `condition.bridge = cast<bool>` | Conditions bridge to native C++ using the explicit native-bool cast path. | `while ($flag) {}` | `while (::scpp::cast<bool>(flag)) { ... }` | This keeps control flow legal in C++ without re-wrapping through `bool_t` just to unwrap again. |
 
 ### 5.2 Text coercion
 
@@ -257,7 +257,7 @@ Declares the stable helper names that generators/frontends are allowed to target
 | `namespaces.php = scpp::php` | PHP-specific runtime helpers, when needed, live under a separate namespace. | `// frontend/runtime glue` | `::scpp::php::...;` | Keeps core runtime and PHP-facing glue separable. |
 | `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `echo $a, $b;` | `::scpp::php::echo_eval(...);` | Important because contract stability matters more than today’s internal implementation structure. |
 | `notes.separation_rule` | The contract lists shared knowledge helpers, not generator internals. | `// policy note` | `// no direct dependency on private helper names` | This is a governance rule: keep frontend/runtime coupling narrow and intentional. |
-| `notes.php_identity.rule = exact_type_required_except_null_nullable` | Strict identity uses exact type matching, with only null-vs-empty-nullable cross-type equality allowed. | `$a === $b;` | `::scpp::php::identical(a, b);` | Same-type values compare by value or identity depending on wrapper kind; differing exact types are non-identical. The helper returns `bool_t`, not native `bool`, because it is part of the PHP runtime semantic layer. |
+| `notes.php_identity.rule = php_visible_value_normalization` | Strict identity normalizes PHP-facing wrappers into their visible PHP values before comparison. | `$a === $b;` | `::scpp::php::identical(a, b);` | `nullable<T>`, `result_or_false<T>`, `result_or_bool<T>`, `result<T>`, and `mixed_t` compare by normalized PHP-visible kind/value rather than by raw wrapper type. The helper returns `bool_t`, not native `bool`, because it is part of the PHP runtime semantic layer. |
 
 ## 13. Scope Note
 
