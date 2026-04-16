@@ -48,8 +48,9 @@ The helpers are intentionally separate because the semantic target differs:
 The ternary condition is evaluated once inside the runtime helper.
 
 Initial supported truthiness path:
-- plain scalar / dynamic values through existing `cast<bool>(...)` behavior
-- `nullable<T>` as false when empty, otherwise truthiness of the contained `T`
+- plain scalar inputs continue through the existing explicit boolean bridge
+- `mixed_t` in ternary / elvis condition context uses PHP-style truthiness inside the helper (`null`, `0`, `0.0`, `""`, and `"0"` are false; non-empty arrays are true; dynamic object handles are true when present)
+- `nullable<T>` is false when empty, otherwise it reuses the truthiness rule of the contained `T`, including the `mixed_t` helper path when applicable
 
 ## Elvis rule
 

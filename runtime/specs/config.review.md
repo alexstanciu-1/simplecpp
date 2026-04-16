@@ -99,6 +99,8 @@ Only the listed casts exist. The default policy is forbidden, so every allowed c
 | `mixed_t -> bool_t / int_t / float_t / string_t` | Dynamic explicit casts dispatch by runtime kind and then reuse the corresponding static cast rule. | `$x = (int)$m;` | `auto x = ::scpp::cast<::scpp::int_t>(m);` | Unsupported runtime kinds fail at runtime; supported string payloads use the same strict string rules as direct `string_t` casts. |
 | `mixed_t -> nullable<T>` | Dynamic explicit cast may lift runtime null into empty nullable and otherwise reuse the configured `mixed_t -> T` rule for the wrapped target. | `function f(array $row): ?string { return $row["label"]; }` | `return ::scpp::cast<::scpp::nullable<::scpp::string_t>>(row.get(::scpp::string_t("label")));` | This keeps typed-boundary normalization centralized in `cast` instead of spreading null checks and unwrap logic across generator sites. |
 
+| `php::ternary_eval` mixed condition truthiness | Ternary / elvis condition evaluation on `mixed_t` uses helper-owned PHP truthiness rather than strict `cast<bool_t>(mixed_t)` narrowing. | `$x ?: 7;` where `$x` is `mixed` | `::scpp::php::ternary_eval(...);` | `null`, `0`, `0.0`, `""`, and `"0"` are false; non-empty arrays are true; present dynamic object handles are true. |
+
 | `nullable<T> -> T` | Unwrapping a present nullable is explicit. | `$x = $maybe; // after presence check` | `auto x = ::scpp::cast<T>(maybe);` | Config labels this as `unwrap_present_value`, so the generator must only use it when presence is guaranteed. |
 | `nullopt_t -> nullable<T>` | Optional-empty sentinel may construct empty nullable implicitly. | `$x = null; // empty optional route` | `::scpp::nullable<T> x = ::scpp::nullopt_t();` | Keeps sentinel entry points flexible while preserving wrapper semantics. |
 | `nullptr_t -> shared_p<T> / unique_p<T> / weak_p<T>` | Pointer-empty sentinel may construct empty handle wrappers implicitly. | `$x = null; // pointer-empty route` | `::scpp::shared_p<T> x = ::scpp::nullptr_t();` | Useful when the generator wants pointer-flavored empty semantics. |
@@ -117,7 +119,7 @@ Condition lowering remains explicit: semantic `bool_t` stays the comparison/resu
 
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
-| `condition.allowed_inputs = [bool_t, int_t, float_t]` | Conditions may be lowered from configured scalar inputs through explicit boolean casts. | `if ($x) {}` | `if (::scpp::cast<bool>(x)) { ... }` | Truthiness remains opt-in through the cast table instead of native implicit conversions. |
+| `condition.allowed_inputs = [bool_t, int_t, float_t, mixed_t]` | Generic condition lowering keeps the explicit boolean bridge, while helper-owned PHP condition sites may apply a dedicated `mixed_t` truthiness path. | `if ($x) {}` / `$x ?: 7` | `if (::scpp::cast<bool>(x)) { ... }` / `::scpp::php::ternary_eval(...);` | The strict cast path remains available, but ternary / elvis on `mixed_t` now uses helper-owned PHP truthiness instead of narrowing through `cast<bool_t>(mixed_t)`. |
 | `condition.bridge = cast<bool>` | Conditions bridge to native C++ using the explicit native-bool cast path. | `while ($flag) {}` | `while (::scpp::cast<bool>(flag)) { ... }` | This keeps control flow legal in C++ without re-wrapping through `bool_t` just to unwrap again. |
 
 ### 5.2 Text coercion

@@ -956,7 +956,42 @@ inline bool_t ternary_condition_truthy(Value &&value) {
 			return bool_t(false);
 		}
 		using inner_t = typename conditional_nullable_info<value_t>::inner_type;
-		return bool_t(cast<bool>(cast<inner_t>(value)));
+		return ternary_condition_truthy(cast<inner_t>(value));
+	} else if constexpr (std::is_same_v<value_t, mixed_t>) {
+		switch (value.kind()) {
+			case mixed_t::kind_t::null_v:
+				return bool_t(false);
+			case mixed_t::kind_t::bool_v:
+				return value.bool_value();
+			case mixed_t::kind_t::int_v:
+				return bool_t(value.int_value().native_value() != 0);
+			case mixed_t::kind_t::float_v:
+				return bool_t(value.float_value().native_value() != 0.0);
+			case mixed_t::kind_t::string_v: {
+				const auto *string_value = value.string_if();
+				return bool_t(string_value != nullptr && !string_value->empty().native_value() && *string_value != string_t("0"));
+			}
+			case mixed_t::kind_t::table_v: {
+				const auto *table_value = value.table_if();
+				return bool_t(table_value != nullptr && !table_value->empty().native_value());
+			}
+			case mixed_t::kind_t::shared_table_v: {
+				const auto *table_value = value.shared_table_if();
+				return bool_t(table_value != nullptr && static_cast<bool>(*table_value) && !(*table_value)->empty().native_value());
+			}
+			case mixed_t::kind_t::dynamic_v: {
+				const auto *dynamic_value = value.dynamic_if();
+				return bool_t(dynamic_value != nullptr && static_cast<bool>(*dynamic_value));
+			}
+			case mixed_t::kind_t::weak_table_v: {
+				const auto *weak_value = value.weak_table_if();
+				if (weak_value == nullptr) {
+					return bool_t(false);
+				}
+				auto locked = weak_value->lock();
+				return bool_t(static_cast<bool>(locked) && !locked->empty().native_value());
+			}
+		}
 	}
 	return bool_t(cast<bool>(std::forward<Value>(value)));
 }
