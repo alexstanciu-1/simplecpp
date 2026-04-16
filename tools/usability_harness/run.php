@@ -27,6 +27,10 @@ final class HarnessConfig
 		public readonly int $stopAfterUniqueBugFailures,
 		public readonly bool $compareWithPhpWhenDeterministic,
 		public readonly array $enabledKinds,
+		public readonly bool $runAllTemplates,
+		public readonly ?string $selectedTemplateId,
+		public readonly ?string $selectedKind,
+		public readonly ?string $selectedCampaign,
 		public readonly int $initTimeoutSeconds,
 		public readonly int $phpTimeoutSeconds,
 		public readonly int $runTimeoutSeconds,
@@ -42,6 +46,7 @@ final class HarnessResult
 	public function __construct(
 		public string $testId,
 		public string $kind,
+		public string $campaign,
 		public string $status,
 		public string $classification,
 		public string $stage,
@@ -61,6 +66,7 @@ final class HarnessResult
 		return [
 			'test_id' => $this->testId,
 			'kind' => $this->kind,
+			'campaign' => $this->campaign,
 			'status' => $this->status,
 			'classification' => $this->classification,
 			'stage' => $this->stage,
@@ -87,7 +93,7 @@ function main(array $argv): void
 	$templates = load_templates(resolve_config_path($repoRoot, $config->templatesPath));
 
 	prepare_artifact_roots($config);
-	$selectedTemplates = select_templates($templates, $config->enabledKinds, $config->maxAttempts);
+	$selectedTemplates = select_templates($templates, $config);
 	if ($selectedTemplates === []) {
 		fwrite(STDERR, "No enabled harness templates matched the current configuration.\n");
 		exit(1);
@@ -124,6 +130,8 @@ function main(array $argv): void
 	$finishedAt = date(DATE_ATOM);
 	$report = build_report($config, $configPath, $startedAt, $finishedAt, $attempts, $results, $uniqueFailures);
 	write_json_file($config->artifactsRoot . '/report.json', $report);
+	write_json_file($config->artifactsRoot . '/feature_summary.json', $report['feature_summary']);
+	write_json_file($config->artifactsRoot . '/campaign_summary.json', $report['campaign_summary']);
 	write_summary_file($config->artifactsRoot . '/summary.txt', $report);
 
 	echo 'Harness completed.' . PHP_EOL;
@@ -145,6 +153,10 @@ function parse_arguments(array $args): array
 			$parsed['include_scenarios'] = true;
 			continue;
 		}
+		if ($arg === '--all') {
+			$parsed['all'] = true;
+			continue;
+		}
 		if (str_starts_with($arg, '--config=')) {
 			$parsed['config'] = substr($arg, strlen('--config='));
 			continue;
@@ -157,6 +169,18 @@ function parse_arguments(array $args): array
 			$parsed['stop_after_bugs'] = (int) substr($arg, strlen('--stop-after-bugs='));
 			continue;
 		}
+		if (str_starts_with($arg, '--template=')) {
+			$parsed['template'] = substr($arg, strlen('--template='));
+			continue;
+		}
+		if (str_starts_with($arg, '--kind=')) {
+			$parsed['kind'] = substr($arg, strlen('--kind='));
+			continue;
+		}
+		if (str_starts_with($arg, '--campaign=')) {
+			$parsed['campaign'] = substr($arg, strlen('--campaign='));
+			continue;
+		}
 		if ($arg === '--config' && isset($args[$i + 1])) {
 			$parsed['config'] = $args[++$i];
 			continue;
@@ -167,6 +191,18 @@ function parse_arguments(array $args): array
 		}
 		if ($arg === '--stop-after-bugs' && isset($args[$i + 1])) {
 			$parsed['stop_after_bugs'] = (int) $args[++$i];
+			continue;
+		}
+		if ($arg === '--template' && isset($args[$i + 1])) {
+			$parsed['template'] = $args[++$i];
+			continue;
+		}
+		if ($arg === '--kind' && isset($args[$i + 1])) {
+			$parsed['kind'] = $args[++$i];
+			continue;
+		}
+		if ($arg === '--campaign' && isset($args[$i + 1])) {
+			$parsed['campaign'] = $args[++$i];
 			continue;
 		}
 		if (in_array($arg, ['-h', '--help'], true)) {
@@ -183,7 +219,7 @@ function print_help(): void
 {
 	echo "Usability harness\n";
 	echo "Usage:\n";
-	echo "  php tools/usability_harness/run.php [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
+	echo "  php tools/usability_harness/run.php [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios] [--all] [--template <id>] [--kind <micro|scenario>] [--campaign <name>]\n";
 }
 
 function resolve_config_path(string $repoRoot, string $path): string
@@ -223,12 +259,25 @@ function load_config(string $repoRoot, string $configPath, array $args): Harness
 		stopAfterUniqueBugFailures: max(1, (int) ($args['stop_after_bugs'] ?? $data['stop_after_unique_bug_failures'] ?? 20)),
 		compareWithPhpWhenDeterministic: (bool) ($data['compare_with_php_when_deterministic'] ?? true),
 		enabledKinds: array_values(array_unique($enabledKinds)),
+		runAllTemplates: ($args['all'] ?? false) === true,
+		selectedTemplateId: normalize_optional_string($args['template'] ?? null),
+		selectedKind: normalize_optional_string($args['kind'] ?? null),
+		selectedCampaign: normalize_optional_string($args['campaign'] ?? null),
 		initTimeoutSeconds: max(1, (int) ($data['timeouts']['init_seconds'] ?? 30)),
 		phpTimeoutSeconds: max(1, (int) ($data['timeouts']['php_seconds'] ?? 30)),
 		runTimeoutSeconds: max(1, (int) ($data['timeouts']['run_seconds'] ?? 180)),
 		phpBinary: $phpBinary,
 		astSoPath: $astSoPath,
 	);
+}
+
+function normalize_optional_string(mixed $value): ?string
+{
+	if (!is_string($value)) {
+		return null;
+	}
+	$value = trim($value);
+	return $value === '' ? null : $value;
 }
 
 function resolve_php_binary(): string
@@ -322,22 +371,43 @@ function remove_directory(string $path): void
 	}
 }
 
-function select_templates(array $templates, array $enabledKinds, int $limit): array
+function select_templates(array $templates, HarnessConfig $config): array
 {
 	$selected = [];
+	$hasExplicitSelection = $config->runAllTemplates
+		|| $config->selectedTemplateId !== null
+		|| $config->selectedKind !== null
+		|| $config->selectedCampaign !== null;
+
 	foreach ($templates as $template) {
 		if (!is_array($template)) {
 			continue;
 		}
+		$id = (string) ($template['id'] ?? '');
 		$kind = (string) ($template['kind'] ?? 'micro');
-		if (!in_array($kind, $enabledKinds, true)) {
+		$campaign = (string) ($template['campaign'] ?? 'uncategorized');
+
+		if ($config->selectedTemplateId !== null && $id !== $config->selectedTemplateId) {
 			continue;
 		}
-		if (($template['enabled_by_default'] ?? false) !== true && $kind !== 'scenario') {
+		if ($config->selectedKind !== null && $kind !== $config->selectedKind) {
 			continue;
 		}
+		if ($config->selectedCampaign !== null && $campaign !== $config->selectedCampaign) {
+			continue;
+		}
+
+		if (!$hasExplicitSelection) {
+			if (!in_array($kind, $config->enabledKinds, true)) {
+				continue;
+			}
+			if ($kind !== 'scenario' && ($template['enabled_by_default'] ?? false) !== true) {
+				continue;
+			}
+		}
+
 		$selected[] = $template;
-		if (count($selected) >= $limit) {
+		if (count($selected) >= $config->maxAttempts) {
 			break;
 		}
 	}
@@ -348,6 +418,7 @@ function execute_template(HarnessConfig $config, array $template): HarnessResult
 {
 	$testId = (string) ($template['id'] ?? 'unknown');
 	$kind = (string) ($template['kind'] ?? 'micro');
+	$campaign = (string) ($template['campaign'] ?? 'uncategorized');
 	$features = normalize_string_list($template['features'] ?? []);
 	$projectRoot = $config->workRoot . '/' . $testId;
 	$artifactBase = '';
@@ -362,7 +433,7 @@ function execute_template(HarnessConfig $config, array $template): HarnessResult
 	if (!validate_template($template)) {
 		$artifactBase = store_quarantine_artifact($config, 'generator', $testId, $projectRoot, $template, null, $initResult, $scppResult, $phpReference, $runtimeComparison, 'template_validation', 'Template is missing required fields.');
 		cleanup_work_project($projectRoot);
-		return new HarnessResult($testId, $kind, 'fail', 'generator', 'template_validation', 'Template is missing required fields.', build_dedup_key('template_validation', 'Template is missing required fields.'), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
+		return new HarnessResult($testId, $kind, $campaign, 'fail', 'generator', 'template_validation', 'Template is missing required fields.', build_dedup_key('template_validation', 'Template is missing required fields.'), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
 	}
 
 	$initResult = run_scpp_command($config, $projectRoot, ['init'], $config->initTimeoutSeconds);
@@ -371,7 +442,7 @@ function execute_template(HarnessConfig $config, array $template): HarnessResult
 		$class = classify_failure('scpp_init', $initResult['stderr'], $initResult['stdout']);
 		$artifactBase = store_quarantine_artifact($config, $class, $testId, $projectRoot, $template, null, $initResult, $scppResult, $phpReference, $runtimeComparison, 'scpp_init', $message);
 		cleanup_work_project($projectRoot);
-		return new HarnessResult($testId, $kind, 'fail', $class, 'scpp_init', $message, build_dedup_key('scpp_init', extract_failure_text($initResult)), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
+		return new HarnessResult($testId, $kind, $campaign, 'fail', $class, 'scpp_init', $message, build_dedup_key('scpp_init', extract_failure_text($initResult)), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
 	}
 
 	$deterministic = ($template['deterministic'] ?? false) === true;
@@ -381,7 +452,7 @@ function execute_template(HarnessConfig $config, array $template): HarnessResult
 			$message = 'PHP reference execution failed.';
 			$artifactBase = store_quarantine_artifact($config, 'generator', $testId, $projectRoot, $template, null, $initResult, $scppResult, $phpReference, $runtimeComparison, 'php_reference', $message);
 			cleanup_work_project($projectRoot);
-			return new HarnessResult($testId, $kind, 'fail', 'generator', 'php_reference', $message, build_dedup_key('php_reference', extract_failure_text($phpReference)), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
+			return new HarnessResult($testId, $kind, $campaign, 'fail', 'generator', 'php_reference', $message, build_dedup_key('php_reference', extract_failure_text($phpReference)), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
 		}
 	}
 
@@ -393,7 +464,7 @@ function execute_template(HarnessConfig $config, array $template): HarnessResult
 		$message = 'scpp ' . $executionMode . ' failed.';
 		$artifactBase = store_quarantine_artifact($config, $class, $testId, $projectRoot, $template, null, $initResult, $scppResult, $phpReference, $runtimeComparison, 'scpp_' . $executionMode, $message);
 		cleanup_work_project($projectRoot);
-		return new HarnessResult($testId, $kind, 'fail', $class, 'scpp_' . $executionMode, $message, build_dedup_key('scpp_' . $executionMode, extract_failure_text($scppResult)), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
+		return new HarnessResult($testId, $kind, $campaign, 'fail', $class, 'scpp_' . $executionMode, $message, build_dedup_key('scpp_' . $executionMode, extract_failure_text($scppResult)), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
 	}
 
 	$runtimeComparison = compare_runtime_outputs($template, $phpReference, $scppResult, $executionMode);
@@ -401,12 +472,12 @@ function execute_template(HarnessConfig $config, array $template): HarnessResult
 		$message = 'Runtime output mismatch.';
 		$artifactBase = store_quarantine_artifact($config, 'bug', $testId, $projectRoot, $template, null, $initResult, $scppResult, $phpReference, $runtimeComparison, 'output_compare', $message);
 		cleanup_work_project($projectRoot);
-		return new HarnessResult($testId, $kind, 'fail', 'bug', 'output_compare', $message, build_dedup_key('output_compare', (string) ($runtimeComparison['reason'] ?? 'output mismatch')), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
+		return new HarnessResult($testId, $kind, $campaign, 'fail', 'bug', 'output_compare', $message, build_dedup_key('output_compare', (string) ($runtimeComparison['reason'] ?? 'output mismatch')), $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
 	}
 
 	$artifactBase = store_passing_artifact($config, $testId, $projectRoot, $template, $initResult, $scppResult, $phpReference, $runtimeComparison);
 	cleanup_work_project($projectRoot);
-	return new HarnessResult($testId, $kind, 'pass', 'pass', 'complete', 'Pass.', null, $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
+	return new HarnessResult($testId, $kind, $campaign, 'pass', 'pass', 'complete', 'Pass.', null, $features, $artifactBase, $phpReference, $initResult, $scppResult, $runtimeComparison);
 }
 
 function materialize_template_project(string $projectRoot, array $template): void
@@ -447,6 +518,11 @@ function run_php_reference(HarnessConfig $config, string $projectRoot, array $te
 
 function run_scpp_command(HarnessConfig $config, string $projectRoot, array $scppArgs, int $timeoutSeconds): array
 {
+	$launcher = find_command_path('scpp');
+	if ($launcher !== null) {
+		return run_command(array_merge([$launcher], $scppArgs), $projectRoot, $timeoutSeconds);
+	}
+
 	$script = normalize_path($config->repoRoot . '/bin/scpp.php');
 	return run_command(build_php_command($config, true, array_merge([$script], $scppArgs)), $projectRoot, $timeoutSeconds);
 }
@@ -663,7 +739,7 @@ function store_passing_artifact(HarnessConfig $config, string $testId, string $p
 {
 	$featureKey = build_feature_key(normalize_string_list($template['features'] ?? []));
 	$artifactRoot = $config->passingRoot . '/' . $featureKey . '/' . $testId;
-	copy_selected_project_files($projectRoot, $artifactRoot);
+	copy_selected_project_files($projectRoot, $artifactRoot, $template);
 	write_json_file($artifactRoot . '/metadata.json', [
 		'test_id' => $testId,
 		'kind' => $template['kind'] ?? 'micro',
@@ -683,6 +759,7 @@ function store_quarantine_artifact(HarnessConfig $config, string $classification
 	$artifactName = ($dedupKey ?? 'raw') . '__' . $testId;
 	$artifactRoot = $config->quarantineRoot . '/' . $bucket . '/' . $artifactName;
 	copy_directory($projectRoot, $artifactRoot);
+	capture_generated_cpp($projectRoot, $artifactRoot);
 	write_json_file($artifactRoot . '/metadata.json', [
 		'test_id' => $testId,
 		'kind' => $template['kind'] ?? 'micro',
@@ -699,13 +776,38 @@ function store_quarantine_artifact(HarnessConfig $config, string $classification
 	return relative_path($config->repoRoot, $artifactRoot);
 }
 
-function copy_selected_project_files(string $sourceRoot, string $targetRoot): void
+function copy_selected_project_files(string $sourceRoot, string $targetRoot, array $template): void
 {
 	ensure_directory($targetRoot);
-	foreach (['main.php', 'prism.json'] as $name) {
+	$wanted = ['prism.json'];
+	foreach (($template['files'] ?? []) as $relativePath => $_content) {
+		if (is_string($relativePath) && $relativePath !== '') {
+			$wanted[] = str_replace('\\', '/', $relativePath);
+		}
+	}
+	$wanted = array_values(array_unique($wanted));
+	foreach ($wanted as $name) {
 		$source = $sourceRoot . '/' . $name;
 		if (is_file($source)) {
 			copy_file($source, $targetRoot . '/' . $name);
+		}
+	}
+}
+
+function capture_generated_cpp(string $projectRoot, string $artifactRoot): void
+{
+	$generatedRoot = $projectRoot . '/.prism/generated';
+	if (is_dir($generatedRoot)) {
+		copy_directory($generatedRoot, $artifactRoot . '/generated_cpp');
+	}
+	$buildRoot = $projectRoot . '/.prism/build';
+	if (!is_dir($buildRoot)) {
+		return;
+	}
+	foreach (['main.cpp', 'main.hpp'] as $name) {
+		$source = $buildRoot . '/' . $name;
+		if (is_file($source)) {
+			copy_file($source, $artifactRoot . '/generated_build/' . $name);
 		}
 	}
 }
@@ -777,17 +879,75 @@ function build_report(HarnessConfig $config, string $configPath, string $started
 			$totals['unique_bug_failures']++;
 		}
 	}
+	$featureSummary = build_feature_summary($results);
+	$campaignSummary = build_campaign_summary($results);
 	return [
-		'version' => 1,
+		'version' => 2,
 		'repo_root' => relative_path($config->repoRoot, $config->repoRoot),
 		'config_path' => relative_path($config->repoRoot, $configPath),
+		'selection' => [
+			'all' => $config->runAllTemplates,
+			'template' => $config->selectedTemplateId,
+			'kind' => $config->selectedKind,
+			'campaign' => $config->selectedCampaign,
+			'enabled_kinds' => $config->enabledKinds,
+		],
 		'started_at' => $startedAt,
 		'finished_at' => $finishedAt,
 		'attempts' => $attempts,
 		'totals' => $totals,
 		'unique_failures' => $uniqueFailures,
+		'feature_summary' => $featureSummary,
+		'campaign_summary' => $campaignSummary,
 		'results' => array_map(static fn (HarnessResult $result): array => $result->toArray(), $results),
 	];
+}
+
+function build_feature_summary(array $results): array
+{
+	$summary = [];
+	foreach ($results as $result) {
+		if (!$result instanceof HarnessResult) {
+			continue;
+		}
+		foreach ($result->features as $feature) {
+			if (!isset($summary[$feature])) {
+				$summary[$feature] = ['pass' => 0, 'fail' => 0, 'tests' => []];
+			}
+			$summary[$feature][$result->status]++;
+			$summary[$feature]['tests'][] = $result->testId;
+		}
+	}
+	ksort($summary, SORT_STRING);
+	foreach ($summary as &$row) {
+		$row['tests'] = array_values(array_unique($row['tests']));
+	}
+	unset($row);
+	return $summary;
+}
+
+function build_campaign_summary(array $results): array
+{
+	$summary = [];
+	foreach ($results as $result) {
+		if (!$result instanceof HarnessResult) {
+			continue;
+		}
+		$campaign = $result->campaign;
+		if (!isset($summary[$campaign])) {
+			$summary[$campaign] = ['pass' => 0, 'fail' => 0, 'kinds' => [], 'tests' => []];
+		}
+		$summary[$campaign][$result->status]++;
+		$summary[$campaign]['kinds'][] = $result->kind;
+		$summary[$campaign]['tests'][] = $result->testId;
+	}
+	ksort($summary, SORT_STRING);
+	foreach ($summary as &$row) {
+		$row['kinds'] = array_values(array_unique($row['kinds']));
+		$row['tests'] = array_values(array_unique($row['tests']));
+	}
+	unset($row);
+	return $summary;
 }
 
 function write_summary_file(string $path, array $report): void
@@ -800,6 +960,21 @@ function write_summary_file(string $path, array $report): void
 	$lines[] = 'Pass: ' . (string) (($report['totals']['pass'] ?? 0));
 	$lines[] = 'Fail: ' . (string) (($report['totals']['fail'] ?? 0));
 	$lines[] = 'Unique bug failures: ' . (string) (($report['totals']['unique_bug_failures'] ?? 0));
+	$selection = $report['selection'] ?? [];
+	$lines[] = 'Selection: all=' . (($selection['all'] ?? false) ? 'true' : 'false')
+		. ', template=' . (string) ($selection['template'] ?? '')
+		. ', kind=' . (string) ($selection['kind'] ?? '')
+		. ', campaign=' . (string) ($selection['campaign'] ?? '');
+	$lines[] = '';
+	$lines[] = 'Campaign summary:';
+	foreach (($report['campaign_summary'] ?? []) as $campaign => $row) {
+		$lines[] = '- ' . $campaign . ' => pass=' . (string) ($row['pass'] ?? 0) . ', fail=' . (string) ($row['fail'] ?? 0);
+	}
+	$lines[] = '';
+	$lines[] = 'Feature summary:';
+	foreach (($report['feature_summary'] ?? []) as $feature => $row) {
+		$lines[] = '- ' . $feature . ' => pass=' . (string) ($row['pass'] ?? 0) . ', fail=' . (string) ($row['fail'] ?? 0);
+	}
 	$lines[] = '';
 	$lines[] = 'Results:';
 	foreach (($report['results'] ?? []) as $result) {

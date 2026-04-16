@@ -113,7 +113,7 @@ function scpp_run_binary_service(string $workingDirectory, string $binaryPath, a
 		1 => ['pipe', 'w'],
 		2 => ['pipe', 'w'],
 	];
-	$process = proc_open($command, $descriptor, $pipes, $workingDirectory);
+	$process = proc_open($command, $descriptor, $pipes, $workingDirectory, scpp_build_process_environment());
 	if (!is_resource($process)) {
 		throw new RuntimeException('Failed to start built program.');
 	}
@@ -358,7 +358,7 @@ function handle_run(string $cwd, array $args): void
 		1 => ['file', 'php://stdout', 'w'],
 		2 => ['file', 'php://stderr', 'w'],
 	];
-	$process = proc_open($command, $descriptor, $pipes, $project['project_root']);
+	$process = proc_open($command, $descriptor, $pipes, $project['project_root'], scpp_build_process_environment());
 	if (!is_resource($process)) {
 		scpp_fail('Failed to start built program.' . PHP_EOL, 4);
 	}
@@ -384,7 +384,7 @@ function handle_usability_harness(string $cwd, array $args): void
 		1 => ['file', 'php://stdout', 'w'],
 		2 => ['file', 'php://stderr', 'w'],
 	];
-	$process = proc_open($command, $descriptor, $pipes, $cwd);
+	$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment());
 	if (!is_resource($process)) {
 		scpp_fail('Failed to start usability harness.' . PHP_EOL, 4);
 	}
@@ -576,7 +576,7 @@ function execute_build(string $projectRoot, string $configPath): array
 		1 => $captureSubprocessOutput ? ['pipe', 'w'] : ['file', 'php://stdout', 'w'],
 		2 => $captureSubprocessOutput ? ['pipe', 'w'] : ['file', 'php://stderr', 'w'],
 	];
-	$process = proc_open($command, $descriptor, $pipes, $projectRoot);
+	$process = proc_open($command, $descriptor, $pipes, $projectRoot, scpp_build_process_environment());
 	if (!is_resource($process)) {
 		scpp_fail("Failed to start Ninja.
 ", 4);
@@ -1292,7 +1292,7 @@ function compiler_launcher_is_usable(string $launcherCommand, string $compilerCo
 		1 => ['pipe', 'w'],
 		2 => ['pipe', 'w'],
 	];
-	$process = @proc_open($command, $descriptor, $pipes);
+	$process = @proc_open($command, $descriptor, $pipes, null, scpp_build_process_environment());
 	if (!is_resource($process)) {
 		return false;
 	}
@@ -1815,6 +1815,69 @@ function compiler_invocation_prefix(array $compiler): string
 	return '$cxx_launcher ';
 }
 
+/** @return array<string,string> */
+function scpp_build_process_environment(array $extra = []): array
+{
+	$env = [];
+	foreach ([getenv(), $_ENV, $_SERVER] as $source) {
+		if (!is_array($source)) {
+			continue;
+		}
+		foreach ($source as $key => $value) {
+			if (!is_string($key) || $key == '') {
+				continue;
+			}
+			if (is_array($value) || is_object($value) || $value === null) {
+				continue;
+			}
+			$env[$key] = (string) $value;
+		}
+	}
+	foreach ($extra as $key => $value) {
+		if (!is_string($key) || $key == '') {
+			continue;
+		}
+		if (is_array($value) || is_object($value) || $value === null) {
+			continue;
+		}
+		$env[$key] = (string) $value;
+	}
+	$env['PATH'] = scpp_effective_path_env($env['PATH'] ?? null);
+	return $env;
+}
+
+function scpp_effective_path_env(?string $pathEnv = null): string
+{
+	$pathEnv = is_string($pathEnv) ? trim($pathEnv) : '';
+	$dirs = [];
+	if ($pathEnv !== '') {
+		$dirs = array_filter(explode(PATH_SEPARATOR, $pathEnv), static fn (string $dir): bool => $dir !== '');
+	}
+	if (PHP_OS_FAMILY !== 'Windows') {
+		$dirs = array_merge($dirs, [
+			'/usr/local/sbin',
+			'/usr/local/bin',
+			'/usr/sbin',
+			'/usr/bin',
+			'/sbin',
+			'/bin',
+			'/usr/games',
+			'/usr/local/games',
+			'/snap/bin',
+		]);
+	}
+	$normalized = [];
+	foreach ($dirs as $dir) {
+		$dir = trim($dir);
+		if ($dir === '') {
+			continue;
+		}
+		$normalized[] = rtrim($dir, "\/");
+	}
+	$normalized = array_values(array_unique($normalized));
+	return implode(PATH_SEPARATOR, $normalized);
+}
+
 function object_extension(string $kind): string
 {
 	return $kind === 'msvc' ? 'obj' : 'o';
@@ -1823,8 +1886,8 @@ function object_extension(string $kind): string
 /** @param list<string> $commands */
 function find_command_path(array $commands): ?string
 {
-	$pathEnv = getenv('PATH');
-	if (!is_string($pathEnv) || $pathEnv === '') {
+	$pathEnv = scpp_effective_path_env(getenv('PATH') === false ? null : (string) getenv('PATH'));
+	if ($pathEnv === '') {
 		return null;
 	}
 

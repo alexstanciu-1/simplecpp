@@ -1046,7 +1046,7 @@ function runCommandMeasured(array $command, string $workingDirectory, int $timeo
 		];
 	}
 
-	$process = proc_open($processCommand, $descriptorSpec, $pipes, $workingDirectory);
+	$process = proc_open($processCommand, $descriptorSpec, $pipes, $workingDirectory, buildProcessEnvironment());
 	if (!is_resource($process)) {
 		throw new RuntimeException('Failed to start process: ' . implode(' ', $command));
 	}
@@ -1392,10 +1392,72 @@ function formatThrowableDetails(Throwable $throwable): string
 	return implode("\n", $parts);
 }
 
+function buildEffectivePath(?string $pathEnv = null): string
+{
+	$pathEnv = is_string($pathEnv) ? trim($pathEnv) : '';
+	$dirs = [];
+	if ($pathEnv !== '') {
+		$dirs = array_filter(explode(PATH_SEPARATOR, $pathEnv), static fn (string $dir): bool => $dir !== '');
+	}
+	if (DIRECTORY_SEPARATOR !== '\\') {
+		$dirs = array_merge($dirs, [
+			'/usr/local/sbin',
+			'/usr/local/bin',
+			'/usr/sbin',
+			'/usr/bin',
+			'/sbin',
+			'/bin',
+			'/usr/games',
+			'/usr/local/games',
+			'/snap/bin',
+		]);
+	}
+	$normalized = [];
+	foreach ($dirs as $dir) {
+		$dir = trim($dir);
+		if ($dir === '') {
+			continue;
+		}
+		$normalized[] = rtrim($dir, "\/");
+	}
+	$normalized = array_values(array_unique($normalized));
+	return implode(PATH_SEPARATOR, $normalized);
+}
+
+function buildProcessEnvironment(array $extra = []): array
+{
+	$env = [];
+	foreach ([getenv(), $_ENV, $_SERVER] as $source) {
+		if (!is_array($source)) {
+			continue;
+		}
+		foreach ($source as $key => $value) {
+			if (!is_string($key) || $key == '') {
+				continue;
+			}
+			if (is_array($value) || is_object($value) || $value === null) {
+				continue;
+			}
+			$env[$key] = (string) $value;
+		}
+	}
+	foreach ($extra as $key => $value) {
+		if (!is_string($key) || $key == '') {
+			continue;
+		}
+		if (is_array($value) || is_object($value) || $value === null) {
+			continue;
+		}
+		$env[$key] = (string) $value;
+	}
+	$env['PATH'] = buildEffectivePath($env['PATH'] ?? null);
+	return $env;
+}
+
 function commandExistsOnPath(string $command): bool
 {
-	$pathEnv = getenv('PATH');
-	if (!is_string($pathEnv) || $pathEnv === '') {
+	$pathEnv = buildEffectivePath(getenv('PATH') === false ? null : (string) getenv('PATH'));
+	if ($pathEnv === '') {
 		return false;
 	}
 
@@ -1446,7 +1508,7 @@ function compilerLauncherIsUsable(string $launcher, string $compiler): bool
 		1 => ['pipe', 'w'],
 		2 => ['pipe', 'w'],
 	];
-	$process = @proc_open([$launcher, $compiler, '--version'], $descriptor, $pipes);
+	$process = @proc_open([$launcher, $compiler, '--version'], $descriptor, $pipes, null, buildProcessEnvironment());
 	if (!is_resource($process)) {
 		return false;
 	}

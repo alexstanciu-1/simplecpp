@@ -176,6 +176,10 @@ Run the deterministic usability harness:
 
 ```bash
 scpp usability-harness
+scpp usability-harness --all
+scpp usability-harness --kind scenario
+scpp usability-harness --campaign scenarios_multifile
+scpp usability-harness --template scenario_bool_null_gate_001
 ```
 
 Transpile one PHP file to generated C++ printed on stdout:
