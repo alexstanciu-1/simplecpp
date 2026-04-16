@@ -936,6 +936,18 @@ struct ternary_result<T, nullable<T>> {
 	using type = nullable<T>;
 };
 
+template <typename Else>
+requires (!std::is_same_v<std::remove_cvref_t<Else>, mixed_t>)
+struct ternary_result<mixed_t, Else> {
+	using type = mixed_t;
+};
+
+template <typename Then>
+requires (!std::is_same_v<std::remove_cvref_t<Then>, mixed_t>)
+struct ternary_result<Then, mixed_t> {
+	using type = mixed_t;
+};
+
 template <typename Value>
 inline bool_t ternary_condition_truthy(Value &&value) {
 	using value_t = std::remove_cvref_t<Value>;
@@ -955,6 +967,12 @@ inline Result normalize_ternary_branch(Value &&value) {
 	using value_t = std::remove_cvref_t<Value>;
 	if constexpr (std::is_same_v<result_t, value_t>) {
 		return std::forward<Value>(value);
+	} else if constexpr (std::is_same_v<result_t, mixed_t>) {
+		if constexpr (conditional_nullable_info_v<value_t>) {
+			using inner_t = typename conditional_nullable_info<value_t>::inner_type;
+			return mixed_t(cast<inner_t>(value));
+		}
+		return mixed_t(std::forward<Value>(value));
 	} else if constexpr (
 		conditional_nullable_info_v<result_t>
 		&& std::is_same_v<typename conditional_nullable_info<result_t>::inner_type, value_t>

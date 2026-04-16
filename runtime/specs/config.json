@@ -2892,6 +2892,7 @@
 			"conditional_helpers": {
 				"coalesce_exact_match_priority": "coalesce_result resolves exact same-type pairs first; mixed_t ?? mixed_t is an explicit supported exact-match cell",
 				"ternary_exact_match_priority": "ternary_result keeps an explicit mixed_t ?: mixed_t same-type cell for symmetry with coalesce and future-proofing",
+				"ternary_mixed_cross_type": "ternary_result supports mixed_t ?: T and T ?: mixed_t by normalizing the non-dynamic branch into mixed_t",
 				"matrix_source": "specs/conditional_expression_matrix.md"
 			}
 		}

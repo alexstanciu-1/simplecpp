@@ -36,6 +36,8 @@ The helpers are intentionally separate because the semantic target differs:
 |---|---|---:|---|---|
 | `T` | `T` | `T` | supported | exact same type |
 | `mixed_t` | `mixed_t` | `mixed_t` | supported | explicit exact-match path kept alongside generic same-type deduction for symmetry with `??` |
+| `mixed_t` | `T` | `mixed_t` | supported | truthy branch preserves the dynamic carrier; else branch is normalized into `mixed_t` |
+| `T` | `mixed_t` | `mixed_t` | supported | else branch preserves the dynamic carrier; then branch is normalized into `mixed_t` |
 | `nullable<T>` | `nullable<T>` | `nullable<T>` | supported | exact same wrapper type |
 | `nullable<T>` | `T` | `nullable<T>` | supported | else branch is wrapped into `nullable<T>` |
 | `T` | `nullable<T>` | `nullable<T>` | supported | then branch is wrapped into `nullable<T>` |
