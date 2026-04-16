@@ -882,6 +882,11 @@ struct coalesce_result<T, T> {
 	using type = T;
 };
 
+template <>
+struct coalesce_result<mixed_t, mixed_t> {
+	using type = mixed_t;
+};
+
 template <typename T, typename Right>
 requires (!conditional_nullable_info_v<Right>)
 struct coalesce_result<nullable<T>, Right> {
@@ -889,6 +894,7 @@ struct coalesce_result<nullable<T>, Right> {
 };
 
 template <typename Right>
+requires (!std::is_same_v<std::remove_cvref_t<Right>, mixed_t>)
 struct coalesce_result<mixed_t, Right> {
 	using type = mixed_t;
 };
@@ -899,7 +905,10 @@ struct coalesce_result<nullable<T>, mixed_t> {
 };
 
 template <typename Left>
-requires (!conditional_nullable_info_v<Left>)
+requires (
+	!conditional_nullable_info_v<Left>
+	&& !std::is_same_v<std::remove_cvref_t<Left>, mixed_t>
+)
 struct coalesce_result<Left, mixed_t> {
 	using type = mixed_t;
 };
@@ -910,6 +919,11 @@ struct ternary_result;
 template <typename T>
 struct ternary_result<T, T> {
 	using type = T;
+};
+
+template <>
+struct ternary_result<mixed_t, mixed_t> {
+	using type = mixed_t;
 };
 
 template <typename T>

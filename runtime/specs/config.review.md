@@ -315,3 +315,5 @@ Current runtime expectations for `mixed_t` in the dynamic subsystem:
 
 `dynamic_t` is now a separate public runtime form backed by shared `hash_t<mixed_t>` storage.
 It is carried in `mixed_t` via `dynamic_v`. Shared storage does not imply semantic equivalence with `hash_t`.
+
+- `runtime_helpers_contract.notes.conditional_helpers` now records the exact-match priority for `??` / `?:` and points back to `specs/conditional_expression_matrix.md`.

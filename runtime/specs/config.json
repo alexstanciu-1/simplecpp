@@ -1,2983 +1,2988 @@
 {
-    "schema_version": "1.0.0",
-    "artifact": "scpp_runtime_config",
-    "runtime": {
-        "namespace": "scpp",
-        "umbrella_header": "scpp/runtime.hpp",
-        "create_default_owner": "shared",
-        "default_cast_policy": "forbidden",
-        "default_overload_policy": "forbidden",
-        "emit_deleted_for_forbidden_operations": true,
-        "comparison_result_type": "bool_t",
-        "condition_lowering": {
-            "semantic_type": "bool_t",
-            "cpp_bridge": "static_cast<bool>"
-        },
-        "default_assignment_policy": "forbidden",
-        "dynamic_runtime_policy": {
-            "status": "authoritative_current_policy",
-            "purpose": "hash_t and mixed_t form the dynamic fallback subsystem for quick code; explicit data structures remain preferred",
-            "tradeoffs": "using hash_t reduces performance, increases memory usage, reduces compile-time issue detection and static analysis capability, and becomes less readable as surrounding code grows",
-            "evaluation_rule": "once types are established, follow normal Prism++ rules",
-            "exceptions_rule": "exceptions must be documented separately and explicitly",
-            "runtime_error_payload_minimum": [
-                "message",
-                "operation",
-                "runtime type information",
-                "file",
-                "line"
-            ],
-            "runtime_error_payload_optional": [
-                "key_or_index",
-                "member_name",
-                "function_name"
-            ],
-            "unknown_combinations_policy": "if a combination is not covered by this config, it is not defined and must be treated as unsupported until specified"
-        },
-        "dynamic_v1_operation_scope": {
-            "enabled_now": [
-                "hash_t._find_val",
-                "hash_t.at",
-                "hash_t.find",
-                "hash_t.nonconst_operator_square_brackets",
-                "mixed_t._find_val",
-                "mixed_t.assignment_boundary_dispatch",
-                "mixed_t.cast_dispatch",
-                "mixed_t.condition_dispatch",
-                "mixed_t.exact_scalar_accessors",
-                "mixed_t.increment_decrement_dispatch",
-                "mixed_t.logical_dispatch",
-                "mixed_t.mutation_dispatch",
-                "mixed_t.operator_dispatch",
-                "mixed_t.shared_table_if",
-                "mixed_t.shared_table_storage",
-                "mixed_t.string_if",
-                "mixed_t.table_identity_comparison_dispatch",
-                "mixed_t.table_if",
-                "mixed_t.weak_table_if"
-            ],
-            "explicit_only": [
-                "casts"
-            ],
-            "deferred": [
-                "mixed_t callable behavior"
-            ]
-        }
-    },
-    "runtime_types": {
-        "table": {
-            "name": "hash_t",
-            "php_mapping": "array",
-            "keys": [
-                "int",
-                "string"
-            ],
-            "ordered": true,
-            "packed_mode": true,
-            "overwrite_on_set": true,
-            "append_rule": "max_int_key_plus_one",
-            "lookup": {
-                "type": "maybe_value_t",
-                "representation": "nullable<mixed_t>",
-                "nullopt": true,
-                "found_null_is_distinct": true,
-                "helpers": [
-                    "is_nullopt",
-                    "was_found"
-                ]
-            },
-            "access": {
-                "at": "checked_no_insert",
-                "at_failure": "throw_style",
-                "operator[]": "inserting_nonconst_only"
-            },
-            "public_header": "scpp/hash_t.hpp",
-            "implementation_header": "scpp/support/hash_t.hpp",
-            "implementation_cpp": "scpp/support/hash_t.cpp",
-            "generation_rules": {
-                "read_only_lowering": "find",
-                "checked_read_lowering": "at",
-                "forbid_nonconst_bracket_for_read": true,
-                "plain_dynamic_read_lowering": "_find_val",
-                "presence_sensitive_read_lowering": "find",
-                "object_like_read_lowering": "_find_val",
-                "object_like_miss_value": "mixed_t(null_t{})"
-            },
-            "remove": {
-                "returns": {
-                    "true": "existed_and_removed",
-                    "false": "not_present"
-                },
-                "preserve_remaining_keys": true,
-                "packed_mode": {
-                    "allow_direct_compaction_that_shifts_keys": false,
-                    "required_strategy_if_needed": [
-                        "promote_to_associative",
-                        "tombstone_preserving"
-                    ]
-                }
-            },
-            "regression_cases": [
-                {
-                    "name": "packed_remove_preserves_numeric_keys",
-                    "steps": [
-                        "append 100 -> key 0",
-                        "append 200 -> key 1",
-                        "remove key 0",
-                        "has(0) == false",
-                        "has(1) == true",
-                        "append 300 -> key 2"
-                    ]
-                }
-            ],
-            "dynamic_access_policy": {
-                "current_receiver_rules": {
-                    "table_t_receiver": "allowed",
-                    "value_t_table_receiver": "allowed through mixed_t runtime dispatch",
-                    "value_t_null_receiver_for__find_val": "returns mixed_t(null_t{})",
-                    "string_t_receiver": "runtime error for operator[] in current policy",
-                    "int_float_bool_null_receiver": "runtime error for operator[] in current policy"
-                },
-                "missing_key_behavior": {
-                    "find": "returns empty maybe_value_t",
-                    "at": "checked access, no insertion, failure on miss",
-                    "nonconst_operator_square_brackets_int": "inserting access",
-                    "nonconst_operator_square_brackets_string": "inserting access",
-                    "_find_val": "returns mixed_t(null_t{})"
-                },
-                "future_reserved": {
-                    "string_indexing": "reserved for later char_t/byte_t based design"
-                }
-            },
-            "object_like_form": {
-                "storage_type": "hash_t",
-                "carrier_type": "shared_p<hash_t>",
-                "public_runtime_type": "dynamic_t",
-                "missing_property_read": "null_via__find_val",
-                "identity": "pointer_identity",
-                "weak_identity_recommendation": "shared_vs_weak_compare_locked_pointer_or_false_if_expired",
-                "int_and_string_keys": "same_runtime_behavior_as_table_t"
-            }
-        }
-    },
-    "types": {
-        "null_t": {
-            "kind": "scalar_tag",
-            "header": "scpp/null_t.hpp",
-            "template": false,
-            "cpp_underlying": null,
-            "family": "sentinel",
-            "semantic_role": "generic_null",
-            "stable_core_api": [
-                "default_ctor"
-            ]
-        },
-        "nullopt_t": {
-            "kind": "scalar_tag",
-            "header": "scpp/nullopt_t.hpp",
-            "template": false,
-            "cpp_underlying": null,
-            "family": "sentinel",
-            "semantic_role": "optional_empty",
-            "stable_core_api": [
-                "default_ctor"
-            ]
-        },
-        "nullptr_t": {
-            "kind": "scalar_tag",
-            "header": "scpp/nullptr_t.hpp",
-            "template": false,
-            "cpp_underlying": null,
-            "family": "sentinel",
-            "semantic_role": "pointer_empty",
-            "stable_core_api": [
-                "default_ctor"
-            ]
-        },
-        "bool_t": {
-            "kind": "scalar_wrapper",
-            "header": "scpp/bool_t.hpp",
-            "template": false,
-            "cpp_underlying": "bool",
-            "stable_core_api": [
-                "default_ctor",
-                "explicit_native_ctor",
-                "native_value"
-            ],
-            "entry_ctors": [
-                {
-                    "from_cpp": "bool",
-                    "explicit": true
-                }
-            ]
-        },
-        "int_t": {
-            "kind": "scalar_wrapper",
-            "header": "scpp/int_t.hpp",
-            "template": false,
-            "cpp_underlying": "std::int64_t",
-            "stable_core_api": [
-                "default_ctor",
-                "explicit_native_ctor",
-                "native_value"
-            ],
-            "entry_ctors": [
-                {
-                    "from_cpp": "std::int64_t",
-                    "explicit": true
-                }
-            ]
-        },
-        "float_t": {
-            "kind": "scalar_wrapper",
-            "header": "scpp/float_t.hpp",
-            "template": false,
-            "cpp_underlying": "double",
-            "stable_core_api": [
-                "default_ctor",
-                "explicit_native_ctor",
-                "native_value"
-            ],
-            "entry_ctors": [
-                {
-                    "from_cpp": "double",
-                    "explicit": true
-                }
-            ]
-        },
-        "string_t": {
-            "kind": "scalar_wrapper",
-            "header": "scpp/string_t.hpp",
-            "template": false,
-            "cpp_underlying": "std::string",
-            "stable_core_api": [
-                "default_ctor",
-                "explicit_native_ctor",
-                "explicit_string_view_ctor",
-                "explicit_cstr_ctor",
-                "native_value",
-                "size",
-                "empty",
-                "append"
-            ],
-            "entry_ctors": [
-                {
-                    "from_cpp": "std::string",
-                    "explicit": true
-                },
-                {
-                    "from_cpp": "std::string_view",
-                    "explicit": true
-                },
-                {
-                    "from_cpp": "const char*",
-                    "explicit": true
-                }
-            ]
-        },
-        "vector_t": {
-            "kind": "template_wrapper",
-            "header": "scpp/vector_t.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "std::vector<T>",
-            "stable_core_api": [
-                "default_ctor",
-                "size",
-                "empty",
-                "clear",
-                "at",
-                "index",
-                "append"
-            ]
-        },
-        "value_p": {
-            "kind": "template_wrapper",
-            "header": "scpp/value_p.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "T",
-            "family": "inline_storage",
-            "allocates": false,
-            "copyable": true,
-            "movable": true,
-            "stable_core_api": [
-                "default_ctor",
-                "copy_ctor",
-                "move_ctor",
-                "copy_assign",
-                "move_assign",
-                "explicit_value_ctor",
-                "in_place_ctor",
-                "has_value",
-                "get",
-                "deref",
-                "arrow"
-            ]
-        },
-        "ref_p": {
-            "kind": "template_wrapper",
-            "header": "scpp/ref_p.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "T*",
-            "family": "reference",
-            "allocates": false,
-            "copyable": true,
-            "movable": true,
-            "nullable": false,
-            "stable_core_api": [
-                "value_ctor",
-                "copy_ctor",
-                "move_ctor",
-                "copy_assign",
-                "move_assign",
-                "get",
-                "deref",
-                "arrow"
-            ],
-            "assignment_semantics": {
-                "copy_assign": "write_through",
-                "move_assign": "write_through",
-                "rebind_on_assignment": false,
-                "direct_value_assignment": true,
-                "copy_construction": "alias_same_target",
-                "move_construction": "alias_same_target"
-            }
-        },
-        "shared_p": {
-            "kind": "template_wrapper",
-            "header": "scpp/shared_p.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "std::shared_ptr<T>",
-            "stable_core_api": [
-                "default_ctor",
-                "null_ctor",
-                "explicit_native_ctor",
-                "element_type",
-                "copy_ctor",
-                "move_ctor",
-                "converting_copy_ctor",
-                "converting_move_ctor",
-                "copy_assign",
-                "move_assign",
-                "converting_copy_assign",
-                "converting_move_assign",
-                "null_assign",
-                "has_value",
-                "bool_conversion",
-                "get",
-                "use_count",
-                "unique",
-                "reset",
-                "swap",
-                "deref",
-                "arrow",
-                "native_value"
-            ]
-        },
-        "unique_p": {
-            "kind": "template_wrapper",
-            "header": "scpp/unique_p.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "std::unique_ptr<T>",
-            "stable_core_api": [
-                "default_ctor",
-                "null_ctor",
-                "explicit_native_ctor",
-                "element_type",
-                "move_ctor",
-                "move_assign",
-                "converting_move_ctor",
-                "converting_move_assign",
-                "null_assign",
-                "has_value",
-                "bool_conversion",
-                "get",
-                "reset",
-                "release",
-                "swap",
-                "deref",
-                "arrow",
-                "native_value"
-            ],
-            "copyable": false,
-            "movable": true
-        },
-        "weak_p": {
-            "kind": "template_wrapper",
-            "header": "scpp/weak_p.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "std::weak_ptr<T>",
-            "stable_core_api": [
-                "default_ctor",
-                "null_ctor",
-                "explicit_native_ctor",
-                "element_type",
-                "explicit_from_shared",
-                "converting_from_shared",
-                "copy_ctor",
-                "copy_assign",
-                "converting_copy_ctor",
-                "converting_copy_assign",
-                "null_assign",
-                "expired",
-                "use_count",
-                "lock",
-                "reset",
-                "swap",
-                "native_value"
-            ]
-        },
-        "nullable": {
-            "kind": "template_wrapper",
-            "header": "scpp/nullable.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "std::optional<T>",
-            "stable_core_api": [
-                "default_ctor",
-                "null_ctor",
-                "value_ctor",
-                "has_value",
-                "reset",
-                "require_value",
-                "value",
-                "value_or",
-                "implicit_typed_boundary_bridge",
-                "operator_arrow",
-                "native_value"
-            ],
-            "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; empty state is a runtime error; the current required-value cast wording is \"cast<To>(nullable) cannot convert an empty nullable to a required value\"; this bridge must not widen operator candidate sets",
-            "cast_lifting_rule": "centralized cast lifting may unwrap nullable<U> to any configured explicit target T through require_value and cast<T>(U); string_t remains the configured PHP-style empty-string exception for empty nullable values; the symmetric inbound bridge cast<nullable<T>>(mixed_t) maps runtime null to empty nullable and otherwise delegates through the configured mixed_t -> T cast",
-            "operator_lifting_rule": "centralized generated operators, not the temporary typed-boundary bridge, define nullable participation in unary, binary, logical, relational, mutation, and compound-assignment families; empty nullable operands fail through runtime errors except explicit sentinel comparisons and equality/inequality against non-sentinel values",
-            "arrow_rule": "nullable<T>::operator->() is part of the stable wrapper surface; it must require a present value, forward to wrapped T::operator->() when T already exposes it, and otherwise return the address of the wrapped object for direct-object member access"
-        },
-        "result_or_false": {
-            "kind": "template_wrapper",
-            "header": "scpp/result_or_false.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "detail::result_core<T, false, false>",
-            "stable_core_api": [
-                "default_ctor",
-                "false_ctor",
-                "value_ctor",
-                "has_value",
-                "is_false",
-                "reset",
-                "require_value",
-                "value",
-                "implicit_typed_boundary_bridge",
-                "operator_arrow"
-            ],
-            "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the false-like empty state is a runtime error for required-value conversions",
-            "cast_lifting_rule": "centralized cast lifting may unwrap result_or_false<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the false-like empty state",
-            "operator_lifting_rule": "centralized generated operators define result_or_false participation through the same guarded-value lifting surface used by nullable; the false-like empty state fails through runtime errors except explicit false-sentinel comparisons",
-            "sentinel_rule": "the public PHP-facing comparison surface remains == false while the runtime implementation uses false_sentinel_t / false_sentinel internally"
-        },
-        "result_or_bool": {
-            "kind": "template_wrapper",
-            "header": "scpp/result_or_bool.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "detail::result_core<T, false, true>",
-            "stable_core_api": [
-                "default_ctor",
-                "false_ctor",
-                "true_ctor",
-                "value_ctor",
-                "has_value",
-                "is_false",
-                "is_true",
-                "reset",
-                "require_value",
-                "value",
-                "implicit_typed_boundary_bridge",
-                "operator_arrow"
-            ],
-            "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the bool states are runtime errors for required-value conversions",
-            "cast_lifting_rule": "centralized cast lifting may unwrap result_or_bool<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the bool states, while a true-state stringifies as the PHP boolean true contract",
-            "operator_lifting_rule": "centralized generated operators define result_or_bool participation through the same guarded-value lifting surface used by nullable; the non-value bool states fail through runtime errors except explicit bool/false-sentinel comparisons",
-            "sentinel_rule": "the public PHP-facing comparison surface remains == false and == true while the runtime implementation uses false_sentinel_t / false_sentinel and bool_t(true) internally"
-        },
-        "error_t": {
-            "kind": "runtime_value",
-            "header": "scpp/error_t.hpp",
-            "template": false,
-            "semantic_role": "structured_in_band_failure_payload",
-            "stable_core_api": [
-                "default_ctor",
-                "message_line_file_ctor",
-                "get_message",
-                "get_line",
-                "get_file"
-            ],
-            "minimum_payload": [
-                "message",
-                "line",
-                "file"
-            ]
-        },
-        "result": {
-            "kind": "template_wrapper",
-            "header": "scpp/result.hpp",
-            "template": true,
-            "template_params": [
-                "T"
-            ],
-            "cpp_underlying": "std::variant<T, error_t>",
-            "stable_core_api": [
-                "default_ctor",
-                "value_ctor",
-                "error_ctor",
-                "has_value",
-                "has_error",
-                "require_value",
-                "require_error",
-                "value",
-                "error",
-                "implicit_typed_boundary_bridge",
-                "operator_arrow"
-            ],
-            "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the error state is a runtime error for required-value conversions",
-            "cast_lifting_rule": "centralized cast lifting may unwrap result<U> to any configured explicit target T through require_value and cast<T>(U); the error state never silently converts to a value",
-            "operator_lifting_rule": "centralized generated operators define result participation through the same guarded-value lifting surface used by nullable; the error state fails through runtime errors except explicit error-sentinel comparisons",
-            "error_access_rule": "wrapper error inspection is explicit through error(); the value path stays on operator->() and the generator lowers $result->error()->... to the wrapper method instead of treating error as a real payload property"
-        },
-        "hash_t": {
-            "kind": "runtime_container",
-            "header": "scpp/hash_t.hpp",
-            "template": false,
-            "semantic_role": "php_array_runtime",
-            "stable_core_api": [
-                "empty",
-                "size",
-                "is_packed",
-                "clear",
-                "append",
-                "set",
-                "has",
-                "find",
-                "at",
-                "operator[]",
-                "remove"
-            ]
-        },
-        "mixed_t": {
-            "kind": "runtime_value",
-            "header": "scpp/mixed_t.hpp",
-            "template": false,
-            "semantic_role": "table_payload",
-            "stable_core_api": [
-                "default_ctor",
-                "null_ctor",
-                "clone",
-                "kind",
-                "is_null"
-            ],
-            "stored_runtime_kinds": [
-                {
-                    "name": "null_v",
-                    "public_meaning": "stored null_t state"
-                },
-                {
-                    "name": "bool_v",
-                    "public_meaning": "stored bool_t / bool"
-                },
-                {
-                    "name": "int_v",
-                    "public_meaning": "stored int_t / std::int64_t"
-                },
-                {
-                    "name": "float_v",
-                    "public_meaning": "stored float_t / double"
-                },
-                {
-                    "name": "string_v",
-                    "public_meaning": "owned string_t"
-                },
-                {
-                    "name": "table_v",
-                    "public_meaning": "owned hash_t<mixed_t>"
-                },
-                {
-                    "name": "shared_table_v",
-                    "public_meaning": "shared hash_t<mixed_t>"
-                },
-                {
-                    "name": "weak_table_v",
-                    "public_meaning": "weak hash_t<mixed_t>"
-                }
-            ],
-            "current_accessors": {
-                "exact_scalar_accessors": {
-                    "bool_value": "requires kind bool_v, else runtime error",
-                    "int_value": "requires kind int_v, else runtime error",
-                    "float_value": "requires kind float_v, else runtime error",
-                    "string_exact_access": "preferred runtime contract is exact string extraction via the explicit mixed_t/string_t bridge; probe access remains string_if()"
-                },
-                "probe_accessors": {
-                    "string_if": "returns const string_t* or nullptr",
-                    "table_if": "returns hash_t<mixed_t>* / const hash_t<mixed_t>* for owned/shared table; otherwise nullptr",
-                    "shared_table_if": "returns shared table handle probe or nullptr",
-                    "weak_table_if": "returns weak table handle probe or nullptr"
-                },
-                "clone_policy": {
-                    "null_bool_int_float_string": "cloned by value",
-                    "table_v": "deep copies owned table payload",
-                    "shared_table_v": "copies shared handle",
-                    "dynamic_v": "copies shared dynamic handle",
-                    "weak_table_v": "copies weak handle"
-                }
-            },
-            "dynamic_policy": {
-                "status": "current_implemented_behavior_plus_authoritative_policy",
-                "principle": "once runtime operand types are established, follow normal Prism++ rules; exceptions must be listed explicitly",
-                "implicit_conversions": "forbidden unless an operation or cast rule explicitly allows them",
-                "dynamic_dispatch_scope": [
-                    "runtime type establishment",
-                    "checked extraction / explicit conversion",
-                    "operation dispatch only where explicitly documented"
-                ],
-                "not_yet_enabled": [
-                    "dynamic callable dispatch",
-                    "dynamic method dispatch"
-                ],
-                "operator_resolution_rule": "implicit mixed_t to native extraction must not participate in overload candidate expansion; any operator involving mixed_t resolves through mixed_t runtime-kind dispatch only",
-                "typed_boundary_bridge_rule": "implicit mixed_t to native extraction is temporarily accepted only for initialization/assignment, by-value argument passing, and typed return; failed extraction is a runtime error",
-                "concat_rule": "PHP string concatenation (.) and (.=) is generator-owned and must be lowered into explicit text conversion plus primitive string_t concatenation; mixed_t has no independent concat dispatch family"
-            },
-            "dispatch_contract": {
-                "model": "runtime_kind_dispatch_delegates_to_native_rules",
-                "delegate_reference_format": {
-                    "delegate_to_native_rule": {
-                        "lhs": "<native type>",
-                        "op": "<operator>",
-                        "rhs": "<native type>"
-                    }
-                },
-                "implicit_extraction": {
-                    "allowed_contexts": [
-                        "initialization",
-                        "assignment",
-                        "by_value_argument",
-                        "typed_return"
-                    ],
-                    "forbidden_contexts": [
-                        "operator_overload_resolution",
-                        "overload_disambiguation",
-                        "by_reference_parameter_adaptation"
-                    ]
-                },
-                "kinds_delegate_as": {
-                    "null_v": "null_t",
-                    "bool_v": "bool_t",
-                    "int_v": "int_t",
-                    "float_v": "float_t",
-                    "string_v": "string_t",
-                    "table_v": "hash_t<mixed_t> owned table carrier",
-                    "shared_table_v": "shared_p<hash_t<mixed_t>> carrier",
-                    "dynamic_v": "dynamic_t carrier",
-                    "weak_table_v": "weak_p<hash_t<mixed_t>> carrier"
-                },
-                "operator_surface": {
-                    "binary_arithmetic": [
-                        "+",
-                        "-",
-                        "*",
-                        "/",
-                        "%"
-                    ],
-                    "binary_comparison": [
-                        "==",
-                        "!=",
-                        "<",
-                        "<=",
-                        ">",
-                        ">="
-                    ],
-                    "binary_logical": [
-                        "&&",
-                        "||"
-                    ],
-                    "unary": [
-                        "+",
-                        "-",
-                        "!",
-                        "++prefix",
-                        "++postfix",
-                        "--prefix",
-                        "--postfix"
-                    ],
-                    "compound": [
-                        "+=",
-                        "-=",
-                        "*=",
-                        "/=",
-                        "%="
-                    ]
-                },
-                "delegation_rule": "if the established runtime kinds map to an allowed native rule, execute that native rule and box the result when needed; otherwise raise a runtime error",
-                "compound_assignment_rule": "compound assignment is allowed only when the delegated native binary operator exists and assignment back into the stored lhs kind is valid",
-                "table_carrier_policy": {
-                    "arithmetic": "runtime_error",
-                    "ordering_comparison": "runtime_error",
-                    "equality_inequality": {
-                        "table_v": "runtime_error",
-                        "shared_table_v": "identity_by_shared_target_pointer",
-                        "dynamic_v": "identity_by_shared_target_pointer",
-                        "weak_table_v": "identity_by_locked_target_pointer_or_false_if_either_expired"
-                    }
-                },
-                "weak_table_policy": {
-                    "_find_val": "returns mixed_t(null_t{}) when expired",
-                    "find": "returns not_found when expired",
-                    "at": "runtime_error when expired",
-                    "write_or_index_assign": "runtime_error when expired"
-                },
-                "generator_owned_operations": {
-                    "concat": [
-                        ".",
-                        ".="
-                    ]
-                },
-                "boundary_bridges": {
-                    "rule_id": "mbb_001",
-                    "initialization": true,
-                    "assignment": true,
-                    "by_value_argument": true,
-                    "typed_return": true,
-                    "operator_overload_resolution": false,
-                    "overload_disambiguation": false,
-                    "by_reference_parameter_adaptation": false,
-                    "const_reference_parameter_adaptation": false
-                }
-            },
-            "boundary_bridges": {
-                "assignment": true,
-                "function_argument_by_value": true,
-                "return": true,
-                "operator_resolution": false,
-                "by_reference_argument": false,
-                "const_reference_argument": false,
-                "overload_resolution": false
-            }
-        },
-        "maybe_value_t": {
-            "kind": "runtime_alias",
-            "header": "scpp/hash_t.hpp",
-            "template": false,
-            "semantic_role": "table_lookup_result",
-            "stable_core_api": [
-                "is_nullopt",
-                "was_found"
-            ]
-        }
-    },
-    "memory_helpers": {
-        "create": {
-            "enabled": true,
-            "returns": "shared_p<T>",
-            "kind": "factory",
-            "policy_role": "default_managed_creation"
-        },
-        "shared": {
-            "enabled": true,
-            "returns": "shared_p<T>",
-            "kind": "factory"
-        },
-        "unique": {
-            "enabled": true,
-            "returns": "unique_p<T>",
-            "kind": "factory"
-        },
-        "weak": {
-            "enabled": true,
-            "returns": "weak_p<T>",
-            "kind": "derived_reference",
-            "from": "shared_p<T>",
-            "allocates": false
-        },
-        "value": {
-            "enabled": true,
-            "returns": "value_p<T>",
-            "kind": "factory",
-            "allocates": false,
-            "policy_role": "explicit_inline_value_creation"
-        },
-        "ref": {
-            "enabled": true,
-            "kind": "reference_adapter",
-            "allocates": false,
-            "overloads": [
-                {
-                    "from": "T&",
-                    "returns": "ref_p<T>",
-                    "when": "T is not handle_like and not ref_like"
-                },
-                {
-                    "from": "value_p<T>&",
-                    "returns": "ref_p<T>"
-                },
-                {
-                    "from": "ref_p<T>",
-                    "returns": "ref_p<T>",
-                    "policy_role": "identity"
-                },
-                {
-                    "from": "T&",
-                    "returns": "T&",
-                    "when": "T is handle_like",
-                    "policy_role": "handle_passthrough"
-                }
-            ]
-        }
-    },
-    "casts": [
-        {
-            "from": "null_t",
-            "to": "shared_p<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "null_t",
-            "to": "unique_p<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "null_t",
-            "to": "weak_p<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "null_t",
-            "to": "nullable<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "T",
-            "to": "nullable<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "shared_p<T>",
-            "to": "weak_p<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "int_t",
-            "to": "float_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false
-        },
-        {
-            "from": "bool_t",
-            "to": "int_t",
-            "kind": "explicit",
-            "form": "constructor",
-            "template_rule": false
-        },
-        {
-            "from": "bool_t",
-            "to": "float_t",
-            "kind": "explicit",
-            "form": "constructor",
-            "template_rule": false
-        },
-        {
-            "from": "bool_t",
-            "to": "bool",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "int_t",
-            "to": "bool_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "float_t",
-            "to": "bool_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "float_t",
-            "to": "int_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "string_t",
-            "to": "string_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false,
-            "policy_role": "identity"
-        },
-        {
-            "from": "nullable<T>",
-            "to": "T",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": true,
-            "policy_role": "unwrap_present_value_or_runtime_error",
-            "typed_boundary_implicit_bridge": true,
-            "note": "the same centralized lifting rule also applies to nullable<U> -> T for any configured explicit cast pair by unwrapping first; string_t remains the empty-string exception"
-        },
-        {
-            "from": "nullopt_t",
-            "to": "nullable<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "nullptr_t",
-            "to": "shared_p<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "nullptr_t",
-            "to": "unique_p<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "nullptr_t",
-            "to": "weak_p<T>",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "T",
-            "to": "value_p<T>",
-            "kind": "explicit",
-            "form": "constructor",
-            "template_rule": true
-        },
-        {
-            "from": "T&",
-            "to": "ref_p<T>",
-            "kind": "explicit",
-            "form": "helper",
-            "helper_name": "ref",
-            "template_rule": true
-        },
-        {
-            "from": "value_p<T>&",
-            "to": "ref_p<T>",
-            "kind": "explicit",
-            "form": "helper",
-            "helper_name": "ref",
-            "template_rule": true
-        },
-        {
-            "from": "null_t",
-            "to": "mixed_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false,
-            "policy_role": "box_into_mixed_runtime_value"
-        },
-        {
-            "from": "bool_t",
-            "to": "mixed_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false,
-            "policy_role": "box_into_mixed_runtime_value"
-        },
-        {
-            "from": "int_t",
-            "to": "mixed_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false,
-            "policy_role": "box_into_mixed_runtime_value"
-        },
-        {
-            "from": "float_t",
-            "to": "mixed_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false,
-            "policy_role": "box_into_mixed_runtime_value"
-        },
-        {
-            "from": "string_t",
-            "to": "mixed_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false,
-            "policy_role": "box_into_mixed_runtime_value"
-        },
-        {
-            "from": "hash_t",
-            "to": "mixed_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false,
-            "policy_role": "box_into_mixed_runtime_value"
-        },
-        {
-            "from": "shared_p<hash_t>",
-            "to": "mixed_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false,
-            "policy_role": "box_into_mixed_runtime_value"
-        },
-        {
-            "from": "weak_p<hash_t>",
-            "to": "mixed_t",
-            "kind": "implicit",
-            "form": "constructor",
-            "template_rule": false,
-            "policy_role": "box_into_mixed_runtime_value"
-        },
-        {
-            "from": "mixed_t",
-            "to": "bool_t",
-            "kind": "boundary_implicit_v1_visible_intention",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false,
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_literals"
-        },
-        {
-            "from": "mixed_t",
-            "to": "int_t",
-            "kind": "boundary_implicit_v1_visible_intention",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false,
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_parse"
-        },
-        {
-            "from": "mixed_t",
-            "to": "float_t",
-            "kind": "boundary_implicit_v1_visible_intention",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false,
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_parse"
-        },
-        {
-            "from": "mixed_t",
-            "to": "string_t",
-            "kind": "boundary_implicit_v1_visible_intention",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false,
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
-        },
-        {
-            "from": "mixed_t",
-            "to": "nullable<T>",
-            "kind": "boundary_implicit_v1_visible_intention",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": true,
-            "policy_role": "runtime_null_to_empty_nullable_otherwise_delegate_to_configured_mixed_to_wrapped_target_cast"
-        },
-        {
-            "from": "bool_t",
-            "to": "int_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "bool_t",
-            "to": "float_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "int_t",
-            "to": "float_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "string_t",
-            "to": "bool_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false,
-            "policy_role": "strict_string_bool_literal_set"
-        },
-        {
-            "from": "string_t",
-            "to": "int_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false,
-            "policy_role": "strict_full_string_base10_parse"
-        },
-        {
-            "from": "string_t",
-            "to": "float_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false,
-            "policy_role": "strict_full_string_finite_decimal_parse"
-        },
-        {
-            "from": "int_t",
-            "to": "string_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "float_t",
-            "to": "string_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "bool_t",
-            "to": "string_t",
-            "kind": "explicit",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "mixed_t",
-            "to": "shared_p<hash_t<mixed_t>>",
-            "kind": "boundary_implicit_v1_visible_intention",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        },
-        {
-            "from": "mixed_t",
-            "to": "weak_p<hash_t<mixed_t>>",
-            "kind": "boundary_implicit_v1_visible_intention",
-            "form": "named_cast",
-            "cast_name": "cast",
-            "template_rule": false
-        }
-    ],
-    "coercions": {
-        "condition": {
-            "semantic_type": "bool_t",
-            "bridge": "cast<bool>",
-            "allowed_inputs": [
-                "bool_t",
-                "int_t",
-                "float_t",
-                "mixed_t"
-            ],
-            "mixed_t_rule": "establish runtime kind and delegate to the corresponding native condition rule; string_t, null_t, and table carriers remain errors under the current policy"
-        },
-        "text": {
-            "result_type": "string_t",
-            "dispatch_helper": "to_string",
-            "null_rendering": {
-                "null_t": "",
-                "nullopt_t": "",
-                "nullptr_t": ""
-            },
-            "rules": [
-                {
-                    "from": "string_t",
-                    "kind": "identity"
-                },
-                {
-                    "from": "bool_t",
-                    "kind": "helper",
-                    "helper_name": "to_string"
-                },
-                {
-                    "from": "int_t",
-                    "kind": "helper",
-                    "helper_name": "to_string"
-                },
-                {
-                    "from": "float_t",
-                    "kind": "helper",
-                    "helper_name": "to_string"
-                },
-                {
-                    "from": "null_t",
-                    "kind": "literal",
-                    "value": ""
-                },
-                {
-                    "from": "nullopt_t",
-                    "kind": "literal",
-                    "value": ""
-                },
-                {
-                    "from": "nullptr_t",
-                    "kind": "literal",
-                    "value": ""
-                },
-                {
-                    "from": "nullable<T>",
-                    "kind": "helper",
-                    "helper_name": "to_string",
-                    "template_rule": true
-                },
-                {
-                    "from": "value_p<T>",
-                    "kind": "helper",
-                    "helper_name": "to_string",
-                    "template_rule": true
-                },
-                {
-                    "from": "ref_p<T>",
-                    "kind": "helper",
-                    "helper_name": "to_string",
-                    "template_rule": true
-                },
-                {
-                    "from": "shared_p<T>",
-                    "kind": "helper",
-                    "helper_name": "to_string",
-                    "template_rule": true
-                },
-                {
-                    "from": "unique_p<T>",
-                    "kind": "helper",
-                    "helper_name": "to_string",
-                    "template_rule": true
-                },
-                {
-                    "from": "weak_p<T>",
-                    "kind": "helper",
-                    "helper_name": "to_string",
-                    "template_rule": true
-                },
-                {
-                    "from": "mixed_t",
-                    "kind": "helper",
-                    "helper_name": "to_string",
-                    "policy_role": "explicit_text_conversion_after_runtime_kind_dispatch"
-                }
-            ]
-        }
-    },
-    "subtyping": {
-        "object_subtype_source": "cpp_pointer_convertibility",
-        "wrapper_rules": [
-            {
-                "wrapper": "shared_p<T>",
-                "variance": "covariant",
-                "from": "shared_p<U>",
-                "to": "shared_p<T>",
-                "when": "U* is convertible to T*",
-                "kind": "implicit"
-            },
-            {
-                "wrapper": "weak_p<T>",
-                "variance": "covariant",
-                "from": "weak_p<U>",
-                "to": "weak_p<T>",
-                "when": "U* is convertible to T*",
-                "kind": "implicit"
-            },
-            {
-                "wrapper": "ref_p<T>",
-                "variance": "covariant",
-                "from": "ref_p<U>",
-                "to": "ref_p<T>",
-                "when": "U* is convertible to T*",
-                "kind": "implicit"
-            },
-            {
-                "wrapper": "unique_p<T>",
-                "variance": "covariant_move_only",
-                "from": "unique_p<U>",
-                "to": "unique_p<T>",
-                "when": "U* is convertible to T*",
-                "kind": "move_only"
-            }
-        ],
-        "forbidden_wrapper_rules": [
-            {
-                "wrapper": "nullable<T>",
-                "from": "nullable<U>",
-                "to": "nullable<T>",
-                "reason": "generic_inner_subtyping_not_enabled"
-            },
-            {
-                "wrapper": "value_p<T>",
-                "from": "value_p<U>",
-                "to": "value_p<T>",
-                "reason": "inline_value_wrapper_is_not_polymorphic"
-            }
-        ]
-    },
-    "overload_families": [
-        {
-            "name": "bool_logical",
-            "enabled": true,
-            "operators": [
-                {
-                    "symbol": "!",
-                    "arity": 1,
-                    "operands": [
-                        "bool_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "&&",
-                    "arity": 2,
-                    "operands": [
-                        "bool_t",
-                        "bool_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "||",
-                    "arity": 2,
-                    "operands": [
-                        "bool_t",
-                        "bool_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "bool_t",
-                        "bool_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "bool_t",
-                        "bool_t"
-                    ],
-                    "result": "bool_t"
-                }
-            ]
-        },
-        {
-            "name": "int_arithmetic",
-            "enabled": true,
-            "operators": [
-                {
-                    "symbol": "+",
-                    "arity": 1,
-                    "operands": [
-                        "int_t"
-                    ],
-                    "result": "int_t"
-                },
-                {
-                    "symbol": "-",
-                    "arity": 1,
-                    "operands": [
-                        "int_t"
-                    ],
-                    "result": "int_t"
-                },
-                {
-                    "symbol": "+",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t"
-                },
-                {
-                    "symbol": "-",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t"
-                },
-                {
-                    "symbol": "*",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t"
-                },
-                {
-                    "symbol": "/",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t"
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "<",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "<=",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": ">",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": ">=",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                }
-            ]
-        },
-        {
-            "enabled": true,
-            "name": "int_bitwise_and_mutation",
-            "operators": [
-                {
-                    "arity": 1,
-                    "operands": [
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": "~"
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": "%"
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": "&"
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": "|"
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": "^"
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": "<<"
-                },
-                {
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": ">>"
-                },
-                {
-                    "arity": 1,
-                    "operands": [
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "++prefix",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 1,
-                    "operands": [
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": "++postfix",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 1,
-                    "operands": [
-                        "int_t"
-                    ],
-                    "result": "int_t&",
-                    "symbol": "--prefix",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 1,
-                    "operands": [
-                        "int_t"
-                    ],
-                    "result": "int_t",
-                    "symbol": "--postfix",
-                    "mutates_lhs": true
-                }
-            ]
-        },
-        {
-            "name": "float_arithmetic",
-            "enabled": true,
-            "operators": [
-                {
-                    "symbol": "+",
-                    "arity": 1,
-                    "operands": [
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "-",
-                    "arity": 1,
-                    "operands": [
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "+",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "-",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "*",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "/",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "<",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "<=",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": ">",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": ">=",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                }
-            ]
-        },
-        {
-            "enabled": true,
-            "name": "float_mutation",
-            "operators": [
-                {
-                    "arity": 1,
-                    "operands": [
-                        "float_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "++prefix",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 1,
-                    "operands": [
-                        "float_t"
-                    ],
-                    "result": "float_t",
-                    "symbol": "++postfix",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 1,
-                    "operands": [
-                        "float_t"
-                    ],
-                    "result": "float_t&",
-                    "symbol": "--prefix",
-                    "mutates_lhs": true
-                },
-                {
-                    "arity": 1,
-                    "operands": [
-                        "float_t"
-                    ],
-                    "result": "float_t",
-                    "symbol": "--postfix",
-                    "mutates_lhs": true
-                }
-            ]
-        },
-        {
-            "name": "mixed_numeric",
-            "enabled": true,
-            "promotion": {
-                "left": "int_t",
-                "right": "float_t",
-                "promote_to": "float_t"
-            },
-            "symmetric": true,
-            "operators": [
-                {
-                    "symbol": "+",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "-",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "*",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                },
-                {
-                    "symbol": "/",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "float_t"
-                }
-            ]
-        },
-        {
-            "name": "string_ops",
-            "enabled": true,
-            "operators": [
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "string_t",
-                        "string_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "string_t",
-                        "string_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "<",
-                    "arity": 2,
-                    "operands": [
-                        "string_t",
-                        "string_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "<=",
-                    "arity": 2,
-                    "operands": [
-                        "string_t",
-                        "string_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": ">",
-                    "arity": 2,
-                    "operands": [
-                        "string_t",
-                        "string_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": ">=",
-                    "arity": 2,
-                    "operands": [
-                        "string_t",
-                        "string_t"
-                    ],
-                    "result": "bool_t"
-                }
-            ]
-        },
-        {
-            "name": "pointer_null_comparisons",
-            "enabled": true,
-            "template_rule": true,
-            "operators": [
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "shared_p<T>",
-                        "null_t"
-                    ],
-                    "result": "bool_t",
-                    "symmetric": true
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "shared_p<T>",
-                        "null_t"
-                    ],
-                    "result": "bool_t",
-                    "symmetric": true
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "unique_p<T>",
-                        "null_t"
-                    ],
-                    "result": "bool_t",
-                    "symmetric": true
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "unique_p<T>",
-                        "null_t"
-                    ],
-                    "result": "bool_t",
-                    "symmetric": true
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "weak_p<T>",
-                        "null_t"
-                    ],
-                    "result": "bool_t",
-                    "symmetric": true
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "weak_p<T>",
-                        "null_t"
-                    ],
-                    "result": "bool_t",
-                    "symmetric": true
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "shared_p<T>",
-                        "shared_p<T>"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "shared_p<T>",
-                        "shared_p<T>"
-                    ],
-                    "result": "bool_t"
-                }
-            ],
-            "sentinel_resolution": "equivalence_group",
-            "sentinel_equivalence_group": [
-                "null_t",
-                "nullopt_t",
-                "nullptr_t"
-            ]
-        },
-        {
-            "name": "nullable_ops",
-            "enabled": true,
-            "template_rule": true,
-            "operators": [
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "nullable<T>",
-                        "null_t"
-                    ],
-                    "result": "bool_t",
-                    "symmetric": true
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "nullable<T>",
-                        "null_t"
-                    ],
-                    "result": "bool_t",
-                    "symmetric": true
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "nullable<T>",
-                        "nullable<T>"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "nullable<T>",
-                        "nullable<T>"
-                    ],
-                    "result": "bool_t"
-                }
-            ],
-            "sentinel_resolution": "equivalence_group",
-            "sentinel_equivalence_group": [
-                "null_t",
-                "nullopt_t",
-                "nullptr_t"
-            ]
-        },
-        {
-            "name": "int_logical",
-            "enabled": true,
-            "operators": [
-                {
-                    "symbol": "!",
-                    "arity": 1,
-                    "operands": [
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "&&",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "||",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "int_t"
-                    ],
-                    "result": "bool_t"
-                }
-            ]
-        },
-        {
-            "name": "float_logical",
-            "enabled": true,
-            "operators": [
-                {
-                    "symbol": "!",
-                    "arity": 1,
-                    "operands": [
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "&&",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "||",
-                    "arity": 2,
-                    "operands": [
-                        "float_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                }
-            ]
-        },
-        {
-            "name": "mixed_numeric_logical",
-            "enabled": true,
-            "promotion": {
-                "left": "int_t",
-                "right": "float_t",
-                "promote_to": "float_t"
-            },
-            "symmetric": true,
-            "operators": [
-                {
-                    "symbol": "&&",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "||",
-                    "arity": 2,
-                    "operands": [
-                        "int_t",
-                        "float_t"
-                    ],
-                    "result": "bool_t"
-                }
-            ]
-        },
-        {
-            "name": "null_comparisons",
-            "enabled": true,
-            "operators": [
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "null_t",
-                        "null_t"
-                    ],
-                    "result": "bool_t"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "null_t",
-                        "null_t"
-                    ],
-                    "result": "bool_t"
-                }
-            ]
-        },
-        {
-            "name": "table_identity_comparisons",
-            "enabled": true,
-            "operators": [
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "shared_p<hash_t>",
-                        "shared_p<hash_t>"
-                    ],
-                    "result": "bool_t",
-                    "policy_role": "identity_by_shared_target_pointer"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "shared_p<hash_t>",
-                        "shared_p<hash_t>"
-                    ],
-                    "result": "bool_t",
-                    "policy_role": "identity_by_shared_target_pointer"
-                },
-                {
-                    "symbol": "==",
-                    "arity": 2,
-                    "operands": [
-                        "weak_p<hash_t>",
-                        "weak_p<hash_t>"
-                    ],
-                    "result": "bool_t",
-                    "policy_role": "identity_by_locked_target_pointer_or_false_if_either_expired"
-                },
-                {
-                    "symbol": "!=",
-                    "arity": 2,
-                    "operands": [
-                        "weak_p<hash_t>",
-                        "weak_p<hash_t>"
-                    ],
-                    "result": "bool_t",
-                    "policy_role": "identity_by_locked_target_pointer_or_false_if_either_expired"
-                }
-            ]
-        },
-        {
-            "name": "nullable_lifted_ops",
-            "enabled": true,
-            "template_rule": true,
-            "status": "authoritative_current_policy",
-            "policy_role": "checked_unwrap_then_delegate_to_wrapped_operator_family",
-            "covers": [
-                "unary",
-                "binary",
-                "logical",
-                "relational",
-                "mutation",
-                "compound_assignment"
-            ],
-            "operands": [
-                "nullable<T> with nullable<U> or plain U where the wrapped-value operator family is defined"
-            ],
-            "empty_operand_policy": "runtime_error_except_explicit_null_sentinel_comparisons_and_nullable_equality_with_non_sentinel_values",
-            "notes": [
-                "temporary typed-boundary implicit conversion is not the intended operator participation mechanism",
-                "operator lifting must stay centralized to keep generated code and overload review deterministic"
-            ]
-        }
-    ],
-    "forbidden_operation_groups": [
-        {
-            "name": "bool_arithmetic",
-            "patterns": [
-                [
-                    "bool_t",
-                    "+",
-                    "bool_t"
-                ],
-                [
-                    "bool_t",
-                    "-",
-                    "bool_t"
-                ],
-                [
-                    "bool_t",
-                    "*",
-                    "bool_t"
-                ],
-                [
-                    "bool_t",
-                    "/",
-                    "bool_t"
-                ]
-            ]
-        },
-        {
-            "name": "pointer_cross_family_comparisons",
-            "patterns": [
-                [
-                    "shared_p<T>",
-                    "==",
-                    "unique_p<T>"
-                ],
-                [
-                    "shared_p<T>",
-                    "!=",
-                    "unique_p<T>"
-                ],
-                [
-                    "shared_p<T>",
-                    "==",
-                    "weak_p<T>"
-                ],
-                [
-                    "shared_p<T>",
-                    "!=",
-                    "weak_p<T>"
-                ],
-                [
-                    "unique_p<T>",
-                    "==",
-                    "weak_p<T>"
-                ],
-                [
-                    "unique_p<T>",
-                    "!=",
-                    "weak_p<T>"
-                ]
-            ]
-        },
-        {
-            "name": "vector_arithmetic",
-            "patterns": [
-                [
-                    "vector_t<T>",
-                    "+",
-                    "vector_t<T>"
-                ],
-                [
-                    "vector_t<T>",
-                    "-",
-                    "vector_t<T>"
-                ],
-                [
-                    "vector_t<T>",
-                    "*",
-                    "vector_t<T>"
-                ],
-                [
-                    "vector_t<T>",
-                    "/",
-                    "vector_t<T>"
-                ]
-            ]
-        },
-        {
-            "name": "string_arithmetic",
-            "patterns": [
-                [
-                    "string_t",
-                    "+",
-                    "string_t"
-                ],
-                [
-                    "string_t",
-                    "-",
-                    "string_t"
-                ],
-                [
-                    "string_t",
-                    "*",
-                    "string_t"
-                ],
-                [
-                    "string_t",
-                    "/",
-                    "string_t"
-                ]
-            ]
-        },
-        {
-            "name": "nullable_arithmetic",
-            "patterns": [
-                [
-                    "nullable<T>",
-                    "+",
-                    "nullable<T>"
-                ],
-                [
-                    "nullable<T>",
-                    "-",
-                    "nullable<T>"
-                ],
-                [
-                    "nullable<T>",
-                    "*",
-                    "nullable<T>"
-                ],
-                [
-                    "nullable<T>",
-                    "/",
-                    "nullable<T>"
-                ]
-            ]
-        },
-        {
-            "name": "pointer_arithmetic",
-            "patterns": [
-                [
-                    "shared_p<T>",
-                    "+",
-                    "shared_p<T>"
-                ],
-                [
-                    "shared_p<T>",
-                    "-",
-                    "shared_p<T>"
-                ],
-                [
-                    "shared_p<T>",
-                    "*",
-                    "shared_p<T>"
-                ],
-                [
-                    "shared_p<T>",
-                    "/",
-                    "shared_p<T>"
-                ],
-                [
-                    "unique_p<T>",
-                    "+",
-                    "unique_p<T>"
-                ],
-                [
-                    "unique_p<T>",
-                    "-",
-                    "unique_p<T>"
-                ],
-                [
-                    "unique_p<T>",
-                    "*",
-                    "unique_p<T>"
-                ],
-                [
-                    "unique_p<T>",
-                    "/",
-                    "unique_p<T>"
-                ],
-                [
-                    "weak_p<T>",
-                    "+",
-                    "weak_p<T>"
-                ],
-                [
-                    "weak_p<T>",
-                    "-",
-                    "weak_p<T>"
-                ],
-                [
-                    "weak_p<T>",
-                    "*",
-                    "weak_p<T>"
-                ],
-                [
-                    "weak_p<T>",
-                    "/",
-                    "weak_p<T>"
-                ]
-            ]
-        },
-        {
-            "name": "sentinel_arithmetic",
-            "patterns": [
-                [
-                    "null_t",
-                    "+",
-                    "null_t"
-                ],
-                [
-                    "null_t",
-                    "-",
-                    "null_t"
-                ],
-                [
-                    "null_t",
-                    "*",
-                    "null_t"
-                ],
-                [
-                    "null_t",
-                    "/",
-                    "null_t"
-                ]
-            ]
-        },
-        {
-            "name": "mixed_operator_candidate_expansion",
-            "patterns": [
-                [
-                    "mixed_t",
-                    "implicit_extract_for_operator_resolution",
-                    "*"
-                ]
-            ],
-            "reason": "mixed_t extraction is allowed only at explicit typed boundaries, not for overload candidate creation"
-        }
-    ],
-    "composition_constraints": {
-        "family_tags": {
-            "shared_p<T>": "ownership",
-            "unique_p<T>": "ownership",
-            "weak_p<T>": "ownership",
-            "value_p<T>": "inline_storage",
-            "ref_p<T>": "reference",
-            "nullable<T>": "optionality"
-        },
-        "forbidden_nesting": [
-            {
-                "outer": "value_p<T>",
-                "inner_family": "ownership",
-                "reason": "inline_value_wrapper_must_not_embed_handle_like_ownership_wrappers"
-            },
-            {
-                "outer": "value_p<T>",
-                "inner": "ref_p<U>",
-                "reason": "inline_value_wrapper_must_not_embed_reference_wrappers"
-            },
-            {
-                "outer": "ref_p<T>",
-                "inner_family": "ownership",
-                "reason": "reference_wrapper_must_not_target_handle_like_ownership_wrappers"
-            },
-            {
-                "outer": "ref_p<T>",
-                "inner": "ref_p<U>",
-                "reason": "reference_wrapper_must_not_wrap_reference_wrapper"
-            },
-            {
-                "outer": "nullable<T>",
-                "inner": "unique_p<U>",
-                "reason": "optional_unique_ownership_is_forbidden_due_to_redundant_and_confusing_null_layering"
-            }
-        ],
-        "allowed_special_nesting": [
-            {
-                "outer": "nullable<T>",
-                "inner": "ref_p<U>",
-                "reason": "optional_borrowed_reference_is_allowed_for_runtime_level_use_but_is_not_the_primary_php_object_lowering_model"
-            }
-        ],
-        "helper_collapse_rules": [
-            {
-                "helper": "ref",
-                "input": "ref_p<T>",
-                "result": "ref_p<T>",
-                "policy": "identity"
-            },
-            {
-                "helper": "ref",
-                "input": "value_p<T>&",
-                "result": "ref_p<T>",
-                "policy": "unwrap_inner_value"
-            },
-            {
-                "helper": "ref",
-                "input_family": "ownership",
-                "result": "same_type",
-                "policy": "handle_passthrough"
-            }
-        ],
-        "php_lowering_guidance": {
-            "nullable_object_like": "nullable<shared_p<T>>",
-            "disfavored_forms": [
-                "nullable<ref_p<T>>",
-                "nullable<unique_p<T>>"
-            ]
-        }
-    },
-    "assignments": [
-        {
-            "target": "bool_t",
-            "source": "bool_t",
-            "kind": "copy"
-        },
-        {
-            "target": "int_t",
-            "source": "int_t",
-            "kind": "copy"
-        },
-        {
-            "target": "float_t",
-            "source": "float_t",
-            "kind": "copy"
-        },
-        {
-            "target": "string_t",
-            "source": "string_t",
-            "kind": "copy"
-        },
-        {
-            "target": "vector_t<T>",
-            "source": "vector_t<T>",
-            "kind": "copy",
-            "template_rule": true
-        },
-        {
-            "target": "nullable<T>",
-            "source": "T",
-            "kind": "copy",
-            "template_rule": true
-        },
-        {
-            "target": "nullable<T>",
-            "source": "nullable<T>",
-            "kind": "copy",
-            "template_rule": true
-        },
-        {
-            "target": "nullable<T>",
-            "source": "null_t",
-            "kind": "reset_to_empty",
-            "template_rule": true
-        },
-        {
-            "target": "shared_p<T>",
-            "source": "shared_p<T>",
-            "kind": "copy",
-            "template_rule": true
-        },
-        {
-            "target": "shared_p<T>",
-            "source": "null_t",
-            "kind": "reset_to_null",
-            "template_rule": true
-        },
-        {
-            "target": "unique_p<T>",
-            "source": "unique_p<T>",
-            "kind": "move",
-            "template_rule": true
-        },
-        {
-            "target": "unique_p<T>",
-            "source": "null_t",
-            "kind": "reset_to_null",
-            "template_rule": true
-        },
-        {
-            "target": "weak_p<T>",
-            "source": "weak_p<T>",
-            "kind": "copy",
-            "template_rule": true
-        },
-        {
-            "target": "weak_p<T>",
-            "source": "shared_p<T>",
-            "kind": "copy_from_shared",
-            "template_rule": true
-        },
-        {
-            "target": "weak_p<T>",
-            "source": "null_t",
-            "kind": "reset_to_empty",
-            "template_rule": true
-        },
-        {
-            "target": "value_p<T>",
-            "source": "value_p<T>",
-            "kind": "copy",
-            "template_rule": true
-        },
-        {
-            "target": "value_p<T>",
-            "source": "T",
-            "kind": "copy_into_inner",
-            "template_rule": true
-        },
-        {
-            "target": "ref_p<T>",
-            "source": "ref_p<T>",
-            "kind": "copy",
-            "template_rule": true
-        },
-        {
-            "target": "nullable<T>",
-            "source": "nullopt_t",
-            "kind": "reset_to_empty",
-            "template_rule": true
-        },
-        {
-            "target": "nullable<T>",
-            "source": "nullptr_t",
-            "kind": "reset_to_empty",
-            "template_rule": true,
-            "policy_role": "sentinel_equivalence"
-        },
-        {
-            "target": "shared_p<T>",
-            "source": "nullptr_t",
-            "kind": "reset_to_null",
-            "template_rule": true
-        },
-        {
-            "target": "shared_p<T>",
-            "source": "nullopt_t",
-            "kind": "reset_to_null",
-            "template_rule": true,
-            "policy_role": "sentinel_equivalence"
-        },
-        {
-            "target": "unique_p<T>",
-            "source": "nullptr_t",
-            "kind": "reset_to_null",
-            "template_rule": true
-        },
-        {
-            "target": "unique_p<T>",
-            "source": "nullopt_t",
-            "kind": "reset_to_null",
-            "template_rule": true,
-            "policy_role": "sentinel_equivalence"
-        },
-        {
-            "target": "weak_p<T>",
-            "source": "nullptr_t",
-            "kind": "reset_to_empty",
-            "template_rule": true
-        },
-        {
-            "target": "weak_p<T>",
-            "source": "nullopt_t",
-            "kind": "reset_to_empty",
-            "template_rule": true,
-            "policy_role": "sentinel_equivalence"
-        },
-        {
-            "target": "shared_p<T>",
-            "source": "shared_p<U>",
-            "kind": "copy_upcast",
-            "template_rule": true,
-            "when": "U* is convertible to T*"
-        },
-        {
-            "target": "weak_p<T>",
-            "source": "weak_p<U>",
-            "kind": "copy_upcast",
-            "template_rule": true,
-            "when": "U* is convertible to T*"
-        },
-        {
-            "target": "ref_p<T>",
-            "source": "ref_p<U>",
-            "kind": "copy_upcast",
-            "template_rule": true,
-            "when": "U* is convertible to T*"
-        },
-        {
-            "target": "weak_p<T>",
-            "source": "shared_p<U>",
-            "kind": "copy_from_shared_upcast",
-            "template_rule": true,
-            "when": "U* is convertible to T*"
-        },
-        {
-            "target": "unique_p<T>",
-            "source": "unique_p<U>",
-            "kind": "move_upcast",
-            "template_rule": true,
-            "when": "U* is convertible to T*"
-        },
-        {
-            "target": "shared_p<T>",
-            "source": "shared_p<U>",
-            "kind": "move_upcast",
-            "template_rule": true,
-            "when": "U* is convertible to T*"
-        },
-        {
-            "target": "mixed_t",
-            "source": "mixed_t",
-            "kind": "copy"
-        },
-        {
-            "target": "mixed_t",
-            "source": "null_t",
-            "kind": "box"
-        },
-        {
-            "target": "mixed_t",
-            "source": "bool_t",
-            "kind": "box"
-        },
-        {
-            "target": "mixed_t",
-            "source": "int_t",
-            "kind": "box"
-        },
-        {
-            "target": "mixed_t",
-            "source": "float_t",
-            "kind": "box"
-        },
-        {
-            "target": "mixed_t",
-            "source": "string_t",
-            "kind": "box"
-        },
-        {
-            "target": "mixed_t",
-            "source": "hash_t",
-            "kind": "box_owned_table"
-        },
-        {
-            "target": "mixed_t",
-            "source": "shared_p<hash_t>",
-            "kind": "box_shared_table"
-        },
-        {
-            "target": "mixed_t",
-            "source": "weak_p<hash_t>",
-            "kind": "box_weak_table"
-        },
-        {
-            "target": "bool_t",
-            "source": "mixed_t",
-            "kind": "visible_intention_boundary_extract",
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
-        },
-        {
-            "target": "int_t",
-            "source": "mixed_t",
-            "kind": "visible_intention_boundary_extract",
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
-        },
-        {
-            "target": "float_t",
-            "source": "mixed_t",
-            "kind": "visible_intention_boundary_extract",
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
-        },
-        {
-            "target": "string_t",
-            "source": "mixed_t",
-            "kind": "visible_intention_boundary_extract",
-            "policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
-        }
-    ],
-    "sentinel_semantics": {
-        "equivalence_groups": [
-            {
-                "members": [
-                    "null_t",
-                    "nullopt_t",
-                    "nullptr_t"
-                ],
-                "policy": "comparison_equivalent"
-            }
-        ]
-    },
-    "runtime_helpers_contract": {
-        "stable_helpers": [
-            "create",
-            "shared",
-            "unique",
-            "weak",
-            "value",
-            "ref",
-            "cast",
-            "to_string",
-            "identical",
-            "not_identical",
-            "concat_assign",
-            "echo_eval"
-        ],
-        "namespaces": {
-            "core": "scpp",
-            "php": "scpp::php"
-        },
-        "generator_allowed_helpers": [
-            "create",
-            "shared",
-            "unique",
-            "weak",
-            "value",
-            "ref",
-            "cast",
-            "to_string",
-            "identical",
-            "not_identical",
-            "concat_assign",
-            "echo_eval"
-        ],
-        "notes": {
-            "purpose": "declares stable runtime helper entry points that frontends/generators may target directly",
-            "separation_rule": "helpers listed here are shared knowledge contracts, not generator implementation details",
-            "operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity using exact type matching except for null_t versus nullable<T>.",
-            "php_identity": {
-                "rule": "exact_type_required_except_null_nullable",
-                "exceptions": [
-                    "null_t == null_t",
-                    "null_t == nullable<T> when empty",
-                    "nullable<T> == null_t when empty"
-                ],
-                "same_type_behavior": {
-                    "scalars": "value_compare",
-                    "nullable<T>": "null_state_then_recursive_identical_of_T",
-                    "shared_p<T>": "managed_object_identity",
-                    "unique_p<T>": "managed_object_identity",
-                    "ref_p<T>": "referent_identity"
-                }
-            },
-            "callables": {
-                "representation": [
-                    "native_lambda",
-                    "std::function<R(Args...)>"
-                ],
-                "invocation_form": "direct_call_operator",
-                "supported_php_subset": [
-                    "anonymous_functions",
-                    "use_by_value"
-                ],
-                "unsupported_php_subset": [
-                    "use_by_reference"
-                ]
-            }
-        }
-    },
-    "call_semantics": {
-        "invocable_types": [
-            {
-                "type": "native_callable",
-                "call_form": "operator()",
-                "null_call_policy": "forbidden",
-                "notes": [
-                    "generator emits native C++ lambdas for anonymous functions",
-                    "generator may emit std::function<R(Args...)> when a concrete callable signature is required",
-                    "use(&$x) is not covered by this contract version"
-                ]
-            }
-        ]
-    },
-    "validation_requirements": {
-        "schema_rule_ids": {
-            "vr_001": "operator_resolution_uniqueness",
-            "vr_002": "assignment_resolution_uniqueness",
-            "vr_003": "compound_assignment_derivation_consistency",
-            "vr_004": "function_argument_boundary_uniqueness",
-            "vr_005": "return_boundary_uniqueness",
-            "vr_006": "cast_graph_no_duplicate_paths",
-            "vr_007": "condition_resolution_uniqueness",
-            "vr_008": "comparison_resolution_uniqueness",
-            "vr_009": "indexing_context_uniqueness",
-            "vr_010": "weak_table_expiry_behavior_uniqueness",
-            "vr_011": "generator_runtime_boundary_non_overlap",
-            "vr_012": "runtime_compile_surface_ambiguity_audit_required"
-        },
-        "must_check_after_change": [
-            "operator_resolution_uniqueness",
-            "assignment_resolution_uniqueness",
-            "compound_assignment_derivation_consistency",
-            "function_argument_boundary_uniqueness",
-            "return_boundary_uniqueness",
-            "cast_graph_no_duplicate_paths",
-            "condition_resolution_uniqueness",
-            "comparison_resolution_uniqueness",
-            "indexing_context_uniqueness",
-            "weak_table_expiry_behavior_uniqueness",
-            "generator_runtime_boundary_non_overlap",
-            "runtime_compile_surface_ambiguity_audit_required"
-        ],
-        "pipeline_policy": {
-            "ambiguity": "fail",
-            "config_inconsistency": "fail",
-            "unused_rules": "warn",
-            "auto_resolution": "forbidden"
-        },
-        "tooling": {
-            "primary_validator": "tools/runtime_config/bin/validate_config.php",
-            "runtime_audit": "tools/runtime_config/bin/audit_runtime_vs_config.php",
-            "audit_default_exit": 0,
-            "audit_strict_option": "--strict"
-        },
-        "runtime_audit_requirements": {
-            "default_exit": 0,
-            "strict_option": "--strict",
-            "must_probe": [
-                "mixed_t + int_t",
-                "mixed_t + float_t",
-                "mixed_t == int_t",
-                "mixed_t && int_t",
-                "mixed_t += int_t"
-            ],
-            "must_detect": [
-                "native conversion out of mixed_t",
-                "native conversion into mixed_t",
-                "shared operator symbol on both dynamic and native families"
-            ]
-        }
-    },
-    "compound_assignment_policy": {
-        "rule_id": "cap_001",
-        "model": "derived_from_binary_op_then_assign_back",
-        "rule": "lhs op= rhs is valid iff lhs op rhs is valid and the result type is assignable back to lhs under assignment rules",
-        "supported_symbols": [
-            "+=",
-            "-=",
-            "*=",
-            "/=",
-            "%=",
-            "&=",
-            "|=",
-            "^=",
-            "<<=",
-            ">>="
-        ]
-    }
+	"schema_version": "1.0.0",
+	"artifact": "scpp_runtime_config",
+	"runtime": {
+		"namespace": "scpp",
+		"umbrella_header": "scpp/runtime.hpp",
+		"create_default_owner": "shared",
+		"default_cast_policy": "forbidden",
+		"default_overload_policy": "forbidden",
+		"emit_deleted_for_forbidden_operations": true,
+		"comparison_result_type": "bool_t",
+		"condition_lowering": {
+			"semantic_type": "bool_t",
+			"cpp_bridge": "static_cast<bool>"
+		},
+		"default_assignment_policy": "forbidden",
+		"dynamic_runtime_policy": {
+			"status": "authoritative_current_policy",
+			"purpose": "hash_t and mixed_t form the dynamic fallback subsystem for quick code; explicit data structures remain preferred",
+			"tradeoffs": "using hash_t reduces performance, increases memory usage, reduces compile-time issue detection and static analysis capability, and becomes less readable as surrounding code grows",
+			"evaluation_rule": "once types are established, follow normal Prism++ rules",
+			"exceptions_rule": "exceptions must be documented separately and explicitly",
+			"runtime_error_payload_minimum": [
+				"message",
+				"operation",
+				"runtime type information",
+				"file",
+				"line"
+			],
+			"runtime_error_payload_optional": [
+				"key_or_index",
+				"member_name",
+				"function_name"
+			],
+			"unknown_combinations_policy": "if a combination is not covered by this config, it is not defined and must be treated as unsupported until specified"
+		},
+		"dynamic_v1_operation_scope": {
+			"enabled_now": [
+				"hash_t._find_val",
+				"hash_t.at",
+				"hash_t.find",
+				"hash_t.nonconst_operator_square_brackets",
+				"mixed_t._find_val",
+				"mixed_t.assignment_boundary_dispatch",
+				"mixed_t.cast_dispatch",
+				"mixed_t.condition_dispatch",
+				"mixed_t.exact_scalar_accessors",
+				"mixed_t.increment_decrement_dispatch",
+				"mixed_t.logical_dispatch",
+				"mixed_t.mutation_dispatch",
+				"mixed_t.operator_dispatch",
+				"mixed_t.shared_table_if",
+				"mixed_t.shared_table_storage",
+				"mixed_t.string_if",
+				"mixed_t.table_identity_comparison_dispatch",
+				"mixed_t.table_if",
+				"mixed_t.weak_table_if"
+			],
+			"explicit_only": [
+				"casts"
+			],
+			"deferred": [
+				"mixed_t callable behavior"
+			]
+		}
+	},
+	"runtime_types": {
+		"table": {
+			"name": "hash_t",
+			"php_mapping": "array",
+			"keys": [
+				"int",
+				"string"
+			],
+			"ordered": true,
+			"packed_mode": true,
+			"overwrite_on_set": true,
+			"append_rule": "max_int_key_plus_one",
+			"lookup": {
+				"type": "maybe_value_t",
+				"representation": "nullable<mixed_t>",
+				"nullopt": true,
+				"found_null_is_distinct": true,
+				"helpers": [
+					"is_nullopt",
+					"was_found"
+				]
+			},
+			"access": {
+				"at": "checked_no_insert",
+				"at_failure": "throw_style",
+				"operator[]": "inserting_nonconst_only"
+			},
+			"public_header": "scpp/hash_t.hpp",
+			"implementation_header": "scpp/support/hash_t.hpp",
+			"implementation_cpp": "scpp/support/hash_t.cpp",
+			"generation_rules": {
+				"read_only_lowering": "find",
+				"checked_read_lowering": "at",
+				"forbid_nonconst_bracket_for_read": true,
+				"plain_dynamic_read_lowering": "_find_val",
+				"presence_sensitive_read_lowering": "find",
+				"object_like_read_lowering": "_find_val",
+				"object_like_miss_value": "mixed_t(null_t{})"
+			},
+			"remove": {
+				"returns": {
+					"true": "existed_and_removed",
+					"false": "not_present"
+				},
+				"preserve_remaining_keys": true,
+				"packed_mode": {
+					"allow_direct_compaction_that_shifts_keys": false,
+					"required_strategy_if_needed": [
+						"promote_to_associative",
+						"tombstone_preserving"
+					]
+				}
+			},
+			"regression_cases": [
+				{
+					"name": "packed_remove_preserves_numeric_keys",
+					"steps": [
+						"append 100 -> key 0",
+						"append 200 -> key 1",
+						"remove key 0",
+						"has(0) == false",
+						"has(1) == true",
+						"append 300 -> key 2"
+					]
+				}
+			],
+			"dynamic_access_policy": {
+				"current_receiver_rules": {
+					"table_t_receiver": "allowed",
+					"value_t_table_receiver": "allowed through mixed_t runtime dispatch",
+					"value_t_null_receiver_for__find_val": "returns mixed_t(null_t{})",
+					"string_t_receiver": "runtime error for operator[] in current policy",
+					"int_float_bool_null_receiver": "runtime error for operator[] in current policy"
+				},
+				"missing_key_behavior": {
+					"find": "returns empty maybe_value_t",
+					"at": "checked access, no insertion, failure on miss",
+					"nonconst_operator_square_brackets_int": "inserting access",
+					"nonconst_operator_square_brackets_string": "inserting access",
+					"_find_val": "returns mixed_t(null_t{})"
+				},
+				"future_reserved": {
+					"string_indexing": "reserved for later char_t/byte_t based design"
+				}
+			},
+			"object_like_form": {
+				"storage_type": "hash_t",
+				"carrier_type": "shared_p<hash_t>",
+				"public_runtime_type": "dynamic_t",
+				"missing_property_read": "null_via__find_val",
+				"identity": "pointer_identity",
+				"weak_identity_recommendation": "shared_vs_weak_compare_locked_pointer_or_false_if_expired",
+				"int_and_string_keys": "same_runtime_behavior_as_table_t"
+			}
+		}
+	},
+	"types": {
+		"null_t": {
+			"kind": "scalar_tag",
+			"header": "scpp/null_t.hpp",
+			"template": false,
+			"cpp_underlying": null,
+			"family": "sentinel",
+			"semantic_role": "generic_null",
+			"stable_core_api": [
+				"default_ctor"
+			]
+		},
+		"nullopt_t": {
+			"kind": "scalar_tag",
+			"header": "scpp/nullopt_t.hpp",
+			"template": false,
+			"cpp_underlying": null,
+			"family": "sentinel",
+			"semantic_role": "optional_empty",
+			"stable_core_api": [
+				"default_ctor"
+			]
+		},
+		"nullptr_t": {
+			"kind": "scalar_tag",
+			"header": "scpp/nullptr_t.hpp",
+			"template": false,
+			"cpp_underlying": null,
+			"family": "sentinel",
+			"semantic_role": "pointer_empty",
+			"stable_core_api": [
+				"default_ctor"
+			]
+		},
+		"bool_t": {
+			"kind": "scalar_wrapper",
+			"header": "scpp/bool_t.hpp",
+			"template": false,
+			"cpp_underlying": "bool",
+			"stable_core_api": [
+				"default_ctor",
+				"explicit_native_ctor",
+				"native_value"
+			],
+			"entry_ctors": [
+				{
+					"from_cpp": "bool",
+					"explicit": true
+				}
+			]
+		},
+		"int_t": {
+			"kind": "scalar_wrapper",
+			"header": "scpp/int_t.hpp",
+			"template": false,
+			"cpp_underlying": "std::int64_t",
+			"stable_core_api": [
+				"default_ctor",
+				"explicit_native_ctor",
+				"native_value"
+			],
+			"entry_ctors": [
+				{
+					"from_cpp": "std::int64_t",
+					"explicit": true
+				}
+			]
+		},
+		"float_t": {
+			"kind": "scalar_wrapper",
+			"header": "scpp/float_t.hpp",
+			"template": false,
+			"cpp_underlying": "double",
+			"stable_core_api": [
+				"default_ctor",
+				"explicit_native_ctor",
+				"native_value"
+			],
+			"entry_ctors": [
+				{
+					"from_cpp": "double",
+					"explicit": true
+				}
+			]
+		},
+		"string_t": {
+			"kind": "scalar_wrapper",
+			"header": "scpp/string_t.hpp",
+			"template": false,
+			"cpp_underlying": "std::string",
+			"stable_core_api": [
+				"default_ctor",
+				"explicit_native_ctor",
+				"explicit_string_view_ctor",
+				"explicit_cstr_ctor",
+				"native_value",
+				"size",
+				"empty",
+				"append"
+			],
+			"entry_ctors": [
+				{
+					"from_cpp": "std::string",
+					"explicit": true
+				},
+				{
+					"from_cpp": "std::string_view",
+					"explicit": true
+				},
+				{
+					"from_cpp": "const char*",
+					"explicit": true
+				}
+			]
+		},
+		"vector_t": {
+			"kind": "template_wrapper",
+			"header": "scpp/vector_t.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "std::vector<T>",
+			"stable_core_api": [
+				"default_ctor",
+				"size",
+				"empty",
+				"clear",
+				"at",
+				"index",
+				"append"
+			]
+		},
+		"value_p": {
+			"kind": "template_wrapper",
+			"header": "scpp/value_p.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "T",
+			"family": "inline_storage",
+			"allocates": false,
+			"copyable": true,
+			"movable": true,
+			"stable_core_api": [
+				"default_ctor",
+				"copy_ctor",
+				"move_ctor",
+				"copy_assign",
+				"move_assign",
+				"explicit_value_ctor",
+				"in_place_ctor",
+				"has_value",
+				"get",
+				"deref",
+				"arrow"
+			]
+		},
+		"ref_p": {
+			"kind": "template_wrapper",
+			"header": "scpp/ref_p.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "T*",
+			"family": "reference",
+			"allocates": false,
+			"copyable": true,
+			"movable": true,
+			"nullable": false,
+			"stable_core_api": [
+				"value_ctor",
+				"copy_ctor",
+				"move_ctor",
+				"copy_assign",
+				"move_assign",
+				"get",
+				"deref",
+				"arrow"
+			],
+			"assignment_semantics": {
+				"copy_assign": "write_through",
+				"move_assign": "write_through",
+				"rebind_on_assignment": false,
+				"direct_value_assignment": true,
+				"copy_construction": "alias_same_target",
+				"move_construction": "alias_same_target"
+			}
+		},
+		"shared_p": {
+			"kind": "template_wrapper",
+			"header": "scpp/shared_p.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "std::shared_ptr<T>",
+			"stable_core_api": [
+				"default_ctor",
+				"null_ctor",
+				"explicit_native_ctor",
+				"element_type",
+				"copy_ctor",
+				"move_ctor",
+				"converting_copy_ctor",
+				"converting_move_ctor",
+				"copy_assign",
+				"move_assign",
+				"converting_copy_assign",
+				"converting_move_assign",
+				"null_assign",
+				"has_value",
+				"bool_conversion",
+				"get",
+				"use_count",
+				"unique",
+				"reset",
+				"swap",
+				"deref",
+				"arrow",
+				"native_value"
+			]
+		},
+		"unique_p": {
+			"kind": "template_wrapper",
+			"header": "scpp/unique_p.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "std::unique_ptr<T>",
+			"stable_core_api": [
+				"default_ctor",
+				"null_ctor",
+				"explicit_native_ctor",
+				"element_type",
+				"move_ctor",
+				"move_assign",
+				"converting_move_ctor",
+				"converting_move_assign",
+				"null_assign",
+				"has_value",
+				"bool_conversion",
+				"get",
+				"reset",
+				"release",
+				"swap",
+				"deref",
+				"arrow",
+				"native_value"
+			],
+			"copyable": false,
+			"movable": true
+		},
+		"weak_p": {
+			"kind": "template_wrapper",
+			"header": "scpp/weak_p.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "std::weak_ptr<T>",
+			"stable_core_api": [
+				"default_ctor",
+				"null_ctor",
+				"explicit_native_ctor",
+				"element_type",
+				"explicit_from_shared",
+				"converting_from_shared",
+				"copy_ctor",
+				"copy_assign",
+				"converting_copy_ctor",
+				"converting_copy_assign",
+				"null_assign",
+				"expired",
+				"use_count",
+				"lock",
+				"reset",
+				"swap",
+				"native_value"
+			]
+		},
+		"nullable": {
+			"kind": "template_wrapper",
+			"header": "scpp/nullable.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "std::optional<T>",
+			"stable_core_api": [
+				"default_ctor",
+				"null_ctor",
+				"value_ctor",
+				"has_value",
+				"reset",
+				"require_value",
+				"value",
+				"value_or",
+				"implicit_typed_boundary_bridge",
+				"operator_arrow",
+				"native_value"
+			],
+			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; empty state is a runtime error; the current required-value cast wording is \"cast<To>(nullable) cannot convert an empty nullable to a required value\"; this bridge must not widen operator candidate sets",
+			"cast_lifting_rule": "centralized cast lifting may unwrap nullable<U> to any configured explicit target T through require_value and cast<T>(U); string_t remains the configured PHP-style empty-string exception for empty nullable values; the symmetric inbound bridge cast<nullable<T>>(mixed_t) maps runtime null to empty nullable and otherwise delegates through the configured mixed_t -> T cast",
+			"operator_lifting_rule": "centralized generated operators, not the temporary typed-boundary bridge, define nullable participation in unary, binary, logical, relational, mutation, and compound-assignment families; empty nullable operands fail through runtime errors except explicit sentinel comparisons and equality/inequality against non-sentinel values",
+			"arrow_rule": "nullable<T>::operator->() is part of the stable wrapper surface; it must require a present value, forward to wrapped T::operator->() when T already exposes it, and otherwise return the address of the wrapped object for direct-object member access"
+		},
+		"result_or_false": {
+			"kind": "template_wrapper",
+			"header": "scpp/result_or_false.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "detail::result_core<T, false, false>",
+			"stable_core_api": [
+				"default_ctor",
+				"false_ctor",
+				"value_ctor",
+				"has_value",
+				"is_false",
+				"reset",
+				"require_value",
+				"value",
+				"implicit_typed_boundary_bridge",
+				"operator_arrow"
+			],
+			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the false-like empty state is a runtime error for required-value conversions",
+			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_false<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the false-like empty state",
+			"operator_lifting_rule": "centralized generated operators define result_or_false participation through the same guarded-value lifting surface used by nullable; the false-like empty state fails through runtime errors except explicit false-sentinel comparisons",
+			"sentinel_rule": "the public PHP-facing comparison surface remains == false while the runtime implementation uses false_sentinel_t / false_sentinel internally"
+		},
+		"result_or_bool": {
+			"kind": "template_wrapper",
+			"header": "scpp/result_or_bool.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "detail::result_core<T, false, true>",
+			"stable_core_api": [
+				"default_ctor",
+				"false_ctor",
+				"true_ctor",
+				"value_ctor",
+				"has_value",
+				"is_false",
+				"is_true",
+				"reset",
+				"require_value",
+				"value",
+				"implicit_typed_boundary_bridge",
+				"operator_arrow"
+			],
+			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the bool states are runtime errors for required-value conversions",
+			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_bool<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the bool states, while a true-state stringifies as the PHP boolean true contract",
+			"operator_lifting_rule": "centralized generated operators define result_or_bool participation through the same guarded-value lifting surface used by nullable; the non-value bool states fail through runtime errors except explicit bool/false-sentinel comparisons",
+			"sentinel_rule": "the public PHP-facing comparison surface remains == false and == true while the runtime implementation uses false_sentinel_t / false_sentinel and bool_t(true) internally"
+		},
+		"error_t": {
+			"kind": "runtime_value",
+			"header": "scpp/error_t.hpp",
+			"template": false,
+			"semantic_role": "structured_in_band_failure_payload",
+			"stable_core_api": [
+				"default_ctor",
+				"message_line_file_ctor",
+				"get_message",
+				"get_line",
+				"get_file"
+			],
+			"minimum_payload": [
+				"message",
+				"line",
+				"file"
+			]
+		},
+		"result": {
+			"kind": "template_wrapper",
+			"header": "scpp/result.hpp",
+			"template": true,
+			"template_params": [
+				"T"
+			],
+			"cpp_underlying": "std::variant<T, error_t>",
+			"stable_core_api": [
+				"default_ctor",
+				"value_ctor",
+				"error_ctor",
+				"has_value",
+				"has_error",
+				"require_value",
+				"require_error",
+				"value",
+				"error",
+				"implicit_typed_boundary_bridge",
+				"operator_arrow"
+			],
+			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the error state is a runtime error for required-value conversions",
+			"cast_lifting_rule": "centralized cast lifting may unwrap result<U> to any configured explicit target T through require_value and cast<T>(U); the error state never silently converts to a value",
+			"operator_lifting_rule": "centralized generated operators define result participation through the same guarded-value lifting surface used by nullable; the error state fails through runtime errors except explicit error-sentinel comparisons",
+			"error_access_rule": "wrapper error inspection is explicit through error(); the value path stays on operator->() and the generator lowers $result->error()->... to the wrapper method instead of treating error as a real payload property"
+		},
+		"hash_t": {
+			"kind": "runtime_container",
+			"header": "scpp/hash_t.hpp",
+			"template": false,
+			"semantic_role": "php_array_runtime",
+			"stable_core_api": [
+				"empty",
+				"size",
+				"is_packed",
+				"clear",
+				"append",
+				"set",
+				"has",
+				"find",
+				"at",
+				"operator[]",
+				"remove"
+			]
+		},
+		"mixed_t": {
+			"kind": "runtime_value",
+			"header": "scpp/mixed_t.hpp",
+			"template": false,
+			"semantic_role": "table_payload",
+			"stable_core_api": [
+				"default_ctor",
+				"null_ctor",
+				"clone",
+				"kind",
+				"is_null"
+			],
+			"stored_runtime_kinds": [
+				{
+					"name": "null_v",
+					"public_meaning": "stored null_t state"
+				},
+				{
+					"name": "bool_v",
+					"public_meaning": "stored bool_t / bool"
+				},
+				{
+					"name": "int_v",
+					"public_meaning": "stored int_t / std::int64_t"
+				},
+				{
+					"name": "float_v",
+					"public_meaning": "stored float_t / double"
+				},
+				{
+					"name": "string_v",
+					"public_meaning": "owned string_t"
+				},
+				{
+					"name": "table_v",
+					"public_meaning": "owned hash_t<mixed_t>"
+				},
+				{
+					"name": "shared_table_v",
+					"public_meaning": "shared hash_t<mixed_t>"
+				},
+				{
+					"name": "weak_table_v",
+					"public_meaning": "weak hash_t<mixed_t>"
+				}
+			],
+			"current_accessors": {
+				"exact_scalar_accessors": {
+					"bool_value": "requires kind bool_v, else runtime error",
+					"int_value": "requires kind int_v, else runtime error",
+					"float_value": "requires kind float_v, else runtime error",
+					"string_exact_access": "preferred runtime contract is exact string extraction via the explicit mixed_t/string_t bridge; probe access remains string_if()"
+				},
+				"probe_accessors": {
+					"string_if": "returns const string_t* or nullptr",
+					"table_if": "returns hash_t<mixed_t>* / const hash_t<mixed_t>* for owned/shared table; otherwise nullptr",
+					"shared_table_if": "returns shared table handle probe or nullptr",
+					"weak_table_if": "returns weak table handle probe or nullptr"
+				},
+				"clone_policy": {
+					"null_bool_int_float_string": "cloned by value",
+					"table_v": "deep copies owned table payload",
+					"shared_table_v": "copies shared handle",
+					"dynamic_v": "copies shared dynamic handle",
+					"weak_table_v": "copies weak handle"
+				}
+			},
+			"dynamic_policy": {
+				"status": "current_implemented_behavior_plus_authoritative_policy",
+				"principle": "once runtime operand types are established, follow normal Prism++ rules; exceptions must be listed explicitly",
+				"implicit_conversions": "forbidden unless an operation or cast rule explicitly allows them",
+				"dynamic_dispatch_scope": [
+					"runtime type establishment",
+					"checked extraction / explicit conversion",
+					"operation dispatch only where explicitly documented"
+				],
+				"not_yet_enabled": [
+					"dynamic callable dispatch",
+					"dynamic method dispatch"
+				],
+				"operator_resolution_rule": "implicit mixed_t to native extraction must not participate in overload candidate expansion; any operator involving mixed_t resolves through mixed_t runtime-kind dispatch only",
+				"typed_boundary_bridge_rule": "implicit mixed_t to native extraction is temporarily accepted only for initialization/assignment, by-value argument passing, and typed return; failed extraction is a runtime error",
+				"concat_rule": "PHP string concatenation (.) and (.=) is generator-owned and must be lowered into explicit text conversion plus primitive string_t concatenation; mixed_t has no independent concat dispatch family"
+			},
+			"dispatch_contract": {
+				"model": "runtime_kind_dispatch_delegates_to_native_rules",
+				"delegate_reference_format": {
+					"delegate_to_native_rule": {
+						"lhs": "<native type>",
+						"op": "<operator>",
+						"rhs": "<native type>"
+					}
+				},
+				"implicit_extraction": {
+					"allowed_contexts": [
+						"initialization",
+						"assignment",
+						"by_value_argument",
+						"typed_return"
+					],
+					"forbidden_contexts": [
+						"operator_overload_resolution",
+						"overload_disambiguation",
+						"by_reference_parameter_adaptation"
+					]
+				},
+				"kinds_delegate_as": {
+					"null_v": "null_t",
+					"bool_v": "bool_t",
+					"int_v": "int_t",
+					"float_v": "float_t",
+					"string_v": "string_t",
+					"table_v": "hash_t<mixed_t> owned table carrier",
+					"shared_table_v": "shared_p<hash_t<mixed_t>> carrier",
+					"dynamic_v": "dynamic_t carrier",
+					"weak_table_v": "weak_p<hash_t<mixed_t>> carrier"
+				},
+				"operator_surface": {
+					"binary_arithmetic": [
+						"+",
+						"-",
+						"*",
+						"/",
+						"%"
+					],
+					"binary_comparison": [
+						"==",
+						"!=",
+						"<",
+						"<=",
+						">",
+						">="
+					],
+					"binary_logical": [
+						"&&",
+						"||"
+					],
+					"unary": [
+						"+",
+						"-",
+						"!",
+						"++prefix",
+						"++postfix",
+						"--prefix",
+						"--postfix"
+					],
+					"compound": [
+						"+=",
+						"-=",
+						"*=",
+						"/=",
+						"%="
+					]
+				},
+				"delegation_rule": "if the established runtime kinds map to an allowed native rule, execute that native rule and box the result when needed; otherwise raise a runtime error",
+				"compound_assignment_rule": "compound assignment is allowed only when the delegated native binary operator exists and assignment back into the stored lhs kind is valid",
+				"table_carrier_policy": {
+					"arithmetic": "runtime_error",
+					"ordering_comparison": "runtime_error",
+					"equality_inequality": {
+						"table_v": "runtime_error",
+						"shared_table_v": "identity_by_shared_target_pointer",
+						"dynamic_v": "identity_by_shared_target_pointer",
+						"weak_table_v": "identity_by_locked_target_pointer_or_false_if_either_expired"
+					}
+				},
+				"weak_table_policy": {
+					"_find_val": "returns mixed_t(null_t{}) when expired",
+					"find": "returns not_found when expired",
+					"at": "runtime_error when expired",
+					"write_or_index_assign": "runtime_error when expired"
+				},
+				"generator_owned_operations": {
+					"concat": [
+						".",
+						".="
+					]
+				},
+				"boundary_bridges": {
+					"rule_id": "mbb_001",
+					"initialization": true,
+					"assignment": true,
+					"by_value_argument": true,
+					"typed_return": true,
+					"operator_overload_resolution": false,
+					"overload_disambiguation": false,
+					"by_reference_parameter_adaptation": false,
+					"const_reference_parameter_adaptation": false
+				}
+			},
+			"boundary_bridges": {
+				"assignment": true,
+				"function_argument_by_value": true,
+				"return": true,
+				"operator_resolution": false,
+				"by_reference_argument": false,
+				"const_reference_argument": false,
+				"overload_resolution": false
+			}
+		},
+		"maybe_value_t": {
+			"kind": "runtime_alias",
+			"header": "scpp/hash_t.hpp",
+			"template": false,
+			"semantic_role": "table_lookup_result",
+			"stable_core_api": [
+				"is_nullopt",
+				"was_found"
+			]
+		}
+	},
+	"memory_helpers": {
+		"create": {
+			"enabled": true,
+			"returns": "shared_p<T>",
+			"kind": "factory",
+			"policy_role": "default_managed_creation"
+		},
+		"shared": {
+			"enabled": true,
+			"returns": "shared_p<T>",
+			"kind": "factory"
+		},
+		"unique": {
+			"enabled": true,
+			"returns": "unique_p<T>",
+			"kind": "factory"
+		},
+		"weak": {
+			"enabled": true,
+			"returns": "weak_p<T>",
+			"kind": "derived_reference",
+			"from": "shared_p<T>",
+			"allocates": false
+		},
+		"value": {
+			"enabled": true,
+			"returns": "value_p<T>",
+			"kind": "factory",
+			"allocates": false,
+			"policy_role": "explicit_inline_value_creation"
+		},
+		"ref": {
+			"enabled": true,
+			"kind": "reference_adapter",
+			"allocates": false,
+			"overloads": [
+				{
+					"from": "T&",
+					"returns": "ref_p<T>",
+					"when": "T is not handle_like and not ref_like"
+				},
+				{
+					"from": "value_p<T>&",
+					"returns": "ref_p<T>"
+				},
+				{
+					"from": "ref_p<T>",
+					"returns": "ref_p<T>",
+					"policy_role": "identity"
+				},
+				{
+					"from": "T&",
+					"returns": "T&",
+					"when": "T is handle_like",
+					"policy_role": "handle_passthrough"
+				}
+			]
+		}
+	},
+	"casts": [
+		{
+			"from": "null_t",
+			"to": "shared_p<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "null_t",
+			"to": "unique_p<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "null_t",
+			"to": "weak_p<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "null_t",
+			"to": "nullable<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "T",
+			"to": "nullable<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "shared_p<T>",
+			"to": "weak_p<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "int_t",
+			"to": "float_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false
+		},
+		{
+			"from": "bool_t",
+			"to": "int_t",
+			"kind": "explicit",
+			"form": "constructor",
+			"template_rule": false
+		},
+		{
+			"from": "bool_t",
+			"to": "float_t",
+			"kind": "explicit",
+			"form": "constructor",
+			"template_rule": false
+		},
+		{
+			"from": "bool_t",
+			"to": "bool",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "int_t",
+			"to": "bool_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "float_t",
+			"to": "bool_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "float_t",
+			"to": "int_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "string_t",
+			"to": "string_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false,
+			"policy_role": "identity"
+		},
+		{
+			"from": "nullable<T>",
+			"to": "T",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": true,
+			"policy_role": "unwrap_present_value_or_runtime_error",
+			"typed_boundary_implicit_bridge": true,
+			"note": "the same centralized lifting rule also applies to nullable<U> -> T for any configured explicit cast pair by unwrapping first; string_t remains the empty-string exception"
+		},
+		{
+			"from": "nullopt_t",
+			"to": "nullable<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "nullptr_t",
+			"to": "shared_p<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "nullptr_t",
+			"to": "unique_p<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "nullptr_t",
+			"to": "weak_p<T>",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "T",
+			"to": "value_p<T>",
+			"kind": "explicit",
+			"form": "constructor",
+			"template_rule": true
+		},
+		{
+			"from": "T&",
+			"to": "ref_p<T>",
+			"kind": "explicit",
+			"form": "helper",
+			"helper_name": "ref",
+			"template_rule": true
+		},
+		{
+			"from": "value_p<T>&",
+			"to": "ref_p<T>",
+			"kind": "explicit",
+			"form": "helper",
+			"helper_name": "ref",
+			"template_rule": true
+		},
+		{
+			"from": "null_t",
+			"to": "mixed_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false,
+			"policy_role": "box_into_mixed_runtime_value"
+		},
+		{
+			"from": "bool_t",
+			"to": "mixed_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false,
+			"policy_role": "box_into_mixed_runtime_value"
+		},
+		{
+			"from": "int_t",
+			"to": "mixed_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false,
+			"policy_role": "box_into_mixed_runtime_value"
+		},
+		{
+			"from": "float_t",
+			"to": "mixed_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false,
+			"policy_role": "box_into_mixed_runtime_value"
+		},
+		{
+			"from": "string_t",
+			"to": "mixed_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false,
+			"policy_role": "box_into_mixed_runtime_value"
+		},
+		{
+			"from": "hash_t",
+			"to": "mixed_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false,
+			"policy_role": "box_into_mixed_runtime_value"
+		},
+		{
+			"from": "shared_p<hash_t>",
+			"to": "mixed_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false,
+			"policy_role": "box_into_mixed_runtime_value"
+		},
+		{
+			"from": "weak_p<hash_t>",
+			"to": "mixed_t",
+			"kind": "implicit",
+			"form": "constructor",
+			"template_rule": false,
+			"policy_role": "box_into_mixed_runtime_value"
+		},
+		{
+			"from": "mixed_t",
+			"to": "bool_t",
+			"kind": "boundary_implicit_v1_visible_intention",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false,
+			"policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_literals"
+		},
+		{
+			"from": "mixed_t",
+			"to": "int_t",
+			"kind": "boundary_implicit_v1_visible_intention",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false,
+			"policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_parse"
+		},
+		{
+			"from": "mixed_t",
+			"to": "float_t",
+			"kind": "boundary_implicit_v1_visible_intention",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false,
+			"policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error_including_strict_string_parse"
+		},
+		{
+			"from": "mixed_t",
+			"to": "string_t",
+			"kind": "boundary_implicit_v1_visible_intention",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false,
+			"policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+		},
+		{
+			"from": "mixed_t",
+			"to": "nullable<T>",
+			"kind": "boundary_implicit_v1_visible_intention",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": true,
+			"policy_role": "runtime_null_to_empty_nullable_otherwise_delegate_to_configured_mixed_to_wrapped_target_cast"
+		},
+		{
+			"from": "bool_t",
+			"to": "int_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "bool_t",
+			"to": "float_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "int_t",
+			"to": "float_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "string_t",
+			"to": "bool_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false,
+			"policy_role": "strict_string_bool_literal_set"
+		},
+		{
+			"from": "string_t",
+			"to": "int_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false,
+			"policy_role": "strict_full_string_base10_parse"
+		},
+		{
+			"from": "string_t",
+			"to": "float_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false,
+			"policy_role": "strict_full_string_finite_decimal_parse"
+		},
+		{
+			"from": "int_t",
+			"to": "string_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "float_t",
+			"to": "string_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "bool_t",
+			"to": "string_t",
+			"kind": "explicit",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "mixed_t",
+			"to": "shared_p<hash_t<mixed_t>>",
+			"kind": "boundary_implicit_v1_visible_intention",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		},
+		{
+			"from": "mixed_t",
+			"to": "weak_p<hash_t<mixed_t>>",
+			"kind": "boundary_implicit_v1_visible_intention",
+			"form": "named_cast",
+			"cast_name": "cast",
+			"template_rule": false
+		}
+	],
+	"coercions": {
+		"condition": {
+			"semantic_type": "bool_t",
+			"bridge": "cast<bool>",
+			"allowed_inputs": [
+				"bool_t",
+				"int_t",
+				"float_t",
+				"mixed_t"
+			],
+			"mixed_t_rule": "establish runtime kind and delegate to the corresponding native condition rule; string_t, null_t, and table carriers remain errors under the current policy"
+		},
+		"text": {
+			"result_type": "string_t",
+			"dispatch_helper": "to_string",
+			"null_rendering": {
+				"null_t": "",
+				"nullopt_t": "",
+				"nullptr_t": ""
+			},
+			"rules": [
+				{
+					"from": "string_t",
+					"kind": "identity"
+				},
+				{
+					"from": "bool_t",
+					"kind": "helper",
+					"helper_name": "to_string"
+				},
+				{
+					"from": "int_t",
+					"kind": "helper",
+					"helper_name": "to_string"
+				},
+				{
+					"from": "float_t",
+					"kind": "helper",
+					"helper_name": "to_string"
+				},
+				{
+					"from": "null_t",
+					"kind": "literal",
+					"value": ""
+				},
+				{
+					"from": "nullopt_t",
+					"kind": "literal",
+					"value": ""
+				},
+				{
+					"from": "nullptr_t",
+					"kind": "literal",
+					"value": ""
+				},
+				{
+					"from": "nullable<T>",
+					"kind": "helper",
+					"helper_name": "to_string",
+					"template_rule": true
+				},
+				{
+					"from": "value_p<T>",
+					"kind": "helper",
+					"helper_name": "to_string",
+					"template_rule": true
+				},
+				{
+					"from": "ref_p<T>",
+					"kind": "helper",
+					"helper_name": "to_string",
+					"template_rule": true
+				},
+				{
+					"from": "shared_p<T>",
+					"kind": "helper",
+					"helper_name": "to_string",
+					"template_rule": true
+				},
+				{
+					"from": "unique_p<T>",
+					"kind": "helper",
+					"helper_name": "to_string",
+					"template_rule": true
+				},
+				{
+					"from": "weak_p<T>",
+					"kind": "helper",
+					"helper_name": "to_string",
+					"template_rule": true
+				},
+				{
+					"from": "mixed_t",
+					"kind": "helper",
+					"helper_name": "to_string",
+					"policy_role": "explicit_text_conversion_after_runtime_kind_dispatch"
+				}
+			]
+		}
+	},
+	"subtyping": {
+		"object_subtype_source": "cpp_pointer_convertibility",
+		"wrapper_rules": [
+			{
+				"wrapper": "shared_p<T>",
+				"variance": "covariant",
+				"from": "shared_p<U>",
+				"to": "shared_p<T>",
+				"when": "U* is convertible to T*",
+				"kind": "implicit"
+			},
+			{
+				"wrapper": "weak_p<T>",
+				"variance": "covariant",
+				"from": "weak_p<U>",
+				"to": "weak_p<T>",
+				"when": "U* is convertible to T*",
+				"kind": "implicit"
+			},
+			{
+				"wrapper": "ref_p<T>",
+				"variance": "covariant",
+				"from": "ref_p<U>",
+				"to": "ref_p<T>",
+				"when": "U* is convertible to T*",
+				"kind": "implicit"
+			},
+			{
+				"wrapper": "unique_p<T>",
+				"variance": "covariant_move_only",
+				"from": "unique_p<U>",
+				"to": "unique_p<T>",
+				"when": "U* is convertible to T*",
+				"kind": "move_only"
+			}
+		],
+		"forbidden_wrapper_rules": [
+			{
+				"wrapper": "nullable<T>",
+				"from": "nullable<U>",
+				"to": "nullable<T>",
+				"reason": "generic_inner_subtyping_not_enabled"
+			},
+			{
+				"wrapper": "value_p<T>",
+				"from": "value_p<U>",
+				"to": "value_p<T>",
+				"reason": "inline_value_wrapper_is_not_polymorphic"
+			}
+		]
+	},
+	"overload_families": [
+		{
+			"name": "bool_logical",
+			"enabled": true,
+			"operators": [
+				{
+					"symbol": "!",
+					"arity": 1,
+					"operands": [
+						"bool_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "&&",
+					"arity": 2,
+					"operands": [
+						"bool_t",
+						"bool_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "||",
+					"arity": 2,
+					"operands": [
+						"bool_t",
+						"bool_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"bool_t",
+						"bool_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"bool_t",
+						"bool_t"
+					],
+					"result": "bool_t"
+				}
+			]
+		},
+		{
+			"name": "int_arithmetic",
+			"enabled": true,
+			"operators": [
+				{
+					"symbol": "+",
+					"arity": 1,
+					"operands": [
+						"int_t"
+					],
+					"result": "int_t"
+				},
+				{
+					"symbol": "-",
+					"arity": 1,
+					"operands": [
+						"int_t"
+					],
+					"result": "int_t"
+				},
+				{
+					"symbol": "+",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t"
+				},
+				{
+					"symbol": "-",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t"
+				},
+				{
+					"symbol": "*",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t"
+				},
+				{
+					"symbol": "/",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t"
+				},
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "<",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "<=",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": ">",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": ">=",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "bool_t"
+				}
+			]
+		},
+		{
+			"enabled": true,
+			"name": "int_bitwise_and_mutation",
+			"operators": [
+				{
+					"arity": 1,
+					"operands": [
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": "~"
+				},
+				{
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": "%"
+				},
+				{
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": "&"
+				},
+				{
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": "|"
+				},
+				{
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": "^"
+				},
+				{
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": "<<"
+				},
+				{
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": ">>"
+				},
+				{
+					"arity": 1,
+					"operands": [
+						"int_t"
+					],
+					"result": "int_t&",
+					"symbol": "++prefix",
+					"mutates_lhs": true
+				},
+				{
+					"arity": 1,
+					"operands": [
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": "++postfix",
+					"mutates_lhs": true
+				},
+				{
+					"arity": 1,
+					"operands": [
+						"int_t"
+					],
+					"result": "int_t&",
+					"symbol": "--prefix",
+					"mutates_lhs": true
+				},
+				{
+					"arity": 1,
+					"operands": [
+						"int_t"
+					],
+					"result": "int_t",
+					"symbol": "--postfix",
+					"mutates_lhs": true
+				}
+			]
+		},
+		{
+			"name": "float_arithmetic",
+			"enabled": true,
+			"operators": [
+				{
+					"symbol": "+",
+					"arity": 1,
+					"operands": [
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "-",
+					"arity": 1,
+					"operands": [
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "+",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "-",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "*",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "/",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "<",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "<=",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": ">",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": ">=",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				}
+			]
+		},
+		{
+			"enabled": true,
+			"name": "float_mutation",
+			"operators": [
+				{
+					"arity": 1,
+					"operands": [
+						"float_t"
+					],
+					"result": "float_t&",
+					"symbol": "++prefix",
+					"mutates_lhs": true
+				},
+				{
+					"arity": 1,
+					"operands": [
+						"float_t"
+					],
+					"result": "float_t",
+					"symbol": "++postfix",
+					"mutates_lhs": true
+				},
+				{
+					"arity": 1,
+					"operands": [
+						"float_t"
+					],
+					"result": "float_t&",
+					"symbol": "--prefix",
+					"mutates_lhs": true
+				},
+				{
+					"arity": 1,
+					"operands": [
+						"float_t"
+					],
+					"result": "float_t",
+					"symbol": "--postfix",
+					"mutates_lhs": true
+				}
+			]
+		},
+		{
+			"name": "mixed_numeric",
+			"enabled": true,
+			"promotion": {
+				"left": "int_t",
+				"right": "float_t",
+				"promote_to": "float_t"
+			},
+			"symmetric": true,
+			"operators": [
+				{
+					"symbol": "+",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "-",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "*",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"float_t"
+					],
+					"result": "float_t"
+				},
+				{
+					"symbol": "/",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"float_t"
+					],
+					"result": "float_t"
+				}
+			]
+		},
+		{
+			"name": "string_ops",
+			"enabled": true,
+			"operators": [
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"string_t",
+						"string_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"string_t",
+						"string_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "<",
+					"arity": 2,
+					"operands": [
+						"string_t",
+						"string_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "<=",
+					"arity": 2,
+					"operands": [
+						"string_t",
+						"string_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": ">",
+					"arity": 2,
+					"operands": [
+						"string_t",
+						"string_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": ">=",
+					"arity": 2,
+					"operands": [
+						"string_t",
+						"string_t"
+					],
+					"result": "bool_t"
+				}
+			]
+		},
+		{
+			"name": "pointer_null_comparisons",
+			"enabled": true,
+			"template_rule": true,
+			"operators": [
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"shared_p<T>",
+						"null_t"
+					],
+					"result": "bool_t",
+					"symmetric": true
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"shared_p<T>",
+						"null_t"
+					],
+					"result": "bool_t",
+					"symmetric": true
+				},
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"unique_p<T>",
+						"null_t"
+					],
+					"result": "bool_t",
+					"symmetric": true
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"unique_p<T>",
+						"null_t"
+					],
+					"result": "bool_t",
+					"symmetric": true
+				},
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"weak_p<T>",
+						"null_t"
+					],
+					"result": "bool_t",
+					"symmetric": true
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"weak_p<T>",
+						"null_t"
+					],
+					"result": "bool_t",
+					"symmetric": true
+				},
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"shared_p<T>",
+						"shared_p<T>"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"shared_p<T>",
+						"shared_p<T>"
+					],
+					"result": "bool_t"
+				}
+			],
+			"sentinel_resolution": "equivalence_group",
+			"sentinel_equivalence_group": [
+				"null_t",
+				"nullopt_t",
+				"nullptr_t"
+			]
+		},
+		{
+			"name": "nullable_ops",
+			"enabled": true,
+			"template_rule": true,
+			"operators": [
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"nullable<T>",
+						"null_t"
+					],
+					"result": "bool_t",
+					"symmetric": true
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"nullable<T>",
+						"null_t"
+					],
+					"result": "bool_t",
+					"symmetric": true
+				},
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"nullable<T>",
+						"nullable<T>"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"nullable<T>",
+						"nullable<T>"
+					],
+					"result": "bool_t"
+				}
+			],
+			"sentinel_resolution": "equivalence_group",
+			"sentinel_equivalence_group": [
+				"null_t",
+				"nullopt_t",
+				"nullptr_t"
+			]
+		},
+		{
+			"name": "int_logical",
+			"enabled": true,
+			"operators": [
+				{
+					"symbol": "!",
+					"arity": 1,
+					"operands": [
+						"int_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "&&",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "||",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"int_t"
+					],
+					"result": "bool_t"
+				}
+			]
+		},
+		{
+			"name": "float_logical",
+			"enabled": true,
+			"operators": [
+				{
+					"symbol": "!",
+					"arity": 1,
+					"operands": [
+						"float_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "&&",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "||",
+					"arity": 2,
+					"operands": [
+						"float_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				}
+			]
+		},
+		{
+			"name": "mixed_numeric_logical",
+			"enabled": true,
+			"promotion": {
+				"left": "int_t",
+				"right": "float_t",
+				"promote_to": "float_t"
+			},
+			"symmetric": true,
+			"operators": [
+				{
+					"symbol": "&&",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "||",
+					"arity": 2,
+					"operands": [
+						"int_t",
+						"float_t"
+					],
+					"result": "bool_t"
+				}
+			]
+		},
+		{
+			"name": "null_comparisons",
+			"enabled": true,
+			"operators": [
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"null_t",
+						"null_t"
+					],
+					"result": "bool_t"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"null_t",
+						"null_t"
+					],
+					"result": "bool_t"
+				}
+			]
+		},
+		{
+			"name": "table_identity_comparisons",
+			"enabled": true,
+			"operators": [
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"shared_p<hash_t>",
+						"shared_p<hash_t>"
+					],
+					"result": "bool_t",
+					"policy_role": "identity_by_shared_target_pointer"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"shared_p<hash_t>",
+						"shared_p<hash_t>"
+					],
+					"result": "bool_t",
+					"policy_role": "identity_by_shared_target_pointer"
+				},
+				{
+					"symbol": "==",
+					"arity": 2,
+					"operands": [
+						"weak_p<hash_t>",
+						"weak_p<hash_t>"
+					],
+					"result": "bool_t",
+					"policy_role": "identity_by_locked_target_pointer_or_false_if_either_expired"
+				},
+				{
+					"symbol": "!=",
+					"arity": 2,
+					"operands": [
+						"weak_p<hash_t>",
+						"weak_p<hash_t>"
+					],
+					"result": "bool_t",
+					"policy_role": "identity_by_locked_target_pointer_or_false_if_either_expired"
+				}
+			]
+		},
+		{
+			"name": "nullable_lifted_ops",
+			"enabled": true,
+			"template_rule": true,
+			"status": "authoritative_current_policy",
+			"policy_role": "checked_unwrap_then_delegate_to_wrapped_operator_family",
+			"covers": [
+				"unary",
+				"binary",
+				"logical",
+				"relational",
+				"mutation",
+				"compound_assignment"
+			],
+			"operands": [
+				"nullable<T> with nullable<U> or plain U where the wrapped-value operator family is defined"
+			],
+			"empty_operand_policy": "runtime_error_except_explicit_null_sentinel_comparisons_and_nullable_equality_with_non_sentinel_values",
+			"notes": [
+				"temporary typed-boundary implicit conversion is not the intended operator participation mechanism",
+				"operator lifting must stay centralized to keep generated code and overload review deterministic"
+			]
+		}
+	],
+	"forbidden_operation_groups": [
+		{
+			"name": "bool_arithmetic",
+			"patterns": [
+				[
+					"bool_t",
+					"+",
+					"bool_t"
+				],
+				[
+					"bool_t",
+					"-",
+					"bool_t"
+				],
+				[
+					"bool_t",
+					"*",
+					"bool_t"
+				],
+				[
+					"bool_t",
+					"/",
+					"bool_t"
+				]
+			]
+		},
+		{
+			"name": "pointer_cross_family_comparisons",
+			"patterns": [
+				[
+					"shared_p<T>",
+					"==",
+					"unique_p<T>"
+				],
+				[
+					"shared_p<T>",
+					"!=",
+					"unique_p<T>"
+				],
+				[
+					"shared_p<T>",
+					"==",
+					"weak_p<T>"
+				],
+				[
+					"shared_p<T>",
+					"!=",
+					"weak_p<T>"
+				],
+				[
+					"unique_p<T>",
+					"==",
+					"weak_p<T>"
+				],
+				[
+					"unique_p<T>",
+					"!=",
+					"weak_p<T>"
+				]
+			]
+		},
+		{
+			"name": "vector_arithmetic",
+			"patterns": [
+				[
+					"vector_t<T>",
+					"+",
+					"vector_t<T>"
+				],
+				[
+					"vector_t<T>",
+					"-",
+					"vector_t<T>"
+				],
+				[
+					"vector_t<T>",
+					"*",
+					"vector_t<T>"
+				],
+				[
+					"vector_t<T>",
+					"/",
+					"vector_t<T>"
+				]
+			]
+		},
+		{
+			"name": "string_arithmetic",
+			"patterns": [
+				[
+					"string_t",
+					"+",
+					"string_t"
+				],
+				[
+					"string_t",
+					"-",
+					"string_t"
+				],
+				[
+					"string_t",
+					"*",
+					"string_t"
+				],
+				[
+					"string_t",
+					"/",
+					"string_t"
+				]
+			]
+		},
+		{
+			"name": "nullable_arithmetic",
+			"patterns": [
+				[
+					"nullable<T>",
+					"+",
+					"nullable<T>"
+				],
+				[
+					"nullable<T>",
+					"-",
+					"nullable<T>"
+				],
+				[
+					"nullable<T>",
+					"*",
+					"nullable<T>"
+				],
+				[
+					"nullable<T>",
+					"/",
+					"nullable<T>"
+				]
+			]
+		},
+		{
+			"name": "pointer_arithmetic",
+			"patterns": [
+				[
+					"shared_p<T>",
+					"+",
+					"shared_p<T>"
+				],
+				[
+					"shared_p<T>",
+					"-",
+					"shared_p<T>"
+				],
+				[
+					"shared_p<T>",
+					"*",
+					"shared_p<T>"
+				],
+				[
+					"shared_p<T>",
+					"/",
+					"shared_p<T>"
+				],
+				[
+					"unique_p<T>",
+					"+",
+					"unique_p<T>"
+				],
+				[
+					"unique_p<T>",
+					"-",
+					"unique_p<T>"
+				],
+				[
+					"unique_p<T>",
+					"*",
+					"unique_p<T>"
+				],
+				[
+					"unique_p<T>",
+					"/",
+					"unique_p<T>"
+				],
+				[
+					"weak_p<T>",
+					"+",
+					"weak_p<T>"
+				],
+				[
+					"weak_p<T>",
+					"-",
+					"weak_p<T>"
+				],
+				[
+					"weak_p<T>",
+					"*",
+					"weak_p<T>"
+				],
+				[
+					"weak_p<T>",
+					"/",
+					"weak_p<T>"
+				]
+			]
+		},
+		{
+			"name": "sentinel_arithmetic",
+			"patterns": [
+				[
+					"null_t",
+					"+",
+					"null_t"
+				],
+				[
+					"null_t",
+					"-",
+					"null_t"
+				],
+				[
+					"null_t",
+					"*",
+					"null_t"
+				],
+				[
+					"null_t",
+					"/",
+					"null_t"
+				]
+			]
+		},
+		{
+			"name": "mixed_operator_candidate_expansion",
+			"patterns": [
+				[
+					"mixed_t",
+					"implicit_extract_for_operator_resolution",
+					"*"
+				]
+			],
+			"reason": "mixed_t extraction is allowed only at explicit typed boundaries, not for overload candidate creation"
+		}
+	],
+	"composition_constraints": {
+		"family_tags": {
+			"shared_p<T>": "ownership",
+			"unique_p<T>": "ownership",
+			"weak_p<T>": "ownership",
+			"value_p<T>": "inline_storage",
+			"ref_p<T>": "reference",
+			"nullable<T>": "optionality"
+		},
+		"forbidden_nesting": [
+			{
+				"outer": "value_p<T>",
+				"inner_family": "ownership",
+				"reason": "inline_value_wrapper_must_not_embed_handle_like_ownership_wrappers"
+			},
+			{
+				"outer": "value_p<T>",
+				"inner": "ref_p<U>",
+				"reason": "inline_value_wrapper_must_not_embed_reference_wrappers"
+			},
+			{
+				"outer": "ref_p<T>",
+				"inner_family": "ownership",
+				"reason": "reference_wrapper_must_not_target_handle_like_ownership_wrappers"
+			},
+			{
+				"outer": "ref_p<T>",
+				"inner": "ref_p<U>",
+				"reason": "reference_wrapper_must_not_wrap_reference_wrapper"
+			},
+			{
+				"outer": "nullable<T>",
+				"inner": "unique_p<U>",
+				"reason": "optional_unique_ownership_is_forbidden_due_to_redundant_and_confusing_null_layering"
+			}
+		],
+		"allowed_special_nesting": [
+			{
+				"outer": "nullable<T>",
+				"inner": "ref_p<U>",
+				"reason": "optional_borrowed_reference_is_allowed_for_runtime_level_use_but_is_not_the_primary_php_object_lowering_model"
+			}
+		],
+		"helper_collapse_rules": [
+			{
+				"helper": "ref",
+				"input": "ref_p<T>",
+				"result": "ref_p<T>",
+				"policy": "identity"
+			},
+			{
+				"helper": "ref",
+				"input": "value_p<T>&",
+				"result": "ref_p<T>",
+				"policy": "unwrap_inner_value"
+			},
+			{
+				"helper": "ref",
+				"input_family": "ownership",
+				"result": "same_type",
+				"policy": "handle_passthrough"
+			}
+		],
+		"php_lowering_guidance": {
+			"nullable_object_like": "nullable<shared_p<T>>",
+			"disfavored_forms": [
+				"nullable<ref_p<T>>",
+				"nullable<unique_p<T>>"
+			]
+		}
+	},
+	"assignments": [
+		{
+			"target": "bool_t",
+			"source": "bool_t",
+			"kind": "copy"
+		},
+		{
+			"target": "int_t",
+			"source": "int_t",
+			"kind": "copy"
+		},
+		{
+			"target": "float_t",
+			"source": "float_t",
+			"kind": "copy"
+		},
+		{
+			"target": "string_t",
+			"source": "string_t",
+			"kind": "copy"
+		},
+		{
+			"target": "vector_t<T>",
+			"source": "vector_t<T>",
+			"kind": "copy",
+			"template_rule": true
+		},
+		{
+			"target": "nullable<T>",
+			"source": "T",
+			"kind": "copy",
+			"template_rule": true
+		},
+		{
+			"target": "nullable<T>",
+			"source": "nullable<T>",
+			"kind": "copy",
+			"template_rule": true
+		},
+		{
+			"target": "nullable<T>",
+			"source": "null_t",
+			"kind": "reset_to_empty",
+			"template_rule": true
+		},
+		{
+			"target": "shared_p<T>",
+			"source": "shared_p<T>",
+			"kind": "copy",
+			"template_rule": true
+		},
+		{
+			"target": "shared_p<T>",
+			"source": "null_t",
+			"kind": "reset_to_null",
+			"template_rule": true
+		},
+		{
+			"target": "unique_p<T>",
+			"source": "unique_p<T>",
+			"kind": "move",
+			"template_rule": true
+		},
+		{
+			"target": "unique_p<T>",
+			"source": "null_t",
+			"kind": "reset_to_null",
+			"template_rule": true
+		},
+		{
+			"target": "weak_p<T>",
+			"source": "weak_p<T>",
+			"kind": "copy",
+			"template_rule": true
+		},
+		{
+			"target": "weak_p<T>",
+			"source": "shared_p<T>",
+			"kind": "copy_from_shared",
+			"template_rule": true
+		},
+		{
+			"target": "weak_p<T>",
+			"source": "null_t",
+			"kind": "reset_to_empty",
+			"template_rule": true
+		},
+		{
+			"target": "value_p<T>",
+			"source": "value_p<T>",
+			"kind": "copy",
+			"template_rule": true
+		},
+		{
+			"target": "value_p<T>",
+			"source": "T",
+			"kind": "copy_into_inner",
+			"template_rule": true
+		},
+		{
+			"target": "ref_p<T>",
+			"source": "ref_p<T>",
+			"kind": "copy",
+			"template_rule": true
+		},
+		{
+			"target": "nullable<T>",
+			"source": "nullopt_t",
+			"kind": "reset_to_empty",
+			"template_rule": true
+		},
+		{
+			"target": "nullable<T>",
+			"source": "nullptr_t",
+			"kind": "reset_to_empty",
+			"template_rule": true,
+			"policy_role": "sentinel_equivalence"
+		},
+		{
+			"target": "shared_p<T>",
+			"source": "nullptr_t",
+			"kind": "reset_to_null",
+			"template_rule": true
+		},
+		{
+			"target": "shared_p<T>",
+			"source": "nullopt_t",
+			"kind": "reset_to_null",
+			"template_rule": true,
+			"policy_role": "sentinel_equivalence"
+		},
+		{
+			"target": "unique_p<T>",
+			"source": "nullptr_t",
+			"kind": "reset_to_null",
+			"template_rule": true
+		},
+		{
+			"target": "unique_p<T>",
+			"source": "nullopt_t",
+			"kind": "reset_to_null",
+			"template_rule": true,
+			"policy_role": "sentinel_equivalence"
+		},
+		{
+			"target": "weak_p<T>",
+			"source": "nullptr_t",
+			"kind": "reset_to_empty",
+			"template_rule": true
+		},
+		{
+			"target": "weak_p<T>",
+			"source": "nullopt_t",
+			"kind": "reset_to_empty",
+			"template_rule": true,
+			"policy_role": "sentinel_equivalence"
+		},
+		{
+			"target": "shared_p<T>",
+			"source": "shared_p<U>",
+			"kind": "copy_upcast",
+			"template_rule": true,
+			"when": "U* is convertible to T*"
+		},
+		{
+			"target": "weak_p<T>",
+			"source": "weak_p<U>",
+			"kind": "copy_upcast",
+			"template_rule": true,
+			"when": "U* is convertible to T*"
+		},
+		{
+			"target": "ref_p<T>",
+			"source": "ref_p<U>",
+			"kind": "copy_upcast",
+			"template_rule": true,
+			"when": "U* is convertible to T*"
+		},
+		{
+			"target": "weak_p<T>",
+			"source": "shared_p<U>",
+			"kind": "copy_from_shared_upcast",
+			"template_rule": true,
+			"when": "U* is convertible to T*"
+		},
+		{
+			"target": "unique_p<T>",
+			"source": "unique_p<U>",
+			"kind": "move_upcast",
+			"template_rule": true,
+			"when": "U* is convertible to T*"
+		},
+		{
+			"target": "shared_p<T>",
+			"source": "shared_p<U>",
+			"kind": "move_upcast",
+			"template_rule": true,
+			"when": "U* is convertible to T*"
+		},
+		{
+			"target": "mixed_t",
+			"source": "mixed_t",
+			"kind": "copy"
+		},
+		{
+			"target": "mixed_t",
+			"source": "null_t",
+			"kind": "box"
+		},
+		{
+			"target": "mixed_t",
+			"source": "bool_t",
+			"kind": "box"
+		},
+		{
+			"target": "mixed_t",
+			"source": "int_t",
+			"kind": "box"
+		},
+		{
+			"target": "mixed_t",
+			"source": "float_t",
+			"kind": "box"
+		},
+		{
+			"target": "mixed_t",
+			"source": "string_t",
+			"kind": "box"
+		},
+		{
+			"target": "mixed_t",
+			"source": "hash_t",
+			"kind": "box_owned_table"
+		},
+		{
+			"target": "mixed_t",
+			"source": "shared_p<hash_t>",
+			"kind": "box_shared_table"
+		},
+		{
+			"target": "mixed_t",
+			"source": "weak_p<hash_t>",
+			"kind": "box_weak_table"
+		},
+		{
+			"target": "bool_t",
+			"source": "mixed_t",
+			"kind": "visible_intention_boundary_extract",
+			"policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
+		},
+		{
+			"target": "int_t",
+			"source": "mixed_t",
+			"kind": "visible_intention_boundary_extract",
+			"policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
+		},
+		{
+			"target": "float_t",
+			"source": "mixed_t",
+			"kind": "visible_intention_boundary_extract",
+			"policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
+		},
+		{
+			"target": "string_t",
+			"source": "mixed_t",
+			"kind": "visible_intention_boundary_extract",
+			"policy_role": "delegate_by_runtime_kind_to_native_rule_or_runtime_error"
+		}
+	],
+	"sentinel_semantics": {
+		"equivalence_groups": [
+			{
+				"members": [
+					"null_t",
+					"nullopt_t",
+					"nullptr_t"
+				],
+				"policy": "comparison_equivalent"
+			}
+		]
+	},
+	"runtime_helpers_contract": {
+		"stable_helpers": [
+			"create",
+			"shared",
+			"unique",
+			"weak",
+			"value",
+			"ref",
+			"cast",
+			"to_string",
+			"identical",
+			"not_identical",
+			"concat_assign",
+			"echo_eval"
+		],
+		"namespaces": {
+			"core": "scpp",
+			"php": "scpp::php"
+		},
+		"generator_allowed_helpers": [
+			"create",
+			"shared",
+			"unique",
+			"weak",
+			"value",
+			"ref",
+			"cast",
+			"to_string",
+			"identical",
+			"not_identical",
+			"concat_assign",
+			"echo_eval"
+		],
+		"notes": {
+			"purpose": "declares stable runtime helper entry points that frontends/generators may target directly",
+			"separation_rule": "helpers listed here are shared knowledge contracts, not generator implementation details",
+			"operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity using exact type matching except for null_t versus nullable<T>.",
+			"php_identity": {
+				"rule": "exact_type_required_except_null_nullable",
+				"exceptions": [
+					"null_t == null_t",
+					"null_t == nullable<T> when empty",
+					"nullable<T> == null_t when empty"
+				],
+				"same_type_behavior": {
+					"scalars": "value_compare",
+					"nullable<T>": "null_state_then_recursive_identical_of_T",
+					"shared_p<T>": "managed_object_identity",
+					"unique_p<T>": "managed_object_identity",
+					"ref_p<T>": "referent_identity"
+				}
+			},
+			"callables": {
+				"representation": [
+					"native_lambda",
+					"std::function<R(Args...)>"
+				],
+				"invocation_form": "direct_call_operator",
+				"supported_php_subset": [
+					"anonymous_functions",
+					"use_by_value"
+				],
+				"unsupported_php_subset": [
+					"use_by_reference"
+				]
+			},
+			"conditional_helpers": {
+				"coalesce_exact_match_priority": "coalesce_result resolves exact same-type pairs first; mixed_t ?? mixed_t is an explicit supported exact-match cell",
+				"ternary_exact_match_priority": "ternary_result keeps an explicit mixed_t ?: mixed_t same-type cell for symmetry with coalesce and future-proofing",
+				"matrix_source": "specs/conditional_expression_matrix.md"
+			}
+		}
+	},
+	"call_semantics": {
+		"invocable_types": [
+			{
+				"type": "native_callable",
+				"call_form": "operator()",
+				"null_call_policy": "forbidden",
+				"notes": [
+					"generator emits native C++ lambdas for anonymous functions",
+					"generator may emit std::function<R(Args...)> when a concrete callable signature is required",
+					"use(&$x) is not covered by this contract version"
+				]
+			}
+		]
+	},
+	"validation_requirements": {
+		"schema_rule_ids": {
+			"vr_001": "operator_resolution_uniqueness",
+			"vr_002": "assignment_resolution_uniqueness",
+			"vr_003": "compound_assignment_derivation_consistency",
+			"vr_004": "function_argument_boundary_uniqueness",
+			"vr_005": "return_boundary_uniqueness",
+			"vr_006": "cast_graph_no_duplicate_paths",
+			"vr_007": "condition_resolution_uniqueness",
+			"vr_008": "comparison_resolution_uniqueness",
+			"vr_009": "indexing_context_uniqueness",
+			"vr_010": "weak_table_expiry_behavior_uniqueness",
+			"vr_011": "generator_runtime_boundary_non_overlap",
+			"vr_012": "runtime_compile_surface_ambiguity_audit_required"
+		},
+		"must_check_after_change": [
+			"operator_resolution_uniqueness",
+			"assignment_resolution_uniqueness",
+			"compound_assignment_derivation_consistency",
+			"function_argument_boundary_uniqueness",
+			"return_boundary_uniqueness",
+			"cast_graph_no_duplicate_paths",
+			"condition_resolution_uniqueness",
+			"comparison_resolution_uniqueness",
+			"indexing_context_uniqueness",
+			"weak_table_expiry_behavior_uniqueness",
+			"generator_runtime_boundary_non_overlap",
+			"runtime_compile_surface_ambiguity_audit_required"
+		],
+		"pipeline_policy": {
+			"ambiguity": "fail",
+			"config_inconsistency": "fail",
+			"unused_rules": "warn",
+			"auto_resolution": "forbidden"
+		},
+		"tooling": {
+			"primary_validator": "tools/runtime_config/bin/validate_config.php",
+			"runtime_audit": "tools/runtime_config/bin/audit_runtime_vs_config.php",
+			"audit_default_exit": 0,
+			"audit_strict_option": "--strict"
+		},
+		"runtime_audit_requirements": {
+			"default_exit": 0,
+			"strict_option": "--strict",
+			"must_probe": [
+				"mixed_t + int_t",
+				"mixed_t + float_t",
+				"mixed_t == int_t",
+				"mixed_t && int_t",
+				"mixed_t += int_t"
+			],
+			"must_detect": [
+				"native conversion out of mixed_t",
+				"native conversion into mixed_t",
+				"shared operator symbol on both dynamic and native families"
+			]
+		}
+	},
+	"compound_assignment_policy": {
+		"rule_id": "cap_001",
+		"model": "derived_from_binary_op_then_assign_back",
+		"rule": "lhs op= rhs is valid iff lhs op rhs is valid and the result type is assignable back to lhs under assignment rules",
+		"supported_symbols": [
+			"+=",
+			"-=",
+			"*=",
+			"/=",
+			"%=",
+			"&=",
+			"|=",
+			"^=",
+			"<<=",
+			">>="
+		]
+	}
 }
