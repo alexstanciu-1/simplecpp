@@ -985,6 +985,7 @@ becomes:
 Rules:
 - the generator must stay structurally simple and type-blind here; it emits helper calls rather than solving branch/result typing inline
 - `??` and `?:` use different runtime matrices; they do not share one universal normalization rule
+- the current `??` matrix includes explicit dynamic-carrier entries for `mixed_t ?? T`, `T ?? mixed_t`, and `nullable<T> ?? mixed_t`; these normalize to `mixed_t` rather than attempting a typed payload result
 - helper lambdas preserve lazy right/branch evaluation
 - elvis lowering must evaluate the left operand exactly once
 - unsupported operand/branch combinations must fail deterministically at compile time in the runtime helper layer

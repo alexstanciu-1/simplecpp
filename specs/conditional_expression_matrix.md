@@ -14,7 +14,7 @@ Keep the generator structurally simple and mostly type-blind while ensuring that
 ## Runtime helper split
 
 The helpers are intentionally separate because the semantic target differs:
-- `??` produces the first defined value and usually unwraps `nullable<T>` to `T`
+- `??` produces the first defined value and usually unwraps `nullable<T>` to `T`, except for explicit `mixed_t` result-matrix entries that preserve the dynamic carrier
 - `?:` chooses between two branches and may preserve wrapper shape such as `nullable<T>`
 
 ## Initial `??` matrix
@@ -23,8 +23,11 @@ The helpers are intentionally separate because the semantic target differs:
 |---|---|---:|---|---|
 | `T` | `T` | `T` | supported | exact same non-wrapper type |
 | `nullable<T>` | `T` | `T` | supported | unwrap left when set; cast fallback to `T` |
+| `mixed_t` | `T` | `mixed_t` | supported | preserves dynamic carrier and applies PHP null fallback semantics |
+| `T` | `mixed_t` | `mixed_t` | supported | fallback is normalized into `mixed_t` explicitly |
+| `nullable<T>` | `mixed_t` | `mixed_t` | supported | unwrap left when set; otherwise use dynamic fallback |
 | `nullable<T>` | `nullable<T>` | n/a | rejected for now | would require a distinct result policy |
-| mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
+| other mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
 
 ## Initial `?:` matrix
 

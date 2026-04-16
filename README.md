@@ -151,3 +151,60 @@ Prism++ now has an explicit project-mode staging contract:
 
 The full deliberate multi-file model is still in progress, but the command shape and project layout are now fixed around `scpp init` + `scpp build` / `scpp run`.
 - optional FastCGI companion builds are now available through `prism.json` fastcgi settings and a handwritten `native_cpp/` handler
+
+## Usability Harness
+
+The usability harness validates that small Simple C++ / PHP-like programs remain usable for first-time users.
+
+Run:
+
+```bash
+scpp usability-harness
+```
+
+Useful options:
+
+Run all templates (ignore enabled flags):
+
+```bash
+scpp usability-harness --all
+```
+
+Run only micro tests:
+
+```bash
+scpp usability-harness --kind micro
+```
+
+Run only scenario tests:
+
+```bash
+scpp usability-harness --kind scenario
+```
+
+Run a specific template:
+
+```bash
+scpp usability-harness --template <id>
+```
+
+Run a specific campaign:
+
+```bash
+scpp usability-harness --campaign <name>
+```
+
+Results are written to:
+
+```
+tests/generated/usability_harness/
+```
+
+Including:
+- `report.json`
+- `summary.txt`
+- `feature_summary.json`
+- `campaign_summary.json`
+- `quarantine/` for failing cases with logs and generated C++
+
+For detailed harness behavior and artifact layout, see `tools/usability_harness/README.md`.
