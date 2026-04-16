@@ -1,0 +1,46 @@
+{
+	"id": "runtime_wrappers_002_php_operator_normalization",
+	"suite": "runtime",
+	"group": "wrappers",
+	"level": "level_01",
+	"outcome": "positive",
+	"enabled": true,
+	"status": "active",
+	"compare": {
+		"stdout": "exact",
+		"stderr": "exact",
+		"compile_error": "substring_all",
+		"normalize_stdout_newlines": true,
+		"normalize_stderr_newlines": true,
+		"trim_final_stdout_newline": false,
+		"trim_final_stderr_newline": false,
+		"case_sensitive_errors": true
+	},
+	"build": {
+		"compiler": "g++",
+		"language_standard": "c++23",
+		"flags": [
+			"-O3"
+		]
+	},
+	"expect": {
+		"compile": {
+			"success": true,
+			"error_contains": []
+		},
+		"run": {
+			"success": true,
+			"exit_code": 0,
+			"stdout": "",
+			"stderr": ""
+		}
+	},
+	"tags": [
+		"runtime",
+		"wrappers",
+		"php_identity",
+		"coalesce",
+		"ternary"
+	],
+	"notes": "Covers wrapper-normalized PHP strict identity plus coalesce/ternary behavior for mixed_t, nullable<T>, result_or_false<T>, and result_or_bool<T>."
+}
