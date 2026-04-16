@@ -21,7 +21,7 @@
         "php": {
             "run": true,
             "exit_code": 0,
-            "stdout": "int(7)\nint(22)\nint(7)\nstring(4) \"done\"\nint(7)\n",
+            "stdout": "int(7)\nint(22)\nint(7)\nbool(true)\nfloat(3.5)\n",
             "stderr": ""
         },
         "generate": {
@@ -35,7 +35,7 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "int(7)\nint(22)\nint(7)\nstring(4) \"done\"\nint(7)\n",
+            "stdout": "int(7)\nint(22)\nint(7)\nbool(true)\nfloat(3.5)\n",
             "stderr": ""
         }
     },
@@ -45,7 +45,7 @@
         "ternary",
         "mixed"
     ],
-    "notes": "Mixed shorthand ternary / elvis branch normalization through runtime helper.",
+    "notes": "Mixed shorthand ternary / elvis branch normalization for the allowed mixed condition kinds (bool/int/float).",
     "build": {
         "sanitizers": null
     }

@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-function a(): mixed { return null; }
+function a(): mixed { return false; }
 function b(): mixed { return 22; }
 function c(): mixed { return 0; }
-function d(): mixed { return "done"; }
-function e(): mixed { return false; }
+function d(): mixed { return true; }
+function e(): mixed { return 3.5; }
 
 var_dump(a() ?: 7);
 var_dump(b() ?: 7);

@@ -992,10 +992,16 @@ TXT;
 	{
 		$command = [
 			PHP_BINARY,
-			$this->selfPath,
-			'worker',
-			'--json=' . $jsonPath,
 		];
+
+		$astSoPath = $this->projectRoot . '/ext/8.4-deb/ast.so';
+		if (!extension_loaded('ast') && is_file($astSoPath)) {
+			$command[] = '-dextension=' . $astSoPath;
+		}
+
+		$command[] = $this->selfPath;
+		$command[] = 'worker';
+		$command[] = '--json=' . $jsonPath;
 		if ($sanitizers !== '') {
 			$command[] = '--san=' . $sanitizers;
 		}
