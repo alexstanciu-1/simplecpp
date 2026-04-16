@@ -1,0 +1,23 @@
+<?php
+declare(strict_types=1);
+
+function a(): mixed {
+	return null;
+}
+
+function b(): mixed {
+	return 22;
+}
+
+function c(): mixed {
+	return null;
+}
+
+function d(): mixed {
+	return "done";
+}
+
+var_dump(a() ?? b() ?? 0);
+var_dump(c() ?? d() ?? 0);
+var_dump(a() ?? c() ?? 0);
+var_dump(d() ?? b() ?? 0);
