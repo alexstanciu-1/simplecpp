@@ -4,64 +4,452 @@
 
 namespace scpp::php {
 
-// Implements PHP strict identity for two null sentinels.
-// How: strict identity treats identical null sentinels as equal without consulting wrapper operator overloads.
-inline bool_t identical(null_t, null_t) {
+// Implements PHP strict identity for PHP-visible null sentinels.
+// How: runtime-only null sentinels all normalize to the PHP null value before strict comparison.
+template <typename Left, typename Right>
+requires (
+	(std::is_same_v<std::remove_cvref_t<Left>, null_t> || std::is_same_v<std::remove_cvref_t<Left>, nullopt_t> || std::is_same_v<std::remove_cvref_t<Left>, nullptr_t>)
+	&& (std::is_same_v<std::remove_cvref_t<Right>, null_t> || std::is_same_v<std::remove_cvref_t<Right>, nullopt_t> || std::is_same_v<std::remove_cvref_t<Right>, nullptr_t>)
+)
+inline bool_t identical(Left, Right) {
 	return bool_t(true);
 }
 
-// Implements PHP strict identity between null and nullable<T> when the nullable is empty.
-// How: this is the one cross-type exception to the exact-type identity rule currently adopted by the runtime.
+// Forward declarations keep recursive wrapper-aware overloads free to delegate into the generic exact-type and cross-type identity paths defined later in this header.
 template <typename T>
-inline bool_t identical(null_t, const nullable<T> &right) {
-	return bool_t(!right.has_value().native_value());
+inline bool_t identical(const T &left, const T &right);
+
+template <typename Left, typename Right>
+requires (!std::is_same_v<std::remove_cvref_t<Left>, std::remove_cvref_t<Right>>)
+inline bool_t identical(const Left &left, const Right &right);
+
+template <typename Left, typename Right>
+inline bool_t not_identical(const Left &left, const Right &right);
+
+namespace detail {
+
+// Centralizes the PHP-visible null test used by identity, isset/coalesce, and other wrapper-aware helper paths.
+// How: wrappers normalize to the PHP value they expose rather than leaking storage-state semantics into operator lowering.
+inline bool_t php_is_null_value(null_t) {
+	return bool_t(true);
 }
 
-// Implements PHP strict identity between nullable<T> and null when the nullable is empty.
-// How: this is the symmetric form of the null-vs-nullable exception.
-template <typename T>
-inline bool_t identical(const nullable<T> &left, null_t) {
-	return bool_t(!left.has_value().native_value());
+inline bool_t php_is_null_value(nullopt_t) {
+	return bool_t(true);
 }
 
-// Implements PHP strict identity for two nullable values of the same exact type.
-// How: empty state matches empty state; present values recurse into the same identity helper for the contained exact type.
+inline bool_t php_is_null_value(nullptr_t) {
+	return bool_t(true);
+}
+
+inline bool_t php_is_null_value(const mixed_t &value) {
+	return bool_t(value.kind() == mixed_t::kind_t::null_v);
+}
+
+inline bool_t php_is_null_value(const bool_t &) {
+	return bool_t(false);
+}
+
+inline bool_t php_is_null_value(const int_t &) {
+	return bool_t(false);
+}
+
+inline bool_t php_is_null_value(const float_t &) {
+	return bool_t(false);
+}
+
+inline bool_t php_is_null_value(const string_t &) {
+	return bool_t(false);
+}
+
+inline bool_t php_is_null_value(const false_sentinel_t &) {
+	return bool_t(false);
+}
+
+inline bool_t php_is_null_value(const error_sentinel_t &) {
+	return bool_t(false);
+}
+
 template <typename T>
-inline bool_t identical(const nullable<T> &left, const nullable<T> &right) {
-	if (!left.has_value().native_value() && !right.has_value().native_value()) {
-		return bool_t(true);
+inline bool_t php_is_null_value(const nullable<T> &value) {
+	return bool_t(!value.has_value().native_value());
+}
+
+template <typename T>
+inline bool_t php_is_null_value(const result_or_false<T> &) {
+	return bool_t(false);
+}
+
+template <typename T>
+inline bool_t php_is_null_value(const result_or_bool<T> &) {
+	return bool_t(false);
+}
+
+template <typename T>
+inline bool_t php_is_null_value(const result<T> &) {
+	return bool_t(false);
+}
+
+template <typename T>
+inline bool_t php_is_null_value(const shared_p<T> &value) {
+	return bool_t(!value.has_value().native_value());
+}
+
+template <typename T>
+inline bool_t php_is_null_value(const unique_p<T> &value) {
+	return bool_t(!value.has_value().native_value());
+}
+
+template <typename T>
+inline bool_t php_is_null_value(const weak_p<T> &value) {
+	return bool_t(value.expired().native_value());
+}
+
+template <typename T>
+requires (
+	!std::is_same_v<std::remove_cvref_t<T>, null_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, nullopt_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, bool_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, int_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, float_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, string_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, false_sentinel_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, error_sentinel_t>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, nullable>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_false>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_bool>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, shared_p>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, unique_p>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, weak_p>
+)
+inline bool_t php_is_null_value(const T &) {
+	return bool_t(false);
+}
+
+// Implements strict same-kind mixed_t identity without falling back to mixed_t::operator== loose numeric paths.
+// How: PHP strict identity first requires matching runtime kind, then compares only the active payload for that exact kind.
+inline bool_t identical_same_kind_mixed(const mixed_t &left, const mixed_t &right) {
+	switch (left.kind()) {
+		case mixed_t::kind_t::null_v:
+			return bool_t(true);
+		case mixed_t::kind_t::bool_v:
+			return bool_t(left.bool_value() == right.bool_value());
+		case mixed_t::kind_t::int_v:
+			return bool_t(left.int_value() == right.int_value());
+		case mixed_t::kind_t::float_v:
+			return bool_t(left.float_value() == right.float_value());
+		case mixed_t::kind_t::string_v:
+			return bool_t(*left.string_if() == *right.string_if());
+		case mixed_t::kind_t::table_v:
+		case mixed_t::kind_t::shared_table_v:
+		case mixed_t::kind_t::dynamic_v:
+		case mixed_t::kind_t::weak_table_v:
+			return left == right;
 	}
-	if (left.has_value().native_value() != right.has_value().native_value()) {
+	return bool_t(false);
+}
+
+} // namespace detail
+
+// Implements PHP strict identity between a dynamic mixed_t and null-like sentinels.
+// How: mixed_t is normalized to the PHP value it carries before strict comparison.
+template <typename Right>
+requires (std::is_same_v<std::remove_cvref_t<Right>, null_t> || std::is_same_v<std::remove_cvref_t<Right>, nullopt_t> || std::is_same_v<std::remove_cvref_t<Right>, nullptr_t>)
+inline bool_t identical(const mixed_t &left, Right) {
+	return detail::php_is_null_value(left);
+}
+
+// Implements PHP strict identity between null-like sentinels and a dynamic mixed_t.
+// How: this is the symmetric form of the mixed_t-null identity rule so overload resolution never falls through to the generic cross-type false path.
+template <typename Left>
+requires (std::is_same_v<std::remove_cvref_t<Left>, null_t> || std::is_same_v<std::remove_cvref_t<Left>, nullopt_t> || std::is_same_v<std::remove_cvref_t<Left>, nullptr_t>)
+inline bool_t identical(Left, const mixed_t &right) {
+	return detail::php_is_null_value(right);
+}
+
+// Implements PHP strict identity for two dynamic mixed_t values.
+// How: strict identity requires exact runtime kind equality before payload comparison, so mixed_t::operator== is not reused blindly.
+template <typename LeftMixed, typename RightMixed>
+requires (std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t> && std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>)
+inline bool_t identical(const LeftMixed &left, const RightMixed &right) {
+	if (left.kind() != right.kind()) {
 		return bool_t(false);
+	}
+	return detail::identical_same_kind_mixed(left, right);
+}
+
+// Implements PHP strict identity between mixed_t and supported scalar payload wrappers.
+// How: the dynamic carrier unwraps one PHP-visible layer and only succeeds when the active mixed kind matches the compared scalar type exactly.
+template <typename LeftMixed>
+requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
+inline bool_t identical(const LeftMixed &left, const bool_t &right) {
+	if (left.kind() != mixed_t::kind_t::bool_v) {
+		return bool_t(false);
+	}
+	return identical(left.bool_value(), right);
+}
+
+template <typename RightMixed>
+requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
+inline bool_t identical(const bool_t &left, const RightMixed &right) {
+	return identical(right, left);
+}
+
+template <typename LeftMixed>
+requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
+inline bool_t identical(const LeftMixed &left, const int_t &right) {
+	if (left.kind() != mixed_t::kind_t::int_v) {
+		return bool_t(false);
+	}
+	return identical(left.int_value(), right);
+}
+
+template <typename RightMixed>
+requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
+inline bool_t identical(const int_t &left, const RightMixed &right) {
+	return identical(right, left);
+}
+
+template <typename LeftMixed>
+requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
+inline bool_t identical(const LeftMixed &left, const float_t &right) {
+	if (left.kind() != mixed_t::kind_t::float_v) {
+		return bool_t(false);
+	}
+	return identical(left.float_value(), right);
+}
+
+template <typename RightMixed>
+requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
+inline bool_t identical(const float_t &left, const RightMixed &right) {
+	return identical(right, left);
+}
+
+template <typename LeftMixed>
+requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
+inline bool_t identical(const LeftMixed &left, const string_t &right) {
+	if (left.kind() != mixed_t::kind_t::string_v) {
+		return bool_t(false);
+	}
+	return identical(*left.string_if(), right);
+}
+
+template <typename RightMixed>
+requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
+inline bool_t identical(const string_t &left, const RightMixed &right) {
+	return identical(right, left);
+}
+
+// Implements PHP strict identity for nullable wrappers via PHP-visible normalization.
+// How: empty nullable normalizes to PHP null; present values recurse into strict identity for the wrapped payload.
+template <typename T, typename U>
+inline bool_t identical(const nullable<T> &left, const nullable<U> &right) {
+	if (!left.has_value().native_value()) {
+		return identical(null_t{}, right);
+	}
+	if (!right.has_value().native_value()) {
+		return identical(left, null_t{});
 	}
 	return identical(left.value(), right.value());
 }
 
-// Implements PHP strict identity between null and shared ownership wrappers.
-// How: an empty shared handle represents PHP null at the runtime comparison layer.
+template <typename T, typename Right>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Right>, nullable>)
+inline bool_t identical(const nullable<T> &left, const Right &right) {
+	if (!left.has_value().native_value()) {
+		return identical(null_t{}, right);
+	}
+	return identical(left.value(), right);
+}
+
+template <typename Left, typename T>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, nullable>)
+inline bool_t identical(const Left &left, const nullable<T> &right) {
+	if (!right.has_value().native_value()) {
+		return identical(left, null_t{});
+	}
+	return identical(left, right.value());
+}
+
+// Implements PHP strict identity for explicit false-sentinel tags through the PHP bool(false) value domain.
+// How: false-able wrappers expose the PHP false value, not a distinct sentinel type, at the operator layer.
+inline bool_t identical(false_sentinel_t, false_sentinel_t) {
+	return bool_t(true);
+}
+
+template <typename Right>
+requires (!std::is_same_v<std::remove_cvref_t<Right>, false_sentinel_t>)
+inline bool_t identical(false_sentinel_t, const Right &right) {
+	return identical(bool_t(false), right);
+}
+
+template <typename Left>
+requires (!std::is_same_v<std::remove_cvref_t<Left>, false_sentinel_t>)
+inline bool_t identical(const Left &left, false_sentinel_t) {
+	return identical(left, bool_t(false));
+}
+
+// Implements PHP strict identity for result_or_false<T> via PHP-visible normalization.
+// How: the false state normalizes to PHP false, while present values recurse into strict identity for the wrapped payload.
+template <typename T, typename U>
+inline bool_t identical(const result_or_false<T> &left, const result_or_false<U> &right) {
+	if (!left.has_value().native_value()) {
+		return identical(bool_t(false), right);
+	}
+	if (!right.has_value().native_value()) {
+		return identical(left, bool_t(false));
+	}
+	return identical(left.value(), right.value());
+}
+
+template <typename T, typename Right>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Right>, result_or_false>)
+inline bool_t identical(const result_or_false<T> &left, const Right &right) {
+	if (!left.has_value().native_value()) {
+		return identical(bool_t(false), right);
+	}
+	return identical(left.value(), right);
+}
+
+template <typename Left, typename T>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result_or_false>)
+inline bool_t identical(const Left &left, const result_or_false<T> &right) {
+	if (!right.has_value().native_value()) {
+		return identical(left, bool_t(false));
+	}
+	return identical(left, right.value());
+}
+
+// Implements PHP strict identity for result_or_bool<T> via PHP-visible normalization.
+// How: bool sentinel states normalize to PHP bool values, while wrapped values recurse into strict identity for the payload.
+template <typename T, typename U>
+inline bool_t identical(const result_or_bool<T> &left, const result_or_bool<U> &right) {
+	if (!left.has_value().native_value()) {
+		return identical(bool_t(left.is_true().native_value()), right);
+	}
+	if (!right.has_value().native_value()) {
+		return identical(left, bool_t(right.is_true().native_value()));
+	}
+	return identical(left.value(), right.value());
+}
+
+template <typename T, typename Right>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Right>, result_or_bool>)
+inline bool_t identical(const result_or_bool<T> &left, const Right &right) {
+	if (!left.has_value().native_value()) {
+		return identical(bool_t(left.is_true().native_value()), right);
+	}
+	return identical(left.value(), right);
+}
+
+template <typename Left, typename T>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result_or_bool>)
+inline bool_t identical(const Left &left, const result_or_bool<T> &right) {
+	if (!right.has_value().native_value()) {
+		return identical(left, bool_t(right.is_true().native_value()));
+	}
+	return identical(left, right.value());
+}
+
+// Implements structured runtime error payload identity for result<T> error states.
+// How: error-bearing wrappers compare the visible payload fields exactly rather than leaking std::variant layout semantics.
+inline bool_t identical(const error_t &left, const error_t &right) {
+	return bool_t(
+		left.get_message() == right.get_message()
+		&& left.get_line() == right.get_line()
+		&& left.get_file() == right.get_file()
+	);
+}
+
+// Implements state-tag identity for explicit result<T> error comparisons.
+// How: the sentinel is only a state tag, so only the exact same tag is identical to itself.
+inline bool_t identical(error_sentinel_t, error_sentinel_t) {
+	return bool_t(true);
+}
+
+// Implements PHP-runtime strict identity for result<T> via wrapper normalization.
+// How: present values recurse into payload identity; error states compare error payloads or explicit error sentinels; cross-state comparisons are non-identical.
+template <typename T, typename U>
+inline bool_t identical(const result<T> &left, const result<U> &right) {
+	if (left.has_value().native_value() && right.has_value().native_value()) {
+		return identical(left.value(), right.value());
+	}
+	if (left.has_error().native_value() && right.has_error().native_value()) {
+		return identical(*left.error(), *right.error());
+	}
+	return bool_t(false);
+}
+
 template <typename T>
-inline bool_t identical(null_t, const shared_p<T> &right) {
+inline bool_t identical(const result<T> &left, error_sentinel_t) {
+	return left.has_error();
+}
+
+template <typename T>
+inline bool_t identical(error_sentinel_t, const result<T> &right) {
+	return right.has_error();
+}
+
+template <typename T, typename Right>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Right>, result>)
+inline bool_t identical(const result<T> &left, const Right &right) {
+	if (left.has_value().native_value()) {
+		return identical(left.value(), right);
+	}
+	if constexpr (std::is_same_v<std::remove_cvref_t<Right>, error_t>) {
+		return left.has_error().native_value() ? identical(*left.error(), right) : bool_t(false);
+	} else if constexpr (std::is_same_v<std::remove_cvref_t<Right>, error_sentinel_t>) {
+		return left.has_error();
+	}
+	return bool_t(false);
+}
+
+template <typename Left, typename T>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result>)
+inline bool_t identical(const Left &left, const result<T> &right) {
+	if (right.has_value().native_value()) {
+		return identical(left, right.value());
+	}
+	if constexpr (std::is_same_v<std::remove_cvref_t<Left>, error_t>) {
+		return right.has_error().native_value() ? identical(left, *right.error()) : bool_t(false);
+	} else if constexpr (std::is_same_v<std::remove_cvref_t<Left>, error_sentinel_t>) {
+		return right.has_error();
+	}
+	return bool_t(false);
+}
+
+// Implements PHP strict identity between PHP-visible null sentinels and shared ownership wrappers.
+// How: empty shared handles normalize to PHP null before comparison, regardless of which runtime null sentinel reaches the helper.
+template <typename NullLike, typename T>
+requires (std::is_same_v<std::remove_cvref_t<NullLike>, null_t> || std::is_same_v<std::remove_cvref_t<NullLike>, nullopt_t> || std::is_same_v<std::remove_cvref_t<NullLike>, nullptr_t>)
+inline bool_t identical(NullLike, const shared_p<T> &right) {
 	return bool_t(!right.has_value().native_value());
 }
 
-// Implements PHP strict identity between shared ownership wrappers and null.
-// How: an empty shared handle represents PHP null at the runtime comparison layer.
-template <typename T>
-inline bool_t identical(const shared_p<T> &left, null_t) {
+// Implements PHP strict identity between shared ownership wrappers and PHP-visible null sentinels.
+// How: this is the symmetric form of the normalized shared-handle null rule.
+template <typename T, typename NullLike>
+requires (std::is_same_v<std::remove_cvref_t<NullLike>, null_t> || std::is_same_v<std::remove_cvref_t<NullLike>, nullopt_t> || std::is_same_v<std::remove_cvref_t<NullLike>, nullptr_t>)
+inline bool_t identical(const shared_p<T> &left, NullLike) {
 	return bool_t(!left.has_value().native_value());
 }
 
-// Implements PHP strict identity between null and unique ownership wrappers.
-// How: an empty unique handle represents PHP null at the runtime comparison layer.
-template <typename T>
-inline bool_t identical(null_t, const unique_p<T> &right) {
+// Implements PHP strict identity between PHP-visible null sentinels and unique ownership wrappers.
+// How: empty unique handles normalize to PHP null before comparison, regardless of sentinel spelling.
+template <typename NullLike, typename T>
+requires (std::is_same_v<std::remove_cvref_t<NullLike>, null_t> || std::is_same_v<std::remove_cvref_t<NullLike>, nullopt_t> || std::is_same_v<std::remove_cvref_t<NullLike>, nullptr_t>)
+inline bool_t identical(NullLike, const unique_p<T> &right) {
 	return bool_t(!right.has_value().native_value());
 }
 
-// Implements PHP strict identity between unique ownership wrappers and null.
-// How: an empty unique handle represents PHP null at the runtime comparison layer.
-template <typename T>
-inline bool_t identical(const unique_p<T> &left, null_t) {
+// Implements PHP strict identity between unique ownership wrappers and PHP-visible null sentinels.
+// How: this is the symmetric form of the normalized unique-handle null rule.
+template <typename T, typename NullLike>
+requires (std::is_same_v<std::remove_cvref_t<NullLike>, null_t> || std::is_same_v<std::remove_cvref_t<NullLike>, nullopt_t> || std::is_same_v<std::remove_cvref_t<NullLike>, nullptr_t>)
+inline bool_t identical(const unique_p<T> &left, NullLike) {
 	return bool_t(!left.has_value().native_value());
 }
 
@@ -93,27 +481,15 @@ inline bool_t identical(const unique_p<T> &left, const unique_p<T> &right) {
 	return bool_t(left.get() == right.get());
 }
 
-// Implements PHP strict identity between a dynamic mixed_t and null.
-// How: mixed_t is a tagged PHP value container, so strict identity must inspect the active kind rather than reject the comparison as a generic cross-type mismatch.
-inline bool_t identical(const mixed_t &left, null_t) {
-	return bool_t(left.kind() == mixed_t::kind_t::null_v);
-}
-
-// Implements PHP strict identity between null and a dynamic mixed_t.
-// How: this is the symmetric form of the mixed_t-null identity rule so overload resolution never falls through to the generic cross-type false path.
-inline bool_t identical(null_t, const mixed_t &right) {
-	return bool_t(right.kind() == mixed_t::kind_t::null_v);
-}
-
-// Implements PHP strict identity for same-type runtime values not needing special object/null handling.
-// How: the helper keeps strict comparison in the PHP helper layer and delegates exact-type value equality to the runtime operator surface.
+// Implements PHP strict identity for same-type runtime values not needing wrapper normalization or object/null special handling.
+// How: after wrapper-aware overloads have had a chance to normalize PHP-visible values, the exact same runtime type can delegate to its stable equality operator.
 template <typename T>
 inline bool_t identical(const T &left, const T &right) {
 	return bool_t(left == right);
 }
 
-// Implements PHP strict identity for differing runtime value categories.
-// How: the helper returns false because strict identity currently requires exact type equality except for null vs nullable<T>.
+// Implements PHP strict identity for differing runtime value categories once wrapper normalization opportunities are exhausted.
+// How: strict identity requires the same PHP-visible type and value, so remaining cross-type pairs are non-identical.
 template <typename Left, typename Right>
 requires (!std::is_same_v<std::remove_cvref_t<Left>, std::remove_cvref_t<Right>>)
 inline bool_t identical(const Left &, const Right &) {
@@ -121,7 +497,7 @@ inline bool_t identical(const Left &, const Right &) {
 }
 
 // Implements PHP strict non-identity as the inverse of the strict identity helper.
-// How: one source of truth avoids drift between special-case identical overloads and their negated form.
+// How: one source of truth avoids drift between wrapper-normalized identical overloads and their negated form.
 template <typename Left, typename Right>
 inline bool_t not_identical(const Left &left, const Right &right) {
 	return !identical(left, right);
@@ -789,17 +1165,20 @@ inline bool_t isset_one(const nullable<T> &value) {
 
 template <typename T>
 inline bool_t isset_one(const result_or_false<T> &value) {
-	return value.has_value();
+	(void) value;
+	return bool_t(true);
 }
 
 template <typename T>
 inline bool_t isset_one(const result_or_bool<T> &value) {
-	return bool_t(value.has_value().native_value() || value.is_true().native_value());
+	(void) value;
+	return bool_t(true);
 }
 
 template <typename T>
 inline bool_t isset_one(const result<T> &value) {
-	return value.has_value();
+	(void) value;
+	return bool_t(true);
 }
 
 template <typename T>
@@ -874,6 +1253,33 @@ struct conditional_nullable_info<nullable<T>> {
 template <typename T>
 inline constexpr bool conditional_nullable_info_v = conditional_nullable_info<std::remove_cvref_t<T>>::value;
 
+
+template <typename T>
+struct guarded_result_info {
+	static constexpr bool value = false;
+};
+
+template <typename T>
+struct guarded_result_info<result_or_false<T>> {
+	static constexpr bool value = true;
+	using inner_type = T;
+};
+
+template <typename T>
+struct guarded_result_info<result_or_bool<T>> {
+	static constexpr bool value = true;
+	using inner_type = T;
+};
+
+template <typename T>
+struct guarded_result_info<result<T>> {
+	static constexpr bool value = true;
+	using inner_type = T;
+};
+
+template <typename T>
+inline constexpr bool guarded_result_info_v = guarded_result_info<std::remove_cvref_t<T>>::value;
+
 template <typename Left, typename Right>
 struct coalesce_result;
 
@@ -913,6 +1319,21 @@ struct coalesce_result<Left, mixed_t> {
 	using type = mixed_t;
 };
 
+template <typename T, typename Right>
+struct coalesce_result<result_or_false<T>, Right> {
+	using type = result_or_false<T>;
+};
+
+template <typename T, typename Right>
+struct coalesce_result<result_or_bool<T>, Right> {
+	using type = result_or_bool<T>;
+};
+
+template <typename T, typename Right>
+struct coalesce_result<result<T>, Right> {
+	using type = result<T>;
+};
+
 template <typename Then, typename Else>
 struct ternary_result;
 
@@ -948,6 +1369,60 @@ struct ternary_result<Then, mixed_t> {
 	using type = mixed_t;
 };
 
+template <typename T>
+struct ternary_result<result_or_false<T>, T> {
+	using type = result_or_false<T>;
+};
+
+template <typename T>
+struct ternary_result<T, result_or_false<T>> {
+	using type = result_or_false<T>;
+};
+
+template <typename T>
+struct ternary_result<result_or_bool<T>, T> {
+	using type = result_or_bool<T>;
+};
+
+template <typename T>
+struct ternary_result<T, result_or_bool<T>> {
+	using type = result_or_bool<T>;
+};
+
+template <typename T>
+struct ternary_result<result<T>, T> {
+	using type = result<T>;
+};
+
+template <typename T>
+struct ternary_result<T, result<T>> {
+	using type = result<T>;
+};
+
+template <typename T>
+inline bool_t ternary_condition_truthy(const result_or_false<T> &value) {
+	if (!value.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return ternary_condition_truthy(value.value());
+}
+
+template <typename T>
+inline bool_t ternary_condition_truthy(const result_or_bool<T> &value) {
+	if (!value.has_value().native_value()) {
+		return value.is_true();
+	}
+	return ternary_condition_truthy(value.value());
+}
+
+template <typename T>
+inline bool_t ternary_condition_truthy(const result<T> &value) {
+	if (!value.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return ternary_condition_truthy(value.value());
+}
+
 template <typename Value>
 inline bool_t ternary_condition_truthy(Value &&value) {
 	using value_t = std::remove_cvref_t<Value>;
@@ -957,6 +1432,21 @@ inline bool_t ternary_condition_truthy(Value &&value) {
 		}
 		using inner_t = typename conditional_nullable_info<value_t>::inner_type;
 		return ternary_condition_truthy(cast<inner_t>(value));
+	} else if constexpr (::scpp::detail::is_specialization_of_v<value_t, result_or_false>) {
+		if (!value.has_value().native_value()) {
+			return bool_t(false);
+		}
+		return ternary_condition_truthy(value.value());
+	} else if constexpr (::scpp::detail::is_specialization_of_v<value_t, result_or_bool>) {
+		if (!value.has_value().native_value()) {
+			return value.is_true();
+		}
+		return ternary_condition_truthy(value.value());
+	} else if constexpr (::scpp::detail::is_specialization_of_v<value_t, result>) {
+		if (!value.has_value().native_value()) {
+			return bool_t(false);
+		}
+		return ternary_condition_truthy(value.value());
 	} else if constexpr (std::is_same_v<value_t, mixed_t>) {
 		switch (value.kind()) {
 			case mixed_t::kind_t::null_v:
@@ -1008,11 +1498,20 @@ inline Result normalize_ternary_branch(Value &&value) {
 			return mixed_t(cast<inner_t>(value));
 		}
 		return mixed_t(std::forward<Value>(value));
-	} else if constexpr (
-		conditional_nullable_info_v<result_t>
-		&& std::is_same_v<typename conditional_nullable_info<result_t>::inner_type, value_t>
-	) {
-		return result_t(std::forward<Value>(value));
+	} else if constexpr (conditional_nullable_info_v<result_t>) {
+		using inner_t = typename conditional_nullable_info<result_t>::inner_type;
+		if constexpr (std::is_same_v<inner_t, value_t>) {
+			return result_t(std::forward<Value>(value));
+		} else {
+			static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported php::ternary_eval branch combination");
+		}
+	} else if constexpr (guarded_result_info_v<result_t>) {
+		using inner_t = typename guarded_result_info<result_t>::inner_type;
+		if constexpr (std::is_same_v<inner_t, value_t>) {
+			return result_t(std::forward<Value>(value));
+		} else {
+			static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported php::ternary_eval branch combination");
+		}
 	} else {
 		static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported php::ternary_eval branch combination");
 	}
@@ -1031,6 +1530,13 @@ inline Result normalize_coalesce_branch(Value &&value) {
 			return mixed_t(cast<inner_t>(value));
 		}
 		return mixed_t(std::forward<Value>(value));
+	} else if constexpr (guarded_result_info_v<result_t>) {
+		using inner_t = typename guarded_result_info<result_t>::inner_type;
+		if constexpr (std::is_same_v<inner_t, value_t>) {
+			return result_t(std::forward<Value>(value));
+		} else {
+			return cast<result_t>(std::forward<Value>(value));
+		}
 	} else {
 		return cast<result_t>(std::forward<Value>(value));
 	}
@@ -1046,7 +1552,7 @@ inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
 	using left_t = std::remove_cvref_t<decltype(left)>;
 	using right_t = std::remove_cvref_t<decltype(right_fn())>;
 	using result_t = typename detail::coalesce_result<left_t, right_t>::type;
-	if (static_cast<bool>(isset(left))) {
+	if (!static_cast<bool>(detail::php_is_null_value(left))) {
 		return detail::normalize_coalesce_branch<result_t>(left);
 	}
 	return detail::normalize_coalesce_branch<result_t>(right_fn());
