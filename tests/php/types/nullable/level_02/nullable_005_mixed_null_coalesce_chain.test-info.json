@@ -21,11 +21,7 @@
 		"php": {
 			"run": true,
 			"exit_code": 0,
-			"stdout": "int(22)
-string(4) "done"
-int(0)
-string(4) "done"
-",
+			"stdout": "int(22)\nstring(4) \"done\"\nint(0)\nstring(4) \"done\"\n",
 			"stderr": ""
 		},
 		"generate": {
@@ -39,11 +35,7 @@ string(4) "done"
 		"run": {
 			"success": true,
 			"exit_code": 0,
-			"stdout": "int(22)
-string(4) "done"
-int(0)
-string(4) "done"
-",
+			"stdout": "int(22)\nstring(4) \"done\"\nint(0)\nstring(4) \"done\"\n",
 			"stderr": ""
 		}
 	},

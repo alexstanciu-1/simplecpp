@@ -1449,38 +1449,14 @@ inline bool_t ternary_condition_truthy(Value &&value) {
 		return ternary_condition_truthy(value.value());
 	} else if constexpr (std::is_same_v<value_t, mixed_t>) {
 		switch (value.kind()) {
-			case mixed_t::kind_t::null_v:
-				return bool_t(false);
 			case mixed_t::kind_t::bool_v:
 				return value.bool_value();
 			case mixed_t::kind_t::int_v:
 				return bool_t(value.int_value().native_value() != 0);
 			case mixed_t::kind_t::float_v:
 				return bool_t(value.float_value().native_value() != 0.0);
-			case mixed_t::kind_t::string_v: {
-				const auto *string_value = value.string_if();
-				return bool_t(string_value != nullptr && !string_value->empty().native_value() && *string_value != string_t("0"));
-			}
-			case mixed_t::kind_t::table_v: {
-				const auto *table_value = value.table_if();
-				return bool_t(table_value != nullptr && !table_value->empty().native_value());
-			}
-			case mixed_t::kind_t::shared_table_v: {
-				const auto *table_value = value.shared_table_if();
-				return bool_t(table_value != nullptr && static_cast<bool>(*table_value) && !(*table_value)->empty().native_value());
-			}
-			case mixed_t::kind_t::dynamic_v: {
-				const auto *dynamic_value = value.dynamic_if();
-				return bool_t(dynamic_value != nullptr && static_cast<bool>(*dynamic_value));
-			}
-			case mixed_t::kind_t::weak_table_v: {
-				const auto *weak_value = value.weak_table_if();
-				if (weak_value == nullptr) {
-					return bool_t(false);
-				}
-				auto locked = weak_value->lock();
-				return bool_t(static_cast<bool>(locked) && !locked->empty().native_value());
-			}
+			default:
+				throw std::runtime_error("scpp::php::ternary_condition_truthy(mixed_t): runtime kind is not allowed in condition context");
 		}
 	}
 	return bool_t(cast<bool>(std::forward<Value>(value)));
@@ -1559,7 +1535,7 @@ inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
 }
 
 // Implements runtime-directed lowering for PHP ternary / elvis expressions so branch compatibility is enforced consistently in one place.
-// How: the helper evaluates the condition once, applies wrapper-aware truthiness for supported inputs, and normalizes supported branch pairs through an explicit compile-time matrix.
+// How: the helper evaluates the condition once, applies wrapper-aware truthiness for the approved condition subset (including narrow mixed_t numeric/bool payloads), and normalizes supported branch pairs through an explicit compile-time matrix.
 template <typename CondFn, typename ThenFn, typename ElseFn>
 inline auto ternary_eval(CondFn &&cond_fn, ThenFn &&then_fn, ElseFn &&else_fn) {
 	auto &&cond = cond_fn();
@@ -1705,6 +1681,14 @@ inline void apply_unset(bool_t &value) {
 }
 
 } // namespace detail
+
+
+// Implements the shared condition helper for generated control-flow sites.
+// How: reuses the same approved condition-domain rules as ternary / elvis so mixed_t is only accepted for runtime bool/int/float payloads.
+template <typename Value>
+inline bool_t condition_truthy(Value &&value) {
+	return detail::ternary_condition_truthy(std::forward<Value>(value));
+}
 
 // Implements the lowered unset helper for the currently supported mutable wrappers.
 // How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.

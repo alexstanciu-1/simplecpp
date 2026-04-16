@@ -43,7 +43,7 @@ Semantic boolean wrapper.
 
 Contract:
 - MUST represent runtime boolean values
-- MUST not introduce uncontrolled implicit truthiness in generated logic
+- MUST not introduce uncontrolled implicit truthiness in generated logic; mixed_t may participate only through the approved condition helper when its runtime payload is bool/int/float
 - SHOULD be explicitly bridged at native C++ condition boundaries
 
 ### `int_t` — Stable

@@ -1226,14 +1226,14 @@
 	"coercions": {
 		"condition": {
 			"semantic_type": "bool_t",
-			"bridge": "cast<bool>",
+			"bridge": "php::condition_truthy + static_cast<bool>",
 			"allowed_inputs": [
 				"bool_t",
 				"int_t",
 				"float_t",
 				"mixed_t"
 			],
-			"mixed_t_rule": "for generic condition coercion the bridge remains explicit, but php::ternary_eval uses helper-owned PHP-style mixed_t truthiness for condition evaluation: null, 0, 0.0, \"\", and \"0\" are false; non-empty arrays are true; present dynamic object handles are true"
+			"mixed_t_rule": "for generic condition coercion and php::ternary_eval, mixed_t is allowed only when the active runtime payload is bool, int, or float; all other runtime kinds fail in condition context"
 		},
 		"text": {
 			"result_type": "string_t",

@@ -221,7 +221,7 @@ Included initially:
 - `bool_t` is the semantic boolean type of the runtime
 - runtime comparisons produce the configured semantic comparison type, not native `bool`
 - generated C++ control-flow must bridge explicitly from semantic boolean representation to native C++ condition evaluation
-- the approved control-flow bridge is an explicit native-bool conversion (`static_cast<bool>(...)` or `cast<bool>(...)`), not `.native_value()` in generated conditions
+- the approved control-flow bridge is an explicit native-bool conversion from the shared condition helper result (`static_cast<bool>(::scpp::php::condition_truthy(...))` for general condition sites, or `static_cast<bool>(...)` for values already known to be `bool_t`), not `.native_value()` in generated conditions
 - `bool_t` must not provide uncontrolled truthiness; any native-bool bridge must remain explicit
 
 ### 6.3 `int_t` and `float_t`

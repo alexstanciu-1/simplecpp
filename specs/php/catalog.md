@@ -195,7 +195,7 @@ Contract:
 - Use strict comparisons
 - Check failure explicitly
 - Separate null and false
-- Avoid implicit truthiness, especially string or mixed-in-condition forms
+- Avoid implicit truthiness, especially string-in-condition forms; `mixed` in condition context is only valid for runtime bool/int/float payloads
 - Prefer predictable structures
 
 ---

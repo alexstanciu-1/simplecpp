@@ -15,8 +15,8 @@ Keep the generator structurally simple and mostly type-blind while ensuring that
 
 The helpers are intentionally separate because the semantic target differs:
 - `??` produces the first non-null PHP-visible value and usually unwraps `nullable<T>` to `T`, except for explicit carrier-preserving entries such as `mixed_t` and guarded-result wrappers
-- `?:` chooses between two branches using PHP-visible truthiness and may preserve wrapper shape such as `nullable<T>` or guarded-result wrappers
-- both helpers share the same wrapper normalization rules for PHP null-ness / truthiness even though their result matrices remain separate
+- `?:` chooses between two branches using the approved condition subset and may preserve wrapper shape such as `nullable<T>` or guarded-result wrappers
+- both helpers share the same wrapper normalization rules for PHP null-ness / approved condition handling even though their result matrices remain separate
 
 ## Initial `??` matrix
 
@@ -60,19 +60,19 @@ The ternary condition is evaluated once inside the runtime helper.
 Current approved condition domain:
 - direct condition inputs are limited to the configured explicit condition subset
 - no implicit string truthiness is supported
-- no helper-owned PHP-style `mixed_t` truthiness is supported
-- `string_t`, `mixed_t`, `null_t`, and table/object-like carriers must not silently participate in condition evaluation
-- if boolean intent is required, the source must already be boolean/numeric in the approved subset or be normalized explicitly before the condition site
+- `mixed_t` is allowed in ternary / elvis condition context only when its active runtime kind is `bool`, `int`, or `float`
+- `mixed_t` holding `null`, `string`, or table / object-like carriers must fail instead of participating implicitly in condition evaluation
+- if boolean intent is required for string or other non-approved carriers, the source must be normalized explicitly before the condition site
 
 Practical implication:
 - `"0" ? ... : ...` is not an approved implicit condition form
 - `"yes" ? ... : ...` is not an approved implicit condition form
-- `$mixed ?: $fallback` is only valid when `$mixed` is already in the approved condition subset or has been normalized explicitly
+- `$mixed ?: $fallback` is valid only when `$mixed` carries runtime `bool`, `int`, or `float`, or has been normalized explicitly before the condition site
 
-Initial supported truthiness path:
+Initial supported condition path:
 - plain scalar inputs continue through the existing explicit boolean bridge
-- `mixed_t` in ternary / elvis condition context uses PHP-style truthiness inside the helper (`null`, `0`, `0.0`, `""`, and `"0"` are false; non-empty arrays are true; dynamic object handles are true when present)
-- `nullable<T>` is false when empty, otherwise it reuses the truthiness rule of the contained `T`, including the `mixed_t` helper path when applicable
+- `mixed_t` in ternary / elvis condition context uses a narrow helper-owned rule: only runtime `bool`, `int`, and `float` kinds participate; all other kinds fail
+- `nullable<T>` is false when empty, otherwise it reuses the condition rule of the contained `T`, including the narrow `mixed_t` path when applicable
 
 
 ## Elvis rule

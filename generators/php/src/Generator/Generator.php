@@ -3810,7 +3810,7 @@ final class Generator
 		if ($this->exprProducesBool($expr)) {
 			return 'static_cast<bool>(' . $rendered . ')';
 		}
-		return 'cast<bool>(' . $rendered . ')';
+		return 'static_cast<bool>(' . $this->qualifyKnownPhpRuntimeSymbol('condition_truthy') . '(' . $rendered . '))';
 	}
 
 	/**

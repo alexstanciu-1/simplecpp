@@ -520,7 +520,7 @@ This applies:
 - in function arguments
 - in conditions
 - condition lowering must use `static_cast<bool>(...)` for expressions already known to produce `bool_t`
-- condition lowering must use `cast<bool>(...)` for non-`bool_t` expressions that are allowed to enter control flow
+- condition lowering must use `php::condition_truthy(...)` plus `static_cast<bool>(...)` for non-`bool_t` expressions that are allowed to enter control flow; `mixed_t` is only valid when its runtime payload is bool/int/float
 - in branch bodies
 - in loop bodies
 
