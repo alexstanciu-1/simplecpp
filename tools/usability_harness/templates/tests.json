@@ -443,6 +443,184 @@
             "files": {
                 "main.php": "<?php\n\n// Build a tiny pipeline state list.\n$steps = [];\n$steps[] = \"start\";\n$steps[] = \"ready\";\n$steps[] = \"done\";\n\n// Read each checkpoint deterministically.\necho $steps[0], \"\\n\";\necho $steps[1], \"\\n\";\necho $steps[2], \"\\n\";\n"
             }
+        },
+        {
+            "id": "micro_deep_nested_read_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Deeper nested array read across three explicit levels.",
+            "features": [
+                "nested_arrays",
+                "deep_nesting",
+                "dim_read"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "42\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a deeper nested structure explicitly.\n$data = [];\n$data[\"a\"] = [];\n$data[\"a\"][\"b\"] = [];\n$data[\"a\"][\"b\"][\"c\"] = 42;\n\n// Read the deepest value deterministically.\necho $data[\"a\"][\"b\"][\"c\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_conditional_array_build_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Conditional construction of arrays with explicit branch writes.",
+            "features": [
+                "if_else",
+                "conditional_array_construction",
+                "string_keys"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "active\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a row through explicit branching.\n$mode = 1;\n$row = [];\nif ($mode === 1) {\n\t$row[\"status\"] = \"active\";\n} else {\n\t$row[\"status\"] = \"inactive\";\n}\n\n// Read the selected branch result.\necho $row[\"status\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_function_nested_lookup_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Typed function reads a nested row field from an array argument.",
+            "features": [
+                "typed_function",
+                "nested_arrays",
+                "function_array_interaction"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "Alex\n",
+            "files": {
+                "main.php": "<?php\n\n// Read a nested user field through a typed helper.\nfunction user_name(array $payload): string {\n\treturn $payload[\"user\"][\"name\"];\n}\n\n$payload = [];\n$payload[\"user\"] = [];\n$payload[\"user\"][\"name\"] = \"Alex\";\n\necho user_name($payload), \"\\n\";\n"
+            }
+        },
+        {
+            "id": "micro_bool_null_array_combo_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Explicit bool, null, and array values combined without shortcuts.",
+            "features": [
+                "bool_return",
+                "nullable_return",
+                "nested_arrays",
+                "explicit_checks"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "enabled\nmissing\n",
+            "files": {
+                "main.php": "<?php\n\n// Return an explicit bool state.\nfunction is_enabled(array $row): bool {\n\treturn $row[\"enabled\"] === true;\n}\n\n// Return an explicit nullable field.\nfunction maybe_label(array $row): ?string {\n\tif ($row[\"label\"] === null) {\n\t\treturn null;\n\t}\n\n\treturn $row[\"label\"];\n}\n\n$row = [];\n$row[\"enabled\"] = true;\n$row[\"label\"] = null;\n\nif (is_enabled($row) === true) {\n\techo \"enabled\\n\";\n}\n\n$label = maybe_label($row);\nif ($label === null) {\n\techo \"missing\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "micro_nested_projection_001",
+            "kind": "micro",
+            "enabled_by_default": true,
+            "intent": "Function projects nested array rows into a packed output array.",
+            "features": [
+                "typed_function",
+                "foreach",
+                "nested_arrays",
+                "projection"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "A\nB\n",
+            "files": {
+                "main.php": "<?php\n\n// Project names out of nested rows.\nfunction names_of(array $rows): array {\n\t$result = [];\n\tforeach ($rows as $row) {\n\t\t$result[] = $row[\"user\"][\"name\"];\n\t}\n\n\treturn $result;\n}\n\n$rows = [];\n$rows[] = [\"user\" => [\"name\" => \"A\"]];\n$rows[] = [\"user\" => [\"name\" => \"B\"]];\n\nforeach (names_of($rows) as $name) {\n\techo $name, \"\\n\";\n}\n"
+            }
+        },
+        {
+            "id": "scenario_conditional_profile_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for conditional profile construction and explicit reads.",
+            "features": [
+                "scenario",
+                "conditional_array_construction",
+                "nested_arrays",
+                "string_keys"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "A\nactive\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a profile through explicit steps.\n$profile = [];\n$profile[\"user\"] = [];\n$profile[\"user\"][\"name\"] = \"A\";\n\n$enabled = true;\nif ($enabled === true) {\n\t$profile[\"user\"][\"status\"] = \"active\";\n} else {\n\t$profile[\"user\"][\"status\"] = \"inactive\";\n}\n\n// Emit deterministic fields.\necho $profile[\"user\"][\"name\"], \"\\n\";\necho $profile[\"user\"][\"status\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "scenario_deep_grouping_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for deeper grouping and later nested readback.",
+            "features": [
+                "scenario",
+                "deep_nesting",
+                "nested_arrays",
+                "string_keys"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "hotel\n2\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a grouped structure over three explicit levels.\n$data = [];\n$data[\"groups\"] = [];\n$data[\"groups\"][\"primary\"] = [];\n$data[\"groups\"][\"primary\"][\"type\"] = \"hotel\";\n$data[\"groups\"][\"primary\"][\"count\"] = 2;\n\n// Emit nested values.\necho $data[\"groups\"][\"primary\"][\"type\"], \"\\n\";\necho $data[\"groups\"][\"primary\"][\"count\"], \"\\n\";\n"
+            }
+        },
+        {
+            "id": "scenario_bool_null_matrix_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Scenario skeleton for explicit bool and nullable matrix handling in rows.",
+            "features": [
+                "scenario",
+                "bool_return",
+                "nullable_return",
+                "row_iteration"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "1:on\n2:missing\n",
+            "files": {
+                "main.php": "<?php\n\n// Build a tiny deterministic row set.\n$rows = [];\n$rows[] = [\"id\" => 1, \"enabled\" => true, \"label\" => \"on\"];\n$rows[] = [\"id\" => 2, \"enabled\" => false, \"label\" => null];\n\n// Emit explicit states without truthiness shortcuts.\nforeach ($rows as $row) {\n\tif ($row[\"enabled\"] === true) {\n\t\techo $row[\"id\"], \":\", $row[\"label\"], \"\\n\";\n\t} else {\n\t\techo $row[\"id\"], \":missing\\n\";\n\t}\n}\n"
+            }
+        },
+        {
+            "id": "scenario_multifile_user_card_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Opt-in multi-file scenario for a typed helper used by main.",
+            "features": [
+                "scenario",
+                "multi_file",
+                "typed_function"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "user:Alex\n",
+            "files": {
+                "main.php": "<?php\n\n// Main entrypoint for the multi-file scenario.\nrequire __DIR__ . '/helpers.php';\n\necho user_card(\"Alex\"), \"\\n\";\n",
+                "helpers.php": "<?php\n\n// Typed helper declared in a second file.\nfunction user_card(string $name): string {\n\treturn \"user:\" . $name;\n}\n"
+            }
+        },
+        {
+            "id": "scenario_multifile_nested_transform_001",
+            "kind": "scenario",
+            "enabled_by_default": false,
+            "intent": "Opt-in multi-file scenario for nested array transformation through a helper.",
+            "features": [
+                "scenario",
+                "multi_file",
+                "nested_arrays",
+                "function_array_interaction"
+            ],
+            "deterministic": true,
+            "execution_mode": "run",
+            "expected_stdout": "A\nB\n",
+            "files": {
+                "main.php": "<?php\n\n// Main entrypoint for the multi-file transformation scenario.\nrequire __DIR__ . '/helpers.php';\n\n$rows = [];\n$rows[] = [\"user\" => [\"name\" => \"A\"]];\n$rows[] = [\"user\" => [\"name\" => \"B\"]];\n\nforeach (extract_names($rows) as $name) {\n\techo $name, \"\\n\";\n}\n",
+                "helpers.php": "<?php\n\n// Transform nested rows in a helper file.\nfunction extract_names(array $rows): array {\n\t$result = [];\n\tforeach ($rows as $row) {\n\t\t$result[] = $row[\"user\"][\"name\"];\n\t}\n\n\treturn $result;\n}\n"
+            }
         }
     ]
 }
