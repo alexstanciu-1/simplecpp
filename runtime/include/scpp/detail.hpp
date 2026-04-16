@@ -99,6 +99,18 @@ inline constexpr bool is_shared_p_v = is_shared_p<remove_cvref_t<T>>::value;
 template <typename T>
 inline constexpr bool is_handle_like_v = is_handle_like<remove_cvref_t<T>>::value;
 
+// Extracts the wrapped payload type from nullable<T> so centralized cast helpers can lift dynamic values into explicit nullable destinations.
+template <typename T>
+struct nullable_value_type;
+
+template <typename T>
+struct nullable_value_type<nullable<T>> {
+	using type = T;
+};
+
+template <typename T>
+using nullable_value_type_t = typename nullable_value_type<remove_cvref_t<T>>::type;
+
 // Detects whether a runtime type exposes operator-> so wrapper types can forward dereference safely.
 template <typename T, typename = void>
 struct has_arrow_operator : std::false_type {};

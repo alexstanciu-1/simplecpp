@@ -504,6 +504,19 @@ inline string_t cast<string_t, mixed_t>(const mixed_t &value) {
 	}
 }
 
+// mixed_t -> nullable<T>
+// Centralized dynamic-to-nullable lifting mirrors nullable-to-value lifting in the opposite direction.
+// Null stays null; any non-null runtime kind must satisfy the already-configured mixed_t -> T rule for the wrapped target.
+template <typename To>
+requires(detail::is_specialization_of_v<To, nullable>)
+inline To cast(const mixed_t &value) {
+	using wrapped_t = detail::nullable_value_type_t<To>;
+	if (value.kind() == mixed_t::kind_t::null_v) {
+		return To(null_t{});
+	}
+	return To(cast<wrapped_t>(value));
+}
+
 // mixed_t -> shared_p<hash_t<mixed_t>>
 // Keeps object-like shared ownership explicit while still allowing mixed_t to auto-bridge in typed contexts.
 template <>

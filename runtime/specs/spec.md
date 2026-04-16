@@ -281,6 +281,7 @@ Included initially:
 - `nullptr_t` is the canonical semantic sentinel for constructing or comparing empty pointer-like wrappers
 - explicit unwrap/cast remains `cast<T>(nullable<T>)` when generated code can emit it directly
 - the centralized cast surface may also lift `nullable<U>` into any configured explicit target `T` by first requiring a present value and then delegating to `cast<T>(U)`; `string_t` remains the configured PHP-style exception where empty nullable stringifies to `""`
+- the centralized cast surface may also lift `mixed_t` into `nullable<T>`: runtime `null` becomes empty nullable, and any non-null runtime kind must satisfy the configured `mixed_t -> T` cast for the wrapped target
 - until the current symbol/type-blind generator reaches typed-boundary parity, `nullable<T>` may also provide a temporary implicit bridge to wrapped `T` only for explicit typed destinations such as typed by-value argument passing and typed return
 - the temporary typed-boundary bridge must throw a runtime error when the nullable is empty; for centralized cast lifting the required wording is `cast<To>(nullable) cannot convert an empty nullable to a required value`
 - the centralized generated operator surface is the authoritative way `nullable<T>` participates in unary, binary, logical, relational, mutation, and compound-assignment families; each participating operator must require present wrapped values and then delegate to the wrapped-value operator family

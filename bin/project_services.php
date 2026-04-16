@@ -1218,7 +1218,7 @@ function build_compiler_spec(string $command): array
 	return [
 		'command' => $command,
 		'kind' => $kind,
-		'launcher' => resolve_compiler_launcher(),
+		'launcher' => resolve_compiler_launcher($command),
 		'linker_flags' => detect_fast_linker_flags($kind),
 		'archiver' => detect_archiver_command($kind),
 	];
@@ -1233,7 +1233,7 @@ function compiler_kind_from_command(string $command): string
 	return 'gnu_like';
 }
 
-function resolve_compiler_launcher(): ?string
+function resolve_compiler_launcher(string $compilerCommand): ?string
 {
 	$envOverride = getenv('SCPP_CXX_LAUNCHER');
 	if ($envOverride !== false) {
@@ -1245,10 +1245,13 @@ function resolve_compiler_launcher(): ?string
 		if ($path === null && !preg_match('/[\\\/]/', $trimmed)) {
 			scpp_fail('Configured compiler launcher not found in PATH: ' . $trimmed . PHP_EOL, 1);
 		}
+		if (!compiler_launcher_is_usable($trimmed, $compilerCommand)) {
+			scpp_fail('Configured compiler launcher is not usable: ' . $trimmed . ' with compiler ' . $compilerCommand . PHP_EOL, 1);
+		}
 		return $trimmed;
 	}
 
-	return detect_compiler_launcher();
+	return detect_compiler_launcher($compilerCommand);
 }
 
 /** @return array{command:string,kind:string,launcher:?string,linker_flags:list<string>,archiver:?string}|null */
@@ -1271,9 +1274,36 @@ function detect_default_compiler(): ?array
 	return null;
 }
 
-function detect_compiler_launcher(): ?string
+function detect_compiler_launcher(string $compilerCommand): ?string
 {
-	return find_command_path(['sccache']);
+	$launcher = find_command_path(['sccache']);
+	if ($launcher === null) {
+		return null;
+	}
+
+	return compiler_launcher_is_usable($launcher, $compilerCommand) ? $launcher : null;
+}
+
+function compiler_launcher_is_usable(string $launcherCommand, string $compilerCommand): bool
+{
+	$command = [$launcherCommand, $compilerCommand, '--version'];
+	$descriptor = [
+		0 => ['pipe', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w'],
+	];
+	$process = @proc_open($command, $descriptor, $pipes);
+	if (!is_resource($process)) {
+		return false;
+	}
+
+	fclose($pipes[0]);
+	stream_get_contents($pipes[1]);
+	stream_get_contents($pipes[2]);
+	fclose($pipes[1]);
+	fclose($pipes[2]);
+	$status = proc_close($process);
+	return is_int($status) && $status === 0;
 }
 
 function detect_archiver_command(string $compilerKind): ?string

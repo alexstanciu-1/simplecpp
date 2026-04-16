@@ -466,7 +466,7 @@
                 "native_value"
             ],
             "typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; empty state is a runtime error; the current required-value cast wording is \"cast<To>(nullable) cannot convert an empty nullable to a required value\"; this bridge must not widen operator candidate sets",
-            "cast_lifting_rule": "centralized cast lifting may unwrap nullable<U> to any configured explicit target T through require_value and cast<T>(U); string_t remains the configured PHP-style empty-string exception for empty nullable values",
+            "cast_lifting_rule": "centralized cast lifting may unwrap nullable<U> to any configured explicit target T through require_value and cast<T>(U); string_t remains the configured PHP-style empty-string exception for empty nullable values; the symmetric inbound bridge cast<nullable<T>>(mixed_t) maps runtime null to empty nullable and otherwise delegates through the configured mixed_t -> T cast",
             "operator_lifting_rule": "centralized generated operators, not the temporary typed-boundary bridge, define nullable participation in unary, binary, logical, relational, mutation, and compound-assignment families; empty nullable operands fail through runtime errors except explicit sentinel comparisons and equality/inequality against non-sentinel values",
             "arrow_rule": "nullable<T>::operator->() is part of the stable wrapper surface; it must require a present value, forward to wrapped T::operator->() when T already exposes it, and otherwise return the address of the wrapped object for direct-object member access"
         },
@@ -474,7 +474,9 @@
             "kind": "template_wrapper",
             "header": "scpp/result_or_false.hpp",
             "template": true,
-            "template_params": ["T"],
+            "template_params": [
+                "T"
+            ],
             "cpp_underlying": "detail::result_core<T, false, false>",
             "stable_core_api": [
                 "default_ctor",
@@ -497,7 +499,9 @@
             "kind": "template_wrapper",
             "header": "scpp/result_or_bool.hpp",
             "template": true,
-            "template_params": ["T"],
+            "template_params": [
+                "T"
+            ],
             "cpp_underlying": "detail::result_core<T, false, true>",
             "stable_core_api": [
                 "default_ctor",
@@ -523,14 +527,26 @@
             "header": "scpp/error_t.hpp",
             "template": false,
             "semantic_role": "structured_in_band_failure_payload",
-            "stable_core_api": ["default_ctor", "message_line_file_ctor", "get_message", "get_line", "get_file"],
-            "minimum_payload": ["message", "line", "file"]
+            "stable_core_api": [
+                "default_ctor",
+                "message_line_file_ctor",
+                "get_message",
+                "get_line",
+                "get_file"
+            ],
+            "minimum_payload": [
+                "message",
+                "line",
+                "file"
+            ]
         },
         "result": {
             "kind": "template_wrapper",
             "header": "scpp/result.hpp",
             "template": true,
-            "template_params": ["T"],
+            "template_params": [
+                "T"
+            ],
             "cpp_underlying": "std::variant<T, error_t>",
             "stable_core_api": [
                 "default_ctor",
@@ -1105,6 +1121,15 @@
             "cast_name": "cast",
             "template_rule": false,
             "policy_role": "delegate_by_runtime_kind_to_native_rule_then_extract_or_runtime_error"
+        },
+        {
+            "from": "mixed_t",
+            "to": "nullable<T>",
+            "kind": "boundary_implicit_v1_visible_intention",
+            "form": "named_cast",
+            "cast_name": "cast",
+            "template_rule": true,
+            "policy_role": "runtime_null_to_empty_nullable_otherwise_delegate_to_configured_mixed_to_wrapped_target_cast"
         },
         {
             "from": "bool_t",

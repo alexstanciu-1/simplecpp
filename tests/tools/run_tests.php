@@ -923,7 +923,36 @@ TXT;
 
 	private function detectCompilerLauncher(): ?string
 	{
-		return $this->commandExistsOnPath('sccache') ? 'sccache' : null;
+		if (!$this->compilerLauncherIsUsable('sccache', 'g++')) {
+			return null;
+		}
+
+		return 'sccache';
+	}
+
+	private function compilerLauncherIsUsable(string $launcher, string $compiler): bool
+	{
+		if (!$this->commandExistsOnPath($launcher) || !$this->commandExistsOnPath($compiler)) {
+			return false;
+		}
+
+		$descriptor = [
+			0 => ['pipe', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = @proc_open([$launcher, $compiler, '--version'], $descriptor, $pipes, $this->repoRoot);
+		if (!is_resource($process)) {
+			return false;
+		}
+
+		fclose($pipes[0]);
+		stream_get_contents($pipes[1]);
+		stream_get_contents($pipes[2]);
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		$status = proc_close($process);
+		return is_int($status) && $status === 0;
 	}
 
 	private function commandExistsOnPath(string $command): bool

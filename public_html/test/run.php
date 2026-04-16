@@ -1427,12 +1427,37 @@ function commandExistsOnPath(string $command): bool
 
 function withCompilerLauncher(array $command): array
 {
-	if (!commandExistsOnPath('sccache')) {
+	if ($command === [] || !compilerLauncherIsUsable('sccache', (string) $command[0])) {
 		return $command;
 	}
 
 	array_unshift($command, 'sccache');
 	return $command;
+}
+
+function compilerLauncherIsUsable(string $launcher, string $compiler): bool
+{
+	if ($compiler === '' || !commandExistsOnPath($launcher)) {
+		return false;
+	}
+
+	$descriptor = [
+		0 => ['pipe', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w'],
+	];
+	$process = @proc_open([$launcher, $compiler, '--version'], $descriptor, $pipes);
+	if (!is_resource($process)) {
+		return false;
+	}
+
+	fclose($pipes[0]);
+	stream_get_contents($pipes[1]);
+	stream_get_contents($pipes[2]);
+	fclose($pipes[1]);
+	fclose($pipes[2]);
+	$status = proc_close($process);
+	return is_int($status) && $status === 0;
 }
 
 function buildRuntimeCompileCommand(string $projectRoot, string $sourcePath, string $objectPath, bool $memTestEnabled = false): array
