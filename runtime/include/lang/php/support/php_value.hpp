@@ -888,6 +888,22 @@ struct coalesce_result<nullable<T>, Right> {
 	using type = T;
 };
 
+template <typename Right>
+struct coalesce_result<mixed_t, Right> {
+	using type = mixed_t;
+};
+
+template <typename T>
+struct coalesce_result<nullable<T>, mixed_t> {
+	using type = mixed_t;
+};
+
+template <typename Left>
+requires (!conditional_nullable_info_v<Left>)
+struct coalesce_result<Left, mixed_t> {
+	using type = mixed_t;
+};
+
 template <typename Then, typename Else>
 struct ternary_result;
 
@@ -935,6 +951,24 @@ inline Result normalize_ternary_branch(Value &&value) {
 	}
 }
 
+
+template <typename Result, typename Value>
+inline Result normalize_coalesce_branch(Value &&value) {
+	using result_t = std::remove_cvref_t<Result>;
+	using value_t = std::remove_cvref_t<Value>;
+	if constexpr (std::is_same_v<result_t, value_t>) {
+		return std::forward<Value>(value);
+	} else if constexpr (std::is_same_v<result_t, mixed_t>) {
+		if constexpr (conditional_nullable_info_v<value_t>) {
+			using inner_t = typename conditional_nullable_info<value_t>::inner_type;
+			return mixed_t(cast<inner_t>(value));
+		}
+		return mixed_t(std::forward<Value>(value));
+	} else {
+		return cast<result_t>(std::forward<Value>(value));
+	}
+}
+
 } // namespace detail
 
 // Implements runtime-directed lowering for PHP null coalescing so code generation can stay structurally simple and type-blind.
@@ -946,9 +980,9 @@ inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
 	using right_t = std::remove_cvref_t<decltype(right_fn())>;
 	using result_t = typename detail::coalesce_result<left_t, right_t>::type;
 	if (static_cast<bool>(isset(left))) {
-		return cast<result_t>(left);
+		return detail::normalize_coalesce_branch<result_t>(left);
 	}
-	return cast<result_t>(right_fn());
+	return detail::normalize_coalesce_branch<result_t>(right_fn());
 }
 
 // Implements runtime-directed lowering for PHP ternary / elvis expressions so branch compatibility is enforced consistently in one place.
