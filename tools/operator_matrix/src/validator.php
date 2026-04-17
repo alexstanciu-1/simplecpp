@@ -9,7 +9,7 @@ declare(strict_types=1);
  * @param list<array<string, mixed>> $rows
  * @return array<string, mixed>
  */
-function om_validate_rows(array $registry, array $rows): array
+function om_validate_rows(array $registry, array $rows, ?string $familyFilter = null): array
 {
 	$errors = [];
 	$warnings = [];
@@ -145,6 +145,9 @@ function om_validate_rows(array $registry, array $rows): array
 	}
 
 	foreach ($registry['definition_keys'] as $definitionKey => $definitionMeta) {
+		if ($familyFilter !== null && $definitionMeta['family_id'] !== $familyFilter) {
+			continue;
+		}
 		$expectedKeys = [];
 		$lhsProfiles = $registry['profiles_by_type'][$definitionMeta['lhs_type']] ?? [];
 		$rhsProfiles = ['-'];

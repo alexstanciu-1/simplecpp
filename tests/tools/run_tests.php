@@ -29,6 +29,8 @@ final class Phase1TestRunner
 	private string $projectRoot;
 	private string $phpTestsRoot;
 	private string $runtimeTestsRoot;
+	private string $phpMatrixTestsRoot;
+	private string $runtimeMatrixTestsRoot;
 	private string $stateRoot;
 	private string $selfPath;
 
@@ -37,6 +39,8 @@ final class Phase1TestRunner
 		$this->projectRoot = $this->resolveProjectRoot();
 		$this->phpTestsRoot = $this->projectRoot . '/tests/php';
 		$this->runtimeTestsRoot = $this->projectRoot . '/tests/runtime';
+		$this->phpMatrixTestsRoot = $this->projectRoot . '/tests/php-matrix';
+		$this->runtimeMatrixTestsRoot = $this->projectRoot . '/tests/runtime-matrix';
 		$this->stateRoot = $this->projectRoot . '/tests/.runtime';
 		$this->selfPath = realpath(__FILE__) ?: __FILE__;
 	}
@@ -129,12 +133,13 @@ final class Phase1TestRunner
 	{
 		echo <<<TXT
 Usage:
-	php tests/tools/run_tests.php reset [--suite=php|runtime] [--level=level_01] [--test=pattern] [--include-disabled] [--san=address,undefined]
-	php tests/tools/run_tests.php run [--suite=php|runtime] [--level=level_01] [--test=pattern] [--jobs=12] [--include-disabled] [--san=address,undefined]
+	php tests/tools/run_tests.php reset [--suite=php|runtime|php-matrix|runtime-matrix] [--level=level_01] [--test=pattern] [--include-disabled] [--san=address,undefined]
+	php tests/tools/run_tests.php run [--suite=php|runtime|php-matrix|runtime-matrix] [--level=level_01] [--test=pattern] [--jobs=12] [--include-disabled] [--san=address,undefined]
 	php tests/tools/run_tests.php gate --suite=runtime [--jobs=12] [--include-disabled]
 
 Filters:
-	--suite=php|runtime       Select the PHP flow or the direct runtime C++ flow.
+	--suite=php|runtime|php-matrix|runtime-matrix
+	                        Select the curated or matrix-generated PHP/runtime flow.
 	--level=level_01          Run/reset only one level.
 	--test=needle             Run/reset one specific test id, filename, or relative path fragment.
 	--include-disabled        Include disabled / known-gap tests.
@@ -307,9 +312,11 @@ TXT;
 		$root = match ($suite) {
 			'php' => $this->phpTestsRoot,
 			'runtime' => $this->runtimeTestsRoot,
+			'php-matrix' => $this->phpMatrixTestsRoot,
+			'runtime-matrix' => $this->runtimeMatrixTestsRoot,
 			default => throw new RuntimeException('Unknown suite: ' . $suite),
 		};
-		$expectedExtension = $suite === 'runtime' ? 'cpp' : 'php';
+		$expectedExtension = in_array($suite, ['runtime', 'runtime-matrix'], true) ? 'cpp' : 'php';
 
 		$iterator = new RecursiveIteratorIterator(
 			new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)

@@ -75,6 +75,7 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 - `generation_rules_v1.md`
 - working generator slice now includes `operators_conditional_selection/elvis` with truthiness-driven branch selection semantics. — deterministic matrix row generation rules
 - `output_schema_v1.md` — canonical output row schema and enums
+- `test_seed_schema_v1.md` — canonical matrix-to-seed intermediate artifact
 - `test_generation_rules_v1.md` — matrix-to-test synthesis rules
 - `source_mapping_v1.md` — concrete family-first mapping to authority files, runtime config, and implementation touchpoints
 - `regeneration_policy_v1.md` — trigger, scope, validation, and project-error rules for matrix regeneration

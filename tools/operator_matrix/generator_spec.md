@@ -54,9 +54,12 @@ Current `ternary` working slice:
 ## Output
 - `build/operator_matrix/matrix.json`
 - `build/operator_matrix/validation_report.json`
+- `build/operator_matrix/test_seeds.json`
+- `build/operator_matrix/test_seed_validation_report.json`
 
 ## Notes
 - this generator reads structured JSON only
 - it does not parse Markdown
-- test generation remains a separate phase
+- test-file generation remains a separate phase
+- row-faithful test-seed generation is emitted as an intermediate artifact
 - config-level contradiction checks are intentionally deferred from this working slice

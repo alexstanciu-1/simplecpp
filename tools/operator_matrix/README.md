@@ -49,7 +49,7 @@ Current `ternary` slice:
 - accepts condition types `bool_t`, `int_t`, `float_t`, and `mixed_t`
 - keeps wrapper families out of the condition position in this working slice
 
-Test generation is out of scope for this phase.
+Test-file emission is out of scope for this phase. The tool now emits row-faithful test seeds as an intermediate planning artifact for the current `operators_conditional_selection` slice.
 
 ---
 
@@ -67,6 +67,8 @@ php tools/operator_matrix/generator.php --stdout
 Generated artifacts:
 - `build/operator_matrix/matrix.json`
 - `build/operator_matrix/validation_report.json`
+- `build/operator_matrix/test_seeds.json`
+- `build/operator_matrix/test_seed_validation_report.json`
 
 Exit codes:
 - `0` → generation and validation succeeded
