@@ -74,3 +74,4 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 - `generation_rules_v1.md` — deterministic matrix row generation rules
 - `output_schema_v1.md` — canonical output row schema and enums
 - `test_generation_rules_v1.md` — matrix-to-test synthesis rules
+- `source_mapping_v1.md` — concrete family-first mapping to authority files, runtime config, and implementation touchpoints

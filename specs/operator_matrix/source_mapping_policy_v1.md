@@ -121,3 +121,8 @@ The source-of-truth model is:
 - family-first
 - override-only when necessary
 - aligned to normative specs first and runtime surface second
+
+## 8. Relationship to Concrete Mapping
+
+This policy document defines the mapping strategy.
+The concrete project mapping is recorded in `source_mapping_v1.md`.
