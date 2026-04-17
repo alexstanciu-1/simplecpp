@@ -42,10 +42,17 @@
       "items": [
         {
           "item_id": "coalesce",
-          "source_item_refs": []
+          "source_item_refs": [],
+          "arity": 2
         },
         {
           "item_id": "elvis",
+          "source_item_refs": [],
+          "arity": 2
+        },
+        {
+          "item_id": "ternary",
+          "arity": 3,
           "source_item_refs": []
         }
       ]

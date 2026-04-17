@@ -44,7 +44,7 @@ function om_build_rows(array $data, array $registry, ?string $familyFilter): arr
 				'family_id' => $familyId,
 				'item_id' => $itemId,
 				'subfamily_id' => $family['subfamily_id'],
-				'arity' => $family['arity'],
+				'arity' => om_item_arity($family, $item),
 				'lhs_type' => $definition['lhs_type'],
 				'rhs_type' => $rhsType,
 				'third_type' => $thirdType,

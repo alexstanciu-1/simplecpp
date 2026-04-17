@@ -23,6 +23,7 @@ Items:
 - `cast_bool`
 - `coalesce`
 - `elvis`
+- `ternary`
 
 Type universe currently present in structured data:
 - `bool_t`
@@ -39,11 +40,16 @@ Current `elvis` working slice:
 - same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
 - compile-time rejected rows for the current wrapper families until a dedicated wrapper-aware `elvis` policy is specified
 
+Current `ternary` working slice:
+- same-type `then/else` rows for `bool_t`, `int_t`, `float_t`, `string_t`, and `mixed_t`
+- condition rows for `bool_t`, `int_t`, `float_t`, and `mixed_t`
+- wrapper families remain out of scope for the condition operand in this working slice
+
 ## Current Guarantees
 - deterministic `row_id`
 - full profile-explicit source rows
 - validation for unknown ids and duplicate row ids
-- validation for exact profile coverage per definition, including binary `(family_id, item_id, lhs_type, rhs_type)` definitions
+- validation for exact profile coverage per definition, including binary and ternary `(family_id, item_id, lhs_type, rhs_type, third_type)` definitions
 
 ## Output
 - `build/operator_matrix/matrix.json`

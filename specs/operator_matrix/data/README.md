@@ -5,7 +5,7 @@ This folder stores the machine-readable input consumed by `tools/operator_matrix
 ## Files
 - `families.json` — registered families/items and grouped authority references
 - `types.json` — canonical type ids and fully enumerated profiles for the current working slice
-- `semantics.json` — profile-explicit source rows per unary or binary definition
+- `semantics.json` — profile-explicit source rows per unary, binary, or ternary definition
 
 ## Current Working Slice
 Families:
@@ -18,6 +18,7 @@ Implemented items:
 - `cast_bool`
 - `coalesce`
 - `elvis`
+- `ternary`
 
 Type universe currently present in structured data:
 - `bool_t`
@@ -32,8 +33,10 @@ Type universe currently present in structured data:
 
 Current selection-family support:
 - `coalesce` includes the wrapper-aware policy already documented for approved wrapper families
-- `elvis` currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
+- `elvis`
+- `ternary` currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
 - current wrapper families are emitted as compile-time rejected `elvis` rows until a dedicated wrapper-aware `elvis` policy is specified
+- `ternary` currently supports same-type `then/else` rows for non-wrapper branch types and uses the current condition-truthiness slice for the condition operand
 
 ## Rules
 - every source row must remain profile-explicit

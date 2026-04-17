@@ -52,6 +52,7 @@ The matrix documents are responsible for normalization and projection, not seman
 This folder may act as the canonical authority for:
 - family naming
 - item identifiers
+- item arity and operand-shape naming
 - profile naming
 - edge-case identifiers
 - operand target kind naming

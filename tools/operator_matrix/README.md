@@ -27,6 +27,7 @@ Implemented items:
 - `cast_bool`
 - `coalesce`
 - `elvis`
+- `ternary`
 
 Current working type universe in structured data includes:
 - `bool_t`
@@ -42,6 +43,11 @@ Current working type universe in structured data includes:
 Current `elvis` slice:
 - supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
 - emits compile-time rejected rows for the current wrapper families until a dedicated wrapper-aware `elvis` policy is specified
+
+Current `ternary` slice:
+- supports same-type `then/else` rows for `bool_t`, `int_t`, `float_t`, `string_t`, and `mixed_t`
+- accepts condition types `bool_t`, `int_t`, `float_t`, and `mixed_t`
+- keeps wrapper families out of the condition position in this working slice
 
 Test generation is out of scope for this phase.
 

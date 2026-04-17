@@ -61,7 +61,8 @@ function om_validate_rows(array $registry, array $rows): array
 		}
 
 		$family = $registry['families_by_id'][$familyId];
-		$arity = (int) $family['arity'];
+		$item = $registry['items_by_family'][$familyId][$itemId] ?? [];
+		$arity = om_item_arity($family, $item);
 
 		if (!isset($registry['items_by_family'][$familyId][$itemId])) {
 			$errors[] = om_validation_issue('project_error', $context, 'unknown_item', 'Unknown item_id for family ' . $familyId . ': ' . $itemId);

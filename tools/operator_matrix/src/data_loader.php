@@ -86,3 +86,22 @@ function om_build_definition_key(string $familyId, string $itemId, string $lhsTy
 		$thirdType ?? '-',
 	]);
 }
+
+
+/**
+ * Resolve item arity, allowing an item-specific override over the family default.
+ *
+ * @param array<string, mixed> $family
+ * @param array<string, mixed> $item
+ */
+function om_item_arity(array $family, array $item): int
+{
+	$itemArity = $item['arity'] ?? null;
+	if (is_int($itemArity)) {
+		return $itemArity;
+	}
+	if (is_numeric($itemArity)) {
+		return (int) $itemArity;
+	}
+	return (int) ($family['arity'] ?? 1);
+}

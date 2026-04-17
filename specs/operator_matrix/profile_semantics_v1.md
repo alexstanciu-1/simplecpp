@@ -380,6 +380,7 @@ Rows must distinguish:
 - condition profile behavior
 - branch/result shape behavior
 - wrapper-preserving behavior where specified
+- ternary third-operand behavior when the item has arity 3
 
 The family must not be flattened into a simple binary-operator table.
 
