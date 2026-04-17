@@ -16,10 +16,12 @@ Provide a clean executable pipeline that:
 Families:
 - `condition_truthiness`
 - `casts_explicit`
+- `operators_conditional_selection`
 
 Items:
 - `if_condition`
 - `cast_bool`
+- `coalesce`
 
 Types covered:
 - `bool_t`
@@ -36,7 +38,7 @@ Types covered:
 - deterministic `row_id`
 - full profile-explicit source rows
 - validation for unknown ids and duplicate row ids
-- validation for exact profile coverage per `(family_id, item_id, lhs_type)` definition
+- validation for exact profile coverage per definition, including binary `(family_id, item_id, lhs_type, rhs_type)` definitions
 
 ## Output
 - `build/operator_matrix/matrix.json`

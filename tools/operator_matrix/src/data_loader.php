@@ -51,11 +51,19 @@ function om_build_registry(array $data): array
 	}
 
 	foreach ($data['semantics']['definitions'] as $definition) {
-		$key = implode('|', [$definition['family_id'], $definition['item_id'], $definition['lhs_type']]);
+		$key = om_build_definition_key(
+			$definition['family_id'],
+			$definition['item_id'],
+			$definition['lhs_type'],
+			$definition['rhs_type'] ?? null,
+			$definition['third_type'] ?? null,
+		);
 		$definitionKeys[$key] = [
 			'family_id' => $definition['family_id'],
 			'item_id' => $definition['item_id'],
 			'lhs_type' => $definition['lhs_type'],
+			'rhs_type' => $definition['rhs_type'] ?? null,
+			'third_type' => $definition['third_type'] ?? null,
 		];
 	}
 
@@ -66,4 +74,15 @@ function om_build_registry(array $data): array
 		'known_profiles' => $knownProfiles,
 		'definition_keys' => $definitionKeys,
 	];
+}
+
+function om_build_definition_key(string $familyId, string $itemId, string $lhsType, ?string $rhsType, ?string $thirdType): string
+{
+	return implode('|', [
+		$familyId,
+		$itemId,
+		$lhsType,
+		$rhsType ?? '-',
+		$thirdType ?? '-',
+	]);
 }

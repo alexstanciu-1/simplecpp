@@ -14,7 +14,7 @@ function om_validate_rows(array $registry, array $rows): array
 	$errors = [];
 	$warnings = [];
 	$rowIds = [];
-	$definitionProfiles = [];
+	$definitionCoverage = [];
 	$allowedStatuses = [
 		'supported' => true,
 		'compile_time_rejected' => true,
@@ -33,10 +33,19 @@ function om_validate_rows(array $registry, array $rows): array
 		$familyId = (string) ($row['family_id'] ?? '');
 		$itemId = (string) ($row['item_id'] ?? '');
 		$lhsType = (string) ($row['lhs_type'] ?? '');
+		$rhsType = $row['rhs_type'];
+		$thirdType = $row['third_type'];
 		$lhsProfile = (string) ($row['lhs_profile'] ?? '');
+		$rhsProfile = $row['rhs_profile'];
+		$thirdProfile = $row['third_profile'];
 		$status = (string) ($row['status'] ?? '');
 		$behaviorClass = $row['behavior_class'] ?? null;
-		$definitionKey = implode('|', [$familyId, $itemId, $lhsType]);
+		$definitionKey = om_build_definition_key($familyId, $itemId, $lhsType, is_string($rhsType) ? $rhsType : null, is_string($thirdType) ? $thirdType : null);
+		$coverageKey = implode('|', [
+			$lhsProfile,
+			is_string($rhsProfile) ? $rhsProfile : '-',
+			is_string($thirdProfile) ? $thirdProfile : '-',
+		]);
 
 		if (($row['row_id'] ?? '') === '') {
 			$errors[] = om_validation_issue('validation_error', $context, 'missing_row_id', 'Every row must have a row_id.');
@@ -51,6 +60,9 @@ function om_validate_rows(array $registry, array $rows): array
 			continue;
 		}
 
+		$family = $registry['families_by_id'][$familyId];
+		$arity = (int) $family['arity'];
+
 		if (!isset($registry['items_by_family'][$familyId][$itemId])) {
 			$errors[] = om_validation_issue('project_error', $context, 'unknown_item', 'Unknown item_id for family ' . $familyId . ': ' . $itemId);
 		}
@@ -58,11 +70,38 @@ function om_validate_rows(array $registry, array $rows): array
 		if (!isset($registry['profiles_by_type'][$lhsType])) {
 			$errors[] = om_validation_issue('validation_error', $context, 'unknown_lhs_type', 'Unknown lhs_type: ' . $lhsType);
 		} else {
-			$definitionProfiles[$definitionKey][$lhsProfile] = true;
+			$definitionCoverage[$definitionKey][$coverageKey] = true;
 		}
 
 		if (!isset($registry['known_profiles'][$lhsProfile])) {
 			$errors[] = om_validation_issue('validation_error', $context, 'unknown_lhs_profile', 'Unknown lhs_profile: ' . $lhsProfile);
+		}
+
+		if ($arity >= 2) {
+			if (!is_string($rhsType) || $rhsType === '') {
+				$errors[] = om_validation_issue('validation_error', $context, 'missing_rhs_type', 'Binary rows must define rhs_type.');
+			} elseif (!isset($registry['profiles_by_type'][$rhsType])) {
+				$errors[] = om_validation_issue('validation_error', $context, 'unknown_rhs_type', 'Unknown rhs_type: ' . $rhsType);
+			}
+
+			if (!is_string($rhsProfile) || $rhsProfile === '') {
+				$errors[] = om_validation_issue('validation_error', $context, 'missing_rhs_profile', 'Binary rows must define rhs_profile.');
+			} elseif (!isset($registry['known_profiles'][$rhsProfile])) {
+				$errors[] = om_validation_issue('validation_error', $context, 'unknown_rhs_profile', 'Unknown rhs_profile: ' . $rhsProfile);
+			}
+		} elseif ($rhsType !== null || $rhsProfile !== null) {
+			$errors[] = om_validation_issue('validation_error', $context, 'unexpected_rhs_fields', 'Unary rows must not define rhs_type or rhs_profile.');
+		}
+
+		if ($arity >= 3) {
+			if (!is_string($thirdType) || $thirdType === '') {
+				$errors[] = om_validation_issue('validation_error', $context, 'missing_third_type', 'Ternary rows must define third_type.');
+			}
+			if (!is_string($thirdProfile) || $thirdProfile === '') {
+				$errors[] = om_validation_issue('validation_error', $context, 'missing_third_profile', 'Ternary rows must define third_profile.');
+			}
+		} elseif ($thirdType !== null || $thirdProfile !== null) {
+			$errors[] = om_validation_issue('validation_error', $context, 'unexpected_third_fields', 'Non-ternary rows must not define third_type or third_profile.');
 		}
 
 		if (!isset($allowedStatuses[$status])) {
@@ -89,33 +128,61 @@ function om_validate_rows(array $registry, array $rows): array
 			$errors[] = om_validation_issue('project_error', $context, 'missing_source_family_refs', 'Every row must carry source_family_refs.');
 		}
 
-		$expectedRowId = om_build_row_id($familyId, $itemId, $lhsType, $lhsProfile);
+		$expectedRowId = om_build_row_id(
+			$familyId,
+			$itemId,
+			$lhsType,
+			$lhsProfile,
+			is_string($rhsType) ? $rhsType : null,
+			is_string($rhsProfile) ? $rhsProfile : null,
+			is_string($thirdType) ? $thirdType : null,
+			is_string($thirdProfile) ? $thirdProfile : null,
+		);
 		if (($row['row_id'] ?? '') !== $expectedRowId) {
 			$errors[] = om_validation_issue('validation_error', $context, 'non_deterministic_row_id', 'row_id does not match canonical tuple-based format.');
 		}
 	}
 
 	foreach ($registry['definition_keys'] as $definitionKey => $definitionMeta) {
-		$expectedProfiles = $registry['profiles_by_type'][$definitionMeta['lhs_type']] ?? [];
-		$actualProfiles = array_keys($definitionProfiles[$definitionKey] ?? []);
-		sort($expectedProfiles);
-		sort($actualProfiles);
+		$expectedKeys = [];
+		$lhsProfiles = $registry['profiles_by_type'][$definitionMeta['lhs_type']] ?? [];
+		$rhsProfiles = ['-'];
+		$thirdProfiles = ['-'];
 
-		if ($expectedProfiles !== $actualProfiles) {
-			$missingProfiles = array_values(array_diff($expectedProfiles, $actualProfiles));
-			$extraProfiles = array_values(array_diff($actualProfiles, $expectedProfiles));
-			$messageParts = [];
-			if ($missingProfiles !== []) {
-				$messageParts[] = 'missing profiles: ' . implode(', ', $missingProfiles);
+		if (is_string($definitionMeta['rhs_type']) && $definitionMeta['rhs_type'] !== '') {
+			$rhsProfiles = $registry['profiles_by_type'][$definitionMeta['rhs_type']] ?? [];
+		}
+		if (is_string($definitionMeta['third_type']) && $definitionMeta['third_type'] !== '') {
+			$thirdProfiles = $registry['profiles_by_type'][$definitionMeta['third_type']] ?? [];
+		}
+
+		foreach ($lhsProfiles as $lhsProfile) {
+			foreach ($rhsProfiles as $rhsProfile) {
+				foreach ($thirdProfiles as $thirdProfile) {
+					$expectedKeys[] = implode('|', [$lhsProfile, $rhsProfile, $thirdProfile]);
+				}
 			}
-			if ($extraProfiles !== []) {
-				$messageParts[] = 'unexpected profiles: ' . implode(', ', $extraProfiles);
+		}
+
+		$actualKeys = array_keys($definitionCoverage[$definitionKey] ?? []);
+		sort($expectedKeys);
+		sort($actualKeys);
+
+		if ($expectedKeys !== $actualKeys) {
+			$missingKeys = array_values(array_diff($expectedKeys, $actualKeys));
+			$extraKeys = array_values(array_diff($actualKeys, $expectedKeys));
+			$messageParts = [];
+			if ($missingKeys !== []) {
+				$messageParts[] = 'missing combinations: ' . implode(', ', $missingKeys);
+			}
+			if ($extraKeys !== []) {
+				$messageParts[] = 'unexpected combinations: ' . implode(', ', $extraKeys);
 			}
 			$errors[] = om_validation_issue(
 				'validation_error',
 				'definition (' . $definitionKey . ')',
 				'incomplete_profile_coverage',
-				'The generated row set must cover the exact known profiles for the lhs_type; ' . implode('; ', $messageParts)
+				'The generated row set must cover the exact known profile combinations for the definition; ' . implode('; ', $messageParts)
 			);
 		}
 	}

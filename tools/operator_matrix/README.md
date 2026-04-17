@@ -20,10 +20,12 @@ The JSON files provide the normalized input required by the generator.
 Implemented families:
 - `condition_truthiness`
 - `casts_explicit`
+- `operators_conditional_selection`
 
 Implemented items:
 - `if_condition`
 - `cast_bool`
+- `coalesce`
 
 Implemented types:
 - `bool_t`

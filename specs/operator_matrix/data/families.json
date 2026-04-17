@@ -30,6 +30,21 @@
 					"source_item_refs": []
 				}
 			]
+		},
+		{
+			"family_id": "operators_conditional_selection",
+			"subfamily_id": "selection",
+			"arity": 2,
+			"source_family_refs": [
+				"specs/conditional_expression_matrix.md",
+				"runtime/specs/config.json#conditionals"
+			],
+			"items": [
+				{
+					"item_id": "coalesce",
+					"source_item_refs": []
+				}
+			]
 		}
 	]
 }

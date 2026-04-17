@@ -5,12 +5,13 @@ This folder stores the machine-readable input consumed by `tools/operator_matrix
 ## Files
 - `families.json` — registered families/items and grouped authority references
 - `types.json` — canonical type ids and fully enumerated profiles for the current working slice
-- `semantics.json` — profile-explicit source rows per `(family_id, item_id, lhs_type)` definition
+- `semantics.json` — profile-explicit source rows per unary or binary definition
 
 ## Current Working Slice
 Families:
 - `condition_truthiness`
 - `casts_explicit`
+- `operators_conditional_selection`
 
 Types covered:
 - `bool_t`
