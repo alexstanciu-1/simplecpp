@@ -62,6 +62,10 @@ final class TypeMapper
 			return 'nullable<' . $this->mapUserTypeName($this->unwrapNullableInlineValueType($phpType)) . '>';
 		}
 
+		if ($this->isGenericNullableType($phpType)) {
+			return 'nullable<' . $this->mapDeclaredType($this->unwrapGenericNullableType($phpType)) . '>';
+		}
+
 		if ($this->isOrFalseType($phpType)) {
 			return 'result_or_false<' . $this->mapDeclaredType($this->unwrapOrFalseType($phpType)) . '>';
 		}
@@ -267,6 +271,27 @@ final class TypeMapper
 	{
 		$normalized = trim($phpType);
 		if (preg_match('/^value\s*<\s*\?\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+			return trim($matches[1]);
+		}
+
+		return $normalized;
+	}
+
+	public function isGenericNullableType(string $phpType): bool
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^nullable\s*<\s*(.+)\s*>$/', $normalized, $matches) !== 1) {
+			return false;
+		}
+
+		$inner = trim($matches[1]);
+		return $inner !== '' && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p)\s*(?:<|$)/', $inner) !== 1;
+	}
+
+	public function unwrapGenericNullableType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^nullable\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			return trim($matches[1]);
 		}
 
@@ -535,7 +560,7 @@ final class TypeMapper
 		if (str_contains($normalized, '?') && !str_starts_with($normalized, '?') && preg_match('/^value\s*<\s*\?\s*.+\s*>$/', $normalized) !== 1) {
 			throw new GenerationException('Nullable marker (?) is only supported as a leading type marker or in value<?T>: ' . $phpType);
 		}
-		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:value|shared|unique|weak|weakref|function|vector|vector_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
+		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
 			throw new GenerationException('Unsupported explicit type syntax: ' . $phpType);
 		}
 		if (preg_match('/^value\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {

@@ -2977,6 +2977,12 @@ final class Generator
 			$expr = $statement->kind === 'assign_ref'
 				? $this->renderReferenceBindingExpr($exprNode, $namespacePhp)
 				: $this->renderInitializerExpr($exprNode, $effectiveTyped, $namespacePhp);
+			if ($statement->kind === 'assign' && $effectiveTyped === null && $name !== null) {
+				$storedTyped = $this->declaredLocalTypes[$name] ?? null;
+				if (is_string($storedTyped) && $storedTyped !== '') {
+					$expr = $this->wrapExprForExpectedType($expr, $this->inferExprType($exprNode), $storedTyped);
+				}
+			}
 			$typedVectorType = $effectiveTyped !== null ? $this->mapTypedVectorLocalType($effectiveTyped) : null;
 			$isTypedEmptyVectorLiteral = $statement->kind === 'assign' && $typedVectorType !== null && $this->isEmptyPositionalArrayLiteral($exprNode);
 			if ($statement->kind === 'assign_ref') {
@@ -5810,9 +5816,28 @@ final class Generator
 			return;
 		}
 
-		if ($actualType !== $expectedType) {
-			$this->fail($context . ' expects output type ' . $expectedType . ' but got ' . $actualType . ' at line ' . $line . '.');
+		$normalizedExpectedType = $this->normalizeTakeExpectedOutputType($expectedType);
+		if ($actualType !== $normalizedExpectedType) {
+			$this->fail($context . ' expects output type ' . $normalizedExpectedType . ' but got ' . $actualType . ' at line ' . $line . '.');
 		}
+	}
+
+	private function normalizeTakeExpectedOutputType(string $expectedType): string
+	{
+		$normalized = trim($expectedType);
+		if ($normalized === '' || $normalized === 'auto') {
+			return $normalized;
+		}
+
+		if (preg_match('/^(?:int_t|float_t|bool_t|string_t|mixed_t|error_t|hash_t|::scpp::hash_t)(?:<.*>)?$/', $normalized) === 1) {
+			return $normalized;
+		}
+
+		if (preg_match('/^(?:nullable|result|result_or_false|result_or_bool|shared_p|unique_p|weak_p|value_p|vector_t)<.+>$/', $normalized) === 1) {
+			return $normalized;
+		}
+
+		return $this->typeMapper->mapDeclaredType($normalized);
 	}
 
 	private function renderRuntimeAwareCallNameExpr(mixed $expr, ?string $namespacePhp): string
