@@ -1,33 +1,49 @@
-# Operator Matrix Generator (v1 Skeleton)
+# Operator Matrix Generator (v1 Working Slice)
 
 ## Purpose
-Provide a minimal executable pipeline that:
-- reads operator_matrix specs
-- expands a small subset of types/profiles
-- emits valid matrix rows
+Provide a clean executable pipeline that:
+- reads structured operator-matrix data
+- validates family/type/profile coverage
+- emits deterministic source rows
+- writes build artifacts for review
 
 ## Inputs
-- specs/operator_matrix/catalog_v1.md
-- specs/operator_matrix/type_universe_v1.md
-- specs/operator_matrix/generation_rules_v1.md
+- `specs/operator_matrix/data/families.json`
+- `specs/operator_matrix/data/types.json`
+- `specs/operator_matrix/data/semantics.json`
 
-## Phases
-1. Load configuration (hardcoded v1 subset)
-2. Expand types → profiles
-3. Generate rows for selected families
-4. Output JSON
+## Current Scope
+Families:
+- `condition_truthiness`
+- `casts_explicit`
 
-## Scope (v1)
-- Only:
-  - condition_truthiness
-  - casts_explicit
-- Limited types:
-  - int_t
-  - bool_t
+Items:
+- `if_condition`
+- `cast_bool`
+
+Types covered:
+- `bool_t`
+- `int_t`
+- `float_t`
+- `string_t`
+- `nullable<int_t>`
+- `nullable<bool_t>`
+- `nullable<float_t>`
+- `nullable<string_t>`
+- `mixed_t`
+
+## Current Guarantees
+- deterministic `row_id`
+- full profile-explicit source rows
+- validation for unknown ids and duplicate row ids
+- validation for exact profile coverage per `(family_id, item_id, lhs_type)` definition
 
 ## Output
-- JSON rows matching output_schema_v1.md
+- `build/operator_matrix/matrix.json`
+- `build/operator_matrix/validation_report.json`
 
 ## Notes
-- This is NOT full generator
-- Only validates pipeline shape
+- This generator reads structured JSON only
+- it does not parse Markdown
+- test generation remains a separate phase
+- config-level contradiction checks are intentionally deferred from this working slice

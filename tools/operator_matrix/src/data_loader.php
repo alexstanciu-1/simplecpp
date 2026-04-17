@@ -31,6 +31,7 @@ function om_build_registry(array $data): array
 	$itemsByFamily = [];
 	$profilesByType = [];
 	$knownProfiles = [];
+	$definitionKeys = [];
 
 	foreach ($data['families']['families'] as $family) {
 		$familyId = $family['family_id'];
@@ -49,10 +50,20 @@ function om_build_registry(array $data): array
 		}
 	}
 
+	foreach ($data['semantics']['definitions'] as $definition) {
+		$key = implode('|', [$definition['family_id'], $definition['item_id'], $definition['lhs_type']]);
+		$definitionKeys[$key] = [
+			'family_id' => $definition['family_id'],
+			'item_id' => $definition['item_id'],
+			'lhs_type' => $definition['lhs_type'],
+		];
+	}
+
 	return [
 		'families_by_id' => $familiesById,
 		'items_by_family' => $itemsByFamily,
 		'profiles_by_type' => $profilesByType,
 		'known_profiles' => $knownProfiles,
+		'definition_keys' => $definitionKeys,
 	];
 }

@@ -14,6 +14,7 @@ function om_validate_rows(array $registry, array $rows): array
 	$errors = [];
 	$warnings = [];
 	$rowIds = [];
+	$definitionProfiles = [];
 	$allowedStatuses = [
 		'supported' => true,
 		'compile_time_rejected' => true,
@@ -35,6 +36,7 @@ function om_validate_rows(array $registry, array $rows): array
 		$lhsProfile = (string) ($row['lhs_profile'] ?? '');
 		$status = (string) ($row['status'] ?? '');
 		$behaviorClass = $row['behavior_class'] ?? null;
+		$definitionKey = implode('|', [$familyId, $itemId, $lhsType]);
 
 		if (($row['row_id'] ?? '') === '') {
 			$errors[] = om_validation_issue('validation_error', $context, 'missing_row_id', 'Every row must have a row_id.');
@@ -55,6 +57,8 @@ function om_validate_rows(array $registry, array $rows): array
 
 		if (!isset($registry['profiles_by_type'][$lhsType])) {
 			$errors[] = om_validation_issue('validation_error', $context, 'unknown_lhs_type', 'Unknown lhs_type: ' . $lhsType);
+		} else {
+			$definitionProfiles[$definitionKey][$lhsProfile] = true;
 		}
 
 		if (!isset($registry['known_profiles'][$lhsProfile])) {
@@ -88,6 +92,31 @@ function om_validate_rows(array $registry, array $rows): array
 		$expectedRowId = om_build_row_id($familyId, $itemId, $lhsType, $lhsProfile);
 		if (($row['row_id'] ?? '') !== $expectedRowId) {
 			$errors[] = om_validation_issue('validation_error', $context, 'non_deterministic_row_id', 'row_id does not match canonical tuple-based format.');
+		}
+	}
+
+	foreach ($registry['definition_keys'] as $definitionKey => $definitionMeta) {
+		$expectedProfiles = $registry['profiles_by_type'][$definitionMeta['lhs_type']] ?? [];
+		$actualProfiles = array_keys($definitionProfiles[$definitionKey] ?? []);
+		sort($expectedProfiles);
+		sort($actualProfiles);
+
+		if ($expectedProfiles !== $actualProfiles) {
+			$missingProfiles = array_values(array_diff($expectedProfiles, $actualProfiles));
+			$extraProfiles = array_values(array_diff($actualProfiles, $expectedProfiles));
+			$messageParts = [];
+			if ($missingProfiles !== []) {
+				$messageParts[] = 'missing profiles: ' . implode(', ', $missingProfiles);
+			}
+			if ($extraProfiles !== []) {
+				$messageParts[] = 'unexpected profiles: ' . implode(', ', $extraProfiles);
+			}
+			$errors[] = om_validation_issue(
+				'validation_error',
+				'definition (' . $definitionKey . ')',
+				'incomplete_profile_coverage',
+				'The generated row set must cover the exact known profiles for the lhs_type; ' . implode('; ', $messageParts)
+			);
 		}
 	}
 

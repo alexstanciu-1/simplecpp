@@ -1,172 +1,945 @@
 {
-	"version": 1,
-	"definitions": [
-		{
-			"family_id": "condition_truthiness",
-			"item_id": "if_condition",
-			"lhs_type": "bool_t",
-			"rows": [
-				{
-					"lhs_profile": "bool.false",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.false",
-					"edge_case": true,
-					"edge_case_id": "condition.bool.false",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Direct false profile in condition context."
-				},
-				{
-					"lhs_profile": "bool.true",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.true",
-					"edge_case": true,
-					"edge_case_id": "condition.bool.true",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Direct true profile in condition context."
-				}
-			]
-		},
-		{
-			"family_id": "condition_truthiness",
-			"item_id": "if_condition",
-			"lhs_type": "int_t",
-			"rows": [
-				{
-					"lhs_profile": "int.zero",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.false",
-					"edge_case": true,
-					"edge_case_id": "condition.int.zero",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Zero integer condition evaluates false."
-				},
-				{
-					"lhs_profile": "int.nonzero",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.true",
-					"edge_case": true,
-					"edge_case_id": "condition.int.nonzero",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Non-zero integer condition evaluates true."
-				}
-			]
-		},
-		{
-			"family_id": "condition_truthiness",
-			"item_id": "if_condition",
-			"lhs_type": "nullable<int_t>",
-			"rows": [
-				{
-					"lhs_profile": "nullable.empty",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.false",
-					"edge_case": true,
-					"edge_case_id": "condition.nullable_int.empty",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Empty nullable delegates to false in condition context."
-				},
-				{
-					"lhs_profile": "nullable.present.int.zero",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.false",
-					"edge_case": true,
-					"edge_case_id": "condition.nullable_int.present_zero",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Present zero delegates to contained int.zero rule."
-				},
-				{
-					"lhs_profile": "nullable.present.int.nonzero",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.true",
-					"edge_case": true,
-					"edge_case_id": "condition.nullable_int.present_nonzero",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Present non-zero delegates to contained int.nonzero rule."
-				}
-			]
-		},
-		{
-			"family_id": "casts_explicit",
-			"item_id": "cast_bool",
-			"lhs_type": "bool_t",
-			"rows": [
-				{
-					"lhs_profile": "bool.false",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.false",
-					"edge_case": true,
-					"edge_case_id": "cast_bool.bool.false",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Explicit bool cast preserves false profile."
-				},
-				{
-					"lhs_profile": "bool.true",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.true",
-					"edge_case": true,
-					"edge_case_id": "cast_bool.bool.true",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Explicit bool cast preserves true profile."
-				}
-			]
-		},
-		{
-			"family_id": "casts_explicit",
-			"item_id": "cast_bool",
-			"lhs_type": "int_t",
-			"rows": [
-				{
-					"lhs_profile": "int.zero",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.false",
-					"edge_case": true,
-					"edge_case_id": "cast_bool.int.zero",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Explicit bool cast converts zero integer to false."
-				},
-				{
-					"lhs_profile": "int.nonzero",
-					"status": "supported",
-					"behavior_class": "deterministic_value",
-					"result_type": "bool_t",
-					"result_profile": "bool.true",
-					"edge_case": true,
-					"edge_case_id": "cast_bool.int.nonzero",
-					"test_seed_class": "runtime_success",
-					"diagnostic_class": null,
-					"notes": "Explicit bool cast converts non-zero integer to true."
-				}
-			]
-		}
-	]
+    "version": 1,
+    "definitions": [
+        {
+            "family_id": "condition_truthiness",
+            "item_id": "if_condition",
+            "lhs_type": "bool_t",
+            "rows": [
+                {
+                    "lhs_profile": "bool.false",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.bool.false",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Direct false profile in condition context."
+                },
+                {
+                    "lhs_profile": "bool.true",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.bool.true",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Direct true profile in condition context."
+                }
+            ]
+        },
+        {
+            "family_id": "condition_truthiness",
+            "item_id": "if_condition",
+            "lhs_type": "int_t",
+            "rows": [
+                {
+                    "lhs_profile": "int.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.int.zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Zero integer condition evaluates false."
+                },
+                {
+                    "lhs_profile": "int.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.int.nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Non-zero integer condition evaluates true."
+                }
+            ]
+        },
+        {
+            "family_id": "condition_truthiness",
+            "item_id": "if_condition",
+            "lhs_type": "float_t",
+            "rows": [
+                {
+                    "lhs_profile": "float.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.float.zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Zero float condition evaluates false."
+                },
+                {
+                    "lhs_profile": "float.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.float.nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Non-zero float condition evaluates true."
+                }
+            ]
+        },
+        {
+            "family_id": "condition_truthiness",
+            "item_id": "if_condition",
+            "lhs_type": "nullable<int_t>",
+            "rows": [
+                {
+                    "lhs_profile": "nullable.empty",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_int.empty",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Empty nullable delegates to false in condition context."
+                },
+                {
+                    "lhs_profile": "nullable.present.int.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_int.present_zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present zero delegates to contained int.zero rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.int.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_int.present_nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present non-zero delegates to contained int.nonzero rule."
+                }
+            ]
+        },
+        {
+            "family_id": "condition_truthiness",
+            "item_id": "if_condition",
+            "lhs_type": "nullable<bool_t>",
+            "rows": [
+                {
+                    "lhs_profile": "nullable.empty",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_bool.empty",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Empty nullable delegates to false in condition context."
+                },
+                {
+                    "lhs_profile": "nullable.present.bool.false",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_bool.present_false",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present false delegates to contained bool.false rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.bool.true",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_bool.present_true",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present true delegates to contained bool.true rule."
+                }
+            ]
+        },
+        {
+            "family_id": "condition_truthiness",
+            "item_id": "if_condition",
+            "lhs_type": "nullable<float_t>",
+            "rows": [
+                {
+                    "lhs_profile": "nullable.empty",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_float.empty",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Empty nullable delegates to false in condition context."
+                },
+                {
+                    "lhs_profile": "nullable.present.float.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_float.present_zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present zero delegates to contained float.zero rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.float.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.nullable_float.present_nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present non-zero delegates to contained float.nonzero rule."
+                }
+            ]
+        },
+        {
+            "family_id": "condition_truthiness",
+            "item_id": "if_condition",
+            "lhs_type": "mixed_t",
+            "rows": [
+                {
+                    "lhs_profile": "mixed.bool.false",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.bool.false",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Allowed mixed bool false participates in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.bool.true",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.bool.true",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Allowed mixed bool true participates in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.int.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.int.zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Allowed mixed int zero participates in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.int.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.int.nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Allowed mixed int non-zero participates in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.float.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.float.zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Allowed mixed float zero participates in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.float.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.float.nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Allowed mixed float non-zero participates in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.null",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.null",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_condition_type",
+                    "notes": "Null mixed runtime kind is not allowed in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.string.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.string.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_condition_type",
+                    "notes": "String mixed runtime kind is not allowed in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.string.zero_string",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.string.zero_string",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_condition_type",
+                    "notes": "String mixed runtime kind is not allowed in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.string.bool_false_literal",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.string.bool_false_literal",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_condition_type",
+                    "notes": "String mixed runtime kind is not allowed in condition context even when the payload could be cast to bool."
+                },
+                {
+                    "lhs_profile": "mixed.string.bool_true_literal",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.string.bool_true_literal",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_condition_type",
+                    "notes": "String mixed runtime kind is not allowed in condition context even when the payload could be cast to bool."
+                },
+                {
+                    "lhs_profile": "mixed.string.nonempty_nonzero_nonbool_literal",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.string.other",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_condition_type",
+                    "notes": "String mixed runtime kind is not allowed in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.hash.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.hash.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_condition_type",
+                    "notes": "Hash mixed runtime kind is not allowed in condition context."
+                },
+                {
+                    "lhs_profile": "mixed.hash.nonempty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "condition.mixed.hash.nonempty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_condition_type",
+                    "notes": "Hash mixed runtime kind is not allowed in condition context."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "bool_t",
+            "rows": [
+                {
+                    "lhs_profile": "bool.false",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.bool.false",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Explicit bool cast preserves false profile."
+                },
+                {
+                    "lhs_profile": "bool.true",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.bool.true",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Explicit bool cast preserves true profile."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "int_t",
+            "rows": [
+                {
+                    "lhs_profile": "int.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.int.zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Explicit bool cast converts zero integer to false."
+                },
+                {
+                    "lhs_profile": "int.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.int.nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Explicit bool cast converts non-zero integer to true."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "float_t",
+            "rows": [
+                {
+                    "lhs_profile": "float.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.float.zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Explicit bool cast converts zero float to false."
+                },
+                {
+                    "lhs_profile": "float.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.float.nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Explicit bool cast converts non-zero float to true."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "string_t",
+            "rows": [
+                {
+                    "lhs_profile": "string.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.string.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_cast_string_literal",
+                    "notes": "Strict string-to-bool cast rejects empty string."
+                },
+                {
+                    "lhs_profile": "string.zero_string",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.string.zero_string",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Strict string-to-bool cast accepts literal 0 as false."
+                },
+                {
+                    "lhs_profile": "string.bool_false_literal",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.string.bool_false_literal",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Strict string-to-bool cast accepts false literals."
+                },
+                {
+                    "lhs_profile": "string.bool_true_literal",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.string.bool_true_literal",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Strict string-to-bool cast accepts true literals."
+                },
+                {
+                    "lhs_profile": "string.nonempty_nonzero_nonbool_literal",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.string.other",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_cast_string_literal",
+                    "notes": "Strict string-to-bool cast rejects non-bool non-zero strings."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "nullable<int_t>",
+            "rows": [
+                {
+                    "lhs_profile": "nullable.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_int.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_nullable_unwrap_empty",
+                    "notes": "Empty nullable unwrap for explicit bool cast is a runtime error."
+                },
+                {
+                    "lhs_profile": "nullable.present.int.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_int.int_zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.int.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_int.int_nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "nullable<bool_t>",
+            "rows": [
+                {
+                    "lhs_profile": "nullable.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_bool.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_nullable_unwrap_empty",
+                    "notes": "Empty nullable unwrap for explicit bool cast is a runtime error."
+                },
+                {
+                    "lhs_profile": "nullable.present.bool.false",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_bool.bool_false",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.bool.true",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_bool.bool_true",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "nullable<float_t>",
+            "rows": [
+                {
+                    "lhs_profile": "nullable.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_float.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_nullable_unwrap_empty",
+                    "notes": "Empty nullable unwrap for explicit bool cast is a runtime error."
+                },
+                {
+                    "lhs_profile": "nullable.present.float.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_float.float_zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.float.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_float.float_nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "nullable<string_t>",
+            "rows": [
+                {
+                    "lhs_profile": "nullable.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_string.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_nullable_unwrap_empty",
+                    "notes": "Empty nullable unwrap for explicit bool cast is a runtime error."
+                },
+                {
+                    "lhs_profile": "nullable.present.string.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_string.string_empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_cast_string_literal",
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.string.zero_string",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_string.string_zero_string",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.string.bool_false_literal",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_string.string_bool_false_literal",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.string.bool_true_literal",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_string.string_bool_true_literal",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                },
+                {
+                    "lhs_profile": "nullable.present.string.nonempty_nonzero_nonbool_literal",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.nullable_string.string_nonempty_nonzero_nonbool_literal",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_cast_string_literal",
+                    "notes": "Present nullable value unwraps first, then applies the contained cast_bool rule."
+                }
+            ]
+        },
+        {
+            "family_id": "casts_explicit",
+            "item_id": "cast_bool",
+            "lhs_type": "mixed_t",
+            "rows": [
+                {
+                    "lhs_profile": "mixed.null",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.null",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_mixed_kind_for_cast_bool",
+                    "notes": "Mixed null runtime kind is not convertible to bool_t."
+                },
+                {
+                    "lhs_profile": "mixed.bool.false",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.bool.false",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed bool false delegates to native bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.bool.true",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.bool.true",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed bool true delegates to native bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.int.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.int.zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed int zero delegates to native int->bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.int.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.int.nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed int non-zero delegates to native int->bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.float.zero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.float.zero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed float zero delegates to native float->bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.float.nonzero",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.float.nonzero",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed float non-zero delegates to native float->bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.string.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.string.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_cast_string_literal",
+                    "notes": "Mixed string empty delegates to strict string->bool cast and throws."
+                },
+                {
+                    "lhs_profile": "mixed.string.zero_string",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.string.zero_string",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed string 0 delegates to strict string->bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.string.bool_false_literal",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.string.bool_false_literal",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed false string literal delegates to strict string->bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.string.bool_true_literal",
+                    "status": "supported",
+                    "behavior_class": "deterministic_value",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.true",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.string.bool_true_literal",
+                    "test_seed_class": "runtime_success",
+                    "diagnostic_class": null,
+                    "notes": "Mixed true string literal delegates to strict string->bool cast."
+                },
+                {
+                    "lhs_profile": "mixed.string.nonempty_nonzero_nonbool_literal",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.string.other",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_cast_string_literal",
+                    "notes": "Mixed non-bool string delegates to strict string->bool cast and throws."
+                },
+                {
+                    "lhs_profile": "mixed.hash.empty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.hash.empty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_mixed_kind_for_cast_bool",
+                    "notes": "Mixed hash runtime kind is not convertible to bool_t."
+                },
+                {
+                    "lhs_profile": "mixed.hash.nonempty",
+                    "status": "supported",
+                    "behavior_class": "throws",
+                    "result_type": "bool_t",
+                    "result_profile": "bool.false",
+                    "edge_case": true,
+                    "edge_case_id": "cast_bool.mixed.hash.nonempty",
+                    "test_seed_class": "runtime_throw",
+                    "diagnostic_class": "invalid_mixed_kind_for_cast_bool",
+                    "notes": "Mixed hash runtime kind is not convertible to bool_t."
+                }
+            ]
+        }
+    ]
 }
