@@ -14,6 +14,7 @@
 #include "scpp/result_or_bool.hpp"
 #include "scpp/result.hpp"
 #include "scpp/error_t.hpp"
+#include "lang/php/support/php_take.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"

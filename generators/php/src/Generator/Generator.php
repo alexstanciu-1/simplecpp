@@ -5490,6 +5490,9 @@ final class Generator
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr->children['expr'] ?? null;
 			$args = $expr->children['args']->children ?? [];
+			if ($this->isTakeCallName($nameExpr)) {
+				return $this->renderTakeCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			$name = $functionDecl !== null
 				? $this->renderNameExpr($nameExpr, $namespacePhp)
@@ -5720,6 +5723,96 @@ final class Generator
 			return $this->renderSymbolPath($name, $flags, true);
 		}
 		return $this->renderExpr($expr, $namespacePhp);
+	}
+
+	private function isTakeCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'take';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderTakeCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 2 && count($args) !== 3) {
+			$this->fail('take() expects exactly 2 or 3 arguments at line ' . $line . '.');
+		}
+
+		foreach ($args as $index => $arg) {
+			if ($index === array_key_last($args)) {
+				continue;
+			}
+			if ($this->extractSimpleVarName($arg) === null) {
+				$this->fail('take() output arguments must be simple local variables at line ' . $line . '.');
+			}
+		}
+
+		$this->validateTakeCall($args, $namespacePhp, $line);
+		$renderedArgs = [];
+		foreach ($args as $arg) {
+			$renderedArgs[] = $this->renderExpr($arg, $namespacePhp);
+		}
+
+		return $this->qualifyKnownPhpRuntimeSymbol('take') . '(' . implode(', ', $renderedArgs) . ')';
+	}
+
+	/** @param list<mixed> $args */
+	private function validateTakeCall(array $args, ?string $namespacePhp, int $line): void
+	{
+		$sourceNode = $args[array_key_last($args)] ?? null;
+		$sourceType = $this->inferExprTypeWithNamespace($sourceNode, $namespacePhp);
+		if (preg_match('/^nullable<(.+)>$/', $sourceType, $matches) === 1) {
+			if (count($args) !== 2) {
+				$this->fail('take(nullable<T>) requires exactly one output variable and one source expression at line ' . $line . '.');
+			}
+			$this->assertTakeOutputTypeMatches($args[0], $matches[1], $line, 'take(nullable<T>)');
+			return;
+		}
+
+		if (preg_match('/^result_or_false<(.+)>$/', $sourceType, $matches) === 1) {
+			if (count($args) !== 2) {
+				$this->fail('take(result_or_false<T>) requires exactly one output variable and one source expression at line ' . $line . '.');
+			}
+			$this->assertTakeOutputTypeMatches($args[0], $matches[1], $line, 'take(result_or_false<T>)');
+			return;
+		}
+
+		if (preg_match('/^result<(.+)>$/', $sourceType, $matches) === 1) {
+			if (count($args) !== 3) {
+				$this->fail('take(result<T>) requires two output variables plus the source expression at line ' . $line . '.');
+			}
+			$this->assertTakeOutputTypeMatches($args[0], $matches[1], $line, 'take(result<T>)');
+			$this->assertTakeOutputTypeMatches($args[1], 'error_t', $line, 'take(result<T>)');
+			return;
+		}
+
+		if (preg_match('/^result_or_bool<(.+)>$/', $sourceType, $matches) === 1) {
+			if (count($args) !== 3) {
+				$this->fail('take(result_or_bool<T>) requires two output variables plus the source expression at line ' . $line . '.');
+			}
+			$this->assertTakeOutputTypeMatches($args[0], $matches[1], $line, 'take(result_or_bool<T>)');
+			$this->assertTakeOutputTypeMatches($args[1], 'bool_t', $line, 'take(result_or_bool<T>)');
+			return;
+		}
+
+		if ($sourceType !== 'auto') {
+			$this->fail('take() requires nullable<T>, result<T>, result_or_false<T>, or result_or_bool<T> as the source expression at line ' . $line . '; got ' . $sourceType . '.');
+		}
+	}
+
+	private function assertTakeOutputTypeMatches(mixed $expr, string $expectedType, int $line, string $context): void
+	{
+		$actualType = $this->inferExprType($expr);
+		if ($actualType === 'auto') {
+			return;
+		}
+
+		if ($actualType !== $expectedType) {
+			$this->fail($context . ' expects output type ' . $expectedType . ' but got ' . $actualType . ' at line ' . $line . '.');
+		}
 	}
 
 	private function renderRuntimeAwareCallNameExpr(mixed $expr, ?string $namespacePhp): string
@@ -6087,6 +6180,47 @@ final class Generator
 		return $this->localCppName($name);
 	}
 
+	private function inferExprTypeWithNamespace(mixed $expr, ?string $namespacePhp): string
+	{
+		if (!is_object($expr)) {
+			return $this->inferExprType($expr);
+		}
+
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::CALL) {
+			$nameExpr = $expr->children['expr'] ?? null;
+			if ($this->isTakeCallName($nameExpr)) {
+				return 'bool_t';
+			}
+			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
+			if ($functionDecl !== null && $functionDecl->returnType !== null) {
+				return $this->typeMapper->mapReturnType($functionDecl->returnType, $functionDecl->returnsByReference);
+			}
+		}
+
+		if ($kind === AstKind::STATIC_CALL) {
+			$classNode = $expr->children['class'] ?? null;
+			$methodName = (string) ($expr->children['method'] ?? '');
+			$methodDecl = $this->lookupMethodDeclByStaticCall($classNode, $methodName, $namespacePhp);
+			if ($methodDecl !== null && $methodDecl->returnType !== null) {
+				return $this->typeMapper->mapReturnType($methodDecl->returnType, $methodDecl->returnsByReference);
+			}
+		}
+
+		if ($kind === AstKind::METHOD_CALL) {
+			$baseExpr = $expr->children['expr'] ?? null;
+			$methodName = (string) ($expr->children['method'] ?? '');
+			$methodDecl = is_object($baseExpr) && ($baseExpr->kind ?? null) === AstKind::VAR && ($baseExpr->children['name'] ?? null) === 'this'
+				? $this->lookupMethodDeclByCurrentClass($methodName, $namespacePhp)
+				: null;
+			if ($methodDecl !== null && $methodDecl->returnType !== null) {
+				return $this->typeMapper->mapReturnType($methodDecl->returnType, $methodDecl->returnsByReference);
+			}
+		}
+
+		return $this->inferExprType($expr);
+	}
+
 	private function inferExprType(mixed $expr): string
 	{
 		if (is_int($expr)) {
@@ -6125,6 +6259,13 @@ final class Generator
 				if ($classDecl instanceof ClassDecl && $classDecl->isEnum) {
 					return $this->typeMapper->mapDeclaredType($classDecl->name);
 				}
+			}
+			return 'auto';
+		}
+		if ($kind === AstKind::CALL) {
+			$nameExpr = $expr->children['expr'] ?? null;
+			if ($this->isTakeCallName($nameExpr)) {
+				return 'bool_t';
 			}
 			return 'auto';
 		}

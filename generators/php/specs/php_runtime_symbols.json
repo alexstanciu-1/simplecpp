@@ -7,6 +7,7 @@
         "coalesce_eval",
         "ternary_eval",
         "condition_truthy",
+        "take",
         "var_dump",
         "echo_eval",
         "identical",

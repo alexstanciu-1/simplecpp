@@ -695,6 +695,15 @@ Generated and example code SHOULD:
 - keep `null` separate from `false`
 - avoid truthiness shortcuts when the state matters
 - prefer the most explicit return-state handling form
+- use `php::take(...)` when code should extract wrapper payloads into existing locals while preserving explicit branch semantics
+
+### 10.4 `php::take(...)`
+
+- `php::take($value, $source)` is the unified extraction helper for `nullable<T>` and `result_or_false<T>` wrappers
+- `php::take($value, $error, $source)` is the unified extraction helper for `result<T>` wrappers
+- `php::take($value, $bool, $source)` is the unified extraction helper for `result_or_bool<T>` wrappers
+- `result_or_bool<T>` returns `true` from `take(...)` for both wrapped-value and bool-true states so mysqli-style success-without-result APIs stay representable
+- outputs unrelated to the active wrapper branch remain unchanged
 
 ---
 
