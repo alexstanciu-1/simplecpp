@@ -208,3 +208,7 @@ Including:
 - `quarantine/` for failing cases with logs and generated C++
 
 For detailed harness behavior and artifact layout, see `tools/usability_harness/README.md`.
+
+## Guidance
+- `specs/strict_mode.md` — recommended coding discipline (not enforced)
+

@@ -1,5 +1,6 @@
 See `specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 See also `specs/array_semantics.md` for the authoritative current array/table subset.
+See `specs/strict_mode.md` for recommended extraction and usage patterns to avoid dynamic type propagation.
 
 # Dynamic Types Specification (v2.2)
 
