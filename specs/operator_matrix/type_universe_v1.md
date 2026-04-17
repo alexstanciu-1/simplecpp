@@ -5,6 +5,8 @@
 
 ## 1. Purpose
 
+Derived coordination spec.
+
 This document defines the **canonical type universe** used by the operator matrix.
 
 It provides:

@@ -5,6 +5,8 @@
 
 ## 1. Purpose
 
+Derived coordination spec.
+
 This document defines the **canonical taxonomy and item inventory** for the dynamic
 operator / cast / language semantics matrix.
 
@@ -21,7 +23,20 @@ This document defines:
 
 ---
 
-## 2. Design Constraints
+## 2. Authority Relationship
+
+This document is subordinate to:
+- `specs/spec_map.md`
+- normative language specs under `specs/`
+- subsystem normative specs under `runtime/specs/` and `generators/php/specs/`
+- `runtime/specs/config.json` for current runtime-supported combinations
+
+This document normalizes matrix structure and naming.
+It does not override normative semantic behavior.
+
+---
+
+## 3. Design Constraints
 
 The taxonomy must be:
 
@@ -32,7 +47,7 @@ The taxonomy must be:
 
 ---
 
-## 3. Top-Level Families (v1)
+## 4. Top-Level Families (v1)
 
 ### F1. condition_truthiness
 
@@ -186,7 +201,7 @@ Reset / mutation:
 
 ---
 
-## 4. Subfamily Tags
+## 5. Subfamily Tags
 
 Each item must include a subfamily tag for filtering and reporting.
 
@@ -206,7 +221,7 @@ Allowed subfamilies:
 
 ---
 
-## 5. Matrix Structure Requirements
+## 6. Matrix Structure Requirements
 
 The matrix MUST NOT be limited to type-level combinations.
 
@@ -218,7 +233,7 @@ Each evaluation must include:
 
 ---
 
-## 6. Required Axes
+## 7. Required Axes
 
 Each matrix entry must support:
 
@@ -235,7 +250,7 @@ AND
 
 ---
 
-## 7. Status Classification
+## 8. Status Classification
 
 Each evaluation result must be classified as:
 
@@ -247,7 +262,7 @@ Each evaluation result must be classified as:
 
 ---
 
-## 8. Result Metadata
+## 9. Result Metadata
 
 Each evaluation must include:
 
@@ -259,7 +274,7 @@ Each evaluation must include:
 
 ---
 
-## 9. Profile Requirement (Critical)
+## 10. Profile Requirement (Critical)
 
 Types MUST be expanded into runtime profiles.
 
@@ -298,7 +313,7 @@ Examples:
 
 ---
 
-## 10. Out of Scope (v1)
+## 11. Out of Scope (v1)
 
 The following are explicitly excluded:
 
@@ -315,7 +330,7 @@ The following are explicitly excluded:
 
 ---
 
-## 11. Summary
+## 12. Summary
 
 v1 defines a controlled semantic surface consisting of:
 
