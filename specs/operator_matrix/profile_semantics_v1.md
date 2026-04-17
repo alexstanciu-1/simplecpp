@@ -90,7 +90,6 @@ This is distinct from compile-time rejection of the semantic form itself.
 
 Allowed behavior classes:
 - `deterministic_value`
-- `runtime_partitioned`
 - `throws`
 - `noop`
 - `failure_value`
@@ -100,12 +99,6 @@ Allowed behavior classes:
 
 ##### `deterministic_value`
 A supported row yields a normal value/result for the exact profile.
-
-##### `runtime_partitioned`
-The outer type is accepted, but runtime kind/profile must be expanded into separate rows.
-This is most important for:
-- `mixed_t`
-- wrapper carriers that delegate to contained payload profiles
 
 ##### `throws`
 The row compiles and reaches runtime, but evaluation must fail by throwing/raising for that profile.
@@ -201,10 +194,6 @@ Examples:
 - `nullable<string_t>.present.string.nonempty_nonzero` → `status=compile_time_rejected`
 
 ##### `mixed_t`
-Outer type summary:
-- `status=supported`
-- `behavior_class=runtime_partitioned`
-
 Accepted runtime kinds:
 - `mixed.bool.false` → false
 - `mixed.bool.true` → true
@@ -255,7 +244,6 @@ Supported native profiles:
 - `nullable.present.<T_profile>` → unwrap first, then apply contained rule
 
 ##### `mixed_t`
-- outer summary row uses `behavior_class=runtime_partitioned`
 - concrete rows dispatch by active kind and then apply cast behavior
 
 ##### `cast_int`, `cast_float`, `cast_string`

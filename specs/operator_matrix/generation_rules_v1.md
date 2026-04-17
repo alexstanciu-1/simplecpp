@@ -110,7 +110,7 @@ For non-target-sensitive rows, target-kind fields remain null/absent.
 
 ### `mixed_t`
 - emit one row per active runtime kind/profile
-- use family-specific `behavior_class=runtime_partitioned` only as a summary concept; concrete rows remain explicit
+- concrete rows remain explicit for every active runtime kind/profile
 
 ### `result<T>` / `result_or_false<T>` / `result_or_bool<T>`
 - preserve wrapper identity
@@ -141,7 +141,6 @@ Supported rows must also include `behavior_class`.
 
 For `status=supported`, assign exactly one `behavior_class`:
 - `deterministic_value`
-- `runtime_partitioned`
 - `throws`
 - `noop`
 - `failure_value`
@@ -189,3 +188,8 @@ Each emitted row must include enough metadata to decide whether it should genera
 - a helper-routed semantic regression test
 
 That mapping is defined by `test_generation_rules_v1.md`.
+
+## 13. Profile Explicitness Rule
+
+All source rows MUST be fully profile-expanded.
+Aggregated rows are not allowed in the source dataset.

@@ -21,7 +21,15 @@ This is required for:
 
 ---
 
-## 2. Base Types (Scalar)
+## 2. Authority Relationship
+
+This document is a derived coordination specification.
+It does not define language semantics.
+It normalizes the type and profile space for matrix generation and validation.
+
+---
+
+## 3. Base Types (Scalar)
 
 ### int_t
 ### float_t
@@ -30,14 +38,14 @@ This is required for:
 
 ---
 
-## 3. Compound Types
+## 4. Compound Types
 
 ### hash_t
 - associative / array-like container
 
 ---
 
-## 4. Wrapper Types
+## 5. Wrapper Types
 
 ### nullable<T>
 Represents:
@@ -72,13 +80,13 @@ Represents:
 
 ---
 
-## 5. Profile Expansion Rules
+## 6. Profile Expansion Rules
 
 Each type must expand into runtime profiles.
 
 ---
 
-## 6. Scalar Profiles
+## 7. Scalar Profiles
 
 ### int_t
 - int.zero
@@ -99,21 +107,21 @@ Each type must expand into runtime profiles.
 
 ---
 
-## 7. hash_t Profiles
+## 8. hash_t Profiles
 
 - hash.empty
 - hash.nonempty
 
 ---
 
-## 8. nullable<T> Expansion
+## 9. nullable<T> Expansion
 
 - nullable.empty
 - nullable.present.<T_profile>
 
 ---
 
-## 9. mixed_t Expansion
+## 10. mixed_t Expansion
 
 - mixed.null
 - mixed.bool.false
@@ -130,7 +138,7 @@ Each type must expand into runtime profiles.
 
 ---
 
-## 10. result* Expansion
+## 11. result* Expansion
 
 ### result<T>
 - result.success.<T_profile>
@@ -147,7 +155,7 @@ Each type must expand into runtime profiles.
 
 ---
 
-## 11. Notes
+## 12. Notes
 
 - All operators must resolve against profiles, not just types.
 - Profiles are required for correctness in condition, casting, and comparison.

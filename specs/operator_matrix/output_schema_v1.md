@@ -90,7 +90,6 @@ Allowed `status` values:
 
 Allowed `behavior_class` values:
 - `deterministic_value`
-- `runtime_partitioned`
 - `throws`
 - `noop`
 - `failure_value`

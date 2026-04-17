@@ -76,3 +76,5 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 - `test_generation_rules_v1.md` — matrix-to-test synthesis rules
 - `source_mapping_v1.md` — concrete family-first mapping to authority files, runtime config, and implementation touchpoints
 - `regeneration_policy_v1.md` — trigger, scope, validation, and project-error rules for matrix regeneration
+- `matrix_validation_rules_v1.md` — acceptance and validation contract for generated matrix data
+- `data/` — structured JSON input consumed by `tools/operator_matrix/`
