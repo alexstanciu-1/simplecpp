@@ -1,0 +1,31 @@
+{
+	"version": 1,
+	"types": [
+		{
+			"type_id": "bool_t",
+			"kind": "base",
+			"profiles": [
+				"bool.false",
+				"bool.true"
+			]
+		},
+		{
+			"type_id": "int_t",
+			"kind": "base",
+			"profiles": [
+				"int.zero",
+				"int.nonzero"
+			]
+		},
+		{
+			"type_id": "nullable<int_t>",
+			"kind": "wrapper",
+			"wrapper_of": "int_t",
+			"profiles": [
+				"nullable.empty",
+				"nullable.present.int.zero",
+				"nullable.present.int.nonzero"
+			]
+		}
+	]
+}

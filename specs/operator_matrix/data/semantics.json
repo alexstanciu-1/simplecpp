@@ -1,0 +1,172 @@
+{
+	"version": 1,
+	"definitions": [
+		{
+			"family_id": "condition_truthiness",
+			"item_id": "if_condition",
+			"lhs_type": "bool_t",
+			"rows": [
+				{
+					"lhs_profile": "bool.false",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.false",
+					"edge_case": true,
+					"edge_case_id": "condition.bool.false",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Direct false profile in condition context."
+				},
+				{
+					"lhs_profile": "bool.true",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.true",
+					"edge_case": true,
+					"edge_case_id": "condition.bool.true",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Direct true profile in condition context."
+				}
+			]
+		},
+		{
+			"family_id": "condition_truthiness",
+			"item_id": "if_condition",
+			"lhs_type": "int_t",
+			"rows": [
+				{
+					"lhs_profile": "int.zero",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.false",
+					"edge_case": true,
+					"edge_case_id": "condition.int.zero",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Zero integer condition evaluates false."
+				},
+				{
+					"lhs_profile": "int.nonzero",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.true",
+					"edge_case": true,
+					"edge_case_id": "condition.int.nonzero",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Non-zero integer condition evaluates true."
+				}
+			]
+		},
+		{
+			"family_id": "condition_truthiness",
+			"item_id": "if_condition",
+			"lhs_type": "nullable<int_t>",
+			"rows": [
+				{
+					"lhs_profile": "nullable.empty",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.false",
+					"edge_case": true,
+					"edge_case_id": "condition.nullable_int.empty",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Empty nullable delegates to false in condition context."
+				},
+				{
+					"lhs_profile": "nullable.present.int.zero",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.false",
+					"edge_case": true,
+					"edge_case_id": "condition.nullable_int.present_zero",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Present zero delegates to contained int.zero rule."
+				},
+				{
+					"lhs_profile": "nullable.present.int.nonzero",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.true",
+					"edge_case": true,
+					"edge_case_id": "condition.nullable_int.present_nonzero",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Present non-zero delegates to contained int.nonzero rule."
+				}
+			]
+		},
+		{
+			"family_id": "casts_explicit",
+			"item_id": "cast_bool",
+			"lhs_type": "bool_t",
+			"rows": [
+				{
+					"lhs_profile": "bool.false",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.false",
+					"edge_case": true,
+					"edge_case_id": "cast_bool.bool.false",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Explicit bool cast preserves false profile."
+				},
+				{
+					"lhs_profile": "bool.true",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.true",
+					"edge_case": true,
+					"edge_case_id": "cast_bool.bool.true",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Explicit bool cast preserves true profile."
+				}
+			]
+		},
+		{
+			"family_id": "casts_explicit",
+			"item_id": "cast_bool",
+			"lhs_type": "int_t",
+			"rows": [
+				{
+					"lhs_profile": "int.zero",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.false",
+					"edge_case": true,
+					"edge_case_id": "cast_bool.int.zero",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Explicit bool cast converts zero integer to false."
+				},
+				{
+					"lhs_profile": "int.nonzero",
+					"status": "supported",
+					"behavior_class": "deterministic_value",
+					"result_type": "bool_t",
+					"result_profile": "bool.true",
+					"edge_case": true,
+					"edge_case_id": "cast_bool.int.nonzero",
+					"test_seed_class": "runtime_success",
+					"diagnostic_class": null,
+					"notes": "Explicit bool cast converts non-zero integer to true."
+				}
+			]
+		}
+	]
+}
