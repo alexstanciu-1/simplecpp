@@ -54,6 +54,7 @@ This folder may act as the canonical authority for:
 - item identifiers
 - profile naming
 - edge-case identifiers
+- operand target kind naming
 - matrix row schema
 - test-seed grouping
 
@@ -67,8 +68,9 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 
 - `catalog_v1.md` — canonical family taxonomy and v1 item inventory
 - `type_universe_v1.md` — canonical type set and profile expansion basis
-
-Future documents may include:
-- profile semantics
-- generation rules
-- test synthesis mapping
+- `profile_semantics_v1.md` — family-by-family profile behavior and status/behavior rules
+- `operand_target_kinds_v1.md` — canonical operand target kinds for mutation/reset-sensitive families
+- `source_mapping_policy_v1.md` — family-first source-of-truth mapping policy
+- `generation_rules_v1.md` — deterministic matrix row generation rules
+- `output_schema_v1.md` — canonical output row schema and enums
+- `test_generation_rules_v1.md` — matrix-to-test synthesis rules

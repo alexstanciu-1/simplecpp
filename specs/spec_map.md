@@ -75,10 +75,11 @@ If a new implementation pass, review, or chat session starts, this document shou
 
 ### Level 3 — Audit / planning / supporting documents
 
-7. audit, todo, and reference documents under `specs/`
+7. audit, todo, reference, and derived coordination documents under `specs/`
    - examples: `dynamic_types_impl_audit.md`, `mixed_boundary_transitional.md`, `todo*.md`, `references.md`
    - conditional helpers and matrices: `conditional_expression_matrix.md`
    - useful for planning and consistency checks
+   - includes `operator_matrix/` as a derived coordination view over normative specs and runtime config
    - not higher authority than the normative specs above
    - includes `cli_installation_milestone.md` for the current first-binary installer/CLI contract
 
@@ -295,3 +296,14 @@ Authority:
 
 
 See: module_inclusion_model.md
+
+
+### `specs/operator_matrix/`
+Role:
+- derived coordination specs for the operator / cast / helper matrix
+- normalizes family names, item identifiers, type/profile expansion, and test-generation structure
+- used for visualization, edge-case enumeration, and automated test synthesis
+
+Authority:
+- derived and subordinate to normative specs and runtime contracts
+- must not define new semantics or override `runtime/specs/config.json` for current runtime-supported combinations

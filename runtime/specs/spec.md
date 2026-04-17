@@ -4,6 +4,24 @@ See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict
 
 > Transitional implementation note: see `../../specs/mixed_boundary_transitional.md`.
 
+
+## Operator Matrix Synchronization
+
+The derived operator-matrix subsystem consumes runtime semantic rules and
+machine-readable operator support data to build a normalized matrix for:
+- visualization
+- edge-case enumeration
+- automated test generation
+
+Any change that affects operator, cast, condition-truthiness, `isset`, `empty`,
+`count`, or `unset` behavior must be reviewed for synchronization with:
+- `specs/operator_matrix/`
+- `runtime/specs/config.json`
+
+The operator-matrix documents are derived coordination specs. They do not define
+new runtime semantics, but they must be kept consistent with current runtime
+contracts and supported-combination configuration.
+
 ## 1. Scope
 
 This document defines the non-redundant, human-readable specification for the **Prism++ runtime/library** and its relationship to the **runtime configuration**.

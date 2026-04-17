@@ -49,16 +49,16 @@ The taxonomy must be:
 
 ## 4. Top-Level Families (v1)
 
-### F1. condition_truthiness
+### F1. `condition_truthiness`
 
 Evaluation of expressions in condition context.
 
 #### Items
-- if_condition
-- while_condition
-- do_while_condition
-- ternary_condition
-- elvis_condition
+- `if_condition`
+- `while_condition`
+- `do_while_condition`
+- `ternary_condition`
+- `elvis_condition`
 
 #### Notes
 - Not equivalent to `(bool)` cast
@@ -67,15 +67,15 @@ Evaluation of expressions in condition context.
 
 ---
 
-### F2. casts_explicit
+### F2. `casts_explicit`
 
 Explicit user-facing casts.
 
 #### Items
-- cast_bool
-- cast_int
-- cast_float
-- cast_string
+- `cast_bool`
+- `cast_int`
+- `cast_float`
+- `cast_string`
 
 #### Notes
 - Includes compile-time + runtime validation
@@ -84,91 +84,98 @@ Explicit user-facing casts.
 
 ---
 
-### F3. operators_unary
+### F3. `operators_unary`
 
 Unary operators.
 
 #### Items
-- logical_not
-- unary_plus
-- unary_minus
-- bitwise_not
-- pre_increment
-- post_increment
-- pre_decrement
-- post_decrement
+- `logical_not`
+- `unary_plus`
+- `unary_minus`
+- `bitwise_not`
+- `pre_increment`
+- `post_increment`
+- `pre_decrement`
+- `post_decrement`
 
 #### Metadata flags
-- mutates_input (for ++ / --)
-- requires_lvalue
+- `mutates_input` (for `++` / `--`)
+- `requires_lvalue`
+- `operand_target_kind_applicable`
 
 ---
 
-### F4. operators_binary_arithmetic_bitwise
+### F4. `operators_binary_arithmetic_bitwise`
 
 Binary arithmetic and bitwise operators.
 
 #### Items
 
 Arithmetic:
-- add
-- sub
-- mul
-- div
-- mod
+- `add`
+- `sub`
+- `mul`
+- `div`
+- `mod`
 
 Bitwise / shift:
-- bit_and
-- bit_or
-- bit_xor
-- shift_left
-- shift_right
+- `bit_and`
+- `bit_or`
+- `bit_xor`
+- `shift_left`
+- `shift_right`
 
 ---
 
-### F5. operators_binary_logical_relational
+### F5. `operators_binary_logical_relational`
 
 Binary logical and relational operators.
 
 #### Items
 
 Logical:
-- logical_and
-- logical_or
+- `logical_and`
+- `logical_or`
 
 Relational / value comparison:
-- equal
-- not_equal
-- less
-- less_equal
-- greater
-- greater_equal
+- `equal`
+- `not_equal`
+- `less`
+- `less_equal`
+- `greater`
+- `greater_equal`
+
+#### Notes
+- This family excludes strict PHP identity
+- `===` / `!==` are intentionally modeled in a dedicated family
 
 ---
 
-### F6. operators_identity_php
+### F6. `operators_identity_strict`
 
-Strict identity operators (PHP semantics).
+Strict identity operators.
 
 #### Items
-- identical
-- not_identical
+- `identical`
+- `not_identical`
 
 #### Notes
+- Dedicated family by design
 - Helper-based semantics
 - Uses PHP-visible normalization
 - Wrapper-aware behavior required
+- Must not be merged into ordinary comparison reporting
 
 ---
 
-### F7. operators_conditional_selection
+### F7. `operators_conditional_selection`
 
 Selection operators.
 
 #### Items
-- coalesce
-- ternary
-- elvis
+- `coalesce`
+- `ternary`
+- `elvis`
 
 #### Notes
 - Includes both condition evaluation and result-shape logic
@@ -176,28 +183,29 @@ Selection operators.
 
 ---
 
-### F8. language_probes_and_reset
+### F8. `language_probes_and_reset`
 
 Language-level helpers (not operators).
 
 #### Items
 
 Value probes:
-- isset_value
-- empty_value
-- count_value
+- `isset_value`
+- `empty_value`
+- `count_value`
 
 Keyed probes:
-- isset_keyed
-- empty_keyed
+- `isset_keyed`
+- `empty_keyed`
 
 Reset / mutation:
-- unset_value
-- unset_keyed
+- `unset_value`
+- `unset_keyed`
 
 #### Notes
 - Keyed and non-keyed forms must be modeled separately
-- unset semantics differ between value and keyed forms
+- `unset` semantics differ between value and keyed forms
+- Operand target kinds are relevant for `unset` forms
 
 ---
 
@@ -207,17 +215,17 @@ Each item must include a subfamily tag for filtering and reporting.
 
 Allowed subfamilies:
 
-- condition
-- cast
-- unary
-- arithmetic
-- bitwise
-- logical
-- relational
-- identity
-- selection
-- probe
-- reset
+- `condition`
+- `cast`
+- `unary`
+- `arithmetic`
+- `bitwise`
+- `logical`
+- `relational`
+- `identity`
+- `selection`
+- `probe`
+- `reset`
 
 ---
 
@@ -228,8 +236,12 @@ The matrix MUST NOT be limited to type-level combinations.
 Each evaluation must include:
 
 - type
-- shape (wrapper / container)
-- runtime profile
+- profile
+- family-specific behavior
+
+For families that mutate or target storage, matrix evaluation must also include:
+
+- operand target kind
 
 ---
 
@@ -237,100 +249,23 @@ Each evaluation must include:
 
 Each matrix entry must support:
 
-- item_id
-- lhs_type
-- rhs_type (if applicable)
-- third_type (ternary only)
+- `item_id`
+- `lhs_type`
+- `rhs_type` (if applicable)
+- `third_type` (ternary only)
+- `lhs_profile`
+- `rhs_profile`
+- `third_profile`
 
-AND
+And, when applicable:
 
-- lhs_profile
-- rhs_profile
-- third_profile
-
----
-
-## 8. Status Classification
-
-Each evaluation result must be classified as:
-
-- supported
-- supported_with_runtime_partition
-- runtime_error
-- compile_time_rejected
-- helper_based
+- `lhs_target_kind`
+- `rhs_target_kind`
+- `third_target_kind`
 
 ---
 
-## 9. Result Metadata
-
-Each evaluation must include:
-
-- result_type
-- result_profile
-- behavior_note
-- edge_case (boolean)
-- test_seed_class
-
----
-
-## 10. Profile Requirement (Critical)
-
-Types MUST be expanded into runtime profiles.
-
-Examples:
-
-### int_t
-- int.zero
-- int.nonzero
-
-### float_t
-- float.zero
-- float.nonzero
-
-### string_t
-- string.empty
-- string.zero_string
-- string.nonempty_nonzero
-
-### nullable<T>
-- nullable.empty
-- nullable.present.<T_profile>
-
-### mixed_t
-- mixed.null
-- mixed.bool.false
-- mixed.bool.true
-- mixed.int.zero
-- mixed.int.nonzero
-- mixed.float.zero
-- mixed.float.nonzero
-- mixed.string.empty
-- mixed.string.zero_string
-- mixed.string.nonempty_nonzero
-- mixed.hash.empty
-- mixed.hash.nonempty
-
----
-
-## 11. Out of Scope (v1)
-
-The following are explicitly excluded:
-
-- assignment (=)
-- compound assignment (+=, -=, etc.)
-- array append semantics
-- property access semantics
-- method calls
-- nullsafe operator (?->)
-- instanceof
-- references / aliasing
-- function call coercion rules
-- full PHP loose coercion system
-
----
-
-## 12. Summary
+## 8. Summary
 
 v1 defines a controlled semantic surface consisting of:
 
@@ -338,7 +273,7 @@ v1 defines a controlled semantic surface consisting of:
 - explicit casts
 - unary operators
 - binary operators
-- identity operators
+- strict identity operators
 - conditional selection
 - language probes
 - reset operations
@@ -347,6 +282,7 @@ All evaluation must be:
 
 - profile-aware
 - wrapper-aware
+- target-kind-aware where required
 - edge-case explicit
 
 This catalog is the foundation for:
