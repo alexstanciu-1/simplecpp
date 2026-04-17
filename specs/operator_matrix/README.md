@@ -71,7 +71,8 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 - `profile_semantics_v1.md` — family-by-family profile behavior and status/behavior rules
 - `operand_target_kinds_v1.md` — canonical operand target kinds for mutation/reset-sensitive families
 - `source_mapping_policy_v1.md` — family-first source-of-truth mapping policy
-- `generation_rules_v1.md` — deterministic matrix row generation rules
+- `generation_rules_v1.md`
+- working generator slice now includes `operators_conditional_selection/elvis` with truthiness-driven branch selection semantics. — deterministic matrix row generation rules
 - `output_schema_v1.md` — canonical output row schema and enums
 - `test_generation_rules_v1.md` — matrix-to-test synthesis rules
 - `source_mapping_v1.md` — concrete family-first mapping to authority files, runtime config, and implementation touchpoints

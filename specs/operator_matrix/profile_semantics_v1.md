@@ -445,3 +445,11 @@ The critical rules are:
 - keep profile-partitioned support explicit
 - include operand target kind where mutation/reset semantics require it
 - keep strict identity in its own dedicated family
+
+
+## Elvis Working Slice Note
+
+For the current working generator slice, `elvis` is truthiness-driven and intentionally narrower than `coalesce`.
+It currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`.
+The current wrapper families are emitted as compile-time rejected `elvis` rows until a dedicated wrapper-aware `elvis` policy is specified.
+

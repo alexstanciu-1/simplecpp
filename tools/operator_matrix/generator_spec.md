@@ -22,17 +22,22 @@ Items:
 - `if_condition`
 - `cast_bool`
 - `coalesce`
+- `elvis`
 
-Types covered:
+Type universe currently present in structured data:
 - `bool_t`
 - `int_t`
 - `float_t`
 - `string_t`
-- `nullable<int_t>`
-- `nullable<bool_t>`
-- `nullable<float_t>`
-- `nullable<string_t>`
+- `nullable<T>` for current scalar `T`
 - `mixed_t`
+- `result<T>` for current scalar `T`
+- `result_or_false<T>` for current scalar `T`
+- `result_or_bool<T>` for current scalar `T`
+
+Current `elvis` working slice:
+- same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
+- compile-time rejected rows for the current wrapper families until a dedicated wrapper-aware `elvis` policy is specified
 
 ## Current Guarantees
 - deterministic `row_id`
@@ -45,7 +50,7 @@ Types covered:
 - `build/operator_matrix/validation_report.json`
 
 ## Notes
-- This generator reads structured JSON only
+- this generator reads structured JSON only
 - it does not parse Markdown
 - test generation remains a separate phase
 - config-level contradiction checks are intentionally deferred from this working slice

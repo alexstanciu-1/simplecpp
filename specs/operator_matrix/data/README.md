@@ -13,19 +13,31 @@ Families:
 - `casts_explicit`
 - `operators_conditional_selection`
 
-Types covered:
+Implemented items:
+- `if_condition`
+- `cast_bool`
+- `coalesce`
+- `elvis`
+
+Type universe currently present in structured data:
 - `bool_t`
 - `int_t`
 - `float_t`
 - `string_t`
-- `nullable<int_t>`
-- `nullable<bool_t>`
-- `nullable<float_t>`
-- `nullable<string_t>`
+- `nullable<T>` for current scalar `T`
 - `mixed_t`
+- `result<T>` for current scalar `T`
+- `result_or_false<T>` for current scalar `T`
+- `result_or_bool<T>` for current scalar `T`
+
+Current selection-family support:
+- `coalesce` includes the wrapper-aware policy already documented for approved wrapper families
+- `elvis` currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
+- current wrapper families are emitted as compile-time rejected `elvis` rows until a dedicated wrapper-aware `elvis` policy is specified
 
 ## Rules
 - every source row must remain profile-explicit
 - aggregated rows do not belong in this dataset
 - every definition must cover the exact profile set declared for its `lhs_type`
+- binary definitions must cover the exact profile Cartesian product declared for `lhs_type` and `rhs_type`
 - the generator validates completeness for the current working slice
