@@ -193,3 +193,8 @@ That mapping is defined by `test_generation_rules_v1.md`.
 
 All source rows MUST be fully profile-expanded.
 Aggregated rows are not allowed in the source dataset.
+
+
+## coalesce result-shape
+
+For wrapper-aware `??`, generation must not preserve wrapper carriers in result rows. Approved wrapper families are auto-unpacked to the selected usable value domain before result-shape resolution. `result_or_bool<T>` must be emitted as compile-time rejected on either side of `??`. Result domains that do not match and do not have a documented promotion must be rejected.

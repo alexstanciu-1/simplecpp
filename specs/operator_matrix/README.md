@@ -78,3 +78,8 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 - `regeneration_policy_v1.md` — trigger, scope, validation, and project-error rules for matrix regeneration
 - `matrix_validation_rules_v1.md` — acceptance and validation contract for generated matrix data
 - `data/` — structured JSON input consumed by `tools/operator_matrix/`
+
+
+## Wrapper-aware coalesce policy
+
+`??` is wrapper-state driven for approved wrapper families and does not preserve wrapper carriers in the result. Approved wrapper families auto-unpack to their usable value domain for `coalesce`: `nullable<T>`, `result<T>`, and `result_or_false<T>`. `result_or_bool<T>` is compile-time rejected on either side of `??`. `mixed_t` uses selected value-domain semantics only for explicitly defined runtime kinds.

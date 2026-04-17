@@ -1,103 +1,248 @@
 {
-    "version": 1,
-    "types": [
-        {
-            "type_id": "bool_t",
-            "kind": "base",
-            "profiles": [
-                "bool.false",
-                "bool.true"
-            ]
-        },
-        {
-            "type_id": "int_t",
-            "kind": "base",
-            "profiles": [
-                "int.zero",
-                "int.nonzero"
-            ]
-        },
-        {
-            "type_id": "float_t",
-            "kind": "base",
-            "profiles": [
-                "float.zero",
-                "float.nonzero"
-            ]
-        },
-        {
-            "type_id": "string_t",
-            "kind": "base",
-            "profiles": [
-                "string.empty",
-                "string.zero_string",
-                "string.bool_false_literal",
-                "string.bool_true_literal",
-                "string.nonempty_nonzero_nonbool_literal"
-            ]
-        },
-        {
-            "type_id": "nullable<int_t>",
-            "kind": "wrapper",
-            "wrapper_of": "int_t",
-            "profiles": [
-                "nullable.empty",
-                "nullable.present.int.zero",
-                "nullable.present.int.nonzero"
-            ]
-        },
-        {
-            "type_id": "nullable<bool_t>",
-            "kind": "wrapper",
-            "wrapper_of": "bool_t",
-            "profiles": [
-                "nullable.empty",
-                "nullable.present.bool.false",
-                "nullable.present.bool.true"
-            ]
-        },
-        {
-            "type_id": "nullable<float_t>",
-            "kind": "wrapper",
-            "wrapper_of": "float_t",
-            "profiles": [
-                "nullable.empty",
-                "nullable.present.float.zero",
-                "nullable.present.float.nonzero"
-            ]
-        },
-        {
-            "type_id": "nullable<string_t>",
-            "kind": "wrapper",
-            "wrapper_of": "string_t",
-            "profiles": [
-                "nullable.empty",
-                "nullable.present.string.empty",
-                "nullable.present.string.zero_string",
-                "nullable.present.string.bool_false_literal",
-                "nullable.present.string.bool_true_literal",
-                "nullable.present.string.nonempty_nonzero_nonbool_literal"
-            ]
-        },
-        {
-            "type_id": "mixed_t",
-            "kind": "dynamic",
-            "profiles": [
-                "mixed.null",
-                "mixed.bool.false",
-                "mixed.bool.true",
-                "mixed.int.zero",
-                "mixed.int.nonzero",
-                "mixed.float.zero",
-                "mixed.float.nonzero",
-                "mixed.string.empty",
-                "mixed.string.zero_string",
-                "mixed.string.bool_false_literal",
-                "mixed.string.bool_true_literal",
-                "mixed.string.nonempty_nonzero_nonbool_literal",
-                "mixed.hash.empty",
-                "mixed.hash.nonempty"
-            ]
-        }
-    ]
+  "version": 1,
+  "types": [
+    {
+      "type_id": "bool_t",
+      "kind": "base",
+      "profiles": [
+        "bool.false",
+        "bool.true"
+      ]
+    },
+    {
+      "type_id": "int_t",
+      "kind": "base",
+      "profiles": [
+        "int.zero",
+        "int.nonzero"
+      ]
+    },
+    {
+      "type_id": "float_t",
+      "kind": "base",
+      "profiles": [
+        "float.zero",
+        "float.nonzero"
+      ]
+    },
+    {
+      "type_id": "string_t",
+      "kind": "base",
+      "profiles": [
+        "string.empty",
+        "string.zero_string",
+        "string.bool_false_literal",
+        "string.bool_true_literal",
+        "string.nonempty_nonzero_nonbool_literal"
+      ]
+    },
+    {
+      "type_id": "nullable<int_t>",
+      "kind": "wrapper",
+      "wrapper_of": "int_t",
+      "profiles": [
+        "nullable.empty",
+        "nullable.present.int.zero",
+        "nullable.present.int.nonzero"
+      ]
+    },
+    {
+      "type_id": "nullable<bool_t>",
+      "kind": "wrapper",
+      "wrapper_of": "bool_t",
+      "profiles": [
+        "nullable.empty",
+        "nullable.present.bool.false",
+        "nullable.present.bool.true"
+      ]
+    },
+    {
+      "type_id": "nullable<float_t>",
+      "kind": "wrapper",
+      "wrapper_of": "float_t",
+      "profiles": [
+        "nullable.empty",
+        "nullable.present.float.zero",
+        "nullable.present.float.nonzero"
+      ]
+    },
+    {
+      "type_id": "nullable<string_t>",
+      "kind": "wrapper",
+      "wrapper_of": "string_t",
+      "profiles": [
+        "nullable.empty",
+        "nullable.present.string.empty",
+        "nullable.present.string.zero_string",
+        "nullable.present.string.bool_false_literal",
+        "nullable.present.string.bool_true_literal",
+        "nullable.present.string.nonempty_nonzero_nonbool_literal"
+      ]
+    },
+    {
+      "type_id": "mixed_t",
+      "kind": "dynamic",
+      "profiles": [
+        "mixed.null",
+        "mixed.bool.false",
+        "mixed.bool.true",
+        "mixed.int.zero",
+        "mixed.int.nonzero",
+        "mixed.float.zero",
+        "mixed.float.nonzero",
+        "mixed.string.empty",
+        "mixed.string.zero_string",
+        "mixed.string.bool_false_literal",
+        "mixed.string.bool_true_literal",
+        "mixed.string.nonempty_nonzero_nonbool_literal",
+        "mixed.hash.empty",
+        "mixed.hash.nonempty"
+      ]
+    },
+    {
+      "type_id": "result<bool_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result",
+      "wrapper_of": "bool_t",
+      "profiles": [
+        "result.failure",
+        "result.success.bool.false",
+        "result.success.bool.true"
+      ]
+    },
+    {
+      "type_id": "result<float_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result",
+      "wrapper_of": "float_t",
+      "profiles": [
+        "result.failure",
+        "result.success.float.zero",
+        "result.success.float.nonzero"
+      ]
+    },
+    {
+      "type_id": "result<int_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result",
+      "wrapper_of": "int_t",
+      "profiles": [
+        "result.failure",
+        "result.success.int.zero",
+        "result.success.int.nonzero"
+      ]
+    },
+    {
+      "type_id": "result<string_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result",
+      "wrapper_of": "string_t",
+      "profiles": [
+        "result.failure",
+        "result.success.string.empty",
+        "result.success.string.zero_string",
+        "result.success.string.bool_false_literal",
+        "result.success.string.bool_true_literal",
+        "result.success.string.nonempty_nonzero_nonbool_literal"
+      ]
+    },
+    {
+      "type_id": "result_or_bool<bool_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result_or_bool",
+      "wrapper_of": "bool_t",
+      "profiles": [
+        "result_or_bool.sentinel.false",
+        "result_or_bool.sentinel.true",
+        "result_or_bool.success.bool.false",
+        "result_or_bool.success.bool.true"
+      ]
+    },
+    {
+      "type_id": "result_or_bool<float_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result_or_bool",
+      "wrapper_of": "float_t",
+      "profiles": [
+        "result_or_bool.sentinel.false",
+        "result_or_bool.sentinel.true",
+        "result_or_bool.success.float.zero",
+        "result_or_bool.success.float.nonzero"
+      ]
+    },
+    {
+      "type_id": "result_or_bool<int_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result_or_bool",
+      "wrapper_of": "int_t",
+      "profiles": [
+        "result_or_bool.sentinel.false",
+        "result_or_bool.sentinel.true",
+        "result_or_bool.success.int.zero",
+        "result_or_bool.success.int.nonzero"
+      ]
+    },
+    {
+      "type_id": "result_or_bool<string_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result_or_bool",
+      "wrapper_of": "string_t",
+      "profiles": [
+        "result_or_bool.sentinel.false",
+        "result_or_bool.sentinel.true",
+        "result_or_bool.success.string.empty",
+        "result_or_bool.success.string.zero_string",
+        "result_or_bool.success.string.bool_false_literal",
+        "result_or_bool.success.string.bool_true_literal",
+        "result_or_bool.success.string.nonempty_nonzero_nonbool_literal"
+      ]
+    },
+    {
+      "type_id": "result_or_false<bool_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result_or_false",
+      "wrapper_of": "bool_t",
+      "profiles": [
+        "result_or_false.sentinel.false",
+        "result_or_false.success.bool.false",
+        "result_or_false.success.bool.true"
+      ]
+    },
+    {
+      "type_id": "result_or_false<float_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result_or_false",
+      "wrapper_of": "float_t",
+      "profiles": [
+        "result_or_false.sentinel.false",
+        "result_or_false.success.float.zero",
+        "result_or_false.success.float.nonzero"
+      ]
+    },
+    {
+      "type_id": "result_or_false<int_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result_or_false",
+      "wrapper_of": "int_t",
+      "profiles": [
+        "result_or_false.sentinel.false",
+        "result_or_false.success.int.zero",
+        "result_or_false.success.int.nonzero"
+      ]
+    },
+    {
+      "type_id": "result_or_false<string_t>",
+      "kind": "wrapper",
+      "wrapper_family": "result_or_false",
+      "wrapper_of": "string_t",
+      "profiles": [
+        "result_or_false.sentinel.false",
+        "result_or_false.success.string.empty",
+        "result_or_false.success.string.zero_string",
+        "result_or_false.success.string.bool_false_literal",
+        "result_or_false.success.string.bool_true_literal",
+        "result_or_false.success.string.nonempty_nonzero_nonbool_literal"
+      ]
+    }
+  ]
 }
