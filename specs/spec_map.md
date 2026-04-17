@@ -300,6 +300,7 @@ See: module_inclusion_model.md
 
 ### `specs/operator_matrix/`
 Role:
+- includes regeneration policy and synchronization checks for matrix freshness
 - derived coordination specs for the operator / cast / helper matrix
 - normalizes family names, item identifiers, type/profile expansion, and test-generation structure
 - used for visualization, edge-case enumeration, and automated test synthesis
