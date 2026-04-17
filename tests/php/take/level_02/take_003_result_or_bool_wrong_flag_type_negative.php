@@ -1,0 +1,8 @@
+<?php
+declare(strict_types=1);
+
+$orb /** result_or_bool<int> */ = true;
+$out /** int */ = 0;
+$msg /** string */ = "";
+
+take($out, $msg, $orb);
