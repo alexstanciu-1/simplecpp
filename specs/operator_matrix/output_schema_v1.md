@@ -97,6 +97,7 @@ Allowed `behavior_class` values:
 
 ### Notes
 - `behavior_class` is required only for `status=supported` rows.
+- supported rows with `behavior_class=throws` may omit `result_type` / `result_profile` when the operation has no successful value result.
 - `compile_time_rejected` and `unsupported_by_runtime_surface` rows must not invent runtime behavior.
 
 ---

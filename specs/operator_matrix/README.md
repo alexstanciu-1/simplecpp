@@ -85,7 +85,7 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 
 ## Wrapper-aware coalesce policy
 
-`??` is wrapper-state driven for approved wrapper families and does not preserve wrapper carriers in the result. Approved wrapper families auto-unpack to their usable value domain for `coalesce`: `nullable<T>`, `result<T>`, and `result_or_false<T>`. `result_or_bool<T>` is compile-time rejected on either side of `??`. `mixed_t` uses selected value-domain semantics only for explicitly defined runtime kinds.
+`??` is wrapper-state driven for approved wrapper families and does not preserve wrapper carriers in the result. Approved wrapper families auto-unpack to their usable value domain for `coalesce`: `nullable<T>`, `result<T>`, and `result_or_false<T>`. In the current version, `result_or_bool<T>` is rejected in the runtime helper path on either side of `??`; a later typed semantic layer may move that rejection earlier. `mixed_t` uses selected value-domain semantics only for explicitly defined runtime kinds.
 
 
 ## Generated matrix test output

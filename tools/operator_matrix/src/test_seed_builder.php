@@ -179,7 +179,11 @@ function om_resolve_seed_outcome_class(array $row): string
 {
 	$status = (string) ($row['status'] ?? '');
 	$behaviorClass = $row['behavior_class'] ?? null;
+	$diagnosticClass = (string) ($row['diagnostic_class'] ?? '');
 
+	if ($diagnosticClass === 'coalesce_reject_result_or_bool') {
+		return 'negative_runtime';
+	}
 	if ($status === 'compile_time_rejected') {
 		return 'negative_generate';
 	}

@@ -197,4 +197,4 @@ Aggregated rows are not allowed in the source dataset.
 
 ## coalesce result-shape
 
-For wrapper-aware `??`, generation must not preserve wrapper carriers in result rows. Approved wrapper families are auto-unpacked to the selected usable value domain before result-shape resolution. `result_or_bool<T>` must be emitted as compile-time rejected on either side of `??`. Result domains that do not match and do not have a documented promotion must be rejected.
+For wrapper-aware `??`, generation must not preserve wrapper carriers in result rows. Approved wrapper families are auto-unpacked to the selected usable value domain before result-shape resolution. In the current implementation, `result_or_bool<T>` rows for `??` are modeled as runtime throws rather than generator rejections because the PHP generator intentionally stays type-blind. Result domains that do not match and do not have a documented promotion must still be rejected or modeled explicitly.

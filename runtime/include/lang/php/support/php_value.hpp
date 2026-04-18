@@ -1527,11 +1527,19 @@ inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
 	auto &&left = left_fn();
 	using left_t = std::remove_cvref_t<decltype(left)>;
 	using right_t = std::remove_cvref_t<decltype(right_fn())>;
-	using result_t = typename detail::coalesce_result<left_t, right_t>::type;
-	if (!static_cast<bool>(detail::php_is_null_value(left))) {
-		return detail::normalize_coalesce_branch<result_t>(left);
+	if constexpr (
+		::scpp::detail::is_specialization_of_v<left_t, result_or_bool>
+		|| ::scpp::detail::is_specialization_of_v<right_t, result_or_bool>
+	) {
+		throw std::runtime_error("scpp::php::coalesce_eval(): coalesce rejects result_or_bool<T>");
+		return mixed_t();
+	} else {
+		using result_t = typename detail::coalesce_result<left_t, right_t>::type;
+		if (!static_cast<bool>(detail::php_is_null_value(left))) {
+			return detail::normalize_coalesce_branch<result_t>(left);
+		}
+		return detail::normalize_coalesce_branch<result_t>(right_fn());
 	}
-	return detail::normalize_coalesce_branch<result_t>(right_fn());
 }
 
 // Implements runtime-directed lowering for PHP ternary / elvis expressions so branch compatibility is enforced consistently in one place.

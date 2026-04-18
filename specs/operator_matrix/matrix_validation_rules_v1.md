@@ -238,6 +238,7 @@ Examples:
 - `compile_time_rejected` must not claim deterministic result metadata
 - a supported row that throws at runtime must use the supported status with
   a throwing behavior class, not compile-time rejection
+- supported `throws` rows may omit `result_type` / `result_profile` when no value is produced
 - helper-routed semantics must still obey family rules
 
 ### 8.2 Result coherence

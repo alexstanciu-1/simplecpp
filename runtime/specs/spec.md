@@ -534,6 +534,7 @@ See: module_inclusion_model.md
 - `result<T>` error inspection is explicit through `error()`. The generator must lower `$result->error()->...` to the wrapper method rather than treating `error` as a real payload property.
 - `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, and its non-value states must normalize to the visible PHP boolean sentinels `false` and `true` for helper-owned operators and conditions.
 - `php::take(...)` is the unified guarded extraction helper for `nullable<T>`, `result_or_false<T>`, `result_or_bool<T>`, and `result<T>`. It returns `bool_t`, evaluates the source expression once, and only assigns the outputs that correspond to the active wrapper branch.
+- In the current version, `php::coalesce_eval(...)` rejects `result_or_bool<T>` on either side at runtime with a deterministic error rather than relying on generator-side semantic rejection.
 - For `result_or_bool<T>`, `php::take(value_out, bool_out, source)` returns `true` for both wrapped-value and boolean-true states so PHP-style APIs such as `mysqli::query()` can treat `true` as a successful non-row result. The `bool_out` slot receives the active boolean state only on bool branches.
 
 ## PHP false-sentinel exposure rule

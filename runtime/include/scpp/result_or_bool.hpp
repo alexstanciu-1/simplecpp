@@ -16,7 +16,11 @@ public:
 	result_or_bool(nullopt_t sentinel) noexcept : base_t(sentinel) {}
 	result_or_bool(const bool_t &value) : base_t(value) {}
 	result_or_bool(bool value) : base_t(value) {}
+	template <typename U = T>
+	requires (!std::is_same_v<std::remove_cvref_t<U>, bool_t>)
 	result_or_bool(const T &value) : base_t(value) {}
+	template <typename U = T>
+	requires (!std::is_same_v<std::remove_cvref_t<U>, bool_t>)
 	result_or_bool(T &&value) noexcept(std::is_nothrow_move_constructible_v<T>) : base_t(std::move(value)) {}
 
 	using base_t::has_value;
@@ -34,7 +38,11 @@ public:
 	result_or_bool &operator=(nullopt_t sentinel) noexcept { this->assign_false(sentinel); return *this; }
 	result_or_bool &operator=(const bool_t &value) { this->assign_bool(value); return *this; }
 	result_or_bool &operator=(bool value) { this->assign_bool(value); return *this; }
+	template <typename U = T>
+	requires (!std::is_same_v<std::remove_cvref_t<U>, bool_t>)
 	result_or_bool &operator=(const T &value) { this->assign_value(value); return *this; }
+	template <typename U = T>
+	requires (!std::is_same_v<std::remove_cvref_t<U>, bool_t>)
 	result_or_bool &operator=(T &&value) noexcept(std::is_nothrow_move_assignable_v<T>) { this->assign_value(std::move(value)); return *this; }
 };
 

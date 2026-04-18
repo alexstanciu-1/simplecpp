@@ -29,7 +29,7 @@ The helpers are intentionally separate because the semantic target differs:
 | `T` | `mixed_t` | `mixed_t` | supported | fallback is normalized into `mixed_t` explicitly |
 | `nullable<T>` | `mixed_t` | `mixed_t` | supported | unwrap left when set; otherwise use dynamic fallback |
 | `result_or_false<T>` | `T` | `result_or_false<T>` | supported | PHP `false` is not null, so coalesce preserves the guarded wrapper |
-| `result_or_bool<T>` | `T` | `result_or_bool<T>` | supported | PHP bool sentinels are not null, so coalesce preserves the guarded wrapper |
+| `result_or_bool<T>` | `T` | runtime error | supported + throws | current version rejects `result_or_bool<T>` in `php::coalesce_eval(...)` rather than preserving the guarded wrapper |
 | `result<T>` | `T` | `result<T>` | supported | structured result wrappers are not null and preserve their wrapper identity |
 | `nullable<T>` | `nullable<T>` | n/a | rejected for now | would require a distinct result policy |
 | other mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
@@ -48,7 +48,7 @@ The helpers are intentionally separate because the semantic target differs:
 | `result_or_false<T>` | `T` | `result_or_false<T>` | supported | fallback `T` is wrapped into the guarded PHP `T|false` carrier |
 | `T` | `result_or_false<T>` | `result_or_false<T>` | supported | present branch is wrapped into the guarded PHP `T|false` carrier |
 | `result_or_bool<T>` | `T` | `result_or_bool<T>` | supported | fallback `T` is wrapped into the guarded PHP `T|bool` carrier |
-| `T` | `result_or_bool<T>` | `result_or_bool<T>` | supported | present branch is wrapped into the guarded PHP `T|bool` carrier |
+| `T` | `result_or_bool<T>` | runtime error | supported + throws | current version rejects `result_or_bool<T>` in `php::coalesce_eval(...)` rather than wrapping the fallback |
 | `result<T>` | `T` | `result<T>` | supported | fallback `T` is wrapped into the structured result carrier |
 | `T` | `result<T>` | `result<T>` | supported | present branch is wrapped into the structured result carrier |
 | mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
@@ -95,5 +95,6 @@ The conditional helpers reuse one PHP-visible wrapper normalization rule:
 - `nullable<T>` is null when empty and otherwise delegates to the wrapped payload
 - `result_or_false<T>` is never null; its empty state is PHP `false`
 - `result_or_bool<T>` is never null; its non-value states are PHP `false` and `true`
+- current version note: despite that nullability model, `??` still rejects `result_or_bool<T>` in the runtime helper path by project decision
 - `result<T>` is never null; non-success states remain wrapper states
 - `mixed_t` uses its active runtime kind (`null`, `bool`, `int`, `float`, `string`, table/object carriers)

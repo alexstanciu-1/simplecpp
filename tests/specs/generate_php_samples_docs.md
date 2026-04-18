@@ -521,7 +521,7 @@ Fields:
 
 Rules:
 - if `success` is `false`, the test MAY still define exact expected stdout/stderr if those are stable.
-- if the runtime failure is not stable enough for exact stderr, set `compare.stderr` to `ignore` and use exit code only.
+- if the runtime failure is not stable enough for exact stderr, set `compare.stderr` to `ignore` and use `expect.run.error_contains` and/or exit code only.
 
 ---
 
@@ -570,7 +570,7 @@ Required mapping:
 - `expect.run.success = false`
 
 Additionally:
-- the failure signature MUST be stable enough to check using declared comparison rules.
+- the failure signature MUST be stable enough to check using declared comparison rules, typically through `expect.run.error_contains` on stderr fragments.
 
 ---
 

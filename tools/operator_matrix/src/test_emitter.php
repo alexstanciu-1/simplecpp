@@ -481,9 +481,11 @@ function om_build_php_matrix_test_info(array $seed, string $id, array $options):
 					'exit_code' => 0,
 					'stdout' => $stdout,
 					'stderr' => '',
+					'error_contains' => [],
 				]
 				: [
-					'success' => !$negativeRuntime ? false : false,
+					'success' => false,
+					'error_contains' => $negativeRuntime ? om_expected_runtime_substrings((string) ($expected['diagnostic_class'] ?? '')) : [],
 				],
 		],
 		'tags' => om_build_seed_tags($seed),
@@ -531,9 +533,19 @@ function om_build_seed_notes(array $seed): string
 function om_expected_generator_substrings(string $diagnosticClass): array
 {
 	return match ($diagnosticClass) {
-		'coalesce_reject_result_or_bool' => ['result_or_bool', 'coalesce'],
 		'unsupported_elvis_lhs_type' => ['elvis'],
 		'coalesce_rhs_has_no_usable_value_domain' => ['coalesce'],
+		default => [],
+	};
+}
+
+/**
+ * @return list<string>
+ */
+function om_expected_runtime_substrings(string $diagnosticClass): array
+{
+	return match ($diagnosticClass) {
+		'coalesce_reject_result_or_bool' => ['result_or_bool', 'coalesce'],
 		default => [],
 	};
 }

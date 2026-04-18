@@ -116,8 +116,8 @@ function om_validate_rows(array $registry, array $rows, ?string $familyFilter = 
 				$errors[] = om_validation_issue('validation_error', $context, 'invalid_behavior_class', 'Invalid behavior_class: ' . $behaviorClass);
 			}
 
-			if (($row['result_type'] ?? null) === null || ($row['result_profile'] ?? null) === null) {
-				$errors[] = om_validation_issue('validation_error', $context, 'missing_result_fields', 'Supported rows must define result_type and result_profile.');
+			if ($behaviorClass !== 'throws' && (($row['result_type'] ?? null) === null || ($row['result_profile'] ?? null) === null)) {
+				$errors[] = om_validation_issue('validation_error', $context, 'missing_result_fields', 'Supported non-throwing rows must define result_type and result_profile.');
 			}
 		} else {
 			if ($behaviorClass !== null) {

@@ -1166,6 +1166,19 @@ TXT;
 			$notes[] = 'stderr mismatch';
 		}
 
+		foreach ((array) ($expect['error_contains'] ?? []) as $needle) {
+			if (!is_string($needle) || $needle === '') {
+				continue;
+			}
+			$found = (bool) ($compare['case_sensitive_errors'] ?? true)
+				? (strpos((string) ($actual['stderr'] ?? ''), $needle) !== false)
+				: (stripos((string) ($actual['stderr'] ?? ''), $needle) !== false);
+			if (!$found) {
+				$ok = false;
+				$notes[] = 'run error text missing substring: ' . $needle;
+			}
+		}
+
 		return ['ok' => $ok, 'notes' => $notes];
 	}
 

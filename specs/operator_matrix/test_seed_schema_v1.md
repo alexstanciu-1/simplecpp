@@ -86,6 +86,7 @@ Generate one seed for every `operators_conditional_selection` matrix row whose `
 - `compile_time_rejected` -> `negative_generate`
 - `unsupported_by_runtime_surface` -> `negative_generate`
 - `supported + throws` -> `negative_runtime`
+- current implementation note: `coalesce_reject_result_or_bool` is intentionally emitted as `negative_runtime` because the rejection lives in `php::coalesce_eval(...)` for now
 - all other supported rows -> `positive`
 
 ### Suite Mapping
