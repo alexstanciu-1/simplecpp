@@ -1280,6 +1280,35 @@ struct guarded_result_info<result<T>> {
 template <typename T>
 inline constexpr bool guarded_result_info_v = guarded_result_info<std::remove_cvref_t<T>>::value;
 
+template <typename T>
+struct coalesce_wrapper_info {
+	static constexpr bool value = false;
+};
+
+template <typename T>
+struct coalesce_wrapper_info<nullable<T>> {
+	static constexpr bool value = true;
+	using inner_type = T;
+};
+
+template <typename T>
+struct coalesce_wrapper_info<result_or_false<T>> {
+	static constexpr bool value = true;
+	using inner_type = T;
+};
+
+template <typename T>
+struct coalesce_wrapper_info<result<T>> {
+	static constexpr bool value = true;
+	using inner_type = T;
+};
+
+template <typename T>
+inline constexpr bool coalesce_wrapper_info_v = coalesce_wrapper_info<std::remove_cvref_t<T>>::value;
+
+template <typename T>
+using coalesce_wrapper_inner_t = typename coalesce_wrapper_info<std::remove_cvref_t<T>>::inner_type;
+
 template <typename Left, typename Right>
 struct coalesce_result;
 
@@ -1294,9 +1323,53 @@ struct coalesce_result<mixed_t, mixed_t> {
 };
 
 template <typename T, typename Right>
-requires (!conditional_nullable_info_v<Right>)
+requires (
+	!coalesce_wrapper_info_v<Right>
+	&& !std::is_same_v<std::remove_cvref_t<Right>, mixed_t>
+)
 struct coalesce_result<nullable<T>, Right> {
 	using type = T;
+};
+
+template <typename Left, typename T>
+requires (
+	!coalesce_wrapper_info_v<Left>
+	&& !std::is_same_v<std::remove_cvref_t<Left>, mixed_t>
+)
+struct coalesce_result<Left, nullable<T>> {
+	using type = Left;
+};
+
+template <typename Left, typename Right>
+requires (
+	coalesce_wrapper_info_v<Left>
+	&& coalesce_wrapper_info_v<Right>
+	&& std::is_same_v<coalesce_wrapper_inner_t<Left>, coalesce_wrapper_inner_t<Right>>
+)
+struct coalesce_result<Left, Right> {
+	using type = coalesce_wrapper_inner_t<Left>;
+};
+
+template <typename Left, typename Right>
+requires (
+	!coalesce_wrapper_info_v<Left>
+	&& coalesce_wrapper_info_v<Right>
+	&& !std::is_same_v<std::remove_cvref_t<Left>, mixed_t>
+	&& std::is_same_v<std::remove_cvref_t<Left>, coalesce_wrapper_inner_t<Right>>
+)
+struct coalesce_result<Left, Right> {
+	using type = Left;
+};
+
+template <typename Left, typename Right>
+requires (
+	coalesce_wrapper_info_v<Left>
+	&& !coalesce_wrapper_info_v<Right>
+	&& !std::is_same_v<std::remove_cvref_t<Right>, mixed_t>
+	&& std::is_same_v<coalesce_wrapper_inner_t<Left>, std::remove_cvref_t<Right>>
+)
+struct coalesce_result<Left, Right> {
+	using type = Right;
 };
 
 template <typename Right>
@@ -1312,26 +1385,22 @@ struct coalesce_result<nullable<T>, mixed_t> {
 
 template <typename Left>
 requires (
-	!conditional_nullable_info_v<Left>
+	!coalesce_wrapper_info_v<Left>
 	&& !std::is_same_v<std::remove_cvref_t<Left>, mixed_t>
 )
 struct coalesce_result<Left, mixed_t> {
 	using type = mixed_t;
 };
 
-template <typename T, typename Right>
-struct coalesce_result<result_or_false<T>, Right> {
-	using type = result_or_false<T>;
+template <typename Left>
+requires (coalesce_wrapper_info_v<Left>)
+struct coalesce_result<Left, mixed_t> {
+	using type = mixed_t;
 };
 
 template <typename T, typename Right>
 struct coalesce_result<result_or_bool<T>, Right> {
 	using type = result_or_bool<T>;
-};
-
-template <typename T, typename Right>
-struct coalesce_result<result<T>, Right> {
-	using type = result<T>;
 };
 
 template <typename Then, typename Else>
@@ -1494,6 +1563,22 @@ inline Result normalize_ternary_branch(Value &&value) {
 }
 
 
+template <typename Value>
+inline bool_t coalesce_has_usable_value(const Value &value) {
+	using value_t = std::remove_cvref_t<Value>;
+	if constexpr (conditional_nullable_info_v<value_t>) {
+		return value.has_value();
+	} else if constexpr (::scpp::detail::is_specialization_of_v<value_t, result_or_false>) {
+		return value.has_value();
+	} else if constexpr (::scpp::detail::is_specialization_of_v<value_t, result>) {
+		return value.has_value();
+	} else if constexpr (std::is_same_v<value_t, mixed_t>) {
+		return bool_t(!php_is_null_value(value).native_value());
+	} else {
+		return bool_t(true);
+	}
+}
+
 template <typename Result, typename Value>
 inline Result normalize_coalesce_branch(Value &&value) {
 	using result_t = std::remove_cvref_t<Result>;
@@ -1535,7 +1620,7 @@ inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
 		return mixed_t();
 	} else {
 		using result_t = typename detail::coalesce_result<left_t, right_t>::type;
-		if (!static_cast<bool>(detail::php_is_null_value(left))) {
+		if (static_cast<bool>(detail::coalesce_has_usable_value(left))) {
 			return detail::normalize_coalesce_branch<result_t>(left);
 		}
 		return detail::normalize_coalesce_branch<result_t>(right_fn());
