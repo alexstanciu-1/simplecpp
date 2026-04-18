@@ -995,14 +995,32 @@ TXT;
 		return false;
 	}
 
+
+	private function resolveBundledAstExtensionPath(): ?string
+	{
+		$candidates = [
+			$this->projectRoot . '/ext/8.4-deb/ast.so',
+			$this->projectRoot . '/ext/8.4-deb_php_ast.so',
+			$this->projectRoot . '/ext/ast.so',
+		];
+
+		foreach ($candidates as $candidate) {
+			if (is_file($candidate)) {
+				return $candidate;
+			}
+		}
+
+		return null;
+	}
+
 	private function startWorkerProcess(string $jsonPath, string $sanitizers = ''): array
 	{
 		$command = [
 			PHP_BINARY,
 		];
 
-		$astSoPath = $this->projectRoot . '/ext/8.4-deb/ast.so';
-		if (!extension_loaded('ast') && is_file($astSoPath)) {
+		$astSoPath = $this->resolveBundledAstExtensionPath();
+		if (!extension_loaded('ast') && is_string($astSoPath) && is_file($astSoPath)) {
 			$command[] = '-dextension=' . $astSoPath;
 		}
 
@@ -1035,8 +1053,8 @@ TXT;
 	private function buildPhpWorkerEnvironment(): array
 	{
 		$env = $this->buildProcessEnvironment();
-		$astSoPath = $this->projectRoot . '/ext/8.4-deb/ast.so';
-		if (is_file($astSoPath)) {
+		$astSoPath = $this->resolveBundledAstExtensionPath();
+		if (is_string($astSoPath) && is_file($astSoPath)) {
 			$flag = '-dextension=' . $astSoPath;
 			$env['PHP_AST_SO'] = $astSoPath;
 			$env['PHP_AST_EXTENSION_FLAG'] = $flag;

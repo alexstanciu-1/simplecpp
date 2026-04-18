@@ -75,7 +75,7 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 - `generation_rules_v1.md`
 - working generator slice now includes `operators_conditional_selection/elvis` with truthiness-driven branch selection semantics. — deterministic matrix row generation rules
 - `output_schema_v1.md` — canonical output row schema and enums
-- `test_seed_schema_v1.md` — canonical matrix-to-seed intermediate artifact
+- `test_seed_schema_v1.md` — canonical matrix-to-seed intermediate artifact and emitted-test handoff
 - `test_generation_rules_v1.md` — matrix-to-test synthesis rules
 - `source_mapping_v1.md` — concrete family-first mapping to authority files, runtime config, and implementation touchpoints
 - `regeneration_policy_v1.md` — trigger, scope, validation, and project-error rules for matrix regeneration
@@ -86,3 +86,9 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 ## Wrapper-aware coalesce policy
 
 `??` is wrapper-state driven for approved wrapper families and does not preserve wrapper carriers in the result. Approved wrapper families auto-unpack to their usable value domain for `coalesce`: `nullable<T>`, `result<T>`, and `result_or_false<T>`. `result_or_bool<T>` is compile-time rejected on either side of `??`. `mixed_t` uses selected value-domain semantics only for explicitly defined runtime kinds.
+
+
+## Generated matrix test output
+
+The generator now emits concrete PHP matrix tests under `tests/php-matrix/` and a summary report at `build/operator_matrix/test_emission_report.json`.
+The current runtime-matrix root is created but intentionally left empty until a later emitter phase.

@@ -20,6 +20,7 @@ Generator output path:
 
 - `build/operator_matrix/test_seeds.json`
 - `build/operator_matrix/test_seed_validation_report.json`
+- `build/operator_matrix/test_emission_report.json`
 
 ---
 
@@ -92,8 +93,8 @@ Generate one seed for every `operators_conditional_selection` matrix row whose `
 Current v1 mapping:
 - `operators_conditional_selection` -> `php-matrix`
 
-This is only a planning target for later test emission.
-The seed layer itself does not emit concrete tests.
+The current generator now also emits concrete PHP matrix tests into `tests/php-matrix/`.
+The seed layer remains the canonical intermediate artifact consumed by the emitter.
 
 ---
 
@@ -108,5 +109,6 @@ Validation must ensure:
 
 ## 7. Notes
 
-v1 intentionally avoids test-file emission.
-That remains a later phase consuming this seed artifact and the existing `*.test-info.json` project contract.
+v1 now includes deterministic PHP matrix test emission for `operators_conditional_selection`.
+Concrete files are emitted under `tests/php-matrix/<item_id>/<level>/` using the existing `*.test-info.json` project contract.
+Only the currently reliable positive non-wrapper slice is enabled by default; wrapper-heavy and negative slices are emitted as disabled `experimental` tests so the suite stays runnable while gaps remain visible.

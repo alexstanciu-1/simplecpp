@@ -10,6 +10,7 @@ require_once __DIR__ . '/src/row_builder.php';
 require_once __DIR__ . '/src/validator.php';
 require_once __DIR__ . '/src/test_seed_builder.php';
 require_once __DIR__ . '/src/test_seed_validator.php';
+require_once __DIR__ . '/src/test_emitter.php';
 
 main($argv);
 
@@ -28,6 +29,7 @@ function main(array $argv): void
 		$validation = om_validate_rows($registry, $rows, $options['family']);
 		$testSeeds = om_build_test_seeds($registry, $rows);
 		$testSeedValidation = om_validate_test_seeds($rows, $testSeeds);
+		$emissionReport = om_emit_matrix_tests($repoRoot, $testSeeds);
 
 		$outputRoot = $repoRoot . '/build/operator_matrix';
 		om_ensure_directory($outputRoot);
@@ -35,6 +37,7 @@ function main(array $argv): void
 		om_write_json_file($outputRoot . '/validation_report.json', $validation);
 		om_write_json_file($outputRoot . '/test_seeds.json', $testSeeds);
 		om_write_json_file($outputRoot . '/test_seed_validation_report.json', $testSeedValidation);
+		om_write_json_file($outputRoot . '/test_emission_report.json', $emissionReport);
 
 		if ($options['stdout']) {
 			echo json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), PHP_EOL;
@@ -46,9 +49,14 @@ function main(array $argv): void
 		echo 'Validation report: build/operator_matrix/validation_report.json' . PHP_EOL;
 		echo 'Test seeds: build/operator_matrix/test_seeds.json' . PHP_EOL;
 		echo 'Test seed validation report: build/operator_matrix/test_seed_validation_report.json' . PHP_EOL;
+		echo 'Test emission report: build/operator_matrix/test_emission_report.json' . PHP_EOL;
+		echo 'PHP matrix tests root: tests/php-matrix' . PHP_EOL;
+		echo 'Runtime matrix tests root: tests/runtime-matrix' . PHP_EOL;
 		echo 'Validation errors: ' . $validation['error_count'] . PHP_EOL;
 		echo 'Validation warnings: ' . $validation['warning_count'] . PHP_EOL;
 		echo 'Test seeds: ' . count($testSeeds) . PHP_EOL;
+		echo 'Emitted php-matrix tests: ' . $emissionReport['php-matrix']['test_count'] . PHP_EOL;
+		echo 'Emitted runtime-matrix tests: ' . $emissionReport['runtime-matrix']['test_count'] . PHP_EOL;
 		echo 'Test seed validation errors: ' . $testSeedValidation['error_count'] . PHP_EOL;
 		echo 'Test seed validation warnings: ' . $testSeedValidation['warning_count'] . PHP_EOL;
 
