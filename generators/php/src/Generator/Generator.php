@@ -6401,9 +6401,28 @@ private function renderObjectCastExpr(mixed $expr, ?string $namespacePhp): strin
 
 	private function renderCoalesceExpr(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
 	{
+		$this->assertCoalesceOperandAccepted($leftNode, 'left', $namespacePhp);
+		$this->assertCoalesceOperandAccepted($rightNode, 'right', $namespacePhp);
+
 		$coalesceFn = $this->qualifyKnownPhpRuntimeSymbol('coalesce_eval');
 		return $coalesceFn
 			. '([&]() -> decltype(auto) { return ' . $this->renderExpr($leftNode, $namespacePhp) . '; }, [&]() -> decltype(auto) { return ' . $this->renderExpr($rightNode, $namespacePhp) . '; })';
+	}
+
+	private function assertCoalesceOperandAccepted(mixed $expr, string $side, ?string $namespacePhp): void
+	{
+		$type = $this->inferExprTypeWithNamespace($expr, $namespacePhp);
+		if (!$this->isRejectedCoalesceOperandType($type)) {
+			return;
+		}
+
+		$line = is_object($expr) ? (int) ($expr->lineno ?? 0) : 0;
+		$this->fail('coalesce rejects result_or_bool<T> on the ' . $side . ' side at line ' . $line . '.');
+	}
+
+	private function isRejectedCoalesceOperandType(string $type): bool
+	{
+		return preg_match('/^result_or_bool<.+>$/', $type) === 1;
 	}
 
 	private function inferConstantType(mixed $expr, ?string $namespacePhp): string
