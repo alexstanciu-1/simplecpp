@@ -112,3 +112,17 @@ Validation must ensure:
 v1 now includes deterministic PHP matrix test emission for `operators_conditional_selection`.
 Concrete files are emitted under `tests/php-matrix/<item_id>/<level>/` using the existing `*.test-info.json` project contract.
 Only the currently reliable positive non-wrapper slice is enabled by default; wrapper-heavy and negative slices are emitted as disabled `experimental` tests so the suite stays runnable while gaps remain visible.
+
+Negative-generate emission is configurable:
+- `--emit-negative-generate=none|all`
+- `--enable-negative-generate=none|all`
+- `--enable-negative-generate-diagnostic=<csv>`
+- `--disable-negative-generate-diagnostic=<csv>`
+- `--negative-generate-disabled-status=experimental|known_fail`
+- `--strict-negative-generate-enable`
+
+Enablement priority is deterministic:
+1. explicit diagnostic denylist
+2. explicit diagnostic allowlist
+3. global negative-generate enable mode
+4. default disabled state

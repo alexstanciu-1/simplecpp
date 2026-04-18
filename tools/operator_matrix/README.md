@@ -62,6 +62,7 @@ php tools/operator_matrix/generator.php
 php tools/operator_matrix/generator.php --family=condition_truthiness
 php tools/operator_matrix/generator.php --validate
 php tools/operator_matrix/generator.php --stdout
+php tools/operator_matrix/generator.php --family=operators_conditional_selection --enable-negative-generate-diagnostic=coalesce_reject_result_or_bool
 ```
 
 Generated artifacts:
@@ -74,3 +75,18 @@ Exit codes:
 - `0` → generation and validation succeeded
 - `1` → usage or IO failure
 - `2` → validation errors were found
+
+
+Negative-generate emission controls:
+- `--emit-negative-generate=none|all` — emit or suppress `negative_generate` test files (default: `all`)
+- `--enable-negative-generate=none|all` — globally enable or keep disabled emitted `negative_generate` tests (default: `none`)
+- `--enable-negative-generate-diagnostic=a,b` — enable only the listed `negative_generate` diagnostic classes
+- `--disable-negative-generate-diagnostic=a,b` — force-disable the listed `negative_generate` diagnostic classes
+- `--negative-generate-disabled-status=experimental|known_fail` — status assigned to disabled `negative_generate` tests (default: `experimental`)
+- `--strict-negative-generate-enable` — fail generation if an allowlisted `negative_generate` diagnostic emits zero tests
+
+Negative-generate enablement priority:
+1. explicit diagnostic denylist
+2. explicit diagnostic allowlist
+3. global `--enable-negative-generate`
+4. default disabled state

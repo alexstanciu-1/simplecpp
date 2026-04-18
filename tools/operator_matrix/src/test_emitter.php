@@ -6,9 +6,10 @@ declare(strict_types=1);
  * Emit concrete PHP matrix tests from deterministic test seeds.
  *
  * @param list<array<string, mixed>> $seeds
+ * @param array<string, mixed> $options
  * @return array<string, mixed>
  */
-function om_emit_matrix_tests(string $repoRoot, array $seeds): array
+function om_emit_matrix_tests(string $repoRoot, array $seeds, array $options): array
 {
 	$phpMatrixRoot = $repoRoot . '/tests/php-matrix';
 	$runtimeMatrixRoot = $repoRoot . '/tests/runtime-matrix';
@@ -21,11 +22,27 @@ function om_emit_matrix_tests(string $repoRoot, array $seeds): array
 			'test_count' => 0,
 			'source_files' => 0,
 			'info_files' => 0,
+			'enabled_test_count' => 0,
+			'disabled_test_count' => 0,
 		],
 		'runtime-matrix' => [
 			'test_count' => 0,
 			'source_files' => 0,
 			'info_files' => 0,
+			'enabled_test_count' => 0,
+			'disabled_test_count' => 0,
+		],
+		'negative_generate' => [
+			'emit_mode' => (string) ($options['emit_negative_generate'] ?? 'all'),
+			'enable_mode' => (string) ($options['enable_negative_generate'] ?? 'none'),
+			'disabled_status' => (string) ($options['negative_generate_disabled_status'] ?? 'experimental'),
+			'strict_enable' => (bool) ($options['strict_negative_generate_enable'] ?? false),
+			'enabled_diagnostics' => array_values($options['enable_negative_generate_diagnostic'] ?? []),
+			'disabled_diagnostics' => array_values($options['disable_negative_generate_diagnostic'] ?? []),
+			'emitted_count' => 0,
+			'enabled_count' => 0,
+			'disabled_count' => 0,
+			'per_diagnostic' => [],
 		],
 	];
 	$manifest = [];
@@ -34,6 +51,9 @@ function om_emit_matrix_tests(string $repoRoot, array $seeds): array
 	foreach ($seeds as $seed) {
 		$suite = (string) ($seed['suite'] ?? '');
 		if ($suite !== 'php-matrix') {
+			continue;
+		}
+		if (!om_should_emit_seed($seed, $options)) {
 			continue;
 		}
 
@@ -49,13 +69,31 @@ function om_emit_matrix_tests(string $repoRoot, array $seeds): array
 		om_ensure_directory(dirname($infoPath));
 
 		$sourceContent = om_render_php_matrix_source($seed);
-		$infoContent = om_build_php_matrix_test_info($seed, $stem);
+		$infoContent = om_build_php_matrix_test_info($seed, $stem, $options);
 		file_put_contents($sourcePath, $sourceContent);
 		om_write_json_file($infoPath, $infoContent);
 
+		$enabled = (bool) ($infoContent['enabled'] ?? false);
 		$emitted[$suite]['test_count']++;
 		$emitted[$suite]['source_files']++;
 		$emitted[$suite]['info_files']++;
+		$emitted[$suite][$enabled ? 'enabled_test_count' : 'disabled_test_count']++;
+
+		if ((string) ($seed['outcome_class'] ?? '') === 'negative_generate') {
+			$diagnosticClass = om_seed_diagnostic_class($seed);
+			if (!isset($emitted['negative_generate']['per_diagnostic'][$diagnosticClass])) {
+				$emitted['negative_generate']['per_diagnostic'][$diagnosticClass] = [
+					'emitted_count' => 0,
+					'enabled_count' => 0,
+					'disabled_count' => 0,
+				];
+			}
+			$emitted['negative_generate']['emitted_count']++;
+			$emitted['negative_generate'][$enabled ? 'enabled_count' : 'disabled_count']++;
+			$emitted['negative_generate']['per_diagnostic'][$diagnosticClass]['emitted_count']++;
+			$emitted['negative_generate']['per_diagnostic'][$diagnosticClass][$enabled ? 'enabled_count' : 'disabled_count']++;
+		}
+
 		$manifest[] = [
 			'seed_id' => $seed['seed_id'],
 			'suite' => $suite,
@@ -63,6 +101,9 @@ function om_emit_matrix_tests(string $repoRoot, array $seeds): array
 			'info_path' => $relativeInfoPath,
 			'outcome_class' => $seed['outcome_class'],
 			'test_seed_class' => $seed['test_seed_class'],
+			'diagnostic_class' => om_seed_diagnostic_class($seed),
+			'enabled' => $enabled,
+			'status' => $infoContent['status'],
 		];
 	}
 
@@ -78,6 +119,9 @@ function om_emit_matrix_tests(string $repoRoot, array $seeds): array
 		'test_count' => 0,
 		'entries' => [],
 	]);
+
+	om_assert_strict_negative_generate_enablement($emitted['negative_generate']);
+	ksort($emitted['negative_generate']['per_diagnostic']);
 
 	return $emitted;
 }
@@ -314,6 +358,50 @@ function om_render_seed_profile_literal(string $type, string $profile): string
 /**
  * @param array<string, mixed> $seed
  */
+function om_should_emit_seed(array $seed, array $options): bool
+{
+	if ((string) ($seed['outcome_class'] ?? '') !== 'negative_generate') {
+		return true;
+	}
+
+	return (string) ($options['emit_negative_generate'] ?? 'all') !== 'none';
+}
+
+/**
+ * @param array<string, mixed> $seed
+ */
+function om_should_enable_seed(array $seed, array $options): bool
+{
+	if ((string) ($seed['outcome_class'] ?? '') !== 'negative_generate') {
+		return om_should_enable_seed_by_default($seed);
+	}
+
+	$diagnosticClass = om_seed_diagnostic_class($seed);
+	$disabledDiagnostics = array_fill_keys($options['disable_negative_generate_diagnostic'] ?? [], true);
+	if (isset($disabledDiagnostics[$diagnosticClass])) {
+		return false;
+	}
+
+	$enabledDiagnostics = array_fill_keys($options['enable_negative_generate_diagnostic'] ?? [], true);
+	if (isset($enabledDiagnostics[$diagnosticClass])) {
+		return true;
+	}
+
+	return (string) ($options['enable_negative_generate'] ?? 'none') === 'all';
+}
+
+/**
+ * @param array<string, mixed> $seed
+ */
+function om_seed_diagnostic_class(array $seed): string
+{
+	$diagnosticClass = (string) (($seed['expected']['diagnostic_class'] ?? '') ?: 'unspecified_negative_generate');
+	return $diagnosticClass;
+}
+
+/**
+ * @param array<string, mixed> $seed
+ */
 function om_should_enable_seed_by_default(array $seed): bool
 {
 	if ((string) ($seed['outcome_class'] ?? '') !== 'positive') {
@@ -337,9 +425,10 @@ function om_should_enable_seed_by_default(array $seed): bool
 
 /**
  * @param array<string, mixed> $seed
+ * @param array<string, mixed> $options
  * @return array<string, mixed>
  */
-function om_build_php_matrix_test_info(array $seed, string $id): array
+function om_build_php_matrix_test_info(array $seed, string $id, array $options): array
 {
 	$outcome = (string) $seed['outcome_class'];
 	$positive = ($outcome === 'positive');
@@ -347,7 +436,10 @@ function om_build_php_matrix_test_info(array $seed, string $id): array
 	$negativeRuntime = ($outcome === 'negative_runtime');
 	$expected = is_array($seed['expected'] ?? null) ? $seed['expected'] : [];
 	$stdout = $positive ? om_render_expected_var_dump((string) ($expected['result_profile'] ?? '')) : '';
-	$enabled = om_should_enable_seed_by_default($seed);
+	$enabled = om_should_enable_seed($seed, $options);
+	$status = $enabled
+		? 'active'
+		: (($negativeGenerate ? (string) ($options['negative_generate_disabled_status'] ?? 'experimental') : 'experimental'));
 
 	return [
 		'id' => $id,
@@ -355,7 +447,7 @@ function om_build_php_matrix_test_info(array $seed, string $id): array
 		'level' => (string) $seed['level'],
 		'outcome' => $outcome,
 		'enabled' => $enabled,
-		'status' => $enabled ? 'active' : 'experimental',
+		'status' => $status,
 		'php_as_oracle' => false,
 		'compare' => [
 			'stdout' => 'exact',
@@ -444,6 +536,25 @@ function om_expected_generator_substrings(string $diagnosticClass): array
 		'coalesce_rhs_has_no_usable_value_domain' => ['coalesce'],
 		default => [],
 	};
+}
+
+
+/**
+ * @param array<string, mixed> $negativeGenerateReport
+ */
+function om_assert_strict_negative_generate_enablement(array $negativeGenerateReport): void
+{
+	if (!(bool) ($negativeGenerateReport['strict_enable'] ?? false)) {
+		return;
+	}
+
+	foreach (($negativeGenerateReport['enabled_diagnostics'] ?? []) as $diagnosticClass) {
+		$diagnosticClass = (string) $diagnosticClass;
+		$stats = $negativeGenerateReport['per_diagnostic'][$diagnosticClass] ?? null;
+		if (!is_array($stats) || (int) ($stats['emitted_count'] ?? 0) === 0) {
+			throw new RuntimeException('Strict negative_generate enablement failed: diagnostic class emitted zero tests: ' . $diagnosticClass);
+		}
+	}
 }
 
 function om_render_expected_var_dump(string $profile): string

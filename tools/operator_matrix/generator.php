@@ -29,7 +29,7 @@ function main(array $argv): void
 		$validation = om_validate_rows($registry, $rows, $options['family']);
 		$testSeeds = om_build_test_seeds($registry, $rows);
 		$testSeedValidation = om_validate_test_seeds($rows, $testSeeds);
-		$emissionReport = om_emit_matrix_tests($repoRoot, $testSeeds);
+		$emissionReport = om_emit_matrix_tests($repoRoot, $testSeeds, $options);
 
 		$outputRoot = $repoRoot . '/build/operator_matrix';
 		om_ensure_directory($outputRoot);
@@ -56,6 +56,11 @@ function main(array $argv): void
 		echo 'Validation warnings: ' . $validation['warning_count'] . PHP_EOL;
 		echo 'Test seeds: ' . count($testSeeds) . PHP_EOL;
 		echo 'Emitted php-matrix tests: ' . $emissionReport['php-matrix']['test_count'] . PHP_EOL;
+		echo 'Enabled php-matrix tests: ' . $emissionReport['php-matrix']['enabled_test_count'] . PHP_EOL;
+		echo 'Disabled php-matrix tests: ' . $emissionReport['php-matrix']['disabled_test_count'] . PHP_EOL;
+		echo 'Negative-generate emitted: ' . $emissionReport['negative_generate']['emitted_count'] . PHP_EOL;
+		echo 'Negative-generate enabled: ' . $emissionReport['negative_generate']['enabled_count'] . PHP_EOL;
+		echo 'Negative-generate disabled: ' . $emissionReport['negative_generate']['disabled_count'] . PHP_EOL;
 		echo 'Emitted runtime-matrix tests: ' . $emissionReport['runtime-matrix']['test_count'] . PHP_EOL;
 		echo 'Test seed validation errors: ' . $testSeedValidation['error_count'] . PHP_EOL;
 		echo 'Test seed validation warnings: ' . $testSeedValidation['warning_count'] . PHP_EOL;

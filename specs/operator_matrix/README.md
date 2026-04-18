@@ -92,3 +92,9 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 
 The generator now emits concrete PHP matrix tests under `tests/php-matrix/` and a summary report at `build/operator_matrix/test_emission_report.json`.
 The current runtime-matrix root is created but intentionally left empty until a later emitter phase.
+
+Negative-generate emission and enablement are configurable by CLI flag. The current priority order is deterministic:
+1. explicit diagnostic denylist
+2. explicit diagnostic allowlist
+3. global negative-generate enable mode
+4. default disabled state
