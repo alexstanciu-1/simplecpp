@@ -73,6 +73,11 @@ If a new implementation pass, review, or chat session starts, this document shou
    - authoritative for `scpp/runtime.hpp` versus per-language umbrella intent
    - authoritative for the current multi-language / multi-module build-composition direction
 
+6C. `specs/runtime/error_handling.md`
+   - authoritative for runtime error output modes
+   - authoritative for JSON error-mode envelope, field stability, and debug-trace rules
+   - must not contradict Level 1 documents
+
 ### Level 3 — Audit / planning / supporting documents
 
 7. audit, todo, reference, and derived coordination documents under `specs/`
@@ -211,6 +216,15 @@ Role:
 
 Authority:
 - normative for generation workflow, but subordinate to higher-level documents
+
+### `specs/runtime/error_handling.md`
+Role:
+- runtime error output contract
+- defines default human-readable messages versus JSON-mode output
+- defines stable versus non-stable JSON fields and debug-trace behavior
+
+Authority:
+- normative for runtime error presentation, but subordinate to higher-level documents
 
 ### `specs/builtin_intake_procedure.md`
 Role:
