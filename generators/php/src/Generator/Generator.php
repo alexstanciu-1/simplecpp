@@ -182,12 +182,22 @@ final class Generator
 
 		if ($emitProgramEntry && $file->rootStatements !== []) {
 			$source[] = 'int main() {';
-			$source[] = $this->indent(1) . 'return scpp::' . $unitMainName . '();';
+			$source[] = $this->indent(1) . 'try {';
+			$source[] = $this->indent(2) . 'return scpp::' . $unitMainName . '();';
+			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
+			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
+			$source[] = $this->indent(2) . 'return 1;';
+			$source[] = $this->indent(1) . '}';
 			$source[] = '}';
 			$source[] = '';
 		} elseif ($emitProgramEntry && $namespaceMainTargets !== []) {
 			$source[] = 'int main() {';
-			$source[] = $this->indent(1) . 'return ' . $namespaceMainTargets[0] . ';';
+			$source[] = $this->indent(1) . 'try {';
+			$source[] = $this->indent(2) . 'return ' . $namespaceMainTargets[0] . ';';
+			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
+			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
+			$source[] = $this->indent(2) . 'return 1;';
+			$source[] = $this->indent(1) . '}';
 			$source[] = '}';
 			$source[] = '';
 		}

@@ -9,6 +9,7 @@
 // - gathers the complete public runtime surface in config order
 
 #include "scpp/detail.hpp"
+#include "scpp/runtime_error.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/nullopt_t.hpp"
 #include "scpp/nullptr_t.hpp"

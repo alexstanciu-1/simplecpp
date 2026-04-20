@@ -498,7 +498,8 @@ function om_build_php_matrix_test_info(array $seed, string $id, array $options):
 				]
 				: [
 					'success' => false,
-					'error_contains' => $negativeRuntime ? om_expected_runtime_substrings((string) ($expected['diagnostic_class'] ?? '')) : [],
+					'error_contains' => [],
+					'error_json' => $negativeRuntime ? om_expected_runtime_json((string) ($expected['diagnostic_class'] ?? '')) : [],
 				],
 		],
 		'tags' => om_build_seed_tags($seed),
@@ -553,13 +554,21 @@ function om_expected_generator_substrings(string $diagnosticClass): array
 }
 
 /**
- * @return list<string>
+ * @return array<string, string>
  */
-function om_expected_runtime_substrings(string $diagnosticClass): array
+function om_expected_runtime_json(string $diagnosticClass): array
 {
 	return match ($diagnosticClass) {
-		'coalesce_reject_result_or_bool' => ['result_or_bool', 'coalesce'],
-		'coalesce_selected_branch_has_no_usable_value_domain' => ['coalesce', 'usable value domain'],
+		'coalesce_reject_result_or_bool' => [
+			'code' => 'coalesce_reject_result_or_bool',
+			'component' => 'php::coalesce_eval',
+			'operator' => '??',
+		],
+		'coalesce_selected_branch_has_no_usable_value_domain' => [
+			'code' => 'coalesce_selected_branch_has_no_usable_value_domain',
+			'component' => 'php::coalesce_eval',
+			'operator' => '??',
+		],
 		default => [],
 	};
 }

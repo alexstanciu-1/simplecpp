@@ -508,7 +508,12 @@ TXT;
 				$results['last_run']['stages']['compile']['comparison_notes'] = $compileComparison['notes'];
 
 				if ($results['last_run']['stages']['compile']['success'] === true) {
-					$cppRun = $this->runCommand([(string) $compileRun['binary_path']], $tempDir, self::RUN_TIMEOUT_SECONDS);
+					$runExpect = is_array($expect['run'] ?? null) ? $expect['run'] : [];
+					$runtimeEnv = [];
+					if ($this->shouldEnableRuntimeErrorJson($expect)) {
+						$runtimeEnv['SCPP_ERROR_FORMAT'] = 'json';
+					}
+					$cppRun = $this->runCommand([(string) $compileRun['binary_path']], $tempDir, self::RUN_TIMEOUT_SECONDS, $runtimeEnv);
 					$results['last_run']['stages']['run'] = [
 						'success' => ($cppRun['exit_code'] === 0 && $cppRun['timed_out'] === false),
 						'exit_code' => $cppRun['exit_code'],
@@ -519,7 +524,6 @@ TXT;
 						'comparison_ok' => true,
 						'comparison_notes' => [],
 					];
-					$runExpect = is_array($expect['run'] ?? null) ? $expect['run'] : [];
 					$runComparison = $this->compareStageRun($runExpect, $results['last_run']['stages']['run'], $compare);
 					$results['last_run']['stages']['run']['comparison_ok'] = $runComparison['ok'];
 					$results['last_run']['stages']['run']['comparison_notes'] = $runComparison['notes'];
@@ -641,6 +645,9 @@ TXT;
 				}
 				$runTimeout = (int) ($build['run_timeout_seconds'] ?? self::RUN_TIMEOUT_SECONDS);
 				$runtimeEnv = array_merge($this->buildSanitizerRunEnvironment((string) ($build['sanitizers'] ?? '')), (array) ($build['env'] ?? []));
+				if ($this->shouldEnableRuntimeErrorJson($expect)) {
+					$runtimeEnv['SCPP_ERROR_FORMAT'] = 'json';
+				}
 				$cppRun = $this->runCommand($runCommand, $tempDir, $runTimeout, $runtimeEnv);
 				$results['last_run']['stages']['run'] = [
 					'success' => ($cppRun['exit_code'] === 0 && $cppRun['timed_out'] === false),
@@ -1140,6 +1147,53 @@ TXT;
 		];
 	}
 
+
+	/**
+	 * @return array<string, mixed>|null
+	 */
+	private function decodeRuntimeErrorJson(string $stderr): ?array
+	{
+		$stderr = trim($stderr);
+		if ($stderr === '') {
+			return null;
+		}
+
+		$decoded = json_decode($stderr, true);
+		if (!is_array($decoded)) {
+			return null;
+		}
+		$error = $decoded['error'] ?? null;
+		return is_array($error) ? $error : null;
+	}
+
+	/**
+	 * @param array<string, mixed> $expected
+	 * @param array<string, mixed> $actual
+	 * @return array{ok: bool, notes: list<string>}
+	 */
+	private function compareRuntimeErrorJson(array $expected, array $actual): array
+	{
+		$notes = [];
+		$ok = true;
+		foreach ($expected as $key => $value) {
+			if (!is_string($key) || $key === '') {
+				continue;
+			}
+			$actualValue = $actual[$key] ?? null;
+			if ((string) $actualValue !== (string) $value) {
+				$ok = false;
+				$notes[] = sprintf('run error json mismatch for %s: expected=%s actual=%s', $key, (string) $value, is_scalar($actualValue) ? (string) $actualValue : gettype($actualValue));
+			}
+		}
+		return ['ok' => $ok, 'notes' => $notes];
+	}
+
+	private function shouldEnableRuntimeErrorJson(array $expect): bool
+	{
+		$run = is_array($expect['run'] ?? null) ? $expect['run'] : [];
+		return is_array($run['error_json'] ?? null) && $run['error_json'] !== [];
+	}
+
 	private function compareStageRun(array $expect, array $actual, array $compare): array
 	{
 		$notes = [];
@@ -1176,6 +1230,21 @@ TXT;
 			if (!$found) {
 				$ok = false;
 				$notes[] = 'run error text missing substring: ' . $needle;
+			}
+		}
+
+		$expectedErrorJson = $expect['error_json'] ?? null;
+		if (is_array($expectedErrorJson) && $expectedErrorJson !== []) {
+			$decodedError = $this->decodeRuntimeErrorJson((string) ($actual['stderr'] ?? ''));
+			if ($decodedError === null) {
+				$ok = false;
+				$notes[] = 'run stderr is not valid runtime error JSON';
+			} else {
+				$jsonComparison = $this->compareRuntimeErrorJson($expectedErrorJson, $decodedError);
+				if ($jsonComparison['ok'] !== true) {
+					$ok = false;
+					$notes = array_merge($notes, $jsonComparison['notes']);
+				}
 			}
 		}
 

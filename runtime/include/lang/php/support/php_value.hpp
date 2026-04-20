@@ -1582,7 +1582,7 @@ inline void coalesce_require_selected_value_domain(const Value &value) {
 	using value_t = std::remove_cvref_t<Value>;
 	if constexpr (coalesce_wrapper_info_v<value_t>) {
 		if (!value.has_value().native_value()) {
-			throw std::runtime_error("scpp::php::coalesce_eval(): ?? selected a branch with no usable value domain");
+			throw scpp::runtime_error("scpp::php::coalesce_eval(): ?? selected a branch with no usable value domain", "coalesce_selected_branch_has_no_usable_value_domain", "php::coalesce_eval", "??");
 		}
 	}
 }
@@ -1627,7 +1627,7 @@ inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
 		::scpp::detail::is_specialization_of_v<left_t, result_or_bool>
 		|| ::scpp::detail::is_specialization_of_v<right_t, result_or_bool>
 	) {
-		throw std::runtime_error("scpp::php::coalesce_eval(): ?? does not support result_or_bool<T>; convert it explicitly first");
+		throw scpp::runtime_error("scpp::php::coalesce_eval(): ?? does not support result_or_bool<T>; convert it explicitly first", "coalesce_reject_result_or_bool", "php::coalesce_eval", "??");
 		return mixed_t();
 	} else {
 		using result_t = typename detail::coalesce_result<left_t, right_t>::type;
