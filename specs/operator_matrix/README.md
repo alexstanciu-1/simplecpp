@@ -105,6 +105,20 @@ Negative-generate emission and enablement are configurable by CLI flag. The curr
 3. global negative-generate enable mode
 4. default disabled state
 
+
+## Current ternary / elvis placement note
+
+For `expr_1 ? expr_2 : expr_3` and `expr_1 ?: expr_3`, the current project uses one runtime helper path: `php::ternary_eval(...)`.
+
+Important current layering rule:
+- the runtime helper already owns wrapper-aware condition delegation and branch normalization for supported branch/result pairs
+- the current operator-matrix structured data remains narrower than that helper in the emitted ternary / elvis slice
+- current compile-time rejected elvis wrapper rows in the matrix data therefore represent a matrix-slice boundary, not proof that the runtime helper itself has no wrapper-aware condition behavior
+
+Until the matrix expansion is completed, ternary / elvis discussions must state clearly whether they refer to:
+- runtime-helper semantics, or
+- the currently emitted operator-matrix slice
+
 ## Runtime Errors (JSON Mode)
 
 When SCPP_ERROR_FORMAT=json is enabled:

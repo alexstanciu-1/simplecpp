@@ -38,7 +38,7 @@ Current selection-family support:
 - `mixed_t(null)` remains a valid selected mixed result domain for `coalesce` when it is the selected fallback branch
 - `elvis`
 - `ternary` currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
-- current wrapper families are emitted as compile-time rejected `elvis` rows until a dedicated wrapper-aware `elvis` policy is specified
+- current wrapper families are still emitted as compile-time rejected `elvis` rows in the structured dataset pending matrix expansion, even though the runtime ternary/elvis helper already has wrapper-aware condition delegation for current wrapper families
 - `ternary` currently supports same-type `then/else` rows for non-wrapper branch types and uses the current condition-truthiness slice for the condition operand
 
 ## Rules

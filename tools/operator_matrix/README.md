@@ -42,12 +42,12 @@ Current working type universe in structured data includes:
 
 Current `elvis` slice:
 - supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
-- emits compile-time rejected rows for the current wrapper families until a dedicated wrapper-aware `elvis` policy is specified
+- still emits compile-time rejected rows for the current wrapper families in the structured-data slice pending matrix expansion
 
 Current `ternary` slice:
 - supports same-type `then/else` rows for `bool_t`, `int_t`, `float_t`, `string_t`, and `mixed_t`
-- accepts condition types `bool_t`, `int_t`, `float_t`, and `mixed_t`
-- keeps wrapper families out of the condition position in this working slice
+- accepts condition types `bool_t`, `int_t`, `float_t`, and `mixed_t` in the current structured-data slice
+- keeps wrapper families out of the current emitted condition position even though the runtime `php::ternary_eval(...)` helper already has wrapper-aware condition delegation
 
 Test-file emission is out of scope for this phase. The tool now emits row-faithful test seeds as an intermediate planning artifact for the current `operators_conditional_selection` slice.
 

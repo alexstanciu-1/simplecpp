@@ -456,9 +456,14 @@ The critical rules are:
 - keep strict identity in its own dedicated family
 
 
-## Elvis Working Slice Note
+## Ternary / Elvis Working Slice Note
 
 For the current working generator slice, `elvis` is truthiness-driven and intentionally narrower than `coalesce`.
-It currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`.
-The current wrapper families are emitted as compile-time rejected `elvis` rows until a dedicated wrapper-aware `elvis` policy is specified.
+The current structured-data slice currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`.
+Current wrapper-family `elvis` rows are still emitted as compile-time rejected in the matrix dataset pending explicit slice expansion.
+
+Important layering note:
+- this dataset boundary must not be confused with the current runtime helper capability
+- `php::ternary_eval(...)` already owns wrapper-aware condition delegation for current wrapper families and remains the authority for already-lowered ternary / elvis code paths
+- matrix/data discussions must state explicitly whether they refer to the runtime helper or only to the currently emitted slice
 

@@ -115,6 +115,29 @@ Initial supported condition path:
 
 `$x ?: $y` lowers through a temporary plus `php::ternary_eval(...)` so `$x` is evaluated exactly once.
 
+Current helper interpretation:
+- elvis reuses ternary condition evaluation for the left operand
+- if the left operand is truthy under the helper-owned condition rule, the result is the normalized left branch value
+- otherwise the result is the normalized fallback branch value
+- elvis therefore shares the ternary condition domain and branch-normalization matrix rather than the coalesce usable-value rule
+
+## Current ternary / elvis layering note
+
+The current project has three distinct layers for `expr_1 ? expr_2 : expr_3` and `expr_1 ?: expr_3`:
+- the generator lowers both operators through `php::ternary_eval(...)`
+- the runtime helper currently implements wrapper-aware condition delegation for `nullable<T>`, `result<T>`, `result_or_false<T>`, and `result_or_bool<T>`, plus the narrow `mixed_t` condition rule already documented above
+- the operator-matrix structured data is still narrower for the current emitted slice and must not be mistaken for the full runtime-helper capability
+
+Current practical rule:
+- runtime helper behavior is authoritative for already-lowered ternary / elvis code paths
+- the operator-matrix dataset remains authoritative only for the rows it explicitly models and emits in the current slice
+- current elvis compile-time rejected wrapper rows in `specs/operator_matrix/data/semantics.json` therefore describe a matrix-slice limitation, not a claim that `php::ternary_eval(...)` lacks wrapper-aware condition behavior
+
+Current matrix-slice status:
+- ternary structured data currently focuses on non-wrapper branch pairs plus the currently approved condition slice
+- elvis structured data currently models same-type non-wrapper rows and explicit `mixed_t` rows
+- wrapper-led elvis rows remain emitted as compile-time rejected in the matrix dataset pending a dedicated matrix expansion and reconciliation pass
+
 ## Test intent
 
 Seed tests should prove that the helper path behaves identically for:
