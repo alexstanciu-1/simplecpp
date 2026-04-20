@@ -135,3 +135,8 @@ For ternary / elvis condition runtime rejects:
 
 - ternary_condition_reject_mixed_kind
 
+Condition-truthiness note:
+- ternary / elvis condition semantics follow the shared `condition_truthiness` family, not explicit `(bool)` cast rules
+- `string_t` is truthy unless it is `""` or `"0"`
+- typed/explicit `string_t -> bool_t` normalization remains narrower and may runtime-error on other literals
+

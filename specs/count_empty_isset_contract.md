@@ -24,10 +24,11 @@ These APIs are semantic hubs and must not be implemented as unrelated shortcuts.
 
 Normative rule:
 - `count(...)` is a strict countability query
-- `empty(...)` is a narrowed Prism++ emptiness query
+- `empty(...)` is a PHP-aligned emptiness query with one explicit Prism++ deviation for `"0"`
 - `isset(...)` is a null-sensitive presence query
 - `isset(...)` and `empty(...)` must be fully non-mutating
 - keyed `isset(...)` must not collapse into pure key-existence semantics when the stored value can be `null`
+- wrapper sentinel states must not be reported as present merely because a wrapper object exists
 
 ## 3. `count(...)`
 
@@ -51,35 +52,41 @@ Examples:
 
 ## 4. `empty(...)`
 
-This project uses a deliberately narrowed emptiness contract.
+`empty(...)` is intended to stay close to PHP for value states that semantically make sense, with one deliberate Prism++ deviation:
+- `empty("0")` is `false` in Prism++
 
-This is **not** full PHP falsiness.
+Normative rule:
+- for supported value families, `empty(x)` follows PHP-style emptiness
+- `"0"` remains the one documented exception and evaluates as not empty
+- unsupported/nonsensical type families must runtime-error rather than inventing ad-hoc emptiness semantics
 
-`empty(x)` is `true` only for:
+`empty(x)` is `true` for:
 - `null`
+- `false`
+- `0`
+- `0.0`
 - empty string `""`
 - empty countable / empty array-like value
 - missing keyed lookup
 - invalid keyed lookup shape
+- wrapper states that expose no present value under the same probe semantics
 
 `empty(x)` is `false` for:
-- `false`
-- `0`
-- `0.0`
 - `"0"`
-- any non-empty string
+- any other non-empty string
 - any non-empty countable
-- all other present non-null values
+- present non-empty object-handle / scalar / wrapper values that have a visible present value and are not otherwise empty by the supported rule
 
 Examples:
 - `empty(null)` -> `true`
+- `empty(false)` -> `true`
+- `empty(0)` -> `true`
+- `empty(0.0)` -> `true`
 - `empty("")` -> `true`
 - `empty([])` -> `true`
-- `empty(false)` -> `false`
-- `empty(0)` -> `false`
 - `empty("0")` -> `false`
 
-This difference from PHP must remain documented anywhere `empty(...)` semantics are described.
+This single documented difference from PHP must remain stated anywhere `empty(...)` semantics are described.
 
 ## 5. `isset(...)`
 
@@ -90,6 +97,7 @@ Normative rule:
 - missing keyed lookup -> `false`
 - existing keyed slot with `null` -> `false`
 - invalid lookup shape -> `false`
+- wrapper false/empty sentinel states that do not expose a present value under probe semantics -> `false`
 
 Examples:
 - `isset($a["missing"])` -> `false`
@@ -124,11 +132,14 @@ At minimum, coverage must prove:
 - `count(42)` throws
 - `count(mixed_t(hash))` returns size
 - `empty(null)` is `true`
+- `empty(false)` is `true`
+- `empty(0)` is `true`
+- `empty(0.0)` is `true`
 - `empty("")` is `true`
-- `empty(false)` is `false`
-- `empty(0)` is `false`
 - `empty("0")` is `false`
 - `empty(missing keyed lookup)` is `true`
 - `isset(missing keyed lookup)` is `false`
 - `isset(existing null)` is `false`
+- `isset(result_or_false(false-sentinel))` is `false`
+- `isset(result_or_bool(false-sentinel))` is `false`
 - no autovivification occurs during `isset(...)` / `empty(...)`

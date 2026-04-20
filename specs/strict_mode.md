@@ -93,6 +93,9 @@ Avoid using unresolved values in:
 - logical operators (`&&`, `||`)
 - ternary (`?:`)
 
+This is guidance, not a claim that such conditions are always invalid.
+String conditions use PHP-style truthiness in the language/runtime, while typed/explicit `bool` normalization is narrower and may reject ambiguous string literals.
+
 **Discouraged:**
 ```php
 if ($mixed) { ... }

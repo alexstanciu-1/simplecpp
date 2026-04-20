@@ -150,22 +150,12 @@ Result:
 
 ### 5.2 Existing key
 
-`empty($a[k])` is `true` only for:
-- `null`
-- `""`
-- empty array/table
+`empty($a[k])` follows the same top-level runtime contract documented in `specs/count_empty_isset_contract.md`.
 
-`empty($a[k])` is `false` for:
-- `0`
-- `0.0`
-- `"0"`
-- `false`
-- any non-empty string
-- any non-empty array/table
-
-This is a deliberate Prism++ subset rule and is not full PHP falsiness.
-
-The normative cross-runtime contract now lives in `specs/count_empty_isset_contract.md`.
+In particular:
+- `null`, `false`, `0`, `0.0`, `""`, and empty array/table values are empty
+- `"0"` remains the one deliberate Prism++ exception and is not empty
+- unsupported/nonsensical type families must runtime-error rather than inventing new keyed-emptiness behavior
 
 ## 6. Top-level keyed write
 

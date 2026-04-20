@@ -16,8 +16,9 @@ Keep the generator structurally simple and mostly type-blind while ensuring that
 
 The helpers are intentionally separate because the semantic target differs:
 - `??` uses wrapper-state / usable-value presence for approved wrapper families and does not preserve wrapper carriers in the result
-- `?:` chooses between two branches using the approved condition subset and may preserve wrapper shape where explicitly documented for that helper family
-- both helpers share the same wrapper normalization rules for PHP-visible state inspection even though their result policies remain separate
+- `?:` chooses between two branches using condition truthiness and may preserve wrapper shape where explicitly documented for that helper family
+- `??` must never reuse condition truthiness as its decision rule
+- both helpers may reuse shared wrapper/value inspection helpers where appropriate, but their semantic entry rules remain distinct
 
 ## Current `??` rule
 
@@ -95,29 +96,38 @@ Practical effect:
 The ternary condition is evaluated once inside the runtime helper.
 
 Current approved condition domain:
-- direct condition inputs are limited to the configured explicit condition subset
-- no implicit string truthiness is supported
-- `mixed_t` is allowed in ternary / elvis condition context only when its active runtime kind is `bool`, `int`, or `float`
-- `mixed_t` holding `null`, `string`, or table / object-like carriers must fail instead of participating implicitly in condition evaluation
-- if boolean intent is required for string or other non-approved carriers, the source must be normalized explicitly before the condition site
+- direct condition inputs are governed by `condition_truthy(...)`, not by generic explicit-cast rules
+- direct string truthiness is supported
+- `string_t` truthiness is PHP-like: `""` -> false, `"0"` -> false, anything else -> true
+- object-handle truthiness is presence/aliveness-based by project intent: live non-null handles are truthy; null/expired handles are falsy
+- `mixed_t` participation is hybrid in the current implementation: approved inner kinds delegate to their condition rule; full kind coverage is still an implementation task
+- if a real `bool_t` value is required rather than condition truthiness, explicit/typed boolean normalization uses the distinct string-to-bool rule documented below
+
+String truthiness and boolean normalization are intentionally distinct:
+- condition truthiness for `string_t`: `""` -> false, `"0"` -> false, anything else -> true
+- `string_t -> bool_t` normalization: `"true"` / `"1"` -> true; `"false"` / `"0"` / `""` -> false; anything else -> runtime error
 
 Practical implication:
-- `"0" ? ... : ...` is not an approved implicit condition form
-- `"yes" ? ... : ...` is not an approved implicit condition form
-- `$mixed ?: $fallback` is valid only when `$mixed` carries runtime `bool`, `int`, or `float`, or has been normalized explicitly before the condition site
+- `"0" ? ... : ...` selects the false branch
+- `"yes" ? ... : ...` selects the true branch
+- assigning or casting `"yes"` to `bool_t` is a runtime error
+- `$mixed ?: $fallback` currently remains limited by the active `mixed_t` kind support implemented in the shared condition helper
 
-Initial supported condition path:
-- plain scalar inputs continue through the existing explicit boolean bridge
-- `mixed_t` in ternary / elvis condition context uses a narrow helper-owned rule: only runtime `bool`, `int`, and `float` kinds participate; all other kinds fail
-- `nullable<T>` is false when empty, otherwise it reuses the condition rule of the contained `T`, including the narrow `mixed_t` path when applicable
+Current supported condition path:
+- plain scalar inputs use the shared condition-truthiness rule
+- `nullable<T>` is false when empty, otherwise it reuses the condition rule of the contained `T`
+- `result<T>` is false on non-value/error state and otherwise reuses the condition rule of the carried `T`
+- `result_or_false<T>` is false on its false sentinel and otherwise reuses the condition rule of the carried `T`
+- `result_or_bool<T>` reuses the carried `T` on success; its sentinel `true` / `false` states evaluate as boolean success/failure states
+- `mixed_t` currently delegates only for the approved implemented runtime kinds; broader delegation remains a tracked follow-up task
 
 ## Elvis rule
 
 `$x ?: $y` lowers through a temporary plus `php::ternary_eval(...)` so `$x` is evaluated exactly once.
 
 Current helper interpretation:
-- elvis reuses ternary condition evaluation for the left operand
-- if the left operand is truthy under the helper-owned condition rule, the result is the normalized left branch value
+- elvis reuses the same `condition_truthy(...)` authority as ternary for the left operand
+- if the left operand is truthy under that shared rule, the result is the normalized left branch value
 - otherwise the result is the normalized fallback branch value
 - elvis therefore shares the ternary condition domain and branch-normalization matrix rather than the coalesce usable-value rule
 
@@ -132,6 +142,7 @@ Current practical rule:
 - runtime helper behavior is authoritative for already-lowered ternary / elvis code paths
 - the operator-matrix dataset remains authoritative only for the rows it explicitly models and emits in the current slice
 - current elvis compile-time rejected wrapper rows in `specs/operator_matrix/data/semantics.json` therefore describe a matrix-slice limitation, not a claim that `php::ternary_eval(...)` lacks wrapper-aware condition behavior
+- when matrix/profile docs and this runtime-helper document diverge, this document wins for helper-owned ternary/elvis semantics until the matrix slice is expanded
 
 Current matrix-slice status:
 - ternary structured data currently focuses on non-wrapper branch pairs plus the currently approved condition slice

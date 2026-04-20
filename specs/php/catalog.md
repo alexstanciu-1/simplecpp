@@ -78,10 +78,10 @@ if ($x > 0) {
 ```
 
 Contract:
-- Conditions should be explicit
-- Avoid ambiguous truthiness
-- Do not rely on implicit string truthiness such as `if ($text)` when the intent is boolean
-- Normalize mixed/dynamic values before control-flow use
+- Conditions should be explicit when boolean intent matters
+- String conditions follow PHP-style truthiness (`""` and `"0"` are false; other strings are true)
+- Typed/explicit bool normalization is narrower than condition truthiness
+- Normalize mixed/dynamic values before control-flow use when the carried kind is not already clear
 
 ---
 

@@ -128,7 +128,10 @@ Item-level source declarations must remain rare.
 - spec defines truthiness semantics
 - runtime must conform
 - matrix rows must remain profile-explicit
-- `condition_truthiness` is distinct from explicit `(bool)` cast
+- `condition_truthiness` is distinct from explicit `(bool)` cast and from typed boolean normalization
+- `string_t` therefore has two separate rules:
+  - condition truthiness: `""` / `"0"` false, everything else true
+  - typed/explicit bool normalization: `"true"` / `"1"` true; `"false"` / `"0"` / `""` false; everything else runtime error
 - `mixed_t` participation is hybrid:
   - allowed kind space follows specs
   - per-kind execution behavior must match runtime implementation and must be kept synchronized with specs

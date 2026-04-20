@@ -149,16 +149,18 @@ Normative source:
 - `runtime/specs/config.json` → `coercions.condition`
 
 #### v1 rule
-Condition context is **not** equivalent to generic PHP falsiness and is **not** equivalent to unconstrained `(bool)` cast.
+Condition context is **not** equivalent to unconstrained `(bool)` cast.
 
 Approved direct condition inputs:
 - `bool_t`
 - `int_t`
 - `float_t`
+- `string_t`
+- object-handle carriers by presence/aliveness rule
 - `mixed_t`
 - `nullable<T>` only by wrapper delegation when the contained `T` itself is valid in condition context
 
-Direct string truthiness is not approved in the current subset.
+Condition truthiness is intentionally distinct from explicit/typed `string_t -> bool_t` normalization.
 
 #### Canonical profile behavior
 
@@ -175,11 +177,13 @@ Direct string truthiness is not approved in the current subset.
 - `float.nonzero` → `status=supported`, `behavior_class=deterministic_value`, result true
 
 ##### `string_t`
-- all current profiles → `status=compile_time_rejected`
+- `string.empty` → `status=supported`, `behavior_class=deterministic_value`, result false
+- `string.zero_literal` → `status=supported`, `behavior_class=deterministic_value`, result false
+- `string.nonempty_nonzero` → `status=supported`, `behavior_class=deterministic_value`, result true
 
 Notes:
-- PHP-style non-empty-string truthiness is not part of this family.
-- If boolean intent is needed for string input, explicit normalization must happen before the condition site.
+- this family follows PHP-style string truthiness for condition context
+- explicit/typed `string_t -> bool_t` normalization remains narrower: only `"true"`, `"false"`, `"1"`, `"0"`, and `""` are accepted; anything else runtime-errors
 
 ##### `hash_t`
 - all current profiles → `status=compile_time_rejected`
@@ -191,7 +195,7 @@ Notes:
 Examples:
 - `nullable<int_t>.present.int.zero` → false
 - `nullable<int_t>.present.int.nonzero` → true
-- `nullable<string_t>.present.string.nonempty_nonzero` → `status=compile_time_rejected`
+- `nullable<string_t>.present.string.nonempty_nonzero` → true
 
 ##### `mixed_t`
 Accepted runtime kinds:

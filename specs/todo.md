@@ -65,6 +65,14 @@ TODOs in big lines (my notes)
 "known semantic mismatch buckets"
 	 ... areas where your system is intentionally not PHP-equivalent, or is only partially equivalent.
 
+condition/runtime alignment
+	make object-handle truthiness explicit in the shared condition helper
+		- shared_p<T>: non-null true, null false
+		- unique_p<T>: non-null true, null false
+		- weak_p<T>: live target true, expired/empty false
+	finish mixed_t condition delegation so approved active kinds follow the carried/lowered kind centrally
+	unify logical operators and conditional operators behind the same condition_truthiness authority
+
 
 builtin function layer
 	This is probably the biggest one in general terms. Not just curl, but a usable first batch:
