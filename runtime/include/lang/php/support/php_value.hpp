@@ -1521,7 +1521,7 @@ inline bool_t ternary_condition_truthy(Value &&value) {
 			case mixed_t::kind_t::float_v:
 				return bool_t(value.float_value().native_value() != 0.0);
 			default:
-				throw std::runtime_error("scpp::php::ternary_condition_truthy(mixed_t): runtime kind is not allowed in condition context");
+				throw std::runtime_error("scpp::php::ternary_condition_truthy(mixed_t): mixed_t kind is not allowed in condition context");
 		}
 	}
 	return bool_t(cast<bool>(std::forward<Value>(value)));
@@ -1580,7 +1580,7 @@ inline void coalesce_require_selected_value_domain(const Value &value) {
 	using value_t = std::remove_cvref_t<Value>;
 	if constexpr (coalesce_wrapper_info_v<value_t>) {
 		if (!value.has_value().native_value()) {
-			throw std::runtime_error("scpp::php::coalesce_eval(): selected branch has no usable value domain for ??");
+			throw std::runtime_error("scpp::php::coalesce_eval(): ?? selected a branch with no usable value");
 		}
 	}
 }
@@ -1625,7 +1625,7 @@ inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
 		::scpp::detail::is_specialization_of_v<left_t, result_or_bool>
 		|| ::scpp::detail::is_specialization_of_v<right_t, result_or_bool>
 	) {
-		throw std::runtime_error("scpp::php::coalesce_eval(): operator ?? rejects result_or_bool<T>; use an explicit sentinel-aware conversion before coalescing");
+		throw std::runtime_error("scpp::php::coalesce_eval(): ?? does not support result_or_bool<T>; convert it explicitly first");
 		return mixed_t();
 	} else {
 		using result_t = typename detail::coalesce_result<left_t, right_t>::type;
