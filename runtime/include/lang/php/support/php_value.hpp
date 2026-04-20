@@ -1398,10 +1398,6 @@ struct coalesce_result<Left, mixed_t> {
 	using type = mixed_t;
 };
 
-template <typename T, typename Right>
-struct coalesce_result<result_or_bool<T>, Right> {
-	using type = result_or_bool<T>;
-};
 
 template <typename Then, typename Else>
 struct ternary_result;
@@ -1579,15 +1575,21 @@ inline bool_t coalesce_has_usable_value(const Value &value) {
 	}
 }
 
+template <typename Value>
+inline void coalesce_require_selected_value_domain(const Value &value) {
+	using value_t = std::remove_cvref_t<Value>;
+	if constexpr (coalesce_wrapper_info_v<value_t>) {
+		if (!value.has_value().native_value()) {
+			throw std::runtime_error("scpp::php::coalesce_eval(): selected branch has no usable value domain for ??");
+		}
+	}
+}
+
 template <typename Result, typename Value>
 inline Result normalize_coalesce_branch(Value &&value) {
 	using result_t = std::remove_cvref_t<Result>;
 	using value_t = std::remove_cvref_t<Value>;
-	if constexpr (coalesce_wrapper_info_v<value_t>) {
-		if (!value.has_value().native_value()) {
-			throw std::runtime_error("scpp::php::coalesce_eval(): selected branch has no usable value domain");
-		}
-	}
+	coalesce_require_selected_value_domain(value);
 	if constexpr (std::is_same_v<result_t, value_t>) {
 		return std::forward<Value>(value);
 	} else if constexpr (std::is_same_v<result_t, mixed_t>) {
@@ -1623,7 +1625,7 @@ inline auto coalesce_eval(LeftFn &&left_fn, RightFn &&right_fn) {
 		::scpp::detail::is_specialization_of_v<left_t, result_or_bool>
 		|| ::scpp::detail::is_specialization_of_v<right_t, result_or_bool>
 	) {
-		throw std::runtime_error("scpp::php::coalesce_eval(): coalesce rejects result_or_bool<T>");
+		throw std::runtime_error("scpp::php::coalesce_eval(): operator ?? rejects result_or_bool<T>; use an explicit sentinel-aware conversion before coalescing");
 		return mixed_t();
 	} else {
 		using result_t = typename detail::coalesce_result<left_t, right_t>::type;
