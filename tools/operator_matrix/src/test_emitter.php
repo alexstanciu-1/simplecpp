@@ -548,7 +548,7 @@ function om_expected_generator_substrings(string $diagnosticClass): array
 {
 	return match ($diagnosticClass) {
 		'unsupported_elvis_lhs_type' => ['elvis'],
-		'coalesce_selected_branch_has_no_usable_value_domain' => ['coalesce'],
+		'coalesce_selected_branch_has_no_usable_value_domain' => [],
 		default => [],
 	};
 }
