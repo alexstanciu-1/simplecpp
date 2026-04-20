@@ -73,7 +73,7 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 - `operand_target_kinds_v1.md` — canonical operand target kinds for mutation/reset-sensitive families
 - `source_mapping_policy_v1.md` — family-first source-of-truth mapping policy
 - `generation_rules_v1.md`
-- working generator slice now includes `operators_conditional_selection/elvis` with truthiness-driven branch selection semantics. — deterministic matrix row generation rules
+- `generation_rules_v1.md` — deterministic matrix row generation rules
 - `output_schema_v1.md` — canonical output row schema and enums
 - `test_seed_schema_v1.md` — canonical matrix-to-seed intermediate artifact and emitted-test handoff
 - `test_generation_rules_v1.md` — matrix-to-test synthesis rules
@@ -85,7 +85,13 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 
 ## Wrapper-aware coalesce policy
 
-`??` is wrapper-state driven for approved wrapper families and does not preserve wrapper carriers in the result. Approved wrapper families auto-unpack to their usable value domain for `coalesce`: `nullable<T>`, `result<T>`, and `result_or_false<T>`. In the current version, `result_or_bool<T>` is rejected in the runtime helper path on either side of `??`; a later typed semantic layer may move that rejection earlier. `mixed_t` uses selected value-domain semantics only for explicitly defined runtime kinds.
+`??` is wrapper-state driven for approved wrapper families and does not preserve wrapper carriers in the result. Approved wrapper families auto-unpack to their usable value domain for `coalesce`: `nullable<T>`, `result<T>`, and `result_or_false<T>`. In the current version, `result_or_bool<T>` is rejected in the runtime helper path on either side of `??`; a later typed semantic layer may move that rejection earlier.
+
+Current coalesce interpretation rules:
+- the generator remains intentionally type-blind, so some profile-specific invalid rows are runtime-rejected in v1 rather than rejected earlier
+- runtime rejection should be described in terms of the selected branch having no usable value domain, not only in terms of the syntactic RHS
+- `mixed_t(null)` is a valid selected mixed result domain when it is the selected fallback branch; it must not be conflated with wrapper states that have no usable selected value
+- `mixed_t` uses selected value-domain semantics only for explicitly defined runtime kinds
 
 
 ## Generated matrix test output

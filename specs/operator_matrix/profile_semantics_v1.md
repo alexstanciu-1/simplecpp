@@ -379,8 +379,16 @@ Normative source:
 Rows must distinguish:
 - condition profile behavior
 - branch/result shape behavior
-- wrapper-preserving behavior where specified
+- wrapper-aware branch/result behavior where specified
 - ternary third-operand behavior when the item has arity 3
+
+For `coalesce` in the current version:
+- approved wrapper families are `nullable<T>`, `result<T>`, and `result_or_false<T>`
+- approved wrappers auto-unpack to their usable selected value domain rather than preserving wrapper carriers in the result
+- `result_or_bool<T>` is runtime-rejected in v1
+- some profile-explicit invalid rows are runtime-rejected in v1 because the current generator is intentionally type-blind
+- `mixed_t(null)` must be treated as a valid selected mixed result domain when it is the selected fallback branch
+- diagnostics should be framed in terms of the selected branch having no usable value domain, not only the syntactic RHS
 
 The family must not be flattened into a simple binary-operator table.
 
@@ -421,9 +429,9 @@ Examples:
 
 ## 7. Wrapper Delegation Rule
 
-Wrapper types must never be silently erased.
+Wrapper types must never be silently erased in the source matrix description.
 
-When a family supports a wrapper by delegation, the matrix row must still record:
+When a family supports a wrapper by delegation or auto-unpack, the matrix row must still record:
 - wrapper type
 - wrapper profile
 - delegated contained profile

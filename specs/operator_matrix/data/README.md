@@ -33,6 +33,9 @@ Type universe currently present in structured data:
 
 Current selection-family support:
 - `coalesce` includes the wrapper-aware policy already documented for approved wrapper families
+- approved `coalesce` wrapper families auto-unpack to their usable value domain: `nullable<T>`, `result<T>`, and `result_or_false<T>`
+- current `coalesce` runtime rejection includes `result_or_bool<T>` participation and selected-branch rows that still have no usable value domain
+- `mixed_t(null)` remains a valid selected mixed result domain for `coalesce` when it is the selected fallback branch
 - `elvis`
 - `ternary` currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
 - current wrapper families are emitted as compile-time rejected `elvis` rows until a dedicated wrapper-aware `elvis` policy is specified

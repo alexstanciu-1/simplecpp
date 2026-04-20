@@ -9,29 +9,66 @@ This document defines the initial centralized runtime matrix for helper-based lo
 Keep the generator structurally simple and mostly type-blind while ensuring that:
 - direct expressions and assigned locals behave the same
 - supported combinations are deterministic
-- unsupported combinations fail clearly at compile time
+- wrapper-aware selection behavior is explicit
+- runtime-only rejection paths are documented where the current architecture cannot reject the row earlier
 
 ## Runtime helper split
 
 The helpers are intentionally separate because the semantic target differs:
-- `??` produces the first non-null PHP-visible value and usually unwraps `nullable<T>` to `T`, except for explicit carrier-preserving entries such as `mixed_t` and guarded-result wrappers
-- `?:` chooses between two branches using the approved condition subset and may preserve wrapper shape such as `nullable<T>` or guarded-result wrappers
-- both helpers share the same wrapper normalization rules for PHP null-ness / approved condition handling even though their result matrices remain separate
+- `??` uses wrapper-state / usable-value presence for approved wrapper families and does not preserve wrapper carriers in the result
+- `?:` chooses between two branches using the approved condition subset and may preserve wrapper shape where explicitly documented for that helper family
+- both helpers share the same wrapper normalization rules for PHP-visible state inspection even though their result policies remain separate
+
+## Current `??` rule
+
+`??` is not modeled as a generic PHP-null-only operator once approved wrappers participate.
+
+Current evaluation rule:
+- evaluate the left operand exactly once
+- if the left operand has a usable selected value, return its normalized selected value
+- otherwise evaluate the right operand exactly once
+- if the selected right branch has a usable selected value, return its normalized selected value
+- otherwise runtime-reject the operation
+
+Current v1 notes:
+- approved wrapper families auto-unpack to their usable value domain
+- approved wrapper families for `??` are:
+  - `nullable<T>`
+  - `result<T>`
+  - `result_or_false<T>`
+- `result_or_bool<T>` is rejected in the runtime helper path on either side of `??`
+- the generator remains intentionally type-blind, so some profile-specific invalid rows are runtime-rejected in v1 rather than generator- or compile-time rejected
+
+## Usable selected value vs selected mixed null
+
+The following states must not be conflated:
+- wrapper states with no usable selected value:
+  - `nullable.empty`
+  - `result.failure`
+  - `result_or_false.sentinel.false`
+- valid selected mixed values whose payload happens to be null:
+  - `mixed_t(null)` / `mixed.null`
+
+Practical effect:
+- `mixed_t(null)` may trigger fallback when it is the current branch being tested for usability
+- but if fallback selects a `mixed_t(null)` branch, the selected value domain is still valid and the coalesce result may be `mixed_t(null)`
 
 ## Initial `??` matrix
 
 | Left | Right | Result | Status | Notes |
 |---|---|---:|---|---|
 | `T` | `T` | `T` | supported | exact same non-wrapper type |
-| `nullable<T>` | `T` | `T` | supported | unwrap left when set; cast fallback to `T` |
-| `mixed_t` | `mixed_t` | `mixed_t` | supported | explicit exact-match path avoids partial-specialization ambiguity in chained coalesce expressions |
-| `mixed_t` | `T` | `mixed_t` | supported | preserves dynamic carrier and applies PHP null fallback semantics |
+| `nullable<T>` | `T` | `T` | supported | approved wrapper auto-unpacks when present; fallback uses `T` |
+| `result<T>` | `T` | `T` | supported | approved wrapper auto-unpacks on success; failure falls through to fallback |
+| `result_or_false<T>` | `T` | `T` | supported | approved wrapper auto-unpacks on success; false sentinel falls through to fallback |
+| `mixed_t` | `mixed_t` | `mixed_t` | supported | exact-match mixed path uses selected value-domain semantics |
+| `mixed_t` | `T` | `mixed_t` | supported | mixed carrier remains the explicit result domain for this join |
 | `T` | `mixed_t` | `mixed_t` | supported | fallback is normalized into `mixed_t` explicitly |
-| `nullable<T>` | `mixed_t` | `mixed_t` | supported | unwrap left when set; otherwise use dynamic fallback |
-| `result_or_false<T>` | `T` | `result_or_false<T>` | supported | PHP `false` is not null, so coalesce preserves the guarded wrapper |
-| `result_or_bool<T>` | `T` | runtime error | supported + throws | current version rejects `result_or_bool<T>` in `php::coalesce_eval(...)` rather than preserving the guarded wrapper |
-| `result<T>` | `T` | `result<T>` | supported | structured result wrappers are not null and preserve their wrapper identity |
-| `nullable<T>` | `nullable<T>` | n/a | rejected for now | would require a distinct result policy |
+| `nullable<T>` | `mixed_t` | `mixed_t` | supported | present left unwraps to payload; fallback uses mixed selected value domain |
+| `result<T>` | `mixed_t` | `mixed_t` | supported | success unwraps to payload; failure falls through to mixed selected value domain |
+| `result_or_false<T>` | `mixed_t` | `mixed_t` | supported | success unwraps to payload; false sentinel falls through to mixed selected value domain |
+| `result_or_bool<T>` | any | runtime error | supported + throws | current version rejects `result_or_bool<T>` in `php::coalesce_eval(...)` |
+| selected branch has no usable value domain | n/a | runtime error | supported + throws | current version runtime-rejects rows whose selected branch still has no usable selected value domain |
 | other mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
 
 ## Initial `?:` matrix
@@ -48,7 +85,7 @@ The helpers are intentionally separate because the semantic target differs:
 | `result_or_false<T>` | `T` | `result_or_false<T>` | supported | fallback `T` is wrapped into the guarded PHP `T|false` carrier |
 | `T` | `result_or_false<T>` | `result_or_false<T>` | supported | present branch is wrapped into the guarded PHP `T|false` carrier |
 | `result_or_bool<T>` | `T` | `result_or_bool<T>` | supported | fallback `T` is wrapped into the guarded PHP `T|bool` carrier |
-| `T` | `result_or_bool<T>` | runtime error | supported + throws | current version rejects `result_or_bool<T>` in `php::coalesce_eval(...)` rather than wrapping the fallback |
+| `T` | `result_or_bool<T>` | `result_or_bool<T>` | supported | present branch is wrapped into the guarded PHP `T|bool` carrier |
 | `result<T>` | `T` | `result<T>` | supported | fallback `T` is wrapped into the structured result carrier |
 | `T` | `result<T>` | `result<T>` | supported | present branch is wrapped into the structured result carrier |
 | mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
@@ -74,7 +111,6 @@ Initial supported condition path:
 - `mixed_t` in ternary / elvis condition context uses a narrow helper-owned rule: only runtime `bool`, `int`, and `float` kinds participate; all other kinds fail
 - `nullable<T>` is false when empty, otherwise it reuses the condition rule of the contained `T`, including the narrow `mixed_t` path when applicable
 
-
 ## Elvis rule
 
 `$x ?: $y` lowers through a temporary plus `php::ternary_eval(...)` so `$x` is evaluated exactly once.
@@ -85,16 +121,20 @@ Seed tests should prove that the helper path behaves identically for:
 - direct nullable expressions
 - nullable values first assigned to locals
 - ternary / elvis over the same runtime types
+- wrapper-aware coalesce rows, including runtime-only rejection rows that cannot be classified earlier by the current generator architecture
 
 As new combinations are approved, extend this matrix first, then add fixtures.
-
 
 ## Shared wrapper normalization rule
 
 The conditional helpers reuse one PHP-visible wrapper normalization rule:
 - `nullable<T>` is null when empty and otherwise delegates to the wrapped payload
-- `result_or_false<T>` is never null; its empty state is PHP `false`
-- `result_or_bool<T>` is never null; its non-value states are PHP `false` and `true`
-- current version note: despite that nullability model, `??` still rejects `result_or_bool<T>` in the runtime helper path by project decision
-- `result<T>` is never null; non-success states remain wrapper states
+- `result_or_false<T>` is not a usable selected coalesce value in its false-sentinel state; on success it delegates to the wrapped payload
+- `result_or_bool<T>` is never approved for `??` in the current version; its non-value states are `false` and `true` sentinels
+- `result<T>` is not a usable selected coalesce value in failure state; on success it delegates to the wrapped payload
 - `mixed_t` uses its active runtime kind (`null`, `bool`, `int`, `float`, `string`, table/object carriers)
+
+Current version note:
+- `??` uses wrapper-state / usable-value presence for approved wrappers
+- `?:` / ternary use condition-truthiness rules instead
+- helper result behavior must therefore be documented per helper family rather than inferred from a single PHP-visible nullability rule

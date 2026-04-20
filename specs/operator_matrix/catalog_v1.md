@@ -179,7 +179,7 @@ Selection operators.
 
 #### Notes
 - Includes both condition evaluation and result-shape logic
-- Must support wrapper-preserving behavior
+- Must support wrapper-aware behavior; `coalesce` specifically uses approved wrapper auto-unpack rather than wrapper preservation
 
 ---
 
