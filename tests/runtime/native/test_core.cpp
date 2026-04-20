@@ -104,7 +104,10 @@ static void test_named_casts() {
 	assert(scpp::cast<scpp::float_t>(scpp::bool_t(true)).native_value() == 1.0);
 	assert(scpp::cast<scpp::float_t>(scpp::int_t(42)).native_value() == 42.0);
 	assert(scpp::cast<scpp::bool_t>(scpp::string_t("true")).native_value() == true);
-	assert(scpp::cast<scpp::bool_t>(scpp::string_t("False")).native_value() == false);
+	assert(scpp::cast<scpp::bool_t>(scpp::string_t("")).native_value() == false);
+	scpp_test::expect_throw<std::runtime_error>([]() {
+		(void)scpp::cast<scpp::bool_t>(scpp::string_t("False"));
+	});
 	assert(scpp::cast<scpp::int_t>(scpp::string_t("-42")).native_value() == -42);
 	assert(scpp::cast<scpp::float_t>(scpp::string_t("3.5")).native_value() == 3.5);
 	assert(scpp::cast<scpp::string_t>(scpp::int_t(42)).native_value() == "42");
@@ -233,8 +236,9 @@ static void test_php_countable_contract_helpers() {
 	assert(scpp::php::empty(scpp::mixed_t(scpp::null_t{})).native_value() == true);
 	assert(scpp::php::empty(scpp::string_t("")).native_value() == true);
 	assert(scpp::php::empty(scpp::string_t("0")).native_value() == false);
-	assert(scpp::php::empty(scpp::bool_t(false)).native_value() == false);
-	assert(scpp::php::empty(scpp::int_t(0)).native_value() == false);
+	assert(scpp::php::empty(scpp::bool_t(false)).native_value() == true);
+	assert(scpp::php::empty(scpp::int_t(0)).native_value() == true);
+	assert(scpp::php::empty(scpp::float_t(0.0)).native_value() == true);
 	assert(scpp::php::isset(scpp::mixed_t(scpp::int_t(42)), scpp::string_t("id")).native_value() == false);
 
 	scpp::mixed_t mixed_with_null(scpp::shared_table_(

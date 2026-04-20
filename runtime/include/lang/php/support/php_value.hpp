@@ -546,8 +546,8 @@ inline const hash_t<mixed_t> &countable_hash_or_throw(const mixed_t &value, cons
 	throw std::runtime_error(std::string("php::") + operation + "(mixed_t) expects hash-compatible mixed_t");
 }
 
-// Centralizes the narrowed Prism++ emptiness contract for plain one-value checks.
-// How: this stays intentionally smaller than PHP falsiness; only null, empty string, and empty countables are empty.
+// Centralizes the PHP-aligned Prism++ emptiness contract for plain one-value checks.
+// How: this follows PHP emptiness for supported scalar/wrapper families, except that string "0" remains the one deliberate Prism++ non-empty value.
 inline bool_t empty_scalar(null_t) {
 	return bool_t(true);
 }
@@ -564,16 +564,16 @@ inline bool_t empty_scalar(const string_t &value) {
 	return value.empty();
 }
 
-inline bool_t empty_scalar(const bool_t &) {
-	return bool_t(false);
+inline bool_t empty_scalar(const bool_t &value) {
+	return bool_t(!value.native_value());
 }
 
-inline bool_t empty_scalar(const int_t &) {
-	return bool_t(false);
+inline bool_t empty_scalar(const int_t &value) {
+	return bool_t(value.native_value() == 0);
 }
 
-inline bool_t empty_scalar(const float_t &) {
-	return bool_t(false);
+inline bool_t empty_scalar(const float_t &value) {
+	return bool_t(value.native_value() == 0.0);
 }
 
 template <typename T>
@@ -737,8 +737,17 @@ inline bool_t empty_from_probe(const probe_state state, const mixed_t *value) {
 	if (value == nullptr) {
 		return bool_t(false);
 	}
+	if (value->is_bool().native_value()) {
+		return empty_scalar(value->bool_value());
+	}
+	if (value->is_int().native_value()) {
+		return empty_scalar(value->int_value());
+	}
+	if (value->is_float().native_value()) {
+		return empty_scalar(value->float_value());
+	}
 	if (const auto *string_value = value->string_if()) {
-		return string_value->empty();
+		return empty_scalar(*string_value);
 	}
 	if (const auto *table_value = value->table_if()) {
 		return table_value->empty();
@@ -818,8 +827,8 @@ inline bool_t empty(const hash_t<T> &value) {
 	return value.empty();
 }
 
-// Implements the narrowed Prism++ empty() contract for one-value scalar and wrapper inputs.
-// How: only null, empty string, and empty countables are empty; numeric zero, false, and "0" are intentionally not empty.
+// Implements the PHP-aligned Prism++ empty() contract for one-value scalar and wrapper inputs.
+// How: supported scalar/wrapper families follow PHP emptiness except that string "0" remains the one deliberate Prism++ non-empty value.
 inline bool_t empty(null_t value) {
 	return detail::empty_scalar(value);
 }
@@ -1167,20 +1176,17 @@ inline bool_t isset_one(const nullable<T> &value) {
 
 template <typename T>
 inline bool_t isset_one(const result_or_false<T> &value) {
-	(void) value;
-	return bool_t(true);
+	return detail::isset_from_probe(detail::probe_value(value).state);
 }
 
 template <typename T>
 inline bool_t isset_one(const result_or_bool<T> &value) {
-	(void) value;
-	return bool_t(true);
+	return detail::isset_from_probe(detail::probe_value(value).state);
 }
 
 template <typename T>
 inline bool_t isset_one(const result<T> &value) {
-	(void) value;
-	return bool_t(true);
+	return detail::isset_from_probe(detail::probe_value(value).state);
 }
 
 template <typename T>

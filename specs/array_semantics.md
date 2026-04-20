@@ -273,7 +273,7 @@ Important distinction:
 - append on array/hash carriers
 - append on `mixed(kind=null)` with autovivification
 - `isset($a[k])` with null-sensitive semantics
-- `empty($a[k])` under the reduced Prism++ emptiness rule above
+- `empty($a[k])` under the PHP-aligned Prism++ emptiness rule above, with the documented `"0"` exception
 - `unset($a[k])` as no-op on missing keys and removal on existing keys
 - typed value destinations fed by array reads through the ordinary typed-boundary rules
 

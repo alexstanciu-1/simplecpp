@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
 
-// Reduced Prism++ empty() subset: null and empty string are empty; false, 0, and "0" are not.
+// PHP-aligned Prism++ empty() contract: false, 0, and 0.0 are empty; the one deliberate deviation is that "0" is not empty.
 $none = null;
 $blank = "";
 $falseValue = false;
 $zero = 0;
+$zeroFloat = 0.0;
 $zeroString = "0";
 
 
@@ -13,4 +14,5 @@ echo empty($none) ? "T\n" : "F\n";
 echo empty($blank) ? "T\n" : "F\n";
 echo empty($falseValue) ? "T\n" : "F\n";
 echo empty($zero) ? "T\n" : "F\n";
+echo empty($zeroFloat) ? "T\n" : "F\n";
 echo empty($zeroString) ? "T\n" : "F\n";

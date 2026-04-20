@@ -41,5 +41,5 @@
         "isset",
         "empty"
     ],
-    "notes": "Covers keyed null-sensitive isset() and reduced empty() semantics on hash_t<mixed_t> values."
+    "notes": "Covers keyed null-sensitive isset() and PHP-aligned empty() semantics with the documented \"0\" deviation on hash_t<mixed_t> values."
 }

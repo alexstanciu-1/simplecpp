@@ -1233,7 +1233,7 @@
 				"float_t",
 				"mixed_t"
 			],
-			"mixed_t_rule": "for generic condition coercion and php::ternary_eval, mixed_t is allowed only when the active runtime payload is bool, int, or float; all other runtime kinds fail in condition context"
+			"mixed_t_rule": "for generic condition coercion and php::ternary_eval, mixed_t currently delegates through the shared condition helper for null, bool, int, float, and string payloads; table/object-like runtime kinds still fail in condition context"
 		},
 		"text": {
 			"result_type": "string_t",

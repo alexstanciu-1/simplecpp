@@ -337,7 +337,7 @@ Included initially:
 - `string_if()`, `table_if()`, `shared_table_if()`, and `weak_table_if()` are the current probe-style accessors
 - `cast<T>(mixed_t)` is the central typed bridge for dynamic-to-typed use
 - project-level explicit casts should normalize through `cast<T>(...)` rather than direct wrapper-to-wrapper `static_cast` chains
-- strict string explicit casts are part of the current policy: `string_t -> bool_t` accepts only `"0"`, `"1"`, `"true"`, `"false"` and the approved case variants, while `string_t -> int_t` and `string_t -> float_t` require whole-string successful parses with no trailing characters
+- strict string explicit casts are part of the current policy: `string_t -> bool_t` accepts only `""`, `"0"`, `"1"`, `"true"`, and `"false"`; any other literal runtime-errors, while `string_t -> int_t` and `string_t -> float_t` require whole-string successful parses with no trailing characters
 - long-term runtime intent is explicit bridge use at typed boundaries; current v1 non-explicit acceptance at some language/S2S sites is documented in `../../specs/dynamic_types.md` under Explicit Typed Boundaries and Technical Compromises
 - until generator parity exists, runtime/operator/cast surface must preserve those v1-visible typed-destination bridges instead of removing them for API purity alone
 - `mixed_t::operator[]` is the primary mutating chained dynamic array access helper

@@ -40,6 +40,6 @@
         "core_values",
         "empty"
     ],
-    "notes": "Locks the reduced Prism++ empty() scalar matrix for null, empty string, false, 0, and \"0\".",
+    "notes": "Locks the PHP-aligned Prism++ empty() scalar matrix for null, false, 0, 0.0, empty string, and the documented \"0\" deviation.",
     "build_notes": null
 }

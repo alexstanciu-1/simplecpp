@@ -32,16 +32,16 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "T\nT\nF\nF\nF\n",
+            "stdout": "T\nT\nT\nT\nT\nF\n",
             "stderr": ""
         }
     },
     "tags": [
         "control_flow",
         "empty",
-        "subset_contract"
+        "php_aligned"
     ],
-    "notes": "Locks the reduced Prism++ empty() scalar contract, which intentionally differs from PHP for false, 0, and \"0\".",
+    "notes": "Locks the PHP-aligned Prism++ empty() scalar contract, which intentionally differs from PHP only for \"0\".",
     "build": {
         "sanitizers": null
     }

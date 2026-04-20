@@ -100,11 +100,11 @@ namespace detail {
 }
 
 inline bool parse_bool_string_strict(const std::string &value, bool &out) {
-	if (value == "0" || value == "false" || value == "FALSE" || value == "False") {
+	if (value.empty() || value == "0" || value == "false") {
 		out = false;
 		return true;
 	}
-	if (value == "1" || value == "true" || value == "TRUE" || value == "True") {
+	if (value == "1" || value == "true") {
 		out = true;
 		return true;
 	}
@@ -270,7 +270,7 @@ inline int_t cast<int_t, float_t>(const float_t &value) {
 }
 
 // string_t -> bool_t
-// String-to-bool is strict in this project: only a small approved literal set is accepted.
+// String-to-bool is strict in this project: only "", "0", "1", "true", and "false" are accepted.
 template <>
 inline bool_t cast<bool_t, string_t>(const string_t &value) {
 	bool parsed = false;
