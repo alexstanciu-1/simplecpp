@@ -78,6 +78,11 @@ If a new implementation pass, review, or chat session starts, this document shou
    - authoritative for JSON error-mode envelope, field stability, and debug-trace rules
    - must not contradict Level 1 documents
 
+6D. `specs/architecture/runtime_design/semantic_consistency.md`
+   - authoritative for runtime semantic anti-drift organization rules
+   - authoritative for operator-family file ownership, shared semantic helper reuse, anti-fallback rules, and runtime design-rule placement
+   - must not contradict Level 1 documents or user-visible language semantics
+
 ### Level 3 — Audit / planning / supporting documents
 
 7. audit, todo, reference, and derived coordination documents under `specs/`
@@ -242,6 +247,15 @@ Role:
 
 Authority:
 - normative for runtime/language/module layering, but subordinate to higher-level documents
+
+### `specs/architecture/runtime_design/semantic_consistency.md`
+Role:
+- normative runtime design-governance rule for semantic consistency and anti-drift structure
+- fixes file-ownership, shared-helper reuse, semantic-authority, and anti-fallback rules for runtime work
+- fixes the placement rule that runtime design-governance documents belong under `specs/architecture/runtime_design/` instead of the main `runtime/` tree
+
+Authority:
+- normative for runtime semantic organization and code-structure discipline, but subordinate to higher-level documents and user-visible language semantics
 
 ### `generators/php/specs/rules.md`
 Role:
