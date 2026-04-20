@@ -131,3 +131,7 @@ For `??`:
 - coalesce_selected_branch_has_no_usable_value_domain
 - coalesce_reject_result_or_bool
 
+For ternary / elvis condition runtime rejects:
+
+- ternary_condition_reject_mixed_kind
+

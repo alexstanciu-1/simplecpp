@@ -101,3 +101,7 @@ Not stable:
 
 - coalesce_selected_branch_has_no_usable_value_domain
 - coalesce_reject_result_or_bool
+
+## Ternary / Elvis Error Codes
+
+- ternary_condition_reject_mixed_kind

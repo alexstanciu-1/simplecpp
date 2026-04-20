@@ -1490,6 +1490,42 @@ inline bool_t ternary_condition_truthy(const result<T> &value) {
 	return ternary_condition_truthy(value.value());
 }
 
+inline const char *ternary_condition_mixed_kind_name(const mixed_t::kind_t kind) {
+	switch (kind) {
+		case mixed_t::kind_t::null_v:
+			return "null_t";
+		case mixed_t::kind_t::bool_v:
+			return "bool_t";
+		case mixed_t::kind_t::int_v:
+			return "int_t";
+		case mixed_t::kind_t::float_v:
+			return "float_t";
+		case mixed_t::kind_t::string_v:
+			return "string_t";
+		case mixed_t::kind_t::table_v:
+			return "hash_t";
+		case mixed_t::kind_t::shared_table_v:
+			return "shared_hash_t";
+		case mixed_t::kind_t::dynamic_v:
+			return "dynamic_t";
+		case mixed_t::kind_t::weak_table_v:
+			return "weak_hash_t";
+	}
+	return "unknown";
+}
+
+[[noreturn]] inline void throw_ternary_condition_mixed_kind_error(const mixed_t &value) {
+	throw scpp::runtime_error(
+		"scpp::php::ternary_condition_truthy(mixed_t): mixed_t kind is not allowed in condition context",
+		"ternary_condition_reject_mixed_kind",
+		"php::ternary_condition_truthy",
+		"?:",
+		{
+			{"mixed_kind", ternary_condition_mixed_kind_name(value.kind())}
+		}
+	);
+}
+
 template <typename Value>
 inline bool_t ternary_condition_truthy(Value &&value) {
 	using value_t = std::remove_cvref_t<Value>;
@@ -1523,7 +1559,7 @@ inline bool_t ternary_condition_truthy(Value &&value) {
 			case mixed_t::kind_t::float_v:
 				return bool_t(value.float_value().native_value() != 0.0);
 			default:
-				throw std::runtime_error("scpp::php::ternary_condition_truthy(mixed_t): mixed_t kind is not allowed in condition context");
+				throw_ternary_condition_mixed_kind_error(value);
 		}
 	}
 	return bool_t(cast<bool>(std::forward<Value>(value)));
