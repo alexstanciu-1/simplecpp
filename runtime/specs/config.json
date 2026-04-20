@@ -520,7 +520,7 @@
 			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the bool states are runtime errors for required-value conversions",
 			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_bool<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the bool states, while a true-state stringifies as the PHP boolean true contract",
 			"operator_lifting_rule": "centralized generated operators define result_or_bool participation through the same guarded-value lifting surface used by nullable; the non-value bool states fail through runtime errors except explicit bool/false-sentinel comparisons",
-			"sentinel_rule": "the public PHP-facing comparison surface remains == false and == true while the runtime implementation uses false_sentinel_t / false_sentinel and bool_t(true) internally"
+			"sentinel_rule": "the public PHP-facing comparison surface remains == false and == true while the runtime implementation uses false_sentinel_t / false_sentinel and true_sentinel_t / true_sentinel internally; result_or_bool<bool_t> reserves plain bool/bool_t construction for wrapped payload values"
 		},
 		"error_t": {
 			"kind": "runtime_value",

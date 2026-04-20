@@ -1248,6 +1248,7 @@ If a symbol is not present in the registry, the generator will **not** qualify i
 ## Explicit result_or_false<T> and result<T> type intent
 
 - `result_or_false<T>`, `result_or_bool<T>`, and `result<T>` are explicit type-intent wrappers only; the generator must not infer them from PHP unions automatically in this pass.
+- For `result_or_false<bool_t>`, plain `false` remains a wrapped payload value; the explicit false-sentinel forms are `false_sentinel`, `null`, and `nullopt`. The generator must not rewrite a typed `false` payload into the sentinel for this specialization.
 - explicit type intent must never silently degrade to `mixed_t`; unsupported or malformed `result_or_false<T>` / `result_or_bool<T>` / `result<T>` syntax is a generator error.
 - wrapper lowering uses the canonical mapped inner runtime type, so `result_or_false<MyBox>` lowers to `result_or_false<shared_p<MyBox>>`, `result_or_bool<MyBox>` lowers to `result_or_bool<shared_p<MyBox>>`, while `result<int>` lowers to `result<int_t>`.
 - `$result->error()->...` is the supported error-access surface for `result<T>` and must lower to the wrapper method rather than a payload property named `error`.

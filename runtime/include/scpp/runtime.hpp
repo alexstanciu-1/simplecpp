@@ -24,6 +24,7 @@
 #include "scpp/weak_p.hpp"
 #include "scpp/value_p.hpp"
 #include "scpp/false_sentinel_t.hpp"
+#include "scpp/true_sentinel_t.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/result_or_false.hpp"
 #include "scpp/result_or_bool.hpp"

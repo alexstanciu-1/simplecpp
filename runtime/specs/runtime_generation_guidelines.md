@@ -328,6 +328,7 @@ See: module_inclusion_model.md
 - `result<T>` is the explicit structured-failure wrapper. Value-required casts, typed-boundary conversions, and operator participation unwrap only the success value; the error state is never silently converted into a usable value.
 - `result<T>` error inspection is explicit through `error()`. The generator must lower `$result->error()->...` to the wrapper method rather than treating `error` as a real payload property.
 - `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, but its non-value states are the PHP boolean sentinels `false` and `true`.
+- Policy lock for `result_or_bool<bool_t>`: implicit `bool` / `bool_t` construction and assignment target the wrapped payload. Use `false_sentinel`, `null`, or `nullopt` for the false state, and `true_sentinel` for the true state.
 
 
 ## PHP exposure return contracts

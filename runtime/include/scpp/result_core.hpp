@@ -4,6 +4,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/error_t.hpp"
 #include "scpp/false_sentinel_t.hpp"
+#include "scpp/true_sentinel_t.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/nullopt_t.hpp"
 
@@ -93,6 +94,10 @@ protected:
 		: storage_(std::monostate{}), state_(value ? result_state::true_value : result_state::false_value) {
 	}
 
+	result_core(true_sentinel_t) requires (!AllowError && AllowTrue)
+		: storage_(std::monostate{}), state_(result_state::true_value) {
+	}
+
 	result_core &assign_value(const T &value) {
 		storage_ = value;
 		state_ = result_state::value;
@@ -150,6 +155,12 @@ protected:
 	result_core &assign_bool(bool value) requires (!AllowError && AllowTrue) {
 		storage_ = std::monostate{};
 		state_ = value ? result_state::true_value : result_state::false_value;
+		return *this;
+	}
+
+	result_core &assign_true(true_sentinel_t) requires (!AllowError && AllowTrue) {
+		storage_ = std::monostate{};
+		state_ = result_state::true_value;
 		return *this;
 	}
 

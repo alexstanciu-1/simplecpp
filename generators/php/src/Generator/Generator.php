@@ -418,7 +418,11 @@ final class Generator
 			return $renderedExpr;
 		}
 
-		if (str_starts_with($expectedType, 'result_or_false<') && $renderedExpr === 'static_cast<bool_t>(false)') {
+		if (
+			str_starts_with($expectedType, 'result_or_false<')
+			&& $expectedType !== 'result_or_false<bool_t>'
+			&& $renderedExpr === 'static_cast<bool_t>(false)'
+		) {
 			return 'false_sentinel';
 		}
 

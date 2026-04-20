@@ -24,6 +24,30 @@ struct sample_box final {
 	[[nodiscard]] scpp::int_t get_value() const { return value; }
 };
 
+
+static void test_result_or_bool_bool_payload_policy() {
+	scpp::result_or_bool<scpp::bool_t> payload_false(scpp::bool_t(false));
+	scpp::result_or_bool<scpp::bool_t> payload_true(true);
+	scpp::result_or_bool<scpp::bool_t> sentinel_true(scpp::true_sentinel);
+	scpp::result_or_bool<scpp::bool_t> sentinel_false(scpp::false_sentinel);
+
+	assert(payload_false.has_value().native_value());
+	assert(!payload_false.is_false().native_value());
+	assert(!payload_false.is_true().native_value());
+	assert(!payload_false.value().native_value());
+
+	assert(payload_true.has_value().native_value());
+	assert(payload_true.value().native_value());
+
+	assert(!sentinel_true.has_value().native_value());
+	assert(sentinel_true.is_true().native_value());
+	assert(!sentinel_true.is_false().native_value());
+
+	assert(!sentinel_false.has_value().native_value());
+	assert(!sentinel_false.is_true().native_value());
+	assert(sentinel_false.is_false().native_value());
+}
+
 static void test_result_or_bool_basic() {
 	scpp::result_or_bool<scpp::int_t> value(scpp::int_t(10));
 	scpp::result_or_bool<scpp::int_t> bool_true(scpp::bool_t(true));
@@ -78,6 +102,7 @@ static void test_or_error_basic() {
 
 int main() {
 	test_or_false_basic();
+	test_result_or_bool_bool_payload_policy();
 	test_result_or_bool_basic();
 	test_or_error_basic();
 	return 0;
