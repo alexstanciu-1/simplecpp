@@ -275,6 +275,19 @@ function om_map_seed_type_to_php_annotation(string $type): string
 
 function om_render_seed_profile_literal(string $type, string $profile): string
 {
+	if ($type === 'result_or_false<bool_t>' && $profile === 'result_or_false.sentinel.false') {
+		return 'null';
+	}
+
+	if ($type === 'result_or_bool<bool_t>') {
+		if ($profile === 'result_or_bool.sentinel.false') {
+			return 'null';
+		}
+		if ($profile === 'result_or_bool.sentinel.true') {
+			return 'true_sentinel';
+		}
+	}
+
 	return match ($profile) {
 		'bool.false' => 'false',
 		'bool.true' => 'true',
