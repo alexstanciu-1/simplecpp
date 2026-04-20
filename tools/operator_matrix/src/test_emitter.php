@@ -547,7 +547,7 @@ function om_expected_generator_substrings(string $diagnosticClass): array
 {
 	return match ($diagnosticClass) {
 		'unsupported_elvis_lhs_type' => ['elvis'],
-		'coalesce_rhs_has_no_usable_value_domain' => ['coalesce'],
+		'coalesce_selected_branch_has_no_usable_value_domain' => ['coalesce'],
 		default => [],
 	};
 }
@@ -559,7 +559,7 @@ function om_expected_runtime_substrings(string $diagnosticClass): array
 {
 	return match ($diagnosticClass) {
 		'coalesce_reject_result_or_bool' => ['result_or_bool', 'coalesce'],
-		'coalesce_rhs_has_no_usable_value_domain' => ['coalesce', 'usable value domain'],
+		'coalesce_selected_branch_has_no_usable_value_domain' => ['coalesce', 'usable value domain'],
 		default => [],
 	};
 }

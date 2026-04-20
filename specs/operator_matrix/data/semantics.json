@@ -6931,7 +6931,7 @@
           "edge_case_id": "coalesce.mixed_t.nullable(bool_t).mixed.null.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -7442,7 +7442,7 @@
           "edge_case_id": "coalesce.mixed_t.nullable(float_t).mixed.null.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -7953,7 +7953,7 @@
           "edge_case_id": "coalesce.mixed_t.nullable(int_t).mixed.null.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -8464,7 +8464,7 @@
           "edge_case_id": "coalesce.mixed_t.nullable(string_t).mixed.null.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -9479,7 +9479,7 @@
           "edge_case_id": "coalesce.mixed_t.result(bool_t).mixed.null.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -9990,7 +9990,7 @@
           "edge_case_id": "coalesce.mixed_t.result(float_t).mixed.null.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -10501,7 +10501,7 @@
           "edge_case_id": "coalesce.mixed_t.result(int_t).mixed.null.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -11012,7 +11012,7 @@
           "edge_case_id": "coalesce.mixed_t.result(string_t).mixed.null.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -14985,7 +14985,7 @@
           "edge_case_id": "coalesce.mixed_t.result_or_false(bool_t).mixed.null.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -15496,7 +15496,7 @@
           "edge_case_id": "coalesce.mixed_t.result_or_false(float_t).mixed.null.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -16007,7 +16007,7 @@
           "edge_case_id": "coalesce.mixed_t.result_or_false(int_t).mixed.null.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -16518,7 +16518,7 @@
           "edge_case_id": "coalesce.mixed_t.result_or_false(string_t).mixed.null.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -19091,7 +19091,7 @@
           "edge_case_id": "coalesce.nullable(bool_t).nullable(bool_t).nullable.empty.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -19206,7 +19206,7 @@
           "edge_case_id": "coalesce.nullable(bool_t).result(bool_t).nullable.empty.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -19461,7 +19461,7 @@
           "edge_case_id": "coalesce.nullable(bool_t).result_or_false(bool_t).nullable.empty.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -20216,7 +20216,7 @@
           "edge_case_id": "coalesce.nullable(float_t).nullable(float_t).nullable.empty.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -20331,7 +20331,7 @@
           "edge_case_id": "coalesce.nullable(float_t).result(float_t).nullable.empty.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -20586,7 +20586,7 @@
           "edge_case_id": "coalesce.nullable(float_t).result_or_false(float_t).nullable.empty.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -21341,7 +21341,7 @@
           "edge_case_id": "coalesce.nullable(int_t).nullable(int_t).nullable.empty.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -21456,7 +21456,7 @@
           "edge_case_id": "coalesce.nullable(int_t).result(int_t).nullable.empty.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -21711,7 +21711,7 @@
           "edge_case_id": "coalesce.nullable(int_t).result_or_false(int_t).nullable.empty.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -22926,7 +22926,7 @@
           "edge_case_id": "coalesce.nullable(string_t).nullable(string_t).nullable.empty.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -23365,7 +23365,7 @@
           "edge_case_id": "coalesce.nullable(string_t).result(string_t).nullable.empty.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -24274,7 +24274,7 @@
           "edge_case_id": "coalesce.nullable(string_t).result_or_false(string_t).nullable.empty.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -25189,10 +25189,12 @@
           "status": "supported",
           "edge_case": true,
           "edge_case_id": "coalesce.result(bool_t).mixed_t.result.failure.rhs.mixed.null",
-          "test_seed_class": "coalesce_runtime_reject",
-          "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
-          "behavior_class": "throws"
+          "test_seed_class": "runtime_success",
+          "notes": "Left side is in a fallback-triggering state; the selected fallback branch is mixed.null, which remains a valid selected mixed result domain.",
+          "diagnostic_class": null,
+          "behavior_class": "deterministic_value",
+          "result_type": "mixed_t",
+          "result_profile": "mixed.null"
         },
         {
           "lhs_profile": "result.failure",
@@ -25702,7 +25704,7 @@
           "edge_case_id": "coalesce.result(bool_t).nullable(bool_t).result.failure.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -25817,7 +25819,7 @@
           "edge_case_id": "coalesce.result(bool_t).result(bool_t).result.failure.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -26072,7 +26074,7 @@
           "edge_case_id": "coalesce.result(bool_t).result_or_false(bool_t).result.failure.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -26265,10 +26267,12 @@
           "status": "supported",
           "edge_case": true,
           "edge_case_id": "coalesce.result(float_t).mixed_t.result.failure.rhs.mixed.null",
-          "test_seed_class": "coalesce_runtime_reject",
-          "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
-          "behavior_class": "throws"
+          "test_seed_class": "runtime_success",
+          "notes": "Left side is in a fallback-triggering state; the selected fallback branch is mixed.null, which remains a valid selected mixed result domain.",
+          "diagnostic_class": null,
+          "behavior_class": "deterministic_value",
+          "result_type": "mixed_t",
+          "result_profile": "mixed.null"
         },
         {
           "lhs_profile": "result.failure",
@@ -26778,7 +26782,7 @@
           "edge_case_id": "coalesce.result(float_t).nullable(float_t).result.failure.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -26893,7 +26897,7 @@
           "edge_case_id": "coalesce.result(float_t).result(float_t).result.failure.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -27148,7 +27152,7 @@
           "edge_case_id": "coalesce.result(float_t).result_or_false(float_t).result.failure.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -27341,10 +27345,12 @@
           "status": "supported",
           "edge_case": true,
           "edge_case_id": "coalesce.result(int_t).mixed_t.result.failure.rhs.mixed.null",
-          "test_seed_class": "coalesce_runtime_reject",
-          "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
-          "behavior_class": "throws"
+          "test_seed_class": "runtime_success",
+          "notes": "Left side is in a fallback-triggering state; the selected fallback branch is mixed.null, which remains a valid selected mixed result domain.",
+          "diagnostic_class": null,
+          "behavior_class": "deterministic_value",
+          "result_type": "mixed_t",
+          "result_profile": "mixed.null"
         },
         {
           "lhs_profile": "result.failure",
@@ -27854,7 +27860,7 @@
           "edge_case_id": "coalesce.result(int_t).nullable(int_t).result.failure.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -27969,7 +27975,7 @@
           "edge_case_id": "coalesce.result(int_t).result(int_t).result.failure.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -28224,7 +28230,7 @@
           "edge_case_id": "coalesce.result(int_t).result_or_false(int_t).result.failure.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -28337,10 +28343,12 @@
           "status": "supported",
           "edge_case": true,
           "edge_case_id": "coalesce.result(string_t).mixed_t.result.failure.rhs.mixed.null",
-          "test_seed_class": "coalesce_runtime_reject",
-          "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
-          "behavior_class": "throws"
+          "test_seed_class": "runtime_success",
+          "notes": "Left side is in a fallback-triggering state; the selected fallback branch is mixed.null, which remains a valid selected mixed result domain.",
+          "diagnostic_class": null,
+          "behavior_class": "deterministic_value",
+          "result_type": "mixed_t",
+          "result_profile": "mixed.null"
         },
         {
           "lhs_profile": "result.failure",
@@ -29354,7 +29362,7 @@
           "edge_case_id": "coalesce.result(string_t).nullable(string_t).result.failure.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -29793,7 +29801,7 @@
           "edge_case_id": "coalesce.result(string_t).result(string_t).result.failure.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -30702,7 +30710,7 @@
           "edge_case_id": "coalesce.result(string_t).result_or_false(string_t).result.failure.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -38995,10 +39003,12 @@
           "status": "supported",
           "edge_case": true,
           "edge_case_id": "coalesce.result_or_false(bool_t).mixed_t.result_or_false.sentinel.false.rhs.mixed.null",
-          "test_seed_class": "coalesce_runtime_reject",
-          "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
-          "behavior_class": "throws"
+          "test_seed_class": "runtime_success",
+          "notes": "Left side is in a fallback-triggering state; the selected fallback branch is mixed.null, which remains a valid selected mixed result domain.",
+          "diagnostic_class": null,
+          "behavior_class": "deterministic_value",
+          "result_type": "mixed_t",
+          "result_profile": "mixed.null"
         },
         {
           "lhs_profile": "result_or_false.sentinel.false",
@@ -39508,7 +39518,7 @@
           "edge_case_id": "coalesce.result_or_false(bool_t).nullable(bool_t).result_or_false.sentinel.false.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -39623,7 +39633,7 @@
           "edge_case_id": "coalesce.result_or_false(bool_t).result(bool_t).result_or_false.sentinel.false.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -39878,7 +39888,7 @@
           "edge_case_id": "coalesce.result_or_false(bool_t).result_or_false(bool_t).result_or_false.sentinel.false.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -40071,10 +40081,12 @@
           "status": "supported",
           "edge_case": true,
           "edge_case_id": "coalesce.result_or_false(float_t).mixed_t.result_or_false.sentinel.false.rhs.mixed.null",
-          "test_seed_class": "coalesce_runtime_reject",
-          "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
-          "behavior_class": "throws"
+          "test_seed_class": "runtime_success",
+          "notes": "Left side is in a fallback-triggering state; the selected fallback branch is mixed.null, which remains a valid selected mixed result domain.",
+          "diagnostic_class": null,
+          "behavior_class": "deterministic_value",
+          "result_type": "mixed_t",
+          "result_profile": "mixed.null"
         },
         {
           "lhs_profile": "result_or_false.sentinel.false",
@@ -40584,7 +40596,7 @@
           "edge_case_id": "coalesce.result_or_false(float_t).nullable(float_t).result_or_false.sentinel.false.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -40699,7 +40711,7 @@
           "edge_case_id": "coalesce.result_or_false(float_t).result(float_t).result_or_false.sentinel.false.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -40954,7 +40966,7 @@
           "edge_case_id": "coalesce.result_or_false(float_t).result_or_false(float_t).result_or_false.sentinel.false.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -41147,10 +41159,12 @@
           "status": "supported",
           "edge_case": true,
           "edge_case_id": "coalesce.result_or_false(int_t).mixed_t.result_or_false.sentinel.false.rhs.mixed.null",
-          "test_seed_class": "coalesce_runtime_reject",
-          "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
-          "behavior_class": "throws"
+          "test_seed_class": "runtime_success",
+          "notes": "Left side is in a fallback-triggering state; the selected fallback branch is mixed.null, which remains a valid selected mixed result domain.",
+          "diagnostic_class": null,
+          "behavior_class": "deterministic_value",
+          "result_type": "mixed_t",
+          "result_profile": "mixed.null"
         },
         {
           "lhs_profile": "result_or_false.sentinel.false",
@@ -41660,7 +41674,7 @@
           "edge_case_id": "coalesce.result_or_false(int_t).nullable(int_t).result_or_false.sentinel.false.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -41775,7 +41789,7 @@
           "edge_case_id": "coalesce.result_or_false(int_t).result(int_t).result_or_false.sentinel.false.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -42030,7 +42044,7 @@
           "edge_case_id": "coalesce.result_or_false(int_t).result_or_false(int_t).result_or_false.sentinel.false.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -42143,10 +42157,12 @@
           "status": "supported",
           "edge_case": true,
           "edge_case_id": "coalesce.result_or_false(string_t).mixed_t.result_or_false.sentinel.false.rhs.mixed.null",
-          "test_seed_class": "coalesce_runtime_reject",
-          "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
-          "behavior_class": "throws"
+          "test_seed_class": "runtime_success",
+          "notes": "Left side is in a fallback-triggering state; the selected fallback branch is mixed.null, which remains a valid selected mixed result domain.",
+          "diagnostic_class": null,
+          "behavior_class": "deterministic_value",
+          "result_type": "mixed_t",
+          "result_profile": "mixed.null"
         },
         {
           "lhs_profile": "result_or_false.sentinel.false",
@@ -43160,7 +43176,7 @@
           "edge_case_id": "coalesce.result_or_false(string_t).nullable(string_t).result_or_false.sentinel.false.rhs.nullable.empty",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -43599,7 +43615,7 @@
           "edge_case_id": "coalesce.result_or_false(string_t).result(string_t).result_or_false.sentinel.false.rhs.result.failure",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {
@@ -44508,7 +44524,7 @@
           "edge_case_id": "coalesce.result_or_false(string_t).result_or_false(string_t).result_or_false.sentinel.false.rhs.result_or_false.sentinel.false",
           "test_seed_class": "coalesce_runtime_reject",
           "notes": "Both sides reduce to fallback-triggering states for this explicit profile combination; coalesce working slice runtime-rejects rows without a usable selected value domain.",
-          "diagnostic_class": "coalesce_rhs_has_no_usable_value_domain",
+          "diagnostic_class": "coalesce_selected_branch_has_no_usable_value_domain",
           "behavior_class": "throws"
         },
         {

@@ -1326,6 +1326,7 @@ template <typename T, typename Right>
 requires (
 	!coalesce_wrapper_info_v<Right>
 	&& !std::is_same_v<std::remove_cvref_t<Right>, mixed_t>
+	&& std::is_same_v<T, std::remove_cvref_t<Right>>
 )
 struct coalesce_result<nullable<T>, Right> {
 	using type = T;
@@ -1335,6 +1336,7 @@ template <typename Left, typename T>
 requires (
 	!coalesce_wrapper_info_v<Left>
 	&& !std::is_same_v<std::remove_cvref_t<Left>, mixed_t>
+	&& std::is_same_v<std::remove_cvref_t<Left>, T>
 )
 struct coalesce_result<Left, nullable<T>> {
 	using type = Left;
@@ -1580,7 +1582,7 @@ inline void coalesce_require_selected_value_domain(const Value &value) {
 	using value_t = std::remove_cvref_t<Value>;
 	if constexpr (coalesce_wrapper_info_v<value_t>) {
 		if (!value.has_value().native_value()) {
-			throw std::runtime_error("scpp::php::coalesce_eval(): ?? selected a branch with no usable value");
+			throw std::runtime_error("scpp::php::coalesce_eval(): ?? selected a branch with no usable value domain");
 		}
 	}
 }
