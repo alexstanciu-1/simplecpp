@@ -1583,12 +1583,19 @@ template <typename Result, typename Value>
 inline Result normalize_coalesce_branch(Value &&value) {
 	using result_t = std::remove_cvref_t<Result>;
 	using value_t = std::remove_cvref_t<Value>;
+	if constexpr (coalesce_wrapper_info_v<value_t>) {
+		if (!value.has_value().native_value()) {
+			throw std::runtime_error("scpp::php::coalesce_eval(): selected branch has no usable value domain");
+		}
+	}
 	if constexpr (std::is_same_v<result_t, value_t>) {
 		return std::forward<Value>(value);
 	} else if constexpr (std::is_same_v<result_t, mixed_t>) {
 		if constexpr (conditional_nullable_info_v<value_t>) {
 			using inner_t = typename conditional_nullable_info<value_t>::inner_type;
 			return mixed_t(cast<inner_t>(value));
+		} else if constexpr (::scpp::detail::is_specialization_of_v<value_t, result_or_false> || ::scpp::detail::is_specialization_of_v<value_t, result>) {
+			return mixed_t(value.value());
 		}
 		return mixed_t(std::forward<Value>(value));
 	} else if constexpr (guarded_result_info_v<result_t>) {
