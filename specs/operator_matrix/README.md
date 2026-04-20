@@ -104,3 +104,16 @@ Negative-generate emission and enablement are configurable by CLI flag. The curr
 2. explicit diagnostic allowlist
 3. global negative-generate enable mode
 4. default disabled state
+
+## Runtime Errors (JSON Mode)
+
+When SCPP_ERROR_FORMAT=json is enabled:
+
+- runtime errors must include a stable `code`
+- tests should assert on `code`, not message text
+
+For `??`:
+
+- coalesce_selected_branch_has_no_usable_value_domain
+- coalesce_reject_result_or_bool
+

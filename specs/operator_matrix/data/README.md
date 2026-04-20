@@ -47,3 +47,16 @@ Current selection-family support:
 - every definition must cover the exact profile set declared for its `lhs_type`
 - binary definitions must cover the exact profile Cartesian product declared for `lhs_type` and `rhs_type`
 - the generator validates completeness for the current working slice
+
+## Runtime Reject Expectations
+
+Runtime-reject tests should:
+
+- prefer JSON mode (SCPP_ERROR_FORMAT=json)
+- validate:
+  - error.code
+- avoid:
+  - substring matching on message
+
+This ensures stability when messages change.
+
