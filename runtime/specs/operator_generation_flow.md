@@ -316,7 +316,8 @@ That is the current procedural and informational model for the operator-generati
 
 ## result_or_false<T>, result_or_bool<T>, and result<T>
 
-- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`.
+- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper.
+- For `result_or_false<bool_t>`, plain `bool` / `bool_t` construction remains a wrapped payload value. The false sentinel stays explicit through `false_sentinel`, `null`, or `nullopt`; code generation must not silently rewrite a typed payload `false` into the sentinel for this specialization. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`.
 - `result<T>` is the explicit structured-failure wrapper. Value-required casts, typed-boundary conversions, and operator participation unwrap only the success value; the error state is never silently converted into a usable value.
 - `result<T>` error inspection is explicit through `error()`. The generator must lower `$result->error()->...` to the wrapper method rather than treating `error` as a real payload property.
 - `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, but its non-value states are the PHP boolean sentinels `false` and `true`.

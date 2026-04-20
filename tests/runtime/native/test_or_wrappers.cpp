@@ -17,6 +17,13 @@ static void test_or_false_basic() {
 		threw = true;
 	}
 	assert(threw == true);
+
+	scpp::result_or_false<scpp::bool_t> bool_payload_false(scpp::bool_t(false));
+	scpp::result_or_false<scpp::bool_t> bool_sentinel_false(scpp::false_sentinel);
+	assert(bool_payload_false.has_value().native_value() == true);
+	assert(bool_payload_false.value().native_value() == false);
+	assert(bool_sentinel_false.has_value().native_value() == false);
+	assert((bool_sentinel_false == scpp::false_sentinel).native_value() == true);
 }
 
 struct sample_box final {

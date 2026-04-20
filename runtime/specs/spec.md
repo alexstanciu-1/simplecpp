@@ -529,7 +529,8 @@ See: module_inclusion_model.md
 
 ## result_or_false<T>, result_or_bool<T>, and result<T>
 
-- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`, and PHP helper operators must normalize that state as the visible PHP `false` value.
+- `result_or_false<T>` is the explicit PHP-compatibility false-able wrapper.
+- For `result_or_false<bool_t>`, plain `bool` / `bool_t` construction remains a wrapped payload value. The false sentinel stays explicit through `false_sentinel`, `null`, or `nullopt`; code generation must not silently rewrite a typed payload `false` into the sentinel for this specialization. It shares the centralized guarded-value operator/cast lifting model with `nullable<T>`, but its empty state represents the PHP `false` sentinel rather than `null`, and PHP helper operators must normalize that state as the visible PHP `false` value.
 - `result<T>` is the explicit structured-failure wrapper. Value-required casts and typed-boundary conversions unwrap only the success value; PHP helper identity may compare either the success payload or the structured `error_t` payload, but the error state is never silently converted into a usable value.
 - `result<T>` error inspection is explicit through `error()`. The generator must lower `$result->error()->...` to the wrapper method rather than treating `error` as a real payload property.
 - `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, and its non-value states must normalize to the visible PHP boolean sentinels `false` and `true` for helper-owned operators and conditions.
