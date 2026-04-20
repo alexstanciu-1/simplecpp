@@ -2,6 +2,7 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/cast.hpp"
 #include "scpp/memory.hpp"
+#include "lang/php/operators/conditional/condition_truthiness.hpp"
 
 #include <sstream>
 #include <utility>
@@ -64,30 +65,6 @@ namespace {
 	auto right_locked = right.lock();
 	if (!static_cast<bool>(left_locked) || !static_cast<bool>(right_locked)) return bool_t{false};
 	return left_locked == right_locked;
-}
-
-[[nodiscard]] bool is_condition_compatible_kind(const mixed_t::kind_t kind) noexcept {
-	switch (kind) {
-		case mixed_t::kind_t::bool_v:
-		case mixed_t::kind_t::int_v:
-		case mixed_t::kind_t::float_v:
-			return true;
-		default:
-			return false;
-	}
-}
-
-[[nodiscard]] bool_t to_condition_bool(const mixed_t &value, const char *operation) {
-	switch (value.kind()) {
-		case mixed_t::kind_t::bool_v:
-			return value.bool_value();
-		case mixed_t::kind_t::int_v:
-			return cast<bool_t>(value.int_value());
-		case mixed_t::kind_t::float_v:
-			return cast<bool_t>(value.float_value());
-		default:
-			throw runtime_error_unary(operation, value);
-	}
 }
 
 [[nodiscard]] mixed_t &apply_compound_assignment(mixed_t &left, const mixed_t &right, const char *operation) {
@@ -838,7 +815,7 @@ mixed_t operator-(const mixed_t &value) {
 	}
 }
 bool_t operator!(const mixed_t &value) {
-	return !to_condition_bool(value, "!");
+	return bool_t(!static_cast<bool>(::scpp::php::condition_truthy(value)));
 }
 mixed_t operator~(const mixed_t &value) {
 	if (value.kind() == mixed_t::kind_t::int_v) return mixed_t{~value.int_value_};
@@ -999,16 +976,10 @@ bool_t operator>=(const mixed_t &left, const mixed_t &right) {
 	throw runtime_error_binary(">=", left, right);
 }
 bool_t operator&&(const mixed_t &left, const mixed_t &right) {
-	if (!is_condition_compatible_kind(left.kind()) || !is_condition_compatible_kind(right.kind())) {
-		throw runtime_error_binary("&&", left, right);
-	}
-	return to_condition_bool(left, "&&") && to_condition_bool(right, "&&");
+	return bool_t(static_cast<bool>(::scpp::php::condition_truthy(left)) && static_cast<bool>(::scpp::php::condition_truthy(right)));
 }
 bool_t operator||(const mixed_t &left, const mixed_t &right) {
-	if (!is_condition_compatible_kind(left.kind()) || !is_condition_compatible_kind(right.kind())) {
-		throw runtime_error_binary("||", left, right);
-	}
-	return to_condition_bool(left, "||") || to_condition_bool(right, "||");
+	return bool_t(static_cast<bool>(::scpp::php::condition_truthy(left)) || static_cast<bool>(::scpp::php::condition_truthy(right)));
 }
 
 // ============================================================

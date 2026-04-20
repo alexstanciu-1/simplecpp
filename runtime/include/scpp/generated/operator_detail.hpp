@@ -14,6 +14,7 @@
 #include "scpp/weak_p.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/cast.hpp"
+#include "lang/php/operators/conditional/condition_truthiness.hpp"
 
 namespace scpp::detail::generated_operator_detail {
 
@@ -37,16 +38,9 @@ namespace scpp::detail::generated_operator_detail {
 	return int_t(~value.native_value());
 }
 
-[[nodiscard]] inline constexpr bool truthy(const bool_t &value) noexcept {
-	return value.native_value();
-}
-
-[[nodiscard]] inline constexpr bool truthy(const int_t &value) noexcept {
-	return value.native_value() != 0;
-}
-
-[[nodiscard]] inline constexpr bool truthy(const float_t &value) noexcept {
-	return value.native_value() != 0.0;
+template <typename Value>
+[[nodiscard]] inline bool truthy(const Value &value) {
+	return static_cast<bool>(::scpp::php::condition_truthy(value));
 }
 
 [[nodiscard]] inline constexpr int_t add(const int_t &lhs, const int_t &rhs) noexcept {
