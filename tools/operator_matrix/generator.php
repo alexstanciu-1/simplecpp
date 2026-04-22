@@ -27,8 +27,10 @@ function main(array $argv): void
 		$registry = om_build_registry($data);
 		$rows = om_build_rows($data, $registry, $options['family']);
 		$validation = om_validate_rows($registry, $rows, $options['family']);
+		om_validate_seed_builder_routing($rows);
 		$testSeeds = om_build_test_seeds($registry, $rows);
 		$testSeedValidation = om_validate_test_seeds($rows, $testSeeds);
+		om_validate_emitter_routing($testSeeds);
 		$emissionReport = om_emit_matrix_tests($repoRoot, $testSeeds, $options);
 
 		$outputRoot = $repoRoot . '/build/operator_matrix';

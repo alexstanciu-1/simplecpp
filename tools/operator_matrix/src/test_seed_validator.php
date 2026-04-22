@@ -18,12 +18,13 @@ function om_validate_test_seeds(array $rows, array $seeds): array
 	$rowsRequiringSeeds = [];
 
 	foreach ($rows as $row) {
-		if (($row['family_id'] ?? null) !== 'operators_conditional_selection') {
-			continue;
-		}
-
 		$testSeedClass = $row['test_seed_class'] ?? null;
-		if (is_string($testSeedClass) && $testSeedClass !== '') {
+		$familyId = (string) ($row['family_id'] ?? '');
+		if (
+			is_string($testSeedClass)
+			&& $testSeedClass !== ''
+			&& om_has_seed_builder_route_for_family($familyId)
+		) {
 			$rowsRequiringSeeds[(string) $row['row_id']] = true;
 		}
 	}

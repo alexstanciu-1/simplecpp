@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ssh -T alex-ai@dev002.travelfuse.ro <<'REMOTE'
+set -euo pipefail
+cd /home/alex-ai/simple_cpp
+run_root="/home/alex-ai/operator_matrix_server_runs"
+mkdir -p "$run_root"
+run_id="operator_matrix_full_$(date +%Y%m%d_%H%M%S)"
+log="${run_root}/${run_id}.log"
+pidfile="${run_root}/${run_id}.pid"
+nohup bash -lc '
+set -e
+cd /home/alex-ai/simple_cpp
+printf "[%s] loader_schema_test start\n" "$(date -Iseconds)"
+php8.5 tools/operator_matrix/tests/loader_schema_test.php
+printf "[%s] routing_regression_test start\n" "$(date -Iseconds)"
+php8.5 tools/operator_matrix/tests/routing_regression_test.php
+printf "[%s] emitter_regression_test start\n" "$(date -Iseconds)"
+php8.5 tools/operator_matrix/tests/emitter_regression_test.php
+printf "[%s] generator start\n" "$(date -Iseconds)"
+php8.5 tools/operator_matrix/generator.php
+printf "[%s] reset php-matrix start\n" "$(date -Iseconds)"
+php8.5 tests/tools/run_tests.php reset --suite=php-matrix
+printf "[%s] run php-matrix start\n" "$(date -Iseconds)"
+php8.5 tests/tools/run_tests.php run --suite=php-matrix --jobs=24
+printf "[%s] job complete\n" "$(date -Iseconds)"
+' > "$log" 2>&1 < /dev/null &
+echo $! > "$pidfile"
+printf 'RUN_ID=%s\nPID=%s\nLOG=%s\nPIDFILE=%s\n' "$run_id" "$(cat "$pidfile")" "$log" "$pidfile"
+REMOTE

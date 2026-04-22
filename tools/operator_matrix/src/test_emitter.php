@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Emit concrete PHP matrix tests from deterministic test seeds.
+ * Emit concrete matrix tests from deterministic test seeds.
  *
  * @param list<array<string, mixed>> $seeds
  * @param array<string, mixed> $options
@@ -11,69 +11,50 @@ declare(strict_types=1);
  */
 function om_emit_matrix_tests(string $repoRoot, array $seeds, array $options): array
 {
-	$phpMatrixRoot = $repoRoot . '/tests/php-matrix';
-	$runtimeMatrixRoot = $repoRoot . '/tests/runtime-matrix';
+	$emitterRoutes = om_emitter_routes();
+	om_assert_emitter_routes_are_valid($emitterRoutes);
 
-	om_recreate_generated_tree($phpMatrixRoot);
-	om_recreate_generated_tree($runtimeMatrixRoot);
-
-	$emitted = [
-		'php-matrix' => [
+	$rootsBySuite = [];
+	$emitted = [];
+	foreach ($emitterRoutes as $route) {
+		$suite = (string) $route['suite'];
+		$root = $repoRoot . '/tests/' . $suite;
+		$rootsBySuite[$suite] = $root;
+		om_recreate_generated_tree($root);
+		$emitted[$suite] = [
 			'test_count' => 0,
 			'source_files' => 0,
 			'info_files' => 0,
 			'enabled_test_count' => 0,
 			'disabled_test_count' => 0,
-		],
-		'runtime-matrix' => [
-			'test_count' => 0,
-			'source_files' => 0,
-			'info_files' => 0,
-			'enabled_test_count' => 0,
-			'disabled_test_count' => 0,
-		],
-		'negative_generate' => [
-			'emit_mode' => (string) ($options['emit_negative_generate'] ?? 'all'),
-			'enable_mode' => (string) ($options['enable_negative_generate'] ?? 'none'),
-			'disabled_status' => (string) ($options['negative_generate_disabled_status'] ?? 'experimental'),
-			'strict_enable' => (bool) ($options['strict_negative_generate_enable'] ?? false),
-			'enabled_diagnostics' => array_values($options['enable_negative_generate_diagnostic'] ?? []),
-			'disabled_diagnostics' => array_values($options['disable_negative_generate_diagnostic'] ?? []),
-			'emitted_count' => 0,
-			'enabled_count' => 0,
-			'disabled_count' => 0,
-			'per_diagnostic' => [],
-		],
+		];
+	}
+
+	$emitted['negative_generate'] = [
+		'emit_mode' => (string) ($options['emit_negative_generate'] ?? 'all'),
+		'enable_mode' => (string) ($options['enable_negative_generate'] ?? 'none'),
+		'disabled_status' => (string) ($options['negative_generate_disabled_status'] ?? 'experimental'),
+		'strict_enable' => (bool) ($options['strict_negative_generate_enable'] ?? false),
+		'enabled_diagnostics' => array_values($options['enable_negative_generate_diagnostic'] ?? []),
+		'disabled_diagnostics' => array_values($options['disable_negative_generate_diagnostic'] ?? []),
+		'emitted_count' => 0,
+		'enabled_count' => 0,
+		'disabled_count' => 0,
+		'per_diagnostic' => [],
 	];
-	$manifest = [];
 
-	$featureOrdinals = [];
+	$manifestsBySuite = [];
+	$featureOrdinalsBySuite = [];
 	foreach ($seeds as $seed) {
-		$suite = (string) ($seed['suite'] ?? '');
-		if ($suite !== 'php-matrix') {
+		$route = om_resolve_emitter_route($seed, $emitterRoutes);
+		$emit = $route['emitter'];
+		$emittedResult = $emit($repoRoot, $seed, $options, $route, $featureOrdinalsBySuite);
+		if ($emittedResult === null) {
 			continue;
 		}
-		if (!om_should_emit_seed($seed, $options)) {
-			continue;
-		}
 
-		$feature = (string) ($seed['feature'] ?? 'matrix');
-		$featureOrdinals[$feature] = ($featureOrdinals[$feature] ?? 0) + 1;
-		$stem = om_build_emitted_test_stem($seed, (int) $featureOrdinals[$feature]);
-		$relativeDirectory = 'tests/' . $suite . '/' . $feature . '/' . (string) ($seed['level'] ?? 'level_01');
-		$relativeSourcePath = $relativeDirectory . '/' . $stem . '.php';
-		$relativeInfoPath = $relativeDirectory . '/' . $stem . '.test-info.json';
-		$sourcePath = $repoRoot . '/' . $relativeSourcePath;
-		$infoPath = $repoRoot . '/' . $relativeInfoPath;
-		om_ensure_directory(dirname($sourcePath));
-		om_ensure_directory(dirname($infoPath));
-
-		$sourceContent = om_render_php_matrix_source($seed);
-		$infoContent = om_build_php_matrix_test_info($seed, $stem, $options);
-		file_put_contents($sourcePath, $sourceContent);
-		om_write_json_file($infoPath, $infoContent);
-
-		$enabled = (bool) ($infoContent['enabled'] ?? false);
+		$suite = (string) $route['suite'];
+		$enabled = (bool) ($emittedResult['info']['enabled'] ?? false);
 		$emitted[$suite]['test_count']++;
 		$emitted[$suite]['source_files']++;
 		$emitted[$suite]['info_files']++;
@@ -94,31 +75,29 @@ function om_emit_matrix_tests(string $repoRoot, array $seeds, array $options): a
 			$emitted['negative_generate']['per_diagnostic'][$diagnosticClass][$enabled ? 'enabled_count' : 'disabled_count']++;
 		}
 
-		$manifest[] = [
+		$manifestsBySuite[$suite][] = [
 			'seed_id' => $seed['seed_id'],
 			'suite' => $suite,
-			'source_path' => $relativeSourcePath,
-			'info_path' => $relativeInfoPath,
+			'source_path' => $emittedResult['relative_source_path'],
+			'info_path' => $emittedResult['relative_info_path'],
 			'outcome_class' => $seed['outcome_class'],
 			'test_seed_class' => $seed['test_seed_class'],
 			'diagnostic_class' => om_seed_diagnostic_class($seed),
 			'enabled' => $enabled,
-			'status' => $infoContent['status'],
+			'status' => $emittedResult['info']['status'],
 		];
 	}
 
-	om_write_json_file($phpMatrixRoot . '/_manifest.json', [
-		'generated_at_utc' => gmdate('c'),
-		'suite' => 'php-matrix',
-		'test_count' => $emitted['php-matrix']['test_count'],
-		'entries' => $manifest,
-	]);
-	om_write_json_file($runtimeMatrixRoot . '/_manifest.json', [
-		'generated_at_utc' => gmdate('c'),
-		'suite' => 'runtime-matrix',
-		'test_count' => 0,
-		'entries' => [],
-	]);
+	foreach ($emitterRoutes as $route) {
+		$suite = (string) $route['suite'];
+		$root = $rootsBySuite[$suite];
+		om_write_json_file($root . '/_manifest.json', [
+			'generated_at_utc' => gmdate('c'),
+			'suite' => $suite,
+			'test_count' => $emitted[$suite]['test_count'],
+			'entries' => array_values($manifestsBySuite[$suite] ?? []),
+		]);
+	}
 
 	om_assert_strict_negative_generate_enablement($emitted['negative_generate']);
 	ksort($emitted['negative_generate']['per_diagnostic']);
@@ -126,11 +105,176 @@ function om_emit_matrix_tests(string $repoRoot, array $seeds, array $options): a
 	return $emitted;
 }
 
+/**
+ * @return list<array<string, mixed>>
+ */
+function om_emitter_routes(): array
+{
+	return [
+		[
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'emitter' => 'om_emit_php_matrix_seed',
+		],
+		[
+			'suite' => 'runtime-matrix',
+			'target_flow' => 'runtime',
+			'emitter' => 'om_emit_runtime_matrix_seed',
+		],
+	];
+}
+
+/**
+ * @param list<array<string, mixed>> $routes
+ */
+function om_assert_emitter_routes_are_valid(array $routes): void
+{
+	$seenSuites = [];
+	foreach ($routes as $routeIndex => $route) {
+		$suite = (string) ($route['suite'] ?? '');
+		if ($suite === '') {
+			throw new RuntimeException('Emitter route is missing suite at index ' . $routeIndex);
+		}
+		if (isset($seenSuites[$suite])) {
+			throw new RuntimeException('Multiple emitter routes declared for suite: ' . $suite);
+		}
+
+		$emitter = $route['emitter'] ?? null;
+		if (!is_string($emitter) || $emitter === '' || !function_exists($emitter)) {
+			throw new RuntimeException('Emitter route for suite ' . $suite . ' references an unknown emitter.');
+		}
+
+		$targetFlow = $route['target_flow'] ?? null;
+		if (!is_string($targetFlow) || $targetFlow === '') {
+			throw new RuntimeException('Emitter route for suite ' . $suite . ' is missing target_flow.');
+		}
+
+		$seenSuites[$suite] = true;
+	}
+}
+
+/**
+ * @param list<array<string, mixed>> $seeds
+ */
+function om_validate_emitter_routing(array $seeds): void
+{
+	$routes = om_emitter_routes();
+	om_assert_emitter_routes_are_valid($routes);
+
+	foreach ($seeds as $index => $seed) {
+		try {
+			om_resolve_emitter_route($seed, $routes);
+		} catch (RuntimeException $exception) {
+			$seedId = (string) ($seed['seed_id'] ?? 'missing-seed-id');
+			throw new RuntimeException(
+				'Emitter routing failed for seed[' . $index . '] (' . $seedId . '): ' . $exception->getMessage(),
+				0,
+				$exception
+			);
+		}
+	}
+}
+
+/**
+ * @param array<string, mixed> $seed
+ * @param list<array<string, mixed>> $routes
+ * @return array<string, mixed>
+ */
+function om_resolve_emitter_route(array $seed, array $routes): array
+{
+	$suite = (string) ($seed['suite'] ?? '');
+	$targetFlow = (string) ($seed['target_flow'] ?? '');
+	foreach ($routes as $route) {
+		if (($route['suite'] ?? null) !== $suite) {
+			continue;
+		}
+		if (($route['target_flow'] ?? null) !== $targetFlow) {
+			throw new RuntimeException(
+				'Emitter route target_flow mismatch for suite ' . $suite . ': seed=' . $targetFlow . ' route=' . (string) $route['target_flow']
+			);
+		}
+		return $route;
+	}
+
+	throw new RuntimeException('No emitter route defined for suite: ' . $suite);
+}
+
 function om_recreate_generated_tree(string $root): void
 {
-	om_delete_directory($root);
 	om_ensure_directory($root);
+	om_clear_directory_contents($root);
 	file_put_contents($root . '/.gitkeep', '');
+}
+
+function om_clear_directory_contents(string $path): void
+{
+	if (!is_dir($path)) {
+		return;
+	}
+
+	$entries = scandir($path);
+	if ($entries === false) {
+		throw new RuntimeException('Unable to scan generated tree: ' . $path);
+	}
+
+	foreach ($entries as $entry) {
+		if ($entry === '.' || $entry === '..') {
+			continue;
+		}
+
+		$entryPath = $path . '/' . $entry;
+		om_delete_directory_entry($entryPath);
+	}
+}
+
+function om_delete_directory_entry(string $path): void
+{
+	if (is_dir($path)) {
+		om_clear_directory_contents($path);
+		om_retry_delete(static function () use ($path): bool {
+			if (@rmdir($path)) {
+				return true;
+			}
+
+			if (is_dir($path)) {
+				om_clear_directory_contents($path);
+				return @rmdir($path);
+			}
+
+			return false;
+		}, $path, 'directory');
+		return;
+	}
+
+	om_retry_delete(static function () use ($path): bool {
+		return @unlink($path);
+	}, $path, 'file');
+}
+
+/**
+ * @param callable(): bool $deleter
+ */
+function om_retry_delete(callable $deleter, string $path, string $kind): void
+{
+	$attempts = 5;
+	for ($attempt = 0; $attempt < $attempts; $attempt++) {
+		clearstatcache(true, $path);
+		if (!file_exists($path) && !is_dir($path)) {
+			return;
+		}
+		if ($deleter()) {
+			clearstatcache(true, $path);
+			if (!file_exists($path) && !is_dir($path)) {
+				return;
+			}
+		}
+		usleep(50000);
+	}
+
+	clearstatcache(true, $path);
+	if (file_exists($path) || is_dir($path)) {
+		throw new RuntimeException('Unable to delete generated ' . $kind . ': ' . $path);
+	}
 }
 
 function om_delete_directory(string $path): void
@@ -139,6 +283,7 @@ function om_delete_directory(string $path): void
 		return;
 	}
 
+	om_clear_directory_contents($path);
 	$iterator = new RecursiveIteratorIterator(
 		new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
 		RecursiveIteratorIterator::CHILD_FIRST
@@ -146,12 +291,66 @@ function om_delete_directory(string $path): void
 	foreach ($iterator as $entry) {
 		$entryPath = $entry->getPathname();
 		if ($entry->isDir()) {
-			rmdir($entryPath);
-		} else {
-			unlink($entryPath);
+			@rmdir($entryPath);
+			continue;
 		}
+
+		@unlink($entryPath);
 	}
-	rmdir($path);
+
+	@rmdir($path);
+	if (is_dir($path)) {
+		throw new RuntimeException('Unable to fully delete generated tree: ' . $path);
+	}
+}
+
+/**
+ * @param array<string, mixed> $seed
+ * @param array<string, mixed> $options
+ * @param array<string, mixed> $route
+ * @param array<string, array<string, int>> $featureOrdinalsBySuite
+ * @return array<string, mixed>|null
+ */
+function om_emit_php_matrix_seed(string $repoRoot, array $seed, array $options, array $route, array &$featureOrdinalsBySuite): ?array
+{
+	if (!om_should_emit_seed($seed, $options)) {
+		return null;
+	}
+
+	$suite = (string) $route['suite'];
+	$feature = (string) ($seed['feature'] ?? 'matrix');
+	$featureOrdinalsBySuite[$suite][$feature] = ($featureOrdinalsBySuite[$suite][$feature] ?? 0) + 1;
+	$stem = om_build_emitted_test_stem($seed, (int) $featureOrdinalsBySuite[$suite][$feature]);
+	$relativeDirectory = 'tests/' . $suite . '/' . $feature . '/' . (string) ($seed['level'] ?? 'level_01');
+	$relativeSourcePath = $relativeDirectory . '/' . $stem . '.php';
+	$relativeInfoPath = $relativeDirectory . '/' . $stem . '.test-info.json';
+	$sourcePath = $repoRoot . '/' . $relativeSourcePath;
+	$infoPath = $repoRoot . '/' . $relativeInfoPath;
+	om_ensure_directory(dirname($sourcePath));
+	om_ensure_directory(dirname($infoPath));
+
+	$sourceContent = om_render_php_matrix_source($seed);
+	$infoContent = om_build_php_matrix_test_info($seed, $stem, $options);
+	file_put_contents($sourcePath, $sourceContent);
+	om_write_json_file($infoPath, $infoContent);
+
+	return [
+		'relative_source_path' => $relativeSourcePath,
+		'relative_info_path' => $relativeInfoPath,
+		'info' => $infoContent,
+	];
+}
+
+/**
+ * @param array<string, mixed> $seed
+ * @param array<string, mixed> $options
+ * @param array<string, mixed> $route
+ * @param array<string, array<string, int>> $featureOrdinalsBySuite
+ * @return array<string, mixed>|null
+ */
+function om_emit_runtime_matrix_seed(string $repoRoot, array $seed, array $options, array $route, array &$featureOrdinalsBySuite): ?array
+{
+	return null;
 }
 
 /**
@@ -167,7 +366,7 @@ function om_render_php_matrix_source(array $seed): string
 		'// seed_id: ' . (string) $seed['seed_id'],
 		'// item: ' . (string) $seed['item_id'],
 		'// test_seed_class: ' . (string) $seed['test_seed_class'],
-		'// notes: ' . om_render_single_line_comment((string) ($seed['notes'] ?? '')), 
+		'// notes: ' . om_render_single_line_comment((string) ($seed['notes'] ?? '')),
 	];
 
 	$operands = is_array($seed['operands'] ?? null) ? $seed['operands'] : [];
@@ -190,12 +389,13 @@ function om_render_php_matrix_source(array $seed): string
 	}
 
 	$lines[] = '';
-	$lines[] = 'var_dump(' . om_render_seed_expression($seed) . ');';
+	foreach (om_render_seed_php_lines($seed) as $line) {
+		$lines[] = $line;
+	}
 	$lines[] = '';
 
 	return implode(PHP_EOL, $lines);
 }
-
 
 /**
  * @param array<string, mixed> $seed
@@ -234,10 +434,30 @@ function om_render_single_line_comment(string $value): string
 /**
  * @param array<string, mixed> $seed
  */
+function om_render_seed_php_lines(array $seed): array
+{
+	$itemId = (string) ($seed['item_id'] ?? '');
+	if ($itemId === 'if_condition') {
+		return [
+			'if ($lhs) {',
+			"\t" . 'var_dump(true);',
+			'} else {',
+			"\t" . 'var_dump(false);',
+			'}',
+		];
+	}
+
+	return ['var_dump(' . om_render_seed_expression($seed) . ');'];
+}
+
+/**
+ * @param array<string, mixed> $seed
+ */
 function om_render_seed_expression(array $seed): string
 {
 	$itemId = (string) ($seed['item_id'] ?? '');
 	return match ($itemId) {
+		'cast_bool' => '(bool) $lhs',
 		'coalesce' => '$lhs ?? $rhs',
 		'elvis' => '$lhs ?: $rhs',
 		'ternary' => '$lhs ? $rhs : $third',
@@ -366,7 +586,6 @@ function om_render_seed_profile_literal(string $type, string $profile): string
 		default => throw new RuntimeException('Unsupported seed profile literal: ' . $type . ' / ' . $profile),
 	};
 }
-
 
 /**
  * @param array<string, mixed> $seed
@@ -569,10 +788,21 @@ function om_expected_runtime_json(string $diagnosticClass): array
 			'component' => 'php::coalesce_eval',
 			'operator' => '??',
 		],
+		'invalid_cast_string_literal' => [
+			'code' => 'invalid_cast_string_literal',
+			'component' => 'scpp::cast<bool_t>',
+		],
+		'invalid_mixed_kind_for_cast_bool' => [
+			'code' => 'invalid_mixed_kind_for_cast_bool',
+			'component' => 'scpp::cast<bool_t>',
+		],
+		'invalid_nullable_unwrap_empty' => [
+			'code' => 'invalid_nullable_unwrap_empty',
+			'component' => 'scpp::nullable_unwrap',
+		],
 		default => [],
 	};
 }
-
 
 /**
  * @param array<string, mixed> $negativeGenerateReport
