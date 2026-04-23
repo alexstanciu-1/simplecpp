@@ -289,8 +289,10 @@ function print_doctor(): void
 	$phpIni = php_ini_loaded_file();
 	$astLoaded = extension_loaded('ast') ? 'yes' : 'no';
 	$ninja = find_command_path(['ninja']);
-	$compilerLauncher = resolve_compiler_launcher();
 	$compiler = resolve_compiler(['build' => []]);
+	$compilerLauncher = $compiler !== null
+		? resolve_compiler_launcher($compiler['command'])
+		: null;
 	$projectConfig = find_project_config(getcwd() === false ? $repoRoot : getcwd());
 
 	echo "scpp doctor\n";
