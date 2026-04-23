@@ -152,6 +152,15 @@ Prism++ now has an explicit project-mode staging contract:
 The full deliberate multi-file model is still in progress, but the command shape and project layout are now fixed around `scpp init` + `scpp build` / `scpp run`.
 - optional FastCGI companion builds are now available through `prism.json` fastcgi settings and a handwritten `native_cpp/` handler
 
+## AI Onboarding
+
+AI-facing repo guidance now lives under:
+
+- `docs/ai_onboarding/README.md`
+- `docs/ai_onboarding/coding_style.md`
+
+Start there when orienting Codex or another assistant to the project structure, semantic authority order, and validation workflow.
+
 ## Usability Harness
 
 The usability harness validates that small Simple C++ / PHP-like programs remain usable for first-time users.
