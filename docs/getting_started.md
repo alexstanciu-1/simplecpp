@@ -102,3 +102,9 @@ This still prints generated C++ to stdout and remains useful for narrow fixture 
 ## 5. Current boundary
 
 The project command shape is now fixed around `scpp init` + `scpp build` / `scpp run`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` and `scpp run` recursively transpile project PHP files and use cached file metadata, while still relying on the configured single entrypoint and the repo runtime directly.
+
+## 6. AI onboarding
+
+For Codex or other assistant-oriented repo guidance, start with:
+
+- `docs/ai_onboarding/README.md`
