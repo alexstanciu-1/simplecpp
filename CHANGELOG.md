@@ -9,6 +9,24 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - No release notes recorded yet.
 
+## 0.1.2 - 2026-04-23
+
+### Additions
+
+- None
+
+### Fixes
+
+- Fixed `scpp --doctor` so compiler launcher detection no longer fatals when no launcher command has been resolved yet
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- None
+
 ## 0.1.1 - 2026-04-23
 
 ### Additions
