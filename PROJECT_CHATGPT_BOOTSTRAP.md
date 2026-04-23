@@ -1,5 +1,9 @@
 # Project bootstrap for ChatGPT
 Doc Status: supporting
+## Workflow authority
+Before performing repository Git workflow, pull-request, or release operations, follow:
+- `specs/git_workflow_release_procedure.md`
+
 ## Sandbox setup
 If this project archive contains `ext/ast*/ast.so`, install that extension in the sandbox before running any transpiler validation.
 

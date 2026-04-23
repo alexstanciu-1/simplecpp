@@ -16,7 +16,8 @@ Purpose: Standardized workflow for interacting with the AI on the Simple C++ / P
 4. The assistant works **only inside this folder**.
 5. The assistant returns a **full updated project archive**, not partial files.
 6. The user reviews changes using Beyond Compare.
-7. The user handles all Git operations, including commit, push, and pull request management.
+7. Git operations, pull requests, and releases must follow:
+   - `specs/git_workflow_release_procedure.md`
 8. If no new archive is provided:
    - the assistant continues working on the existing folder (same chat only)
 9. In a new chat:
@@ -40,6 +41,8 @@ Purpose: Standardized workflow for interacting with the AI on the Simple C++ / P
 - If the user is on Windows, development work must be performed through WSL rather than native Windows shells/tools
 - On Windows + WSL setups, the working copy should live in the WSL filesystem and commands should be run from WSL
 - Any git-related command that needs to be run from the Windows side should be run through Git Bash rather than PowerShell
+- Git branching, pull requests, release handling, and release notes are governed by:
+  - `specs/git_workflow_release_procedure.md`
 - Current Windows + WSL project mapping:
   - Windows mirror: `D:\Work_2026\__AI\simple_cpp`
   - Active WSL working copy: `/home/alexv/__AI/simple-cpp`

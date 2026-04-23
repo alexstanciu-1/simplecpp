@@ -4,6 +4,11 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path":  "CHANGELOG.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
                         "path":  "docs/architecture/runtime_layering.md",
                         "kind":  "markdown",
                         "doc_status":  "supporting"
@@ -202,6 +207,11 @@
                         "path":  "specs/AI_WORKFLOW.md",
                         "kind":  "markdown",
                         "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/git_workflow_release_procedure.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
                     },
                     {
                         "path":  "specs/architecture/runtime_design/README.md",

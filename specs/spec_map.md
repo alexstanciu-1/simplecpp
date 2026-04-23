@@ -106,6 +106,7 @@ The authority stack for the current project is:
 10. workflow-specialized normative specs that remain subordinate to higher levels:
    - `specs/builtin_intake_procedure.md`
    - `specs/runtime/error_handling.md`
+   - `specs/git_workflow_release_procedure.md`
 
 ### Level 5 - Machine-readable config and derived coordination data
 

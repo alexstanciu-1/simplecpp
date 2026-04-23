@@ -210,5 +210,5 @@ Including:
 For detailed harness behavior and artifact layout, see `tools/usability_harness/README.md`.
 
 ## Guidance
+- `specs/git_workflow_release_procedure.md` - authoritative Git workflow, pull-request, and release-notes procedure
 - `specs/strict_mode.md` Ã¢â‚¬â€ recommended coding discipline (not enforced)
-
