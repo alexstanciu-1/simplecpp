@@ -1,5 +1,5 @@
 # Runtime Config Validation Tools
-
+Doc Status: supporting
 This directory contains CLI tools for validating `runtime/specs/config.json` and auditing runtime drift against it.
 
 ## Tools

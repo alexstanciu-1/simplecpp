@@ -240,6 +240,14 @@ final class Generator
 		throw new GenerationException($message);
 	}
 
+	private function unsupportedExprKindMessage(mixed $expr, mixed $kind): string
+	{
+		$line = (int) ($expr->lineno ?? 0);
+		return 'Unsupported expression lowering for AST kind ' . (string) $kind . ' at line ' . $line . '. '
+			. 'Category: generator lowering gap. '
+			. 'Requirement: add an explicit lowering rule for this expression shape or rewrite the source to a supported form.';
+	}
+
 	private function throwIfErrors(): void
 	{
 		if ($this->errors === []) {
@@ -4072,6 +4080,23 @@ final class Generator
 		return '(' . $target . ' = ' . $value . ')';
 	}
 
+	private function renderCompoundAssignmentExpr(mixed $varNode, mixed $exprNode, int $flags, ?string $namespacePhp): string
+	{
+		$operator = $this->mapAssignOpFlagToOperator($flags);
+		if ($operator === null) {
+			return '/* unsupported-assign-op-' . $flags . ' */';
+		}
+
+		$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
+		if ($flags === AstKind::BINARY_CONCAT) {
+			$expr = $this->renderStringOperand($exprNode, $namespacePhp);
+			return '(' . $target . ' = (' . $target . ' + ' . $expr . '))';
+		}
+
+		$expr = $this->renderExpr($exprNode, $namespacePhp);
+		return '(' . $target . ' ' . $operator . ' ' . $expr . ')';
+	}
+
 
 	private function unsupportedPhpArrayKeyMessage(mixed $keyNode): ?string
 	{
@@ -5366,6 +5391,7 @@ final class Generator
 			return 'string_t(' . json_encode($expr, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')';
 		}
 		if (!is_object($expr)) {
+			$this->errors[] = 'Unsupported expression value in generator input. Category: generator lowering gap. Requirement: pass a scalar literal or AST node supported by the current lowering surface.';
 			return '/* unsupported-expr */';
 		}
 
@@ -5538,6 +5564,14 @@ final class Generator
 		if ($kind === AstKind::ASSIGN) {
 			return $this->renderAssignmentExpr($expr->children['var'] ?? null, $expr->children['expr'] ?? null, $namespacePhp);
 		}
+		if ($kind === AstKind::ASSIGN_OP) {
+			return $this->renderCompoundAssignmentExpr(
+				$expr->children['var'] ?? null,
+				$expr->children['expr'] ?? null,
+				(int) ($expr->flags ?? 0),
+				$namespacePhp
+			);
+		}
 		if ($kind === AstKind::UNARY_OP) {
 			$inner = $this->renderExpr($expr->children['expr'] ?? null, $namespacePhp);
 			$flags = (int) ($expr->flags ?? 0);
@@ -5578,6 +5612,7 @@ final class Generator
 			$this->fail('throw used as an expression is not supported yet at line ' . (int) ($expr->lineno ?? 0) . '.');
 		}
 
+		$this->errors[] = $this->unsupportedExprKindMessage($expr, $kind);
 		return '/* unsupported-expr-kind-' . $kind . ' */';
 	}
 

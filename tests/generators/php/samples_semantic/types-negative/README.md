@@ -1,5 +1,5 @@
 # types-negative
-
+Doc Status: supporting
 Negative semantic tests for type handling.
 
 Rule for this bucket:

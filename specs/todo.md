@@ -1,5 +1,8 @@
+Doc Status: planning
 
-# Prism++ – First Practical Use Roadmap
+
+
+# Prism++ â€“ First Practical Use Roadmap
 
 ## Scope
 This document lists the minimal missing features required to make Prism++ usable for a first real project.
@@ -11,7 +14,7 @@ This document lists the minimal missing features required to make Prism++ usable
 - throw _ try/catch/finally
 - Anonymous functions / closures, plus closure binding behavior.
 - Arrow functions and first-class callable syntax, both listed in the PHP language reference.
-- Enums, which are part of modern PHP’s language surface. Named argumentsconstructor property promotion, union types, and match,
+- Enums, which are part of modern PHPâ€™s language surface. Named argumentsconstructor property promotion, union types, and match,
 
 ---
 
@@ -19,21 +22,21 @@ This document lists the minimal missing features required to make Prism++ usable
 
 | Area | Feature | Status | Why it matters | Minimal scope for v1 |
 |------|--------|--------|----------------|----------------------|
-| **Core structure** | `require` (multi-file) | 🔴 missing | Cannot scale beyond single file | include + compile/link model |
-| | Cross-file symbols | 🔴 missing | Functions/classes unusable across files | global registry / TU merge |
-| | `__DIR__` / path base | 🔴 missing | Needed for relative includes | constant + basic path join |
-| **Runtime basics** | Builtin functions (string) | 🔴 missing | 80% of real code uses them | strlen, strpos, substr, trim, explode, implode |
-| | Builtin functions (file/dir) | 🔴 missing | Any CLI/tooling needs this | file_get_contents, file_put_contents, is_file, scandir, mkdir, unlink |
-| | Builtin functions (json) | 🔴 missing | Config / APIs | json_encode, json_decode |
-| | Builtin functions (env/process) | 🔴 missing | CLI + config | getenv, argv |
-| **Control flow** | `throw` / `try-catch` | 🔴 missing | Required for non-trivial logic | basic exception type + catch |
-| | `exit` / `die` | 🔴 missing | Control termination | simple exit(int/string) |
-| **Data structures** | Typed map/dictionary | 🔴 missing | Needed before full PHP array | map<string, T>-like |
-| | php-like-array | 🟡 optional | Needed for PHP parity, not first use | defer |
-| | `dynamic_t/stdClass` | 🟡 optional | Dynamic object use | simple key→value object |
-| | variants | 🟡 optional | Flex typing convenience | defer if strict typing ok |
-| **Interop / utility** | Reflection-lite | 🟡 missing | Common patterns depend on it | class_exists, method_exists |
-| | Basic path utilities | 🔴 missing | Avoid manual string hacks | join / normalize paths |
+| **Core structure** | `require` (multi-file) | ðŸ”´ missing | Cannot scale beyond single file | include + compile/link model |
+| | Cross-file symbols | ðŸ”´ missing | Functions/classes unusable across files | global registry / TU merge |
+| | `__DIR__` / path base | ðŸ”´ missing | Needed for relative includes | constant + basic path join |
+| **Runtime basics** | Builtin functions (string) | ðŸ”´ missing | 80% of real code uses them | strlen, strpos, substr, trim, explode, implode |
+| | Builtin functions (file/dir) | ðŸ”´ missing | Any CLI/tooling needs this | file_get_contents, file_put_contents, is_file, scandir, mkdir, unlink |
+| | Builtin functions (json) | ðŸ”´ missing | Config / APIs | json_encode, json_decode |
+| | Builtin functions (env/process) | ðŸ”´ missing | CLI + config | getenv, argv |
+| **Control flow** | `throw` / `try-catch` | ðŸ”´ missing | Required for non-trivial logic | basic exception type + catch |
+| | `exit` / `die` | ðŸ”´ missing | Control termination | simple exit(int/string) |
+| **Data structures** | Typed map/dictionary | ðŸ”´ missing | Needed before full PHP array | map<string, T>-like |
+| | php-like-array | ðŸŸ¡ optional | Needed for PHP parity, not first use | defer |
+| | `dynamic_t/stdClass` | ðŸŸ¡ optional | Dynamic object use | simple keyâ†’value object |
+| | variants | ðŸŸ¡ optional | Flex typing convenience | defer if strict typing ok |
+| **Interop / utility** | Reflection-lite | ðŸŸ¡ missing | Common patterns depend on it | class_exists, method_exists |
+| | Basic path utilities | ðŸ”´ missing | Avoid manual string hacks | join / normalize paths |
 
 ---
 
@@ -82,6 +85,9 @@ builtin function layer
 	process/env: getenv, argv
 	network/http later: curl_*
 
+installer / toolchain completeness
+	Add CMake to the installer-managed toolchain on Linux/WSL so runtime-native bring-up and CMake-based smoke paths work without manual follow-up.
+
 error handling
 	throw, try/catch, finally are still open in the catalog. For real project code, this becomes a gap fast.
 
@@ -89,7 +95,7 @@ exit / die
 	Small feature, high practical value.
 
 associative container support
-	I would not keep this fully under “optional php-like-array”.
+	I would not keep this fully under â€œoptional php-like-arrayâ€.
 	Even before full PHP array semantics, a typed map/dictionary is very useful for first projects.
 
 multi-file symbol resolution model
@@ -121,4 +127,3 @@ My compact ranking for first practical use:
 	dynamic_t/stdClass
 	variants
 	full php-like-array
-

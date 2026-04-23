@@ -1,0 +1,2212 @@
+{
+    "schema_version":  "1.0.0",
+    "artifact":  "document_status_catalog",
+    "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
+    "entries":  [
+                    {
+                        "path":  "docs/architecture/runtime_layering.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "docs/examples.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "docs/fastcgi.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "docs/filesystem_builtins.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "docs/getting_started.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "docs/installation.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "docs/json_builtins.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "examples/scenarios/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "generators/php/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "generators/php/samples/EXPECTED_STDOUT.md",
+                        "kind":  "markdown",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "generators/php/samples/know_how/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "generators/php/samples/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "generators/php/samples/stage_02/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "generators/php/samples/stage_03/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "generators/php/specs/catalog.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/catalog_rebuild_workflow.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "generators/php/specs/exceptions.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/incompatibilities.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/interoperability_with_regular_cpp_modules.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/module_inclusion_model.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/primary_type_normalized_parameters.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/rules.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/rules_catalog.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/StrLComp.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/unsupported.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/unsupported_dev.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "integrations/php/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "PROJECT_CHATGPT_BOOTSTRAP.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "public_html/test/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "runtime/specs/catalog.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "runtime/specs/config.review.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "runtime/specs/error_handling.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "runtime/specs/hash_t.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "runtime/specs/operator_generation_flow.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "runtime/specs/runtime_generation_guidelines.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "runtime/specs/simple_cpp_array_limitations.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "runtime/specs/spec.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/_archive/dynamic_types.md",
+                        "kind":  "markdown",
+                        "doc_status":  "historical"
+                    },
+                    {
+                        "path":  "specs/AI_WORKFLOW.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/architecture/runtime_design/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/architecture/runtime_design/semantic_consistency.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/architecture/runtime_design/structure.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/architecture/runtime_layering.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/array_semantics.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtin_intake_procedure.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/builtins/db/mysqli.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/basename.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/copy.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/dirname.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fclose.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/feof.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fflush.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fgets.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/file_exists.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/file_get_contents.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/file_put_contents.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/filemtime.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/filesize.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/first_pass.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fopen.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fputs.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fread.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fseek.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/ftell.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/fwrite.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/is_dir.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/is_file.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/is_link.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/mkdir.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/realpath.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/rename.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/rewind.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/rmdir.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/scandir.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/touch.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/filesystem/unlink.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/first_pass.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_decode.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/json_encode.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/json/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/bin2hex.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/explode.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/hex2bin.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/implode.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/lcfirst.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/ltrim.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/number_format.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/rtrim.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/str_ends_with.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/str_pad.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/str_replace.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/str_starts_with.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/strlen.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/strpos.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/strrpos.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/strtolower.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/strtoupper.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/substr_compare.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/substr_replace.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/trim.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/string/ucfirst.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/cli_installation_milestone.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/conditional_expression_matrix.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/count_empty_isset_contract.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/dynamic_types.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/dynamic_types_impl_audit.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/language/closures.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/mixed_boundary_transitional.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/native_reference_safety.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/catalog_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/data/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/generation_rules_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/matrix_validation_rules_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/operand_target_kinds_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/output_schema_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/profile_semantics_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/regeneration_policy_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/source_mapping_policy_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/source_mapping_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/test_generation_rules_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/test_seed_schema_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/type_universe_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/pending_issues.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/php/canonical_examples.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/php/catalog.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/project_build_v1.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/PROJECT_PATCH_PROTOCOL.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "specs/reference_test_matrix.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/references.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "specs/runtime/error_handling.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/spec_map.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/strict_mode.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/todo.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "specs/todo_vs_php.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "tests/generated/usability_harness/passing/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/generated/usability_harness/quarantine/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/generated/usability_harness/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/generators/php/samples_semantic/types-negative/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tests/generators/php/samples_semantic/types-positive/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tests/generators/php/special_tests/README_exceptions_control_flow.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tests/php/arrays/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tests/php/reference_matrix/CATALOG.md",
+                        "kind":  "markdown",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/reference_matrix/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tests/runtime/coverage/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tests/specs/generate_php_samples_docs.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tests/specs/test_generation_workflow.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "tests/specs/test_obligation_schema.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "tests/specs/test_source_hierarchy.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "tests/tools/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tools/operator_matrix/generator_spec.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tools/operator_matrix/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tools/runtime_config/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tools/usability_harness/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "generators/php/composer.json",
+                        "kind":  "json",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "generators/php/specs/php_builtins.json",
+                        "kind":  "json",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "generators/php/specs/php_generator_specs_config.do-not-use-yet.json",
+                        "kind":  "json",
+                        "doc_status":  "planning"
+                    },
+                    {
+                        "path":  "generators/php/specs/php_runtime_symbols.json",
+                        "kind":  "json",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "runtime/specs/config.json",
+                        "kind":  "json",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/document_status_catalog.json",
+                        "kind":  "json",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/data/families.json",
+                        "kind":  "json",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/data/semantics.json",
+                        "kind":  "json",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/operator_matrix/data/types.json",
+                        "kind":  "json",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_001_empty_append_scalar.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_002_packed_readback.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_003_explicit_int_keys_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_004_string_keys_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_005_mixed_int_string_keys.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_006_overwrite_existing_key.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_007_append_after_high_int_key.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_008_append_after_string_keys_only.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_009_nested_array_literal_read.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_010_nested_dim_write.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_011_nested_append_rows.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_012_copy_value_top_level.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_013_copy_value_nested_independence.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_014_assign_nested_into_slot_then_mutate_source.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_015_append_then_overwrite_nested_row.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_016_numeric_string_key_normalization.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_017_small_loop_row_growth.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_018_row_update_after_loop_append.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_019_nested_snapshot_value.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_01/arrays_020_root_row_leaf_basic_consistency.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_021_pass_array_by_value_snapshot.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_022_pass_array_by_ref_mutation.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_023_root_row_leaf_alias.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_024_same_row_twice_by_ref.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_025_same_leaf_value_and_ref_split.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_026_nested_parent_same_leaf.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_027_duplicate_row_refs_root_path.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_028_fanout_root_mid_leaf.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_029_row_copy_then_mutate_original.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_030_row_copy_then_mutate_copy.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_031_large_loop_row_growth.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_032_dense_growth_then_patch.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_033_numeric_string_and_int_key_collision.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_034_bool_keys_casting.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_035_null_key_casting.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_036_root_ref_append_other_row_stability.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_037_cross_row_nested_alias.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_038_matrix_like_nested_writes.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_039_deep_three_level_duplicate_refs.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/arrays/level_02/arrays_040_self_assign_from_nested_slot.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/casts/level_01/casts_001_int_to_string_via_concat.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/casts/level_01/casts_002_float_to_string_via_concat.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/casts/level_01/casts_003_bool_to_string_via_concat.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/casts/level_02/casts_004_echo_cast_path.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/casts/level_02/casts_005_condition_bool_cast_path.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/casts/level_02/casts_006_mixed_to_nullable_typed_return.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_01/classes_001_basic_construction.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_01/classes_002_property_read_write_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_01/classes_003_method_call_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_01/classes_004_class_const_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_02/classes_005_static_property_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_02/classes_006_static_method_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_02/classes_007_method_reference_param.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_02/classes_008_method_reference_return.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/classes/level_02/classes_009_inheritance_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/constants/level_01/constants_001_class_const_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/constants/level_01/constants_002_const_read_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/constants/level_02/constants_003_const_in_expression.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/constants/level_02/constants_004_const_cross_namespace.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_01/control_flow_001_if_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_01/control_flow_002_if_else_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_01/control_flow_003_while_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_01/control_flow_004_do_while_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_01/control_flow_005_for_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_01/control_flow_006_foreach_value_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_01/control_flow_007_return_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_008_if_elseif_else_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_009_break_one_level.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_010_continue_one_level.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_011_switch_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_012_match_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_013_foreach_ref_value_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_014_foreach_outer_name_shadow_kept.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_015_foreach_key_value_negative.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_016_foreach_key_ref_value_negative.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_017_false_null_explicit_split.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_018_isset_key_present_missing_null.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_019_empty_scalar_subset_contract.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_020_isset_vs_empty_key_intent.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/control_flow/level_02/control_flow_021_string_condition_truthiness.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/functions/level_01/functions_001_typed_param_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/functions/level_01/functions_002_typed_return_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/functions/level_01/functions_003_default_param_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/functions/level_02/functions_004_multi_param_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/functions/level_02/functions_005_reference_param_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/functions/level_02/functions_006_reference_return_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/functions/level_02/functions_007_void_return_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/functions/level_02/functions_008_variadic_negative.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/known_gap/interpolation/level_01/interpolation_001_basic_var_known_gap.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/known_gap/interpolation/level_01/interpolation_002_braced_var_known_gap.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/known_gap/interpolation/level_02/interpolation_003_property_known_gap.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/known_gap/interpolation/level_02/interpolation_004_index_known_gap.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/known_gap/interpolation/level_02/interpolation_005_static_known_gap.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/known_gap/interpolation/level_02/interpolation_006_function_call_known_gap.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/known_gap/interpolation/level_02/interpolation_007_expression_known_gap.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/namespaces/level_01/namespaces_001_basic_namespace_class.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/namespaces/level_01/namespaces_002_fully_qualified_class_access.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/namespaces/level_02/namespaces_003_cross_namespace_static_access.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/namespaces/level_02/namespaces_004_namespace_const_access.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_01/operators_001_add_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_01/operators_002_sub_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_01/operators_003_mul_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_01/operators_004_div_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_01/operators_005_concat_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_006_mod_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_007_eq_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_008_neq_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_009_lt_gt_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_010_lte_gte_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_011_logic_and_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_012_logic_or_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_013_logic_not_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_014_compound_assign_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_015_pre_increment_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_016_post_increment_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_017_pre_decrement_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/operators/level_02/operators_018_post_decrement_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/output/level_01/output_001_echo_string_literal.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/output/level_01/output_002_echo_multiple_values.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/output/level_02/output_003_echo_concat_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/output/level_02/output_004_echo_numeric_cast_path.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/references/level_01/references_001_local_reference_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/references/level_01/references_002_reference_assignment_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/references/level_02/references_003_pass_by_reference_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/references/level_02/references_004_return_by_reference_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/references/level_02/references_005_reference_mutation_chain.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/take/level_02/take_001_wrapper_extraction_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/take/level_02/take_002_nullable_wrong_arity_negative.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/take/level_02/take_003_result_or_bool_wrong_flag_type_negative.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/bool/level_01/bool_001_init_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/bool/level_01/bool_002_assign_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/bool/level_02/bool_003_logic_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/bool/level_02/bool_004_comparison_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/bool/level_02/bool_005_concat_cast_path.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/float/level_01/float_001_init_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/float/level_01/float_002_assign_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/float/level_02/float_003_arithmetic_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/float/level_02/float_004_comparison_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/float/level_02/float_005_concat_cast_path.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/int/level_01/int_001_init_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/int/level_01/int_002_assign_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/int/level_02/int_003_arithmetic_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/int/level_02/int_004_comparison_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/int/level_02/int_005_concat_cast_path.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_01/nullable_001_nullable_int_init.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_01/nullable_002_nullable_int_assign.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_003_null_coalesce_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_004_mixed_null_coalesce_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_004_nullable_return_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_005_mixed_null_coalesce_chain.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_005_untyped_null_negative.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_006_ternary_nullable_branch.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_007_elvis_nullable_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_007_mixed_ternary_elvis_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_008_bool_identity_nullable_return.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/nullable/level_02/nullable_009_mixed_strict_scalar_identity.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/string/level_01/string_001_init_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/string/level_01/string_002_assign_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/string/level_02/string_003_concat_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/string/level_02/string_004_comparison_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/vector/level_01/vector_001_empty_vector_init.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/vector/level_01/vector_002_vector_literal_init.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/vector/level_02/vector_003_vector_assign_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/vector/level_02/vector_004_vector_append_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/vector/level_02/vector_005_vector_index_read.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/vector/level_02/vector_006_vector_index_write.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/vector/level_02/vector_007_untyped_empty_array_negative.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/types/vector/level_02/vector_008_untyped_array_literal_negative.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/use/level_01/use_001_use_class_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/use/level_01/use_002_use_namespace_alias_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/use/level_02/use_003_use_function_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/use/level_02/use_004_use_const_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/use/level_02/use_005_use_multiple_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/variables/level_01/variables_001_definition_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/variables/level_01/variables_002_reassignment_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/variables/level_02/variables_003_inner_scope_shadow_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/variables/level_02/variables_004_assign_from_variable.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/php/variables/level_02/variables_005_assign_from_expression.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_001_vector_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_002_vector_bounds.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_003_vector_initializer_copy.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_004_vector_move_semantics.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_005_vector_nullable_elements.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_006_vector_shared_elements.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_007_vector_string_elements.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_008_vector_clear_reuse_shared_lifetime.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_009_vector_unique_move_storage.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_010_vector_weak_observer_expire_on_clear.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_011_vector_value_copy_isolation.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_012_vector_nested_vectors.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_013_vector_nullable_shared_mix.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_014_vector_copy_independent_nullable.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/containers/level_01/runtime_containers_015_vector_shared_alias_after_copy.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/control_flow/level_01/runtime_control_flow_001_condition_truthiness.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_001_int_float_bool.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_002_string.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_003_int_bitwise_shift.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_004_int_increment_paths.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_005_float_mixed_ops.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_006_bool_logic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_007_string_basic_ops.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_008_casts_basic.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/core_values/level_01/runtime_core_values_009_php_empty_scalar_subset.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/hash_t/level_01/runtime_hash_t_001_find_at_remove_append.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/hash_t/level_01/runtime_hash_t_002_strict_key_domains.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/hash_t/level_01/runtime_hash_t_003_find_val_and_const_read.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/hash_t/level_01/runtime_hash_t_004_isset_empty_keyed_null_sensitive.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/invariants_compile_fail/level_01/runtime_invariants_compile_fail_001_unique_copy_construct_forbidden.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/invariants_compile_fail/level_01/runtime_invariants_compile_fail_002_unique_copy_assign_forbidden.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/invariants_compile_fail/level_01/runtime_invariants_compile_fail_003_value_shared_wrapper_forbidden.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/invariants_compile_fail/level_01/runtime_invariants_compile_fail_004_value_unique_wrapper_forbidden.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_001_shared_last_owner.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_002_value_copy_lifetime.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_003_unique_release_delete_once.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_004_vector_clear_destroys_elements.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_005_shared_swap_lifetime.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_006_nullable_reset_destroys_value.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_007_value_move_lifetime.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_008_unique_reset_replaces_old.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_009_vector_shared_clear_releases_last_owner.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_010_vector_nullable_lifetime_balance.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_011_nested_vector_value_lifetime.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/lifecycle/level_01/runtime_lifecycle_012_shared_chain_reassignment_lifetime.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/mixed_t/level_01/runtime_mixed_t_001_typed_boundary_extract.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/mixed_t/level_01/runtime_mixed_t_002_args_and_return.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/mixed_t/level_01/runtime_mixed_t_003_compound_unary_logical.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/mixed_t/level_01/runtime_mixed_t_004_table_access_and_autovivify.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/mixed_t/level_01/runtime_mixed_t_005_weak_table_expired_paths.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_001_state_transitions.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_002_reset_value_or.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_003_equality.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_004_copy_move.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_005_value_exception.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_006_nullable_shared_reset_copy.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_007_nullable_vector_copy_isolation.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_008_nullable_value_lifetime_nested.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_009_nullable_shared_value_or_fallback.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/nullable/level_01/runtime_nullable_010_assign_null_after_move.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_001_shared_unique_weak.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_002_value_copy_isolation.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_003_shared_reset_swap.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_004_shared_upcast.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_005_unique_move_release_reset.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_006_unique_upcast.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_007_weak_assignment_lock.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_008_create_helper.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_009_shared_self_assignment_and_null_reset.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_010_unique_swap_states.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_011_weak_swap_and_reset.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_012_create_shared_weak_roundtrip.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/ownership/level_01/runtime_ownership_013_value_vector_member_isolation.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_001_aliasing.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_002_native_reference_assignment.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_003_const_reference_reads.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_004_shared_wrapper_alias.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_005_unique_wrapper_alias.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_006_value_native_alias.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_007_nullable_alias_reset.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_008_vector_element_alias_mutation.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_009_shared_inside_vector_alias_count.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/references/level_01/runtime_references_010_value_wrapper_reference_mutation.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_001_shared_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_002_unique_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_003_weak_expire_lock_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_004_nullable_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_005_vector_destructor_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_006_value_move_copy_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_007_vector_shared_clear_reassign_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_008_nullable_shared_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_009_weak_swap_reset_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/stress/level_01/runtime_stress_010_nested_vector_lifetime_churn.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/wrappers/level_01/runtime_wrappers_001_result_wrapper_states.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/wrappers/level_01/runtime_wrappers_002_php_operator_normalization.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tests/runtime/wrappers/level_01/runtime_wrappers_003_take_helper.test-info.json",
+                        "kind":  "json",
+                        "doc_status":  "derived"
+                    },
+                    {
+                        "path":  "tools/usability_harness/config.json",
+                        "kind":  "json",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "tools/usability_harness/templates/tests.json",
+                        "kind":  "json",
+                        "doc_status":  "supporting"
+                    }
+                ]
+}

@@ -1,5 +1,5 @@
-# JSON builtins — first pass
-
+# JSON builtins â€” first pass
+Doc Status: normative
 This document defines the first-pass narrowed contract for the Prism++ / Simple C++ JSON builtins.
 
 See also:

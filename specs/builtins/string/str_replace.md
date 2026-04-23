@@ -1,5 +1,5 @@
-# Builtin Contract — `str_replace`
-
+# Builtin Contract â€” `str_replace`
+Doc Status: normative
 ## Identity
 - Name: `str_replace`
 - Module/family: string
@@ -19,8 +19,8 @@
 - Empty `search` returns the original subject unchanged.
 
 ## Compatibility table
-- PHP supports array forms and count output → Prism++ currently supports only the string-only form → modified
-- PHP replaces all non-overlapping matches → Prism++ keeps the same practical direction → kept
+- PHP supports array forms and count output â†’ Prism++ currently supports only the string-only form â†’ modified
+- PHP replaces all non-overlapping matches â†’ Prism++ keeps the same practical direction â†’ kept
 
 ## Error policy
 - No runtime error for valid typed inputs.

@@ -1,5 +1,5 @@
 # Runtime Error Handling (v1)
-
+Doc Status: normative
 ## Overview
 
 The Prism++ runtime supports two error output modes:

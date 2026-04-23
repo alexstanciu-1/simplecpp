@@ -634,7 +634,7 @@
             "execution_mode": "run",
             "expected_stdout": "user:Alex\n",
             "files": {
-                "main.php": "<?php\n\n// Main entrypoint for the multi-file scenario.\nrequire __DIR__ . '/helpers.php';\n\necho user_card(\"Alex\"), \"\\n\";\n",
+                "main.php": "<?php\n\n// Main entrypoint for the multi-file scenario.\nrequire_once 'helpers.php';\n\necho user_card(\"Alex\"), \"\\n\";\n",
                 "helpers.php": "<?php\n\n// Typed helper declared in a second file.\nfunction user_card(string $name): string {\n\treturn \"user:\" . $name;\n}\n"
             },
             "campaign": "scenarios_multifile"
@@ -654,7 +654,7 @@
             "execution_mode": "run",
             "expected_stdout": "A\nB\n",
             "files": {
-                "main.php": "<?php\n\n// Main entrypoint for the multi-file transformation scenario.\nrequire __DIR__ . '/helpers.php';\n\n$rows = [];\n$rows[] = [\"user\" => [\"name\" => \"A\"]];\n$rows[] = [\"user\" => [\"name\" => \"B\"]];\n\nforeach (extract_names($rows) as $name) {\n\techo $name, \"\\n\";\n}\n",
+                "main.php": "<?php\n\n// Main entrypoint for the multi-file transformation scenario.\nrequire_once 'helpers.php';\n\n$rows = [];\n$rows[] = [\"user\" => [\"name\" => \"A\"]];\n$rows[] = [\"user\" => [\"name\" => \"B\"]];\n\nforeach (extract_names($rows) as $name) {\n\techo $name, \"\\n\";\n}\n",
                 "helpers.php": "<?php\n\n// Transform nested rows in a helper file.\nfunction extract_names(array $rows): array {\n\t$result = [];\n\tforeach ($rows as $row) {\n\t\t$result[] = $row[\"user\"][\"name\"];\n\t}\n\n\treturn $result;\n}\n"
             },
             "campaign": "scenarios_multifile"
@@ -769,7 +769,7 @@
             "execution_mode": "run",
             "expected_stdout": "2\nA\n",
             "files": {
-                "main.php": "<?php\n\nrequire_once __DIR__ . '/support.php';\n\n$rows = build_rows();\necho row_count($rows), \"\\n\";\necho $rows[0][\"name\"], \"\\n\";\n",
+                "main.php": "<?php\n\nrequire_once 'support.php';\n\n$rows = build_rows();\necho row_count($rows), \"\\n\";\necho $rows[0][\"name\"], \"\\n\";\n",
                 "support.php": "<?php\n\nfunction build_rows(): array {\n\t$rows = [];\n\t$rows[] = [\"name\" => \"A\"];\n\t$rows[] = [\"name\" => \"B\"];\n\treturn $rows;\n}\n\nfunction row_count(array $rows): int {\n\t$total = 0;\n\tforeach ($rows as $row) {\n\t\t$total = $total + 1;\n\t}\n\treturn $total;\n}\n"
             }
         },
@@ -789,7 +789,7 @@
             "execution_mode": "run",
             "expected_stdout": "x\ny\n",
             "files": {
-                "main.php": "<?php\n\nrequire_once __DIR__ . '/transform.php';\n\n$rows = [];\n$rows[] = [\"code\" => \"x\"];\n$rows[] = [\"code\" => \"y\"];\n\nforeach (codes_only($rows) as $code) {\n\techo $code, \"\\n\";\n}\n",
+                "main.php": "<?php\n\nrequire_once 'transform.php';\n\n$rows = [];\n$rows[] = [\"code\" => \"x\"];\n$rows[] = [\"code\" => \"y\"];\n\nforeach (codes_only($rows) as $code) {\n\techo $code, \"\\n\";\n}\n",
                 "transform.php": "<?php\n\nfunction codes_only(array $rows): array {\n\t$result = [];\n\tforeach ($rows as $row) {\n\t\t$result[] = $row[\"code\"];\n\t}\n\treturn $result;\n}\n"
             }
         },

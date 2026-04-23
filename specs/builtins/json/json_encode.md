@@ -1,5 +1,5 @@
 # `json_encode`
-
+Doc Status: normative
 ## Current contract
 
 - `scpp::php::json_encode(const mixed_t &value) -> string_t`

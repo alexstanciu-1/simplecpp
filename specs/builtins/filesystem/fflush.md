@@ -1,5 +1,5 @@
-# Builtin Contract — `fflush`
-
+# Builtin Contract â€” `fflush`
+Doc Status: normative
 ## Identity
 - Name: `fflush`
 - Module/family: filesystem / stdio
@@ -18,7 +18,7 @@
 - Operational flush failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` → Prism++ now returns `true`/`false` at the PHP exposure layer → aligned
+- PHP returns `true`/`false` â†’ Prism++ now returns `true`/`false` at the PHP exposure layer â†’ aligned
 
 ## Error policy
 - Null resource, wrong resource kind, and closed-resource use throw runtime errors.

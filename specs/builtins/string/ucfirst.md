@@ -1,5 +1,5 @@
-# Builtin Contract — `ucfirst`
-
+# Builtin Contract â€” `ucfirst`
+Doc Status: normative
 ## Identity
 - Name: `ucfirst`
 - Module/family: string
@@ -17,8 +17,8 @@
 - Current contract is ASCII/byte-oriented, not Unicode-aware.
 
 ## Compatibility table
-- PHP uppercases the first character → Prism++ uppercases the first byte → modified
-- Empty input returns empty output → Prism++ does the same → kept
+- PHP uppercases the first character â†’ Prism++ uppercases the first byte â†’ modified
+- Empty input returns empty output â†’ Prism++ does the same â†’ kept
 
 ## Error policy
 - No runtime error for valid typed string inputs.

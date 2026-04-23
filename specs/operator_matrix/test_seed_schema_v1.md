@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Test Seed Schema
+Doc Status: normative
 
 ---
 

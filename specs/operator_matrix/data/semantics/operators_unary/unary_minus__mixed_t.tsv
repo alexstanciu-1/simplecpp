@@ -1,0 +1,15 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+mixed.null						supported	throws	mixed_t	mixed.null	true	unary_minus.mixed.null	runtime_throw		Mixed null is not a valid operand for unary minus.
+mixed.bool.false						supported	throws	mixed_t	mixed.bool.false	true	unary_minus.mixed.bool.false	runtime_throw		Mixed bool false is not a valid operand for unary minus.
+mixed.bool.true						supported	throws	mixed_t	mixed.bool.true	true	unary_minus.mixed.bool.true	runtime_throw		Mixed bool true is not a valid operand for unary minus.
+mixed.int.zero						supported	deterministic_value	mixed_t	mixed.int.zero	true	unary_minus.mixed.int.zero	runtime_success		Mixed int zero negates to zero.
+mixed.int.nonzero						supported	deterministic_value	mixed_t	mixed.int.neg_seven	true	unary_minus.mixed.int.nonzero	runtime_success		Mixed int non-zero negates to the matching negative value.
+mixed.float.zero						supported	deterministic_value	mixed_t	mixed.float.neg_zero	true	unary_minus.mixed.float.zero	runtime_success		Mixed float zero negates to signed zero.
+mixed.float.nonzero						supported	deterministic_value	mixed_t	mixed.float.neg_3_5	true	unary_minus.mixed.float.nonzero	runtime_success		Mixed float non-zero negates to the matching negative value.
+mixed.string.empty						supported	throws	mixed_t	mixed.string.empty	true	unary_minus.mixed.string.empty	runtime_throw		Mixed empty string is not a valid operand for unary minus.
+mixed.string.zero_string						supported	throws	mixed_t	mixed.string.zero_string	true	unary_minus.mixed.string.zero_string	runtime_throw		Mixed string 0 is not a valid operand for unary minus.
+mixed.string.bool_false_literal						supported	throws	mixed_t	mixed.string.bool_false_literal	true	unary_minus.mixed.string.bool_false_literal	runtime_throw		Mixed string bool literal is not a valid operand for unary minus.
+mixed.string.bool_true_literal						supported	throws	mixed_t	mixed.string.bool_true_literal	true	unary_minus.mixed.string.bool_true_literal	runtime_throw		Mixed string bool literal is not a valid operand for unary minus.
+mixed.string.nonempty_nonzero_nonbool_literal						supported	throws	mixed_t	mixed.string.nonempty_nonzero_nonbool_literal	true	unary_minus.mixed.string.other	runtime_throw		Mixed non-numeric string is not a valid operand for unary minus.
+mixed.hash.empty						supported	throws	mixed_t	mixed.hash.empty	true	unary_minus.mixed.hash.empty	runtime_throw		Mixed hash is not a valid operand for unary minus.
+mixed.hash.nonempty						supported	throws	mixed_t	mixed.hash.nonempty	true	unary_minus.mixed.hash.nonempty	runtime_throw		Mixed hash is not a valid operand for unary minus.

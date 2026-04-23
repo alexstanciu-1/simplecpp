@@ -1,5 +1,5 @@
-# Builtin Contract — `rewind`
-
+# Builtin Contract â€” `rewind`
+Doc Status: normative
 ## Identity
 - Name: `rewind`
 - Module/family: filesystem / stdio
@@ -17,7 +17,7 @@
 - Success returns `true`.
 
 ## Compatibility table
-- PHP returns `true` on success and `false` on failure → Prism++ returns `true` on success and throws for invalid resource use → modified
+- PHP returns `true` on success and `false` on failure â†’ Prism++ returns `true` on success and throws for invalid resource use â†’ modified
 
 ## Error policy
 - Null resource, wrong resource kind, and closed-resource use throw runtime errors.

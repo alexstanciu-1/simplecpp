@@ -1,6 +1,9 @@
+Doc Status: normative
+
+
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
-# Prism++ – Primary-Type Normalized Parameters
+# Prism++ â€“ Primary-Type Normalized Parameters
 
 Status: Active v1 design + template-wrapper implementation slice.
 

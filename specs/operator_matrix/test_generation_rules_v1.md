@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Test Generation Rules
+Doc Status: normative
 
 ---
 
@@ -105,10 +105,10 @@ Always generate tests for rows that represent materially distinct edge cases, in
 For items that use operand target kinds, test generation must preserve that dimension.
 
 Examples:
-- `pre_increment × int_t × assignable_variable` → runtime success or compile-fail depending on support
-- `pre_increment × int_t × temporary_result` → compile-fail
-- `unset_keyed × keyed_element.present` → runtime mutation test
-- `unset_keyed × keyed_element.missing` → runtime noop test
+- `pre_increment Ã— int_t Ã— assignable_variable` â†’ runtime success or compile-fail depending on support
+- `pre_increment Ã— int_t Ã— temporary_result` â†’ compile-fail
+- `unset_keyed Ã— keyed_element.present` â†’ runtime mutation test
+- `unset_keyed Ã— keyed_element.missing` â†’ runtime noop test
 
 A profile-only test is insufficient when target-kind semantics differ.
 

@@ -1,5 +1,5 @@
-# Builtin Contract — `ftell`
-
+# Builtin Contract â€” `ftell`
+Doc Status: normative
 ## Identity
 - Name: `ftell`
 - Module/family: filesystem / stdio
@@ -17,7 +17,7 @@
 - Operational tell failure returns `null`.
 
 ## Compatibility table
-- PHP returns the current offset or `false` → Prism++ returns offset or `null` → modified
+- PHP returns the current offset or `false` â†’ Prism++ returns offset or `null` â†’ modified
 
 ## Error policy
 - Null resource, wrong resource kind, and closed-resource use throw runtime errors.

@@ -1,5 +1,5 @@
 # PHP FastCGI Bridge for Simple C++
-
+Doc Status: supporting
 This directory contains a standalone PHP bridge for calling Simple C++ applications over FastCGI.
 
 ## Design goals

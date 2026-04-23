@@ -1,5 +1,5 @@
 # Runtime layering
-
+Doc Status: supporting
 Prism++ / Simple C++ now treats the runtime as a composition of:
 
 - non-language runtime core
@@ -19,10 +19,10 @@ Use:
 
 Current runtime targets include:
 
-- `scpp_runtime` → non-language runtime core
-- `scpp_lang_php` → PHP runtime layer
-- `scpp_json` → JSON runtime module
-- `scpp_filesystem` → filesystem runtime module
+- `scpp_runtime` â†’ non-language runtime core
+- `scpp_lang_php` â†’ PHP runtime layer
+- `scpp_json` â†’ JSON runtime module
+- `scpp_filesystem` â†’ filesystem runtime module
 
 ## Dependency rule
 

@@ -1,5 +1,5 @@
 # `know_how` fixtures
-
+Doc Status: supporting
 This folder is for AST/exporter reconnaissance fixtures.
 
 These files are not the main staged compatibility suite. Their role is narrower:

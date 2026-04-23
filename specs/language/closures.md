@@ -1,5 +1,5 @@
 # Closures (Lambda Functions)
-
+Doc Status: normative
 ## Overview
 
 A closure is an anonymous function value defined inline:
@@ -47,13 +47,13 @@ Closures **cannot be stored in dynamic or untyped containers**:
 
 ```php
 $data = [];
-$data['fn'] = function () { ... }; // ❌ compile-time error
+$data['fn'] = function () { ... }; // âŒ compile-time error
 ```
 
 Closures **cannot be assigned to mixed_t**:
 
 ```php
-$m = function () { ... }; // ❌ if $m is mixed_t
+$m = function () { ... }; // âŒ if $m is mixed_t
 ```
 
 Closures **cannot be implicitly unified across different types**:
@@ -61,7 +61,7 @@ Closures **cannot be implicitly unified across different types**:
 ```php
 $f = $cond
 	? function (int $x): int { return $x + 1; }
-	: function (int $x): int { return $x + 2; }; // ❌
+	: function (int $x): int { return $x + 2; }; // âŒ
 ```
 
 ---
@@ -92,7 +92,7 @@ $f = function (int $a): int {
 };
 ```
 
-↓
+â†“
 
 ```cpp
 auto f = [](int a) -> int {

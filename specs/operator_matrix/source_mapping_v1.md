@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Source Mapping
+Doc Status: normative
 
 ---
 

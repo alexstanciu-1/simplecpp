@@ -1,5 +1,5 @@
-# Builtin Contract — `mkdir`
-
+# Builtin Contract â€” `mkdir`
+Doc Status: normative
 ## Identity
 - Name: `mkdir`
 - Module/family: filesystem
@@ -18,7 +18,7 @@
 - Operational failure, including already-existing target, returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` and has richer mode/recursive options → Prism++ currently supports only a narrowed single-directory form with `true`/`false` → modified
+- PHP returns `true`/`false` and has richer mode/recursive options â†’ Prism++ currently supports only a narrowed single-directory form with `true`/`false` â†’ modified
 
 ## Error policy
 - Does not throw for ordinary create failure.

@@ -1,5 +1,5 @@
-# Builtin Contract — `file_put_contents`
-
+# Builtin Contract â€” `file_put_contents`
+Doc Status: normative
 ## Identity
 - Name: `file_put_contents`
 - Module/family: filesystem
@@ -20,8 +20,8 @@
 - Append and flags are out of scope in this first pass.
 
 ## Compatibility table
-- PHP returns bytes written or `false` → Prism++ returns bytes written or `false` → modified
-- PHP supports flags and broader input coercions → Prism++ currently supports overwrite-only string writes → modified
+- PHP returns bytes written or `false` â†’ Prism++ returns bytes written or `false` â†’ modified
+- PHP supports flags and broader input coercions â†’ Prism++ currently supports overwrite-only string writes â†’ modified
 
 ## Error policy
 - Does not throw for ordinary open/write failure.

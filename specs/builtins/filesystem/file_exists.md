@@ -1,5 +1,5 @@
-# Builtin Contract — `file_exists`
-
+# Builtin Contract â€” `file_exists`
+Doc Status: normative
 ## Identity
 - Name: `file_exists`
 - Module/family: filesystem
@@ -17,7 +17,7 @@
 - Operational filesystem errors collapse to `false` in this first pass.
 
 ## Compatibility table
-- PHP returns bool → Prism++ returns bool → kept
+- PHP returns bool â†’ Prism++ returns bool â†’ kept
 
 ## Error policy
 - Does not throw for ordinary path lookup failures.

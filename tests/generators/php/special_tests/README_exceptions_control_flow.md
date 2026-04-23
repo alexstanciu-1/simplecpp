@@ -1,5 +1,5 @@
 # Exception / control-flow spot checks
-
+Doc Status: supporting
 - `test_07_finally_return.php` exercises delayed `return` through `finally`.
 - Literal forms such as `break 2;`, `break 3;`, or `continue 2;` may already be rejected by the PHP front-end when the nesting depth is invalid at parse/compile time.
 - The generator still now rejects any non-unit `break` / `continue` depth that reaches IR lowering, including non-simple depth expressions.

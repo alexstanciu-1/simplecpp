@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Canonical Catalog
+Doc Status: normative
 
 ---
 
@@ -11,7 +11,7 @@ This document defines the **canonical taxonomy and item inventory** for the dyna
 operator / cast / language semantics matrix.
 
 This matrix is used for:
-- semantic visualization (types × operators)
+- semantic visualization (types Ã— operators)
 - edge-case coverage tracking
 - automated test generation
 - regression validation against specs and runtime

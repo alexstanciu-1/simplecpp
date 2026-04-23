@@ -1,0 +1,5 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+int.zero	float.zero					supported	deterministic_value	bool_t	bool.false	true	less_than.int_zero.float_zero	runtime_success		Deterministic ordering dispatch follows the current numeric operator family.
+int.zero	float.nonzero					supported	deterministic_value	bool_t	bool.true	true	less_than.int_zero.float_nonzero	runtime_success		Deterministic ordering dispatch follows the current numeric operator family.
+int.nonzero	float.zero					supported	deterministic_value	bool_t	bool.false	true	less_than.int_nonzero.float_zero	runtime_success		Deterministic ordering dispatch follows the current numeric operator family.
+int.nonzero	float.nonzero					supported	deterministic_value	bool_t	bool.false	true	less_than.int_nonzero.float_nonzero	runtime_success		Deterministic ordering dispatch follows the current numeric operator family.

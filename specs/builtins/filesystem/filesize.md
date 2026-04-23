@@ -1,5 +1,5 @@
-# Builtin Contract — `filesize`
-
+# Builtin Contract â€” `filesize`
+Doc Status: normative
 ## Identity
 - Name: `filesize`
 - Module/family: filesystem
@@ -17,7 +17,7 @@
 - Failure returns `null`.
 
 ## Compatibility table
-- PHP returns size or `false` → Prism++ returns size or `false` → modified
+- PHP returns size or `false` â†’ Prism++ returns size or `false` â†’ modified
 
 ## Error policy
 - Does not throw for ordinary lookup failure.

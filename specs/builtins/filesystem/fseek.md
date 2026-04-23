@@ -1,5 +1,5 @@
-# Builtin Contract — `fseek`
-
+# Builtin Contract â€” `fseek`
+Doc Status: normative
 ## Identity
 - Name: `fseek`
 - Module/family: filesystem / stdio
@@ -20,7 +20,7 @@
 - Operational seek failure returns `null`.
 
 ## Compatibility table
-- PHP returns `0` on success and `-1` on failure → Prism++ returns `0` on success and `null` on operational failure → modified
+- PHP returns `0` on success and `-1` on failure â†’ Prism++ returns `0` on success and `null` on operational failure â†’ modified
 
 ## Error policy
 - Null resource, wrong resource kind, and closed-resource use throw runtime errors.

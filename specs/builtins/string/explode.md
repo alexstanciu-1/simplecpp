@@ -1,5 +1,5 @@
-# Builtin Contract — `explode`
-
+# Builtin Contract â€” `explode`
+Doc Status: normative
 ## Identity
 - Name: `explode`
 - Module/family: string
@@ -24,9 +24,9 @@
 - Behavior is byte-oriented and binary-safe.
 
 ## Compatibility table
-- PHP returns a packed array of strings → Prism++ returns `mixed_t` containing `hash_t<mixed_t>` → modified
-- PHP rejects empty separator → Prism++ keeps the same behavior → kept
-- PHP supports positive and negative limits → Prism++ keeps the same practical behavior → kept
+- PHP returns a packed array of strings â†’ Prism++ returns `mixed_t` containing `hash_t<mixed_t>` â†’ modified
+- PHP rejects empty separator â†’ Prism++ keeps the same behavior â†’ kept
+- PHP supports positive and negative limits â†’ Prism++ keeps the same practical behavior â†’ kept
 
 ## Error policy
 - Empty separator throws `ValueError`.

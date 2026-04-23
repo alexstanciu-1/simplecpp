@@ -1,5 +1,5 @@
 # Project Patch Protocol (MANDATORY)
-
+Doc Status: supporting
 ## 1. Source of truth
 - Always use the full attached project
 - Do NOT reconstruct files from memory
@@ -53,4 +53,4 @@
 
 ## 11. No silent behavior changes
 - Any semantic change must be explicitly stated
-- If behavior differs from previous version → highlight it
+- If behavior differs from previous version â†’ highlight it

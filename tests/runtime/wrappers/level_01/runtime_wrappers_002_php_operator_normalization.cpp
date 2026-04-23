@@ -31,7 +31,12 @@ int main() {
 		[&]() -> decltype(auto) { return false_or_number; },
 		[&]() -> decltype(auto) { return scpp::int_t(99); }
 	);
-	assert(rof_coalesce.is_false().native_value() == true);
+	assert(rof_coalesce.native_value() == 99);
+	auto rof_coalesce_value = scpp::php::coalesce_eval(
+		[&]() -> decltype(auto) { return value_or_number; },
+		[&]() -> decltype(auto) { return scpp::int_t(99); }
+	);
+	assert(rof_coalesce_value.native_value() == 12);
 
 	auto rof_elvis = scpp::php::ternary_eval(
 		[&]() -> decltype(auto) { return false_or_number; },
@@ -46,18 +51,21 @@ int main() {
 	assert(static_cast<bool>(scpp::php::identical(bool_true_or_number, scpp::bool_t(true))));
 	assert(static_cast<bool>(scpp::php::identical(bool_false_or_number, scpp::bool_t(false))));
 
-	auto rob_coalesce = scpp::php::coalesce_eval(
-		[&]() -> decltype(auto) { return bool_false_or_number; },
-		[&]() -> decltype(auto) { return scpp::int_t(15); }
-	);
-	assert(rob_coalesce.is_false().native_value() == true);
+	runtime_test::expect_throw<std::runtime_error>([&]() {
+		(void) scpp::php::coalesce_eval(
+			[&]() -> decltype(auto) { return bool_false_or_number; },
+			[&]() -> decltype(auto) { return scpp::int_t(15); }
+		);
+	});
 
 	auto rob_elvis_true = scpp::php::ternary_eval(
 		[&]() -> decltype(auto) { return bool_true_or_number; },
 		[&]() -> decltype(auto) { return bool_true_or_number; },
 		[&]() -> decltype(auto) { return scpp::int_t(21); }
 	);
+	assert(rob_elvis_true.has_value().native_value() == false);
 	assert(rob_elvis_true.is_true().native_value() == true);
+	assert(rob_elvis_true.is_false().native_value() == false);
 
 	auto rob_elvis_false = scpp::php::ternary_eval(
 		[&]() -> decltype(auto) { return bool_false_or_number; },

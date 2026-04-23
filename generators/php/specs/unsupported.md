@@ -1,5 +1,5 @@
 # Explicitly Not Supported / Reduced Semantics
-
+Doc Status: normative
 This section defines behaviors that are intentionally unsupported or differ from PHP.
 
 ## Rejected by Design

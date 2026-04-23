@@ -1,5 +1,5 @@
 # Prism++ CLI Installation and Project Bootstrap Milestone
-
+Doc Status: planning
 Status: Active for the current first-binary and first-project-bootstrap milestone.
 
 ---

@@ -1,3 +1,6 @@
+Doc Status: planning
+
+
 Your intended syntax is:
 
 $make = fn(int $x) /** function<function<int(int)>(int)> */ =>

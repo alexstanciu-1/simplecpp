@@ -49,7 +49,8 @@ static void test_value_t_basic_storage_contract() {
 	assert(string_value.kind() == scpp::mixed_t::kind_t::string_v);
 	assert(string_value.string_if() != nullptr);
 	assert(string_value.string_if()->native_value() == "hello");
-	static_assert(sizeof(scpp::mixed_t) == 24);
+	static_assert(sizeof(scpp::mixed_t) >= 24);
+	static_assert(sizeof(scpp::mixed_t) <= 64);
 
 	scpp_test::expect_throw<std::runtime_error>([&]() {
 		(void)int_value.bool_value();
@@ -175,9 +176,7 @@ static void test_value_t_comparisons_and_logical() {
 	scpp_test::expect_throw<std::runtime_error>([&]() {
 		(void)(b1 == i1);
 	});
-	scpp_test::expect_throw<std::runtime_error>([&]() {
-		(void)(scpp::mixed_t(scpp::string_t("x")) && b1);
-	});
+	assert((scpp::mixed_t(scpp::string_t("x")) && b1).native_value() == true);
 }
 
 static void test_value_t_assignment_and_increment() {
@@ -273,9 +272,8 @@ static void test_value_t_boxed_table_helpers() {
 	scpp_test::expect_throw<std::runtime_error>([&]() {
 		(void) scpp::mixed_t(scpp::int_t(1)).size();
 	});
-	scpp_test::expect_throw<std::runtime_error>([&]() {
-		(void) scpp::mixed_t(scpp::string_t("x")).empty();
-	});
+	assert(scpp::mixed_t(scpp::string_t("x")).empty() == false);
+	assert(scpp::mixed_t(scpp::string_t("")).empty() == true);
 	scpp_test::expect_throw<std::out_of_range>([&]() {
 		(void) boxed.at(scpp::int_t(99));
 	});

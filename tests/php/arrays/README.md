@@ -1,5 +1,5 @@
 # PHP array semantic suite
-
+Doc Status: supporting
 This suite pressure-tests `hash_t` semantics from PHP-facing inputs.
 
 ## Level 01

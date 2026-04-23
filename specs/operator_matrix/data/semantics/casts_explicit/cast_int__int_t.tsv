@@ -1,0 +1,3 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+int.zero						supported	deterministic_value	int_t	int.zero	true	cast_int.int.zero	runtime_success		Explicit int cast preserves zero integer profile.
+int.nonzero						supported	deterministic_value	int_t	int.nonzero	true	cast_int.int.nonzero	runtime_success		Explicit int cast preserves non-zero integer profile.

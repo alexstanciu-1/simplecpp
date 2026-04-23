@@ -1,5 +1,5 @@
-# Builtin Contract — `fwrite`
-
+# Builtin Contract â€” `fwrite`
+Doc Status: normative
 ## Identity
 - Name: `fwrite`
 - Module/family: filesystem / stdio
@@ -19,7 +19,7 @@
 - Operational write failure returns `null`.
 
 ## Compatibility table
-- PHP returns byte count or `false` → Prism++ returns byte count or `null` → modified
+- PHP returns byte count or `false` â†’ Prism++ returns byte count or `null` â†’ modified
 
 ## Error policy
 - Non-writable stream throws a runtime error.

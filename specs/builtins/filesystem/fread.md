@@ -1,5 +1,5 @@
-# Builtin Contract — `fread`
-
+# Builtin Contract â€” `fread`
+Doc Status: normative
 ## Identity
 - Name: `fread`
 - Module/family: filesystem / stdio
@@ -20,8 +20,8 @@
 - Read error returns `null`.
 
 ## Compatibility table
-- PHP returns bytes read or `false` → Prism++ returns bytes read or `null` → modified
-- PHP distinguishes EOF from failure via empty string / `false` → Prism++ keeps the same practical distinction with empty string / `null` → modified
+- PHP returns bytes read or `false` â†’ Prism++ returns bytes read or `null` â†’ modified
+- PHP distinguishes EOF from failure via empty string / `false` â†’ Prism++ keeps the same practical distinction with empty string / `null` â†’ modified
 
 ## Error policy
 - Negative length throws a runtime error.

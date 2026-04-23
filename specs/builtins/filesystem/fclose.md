@@ -1,5 +1,5 @@
-# Builtin Contract — `fclose`
-
+# Builtin Contract â€” `fclose`
+Doc Status: normative
 ## Identity
 - Name: `fclose`
 - Module/family: filesystem / stdio
@@ -19,7 +19,7 @@
 - Subsequent use of the resource throws.
 
 ## Compatibility table
-- PHP returns `true`/`false` → Prism++ returns `true`/`null` and enforces closed-resource throwing on later use → modified
+- PHP returns `true`/`false` â†’ Prism++ returns `true`/`null` and enforces closed-resource throwing on later use â†’ modified
 
 ## Error policy
 - Null resource, wrong resource kind, and closed-resource use throw runtime errors.

@@ -1,3 +1,6 @@
+Doc Status: normative
+
+
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
 # `hash_t` Import / Adaptation Contract (v1)
@@ -106,8 +109,8 @@ using maybe_value_t = nullable<mixed_t>;
 
 Semantics:
 
-- empty `nullable<mixed_t>` means “not found”
-- present `mixed_t(null_t{})` means “found and the stored value is null”
+- empty `nullable<mixed_t>` means â€œnot foundâ€
+- present `mixed_t(null_t{})` means â€œfound and the stored value is nullâ€
 
 Helpers:
 

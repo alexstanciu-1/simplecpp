@@ -1,3 +1,6 @@
+Doc Status: normative
+
+
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
 # Prism++ Runtime Generation Guidelines
@@ -32,6 +35,7 @@ Generation must preserve a strict layering boundary:
 - when wrapper families need operator participation, generation must prefer one centralized lifted operator surface over relying on native C++ conversion operators; for current nullable work this means lifted unary/binary/logical/relational/mutation operators that unwrap through a checked helper and then delegate to the wrapped-value operator family
 - when wrapper families need cast participation, generation must prefer one centralized lifted cast surface over scattered ad hoc unwraps; for current nullable work this means `cast<T>(nullable<U>)` must route through a checked present-value requirement before delegating to `cast<T>(U)`, and empty nullable failure should use the standardized wording `cast<To>(nullable) cannot convert an empty nullable to a required value`; the symmetric inbound bridge `cast<nullable<T>>(mixed_t)` must map runtime `null` to empty nullable and otherwise delegate through the configured `mixed_t -> T` cast
 - when nullable values need object/property or method dereference, generation must rely on the stable `nullable<T>::operator->()` surface instead of scattering manual unwraps; nullable arrow access must check present-value state first, then forward to wrapped `T::operator->()` when available or expose the address of the wrapped object for direct-object member access
+- generated/frontend-facing code should target language entrypoints such as `scpp::php::*`; language entrypoints may forward to shared `scpp::*` semantic families, but generated code should not call shared `scpp::*` semantic families directly
 
 ## Output layout
 Generation must target the project runtime root and produce files by category, not by ad-hoc manual decisions.
@@ -41,7 +45,12 @@ Expected layout logic:
 - `include/scpp/`
   - one header per generated runtime type or focused component
   - one non-language aggregation header: `runtime.hpp`
+- `include/operators/`
+  - shared Prism++ semantic operator-family authorities
+- `include/casts/`
+  - shared Prism++ semantic cast-family authorities
 - separate language umbrellas when a frontend requires language-owned wrappers
+- separate language adapter trees under `include/lang/<lang>/`
 - `tests/`
   - generated or maintained tests grouped by purpose
 - root build files
@@ -58,7 +67,7 @@ Use these rules for file creation:
 - create shared support headers only when multiple generated headers depend on the same reusable logic
 - keep `runtime.hpp` as the stable non-language umbrella include that pulls in the generated public runtime headers
 - treat `runtime.hpp` as the mandatory public entry point for generated operator availability on the non-language runtime surface
-- place language-owned wrappers behind explicit language umbrellas such as `scpp/lang/php.hpp` rather than re-coupling them into `runtime.hpp`
+- place language-owned wrappers and thin semantic adapters behind explicit language umbrellas such as `scpp/lang/php.hpp` rather than re-coupling them into `runtime.hpp`
 - do not require individual wrapper headers to remain operator-complete after operator-surface migration
 - do not collapse unrelated types into one large header unless the config explicitly models them as one unit
 
@@ -68,8 +77,8 @@ Generation should work from categories:
 1. generate sentinel/value declarations
 2. generate scalar wrappers
 3. generate template wrappers
-4. generate helper functions (memory helpers, cast helpers)
-5. generate the canonical public operator surface from config-owned operator rules
+4. generate shared semantic families (operators, casts, related helpers)
+5. generate language adapters that forward to shared semantic families by default
 6. generate umbrella include
 7. generate or update tests from config-owned semantics
 
@@ -88,6 +97,12 @@ Generation for migrated operator families must follow these rules:
 - do not keep overlapping public operator definitions in multiple runtime locations once the generated family is fully migrated
 
 This means operator generation is no longer an ad-hoc byproduct of wrapper generation. It is a first-class generated surface with its own migration and cleanup discipline.
+
+The same direction applies to cast families:
+
+- one shared semantic family authority
+- thin language adapters above it
+- no semantic ownership in generic support files
 
 ## Source-of-truth rules
 To keep generations consistent:

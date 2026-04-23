@@ -1,0 +1,6 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+string.empty						supported	deterministic_value	bool_t	bool.false	true	condition.string.empty	runtime_success		Empty string condition evaluates false.
+string.zero_string						supported	deterministic_value	bool_t	bool.false	true	condition.string.zero_string	runtime_success		"String ""0"" condition evaluates false."
+string.bool_false_literal						supported	deterministic_value	bool_t	bool.true	true	condition.string.bool_false_literal	runtime_success		"Non-empty string condition evaluates true even for the literal ""false""."
+string.bool_true_literal						supported	deterministic_value	bool_t	bool.true	true	condition.string.bool_true_literal	runtime_success		Non-empty string condition evaluates true.
+string.nonempty_nonzero_nonbool_literal						supported	deterministic_value	bool_t	bool.true	true	condition.string.nonempty_nonzero_nonbool_literal	runtime_success		Non-empty non-zero string condition evaluates true.

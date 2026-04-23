@@ -1,5 +1,5 @@
-# Simple C++ – Test Obligation Schema
-
+# Simple C++ â€“ Test Obligation Schema
+Doc Status: normative
 This file defines the conceptual schema used before concrete PHP samples are generated.
 
 ## Required fields

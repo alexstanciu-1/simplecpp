@@ -1,0 +1,3 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+bool.false						supported	deterministic_value	bool_t	bool.false	true	cast_bool.bool.false	runtime_success		Explicit bool cast preserves false profile.
+bool.true						supported	deterministic_value	bool_t	bool.true	true	cast_bool.bool.true	runtime_success		Explicit bool cast preserves true profile.

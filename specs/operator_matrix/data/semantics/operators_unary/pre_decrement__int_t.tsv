@@ -1,0 +1,3 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+int.zero			assignable_variable			supported	deterministic_value	int_t	int.neg_one	true	pre_decrement.int.zero.assignable	runtime_success		Prefix decrement returns the decremented integer value.
+int.nonzero			assignable_variable			supported	deterministic_value	int_t	int.six	true	pre_decrement.int.nonzero.assignable	runtime_success		Prefix decrement returns the decremented non-zero integer value.

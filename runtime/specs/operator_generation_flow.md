@@ -1,3 +1,6 @@
+Doc Status: normative
+
+
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
 # Prism++ Operator Generation Flow
@@ -84,7 +87,7 @@ This distinction matters:
 - public overlapping operator surfaces create ambiguity risk
 - internal helper functions do not
 
-The cleanup rule is therefore not “remove all helper logic”. The rule is “remove competing public operator declarations once the generated surface fully covers them”.
+The cleanup rule is therefore not â€œremove all helper logicâ€. The rule is â€œremove competing public operator declarations once the generated surface fully covers themâ€.
 
 ---
 
@@ -92,8 +95,8 @@ The cleanup rule is therefore not “remove all helper logic”. The rule is “
 
 For generated operators, the current model is two-path:
 
-### Path A — native-wrapper path
-Used when the participating operands are in the operator’s native-wrapper category bucket.
+### Path A â€” native-wrapper path
+Used when the participating operands are in the operatorâ€™s native-wrapper category bucket.
 
 For example, for numeric operators this means the `int_t` / `float_t` path.
 
@@ -110,7 +113,7 @@ Example policy direction:
 - `int_t op float_t` and `float_t op int_t` return `float_t`
 - invalid native combinations for that operator family must not silently route into dynamic fallback
 
-### Path B — mixed path
+### Path B â€” mixed path
 Used when a covered operator kind includes `mixed_t` participation and at least one participating operand is `mixed_t`.
 
 This path should:
@@ -138,7 +141,7 @@ Nullable arrow dereference is intentionally not part of the generated arithmetic
 
 Use this procedure when changing the operator surface.
 
-### Step 1 — read authority documents
+### Step 1 â€” read authority documents
 Read at least:
 
 - `specs/spec_map.md`
@@ -149,7 +152,7 @@ Read at least:
 
 If a change touches dynamic/mixed user-visible behavior, also read `specs/dynamic_types.md`.
 
-### Step 2 — determine operator family scope
+### Step 2 â€” determine operator family scope
 Decide which operator family is being generated or revised.
 
 Examples:
@@ -162,9 +165,9 @@ Examples:
 - unary arithmetic / logical / bitwise
 - assignment / compound assignment
 
-Do not assume one family’s legality rules automatically transfer to another. `%`, `/`, comparisons, logical operators, and compound assignments often require different category rules.
+Do not assume one familyâ€™s legality rules automatically transfer to another. `%`, `/`, comparisons, logical operators, and compound assignments often require different category rules.
 
-### Step 3 — derive operator-specific operand buckets from config
+### Step 3 â€” derive operator-specific operand buckets from config
 For the target operator family, determine from `runtime/specs/config.json`:
 
 - whether the operator family is enabled
@@ -175,7 +178,7 @@ For the target operator family, determine from `runtime/specs/config.json`:
 
 The generator must not guess missing operator support.
 
-### Step 4 — generate operator-specific constraints
+### Step 4 â€” generate operator-specific constraints
 Build the operator-specific `requires` logic from the stable handwritten concepts.
 
 Examples of intended direction:
@@ -186,7 +189,7 @@ Examples of intended direction:
 
 Avoid using one universal operand concept for every operator family unless the config really models the same category surface everywhere.
 
-### Step 5 — generate native-wrapper branch logic
+### Step 5 â€” generate native-wrapper branch logic
 For native-wrapper-covered combinations, generate a compile-time branch tree that:
 
 - uses `if constexpr` / `else if constexpr`
@@ -197,7 +200,7 @@ For native-wrapper-covered combinations, generate a compile-time branch tree tha
 
 The generated native branch must not call back into the same public operator surface in a way that risks recursion or re-entry ambiguity.
 
-### Step 6 — generate mixed branch logic
+### Step 6 â€” generate mixed branch logic
 If the config says `mixed_t` participates for that operator kind, generate the mixed branch.
 
 The mixed branch should:
@@ -207,7 +210,7 @@ The mixed branch should:
 - return `mixed_t`
 - avoid pretending that invalid dynamic combinations are compile-time errors
 
-### Step 7 — include the generated header in the runtime umbrella
+### Step 7 â€” include the generated header in the runtime umbrella
 The canonical generated operator header must remain reachable through the stable public runtime umbrella include.
 
 The current target location is:
@@ -218,7 +221,7 @@ The umbrella include should expose it consistently.
 
 Direct consumers of the non-language runtime should treat `scpp/runtime.hpp` as the mandatory public entry point for generated operator availability. Language-specific generated code may instead include a language umbrella such as `scpp/lang/php.hpp`, which in turn includes `scpp/runtime.hpp`. Code that includes only individual wrapper headers should not rely on those headers remaining operator-complete.
 
-### Step 8 — remove overlapping public operators only after coverage is verified
+### Step 8 â€” remove overlapping public operators only after coverage is verified
 After generation is updated and validated, remove overlapping public operator definitions from wrapper/member/free-operator code.
 
 Keep:
@@ -229,7 +232,7 @@ Keep:
 
 This removal must be done only after the generated surface covers the same intended semantics.
 
-### Step 9 — validate
+### Step 9 â€” validate
 At minimum validate:
 
 - generation produces a non-empty operator header

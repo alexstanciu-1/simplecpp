@@ -1,0 +1,15 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+mixed.bool.false						supported	deterministic_value	bool_t	bool.true	true	logical_not.mixed.bool.false	runtime_success		Mixed bool false participates in logical not through condition truthiness.
+mixed.bool.true						supported	deterministic_value	bool_t	bool.false	true	logical_not.mixed.bool.true	runtime_success		Mixed bool true participates in logical not through condition truthiness.
+mixed.int.zero						supported	deterministic_value	bool_t	bool.true	true	logical_not.mixed.int.zero	runtime_success		Mixed int zero participates in logical not through condition truthiness.
+mixed.int.nonzero						supported	deterministic_value	bool_t	bool.false	true	logical_not.mixed.int.nonzero	runtime_success		Mixed int non-zero participates in logical not through condition truthiness.
+mixed.float.zero						supported	deterministic_value	bool_t	bool.true	true	logical_not.mixed.float.zero	runtime_success		Mixed float zero participates in logical not through condition truthiness.
+mixed.float.nonzero						supported	deterministic_value	bool_t	bool.false	true	logical_not.mixed.float.nonzero	runtime_success		Mixed float non-zero participates in logical not through condition truthiness.
+mixed.null						supported	deterministic_value	bool_t	bool.true	true	logical_not.mixed.null	runtime_success		Mixed null participates in logical not as false, so the result is true.
+mixed.string.empty						supported	deterministic_value	bool_t	bool.true	true	logical_not.mixed.string.empty	runtime_success		Mixed empty string participates in logical not as false, so the result is true.
+mixed.string.zero_string						supported	deterministic_value	bool_t	bool.true	true	logical_not.mixed.string.zero_string	runtime_success		Mixed string 0 participates in logical not as false, so the result is true.
+mixed.string.bool_false_literal						supported	deterministic_value	bool_t	bool.false	true	logical_not.mixed.string.bool_false_literal	runtime_success		Mixed non-empty string participates in logical not as true, so the result is false.
+mixed.string.bool_true_literal						supported	deterministic_value	bool_t	bool.false	true	logical_not.mixed.string.bool_true_literal	runtime_success		Mixed non-empty string participates in logical not as true, so the result is false.
+mixed.string.nonempty_nonzero_nonbool_literal						supported	deterministic_value	bool_t	bool.false	true	logical_not.mixed.string.other	runtime_success		Mixed non-empty non-zero string participates in logical not as true, so the result is false.
+mixed.hash.empty						supported	throws	bool_t	bool.false	true	logical_not.mixed.hash.empty	runtime_throw	invalid_condition_type	Hash mixed runtime kind is not allowed in logical-not condition evaluation.
+mixed.hash.nonempty						supported	throws	bool_t	bool.false	true	logical_not.mixed.hash.nonempty	runtime_throw	invalid_condition_type	Hash mixed runtime kind is not allowed in logical-not condition evaluation.

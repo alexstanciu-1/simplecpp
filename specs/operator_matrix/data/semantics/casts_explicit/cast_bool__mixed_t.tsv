@@ -1,0 +1,15 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+mixed.null						supported	throws	bool_t	bool.false	true	cast_bool.mixed.null	runtime_throw	invalid_mixed_kind_for_cast_bool	Mixed null runtime kind is not convertible to bool_t.
+mixed.bool.false						supported	deterministic_value	bool_t	bool.false	true	cast_bool.mixed.bool.false	runtime_success		Mixed bool false delegates to native bool cast.
+mixed.bool.true						supported	deterministic_value	bool_t	bool.true	true	cast_bool.mixed.bool.true	runtime_success		Mixed bool true delegates to native bool cast.
+mixed.int.zero						supported	deterministic_value	bool_t	bool.false	true	cast_bool.mixed.int.zero	runtime_success		Mixed int zero delegates to native int->bool cast.
+mixed.int.nonzero						supported	deterministic_value	bool_t	bool.true	true	cast_bool.mixed.int.nonzero	runtime_success		Mixed int non-zero delegates to native int->bool cast.
+mixed.float.zero						supported	deterministic_value	bool_t	bool.false	true	cast_bool.mixed.float.zero	runtime_success		Mixed float zero delegates to native float->bool cast.
+mixed.float.nonzero						supported	deterministic_value	bool_t	bool.true	true	cast_bool.mixed.float.nonzero	runtime_success		Mixed float non-zero delegates to native float->bool cast.
+mixed.string.empty						supported	deterministic_value	bool_t	bool.false	true	cast_bool.mixed.string.empty	runtime_success		Mixed empty string delegates to strict string->bool cast and evaluates false.
+mixed.string.zero_string						supported	deterministic_value	bool_t	bool.false	true	cast_bool.mixed.string.zero_string	runtime_success		Mixed string 0 delegates to strict string->bool cast.
+mixed.string.bool_false_literal						supported	deterministic_value	bool_t	bool.false	true	cast_bool.mixed.string.bool_false_literal	runtime_success		Mixed false string literal delegates to strict string->bool cast.
+mixed.string.bool_true_literal						supported	deterministic_value	bool_t	bool.true	true	cast_bool.mixed.string.bool_true_literal	runtime_success		Mixed true string literal delegates to strict string->bool cast.
+mixed.string.nonempty_nonzero_nonbool_literal						supported	throws	bool_t	bool.false	true	cast_bool.mixed.string.other	runtime_throw	invalid_cast_string_literal	Mixed non-bool string delegates to strict string->bool cast and throws.
+mixed.hash.empty						supported	throws	bool_t	bool.false	true	cast_bool.mixed.hash.empty	runtime_throw	invalid_mixed_kind_for_cast_bool	Mixed hash runtime kind is not convertible to bool_t.
+mixed.hash.nonempty						supported	throws	bool_t	bool.false	true	cast_bool.mixed.hash.nonempty	runtime_throw	invalid_mixed_kind_for_cast_bool	Mixed hash runtime kind is not convertible to bool_t.

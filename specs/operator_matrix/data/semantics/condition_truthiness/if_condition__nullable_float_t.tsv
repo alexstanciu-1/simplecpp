@@ -1,0 +1,4 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+nullable.empty						supported	deterministic_value	bool_t	bool.false	true	condition.nullable_float.empty	runtime_success		Empty nullable delegates to false in condition context.
+nullable.present.float.zero						supported	deterministic_value	bool_t	bool.false	true	condition.nullable_float.present_zero	runtime_success		Present zero delegates to contained float.zero rule.
+nullable.present.float.nonzero						supported	deterministic_value	bool_t	bool.true	true	condition.nullable_float.present_nonzero	runtime_success		Present non-zero delegates to contained float.nonzero rule.

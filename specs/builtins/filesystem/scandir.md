@@ -1,5 +1,5 @@
-# Builtin Contract — `scandir`
-
+# Builtin Contract â€” `scandir`
+Doc Status: normative
 ## Identity
 - Name: `scandir`
 - Module/family: filesystem
@@ -19,8 +19,8 @@
 - Failure returns `false`.
 
 ## Compatibility table
-- PHP includes `.` and `..` in the default result → Prism++ excludes them deliberately → modified
-- PHP returns array or `false` → Prism++ now returns packed `hash_t<mixed_t>` or `false` at the PHP exposure layer → aligned
+- PHP includes `.` and `..` in the default result â†’ Prism++ excludes them deliberately â†’ modified
+- PHP returns array or `false` â†’ Prism++ now returns packed `hash_t<mixed_t>` or `false` at the PHP exposure layer â†’ aligned
 
 ## Error policy
 - Does not throw for ordinary missing-path or not-a-directory failures.

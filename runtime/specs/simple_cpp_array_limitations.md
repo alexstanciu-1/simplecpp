@@ -1,5 +1,5 @@
-# Array Behavior Differences in Prism++ (PHP → Prism++)
-
+# Array Behavior Differences in Prism++ (PHP â†’ Prism++)
+Doc Status: normative
 This document outlines the current reduced Prism++ array/table subset and the remaining known differences from PHP.
 
 This document is **non-authoritative**.
@@ -21,10 +21,10 @@ The current intended Prism++ array/table model is:
 - nested writes **throw** if an existing intermediate has the wrong kind
 - append is allowed on:
 	- array/hash carriers
-	- `mixed(kind=null)` (bootstrap → creates array/table)
+	- `mixed(kind=null)` (bootstrap â†’ creates array/table)
 - `isset($a[k])` is null-sensitive:
-	- missing → `false`
-	- existing `null` → `false`
+	- missing â†’ `false`
+	- existing `null` â†’ `false`
 - `empty($a[k])` is **reduced**:
 	- `true` only for:
 		- `null`
@@ -59,8 +59,8 @@ PHP:
 
 Prism++:
 - **same behavior now enforced**
-	- missing → false
-	- null → false
+	- missing â†’ false
+	- null â†’ false
 
 ---
 
@@ -84,8 +84,8 @@ Not empty:
 ### 2.4 Key Coercion Differences
 
 Not supported:
-- numeric string → int conversion
-- bool/null/float → key coercion
+- numeric string â†’ int conversion
+- bool/null/float â†’ key coercion
 
 Only valid keys:
 - exact `int`
@@ -95,8 +95,8 @@ Only valid keys:
 
 ### 2.5 Negative / Large Integer Keys
 
-- negative keys → not reliable
-- large keys (beyond safe range) → not guaranteed
+- negative keys â†’ not reliable
+- large keys (beyond safe range) â†’ not guaranteed
 
 ---
 
@@ -123,8 +123,8 @@ $x["a"]["b"] = 1;
 ```
 
 Behavior:
-- missing `"a"` → created as table
-- `"a"` exists but not table → **throw**
+- missing `"a"` â†’ created as table
+- `"a"` exists but not table â†’ **throw**
 
 This is stricter than PHP and **intentional**.
 
@@ -171,7 +171,7 @@ function f(int &$x) {}
 f($a["k"]);
 ```
 
-- dynamic slot → native ref conversion is **outside the supported subset**
+- dynamic slot â†’ native ref conversion is **outside the supported subset**
 
 ---
 
@@ -201,10 +201,10 @@ All others:
 
 These behaviors may still appear in older code/tests but are no longer part of the supported model:
 
-- `.as_*_ref()` accessors → removed from safe surface
-- dynamic interior native references → forbidden
-- implicit slot creation via read paths → no longer allowed
-- by-ref coercion from `mixed_t` → removed
+- `.as_*_ref()` accessors â†’ removed from safe surface
+- dynamic interior native references â†’ forbidden
+- implicit slot creation via read paths â†’ no longer allowed
+- by-ref coercion from `mixed_t` â†’ removed
 
 ---
 

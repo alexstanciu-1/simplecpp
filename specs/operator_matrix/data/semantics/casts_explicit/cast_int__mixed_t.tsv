@@ -1,0 +1,15 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+mixed.null						supported	throws	int_t	int.zero	true	cast_int.mixed.null	runtime_throw	invalid_mixed_kind_for_cast_int	Mixed null runtime kind is not convertible to int_t.
+mixed.bool.false						supported	deterministic_value	int_t	int.zero	true	cast_int.mixed.bool.false	runtime_success		Mixed bool false delegates to native bool->int cast.
+mixed.bool.true						supported	deterministic_value	int_t	int.one	true	cast_int.mixed.bool.true	runtime_success		Mixed bool true delegates to native bool->int cast.
+mixed.int.zero						supported	deterministic_value	int_t	int.zero	true	cast_int.mixed.int.zero	runtime_success		Mixed int zero preserves the integer payload.
+mixed.int.nonzero						supported	deterministic_value	int_t	int.nonzero	true	cast_int.mixed.int.nonzero	runtime_success		Mixed int non-zero preserves the integer payload.
+mixed.float.zero						supported	deterministic_value	int_t	int.zero	true	cast_int.mixed.float.zero	runtime_success		Mixed float zero delegates to native float->int cast.
+mixed.float.nonzero						supported	deterministic_value	int_t	int.three	true	cast_int.mixed.float.nonzero	runtime_success		Mixed float non-zero delegates to native float->int cast.
+mixed.string.empty						supported	throws	int_t	int.zero	true	cast_int.mixed.string.empty	runtime_throw	invalid_cast_int_literal	Mixed empty string delegates to strict string->int cast and throws.
+mixed.string.zero_string						supported	deterministic_value	int_t	int.zero	true	cast_int.mixed.string.zero_string	runtime_success		Mixed string 0 delegates to strict string->int cast.
+mixed.string.bool_false_literal						supported	throws	int_t	int.zero	true	cast_int.mixed.string.bool_false_literal	runtime_throw	invalid_cast_int_literal	Mixed false string literal delegates to strict string->int cast and throws.
+mixed.string.bool_true_literal						supported	throws	int_t	int.zero	true	cast_int.mixed.string.bool_true_literal	runtime_throw	invalid_cast_int_literal	Mixed true string literal delegates to strict string->int cast and throws.
+mixed.string.nonempty_nonzero_nonbool_literal						supported	throws	int_t	int.zero	true	cast_int.mixed.string.other	runtime_throw	invalid_cast_int_literal	Mixed non-numeric string delegates to strict string->int cast and throws.
+mixed.hash.empty						supported	throws	int_t	int.zero	true	cast_int.mixed.hash.empty	runtime_throw	invalid_mixed_kind_for_cast_int	Mixed hash runtime kind is not convertible to int_t.
+mixed.hash.nonempty						supported	throws	int_t	int.zero	true	cast_int.mixed.hash.nonempty	runtime_throw	invalid_mixed_kind_for_cast_int	Mixed hash runtime kind is not convertible to int_t.

@@ -1,5 +1,5 @@
-# Builtin Contract — `strrpos`
-
+# Builtin Contract â€” `strrpos`
+Doc Status: normative
 ## Identity
 - Name: `strrpos`
 - Module/family: string
@@ -23,9 +23,9 @@
 - Negative offset limits the search to the prefix ending at `size + offset`.
 
 ## Compatibility table
-- PHP returns `int|false` and preserves `0` vs `false` → Prism++ preserves it through `mixed_t` → kept
-- PHP offset out of haystack range raises `ValueError` → Prism++ raises `ValueError` → kept
-- PHP is byte-oriented here → Prism++ is byte-oriented → kept
+- PHP returns `int|false` and preserves `0` vs `false` â†’ Prism++ preserves it through `mixed_t` â†’ kept
+- PHP offset out of haystack range raises `ValueError` â†’ Prism++ raises `ValueError` â†’ kept
+- PHP is byte-oriented here â†’ Prism++ is byte-oriented â†’ kept
 
 ## Error policy
 - Throws `scpp::php::ValueError` for out-of-range offsets.

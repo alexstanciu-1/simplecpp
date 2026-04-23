@@ -1,5 +1,5 @@
 # Runtime Design Rules
-
+Doc Status: normative
 Status: active normative architecture support folder.
 
 ## Purpose
@@ -14,11 +14,46 @@ They define how runtime code must be organized so that normative behavior is imp
 This folder is the right place for rules such as:
 
 - operator-family file ownership
+- cast-family file ownership
 - shared-helper reuse requirements
 - semantic authority boundaries
 - anti-fallback rules
 - runtime dispatch centralization rules
+- language-adapter forwarding rules
 - spec traceability requirements for runtime helpers
+
+## Current architectural model
+
+The current runtime design model has two semantic layers:
+
+1. shared Prism++ semantic families
+   - namespace root: `scpp::`
+   - file roots such as:
+     - `runtime/include/operators/`
+     - `runtime/include/casts/`
+
+2. language adapter families
+   - namespace roots such as `scpp::php::`
+   - file roots such as:
+     - `runtime/include/lang/php/operators/`
+     - `runtime/include/lang/php/casts/`
+
+Current rule:
+- shared Prism++ semantic families are the real semantic authorities
+- language layers expose stable frontend-facing entrypoints
+- language entrypoints forward by default
+- language-specific semantic overrides are allowed only when explicitly needed
+
+Current examples already following this model:
+- `scpp::coalesce_eval(...)` under `runtime/include/operators/coalesce/`
+- `scpp::condition_truthy(...)` under `runtime/include/operators/conditional/`
+- `scpp::ternary_eval(...)` under `runtime/include/operators/conditional/`
+- `scpp::php::*` adapters that forward to those shared families
+- `mixed_t` convenience methods such as `mixed_t::empty()` and `mixed_t::isset(...)` delegating to shared semantic authorities instead of owning behavior
+
+Current carve-out:
+- PHP builtin/string helper implementation in headers such as `runtime/include/lang/php/support/php_string.hpp` and `runtime/include/lang/php/support/php_common.hpp` remains PHP-owned for now
+- that area should match current PHP-facing behavior first; structural promotion can be revisited when a second language exists
 
 ## Placement rule
 

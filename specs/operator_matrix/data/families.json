@@ -1,61 +1,405 @@
 {
-  "version": 1,
-  "families": [
-    {
-      "family_id": "condition_truthiness",
-      "subfamily_id": "condition",
-      "arity": 1,
-      "source_family_refs": [
-        "specs/conditional_expression_matrix.md",
-        "runtime/specs/config.json#coercions.condition"
-      ],
-      "items": [
-        {
-          "item_id": "if_condition",
-          "source_item_refs": []
-        }
-      ]
-    },
-    {
-      "family_id": "casts_explicit",
-      "subfamily_id": "cast",
-      "arity": 1,
-      "source_family_refs": [
-        "specs/dynamic_types.md",
-        "runtime/specs/config.json#casts"
-      ],
-      "items": [
-        {
-          "item_id": "cast_bool",
-          "source_item_refs": []
-        }
-      ]
-    },
-    {
-      "family_id": "operators_conditional_selection",
-      "subfamily_id": "selection",
-      "arity": 2,
-      "source_family_refs": [
-        "specs/conditional_expression_matrix.md",
-        "runtime/specs/config.json#conditionals"
-      ],
-      "items": [
-        {
-          "item_id": "coalesce",
-          "source_item_refs": [],
-          "arity": 2
-        },
-        {
-          "item_id": "elvis",
-          "source_item_refs": [],
-          "arity": 2
-        },
-        {
-          "item_id": "ternary",
-          "arity": 3,
-          "source_item_refs": []
-        }
-      ]
-    }
-  ]
+    "version":  1,
+    "families":  [
+                     {
+                         "family_id":  "condition_truthiness",
+                         "subfamily_id":  "condition",
+                         "arity":  1,
+                         "source_family_refs":  [
+                                                    "specs/conditional_expression_matrix.md",
+                                                    "runtime/specs/config.json#coercions.condition"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "if_condition",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "casts_explicit",
+                         "subfamily_id":  "cast",
+                         "arity":  1,
+                         "source_family_refs":  [
+                                                    "specs/dynamic_types.md",
+                                                    "runtime/specs/config.json#casts"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "cast_bool",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "cast_int",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "cast_float",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "cast_string",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_conditional_selection",
+                         "subfamily_id":  "selection",
+                         "arity":  2,
+                         "source_family_refs":  [
+                                                    "specs/conditional_expression_matrix.md",
+                                                    "runtime/specs/config.json#conditionals"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "coalesce",
+                                           "source_item_refs":  [
+
+                                                                ],
+                                           "arity":  2
+                                       },
+                                       {
+                                           "item_id":  "elvis",
+                                           "source_item_refs":  [
+
+                                                                ],
+                                           "arity":  2
+                                       },
+                                       {
+                                           "item_id":  "ternary",
+                                           "arity":  3,
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_unary",
+                         "subfamily_id":  "unary",
+                         "arity":  1,
+                         "source_family_refs":  [
+                                                    "runtime/specs/config.json#overload_families",
+                                                    "runtime/specs/spec.md"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "logical_not",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "unary_plus",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "unary_minus",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "bitwise_not",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "pre_increment",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "post_increment",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "pre_decrement",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "post_decrement",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_binary_arithmetic",
+                         "subfamily_id":  "arithmetic",
+                         "arity":  2,
+                         "source_family_refs":  [
+                                                    "runtime/specs/config.json#overload_families",
+                                                    "runtime/specs/spec.md"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "add",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "subtract",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "multiply",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "divide",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "modulo",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_binary_logical",
+                         "subfamily_id":  "logical",
+                         "arity":  2,
+                         "source_family_refs":  [
+                                                    "runtime/specs/config.json#overload_families",
+                                                    "runtime/specs/spec.md"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "logical_and",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "logical_or",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_comparison_equality",
+                         "subfamily_id":  "comparison",
+                         "arity":  2,
+                         "source_family_refs":  [
+                                                    "runtime/specs/config.json#overload_families",
+                                                    "runtime/specs/spec.md"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "equal",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "not_equal",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_comparison_ordering",
+                         "subfamily_id":  "comparison",
+                         "arity":  2,
+                         "source_family_refs":  [
+                                                    "runtime/specs/config.json#overload_families",
+                                                    "runtime/specs/spec.md"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "less_than",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "less_than_or_equal",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "greater_than",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "greater_than_or_equal",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_strict_identity",
+                         "subfamily_id":  "comparison",
+                         "arity":  2,
+                         "source_family_refs":  [
+                                                    "runtime/specs/config.json#generator_allowed_helpers",
+                                                    "runtime/specs/spec.md"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "identical",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "not_identical",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_binary_bitwise",
+                         "subfamily_id":  "bitwise",
+                         "arity":  2,
+                         "source_family_refs":  [
+                                                    "runtime/specs/config.json#overload_families",
+                                                    "runtime/specs/spec.md"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "bitwise_and",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "bitwise_or",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "bitwise_xor",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "shift_left",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "shift_right",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     },
+                     {
+                         "family_id":  "operators_compound_assignment",
+                         "subfamily_id":  "assignment",
+                         "arity":  2,
+                         "source_family_refs":  [
+                                                    "runtime/specs/config.json#compound_assignment_policy",
+                                                    "runtime/specs/spec.md"
+                                                ],
+                         "items":  [
+                                       {
+                                           "item_id":  "add_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "subtract_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "multiply_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "divide_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "modulo_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "bitwise_and_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "bitwise_or_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "bitwise_xor_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "shift_left_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       },
+                                       {
+                                           "item_id":  "shift_right_assign",
+                                           "source_item_refs":  [
+
+                                                                ]
+                                       }
+                                   ]
+                     }
+                 ]
 }

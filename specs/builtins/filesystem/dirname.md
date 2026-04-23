@@ -1,5 +1,5 @@
-# Builtin Contract — `dirname`
-
+# Builtin Contract â€” `dirname`
+Doc Status: normative
 ## Identity
 - Name: `dirname`
 - Module/family: filesystem
@@ -17,7 +17,7 @@
 - No extra PHP edge-case normalization is attempted in this pass.
 
 ## Compatibility table
-- PHP has richer path-edge behavior → Prism++ currently returns `std::filesystem::path(path).parent_path().string()` → modified
+- PHP has richer path-edge behavior â†’ Prism++ currently returns `std::filesystem::path(path).parent_path().string()` â†’ modified
 
 ## Error policy
 - Does not throw for ordinary typed input.

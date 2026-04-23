@@ -1,5 +1,5 @@
-# Prism++ – Rule Catalog
-
+# Prism++ â€“ Rule Catalog
+Doc Status: normative
 This catalog reflects the rules approved in the current session and is aligned with the current project direction.
 
 Columns:
@@ -125,7 +125,7 @@ Core rule families:
 
 - Nested table dim reads chain through `get(...)` / `_find_val(...)` so `$x["inner"][0]` stays non-mutating on the read path.
 - Nested table dim writes keep the full lvalue chain on mutating `operator[]` access, so `$x[0]["name"] = "first";` does not route intermediate segments through `get(...)`.
-- Nested append on a table-valued slot is supported through chained mutating access plus `append(...)` on `mixed_t` / `hash_t<mixed_t>`; the prefix of a nested append target stays on the mutating path (for example `$x["users"][] = $v;` → `x[string_t("users")].append(...)`), while read-only nested access lowers through `get(...)` / `_find_val(...)`.
+- Nested append on a table-valued slot is supported through chained mutating access plus `append(...)` on `mixed_t` / `hash_t<mixed_t>`; the prefix of a nested append target stays on the mutating path (for example `$x["users"][] = $v;` â†’ `x[string_t("users")].append(...)`), while read-only nested access lowers through `get(...)` / `_find_val(...)`.
 - Table-valued assignments into table slots now use direct `mixed_t` assignment through the returned `operator[]` reference.
 
 ## Assignment-expression lambda fallback
@@ -136,6 +136,6 @@ Core rule families:
 - `FUNC-ARG-001`: direct DIM call arguments use the direct slot path `[]`; computed call arguments keep the normal expression/read path. By-value array args rely on runtime detach-on-write rather than generator-side `table_copy(...)`.
 - `REF-BIND-001`: `=&` binding from a direct DIM slot uses the mutable slot path `[]`, not the read path `.get(...)`, so the binding targets the real slot storage.
 
-## Historical note — typed scalar by-reference proxy lowering
+## Historical note â€” typed scalar by-reference proxy lowering
 
 Legacy helper/proxy infrastructure may still exist in the runtime, but it is not part of the supported safe subset. The current design direction is the native-reference safety rule documented in `specs/native_reference_safety.md`.

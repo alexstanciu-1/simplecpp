@@ -1,5 +1,5 @@
-# Runtime Config – Human Review Version
-
+# Runtime Config â€“ Human Review Version
+Doc Status: planning
 Non-authoritative review companion for `runtime/specs/config.json`.
 
 This file is for human inspection only. `config.json` remains the sole machine-readable source of truth.
@@ -34,7 +34,7 @@ These are zero-value semantic sentinels. They are not payload carriers; they exi
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
 | `null_t: scalar_tag` | Generic null sentinel. | `$x = null;` | `::scpp::null_t x = ::scpp::null_t();` | Used as the main null-like semantic value across casts, assignments, and comparisons. |
-| `nullopt_t: scalar_tag` | Optional-empty sentinel. | `$x = null; // optional-like empty state` | `::scpp::nullopt_t x = ::scpp::nullopt_t();` | Separates “empty optional” from other domains while still participating in sentinel equivalence where configured. |
+| `nullopt_t: scalar_tag` | Optional-empty sentinel. | `$x = null; // optional-like empty state` | `::scpp::nullopt_t x = ::scpp::nullopt_t();` | Separates â€œempty optionalâ€ from other domains while still participating in sentinel equivalence where configured. |
 | `nullptr_t: scalar_tag` | Pointer-empty sentinel. | `$x = null; // pointer-like empty state` | `::scpp::nullptr_t x = ::scpp::nullptr_t();` | Allows handle-like wrappers to accept an explicit pointer-empty sentinel without exposing raw `nullptr` as the semantic API. |
 
 ### 2.2 Scalar wrappers
@@ -88,7 +88,7 @@ Only the listed casts exist. The default policy is forbidden, so every allowed c
 |---|---|---|---|---|
 | `null_t -> shared_p<T> / unique_p<T> / weak_p<T>` | Null sentinel may construct empty ownership wrappers implicitly. | `$x = null; // assigned to object-like handle` | `::scpp::shared_p<MyClass> x = ::scpp::null_t();` | This is how null-like PHP object state becomes an empty handle wrapper. |
 | `null_t -> nullable<T>` | Null sentinel may construct an empty nullable implicitly. | `$x = null; // assigned to ?int` | `::scpp::nullable<::scpp::int_t> x = ::scpp::null_t();` | Keeps nullable construction uniform with handle-null construction. |
-| `T -> nullable<T>` | A present value may construct a nullable implicitly. | `$x = 7; $y = $x; // into ?int slot` | `::scpp::nullable<::scpp::int_t> y = x;` | This is the normal “wrap present value” path. |
+| `T -> nullable<T>` | A present value may construct a nullable implicitly. | `$x = 7; $y = $x; // into ?int slot` | `::scpp::nullable<::scpp::int_t> y = x;` | This is the normal â€œwrap present valueâ€ path. |
 | `shared_p<T> -> weak_p<T>` | Shared ownership may downgrade to weak observer implicitly. | `// derive observer from shared object` | `::scpp::weak_p<Service> w = svc;` | Weak-from-shared is considered safe and non-owning. |
 | `int_t -> float_t` | Integer widening is available both as an implicit runtime relation and as the canonical explicit named cast surface. | `$x = (float)$n;` | `auto x = ::scpp::cast<::scpp::float_t>(n);` | Explicit frontend casts should still normalize through `cast<T>(...)` even when the runtime also has a constructor-level widening path. |
 | `bool_t -> int_t / float_t` | Boolean to numeric is explicit only and lowers through named casts. | `$x = (int)$flag;` | `auto x = ::scpp::cast<::scpp::int_t>(flag);` | Explicit conversions are centralized in `cast<T>(...)` instead of being scattered across wrapper constructors. |
@@ -189,7 +189,7 @@ This section controls which wrappers may nest inside which wrappers. It is one o
 | Rule / Directive | Meaning | PHP Example | Expected C++ Generated Code | Explanation |
 |---|---|---|---|---|
 | `family_tags classify wrappers as ownership / inline_storage / reference / optionality` | Nesting rules reason in terms of family, not only concrete names. | `// type composition policy` | `// compile-time validation against family tags` | This makes the config extensible without duplicating every concrete combination. |
-| `value_p<T> must not contain ownership-family wrappers` | Inline value wrapper cannot embed `shared_p`, `unique_p`, or `weak_p`. | `// disallowed: value of handle` | `// generator error for value_p<shared_p<T>>` | Prevents “inline wrapper around heap handle” layering that adds confusion without value. |
+| `value_p<T> must not contain ownership-family wrappers` | Inline value wrapper cannot embed `shared_p`, `unique_p`, or `weak_p`. | `// disallowed: value of handle` | `// generator error for value_p<shared_p<T>>` | Prevents â€œinline wrapper around heap handleâ€ layering that adds confusion without value. |
 | `value_p<T> must not contain native_ref<U>` | Inline value wrapper cannot contain a borrow wrapper. | `// disallowed: value of ref` | `// generator error for value_p<native_ref<T>>` | Borrow semantics inside inline storage are intentionally not part of the model. |
 | `native_ref<T> must not target ownership-family wrappers` | A borrow wrapper cannot wrap a handle wrapper. | `// disallowed: borrowed handle wrapper` | `// generator error for native_ref<shared_p<T>>` | Config prefers handle passthrough instead of double-wrapping ownership in borrowing syntax. |
 | `native_ref<T> must not wrap native_ref<U>` | Borrow wrappers do not stack. | `// disallowed: ref of ref` | `// generator error for native_ref<native_ref<T>>` | Avoids meaningless alias-of-alias wrapper nests. |
@@ -198,7 +198,7 @@ This section controls which wrappers may nest inside which wrappers. It is one o
 | native references are emitted directly | No helper collapse is needed. | `$x = $y; // already borrowed form` | `auto& x = existingRef;` | Prevents redundant wrapper creation. |
 | native reference to inline value | Native references bind directly to the inline value/object. | `// borrow inline value` | `auto& r = inlineValue.get();` | This is the sanctioned bridge from inline storage to borrow semantics. |
 | handle-like explicit reference lowering | Borrow helper passes ownership handles through unchanged. | `// borrow shared handle` | `auto& same = sharedObj;` | This is the reason `native_ref<shared_p<T>>` is both unnecessary and forbidden. |
-| `php_lowering_guidance.nullable_object_like = nullable<shared_p<T>>` | Nullable PHP objects should lower to nullable shared handles. | `function f(?MyClass $x) {}` | `void f(::scpp::nullable<::scpp::shared_p<MyClass>> x);` | This captures the project’s current main lowering model for PHP nullable object references. |
+| `php_lowering_guidance.nullable_object_like = nullable<shared_p<T>>` | Nullable PHP objects should lower to nullable shared handles. | `function f(?MyClass $x) {}` | `void f(::scpp::nullable<::scpp::shared_p<MyClass>> x);` | This captures the projectâ€™s current main lowering model for PHP nullable object references. |
 | `php_lowering_guidance.disfavored_forms = nullable<native_ref<T>>, nullable<unique_p<T>>` | These forms are not the preferred PHP lowering target. | `// avoid these shapes in frontend lowering` | `// generator should choose nullable<shared_p<T>> instead` | This is guidance, not just a raw type-theory statement. |
 
 ## 10. Assignment Rules
@@ -255,7 +255,7 @@ Declares the stable helper names that generators/frontends are allowed to target
 | `stable_helpers = create, shared, unique, weak, value, ref, cast, to_string, identical, not_identical, concat_assign, echo_eval` | These helper entry points are part of the public contract. Member APIs such as `hash_t::_find_val()` are documented separately and are not part of this free-helper list. | `$x = new A(); echo $x; $a === $b;` | `::scpp::create<A>(); ::scpp::to_string(x); ::scpp::php::identical(a, b);` | Anything outside this list should not become a generator dependency without contract change. |
 | `namespaces.core = scpp` | Core helpers live in `::scpp`. | `$x = 1;` | `::scpp::int_t x = ::scpp::int_t(1);` | This aligns type wrappers and helper entry points. |
 | `namespaces.php = scpp::php` | PHP-specific runtime helpers, when needed, live under a separate namespace. | `// frontend/runtime glue` | `::scpp::php::...;` | Keeps core runtime and PHP-facing glue separable. |
-| `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `echo $a, $b;` | `::scpp::php::echo_eval(...);` | Important because contract stability matters more than today’s internal implementation structure. |
+| `generator_allowed_helpers matches stable_helpers` | Generators may only target the approved helper list directly. | `echo $a, $b;` | `::scpp::php::echo_eval(...);` | Important because contract stability matters more than todayâ€™s internal implementation structure. |
 | `notes.separation_rule` | The contract lists shared knowledge helpers, not generator internals. | `// policy note` | `// no direct dependency on private helper names` | This is a governance rule: keep frontend/runtime coupling narrow and intentional. |
 | `notes.php_identity.rule = php_visible_value_normalization` | Strict identity normalizes PHP-facing wrappers into their visible PHP values before comparison. | `$a === $b;` | `::scpp::php::identical(a, b);` | `nullable<T>`, `result_or_false<T>`, `result_or_bool<T>`, `result<T>`, and `mixed_t` compare by normalized PHP-visible kind/value rather than by raw wrapper type. The helper returns `bool_t`, not native `bool`, because it is part of the PHP runtime semantic layer. |
 

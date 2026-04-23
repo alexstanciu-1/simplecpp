@@ -1,5 +1,5 @@
-# Audit — implementation vs `specs/dynamic_types.md`
-
+# Audit â€” implementation vs `specs/dynamic_types.md`
+Doc Status: planning
 > Transitional implementation note: see `specs/mixed_boundary_transitional.md`.
 
 Project used as source of truth: attached ZIP project.  

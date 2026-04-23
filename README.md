@@ -1,5 +1,5 @@
 # Prism++
-
+Doc Status: supporting
 <sub><i>Too old to compromise. Still young enough to build it.</i></sub>
 
 Prism++ compiles simple, high-level languages into controlled, deterministic C++.
@@ -118,7 +118,7 @@ When `sccache` is installed, Prism++ build and test flows use it automatically a
 
 ## Name
 
-“Prism” reflects the idea of transforming simple input into structured, precise output,
+Ã¢â‚¬Å“PrismÃ¢â‚¬Â reflects the idea of transforming simple input into structured, precise output,
 while preserving clarity and control.
 
 ---
@@ -210,5 +210,5 @@ Including:
 For detailed harness behavior and artifact layout, see `tools/usability_harness/README.md`.
 
 ## Guidance
-- `specs/strict_mode.md` — recommended coding discipline (not enforced)
+- `specs/strict_mode.md` Ã¢â‚¬â€ recommended coding discipline (not enforced)
 

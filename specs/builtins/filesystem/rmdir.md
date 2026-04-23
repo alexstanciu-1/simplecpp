@@ -1,5 +1,5 @@
-# Builtin Contract — `rmdir`
-
+# Builtin Contract â€” `rmdir`
+Doc Status: normative
 ## Identity
 - Name: `rmdir`
 - Module/family: filesystem
@@ -17,7 +17,7 @@
 - Success returns `true`; failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` → Prism++ returns `true`/`false` → modified
+- PHP returns `true`/`false` â†’ Prism++ returns `true`/`false` â†’ modified
 
 ## Error policy
 - Does not throw for ordinary remove failure.

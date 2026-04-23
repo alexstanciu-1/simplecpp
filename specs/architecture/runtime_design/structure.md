@@ -1,89 +1,138 @@
-# Runtime Structure — Language Isolation & Operator Organization
+# Runtime Structure - Shared Base and Language Adapters
+Doc Status: normative
+Status: active normative architecture rule.
 
 ## Purpose
+
 Defines physical organization of runtime code to prevent semantic conflicts, enforce ownership, and avoid premature abstraction.
 
-## 1. Language Isolation
+## 1. Shared base versus language adapters
 
-### Rule 1.1 — One folder per language
-Each supported language MUST have its own dedicated runtime folder.
+### Rule 1.1 - Shared base semantic families
+
+The shared Prism++ semantic base lives in shared runtime folders and namespaces.
+
+Current direction:
+- namespace root: `scpp::`
+- operator families under `runtime/include/operators/`
+- cast families under `runtime/include/casts/`
+
+These shared families are the default semantic authorities.
+
+### Rule 1.2 - Language adapter families
+
+Each language has its own dedicated language adapter folder.
+
+Current example:
+- `runtime/include/lang/php/`
+
+Language-facing semantic adapters live under language-owned subfolders such as:
+- `runtime/include/lang/php/operators/`
+- `runtime/include/lang/php/casts/`
+
+These adapters expose stable frontend-facing entrypoints such as `scpp::php::*`.
+
+### Rule 1.3 - Forward by default, override explicitly
+
+When a language uses the shared Prism++ semantics unchanged, the language adapter should forward directly to the shared `scpp::*` family.
+
+If a language later requires different behavior, the language adapter may override that family explicitly.
+
+Current rule:
+- Prism++ semantics and PHP semantics are currently the same by default
+- PHP adapters should therefore be thin wrappers unless a deliberate divergence is introduced later
+
+## 2. Language isolation
+
+### Rule 2.1 - Language syntax/frontends remain isolated
+
+Each supported language MUST still have its own dedicated runtime adapter folder.
 
 Example:
-runtime/include/lang/php/
-runtime/include/lang/js/
-runtime/include/lang/python/
+- `runtime/include/lang/php/`
+- `runtime/include/lang/js/`
+- `runtime/include/lang/python/`
 
-All semantic logic for a language MUST live inside its language folder.
+### Rule 2.2 - Do not prematurely split shared families
 
-### Rule 1.2 — No cross-language semantic sharing
-Semantic behavior MUST NOT be shared across languages.
+Do not duplicate a shared semantic family into per-language implementations unless a real language-specific divergence is required.
+
+At this stage:
+- shared semantics should live once in the shared runtime base
+- language-specific behavior should be introduced only when needed
+
+## 3. Operator and cast organization
+
+### Rule 3.1 - Use family folders
+
+Shared semantic families MUST be grouped by behavior family.
 
 Examples:
-- truthiness rules
-- null handling
-- ?? behavior
-- isset, empty, count
-- string-to-bool interpretation
-- comparison semantics
+- `runtime/include/operators/conditional/`
+- `runtime/include/operators/coalesce/`
+- `runtime/include/operators/logical/`
+- `runtime/include/casts/`
 
-These MUST remain inside the owning language folder.
+Current shared-base examples:
+- `runtime/include/operators/coalesce/coalesce.hpp`
+- `runtime/include/operators/conditional/condition_truthiness.hpp`
+- `runtime/include/operators/conditional/conditional_selection.hpp`
 
-## 2. No Common Layer (for now)
+### Rule 3.2 - Mirror family shape in language adapters
 
-### Rule 2.1 — No shared semantic layer
-At this stage:
-- NO shared semantic folder is allowed
-- NO attempt to unify behavior across languages
+Language adapters should mirror the shared family shape whenever possible.
 
-### Rule 2.2 — Re-evaluation later
-A shared layer may only be introduced after at least two languages are implemented and compared.
+Examples:
+- `runtime/include/lang/php/operators/conditional/`
+- `runtime/include/lang/php/operators/coalesce/`
+- `runtime/include/lang/php/casts/`
 
-## 3. Operator Organization
+Current PHP adapter examples:
+- `runtime/include/lang/php/operators/coalesce/coalesce.hpp`
+- `runtime/include/lang/php/operators/conditional/condition_truthiness.hpp`
+- `runtime/include/lang/php/operators/conditional/conditional_selection.hpp`
 
-### Rule 3.1 — Use operators/ folder
-Each language MUST define:
-operators/
+This keeps future overrides localized and discoverable.
 
-Example:
-runtime/include/lang/php/operators/
+### Rule 3.3 - No semantic family ownership in `support/`
 
-### Rule 3.2 — One operator family per file
-Each operator family MUST be implemented in a dedicated file or subfolder.
+Operator and cast semantics MUST NOT be placed in `support/`, `misc/`, or unrelated runtime files.
 
-Example:
-operators/
-    conditional/
-        conditional_selection.hpp
-        condition_truthiness.hpp
-    coalesce/
-        coalesce.hpp
-    logical/
-        logical.hpp
-    comparison/
-        comparison_strict.hpp
+`support/` is for non-semantic utilities only.
 
-### Rule 3.3 — No operator logic outside operators/
-Operator semantics MUST NOT be placed in support/, misc/, or unrelated runtime files.
+Current PHP-builtins note:
+- PHP builtin/string helper implementation may still live in `runtime/include/lang/php/support/` while the project is PHP-only
+- this applies to areas such as `php_string.hpp` and `php_common.hpp`
+- these files should match PHP-facing behavior first and can be structurally revisited when multi-language builtin organization is needed
 
-## 4. Supporting Structure
+## 4. Supporting structure
 
-Allowed:
-operators/
-intrinsics/
-casts/
-support/
-detail/ (optional)
+Allowed shared-base roots:
+- `operators/`
+- `casts/`
+- `intrinsics/`
+- `support/`
+- `detail/`
 
-## 5. Forbidden Patterns
+Allowed language-adapter roots:
+- `lang/<lang>/operators/`
+- `lang/<lang>/casts/`
+- `lang/<lang>/support/`
+- `lang/<lang>/detail/`
 
-- shared semantic helpers across languages
-- common truthiness/coalesce/cast logic
-- operator logic outside operators/
-- generic misc folders
-- cross-language semantic includes
+## 5. Forbidden patterns
 
-## Summary
+- semantic family authorities hidden in `support/`
+- multiple unrelated entrypoints for one family
+- generator-facing code calling shared `scpp::*` families directly
+- language adapters silently reimplementing shared semantics without explicit need
+- parallel real implementations of the same family
 
-- each language owns its runtime semantics
-- no shared semantic layer yet
-- operators are centralized under operators/
+## 6. Summary
+
+- shared Prism++ semantic families live in shared runtime roots
+- language layers expose stable frontend-facing adapters
+- language adapters forward by default
+- language-specific overrides are explicit
+- operators and casts are centralized by family
+- `support/` is non-semantic

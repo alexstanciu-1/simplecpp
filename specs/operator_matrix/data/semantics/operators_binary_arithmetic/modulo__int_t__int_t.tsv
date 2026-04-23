@@ -1,0 +1,5 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+int.zero	int.zero					supported	throws	int_t	int.zero	true	modulo.rhs.zero	runtime_throw	modulo_by_zero	Modulo rejects a zero right operand.
+int.zero	int.nonzero					supported	deterministic_value	int_t	int.zero	true	modulo.int_zero.int_nonzero	runtime_success		Deterministic arithmetic dispatch follows the current numeric operator family.
+int.nonzero	int.zero					supported	throws	int_t	int.zero	true	modulo.rhs.zero	runtime_throw	modulo_by_zero	Modulo rejects a zero right operand.
+int.nonzero	int.nonzero					supported	deterministic_value	int_t	int.zero	true	modulo.int_nonzero.int_nonzero	runtime_success		Deterministic arithmetic dispatch follows the current numeric operator family.

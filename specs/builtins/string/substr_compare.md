@@ -1,5 +1,5 @@
-# Builtin Contract — `substr_compare`
-
+# Builtin Contract â€” `substr_compare`
+Doc Status: normative
 ## Identity
 - Name: `substr_compare`
 - Module/family: string
@@ -24,9 +24,9 @@
 - If normalization yields no usable subject window, Prism++ compares an empty left slice.
 
 ## Compatibility table
-- PHP supports negative offset and length normalization → Prism++ keeps the same practical normalization direction → kept
-- PHP case-insensitive mode depends on byte comparison behavior → Prism++ uses ASCII-only byte folding → modified
-- PHP emits warnings/errors in some edge conditions → Prism++ uses deterministic empty-slice behavior → modified
+- PHP supports negative offset and length normalization â†’ Prism++ keeps the same practical normalization direction â†’ kept
+- PHP case-insensitive mode depends on byte comparison behavior â†’ Prism++ uses ASCII-only byte folding â†’ modified
+- PHP emits warnings/errors in some edge conditions â†’ Prism++ uses deterministic empty-slice behavior â†’ modified
 
 ## Error policy
 - No runtime error for valid typed inputs.

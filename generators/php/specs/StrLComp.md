@@ -1,5 +1,5 @@
-# Prism++ – General Rules (Authoritative, Normalized)
-
+# Prism++ â€“ General Rules (Authoritative, Normalized)
+Doc Status: normative
 This document is the single source of truth for the supported subset.
 
 ---
@@ -54,13 +54,13 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - return types must be explicit
 
 ### Mapping
-- `int` → `int_t`
-- `float` → `float_t`
-- `bool` → `bool_t`
-- `string` → `string_t`
-- `?T` → `nullable<T>` for value-like types
-- class / interface / abstract object types → `shared_p<T>`
-- `?ClassType` / `?InterfaceType` / `?AbstractType` → `shared_p<T>`
+- `int` â†’ `int_t`
+- `float` â†’ `float_t`
+- `bool` â†’ `bool_t`
+- `string` â†’ `string_t`
+- `?T` â†’ `nullable<T>` for value-like types
+- class / interface / abstract object types â†’ `shared_p<T>`
+- `?ClassType` / `?InterfaceType` / `?AbstractType` â†’ `shared_p<T>`
 - object nullability does not currently change the emitted C++ type; `A` and `?A` both emit `shared_p<A>` for now
 
 ### Returns
@@ -76,17 +76,17 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - parameters and properties additionally support the leading attached form such as `function f(/** vector<int> */ $list): void {}` and `public /** int */ $x;`
 - class constants support the leading attached form such as `const /** int */ X = 1;`
 - detached or non-adjacent type comments remain invalid
-- `$x /** string */ = "test";` → `string_t x("test");`
-- `$x /** ?string */ = "test";` → `nullable<string_t> x("test");`
-- `$x /** ?string */ = null;` → `nullable<string_t> x = null;`
-- `$x /** A */ = new A();` → `shared_p<A> x = create<A>();`
-- `$x /** ?A */ = null;` → `shared_p<A> x = null;`
-- `$x /** value<Point> */ = new Point(1, 2);` → `value_p<Point> x = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));`
-- `$x /** weak<A> */ = null;` → `weak_p<A> x = null;`
-- `$x /** weakref<A> */ = null;` → `weak_p<A> x = null;`
-- `$x /** unique<A> */ = null;` → `unique_p<A> x = null;`
-- `$x /** shared<A> */ = null;` → `shared_p<A> x = null;`
-- `$x /** ref int */ = &$y;` → `int_t& x = y;`
+- `$x /** string */ = "test";` â†’ `string_t x("test");`
+- `$x /** ?string */ = "test";` â†’ `nullable<string_t> x("test");`
+- `$x /** ?string */ = null;` â†’ `nullable<string_t> x = null;`
+- `$x /** A */ = new A();` â†’ `shared_p<A> x = create<A>();`
+- `$x /** ?A */ = null;` â†’ `shared_p<A> x = null;`
+- `$x /** value<Point> */ = new Point(1, 2);` â†’ `value_p<Point> x = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));`
+- `$x /** weak<A> */ = null;` â†’ `weak_p<A> x = null;`
+- `$x /** weakref<A> */ = null;` â†’ `weak_p<A> x = null;`
+- `$x /** unique<A> */ = null;` â†’ `unique_p<A> x = null;`
+- `$x /** shared<A> */ = null;` â†’ `shared_p<A> x = null;`
+- `$x /** ref int */ = &$y;` â†’ `int_t& x = y;`
 - `/** ref Point */` locals lower directly to `shared_p<Point>&` when `Point` lowers to an object handle
 - `ref` lowering is intentionally a reduced write-through alias feature built on native C++ references; rebinding-through-alias and PHP-style alias-preserving `unset` are out of scope
 
@@ -108,7 +108,7 @@ Object construction and ownership helpers are runtime concepts. Current generati
 
 ### Untyped Variable Initialization
 - untyped variables may still lower to explicit runtime-wrapped expressions
-- `$x = "test";` → `auto x = string_t("test");`
+- `$x = "test";` â†’ `auto x = string_t("test");`
 - constructor selection, conversion resolution, and overload resolution remain the C++ compiler's responsibility
 
 ### Passing and Return Conventions
@@ -129,10 +129,10 @@ Object construction and ownership helpers are runtime concepts. Current generati
 All literals must be normalized.
 
 ### Required forms
-- integer → `static_cast<int_t>(v)`
-- float → `static_cast<float_t>(v)`
-- bool → `static_cast<bool_t>(v)`
-- string → `string_t("...")`
+- integer â†’ `static_cast<int_t>(v)`
+- float â†’ `static_cast<float_t>(v)`
+- bool â†’ `static_cast<bool_t>(v)`
+- string â†’ `string_t("...")`
 
 Applies to:
 - assignments
@@ -393,20 +393,20 @@ Restriction:
 `new Class(...)` must be lowered to `create<Class>(...)`.
 
 Examples:
-- `new X()` → `create<X>()`
-- `new \A\B\X()` → `create<::scpp::A::B::X>()`
+- `new X()` â†’ `create<X>()`
+- `new \A\B\X()` â†’ `create<::scpp::A::B::X>()`
 
 The generator must not emit raw `new` for these supported construction forms.
 
 ### 15.2 Static Access
 - same-namespace static access remains unqualified, for example `X::make()`
-- fully-qualified PHP static access lowers to rooted C++ access, for example `\A\X::make()` → `::scpp::A::X::make()`
+- fully-qualified PHP static access lowers to rooted C++ access, for example `\A\X::make()` â†’ `::scpp::A::X::make()`
 
 ### 15.3 Static Access Through Instances
 PHP static access through an instance must be lowered syntactically using `::scpp::class_t<decltype(...)>`.
 
 Example:
-- `$x::make()` → `::scpp::class_t<decltype(x)>::make()`
+- `$x::make()` â†’ `::scpp::class_t<decltype(x)>::make()`
 
 The generator must not attempt to validate whether `::scpp::class_t<decltype(...)>::member` is semantically valid for the produced C++ type.
 
@@ -416,7 +416,7 @@ If the emitted C++ is invalid, it must fail at C++ compile time rather than bein
 
 # Appendix: Full Original Rules (verbatim)
 
-# Prism++ – rules.md
+# Prism++ â€“ rules.md
 
 This is the single source of truth for generation rules and runtime assumptions.
 
@@ -951,8 +951,8 @@ A later decision must either:
 
 ### 16.9 Static Access Through Instances
 - PHP static access through an instance must be lowered syntactically using `::scpp::class_t<decltype(...)>`
-- `$x::make()` → `::scpp::class_t<decltype(x)>::make()`
-- `$x::$prop` → `::scpp::class_t<decltype(x)>::prop`
+- `$x::make()` â†’ `::scpp::class_t<decltype(x)>::make()`
+- `$x::$prop` â†’ `::scpp::class_t<decltype(x)>::prop`
 - the generator must not attempt to validate whether the generated C++ member access is semantically valid
 
 

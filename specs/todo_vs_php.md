@@ -1,5 +1,5 @@
 # Prism++ vs PHP - Language Feature Gap Analysis
-
+Doc Status: planning
 ## Scope
 Language-level features only (no functions/helpers/runtime APIs).
 Based on PHP language reference + project evidence.

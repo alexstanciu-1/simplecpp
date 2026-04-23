@@ -1,0 +1,5 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+int.zero	int.zero					supported	deterministic_value	bool_t	bool.false	true	logical_and.int_zero.int_zero	runtime_success		Deterministic logical dispatch follows the current bool/numeric logical operator family.
+int.zero	int.nonzero					supported	deterministic_value	bool_t	bool.false	true	logical_and.int_zero.int_nonzero	runtime_success		Deterministic logical dispatch follows the current bool/numeric logical operator family.
+int.nonzero	int.zero					supported	deterministic_value	bool_t	bool.false	true	logical_and.int_nonzero.int_zero	runtime_success		Deterministic logical dispatch follows the current bool/numeric logical operator family.
+int.nonzero	int.nonzero					supported	deterministic_value	bool_t	bool.true	true	logical_and.int_nonzero.int_nonzero	runtime_success		Deterministic logical dispatch follows the current bool/numeric logical operator family.

@@ -36,6 +36,8 @@ final class HarnessConfig
 		public readonly int $runTimeoutSeconds,
 		public readonly string $phpBinary,
 		public readonly ?string $astSoPath,
+		public readonly int $jobs,
+		public readonly string $selfPath,
 	) {
 	}
 }
@@ -80,6 +82,260 @@ final class HarnessResult
 			'runtime_comparison' => $this->runtimeComparison,
 		];
 	}
+
+	public function toWorkerPayload(): array
+	{
+		return [
+			'test_id' => $this->testId,
+			'kind' => $this->kind,
+			'campaign' => $this->campaign,
+			'status' => $this->status,
+			'classification' => $this->classification,
+			'stage' => $this->stage,
+			'message' => $this->message,
+			'dedup_key' => $this->dedupKey,
+			'features' => $this->features,
+			'artifact_path' => $this->artifactPath,
+			'php_reference' => $this->phpReference,
+			'init_result' => $this->initResult,
+			'scpp_result' => $this->scppResult,
+			'runtime_comparison' => $this->runtimeComparison,
+		];
+	}
+
+	public static function fromWorkerPayload(array $payload): self
+	{
+		return new self(
+			(string) ($payload['test_id'] ?? 'unknown'),
+			(string) ($payload['kind'] ?? 'micro'),
+			(string) ($payload['campaign'] ?? 'uncategorized'),
+			(string) ($payload['status'] ?? 'fail'),
+			(string) ($payload['classification'] ?? 'tooling'),
+			(string) ($payload['stage'] ?? 'worker'),
+			(string) ($payload['message'] ?? 'Worker result missing message.'),
+			isset($payload['dedup_key']) && is_string($payload['dedup_key']) ? $payload['dedup_key'] : null,
+			normalize_string_list($payload['features'] ?? []),
+			(string) ($payload['artifact_path'] ?? ''),
+			isset($payload['php_reference']) && is_array($payload['php_reference']) ? $payload['php_reference'] : null,
+			is_array($payload['init_result'] ?? null) ? $payload['init_result'] : [],
+			is_array($payload['scpp_result'] ?? null) ? $payload['scpp_result'] : [],
+			isset($payload['runtime_comparison']) && is_array($payload['runtime_comparison']) ? $payload['runtime_comparison'] : null,
+		);
+	}
+}
+
+final class HarnessJobRunner
+{
+	private string $workerStateRoot;
+
+	public function __construct(
+		private readonly HarnessConfig $config,
+		private readonly string $configPath,
+	) {
+		$this->workerStateRoot = $this->config->artifactsRoot . '/_state';
+	}
+
+	/** @param list<array<string,mixed>> $templates */
+	public function run(array $templates): array
+	{
+		$total = count($templates);
+		$jobs = max(1, $this->config->jobs);
+		echo "Running {$total} harness template(s) with up to {$jobs} worker(s)." . PHP_EOL;
+
+		if ($jobs === 1) {
+			return $this->runSequential($templates);
+		}
+
+		return $this->runParallel($templates, $jobs);
+	}
+
+	/** @param list<array<string,mixed>> $templates */
+	private function runSequential(array $templates): array
+	{
+		$results = [];
+		$uniqueFailures = [];
+		$attempts = 0;
+
+		foreach ($templates as $template) {
+			if ($attempts >= $this->config->maxAttempts) {
+				break;
+			}
+
+			$result = execute_template($this->config, $template);
+			$results[] = $result;
+			$attempts++;
+			$this->recordResult($result, $uniqueFailures);
+			$this->printProgress($attempts, count($templates), $result);
+
+			if ($this->uniqueBugCount($uniqueFailures) >= $this->config->stopAfterUniqueBugFailures) {
+				break;
+			}
+		}
+
+		return [$results, $uniqueFailures, $attempts];
+	}
+
+	/** @param list<array<string,mixed>> $templates */
+	private function runParallel(array $templates, int $jobs): array
+	{
+		$queue = array_values($templates);
+		$active = [];
+		$results = [];
+		$uniqueFailures = [];
+		$attempts = 0;
+		$completed = 0;
+		$stopScheduling = false;
+
+		while ($queue !== [] || $active !== []) {
+			while (!$stopScheduling && $queue !== [] && count($active) < $jobs && $attempts < $this->config->maxAttempts) {
+				$template = array_shift($queue);
+				if (!is_array($template)) {
+					continue;
+				}
+				$active[] = $this->startWorkerProcess($template);
+				$attempts++;
+			}
+
+			foreach ($active as $index => &$item) {
+				$item['stdout'] .= (string) stream_get_contents($item['pipes'][1]);
+				$item['stderr'] .= (string) stream_get_contents($item['pipes'][2]);
+
+				$status = proc_get_status($item['proc']);
+				if (($status['running'] ?? false) === true) {
+					continue;
+				}
+
+				fclose($item['pipes'][1]);
+				fclose($item['pipes'][2]);
+				$exitCode = proc_close($item['proc']);
+
+				$result = $this->finishWorkerProcess($item, $exitCode);
+				$results[] = $result;
+				$completed++;
+				$this->recordResult($result, $uniqueFailures);
+				$this->printProgress($completed, $attempts, $result);
+
+				if ($this->uniqueBugCount($uniqueFailures) >= $this->config->stopAfterUniqueBugFailures) {
+					$stopScheduling = true;
+				}
+
+				unset($active[$index]);
+			}
+			unset($item);
+
+			if ($active !== []) {
+				usleep(100000);
+			}
+		}
+
+		return [$results, $uniqueFailures, count($results)];
+	}
+
+	/** @param array<string,mixed> $template */
+	private function startWorkerProcess(array $template): array
+	{
+		$templateId = (string) ($template['id'] ?? 'unknown');
+		$outputPath = $this->workerStateRoot . '/' . $templateId . '.json';
+		if (is_file($outputPath)) {
+			unlink($outputPath);
+		}
+
+		$command = [
+			$this->config->phpBinary,
+			$this->config->selfPath,
+			'--config=' . $this->configPath,
+			'--worker-template=' . $templateId,
+			'--worker-output=' . $outputPath,
+		];
+
+		$descriptor = [
+			0 => ['pipe', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = proc_open(build_shell_command($command), $descriptor, $pipes, $this->config->repoRoot);
+		if (!is_resource($process)) {
+			throw new RuntimeException('Failed to start harness worker for template: ' . $templateId);
+		}
+
+		fclose($pipes[0]);
+		stream_set_blocking($pipes[1], false);
+		stream_set_blocking($pipes[2], false);
+
+		return [
+			'template_id' => $templateId,
+			'output_path' => $outputPath,
+			'proc' => $process,
+			'pipes' => $pipes,
+			'stdout' => '',
+			'stderr' => '',
+		];
+	}
+
+	/** @param array<string,mixed> $item */
+	private function finishWorkerProcess(array $item, int $exitCode): HarnessResult
+	{
+		$outputPath = (string) ($item['output_path'] ?? '');
+		if ($exitCode === 0 && is_file($outputPath)) {
+			$payload = read_json_file($outputPath);
+			unlink($outputPath);
+			return HarnessResult::fromWorkerPayload($payload);
+		}
+
+		$message = trim((string) ($item['stderr'] ?? ''));
+		if ($message === '') {
+			$message = trim((string) ($item['stdout'] ?? ''));
+		}
+		if ($message === '') {
+			$message = 'Harness worker failed without output.';
+		}
+
+		return new HarnessResult(
+			(string) ($item['template_id'] ?? 'unknown'),
+			'micro',
+			'worker',
+			'fail',
+			'tooling',
+			'worker',
+			$message,
+			build_dedup_key('worker', $message),
+			[],
+			'',
+			null,
+			[],
+			[],
+			null,
+		);
+	}
+
+	private function recordResult(HarnessResult $result, array &$uniqueFailures): void
+	{
+		if ($result->status !== 'fail' || $result->dedupKey === null) {
+			return;
+		}
+
+		$uniqueFailures[$result->dedupKey] = [
+			'classification' => $result->classification,
+			'test_id' => $result->testId,
+			'stage' => $result->stage,
+			'message' => $result->message,
+		];
+	}
+
+	private function uniqueBugCount(array $uniqueFailures): int
+	{
+		return count(array_filter($uniqueFailures, static fn (array $failure): bool => ($failure['classification'] ?? '') === 'bug'));
+	}
+
+	private function printProgress(int $completed, int $total, HarnessResult $result): void
+	{
+		$label = strtoupper($result->status);
+		echo "[{$label}] {$completed}/{$total} {$result->testId}";
+		if ($result->status === 'fail') {
+			echo ' [' . $result->classification . '/' . $result->stage . ']';
+		}
+		echo PHP_EOL;
+	}
 }
 
 main($argv);
@@ -92,6 +348,11 @@ function main(array $argv): void
 	$config = load_config($repoRoot, $configPath, $args);
 	$templates = load_templates(resolve_config_path($repoRoot, $config->templatesPath));
 
+	if (isset($args['worker_template'], $args['worker_output'])) {
+		run_worker_mode($config, $templates, (string) $args['worker_template'], resolve_config_path($repoRoot, (string) $args['worker_output']));
+		return;
+	}
+
 	prepare_artifact_roots($config);
 	$selectedTemplates = select_templates($templates, $config);
 	if ($selectedTemplates === []) {
@@ -100,32 +361,7 @@ function main(array $argv): void
 	}
 
 	$startedAt = date(DATE_ATOM);
-	$results = [];
-	$uniqueFailures = [];
-	$attempts = 0;
-
-	foreach ($selectedTemplates as $template) {
-		if ($attempts >= $config->maxAttempts) {
-			break;
-		}
-		$attempts++;
-		$result = execute_template($config, $template);
-		$results[] = $result;
-
-		if ($result->status === 'fail' && $result->dedupKey !== null) {
-			$uniqueFailures[$result->dedupKey] = [
-				'classification' => $result->classification,
-				'test_id' => $result->testId,
-				'stage' => $result->stage,
-				'message' => $result->message,
-			];
-		}
-
-		$uniqueBugCount = count(array_filter($uniqueFailures, static fn (array $failure): bool => $failure['classification'] === 'bug'));
-		if ($uniqueBugCount >= $config->stopAfterUniqueBugFailures) {
-			break;
-		}
-	}
+	[$results, $uniqueFailures, $attempts] = (new HarnessJobRunner($config, $configPath))->run($selectedTemplates);
 
 	$finishedAt = date(DATE_ATOM);
 	$report = build_report($config, $configPath, $startedAt, $finishedAt, $attempts, $results, $uniqueFailures);
@@ -181,6 +417,18 @@ function parse_arguments(array $args): array
 			$parsed['campaign'] = substr($arg, strlen('--campaign='));
 			continue;
 		}
+		if (str_starts_with($arg, '--jobs=')) {
+			$parsed['jobs'] = max(1, (int) substr($arg, strlen('--jobs=')));
+			continue;
+		}
+		if (str_starts_with($arg, '--worker-template=')) {
+			$parsed['worker_template'] = substr($arg, strlen('--worker-template='));
+			continue;
+		}
+		if (str_starts_with($arg, '--worker-output=')) {
+			$parsed['worker_output'] = substr($arg, strlen('--worker-output='));
+			continue;
+		}
 		if ($arg === '--config' && isset($args[$i + 1])) {
 			$parsed['config'] = $args[++$i];
 			continue;
@@ -205,6 +453,10 @@ function parse_arguments(array $args): array
 			$parsed['campaign'] = $args[++$i];
 			continue;
 		}
+		if ($arg === '--jobs' && isset($args[$i + 1])) {
+			$parsed['jobs'] = max(1, (int) $args[++$i]);
+			continue;
+		}
 		if (in_array($arg, ['-h', '--help'], true)) {
 			print_help();
 			exit(0);
@@ -219,7 +471,7 @@ function print_help(): void
 {
 	echo "Usability harness\n";
 	echo "Usage:\n";
-	echo "  php tools/usability_harness/run.php [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios] [--all] [--template <id>] [--kind <micro|scenario>] [--campaign <name>]\n";
+	echo "  php tools/usability_harness/run.php [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--jobs <n>] [--include-scenarios] [--all] [--template <id>] [--kind <micro|scenario>] [--campaign <name>]\n";
 }
 
 function resolve_config_path(string $repoRoot, string $path): string
@@ -268,7 +520,33 @@ function load_config(string $repoRoot, string $configPath, array $args): Harness
 		runTimeoutSeconds: max(1, (int) ($data['timeouts']['run_seconds'] ?? 180)),
 		phpBinary: $phpBinary,
 		astSoPath: $astSoPath,
+		jobs: max(1, (int) ($args['jobs'] ?? $data['jobs'] ?? 1)),
+		selfPath: normalize_path(__FILE__),
 	);
+}
+
+function run_worker_mode(HarnessConfig $config, array $templates, string $templateId, string $outputPath): void
+{
+	$template = find_template_by_id($templates, $templateId);
+	if ($template === null) {
+		fwrite(STDERR, 'Unknown harness template: ' . $templateId . PHP_EOL);
+		exit(1);
+	}
+
+	$result = execute_template($config, $template);
+	write_json_file($outputPath, $result->toWorkerPayload());
+	exit(0);
+}
+
+function find_template_by_id(array $templates, string $templateId): ?array
+{
+	foreach ($templates as $template) {
+		if (is_array($template) && (string) ($template['id'] ?? '') === $templateId) {
+			return $template;
+		}
+	}
+
+	return null;
 }
 
 function normalize_optional_string(mixed $value): ?string
@@ -282,7 +560,7 @@ function normalize_optional_string(mixed $value): ?string
 
 function resolve_php_binary(): string
 {
-	foreach (['php8.4', PHP_BINARY] as $candidate) {
+	foreach (['php8.5', 'php8.4', PHP_BINARY] as $candidate) {
 		$path = find_command_path($candidate);
 		if ($path !== null) {
 			return $path;
@@ -328,6 +606,7 @@ function load_templates(string $templatesPath): array
 function prepare_artifact_roots(HarnessConfig $config): void
 {
 	ensure_directory($config->artifactsRoot);
+	reset_runtime_directory($config->artifactsRoot . '/_state');
 	reset_runtime_directory($config->workRoot);
 	reset_runtime_directory($config->passingRoot);
 	ensure_directory($config->quarantineRoot);
@@ -891,6 +1170,7 @@ function build_report(HarnessConfig $config, string $configPath, string $started
 			'kind' => $config->selectedKind,
 			'campaign' => $config->selectedCampaign,
 			'enabled_kinds' => $config->enabledKinds,
+			'jobs' => $config->jobs,
 		],
 		'started_at' => $startedAt,
 		'finished_at' => $finishedAt,
@@ -957,6 +1237,7 @@ function write_summary_file(string $path, array $report): void
 	$lines[] = 'Started: ' . (string) ($report['started_at'] ?? '');
 	$lines[] = 'Finished: ' . (string) ($report['finished_at'] ?? '');
 	$lines[] = 'Attempts: ' . (string) ($report['attempts'] ?? 0);
+	$lines[] = 'Jobs: ' . (string) (($report['selection']['jobs'] ?? 1));
 	$lines[] = 'Pass: ' . (string) (($report['totals']['pass'] ?? 0));
 	$lines[] = 'Fail: ' . (string) (($report['totals']['fail'] ?? 0));
 	$lines[] = 'Unique bug failures: ' . (string) (($report['totals']['unique_bug_failures'] ?? 0));

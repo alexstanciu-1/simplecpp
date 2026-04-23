@@ -1,5 +1,5 @@
-# Filesystem builtins — first pass
-
+# Filesystem builtins â€” first pass
+Doc Status: supporting
 This page summarizes the first-pass Prism++ / Simple C++ filesystem and stdio builtin surface.
 
 Filesystem is now runtime-owned and lives under `namespace scpp::filesystem`. The PHP layer keeps only a thin wrapper in `namespace scpp::php`. PHP resource/stdio behavior remains PHP-owned for now.

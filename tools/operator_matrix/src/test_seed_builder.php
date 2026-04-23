@@ -61,18 +61,67 @@ function om_seed_builder_routes(): array
 {
 	return [
 		[
+			'family_id' => 'operators_compound_assignment',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
+		],
+		[
+			'family_id' => 'operators_binary_bitwise',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
+		],
+		[
+			'family_id' => 'operators_strict_identity',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
+		],
+		[
+			'family_id' => 'operators_comparison_ordering',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
+		],
+		[
+			'family_id' => 'operators_comparison_equality',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
+		],
+		[
+			'family_id' => 'operators_binary_logical',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
+		],
+		[
+			'family_id' => 'operators_binary_arithmetic',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
+		],
+		[
 			'family_id' => 'casts_explicit',
 			'suite' => 'php-matrix',
 			'target_flow' => 'php',
 			'level' => 'level_01',
-			'builder' => 'om_build_unary_bool_result_seed',
+			'builder' => 'om_build_unary_scalar_result_seed',
 		],
 		[
 			'family_id' => 'condition_truthiness',
 			'suite' => 'php-matrix',
 			'target_flow' => 'php',
 			'level' => 'level_01',
-			'builder' => 'om_build_unary_bool_result_seed',
+			'builder' => 'om_build_unary_scalar_result_seed',
 		],
 		[
 			'family_id' => 'operators_conditional_selection',
@@ -80,6 +129,13 @@ function om_seed_builder_routes(): array
 			'target_flow' => 'php',
 			'level' => 'level_01',
 			'builder' => 'om_build_conditional_selection_seed',
+		],
+		[
+			'family_id' => 'operators_unary',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
 		],
 	];
 }
@@ -238,7 +294,7 @@ function om_build_conditional_selection_seed(array $registry, array $row, array 
  * @param array<string, mixed> $route
  * @return list<array<string, mixed>>
  */
-function om_build_unary_bool_result_seed(array $registry, array $row, array $route): array
+function om_build_unary_scalar_result_seed(array $registry, array $row, array $route): array
 {
 	$seedId = om_build_test_seed_id($row);
 	$pathMeta = om_build_test_seed_paths($row, $route);

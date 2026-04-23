@@ -1,5 +1,5 @@
 # Filesystem / stdio builtin contracts
-
+Doc Status: normative
 This folder contains one contract file per filesystem or stdio builtin in the first-pass Prism++ filesystem surface.
 
 ## Current first-pass coverage

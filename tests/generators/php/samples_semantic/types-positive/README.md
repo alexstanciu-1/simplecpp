@@ -1,5 +1,5 @@
 # types-positive
-
+Doc Status: supporting
 Positive semantic tests for type handling.
 
 Rule for this bucket:

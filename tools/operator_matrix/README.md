@@ -1,55 +1,62 @@
 # Operator Matrix Tooling
-
-Status: v1 working subset
+Doc Status: supporting
+Status: active generator and test-emission surface
 
 ---
 
 ## Purpose
 
-This tool generates machine-readable operator-matrix rows from structured JSON
-input stored under `specs/operator_matrix/data/`.
+This tool generates structured operator-matrix rows from the normalized data in
+`specs/operator_matrix/data/` and emits matrix-driven test assets.
 
-The tool intentionally does **not** parse Markdown directly.
-The Markdown docs remain human-facing coordination specs.
-The JSON files provide the normalized input required by the generator.
+The Markdown specs remain the human-facing coordination layer.
+The structured data files provide the machine-readable input used by the
+generator.
 
 ---
 
 ## Current Scope
 
-Implemented families:
+Active semantic families:
 - `condition_truthiness`
 - `casts_explicit`
 - `operators_conditional_selection`
+- `operators_unary`
+- `operators_binary_arithmetic`
+- `operators_binary_logical`
+- `operators_comparison_equality`
+- `operators_comparison_ordering`
+- `operators_strict_identity`
+- `operators_binary_bitwise`
+- `operators_compound_assignment`
 
-Implemented items:
-- `if_condition`
-- `cast_bool`
-- `coalesce`
-- `elvis`
-- `ternary`
+Current emitted PHP-matrix surface includes:
+- scalar core rows
+- selected `mixed_t` rows where the runtime/config surface is explicit
+- wrapper-lifted rows for validated slices
+- compound-assignment rows for:
+  - `assignable_variable`
+  - `keyed_element`
 
-Current working type universe in structured data includes:
-- `bool_t`
-- `int_t`
-- `float_t`
-- `string_t`
-- `nullable<T>` for current scalar `T`
-- `mixed_t`
-- `result<T>` for current scalar `T`
-- `result_or_false<T>` for current scalar `T`
-- `result_or_bool<T>` for current scalar `T`
+Current emitted test outputs:
+- concrete PHP matrix tests under `tests/php-matrix/`
+- matrix metadata and summaries under `build/operator_matrix/`
 
-Current `elvis` slice:
-- supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`
-- still emits compile-time rejected rows for the current wrapper families in the structured-data slice pending matrix expansion
+Current runtime-matrix state:
+- the runtime-matrix root is created
+- the runtime-matrix emitter is still intentionally unimplemented
+- `tests/runtime-matrix/` is therefore still effectively empty
 
-Current `ternary` slice:
-- supports same-type `then/else` rows for `bool_t`, `int_t`, `float_t`, `string_t`, and `mixed_t`
-- accepts condition types `bool_t`, `int_t`, `float_t`, and `mixed_t` in the current structured-data slice
-- keeps wrapper families out of the current emitted condition position even though the runtime `php::ternary_eval(...)` helper already has wrapper-aware condition delegation
+---
 
-Test-file emission is out of scope for this phase. The tool now emits row-faithful test seeds as an intermediate planning artifact for the current `operators_conditional_selection` slice.
+## Structured Data
+
+Primary structured inputs:
+- `specs/operator_matrix/data/families.json`
+- `specs/operator_matrix/data/semantics.index.json`
+- `specs/operator_matrix/data/semantics/`
+
+The generator does not treat Markdown docs as direct source input.
 
 ---
 
@@ -59,10 +66,9 @@ Run from the project root:
 
 ```bash
 php tools/operator_matrix/generator.php
-php tools/operator_matrix/generator.php --family=condition_truthiness
-php tools/operator_matrix/generator.php --validate
+php tools/operator_matrix/generator.php --family=operators_comparison_equality
+php tools/operator_matrix/generator.php --family=operators_compound_assignment
 php tools/operator_matrix/generator.php --stdout
-php tools/operator_matrix/generator.php --family=operators_conditional_selection --enable-negative-generate-diagnostic=coalesce_reject_result_or_bool
 ```
 
 Generated artifacts:
@@ -70,23 +76,55 @@ Generated artifacts:
 - `build/operator_matrix/validation_report.json`
 - `build/operator_matrix/test_seeds.json`
 - `build/operator_matrix/test_seed_validation_report.json`
+- `build/operator_matrix/test_emission_report.json`
 
 Exit codes:
-- `0` → generation and validation succeeded
-- `1` → usage or IO failure
-- `2` → validation errors were found
+- `0` - generation and validation succeeded
+- `1` - usage or IO failure
+- `2` - validation errors were found
 
+---
+
+## Test Emission
+
+The generator emits row-faithful test seeds and concrete test files.
+
+Current emitted suite:
+- `php-matrix`
+
+Current non-emitted suite:
+- `runtime-matrix`
+
+Enablement is intentionally selective:
+- validated positive slices are enabled
+- broader wrapper or gap-exposing slices may remain emitted-but-disabled
+- negative-generate tests are emitted under explicit policy controls
+
+---
+
+## Negative-Generate Controls
 
 Negative-generate emission controls:
-- `--emit-negative-generate=none|all` — emit or suppress `negative_generate` test files (default: `all`)
-- `--enable-negative-generate=none|all` — globally enable or keep disabled emitted `negative_generate` tests (default: `none`)
-- `--enable-negative-generate-diagnostic=a,b` — enable only the listed `negative_generate` diagnostic classes
-- `--disable-negative-generate-diagnostic=a,b` — force-disable the listed `negative_generate` diagnostic classes
-- `--negative-generate-disabled-status=experimental|known_fail` — status assigned to disabled `negative_generate` tests (default: `experimental`)
-- `--strict-negative-generate-enable` — fail generation if an allowlisted `negative_generate` diagnostic emits zero tests
+- `--emit-negative-generate=none|all`
+- `--enable-negative-generate=none|all`
+- `--enable-negative-generate-diagnostic=a,b`
+- `--disable-negative-generate-diagnostic=a,b`
+- `--negative-generate-disabled-status=experimental|known_fail`
+- `--strict-negative-generate-enable`
 
-Negative-generate enablement priority:
+Enablement priority:
 1. explicit diagnostic denylist
 2. explicit diagnostic allowlist
 3. global `--enable-negative-generate`
 4. default disabled state
+
+---
+
+## Notes
+
+- Family naming and semantic authority are owned by the operator-matrix docs
+  under `specs/operator_matrix/`, not by this README.
+- Runtime behavior remains subordinate to normative specs and
+  `runtime/specs/config.json`.
+- For remaining uncovered or partially covered matrix surface, see
+  `specs/operator_matrix/missing_matrix_surface.md`.

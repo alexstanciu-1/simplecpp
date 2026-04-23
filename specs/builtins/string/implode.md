@@ -1,5 +1,5 @@
-# Builtin Contract — `implode`
-
+# Builtin Contract â€” `implode`
+Doc Status: normative
 ## Identity
 - Name: `implode`
 - Module/family: string
@@ -23,9 +23,9 @@
 - Behavior is byte-oriented and binary-safe.
 
 ## Compatibility table
-- PHP accepts array input in canonical and legacy-swapped forms → Prism++ supports only canonical separator-first form → modified
-- PHP may coerce non-string elements → Prism++ currently supports string elements only → modified
-- Empty input joins to `""` → Prism++ keeps the same behavior → kept
+- PHP accepts array input in canonical and legacy-swapped forms â†’ Prism++ supports only canonical separator-first form â†’ modified
+- PHP may coerce non-string elements â†’ Prism++ currently supports string elements only â†’ modified
+- Empty input joins to `""` â†’ Prism++ keeps the same behavior â†’ kept
 
 ## Error policy
 - No runtime error for valid typed inputs.

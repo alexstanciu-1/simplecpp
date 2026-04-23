@@ -1,5 +1,5 @@
-# Builtin Contract — `touch`
-
+# Builtin Contract â€” `touch`
+Doc Status: normative
 ## Identity
 - Name: `touch`
 - Module/family: filesystem
@@ -18,7 +18,7 @@
 - Success returns `true`; failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` and supports timestamp arguments → Prism++ currently supports the zero-argument time-now form with `true`/`false` → partially aligned
+- PHP returns `true`/`false` and supports timestamp arguments â†’ Prism++ currently supports the zero-argument time-now form with `true`/`false` â†’ partially aligned
 
 ## Error policy
 - Does not throw for ordinary create/update failure.

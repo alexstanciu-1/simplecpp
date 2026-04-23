@@ -1,5 +1,5 @@
 # AI_WORKFLOW.md
-
+Doc Status: planning
 Version: 1.0  
 Purpose: Standardized workflow for interacting with the AI on the Simple C++ / Prism++ project.
 
@@ -37,6 +37,14 @@ Purpose: Standardized workflow for interacting with the AI on the Simple C++ / P
 
 - All work must happen under:
   `/mnt/data/simplecpp_work`
+- If the user is on Windows, development work must be performed through WSL rather than native Windows shells/tools
+- On Windows + WSL setups, the working copy should live in the WSL filesystem and commands should be run from WSL
+- Any git-related command that needs to be run from the Windows side should be run through Git Bash rather than PowerShell
+- Current Windows + WSL project mapping:
+  - Windows mirror: `D:\Work_2026\__AI\simple_cpp`
+  - Active WSL working copy: `/home/alexv/__AI/simple-cpp`
+- The assistant works in the WSL working copy
+- The user reviews changes and syncs code back to `D:\Work_2026\__AI\simple_cpp` when needed
 - Do not read from or write to unrelated project folders
 - Preserve:
   - file encoding

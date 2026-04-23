@@ -1,24 +1,50 @@
 # Operator Matrix Structured Data
+Doc Status: supporting
 
 This folder stores the machine-readable input consumed by `tools/operator_matrix/generator.php`.
 
 ## Files
-- `families.json` — registered families/items and grouped authority references
-- `types.json` — canonical type ids and fully enumerated profiles for the current working slice
-- `semantics.json` — profile-explicit source rows per unary, binary, or ternary definition
+- `families.json` - registered families/items and grouped authority references
+- `types.json` - canonical type ids and fully enumerated profiles for the current working slice
+- `semantics.index.json` - definition index describing family/item/type groupings and TSV row-file paths
+- `semantics/<family>/<item>.tsv` - profile-explicit flat row data, one line per semantic row
 
 ## Current Working Slice
 Families:
 - `condition_truthiness`
 - `casts_explicit`
 - `operators_conditional_selection`
+- `operators_unary`
+- `operators_binary_arithmetic`
+- `operators_binary_logical`
+- `operators_comparison_equality`
 
 Implemented items:
 - `if_condition`
 - `cast_bool`
+- `cast_int`
+- `cast_float`
+- `cast_string`
 - `coalesce`
 - `elvis`
 - `ternary`
+- `logical_not`
+- `unary_plus`
+- `unary_minus`
+- `bitwise_not`
+- `pre_increment`
+- `post_increment`
+- `pre_decrement`
+- `post_decrement`
+- `add`
+- `subtract`
+- `multiply`
+- `divide`
+- `modulo`
+- `logical_and`
+- `logical_or`
+- `equal`
+- `not_equal`
 
 Type universe currently present in structured data:
 - `bool_t`
@@ -47,16 +73,15 @@ Current selection-family support:
 - every definition must cover the exact profile set declared for its `lhs_type`
 - binary definitions must cover the exact profile Cartesian product declared for `lhs_type` and `rhs_type`
 - the generator validates completeness for the current working slice
+- TSV row files should stay flat and line-oriented: one header row, then one semantic row per line
 
 ## Runtime Reject Expectations
 
 Runtime-reject tests should:
-
-- prefer JSON mode (SCPP_ERROR_FORMAT=json)
+- prefer JSON mode (`SCPP_ERROR_FORMAT=json`)
 - validate:
-  - error.code
+  - `error.code`
 - avoid:
   - substring matching on message
 
 This ensures stability when messages change.
-

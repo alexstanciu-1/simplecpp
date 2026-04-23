@@ -1,38 +1,111 @@
 # Runtime Semantic Consistency and Anti-Drift Rules
-
+Doc Status: normative
 Status: active normative architecture rule.
 
 ## Purpose
 
-This document defines required runtime code-organization rules for semantic families such as casts, conditional selection, logical operators, `isset`, `empty`, `count`, and coalesce.
+This document defines required runtime code-organization rules for semantic families such as casts, arithmetic, conditional selection, logical operators, `isset`, `empty`, `count`, and coalesce.
 
 The goal is to prevent semantic drift between:
 
 - runtime implementation
-- operator matrix / generator expectations
+- generator expectations
 - higher-level language/spec documents
 
 These rules govern how runtime code must be structured so that shared behavior is implemented once, audited once, and changed once.
 
 ---
 
-## 1. Operator family structure
+## 1. Semantic authority model
 
-### 1.1 One operator family per file
+### 1.1 One semantic family, one real authority
 
-Each operator family MUST be implemented in a dedicated file or dedicated family-owned file group.
+Each semantic family MUST have exactly one real semantic authority.
 
 Examples:
-- `coalesce.hpp`
-- `conditional_selection.hpp`
-- `logical.hpp`
-- `comparison_strict.hpp`
+- `scpp::condition_truthy(...)`
+- `scpp::coalesce_eval(...)`
+- `scpp::isset(...)`
+- `scpp::empty(...)`
+- `scpp::count(...)`
+- `scpp::cast<T>(...)`
 
-The exact filename may vary with the current runtime layout, but ownership must remain one family per file boundary.
+This is stronger than "one file per family".
+It means the runtime and generator must not leave multiple implementation paths alive for the same semantic meaning.
 
-### 1.2 Thin public entry points
+### 1.2 One compiler-visible entry point per active family
 
-Public operator-family entry points MUST stay thin.
+For each active family, there must be one intended compiler-visible entry point.
+
+The project must not rely on the C++ compiler discovering semantics through multiple unrelated overload paths.
+
+Operator overloads and convenience helpers may exist only if they delegate to the same semantic authority.
+They must not become competing semantic definitions.
+
+### 1.3 Language entrypoints are adapters, not second authorities
+
+Language-facing runtime entrypoints such as `scpp::php::*` are stable frontend-facing adapters.
+
+They may:
+- forward to shared `scpp::*` semantic authorities
+- validate frontend-specific preconditions
+- later replace forwarding with language-specific semantics if explicitly required
+
+They must not create parallel semantic implementations when the shared family already exists.
+
+---
+
+## 2. Family ownership and file structure
+
+### 2.1 One semantic family per file or family-owned file group
+
+Each semantic family MUST be implemented in a dedicated file or dedicated family-owned file group.
+
+Examples:
+- `runtime/include/operators/coalesce/coalesce.hpp`
+- `runtime/include/operators/conditional/condition_truthiness.hpp`
+- `runtime/include/operators/logical/logical.hpp`
+- `runtime/include/casts/bool_cast.hpp`
+
+Language adapters mirror that structure:
+- `runtime/include/lang/php/operators/coalesce/coalesce.hpp`
+- `runtime/include/lang/php/operators/conditional/condition_truthiness.hpp`
+
+### 2.2 Shared base first, language adapter second
+
+When a family currently uses shared Prism++ semantics, the preferred structure is:
+
+1. shared family authority in `scpp::*`
+2. language adapter in `scpp::<lang>::*`
+
+Current example:
+- shared base authority under `runtime/include/operators/`
+- PHP adapter under `runtime/include/lang/php/operators/`
+
+### 2.3 `support/` is not for semantics
+
+`support/` is restricted to non-semantic utilities.
+
+It may contain:
+- plumbing helpers
+- storage utilities
+- formatting helpers
+- small reusable mechanics that do not define language meaning
+
+It must not contain:
+- semantic family authorities
+- meaning-bearing operator/cast/count/isset/empty/coalesce truth tables
+- hidden fallback behavior
+
+Programming-language semantics and support utilities are different categories and must not be mixed.
+
+---
+
+## 3. Thin public entry points
+
+### 3.1 Shared family entry points must stay thin
+
+Public family entry points in `scpp::*` MUST stay thin.
 
 They may:
 - validate family-specific preconditions
@@ -41,11 +114,18 @@ They may:
 
 They MUST NOT embed large duplicated semantic decision trees inline when the same behavior already exists in a shared helper.
 
+### 3.2 Language adapters must stay thinner
+
+Language adapters such as `scpp::php::*` SHOULD be even thinner.
+
+If the language behavior matches the shared family, the language adapter should forward directly.
+If the language behavior differs, the adapter may become the language-owned authority for that language only.
+
 ---
 
-## 2. Shared behavior rules
+## 4. Shared behavior rules
 
-### 2.1 Shared behavior means the same function
+### 4.1 Shared behavior means the same function
 
 If two or more operators are documented as sharing behavior, they MUST call the same semantic helper.
 
@@ -55,7 +135,7 @@ Examples:
 - ternary and elvis must share the same condition helper when their condition evaluation is defined as common behavior
 - logical operators and conditional operators must share the same condition-truthiness authority when defined as common behavior
 
-### 2.2 No parallel implementations
+### 4.2 No parallel implementations
 
 If a semantic helper already exists for a behavior category, new code MUST:
 - reuse that helper, or
@@ -63,39 +143,16 @@ If a semantic helper already exists for a behavior category, new code MUST:
 
 It MUST NOT introduce a second helper that reimplements the same rule set in parallel.
 
----
-
-## 3. Semantic authorities
-
-### 3.1 One public semantic entry point per behavior category
-
-Each behavior category MUST expose one public semantic authority.
-
-Typical examples include:
-- `condition_truthy(...)`
-- `coalesce_has_usable_value(...)`
-- `normalize_selected_branch(...)`
-- `cast<T>(...)`
-- `isset(...)`
-- `empty(...)`
-- `count(...)`
-
-Internal helper layers may exist below the public authority, but there must be one reviewable semantic entry point.
-
-### 3.2 Explicit ownership and boundary declaration
-
-Each public semantic helper SHOULD state clearly in comments:
-- the behavior category it owns
-- the inputs it supports
-- the inputs it rejects
-- whether it is runtime authority, compile-time participation authority, or both
-- the spec document(s) it implements
+Migration rule:
+- prefer moving the whole family and deleting the old version in one pass
+- if that is too tangled, centralize to one authority first and move it in the next pass
+- never keep two real semantic implementations alive in parallel
 
 ---
 
-## 4. No semantic fallbacks
+## 5. No semantic fallbacks
 
-### 4.1 No fallback to unrelated semantic paths
+### 5.1 No fallback to unrelated semantic paths
 
 A missing semantic specialization MUST NOT silently fall back to an unrelated path.
 
@@ -108,16 +165,16 @@ A behavior must be:
 - explicitly handled, or
 - explicitly rejected
 
-### 4.2 Rejection paths are part of the design
+### 5.2 Rejection paths are part of the design
 
 Invalid or unsupported cases must be rejected through stable, centralized error paths.
 Rejection behavior must not drift independently from acceptance behavior.
 
 ---
 
-## 5. Truthiness and condition handling
+## 6. Truthiness and condition handling
 
-### 5.1 Single condition-truthiness authority
+### 6.1 Single condition-truthiness authority
 
 All control-flow truthiness decisions MUST route through the same semantic authority.
 
@@ -127,21 +184,20 @@ This applies to:
 - elvis (`cond ?: b`)
 - logical operators (`!`, `&&`, `||`)
 
-### 5.2 Truthiness is not generic bool cast
+Current authority:
+- `scpp::condition_truthy(...)`
+
+### 6.2 Truthiness is not generic bool cast
 
 Condition truthiness and bool conversion are distinct semantic domains unless a higher-level spec explicitly states otherwise.
-
-Current example intentionally preserved by this rule:
-- `condition_truthy(string_t)` follows control-flow truthiness rules
-- `string_t -> bool_t` normalization follows strict bool-literal parsing rules
 
 Those paths must not be merged accidentally.
 
 ---
 
-## 6. Wrapper and dynamic-type handling
+## 7. Wrapper and dynamic-type handling
 
-### 6.1 Wrapper delegation must be centralized
+### 7.1 Wrapper delegation must be centralized
 
 When a wrapper type participates in a semantic family by delegating to a carried or lowered kind, that delegation must be implemented centrally.
 
@@ -152,26 +208,24 @@ This applies to categories such as:
 - `result_or_bool<T>` where explicitly allowed
 - `mixed_t`
 
-### 6.2 Dynamic runtime dispatch must exist in one place
+### 7.2 Dynamic runtime dispatch must exist in one place
 
 For dynamic carriers such as `mixed_t`, runtime kind dispatch MUST be centralized.
 
 The same family-specific `switch(kind)` or equivalent dispatch logic must not be duplicated independently across multiple operator implementations.
 
----
+### 7.3 `mixed_t` is shared substrate, not language-owned semantics
 
-## 7. Object-handle condition semantics
+`mixed_t` is a Prism++ runtime type and may be reused by multiple languages.
 
-### 7.1 Object-handle truthiness must be explicit
+That does not make `mixed_t` member functions the authority for language semantics.
+Language meaning must still be owned by the relevant family authority.
 
-When object handles participate in condition context, their truthiness must be implemented explicitly in the shared condition helper.
+If `mixed_t` exposes convenience methods for semantic families, those methods must delegate to the shared family authority.
 
-Required semantics:
-- `shared_p<T>`: non-null is true, null is false
-- `unique_p<T>`: non-null is true, null is false
-- `weak_p<T>`: live target is true, expired or empty handle is false
-
-This behavior must not be left to native C++ conversions or incidental fallback behavior.
+Current examples:
+- `mixed_t::empty()` delegates to `scpp::empty(...)`
+- `mixed_t::isset(...)` delegates to `scpp::isset(...)`
 
 ---
 
@@ -213,7 +267,7 @@ The runtime MUST NOT rely on C++ features such as:
 
 Allowed and rejected type combinations for a behavior category must be defined through one reviewable participation authority.
 
-The runtime, operator-matrix derivation, and generator expectations must not each grow independent hidden allowances.
+The runtime, matrix derivation, and generator expectations must not each grow independent hidden allowances.
 
 ---
 
@@ -221,8 +275,8 @@ The runtime, operator-matrix derivation, and generator expectations must not eac
 
 ### 11.1 Shared helper layering must point downward
 
-Operator-family files may depend on shared semantic helpers.
-Shared semantic helpers must not depend on operator-family-specific wrappers for their meaning.
+Family entry files may depend on shared semantic helpers.
+Shared semantic helpers must not depend on family adapters for their meaning.
 
 This avoids circular semantic ownership and keeps shared helpers reusable.
 
@@ -251,7 +305,7 @@ This keeps runtime implementation directories focused on code and keeps design r
 
 ## 14. Practical review checklist
 
-Before adding a new runtime helper for an operator, cast, intrinsic, or wrapper behavior, review all of the following:
+Before adding or moving a runtime helper for an operator, cast, intrinsic, or wrapper behavior, review all of the following:
 
 1. Does this semantic family already have an authority helper?
 2. If yes, can the new site call it directly?
@@ -263,5 +317,7 @@ Before adding a new runtime helper for an operator, cast, intrinsic, or wrapper 
 8. Is the rejection path aligned with the same authority?
 9. Is the file placement consistent with the family-ownership rule?
 10. Does the helper comment identify what spec it implements?
+11. Is `support/` staying non-semantic?
+12. Is there exactly one intended compiler-visible entry point for the family?
 
 If any of these answers is unclear, the change should be treated as drift-sensitive and reviewed before implementation proceeds.

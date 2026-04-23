@@ -1,5 +1,5 @@
 # Reference / Array Test Matrix Plan
-
+Doc Status: normative
 This document tracks the broad PHP-source test pack indexed under `tests/php/reference_matrix/` and stored in the regular `tests/php/*/level_02/` and `tests/php/*/level_03/` layout.
 
 See also:

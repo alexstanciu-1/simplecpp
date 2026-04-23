@@ -1,5 +1,5 @@
 # Getting Started
-
+Doc Status: supporting
 ## 1. Install the CLI
 
 Use the platform installer:

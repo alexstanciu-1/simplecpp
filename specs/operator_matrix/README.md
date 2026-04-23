@@ -1,5 +1,5 @@
 # Operator Matrix Docs
-
+Doc Status: normative
 Status: Derived coordination specs
 
 ---
@@ -67,20 +67,20 @@ Semantic behavior remains owned by the higher-level specs and runtime contracts.
 
 ## 5. Current Documents
 
-- `catalog_v1.md` — canonical family taxonomy and v1 item inventory
-- `type_universe_v1.md` — canonical type set and profile expansion basis
-- `profile_semantics_v1.md` — family-by-family profile behavior and status/behavior rules
-- `operand_target_kinds_v1.md` — canonical operand target kinds for mutation/reset-sensitive families
-- `source_mapping_policy_v1.md` — family-first source-of-truth mapping policy
+- `catalog_v1.md` â€” canonical family taxonomy and v1 item inventory
+- `type_universe_v1.md` â€” canonical type set and profile expansion basis
+- `profile_semantics_v1.md` â€” family-by-family profile behavior and status/behavior rules
+- `operand_target_kinds_v1.md` â€” canonical operand target kinds for mutation/reset-sensitive families
+- `source_mapping_policy_v1.md` â€” family-first source-of-truth mapping policy
 - `generation_rules_v1.md`
-- `generation_rules_v1.md` — deterministic matrix row generation rules
-- `output_schema_v1.md` — canonical output row schema and enums
-- `test_seed_schema_v1.md` — canonical matrix-to-seed intermediate artifact and emitted-test handoff
-- `test_generation_rules_v1.md` — matrix-to-test synthesis rules
-- `source_mapping_v1.md` — concrete family-first mapping to authority files, runtime config, and implementation touchpoints
-- `regeneration_policy_v1.md` — trigger, scope, validation, and project-error rules for matrix regeneration
-- `matrix_validation_rules_v1.md` — acceptance and validation contract for generated matrix data
-- `data/` — structured JSON input consumed by `tools/operator_matrix/`
+- `generation_rules_v1.md` â€” deterministic matrix row generation rules
+- `output_schema_v1.md` â€” canonical output row schema and enums
+- `test_seed_schema_v1.md` â€” canonical matrix-to-seed intermediate artifact and emitted-test handoff
+- `test_generation_rules_v1.md` â€” matrix-to-test synthesis rules
+- `source_mapping_v1.md` â€” concrete family-first mapping to authority files, runtime config, and implementation touchpoints
+- `regeneration_policy_v1.md` â€” trigger, scope, validation, and project-error rules for matrix regeneration
+- `matrix_validation_rules_v1.md` â€” acceptance and validation contract for generated matrix data
+- `data/` â€” structured JSON input consumed by `tools/operator_matrix/`
 
 
 ## Wrapper-aware coalesce policy

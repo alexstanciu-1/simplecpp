@@ -1,5 +1,5 @@
-# Builtin Contract — `ltrim`
-
+# Builtin Contract â€” `ltrim`
+Doc Status: normative
 ## Identity
 - Name: `ltrim`
 - Module/family: string
@@ -21,9 +21,9 @@
 - Empty mask leaves the input unchanged.
 
 ## Compatibility table
-- PHP default trim whitespace set → Prism++ uses the same default byte set → kept
-- PHP custom second argument works as a character mask/set → Prism++ uses byte-set semantics → kept
-- PHP supports richer charlist edge semantics → current Prism++ contract stays at byte-set trimming only → modified
+- PHP default trim whitespace set â†’ Prism++ uses the same default byte set â†’ kept
+- PHP custom second argument works as a character mask/set â†’ Prism++ uses byte-set semantics â†’ kept
+- PHP supports richer charlist edge semantics â†’ current Prism++ contract stays at byte-set trimming only â†’ modified
 
 ## Error policy
 - No runtime error for valid typed string inputs.

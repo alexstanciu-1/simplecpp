@@ -1,5 +1,5 @@
-# Builtin Contract — `substr_replace`
-
+# Builtin Contract â€” `substr_replace`
+Doc Status: normative
 ## Identity
 - Name: `substr_replace`
 - Module/family: string
@@ -25,9 +25,9 @@
 - If a negative length yields no usable replacement window, Prism++ returns the original string unchanged.
 
 ## Compatibility table
-- PHP supports negative offset and length normalization → Prism++ keeps the same practical normalization direction → kept
-- PHP supports array subject/replacement forms → Prism++ currently supports string-only forms → modified
-- PHP edge handling is broader and noisier → Prism++ uses deterministic append/start/no-op behavior → modified
+- PHP supports negative offset and length normalization â†’ Prism++ keeps the same practical normalization direction â†’ kept
+- PHP supports array subject/replacement forms â†’ Prism++ currently supports string-only forms â†’ modified
+- PHP edge handling is broader and noisier â†’ Prism++ uses deterministic append/start/no-op behavior â†’ modified
 
 ## Error policy
 - No runtime error for valid typed inputs.

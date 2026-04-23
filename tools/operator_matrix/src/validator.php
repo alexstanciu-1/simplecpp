@@ -138,6 +138,9 @@ function om_validate_rows(array $registry, array $rows, ?string $familyFilter = 
 			is_string($rhsProfile) ? $rhsProfile : null,
 			is_string($thirdType) ? $thirdType : null,
 			is_string($thirdProfile) ? $thirdProfile : null,
+			is_string($row['lhs_target_kind'] ?? null) ? $row['lhs_target_kind'] : null,
+			is_string($row['rhs_target_kind'] ?? null) ? $row['rhs_target_kind'] : null,
+			is_string($row['third_target_kind'] ?? null) ? $row['third_target_kind'] : null,
 		);
 		if (($row['row_id'] ?? '') !== $expectedRowId) {
 			$errors[] = om_validation_issue('validation_error', $context, 'non_deterministic_row_id', 'row_id does not match canonical tuple-based format.');

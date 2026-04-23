@@ -1,5 +1,5 @@
 # mysqli module (initial runtime slice)
-
+Doc Status: normative
 Status: initial implementation slice
 
 ## Goal

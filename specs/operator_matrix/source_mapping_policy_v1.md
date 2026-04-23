@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Source Mapping Policy
+Doc Status: normative
 
 ---
 
@@ -46,11 +46,11 @@ Primary sources:
 - relevant truthiness rules in core/runtime specs
 
 Secondary sources:
-- `runtime/specs/config.json` → condition coercion support
+- `runtime/specs/config.json` â†’ condition coercion support
 
 ### `casts_explicit`
 Primary sources:
-- `runtime/specs/config.json` → cast surface
+- `runtime/specs/config.json` â†’ cast surface
 - `specs/dynamic_types.md`
 - wrapper/mixed cast specs where applicable
 

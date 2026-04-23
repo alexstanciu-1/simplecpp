@@ -1,5 +1,5 @@
 # Runtime test coverage target
-
+Doc Status: supporting
 Runtime-only coverage is considered sufficient only when all three layers exist:
 
 1. per-feature correctness tests

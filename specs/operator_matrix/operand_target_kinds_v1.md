@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Operand Target Kinds
+Doc Status: normative
 
 ---
 

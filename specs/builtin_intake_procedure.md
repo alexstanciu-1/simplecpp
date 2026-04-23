@@ -1,5 +1,5 @@
 # Prism++ Builtin Intake Procedure
-
+Doc Status: planning
 Status: Active
 Purpose: define the mandatory repeatable procedure for adding new PHP-visible builtins to the project.
 
@@ -467,7 +467,7 @@ It must be read together with:
 ## 18. Final rule
 
 > Builtins are part of the product surface.
-> They must be designed, placed, registered, built, tested, and reported — not just coded.
+> They must be designed, placed, registered, built, tested, and reported â€” not just coded.
 
 ## Runtime Naming Recommendation
 

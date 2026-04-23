@@ -40,6 +40,9 @@ function om_build_rows(array $data, array $registry, ?string $familyFilter): arr
 					$rowDefinition['rhs_profile'] ?? null,
 					$thirdType,
 					$rowDefinition['third_profile'] ?? null,
+					$rowDefinition['lhs_target_kind'] ?? null,
+					$rowDefinition['rhs_target_kind'] ?? null,
+					$rowDefinition['third_target_kind'] ?? null,
 				),
 				'family_id' => $familyId,
 				'item_id' => $itemId,
@@ -105,6 +108,9 @@ function om_build_row_id(
 	?string $rhsProfile = null,
 	?string $thirdType = null,
 	?string $thirdProfile = null,
+	?string $lhsTargetKind = null,
+	?string $rhsTargetKind = null,
+	?string $thirdTargetKind = null,
 ): string {
 	return implode('|', [
 		$familyId,
@@ -115,5 +121,8 @@ function om_build_row_id(
 		$rhsProfile ?? '-',
 		$thirdType ?? '-',
 		$thirdProfile ?? '-',
+		$lhsTargetKind ?? '-',
+		$rhsTargetKind ?? '-',
+		$thirdTargetKind ?? '-',
 	]);
 }

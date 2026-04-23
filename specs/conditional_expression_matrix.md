@@ -1,5 +1,5 @@
 # Conditional / Coalesce Runtime Matrix
-
+Doc Status: normative
 This document defines the initial centralized runtime matrix for helper-based lowering of:
 - `??` via `php::coalesce_eval(...)`
 - `?:` / ternary via `php::ternary_eval(...)`
@@ -141,7 +141,7 @@ The current project has three distinct layers for `expr_1 ? expr_2 : expr_3` and
 Current practical rule:
 - runtime helper behavior is authoritative for already-lowered ternary / elvis code paths
 - the operator-matrix dataset remains authoritative only for the rows it explicitly models and emits in the current slice
-- current elvis compile-time rejected wrapper rows in `specs/operator_matrix/data/semantics.json` therefore describe a matrix-slice limitation, not a claim that `php::ternary_eval(...)` lacks wrapper-aware condition behavior
+- current elvis compile-time rejected wrapper rows in `specs/operator_matrix/data/semantics/operators_conditional_selection/elvis.tsv` therefore describe a matrix-slice limitation, not a claim that `php::ternary_eval(...)` lacks wrapper-aware condition behavior
 - when matrix/profile docs and this runtime-helper document diverge, this document wins for helper-owned ternary/elvis semantics until the matrix slice is expanded
 
 Current matrix-slice status:

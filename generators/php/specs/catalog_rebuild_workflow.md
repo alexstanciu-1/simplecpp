@@ -1,5 +1,5 @@
 # Prism++  Catalog Rebuild Workflow
-
+Doc Status: planning
 1. Assistant provides a PHP example from the catalog.
 2. User provides the expected Prism++ target code, or marks the case as `ERROR`.
 3. Assistant corrects the proposed target to comply with the general rules.

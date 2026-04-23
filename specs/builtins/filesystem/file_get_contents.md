@@ -1,5 +1,5 @@
-# Builtin Contract — `file_get_contents`
-
+# Builtin Contract â€” `file_get_contents`
+Doc Status: normative
 ## Identity
 - Name: `file_get_contents`
 - Module/family: filesystem
@@ -18,7 +18,7 @@
 - Operational open/read failure returns `false`.
 
 ## Compatibility table
-- PHP returns string or `false` → Prism++ now returns string or `false` at the PHP exposure layer → aligned
+- PHP returns string or `false` â†’ Prism++ now returns string or `false` at the PHP exposure layer â†’ aligned
 
 ## Error policy
 - Does not throw for ordinary missing-path or open failures.

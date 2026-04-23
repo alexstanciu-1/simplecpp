@@ -1,5 +1,5 @@
-# Simple C++ – PHP Test Sample Generation Specification (v2)
-
+# Simple C++ â€“ PHP Test Sample Generation Specification (v2)
+Doc Status: supporting
 This document is the strict specification for generating PHP test samples under `tests/php/`.
 
 Its purpose is to make test-case generation reproducible across chats, contributors, and future tooling.
@@ -96,8 +96,8 @@ Rules:
 
 Each test stem now has two runner JSON files:
 
-- `<stem>.test-info.json` — checked-in static test definition
-- `<stem>.test-results.json` — regenerated volatile execution results
+- `<stem>.test-info.json` â€” checked-in static test definition
+- `<stem>.test-results.json` â€” regenerated volatile execution results
 
 The source extension is intentionally **not** part of those filenames. This keeps `<stem>.php.json` free for the generator AST export used by `generators/php`.
 

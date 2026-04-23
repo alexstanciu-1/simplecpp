@@ -177,34 +177,34 @@ template <typename L, typename R>
 concept nullable_binary_lor_operand = (is_guarded_value<L> || is_guarded_value<R>) && requires(const unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs || rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_add_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs += rhs; };
+concept nullable_compound_add_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs += rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_sub_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs -= rhs; };
+concept nullable_compound_sub_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs -= rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_mul_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs *= rhs; };
+concept nullable_compound_mul_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs *= rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_div_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs /= rhs; };
+concept nullable_compound_div_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs /= rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_mod_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs %= rhs; };
+concept nullable_compound_mod_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs %= rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_bitand_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs &= rhs; };
+concept nullable_compound_bitand_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs &= rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_bitor_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs |= rhs; };
+concept nullable_compound_bitor_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs |= rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_bitxor_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs ^= rhs; };
+concept nullable_compound_bitxor_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs ^= rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_shl_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs <<= rhs; };
+concept nullable_compound_shl_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs <<= rhs; };
 
 template <typename L, typename R>
-concept nullable_compound_shr_operand = is_nullable<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs >>= rhs; };
+concept nullable_compound_shr_operand = is_guarded_value<L> && requires(unwrap_nullable_type_t<L> &lhs, const unwrap_nullable_type_t<R> &rhs) { lhs >>= rhs; };
 
 template <typename T>
 	requires (is_native_number<T> || is_mixed<T>)

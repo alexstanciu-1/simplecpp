@@ -1,5 +1,5 @@
-# Builtin Contract — `strlen`
-
+# Builtin Contract â€” `strlen`
+Doc Status: normative
 ## Identity
 - Name: `strlen`
 - Module/family: string
@@ -18,8 +18,8 @@
 - Current contract is byte-oriented and binary-safe.
 
 ## Compatibility table
-- PHP returns string byte length → Prism++ returns string byte length → kept
-- PHP accepts wider scalar coercions in some contexts → Prism++ keeps the typed string-facing wrapper contract → modified
+- PHP returns string byte length â†’ Prism++ returns string byte length â†’ kept
+- PHP accepts wider scalar coercions in some contexts â†’ Prism++ keeps the typed string-facing wrapper contract â†’ modified
 
 ## Error policy
 - No runtime error for valid typed string inputs.

@@ -64,6 +64,7 @@ namespace {
 	}
 
 	const std::string text(value, length);
+#if defined(SCPP_HAS_MYSQLI) && SCPP_HAS_MYSQLI
 	switch (field_type) {
 		case MYSQL_TYPE_TINY:
 		case MYSQL_TYPE_SHORT:
@@ -96,6 +97,10 @@ namespace {
 		default:
 			return mixed_t(string_t(text));
 	}
+#else
+	(void)field_type;
+	return mixed_t(string_t(text));
+#endif
 }
 
 [[nodiscard]] inline std::string normalize_optional_string(const std::string &value) {

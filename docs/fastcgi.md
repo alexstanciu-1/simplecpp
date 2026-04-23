@@ -1,5 +1,5 @@
 # FastCGI build mode
-
+Doc Status: supporting
 Prism++ can emit a second executable for FastCGI serving when `prism.json` enables FastCGI.
 
 ## Minimal config

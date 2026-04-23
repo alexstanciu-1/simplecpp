@@ -1,5 +1,5 @@
 # References in Prism++
-
+Doc Status: supporting
 See `specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 See also `specs/native_reference_safety.md` for the normative native-reference safety boundary.
 

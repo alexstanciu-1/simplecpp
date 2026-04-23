@@ -1,5 +1,5 @@
-# Simple C++ for PHP — Canonical Examples
-Version: v1
+# Simple C++ for PHP â€” Canonical Examples
+Doc Status: normative
 Status: Draft / AI anchor
 Scope: Preferred PHP authoring patterns aligned with `specs/php/catalog.md` and `specs/runtime/catalog.md`
 
@@ -16,15 +16,15 @@ They are intended to:
 ## 2. Format
 
 Each example contains:
-- **Preferred** — the canonical form
-- **Avoid** — a weaker or ambiguous form
-- **Notes** — the reason this pattern is preferred
+- **Preferred** â€” the canonical form
+- **Avoid** â€” a weaker or ambiguous form
+- **Notes** â€” the reason this pattern is preferred
 
 ---
 
 # 3. Canonical Examples
 
-## Example 1 — Strict equality for scalar comparison
+## Example 1 â€” Strict equality for scalar comparison
 
 **Preferred**
 ```php
@@ -50,7 +50,7 @@ if ($x == 10) {
 
 ---
 
-## Example 2 — Explicit false check after query
+## Example 2 â€” Explicit false check after query
 
 **Preferred**
 ```php
@@ -76,7 +76,7 @@ if (!$res) {
 
 ---
 
-## Example 3 — Separate false from null
+## Example 3 â€” Separate false from null
 
 **Preferred**
 ```php
@@ -108,7 +108,7 @@ if (!$value) {
 
 ---
 
-## Example 4 — Typed function boundary
+## Example 4 â€” Typed function boundary
 
 **Preferred**
 ```php
@@ -130,7 +130,7 @@ function add($left, $right) {
 
 ---
 
-## Example 5 — Explicit nullable result handling
+## Example 5 â€” Explicit nullable result handling
 
 **Preferred**
 ```php
@@ -159,7 +159,7 @@ echo $row["id"];
 - Avoid collapsing empty/dynamic/null states into one branch
 
 ---
-## Example 5a — Do not use strings or mixed values directly as conditions
+## Example 5a â€” Do not use strings or mixed values directly as conditions
 
 **Preferred**
 ```php
@@ -186,7 +186,7 @@ if ($status) {
 
 ---
 
-## Example 6 — Array append with predictable intent
+## Example 6 â€” Array append with predictable intent
 
 **Preferred**
 ```php
@@ -208,7 +208,7 @@ array_push($items, 1, 2, 3);
 
 ---
 
-## Example 7 — Mixed array with explicit key intent
+## Example 7 â€” Mixed array with explicit key intent
 
 **Preferred**
 ```php
@@ -230,7 +230,7 @@ $data[age] = 30;
 
 ---
 
-## Example 8 — Foreach over dynamic structure
+## Example 8 â€” Foreach over dynamic structure
 
 **Preferred**
 ```php
@@ -252,7 +252,7 @@ for ($i = 0; $i < count($rows); $i++) {
 
 ---
 
-## Example 9 — Explicit key existence vs emptiness
+## Example 9 â€” Explicit key existence vs emptiness
 
 **Preferred**
 ```php
@@ -274,7 +274,7 @@ if (!empty($row["id"])) {
 
 ---
 
-## Example 10 — Explicit empty check when that is truly the intent
+## Example 10 â€” Explicit empty check when that is truly the intent
 
 **Preferred**
 ```php
@@ -296,7 +296,7 @@ if (!$items) {
 
 ---
 
-## Example 11 — String search with explicit false handling
+## Example 11 â€” String search with explicit false handling
 
 **Preferred**
 ```php
@@ -326,7 +326,7 @@ echo $pos;
 
 ---
 
-## Example 12 — File read with explicit failure handling
+## Example 12 â€” File read with explicit failure handling
 
 **Preferred**
 ```php
@@ -356,7 +356,7 @@ echo $content;
 
 ---
 
-## Example 13 — File write result check
+## Example 13 â€” File write result check
 
 **Preferred**
 ```php
@@ -385,7 +385,7 @@ echo $written;
 
 ---
 
-## Example 14 — Realpath absence/failure contract
+## Example 14 â€” Realpath absence/failure contract
 
 **Preferred**
 ```php
@@ -415,7 +415,7 @@ echo $resolved;
 
 ---
 
-## Example 15 — Prepared statement with explicit step checks
+## Example 15 â€” Prepared statement with explicit step checks
 
 **Preferred**
 ```php
@@ -459,7 +459,7 @@ $result = $stmt->get_result();
 
 ---
 
-## Example 16 — JSON decode as dynamic result
+## Example 16 â€” JSON decode as dynamic result
 
 **Preferred**
 ```php
@@ -489,7 +489,7 @@ echo $data["name"];
 
 ---
 
-## Example 17 — Simple early return flow
+## Example 17 â€” Simple early return flow
 
 **Preferred**
 ```php
@@ -529,7 +529,7 @@ function print_user_id($db) {
 
 ---
 
-## Example 18 — String normalization before comparison
+## Example 18 â€” String normalization before comparison
 
 **Preferred**
 ```php
@@ -553,7 +553,7 @@ if (strtolower(trim($email)) == "alex@example.com") {
 
 ---
 
-## Example 19 — Count with explicit structure intent
+## Example 19 â€” Count with explicit structure intent
 
 **Preferred**
 ```php
@@ -577,7 +577,7 @@ if (!count($items)) {
 
 ---
 
-## Example 20 — Canonical query/fetch pattern
+## Example 20 â€” Canonical query/fetch pattern
 
 **Preferred**
 ```php

@@ -1,5 +1,5 @@
-## Prism++ — Dynamic Type (`mixed_t`)
-
+## Prism++ â€” Dynamic Type (`mixed_t`)
+Doc Status: historical
 ### Intro (User View)
 
 ### Dynamic Type (`mixed`)
@@ -40,7 +40,7 @@ Generated:
 mixed_t v = 5;
 int_t y = cast_int(v);
 
-✔ Works because:
+âœ” Works because:
 - dynamic intent is explicit
 - target type is clear
 
@@ -202,7 +202,7 @@ Dynamic is introduced by:
 
 ### 2.1 Core Rules
 
-- no implicit mixed → native conversion
+- no implicit mixed â†’ native conversion
 - no runtime overload guessing
 - no silent data loss
 
@@ -215,8 +215,8 @@ If mixed participates:
 - result stays dynamic unless operator defines native result
 
 Examples:
-- concat → string
-- comparison → bool
+- concat â†’ string
+- comparison â†’ bool
 
 ---
 

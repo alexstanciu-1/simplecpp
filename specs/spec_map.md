@@ -1,8 +1,8 @@
 # Prism++ Specification Map (v1)
-
+Doc Status: normative
 > Transitional implementation note: see `specs/mixed_boundary_transitional.md`.
 
-Status: Active  
+Status: Active
 Purpose: document hierarchy, authority, and interpretation rules for the current project.
 
 ---
@@ -21,89 +21,147 @@ If a new implementation pass, review, or chat session starts, this document shou
 
 ---
 
-## 2. Authority and priority order
+## 2. Document status labels
 
-### Level 1 — Project language/spec authority
+Every repository documentation artifact should be classified as one of:
+- `normative`
+- `derived`
+- `supporting`
+- `planning`
+- `historical`
 
-1. `specs/spec_map.md`
-   - authority map
-   - interpretation rules
-   - conflict-resolution rules
+These labels are used as follows:
+- `normative`
+  - defines current contract, structure, or required behavior inside its authority domain
+- `derived`
+  - generated or downstream coordination material derived from higher authorities
+- `supporting`
+  - explanatory, operational, onboarding, or reference material that helps use the project but does not define semantics by itself
+- `planning`
+  - roadmap, transition, audit, review, or intended-future material that is not yet current authority
+- `historical`
+  - archived material kept for traceability only
 
-2. `specs/dynamic_types.md`
-   - authoritative for dynamic-type user-visible behavior
-   - especially authoritative for:
-     - `## 1.2 Explicit Typed Boundaries`
-     - `## 1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1`
+Repository-wide labeling is recorded in:
+- `specs/document_status_catalog.json`
 
-3. `specs/array_semantics.md`
-   - authoritative for the current supported array/table subset
-   - especially authoritative for:
-     - read/write/missing-key behavior
-     - nested mutation
-     - append semantics
-     - `isset` / `empty` / `unset` on array/table carriers
-     - the rule that typed value destinations do not change array-read missing-key behavior
-
-### Level 2 — Subsystem normative rules
-
-4. `generators/php/specs/rules.md`
-   - authoritative for generator lowering rules
-   - must follow `specs/dynamic_types.md`
-   - must not silently narrow valid v1 explicit typed boundary sites
-
-5. `runtime/specs/spec.md`
-   - authoritative for runtime semantics and runtime/generation relationship
-   - must follow `specs/dynamic_types.md`
-   - runtime cleanup must not remove bridges still required by valid v1 explicit typed boundary sites
-
-6. other subsystem spec files under:
-   - `generators/php/specs/`
-   - `runtime/specs/`
-   - may refine local behavior
-   - must not contradict Level 1 documents
-
-6A. `specs/builtin_intake_procedure.md`
-   - authoritative for new builtin intake workflow
-   - authoritative for mandatory folder organization and compile-plan requirements for builtin work
-   - must not contradict Level 1 documents
-
-6B. `specs/architecture/runtime_layering.md`
-   - authoritative for runtime/core/module/language dependency direction
-   - authoritative for `scpp/runtime.hpp` versus per-language umbrella intent
-   - authoritative for the current multi-language / multi-module build-composition direction
-
-6C. `specs/runtime/error_handling.md`
-   - authoritative for runtime error output modes
-   - authoritative for JSON error-mode envelope, field stability, and debug-trace rules
-   - must not contradict Level 1 documents
-
-6D. `specs/architecture/runtime_design/semantic_consistency.md`
-   - authoritative for runtime semantic anti-drift organization rules
-   - authoritative for operator-family file ownership, shared semantic helper reuse, anti-fallback rules, and runtime design-rule placement
-   - must not contradict Level 1 documents or user-visible language semantics
-
-### Level 3 — Audit / planning / supporting documents
-
-7. audit, todo, reference, and derived coordination documents under `specs/`
-   - examples: `dynamic_types_impl_audit.md`, `mixed_boundary_transitional.md`, `todo*.md`, `references.md`
-   - conditional helpers and matrices: `conditional_expression_matrix.md`
-   - useful for planning and consistency checks
-   - includes `operator_matrix/` as a derived coordination view over normative specs and runtime config
-   - not higher authority than the normative specs above
-   - includes `cli_installation_milestone.md` for the current first-binary installer/CLI contract
-
-### Level 4 — Implementation
-
-8. source code and tests
-   - runtime implementation
-   - generator implementation
-   - tests
-   - must conform to the authoritative specs above
+Interpretation rules:
+- Markdown docs should carry an in-file `Doc Status:` label.
+- JSON docs/configs should be classified in the catalog unless their schema is explicitly designed to carry a status field safely.
+- A document's status label does not override the authority order below; it clarifies how the document should be read within that order.
 
 ---
 
-## 3. v1 priority rule
+## 3. Authority and priority order
+
+The authority stack for the current project is:
+
+### Level 1 - Master authority map
+
+1. `specs/spec_map.md`
+   - the master map of document roles, priority, and conflict resolution
+   - if this file is updated, the rest of the stack should be interpreted through the updated map
+
+### Level 2 - User-visible language and project semantics
+
+2. top-level normative specs under `specs/`
+   - these define user-visible meaning and project policy
+   - they are the primary authority for language behavior, narrowing decisions, and current v1 commitments
+
+3. especially important top-level semantic authorities:
+   - `specs/dynamic_types.md`
+   - `specs/array_semantics.md`
+   - `specs/count_empty_isset_contract.md`
+   - relevant builtin contracts under `specs/builtins/`
+
+4. `specs/dynamic_types.md` remains especially authoritative for:
+   - `## 1.2 Explicit Typed Boundaries`
+   - `## 1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1`
+
+### Level 3 - Architecture and anti-drift governance
+
+5. architecture-governance rules under `specs/architecture/`
+   - authoritative for structure, dependency direction, semantic ownership, and anti-drift implementation rules
+   - must not override user-visible semantics from Level 2
+
+6. especially important architecture authorities:
+   - `specs/architecture/runtime_layering.md`
+   - `specs/architecture/runtime_design/semantic_consistency.md`
+   - `specs/architecture/runtime_design/structure.md`
+   - `specs/architecture/runtime_design/README.md`
+
+### Level 4 - Runtime and generator subsystem contracts
+
+7. runtime subsystem specs under `runtime/specs/`
+   - authoritative for runtime public contract, helper behavior, and runtime organization within the limits set by Levels 2 and 3
+
+8. generator subsystem specs under `generators/php/specs/`
+   - authoritative for lowering and supported/rejected generator behavior within the limits set by Levels 2 and 3
+
+9. especially important subsystem authorities:
+   - `runtime/specs/spec.md`
+   - `generators/php/specs/rules.md`
+   - supporting local subsystem docs under `runtime/specs/` and `generators/php/specs/`
+
+10. workflow-specialized normative specs that remain subordinate to higher levels:
+   - `specs/builtin_intake_procedure.md`
+   - `specs/runtime/error_handling.md`
+
+### Level 5 - Machine-readable config and derived coordination data
+
+11. machine-readable JSON sources are authoritative inside their own machine-owned domain
+   - they refine support/config/data shape
+   - they must not invent higher-level semantics by themselves
+
+12. especially important machine-readable sources:
+   - `runtime/specs/config.json`
+   - `specs/operator_matrix/data/*.json`
+   - `generators/php/specs/php_builtins.json`
+
+### Level 6 - Test governance and operational tooling
+
+13. test-governance specs under `tests/specs/`
+   - authoritative for how tests are derived, classified, and organized
+   - subordinate to semantic, runtime, and generator authority
+
+14. tool docs and harness configs
+   - operationally important
+   - not primary semantic authority unless explicitly promoted by a higher-level spec
+
+### Level 7 - Planning, audit, and implementation evidence
+
+15. audit / todo / reference / planning documents
+   - examples: `dynamic_types_impl_audit.md`, `mixed_boundary_transitional.md`, `todo*.md`, `references.md`
+   - useful for planning, review, and drift detection
+   - non-authoritative unless explicitly promoted
+
+16. source code, current implementation behavior, and tests
+   - implementation is evidence and regression input
+   - it must conform to the authoritative specs above rather than define them
+
+---
+
+## 4. Conflict-resolution rule
+
+When sources disagree, resolve them in this order:
+
+1. `specs/spec_map.md`
+2. top-level semantic specs under `specs/`
+3. architecture-governance specs under `specs/architecture/`
+4. subsystem specs under `runtime/specs/` and `generators/php/specs/`
+5. machine-readable config/data sources
+6. test-governance specs
+7. planning/audit/reference docs
+8. implementation behavior
+
+A disagreement should not be silently normalized away. It should be recognized as one of:
+- `spec_gap`
+- `known_fail`
+- `regression`
+
+---
+
+## 5. v1 priority rule
 
 For v1, the following rule is normative:
 
@@ -119,9 +177,9 @@ This means:
 
 ---
 
-## 4. Interpretation rules
+## 6. Interpretation rules
 
-### 4.1 Explicit typed boundary sites are normative in v1
+### 5.1 Explicit typed boundary sites are normative in v1
 
 If the destination type is clearly visible and the site is allowed by `specs/dynamic_types.md`, that behavior is part of the v1 contract.
 
@@ -132,13 +190,13 @@ Typical examples include typed destinations such as:
 - typed by-value method argument
 - typed return
 
-### 4.2 The generator should make boundaries explicit when it can
+### 5.2 The generator should make boundaries explicit when it can
 
 The preferred long-term design is for the generator to emit explicit conversion/cast boundaries.
 
 However, until the generator is capable of doing that reliably for all valid sites, runtime bridges required by `1.2` and `1.3` remain allowed and, where necessary, required.
 
-### 4.3 `mixed_t` must not be interpreted in isolation
+### 5.3 `mixed_t` must not be interpreted in isolation
 
 `mixed_t` runtime cleanup must be reviewed against:
 - `specs/dynamic_types.md`
@@ -146,44 +204,60 @@ However, until the generator is capable of doing that reliably for all valid sit
 - especially dynamic-types sections `1.2` and `1.3`
 - current generator capability
 
-Do not apply a pure “strict runtime only” interpretation if that breaks a valid v1 explicit typed boundary site.
+Do not apply a pure "strict runtime only" interpretation if that breaks a valid v1 explicit typed boundary site.
 
-### 4.4 Do not silently upgrade temporary rules into permanent doctrine
+### 5.4 Do not silently upgrade temporary rules into permanent doctrine
 
 Temporary v1 bridges are allowed because of current generator limitations.
 They should be documented as temporary when possible.
 They should be removed only after equivalent generator behavior exists and tests confirm parity.
 
+### 5.5 Architecture-governance documents do not override language meaning
+
+The documents under `specs/architecture/` are normative for structure, ownership, layering, and anti-drift rules.
+
+They must be used to organize implementation correctly, but they must not be read as permission to change user-visible semantics defined by higher-level top-level specs.
+
+### 5.6 Machine-readable config/data does not invent semantics by itself
+
+JSON config and matrix data are authoritative in their own machine-owned domain, but they do not outrank the semantic specs.
+
+If JSON, code, and prose disagree, the higher-level semantic specs win unless the authority map is explicitly updated.
+
 ---
 
-## 5. Required implementation checklist
+## 7. Required implementation checklist
 
-Before changing generator or runtime behavior in areas touched by dynamic typing, check all of the following:
+Before changing generator or runtime behavior in areas touched by dynamic typing or conditional semantics, check all of the following:
 
 1. Is this a valid explicit typed boundary site under `specs/dynamic_types.md`?
 2. Does section `1.3` allow a temporary v1 compromise here?
 3. Does the generator already emit an explicit bridge/cast for this exact site?
 4. If not, is the runtime still required to support it?
-5. Are there tests covering the current behavior?
-6. Will the change break current user-visible v1 behavior?
+5. Is there a top-level semantic spec for this behavior family?
+6. Is there an architecture-governance rule fixing ownership or helper centralization for this family?
+7. Are there tests covering the current behavior?
+8. Will the change break current user-visible v1 behavior?
 
-If any answer is uncertain, the change should be treated as spec-sensitive and reviewed against `specs/dynamic_types.md` first.
+If any answer is uncertain, the change should be treated as spec-sensitive and reviewed against the relevant higher-level specs first.
 
 ---
 
-## 6. Common mistakes to avoid
+## 8. Common mistakes to avoid
 
-Do not do the following without checking `specs/dynamic_types.md` sections 1.2 and 1.3:
+Do not do the following without checking the higher-level specs first:
 
 - remove `mixed_t` to native bridge behavior only because it looks cleaner in C++
 - treat runtime purity as automatically higher priority than user-visible v1 compatibility
 - assume generator explicit-cast coverage exists everywhere
 - change runtime behavior first and plan to fix generator later
 - interpret audit/todo files as higher authority than the normative specs
+- let machine-readable config or current implementation silently override top-level semantics
+- treat architecture docs as permission to change semantics rather than to organize implementation
 
 ---
 
-## 7. Document roles
+## 9. Document roles
 
 ### `specs/dynamic_types.md`
 Role:
@@ -200,13 +274,28 @@ Role:
 Authority:
 - normative
 
+### `specs/count_empty_isset_contract.md`
+Role:
+- primary top-level contract for `count(...)`, `empty(...)`, and `isset(...)`
+- defines the shared semantic family boundary for these helpers, including narrowed emptiness and non-mutating probe rules
+
+Authority:
+- normative
+
+### `specs/builtins/*`
+Role:
+- per-builtin user-visible contracts for accepted inputs, narrowed compatibility, return states, wrapper/runtime split, and test expectations
+
+Authority:
+- normative within each builtin's scope
+
 ### `runtime/specs/spec.md`
 Role:
 - runtime semantic contract and runtime/generator split
 - authoritative also for the rule that translated/runtime failures throw in-process exceptions and only outer process boundaries map uncaught failures to non-zero exit status
 
 Authority:
-- normative, but subordinate to `specs/dynamic_types.md` for dynamic-type visible behavior
+- normative, but subordinate to top-level semantic specs
 
 ### `runtime/specs/hash_t.md`
 Role:
@@ -252,10 +341,25 @@ Authority:
 Role:
 - normative runtime design-governance rule for semantic consistency and anti-drift structure
 - fixes file-ownership, shared-helper reuse, semantic-authority, and anti-fallback rules for runtime work
-- fixes the placement rule that runtime design-governance documents belong under `specs/architecture/runtime_design/` instead of the main `runtime/` tree
 
 Authority:
 - normative for runtime semantic organization and code-structure discipline, but subordinate to higher-level documents and user-visible language semantics
+
+### `specs/architecture/runtime_design/structure.md`
+Role:
+- normative runtime structure rule for language isolation and operator-family placement
+- fixes the current direction that PHP semantic operator families belong under `runtime/include/lang/php/operators/`
+
+Authority:
+- normative for runtime file organization and ownership, but subordinate to user-visible language semantics
+
+### `specs/architecture/runtime_design/README.md`
+Role:
+- entry point for the runtime design-governance folder
+- defines the scope and placement rule for runtime design documents
+
+Authority:
+- supporting architecture-governance entry point, subordinate to the more specific runtime-design documents
 
 ### `generators/php/specs/rules.md`
 Role:
@@ -280,6 +384,29 @@ Role:
 Authority:
 - supporting/normative only insofar as it agrees with higher-level documents
 
+### `runtime/specs/config.json`
+Role:
+- machine-readable runtime contract/config source
+- defines the current data-driven support matrix for runtime-owned types, casts, overloads, and helpers
+
+Authority:
+- authoritative inside its machine-readable config domain, but subordinate to higher-level semantic specs
+
+### `specs/operator_matrix/data/*.json`
+Role:
+- machine-readable operator-matrix input data
+- derived coordination source for matrix generation, validation, and test-seed generation
+
+Authority:
+- authoritative for matrix-tool input shape, but subordinate to normative specs and runtime contracts
+
+### `tests/specs/*`
+Role:
+- test derivation, classification, provenance, and planning rules
+
+Authority:
+- normative for test governance, but subordinate to semantic, runtime, and generator authority
+
 ### audit / todo / reference files
 Role:
 - planning, review, tracking, explanation
@@ -289,25 +416,34 @@ Authority:
 
 ---
 
-## 8. Recommended reading order for a new session
+## 10. Recommended reading order for a new session
 
 1. `specs/spec_map.md`
-2. `specs/dynamic_types.md`
-3. `specs/array_semantics.md` when arrays/tables are involved
+2. relevant top-level semantic specs:
+   - `specs/dynamic_types.md`
+   - `specs/array_semantics.md`
+   - `specs/count_empty_isset_contract.md` when conditional probes/counting are involved
+   - relevant builtin spec under `specs/builtins/`
+3. relevant architecture-governance specs:
+   - `specs/architecture/runtime_layering.md`
+   - `specs/architecture/runtime_design/semantic_consistency.md`
+   - `specs/architecture/runtime_design/structure.md`
 4. relevant subsystem spec:
    - `generators/php/specs/rules.md`
    - `runtime/specs/spec.md`
-4. relevant local supporting docs
-5. implementation files
+5. relevant local supporting docs and machine-readable config/data
+6. implementation files
 
 ---
 
-## 9. Summary rule
+## 11. Summary rule
 
 When in doubt:
 - start from `specs/spec_map.md`
-- then read `specs/dynamic_types.md`
-- and for current v1 dynamic-type behavior, let sections `1.2` and `1.3` decide before applying cleanup instincts
+- then read the relevant top-level semantic specs
+- then read the relevant architecture-governance specs
+- then read the runtime/generator subsystem specs
+- and for current v1 dynamic-type behavior, let `specs/dynamic_types.md` sections `1.2` and `1.3` decide before applying cleanup instincts
 
 ### `specs/cli_installation_milestone.md`
 Role:
@@ -317,21 +453,18 @@ Role:
 Authority:
 - supporting/spec-planning authority for installation and launcher behavior in this milestone
 
-- `specs/count_empty_isset_contract.md`
-  - defines the single runtime contract for `count(...)`, `empty(...)`, and `isset(...)`, including narrowed emptiness and non-mutating probe rules
+### `specs/project_build_v1.md`
+Role:
+- first practical project-build contract
+- defines `scpp init`, `prism.json`, `.prism/`, and Ninja-backed `scpp build` / `scpp run`
 
-- `project_build_v1.md` — first practical project build contract (`scpp init`, `prism.json`, `.prism/`, Ninja-backed `scpp build`)
-
-
-See: module_inclusion_model.md
-
+Authority:
+- supporting/spec-planning authority for the current project-build workflow
 
 ### `specs/operator_matrix/`
 Role:
-- includes regeneration policy and synchronization checks for matrix freshness
 - derived coordination specs for the operator / cast / helper matrix
-- normalizes family names, item identifiers, type/profile expansion, and test-generation structure
-- used for visualization, edge-case enumeration, and automated test synthesis
+- includes regeneration policy, source mapping, validation guidance, and test-generation coordination
 
 Authority:
 - derived and subordinate to normative specs and runtime contracts

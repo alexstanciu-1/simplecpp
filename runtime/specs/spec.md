@@ -1,3 +1,6 @@
+Doc Status: normative
+
+
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
 # Prism++ Runtime/Generation Split - v1 Proposal
@@ -100,6 +103,24 @@ Required dependency direction:
 
 This rule exists to support future `scpp build` composition from selected language targets and selected runtime modules. See `../../specs/architecture/runtime_layering.md` for the dedicated architecture rule.
 
+## 2c. Shared semantic families and language adapters
+
+The current semantic-ownership model has two layers:
+
+1. shared Prism++ semantic families
+   - namespace root: `scpp::`
+   - current intended roots include `runtime/include/operators/` and `runtime/include/casts/`
+
+2. language adapters
+   - namespace roots such as `scpp::php::`
+   - current intended roots include `runtime/include/lang/php/operators/` and `runtime/include/lang/php/casts/`
+
+Current rule:
+- shared Prism++ families are the real semantic authorities by default
+- language adapters expose stable frontend-facing entrypoints
+- language adapters forward by default when language semantics match Prism++ semantics
+- language-specific divergence is allowed later, but must be explicit
+
 ## 3. Runtime design goals
 
 The runtime exists to give generated Prism++ code a **closed semantic surface** inside C++.
@@ -112,6 +133,7 @@ The runtime exists to give generated Prism++ code a **closed semantic surface** 
 - allow casts and overloads to be changed through configuration
 - make forbidden behavior unavailable where practical
 - separate ownership semantics from value optionality
+- ensure one semantic family has one real authority
 
 ---
 
@@ -129,6 +151,7 @@ For current migration work, this means:
 - combinations involving `mixed_t` use the dynamic mixed runtime path when the config says `mixed_t` participates for that operator kind
 - invalid native-wrapper combinations should fail at compile time rather than silently falling into dynamic behavior
 - invalid dynamic combinations remain runtime-handled behavior
+- operator overloads must not become competing semantic authorities; if present, they must delegate to the family authority
 
 This rule exists to make overload participation deliberate and reviewable.
 
@@ -239,7 +262,7 @@ Included initially:
 - `bool_t` is the semantic boolean type of the runtime
 - runtime comparisons produce the configured semantic comparison type, not native `bool`
 - generated C++ control-flow must bridge explicitly from semantic boolean representation to native C++ condition evaluation
-- the approved control-flow bridge is an explicit native-bool conversion from the shared condition helper result (`static_cast<bool>(::scpp::php::condition_truthy(...))` for general condition sites, or `static_cast<bool>(...)` for values already known to be `bool_t`), not `.native_value()` in generated conditions
+- the approved control-flow bridge is an explicit native-bool conversion from the shared condition helper result (`static_cast<bool>(::scpp::condition_truthy(...))` for general condition sites, or `static_cast<bool>(...)` for values already known to be `bool_t`), not `.native_value()` in generated conditions
 - `bool_t` must not provide uncontrolled truthiness; any native-bool bridge must remain explicit
 
 ### 6.3 `int_t` and `float_t`
@@ -343,6 +366,7 @@ Included initially:
 - `mixed_t::operator[]` is the primary mutating chained dynamic array access helper
 - mutable `mixed_t::operator[]` autovivifies `null` into an owned `hash_t<mixed_t>`
 - `mixed_t::get(...)` is the primary non-mutating read helper and returns a null-kind `mixed_t` on missing key or non-array receiver
+- `mixed_t::empty()` and `mixed_t::isset(...)` are convenience methods only; they delegate to the shared `scpp::empty(...)` and `scpp::isset(...)` authorities rather than owning those semantics
 - `_find_val()` remains available as the non-inserting `hash_t<mixed_t>` helper used by generator read paths
 - dynamic arithmetic, comparison, logical operators, mutation, compound assignment, and increment/decrement on `mixed_t` are enabled through runtime-kind dispatch that delegates to the native wrapper rules already defined elsewhere in the config
 - the delegation format is semantic-tuple based: once runtime kinds are established, the runtime resolves the operation as the corresponding native rule such as `int_t + int_t`, `int_t + float_t`, `float_t++`, `string_t += string_t`, or `bool_t && bool_t`
@@ -392,9 +416,9 @@ Policy flexibility is allowed only through configuration/version changes, not th
 ---
 
 
-## 7a. PHP helper identity semantics
+## 7a. Shared strict-identity semantics with PHP adapter exposure
 
-- `===` and `!==` remain helper-based in `scpp::php`
+- strict identity is owned by the shared runtime semantic family, with PHP exposing the stable adapter surface in `scpp::php`
 - strict identity is defined over **PHP-visible values**, not raw wrapper/storage types
 - wrapper carriers normalize before comparison:
 	- `nullable<T>` normalizes to either PHP `null` or wrapped `T`
@@ -440,7 +464,7 @@ The overload surface must also be **data-driven**.
 
 ### Practical recommendation
 Value families should only receive operator families that correspond to the language semantics actually needed.
-Do not expose a broad C++-like operator surface “just in case”.
+Do not expose a broad C++-like operator surface â€œjust in caseâ€.
 
 ### Current operator-phase decision
 The current runtime phase uses a C++-first operator policy for the newly added numeric mutation and integer-bitwise surface.
@@ -451,7 +475,7 @@ Required interpretation for this phase:
 - integer-only operators such as `%`, `&`, `|`, `^`, `~`, `<<`, and `>>` follow native C++ behavior
 - compound assignment operators such as `+=`, `/=`, and `<<=` follow the corresponding native C++ base operator
 - increment and decrement follow native C++ prefix/postfix behavior
-- PHP-specific identity and concatenation-assignment semantics remain helper-based in `scpp::php` rather than pretending to be ordinary C++ operator overloads
+- strict identity and concatenation-assignment use explicit runtime semantic helpers rather than pretending to be ordinary C++ operator overloads
 - string/bitwise/coercion combinations not already representable by the runtime surface should remain unsupported for now and fail in earlier phases or at compile time
 
 ---
@@ -472,6 +496,13 @@ The code generator should target the runtime as a semantic backend, not as a thi
 - source-language legality is not a runtime concern; unsupported PHP-in-subset constructs must be rejected before runtime semantics are involved
 - the runtime may defend internal invariants, but it must not become a policy gatekeeper for frontend or lowering decisions
 - generator-facing concerns must be expressed as constraints on emitted code shape, not as hidden runtime awareness of frontend phases
+
+## 10a. Current PHP builtin/string helper organization
+
+- the current project still keeps PHP builtin/string implementation helpers in `runtime/include/lang/php/support/`
+- this includes areas such as `php_string.hpp` and helper support from `php_common.hpp`
+- for the current PHP-only phase, the priority is matching PHP-facing behavior and keeping the runtime usable
+- broader cross-language builtin/intrinsic restructuring is deferred until a second language exists or a concrete shared builtin family is intentionally promoted
 
 ---
 
@@ -536,7 +567,7 @@ See: module_inclusion_model.md
 - `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, and its non-value states must normalize to the visible PHP boolean sentinels `false` and `true` for helper-owned operators and conditions.
 - Policy lock for `result_or_bool<bool_t>`: plain `bool` / `bool_t` construction and assignment create a wrapped payload value, not a bool-state sentinel. The false sentinel remains explicit through `false_sentinel`, `null`, or `nullopt`; the true sentinel is explicit through `true_sentinel`. This avoids ambiguity between payload `bool_t` and the wrapper's bool-state branch.
 - `php::take(...)` is the unified guarded extraction helper for `nullable<T>`, `result_or_false<T>`, `result_or_bool<T>`, and `result<T>`. It returns `bool_t`, evaluates the source expression once, and only assigns the outputs that correspond to the active wrapper branch.
-- In the current version, `php::coalesce_eval(...)` rejects `result_or_bool<T>` on either side at runtime with a deterministic error rather than relying on generator-side semantic rejection.
+- In the current version, `scpp::coalesce_eval(...)` rejects `result_or_bool<T>` on either side at runtime with a deterministic error rather than relying on generator-side semantic rejection. The PHP-facing adapter forwards to that shared authority.
 - For `result_or_bool<T>`, `php::take(value_out, bool_out, source)` returns `true` for both wrapped-value and boolean-true states so PHP-style APIs such as `mysqli::query()` can treat `true` as a successful non-row result. The `bool_out` slot receives the active boolean state only on bool branches.
 
 ## PHP false-sentinel exposure rule

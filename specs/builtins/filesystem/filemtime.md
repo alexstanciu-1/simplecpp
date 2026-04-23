@@ -1,5 +1,5 @@
-# Builtin Contract — `filemtime`
-
+# Builtin Contract â€” `filemtime`
+Doc Status: normative
 ## Identity
 - Name: `filemtime`
 - Module/family: filesystem
@@ -17,7 +17,7 @@
 - Failure returns `false`.
 
 ## Compatibility table
-- PHP returns timestamp or `false` → Prism++ returns timestamp or `false` → modified
+- PHP returns timestamp or `false` â†’ Prism++ returns timestamp or `false` â†’ modified
 
 ## Error policy
 - Does not throw for ordinary lookup failure.

@@ -1,5 +1,5 @@
-# Builtin Contract — `copy`
-
+# Builtin Contract â€” `copy`
+Doc Status: normative
 ## Identity
 - Name: `copy`
 - Module/family: filesystem
@@ -17,8 +17,8 @@
 - Success returns `true`; failure returns `false`.
 
 ## Compatibility table
-- PHP returns `true`/`false` → Prism++ returns `true`/`false` → modified
-- PHP has broader stream/context behavior → Prism++ currently supports direct path-to-path copy only → modified
+- PHP returns `true`/`false` â†’ Prism++ returns `true`/`false` â†’ modified
+- PHP has broader stream/context behavior â†’ Prism++ currently supports direct path-to-path copy only â†’ modified
 
 ## Error policy
 - Does not throw for ordinary copy failure.

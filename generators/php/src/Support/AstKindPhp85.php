@@ -94,9 +94,9 @@ class AstKindPhp85
 	public const BITWISE_AND = 10;
 	public const BITWISE_XOR = 11;
 	public const BINARY_IS_IDENTICAL = 16;
-	public const BINARY_IS_NOT_EQUAL = 17;
+	public const BINARY_IS_NOT_IDENTICAL = 17;
 	public const BINARY_IS_EQUAL = 18;
-	public const BINARY_IS_NOT_IDENTICAL = 19;
+	public const BINARY_IS_NOT_EQUAL = 19;
 	public const BINARY_IS_SMALLER = 20;
 	public const BINARY_IS_SMALLER_OR_EQUAL = 21;
 	public const BINARY_IS_GREATER = 256;

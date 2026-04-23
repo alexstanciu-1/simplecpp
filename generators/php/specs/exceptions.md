@@ -1,5 +1,5 @@
 # Exceptions and finally lowering (current pass)
-
+Doc Status: normative
 Status: active v1 subset.
 
 ## Goals

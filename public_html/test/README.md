@@ -1,5 +1,5 @@
 # Simple C++ test UI
-
+Doc Status: supporting
 Place this folder under `public_html/test`.
 
 Assumptions:

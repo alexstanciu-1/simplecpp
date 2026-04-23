@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Matrix Validation Rules
+Doc Status: normative
 
 ---
 
@@ -108,9 +108,9 @@ Every row must include:
 Every row must include the operand fields required by its item arity.
 
 Examples:
-- unary item → `lhs_type`, `lhs_profile`
-- binary item → `lhs_type`, `rhs_type`, `lhs_profile`, `rhs_profile`
-- ternary item → all required condition/then/else fields
+- unary item â†’ `lhs_type`, `lhs_profile`
+- binary item â†’ `lhs_type`, `rhs_type`, `lhs_profile`, `rhs_profile`
+- ternary item â†’ all required condition/then/else fields
 
 No row may include extraneous operand fields that are invalid for its item kind.
 
@@ -186,12 +186,12 @@ Source rows must not use aggregated type-only support summaries in place of
 concrete profiles.
 
 Disallowed example:
-- one source row for `cast_bool × mixed_t`
+- one source row for `cast_bool Ã— mixed_t`
 
 Required form:
-- `cast_bool × mixed.null`
-- `cast_bool × mixed.bool.false`
-- `cast_bool × mixed.bool.true`
+- `cast_bool Ã— mixed.null`
+- `cast_bool Ã— mixed.bool.false`
+- `cast_bool Ã— mixed.bool.true`
 - etc.
 
 ### 7.2 Known profile ids only
@@ -308,10 +308,10 @@ when the project test infrastructure supports such tests.
 Runtime rows must map to test categories consistent with their behavior class.
 
 Examples:
-- deterministic value → runtime pass/assert test
-- throws → runtime throw/failure test
-- noop → runtime no-op verification
-- failure-value → runtime value assertion
+- deterministic value â†’ runtime pass/assert test
+- throws â†’ runtime throw/failure test
+- noop â†’ runtime no-op verification
+- failure-value â†’ runtime value assertion
 
 ### 10.4 Target-kind-sensitive rows
 If behavior depends on target kind, the test seed must preserve that dimension.

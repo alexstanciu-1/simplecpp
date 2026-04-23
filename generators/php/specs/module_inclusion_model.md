@@ -1,5 +1,5 @@
 # Module Inclusion Model (Static)
-
+Doc Status: normative
 **Status:** Intentional divergence from PHP
 
 ## Rules

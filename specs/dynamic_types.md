@@ -1,3 +1,6 @@
+Doc Status: normative
+
+
 See `specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 See also `specs/array_semantics.md` for the authoritative current array/table subset.
 See `specs/strict_mode.md` for recommended extraction and usage patterns to avoid dynamic type propagation.
@@ -11,7 +14,7 @@ Replaces: dynamic_types.md (v1)
 
 ---
 
-## Prism++ — Dynamic Type (`mixed_t`)
+## Prism++ â€” Dynamic Type (`mixed_t`)
 
 ### Intro (User View)
 
@@ -70,24 +73,24 @@ If an Explicit Typed Boundary exists, a `mixed` value may be normalized to the t
 
 | Case | Example | Allowed |
 |---|---|---|
-| Typed variable assignment | `$x /** int */ = $v;` | ✔ |
-| Typed property assignment | `$obj->x = $v; // x is int` | ✔ |
-| Typed function argument (by-value) | `f($v); // f(int $x)` | ✔ |
-| Typed method argument (by-value) | `$obj->f($v); // f(int $x)` | ✔ |
-| Typed return | `return $v; // function(): int` | ✔ |
-| Explicit user cast | `$x = (int)$v;` | ✔ |
-| Explicit runtime narrowing guard | `if (is_int($v)) { takesInt($v); }` | ✔ |
+| Typed variable assignment | `$x /** int */ = $v;` | âœ” |
+| Typed property assignment | `$obj->x = $v; // x is int` | âœ” |
+| Typed function argument (by-value) | `f($v); // f(int $x)` | âœ” |
+| Typed method argument (by-value) | `$obj->f($v); // f(int $x)` | âœ” |
+| Typed return | `return $v; // function(): int` | âœ” |
+| Explicit user cast | `$x = (int)$v;` | âœ” |
+| Explicit runtime narrowing guard | `if (is_int($v)) { takesInt($v); }` | âœ” |
 
 ### Not Explicit Typed Boundaries
 
 | Case | Example | Allowed |
 |---|---|---|
-| By-reference arguments | `f($v); // f(int& $x)` | ✖ |
-| Untyped assignment | `$x = $v;` | ✖ |
-| Expressions without typed destination | `$x = $v + 1;` | ✖ |
-| Operator candidate expansion via implicit mixed extraction | `f($v + 1);` or overload-created operator paths | ✖ |
-| Overload resolution | `f($v); // multiple overloads` | ✖ |
-| Intermediate expressions | `$z = foo($v) + 1;` | ✖ |
+| By-reference arguments | `f($v); // f(int& $x)` | âœ– |
+| Untyped assignment | `$x = $v;` | âœ– |
+| Expressions without typed destination | `$x = $v + 1;` | âœ– |
+| Operator candidate expansion via implicit mixed extraction | `f($v + 1);` or overload-created operator paths | âœ– |
+| Overload resolution | `f($v); // multiple overloads` | âœ– |
+| Intermediate expressions | `$z = foo($v) + 1;` | âœ– |
 
 ---
 
@@ -148,7 +151,7 @@ These are accepted in v1 when an Explicit Typed Boundary exists, even though the
 > The explicit-boundary model is a **language / S2S rule enforced through the runtime boundary layer**.  
 > Explicit Typed Boundaries and their v1 compromises belong to the **language / S2S layer**; `mixed_t` by itself does not reveal enough compile-time information to invent those boundaries.
 
-The current implementation may therefore accept some non-explicit `mixed → native` conversions at approved boundary sites that the long-term model would prefer to see as generator-emitted explicit casts.
+The current implementation may therefore accept some non-explicit `mixed â†’ native` conversions at approved boundary sites that the long-term model would prefer to see as generator-emitted explicit casts.
 
 ---
 
@@ -173,14 +176,14 @@ Normative rules:
 
 | Source | Destination | Allowed | Meaning |
 |---|---|---|---|
-| native | mixed | ✔ | boxing |
-| mixed | typed variable | ✔ | convert |
-| mixed | typed parameter (by-value) | ✔ | convert for call |
-| mixed | typed return | ✔ | convert on return |
-| mixed | typed property | ✔ | convert |
-| mixed | untyped | ✔ | stays mixed |
-| mixed | overload selection | ✖ | no implicit disambiguation |
-| mixed | typed by-reference parameter | ✖ | by-reference normalization from `mixed_t` is not part of the current safe subset |
+| native | mixed | âœ” | boxing |
+| mixed | typed variable | âœ” | convert |
+| mixed | typed parameter (by-value) | âœ” | convert for call |
+| mixed | typed return | âœ” | convert on return |
+| mixed | typed property | âœ” | convert |
+| mixed | untyped | âœ” | stays mixed |
+| mixed | overload selection | âœ– | no implicit disambiguation |
+| mixed | typed by-reference parameter | âœ– | by-reference normalization from `mixed_t` is not part of the current safe subset |
 
 ---
 
@@ -203,11 +206,11 @@ See `specs/native_reference_safety.md` and `specs/references.md`.
 `mixed_t` does not define an independent flat operator matrix. Instead, operator behavior is resolved by **runtime kind dispatch** and then delegated to the already-defined native wrapper rule.
 
 Examples:
-- `mixed(kind=int) + mixed(kind=int)` → same rule as `int_t + int_t`
-- `mixed(kind=int) + mixed(kind=float)` → same rule as `int_t + float_t`
-- `mixed(kind=float)++` → same rule as `float_t++`
-- `mixed(kind=string) += string_t` → same rule as `string_t += string_t`
-- `mixed(kind=table) + ...` → error for now
+- `mixed(kind=int) + mixed(kind=int)` â†’ same rule as `int_t + int_t`
+- `mixed(kind=int) + mixed(kind=float)` â†’ same rule as `int_t + float_t`
+- `mixed(kind=float)++` â†’ same rule as `float_t++`
+- `mixed(kind=string) += string_t` â†’ same rule as `string_t += string_t`
+- `mixed(kind=table) + ...` â†’ error for now
 
 Global rules:
 - implicit `mixed -> native` extraction is allowed only at approved Explicit Typed Boundaries (typed initialization/assignment, typed by-value arg passing, typed return, typed property write)
@@ -218,18 +221,18 @@ Global rules:
 
 | Expression | Allowed | Meaning | Result |
 |---|---|---|---|
-| mixed + mixed | ✔ | dispatch by kinds, then delegate to native rule | mixed |
-| mixed + native | ✔ | box native if needed, dispatch by kinds | mixed |
-| native + mixed | ✔ | box native if needed, dispatch by kinds | mixed |
-| mixed - / * / / / % | ✔ | same delegation model | mixed |
-| mixed == / != / < / <= / > / >= | ✔ | dispatch by kinds, then delegate to native comparison rule | bool |
-| mixed && / || / !mixed | ✔ | dispatch by kinds, then delegate to native logical rule | bool |
-| +mixed / -mixed | ✔ | unary numeric dispatch by kind | mixed |
-| ++mixed / --mixed | ✔ | delegate to native increment/decrement rule of contained kind | mixed |
-| mixed[index] | ✔ | indexing | mixed |
-| typed = mixed | ✔ | Explicit Typed Boundary conversion | typed |
-| mixed += native | ✔ | delegated op + assign-back check | mixed |
-| mixed .= native | ✔ | generator-owned concat lowering, not runtime mixed concat dispatch | string/mixed |
+| mixed + mixed | âœ” | dispatch by kinds, then delegate to native rule | mixed |
+| mixed + native | âœ” | box native if needed, dispatch by kinds | mixed |
+| native + mixed | âœ” | box native if needed, dispatch by kinds | mixed |
+| mixed - / * / / / % | âœ” | same delegation model | mixed |
+| mixed == / != / < / <= / > / >= | âœ” | dispatch by kinds, then delegate to native comparison rule | bool |
+| mixed && / || / !mixed | âœ” | dispatch by kinds, then delegate to native logical rule | bool |
+| +mixed / -mixed | âœ” | unary numeric dispatch by kind | mixed |
+| ++mixed / --mixed | âœ” | delegate to native increment/decrement rule of contained kind | mixed |
+| mixed[index] | âœ” | indexing | mixed |
+| typed = mixed | âœ” | Explicit Typed Boundary conversion | typed |
+| mixed += native | âœ” | delegated op + assign-back check | mixed |
+| mixed .= native | âœ” | generator-owned concat lowering, not runtime mixed concat dispatch | string/mixed |
 
 Additional runtime-kind rules:
 - `mixed(kind=null)` delegates to `null_t`
@@ -247,17 +250,17 @@ Additional runtime-kind rules:
 
 | Expression | Allowed | Meaning | Result |
 |---|---|---|---|
-| `[]` | ✔ | dynamic array / hash-table creation | mixed structure |
-| `[1,2]` | ✔ | dynamic array | mixed structure |
-| `["x"=>1]` | ✔ | dynamic hash-table | mixed structure |
-| nested arrays | ✔ | dynamic nested structure | mixed structure |
-| `$a[] = native` | ✔ | append boxed value | mixed |
-| `$a[$k] = native` | ✔ | assign boxed value | mixed |
-| `$a[] = mixed` | ✔ | append dynamic value | mixed |
-| `$a[$k] = mixed` | ✔ | assign dynamic value | mixed |
-| `$a[$k]` | ✔ | indexed read | mixed |
-| `$a[$k1][$k2]` | ✔ | nested read | mixed |
-| typed from `$a[$k]` | ✔ | convert | typed |
+| `[]` | âœ” | dynamic array / hash-table creation | mixed structure |
+| `[1,2]` | âœ” | dynamic array | mixed structure |
+| `["x"=>1]` | âœ” | dynamic hash-table | mixed structure |
+| nested arrays | âœ” | dynamic nested structure | mixed structure |
+| `$a[] = native` | âœ” | append boxed value | mixed |
+| `$a[$k] = native` | âœ” | assign boxed value | mixed |
+| `$a[] = mixed` | âœ” | append dynamic value | mixed |
+| `$a[$k] = mixed` | âœ” | assign dynamic value | mixed |
+| `$a[$k]` | âœ” | indexed read | mixed |
+| `$a[$k1][$k2]` | âœ” | nested read | mixed |
+| typed from `$a[$k]` | âœ” | convert | typed |
 
 ---
 
@@ -266,7 +269,7 @@ Additional runtime-kind rules:
 | Case | Rule |
 |---|---|
 | `mixed&` parameter | requires actual mixed variable |
-| native → `mixed&` | not supported |
+| native â†’ `mixed&` | not supported |
 | typed by-ref param (`string&`) | requires compatible typed storage; no proxy adaptation |
 | cast insertion for by-ref | not allowed |
 | array element reference | dynamic via mixed container |
@@ -416,9 +419,9 @@ Table-carrier exceptions:
 
 | Case | Behavior |
 |---|---|
-| native stable source → native `T&` | allowed |
-| `mixed_t` → native `T&` | not supported in the current safe subset |
-| dynamic slot / element / property → native `T&` | forbidden |
+| native stable source â†’ native `T&` | allowed |
+| `mixed_t` â†’ native `T&` | not supported in the current safe subset |
+| dynamic slot / element / property â†’ native `T&` | forbidden |
 | `try_ref(...)` on `shared_p<T>` element | allowed; returns a copy |
 | `try_ref(...)` on any other element type | throws |
 

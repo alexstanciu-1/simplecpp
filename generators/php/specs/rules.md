@@ -1,6 +1,9 @@
+Doc Status: normative
+
+
 See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
 
-# Prism++ – General Rules (Authoritative, Normalized)
+# Prism++ â€“ General Rules (Authoritative, Normalized)
 
 > Transitional implementation note: see `../../specs/mixed_boundary_transitional.md`.
 
@@ -45,6 +48,9 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - `value_p<T>` is opt-in inline storage and is never the default lowering for PHP object types
 - runtime `null` is the canonical null literal for generated code where null is supported
 - null comparisons/checks must use the configured runtime helpers such as `php::is_null(...)` and `php::not_null(...)`
+- generated/frontend-facing semantic calls should target `scpp::php::*` entrypoints
+- generated code should not call shared `scpp::*` semantic families directly
+- `scpp::php::*` may forward to shared `scpp::*` authorities when PHP semantics match the shared Prism++ semantics
 
 ---
 
@@ -58,13 +64,13 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - return types must be explicit
 
 ### Mapping
-- `int` → `int_t`
-- `float` → `float_t`
-- `bool` → `bool_t`
-- `string` → `string_t`
-- `?T` → `nullable<T>` for value-like types
-- class / interface / abstract object types → `shared_p<T>`
-- `?ClassType` / `?InterfaceType` / `?AbstractType` → `shared_p<T>`
+- `int` â†’ `int_t`
+- `float` â†’ `float_t`
+- `bool` â†’ `bool_t`
+- `string` â†’ `string_t`
+- `?T` â†’ `nullable<T>` for value-like types
+- class / interface / abstract object types â†’ `shared_p<T>`
+- `?ClassType` / `?InterfaceType` / `?AbstractType` â†’ `shared_p<T>`
 - object nullability does not currently change the emitted C++ type; `A` and `?A` both emit `shared_p<A>` for now
 
 ### Returns
@@ -81,17 +87,17 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - class constants support the leading attached form such as `const /** int */ X = 1;`
 - constant declarations fall back to initializer-based type deduction in emitted C++ (`const auto ... = ...`)
 - detached or non-adjacent type comments remain invalid
-- `$x /** string */ = "test";` → `string_t x("test");`
-- `$x /** ?string */ = "test";` → `nullable<string_t> x("test");`
-- `$x /** ?string */ = null;` → `nullable<string_t> x = null;`
-- `$x /** A */ = new A();` → `shared_p<A> x = create<A>();`
-- `$x /** ?A */ = null;` → `shared_p<A> x = null;`
-- `$x /** value<Point> */ = new Point(1, 2);` → `value_p<Point> x = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));`
-- `$x /** weak<A> */ = null;` → `weak_p<A> x = null;`
-- `$x /** weakref<A> */ = null;` → `weak_p<A> x = null;`
-- `$x /** unique<A> */ = null;` → `unique_p<A> x = null;`
-- `$x /** shared<A> */ = null;` → `shared_p<A> x = null;`
-- `$x /** ref int */ = &$y;` → `int_t& x = y;`
+- `$x /** string */ = "test";` â†’ `string_t x("test");`
+- `$x /** ?string */ = "test";` â†’ `nullable<string_t> x("test");`
+- `$x /** ?string */ = null;` â†’ `nullable<string_t> x = null;`
+- `$x /** A */ = new A();` â†’ `shared_p<A> x = create<A>();`
+- `$x /** ?A */ = null;` â†’ `shared_p<A> x = null;`
+- `$x /** value<Point> */ = new Point(1, 2);` â†’ `value_p<Point> x = value<Point>(static_cast<int_t>(1), static_cast<int_t>(2));`
+- `$x /** weak<A> */ = null;` â†’ `weak_p<A> x = null;`
+- `$x /** weakref<A> */ = null;` â†’ `weak_p<A> x = null;`
+- `$x /** unique<A> */ = null;` â†’ `unique_p<A> x = null;`
+- `$x /** shared<A> */ = null;` â†’ `shared_p<A> x = null;`
+- `$x /** ref int */ = &$y;` â†’ `int_t& x = y;`
 - `/** ref Point */` locals lower directly to `shared_p<Point>&` when `Point` lowers to an object handle
 - `ref` lowering is intentionally a reduced write-through alias feature built on native C++ references; rebinding-through-alias and PHP-style alias-preserving `unset` are out of scope
 
@@ -113,7 +119,7 @@ Object construction and ownership helpers are runtime concepts. Current generati
 
 ### Untyped Variable Initialization
 - untyped variables may still lower to explicit runtime-wrapped expressions
-- `$x = "test";` → `auto x = string_t("test");`
+- `$x = "test";` â†’ `auto x = string_t("test");`
 - constructor selection, conversion resolution, and overload resolution remain the C++ compiler's responsibility
 
 ### Passing and Return Conventions
@@ -134,10 +140,10 @@ Object construction and ownership helpers are runtime concepts. Current generati
 All literals must be normalized.
 
 ### Required forms
-- integer → `static_cast<int_t>(v)`
-- float → `static_cast<float_t>(v)`
-- bool → `static_cast<bool_t>(v)`
-- string → `string_t("...")`
+- integer â†’ `static_cast<int_t>(v)`
+- float â†’ `static_cast<float_t>(v)`
+- bool â†’ `static_cast<bool_t>(v)`
+- string â†’ `string_t("...")`
 
 Applies to:
 - assignments
@@ -193,6 +199,11 @@ Examples:
 - `php::not_identical`
 - `scpp::pow`
 - `scpp::cmp`
+
+Current architectural rule:
+- generated PHP-facing lowering targets `scpp::php::*`
+- those language entrypoints are the stable generator-facing surface
+- they may forward to shared `scpp::*` family authorities by default
 
 ---
 
@@ -308,7 +319,7 @@ Priority note:
 - PHP keyed writes now lower to direct `operator[]` assignment
 - PHP append writes lower to `append(...)`; simple right-hand sides inline directly, while non-trivial right-hand sides may spill into a temporary to keep assignment-style lowering explicit
 - `unset($a[k])` lowers to `remove(k)`; missing-key `unset` remains a no-op
-- `isset($a[k])` lowers through the runtime `isset(...)` helper and must preserve null-sensitive semantics (`missing` → `false`, existing `null` → `false`)
+- `isset($a[k])` lowers through the runtime `isset(...)` helper and must preserve null-sensitive semantics (`missing` â†’ `false`, existing `null` â†’ `false`)
 - `empty($a[k])` lowers through the runtime `empty(...)` helper for the resulting value; under the current supported subset it is true only for `null`, `""`, and empty array/table values
 - the normative cross-runtime contract is defined in `specs/count_empty_isset_contract.md`
 
@@ -486,20 +497,20 @@ Restriction:
 `new Class(...)` must be lowered to `create<Class>(...)`.
 
 Examples:
-- `new X()` → `create<X>()`
-- `new \A\B\X()` → `create<::scpp::A::B::X>()`
+- `new X()` â†’ `create<X>()`
+- `new \A\B\X()` â†’ `create<::scpp::A::B::X>()`
 
 The generator must not emit raw `new` for these supported construction forms.
 
 ### 15.2 Static Access
 - same-namespace static access remains unqualified, for example `X::make()`
-- fully-qualified PHP static access lowers to rooted C++ access, for example `\A\X::make()` → `::scpp::A::X::make()`
+- fully-qualified PHP static access lowers to rooted C++ access, for example `\A\X::make()` â†’ `::scpp::A::X::make()`
 
 ### 15.3 Static Access Through Instances
 PHP static access through an instance must be lowered syntactically using `::scpp::class_t<decltype(...)>`.
 
 Example:
-- `$x::make()` → `::scpp::class_t<decltype(x)>::make()`
+- `$x::make()` â†’ `::scpp::class_t<decltype(x)>::make()`
 
 The generator must not attempt to validate whether `::scpp::class_t<decltype(...)>::member` is semantically valid for the produced C++ type.
 
@@ -509,7 +520,7 @@ If the emitted C++ is invalid, it must fail at C++ compile time rather than bein
 
 # Appendix: Full Original Rules (verbatim)
 
-# Prism++ – rules.md
+# Prism++ â€“ rules.md
 
 This is the single source of truth for generation rules and runtime assumptions.
 
@@ -1111,8 +1122,8 @@ A later decision must either:
 
 ### 16.9 Static Access Through Instances
 - PHP static access through an instance must be lowered syntactically using `::scpp::class_t<decltype(...)>`
-- `$x::make()` → `::scpp::class_t<decltype(x)>::make()`
-- `$x::$prop` → `::scpp::class_t<decltype(x)>::prop`
+- `$x::make()` â†’ `::scpp::class_t<decltype(x)>::make()`
+- `$x::$prop` â†’ `::scpp::class_t<decltype(x)>::prop`
 - the generator must not attempt to validate whether the generated C++ member access is semantically valid
 
 
@@ -1205,7 +1216,7 @@ PHP-target array-key normalization is a runtime concern. The generator must not 
 ## Direct DIM call arguments
 
 - Direct DIM expressions used as function-call arguments lower through the direct slot path `[]`, not `.get(...)`.
-- Example: `add($x[0])` → `add(x[0])`.
+- Example: `add($x[0])` â†’ `add(x[0])`.
 - Direct DIM call arguments are valid only for ordinary value passing. They are not native-reference bindable by virtue of being direct DIM expressions.
 - Computed expressions keep the normal read path. Example: `$x[0] + 10` remains `x.get(0) + 10` inside the larger expression.
 - This is an intentional simplification: direct DIM call arguments may autovivify/create a slot. Use an explicit read-only form such as `?? null` when that behavior is not desired.
@@ -1216,7 +1227,7 @@ PHP-target array-key normalization is a runtime concern. The generator must not 
 - Return-by-reference is not recommended in Prism++ and must always surface a generator warning even when generation is still allowed.
 - The generator must also warn for local copy-after-alias patterns rooted in a by-reference call result, for example `$inner =& get_inner($arr); $copy = $arr;`, because Prism++ may not preserve PHP alias semantics for that flow.
 
-## Historical note — typed scalar by-reference proxy lowering
+## Historical note â€” typed scalar by-reference proxy lowering
 
 The runtime may still contain legacy helper/proxy infrastructure, but that legacy path is not part of the supported safe subset. The current design direction is the native-reference safety rule documented in `../../specs/native_reference_safety.md`.
 

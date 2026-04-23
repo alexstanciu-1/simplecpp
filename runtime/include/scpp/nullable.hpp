@@ -4,6 +4,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/nullopt_t.hpp"
+#include "scpp/runtime_error.hpp"
 
 namespace scpp {
 
@@ -16,7 +17,12 @@ private:
 	// Covers the project rule that nullable<T> misuse must raise a runtime error through the runtime surface instead of leaking std::optional exceptions.
 	// Throws a project-shaped runtime error when a caller tries to read an empty nullable value.
 	[[noreturn]] static void throw_empty_access(const char *context) {
-		throw std::runtime_error(std::string("scpp::nullable: ") + context + " requires a present value");
+		throw runtime_error(
+			std::string("scpp::nullable runtime error: ") + context + " requires a present wrapped value. "
+				+ "Requirement: unwrap only non-empty nullable<T> values before using the delegated operator/property path.",
+			"invalid_nullable_unwrap_empty",
+			"scpp::nullable_unwrap"
+		);
 	}
 
 public:

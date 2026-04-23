@@ -1,5 +1,5 @@
-# Builtin Contract — `bin2hex`
-
+# Builtin Contract â€” `bin2hex`
+Doc Status: normative
 ## Identity
 - Name: `bin2hex`
 - Module/family: string
@@ -19,8 +19,8 @@
 - Empty input returns an empty string.
 
 ## Compatibility table
-- PHP emits lowercase hexadecimal text → Prism++ emits lowercase hexadecimal text → kept
-- PHP is binary-safe for raw input bytes → Prism++ keeps byte-oriented conversion → kept
+- PHP emits lowercase hexadecimal text â†’ Prism++ emits lowercase hexadecimal text â†’ kept
+- PHP is binary-safe for raw input bytes â†’ Prism++ keeps byte-oriented conversion â†’ kept
 
 ## Error policy
 - Does not throw for ordinary input.

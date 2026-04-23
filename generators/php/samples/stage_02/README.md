@@ -1,5 +1,5 @@
 # Stage 02 sample set
-
+Doc Status: supporting
 These fixtures are intentionally larger than the stage 01 samples.
 They are designed to combine multiple catalog rules in the same file,
 while still staying small enough to debug quickly.
@@ -10,7 +10,7 @@ while still staying small enough to debug quickly.
 - force synthetic entry generation through real executable statements
 - combine namespace, class, function, constant, reference, and typed-local rules
 - make success depend on exact stdout parity, not only on avoiding errors
-- keep each file in the ~30–40 line range
+- keep each file in the ~30â€“40 line range
 
 ## Files
 

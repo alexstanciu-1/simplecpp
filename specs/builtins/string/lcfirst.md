@@ -1,5 +1,5 @@
-# Builtin Contract — `lcfirst`
-
+# Builtin Contract â€” `lcfirst`
+Doc Status: normative
 ## Identity
 - Name: `lcfirst`
 - Module/family: string
@@ -17,8 +17,8 @@
 - Current contract is ASCII/byte-oriented, not Unicode-aware.
 
 ## Compatibility table
-- PHP lowercases the first character → Prism++ lowercases the first byte → modified
-- Empty input returns empty output → Prism++ does the same → kept
+- PHP lowercases the first character â†’ Prism++ lowercases the first byte â†’ modified
+- Empty input returns empty output â†’ Prism++ does the same â†’ kept
 
 ## Error policy
 - No runtime error for valid typed string inputs.

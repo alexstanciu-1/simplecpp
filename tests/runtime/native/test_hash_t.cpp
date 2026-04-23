@@ -206,7 +206,7 @@ static void test_typed_table_and_builder_contract() {
 	assert(clearable.at(scpp::int_t(0)).int_value().native_value() == 42);
 }
 
-// Verifies table_find_ chaining stays null-safe across table and nullable hops.
+// Verifies nested table lookups stay non-inserting and null-safe through the current hash_t/mixed_t API.
 static void test_table_find_chain_contract() {
 	auto inner = scpp::unique<scpp::hash_t<scpp::mixed_t>>();
 	inner->set(scpp::string_t("leaf"), scpp::mixed_t(scpp::int_t(123)));
@@ -214,16 +214,19 @@ static void test_table_find_chain_contract() {
 	scpp::hash_t<> outer;
 	outer.set(scpp::string_t("child"), scpp::mixed_t(std::move(inner)));
 
-	auto child = scpp::table_find_(outer, scpp::string_t("child"));
-	assert(scpp::was_found(child).native_value() == true);
+	auto child = outer.find(scpp::string_t("child"));
+	assert(child.has_value().native_value() == true);
+	assert(child.value().is_hash().native_value() == true);
 
-	auto leaf = scpp::table_find_(child, scpp::string_t("leaf"));
-	assert(scpp::was_found(leaf).native_value() == true);
+	auto leaf = child.value().get_hash().find(scpp::string_t("leaf"));
+	assert(leaf.has_value().native_value() == true);
 	assert(leaf.value().int_value().native_value() == 123);
 
-	auto missing = scpp::table_find_(child, scpp::string_t("nope"));
+	auto missing = child.value().get_hash().find(scpp::string_t("nope"));
 	assert(scpp::is_nullopt(missing).native_value() == true);
-	assert(scpp::is_nullopt(scpp::table_find_(missing, scpp::string_t("anything"))).native_value() == true);
+
+	scpp::mixed_t missing_child(scpp::null_t{});
+	assert(missing_child.is_null().native_value() == true);
 }
 
 int main() {

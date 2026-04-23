@@ -1,5 +1,5 @@
 # Array / Table Semantics in Prism++
-
+Doc Status: normative
 Status: Active
 
 See `specs/spec_map.md` for document hierarchy, authority, and v1 conflict-resolution rules.
@@ -186,8 +186,8 @@ If `x` already exists but is not table/hash compatible:
 - do not silently overwrite the existing scalar/object/value into a table/hash
 
 This yields the current nested-write rule:
-- missing intermediate → autovivify
-- wrong existing intermediate kind → throw
+- missing intermediate â†’ autovivify
+- wrong existing intermediate kind â†’ throw
 
 ## 8. Read-path side effects
 
@@ -267,7 +267,7 @@ Important distinction:
 
 ### Supported
 - value read of existing key
-- value read of missing key → `null`
+- value read of missing key â†’ `null`
 - top-level keyed write
 - nested keyed write with autovivification of missing intermediates
 - append on array/hash carriers

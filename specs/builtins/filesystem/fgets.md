@@ -1,5 +1,5 @@
-# Builtin Contract — `fgets`
-
+# Builtin Contract â€” `fgets`
+Doc Status: normative
 ## Identity
 - Name: `fgets`
 - Module/family: filesystem / stdio
@@ -22,8 +22,8 @@
 - A partial final line without trailing newline is still returned as a string.
 
 ## Compatibility table
-- PHP returns a line string or `false` → Prism++ returns line string or `null` → modified
-- PHP length handling is broader and warning-heavy → Prism++ keeps a narrowed positive-length contract → modified
+- PHP returns a line string or `false` â†’ Prism++ returns line string or `null` â†’ modified
+- PHP length handling is broader and warning-heavy â†’ Prism++ keeps a narrowed positive-length contract â†’ modified
 
 ## Error policy
 - Non-readable stream throws a runtime error.

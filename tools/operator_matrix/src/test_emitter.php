@@ -375,7 +375,12 @@ function om_render_php_matrix_source(array $seed): string
 		$operand = is_array($operands[$name] ?? null) ? $operands[$name] : [];
 		$type = $operand['type'] ?? null;
 		$profile = $operand['profile'] ?? null;
+		$targetKind = (string) (($operand['target_kind'] ?? '') ?: '');
 		if (!is_string($type) || $type === '' || !is_string($profile) || $profile === '') {
+			continue;
+		}
+		if ($name === 'lhs' && $targetKind === 'keyed_element' && om_seed_supports_keyed_element_target($seed)) {
+			$declared[] = '$lhs /** ' . om_map_seed_type_to_vector_annotation($type) . ' */ = [' . om_render_seed_profile_literal($type, $profile) . '];';
 			continue;
 		}
 		$declared[] = '$' . $name . ' /** ' . om_map_seed_type_to_php_annotation($type) . ' */ = ' . om_render_seed_profile_literal($type, $profile) . ';';
@@ -446,6 +451,23 @@ function om_render_seed_php_lines(array $seed): array
 			'}',
 		];
 	}
+	if (in_array($itemId, ['pre_increment', 'post_increment', 'pre_decrement', 'post_decrement'], true)) {
+		return ['var_dump(' . om_render_seed_expression($seed) . ');'];
+	}
+	if (in_array($itemId, [
+		'add_assign',
+		'subtract_assign',
+		'multiply_assign',
+		'divide_assign',
+		'modulo_assign',
+		'bitwise_and_assign',
+		'bitwise_or_assign',
+		'bitwise_xor_assign',
+		'shift_left_assign',
+		'shift_right_assign',
+	], true)) {
+		return ['var_dump(' . om_render_seed_expression($seed) . ');'];
+	}
 
 	return ['var_dump(' . om_render_seed_expression($seed) . ');'];
 }
@@ -456,8 +478,52 @@ function om_render_seed_php_lines(array $seed): array
 function om_render_seed_expression(array $seed): string
 {
 	$itemId = (string) ($seed['item_id'] ?? '');
+	$lhsOperand = is_array(($seed['operands']['lhs'] ?? null)) ? $seed['operands']['lhs'] : [];
+	$lhsTargetKind = (string) (($lhsOperand['target_kind'] ?? '') ?: '');
+	$lhsValue = ($lhsTargetKind === 'keyed_element' && om_seed_supports_keyed_element_target($seed)) ? '$lhs[0]' : '$lhs';
 	return match ($itemId) {
+		'add_assign' => $lhsValue . ' += $rhs',
+		'subtract_assign' => $lhsValue . ' -= $rhs',
+		'multiply_assign' => $lhsValue . ' *= $rhs',
+		'divide_assign' => $lhsValue . ' /= $rhs',
+		'modulo_assign' => $lhsValue . ' %= $rhs',
+		'bitwise_and_assign' => $lhsValue . ' &= $rhs',
+		'bitwise_or_assign' => $lhsValue . ' |= $rhs',
+		'bitwise_xor_assign' => $lhsValue . ' ^= $rhs',
+		'shift_left_assign' => $lhsValue . ' <<= $rhs',
+		'shift_right_assign' => $lhsValue . ' >>= $rhs',
+		'add' => '$lhs + $rhs',
+		'subtract' => '$lhs - $rhs',
+		'multiply' => '$lhs * $rhs',
+		'divide' => '$lhs / $rhs',
+		'modulo' => '$lhs % $rhs',
+		'bitwise_and' => '$lhs & $rhs',
+		'bitwise_or' => '$lhs | $rhs',
+		'bitwise_xor' => '$lhs ^ $rhs',
+		'shift_left' => '$lhs << $rhs',
+		'shift_right' => '$lhs >> $rhs',
+		'logical_and' => '$lhs && $rhs',
+		'logical_or' => '$lhs || $rhs',
+		'equal' => '$lhs == $rhs',
+		'not_equal' => '$lhs != $rhs',
+		'identical' => '$lhs === $rhs',
+		'not_identical' => '!($lhs === $rhs)',
+		'less_than' => '$lhs < $rhs',
+		'less_than_or_equal' => '$lhs <= $rhs',
+		'greater_than' => '$lhs > $rhs',
+		'greater_than_or_equal' => '$lhs >= $rhs',
 		'cast_bool' => '(bool) $lhs',
+		'cast_int' => '(int) $lhs',
+		'cast_float' => '(float) $lhs',
+		'cast_string' => '(string) $lhs',
+		'logical_not' => '!$lhs',
+		'unary_plus' => '+$lhs',
+		'unary_minus' => '-$lhs',
+		'bitwise_not' => '~$lhs',
+		'pre_increment' => '++$lhs',
+		'post_increment' => '$lhs++',
+		'pre_decrement' => '--$lhs',
+		'post_decrement' => '$lhs--',
 		'coalesce' => '$lhs ?? $rhs',
 		'elvis' => '$lhs ?: $rhs',
 		'ternary' => '$lhs ? $rhs : $third',
@@ -493,6 +559,31 @@ function om_map_seed_type_to_php_annotation(string $type): string
 	};
 }
 
+function om_map_seed_type_to_vector_annotation(string $type): string
+{
+	return 'vector<' . om_map_seed_type_to_php_annotation($type) . '>';
+}
+
+/**
+ * @param array<string, mixed> $seed
+ */
+function om_seed_supports_keyed_element_target(array $seed): bool
+{
+	$itemId = (string) ($seed['item_id'] ?? '');
+	return in_array($itemId, [
+		'add_assign',
+		'subtract_assign',
+		'multiply_assign',
+		'divide_assign',
+		'modulo_assign',
+		'bitwise_and_assign',
+		'bitwise_or_assign',
+		'bitwise_xor_assign',
+		'shift_left_assign',
+		'shift_right_assign',
+	], true);
+}
+
 function om_render_seed_profile_literal(string $type, string $profile): string
 {
 	if ($type === 'result_or_false<bool_t>' && $profile === 'result_or_false.sentinel.false') {
@@ -512,9 +603,21 @@ function om_render_seed_profile_literal(string $type, string $profile): string
 		'bool.false' => 'false',
 		'bool.true' => 'true',
 		'int.zero' => '0',
+		'int.one' => '1',
+		'int.fourteen' => '14',
+		'int.forty_nine' => '49',
+		'int.neg_seven' => '-7',
 		'int.nonzero' => '7',
 		'float.zero' => '0.0',
+		'float.one' => '1.0',
+		'float.two' => '2.0',
+		'float.half' => '0.5',
+		'float.neg_seven' => '-7.0',
 		'float.nonzero' => '3.5',
+		'float.seven' => '7.0',
+		'float.ten_point_five' => '10.5',
+		'float.twelve_point_twenty_five' => '12.25',
+		'float.twenty_four_point_five' => '24.5',
 		'string.empty' => '""',
 		'string.zero_string' => '"0"',
 		'string.bool_false_literal' => '"false"',
@@ -640,7 +743,27 @@ function om_should_enable_seed_by_default(array $seed): bool
 		return false;
 	}
 
+	$feature = (string) ($seed['feature'] ?? '');
+	$wrapperEnabledFeatures = [
+		'add_assign' => true,
+		'subtract_assign' => true,
+		'multiply_assign' => true,
+		'divide_assign' => true,
+		'modulo_assign' => true,
+		'bitwise_and' => true,
+		'bitwise_or' => true,
+		'bitwise_xor' => true,
+		'shift_left' => true,
+		'shift_right' => true,
+		'bitwise_and_assign' => true,
+		'bitwise_or_assign' => true,
+		'bitwise_xor_assign' => true,
+		'shift_left_assign' => true,
+		'shift_right_assign' => true,
+	];
+
 	$operands = is_array($seed['operands'] ?? null) ? $seed['operands'] : [];
+	$hasWrapperOperand = false;
 	foreach (['lhs', 'rhs', 'third'] as $name) {
 		$operand = is_array($operands[$name] ?? null) ? $operands[$name] : [];
 		$type = (string) (($operand['type'] ?? '') ?: '');
@@ -648,8 +771,12 @@ function om_should_enable_seed_by_default(array $seed): bool
 			continue;
 		}
 		if (str_contains($type, 'nullable<') || str_contains($type, 'result')) {
-			return false;
+			$hasWrapperOperand = true;
 		}
+	}
+
+	if ($hasWrapperOperand) {
+		return isset($wrapperEnabledFeatures[$feature]);
 	}
 
 	return true;
@@ -792,13 +919,39 @@ function om_expected_runtime_json(string $diagnosticClass): array
 			'code' => 'invalid_cast_string_literal',
 			'component' => 'scpp::cast<bool_t>',
 		],
+		'invalid_cast_int_literal' => [
+			'code' => 'invalid_cast_int_literal',
+			'component' => 'scpp::cast<int_t>',
+		],
+		'invalid_cast_float_literal' => [
+			'code' => 'invalid_cast_float_literal',
+			'component' => 'scpp::cast<float_t>',
+		],
 		'invalid_mixed_kind_for_cast_bool' => [
 			'code' => 'invalid_mixed_kind_for_cast_bool',
 			'component' => 'scpp::cast<bool_t>',
 		],
+		'invalid_mixed_kind_for_cast_int' => [
+			'code' => 'invalid_mixed_kind_for_cast_int',
+			'component' => 'scpp::cast<int_t>',
+		],
+		'invalid_mixed_kind_for_cast_float' => [
+			'code' => 'invalid_mixed_kind_for_cast_float',
+			'component' => 'scpp::cast<float_t>',
+		],
+		'invalid_mixed_kind_for_cast_string' => [
+			'code' => 'invalid_mixed_kind_for_cast_string',
+			'component' => 'scpp::cast<string_t>',
+		],
 		'invalid_nullable_unwrap_empty' => [
 			'code' => 'invalid_nullable_unwrap_empty',
 			'component' => 'scpp::nullable_unwrap',
+		],
+		'division_by_zero' => [
+			'code' => 'division_by_zero',
+		],
+		'modulo_by_zero' => [
+			'code' => 'modulo_by_zero',
 		],
 		default => [],
 	};
@@ -828,10 +981,36 @@ function om_render_expected_var_dump(string $profile): string
 		'bool.false', 'mixed.bool.false' => "bool(false)\n",
 		'bool.true', 'mixed.bool.true' => "bool(true)\n",
 		'int.zero', 'mixed.int.zero' => "int(0)\n",
+		'int.one', 'mixed.int.one' => "int(1)\n",
+		'int.fourteen', 'mixed.int.fourteen' => "int(14)\n",
+		'int.forty_nine', 'mixed.int.forty_nine' => "int(49)\n",
+		'int.three', 'mixed.int.three' => "int(3)\n",
+		'int.six', 'mixed.int.six' => "int(6)\n",
+		'int.eight', 'mixed.int.eight' => "int(8)\n",
+		'int.eight_hundred_ninety_six', 'mixed.int.eight_hundred_ninety_six' => "int(896)\n",
+		'int.neg_one', 'mixed.int.neg_one' => "int(-1)\n",
+		'int.neg_seven', 'mixed.int.neg_seven' => "int(-7)\n",
+		'int.neg_eight', 'mixed.int.neg_eight' => "int(-8)\n",
 		'int.nonzero', 'mixed.int.nonzero' => "int(7)\n",
 		'float.zero', 'mixed.float.zero' => "float(0)\n",
+		'float.neg_zero', 'mixed.float.neg_zero' => "float(-0)\n",
+		'float.one', 'mixed.float.one' => "float(1)\n",
+		'float.two', 'mixed.float.two' => "float(2)\n",
+		'float.half', 'mixed.float.half' => "float(0.5)\n",
+		'float.neg_one', 'mixed.float.neg_one' => "float(-1)\n",
+		'float.neg_seven', 'mixed.float.neg_seven' => "float(-7)\n",
+		'float.two_point_five', 'mixed.float.two_point_five' => "float(2.5)\n",
+		'float.four_point_five', 'mixed.float.four_point_five' => "float(4.5)\n",
+		'float.seven', 'mixed.float.seven' => "float(7)\n",
+		'float.ten_point_five', 'mixed.float.ten_point_five' => "float(10.5)\n",
+		'float.twelve_point_twenty_five', 'mixed.float.twelve_point_twenty_five' => "float(12.25)\n",
+		'float.twenty_four_point_five', 'mixed.float.twenty_four_point_five' => "float(24.5)\n",
+		'float.neg_3_5', 'mixed.float.neg_3_5' => "float(-3.5)\n",
 		'float.nonzero', 'mixed.float.nonzero' => "float(3.5)\n",
 		'string.empty', 'mixed.string.empty' => "string(0) \"\"\n",
+		'string.one', 'mixed.string.one' => "string(1) \"1\"\n",
+		'string.seven', 'mixed.string.seven' => "string(1) \"7\"\n",
+		'string.float_3_5', 'mixed.string.float_3_5' => "string(3) \"3.5\"\n",
 		'string.zero_string', 'mixed.string.zero_string' => "string(1) \"0\"\n",
 		'string.bool_false_literal', 'mixed.string.bool_false_literal' => "string(5) \"false\"\n",
 		'string.bool_true_literal', 'mixed.string.bool_true_literal' => "string(4) \"true\"\n",

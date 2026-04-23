@@ -1,5 +1,5 @@
-# Filesystem / stdio builtins — first pass
-
+# Filesystem / stdio builtins â€” first pass
+Doc Status: normative
 This document defines the first-pass narrowed contract for the Prism++ / Simple C++ filesystem and stdio builtins.
 
 See also:

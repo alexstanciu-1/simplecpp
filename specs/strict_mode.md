@@ -1,5 +1,5 @@
 # Strict Mode (Guidance Profile)
-
+Doc Status: normative
 ## Status
 
 Strict mode is a **user-facing coding-guidance profile**.

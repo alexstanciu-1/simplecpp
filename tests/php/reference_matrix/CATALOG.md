@@ -1,5 +1,5 @@
 # Reference Matrix Catalog
-
+Doc Status: derived
 Historical snapshot only. Entries here are not guaranteed to match the current supported reference subset or the active metadata-driven test harness.
 
 | File | Class | Topic | Purpose |

@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Type Universe
+Doc Status: normative
 
 ---
 

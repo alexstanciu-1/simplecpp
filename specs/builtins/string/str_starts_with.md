@@ -1,5 +1,5 @@
-# Builtin Contract — `str_starts_with`
-
+# Builtin Contract â€” `str_starts_with`
+Doc Status: normative
 ## Identity
 - Name: `str_starts_with`
 - Module/family: string
@@ -18,8 +18,8 @@
 - Current contract is byte-oriented.
 
 ## Compatibility table
-- PHP prefix check → Prism++ prefix check → kept
-- Empty needle returns `true` → Prism++ does the same → kept
+- PHP prefix check â†’ Prism++ prefix check â†’ kept
+- Empty needle returns `true` â†’ Prism++ does the same â†’ kept
 
 ## Error policy
 - No runtime error for valid typed string inputs.

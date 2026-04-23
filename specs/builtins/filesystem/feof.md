@@ -1,5 +1,5 @@
-# Builtin Contract — `feof`
-
+# Builtin Contract â€” `feof`
+Doc Status: normative
 ## Identity
 - Name: `feof`
 - Module/family: filesystem / stdio
@@ -17,7 +17,7 @@
 - Returns `false` before EOF and `true` after an EOF-triggering read probe.
 
 ## Compatibility table
-- PHP returns boolean EOF state → Prism++ keeps boolean EOF state → kept
+- PHP returns boolean EOF state â†’ Prism++ keeps boolean EOF state â†’ kept
 
 ## Error policy
 - Null resource, wrong resource kind, and closed-resource use throw runtime errors.

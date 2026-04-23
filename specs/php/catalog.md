@@ -1,5 +1,5 @@
-# Simple C++ for PHP — Language Catalog
-Version: v1
+# Simple C++ for PHP â€” Language Catalog
+Doc Status: normative
 Status: Draft / AI anchor
 Scope: PHP authoring surface for Simple C++
 
@@ -18,16 +18,16 @@ It is:
 
 ## 2. Interpretation Rules
 
-- **Stable** — preferred and safe
-- **Transitional** — allowed but not ideal
-- **Partial** — limited support
-- **Unsupported** — do not use
+- **Stable** â€” preferred and safe
+- **Transitional** â€” allowed but not ideal
+- **Partial** â€” limited support
+- **Unsupported** â€” do not use
 
 ---
 
 ## 3. Core Model
 
-### PHP as Authoring Language — Stable
+### PHP as Authoring Language â€” Stable
 
 Contract:
 - PHP is the primary input language
@@ -38,7 +38,7 @@ Contract:
 
 ## 4. Variables
 
-### Assignment — Stable
+### Assignment â€” Stable
 
 ```php
 $x = 10;
@@ -53,7 +53,7 @@ Contract:
 
 ## 5. Functions
 
-### Definition — Stable
+### Definition â€” Stable
 
 ```php
 function add(int $a, int $b): int {
@@ -69,7 +69,7 @@ Contract:
 
 ## 6. Control Flow
 
-### if / else — Stable
+### if / else â€” Stable
 
 ```php
 if ($x > 0) {
@@ -85,7 +85,7 @@ Contract:
 
 ---
 
-### foreach — Stable
+### foreach â€” Stable
 
 ```php
 foreach ($data as $item) {
@@ -100,7 +100,7 @@ Contract:
 
 ## 7. Arrays
 
-### Mixed arrays — Stable
+### Mixed arrays â€” Stable
 
 ```php
 $data = [];
@@ -116,7 +116,7 @@ Contract:
 
 ## 8. Null / False
 
-### Distinction — Stable
+### Distinction â€” Stable
 
 ```php
 if ($value === null) {}
@@ -131,7 +131,7 @@ Contract:
 
 ## 9. Comparisons
 
-### Strict comparison — Preferred
+### Strict comparison â€” Preferred
 
 ```php
 if ($a === $b) {}
@@ -145,7 +145,7 @@ Contract:
 
 ## 10. Functions (Core usage)
 
-### DB query pattern — Stable
+### DB query pattern â€” Stable
 
 ```php
 $res = $db->query("SELECT id FROM users");
@@ -162,7 +162,7 @@ Contract:
 
 ## 11. Objects
 
-### Method calls — Stable
+### Method calls â€” Stable
 
 ```php
 $row = $res->fetch_assoc();
@@ -176,17 +176,17 @@ Contract:
 
 ## 12. Unsupported / Constrained
 
-### Exceptions — Unsupported
+### Exceptions â€” Unsupported
 
 Contract:
 - No implicit exception flow
 
-### References (&) — Partial
+### References (&) â€” Partial
 
 Contract:
 - Limited or avoided
 
-### Dynamic variable variables — Unsupported
+### Dynamic variable variables â€” Unsupported
 
 ---
 

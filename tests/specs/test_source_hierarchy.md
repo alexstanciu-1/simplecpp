@@ -1,5 +1,5 @@
-# Simple C++ – Test Source Hierarchy
-
+# Simple C++ â€“ Test Source Hierarchy
+Doc Status: normative
 This file is a focused companion to `generate_php_samples_docs.md`.
 
 ## Normative order

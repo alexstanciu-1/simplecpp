@@ -1,5 +1,5 @@
-# Builtin Contract — `str_pad`
-
+# Builtin Contract â€” `str_pad`
+Doc Status: normative
 ## Identity
 - Name: `str_pad`
 - Module/family: string
@@ -25,8 +25,8 @@
 - For `STR_PAD_BOTH`, odd extra padding keeps the extra byte on the right.
 
 ## Compatibility table
-- PHP pads by repeated/truncated pad string bytes → Prism++ keeps the same practical direction → kept
-- PHP validates empty pad string and pad type → Prism++ throws `ValueError` for those invalid cases → kept
+- PHP pads by repeated/truncated pad string bytes â†’ Prism++ keeps the same practical direction â†’ kept
+- PHP validates empty pad string and pad type â†’ Prism++ throws `ValueError` for those invalid cases â†’ kept
 
 ## Error policy
 - Throws `ValueError` if `pad_string` is empty.

@@ -1,5 +1,5 @@
 # Installation
-
+Doc Status: supporting
 ## Current install model
 
 The current installer is:

@@ -1,4 +1,5 @@
 # Operator Matrix Generator (v1 Working Slice)
+Doc Status: supporting
 
 ## Purpose
 Provide a clean executable pipeline that:
@@ -10,7 +11,8 @@ Provide a clean executable pipeline that:
 ## Inputs
 - `specs/operator_matrix/data/families.json`
 - `specs/operator_matrix/data/types.json`
-- `specs/operator_matrix/data/semantics.json`
+- `specs/operator_matrix/data/semantics.index.json`
+- `specs/operator_matrix/data/semantics/<family>/<item>.tsv`
 
 ## Current Scope
 Families:
@@ -58,7 +60,7 @@ Current `ternary` working slice:
 - `build/operator_matrix/test_seed_validation_report.json`
 
 ## Notes
-- this generator reads structured JSON only
+- this generator reads structured JSON plus flat TSV row files
 - it does not parse Markdown
 - test-file generation remains a separate phase
 - row-faithful test-seed generation is emitted as an intermediate artifact

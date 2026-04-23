@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Profile Semantics
+Doc Status: normative
 
 ---
 
@@ -121,12 +121,12 @@ The row is supported, but semantics are mediated through a dedicated helper/runt
 Support must remain explicit at the **profile** level.
 
 The matrix must not collapse support to a coarse row like:
-- `cast_bool × mixed_t`
+- `cast_bool Ã— mixed_t`
 
 without also emitting the concrete rows such as:
-- `cast_bool × mixed.bool.false`
-- `cast_bool × mixed.int.zero`
-- `cast_bool × mixed.string.zero_string`
+- `cast_bool Ã— mixed.bool.false`
+- `cast_bool Ã— mixed.int.zero`
+- `cast_bool Ã— mixed.string.zero_string`
 
 UI summaries may aggregate.
 Source matrix data must remain profile-exact.
@@ -146,7 +146,7 @@ This family covers:
 
 Normative source:
 - `specs/conditional_expression_matrix.md`
-- `runtime/specs/config.json` → `coercions.condition`
+- `runtime/specs/config.json` â†’ `coercions.condition`
 
 #### v1 rule
 Condition context is **not** equivalent to unconstrained `(bool)` cast.
@@ -165,51 +165,51 @@ Condition truthiness is intentionally distinct from explicit/typed `string_t -> 
 #### Canonical profile behavior
 
 ##### `bool_t`
-- `bool.false` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `bool.true` → `status=supported`, `behavior_class=deterministic_value`, result true
+- `bool.false` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `bool.true` â†’ `status=supported`, `behavior_class=deterministic_value`, result true
 
 ##### `int_t`
-- `int.zero` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `int.nonzero` → `status=supported`, `behavior_class=deterministic_value`, result true
+- `int.zero` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `int.nonzero` â†’ `status=supported`, `behavior_class=deterministic_value`, result true
 
 ##### `float_t`
-- `float.zero` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `float.nonzero` → `status=supported`, `behavior_class=deterministic_value`, result true
+- `float.zero` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `float.nonzero` â†’ `status=supported`, `behavior_class=deterministic_value`, result true
 
 ##### `string_t`
-- `string.empty` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `string.zero_literal` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `string.nonempty_nonzero` → `status=supported`, `behavior_class=deterministic_value`, result true
+- `string.empty` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `string.zero_literal` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `string.nonempty_nonzero` â†’ `status=supported`, `behavior_class=deterministic_value`, result true
 
 Notes:
 - this family follows PHP-style string truthiness for condition context
 - explicit/typed `string_t -> bool_t` normalization remains narrower: only `"true"`, `"false"`, `"1"`, `"0"`, and `""` are accepted; anything else runtime-errors
 
 ##### `hash_t`
-- all current profiles → `status=compile_time_rejected`
+- all current profiles â†’ `status=compile_time_rejected`
 
 ##### `nullable<T>`
-- `nullable.empty` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `nullable.present.<T_profile>` → delegate to contained `T_profile`
+- `nullable.empty` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `nullable.present.<T_profile>` â†’ delegate to contained `T_profile`
 
 Examples:
-- `nullable<int_t>.present.int.zero` → false
-- `nullable<int_t>.present.int.nonzero` → true
-- `nullable<string_t>.present.string.nonempty_nonzero` → true
+- `nullable<int_t>.present.int.zero` â†’ false
+- `nullable<int_t>.present.int.nonzero` â†’ true
+- `nullable<string_t>.present.string.nonempty_nonzero` â†’ true
 
 ##### `mixed_t`
 Accepted runtime kinds:
-- `mixed.bool.false` → false
-- `mixed.bool.true` → true
-- `mixed.int.zero` → false
-- `mixed.int.nonzero` → true
-- `mixed.float.zero` → false
-- `mixed.float.nonzero` → true
+- `mixed.bool.false` â†’ false
+- `mixed.bool.true` â†’ true
+- `mixed.int.zero` â†’ false
+- `mixed.int.nonzero` â†’ true
+- `mixed.float.zero` â†’ false
+- `mixed.float.nonzero` â†’ true
 
 Rejected runtime kinds:
-- `mixed.null` → `status=supported`, `behavior_class=throws`
-- `mixed.string.*` → `status=supported`, `behavior_class=throws`
-- `mixed.hash.*` → `status=supported`, `behavior_class=throws`
+- `mixed.null` â†’ `status=supported`, `behavior_class=throws`
+- `mixed.string.*` â†’ `status=supported`, `behavior_class=throws`
+- `mixed.hash.*` â†’ `status=supported`, `behavior_class=throws`
 
 #### Matrix generation rule
 The family must emit one row per relevant runtime profile, not a single merged `mixed_t` row.
@@ -225,7 +225,7 @@ This family covers:
 - `cast_string`
 
 Normative source:
-- `runtime/specs/config.json` → `casts`
+- `runtime/specs/config.json` â†’ `casts`
 - `specs/dynamic_types.md`
 - `specs/mixed_boundary_transitional.md`
 
@@ -235,17 +235,17 @@ It must not silently invent PHP-wide coercion beyond configured cast rules.
 
 ##### `cast_bool`
 Supported native profiles:
-- `bool.false` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `bool.true` → `status=supported`, `behavior_class=deterministic_value`, result true
-- `int.zero` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `int.nonzero` → `status=supported`, `behavior_class=deterministic_value`, result true
-- `float.zero` → `status=supported`, `behavior_class=deterministic_value`, result false
-- `float.nonzero` → `status=supported`, `behavior_class=deterministic_value`, result true
-- `string.*` → governed by configured strict string-bool rules; unsupported payloads use `behavior_class=throws`
+- `bool.false` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `bool.true` â†’ `status=supported`, `behavior_class=deterministic_value`, result true
+- `int.zero` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `int.nonzero` â†’ `status=supported`, `behavior_class=deterministic_value`, result true
+- `float.zero` â†’ `status=supported`, `behavior_class=deterministic_value`, result false
+- `float.nonzero` â†’ `status=supported`, `behavior_class=deterministic_value`, result true
+- `string.*` â†’ governed by configured strict string-bool rules; unsupported payloads use `behavior_class=throws`
 
 ##### `nullable<T>`
-- `nullable.empty` → supported only if a normative unwrap-null rule exists; otherwise `status=supported`, `behavior_class=throws`
-- `nullable.present.<T_profile>` → unwrap first, then apply contained rule
+- `nullable.empty` â†’ supported only if a normative unwrap-null rule exists; otherwise `status=supported`, `behavior_class=throws`
+- `nullable.present.<T_profile>` â†’ unwrap first, then apply contained rule
 
 ##### `mixed_t`
 - concrete rows dispatch by active kind and then apply cast behavior
@@ -293,8 +293,8 @@ For `pre_increment`, `post_increment`, `pre_decrement`, `post_decrement`:
 - `plain_value` and `temporary_result` must not be treated as valid mutation targets
 
 Examples:
-- `pre_increment × int_t × assignable_variable` → supported only if config allows the operator/type combination
-- `pre_increment × int_t × temporary_result` → `status=compile_time_rejected`
+- `pre_increment Ã— int_t Ã— assignable_variable` â†’ supported only if config allows the operator/type combination
+- `pre_increment Ã— int_t Ã— temporary_result` â†’ `status=compile_time_rejected`
 
 ---
 
@@ -424,10 +424,10 @@ unless the normative source defines a different failure channel.
 #### Reset rule
 `unset` rows must include operand target kind.
 Examples:
-- `unset_value × assignable_variable` → supported when the target form is valid
-- `unset_keyed × keyed_element.present` → supported; mutation effect applied
-- `unset_keyed × keyed_element.missing` → `status=supported`, `behavior_class=noop`
-- `unset_value × temporary_result` → `status=compile_time_rejected`
+- `unset_value Ã— assignable_variable` â†’ supported when the target form is valid
+- `unset_keyed Ã— keyed_element.present` â†’ supported; mutation effect applied
+- `unset_keyed Ã— keyed_element.missing` â†’ `status=supported`, `behavior_class=noop`
+- `unset_value Ã— temporary_result` â†’ `status=compile_time_rejected`
 
 ---
 

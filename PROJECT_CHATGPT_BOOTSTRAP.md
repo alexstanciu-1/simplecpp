@@ -1,5 +1,5 @@
 # Project bootstrap for ChatGPT
-
+Doc Status: supporting
 ## Sandbox setup
 If this project archive contains `ext/ast*/ast.so`, install that extension in the sandbox before running any transpiler validation.
 

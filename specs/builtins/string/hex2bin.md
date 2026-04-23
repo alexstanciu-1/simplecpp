@@ -1,5 +1,5 @@
-# Builtin Contract — `hex2bin`
-
+# Builtin Contract â€” `hex2bin`
+Doc Status: normative
 ## Identity
 - Name: `hex2bin`
 - Module/family: string
@@ -21,8 +21,8 @@
 - Empty input returns an empty string.
 
 ## Compatibility table
-- PHP accepts mixed hex case → Prism++ accepts both lower and upper hex digits → kept
-- PHP returns `false` for invalid input instead of throwing → Prism++ keeps the same non-throwing failure mode → kept
+- PHP accepts mixed hex case â†’ Prism++ accepts both lower and upper hex digits â†’ kept
+- PHP returns `false` for invalid input instead of throwing â†’ Prism++ keeps the same non-throwing failure mode â†’ kept
 
 ## Error policy
 - Does not throw for ordinary invalid input.

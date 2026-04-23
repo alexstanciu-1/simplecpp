@@ -1,5 +1,5 @@
-# Builtin Contract — `str_ends_with`
-
+# Builtin Contract â€” `str_ends_with`
+Doc Status: normative
 ## Identity
 - Name: `str_ends_with`
 - Module/family: string
@@ -18,8 +18,8 @@
 - Current contract is byte-oriented.
 
 ## Compatibility table
-- PHP suffix check → Prism++ suffix check → kept
-- Empty needle returns `true` → Prism++ does the same → kept
+- PHP suffix check â†’ Prism++ suffix check â†’ kept
+- Empty needle returns `true` â†’ Prism++ does the same â†’ kept
 
 ## Error policy
 - No runtime error for valid typed string inputs.

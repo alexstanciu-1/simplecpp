@@ -1,5 +1,5 @@
-# Builtin Contract — `fopen`
-
+# Builtin Contract â€” `fopen`
+Doc Status: normative
 ## Identity
 - Name: `fopen`
 - Module/family: filesystem / stdio
@@ -19,8 +19,8 @@
 - The resource wrapper stores explicit `kind`, path, mode, readable/writable flags, and closed state.
 
 ## Compatibility table
-- PHP returns `false` on ordinary open failure → Prism++ now returns `false` at the PHP exposure layer → aligned
-- PHP accepts a broader mode surface → Prism++ supports the narrowed first-pass mode set above → modified
+- PHP returns `false` on ordinary open failure â†’ Prism++ now returns `false` at the PHP exposure layer â†’ aligned
+- PHP accepts a broader mode surface â†’ Prism++ supports the narrowed first-pass mode set above â†’ modified
 
 ## Error policy
 - Unsupported mode strings throw a runtime error.

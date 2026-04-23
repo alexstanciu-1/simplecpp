@@ -1,0 +1,10 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+result.failure	result.failure					supported	throws	float_t	float.zero	true	add.wrapper.empty	runtime_throw		Lifted arithmetic unwraps wrapper operands first and rejects empty wrapper states.
+result.failure	result.success.float.zero					supported	throws	float_t	float.zero	true	add.wrapper.empty	runtime_throw		Lifted arithmetic unwraps wrapper operands first and rejects empty wrapper states.
+result.failure	result.success.float.nonzero					supported	throws	float_t	float.zero	true	add.wrapper.empty	runtime_throw		Lifted arithmetic unwraps wrapper operands first and rejects empty wrapper states.
+result.success.float.zero	result.failure					supported	throws	float_t	float.zero	true	add.wrapper.empty	runtime_throw		Lifted arithmetic unwraps wrapper operands first and rejects empty wrapper states.
+result.success.float.zero	result.success.float.zero					supported	deterministic_value	float_t	float.zero	true	add.float_zero.float_zero	runtime_success		Deterministic arithmetic dispatch follows the current numeric operator family.
+result.success.float.zero	result.success.float.nonzero					supported	deterministic_value	float_t	float.nonzero	true	add.float_zero.float_nonzero	runtime_success		Deterministic arithmetic dispatch follows the current numeric operator family.
+result.success.float.nonzero	result.failure					supported	throws	float_t	float.zero	true	add.wrapper.empty	runtime_throw		Lifted arithmetic unwraps wrapper operands first and rejects empty wrapper states.
+result.success.float.nonzero	result.success.float.zero					supported	deterministic_value	float_t	float.nonzero	true	add.float_nonzero.float_zero	runtime_success		Deterministic arithmetic dispatch follows the current numeric operator family.
+result.success.float.nonzero	result.success.float.nonzero					supported	deterministic_value	float_t	float.seven	true	add.float_nonzero.float_nonzero	runtime_success		Deterministic arithmetic dispatch follows the current numeric operator family.

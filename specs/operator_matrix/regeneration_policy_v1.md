@@ -1,5 +1,5 @@
 # Operator / Cast / Language Semantics Matrix
-## v1 Regeneration Policy
+Doc Status: normative
 
 ---
 
@@ -240,7 +240,7 @@ The following states are project errors and must be fixed.
 - operand target kinds are omitted where required for mutating/reset-sensitive items
 
 Project-error rule:
-- these states must not be normalized as “partial support” or “acceptable drift”
+- these states must not be normalized as â€œpartial supportâ€ or â€œacceptable driftâ€
 - the project sources must be fixed, then matrix regeneration/review must be rerun
 
 ---

@@ -1,5 +1,5 @@
-# Builtin Contract — `fputs`
-
+# Builtin Contract â€” `fputs`
+Doc Status: normative
 ## Identity
 - Name: `fputs`
 - Module/family: filesystem / stdio
@@ -17,7 +17,7 @@
 - Returns written byte count on success and `null` on operational failure.
 
 ## Compatibility table
-- PHP treats `fputs` as an alias of `fwrite` → Prism++ keeps the same aliasing model → kept
+- PHP treats `fputs` as an alias of `fwrite` â†’ Prism++ keeps the same aliasing model â†’ kept
 
 ## Error policy
 - Matches `fwrite` error policy.

@@ -1,5 +1,5 @@
 # Reference Matrix PHP Tests
-
+Doc Status: supporting
 This folder records a broad PHP-source reference matrix for the Simple C++ project.
 It is now primarily a historical fixture snapshot, not the active metadata-driven harness surface.
 

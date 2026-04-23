@@ -1,5 +1,5 @@
-# Builtin Contract — `realpath`
-
+# Builtin Contract â€” `realpath`
+Doc Status: normative
 ## Identity
 - Name: `realpath`
 - Module/family: filesystem
@@ -18,8 +18,8 @@
 - Failure returns `false`.
 
 ## Compatibility table
-- PHP returns canonical path or `false` → Prism++ now returns canonical path or `false` at the PHP exposure layer → aligned
-- PHP can vary in edge handling by platform → Prism++ keeps strict existing-path canonicalization → modified
+- PHP returns canonical path or `false` â†’ Prism++ now returns canonical path or `false` at the PHP exposure layer â†’ aligned
+- PHP can vary in edge handling by platform â†’ Prism++ keeps strict existing-path canonicalization â†’ modified
 
 ## Error policy
 - Does not throw for ordinary missing-path failure.

@@ -1,5 +1,5 @@
-# JSON builtins — first pass
-
+# JSON builtins â€” first pass
+Doc Status: supporting
 This page summarizes the first-pass Prism++ / Simple C++ JSON builtin surface.
 
 JSON is now runtime-owned and lives under `namespace scpp::json`. The PHP layer keeps only a thin wrapper in `namespace scpp::php`.

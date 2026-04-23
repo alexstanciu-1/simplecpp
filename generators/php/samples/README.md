@@ -1,5 +1,5 @@
 # PHP generator sample set
-
+Doc Status: supporting
 This set is designed to exercise the currently decided rules in `specs/rules_catalog.md`.
 
 ## Files

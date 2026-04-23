@@ -1,5 +1,5 @@
-# Simple C++ – Test Generation Workflow
-
+# Simple C++ â€“ Test Generation Workflow
+Doc Status: planning
 This file is a focused workflow companion to `generate_php_samples_docs.md`.
 
 ## Workflow

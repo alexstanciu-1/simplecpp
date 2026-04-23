@@ -1,5 +1,5 @@
-# Builtin Contract — `strtolower`
-
+# Builtin Contract â€” `strtolower`
+Doc Status: normative
 ## Identity
 - Name: `strtolower`
 - Module/family: string
@@ -17,8 +17,8 @@
 - Current contract is ASCII/`std::tolower`-style byte conversion, not full Unicode case folding.
 
 ## Compatibility table
-- PHP lowercases strings → Prism++ lowercases strings → kept
-- PHP string semantics can be locale/encoding-sensitive in broader ecosystems → Prism++ keeps byte-wise runtime behavior only → modified
+- PHP lowercases strings â†’ Prism++ lowercases strings â†’ kept
+- PHP string semantics can be locale/encoding-sensitive in broader ecosystems â†’ Prism++ keeps byte-wise runtime behavior only â†’ modified
 
 ## Error policy
 - No runtime error for valid typed string inputs.

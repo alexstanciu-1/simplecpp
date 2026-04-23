@@ -2,9 +2,15 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/cast.hpp"
 #include "scpp/memory.hpp"
-#include "lang/php/operators/conditional/condition_truthiness.hpp"
+#include "operators/conditional/condition_truthiness.hpp"
+#include "operators/empty/empty.hpp"
+#include "operators/isset/isset.hpp"
 
 #include <sstream>
+#include <cctype>
+#include <cerrno>
+#include <cmath>
+#include <cstdlib>
 #include <utility>
 
 namespace scpp {
@@ -35,16 +41,18 @@ namespace {
 
 [[nodiscard]] std::runtime_error runtime_error_unary(const char *operation, const mixed_t &value) {
 	std::ostringstream out;
-	out << "mixed_t runtime error: operation '" << operation
-	    << "' is not supported for kind '" << kind_name(value.kind()) << "'";
+	out << "scpp::mixed_t runtime error: unary operation '" << operation
+	    << "' is not supported for operand kind '" << kind_name(value.kind()) << "'. "
+	    << "Requirement: this operation needs a supported semantic family for that active mixed_t kind.";
 	return std::runtime_error(out.str());
 }
 
 [[nodiscard]] std::runtime_error runtime_error_binary(const char *operation, const mixed_t &left, const mixed_t &right) {
 	std::ostringstream out;
-	out << "mixed_t runtime error: operation '" << operation
-	    << "' is not supported for kinds '"
-	    << kind_name(left.kind()) << "' and '" << kind_name(right.kind()) << "'";
+	out << "scpp::mixed_t runtime error: binary operation '" << operation
+	    << "' is not supported for operand kinds '"
+	    << kind_name(left.kind()) << "' and '" << kind_name(right.kind()) << "'. "
+	    << "Requirement: this operator must be defined for the active mixed_t runtime-kind pair.";
 	return std::runtime_error(out.str());
 }
 
@@ -90,7 +98,10 @@ namespace {
 	} else if (std::string_view(operation) == ">>=") {
 		result = left >> right;
 	} else {
-		throw std::runtime_error("mixed_t runtime error: unknown compound assignment operation");
+		throw std::runtime_error(
+			"scpp::mixed_t runtime error: unknown compound-assignment operator. "
+			"Requirement: use one of the supported operators +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>="
+		);
 	}
 	left = std::move(result);
 	return left;
@@ -100,6 +111,12 @@ namespace {
 	switch (value.kind()) {
 		case mixed_t::kind_t::null_v:
 			return bool_t{true};
+		case mixed_t::kind_t::bool_v:
+			return bool_t(false) == value.bool_value();
+		case mixed_t::kind_t::int_v:
+			return bool_t(false) == cast<bool_t>(value.int_value());
+		case mixed_t::kind_t::float_v:
+			return bool_t(false) == cast<bool_t>(value.float_value());
 		case mixed_t::kind_t::string_v:
 			return cast<string_t>(null_t{}) == *value.string_if();
 		case mixed_t::kind_t::table_v:
@@ -110,16 +127,119 @@ namespace {
 			return *value.dynamic_if() == null_t{};
 		case mixed_t::kind_t::weak_table_v:
 			return *value.weak_table_if() == null_t{};
-		case mixed_t::kind_t::bool_v:
-		case mixed_t::kind_t::int_v:
-		case mixed_t::kind_t::float_v:
-			throw runtime_error_binary("==", mixed_t{null_t{}}, value);
 	}
 	throw runtime_error_binary("==", mixed_t{null_t{}}, value);
 }
 
 [[noreturn]] void deep_compare_not_implemented() {
-	throw std::runtime_error("mixed_t runtime error: deep table compare is not implemented yet");
+	throw std::runtime_error(
+		"scpp::mixed_t runtime error: table-vs-table equality currently has no deep-compare implementation. "
+		"Requirement: use identity-bearing table carriers where identity comparison is defined, or add explicit deep table comparison semantics."
+	);
+}
+
+[[nodiscard]] bool parse_double_string_loose(const std::string &value, double &out) {
+	const char *begin = value.c_str();
+	char *parse_end = nullptr;
+	errno = 0;
+	const double parsed = std::strtod(begin, &parse_end);
+	if (parse_end == begin) {
+		return false;
+	}
+	while (*parse_end != '\0') {
+		const unsigned char ch = static_cast<unsigned char>(*parse_end);
+		if (std::isspace(ch) == 0) {
+			return false;
+		}
+		++parse_end;
+	}
+	if (errno == ERANGE || !std::isfinite(parsed)) {
+		return false;
+	}
+	out = parsed;
+	return true;
+}
+
+[[nodiscard]] bool_t compare_string_to_bool_eq(const string_t &left, const bool_t &right) {
+	const std::string value = left.native_value();
+	const bool left_truthy = !(value.empty() || value == "0");
+	return bool_t(left_truthy) == right;
+}
+
+[[nodiscard]] bool_t compare_numeric_to_string_eq(const double left, const string_t &right) {
+	double right_numeric = 0.0;
+	if (!parse_double_string_loose(right.native_value(), right_numeric)) {
+		return bool_t(false);
+	}
+	return bool_t(left == right_numeric);
+}
+
+[[nodiscard]] bool_t compare_scalar_boolish_eq(const mixed_t &left, const mixed_t &right) {
+	switch (left.kind()) {
+		case mixed_t::kind_t::null_v:
+			switch (right.kind()) {
+				case mixed_t::kind_t::bool_v:
+					return bool_t(false) == right.bool_value();
+				case mixed_t::kind_t::int_v:
+					return bool_t(false) == cast<bool_t>(right.int_value());
+				case mixed_t::kind_t::float_v:
+					return bool_t(false) == cast<bool_t>(right.float_value());
+				case mixed_t::kind_t::string_v:
+					return compare_string_to_bool_eq(*right.string_if(), bool_t(false));
+				default:
+					break;
+			}
+			break;
+		case mixed_t::kind_t::bool_v:
+			switch (right.kind()) {
+				case mixed_t::kind_t::null_v:
+					return left.bool_value() == bool_t(false);
+				case mixed_t::kind_t::bool_v:
+					return left.bool_value() == right.bool_value();
+				case mixed_t::kind_t::int_v:
+					return left.bool_value() == cast<bool_t>(right.int_value());
+				case mixed_t::kind_t::float_v:
+					return left.bool_value() == cast<bool_t>(right.float_value());
+				case mixed_t::kind_t::string_v:
+					return left.bool_value() == compare_string_to_bool_eq(*right.string_if(), bool_t(true));
+				default:
+					break;
+			}
+			break;
+		case mixed_t::kind_t::int_v:
+			switch (right.kind()) {
+				case mixed_t::kind_t::null_v:
+					return cast<bool_t>(left.int_value()) == bool_t(false);
+				case mixed_t::kind_t::bool_v:
+					return cast<bool_t>(left.int_value()) == right.bool_value();
+				default:
+					break;
+			}
+			break;
+		case mixed_t::kind_t::float_v:
+			switch (right.kind()) {
+				case mixed_t::kind_t::null_v:
+					return cast<bool_t>(left.float_value()) == bool_t(false);
+				case mixed_t::kind_t::bool_v:
+					return cast<bool_t>(left.float_value()) == right.bool_value();
+				default:
+					break;
+			}
+			break;
+		case mixed_t::kind_t::string_v:
+			switch (right.kind()) {
+				case mixed_t::kind_t::null_v:
+					return compare_string_to_bool_eq(*left.string_if(), bool_t(false));
+				case mixed_t::kind_t::bool_v:
+					return compare_string_to_bool_eq(*left.string_if(), right.bool_value());
+				default:
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+	throw runtime_error_binary("==", left, right);
 }
 
 } // namespace
@@ -708,10 +828,7 @@ int_t mixed_t::size() const {
 }
 
 bool mixed_t::empty() const {
-	if (const auto *t = resolve_table_const(*this)) {
-		return t->size() == 0;
-	}
-	throw runtime_error_unary("empty", *this);
+	return static_cast<bool>(::scpp::empty(*this));
 }
 
 mixed_t &mixed_t::at(const int_t &key) {
@@ -749,51 +866,19 @@ const mixed_t &mixed_t::at(const string_t &key) const {
 // ============================================================
 
 bool_t mixed_t::isset(const mixed_t &key) const {
-	if (key.kind() == kind_t::int_v)    return isset(key.int_value());
-	if (key.kind() == kind_t::string_v) return isset(*key.string_if());
-	return bool_t{false};
+	return ::scpp::isset(*this, key);
 }
 bool_t mixed_t::isset(const int_t &key) const {
-	if (const auto *t = table_if()) {
-		if (!t->has(key).native_value()) return bool_t{false};
-		return bool_t{t->at(key).kind() != kind_t::null_v};
-	}
-	if (type_ == kind_t::shared_table_v) {
-		if (!shared_table_value_->has(key).native_value()) return bool_t{false};
-		return bool_t{shared_table_value_->at(key).kind() != kind_t::null_v};
-	}
-	if (type_ == kind_t::weak_table_v) {
-		auto locked = weak_table_value_.lock();
-		if (locked) {
-			if (!locked->has(key).native_value()) return bool_t{false};
-			return bool_t{locked->at(key).kind() != kind_t::null_v};
-		}
-	}
-	return bool_t{false};
+	return ::scpp::isset(*this, key);
 }
 bool_t mixed_t::isset(const string_t &key) const {
-	if (const auto *t = table_if()) {
-		if (!t->has(key).native_value()) return bool_t{false};
-		return bool_t{t->at(key).kind() != kind_t::null_v};
-	}
-	if (type_ == kind_t::shared_table_v) {
-		if (!shared_table_value_->has(key).native_value()) return bool_t{false};
-		return bool_t{shared_table_value_->at(key).kind() != kind_t::null_v};
-	}
-	if (type_ == kind_t::weak_table_v) {
-		auto locked = weak_table_value_.lock();
-		if (locked) {
-			if (!locked->has(key).native_value()) return bool_t{false};
-			return bool_t{locked->at(key).kind() != kind_t::null_v};
-		}
-	}
-	return bool_t{false};
+	return ::scpp::isset(*this, key);
 }
 bool_t mixed_t::isset(const char *key) const {
-	return isset(string_t{key});
+	return ::scpp::isset(*this, key);
 }
 bool_t mixed_t::isset(int native_key) const {
-	return isset(int_t{static_cast<std::int64_t>(native_key)});
+	return ::scpp::isset(*this, native_key);
 }
 
 // ============================================================
@@ -815,7 +900,7 @@ mixed_t operator-(const mixed_t &value) {
 	}
 }
 bool_t operator!(const mixed_t &value) {
-	return bool_t(!static_cast<bool>(::scpp::php::condition_truthy(value)));
+	return bool_t(!static_cast<bool>(::scpp::condition_truthy(value)));
 }
 mixed_t operator~(const mixed_t &value) {
 	if (value.kind() == mixed_t::kind_t::int_v) return mixed_t{~value.int_value_};
@@ -900,8 +985,9 @@ mixed_t operator>>(const mixed_t &left, const mixed_t &right) {
 }
 
 bool_t operator==(const mixed_t &left, const mixed_t &right) {
-	if (left.kind()  == mixed_t::kind_t::null_v) return compare_with_null_eq(right);
-	if (right.kind() == mixed_t::kind_t::null_v) return compare_with_null_eq(left);
+	if (left.kind() == mixed_t::kind_t::null_v || right.kind() == mixed_t::kind_t::null_v) {
+		return compare_with_null_eq(left.kind() == mixed_t::kind_t::null_v ? right : left);
+	}
 	if (left.kind() == mixed_t::kind_t::int_v   && right.kind() == mixed_t::kind_t::int_v)
 		return left.int_value_ == right.int_value_;
 	if (left.kind() == mixed_t::kind_t::int_v   && right.kind() == mixed_t::kind_t::float_v)
@@ -912,8 +998,32 @@ bool_t operator==(const mixed_t &left, const mixed_t &right) {
 		return left.float_value_ == right.float_value_;
 	if (left.kind() == mixed_t::kind_t::bool_v  && right.kind() == mixed_t::kind_t::bool_v)
 		return left.bool_value_ == right.bool_value_;
+	if ((left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::int_v)
+	 || (left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::float_v)
+	 || (left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::string_v)
+	 || (left.kind() == mixed_t::kind_t::int_v && right.kind() == mixed_t::kind_t::bool_v)
+	 || (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::bool_v)
+	 || (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::bool_v))
+		return compare_scalar_boolish_eq(left, right);
 	if (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::string_v)
 		return *left.string_value_ == *right.string_value_;
+	if (left.kind() == mixed_t::kind_t::int_v && right.kind() == mixed_t::kind_t::string_v)
+		return compare_numeric_to_string_eq(static_cast<double>(left.int_value_.native_value()), *right.string_value_);
+	if (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::int_v)
+		return compare_numeric_to_string_eq(static_cast<double>(right.int_value_.native_value()), *left.string_value_);
+	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::string_v)
+		return compare_numeric_to_string_eq(left.float_value_.native_value(), *right.string_value_);
+	if (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::float_v)
+		return compare_numeric_to_string_eq(right.float_value_.native_value(), *left.string_value_);
+	if ((left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::bool_v)
+	 || (left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::int_v)
+	 || (left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::float_v)
+	 || (left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::string_v)
+	 || (left.kind() == mixed_t::kind_t::bool_v && right.kind() == mixed_t::kind_t::shared_table_v)
+	 || (left.kind() == mixed_t::kind_t::int_v && right.kind() == mixed_t::kind_t::shared_table_v)
+	 || (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::shared_table_v)
+	 || (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::shared_table_v))
+		return bool_t{false};
 	if (left.kind() == mixed_t::kind_t::shared_table_v && right.kind() == mixed_t::kind_t::shared_table_v)
 		return left.shared_table_value_ == right.shared_table_value_;
 	if (left.kind() == mixed_t::kind_t::dynamic_v && right.kind() == mixed_t::kind_t::dynamic_v)
@@ -976,10 +1086,10 @@ bool_t operator>=(const mixed_t &left, const mixed_t &right) {
 	throw runtime_error_binary(">=", left, right);
 }
 bool_t operator&&(const mixed_t &left, const mixed_t &right) {
-	return bool_t(static_cast<bool>(::scpp::php::condition_truthy(left)) && static_cast<bool>(::scpp::php::condition_truthy(right)));
+	return bool_t(static_cast<bool>(::scpp::condition_truthy(left)) && static_cast<bool>(::scpp::condition_truthy(right)));
 }
 bool_t operator||(const mixed_t &left, const mixed_t &right) {
-	return bool_t(static_cast<bool>(::scpp::php::condition_truthy(left)) || static_cast<bool>(::scpp::php::condition_truthy(right)));
+	return bool_t(static_cast<bool>(::scpp::condition_truthy(left)) || static_cast<bool>(::scpp::condition_truthy(right)));
 }
 
 // ============================================================

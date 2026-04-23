@@ -1,5 +1,5 @@
 # count(), empty(), isset() runtime contract
-
+Doc Status: normative
 This document is the single semantic source of truth for the current Prism++ runtime contract for:
 - `count(...)`
 - `empty(...)`

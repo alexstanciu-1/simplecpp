@@ -1,5 +1,5 @@
 # Interoperability with regular C++ modules
-
+Doc Status: normative
 ## Goal
 Generated Prism++ code should remain linkable from ordinary handwritten C++ modules without leaking PHP-runtime convenience imports through generated headers.
 

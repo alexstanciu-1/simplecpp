@@ -1,5 +1,5 @@
-# Prism++ – Incompatibilities / Semantic Mismatch Notes
-
+# Prism++ â€“ Incompatibilities / Semantic Mismatch Notes
+Doc Status: normative
 This document tracks known or expected incompatibilities between PHP semantics and emitted C++ semantics, 
 to be handled later by explicit rules, runtime helpers, or rejection rules.
 

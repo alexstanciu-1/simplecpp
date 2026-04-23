@@ -1,5 +1,5 @@
 # Fixture-driven PHP -> Prism++ generator starter
-
+Doc Status: supporting
 This is a first code pass built against the sample fixtures in `samples/`.
 
 ## Why fixture-driven first

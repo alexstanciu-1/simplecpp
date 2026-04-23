@@ -1,5 +1,5 @@
 # Stage 03 sample set
-
+Doc Status: supporting
 These samples are intended as the next step after Stage 02.
 They are deliberately larger, around ~100 lines each, and combine more moving parts
 without trying to expand the supported subset too aggressively.

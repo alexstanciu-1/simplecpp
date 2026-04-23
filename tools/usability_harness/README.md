@@ -1,5 +1,5 @@
 # Usability Harness
-
+Doc Status: supporting
 Deterministic v1 usability validation for Simple C++ / PHP-like.
 
 ## Goal
@@ -22,6 +22,7 @@ Optional flags:
 
 ```bash
 scpp usability-harness --limit 10
+scpp usability-harness --jobs 4
 scpp usability-harness --stop-after-bugs 5
 scpp usability-harness --include-scenarios
 scpp usability-harness --all
@@ -30,6 +31,8 @@ scpp usability-harness --campaign scenarios_multifile
 scpp usability-harness --template scenario_bool_null_gate_001
 scpp usability-harness --config tools/usability_harness/config.json
 ```
+
+`--jobs` uses the same parent/worker process pattern as the main test runner: the harness coordinator schedules up to N template workers in parallel while preserving one authoritative execution path per template.
 
 ## Outputs
 

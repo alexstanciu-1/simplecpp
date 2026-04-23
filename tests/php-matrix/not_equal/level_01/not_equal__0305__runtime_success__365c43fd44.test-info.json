@@ -1,0 +1,53 @@
+{
+    "id": "not_equal__0305__runtime_success__365c43fd44",
+    "feature": "not_equal",
+    "level": "level_01",
+    "outcome": "positive",
+    "enabled": false,
+    "status": "experimental",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "bool(true)\n",
+            "stderr": "",
+            "error_contains": []
+        }
+    },
+    "tags": [
+        "operator_matrix",
+        "not_equal",
+        "positive",
+        "runtime_success"
+    ],
+    "notes": "Generated matrix seed. result_or_bool equality distinguishes false and true sentinels from wrapped payload values.",
+    "build": {
+        "sanitizers": null
+    }
+}
