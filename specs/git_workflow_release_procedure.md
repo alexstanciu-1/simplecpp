@@ -87,6 +87,16 @@ The GitHub Release body must be derived from the same release-note content that 
 
 GitHub-generated notes may be used as raw input, but they do not replace the checked-in release notes.
 
+Standard tag naming:
+
+- `v<version>`
+
+Example:
+
+- `v0.1.1`
+
+The release tag must reference the release-ready commit on `main` that carries the final checked-in release notes for that version.
+
 ---
 
 ## 5. Standard Feature Procedure
@@ -113,9 +123,15 @@ Feature branches do not go directly to `main`.
    - run the required validation/test suites
 4. Open a GitHub pull request from `release/<version>` into `main`.
 5. After approval and merge into `main`:
-   - create the release tag on `main`
-   - publish the GitHub Release using the committed release notes
-6. Merge `release/<version>` back into `develop`.
+   - fast-forward local `main`
+   - confirm the checked-in release notes on `main`
+   - create tag `v<version>` on the release-ready `main` commit
+   - push the tag
+   - publish the GitHub Release using the same checked-in notes from `CHANGELOG.md`
+6. Synchronize the release result back into `develop`.
+   - If `develop` already contains the release content and only release-note bookkeeping changed on `main`, merge or fast-forward that note update back into `develop`.
+   - Otherwise merge the release result back into `develop` normally.
+7. Delete `release/<version>` locally and remotely after the release is safely published.
 
 Release branches are not for new feature development.
 
@@ -128,13 +144,29 @@ Release branches are not for new feature development.
 3. Update `CHANGELOG.md` for the patch release.
 4. Open a GitHub pull request from `hotfix/<version>` into `main`.
 5. After merge:
-   - tag the patch release on `main`
-   - publish the GitHub Release
-6. Merge `hotfix/<version>` back into `develop`.
+   - fast-forward local `main`
+   - create tag `v<version>` on the release-ready `main` commit
+   - push the tag
+   - publish the GitHub Release from the checked-in release notes
+6. Merge the hotfix result back into `develop`.
+7. Delete `hotfix/<version>` locally and remotely after publication.
 
 ---
 
-## 8. Tooling Requirements
+## 8. Standard Release Output Checklist
+
+Every published release should leave the repository in this state:
+
+- `main` contains the merged release PR
+- `CHANGELOG.md` contains the release notes for that version
+- tag `v<version>` exists on GitHub
+- a GitHub Release exists for that tag
+- `develop` is synchronized with the release-note/bookkeeping outcome
+- the temporary `release/*` or `hotfix/*` branch has been cleaned up
+
+---
+
+## 9. Tooling Requirements
 
 The following tooling is required before the AI or a contributor executes this workflow:
 
@@ -155,7 +187,7 @@ Examples:
 
 ---
 
-## 9. AI Mandatory Behavior
+## 10. AI Mandatory Behavior
 
 When operating on this repository, the AI must follow these rules:
 
@@ -163,6 +195,7 @@ When operating on this repository, the AI must follow these rules:
 - do not invent alternate branch roles
 - do not merge feature work directly into `main`
 - do not skip release notes for a release or hotfix
+- do not treat a merged release PR as a complete published release until the tag and GitHub Release also exist
 - do not silently continue when required Git or GitHub tooling is unavailable
 - explicitly tell the user what tool is missing and what assistance is needed
 
@@ -170,7 +203,7 @@ If a requested action conflicts with this procedure, the AI should pause and sur
 
 ---
 
-## 10. Relationship to Other Workflow Docs
+## 11. Relationship to Other Workflow Docs
 
 - `specs/AI_WORKFLOW.md`
   - operational chat/session guidance
