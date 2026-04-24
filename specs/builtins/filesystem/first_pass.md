@@ -39,6 +39,7 @@ Key decisions:
 - `scandir()` returns actual entries only
 - `scandir()` sorts entry names ascending
 - `scandir()` excludes `.` and `..`
+- `scandir()` success payload remains directly iterable at the PHP surface through wrapper delegation
 - `realpath()` requires the target path to exist
 - `touch()` creates the file if missing
 - `file_put_contents()` is overwrite-only in this pass
@@ -80,6 +81,13 @@ Key decisions:
 - `realpath`
 - `dirname`
 - `basename`
+
+## Result-wrapper consumption note
+
+For first-pass filesystem builtins that return `result_or_false<T>`:
+- use `take(...)` when code wants an explicit typed payload local
+- direct `foreach` over the wrapper is allowed when `T` is iterable, such as `scandir()`
+- false-sentinel branches remain runtime unwrap failures for direct iteration
 
 ## Testing note
 

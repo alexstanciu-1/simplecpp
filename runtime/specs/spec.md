@@ -567,8 +567,12 @@ See: module_inclusion_model.md
 - `result_or_bool<T>` is the explicit PHP-compatibility bool-able wrapper for contracts such as `T|bool`. It shares the same guarded-value lifting surface, and its non-value states must normalize to the visible PHP boolean sentinels `false` and `true` for helper-owned operators and conditions.
 - Policy lock for `result_or_bool<bool_t>`: plain `bool` / `bool_t` construction and assignment create a wrapped payload value, not a bool-state sentinel. The false sentinel remains explicit through `false_sentinel`, `null`, or `nullopt`; the true sentinel is explicit through `true_sentinel`. This avoids ambiguity between payload `bool_t` and the wrapper's bool-state branch.
 - `php::take(...)` is the unified guarded extraction helper for `nullable<T>`, `result_or_false<T>`, `result_or_bool<T>`, and `result<T>`. It returns `bool_t`, evaluates the source expression once, and only assigns the outputs that correspond to the active wrapper branch.
+- `php::take(value_out, source)` extracts the present / success payload for `nullable<T>` and `result_or_false<T>`, preserves the output type, and leaves `value_out` unchanged on the empty / false branch.
+- `php::take(value_out, error_out, source)` extracts the success payload for `result<T>` and copies the structured error payload only on the error branch.
 - In the current version, `scpp::coalesce_eval(...)` rejects `result_or_bool<T>` on either side at runtime with a deterministic error rather than relying on generator-side semantic rejection. The PHP-facing adapter forwards to that shared authority.
 - For `result_or_bool<T>`, `php::take(value_out, bool_out, source)` returns `true` for both wrapped-value and boolean-true states so PHP-style APIs such as `mysqli::query()` can treat `true` as a successful non-row result. The `bool_out` slot receives the active boolean state only on bool branches.
+- Success-state wrapper delegation for iterable payloads is runtime-owned. When the carried payload exposes the iterable-by-value runtime surface used by PHP `foreach` lowering, approved wrappers may delegate that surface through guarded unwrap.
+- `foreach ($wrapper as $value)` is therefore allowed for approved wrappers whose carried success payload is iterable. Sentinel / empty / error states fail at runtime through guarded unwrap rather than silently acting as an empty iteration.
 
 ## PHP false-sentinel exposure rule
 
