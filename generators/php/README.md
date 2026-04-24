@@ -122,3 +122,9 @@ No implicit pointer/object semantics for enums in v1.
 - `foreach ($items as $key => &$item)` lowers via an explicit-key slot rewrite
 - loop-body uses of the foreach value variable are rewritten to the source slot expression instead of creating a standalone alias local
 - this behavior is provisional and subject to future improvement
+
+## Current class header forward declarations
+
+- namespace-level class forward declarations are emitted before class definitions in generated headers
+- this includes both classes declared in the current namespace block and class names referenced from property or method signatures
+- the goal is to support same-namespace and cross-file class cycles such as `model <-> storage` without requiring users to remove legitimate reverse links from their schema layer
