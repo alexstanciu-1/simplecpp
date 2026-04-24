@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+
+namespace demo\schema;
+
+class model {
+	public ?storage $attached_storage = null;
+}
+
+class storage {
+	public ?model $owner_model = null;
+}
+
+namespace demo\app;
+
+use demo\schema\model;
+use demo\schema\storage;
+
+$m = new model();
+$s = new storage();
+$m->attached_storage = $s;
+$s->owner_model = $m;
+
+echo "ok\n";

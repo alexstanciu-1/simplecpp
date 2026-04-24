@@ -1051,6 +1051,14 @@ final class Generator
 		$source[] = $this->indent(1) . 'using namespace ::scpp;';
 		$source[] = '';
 
+		$forwardDecls = $this->collectNamespaceForwardDecls($classes);
+		foreach ($forwardDecls as $forwardDecl) {
+			$header[] = $forwardDecl;
+		}
+		if ($forwardDecls !== []) {
+			$header[] = '';
+		}
+
 		foreach ($uses as $use) {
 			$useLine = $this->renderUseDeclaration($use);
 
@@ -1089,6 +1097,90 @@ final class Generator
 		$header[] = '';
 		$source[] = '}';
 		$source[] = '';
+	}
+
+	/** @param list<ClassDecl> $classes @return list<string> */
+	private function collectNamespaceForwardDecls(array $classes): array
+	{
+		$names = [];
+		foreach ($classes as $class) {
+			if ($class->isEnum) {
+				continue;
+			}
+
+			$names[$class->name] = true;
+			foreach ($this->collectClassReferencedTypeNames($class) as $referencedName) {
+				$names[$referencedName] = true;
+			}
+		}
+
+		$out = [];
+		foreach (array_keys($names) as $name) {
+			$out[] = 'class ' . $name . ';';
+		}
+
+		return $out;
+	}
+
+	/** @return list<string> */
+	private function collectClassReferencedTypeNames(ClassDecl $class): array
+	{
+		$out = [];
+
+		foreach ($class->properties as $property) {
+			foreach ($this->collectForwardDeclarableTypeNames($property->type) as $typeName) {
+				$out[$typeName] = true;
+			}
+		}
+
+		foreach ($class->methods as $method) {
+			foreach ($this->collectForwardDeclarableTypeNames($method->returnType) as $typeName) {
+				$out[$typeName] = true;
+			}
+
+			foreach ($method->params as $param) {
+				foreach ($this->collectForwardDeclarableTypeNames($param->type) as $typeName) {
+					$out[$typeName] = true;
+				}
+			}
+		}
+
+		return array_values(array_keys($out));
+	}
+
+	/** @return list<string> */
+	private function collectForwardDeclarableTypeNames(?string $declaredType): array
+	{
+		if ($declaredType === null) {
+			return [];
+		}
+
+		$type = trim($this->typeMapper->getPrimaryDeclaredType($declaredType));
+		if ($type === '') {
+			return [];
+		}
+
+		if (str_starts_with($type, '?')) {
+			return $this->collectForwardDeclarableTypeNames(substr($type, 1));
+		}
+
+		if (preg_match('/^\s*callable\s*\(/', $type) === 1) {
+			return [];
+		}
+
+		if (preg_match('/^(?:vector|vector_t|nullable|result_or_false|result_or_bool|result|shared|shared_p|unique|unique_p|weak|weak_p|weakref|value)\s*<\s*(.+)\s*>$/', $type, $matches) === 1) {
+			return $this->collectForwardDeclarableTypeNames(trim($matches[1]));
+		}
+
+		if (preg_match('/^(?:int|float|bool|string|array|mixed|void|null|never|callable|iterable|object|false|true)$/i', $type) === 1) {
+			return [];
+		}
+
+		if (str_contains($type, '\\')) {
+			return [];
+		}
+
+		return [$type];
 	}
 
 	/** @param list<UseDecl> $uses @return list<string> */
