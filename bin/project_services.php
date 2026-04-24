@@ -360,7 +360,14 @@ function handle_run(string $cwd, array $args): void
 		1 => ['file', 'php://stdout', 'w'],
 		2 => ['file', 'php://stderr', 'w'],
 	];
-	$process = proc_open($command, $descriptor, $pipes, $project['project_root'], scpp_build_process_environment());
+	$processEnv = [];
+	if (is_string($buildResult['runtime_library_dir'] ?? null) && $buildResult['runtime_library_dir'] !== '') {
+		$existingPath = getenv('PATH');
+		$processEnv['PATH'] = $buildResult['runtime_library_dir']
+			. PATH_SEPARATOR
+			. (is_string($existingPath) ? $existingPath : '');
+	}
+	$process = proc_open($command, $descriptor, $pipes, $project['project_root'], scpp_build_process_environment($processEnv));
 	if (!is_resource($process)) {
 		scpp_fail('Failed to start built program.' . PHP_EOL, 4);
 	}
@@ -431,7 +438,7 @@ function handle_build(string $cwd): void
 	execute_build($project['project_root'], $project['config_path']);
 }
 
-/** @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string} */
+/** @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string,runtime_library_dir:?string} */
 function execute_build(string $projectRoot, string $configPath): array
 {
 	$config = load_project_config($configPath);
@@ -556,7 +563,8 @@ function execute_build(string $projectRoot, string $configPath): array
 	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppFiles, $outputName, $compiler, $buildMode, $runtimeConfig, $fastcgiBuild);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
-	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppFiles, build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig), $buildDir, $compiler['kind'], $outputName, $fastcgiBuild);
+	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig);
+	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppFiles, $runtimeBuild, $buildDir, $compiler['kind'], $outputName, $fastcgiBuild);
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
@@ -628,6 +636,9 @@ function execute_build(string $projectRoot, string $configPath): array
 		'output_name' => $outputName,
 		'output_path' => $outputPath,
 		'fastcgi_output_path' => $fastcgiOutputPath,
+		'runtime_library_dir' => is_string($runtimeBuild['artifact_path'] ?? null)
+			? normalize_path(dirname($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path'])))
+			: null,
 	];
 }
 
