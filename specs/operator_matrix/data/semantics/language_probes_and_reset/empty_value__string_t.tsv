@@ -1,0 +1,6 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+string.empty	null	null	null	null	null	supported	deterministic_value	bool_t	bool.true	true	empty_value.string.empty	runtime_success	null	empty("") is true.
+string.zero_string	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.string.zero_string	runtime_success	null	Prism++ keeps the documented exception that empty("0") is false.
+string.bool_false_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.string.bool_false_literal	runtime_success	null	Non-empty strings are not empty.
+string.bool_true_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.string.bool_true_literal	runtime_success	null	Non-empty strings are not empty.
+string.nonempty_nonzero_nonbool_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.string.nonempty_nonzero_nonbool_literal	runtime_success	null	Non-empty strings are not empty.

@@ -109,6 +109,9 @@ Unary operators.
 
 Binary arithmetic and bitwise operators.
 
+Approved integer wrapper note:
+- wrapper-aware rows in the bitwise / shift slice compile through guarded unwrap; empty wrapper states do not silently coerce `null` to `0`, they fail at runtime on unwrap
+
 #### Items
 
 Arithmetic:
@@ -209,6 +212,28 @@ Reset / mutation:
 
 ---
 
+### F9. `operators_compound_assignment`
+
+Compound assignment operators.
+
+#### Items
+- `add_assign`
+- `subtract_assign`
+- `multiply_assign`
+- `divide_assign`
+- `modulo_assign`
+- `bitwise_and_assign`
+- `bitwise_or_assign`
+- `bitwise_xor_assign`
+- `shift_left_assign`
+- `shift_right_assign`
+
+#### Notes
+- Must model write-back target kind explicitly
+- Current canonical lhs targets are variable, member/property, keyed element, and a representative chained writable path
+
+---
+
 ## 5. Subfamily Tags
 
 Each item must include a subfamily tag for filtering and reporting.
@@ -226,6 +251,7 @@ Allowed subfamilies:
 - `selection`
 - `probe`
 - `reset`
+- `assignment`
 
 ---
 

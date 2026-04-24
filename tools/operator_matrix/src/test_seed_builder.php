@@ -124,6 +124,13 @@ function om_seed_builder_routes(): array
 			'builder' => 'om_build_unary_scalar_result_seed',
 		],
 		[
+			'family_id' => 'language_probes_and_reset',
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+			'builder' => 'om_build_unary_scalar_result_seed',
+		],
+		[
 			'family_id' => 'operators_conditional_selection',
 			'suite' => 'php-matrix',
 			'target_flow' => 'php',
@@ -379,11 +386,20 @@ function om_build_test_seed_paths(array $row, array $route): array
 	if (is_string($row['rhs_profile']) && $row['rhs_profile'] !== '') {
 		$stemParts[] = om_slugify_seed_component($row['rhs_profile']);
 	}
+	if (is_string($row['lhs_target_kind']) && $row['lhs_target_kind'] !== '') {
+		$stemParts[] = om_slugify_seed_component($row['lhs_target_kind']);
+	}
+	if (is_string($row['rhs_target_kind']) && $row['rhs_target_kind'] !== '') {
+		$stemParts[] = om_slugify_seed_component($row['rhs_target_kind']);
+	}
 	if (is_string($row['third_type']) && $row['third_type'] !== '') {
 		$stemParts[] = om_slugify_seed_component($row['third_type']);
 	}
 	if (is_string($row['third_profile']) && $row['third_profile'] !== '') {
 		$stemParts[] = om_slugify_seed_component($row['third_profile']);
+	}
+	if (is_string($row['third_target_kind']) && $row['third_target_kind'] !== '') {
+		$stemParts[] = om_slugify_seed_component($row['third_target_kind']);
 	}
 	$stemParts[] = om_slugify_seed_component((string) $row['status']);
 	if (is_string($row['behavior_class']) && $row['behavior_class'] !== '') {
@@ -411,9 +427,13 @@ function om_resolve_seed_outcome_class(array $row): string
 	$status = (string) ($row['status'] ?? '');
 	$behaviorClass = $row['behavior_class'] ?? null;
 	$diagnosticClass = (string) ($row['diagnostic_class'] ?? '');
+	$feature = (string) ($row['item_id'] ?? '');
 
 	if ($diagnosticClass === 'coalesce_reject_result_or_bool') {
 		return 'negative_runtime';
+	}
+	if ($status === 'compile_time_rejected' && $feature === 'unset_value') {
+		return 'negative_compile';
 	}
 	if ($status === 'compile_time_rejected') {
 		return 'negative_generate';

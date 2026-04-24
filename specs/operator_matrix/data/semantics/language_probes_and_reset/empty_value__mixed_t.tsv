@@ -1,0 +1,15 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+mixed.null	null	null	null	null	null	supported	deterministic_value	bool_t	bool.true	true	empty_value.mixed.null	runtime_success	null	Mixed null follows the shared empty() contract.
+mixed.bool.false	null	null	null	null	null	supported	deterministic_value	bool_t	bool.true	true	empty_value.mixed.bool.false	runtime_success	null	Mixed false follows the shared empty() contract.
+mixed.bool.true	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.mixed.bool.true	runtime_success	null	Mixed true is not empty.
+mixed.int.zero	null	null	null	null	null	supported	deterministic_value	bool_t	bool.true	true	empty_value.mixed.int.zero	runtime_success	null	Mixed integer zero is empty.
+mixed.int.nonzero	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.mixed.int.nonzero	runtime_success	null	Mixed non-zero integers are not empty.
+mixed.float.zero	null	null	null	null	null	supported	deterministic_value	bool_t	bool.true	true	empty_value.mixed.float.zero	runtime_success	null	Mixed float zero is empty.
+mixed.float.nonzero	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.mixed.float.nonzero	runtime_success	null	Mixed non-zero floats are not empty.
+mixed.string.empty	null	null	null	null	null	supported	deterministic_value	bool_t	bool.true	true	empty_value.mixed.string.empty	runtime_success	null	Mixed empty string is empty.
+mixed.string.zero_string	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.mixed.string.zero_string	runtime_success	null	Prism++ keeps the documented exception that empty("0") is false.
+mixed.string.bool_false_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.mixed.string.bool_false_literal	runtime_success	null	Non-empty non-zero strings are not empty.
+mixed.string.bool_true_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.mixed.string.bool_true_literal	runtime_success	null	Non-empty non-zero strings are not empty.
+mixed.string.nonempty_nonzero_nonbool_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.mixed.string.nonempty_nonzero_nonbool_literal	runtime_success	null	Non-empty non-zero strings are not empty.
+mixed.hash.empty	null	null	null	null	null	supported	deterministic_value	bool_t	bool.true	true	empty_value.mixed.hash.empty	runtime_success	null	An empty mixed hash is empty.
+mixed.hash.nonempty	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	empty_value.mixed.hash.nonempty	runtime_success	null	A non-empty mixed hash is not empty.

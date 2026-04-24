@@ -110,6 +110,8 @@ Allowed values are defined by `operand_target_kinds_v1.md`:
 - `plain_value`
 - `assignable_variable`
 - `keyed_element`
+- `member_property`
+- `chained_writable_path`
 - `temporary_result`
 
 When not applicable, target-kind fields remain null/absent.

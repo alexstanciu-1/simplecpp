@@ -2,6 +2,7 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/cast.hpp"
 #include "scpp/memory.hpp"
+#include "scpp/runtime_error.hpp"
 #include "operators/conditional/condition_truthiness.hpp"
 #include "operators/empty/empty.hpp"
 #include "operators/isset/isset.hpp"
@@ -54,6 +55,36 @@ namespace {
 	    << kind_name(left.kind()) << "' and '" << kind_name(right.kind()) << "'. "
 	    << "Requirement: this operator must be defined for the active mixed_t runtime-kind pair.";
 	return std::runtime_error(out.str());
+}
+
+[[nodiscard]] bool is_zero_divisor(const int_t &value) noexcept {
+	return value.native_value() == 0;
+}
+
+[[nodiscard]] bool is_zero_divisor(const float_t &value) noexcept {
+	return value.native_value() == 0.0;
+}
+
+[[nodiscard]] runtime_error runtime_error_zero_divisor(
+	const char *operation,
+	const char *code,
+	const mixed_t &left,
+	const mixed_t &right
+) {
+	std::ostringstream out;
+	out << "scpp::mixed_t runtime error: binary operation '" << operation
+	    << "' rejected a zero divisor for operand kinds '"
+	    << kind_name(left.kind()) << "' and '" << kind_name(right.kind()) << "'.";
+	return runtime_error(
+		out.str(),
+		code,
+		"mixed_t",
+		operation,
+		{
+			{"lhs_kind", kind_name(left.kind())},
+			{"rhs_kind", kind_name(right.kind())}
+		}
+	);
 }
 
 [[nodiscard]] bool_t compare_shared_to_weak_identity(
@@ -916,8 +947,6 @@ mixed_t operator+(const mixed_t &left, const mixed_t &right) {
 		return mixed_t{left.float_value_ + right.int_value_};
 	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::float_v)
 		return mixed_t{left.float_value_ + right.float_value_};
-	if (left.kind() == mixed_t::kind_t::string_v && right.kind() == mixed_t::kind_t::string_v)
-		return mixed_t{*left.string_value_ + *right.string_value_};
 	throw runtime_error_binary("+", left, right);
 }
 mixed_t operator-(const mixed_t &left, const mixed_t &right) {
@@ -943,19 +972,39 @@ mixed_t operator*(const mixed_t &left, const mixed_t &right) {
 	throw runtime_error_binary("*", left, right);
 }
 mixed_t operator/(const mixed_t &left, const mixed_t &right) {
-	if (left.kind() == mixed_t::kind_t::int_v   && right.kind() == mixed_t::kind_t::int_v)
+	if (left.kind() == mixed_t::kind_t::int_v   && right.kind() == mixed_t::kind_t::int_v) {
+		if (is_zero_divisor(right.int_value_)) {
+			throw runtime_error_zero_divisor("/", "division_by_zero", left, right);
+		}
 		return mixed_t{left.int_value_ / right.int_value_};
-	if (left.kind() == mixed_t::kind_t::int_v   && right.kind() == mixed_t::kind_t::float_v)
+	}
+	if (left.kind() == mixed_t::kind_t::int_v   && right.kind() == mixed_t::kind_t::float_v) {
+		if (is_zero_divisor(right.float_value_)) {
+			throw runtime_error_zero_divisor("/", "division_by_zero", left, right);
+		}
 		return mixed_t{left.int_value_ / right.float_value_};
-	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::int_v)
+	}
+	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::int_v) {
+		if (is_zero_divisor(right.int_value_)) {
+			throw runtime_error_zero_divisor("/", "division_by_zero", left, right);
+		}
 		return mixed_t{left.float_value_ / right.int_value_};
-	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::float_v)
+	}
+	if (left.kind() == mixed_t::kind_t::float_v && right.kind() == mixed_t::kind_t::float_v) {
+		if (is_zero_divisor(right.float_value_)) {
+			throw runtime_error_zero_divisor("/", "division_by_zero", left, right);
+		}
 		return mixed_t{left.float_value_ / right.float_value_};
+	}
 	throw runtime_error_binary("/", left, right);
 }
 mixed_t operator%(const mixed_t &left, const mixed_t &right) {
-	if (left.kind() == mixed_t::kind_t::int_v && right.kind() == mixed_t::kind_t::int_v)
+	if (left.kind() == mixed_t::kind_t::int_v && right.kind() == mixed_t::kind_t::int_v) {
+		if (is_zero_divisor(right.int_value_)) {
+			throw runtime_error_zero_divisor("%", "modulo_by_zero", left, right);
+		}
 		return mixed_t{left.int_value_ % right.int_value_};
+	}
 	throw runtime_error_binary("%", left, right);
 }
 mixed_t operator&(const mixed_t &left, const mixed_t &right) {

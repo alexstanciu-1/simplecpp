@@ -298,6 +298,41 @@ Examples:
 
 ---
 
+### 6.3a `operators_compound_assignment`
+
+This family covers compound forms such as:
+- `add_assign`
+- `subtract_assign`
+- `multiply_assign`
+- `divide_assign`
+- `modulo_assign`
+- bitwise/shift compound items
+
+Normative source:
+- runtime operator configuration
+- current compound-assignment policy
+
+#### Core rule
+Compound assignment is modeled as:
+- evaluate the underlying binary operator semantics
+- write the resulting value back into the lhs target
+
+The row must therefore track lhs target kind.
+
+Approved target kinds in the current canonical surface:
+- `assignable_variable`
+- `member_property`
+- `keyed_element`
+- `chained_writable_path`
+
+Guidance:
+- `member_property` rows use the same semantic outcome as the corresponding variable-target row unless a higher-level property rule says otherwise
+- `keyed_element` rows stay distinct because keyed storage/write-path semantics are modeled separately
+- `chained_writable_path` rows represent a deeper composed lvalue path and should preserve that target distinction through generation and testing
+- non-writable targets such as `plain_value` and `temporary_result` are outside the supported compound-assignment surface
+
+---
+
 ### 6.4 `operators_binary_arithmetic_bitwise`
 
 This family covers arithmetic, bitwise, and shift operators.
@@ -316,6 +351,8 @@ The matrix must:
 For wrapper carriers:
 - `nullable<T>` must not be silently treated as native `T` unless a wrapper rule explicitly delegates
 - `mixed_t` must be expanded by runtime kind when config allows the family path
+- current integer bitwise / shift wrapper rows explicitly delegate for approved wrappers: `nullable<int_t>.present.* op nullable<int_t>.present.*` unwraps and then follows the corresponding `int_t` row
+- for that same delegated slice, any empty/error/sentinel wrapper participation such as `nullable<int_t>.empty op nullable<int_t>.empty` remains `status=supported`, `behavior_class=throws`
 
 ---
 
@@ -470,4 +507,3 @@ Important layering note:
 - this dataset boundary must not be confused with the current runtime helper capability
 - `php::ternary_eval(...)` already owns wrapper-aware condition delegation for current wrapper families and remains the authority for already-lowered ternary / elvis code paths
 - matrix/data discussions must state explicitly whether they refer to the runtime helper or only to the currently emitted slice
-

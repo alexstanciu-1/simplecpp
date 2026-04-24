@@ -14,6 +14,7 @@
 #include "scpp/weak_p.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/cast.hpp"
+#include "scpp/runtime_error.hpp"
 #include "lang/php/operators/conditional/condition_truthiness.hpp"
 
 namespace scpp::detail::generated_operator_detail {
@@ -41,6 +42,32 @@ namespace scpp::detail::generated_operator_detail {
 template <typename Value>
 [[nodiscard]] inline bool truthy(const Value &value) {
 	return static_cast<bool>(::scpp::php::condition_truthy(value));
+}
+
+[[nodiscard]] inline constexpr bool is_zero_divisor(const int_t &value) noexcept {
+	return value.native_value() == 0;
+}
+
+[[nodiscard]] inline bool is_zero_divisor(const float_t &value) noexcept {
+	return value.native_value() == 0.0;
+}
+
+[[nodiscard]] inline runtime_error zero_divisor_error(
+	const char *operation,
+	const char *code,
+	const char *lhs_kind,
+	const char *rhs_kind
+) {
+	return runtime_error(
+		std::string("scpp runtime arithmetic error: operator '") + operation + "' rejected a zero divisor.",
+		code,
+		"generated_operator_detail",
+		operation,
+		{
+			{"lhs_kind", lhs_kind},
+			{"rhs_kind", rhs_kind}
+		}
+	);
 }
 
 [[nodiscard]] inline constexpr int_t add(const int_t &lhs, const int_t &rhs) noexcept {
@@ -91,23 +118,38 @@ template <typename Value>
 	return float_t(lhs.native_value() * rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t div(const int_t &lhs, const int_t &rhs) noexcept {
+[[nodiscard]] inline int_t div(const int_t &lhs, const int_t &rhs) {
+	if (is_zero_divisor(rhs)) {
+		throw zero_divisor_error("/", "division_by_zero", "int_t", "int_t");
+	}
 	return int_t(lhs.native_value() / rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr float_t div(const int_t &lhs, const float_t &rhs) noexcept {
+[[nodiscard]] inline float_t div(const int_t &lhs, const float_t &rhs) {
+	if (is_zero_divisor(rhs)) {
+		throw zero_divisor_error("/", "division_by_zero", "int_t", "float_t");
+	}
 	return float_t(static_cast<double>(lhs.native_value()) / rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr float_t div(const float_t &lhs, const int_t &rhs) noexcept {
+[[nodiscard]] inline float_t div(const float_t &lhs, const int_t &rhs) {
+	if (is_zero_divisor(rhs)) {
+		throw zero_divisor_error("/", "division_by_zero", "float_t", "int_t");
+	}
 	return float_t(lhs.native_value() / static_cast<double>(rhs.native_value()));
 }
 
-[[nodiscard]] inline constexpr float_t div(const float_t &lhs, const float_t &rhs) noexcept {
+[[nodiscard]] inline float_t div(const float_t &lhs, const float_t &rhs) {
+	if (is_zero_divisor(rhs)) {
+		throw zero_divisor_error("/", "division_by_zero", "float_t", "float_t");
+	}
 	return float_t(lhs.native_value() / rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t mod(const int_t &lhs, const int_t &rhs) noexcept {
+[[nodiscard]] inline int_t mod(const int_t &lhs, const int_t &rhs) {
+	if (is_zero_divisor(rhs)) {
+		throw zero_divisor_error("%", "modulo_by_zero", "int_t", "int_t");
+	}
 	return int_t(lhs.native_value() % rhs.native_value());
 }
 

@@ -8,8 +8,8 @@ It is a current working gap report, not a normative semantic source.
 
 | Missing area | Tag | Notes |
 |---|---|---|
-| `operators_compound_assignment` member/property write targets | `needs implementation (code)` | Requires operator-matrix target-kind expansion plus generator/lowering coverage. Runtime operator semantics are likely reusable. |
-| broader assign-target coverage beyond keyed/member | `needs implementation (code)` | Deeper writable target forms and chained lvalue paths are not modeled yet. |
+| `operators_compound_assignment` member/property write targets | `implemented` | Canonical `member_property` target rows are now modeled in the matrix and emitted through dedicated property-write tests. |
+| broader assign-target coverage beyond keyed/member | `implemented` | Compound assignment now models a canonical `chained_writable_path` target to cover representative deeper member/keyed lvalue chains. |
 | wrapper-lifted bitwise/shift compound-assignment full enablement audit | `testing` | The validated wrapper `int_t` bitwise slices need a clean enabled-vs-disabled audit across emitted rows. |
 | broader wrapper lifting consistency across existing families | `testing` | Needs a systematic pass for present, absent, and disabled wrapper rows across families. Some rows may still reveal real implementation gaps. |
 | mixed participation consistency audit across existing families | `testing` | Needs a family-by-family check that each intended `mixed_t` slice is present and aligned with runtime/config authority. |

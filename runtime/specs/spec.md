@@ -474,6 +474,8 @@ Required interpretation for this phase:
 - `float_t` arithmetic uses native C++ floating-point semantics, including IEEE-style `/`
 - integer-only operators such as `%`, `&`, `|`, `^`, `~`, `<<`, and `>>` follow native C++ behavior
 - compound assignment operators such as `+=`, `/=`, and `<<=` follow the corresponding native C++ base operator
+- approved integer wrapper carriers such as `nullable<int_t>`, `result<int_t>`, `result_or_false<int_t>`, and `result_or_bool<int_t>` participate in integer bitwise and shift families by guarded wrapper lifting: present/success payloads unwrap and delegate to the corresponding `int_t` operator
+- empty/error/sentinel wrapper states in those lifted integer bitwise and shift families remain compile-valid but must runtime-error during guarded unwrap rather than silently normalizing to `0`
 - increment and decrement follow native C++ prefix/postfix behavior
 - strict identity and concatenation-assignment use explicit runtime semantic helpers rather than pretending to be ordinary C++ operator overloads
 - string/bitwise/coercion combinations not already representable by the runtime surface should remain unsupported for now and fail in earlier phases or at compile time
