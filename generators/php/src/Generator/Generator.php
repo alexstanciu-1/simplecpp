@@ -3609,7 +3609,7 @@ final class Generator
 		$entryName = '__scpp_foreach_entry_' . $statement->line;
 		$sourceType = $this->inferExprType($payload['expr'] ?? null);
 		$foreachByRefSourceShape = $this->inferForeachByRefSourceShape($payload['expr'] ?? null);
-		$isMixedTableForeach = $sourceType === 'mixed_t' && $foreachByRefSourceShape !== 'unknown';
+		$isMixedTableForeach = $sourceType === 'mixed_t';
 		$sourceAccessExpr = $this->isUntypedTableHandleType($sourceType)
 			? '(*(' . $sourceExpr . '))'
 			: ($isMixedTableForeach ? '(' . $sourceExpr . ').get_hash()' : $sourceExpr);
