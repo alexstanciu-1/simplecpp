@@ -1,0 +1,15 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+mixed.null	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.null	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.bool.false	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.bool.false	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.bool.true	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.bool.true	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.int.zero	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.int.zero	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.int.nonzero	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.int.nonzero	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.float.zero	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.float.zero	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.float.nonzero	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.float.nonzero	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.string.empty	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.string.empty	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.string.zero_string	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.string.zero_string	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.string.bool_false_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.string.bool_false_literal	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.string.bool_true_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.string.bool_true_literal	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.string.nonempty_nonzero_nonbool_literal	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.string.nonempty_nonzero_nonbool_literal	runtime_success	null	Keyed isset on an invalid non-container shape is false.
+mixed.hash.empty	null	null	null	null	null	supported	deterministic_value	bool_t	bool.false	true	isset_keyed.mixed.hash.empty	runtime_success	null	Missing keyed lookups report false.
+mixed.hash.nonempty	null	null	null	null	null	supported	deterministic_value	bool_t	bool.true	true	isset_keyed.mixed.hash.nonempty	runtime_success	null	The representative non-empty keyed row models a present non-null value.

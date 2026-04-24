@@ -41,5 +41,5 @@
         "compound_assignment",
         "logical"
     ],
-    "notes": "Covers derived compound assignment behavior, increment/decrement, numeric logical dispatch, and native string + string delegation through mixed_t."
+    "notes": "Covers derived mixed_t compound assignment behavior, rejects string arithmetic dispatch, and checks zero-divisor runtime throws alongside unary/logical paths."
 }

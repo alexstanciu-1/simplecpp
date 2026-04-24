@@ -379,8 +379,26 @@ function om_render_php_matrix_source(array $seed): string
 		if (!is_string($type) || $type === '' || !is_string($profile) || $profile === '') {
 			continue;
 		}
+		if ($name === 'lhs' && (string) ($seed['item_id'] ?? '') === 'unset_keyed' && $type === 'mixed_t' && $profile === 'mixed.hash.empty') {
+			$declared[] = '$lhs /** mixed */ = ["k" => 1];';
+			continue;
+		}
 		if ($name === 'lhs' && $targetKind === 'keyed_element' && om_seed_supports_keyed_element_target($seed)) {
 			$declared[] = '$lhs /** ' . om_map_seed_type_to_vector_annotation($type) . ' */ = [' . om_render_seed_profile_literal($type, $profile) . '];';
+			continue;
+		}
+		if ($name === 'lhs' && $targetKind === 'member_property' && om_seed_supports_member_property_target($seed)) {
+			$declared[] = 'class OMMemberTarget { ' . om_render_seed_property_declaration('value', $type) . ' }';
+			$declared[] = '$lhs = new OMMemberTarget();';
+			$declared[] = '$lhs->value = ' . om_render_seed_profile_literal($type, $profile) . ';';
+			continue;
+		}
+		if ($name === 'lhs' && $targetKind === 'chained_writable_path' && om_seed_supports_chained_writable_path_target($seed)) {
+			$declared[] = 'class OMChainLeaf { ' . om_render_seed_property_declaration('value', $type) . ' }';
+			$declared[] = 'class OMChainedTarget { public OMChainLeaf $slot; }';
+			$declared[] = '$lhs = new OMChainedTarget();';
+			$declared[] = '$lhs->slot = new OMChainLeaf();';
+			$declared[] = '$lhs->slot->value = ' . om_render_seed_profile_literal($type, $profile) . ';';
 			continue;
 		}
 		$declared[] = '$' . $name . ' /** ' . om_map_seed_type_to_php_annotation($type) . ' */ = ' . om_render_seed_profile_literal($type, $profile) . ';';
@@ -451,6 +469,40 @@ function om_render_seed_php_lines(array $seed): array
 			'}',
 		];
 	}
+	if ($itemId === 'unset_value') {
+		$lhsOperand = is_array(($seed['operands']['lhs'] ?? null)) ? $seed['operands']['lhs'] : [];
+		$lhsTargetKind = (string) (($lhsOperand['target_kind'] ?? '') ?: '');
+		if ($lhsTargetKind === 'temporary_result') {
+			return [
+				'function om_make_unset_value_temp() {',
+				"\t" . 'return 1;',
+				'}',
+				'unset(om_make_unset_value_temp());',
+				'var_dump(true);',
+			];
+		}
+		return [
+			'unset($lhs);',
+			'var_dump(true);',
+		];
+	}
+	if ($itemId === 'unset_keyed') {
+		$lhsOperand = is_array(($seed['operands']['lhs'] ?? null)) ? $seed['operands']['lhs'] : [];
+		$lhsTargetKind = (string) (($lhsOperand['target_kind'] ?? '') ?: '');
+		if ($lhsTargetKind === 'temporary_result') {
+			return [
+				'function om_make_unset_keyed_temp() {',
+				"\t" . 'return ["k" => 1];',
+				'}',
+				'unset(om_make_unset_keyed_temp()["k"]);',
+				'var_dump(true);',
+			];
+		}
+		return [
+			'unset($lhs["k"]);',
+			'var_dump(isset($lhs["k"]));',
+		];
+	}
 	if (in_array($itemId, ['pre_increment', 'post_increment', 'pre_decrement', 'post_decrement'], true)) {
 		return ['var_dump(' . om_render_seed_expression($seed) . ');'];
 	}
@@ -480,7 +532,12 @@ function om_render_seed_expression(array $seed): string
 	$itemId = (string) ($seed['item_id'] ?? '');
 	$lhsOperand = is_array(($seed['operands']['lhs'] ?? null)) ? $seed['operands']['lhs'] : [];
 	$lhsTargetKind = (string) (($lhsOperand['target_kind'] ?? '') ?: '');
-	$lhsValue = ($lhsTargetKind === 'keyed_element' && om_seed_supports_keyed_element_target($seed)) ? '$lhs[0]' : '$lhs';
+	$lhsValue = match (true) {
+		$lhsTargetKind === 'keyed_element' && om_seed_supports_keyed_element_target($seed) => '$lhs[0]',
+		$lhsTargetKind === 'member_property' && om_seed_supports_member_property_target($seed) => '$lhs->value',
+		$lhsTargetKind === 'chained_writable_path' && om_seed_supports_chained_writable_path_target($seed) => '$lhs->slot->value',
+		default => '$lhs',
+	};
 	return match ($itemId) {
 		'add_assign' => $lhsValue . ' += $rhs',
 		'subtract_assign' => $lhsValue . ' -= $rhs',
@@ -516,6 +573,11 @@ function om_render_seed_expression(array $seed): string
 		'cast_int' => '(int) $lhs',
 		'cast_float' => '(float) $lhs',
 		'cast_string' => '(string) $lhs',
+		'isset_value' => 'isset($lhs)',
+		'empty_value' => 'empty($lhs)',
+		'count_value' => 'count($lhs)',
+		'isset_keyed' => 'isset($lhs["k"])',
+		'empty_keyed' => 'empty($lhs["k"])',
 		'logical_not' => '!$lhs',
 		'unary_plus' => '+$lhs',
 		'unary_minus' => '-$lhs',
@@ -564,6 +626,16 @@ function om_map_seed_type_to_vector_annotation(string $type): string
 	return 'vector<' . om_map_seed_type_to_php_annotation($type) . '>';
 }
 
+function om_render_seed_property_declaration(string $propertyName, string $type): string
+{
+	$annotation = om_map_seed_type_to_php_annotation($type);
+	if (str_contains($annotation, '<')) {
+		return 'public /** ' . $annotation . ' */ $' . $propertyName . ';';
+	}
+
+	return 'public ' . $annotation . ' $' . $propertyName . ';';
+}
+
 /**
  * @param array<string, mixed> $seed
  */
@@ -584,9 +656,25 @@ function om_seed_supports_keyed_element_target(array $seed): bool
 	], true);
 }
 
+/**
+ * @param array<string, mixed> $seed
+ */
+function om_seed_supports_member_property_target(array $seed): bool
+{
+	return om_seed_supports_keyed_element_target($seed);
+}
+
+/**
+ * @param array<string, mixed> $seed
+ */
+function om_seed_supports_chained_writable_path_target(array $seed): bool
+{
+	return om_seed_supports_keyed_element_target($seed);
+}
+
 function om_render_seed_profile_literal(string $type, string $profile): string
 {
-	if ($type === 'result_or_false<bool_t>' && $profile === 'result_or_false.sentinel.false') {
+	if (str_starts_with($type, 'result_or_false<') && $profile === 'result_or_false.sentinel.false') {
 		return 'null';
 	}
 
@@ -739,11 +827,38 @@ function om_seed_diagnostic_class(array $seed): string
  */
 function om_should_enable_seed_by_default(array $seed): bool
 {
-	if ((string) ($seed['outcome_class'] ?? '') !== 'positive') {
+	$outcomeClass = (string) ($seed['outcome_class'] ?? '');
+	$feature = (string) ($seed['feature'] ?? '');
+	$familyId = (string) ($seed['family_id'] ?? '');
+	$operands = is_array($seed['operands'] ?? null) ? $seed['operands'] : [];
+	$lhsOperand = is_array($operands['lhs'] ?? null) ? $operands['lhs'] : [];
+	$lhsType = (string) (($lhsOperand['type'] ?? '') ?: '');
+	if ($outcomeClass === 'negative_runtime') {
+		if ($familyId === 'condition_truthiness') {
+			return true;
+		}
+		if (om_seed_supports_cast_wrapper_enablement_by_default($seed)) {
+			return true;
+		}
+		return om_feature_supports_negative_runtime_enablement_by_default($feature);
+	}
+
+	if ($outcomeClass === 'negative_compile') {
+		return $feature === 'unset_value';
+	}
+
+	if ($outcomeClass !== 'positive') {
 		return false;
 	}
 
-	$feature = (string) ($seed['feature'] ?? '');
+	if ($familyId === 'condition_truthiness') {
+		return true;
+	}
+
+	if (om_seed_supports_cast_wrapper_enablement_by_default($seed)) {
+		return true;
+	}
+
 	$wrapperEnabledFeatures = [
 		'add_assign' => true,
 		'subtract_assign' => true,
@@ -762,11 +877,14 @@ function om_should_enable_seed_by_default(array $seed): bool
 		'shift_right_assign' => true,
 	];
 
-	$operands = is_array($seed['operands'] ?? null) ? $seed['operands'] : [];
 	$hasWrapperOperand = false;
+	$lhsTargetKind = '';
 	foreach (['lhs', 'rhs', 'third'] as $name) {
 		$operand = is_array($operands[$name] ?? null) ? $operands[$name] : [];
 		$type = (string) (($operand['type'] ?? '') ?: '');
+		if ($name === 'lhs') {
+			$lhsTargetKind = (string) (($operand['target_kind'] ?? '') ?: '');
+		}
 		if ($type === '') {
 			continue;
 		}
@@ -784,6 +902,44 @@ function om_should_enable_seed_by_default(array $seed): bool
 
 /**
  * @param array<string, mixed> $seed
+ */
+function om_seed_supports_cast_wrapper_enablement_by_default(array $seed): bool
+{
+	$familyId = (string) ($seed['family_id'] ?? '');
+	return $familyId === 'casts_explicit' || $familyId === 'condition_truthiness';
+}
+
+function om_feature_supports_negative_runtime_enablement_by_default(string $feature): bool
+{
+	return isset([
+		'logical_not' => true,
+		'unary_plus' => true,
+		'unary_minus' => true,
+		'bitwise_not' => true,
+		'pre_increment' => true,
+		'post_increment' => true,
+		'pre_decrement' => true,
+		'post_decrement' => true,
+		'add_assign' => true,
+		'subtract_assign' => true,
+		'multiply_assign' => true,
+		'divide_assign' => true,
+		'modulo_assign' => true,
+		'bitwise_and' => true,
+		'bitwise_or' => true,
+		'bitwise_xor' => true,
+		'shift_left' => true,
+		'shift_right' => true,
+		'bitwise_and_assign' => true,
+		'bitwise_or_assign' => true,
+		'bitwise_xor_assign' => true,
+		'shift_left_assign' => true,
+		'shift_right_assign' => true,
+	][$feature]);
+}
+
+/**
+ * @param array<string, mixed> $seed
  * @param array<string, mixed> $options
  * @return array<string, mixed>
  */
@@ -792,6 +948,7 @@ function om_build_php_matrix_test_info(array $seed, string $id, array $options):
 	$outcome = (string) $seed['outcome_class'];
 	$positive = ($outcome === 'positive');
 	$negativeGenerate = ($outcome === 'negative_generate');
+	$negativeCompile = ($outcome === 'negative_compile');
 	$negativeRuntime = ($outcome === 'negative_runtime');
 	$expected = is_array($seed['expected'] ?? null) ? $seed['expected'] : [];
 	$stdout = $positive ? om_render_expected_var_dump((string) ($expected['result_profile'] ?? '')) : '';

@@ -15,8 +15,8 @@ function om_run_routing_regression_test_suite(): void
 	om_assert_emitter_routes_are_valid(om_emitter_routes());
 
 	$seedRoutes = om_seed_builder_routes();
-	if (count($seedRoutes) !== 11) {
-		throw new RuntimeException('Expected exactly eleven active seed builder routes.');
+	if (count($seedRoutes) !== 12) {
+		throw new RuntimeException('Expected exactly twelve active seed builder routes.');
 	}
 
 	$seedFamilies = [];
@@ -35,6 +35,11 @@ function om_run_routing_regression_test_suite(): void
 			'level' => 'level_01',
 		],
 		'condition_truthiness' => [
+			'suite' => 'php-matrix',
+			'target_flow' => 'php',
+			'level' => 'level_01',
+		],
+		'language_probes_and_reset' => [
 			'suite' => 'php-matrix',
 			'target_flow' => 'php',
 			'level' => 'level_01',
@@ -95,6 +100,7 @@ function om_run_routing_regression_test_suite(): void
 	om_assert_true(om_has_seed_builder_route_for_family('operators_strict_identity'), 'Strict identity must be routable.');
 	om_assert_true(om_has_seed_builder_route_for_family('casts_explicit'), 'casts_explicit must be routable.');
 	om_assert_true(om_has_seed_builder_route_for_family('condition_truthiness'), 'Condition truthiness must be routable.');
+	om_assert_true(om_has_seed_builder_route_for_family('language_probes_and_reset'), 'Probe/reset family must be routable.');
 	om_assert_true(om_has_seed_builder_route_for_family('operators_conditional_selection'), 'Active family must be routable.');
 	om_assert_true(om_has_seed_builder_route_for_family('operators_unary'), 'Unary operators must be routable.');
 
@@ -142,6 +148,11 @@ function om_run_routing_regression_test_suite(): void
 		'family_id' => 'condition_truthiness',
 	]);
 	om_assert_same('condition_truthiness', $resolvedConditionRoute['family_id'] ?? null, 'Resolved seed route must match condition_truthiness.');
+
+	$resolvedProbeResetRoute = om_resolve_seed_builder_route([
+		'family_id' => 'language_probes_and_reset',
+	]);
+	om_assert_same('language_probes_and_reset', $resolvedProbeResetRoute['family_id'] ?? null, 'Resolved seed route must match language_probes_and_reset.');
 
 	$resolvedSeedRoute = om_resolve_seed_builder_route([
 		'family_id' => 'operators_conditional_selection',
@@ -211,6 +222,41 @@ function om_run_routing_regression_test_suite(): void
 			], $emitterRoutes);
 		},
 		'No emitter route defined for suite: unknown-suite'
+	);
+
+	$baseRow = [
+		'item_id' => 'bitwise_and_assign',
+		'lhs_type' => 'int_t',
+		'lhs_profile' => 'int.nonzero',
+		'rhs_type' => 'int_t',
+		'rhs_profile' => 'int.zero',
+		'third_type' => '',
+		'third_profile' => '',
+		'lhs_target_kind' => 'assignable_variable',
+		'rhs_target_kind' => '',
+		'third_target_kind' => '',
+		'status' => 'supported',
+		'behavior_class' => 'deterministic_value',
+		'diagnostic_class' => '',
+	];
+	$memberRow = $baseRow;
+	$memberRow['lhs_target_kind'] = 'member_property';
+	$basePathMeta = om_build_test_seed_paths($baseRow, $resolvedCompoundAssignmentRoute);
+	$memberPathMeta = om_build_test_seed_paths($memberRow, $resolvedCompoundAssignmentRoute);
+	om_assert_false(
+		$basePathMeta['suggested_stem'] === $memberPathMeta['suggested_stem'],
+		'Target-kind-distinct rows must not collapse onto the same suggested seed stem.'
+	);
+
+	om_assert_same(
+		'negative_compile',
+		om_resolve_seed_outcome_class([
+			'item_id' => 'unset_value',
+			'status' => 'compile_time_rejected',
+			'behavior_class' => 'throws',
+			'diagnostic_class' => 'unset_value_requires_resettable_target',
+		]),
+		'unset_value compile-time-rejected rows must route to negative_compile.'
 	);
 }
 

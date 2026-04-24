@@ -3127,6 +3127,12 @@ final class Generator
 				if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 					$this->fail('unset() on vector_t indexed elements is not supported yet at line ' . $statement->line . '.');
 				}
+				if ($baseType === 'mixed_t') {
+					$shape = $this->inferForeachByRefSourceShape($baseExpr);
+					if ($shape !== 'non_vector') {
+						$this->fail('unset() on keyed mixed_t targets requires a hash-backed local array shape at line ' . $statement->line . '.');
+					}
+				}
 				return [$base . '.remove(' . $dim . ');'];
 			}
 			// Preserve the generic runtime fallback for non-array/table forms.

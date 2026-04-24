@@ -33,6 +33,7 @@ v1 includes:
 - `post_decrement`
 - `unset_value`
 - `unset_keyed`
+- `operators_compound_assignment`
 
 Other families may ignore this dimension in v1 unless later specs require it.
 
@@ -59,6 +60,20 @@ Examples:
 - hash element by key
 - array-like keyed storage location
 
+### `member_property`
+A writable member/property target.
+Examples:
+- object property
+- handle-backed member slot
+- direct `->property` write surface
+
+### `chained_writable_path`
+A writable path reached through a composed lvalue chain.
+Examples:
+- `->property[0]`
+- `["k"]->property`
+- representative deeper member/keyed write path whose final sink is still writable
+
 ### `temporary_result`
 A temporary expression result that may have a type/profile but is not a valid mutation/reset target.
 Examples:
@@ -75,6 +90,14 @@ Examples:
 - `plain_value` and `temporary_result` must not be treated as valid mutation targets
 - `assignable_variable` is the default valid target kind
 - `keyed_element` is valid only when higher-level specs/runtime support permit it
+
+### `operators_compound_assignment`
+- requires a writable lhs target form
+- `assignable_variable` is the default canonical target kind
+- `member_property` participates when the same compound-assignment semantics are written back through `->property`
+- `keyed_element` remains the canonical keyed/container write form
+- `chained_writable_path` represents a deeper composed write path that still resolves to a writable sink
+- `plain_value` and `temporary_result` are not valid compound-assignment targets
 
 ### `unset_value`
 - requires a targetable storage form

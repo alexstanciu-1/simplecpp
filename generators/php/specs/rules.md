@@ -271,13 +271,14 @@ Current architectural rule:
 
 - reduced PHP array subset (see catalog rows `ARR-*`)
 - `stdClass` / object iteration
-- `foreach` by value is supported for `vector_t` and for the current packed `hash_t<mixed_t>` surface
+- `foreach` by value is supported for `vector_t`, for the current packed `hash_t<mixed_t>` surface, and for approved wrappers that delegate an iterable success payload through the runtime iterable surface
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body
 - by-reference foreach is currently lowered through source-slot rewriting rather than a standalone alias local
 - value-only form synthesizes a hidden key local such as `_<value>_key_`
 - explicit-key form preserves the PHP key variable and rewrites the foreach value variable through the source slot keyed by that variable
 - this lowering is provisional and subject to future improvement
 - for boxed-array foreach over `mixed_t`, indexed loop lowering uses the generator-facing `mixed_t::size()` / `mixed_t::at(...)` surface instead of reaching through to raw table internals
+- for wrapper-carried iterable payloads, the generator remains type-blind and simply lowers against the runtime iterable surface exposed by the wrapper
 - explicit function/method reference returns require an explicit declared PHP return type and must still satisfy the native-reference safety rule; dynamic interior slot/property returns are not allowed
 - `include`, `include_once`, and `require`
 - `and` / `or` / `xor`
@@ -1269,3 +1270,4 @@ If a symbol is not present in the registry, the generator will **not** qualify i
 - `take($value, $bool, $source)` is valid only for source expressions typed as `result_or_bool<T>`.
 - `take(...)` output arguments must be simple local variables in v1. Wrong arity, wrong output type, or a non-wrapper source is a compile-time generator error when the source or output type is known.
 - `take(...)` evaluates its source expression exactly once and returns `bool_t`; for `result_or_bool<T>`, the helper returns `true` for both wrapped-value and bool-true states so mysqli-style APIs remain representable.
+- `take(...)` is the preferred explicit payload-extraction form for `result*<T>` wrappers because the generator does not perform symbol-resolution-driven wrapper inference.

@@ -137,13 +137,15 @@ static void test_value_t_operator_dispatch_numeric_and_string() {
 	assert((i1 ^ i2).int_value().native_value() == (10LL ^ 3LL));
 	assert((i1 << i2).int_value().native_value() == (10LL << 3LL));
 	assert((i1 >> i2).int_value().native_value() == (10LL >> 3LL));
-	assert((s1 + s2).string_if()->native_value() == "Alex");
 
 	assert((+i2).int_value().native_value() == 3);
 	assert((-i2).int_value().native_value() == -3);
 	assert((+f1).float_value().native_value() == 2.5);
 	assert((-f1).float_value().native_value() == -2.5);
 
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		(void)(s1 + s2);
+	});
 	scpp_test::expect_throw<std::runtime_error>([&]() {
 		(void)(s1 - s2);
 	});
@@ -217,6 +219,15 @@ static void test_value_t_assignment_and_increment() {
 	assert(f1.float_value().native_value() == 14.0);
 	f1 /= scpp::mixed_t(scpp::float_t(2.0));
 	assert(f1.float_value().native_value() == 7.0);
+	scpp_test::expect_throw<scpp::runtime_error>([&]() {
+		(void)(i1 / scpp::mixed_t(scpp::int_t(0)));
+	});
+	scpp_test::expect_throw<scpp::runtime_error>([&]() {
+		(void)(i1 % scpp::mixed_t(scpp::int_t(0)));
+	});
+	scpp_test::expect_throw<scpp::runtime_error>([&]() {
+		f1 /= scpp::mixed_t(scpp::float_t(0.0));
+	});
 
 	scpp::mixed_t inc_int(scpp::int_t(1));
 	scpp::mixed_t inc_float(scpp::float_t(1.5));

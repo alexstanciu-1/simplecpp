@@ -95,6 +95,8 @@ foreach ($data as $item) {
 
 Contract:
 - Iteration over arrays/dynamic structures is supported
+- Iteration over approved wrappers carrying iterable success payloads is supported
+- Direct iteration over a non-success wrapper state fails at runtime rather than silently acting as empty
 
 ---
 

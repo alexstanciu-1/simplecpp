@@ -439,20 +439,30 @@ TXT;
 			$expect = is_array($meta['expect'] ?? null) ? $meta['expect'] : [];
 			$compare = is_array($meta['compare'] ?? null) ? $meta['compare'] : [];
 
-			$phpRun = $this->runCommand(['php', $phpPath], $this->projectRoot, self::PHP_TIMEOUT_SECONDS);
-			$results['last_run']['stages']['php'] = [
-				'command' => ['php', $this->relativePath($phpPath)],
-				'exit_code' => $phpRun['exit_code'],
-				'stdout' => $this->normalizeOutput((string) $phpRun['stdout'], $compare, 'stdout'),
-				'stderr' => $this->normalizeOutput((string) $phpRun['stderr'], $compare, 'stderr'),
-				'timed_out' => $phpRun['timed_out'],
-				'duration_ms' => $phpRun['duration_ms'],
-				'success' => ($phpRun['exit_code'] === 0 && $phpRun['timed_out'] === false),
-				'comparison_ok' => true,
-				'comparison_notes' => [],
-			];
-
 			$phpExpect = is_array($expect['php'] ?? null) ? $expect['php'] : [];
+			$shouldRunPhpStage = (($phpExpect['run'] ?? false) === true) || (($meta['php_as_oracle'] ?? false) === true);
+			if ($shouldRunPhpStage) {
+				$phpRun = $this->runCommand(['php', $phpPath], $this->projectRoot, self::PHP_TIMEOUT_SECONDS);
+				$results['last_run']['stages']['php'] = [
+					'command' => ['php', $this->relativePath($phpPath)],
+					'exit_code' => $phpRun['exit_code'],
+					'stdout' => $this->normalizeOutput((string) $phpRun['stdout'], $compare, 'stdout'),
+					'stderr' => $this->normalizeOutput((string) $phpRun['stderr'], $compare, 'stderr'),
+					'timed_out' => $phpRun['timed_out'],
+					'duration_ms' => $phpRun['duration_ms'],
+					'success' => ($phpRun['exit_code'] === 0 && $phpRun['timed_out'] === false),
+					'comparison_ok' => true,
+					'comparison_notes' => [],
+				];
+			} else {
+				$results['last_run']['stages']['php'] = [
+					'skipped' => true,
+					'reason' => 'php_oracle_disabled',
+					'comparison_ok' => true,
+					'comparison_notes' => [],
+				];
+			}
+
 			if (($phpExpect['run'] ?? false) === true) {
 				$phpComparison = $this->compareStageRun($phpExpect, $results['last_run']['stages']['php'], $compare);
 				$results['last_run']['stages']['php']['comparison_ok'] = $phpComparison['ok'];

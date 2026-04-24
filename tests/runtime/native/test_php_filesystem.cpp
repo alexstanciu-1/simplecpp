@@ -317,6 +317,26 @@ static void test_scandir_sorted_names() {
 	assert(table.at(scpp::int_t(0)).get_string().native_value() == "A.txt");
 	assert(table.at(scpp::int_t(1)).get_string().native_value() == "a.txt");
 	assert(table.at(scpp::int_t(2)).get_string().native_value() == "b.txt");
+
+	scpp::hash_t<scpp::mixed_t> taken_listing;
+	assert(scpp::php::take(taken_listing, scpp::php::scandir(to_string_t(dir_path))).native_value());
+	assert(taken_listing.size() == 3);
+
+	std::size_t iterated = 0;
+	for (auto file = listing.begin_entries(); file != listing.end_entries(); ++file) {
+		const auto entry = *file;
+		if (iterated == 0) {
+			assert(entry.value_copy().get_string().native_value() == "A.txt");
+		}
+		++iterated;
+	}
+	assert(iterated == 3);
+
+	const auto missing_listing = scpp::php::scandir(to_string_t(guard.path() / "missing_iterable"));
+	assert(!missing_listing.has_value().native_value());
+	scpp_test::expect_throw<std::runtime_error>([&]() {
+		static_cast<void>(missing_listing.size());
+	});
 }
 
 static void test_failure_contracts() {
