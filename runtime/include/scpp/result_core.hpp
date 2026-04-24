@@ -208,6 +208,48 @@ public:
 	T &value() { return require_value("value()"); }
 	const T &value() const { return require_value("value() const"); }
 
+	template <typename U = T>
+	requires requires(const U &wrapped) { wrapped.size(); }
+	[[nodiscard]] decltype(auto) size() const {
+		return require_value("size() const").size();
+	}
+
+	template <typename U = T>
+	requires requires(U &wrapped, const int_t &index) { wrapped.at(index); }
+	decltype(auto) at(const int_t &index) {
+		return require_value("at(int_t)").at(index);
+	}
+
+	template <typename U = T>
+	requires requires(const U &wrapped, const int_t &index) { wrapped.at(index); }
+	decltype(auto) at(const int_t &index) const {
+		return require_value("at(int_t) const").at(index);
+	}
+
+	template <typename U = T>
+	requires requires(U &wrapped) { wrapped.begin_entries(); wrapped.end_entries(); }
+	decltype(auto) begin_entries() {
+		return require_value("begin_entries()").begin_entries();
+	}
+
+	template <typename U = T>
+	requires requires(U &wrapped) { wrapped.begin_entries(); wrapped.end_entries(); }
+	decltype(auto) end_entries() {
+		return require_value("end_entries()").end_entries();
+	}
+
+	template <typename U = T>
+	requires requires(const U &wrapped) { wrapped.begin_entries(); wrapped.end_entries(); }
+	decltype(auto) begin_entries() const {
+		return require_value("begin_entries() const").begin_entries();
+	}
+
+	template <typename U = T>
+	requires requires(const U &wrapped) { wrapped.begin_entries(); wrapped.end_entries(); }
+	decltype(auto) end_entries() const {
+		return require_value("end_entries() const").end_entries();
+	}
+
 	error_t &require_error(const char *context) requires AllowError {
 		if (state_ != result_state::error) {
 			throw_error_access(context, type_name());

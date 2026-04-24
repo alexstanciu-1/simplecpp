@@ -704,6 +704,13 @@ Generated and example code SHOULD:
 - `php::take($value, $bool, $source)` is the unified extraction helper for `result_or_bool<T>` wrappers
 - `result_or_bool<T>` returns `true` from `take(...)` for both wrapped-value and bool-true states so mysqli-style success-without-result APIs stay representable
 - outputs unrelated to the active wrapper branch remain unchanged
+- `take(...)` is runtime-owned, evaluates the source expression exactly once, and preserves the declared output slot type
+
+### 10.5 Wrapper iterable delegation
+
+- approved wrappers carrying iterable payloads may delegate the runtime iterable-by-value surface through guarded unwrap
+- this enables PHP `foreach ($wrapper as $value)` when the wrapper is in a success / value state and its carried payload is iterable
+- sentinel / empty / error wrapper states fail at runtime on unwrap rather than silently producing zero iterations
 
 ---
 
