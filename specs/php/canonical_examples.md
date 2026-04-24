@@ -252,6 +252,34 @@ for ($i = 0; $i < count($rows); $i++) {
 
 ---
 
+## Example 8a Ã¢â‚¬â€ Foreach over result wrapper success payload
+
+**Allowed**
+```php
+foreach (scandir($dir) as $file) {
+	echo $file, "\n";
+}
+```
+
+**Also preferred when the payload is reused**
+```php
+$files /** hash<mixed> */ = [];
+
+if (!take($files, scandir($dir))) {
+	return;
+}
+
+foreach ($files as $file) {
+	echo $file, "\n";
+}
+```
+
+**Notes**
+- direct foreach unwraps the success payload through the runtime wrapper bridge
+- false/error/sentinel branches are not treated as empty iteration
+
+---
+
 ## Example 9 â€” Explicit key existence vs emptiness
 
 **Preferred**
