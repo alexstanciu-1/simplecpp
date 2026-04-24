@@ -3697,70 +3697,63 @@ final class Generator
 			return ['// ERROR: unsupported foreach key target'];
 		}
 
-		$indexName = '__scpp_foreach_i_' . $statement->line;
-		$entryName = '__scpp_foreach_entry_' . $statement->line;
+		$sourceName = '__scpp_foreach_source_' . $statement->line;
+		$rangeName = '__scpp_foreach_range_' . $statement->line;
+		$iterName = '__scpp_foreach_it_' . $statement->line;
+		$endName = '__scpp_foreach_end_' . $statement->line;
 		$sourceType = $this->inferExprType($payload['expr'] ?? null);
-		$foreachByRefSourceShape = $this->inferForeachByRefSourceShape($payload['expr'] ?? null);
-		$isMixedTableForeach = $sourceType === 'mixed_t';
-		$sourceAccessExpr = $this->isUntypedTableHandleType($sourceType)
-			? '(*(' . $sourceExpr . '))'
-			: ($isMixedTableForeach ? '(' . $sourceExpr . ').get_hash()' : $sourceExpr);
-		$isUntypedTableForeach = $this->isUntypedTableType($sourceType) || $isMixedTableForeach;
-		$elementExpr = $sourceAccessExpr . '.at(' . $indexName . ')';
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
-		} elseif ($isUntypedTableForeach) {
+		} elseif (preg_match('/^result<vector_t<(.+)>>$/', $sourceType, $matches) === 1) {
+			$valueStoredType = $matches[1];
+		} elseif (preg_match('/^result_or_false<vector_t<(.+)>>$/', $sourceType, $matches) === 1) {
+			$valueStoredType = $matches[1];
+		} elseif (preg_match('/^result_or_bool<vector_t<(.+)>>$/', $sourceType, $matches) === 1) {
+			$valueStoredType = $matches[1];
+		} elseif (
+			$this->isUntypedTableType($sourceType)
+			|| $sourceType === 'mixed_t'
+			|| preg_match('/^result<mixed_t>$/', $sourceType) === 1
+			|| preg_match('/^result_or_false<mixed_t>$/', $sourceType) === 1
+			|| preg_match('/^result_or_bool<mixed_t>$/', $sourceType) === 1
+			|| preg_match('/^result<hash_t<mixed_t>>$/', $sourceType) === 1
+			|| preg_match('/^result_or_false<hash_t<mixed_t>>$/', $sourceType) === 1
+			|| preg_match('/^result_or_bool<hash_t<mixed_t>>$/', $sourceType) === 1
+			|| preg_match('/^result<::scpp::hash_t<mixed_t>>$/', $sourceType) === 1
+			|| preg_match('/^result_or_false<::scpp::hash_t<mixed_t>>$/', $sourceType) === 1
+			|| preg_match('/^result_or_bool<::scpp::hash_t<mixed_t>>$/', $sourceType) === 1
+		) {
 			$valueStoredType = 'mixed_t';
 		}
 
-		if ($byRef && !$isUntypedTableForeach && $foreachByRefSourceShape === 'non_vector') {
-			$this->errors[] = 'foreach by reference is currently supported for vector-like arrays only at line ' . $statement->line . '.';
-			return ['// ERROR: foreach by reference currently rejects non-vector arrays'];
-		}
-
-		if ($isUntypedTableForeach) {
-			$lines = [
-				'for (auto ' . $entryName . ' = ' . $sourceAccessExpr . '.begin_entries(); ' . $entryName . ' != ' . $sourceAccessExpr . '.end_entries(); ++' . $entryName . ') {',
-				$this->indent(1) . 'auto __scpp_foreach_entry_view = *' . $entryName . ';',
-			];
-		} else {
-			$lines = [
-				'for (int_t ' . $indexName . ' = static_cast<int_t>(0); static_cast<bool>(' . $indexName . ' < static_cast<int_t>(' . $sourceAccessExpr . '.size())); ++' . $indexName . ') {',
-			];
-		}
+		$lines = [
+			'auto&& ' . $sourceName . ' = ' . $sourceExpr . ';',
+			'auto ' . $rangeName . ' = ::scpp::foreach_range(' . $sourceName . ');',
+			'for (auto ' . $iterName . ' = ' . $rangeName . '.begin(), ' . $endName . ' = ' . $rangeName . '.end(); ' . $iterName . ' != ' . $endName . '; ++' . $iterName . ') {',
+			$this->indent(1) . 'auto __scpp_foreach_entry_view = *' . $iterName . ';',
+		];
 
 		$scopedLocals = $this->declaredLocals;
 		$scopedLocalTypes = $this->declaredLocalTypes;
 		$scopedReferenceLocals = $this->predefinedReferenceLocals;
 
 		$keyCppName = null;
-		$keyAccessExpr = $indexName;
 		if ($keyName !== null) {
 			$keyCppName = $this->localCppName($keyName);
-			if ($isUntypedTableForeach) {
-				$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = __scpp_foreach_entry_view.key();';
-				$this->declaredLocalTypes[$keyName] = 'mixed_t';
-			} else {
-				$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
-				$this->declaredLocalTypes[$keyName] = 'int_t';
-			}
+			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = __scpp_foreach_entry_view.key();';
 			$this->declaredLocals[$keyName] = true;
-			$keyAccessExpr = $keyCppName;
-		} elseif ($byRef && !$isUntypedTableForeach) {
-			$keyCppName = $this->allocateGeneratedLocalName('_' . $valueName . '_key_');
-			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
-			$keyAccessExpr = $keyCppName;
+			$this->declaredLocalTypes[$keyName] = 'mixed_t';
 		}
 
 		if ($byRef) {
 			$this->foreachReferenceSlotStack[] = [
-				$valueName => $isUntypedTableForeach ? '__scpp_foreach_entry_view.value_ref()' : ($sourceAccessExpr . '.at(' . $keyAccessExpr . ')'),
+				$valueName => '__scpp_foreach_entry_view.value_ref()',
 			];
 		} else {
 			$valueCppName = $this->localCppName($valueName);
 			$hasOuterValueBinding = isset($scopedLocals[$valueName]);
-			$currentElementExpr = $isUntypedTableForeach ? '__scpp_foreach_entry_view.value_copy()' : $elementExpr;
+			$currentElementExpr = '__scpp_foreach_entry_view.value_copy()';
 			if ($hasOuterValueBinding) {
 				$lines[] = $this->indent(1) . $valueCppName . ' = ' . $currentElementExpr . ';';
 			} else {
@@ -4112,6 +4105,10 @@ final class Generator
 			|| $type === '::scpp::hash_t'
 			|| $type === 'hash_t<mixed_t>'
 			|| $type === '::scpp::hash_t<mixed_t>'
+			|| $type === 'shared_p<hash_t<mixed_t>>'
+			|| $type === 'shared_p<::scpp::hash_t<mixed_t>>'
+			|| $type === '::scpp::shared_p<hash_t<mixed_t>>'
+			|| $type === '::scpp::shared_p<::scpp::hash_t<mixed_t>>'
 			|| $type === 'unique_p<hash_t<mixed_t>>'
 			|| $type === 'unique_p<::scpp::hash_t<mixed_t>>'
 			|| $type === '::scpp::unique_p<hash_t<mixed_t>>'
@@ -4120,7 +4117,11 @@ final class Generator
 
 	private function isUntypedTableHandleType(string $type): bool
 	{
-		return $type === 'unique_p<hash_t<mixed_t>>'
+		return $type === 'shared_p<hash_t<mixed_t>>'
+			|| $type === 'shared_p<::scpp::hash_t<mixed_t>>'
+			|| $type === '::scpp::shared_p<hash_t<mixed_t>>'
+			|| $type === '::scpp::shared_p<::scpp::hash_t<mixed_t>>'
+			|| $type === 'unique_p<hash_t<mixed_t>>'
 			|| $type === 'unique_p<::scpp::hash_t<mixed_t>>'
 			|| $type === '::scpp::unique_p<hash_t<mixed_t>>'
 			|| $type === '::scpp::unique_p<::scpp::hash_t<mixed_t>>';
