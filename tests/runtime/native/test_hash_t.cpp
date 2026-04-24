@@ -206,6 +206,20 @@ static void test_typed_table_and_builder_contract() {
 	assert(clearable.at(scpp::int_t(0)).int_value().native_value() == 42);
 }
 
+// Verifies string-key identity stays stable across table construction, lookup, and JSON encoding.
+static void test_string_key_identity_contract() {
+	scpp::mixed_t probe = scpp::mixed_t{
+		scpp::shared_table_(
+			scpp::table_kv_(scpp::string_t("name"), scpp::string_t("N")),
+			scpp::table_kv_(scpp::string_t("class"), scpp::string_t("C"))
+		)
+	};
+
+	assert(probe.get(scpp::string_t("name")).get_string().native_value() == "N");
+	assert(probe.get(scpp::string_t("class")).get_string().native_value() == "C");
+	assert(scpp::php::json_encode(probe).native_value() == "{\"name\":\"N\",\"class\":\"C\"}");
+}
+
 // Verifies nested table lookups stay non-inserting and null-safe through the current hash_t/mixed_t API.
 static void test_table_find_chain_contract() {
 	auto inner = scpp::unique<scpp::hash_t<scpp::mixed_t>>();
@@ -238,6 +252,7 @@ int main() {
 	test_table_entry_iteration_contract();
 	test_table_shared_object_like_contract();
 	test_typed_table_and_builder_contract();
+	test_string_key_identity_contract();
 	test_table_find_chain_contract();
 	return 0;
 }
