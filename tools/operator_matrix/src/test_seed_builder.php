@@ -432,7 +432,7 @@ function om_resolve_seed_outcome_class(array $row): string
 	if ($diagnosticClass === 'coalesce_reject_result_or_bool') {
 		return 'negative_runtime';
 	}
-	if ($status === 'compile_time_rejected' && $feature === 'unset_value') {
+	if ($status === 'compile_time_rejected' && ($feature === 'unset_value' || $feature === 'unset_keyed')) {
 		return 'negative_compile';
 	}
 	if ($status === 'compile_time_rejected') {

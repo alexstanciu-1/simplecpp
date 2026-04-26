@@ -866,11 +866,24 @@ final class Generator
 			$statements = [];
 		}
 		$localKinds = [];
+		foreach ($this->declaredLocalTypes as $name => $storedType) {
+			$localKinds[$name] = $this->validationKindForStoredLocalType($storedType);
+		}
 		foreach ($statements as $statement) {
 			if ($statement->kind === 'assign') {
 				$name = $this->extractSimpleVarName($statement->payload['var'] ?? null);
 				if ($name !== null) {
-					$localKinds[$name] = $this->inferValidationKind($statement->payload['expr'] ?? null, $localKinds);
+					$key = $statement->line . ':' . $name;
+					$typed = $this->localTypeComments[$key] ?? null;
+					if (is_string($typed) && $typed !== '') {
+						$storedType = $this->normalizeStoredLocalType($typed);
+						$this->declaredLocalTypes[$name] = $storedType;
+						$localKinds[$name] = $this->validationKindForStoredLocalType($storedType);
+					} elseif (isset($this->declaredLocalTypes[$name])) {
+						$localKinds[$name] = $this->validationKindForStoredLocalType($this->declaredLocalTypes[$name]);
+					} else {
+						$localKinds[$name] = $this->inferValidationKind($statement->payload['expr'] ?? null, $localKinds);
+					}
 				}
 				$this->validateExprTree($statement->payload['expr'] ?? null, $namespacePhp, $localKinds, $statement->line);
 				continue;
@@ -935,6 +948,22 @@ final class Generator
 		}
 	}
 
+	private function validationKindForStoredLocalType(string $storedType): string
+	{
+		$mapped = trim($this->typeMapper->mapDeclaredType($storedType));
+		return match (true) {
+			$mapped === 'mixed_t' => 'mixed',
+			$mapped === 'string_t' => 'string',
+			$mapped === 'bool_t' => 'bool',
+			$mapped === 'int_t', $mapped === 'float_t' => 'number',
+			str_starts_with($mapped, 'nullable<'),
+			str_starts_with($mapped, 'result<'),
+			str_starts_with($mapped, 'result_or_false<'),
+			str_starts_with($mapped, 'result_or_bool<') => 'wrapper',
+			default => 'unknown',
+		};
+	}
+
 	/** @param array<string, string> $localKinds */
 	private function validateExprTree(mixed $expr, ?string $namespacePhp, array $localKinds, int $line): void
 	{
@@ -958,7 +987,8 @@ final class Generator
 			if (in_array($flags, [AstKind::PLUS, AstKind::MINUS, AstKind::MUL, 4, 5], true)) {
 				$leftKind = $this->inferValidationKind($expr->children['left'] ?? null, $localKinds);
 				$rightKind = $this->inferValidationKind($expr->children['right'] ?? null, $localKinds);
-				if ($leftKind === 'string' || $rightKind === 'string') {
+				$hasMixedOperand = ($leftKind === 'mixed' || $rightKind === 'mixed');
+				if (($leftKind === 'string' || $rightKind === 'string') && !$hasMixedOperand) {
 					$this->errors[] = 'String used in arithmetic is rejected at line ' . $line . '.';
 				}
 			}
@@ -3130,7 +3160,7 @@ final class Generator
 				if ($baseType === 'mixed_t') {
 					$shape = $this->inferForeachByRefSourceShape($baseExpr);
 					if ($shape !== 'non_vector') {
-						$this->fail('unset() on keyed mixed_t targets requires a hash-backed local array shape at line ' . $statement->line . '.');
+						return ['unset_keyed(' . $base . ', ' . $dim . ');'];
 					}
 				}
 				return [$base . '.remove(' . $dim . ');'];
@@ -5457,7 +5487,7 @@ final class Generator
 				AstKind::BINARY_IS_SMALLER => '(' . $left . ' < ' . $right . ')',
 				AstKind::BINARY_IS_SMALLER_OR_EQUAL => '(' . $left . ' <= ' . $right . ')',
 				AstKind::BINARY_IS_GREATER => '(' . $left . ' > ' . $right . ')',
-				AstKind::BINARY_IS_NOT_EQUAL => '(' . $left . ' != ' . $right . ')',
+				AstKind::BINARY_IS_NOT_EQUAL => '(!(' . $left . ' == ' . $right . '))',
 				AstKind::BINARY_IS_EQUAL => '(' . $left . ' == ' . $right . ')',
 				AstKind::BINARY_IS_IDENTICAL => $this->qualifyKnownPhpRuntimeSymbol('identical') . '(' . $left . ', ' . $right . ')',
 				AstKind::BINARY_IS_NOT_IDENTICAL => $this->qualifyKnownPhpRuntimeSymbol('not_identical') . '(' . $left . ', ' . $right . ')',

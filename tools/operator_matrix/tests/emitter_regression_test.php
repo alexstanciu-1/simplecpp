@@ -14,6 +14,12 @@ function om_run_emitter_regression_test_suite(): void
 	om_assert_cast_float_uses_explicit_cast_form();
 	om_assert_cast_string_uses_explicit_cast_form();
 	om_assert_cast_wrapper_green_slice_is_enabled_by_default();
+	om_assert_coalesce_rows_are_enabled_by_default();
+	om_assert_ternary_rows_are_enabled_by_default();
+	om_assert_elvis_rows_are_enabled_by_default();
+	om_assert_ordering_wrapper_green_slice_is_enabled_by_default();
+	om_assert_equality_wrapper_green_slice_is_enabled_by_default();
+	om_assert_strict_identity_wrapper_green_slice_is_enabled_by_default();
 	om_assert_add_assign_uses_plain_compound_plus_form();
 	om_assert_add_assign_keyed_element_uses_dim_compound_plus_form();
 	om_assert_add_assign_member_property_uses_property_compound_plus_form();
@@ -24,10 +30,13 @@ function om_run_emitter_regression_test_suite(): void
 	om_assert_modulo_uses_plain_percent_form();
 	om_assert_bitwise_and_uses_plain_amp_form();
 	om_assert_binary_bitwise_negative_runtime_rows_are_enabled_by_default();
+	om_assert_binary_arithmetic_rows_are_enabled_by_default();
 	om_assert_unary_negative_runtime_rows_are_enabled_by_default();
+	om_assert_ordering_negative_runtime_rows_are_enabled_by_default();
 	om_assert_compound_arithmetic_negative_runtime_rows_are_enabled_by_default();
 	om_assert_compound_bitwise_negative_runtime_rows_are_enabled_by_default();
 	om_assert_unset_value_negative_compile_rows_are_enabled_by_default();
+	om_assert_unset_compile_rows_are_enabled_by_default();
 	om_assert_unset_keyed_empty_hash_emits_hash_backed_seed_literal();
 	om_assert_condition_truthiness_rows_are_enabled_by_default();
 	om_assert_shift_left_uses_plain_double_angle_form();
@@ -78,6 +87,66 @@ function om_assert_unset_value_negative_compile_rows_are_enabled_by_default(): v
 	}
 	if (($info['expect']['compile']['success'] ?? null) !== false) {
 		throw new RuntimeException('unset_value compile-rejected rows must expect compile failure.');
+	}
+}
+
+function om_assert_elvis_rows_are_enabled_by_default(): void
+{
+	$wrapperSeed = [
+		'seed_id' => 'seed|operators_conditional_selection|elvis|result_or_bool<bool_t>|result_or_bool.sentinel.true|result_or_bool<bool_t>|result_or_bool.sentinel.false|-|-',
+		'family_id' => 'operators_conditional_selection',
+		'feature' => 'elvis',
+		'item_id' => 'elvis',
+		'level' => 'level_01',
+		'outcome_class' => 'positive',
+		'test_seed_class' => 'runtime_success',
+		'operands' => [
+			'lhs' => [
+				'type' => 'result_or_bool<bool_t>',
+				'profile' => 'result_or_bool.sentinel.true',
+			],
+			'rhs' => [
+				'type' => 'result_or_bool<bool_t>',
+				'profile' => 'result_or_bool.sentinel.false',
+			],
+			'third' => [
+				'type' => null,
+				'profile' => null,
+			],
+		],
+	];
+	if (om_should_enable_seed_by_default($wrapperSeed) !== true) {
+		throw new RuntimeException('Validated elvis wrapper rows must now be enabled by default.');
+	}
+
+	$mixedThrowSeed = [
+		'seed_id' => 'seed|operators_conditional_selection|elvis|mixed_t|mixed.hash.empty|mixed_t|mixed.null|-|-',
+		'family_id' => 'operators_conditional_selection',
+		'feature' => 'elvis',
+		'item_id' => 'elvis',
+		'level' => 'level_01',
+		'outcome_class' => 'negative_runtime',
+		'test_seed_class' => 'runtime_throw',
+		'operands' => [
+			'lhs' => [
+				'type' => 'mixed_t',
+				'profile' => 'mixed.hash.empty',
+			],
+			'rhs' => [
+				'type' => 'mixed_t',
+				'profile' => 'mixed.null',
+			],
+			'third' => [
+				'type' => null,
+				'profile' => null,
+			],
+		],
+		'expected' => [
+			'diagnostic_class' => 'invalid_condition_type',
+		],
+	];
+	if (om_should_enable_seed_by_default($mixedThrowSeed) !== true) {
+		throw new RuntimeException('Validated elvis mixed-hash runtime-throw rows must now be enabled by default.');
 	}
 }
 
@@ -334,6 +403,211 @@ function om_assert_cast_wrapper_green_slice_is_enabled_by_default(): void
 	];
 	if (om_should_enable_seed_by_default($nullableStringCastIntThrow) !== true) {
 		throw new RuntimeException('Structured nullable<string_t> cast_int runtime-throw rows must now be enabled by default.');
+	}
+}
+
+function om_assert_coalesce_rows_are_enabled_by_default(): void
+{
+	$positiveSeed = [
+		'seed_id' => 'seed|operators_conditional_selection|coalesce|nullable<int_t>|nullable.present.int.nonzero|nullable<int_t>|nullable.present.int.zero|-|-',
+		'family_id' => 'operators_conditional_selection',
+		'feature' => 'coalesce',
+		'item_id' => 'coalesce',
+		'level' => 'level_01',
+		'outcome_class' => 'positive',
+		'test_seed_class' => 'runtime_success',
+		'operands' => [
+			'lhs' => [
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.present.int.nonzero',
+			],
+			'rhs' => [
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.present.int.zero',
+			],
+		],
+	];
+
+	if (om_should_enable_seed_by_default($positiveSeed) !== true) {
+		throw new RuntimeException('Validated coalesce wrapper rows must be enabled by default.');
+	}
+
+	$throwSeed = [
+		'seed_id' => 'seed|operators_conditional_selection|coalesce|string_t|string.numeric_zero|result_or_bool<string_t>|result_or_bool.bool.true|-|-',
+		'family_id' => 'operators_conditional_selection',
+		'feature' => 'coalesce',
+		'item_id' => 'coalesce',
+		'level' => 'level_01',
+		'outcome_class' => 'negative_runtime',
+		'test_seed_class' => 'runtime_throw',
+		'operands' => [
+			'lhs' => [
+				'type' => 'string_t',
+				'profile' => 'string.numeric_zero',
+			],
+			'rhs' => [
+				'type' => 'result_or_bool<string_t>',
+				'profile' => 'result_or_bool.bool.true',
+			],
+		],
+		'expected' => [
+			'diagnostic_class' => 'coalesce_reject_result_or_bool',
+		],
+	];
+
+	if (om_should_enable_seed_by_default($throwSeed) !== true) {
+		throw new RuntimeException('Validated coalesce runtime-throw rows must be enabled by default.');
+	}
+}
+
+function om_assert_ternary_rows_are_enabled_by_default(): void
+{
+	$positiveSeed = [
+		'seed_id' => 'seed|operators_conditional_selection|ternary|nullable<int_t>|nullable.present.int.nonzero|nullable<int_t>|nullable.present.int.zero|nullable<int_t>|nullable.present.int.nonzero|-|-|-',
+		'family_id' => 'operators_conditional_selection',
+		'feature' => 'ternary',
+		'item_id' => 'ternary',
+		'level' => 'level_01',
+		'outcome_class' => 'positive',
+		'test_seed_class' => 'runtime_success',
+		'operands' => [
+			'lhs' => [
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.present.int.nonzero',
+			],
+			'rhs' => [
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.present.int.zero',
+			],
+			'third' => [
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.present.int.nonzero',
+			],
+		],
+	];
+
+	if (om_should_enable_seed_by_default($positiveSeed) !== true) {
+		throw new RuntimeException('Validated ternary wrapper rows must be enabled by default.');
+	}
+
+	$throwSeed = [
+		'seed_id' => 'seed|operators_conditional_selection|ternary|mixed_t|mixed.hash.empty|bool_t|bool.false|bool_t|bool.true|-|-|-',
+		'family_id' => 'operators_conditional_selection',
+		'feature' => 'ternary',
+		'item_id' => 'ternary',
+		'level' => 'level_01',
+		'outcome_class' => 'negative_runtime',
+		'test_seed_class' => 'runtime_throw',
+		'operands' => [
+			'lhs' => [
+				'type' => 'mixed_t',
+				'profile' => 'mixed.hash.empty',
+			],
+			'rhs' => [
+				'type' => 'bool_t',
+				'profile' => 'bool.false',
+			],
+			'third' => [
+				'type' => 'bool_t',
+				'profile' => 'bool.true',
+			],
+		],
+		'expected' => [
+			'diagnostic_class' => 'invalid_condition_type',
+		],
+	];
+
+	if (om_should_enable_seed_by_default($throwSeed) !== true) {
+		throw new RuntimeException('Validated ternary runtime-throw rows must be enabled by default.');
+	}
+}
+
+function om_assert_ordering_wrapper_green_slice_is_enabled_by_default(): void
+{
+	$seed = [
+		'seed_id' => 'seed|operators_comparison_ordering|less_than|nullable<float_t>|nullable.present.float.nonzero|nullable<float_t>|nullable.present.float.nonzero|-|-',
+		'family_id' => 'operators_comparison_ordering',
+		'feature' => 'less_than',
+		'item_id' => 'less_than',
+		'level' => 'level_01',
+		'outcome_class' => 'positive',
+		'test_seed_class' => 'runtime_success',
+		'operands' => [
+			[
+				'name' => 'lhs',
+				'type' => 'nullable<float_t>',
+				'profile' => 'nullable.present.float.nonzero',
+			],
+			[
+				'name' => 'rhs',
+				'type' => 'nullable<float_t>',
+				'profile' => 'nullable.present.float.nonzero',
+			],
+		],
+		'semantic_expectation' => [
+			'status' => 'supported',
+			'behavior_class' => 'deterministic_value',
+			'result_type' => 'bool_t',
+			'result_profile' => 'bool.false',
+		],
+	];
+
+	if (om_should_enable_seed_by_default($seed) !== true) {
+		throw new RuntimeException('Ordering wrapper positive rows must now be enabled by default.');
+	}
+}
+
+function om_assert_equality_wrapper_green_slice_is_enabled_by_default(): void
+{
+	$seed = [
+		'seed_id' => 'seed|operators_comparison_equality|equal|nullable<string_t>|nullable.present.string.empty|nullable<string_t>|nullable.present.string.zero_string|-|-',
+		'family_id' => 'operators_comparison_equality',
+		'feature' => 'equal',
+		'item_id' => 'equal',
+		'level' => 'level_01',
+		'outcome_class' => 'positive',
+		'test_seed_class' => 'runtime_success',
+		'operands' => [
+			'lhs' => [
+				'type' => 'nullable<string_t>',
+				'profile' => 'nullable.present.string.empty',
+			],
+			'rhs' => [
+				'type' => 'nullable<string_t>',
+				'profile' => 'nullable.present.string.zero_string',
+			],
+		],
+	];
+
+	if (om_should_enable_seed_by_default($seed) !== true) {
+		throw new RuntimeException('Equality wrapper positive rows must now be enabled by default.');
+	}
+}
+
+function om_assert_strict_identity_wrapper_green_slice_is_enabled_by_default(): void
+{
+	$seed = [
+		'seed_id' => 'seed|operators_strict_identity|identical|result_or_bool<string_t>|result_or_bool.success.string.zero_string|result_or_bool<string_t>|result_or_bool.success.string.empty|-|-',
+		'family_id' => 'operators_strict_identity',
+		'feature' => 'identical',
+		'item_id' => 'identical',
+		'level' => 'level_01',
+		'outcome_class' => 'positive',
+		'test_seed_class' => 'runtime_success',
+		'operands' => [
+			'lhs' => [
+				'type' => 'result_or_bool<string_t>',
+				'profile' => 'result_or_bool.success.string.zero_string',
+			],
+			'rhs' => [
+				'type' => 'result_or_bool<string_t>',
+				'profile' => 'result_or_bool.success.string.empty',
+			],
+		],
+	];
+
+	if (om_should_enable_seed_by_default($seed) !== true) {
+		throw new RuntimeException('Strict-identity wrapper positive rows must now be enabled by default.');
 	}
 }
 
@@ -648,10 +922,55 @@ function om_assert_binary_bitwise_negative_runtime_rows_are_enabled_by_default()
 	}
 
 	$controlSeed = $seed;
-	$controlSeed['feature'] = 'add';
-	$controlSeed['item_id'] = 'add';
+	$controlSeed['family_id'] = 'operators_comparison_equality';
+	$controlSeed['feature'] = 'equal';
+	$controlSeed['item_id'] = 'equal';
 	if (om_should_enable_seed_by_default($controlSeed) !== false) {
-		throw new RuntimeException('Unvalidated runtime-throw families must stay disabled by default.');
+		throw new RuntimeException('Non-enabled runtime-throw families must stay disabled by default.');
+	}
+}
+
+function om_assert_binary_arithmetic_rows_are_enabled_by_default(): void
+{
+	$throwSeed = [
+		'seed_id' => 'seed|operators_binary_arithmetic|divide|nullable<int_t>|nullable.empty|nullable<int_t>|nullable.present.int.nonzero|-|-',
+		'family_id' => 'operators_binary_arithmetic',
+		'feature' => 'divide',
+		'item_id' => 'divide',
+		'level' => 'level_01',
+		'outcome_class' => 'negative_runtime',
+		'test_seed_class' => 'runtime_throw',
+		'operands' => [
+			'lhs' => [
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.empty',
+			],
+			'rhs' => [
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.present.int.nonzero',
+			],
+		],
+		'expected' => [
+			'diagnostic_class' => 'invalid_nullable_unwrap_empty',
+		],
+	];
+	if (om_should_enable_seed_by_default($throwSeed) !== true) {
+		throw new RuntimeException('Binary arithmetic runtime-throw rows must now be enabled by default.');
+	}
+
+	$positiveSeed = $throwSeed;
+	$positiveSeed['seed_id'] = 'seed|operators_binary_arithmetic|add|nullable<float_t>|nullable.present.float.nonzero|nullable<float_t>|nullable.present.float.nonzero|-|-';
+	$positiveSeed['feature'] = 'add';
+	$positiveSeed['item_id'] = 'add';
+	$positiveSeed['outcome_class'] = 'positive';
+	$positiveSeed['test_seed_class'] = 'runtime_success';
+	$positiveSeed['operands']['lhs']['type'] = 'nullable<float_t>';
+	$positiveSeed['operands']['lhs']['profile'] = 'nullable.present.float.nonzero';
+	$positiveSeed['operands']['rhs']['type'] = 'nullable<float_t>';
+	$positiveSeed['operands']['rhs']['profile'] = 'nullable.present.float.nonzero';
+	unset($positiveSeed['expected']);
+	if (om_should_enable_seed_by_default($positiveSeed) !== true) {
+		throw new RuntimeException('Binary arithmetic wrapper-success rows must now be enabled by default.');
 	}
 }
 
@@ -713,6 +1032,42 @@ function om_assert_unary_negative_runtime_rows_are_enabled_by_default(): void
 	}
 }
 
+function om_assert_ordering_negative_runtime_rows_are_enabled_by_default(): void
+{
+	$seed = [
+		'seed_id' => 'seed|operators_comparison_ordering|less_than_or_equal|nullable<int_t>|nullable.empty|nullable<int_t>|nullable.empty|-|-',
+		'family_id' => 'operators_comparison_ordering',
+		'feature' => 'less_than_or_equal',
+		'item_id' => 'less_than_or_equal',
+		'level' => 'level_01',
+		'outcome_class' => 'negative_runtime',
+		'test_seed_class' => 'runtime_throw',
+		'operands' => [
+			[
+				'name' => 'lhs',
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.empty',
+			],
+			[
+				'name' => 'rhs',
+				'type' => 'nullable<int_t>',
+				'profile' => 'nullable.empty',
+			],
+		],
+		'semantic_expectation' => [
+			'status' => 'supported',
+			'behavior_class' => 'throws',
+			'result_type' => 'bool_t',
+			'result_profile' => 'bool.false',
+		],
+	];
+
+	$info = om_build_php_matrix_test_info($seed, 'ordering_negative_runtime', []);
+	if (($info['enabled'] ?? null) !== true) {
+		throw new RuntimeException('Ordering negative-runtime rows must now be enabled by default.');
+	}
+}
+
 function om_assert_compound_bitwise_negative_runtime_rows_are_enabled_by_default(): void
 {
 	$seed = [
@@ -752,8 +1107,8 @@ function om_assert_compound_bitwise_negative_runtime_rows_are_enabled_by_default
 	$controlSeed = $seed;
 	$controlSeed['feature'] = 'logical_and';
 	$controlSeed['item_id'] = 'logical_and';
-	if (om_should_enable_seed_by_default($controlSeed) !== false) {
-		throw new RuntimeException('Unvalidated negative-runtime families must stay disabled by default.');
+	if (om_should_enable_seed_by_default($controlSeed) !== true) {
+		throw new RuntimeException('Validated logical runtime-throw rows must now be enabled by default.');
 	}
 }
 
@@ -812,6 +1167,51 @@ function om_assert_compound_arithmetic_negative_runtime_rows_are_enabled_by_defa
 	$moduloSeed['item_id'] = 'modulo_assign';
 	if (om_should_enable_seed_by_default($moduloSeed) !== true) {
 		throw new RuntimeException('Compound modulo assignment runtime-throw rows must be enabled by default once validated green.');
+	}
+}
+
+function om_assert_unset_compile_rows_are_enabled_by_default(): void
+{
+	$unsetValueSeed = [
+		'seed_id' => 'seed|language_probes_and_reset|unset_value|mixed_t|mixed.null|-|-|-|-',
+		'family_id' => 'language_probes_and_reset',
+		'feature' => 'unset_value',
+		'item_id' => 'unset_value',
+		'outcome_class' => 'negative_compile',
+		'test_seed_class' => 'compile_fail',
+		'operands' => [
+			'lhs' => [
+				'type' => 'mixed_t',
+				'profile' => 'mixed.null',
+			],
+			'rhs' => [
+				'type' => null,
+				'profile' => null,
+			],
+			'third' => [
+				'type' => null,
+				'profile' => null,
+			],
+		],
+		'expected' => [
+			'diagnostic_class' => 'unsupported_unset_target',
+		],
+	];
+	if (om_should_enable_seed_by_default($unsetValueSeed) !== true) {
+		throw new RuntimeException('unset_value compile-rejected rows must stay enabled by default.');
+	}
+
+	$unsetKeyedSeed = $unsetValueSeed;
+	$unsetKeyedSeed['seed_id'] = 'seed|language_probes_and_reset|unset_keyed|mixed_t|mixed.bool.false|-|-|-|-';
+	$unsetKeyedSeed['feature'] = 'unset_keyed';
+	$unsetKeyedSeed['item_id'] = 'unset_keyed';
+	$unsetKeyedSeed['expected'] = [
+		'diagnostic_class' => 'unsupported_unset_keyed_target',
+	];
+	$unsetKeyedSeed['operands']['lhs']['profile'] = 'mixed.bool.false';
+	$unsetKeyedSeed['operands']['lhs']['target_kind'] = 'keyed_element';
+	if (om_should_enable_seed_by_default($unsetKeyedSeed) !== true) {
+		throw new RuntimeException('unset_keyed compile-rejected rows must now be enabled by default.');
 	}
 }
 
