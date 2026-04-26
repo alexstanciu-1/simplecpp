@@ -12,6 +12,7 @@
 #include "scpp/unique_p.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/dynamic_t.hpp"
+#include "scpp/util/global_string_pool.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -96,43 +97,6 @@ private:
         std::uint32_t deleted_count_ = 0;
     };
 
-    // Per-instantiation string pool (singleton per T_VALUE type).
-    class string_pool_t {
-    public:
-        static constexpr std::uint32_t string_key_flag = 0x80000000u;
-        static constexpr std::uint32_t string_id_mask  = 0x7FFFFFFFu;
-
-        static string_pool_t &instance() {
-            static string_pool_t pool;
-            return pool;
-        }
-        string_pool_t(const string_pool_t &)            = delete;
-        string_pool_t &operator=(const string_pool_t &) = delete;
-
-        std::uint32_t intern(const string_t &value) {
-            auto it = lookup_.find(value.native_value());
-            if (it != lookup_.end()) return it->second | string_key_flag;
-            const auto id = static_cast<std::uint32_t>(strings_.size());
-            if (id > string_id_mask) throw std::overflow_error("string pool full");
-            auto [ins, ok] = lookup_.emplace(value.native_value(), id);
-            (void)ok;
-            strings_.push_back(&ins->first);
-            return id | string_key_flag;
-        }
-        [[nodiscard]] string_t resolve(std::uint32_t k) const {
-            if (!is_string_id(k)) throw std::logic_error("hash_t::string_pool_t::resolve: key is not a string id");
-            const auto id = (k & string_id_mask);
-            if (id >= strings_.size()) throw std::out_of_range("hash_t::string_pool_t::resolve: invalid string id");
-            return string_t(*strings_[id]);
-        }
-        static bool is_string_id(std::uint32_t k) { return (k & string_key_flag) != 0; }
-
-    private:
-        string_pool_t() = default;
-        std::unordered_map<std::string, std::uint32_t> lookup_;
-        std::vector<const std::string *>               strings_;
-    };
-
     native_values_t values_;
     std::variant<std::monostate, native_keys_t> keys_;
     std::variant<
@@ -177,7 +141,7 @@ private:
         if (php_target_parse_non_negative_int_key(k.native_value(), normalized_int_key)) {
             return normalized_int_key;
         }
-        return string_pool_t::instance().intern(k);
+        return global_string_pool::instance().intern(k);
     }
 
     void wake_up_associative_mode() {
@@ -256,7 +220,7 @@ private:
 
     void insert_or_assign_int(std::uint32_t key, T_VALUE value) {
         if (std::holds_alternative<std::monostate>(keys_)) {
-            if (!string_pool_t::is_string_id(key)) {
+            if (!global_string_pool::is_string_id(key)) {
                 if (key < values_.size())  { values_[key] = std::move(value); return; }
                 if (key == values_.size()) { values_.push_back(std::move(value)); return; }
             }
@@ -272,7 +236,7 @@ private:
 
     std::pair<bool, T_VALUE *> find_int(std::uint32_t key) {
         if (std::holds_alternative<std::monostate>(keys_)) {
-            if (!string_pool_t::is_string_id(key) && key < values_.size())
+            if (!global_string_pool::is_string_id(key) && key < values_.size())
                 return {true, &values_[key]};
             return {false, nullptr};
         }
@@ -299,7 +263,7 @@ private:
 
     std::pair<bool, const T_VALUE *> find_int(std::uint32_t key) const {
         if (std::holds_alternative<std::monostate>(keys_)) {
-            if (!string_pool_t::is_string_id(key) && key < values_.size())
+            if (!global_string_pool::is_string_id(key) && key < values_.size())
                 return {true, &values_[key]};
             return {false, nullptr};
         }
@@ -358,7 +322,7 @@ private:
             return static_cast<std::uint32_t>(values_.size());
         std::uint32_t max_k = 0; bool have = false;
         for (const auto k : std::get<native_keys_t>(keys_)) {
-            if (k == TOMBSTONE_KEY || string_pool_t::is_string_id(k)) continue;
+            if (k == TOMBSTONE_KEY || global_string_pool::is_string_id(k)) continue;
             if (!have || k > max_k) { max_k = k; have = true; }
         }
         return have ? (max_k + 1) : 0;
@@ -381,8 +345,8 @@ private:
             throw std::out_of_range("hash_t::key_from_physical_index: invalid entry index");
         }
         const auto key = ks[index];
-        if (string_pool_t::is_string_id(key)) {
-            return mixed_t(string_pool_t::instance().resolve(key));
+        if (global_string_pool::is_string_id(key)) {
+            return mixed_t(global_string_pool::instance().resolve(key));
         }
         return mixed_t(int_t{static_cast<std::int64_t>(key)});
     }
@@ -750,8 +714,8 @@ public:
         for (std::uint32_t i = 0; i < ks.size(); ++i) {
             const auto key = ks[i];
             if (key == TOMBSTONE_KEY) continue;
-            if (string_pool_t::is_string_id(key)) {
-                fn(string_pool_t::instance().resolve(key), values_[i]);
+            if (global_string_pool::is_string_id(key)) {
+                fn(global_string_pool::instance().resolve(key), values_[i]);
                 continue;
             }
             fn(int_t{static_cast<std::int64_t>(key)}, values_[i]);
@@ -831,3 +795,4 @@ inline unique_p<hash_t<mixed_t>> mixed_t::take_table_value() {
 }
 
 } // namespace scpp
+

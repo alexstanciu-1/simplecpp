@@ -29,6 +29,7 @@
 #include "scpp/nullable.hpp"
 #include "scpp/result_or_false.hpp"
 #include "scpp/result_or_bool.hpp"
+#include "scpp/foreach.hpp"
 #include "scpp/error_t.hpp"
 #include "scpp/result.hpp"
 #include "scpp/mixed_t.hpp"

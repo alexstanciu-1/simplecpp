@@ -1,0 +1,49 @@
+{
+    "id": "control_flow_025_foreach_mixed_object_key_ref_value",
+    "feature": "control_flow",
+    "level": "level_02",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "a:11\nb:12\n11\n12\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "a:11\nb:12\n11\n12\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "control_flow"
+    ],
+    "notes": "foreach mixed object key/value-by-reference form should expose keys and mutate underlying entries.",
+    "build": {
+        "sanitizers": null
+    }
+}

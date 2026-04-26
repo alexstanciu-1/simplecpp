@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+$items /** vector<int> */ = [4, 5];
+$wrapped /** result_or_false<vector<int>> */ = $items;
+
+foreach ($wrapped as $k => &$value) {
+	$value = $value + 1;
+	echo $k, ":", $value, "\n";
+}
+
+echo $wrapped[0], "\n";
+echo $wrapped[1], "\n";

@@ -20,6 +20,8 @@ require $path;             // invalid
 3. Semantics:
 - inclusion is compile-time dependency linking
 - all files form a static program graph
+- namespace-scoped class headers may require forward declarations for referenced classes before full class definitions are emitted
+- the generator should emit `class X;` style forward declarations early enough to support same-namespace cycles across included files
 
 4. Not supported:
 - dynamic includes
@@ -34,6 +36,7 @@ This model enforces:
 - deterministic builds
 - static analysis compatibility
 - correct C++ mapping
+- safe header generation for cross-file class references without forcing users to flatten type graphs artificially
 
 This is a deliberate language design decision.
 
