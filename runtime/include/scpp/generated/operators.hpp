@@ -25,7 +25,7 @@
 
 namespace scpp {
 
-// Generated from runtime/specs/config.json on 2026-04-24T09:57:06+00:00.
+// Generated from runtime/specs/config.json on 2026-04-24T15:02:47+00:00.
 // Enabled config families: bool_logical, float_arithmetic, float_logical, float_mutation, int_arithmetic, int_bitwise_and_mutation, int_logical, mixed_numeric, mixed_numeric_logical, null_comparisons, nullable_lifted_ops, nullable_ops, pointer_null_comparisons, string_ops, table_identity_comparisons.
 // Do not edit manually.
 
@@ -142,6 +142,31 @@ concept is_lifted_bitwise_operand =
 	|| (is_lifted_compound_wrapper<T> && (is_native_int<lifted_compound_inner_t<T>> || is_mixed<lifted_compound_inner_t<T>>));
 
 template <typename T>
+concept is_lifted_logical_operand =
+	(is_bool<T> || is_native_number<T> || is_mixed<T>)
+	|| (is_lifted_compound_wrapper<T> && (is_bool<lifted_compound_inner_t<T>> || is_native_number<lifted_compound_inner_t<T>> || is_mixed<lifted_compound_inner_t<T>>));
+
+template <typename T>
+concept is_lifted_ordering_operand =
+	(is_native_number<T> || is_string_like<T> || is_mixed<T>)
+	|| (is_lifted_compound_wrapper<T> && (is_native_number<lifted_compound_inner_t<T>> || is_string_like<lifted_compound_inner_t<T>> || is_mixed<lifted_compound_inner_t<T>>));
+
+template <typename T>
+concept is_lifted_equality_operand =
+	(is_bool<T> || is_native_number<T> || is_string_like<T> || is_mixed<T>)
+	|| (is_lifted_compound_wrapper<T> && (is_bool<lifted_compound_inner_t<T>> || is_native_number<lifted_compound_inner_t<T>> || is_string_like<lifted_compound_inner_t<T>> || is_mixed<lifted_compound_inner_t<T>>));
+
+template <typename T>
+concept is_lifted_arithmetic_operand =
+	(is_native_number<T> || is_mixed<T>)
+	|| (is_lifted_compound_wrapper<T> && (is_native_number<lifted_compound_inner_t<T>> || is_mixed<lifted_compound_inner_t<T>>));
+
+template <typename T>
+concept is_lifted_modulo_operand =
+	(is_native_int<T> || is_mixed<T>)
+	|| (is_lifted_compound_wrapper<T> && (is_native_int<lifted_compound_inner_t<T>> || is_mixed<lifted_compound_inner_t<T>>));
+
+template <typename T>
 	requires (is_native_number<T> || is_mixed<T>)
 [[nodiscard]] inline auto operator+(const T &value) {
 	using base_t = detail::remove_cvref_t<T>;
@@ -243,6 +268,14 @@ template <typename T1, typename T2>
 }
 
 template <typename T1, typename T2>
+	requires (is_lifted_arithmetic_operand<T1> && is_lifted_arithmetic_operand<T2>)
+[[nodiscard]] inline auto operator+(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted arithmetic operator+ requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted arithmetic operator+ requires a present right operand");
+	return lhs_value + rhs_value;
+}
+
+template <typename T1, typename T2>
 	requires ((is_native_number<T1> || is_mixed<T1>) && (is_native_number<T2> || is_mixed<T2>))
 [[nodiscard]] inline auto operator-(const T1 &lhs, const T2 &rhs) {
 	using lhs_t = detail::remove_cvref_t<T1>;
@@ -252,6 +285,14 @@ template <typename T1, typename T2>
 	} else {
 		return detail::generated_operator_detail::sub(lhs, rhs);
 	}
+}
+
+template <typename T1, typename T2>
+	requires (is_lifted_arithmetic_operand<T1> && is_lifted_arithmetic_operand<T2>)
+[[nodiscard]] inline auto operator-(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted arithmetic operator- requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted arithmetic operator- requires a present right operand");
+	return lhs_value - rhs_value;
 }
 
 template <typename T1, typename T2>
@@ -267,6 +308,14 @@ template <typename T1, typename T2>
 }
 
 template <typename T1, typename T2>
+	requires (is_lifted_arithmetic_operand<T1> && is_lifted_arithmetic_operand<T2>)
+[[nodiscard]] inline auto operator*(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted arithmetic operator* requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted arithmetic operator* requires a present right operand");
+	return lhs_value * rhs_value;
+}
+
+template <typename T1, typename T2>
 	requires ((is_native_number<T1> || is_mixed<T1>) && (is_native_number<T2> || is_mixed<T2>))
 [[nodiscard]] inline auto operator/(const T1 &lhs, const T2 &rhs) {
 	using lhs_t = detail::remove_cvref_t<T1>;
@@ -279,6 +328,14 @@ template <typename T1, typename T2>
 }
 
 template <typename T1, typename T2>
+	requires (is_lifted_arithmetic_operand<T1> && is_lifted_arithmetic_operand<T2>)
+[[nodiscard]] inline auto operator/(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted arithmetic operator/ requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted arithmetic operator/ requires a present right operand");
+	return lhs_value / rhs_value;
+}
+
+template <typename T1, typename T2>
 	requires ((is_native_int<T1> || is_mixed<T1>) && (is_native_int<T2> || is_mixed<T2>))
 [[nodiscard]] inline auto operator%(const T1 &lhs, const T2 &rhs) {
 	using lhs_t = detail::remove_cvref_t<T1>;
@@ -288,6 +345,14 @@ template <typename T1, typename T2>
 	} else {
 		return detail::generated_operator_detail::mod(lhs, rhs);
 	}
+}
+
+template <typename T1, typename T2>
+	requires (is_lifted_modulo_operand<T1> && is_lifted_modulo_operand<T2>)
+[[nodiscard]] inline auto operator%(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted arithmetic operator% requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted arithmetic operator% requires a present right operand");
+	return lhs_value % rhs_value;
 }
 
 template <typename T1, typename T2>
@@ -386,6 +451,193 @@ template <typename T1, typename T2>
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 
+template <typename T, typename U>
+[[nodiscard]] inline bool_t operator==(const nullable<T> &lhs, const nullable<U> &rhs) {
+	if (!lhs.has_value().native_value()) {
+		return bool_t(!rhs.has_value().native_value());
+	}
+	if (!rhs.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return lhs.value() == rhs.value();
+}
+
+template <typename T, typename Right>
+	requires is_lifted_equality_operand<Right>
+[[nodiscard]] inline bool_t operator==(const nullable<T> &lhs, const Right &rhs) {
+	if (!lhs.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return lhs.value() == rhs;
+}
+
+template <typename Left, typename T>
+	requires is_lifted_equality_operand<Left>
+[[nodiscard]] inline bool_t operator==(const Left &lhs, const nullable<T> &rhs) {
+	if (!rhs.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return lhs == rhs.value();
+}
+
+template <typename T, typename U>
+[[nodiscard]] inline bool_t operator!=(const nullable<T> &lhs, const nullable<U> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T, typename Right>
+	requires is_lifted_equality_operand<Right>
+[[nodiscard]] inline bool_t operator!=(const nullable<T> &lhs, const Right &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename Left, typename T>
+	requires is_lifted_equality_operand<Left>
+[[nodiscard]] inline bool_t operator!=(const Left &lhs, const nullable<T> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T, typename U>
+[[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, const result_or_false<U> &rhs) {
+	if (!lhs.has_value().native_value()) {
+		return bool_t(!rhs.has_value().native_value());
+	}
+	if (!rhs.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return lhs.value() == rhs.value();
+}
+
+template <typename T, typename Right>
+	requires is_lifted_equality_operand<Right>
+[[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, const Right &rhs) {
+	if (!lhs.has_value().native_value()) {
+		return bool_t(bool_t(false) == rhs);
+	}
+	return lhs.value() == rhs;
+}
+
+template <typename Left, typename T>
+	requires is_lifted_equality_operand<Left>
+[[nodiscard]] inline bool_t operator==(const Left &lhs, const result_or_false<T> &rhs) {
+	if (!rhs.has_value().native_value()) {
+		return bool_t(lhs == bool_t(false));
+	}
+	return lhs == rhs.value();
+}
+
+template <typename T, typename U>
+[[nodiscard]] inline bool_t operator!=(const result_or_false<T> &lhs, const result_or_false<U> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T, typename Right>
+	requires is_lifted_equality_operand<Right>
+[[nodiscard]] inline bool_t operator!=(const result_or_false<T> &lhs, const Right &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename Left, typename T>
+	requires is_lifted_equality_operand<Left>
+[[nodiscard]] inline bool_t operator!=(const Left &lhs, const result_or_false<T> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T, typename U>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, const result_or_bool<U> &rhs) {
+	if (!lhs.has_value().native_value()) {
+		if (!rhs.has_value().native_value()) {
+			return bool_t(lhs.is_true().native_value() == rhs.is_true().native_value());
+		}
+		return bool_t(false);
+	}
+	if (!rhs.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return lhs.value() == rhs.value();
+}
+
+template <typename T, typename Right>
+	requires is_lifted_equality_operand<Right>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, const Right &rhs) {
+	if (!lhs.has_value().native_value()) {
+		return bool_t(bool_t(lhs.is_true().native_value()) == rhs);
+	}
+	return lhs.value() == rhs;
+}
+
+template <typename Left, typename T>
+	requires is_lifted_equality_operand<Left>
+[[nodiscard]] inline bool_t operator==(const Left &lhs, const result_or_bool<T> &rhs) {
+	if (!rhs.has_value().native_value()) {
+		return bool_t(lhs == bool_t(rhs.is_true().native_value()));
+	}
+	return lhs == rhs.value();
+}
+
+template <typename T, typename U>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, const result_or_bool<U> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T, typename Right>
+	requires is_lifted_equality_operand<Right>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, const Right &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename Left, typename T>
+	requires is_lifted_equality_operand<Left>
+[[nodiscard]] inline bool_t operator!=(const Left &lhs, const result_or_bool<T> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T, typename U>
+[[nodiscard]] inline bool_t operator==(const result<T> &lhs, const result<U> &rhs) {
+	if (lhs.has_error().native_value()) {
+		return bool_t(rhs.has_error().native_value());
+	}
+	if (rhs.has_error().native_value()) {
+		return bool_t(false);
+	}
+	return lhs.value() == rhs.value();
+}
+
+template <typename T, typename Right>
+	requires is_lifted_equality_operand<Right>
+[[nodiscard]] inline bool_t operator==(const result<T> &lhs, const Right &rhs) {
+	if (lhs.has_error().native_value()) {
+		return bool_t(false);
+	}
+	return lhs.value() == rhs;
+}
+
+template <typename Left, typename T>
+	requires is_lifted_equality_operand<Left>
+[[nodiscard]] inline bool_t operator==(const Left &lhs, const result<T> &rhs) {
+	if (rhs.has_error().native_value()) {
+		return bool_t(false);
+	}
+	return lhs == rhs.value();
+}
+
+template <typename T, typename U>
+[[nodiscard]] inline bool_t operator!=(const result<T> &lhs, const result<U> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T, typename Right>
+	requires is_lifted_equality_operand<Right>
+[[nodiscard]] inline bool_t operator!=(const result<T> &lhs, const Right &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename Left, typename T>
+	requires is_lifted_equality_operand<Left>
+[[nodiscard]] inline bool_t operator!=(const Left &lhs, const result<T> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
 template <typename T1, typename T2>
 	requires (((is_native_number<T1> || is_string_like<T1>) || is_mixed<T1>) &&
 			  ((is_native_number<T2> || is_string_like<T2>) || is_mixed<T2>))
@@ -401,6 +653,14 @@ template <typename T1, typename T2>
 	} else {
 		static_assert(detail::always_false_v<lhs_t, rhs_t>, "unsupported operator< combination");
 	}
+}
+
+template <typename T1, typename T2>
+	requires (is_lifted_ordering_operand<T1> && is_lifted_ordering_operand<T2>)
+[[nodiscard]] inline auto operator<(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted ordering operator< requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted ordering operator< requires a present right operand");
+	return lhs_value < rhs_value;
 }
 
 template <typename T1, typename T2>
@@ -421,6 +681,14 @@ template <typename T1, typename T2>
 }
 
 template <typename T1, typename T2>
+	requires (is_lifted_ordering_operand<T1> && is_lifted_ordering_operand<T2>)
+[[nodiscard]] inline auto operator<=(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted ordering operator<= requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted ordering operator<= requires a present right operand");
+	return lhs_value <= rhs_value;
+}
+
+template <typename T1, typename T2>
 	requires (((is_native_number<T1> || is_string_like<T1>) || is_mixed<T1>) &&
 			  ((is_native_number<T2> || is_string_like<T2>) || is_mixed<T2>))
 [[nodiscard]] inline auto operator>(const T1 &lhs, const T2 &rhs) {
@@ -435,6 +703,14 @@ template <typename T1, typename T2>
 	} else {
 		static_assert(detail::always_false_v<lhs_t, rhs_t>, "unsupported operator> combination");
 	}
+}
+
+template <typename T1, typename T2>
+	requires (is_lifted_ordering_operand<T1> && is_lifted_ordering_operand<T2>)
+[[nodiscard]] inline auto operator>(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted ordering operator> requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted ordering operator> requires a present right operand");
+	return lhs_value > rhs_value;
 }
 
 template <typename T1, typename T2>
@@ -455,32 +731,44 @@ template <typename T1, typename T2>
 }
 
 template <typename T1, typename T2>
-	requires ((is_bool<T1> || is_native_number<T1> || is_mixed<T1>) && (is_bool<T2> || is_native_number<T2> || is_mixed<T2>))
+	requires (is_lifted_ordering_operand<T1> && is_lifted_ordering_operand<T2>)
+[[nodiscard]] inline auto operator>=(const T1 &lhs, const T2 &rhs) {
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted ordering operator>= requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted ordering operator>= requires a present right operand");
+	return lhs_value >= rhs_value;
+}
+
+template <typename T1, typename T2>
+	requires (is_lifted_logical_operand<T1> && is_lifted_logical_operand<T2>)
 [[nodiscard]] inline auto operator&&(const T1 &lhs, const T2 &rhs) {
-	using lhs_t = detail::remove_cvref_t<T1>;
-	using rhs_t = detail::remove_cvref_t<T2>;
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted logical operator&& requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted logical operator&& requires a present right operand");
+	using lhs_t = detail::remove_cvref_t<decltype(lhs_value)>;
+	using rhs_t = detail::remove_cvref_t<decltype(rhs_value)>;
 	if constexpr (is_mixed<lhs_t> || is_mixed<rhs_t>) {
-		return mixed_t(lhs) && mixed_t(rhs);
+		return mixed_t(lhs_value) && mixed_t(rhs_value);
 	} else if constexpr (is_bool<lhs_t> && is_bool<rhs_t>) {
-		return detail::generated_operator_detail::logical_and(lhs, rhs);
+		return detail::generated_operator_detail::logical_and(lhs_value, rhs_value);
 	} else if constexpr (is_native_number<lhs_t> && is_native_number<rhs_t>) {
-		return detail::generated_operator_detail::logical_and(lhs, rhs);
+		return detail::generated_operator_detail::logical_and(lhs_value, rhs_value);
 	} else {
 		static_assert(detail::always_false_v<lhs_t, rhs_t>, "unsupported operator&& combination");
 	}
 }
 
 template <typename T1, typename T2>
-	requires ((is_bool<T1> || is_native_number<T1> || is_mixed<T1>) && (is_bool<T2> || is_native_number<T2> || is_mixed<T2>))
+	requires (is_lifted_logical_operand<T1> && is_lifted_logical_operand<T2>)
 [[nodiscard]] inline auto operator||(const T1 &lhs, const T2 &rhs) {
-	using lhs_t = detail::remove_cvref_t<T1>;
-	using rhs_t = detail::remove_cvref_t<T2>;
+	const auto &lhs_value = require_lifted_compound_value(lhs, "lifted logical operator|| requires a present left operand");
+	const auto &rhs_value = require_lifted_compound_value(rhs, "lifted logical operator|| requires a present right operand");
+	using lhs_t = detail::remove_cvref_t<decltype(lhs_value)>;
+	using rhs_t = detail::remove_cvref_t<decltype(rhs_value)>;
 	if constexpr (is_mixed<lhs_t> || is_mixed<rhs_t>) {
-		return mixed_t(lhs) || mixed_t(rhs);
+		return mixed_t(lhs_value) || mixed_t(rhs_value);
 	} else if constexpr (is_bool<lhs_t> && is_bool<rhs_t>) {
-		return detail::generated_operator_detail::logical_or(lhs, rhs);
+		return detail::generated_operator_detail::logical_or(lhs_value, rhs_value);
 	} else if constexpr (is_native_number<lhs_t> && is_native_number<rhs_t>) {
-		return detail::generated_operator_detail::logical_or(lhs, rhs);
+		return detail::generated_operator_detail::logical_or(lhs_value, rhs_value);
 	} else {
 		static_assert(detail::always_false_v<lhs_t, rhs_t>, "unsupported operator|| combination");
 	}

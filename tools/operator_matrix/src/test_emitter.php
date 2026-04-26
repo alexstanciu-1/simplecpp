@@ -844,7 +844,7 @@ function om_should_enable_seed_by_default(array $seed): bool
 	}
 
 	if ($outcomeClass === 'negative_compile') {
-		return $feature === 'unset_value';
+		return $feature === 'unset_value' || $feature === 'unset_keyed';
 	}
 
 	if ($outcomeClass !== 'positive') {
@@ -860,11 +860,21 @@ function om_should_enable_seed_by_default(array $seed): bool
 	}
 
 	$wrapperEnabledFeatures = [
+		'coalesce' => true,
+		'ternary' => true,
+		'elvis' => true,
+		'add' => true,
+		'subtract' => true,
+		'multiply' => true,
+		'divide' => true,
+		'modulo' => true,
 		'add_assign' => true,
 		'subtract_assign' => true,
 		'multiply_assign' => true,
 		'divide_assign' => true,
 		'modulo_assign' => true,
+		'logical_and' => true,
+		'logical_or' => true,
 		'bitwise_and' => true,
 		'bitwise_or' => true,
 		'bitwise_xor' => true,
@@ -875,6 +885,14 @@ function om_should_enable_seed_by_default(array $seed): bool
 		'bitwise_xor_assign' => true,
 		'shift_left_assign' => true,
 		'shift_right_assign' => true,
+		'equal' => true,
+		'not_equal' => true,
+		'identical' => true,
+		'not_identical' => true,
+		'less_than' => true,
+		'less_than_or_equal' => true,
+		'greater_than' => true,
+		'greater_than_or_equal' => true,
 	];
 
 	$hasWrapperOperand = false;
@@ -912,7 +930,12 @@ function om_seed_supports_cast_wrapper_enablement_by_default(array $seed): bool
 function om_feature_supports_negative_runtime_enablement_by_default(string $feature): bool
 {
 	return isset([
+		'coalesce' => true,
+		'ternary' => true,
+		'elvis' => true,
 		'logical_not' => true,
+		'logical_and' => true,
+		'logical_or' => true,
 		'unary_plus' => true,
 		'unary_minus' => true,
 		'bitwise_not' => true,
@@ -920,6 +943,11 @@ function om_feature_supports_negative_runtime_enablement_by_default(string $feat
 		'post_increment' => true,
 		'pre_decrement' => true,
 		'post_decrement' => true,
+		'add' => true,
+		'subtract' => true,
+		'multiply' => true,
+		'divide' => true,
+		'modulo' => true,
 		'add_assign' => true,
 		'subtract_assign' => true,
 		'multiply_assign' => true,
@@ -935,6 +963,10 @@ function om_feature_supports_negative_runtime_enablement_by_default(string $feat
 		'bitwise_xor_assign' => true,
 		'shift_left_assign' => true,
 		'shift_right_assign' => true,
+		'less_than' => true,
+		'less_than_or_equal' => true,
+		'greater_than' => true,
+		'greater_than_or_equal' => true,
 	][$feature]);
 }
 
@@ -1172,6 +1204,20 @@ function om_render_expected_var_dump(string $profile): string
 		'string.bool_false_literal', 'mixed.string.bool_false_literal' => "string(5) \"false\"\n",
 		'string.bool_true_literal', 'mixed.string.bool_true_literal' => "string(4) \"true\"\n",
 		'string.nonempty_nonzero_nonbool_literal', 'mixed.string.nonempty_nonzero_nonbool_literal' => "string(5) \"hello\"\n",
+		'nullable.empty', 'result.failure' => "NULL\n",
+		'nullable.present.bool.false', 'result.success.bool.false', 'result_or_false.success.bool.false', 'result_or_bool.success.bool.false' => "bool(false)\n",
+		'nullable.present.bool.true', 'result.success.bool.true', 'result_or_false.success.bool.true', 'result_or_bool.success.bool.true' => "bool(true)\n",
+		'nullable.present.int.zero', 'result.success.int.zero', 'result_or_false.success.int.zero', 'result_or_bool.success.int.zero' => "int(0)\n",
+		'nullable.present.int.nonzero', 'result.success.int.nonzero', 'result_or_false.success.int.nonzero', 'result_or_bool.success.int.nonzero' => "int(7)\n",
+		'nullable.present.float.zero', 'result.success.float.zero', 'result_or_false.success.float.zero', 'result_or_bool.success.float.zero' => "float(0)\n",
+		'nullable.present.float.nonzero', 'result.success.float.nonzero', 'result_or_false.success.float.nonzero', 'result_or_bool.success.float.nonzero' => "float(3.5)\n",
+		'nullable.present.string.empty', 'result.success.string.empty', 'result_or_false.success.string.empty', 'result_or_bool.success.string.empty' => "string(0) \"\"\n",
+		'nullable.present.string.zero_string', 'result.success.string.zero_string', 'result_or_false.success.string.zero_string', 'result_or_bool.success.string.zero_string' => "string(1) \"0\"\n",
+		'nullable.present.string.bool_false_literal', 'result.success.string.bool_false_literal', 'result_or_false.success.string.bool_false_literal', 'result_or_bool.success.string.bool_false_literal' => "string(5) \"false\"\n",
+		'nullable.present.string.bool_true_literal', 'result.success.string.bool_true_literal', 'result_or_false.success.string.bool_true_literal', 'result_or_bool.success.string.bool_true_literal' => "string(4) \"true\"\n",
+		'nullable.present.string.nonempty_nonzero_nonbool_literal', 'result.success.string.nonempty_nonzero_nonbool_literal', 'result_or_false.success.string.nonempty_nonzero_nonbool_literal', 'result_or_bool.success.string.nonempty_nonzero_nonbool_literal' => "string(5) \"hello\"\n",
+		'result_or_false.sentinel.false', 'result_or_bool.sentinel.false' => "bool(false)\n",
+		'result_or_bool.sentinel.true' => "bool(true)\n",
 		'mixed.null' => "NULL\n",
 		'mixed.hash.empty' => "array(0) {\n}\n",
 		'mixed.hash.nonempty' => "array(1) {\n  [\"k\"]=>\n  int(1)\n}\n",
