@@ -93,6 +93,7 @@ v1 requires target-kind expansion for:
 - `post_decrement`
 - `unset_value`
 - `unset_keyed`
+- `operators_compound_assignment`
 
 Canonical target kinds come from `operand_target_kinds_v1.md`.
 

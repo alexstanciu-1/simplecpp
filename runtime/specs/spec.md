@@ -153,6 +153,14 @@ For current migration work, this means:
 - invalid dynamic combinations remain runtime-handled behavior
 - operator overloads must not become competing semantic authorities; if present, they must delegate to the family authority
 
+Ordering operators follow the same guarded wrapper-lift rule as the other migrated
+families when the matrix admits wrapper participation:
+
+- approved wrappers such as `nullable<T>`, `result<T>`, `result_or_false<T>`, and
+  `result_or_bool<T>` compile for the admitted ordering payload types
+- present payloads unwrap and delegate to the inner ordering operator
+- empty or sentinel wrapper states compile and then raise runtime unwrap errors
+
 This rule exists to make overload participation deliberate and reviewable.
 
 ## 4. Stable API philosophy
@@ -264,6 +272,9 @@ Included initially:
 - generated C++ control-flow must bridge explicitly from semantic boolean representation to native C++ condition evaluation
 - the approved control-flow bridge is an explicit native-bool conversion from the shared condition helper result (`static_cast<bool>(::scpp::condition_truthy(...))` for general condition sites, or `static_cast<bool>(...)` for values already known to be `bool_t`), not `.native_value()` in generated conditions
 - `bool_t` must not provide uncontrolled truthiness; any native-bool bridge must remain explicit
+- generated logical `&&` / `||` on approved mixed and wrapper carriers must follow that same condition-truthiness bridge rather than inventing a second truthiness rule
+- approved wrapper carriers for logical `&&` / `||` unwrap present payloads and delegate to the shared logical family; empty or sentinel wrapper states stay runtime-failing unwraps rather than becoming compile-time rejection
+- mixed logical `&&` / `||` remain left-to-right short-circuiting at the condition-truthiness bridge, so an invalid right-hand mixed kind may be bypassed when the left operand already determines the result
 
 ### 6.3 `int_t` and `float_t`
 - these are semantic numeric wrappers, not aliases
@@ -329,6 +340,7 @@ Included initially:
 - `nullable<T>::operator->()` is part of the stable nullable runtime surface for object-like use; it must require a present wrapped value and then either forward to wrapped `T::operator->()` when `T` already exposes it or return the address of the wrapped object when direct-object member access is needed
 - empty nullable dereference through `operator->()` must throw a project-shaped runtime error with explicit arrow-context wording so the user can quickly identify null object/property or method access
 - equality/inequality remain the narrow null-aware exception: `nullable<T> == null_t/nullopt_t` is allowed explicitly, `nullable<T> == value` returns false when empty, and relational/arithmetic/logical use of an empty nullable remains a runtime error
+- wrapper-aware equality follows branch normalization rather than guarded unwrap: `nullable<T>` compares empty-to-empty as equal, `result_or_false<T>` keeps the false sentinel distinct from wrapped payload values, `result_or_bool<T>` keeps its true/false sentinel states distinct from wrapped payload values, and `result<T>` treats matching failure states as equal in the current matrix slice
 - the temporary typed-boundary bridge is not a general operator-resolution escape hatch and must not be relied on to define operator participation outside the centralized operator surface
 
 ### 6.11 Reset/cleanup semantics
@@ -474,6 +486,8 @@ Required interpretation for this phase:
 - `float_t` arithmetic uses native C++ floating-point semantics, including IEEE-style `/`
 - integer-only operators such as `%`, `&`, `|`, `^`, `~`, `<<`, and `>>` follow native C++ behavior
 - compound assignment operators such as `+=`, `/=`, and `<<=` follow the corresponding native C++ base operator
+- approved integer wrapper carriers such as `nullable<int_t>`, `result<int_t>`, `result_or_false<int_t>`, and `result_or_bool<int_t>` participate in integer bitwise and shift families by guarded wrapper lifting: present/success payloads unwrap and delegate to the corresponding `int_t` operator
+- empty/error/sentinel wrapper states in those lifted integer bitwise and shift families remain compile-valid but must runtime-error during guarded unwrap rather than silently normalizing to `0`
 - increment and decrement follow native C++ prefix/postfix behavior
 - strict identity and concatenation-assignment use explicit runtime semantic helpers rather than pretending to be ordinary C++ operator overloads
 - string/bitwise/coercion combinations not already representable by the runtime surface should remain unsupported for now and fail in earlier phases or at compile time

@@ -1560,6 +1560,96 @@
                             "row_file":  "semantics/condition_truthiness/if_condition__string_t.tsv"
                         },
                         {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "empty_value",
+                            "lhs_type":  "bool_t",
+                            "row_file":  "semantics/language_probes_and_reset/empty_value__bool_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "empty_value",
+                            "lhs_type":  "float_t",
+                            "row_file":  "semantics/language_probes_and_reset/empty_value__float_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "empty_value",
+                            "lhs_type":  "int_t",
+                            "row_file":  "semantics/language_probes_and_reset/empty_value__int_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "empty_value",
+                            "lhs_type":  "mixed_t",
+                            "row_file":  "semantics/language_probes_and_reset/empty_value__mixed_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "empty_value",
+                            "lhs_type":  "string_t",
+                            "row_file":  "semantics/language_probes_and_reset/empty_value__string_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "isset_keyed",
+                            "lhs_type":  "mixed_t",
+                            "row_file":  "semantics/language_probes_and_reset/isset_keyed__mixed_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "isset_value",
+                            "lhs_type":  "bool_t",
+                            "row_file":  "semantics/language_probes_and_reset/isset_value__bool_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "isset_value",
+                            "lhs_type":  "float_t",
+                            "row_file":  "semantics/language_probes_and_reset/isset_value__float_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "isset_value",
+                            "lhs_type":  "int_t",
+                            "row_file":  "semantics/language_probes_and_reset/isset_value__int_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "isset_value",
+                            "lhs_type":  "mixed_t",
+                            "row_file":  "semantics/language_probes_and_reset/isset_value__mixed_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "isset_value",
+                            "lhs_type":  "string_t",
+                            "row_file":  "semantics/language_probes_and_reset/isset_value__string_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "count_value",
+                            "lhs_type":  "mixed_t",
+                            "row_file":  "semantics/language_probes_and_reset/count_value__mixed_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "empty_keyed",
+                            "lhs_type":  "mixed_t",
+                            "row_file":  "semantics/language_probes_and_reset/empty_keyed__mixed_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "unset_keyed",
+                            "lhs_type":  "mixed_t",
+                            "row_file":  "semantics/language_probes_and_reset/unset_keyed__mixed_t.tsv"
+                        },
+                        {
+                            "family_id":  "language_probes_and_reset",
+                            "item_id":  "unset_value",
+                            "lhs_type":  "mixed_t",
+                            "row_file":  "semantics/language_probes_and_reset/unset_value__mixed_t.tsv"
+                        },
+                        {
                             "family_id":  "operators_unary",
                             "item_id":  "logical_not",
                             "lhs_type":  "bool_t",

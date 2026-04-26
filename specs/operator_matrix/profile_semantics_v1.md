@@ -205,10 +205,14 @@ Accepted runtime kinds:
 - `mixed.int.nonzero` â†’ true
 - `mixed.float.zero` â†’ false
 - `mixed.float.nonzero` â†’ true
+- `mixed.null` â†’ false
+- `mixed.string.empty` â†’ false
+- `mixed.string.zero_string` â†’ false
+- `mixed.string.bool_false_literal` â†’ true
+- `mixed.string.bool_true_literal` â†’ true
+- `mixed.string.nonempty_nonzero_nonbool_literal` â†’ true
 
 Rejected runtime kinds:
-- `mixed.null` â†’ `status=supported`, `behavior_class=throws`
-- `mixed.string.*` â†’ `status=supported`, `behavior_class=throws`
 - `mixed.hash.*` â†’ `status=supported`, `behavior_class=throws`
 
 #### Matrix generation rule
@@ -298,6 +302,41 @@ Examples:
 
 ---
 
+### 6.3a `operators_compound_assignment`
+
+This family covers compound forms such as:
+- `add_assign`
+- `subtract_assign`
+- `multiply_assign`
+- `divide_assign`
+- `modulo_assign`
+- bitwise/shift compound items
+
+Normative source:
+- runtime operator configuration
+- current compound-assignment policy
+
+#### Core rule
+Compound assignment is modeled as:
+- evaluate the underlying binary operator semantics
+- write the resulting value back into the lhs target
+
+The row must therefore track lhs target kind.
+
+Approved target kinds in the current canonical surface:
+- `assignable_variable`
+- `member_property`
+- `keyed_element`
+- `chained_writable_path`
+
+Guidance:
+- `member_property` rows use the same semantic outcome as the corresponding variable-target row unless a higher-level property rule says otherwise
+- `keyed_element` rows stay distinct because keyed storage/write-path semantics are modeled separately
+- `chained_writable_path` rows represent a deeper composed lvalue path and should preserve that target distinction through generation and testing
+- non-writable targets such as `plain_value` and `temporary_result` are outside the supported compound-assignment surface
+
+---
+
 ### 6.4 `operators_binary_arithmetic_bitwise`
 
 This family covers arithmetic, bitwise, and shift operators.
@@ -316,6 +355,10 @@ The matrix must:
 For wrapper carriers:
 - `nullable<T>` must not be silently treated as native `T` unless a wrapper rule explicitly delegates
 - `mixed_t` must be expanded by runtime kind when config allows the family path
+- current arithmetic wrapper rows explicitly delegate for approved numeric wrappers: `nullable<float_t>.present.* op nullable<float_t>.present.*` unwraps and then follows the corresponding numeric row
+- for that same delegated arithmetic slice, any empty/error/sentinel wrapper participation such as `nullable<float_t>.empty op nullable<float_t>.empty` remains `status=supported`, `behavior_class=throws`
+- current integer bitwise / shift wrapper rows explicitly delegate for approved wrappers: `nullable<int_t>.present.* op nullable<int_t>.present.*` unwraps and then follows the corresponding `int_t` row
+- for that same delegated slice, any empty/error/sentinel wrapper participation such as `nullable<int_t>.empty op nullable<int_t>.empty` remains `status=supported`, `behavior_class=throws`
 
 ---
 
@@ -343,6 +386,26 @@ Rows are evaluated as:
 - config-driven for current support surface
 - profile-aware for wrapper and mixed participation
 - explicit about result determinism vs runtime throw behavior
+
+For the logical subset (`logical_and`, `logical_or`):
+- approved wrapper carriers such as `nullable<T>`, `result<T>`, `result_or_false<T>`, and `result_or_bool<T>` delegate by guarded unwrap when the wrapped `T` already participates in the logical family
+- for that delegated slice, present/present rows follow the corresponding native `bool_t` / numeric row, while empty or sentinel participation remains `status=supported`, `behavior_class=throws`
+- `mixed_t` logical rows use the same condition-truthiness bridge as ordinary condition contexts
+- therefore `mixed.null`, `mixed.bool.*`, `mixed.int.*`, `mixed.float.*`, and `mixed.string.*` rows remain supported and deterministic under `logical_and` / `logical_or`
+- current hash-backed `mixed_t` logical rows remain `status=supported`, `behavior_class=throws`
+- for `mixed_t`, left-to-right short-circuit still matters: a hash-backed right operand is bypassed when the left operand already determines `logical_and` false or `logical_or` true
+
+For the equality subset (`equal`, `not_equal`):
+- approved wrapper carriers such as `nullable<T>`, `result<T>`, `result_or_false<T>`, and `result_or_bool<T>` participate by wrapper-specific branch normalization rather than guarded unwrap
+- `nullable<T>` compares empty-to-empty as equal and otherwise compares present wrapped payloads with ordinary equality
+- `result_or_false<T>` keeps the false sentinel branch distinct from wrapped payload branches
+- `result_or_bool<T>` keeps the true/false sentinel branches distinct from wrapped payload branches
+- `result<T>` compares success payloads by ordinary equality and treats matching failure branches as equal in the current matrix slice
+
+For the ordering subset (`less_than`, `less_than_or_equal`, `greater_than`, `greater_than_or_equal`):
+- approved wrapper carriers such as `nullable<T>`, `result<T>`, `result_or_false<T>`, and `result_or_bool<T>` delegate by guarded unwrap when the wrapped `T` already participates in the ordering family
+- for that delegated slice, present/present rows follow the corresponding native numeric or string ordering row
+- empty or sentinel wrapper participation remains `status=supported`, `behavior_class=throws`
 
 ---
 
@@ -463,11 +526,11 @@ The critical rules are:
 ## Ternary / Elvis Working Slice Note
 
 For the current working generator slice, `elvis` is truthiness-driven and intentionally narrower than `coalesce`.
-The current structured-data slice currently supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, and `mixed_t`.
-Current wrapper-family `elvis` rows are still emitted as compile-time rejected in the matrix dataset pending explicit slice expansion.
+The current structured-data slice supports same-type rows for non-wrapper `bool_t`, `int_t`, `float_t`, `string_t`, `mixed_t`, and the approved current wrapper families.
+Wrapper-family `elvis` rows follow the already-lowered `php::ternary_eval(...)` condition rule instead of a separate wrapper-specific truthiness contract.
 
 Important layering note:
 - this dataset boundary must not be confused with the current runtime helper capability
 - `php::ternary_eval(...)` already owns wrapper-aware condition delegation for current wrapper families and remains the authority for already-lowered ternary / elvis code paths
+- wrapper condition handling follows `condition_truthy_impl(...)`: `nullable.empty`, `result.failure`, and `result_or_false.sentinel.false` are falsy; `result_or_bool.sentinel.true` is truthy; `mixed_t` delegates by approved runtime kind and still rejects hash-backed kinds
 - matrix/data discussions must state explicitly whether they refer to the runtime helper or only to the currently emitted slice
-

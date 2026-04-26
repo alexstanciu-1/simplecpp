@@ -16,11 +16,23 @@ inline bool_t identical(Left, Right) {
 }
 
 template <typename T>
+requires (
+	!std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, nullable>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_false>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_bool>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, shared_p>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, unique_p>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, weak_p>
+)
 inline bool_t identical(const T &left, const T &right);
 
 template <typename Left, typename Right>
 requires (!std::is_same_v<std::remove_cvref_t<Left>, std::remove_cvref_t<Right>>)
 inline bool_t identical(const Left &left, const Right &right);
+
+inline bool_t identical(const mixed_t &left, const mixed_t &right);
 
 template <typename Left, typename Right>
 inline bool_t not_identical(const Left &left, const Right &right);
@@ -264,6 +276,7 @@ inline bool_t identical(const nullable<T> &left, const nullable<U> &right) {
 }
 
 template <typename T, typename Right>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Right>, nullable>)
 inline bool_t identical(const nullable<T> &left, const Right &right) {
 	if (!left.has_value().native_value()) {
 		return identical(null_t{}, right);
@@ -272,6 +285,7 @@ inline bool_t identical(const nullable<T> &left, const Right &right) {
 }
 
 template <typename Left, typename T>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, nullable>)
 inline bool_t identical(const Left &left, const nullable<T> &right) {
 	if (!right.has_value().native_value()) {
 		return identical(left, null_t{});
@@ -305,6 +319,7 @@ inline bool_t identical(const result_or_false<T> &left, const result_or_false<U>
 }
 
 template <typename T, typename Right>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Right>, result_or_false>)
 inline bool_t identical(const result_or_false<T> &left, const Right &right) {
 	if (!left.has_value().native_value()) {
 		return identical(bool_t(false), right);
@@ -313,6 +328,7 @@ inline bool_t identical(const result_or_false<T> &left, const Right &right) {
 }
 
 template <typename Left, typename T>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result_or_false>)
 inline bool_t identical(const Left &left, const result_or_false<T> &right) {
 	if (!right.has_value().native_value()) {
 		return identical(left, bool_t(false));
@@ -332,6 +348,7 @@ inline bool_t identical(const result_or_bool<T> &left, const result_or_bool<U> &
 }
 
 template <typename T, typename Right>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Right>, result_or_bool>)
 inline bool_t identical(const result_or_bool<T> &left, const Right &right) {
 	if (!left.has_value().native_value()) {
 		return identical(bool_t(left.is_true().native_value()), right);
@@ -340,6 +357,7 @@ inline bool_t identical(const result_or_bool<T> &left, const Right &right) {
 }
 
 template <typename Left, typename T>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result_or_bool>)
 inline bool_t identical(const Left &left, const result_or_bool<T> &right) {
 	if (!right.has_value().native_value()) {
 		return identical(left, bool_t(right.is_true().native_value()));
@@ -381,6 +399,7 @@ inline bool_t identical(error_sentinel_t, const result<T> &right) {
 }
 
 template <typename T, typename Right>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Right>, result>)
 inline bool_t identical(const result<T> &left, const Right &right) {
 	if constexpr (std::is_same_v<std::remove_cvref_t<Right>, error_sentinel_t>) {
 		return left.has_error().native_value() ? bool_t(true) : bool_t(false);
@@ -390,6 +409,7 @@ inline bool_t identical(const result<T> &left, const Right &right) {
 }
 
 template <typename Left, typename T>
+requires (!::scpp::detail::is_specialization_of_v<std::remove_cvref_t<Left>, result>)
 inline bool_t identical(const Left &left, const result<T> &right) {
 	if constexpr (std::is_same_v<std::remove_cvref_t<Left>, error_sentinel_t>) {
 		return right.has_error().native_value() ? bool_t(true) : bool_t(false);
@@ -443,6 +463,16 @@ inline bool_t identical(const unique_p<T> &left, const unique_p<T> &right) {
 }
 
 template <typename T>
+requires (
+	!std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, nullable>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_false>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result_or_bool>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, result>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, shared_p>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, unique_p>
+	&& !::scpp::detail::is_specialization_of_v<std::remove_cvref_t<T>, weak_p>
+)
 inline bool_t identical(const T &left, const T &right) {
 	return bool_t(left == right);
 }

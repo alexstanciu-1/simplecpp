@@ -16,6 +16,11 @@ namespace detail {
 template <typename T>
 inline void apply_unset(T &) = delete;
 
+// Deleted keyed-unset fallback used to keep unsupported keyed targets on the
+// compile-rejected side after lowering succeeds.
+template <typename TBase, typename TKey>
+inline void apply_unset_keyed(TBase &, const TKey &) = delete;
+
 // Implements one-value unset semantics used by the variadic unset helper.
 // How: nullable wrappers drop back to the empty state immediately.
 template <typename T>
@@ -82,6 +87,19 @@ inline void apply_unset(bool_t &value) {
 template <typename... Args>
 inline void unset(Args &...args) {
 	(detail::apply_unset(args), ...);
+}
+
+// Implements keyed unset lowering for supported associative containers.
+// How: hash-backed targets erase by key, while unsupported keyed targets stay
+// compile-rejected through the deleted detail fallback.
+template <typename TValue, typename TKey>
+inline void unset_keyed(hash_t<TValue> &target, const TKey &key) {
+	target.remove(key);
+}
+
+template <typename TBase, typename TKey>
+inline void unset_keyed(TBase &target, const TKey &key) {
+	detail::apply_unset_keyed(target, key);
 }
 
 } // namespace scpp

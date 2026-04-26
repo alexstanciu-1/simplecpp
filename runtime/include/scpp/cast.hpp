@@ -13,6 +13,7 @@
 #include "scpp/string_t.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
+#include "scpp/runtime_error.hpp"
 
 #include <cctype>
 #include <cerrno>
@@ -93,9 +94,73 @@ inline To cast(const From &value) {
 
 namespace detail {
 
+[[nodiscard]] inline const char *mixed_kind_name(const mixed_t::kind_t kind) noexcept {
+	switch (kind) {
+		case mixed_t::kind_t::null_v:         return "null_t";
+		case mixed_t::kind_t::bool_v:         return "bool_t";
+		case mixed_t::kind_t::int_v:          return "int_t";
+		case mixed_t::kind_t::float_v:        return "float_t";
+		case mixed_t::kind_t::string_v:       return "string_t";
+		case mixed_t::kind_t::table_v:        return "hash_t";
+		case mixed_t::kind_t::shared_table_v: return "shared_hash_t";
+		case mixed_t::kind_t::dynamic_v:      return "dynamic_t";
+		case mixed_t::kind_t::weak_table_v:   return "weak_hash_t";
+	}
+	return "unknown";
+}
+
+[[nodiscard]] inline const char *invalid_cast_literal_code(const char *target) {
+	if (std::string_view(target) == "bool_t") {
+		return "invalid_cast_string_literal";
+	}
+	if (std::string_view(target) == "int_t") {
+		return "invalid_cast_int_literal";
+	}
+	if (std::string_view(target) == "float_t") {
+		return "invalid_cast_float_literal";
+	}
+	return "invalid_cast_literal";
+}
+
 [[noreturn]] inline void throw_invalid_cast_string(const char *target, const std::string &value) {
-	throw std::runtime_error(
-		std::string("scpp::cast<") + target + ">(string_t): invalid strict string literal: \"" + value + "\""
+	throw runtime_error(
+		std::string("scpp::cast<") + target + ">(string_t): invalid strict string literal: \"" + value + "\"",
+		invalid_cast_literal_code(target),
+		std::string("scpp::cast<") + target + ">",
+		"",
+		std::vector<runtime_error_detail_t>{
+			{"source_type", "string_t"},
+			{"literal", value},
+		}
+	);
+}
+
+[[nodiscard]] inline const char *invalid_mixed_kind_code(const char *target) {
+	if (std::string_view(target) == "bool_t") {
+		return "invalid_mixed_kind_for_cast_bool";
+	}
+	if (std::string_view(target) == "int_t") {
+		return "invalid_mixed_kind_for_cast_int";
+	}
+	if (std::string_view(target) == "float_t") {
+		return "invalid_mixed_kind_for_cast_float";
+	}
+	if (std::string_view(target) == "string_t") {
+		return "invalid_mixed_kind_for_cast_string";
+	}
+	return "invalid_mixed_kind_for_cast";
+}
+
+[[noreturn]] inline void throw_invalid_mixed_kind_for_cast(const char *target, const mixed_t &value) {
+	throw runtime_error(
+		std::string("scpp::cast<") + target + ">(mixed_t): runtime kind is not convertible to " + target,
+		invalid_mixed_kind_code(target),
+		std::string("scpp::cast<") + target + ">",
+		"",
+		std::vector<runtime_error_detail_t>{
+			{"source_type", "mixed_t"},
+			{"runtime_kind", mixed_kind_name(value.kind())},
+		}
 	);
 }
 
@@ -437,7 +502,7 @@ inline bool_t cast<bool_t, mixed_t>(const mixed_t &value) {
 		case mixed_t::kind_t::string_v:
 			return cast<bool_t>(*value.string_if());
 		default:
-			throw std::runtime_error("scpp::cast<bool_t>(mixed_t): runtime kind is not convertible to bool_t");
+			detail::throw_invalid_mixed_kind_for_cast("bool_t", value);
 	}
 }
 
@@ -462,7 +527,7 @@ inline int_t cast<int_t, mixed_t>(const mixed_t &value) {
 		case mixed_t::kind_t::string_v:
 			return cast<int_t>(*value.string_if());
 		default:
-			throw std::runtime_error("scpp::cast<int_t>(mixed_t): runtime kind is not convertible to int_t");
+			detail::throw_invalid_mixed_kind_for_cast("int_t", value);
 	}
 }
 
@@ -480,7 +545,7 @@ inline float_t cast<float_t, mixed_t>(const mixed_t &value) {
 		case mixed_t::kind_t::string_v:
 			return cast<float_t>(*value.string_if());
 		default:
-			throw std::runtime_error("scpp::cast<float_t>(mixed_t): runtime kind is not convertible to float_t");
+			detail::throw_invalid_mixed_kind_for_cast("float_t", value);
 	}
 }
 
@@ -500,7 +565,7 @@ inline string_t cast<string_t, mixed_t>(const mixed_t &value) {
 		case mixed_t::kind_t::string_v:
 			return *value.string_if();
 		default:
-			throw std::runtime_error("scpp::cast<string_t>(mixed_t): runtime kind is not convertible to string_t");
+			detail::throw_invalid_mixed_kind_for_cast("string_t", value);
 	}
 }
 

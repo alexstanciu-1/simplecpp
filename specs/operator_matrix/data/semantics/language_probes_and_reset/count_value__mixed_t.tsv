@@ -1,0 +1,15 @@
+lhs_profile	rhs_profile	third_profile	lhs_target_kind	rhs_target_kind	third_target_kind	status	behavior_class	result_type	result_profile	edge_case	edge_case_id	test_seed_class	diagnostic_class	notes
+mixed.null	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.null	null	null	Count rejects non-countable mixed null values.
+mixed.bool.false	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.bool.false	null	null	Count rejects non-countable mixed bool values.
+mixed.bool.true	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.bool.true	null	null	Count rejects non-countable mixed bool values.
+mixed.int.zero	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.int.zero	null	null	Count rejects non-countable mixed integer values.
+mixed.int.nonzero	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.int.nonzero	null	null	Count rejects non-countable mixed integer values.
+mixed.float.zero	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.float.zero	null	null	Count rejects non-countable mixed float values.
+mixed.float.nonzero	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.float.nonzero	null	null	Count rejects non-countable mixed float values.
+mixed.string.empty	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.string.empty	null	null	Count rejects non-countable mixed string values.
+mixed.string.zero_string	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.string.zero_string	null	null	Count rejects non-countable mixed string values.
+mixed.string.bool_false_literal	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.string.bool_false_literal	null	null	Count rejects non-countable mixed string values.
+mixed.string.bool_true_literal	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.string.bool_true_literal	null	null	Count rejects non-countable mixed string values.
+mixed.string.nonempty_nonzero_nonbool_literal	null	null	null	null	null	supported	throws	null	null	true	count_value.mixed.string.nonempty_nonzero_nonbool_literal	null	null	Count rejects non-countable mixed string values.
+mixed.hash.empty	null	null	null	null	null	supported	deterministic_value	int_t	int.zero	true	count_value.mixed.hash.empty	runtime_success	null	Count returns the logical size of an empty mixed hash.
+mixed.hash.nonempty	null	null	null	null	null	supported	deterministic_value	int_t	int.one	true	count_value.mixed.hash.nonempty	runtime_success	null	Count returns the logical size of a representative non-empty mixed hash.
