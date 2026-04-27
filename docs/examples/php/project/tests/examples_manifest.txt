@@ -1,0 +1,6 @@
+01_typed_boundaries
+02_null_vs_false
+03_strict_comparisons
+04_arrays_and_tables
+05_json_decode_basic
+06_filesystem_read_basic

@@ -438,13 +438,18 @@ TXT;
 		try {
 			$expect = is_array($meta['expect'] ?? null) ? $meta['expect'] : [];
 			$compare = is_array($meta['compare'] ?? null) ? $meta['compare'] : [];
+			$build = is_array($meta['build'] ?? null) ? $meta['build'] : [];
 
 			$phpExpect = is_array($expect['php'] ?? null) ? $expect['php'] : [];
 			$shouldRunPhpStage = (($phpExpect['run'] ?? false) === true) || (($meta['php_as_oracle'] ?? false) === true);
 			if ($shouldRunPhpStage) {
-				$phpRun = $this->runCommand(['php', $phpPath], $this->projectRoot, self::PHP_TIMEOUT_SECONDS);
+				$phpCommand = ['php', $phpPath];
+				foreach ((array) ($build['run_args'] ?? []) as $arg) {
+					$phpCommand[] = (string) $arg;
+				}
+				$phpRun = $this->runCommand($phpCommand, $this->projectRoot, self::PHP_TIMEOUT_SECONDS);
 				$results['last_run']['stages']['php'] = [
-					'command' => ['php', $this->relativePath($phpPath)],
+					'command' => array_map('strval', $phpCommand),
 					'exit_code' => $phpRun['exit_code'],
 					'stdout' => $this->normalizeOutput((string) $phpRun['stdout'], $compare, 'stdout'),
 					'stderr' => $this->normalizeOutput((string) $phpRun['stderr'], $compare, 'stderr'),
@@ -523,7 +528,11 @@ TXT;
 					if ($this->shouldEnableRuntimeErrorJson($expect)) {
 						$runtimeEnv['SCPP_ERROR_FORMAT'] = 'json';
 					}
-					$cppRun = $this->runCommand([(string) $compileRun['binary_path']], $tempDir, self::RUN_TIMEOUT_SECONDS, $runtimeEnv);
+					$runCommand = [(string) $compileRun['binary_path']];
+					foreach ((array) ($build['run_args'] ?? []) as $arg) {
+						$runCommand[] = (string) $arg;
+					}
+					$cppRun = $this->runCommand($runCommand, $tempDir, self::RUN_TIMEOUT_SECONDS, $runtimeEnv);
 					$results['last_run']['stages']['run'] = [
 						'success' => ($cppRun['exit_code'] === 0 && $cppRun['timed_out'] === false),
 						'exit_code' => $cppRun['exit_code'],
@@ -531,6 +540,7 @@ TXT;
 						'stderr' => $this->normalizeOutput((string) $cppRun['stderr'], $compare, 'stderr'),
 						'timed_out' => $cppRun['timed_out'],
 						'duration_ms' => $cppRun['duration_ms'],
+						'command' => array_map('strval', $runCommand),
 						'comparison_ok' => true,
 						'comparison_notes' => [],
 					];

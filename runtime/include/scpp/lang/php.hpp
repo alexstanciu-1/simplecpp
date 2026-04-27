@@ -8,4 +8,5 @@
 #include "lang/php/php_stdio.hpp"
 #include "lang/php/php_filesystem.hpp"
 #include "lang/php/php_json.hpp"
+#include "lang/php/php_process.hpp"
 #include "lang/php/php_mysqli.hpp"
