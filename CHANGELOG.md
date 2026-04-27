@@ -9,6 +9,27 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - No release notes recorded yet.
 
+## 0.1.4 - 2026-04-26
+
+### Additions
+
+- Clarified that the PHP S2S generator is type-blind and not a semantic compiler
+- Strengthened AI onboarding guidance to prevent fallback to standard PHP semantics
+- Added explicit documentation for generator responsibility boundaries
+- Introduced `docs/future_thoughts/` for non-authoritative future ideas
+
+### Fixes
+
+- Removed implicit future promises from active documentation by relocating them to planning docs
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- None
+
 ## 0.1.3 - 2026-04-26
 
 ### Additions

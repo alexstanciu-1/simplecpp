@@ -37,7 +37,19 @@ For a new task, default to this sequence:
 - Treat architecture and runtime/generator subsystem specs as subordinate to top-level language semantics.
 - Treat implementation behavior and tests as evidence, not as the semantic source of truth.
 - Treat PHP as the current authoring language surface.
+- Treat the source syntax as PHP-like, not full PHP.
 - Treat generated C++ as a lowering/debug artifact unless the task is specifically about runtime, native integration, or generator output.
+
+## S2S Generator Model
+
+The PHP generator is intentionally type-blind and structurally driven.
+
+- It does not perform full symbol resolution.
+- It does not act as a semantic compiler.
+- It does not guarantee that emitted C++ is semantically valid.
+- It lowers syntax deterministically according to rules and defers deeper validation to the runtime and C++ compiler.
+
+Do not assume standard PHP runtime semantics are available during generation.
 
 ## What To Edit
 
@@ -60,7 +72,7 @@ Prism++ currently works as:
 - generated code targeting the `scpp` runtime
 - project-mode builds through `scpp init`, `scpp build`, and `scpp run`
 
-The generator is intentionally a deterministic structured lowerer, not a full semantic compiler.
+The generator is intentionally a deterministic structured lowerer, not a semantic compiler.
 
 ## When Docs and Code Disagree
 
