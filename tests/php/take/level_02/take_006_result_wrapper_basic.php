@@ -1,0 +1,12 @@
+<?php
+declare(strict_types=1);
+
+$bad /** result<int> */ = error;
+$ok /** result<int> */ = 13;
+$out /** int */ = 0;
+$err /** error_t */;
+echo take($out, $err, $ok) ? "T\n" : "F\n";
+echo $out, "\n";
+
+echo take($out, $err, $bad) ? "T\n" : "F\n";
+echo $out, "\n";

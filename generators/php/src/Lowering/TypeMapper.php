@@ -687,6 +687,26 @@ final class TypeMapper
 			return false;
 		}
 
-		return !in_array($phpType, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'vector_t'], true);
+		return !in_array($phpType, [
+			'int',
+			'float',
+			'bool',
+			'string',
+			'array',
+			'mixed',
+			'void',
+			'vector_t',
+			'int_t',
+			'float_t',
+			'bool_t',
+			'string_t',
+			'mixed_t',
+			'error_t',
+			'hash_t',
+			'::scpp::hash_t',
+			'resource_handle_t',
+			'nullable_resource_handle_t',
+			'falseable_resource_handle_t',
+		], true);
 	}
 }
