@@ -1,0 +1,7 @@
+<?php
+declare(strict_types=1);
+
+$maybe /** nullable<int> */ = 7;
+$row = ["value" => 0];
+
+take($row["value"], $maybe);

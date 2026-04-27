@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+
+$path = "../../../tests/php/take/level_02/fixtures/take_builtin_alpha.txt";
+$missing = "../../../tests/php/take/level_02/fixtures/missing_take_builtin.txt";
+
+$contents /** string */ = "seed";
+echo take($contents, file_get_contents($path)) ? "T\n" : "F\n";
+echo $contents, "\n";
+echo take($contents, file_get_contents($missing)) ? "T\n" : "F\n";
+echo $contents, "\n";
+
+$real /** string */ = "";
+echo take($real, realpath($path)) ? "T\n" : "F\n";
+echo basename($real), "\n";
+echo take($real, realpath($missing)) ? "T\n" : "F\n";
+echo basename($real), "\n";
+
+$fh /** resource_handle_t */;
+echo take($fh, fopen($path, "rb")) ? "T\n" : "F\n";
+$line /** string */ = "";
+echo take($line, fgets($fh)) ? "T\n" : "F\n";
+echo $line;
+echo fclose($fh) ? "C\n" : "NC\n";
