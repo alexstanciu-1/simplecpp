@@ -8,6 +8,9 @@ Purpose: route AI assistants to the best example sources in the repo.
 Start here for preferred PHP authoring patterns:
 
 - `specs/php/canonical_examples.md`
+- `docs/examples/php/README.md`
+
+Use `docs/examples/php/` when you want tested, project-mode PHP examples for agents rather than abstract style guidance alone.
 
 These examples are especially useful for:
 

@@ -642,6 +642,41 @@ if ($res) {
 
 ---
 
+## Example 21 â€” CLI helpers inside a function or method
+
+**Preferred**
+```php
+function show_args(): void {
+	$argc = cli_argc();
+	$argv = cli_argv();
+
+	if ($argc > 1) {
+		echo $argv[1], "\n";
+	}
+}
+```
+
+**Also allowed**
+```php
+function show_args_alias(): void {
+	$args = cli_args();
+	echo $args[1], "\n";
+}
+```
+
+**Avoid**
+```php
+function show_args(): void {
+	echo $argv[1], "\n";
+}
+```
+
+**Notes**
+- use the helper functions in function/method scope
+- do not rely on executable-root `$argv` visibility inside functions
+
+---
+
 # 4. Summary Rules
 
 These examples reinforce the following defaults:
