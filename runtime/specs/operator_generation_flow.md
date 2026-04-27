@@ -125,7 +125,7 @@ This path should:
 
 This split preserves a reviewable fast/static path for wrapper-native combinations while keeping dynamic behavior explicit.
 
-Typed-boundary bridges such as the temporary `nullable<T> -> T` generator-compatibility unwrap are not part of the intended public operator candidate surface. They exist only so explicit typed destinations keep working while the current frontend remains symbol/type-blind.
+Typed-boundary bridges such as the temporary `nullable<T> -> T` generator-compatibility unwrap are not part of the public operator candidate surface. They exist only to preserve current explicit typed-destination behavior under the current frontend limitations.
 
 When a wrapper family needs operator participation before the frontend can emit explicit unwraps, the operator generator must add a centralized lifted operator layer instead of relying on those conversion bridges. For current nullable work, that lifted layer is responsible for:
 - requiring present values for unary/binary/logical/relational/mutation participation
