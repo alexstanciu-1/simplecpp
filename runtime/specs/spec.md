@@ -334,7 +334,7 @@ Included initially:
 - explicit unwrap/cast remains `cast<T>(nullable<T>)` when generated code can emit it directly
 - the centralized cast surface may also lift `nullable<U>` into any configured explicit target `T` by first requiring a present value and then delegating to `cast<T>(U)`; `string_t` remains the configured PHP-style exception where empty nullable stringifies to `""`
 - the centralized cast surface may also lift `mixed_t` into `nullable<T>`: runtime `null` becomes empty nullable, and any non-null runtime kind must satisfy the configured `mixed_t -> T` cast for the wrapped target
-- until the current symbol/type-blind generator reaches typed-boundary parity, `nullable<T>` may also provide a temporary implicit bridge to wrapped `T` only for explicit typed destinations such as typed by-value argument passing and typed return
+- under the current generator limitations, `nullable<T>` may also provide a temporary implicit bridge to wrapped `T` only for explicit typed destinations such as typed by-value argument passing and typed return
 - the temporary typed-boundary bridge must throw a runtime error when the nullable is empty; for centralized cast lifting the required wording is `cast<To>(nullable) cannot convert an empty nullable to a required value`
 - the centralized generated operator surface is the authoritative way `nullable<T>` participates in unary, binary, logical, relational, mutation, and compound-assignment families; each participating operator must require present wrapped values and then delegate to the wrapped-value operator family
 - `nullable<T>::operator->()` is part of the stable nullable runtime surface for object-like use; it must require a present wrapped value and then either forward to wrapped `T::operator->()` when `T` already exposes it or return the address of the wrapped object when direct-object member access is needed
@@ -373,8 +373,8 @@ Included initially:
 - `cast<T>(mixed_t)` is the central typed bridge for dynamic-to-typed use
 - project-level explicit casts should normalize through `cast<T>(...)` rather than direct wrapper-to-wrapper `static_cast` chains
 - strict string explicit casts are part of the current policy: `string_t -> bool_t` accepts only `""`, `"0"`, `"1"`, `"true"`, and `"false"`; any other literal runtime-errors, while `string_t -> int_t` and `string_t -> float_t` require whole-string successful parses with no trailing characters
-- long-term runtime intent is explicit bridge use at typed boundaries; current v1 non-explicit acceptance at some language/S2S sites is documented in `../../specs/dynamic_types.md` under Explicit Typed Boundaries and Technical Compromises
-- until generator parity exists, runtime/operator/cast surface must preserve those v1-visible typed-destination bridges instead of removing them for API purity alone
+- explicit bridge use at typed boundaries remains the cleanup direction for sites where the generator can emit it; current v1 non-explicit acceptance at some language/S2S sites is documented in `../../specs/dynamic_types.md` under Explicit Typed Boundaries and Technical Compromises
+- until approved generator parity exists, runtime/operator/cast surface must preserve those v1-visible typed-destination bridges instead of removing them for API purity alone
 - `mixed_t::operator[]` is the primary mutating chained dynamic array access helper
 - mutable `mixed_t::operator[]` autovivifies `null` into an owned `hash_t<mixed_t>`
 - `mixed_t::get(...)` is the primary non-mutating read helper and returns a null-kind `mixed_t` on missing key or non-array receiver
