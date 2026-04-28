@@ -32,7 +32,7 @@ Runtime: validate resource, call `std::rewind`, and clear error state.
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
 ## Test matrix
 - rewind after write/read cycle returns true

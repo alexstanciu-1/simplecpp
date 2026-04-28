@@ -67,7 +67,7 @@ final class Generator
 	private ?string $currentParentClass = null;
 	private int $tempCounter = 0;
 	private AnnotationExpressionParser $annotationExpressionParser;
-	/** @var array<string, bool> */
+	/** @var array{exact: array<string, string>, bare: array<string, string>} */
 	private array $phpRuntimeRelativeSymbols = [];
 	/** @var array<string, string> */
 	private array $currentPhpVarToCpp = [];
@@ -96,6 +96,7 @@ final class Generator
 
 	public function __construct(
 		private readonly TypeMapper $typeMapper = new TypeMapper(),
+		private readonly string $phpProfile = 'legacy',
 	) {
 		$this->predefinedConstants = $this->loadPredefinedConstants();
 		$this->phpRuntimeRelativeSymbols = $this->loadPhpRuntimeRelativeSymbols();
@@ -4092,6 +4093,13 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
+		if (
+			preg_match('/^result<vector_t<(.+)>>$/', $baseType) === 1
+			|| preg_match('/^result_or_false<vector_t<(.+)>>$/', $baseType) === 1
+			|| preg_match('/^result_or_bool<vector_t<(.+)>>$/', $baseType) === 1
+		) {
+			return $base . '.at(' . $dim . ')';
+		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '.get(' . $dim . ')';
 		}
@@ -5615,12 +5623,27 @@ final class Generator
 			$baseExpr = $expr->children['expr'] ?? null;
 			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
+			$baseType = $this->inferExprType($baseExpr);
+			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
+				return $base . '.get(string_t(' . json_encode((string) ($expr->children['prop'] ?? 'prop'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '))';
+			}
+			if ($this->isUntypedTableType($baseType)) {
+				return $this->renderUntypedTableAccessBase($base, $baseType) . '._find_val(string_t(' . json_encode((string) ($expr->children['prop'] ?? 'prop'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '))';
+			}
 			return $base === 'this' ? 'this->' . $prop : $base . '->' . $prop;
 		}
 		if ($kind === AstKind::NULLSAFE_PROP) {
 			$baseExpr = $expr->children['expr'] ?? null;
 			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
+			$propLiteral = 'string_t(' . json_encode((string) ($expr->children['prop'] ?? 'prop'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')';
+			$baseType = $this->inferExprType($baseExpr);
+			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
+				return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(isset(__scpp_tmp)) ? __scpp_tmp.get(' . $propLiteral . ') : null; }())';
+			}
+			if ($this->isUntypedTableType($baseType)) {
+				return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(isset(__scpp_tmp)) ? ' . $this->renderUntypedTableAccessBase('__scpp_tmp', $baseType) . '._find_val(' . $propLiteral . ') : null; }())';
+			}
 			return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(isset(__scpp_tmp)) ? __scpp_tmp->' . $prop . ' : null; }())';
 		}
 		if ($kind === AstKind::STATIC_PROP) {
@@ -6033,10 +6056,14 @@ final class Generator
 		return $this->renderNameExpr($expr, $namespacePhp);
 	}
 
-	/** @return array<string, bool> */
+	/** @return array{exact: array<string, string>, bare: array<string, string>} */
 	private function loadPhpRuntimeRelativeSymbols(): array
 	{
-		$path = dirname(__DIR__, 2) . '/specs/php_runtime_symbols.json';
+		$profile = strtolower(trim($this->phpProfile));
+		if (!in_array($profile, ['legacy', 'strict'], true)) {
+			throw new \RuntimeException('Unsupported PHP runtime symbol profile `' . $this->phpProfile . '`.');
+		}
+		$path = dirname(__DIR__, 2) . '/specs/php_runtime_symbols_' . $profile . '.json';
 		if (!is_file($path)) {
 			throw new \RuntimeException('Missing mandatory PHP runtime symbols registry: ' . $path);
 		}
@@ -6057,29 +6084,86 @@ final class Generator
 		}
 
 		$symbols = $data['php_runtime_relative_symbols'] ?? null;
-		if (!is_array($symbols)) {
-			throw new \RuntimeException('Mandatory PHP runtime symbols registry must contain array key php_runtime_relative_symbols: ' . $path);
+		$targets = $data['php_runtime_symbol_targets'] ?? null;
+		if ($symbols !== null && $targets !== null) {
+			throw new \RuntimeException('Mandatory PHP runtime symbols registry must not contain both php_runtime_relative_symbols and php_runtime_symbol_targets: ' . $path);
 		}
-
-		$out = [];
-		foreach ($symbols as $index => $symbol) {
-			if (!is_string($symbol) || $symbol === '') {
-				throw new \RuntimeException('Invalid symbol entry in mandatory PHP runtime symbols registry at index ' . $index . ': ' . $path);
+		$exact = [];
+		$bareBuckets = [];
+		if (is_array($symbols)) {
+			foreach ($symbols as $index => $symbol) {
+				if (!is_string($symbol) || $symbol === '') {
+					throw new \RuntimeException('Invalid symbol entry in mandatory PHP runtime symbols registry at index ' . $index . ': ' . $path);
+				}
+				$this->registerPhpRuntimeRelativeSymbol($exact, $bareBuckets, $symbol, $symbol);
 			}
-			$out[strtolower($symbol)] = true;
+		} elseif (is_array($targets)) {
+			foreach ($targets as $visibleSymbol => $targetSymbol) {
+				if (!is_string($visibleSymbol) || $visibleSymbol === '' || !is_string($targetSymbol) || $targetSymbol === '') {
+					throw new \RuntimeException('Invalid symbol mapping entry in mandatory PHP runtime symbols registry: ' . $path);
+				}
+				$this->registerPhpRuntimeRelativeSymbol($exact, $bareBuckets, $visibleSymbol, $targetSymbol);
+			}
+		} else {
+			throw new \RuntimeException('Mandatory PHP runtime symbols registry must contain array key php_runtime_relative_symbols or object key php_runtime_symbol_targets: ' . $path);
 		}
 
-		return $out;
+		$bare = [];
+		foreach ($bareBuckets as $tail => $matches) {
+			$uniqueMatches = array_values(array_unique($matches));
+			if (count($uniqueMatches) === 1) {
+				$bare[$tail] = $uniqueMatches[0];
+			}
+		}
+
+		return [
+			'exact' => $exact,
+			'bare' => $bare,
+		];
+	}
+
+	/**
+	 * @param array<string,string> $exact
+	 * @param array<string,list<string>> $bareBuckets
+	 */
+	private function registerPhpRuntimeRelativeSymbol(array &$exact, array &$bareBuckets, string $visibleSymbol, string $targetSymbol): void
+	{
+		$visible = ltrim($visibleSymbol, '\\');
+		$target = ltrim($targetSymbol, '\\');
+		$normalizedVisible = strtolower(str_replace('\\', '::', $visible));
+		$exact[$normalizedVisible] = $target;
+		$tail = str_contains($normalizedVisible, '::')
+			? substr($normalizedVisible, (int) strrpos($normalizedVisible, '::') + 2)
+			: $normalizedVisible;
+		$bareBuckets[$tail][] = $target;
 	}
 
 	private function isKnownPhpRuntimeRelativeSymbol(string $symbol): bool
 	{
-		return isset($this->phpRuntimeRelativeSymbols[strtolower($symbol)]);
+		return $this->resolveKnownPhpRuntimeRelativeSymbol($symbol) !== null;
 	}
 
 	private function qualifyKnownPhpRuntimeSymbol(string $symbol): string
 	{
-		return $this->isKnownPhpRuntimeRelativeSymbol($symbol) ? 'php::' . $symbol : $symbol;
+		return $this->resolveKnownPhpRuntimeRelativeSymbol($symbol) ?? $symbol;
+	}
+
+	private function resolveKnownPhpRuntimeRelativeSymbol(string $symbol): ?string
+	{
+		$normalized = strtolower(str_replace('\\', '::', ltrim($symbol, '\\')));
+		if ($normalized === '') {
+			return null;
+		}
+
+		if (isset($this->phpRuntimeRelativeSymbols['exact'][$normalized])) {
+			return $this->phpRuntimeRelativeSymbols['exact'][$normalized];
+		}
+
+		if (!str_contains($normalized, '\\') && isset($this->phpRuntimeRelativeSymbols['bare'][$normalized])) {
+			return $this->phpRuntimeRelativeSymbols['bare'][$normalized];
+		}
+
+		return null;
 	}
 
 	/**

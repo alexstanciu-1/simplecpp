@@ -118,6 +118,13 @@ Paths emitted into `build.ninja` are:
 - `.prism/generated/`
 - `.prism/cache/`
 
+`scpp init` accepts:
+
+- `--php-profile=legacy`
+- `--php-profile=strict`
+
+The current default is `legacy`.
+
 Entrypoint guessing checks these common candidates in order:
 
 - `main.php`
@@ -170,10 +177,16 @@ The FastCGI host expects a handwritten `scpp::fcgi::http_handle(const scpp::fcgi
 ```json
 {
   "runtime": {
-    "languages": ["php"],
+    "languages": {
+      "php": {
+        "profile": "legacy"
+      }
+    },
     "modules": ["json", "filesystem", "mysqli"]
   }
 }
 ```
+
+Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
 Current default behavior keeps all known runtime modules active. Unsupported language or module names must fail clearly during build configuration.

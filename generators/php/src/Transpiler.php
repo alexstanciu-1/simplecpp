@@ -7,6 +7,7 @@ use Scpp\S2S\Builder\IrBuilder;
 use Scpp\S2S\Emit\CppFile;
 use Scpp\S2S\Generator\Generator;
 use Scpp\S2S\Loader\InputLoader;
+use Scpp\S2S\Lowering\TypeMapper;
 use Scpp\S2S\Metadata\TypeCommentExtractor;
 use Scpp\S2S\Support\InputException;
 
@@ -15,6 +16,8 @@ use Scpp\S2S\Support\InputException;
  */
 final class Transpiler
 {
+	private readonly Generator $generator;
+
 	/**
 	 * Stores collaborators and default state for this phase object.
 	 *
@@ -26,8 +29,10 @@ final class Transpiler
 		private readonly InputLoader $loader = new InputLoader(),
 		private readonly TypeCommentExtractor $typeComments = new TypeCommentExtractor(),
 		private readonly IrBuilder $builder = new IrBuilder(),
-		private readonly Generator $generator = new Generator(),
+		?Generator $generator = null,
+		string $phpProfile = 'legacy',
 	) {
+		$this->generator = $generator ?? new Generator(new TypeMapper(), $phpProfile);
 	}
 
 	/**

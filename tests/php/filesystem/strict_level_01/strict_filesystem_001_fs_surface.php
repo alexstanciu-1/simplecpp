@@ -1,0 +1,55 @@
+<?php
+declare(strict_types=1);
+
+$root = "strict_fs_root";
+$dir = $root . "/dir";
+$file = $dir . "/alpha.txt";
+$copy = $dir . "/beta.txt";
+$renamed = $dir . "/gamma.txt";
+$err /** error_t */;
+
+fs_mkdir($root);
+fs_mkdir($dir);
+
+echo fs_is_dir($dir) ? "D\n" : "N\n";
+echo fs_exists($file) ? "Y\n" : "N\n";
+echo fs_is_link($file) ? "L\n" : "N\n";
+
+$written /** int */ = 0;
+take($written, $err, fs_put($file, "hello"));
+echo $written, "\n";
+echo fs_exists($file) ? "Y\n" : "N\n";
+echo fs_is_file($file) ? "Y\n" : "N\n";
+
+$content /** string */ = "";
+take($content, $err, fs_get($file));
+echo $content, "\n";
+
+$size /** int */ = 0;
+take($size, $err, fs_size($file));
+echo $size, "\n";
+
+$mtime /** int */ = 0;
+take($mtime, $err, fs_mtime($file));
+echo $mtime > 0 ? "M\n" : "m\n";
+
+$listing /** vector<string> */ = [];
+take($listing, $err, fs_scan($dir));
+foreach ($listing as $entry) {
+	echo $entry, ",";
+}
+echo "\n";
+
+$real /** string */ = "";
+take($real, $err, fs_realpath($file));
+echo fs_basename($real), "\n";
+echo fs_basename(fs_dirname($file)), "\n";
+
+echo fs_copy($file, $copy) ? "C\n" : "c\n";
+echo fs_rename($copy, $renamed) ? "R\n" : "r\n";
+echo fs_exists($renamed) ? "Y\n" : "N\n";
+echo fs_touch($renamed) ? "T\n" : "t\n";
+echo fs_remove($file) ? "U\n" : "u\n";
+echo fs_remove($renamed) ? "U\n" : "u\n";
+echo fs_rmdir($dir) ? "X\n" : "x\n";
+echo fs_rmdir($root) ? "X\n" : "x\n";

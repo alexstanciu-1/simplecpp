@@ -1,0 +1,50 @@
+{
+    "id": "strict_json_001_json_surface",
+    "feature": "json",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "1\n3\n{\"a\":1,\"b\":[2,3],\"c\":\"x\"}\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "json"
+    ],
+    "notes": "Strict JSON profile surface should map directly to scpp::json::* runtime functions.",
+    "build": {
+        "sanitizers": null
+    }
+}

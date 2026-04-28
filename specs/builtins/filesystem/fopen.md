@@ -35,7 +35,7 @@ Runtime: parse mode, call `std::fopen`, and create a `file_stream` resource wrap
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
 ## Test matrix
 - successful open in read/write mode

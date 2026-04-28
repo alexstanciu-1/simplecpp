@@ -35,7 +35,7 @@ Runtime: validate resource, delegate to `std::fseek`, clear error state on succe
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
 ## Test matrix
 - seek to start

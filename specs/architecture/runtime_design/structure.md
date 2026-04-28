@@ -30,7 +30,11 @@ Language-facing semantic adapters live under language-owned subfolders such as:
 - `runtime/include/lang/php/operators/`
 - `runtime/include/lang/php/casts/`
 
-These adapters expose stable frontend-facing entrypoints such as `scpp::php::*`.
+These adapters expose stable frontend-facing entrypoints such as `scpp::php::*` for language-owned or legacy-facing surfaces.
+
+Current strict-profile exception:
+- a language profile may expose flat visible source names that lower directly to shared runtime families through the active profile registry
+- this does not create a second semantic authority; it is an alternate visible surface over the same shared authority
 
 ### Rule 1.3 - Forward by default, override explicitly
 

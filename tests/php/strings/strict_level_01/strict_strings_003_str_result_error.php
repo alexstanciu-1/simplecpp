@@ -1,0 +1,12 @@
+<?php
+declare(strict_types=1);
+
+$out /** string */ = "seed";
+$err /** error_t */;
+
+echo take($out, $err, str_hex2bin("4")) ? "T\n" : "F\n";
+echo $out, "\n";
+echo take($out, $err, str_hex2bin("ZZ")) ? "T\n" : "F\n";
+echo $out, "\n";
+echo take($out, $err, str_hex2bin("4142")) ? "T\n" : "F\n";
+echo $out, "\n";

@@ -1,0 +1,52 @@
+{
+    "id": "take_004_non_local_output_negative",
+    "feature": "take",
+    "level": "level_02",
+    "outcome": "negative",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": false,
+            "error_contains": [
+                "take() output arguments must be simple local variables"
+            ]
+        },
+        "compile": {
+            "success": false,
+            "error_contains": []
+        },
+        "run": {
+            "success": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "take",
+        "wrappers"
+    ],
+    "notes": "Locks the v1 rule that take() output slots must be simple local variables.",
+    "build": {
+        "sanitizers": null
+    }
+}

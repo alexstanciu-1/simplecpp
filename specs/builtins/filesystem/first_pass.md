@@ -11,7 +11,7 @@ See also:
 
 - `runtime/include/scpp/php_resource.hpp`
 - `runtime/include/scpp/php_stdio.hpp`
-- `runtime/include/scpp/filesystem module (scpp::filesystem).hpp`
+- `runtime/include/modules/filesystem/filesystem.hpp` (`scpp::fs`)
 
 Support implementations live in matching `runtime/include/scpp/support/*` files.
 
@@ -91,5 +91,5 @@ For first-pass filesystem builtins that return `result_or_false<T>`:
 
 ## Testing note
 
-Runtime smoke coverage lives in `tests/runtime/native/test_filesystem module (scpp::filesystem).cpp`.
+Runtime smoke coverage lives in `tests/runtime/native/test_php_filesystem.cpp`.
 That test file intentionally covers both the stdio and filesystem first-pass contracts.

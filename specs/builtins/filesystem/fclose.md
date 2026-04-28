@@ -34,7 +34,7 @@ Runtime: validate resource, call `std::fclose`, and mark the wrapper closed.
 
 ## Compile plan summary
 Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
 ## Test matrix
 - successful close

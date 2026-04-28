@@ -143,7 +143,10 @@ Practical public umbrellas:
 - `runtime/include/scpp/runtime.hpp`
 - `runtime/include/scpp/lang/php.hpp`
 
-Generator-facing PHP semantic calls should prefer `scpp::php::*` entrypoints rather than reaching directly into lower shared families unless the owning layer already does that.
+Generator-facing PHP semantic calls should follow the active PHP profile surface:
+
+- legacy profile prefers `scpp::php::*` entrypoints
+- strict profile may use flat visible names that lower directly to shared runtime families through the active profile registry
 
 ## 8. Editing Posture
 

@@ -39,7 +39,7 @@ When functionality is reusable across languages, the implementation should live 
 Current examples:
 
 - JSON implementation lives in `modules/json/` and `namespace scpp::json`
-- filesystem implementation lives in `modules/filesystem/` and `namespace scpp::filesystem`
+- filesystem implementation lives in `modules/filesystem/` and `namespace scpp::fs`
 - PHP keeps wrapper headers in `lang/php/`
 
 
@@ -50,10 +50,16 @@ Current examples:
 ```json
 {
   "runtime": {
-    "languages": ["php"],
+    "languages": {
+      "php": {
+        "profile": "legacy"
+      }
+    },
     "modules": ["json", "filesystem", "mysqli"]
   }
 }
 ```
+
+Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
 Current default behavior keeps all known runtime modules active. Unsupported language or module names must fail clearly during build configuration.

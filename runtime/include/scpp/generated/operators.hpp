@@ -227,12 +227,36 @@ inline int_t operator++(int_t &value, int) noexcept {
 	return detail::generated_operator_detail::postfix_inc(value);
 }
 
+template <typename T>
+	requires is_lifted_compound_wrapper<T> && is_native_int<lifted_compound_inner_t<T>>
+inline auto &operator++(T &value) {
+	return ++require_lifted_compound_value(value, "lifted prefix operator++ requires a present operand");
+}
+
+template <typename T>
+	requires is_lifted_compound_wrapper<T> && is_native_int<lifted_compound_inner_t<T>>
+inline auto operator++(T &value, int) {
+	return require_lifted_compound_value(value, "lifted postfix operator++ requires a present operand")++;
+}
+
 inline int_t &operator--(int_t &value) noexcept {
 	return detail::generated_operator_detail::prefix_dec(value);
 }
 
 inline int_t operator--(int_t &value, int) noexcept {
 	return detail::generated_operator_detail::postfix_dec(value);
+}
+
+template <typename T>
+	requires is_lifted_compound_wrapper<T> && is_native_int<lifted_compound_inner_t<T>>
+inline auto &operator--(T &value) {
+	return --require_lifted_compound_value(value, "lifted prefix operator-- requires a present operand");
+}
+
+template <typename T>
+	requires is_lifted_compound_wrapper<T> && is_native_int<lifted_compound_inner_t<T>>
+inline auto operator--(T &value, int) {
+	return require_lifted_compound_value(value, "lifted postfix operator-- requires a present operand")--;
 }
 
 inline float_t &operator++(float_t &value) noexcept {
@@ -243,12 +267,36 @@ inline float_t operator++(float_t &value, int) noexcept {
 	return detail::generated_operator_detail::postfix_inc(value);
 }
 
+template <typename T>
+	requires is_lifted_compound_wrapper<T> && is_native_float<lifted_compound_inner_t<T>>
+inline auto &operator++(T &value) {
+	return ++require_lifted_compound_value(value, "lifted prefix operator++ requires a present operand");
+}
+
+template <typename T>
+	requires is_lifted_compound_wrapper<T> && is_native_float<lifted_compound_inner_t<T>>
+inline auto operator++(T &value, int) {
+	return require_lifted_compound_value(value, "lifted postfix operator++ requires a present operand")++;
+}
+
 inline float_t &operator--(float_t &value) noexcept {
 	return detail::generated_operator_detail::prefix_dec(value);
 }
 
 inline float_t operator--(float_t &value, int) noexcept {
 	return detail::generated_operator_detail::postfix_dec(value);
+}
+
+template <typename T>
+	requires is_lifted_compound_wrapper<T> && is_native_float<lifted_compound_inner_t<T>>
+inline auto &operator--(T &value) {
+	return --require_lifted_compound_value(value, "lifted prefix operator-- requires a present operand");
+}
+
+template <typename T>
+	requires is_lifted_compound_wrapper<T> && is_native_float<lifted_compound_inner_t<T>>
+inline auto operator--(T &value, int) {
+	return require_lifted_compound_value(value, "lifted postfix operator-- requires a present operand")--;
 }
 
 [[nodiscard]] inline string_t operator+(const string_t &lhs, const string_t &rhs) {
@@ -508,6 +556,33 @@ template <typename T, typename U>
 	return lhs.value() == rhs.value();
 }
 
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_false<T> &value, false_sentinel_t) noexcept {
+	return bool_t(!value.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(false_sentinel_t, const result_or_false<T> &value) noexcept {
+	return value == false_sentinel;
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, const bool_t &rhs) {
+	if (!lhs.has_value().native_value()) {
+		return detail::generated_operator_detail::eq(bool_t(false), rhs);
+	}
+	if constexpr (is_bool<T>) {
+		return lhs.value() == rhs;
+	} else {
+		return bool_t(false);
+	}
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const bool_t &lhs, const result_or_false<T> &rhs) {
+	return rhs == lhs;
+}
+
 template <typename T, typename Right>
 	requires is_lifted_equality_operand<Right>
 [[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, const Right &rhs) {
@@ -528,6 +603,26 @@ template <typename Left, typename T>
 
 template <typename T, typename U>
 [[nodiscard]] inline bool_t operator!=(const result_or_false<T> &lhs, const result_or_false<U> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_false<T> &value, false_sentinel_t) noexcept {
+	return bool_t(!static_cast<bool>((value == false_sentinel).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(false_sentinel_t lhs, const result_or_false<T> &rhs) noexcept {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_false<T> &lhs, const bool_t &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const bool_t &lhs, const result_or_false<T> &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 
@@ -557,6 +652,43 @@ template <typename T, typename U>
 	return lhs.value() == rhs.value();
 }
 
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &value, false_sentinel_t) noexcept {
+	return bool_t(!value.has_value().native_value() && value.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(false_sentinel_t, const result_or_bool<T> &value) noexcept {
+	return value == false_sentinel;
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &value, true_sentinel_t) noexcept {
+	return bool_t(!value.has_value().native_value() && value.is_true().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(true_sentinel_t, const result_or_bool<T> &value) noexcept {
+	return value == true_sentinel;
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, const bool_t &rhs) {
+	if (!lhs.has_value().native_value()) {
+		return detail::generated_operator_detail::eq(bool_t(lhs.is_true().native_value()), rhs);
+	}
+	if constexpr (is_bool<T>) {
+		return lhs.value() == rhs;
+	} else {
+		return bool_t(false);
+	}
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const bool_t &lhs, const result_or_bool<T> &rhs) {
+	return rhs == lhs;
+}
+
 template <typename T, typename Right>
 	requires is_lifted_equality_operand<Right>
 [[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, const Right &rhs) {
@@ -577,6 +709,36 @@ template <typename Left, typename T>
 
 template <typename T, typename U>
 [[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, const result_or_bool<U> &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &value, false_sentinel_t) noexcept {
+	return bool_t(!static_cast<bool>((value == false_sentinel).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(false_sentinel_t lhs, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &value, true_sentinel_t) noexcept {
+	return bool_t(!static_cast<bool>((value == true_sentinel).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(true_sentinel_t lhs, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, const bool_t &rhs) {
+	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const bool_t &lhs, const result_or_bool<T> &rhs) {
 	return bool_t(!static_cast<bool>((lhs == rhs).native_value()));
 }
 

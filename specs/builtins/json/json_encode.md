@@ -27,4 +27,4 @@ Encodes a runtime value into JSON text.
 
 ## Registration note
 
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
