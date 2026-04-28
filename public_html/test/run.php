@@ -124,13 +124,13 @@ try {
 		throw new RuntimeException('The php-ast extension is required for this test UI.');
 	}
 
-	$projectRoot = realpath(__DIR__ . '/../../');
-	if ($projectRoot === false) {
+	$repoRoot = realpath(__DIR__ . '/../../');
+	if ($repoRoot === false) {
 		throw new RuntimeException('Project root not found.');
 	}
 
-	require_once $projectRoot . '/bin/bootstrap.php';
-	require_once $projectRoot . '/bin/project_services.php';
+	require_once $repoRoot . '/bin/bootstrap.php';
+	require_once $repoRoot . '/bin/project_services.php';
 
 	$sandboxRoot = getSandboxRootPath();
 	ensureSandboxRootExists($sandboxRoot);
@@ -148,12 +148,13 @@ try {
 
 	$projectConfig = find_project_config($sandboxRoot);
 	if ($projectConfig === null) {
-		$initStage = measureStage(static function () use ($sandboxRoot): array {
-			return scpp_run_init_service($sandboxRoot);
+		$initStage = measureStage(static function () use ($sandboxRoot, $repoRoot): array {
+			return runScppCliService($repoRoot, $sandboxRoot, ['init']);
 		});
 		$initResult = $initStage['result'];
 		$timingResources['init_project'] = stageMetricsFromMeasured($initStage, 'scpp init');
 		$timingResources['init_project']['exit_code'] = $initResult['exit_code'];
+		$timingResources['init_project']['command'] = $initResult['command'];
 		$response['project_init_output'] = normalizeCommandOutput((string) $initResult['output']);
 		$response['project_init_error'] = trim((string) $initResult['error']);
 		if (!$initResult['ok']) {
@@ -165,6 +166,16 @@ try {
 		throw new RuntimeException('Failed to resolve sandbox project config after initialization.');
 	}
 	$buildConfigPath = prepareUiBuildConfigPath($projectConfig['project_root'], $projectConfig['config_path'], $entrypointRelativePath);
+	if ($buildConfigPath !== $projectConfig['config_path']) {
+		$overrideConfigJson = file_get_contents($buildConfigPath);
+		if (!is_string($overrideConfigJson) || $overrideConfigJson === '') {
+			throw new RuntimeException('Failed to read temporary UI build config.');
+		}
+		if (file_put_contents($projectConfig['config_path'], $overrideConfigJson) === false) {
+			throw new RuntimeException('Failed to refresh sandbox prism.json for selected entrypoint.');
+		}
+		$buildConfigPath = $projectConfig['config_path'];
+	}
 	$buildConfig = load_project_config($buildConfigPath);
 	$timingResources['project_config'] = [
 		'label' => 'Project config',
@@ -216,7 +227,7 @@ try {
 
 	$phpRun = runCommandMeasured(
 		['php', __DIR__."/run_include.php", $phpPath],
-		$projectRoot,
+		$repoRoot,
 		20
 	);
 	$response['php_output'] = normalizeCommandOutput($phpRun['stdout']);
@@ -242,8 +253,8 @@ try {
 			'reason' => 'generator_failed',
 		];
 	} else {
-		$buildStage = measureStage(static function () use ($projectConfig, $buildConfigPath): array {
-			return scpp_run_build_service($projectConfig['project_root'], $buildConfigPath);
+		$buildStage = measureStage(static function () use ($projectConfig, $repoRoot): array {
+			return runScppCliService($repoRoot, $projectConfig['project_root'], ['build']);
 		});
 		$buildResult = $buildStage['result'];
 		$response['cpp_compile_output'] = normalizeCommandOutput((string) $buildResult['output']);
@@ -253,9 +264,23 @@ try {
 		$compileMetrics['exit_code'] = $buildResult['exit_code'];
 		$compileMetrics['mode'] = (string) (($buildConfig['build']['mode'] ?? 'debug'));
 		$compileMetrics['entrypoint'] = normalizeConfigPathForUi((string) ($buildConfig['entrypoint'] ?? 'main.php'));
+		$compileMetrics['command'] = $buildResult['command'];
 		$timingResources['compile_cpp'] = $compileMetrics;
 
-		if (!$buildResult['ok'] || !is_array($buildResult['result'])) {
+		$buildPayload = [
+			'project_root' => $projectConfig['project_root'],
+			'build_dir' => normalize_path($projectConfig['project_root'] . '/' . normalize_config_path((string) ($buildConfig['build_dir'] ?? '.prism/build'))),
+			'output_name' => build_output_name($entrypointAbsolutePath),
+			'output_path' => normalize_path(
+				$projectConfig['project_root']
+				. '/'
+				. normalize_config_path((string) ($buildConfig['build_dir'] ?? '.prism/build'))
+				. '/'
+				. build_output_name($entrypointAbsolutePath)
+			),
+		];
+
+		if (!$buildResult['ok']) {
 			$response['cpp_error'] = $response['cpp_compile_error'];
 			$response['cpp_output'] = '';
 			$response['cpp_exit_code'] = null;
@@ -265,7 +290,6 @@ try {
 				'reason' => 'build_failed',
 			];
 		} else {
-			$buildPayload = $buildResult['result'];
 			$generatedBase = build_generated_base(
 				normalize_path($projectConfig['project_root'] . '/' . normalize_config_path((string) ($buildConfig['generated_dir'] ?? '.prism/generated'))),
 				normalize_config_path((string) ($buildConfig['entrypoint'] ?? 'main.php'))
@@ -1100,6 +1124,26 @@ function runCommandMeasured(array $command, string $workingDirectory, int $timeo
 		'user_ms' => secondsStringToMs($parsedMetrics['metrics']['user_sec'] ?? null),
 		'sys_ms' => secondsStringToMs($parsedMetrics['metrics']['sys_sec'] ?? null),
 		'max_rss_kb' => isset($parsedMetrics['metrics']['max_rss_kb']) ? (int) $parsedMetrics['metrics']['max_rss_kb'] : null,
+		'command' => $command,
+	];
+}
+
+function runScppCliService(string $repoRoot, string $workingDirectory, array $args, int $timeoutSeconds = 20): array
+{
+	$scriptPath = normalize_path($repoRoot . '/bin/scpp.php');
+	if (!is_file($scriptPath)) {
+		throw new RuntimeException('scpp CLI entrypoint not found: ' . $scriptPath);
+	}
+
+	$command = build_php_script_command($repoRoot, $scriptPath, $args, true);
+	$run = runCommandMeasured($command, $workingDirectory, $timeoutSeconds);
+
+	return [
+		'ok' => $run['exit_code'] === 0,
+		'output' => $run['stdout'],
+		'error' => trim((string) $run['stderr']),
+		'exit_code' => $run['exit_code'],
+		'command' => $run['command'],
 	];
 }
 
