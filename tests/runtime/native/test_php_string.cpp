@@ -285,6 +285,27 @@ static void test_substr_replace() {
 	assert(scpp::php::substr_replace(scpp::string_t("abcdef"), scpp::string_t(""), scpp::int_t(2), scpp::int_t(3)).native_value() == "abf");
 }
 
+static void test_shared_str_surface() {
+	assert(scpp::str::length(scpp::string_t("hello")).native_value() == 5);
+
+	const auto found = scpp::str::find(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(1));
+	assert(found.has_value().native_value());
+	assert(found.value().native_value() == 3);
+
+	const auto missing = scpp::str::find(scpp::string_t("abc"), scpp::string_t("z"));
+	assert(!missing.has_value().native_value());
+
+	const auto split = scpp::str::split(scpp::string_t(","), scpp::string_t("a,b,c"));
+	assert(split.size() == 3);
+	assert(split.native_value()[0].native_value() == "a");
+	assert(split.native_value()[2].native_value() == "c");
+
+	const auto decoded = scpp::str::hex_decode(scpp::string_t("48656c6c6f"));
+	assert(decoded.has_value().native_value());
+	assert(decoded.value().native_value() == "Hello");
+	assert(scpp::str::hex_encode(scpp::string_t("Hello")).native_value() == "48656c6c6f");
+}
+
 } // namespace
 
 int main() {
@@ -311,5 +332,6 @@ int main() {
 	test_substr_compare();
 	test_substr_replace();
 	test_number_format();
+	test_shared_str_surface();
 	return 0;
 }

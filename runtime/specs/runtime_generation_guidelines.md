@@ -35,7 +35,9 @@ Generation must preserve a strict layering boundary:
 - when wrapper families need operator participation, generation must prefer one centralized lifted operator surface over relying on native C++ conversion operators; for current nullable work this means lifted unary/binary/logical/relational/mutation operators that unwrap through a checked helper and then delegate to the wrapped-value operator family
 - when wrapper families need cast participation, generation must prefer one centralized lifted cast surface over scattered ad hoc unwraps; for current nullable work this means `cast<T>(nullable<U>)` must route through a checked present-value requirement before delegating to `cast<T>(U)`, and empty nullable failure should use the standardized wording `cast<To>(nullable) cannot convert an empty nullable to a required value`; the symmetric inbound bridge `cast<nullable<T>>(mixed_t)` must map runtime `null` to empty nullable and otherwise delegate through the configured `mixed_t -> T` cast
 - when nullable values need object/property or method dereference, generation must rely on the stable `nullable<T>::operator->()` surface instead of scattering manual unwraps; nullable arrow access must check present-value state first, then forward to wrapped `T::operator->()` when available or expose the address of the wrapped object for direct-object member access
-- generated/frontend-facing code should target language entrypoints such as `scpp::php::*`; language entrypoints may forward to shared `scpp::*` semantic families, but generated code should not call shared `scpp::*` semantic families directly
+- generated/frontend-facing code should follow the active language-profile surface
+- legacy PHP generated/frontend-facing code should target language entrypoints such as `scpp::php::*`
+- strict PHP generated/frontend-facing code may target shared `scpp::*` runtime families directly when the active strict profile registry defines those symbols
 
 ## Output layout
 Generation must target the project runtime root and produce files by category, not by ad-hoc manual decisions.

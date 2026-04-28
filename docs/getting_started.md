@@ -23,12 +23,21 @@ From the project root:
 scpp init
 ```
 
+Or choose the PHP profile explicitly:
+
+```bash
+scpp init --php-profile=legacy
+scpp init --php-profile=strict
+```
+
 This creates:
 
 - `prism.json`
 - `.prism/build/`
 - `.prism/generated/`
 - `.prism/cache/`
+
+The current default PHP profile is `legacy`.
 
 `scpp init` first looks for a common non-web-first entrypoint such as:
 

@@ -27,4 +27,4 @@ Parses one complete JSON document and returns a `mixed_t` in the normal Prism++ 
 
 ## Registration note
 
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.

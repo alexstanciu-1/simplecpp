@@ -12,4 +12,3 @@
 // PHP-flow tests link against this single runtime object, so wrapper-backed
 // filesystem calls need their implementation units pulled in here as well.
 #include "../modules/filesystem/filesystem.cpp"
-#include "../lang/php/php_filesystem.cpp"

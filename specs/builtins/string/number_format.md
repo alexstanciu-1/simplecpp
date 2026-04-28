@@ -43,8 +43,8 @@ Doc Status: normative
 - Implicitly available by project policy.
 
 ## Compile plan summary
-- Implemented in `runtime/include/scpp/support/php.hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+- Implemented by shared string runtime support under `runtime/include/modules/strings/strings.hpp` with PHP wrapper exposure in `runtime/include/lang/php/support/php_string.hpp`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
 ## Test matrix
 - integer default formatting

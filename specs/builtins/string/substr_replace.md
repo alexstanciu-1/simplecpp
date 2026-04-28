@@ -42,7 +42,7 @@ Doc Status: normative
 
 ## Compile plan summary
 - Implemented in `runtime/include/scpp/support/php.hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
 ## Test matrix
 - positive offset replace

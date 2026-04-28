@@ -1,11 +1,37 @@
 #pragma once
 
 #include "scpp/bool_t.hpp"
+#include "scpp/error_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/result.hpp"
 #include "scpp/result_or_false.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/vector_t.hpp"
+
+namespace scpp::fs {
+
+[[nodiscard]] bool_t is_file(const string_t &path);
+[[nodiscard]] bool_t is_dir(const string_t &path);
+[[nodiscard]] bool_t is_link(const string_t &path);
+[[nodiscard]] bool_t exists(const string_t &path);
+[[nodiscard]] result<string_t> get(const string_t &path);
+[[nodiscard]] result<int_t> put(const string_t &path, const string_t &data);
+[[nodiscard]] bool_t mkdir(const string_t &path);
+[[nodiscard]] result<vector_t<string_t>> scan(const string_t &path);
+[[nodiscard]] result<int_t> size(const string_t &path);
+[[nodiscard]] result<int_t> mtime(const string_t &path);
+[[nodiscard]] bool_t touch(const string_t &path);
+[[nodiscard]] bool_t rmdir(const string_t &path);
+[[nodiscard]] bool_t remove(const string_t &path);
+[[nodiscard]] bool_t copy(const string_t &source, const string_t &dest);
+[[nodiscard]] bool_t rename(const string_t &source, const string_t &dest);
+[[nodiscard]] result<string_t> realpath(const string_t &path);
+[[nodiscard]] string_t dirname(const string_t &path);
+[[nodiscard]] string_t basename(const string_t &path);
+
+} // namespace scpp::fs
 
 namespace scpp::filesystem {
 

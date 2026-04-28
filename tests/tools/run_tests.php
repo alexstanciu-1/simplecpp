@@ -48,6 +48,10 @@ final class Phase1TestRunner
 	public function run(array $argv): int
 	{
 		$options = $this->parseArgs($argv);
+		if (isset($options['profile']) && is_string($options['profile'])) {
+			putenv('SCPP_TEST_PHP_PROFILE=' . strtolower(trim($options['profile'])));
+			$_SERVER['SCPP_TEST_PHP_PROFILE'] = strtolower(trim($options['profile']));
+		}
 
 		return match ($options['command']) {
 			'reset' => $this->resetTests($options),
@@ -75,6 +79,7 @@ final class Phase1TestRunner
 		$options = [
 			'command' => $command,
 			'suite' => 'php',
+			'profile' => 'legacy',
 			'level' => null,
 			'test' => null,
 			'jobs' => self::DEFAULT_JOBS,
@@ -96,6 +101,10 @@ final class Phase1TestRunner
 			}
 			if (str_starts_with($arg, '--suite=')) {
 				$options['suite'] = substr($arg, 8);
+				continue;
+			}
+			if (str_starts_with($arg, '--profile=')) {
+				$options['profile'] = substr($arg, 10);
 				continue;
 			}
 			if (str_starts_with($arg, '--level=')) {
@@ -133,13 +142,14 @@ final class Phase1TestRunner
 	{
 		echo <<<TXT
 Usage:
-	php tests/tools/run_tests.php reset [--suite=php|runtime|php-matrix|runtime-matrix] [--level=level_01] [--test=pattern] [--include-disabled] [--san=address,undefined]
-	php tests/tools/run_tests.php run [--suite=php|runtime|php-matrix|runtime-matrix] [--level=level_01] [--test=pattern] [--jobs=12] [--include-disabled] [--san=address,undefined]
+	php tests/tools/run_tests.php reset [--suite=php|runtime|php-matrix|runtime-matrix] [--profile=legacy|strict] [--level=level_01] [--test=pattern] [--include-disabled] [--san=address,undefined]
+	php tests/tools/run_tests.php run [--suite=php|runtime|php-matrix|runtime-matrix] [--profile=legacy|strict] [--level=level_01] [--test=pattern] [--jobs=12] [--include-disabled] [--san=address,undefined]
 	php tests/tools/run_tests.php gate --suite=runtime [--jobs=12] [--include-disabled]
 
 Filters:
 	--suite=php|runtime|php-matrix|runtime-matrix
 	                        Select the curated or matrix-generated PHP/runtime flow.
+	--profile=legacy|strict PHP suite only. `strict` includes only strict-prefixed tests.
 	--level=level_01          Run/reset only one level.
 	--test=needle             Run/reset one specific test id, filename, or relative path fragment.
 	--include-disabled        Include disabled / known-gap tests.
@@ -227,7 +237,7 @@ TXT;
 		while ($queue !== [] || $active !== []) {
 			while ($queue !== [] && count($active) < $jobs) {
 				$test = array_shift($queue);
-				$handle = $this->startWorkerProcess($test['info_path'], (string) ($options['san'] ?? ''));
+				$handle = $this->startWorkerProcess($test['info_path'], (string) ($options['san'] ?? ''), (string) ($options['profile'] ?? 'legacy'));
 				$active[] = [
 					'test' => $test,
 					'proc' => $handle['proc'],
@@ -349,6 +359,19 @@ TXT;
 			}
 
 			$relativeSourcePath = $this->relativePath($sourcePath);
+			if ($suite === 'php') {
+				$profile = strtolower(trim((string) ($options['profile'] ?? 'legacy')));
+				if (!in_array($profile, ['legacy', 'strict'], true)) {
+					throw new RuntimeException('Unsupported PHP test profile: ' . $profile);
+				}
+				$isStrictProfileTest = $this->isStrictProfileTestPath($relativeSourcePath);
+				if ($profile === 'legacy' && $isStrictProfileTest) {
+					continue;
+				}
+				if ($profile === 'strict' && !$isStrictProfileTest) {
+					continue;
+				}
+			}
 			$testId = (string) ($meta['id'] ?? basename($sourcePath, '.' . $expectedExtension));
 			$level = (string) ($meta['level'] ?? '');
 
@@ -710,7 +733,7 @@ TXT;
 
 		$started = microtime(true);
 		try {
-			$transpiler = new Transpiler();
+			$transpiler = new Transpiler(phpProfile: $this->resolvePhpTestProfile());
 			$cppFile = $transpiler->transpile($phpPath, true);
 			$durationMs = (int) round((microtime(true) - $started) * 1000);
 
@@ -823,15 +846,17 @@ TXT;
 	): array {
 		$cacheRoot = $this->projectRoot . '/tests/.runtime/cache/runtime_objects';
 		$this->ensureDirectory($cacheRoot);
+		$phpProfile = $this->resolvePhpTestProfile();
 
 		$cacheKey = sha1(json_encode([
 			'compiler' => $compiler,
 			'language_standard' => $languageStandard,
 			'flags' => array_values($flags),
 			'defines' => array_values($defines),
-			'runtime_version' => $this->computeRuntimeCacheVersion(),
+			'runtime_version' => $this->computeRuntimeCacheVersion($phpProfile),
 		], JSON_THROW_ON_ERROR));
 		$objectPath = $cacheRoot . '/runtime_' . $cacheKey . '.o';
+		$compositionPath = $cacheRoot . '/runtime_' . $phpProfile . '.cpp';
 		$lockPath = $objectPath . '.lock';
 		$lockHandle = fopen($lockPath, 'c+');
 		if ($lockHandle === false) {
@@ -843,7 +868,11 @@ TXT;
 				throw new RuntimeException('Failed to lock runtime object cache: ' . $lockPath);
 			}
 
-			if (!$this->isRuntimeObjectFresh($objectPath)) {
+			if (file_put_contents($compositionPath, $this->renderRuntimeCompositionSource($phpProfile)) === false) {
+				throw new RuntimeException('Failed to write runtime composition source: ' . $compositionPath);
+			}
+
+			if (!$this->isRuntimeObjectFresh($objectPath, $phpProfile)) {
 				$tmpObjectPath = $objectPath . '.tmp.' . bin2hex(random_bytes(4));
 				$command = array_merge(
 					[$compiler, '-std=' . $languageStandard],
@@ -851,7 +880,7 @@ TXT;
 					$defines,
 					[
 						'-c',
-						$this->projectRoot . '/runtime/include/core/runtime.cpp',
+						$compositionPath,
 						'-I',
 						$this->projectRoot,
 						'-I',
@@ -885,7 +914,7 @@ TXT;
 		}
 	}
 
-	private function isRuntimeObjectFresh(string $objectPath): bool
+	private function isRuntimeObjectFresh(string $objectPath, string $phpProfile): bool
 	{
 		if (!is_file($objectPath)) {
 			return false;
@@ -896,17 +925,19 @@ TXT;
 			return false;
 		}
 
-		return $objectMTime >= $this->latestRuntimeSourceMTime();
+		return $objectMTime >= $this->latestRuntimeSourceMTime($phpProfile);
 	}
 
-	private function computeRuntimeCacheVersion(): array
+	private function computeRuntimeCacheVersion(string $phpProfile): array
 	{
 		return [
-			'latest_runtime_mtime' => $this->latestRuntimeSourceMTime(),
+			'latest_runtime_mtime' => $this->latestRuntimeSourceMTime($phpProfile),
+			'php_profile' => $phpProfile,
+			'test_harness_mtime' => filemtime(__FILE__) ?: 0,
 		];
 	}
 
-	private function latestRuntimeSourceMTime(): int
+	private function latestRuntimeSourceMTime(string $phpProfile): int
 	{
 		$latest = 0;
 		foreach ([$this->projectRoot . '/runtime/include'] as $dir) {
@@ -926,8 +957,29 @@ TXT;
 				}
 			}
 		}
+		if ($phpProfile === 'legacy' || $phpProfile === 'strict') {
+			$scriptMTime = filemtime(__FILE__) ?: 0;
+			if ($scriptMTime > $latest) {
+				$latest = $scriptMTime;
+			}
+		}
 
 		return $latest;
+	}
+
+	private function renderRuntimeCompositionSource(string $phpProfile): string
+	{
+		$lines = [
+			'#include "core/runtime.cpp"',
+			'#include "modules/json/json.cpp"',
+			'#include "modules/mysql/mysql_module.cpp"',
+		];
+		if ($phpProfile === 'legacy') {
+			$lines[] = '#include "lang/php/php_filesystem.cpp"';
+			$lines[] = '#include "lang/php/php_json.cpp"';
+			$lines[] = '#include "lang/php/php_mysqli.cpp"';
+		}
+		return implode("\n", $lines) . "\n";
 	}
 
 	private function withCompilerLauncher(array $command): array
@@ -1030,7 +1082,7 @@ TXT;
 		return null;
 	}
 
-	private function startWorkerProcess(string $jsonPath, string $sanitizers = ''): array
+	private function startWorkerProcess(string $jsonPath, string $sanitizers = '', string $profile = 'legacy'): array
 	{
 		$command = [
 			PHP_BINARY,
@@ -1044,6 +1096,7 @@ TXT;
 		$command[] = $this->selfPath;
 		$command[] = 'worker';
 		$command[] = '--json=' . $jsonPath;
+		$command[] = '--profile=' . strtolower(trim($profile));
 		if ($sanitizers !== '') {
 			$command[] = '--san=' . $sanitizers;
 		}
@@ -1054,7 +1107,7 @@ TXT;
 			2 => ['pipe', 'w'],
 		];
 
-		$procEnv = $this->buildPhpWorkerEnvironment();
+		$procEnv = $this->buildPhpWorkerEnvironment($profile);
 		$proc = proc_open($commandString, $descriptors, $pipes, $this->projectRoot, $procEnv);
 		if (!is_resource($proc)) {
 			throw new RuntimeException('Failed to start worker process.');
@@ -1067,9 +1120,11 @@ TXT;
 		return ['proc' => $proc, 'pipes' => $pipes];
 	}
 
-	private function buildPhpWorkerEnvironment(): array
+	private function buildPhpWorkerEnvironment(string $profile = 'legacy'): array
 	{
 		$env = $this->buildProcessEnvironment();
+		$normalizedProfile = strtolower(trim($profile));
+		$env['SCPP_TEST_PHP_PROFILE'] = in_array($normalizedProfile, ['legacy', 'strict'], true) ? $normalizedProfile : 'legacy';
 		$astSoPath = $this->resolveBundledAstExtensionPath();
 		if (is_string($astSoPath) && is_file($astSoPath)) {
 			$flag = '-dextension=' . $astSoPath;
@@ -1078,6 +1133,23 @@ TXT;
 			$env['PHP_WORKER_AST_SO'] = $astSoPath;
 		}
 		return $env;
+	}
+
+	private function resolvePhpTestProfile(): string
+	{
+		$profile = strtolower(trim((string) ($_SERVER['SCPP_TEST_PHP_PROFILE'] ?? getenv('SCPP_TEST_PHP_PROFILE') ?: 'legacy')));
+		return in_array($profile, ['legacy', 'strict'], true) ? $profile : 'legacy';
+	}
+
+	private function isStrictProfileTestPath(string $relativeSourcePath): bool
+	{
+		$segments = array_filter(explode('/', str_replace('\\', '/', $relativeSourcePath)), static fn (string $segment): bool => $segment !== '');
+		foreach ($segments as $segment) {
+			if (str_starts_with($segment, 'strict_')) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private function buildProcessEnvironment(array $extra = []): array

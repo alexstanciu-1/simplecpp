@@ -90,6 +90,12 @@ static void test_json_encode_key_and_error_contracts() {
 	});
 }
 
+static void test_json_alias_surface() {
+	const auto value = scpp::json::decode(scpp::string_t("[1,2]"));
+	assert(value.kind() == scpp::mixed_t::kind_t::dynamic_v);
+	assert(scpp::json::encode(value).native_value() == "[1,2]");
+}
+
 } // namespace
 
 int main() {
@@ -99,5 +105,6 @@ int main() {
 	test_json_decode_unicode_and_escapes();
 	test_json_encode_shapes();
 	test_json_encode_key_and_error_contracts();
+	test_json_alias_surface();
 	return 0;
 }

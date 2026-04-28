@@ -48,12 +48,14 @@ Current examples already following this model:
 - `scpp::coalesce_eval(...)` under `runtime/include/operators/coalesce/`
 - `scpp::condition_truthy(...)` under `runtime/include/operators/conditional/`
 - `scpp::ternary_eval(...)` under `runtime/include/operators/conditional/`
-- `scpp::php::*` adapters that forward to those shared families
+- `scpp::php::*` adapters that forward to those shared families for legacy PHP
+- strict-profile visible names that lower directly to shared runtime families through the active profile registry
 - `mixed_t` convenience methods such as `mixed_t::empty()` and `mixed_t::isset(...)` delegating to shared semantic authorities instead of owning behavior
 
 Current carve-out:
-- PHP builtin/string helper implementation in headers such as `runtime/include/lang/php/support/php_string.hpp` and `runtime/include/lang/php/support/php_common.hpp` remains PHP-owned for now
-- that area should match current PHP-facing behavior first; structural promotion can be revisited when a second language exists
+- PHP-visible wrapper shaping in headers such as `runtime/include/lang/php/support/php_string.hpp` remains PHP-owned
+- shared reusable string helper mechanics have now been promoted into the non-language runtime-owned `runtime/include/core/string_support.hpp`
+- PHP-specific shaping should remain in `lang/php/*`, while reusable mechanics stay in shared runtime-owned code
 
 ## Placement rule
 

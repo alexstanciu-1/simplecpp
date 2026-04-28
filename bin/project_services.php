@@ -139,13 +139,20 @@ function scpp_run_binary_service(string $workingDirectory, string $binaryPath, a
  */
 final class ProjectInitCommand
 {
-	public function __construct(private readonly string $projectRoot)
+	public function __construct(
+		private readonly string $projectRoot,
+		private readonly string $phpProfile = 'legacy',
+	)
 	{
 	}
 
 	public function run(): void
 	{
 		$projectRoot = normalize_path($this->projectRoot);
+		$phpProfile = strtolower(trim($this->phpProfile));
+		if (!in_array($phpProfile, ['legacy', 'strict'], true)) {
+			scpp_fail('Unsupported PHP profile `' . $this->phpProfile . '` for scpp init. Use `legacy` or `strict`.' . PHP_EOL, 1);
+		}
 		$configPath = $projectRoot . '/' . SCPP_PROJECT_CONFIG;
 		if (is_file($configPath)) {
 			scpp_fail('Project config already exists: ' . relative_or_absolute($projectRoot, $configPath) . PHP_EOL, 1);
@@ -177,7 +184,11 @@ final class ProjectInitCommand
 				'max_requests' => 0,
 			],
 			'runtime' => [
-				'languages' => ['php'],
+				'languages' => [
+					'php' => [
+						'profile' => $phpProfile,
+					],
+				],
 				'modules' => ['json', 'filesystem', 'mysqli'],
 			],
 		];
@@ -194,6 +205,7 @@ final class ProjectInitCommand
 		echo 'Created ' . SCPP_PROJECT_CONFIG . PHP_EOL;
 		echo 'Project root: ' . $projectRoot . PHP_EOL;
 		echo 'Entrypoint: ' . $config['entrypoint'] . PHP_EOL;
+		echo 'PHP profile: ' . $phpProfile . PHP_EOL;
 		if ($entrypoint === null) {
 			echo "Note: no common entrypoint was found; edit prism.json before running scpp build.\n";
 		}
@@ -221,7 +233,7 @@ function main(array $argv): void
 	}
 
 	if ($args[0] === 'init') {
-		handle_init(getcwd() === false ? '.' : getcwd());
+		handle_init(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
 		return;
 	}
 
@@ -261,7 +273,7 @@ function print_help(): void
 	echo "Prism++ CLI\n";
 	echo "Usage:\n";
 	echo "  scpp <input.php>\n";
-	echo "  scpp init\n";
+	echo "  scpp init [--php-profile=legacy|strict]\n";
 	echo "  scpp build\n";
 	echo "  scpp run [-- <args...>]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
@@ -334,9 +346,17 @@ function resolve_repo_root(): string
 	return normalize_path(dirname(__DIR__));
 }
 
-function handle_init(string $cwd): void
+function handle_init(string $cwd, array $args = []): void
 {
-	$command = new ProjectInitCommand($cwd);
+	$phpProfile = 'legacy';
+	foreach ($args as $arg) {
+		if (str_starts_with($arg, '--php-profile=')) {
+			$phpProfile = substr($arg, strlen('--php-profile='));
+			continue;
+		}
+		scpp_fail('Unknown option for `scpp init`: ' . $arg . PHP_EOL, 1);
+	}
+	$command = new ProjectInitCommand($cwd, $phpProfile);
 	$command->run();
 }
 
@@ -479,8 +499,9 @@ function execute_build(string $projectRoot, string $configPath): array
 	$state = load_s2s_state($statePath);
 	$phpFiles = collect_project_php_files($projectRoot);
 	$runtimeBuildSignature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode, $runtimeConfig);
-	$transpiler = new Transpiler();
-	$generatorSignature = compute_s2s_generator_signature($repoRoot);
+	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
+	$transpiler = new Transpiler(phpProfile: $phpProfile);
+	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile);
 	$generatedUnits = [];
 	$nativeCppFiles = collect_project_native_cpp_files($nativeCppDir);
 	$transpiledCount = 0;
@@ -774,16 +795,50 @@ function load_project_config(string $configPath): array
 	return $config;
 }
 
-/** @return array{languages:list<string>,modules:list<string>} */
+/**
+ * @return array{
+ *   languages:list<string>,
+ *   language_profiles:array<string, array{profile:string}>,
+ *   modules:list<string>
+ * }
+ */
 function resolve_runtime_build_config(array $config): array
 {
 	$runtime = is_array($config['runtime'] ?? null) ? $config['runtime'] : [];
-	$languages = $runtime['languages'] ?? ['php'];
+	$languagesRaw = $runtime['languages'] ?? ['php'];
 	$modules = $runtime['modules'] ?? ['json', 'filesystem', 'mysqli'];
-	if (!is_array($languages) || !is_array($modules)) {
-		scpp_fail('Invalid runtime config in ' . SCPP_PROJECT_CONFIG . '; expected arrays for runtime.languages and runtime.modules.' . PHP_EOL, 2);
+	if (!is_array($languagesRaw) || !is_array($modules)) {
+		scpp_fail('Invalid runtime config in ' . SCPP_PROJECT_CONFIG . '; expected runtime.languages as either a list or object, and runtime.modules as an array.' . PHP_EOL, 2);
 	}
-	$languages = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $languages)));
+
+	$languageProfiles = [];
+	if (array_is_list($languagesRaw)) {
+		$languages = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $languagesRaw)));
+		foreach ($languages as $language) {
+			if ($language !== '') {
+				$languageProfiles[$language] = ['profile' => 'legacy'];
+			}
+		}
+	} else {
+		$languages = [];
+		foreach ($languagesRaw as $language => $languageConfig) {
+			$normalizedLanguage = strtolower(trim((string) $language));
+			if ($normalizedLanguage === '') {
+				continue;
+			}
+			if (!is_array($languageConfig)) {
+				scpp_fail('Invalid runtime language config for `' . $normalizedLanguage . '` in ' . SCPP_PROJECT_CONFIG . '; expected an object with at least a profile field.' . PHP_EOL, 2);
+			}
+			$profile = strtolower(trim((string) ($languageConfig['profile'] ?? 'legacy')));
+			if (!in_array($profile, ['legacy', 'strict'], true)) {
+				scpp_fail('Unsupported runtime language profile `' . $profile . '` for `' . $normalizedLanguage . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
+			}
+			$languages[] = $normalizedLanguage;
+			$languageProfiles[$normalizedLanguage] = ['profile' => $profile];
+		}
+		$languages = array_values(array_unique($languages));
+	}
+
 	$modules = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $modules)));
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
@@ -804,6 +859,7 @@ function resolve_runtime_build_config(array $config): array
 	}
 	return [
 		'languages' => $languages,
+		'language_profiles' => $languageProfiles,
 		'modules' => $modules,
 	];
 }
@@ -964,16 +1020,19 @@ function collect_project_php_files(string $projectRoot): array
 }
 
 /** @return array<string,mixed> */
-function compute_s2s_generator_signature(string $repoRoot): string
+function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 'legacy'): string
 {
 	$parts = [
 		'version:' . SCPP_S2S_SIGNATURE_VERSION,
+		'php_profile:' . strtolower(trim($phpProfile)),
 	];
 
 	$files = [
 		$repoRoot . '/bin/scpp.php',
 		$repoRoot . '/generators/php/src/Transpiler.php',
 		$repoRoot . '/generators/php/src/Generator/Generator.php',
+		$repoRoot . '/generators/php/specs/php_runtime_symbols_legacy.json',
+		$repoRoot . '/generators/php/specs/php_runtime_symbols_strict.json',
 	];
 
 	foreach ($files as $file) {
@@ -1572,19 +1631,17 @@ function render_runtime_composition_source(array $runtimeConfig): string
 {
 	$languages = is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'];
 	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'mysqli'];
+	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
 	$lines = [
 		'#include "core/runtime.cpp"',
 	];
 	if (in_array('json', $modules, true)) {
 		$lines[] = '#include "modules/json/json.cpp"';
 	}
-	if (in_array('filesystem', $modules, true)) {
-		$lines[] = '#include "modules/filesystem/filesystem.cpp"';
-	}
 	if (in_array('mysqli', $modules, true)) {
 		$lines[] = '#include "modules/mysql/mysql_module.cpp"';
 	}
-	if (in_array('php', $languages, true)) {
+	if (in_array('php', $languages, true) && $phpProfile === 'legacy') {
 		if (in_array('filesystem', $modules, true)) {
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
 		}
@@ -1596,6 +1653,14 @@ function render_runtime_composition_source(array $runtimeConfig): string
 		}
 	}
 	return implode(PHP_EOL, $lines) . PHP_EOL;
+}
+
+function resolve_php_runtime_profile(array $runtimeConfig): string
+{
+	$profiles = is_array($runtimeConfig['language_profiles'] ?? null) ? $runtimeConfig['language_profiles'] : [];
+	$phpProfile = $profiles['php']['profile'] ?? 'legacy';
+	$normalized = strtolower(trim((string) $phpProfile));
+	return in_array($normalized, ['legacy', 'strict'], true) ? $normalized : 'legacy';
 }
 
 /** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
@@ -1747,6 +1812,7 @@ function compute_runtime_build_signature(string $repoRoot, array $compiler, stri
 		'archiver:' . (is_string($compiler['archiver'] ?? null) ? basename(str_replace('\\', '/', $compiler['archiver'])) : ''),
 		'linker_flags:' . implode(' ', is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : []),
 		'runtime_languages:' . implode(',', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : []),
+		'php_profile:' . resolve_php_runtime_profile($runtimeConfig),
 		'runtime_modules:' . implode(',', is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : []),
 	];
 

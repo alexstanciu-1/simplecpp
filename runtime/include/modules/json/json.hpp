@@ -19,4 +19,12 @@ namespace scpp::json {
 // JSON objects.
 [[nodiscard]] string_t json_encode(const mixed_t &value);
 
+[[nodiscard]] inline mixed_t decode(const string_t &json) {
+	return json_decode(json);
+}
+
+[[nodiscard]] inline string_t encode(const mixed_t &value) {
+	return json_encode(value);
+}
+
 } // namespace scpp::json
