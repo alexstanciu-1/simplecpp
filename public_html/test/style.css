@@ -214,6 +214,14 @@ button:disabled {
 	background: rgba(15, 23, 42, 0.28);
 }
 
+body.hide-sandbox-file-tree-panel .file-tree-panel {
+	display: none;
+}
+
+body.hide-sandbox-file-tree-panel .php-input-layout {
+	grid-template-columns: minmax(0, 1fr);
+}
+
 .tree-root-path {
 	display: flex;
 	align-items: center;
