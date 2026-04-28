@@ -120,9 +120,9 @@ If same-name callables need materially different behavior, use multiple distinct
 
 ### 7.2 Templates as a language promise
 
-Templates are acknowledged as a complementary future mechanism for genuinely generic algorithms, but there is no short-term language promise here.
+Templates are not part of the Prism++ language promise in this feature.
 
-This feature uses template machinery as a code-generation mechanism for normalized parameters.
+This feature uses template machinery only as a code-generation mechanism for normalized parameters.
 
 ## 8. Internal naming
 
@@ -168,4 +168,4 @@ Current generator implementation includes:
 - explicit `@arg.<param>.from(Type)` lowering into normalization helper branches via real PHP expression parsing and normal expression lowering
 - cast-utility fallback when no explicit normalization rule exists
 
-Non-scalar union members remain follow-up work. By-reference normalization from `mixed_t` is not part of the current safe subset; broader future work may revisit this only if it can preserve the native-reference safety rule.
+Non-scalar union members are not part of the current implementation slice. By-reference normalization from `mixed_t` is not part of the current safe subset.

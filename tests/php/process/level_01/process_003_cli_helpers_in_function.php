@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+// CLI helper functions should be usable inside ordinary functions.
+function print_cli_data(): void
+{
+    $argc = cli_argc();
+    $argv = cli_argv();
+    $args = cli_args();
+
+    echo $argc, "\n";
+    echo $argv[1], "\n";
+    echo $args[2], "\n";
+}
+
+print_cli_data();
