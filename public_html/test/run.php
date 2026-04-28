@@ -1195,6 +1195,7 @@ function cleanupDirectory(string $path): void
 function buildDebugJson(array $response, string $phpCode, string $phpAstJson): string
 {
 	$debug = [
+		'repo_version' => readRepoVersionForUi(),
 		'source_php_code' => $phpCode,
 		'php_ast_source' => $response['php_ast_source'],
 		'php_ast_json' => $phpAstJson,
@@ -1218,6 +1219,22 @@ function buildDebugJson(array $response, string $phpCode, string $phpAstJson): s
 	];
 
 	return encodePrettyJson($debug);
+}
+
+function readRepoVersionForUi(): string
+{
+	$versionFile = dirname(__DIR__, 2) . '/VERSION.txt';
+	if (!is_file($versionFile)) {
+		return 'unknown';
+	}
+
+	$versionText = file_get_contents($versionFile);
+	if (!is_string($versionText)) {
+		return 'unknown';
+	}
+
+	$trimmedVersion = trim($versionText);
+	return $trimmedVersion !== '' ? $trimmedVersion : 'unknown';
 }
 
 function buildErrorObjectFromText(string $text): array
