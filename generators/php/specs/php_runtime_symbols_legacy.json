@@ -63,6 +63,10 @@
         "php::realpath",
         "php::dirname",
         "php::basename",
+        "php::cli_argc",
+        "php::cli_argv",
+        "php::cli_args",
+        "php::shell_exec",
         "php::json_decode",
         "php::json_encode"
     ]

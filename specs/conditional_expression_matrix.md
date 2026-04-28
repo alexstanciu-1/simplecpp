@@ -6,7 +6,7 @@ This document defines the initial centralized runtime matrix for helper-based lo
 
 ## Goal
 
-Keep the generator structurally simple and mostly type-blind while ensuring that:
+Document the current helper-owned conditional behavior while ensuring that:
 - direct expressions and assigned locals behave the same
 - supported combinations are deterministic
 - wrapper-aware selection behavior is explicit
@@ -38,7 +38,7 @@ Current v1 notes:
   - `result<T>`
   - `result_or_false<T>`
 - `result_or_bool<T>` is rejected in the runtime helper path on either side of `??`
-- the generator remains intentionally type-blind, so some profile-specific invalid rows are runtime-rejected in v1 rather than generator- or compile-time rejected
+- the current generator does not resolve these rows statically, so some profile-specific invalid rows are runtime-rejected in v1 rather than generator- or compile-time rejected
 
 ## Usable selected value vs selected mixed null
 
@@ -70,7 +70,7 @@ Practical effect:
 | `result_or_false<T>` | `mixed_t` | `mixed_t` | supported | success unwraps to payload; false sentinel falls through to mixed selected value domain |
 | `result_or_bool<T>` | any | runtime error | supported + throws | current version rejects `result_or_bool<T>` in `php::coalesce_eval(...)` |
 | selected branch has no usable value domain | n/a | runtime error | supported + throws | current version runtime-rejects rows whose selected branch still has no usable selected value domain |
-| other mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
+| other mixed/other cross-type joins | n/a | n/a | rejected in current contract | not part of the current matrix |
 
 ## Initial `?:` matrix
 
@@ -89,7 +89,7 @@ Practical effect:
 | `T` | `result_or_bool<T>` | `result_or_bool<T>` | supported | present branch is wrapped into the guarded PHP `T|bool` carrier |
 | `result<T>` | `T` | `result<T>` | supported | fallback `T` is wrapped into the structured result carrier |
 | `T` | `result<T>` | `result<T>` | supported | present branch is wrapped into the structured result carrier |
-| mixed/other cross-type joins | n/a | n/a | rejected for now | add explicitly later |
+| mixed/other cross-type joins | n/a | n/a | rejected in current contract | not part of the current matrix |
 
 ## Condition rule for ternary
 

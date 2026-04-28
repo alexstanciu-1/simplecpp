@@ -67,7 +67,7 @@ For accepted current implementation fallback behavior, see `specs/mixed_boundary
 
 > A conversion crosses an **Explicit Typed Boundary** when the destination type is explicitly identifiable at the conversion site in source code or by an immediately-applicable callable/property contract.
 
-If an Explicit Typed Boundary exists, a `mixed` value may be normalized to the target native type there. Long-term, the generator should materialize that boundary explicitly in emitted C++; current v1 behavior may still rely on approved implementation bridges.
+If an Explicit Typed Boundary exists, a `mixed` value may be normalized to the target native type there. The current v1 contract still permits approved implementation bridges where the current generator does not materialize that boundary explicitly in emitted C++.
 
 ### Valid Explicit Typed Boundary sites
 
@@ -100,21 +100,16 @@ If an Explicit Typed Boundary exists, a `mixed` value may be normalized to the t
 
 For **current v1 user-visible behavior**, **Section 1.2 Explicit Typed Boundaries** and **Section 1.3 Technical Compromises to Preserve Explicit Typed Boundaries in v1** are **normative priority rules**.
 
-If they conflict with a stricter long-term runtime preference such as "all dynamic-to-native bridges should already be explicit in generated C++", then **Section 1.2** and **Section 1.3** take precedence until the generator can actually materialize those explicit bridges (or another approved mechanism replaces them).
+If they conflict with a stricter runtime-cleanup preference such as "all dynamic-to-native bridges should already be explicit in generated C++", then **Section 1.2** and **Section 1.3** take precedence until an approved implementation path exists for those explicit bridges.
 
 This means:
-- implementations must not remove currently-required v1 bridges merely because they are not the preferred long-term runtime shape
+- implementations must not remove currently-required v1 bridges merely because they are not the preferred cleanup shape
 - runtime/spec/generator cleanup must preserve the valid Explicit Typed Boundary sites listed in **Section 1.2**
-- any future removal of a v1 compromise requires generator parity (or an explicitly documented replacement path)
+- removal of a v1 compromise requires approved generator parity (or an explicitly documented replacement path)
 
 ### Context
 
-The long-term model is:
-
-- the runtime remains strict
-- the S2S generator emits explicit `cast_*()` calls when an Explicit Typed Boundary exists
-
-Current implementation limits prevent full realization of that model.
+Current implementation limits mean the runtime remains responsible for preserving approved Explicit Typed Boundary behavior even where the S2S generator does not emit explicit `cast_*()` calls yet.
 
 ### v1 constraints
 
@@ -126,7 +121,7 @@ Current implementation limits prevent full realization of that model.
 
 ### v1 compromise conversions
 
-These are accepted in v1 when an Explicit Typed Boundary exists, even though the long-term model prefers S2S-emitted explicit casts:
+These are accepted in v1 when an Explicit Typed Boundary exists, even when the current generator does not emit an explicit cast at that site:
 
 | Case | Example | Why accepted in v1 |
 |---|---|---|
@@ -151,7 +146,7 @@ These are accepted in v1 when an Explicit Typed Boundary exists, even though the
 > The explicit-boundary model is a **language / S2S rule enforced through the runtime boundary layer**.  
 > Explicit Typed Boundaries and their v1 compromises belong to the **language / S2S layer**; `mixed_t` by itself does not reveal enough compile-time information to invent those boundaries.
 
-The current implementation may therefore accept some non-explicit `mixed â†’ native` conversions at approved boundary sites that the long-term model would prefer to see as generator-emitted explicit casts.
+The current implementation may therefore accept some non-explicit `mixed â†’ native` conversions at approved boundary sites that are still part of the current v1 contract.
 
 ---
 
@@ -384,7 +379,7 @@ The runtime does **not** define PHP concat semantics for `mixed_t`. PHP `.` and 
 | +mixed / -mixed | unary numeric helper | dispatch by kind, delegate to native unary rule | mixed |
 | ++mixed / --mixed | mutation helper | dispatch by kind, delegate to native increment/decrement rule | mixed |
 | mixed[index] | dynamic index helper | runtime lookup/access | mixed |
-| typed = mixed | cast_*() (long-term); v1 may use non-explicit conversion at Explicit Typed Boundaries | checked conversion / current implementation bridge | typed |
+| typed = mixed | explicit `cast_*()` generation preferred; v1 may use non-explicit conversion at Explicit Typed Boundaries | checked conversion / current implementation bridge | typed |
 | mixed += native | dynamic op + assign | delegated op followed by assign-back validity check | mixed |
 | mixed .= native | explicit `to_string(...)` lowering + primitive `string_t` concat | no `mixed_t` concat dispatch | string/mixed |
 
@@ -408,9 +403,9 @@ Table-carrier exceptions:
 | `$a[$k] = mixed` | store directly | store as mixed |
 | `$a[$k]` | emit dynamic index access | mixed |
 | `$a[$k1][$k2]` | emit nested dynamic index access | mixed |
-| typed assignment from `$a[$k]` | inject cast_*() (long-term); v1 may use non-explicit conversion | checked cast / current implementation bridge |
-| typed call from `$a[$k]` | inject cast_*() (long-term); v1 may use non-explicit conversion | checked cast / current implementation bridge |
-| typed return from `$a[$k]` | inject cast_*() (long-term); v1 may use non-explicit conversion | checked cast / current implementation bridge |
+| typed assignment from `$a[$k]` | explicit `cast_*()` generation preferred; v1 may use non-explicit conversion | checked cast / current implementation bridge |
+| typed call from `$a[$k]` | explicit `cast_*()` generation preferred; v1 may use non-explicit conversion | checked cast / current implementation bridge |
+| typed return from `$a[$k]` | explicit `cast_*()` generation preferred; v1 may use non-explicit conversion | checked cast / current implementation bridge |
 | invalid nested indexing | no compile-time rejection | runtime exception |
 
 ---
@@ -433,7 +428,7 @@ Table-carrier exceptions:
 - arrays are dynamic structures
 - indexing returns mixed
 - failed casts throw exception
-- long-term goal remains explicit S2S-emitted casts at Explicit Typed Boundaries
+- explicit S2S-emitted casts remain the preferred cleanup shape at Explicit Typed Boundaries
 - PHP concat remains generator-owned and is not a `mixed_t` runtime operator family
 
 ## 1.4 `dynamic_t` v1

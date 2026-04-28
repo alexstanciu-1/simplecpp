@@ -182,8 +182,9 @@ final class Generator
 		}
 
 		if ($emitProgramEntry && $file->rootStatements !== []) {
-			$source[] = 'int main() {';
+			$source[] = 'int main(int __scpp_argc, char** __scpp_argv) {';
 			$source[] = $this->indent(1) . 'try {';
+			$source[] = $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);';
 			$source[] = $this->indent(2) . 'return scpp::' . $unitMainName . '();';
 			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
 			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
@@ -192,8 +193,9 @@ final class Generator
 			$source[] = '}';
 			$source[] = '';
 		} elseif ($emitProgramEntry && $namespaceMainTargets !== []) {
-			$source[] = 'int main() {';
+			$source[] = 'int main(int __scpp_argc, char** __scpp_argv) {';
 			$source[] = $this->indent(1) . 'try {';
+			$source[] = $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);';
 			$source[] = $this->indent(2) . 'return ' . $namespaceMainTargets[0] . ';';
 			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
 			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
@@ -1917,7 +1919,13 @@ final class Generator
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
+		$this->declaredLocals['argc'] = true;
+		$this->declaredLocals['argv'] = true;
+		$this->declaredLocalTypes['argc'] = 'int_t';
+		$this->declaredLocalTypes['argv'] = 'mixed_t';
 		$this->currentReturnType = 'int';
+		$source[] = $this->indent(1) . 'int_t argc = php::cli_argc();';
+		$source[] = $this->indent(1) . 'mixed_t argv = php::cli_argv();';
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
 			$source[] = $this->indent(1) . $line;
 		}

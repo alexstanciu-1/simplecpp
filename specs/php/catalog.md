@@ -114,6 +114,35 @@ Contract:
 - Mixed keys supported
 - Maps to dynamic runtime structure
 
+## 7a. CLI Globals
+
+### `$argc` / `$argv` at the executable root - Stable
+
+```php
+echo $argc;
+echo $argv[1];
+```
+
+Contract:
+- top-level executable code receives `$argc` and `$argv` from the host entrypoint
+- `$argc` is the argument count
+- `$argv` is the PHP-style CLI argument array
+- current support is for executable-root code and nested child blocks under that root
+
+### `cli_argc()` / `cli_argv()` / `cli_args()` - Stable
+
+```php
+$argc = cli_argc();
+$argv = cli_argv();
+$args = cli_args();
+```
+
+Contract:
+- these PHP functions expose CLI arguments from any supported function or method context
+- `cli_argc()` returns the current argument count as `int`
+- `cli_argv()` returns the PHP-style argument array as `mixed`
+- `cli_args()` is an alias of `cli_argv()`
+
 ---
 
 ## 8. Null / False
@@ -159,6 +188,22 @@ if ($res === false) {
 
 Contract:
 - Failure must be explicitly handled
+
+### Process command output - Stable
+
+```php
+$out = shell_exec("printf ok");
+
+if ($out === false) {
+	return;
+}
+
+echo $out;
+```
+
+Contract:
+- `shell_exec()` is available as a PHP-surface falseable command-output helper
+- prefer explicit `=== false` checks
 
 ---
 

@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+function example_04_arrays_and_tables(): void
+{
+	$items = [];
+	$items[] = 3;
+	$items[] = 5;
+	$items[] = 8;
+
+	$row = [];
+	$row["name"] = "Alex";
+	$row["role"] = "builder";
+	$name /** string */ = $row["name"];
+	$role /** string */ = $row["role"];
+
+	$sum = 0;
+	foreach ($items as $item) {
+		$sum = $sum + $item;
+	}
+
+	echo "sum=", $sum, "\n";
+	echo "name=", $name, "\n";
+	echo "role=", $role, "\n";
+}

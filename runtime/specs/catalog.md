@@ -521,6 +521,21 @@ Directory component.
 ### `basename(path) -> string_t` â€” Stable
 Base name component.
 
+### `set_cli_args(argc, argv) -> void` â€” Stable
+Seeds the runtime CLI context for later helper calls.
+
+### `cli_argc() -> int_t` â€” Stable
+Returns the current CLI argument count.
+
+### `cli_argv() -> mixed_t` â€” Stable
+Builds the PHP-style CLI argument array from the seeded runtime CLI context.
+
+### `cli_args() -> mixed_t` â€” Stable
+Alias of `cli_argv()`.
+
+### `shell_exec(command) -> mixed_t` â€” Stable
+Returns command stdout as `string_t` or `false`.
+
 ---
 
 # 8. Resources / stdio (`scpp::php`)

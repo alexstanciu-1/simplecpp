@@ -996,10 +996,10 @@ becomes:
 ```
 
 Rules:
-- the generator must stay structurally simple and type-blind here; it emits helper calls rather than solving branch/result typing inline
+- current lowering emits helper calls here rather than solving branch/result typing inline
 - `??` and `?:` use different runtime result matrices, but they do share one wrapper-normalization rule for PHP-visible null / bool / dynamic semantics
 - the current `??` matrix includes explicit dynamic-carrier entries for `mixed_t ?? T`, `T ?? mixed_t`, and `nullable<T> ?? mixed_t`; these normalize to `mixed_t` rather than attempting a typed payload result
-- `??` auto-unpacks only the approved wrapper families (`nullable<T>`, `result<T>`, and `result_or_false<T>`) to their usable value domain; in the current version `result_or_bool<T>` is rejected by the runtime helper on either side of coalesce because the generator stays type-blind here, while `?:` follows its own truthiness-based wrapper policy.
+- `??` auto-unpacks only the approved wrapper families (`nullable<T>`, `result<T>`, and `result_or_false<T>`) to their usable value domain; in the current version `result_or_bool<T>` is rejected by the runtime helper on either side of coalesce because current lowering does not resolve that row statically here, while `?:` follows its own truthiness-based wrapper policy.
 - helper lambdas preserve lazy right/branch evaluation
 - elvis lowering must evaluate the left operand exactly once
 - unsupported operand/branch combinations must fail deterministically at compile time in the runtime helper layer

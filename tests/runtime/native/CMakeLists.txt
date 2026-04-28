@@ -80,6 +80,11 @@ add_executable(test_json test_json.cpp)
 target_link_libraries(test_json PRIVATE scpp_lang_php scpp_json scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_json COMMAND test_json)
 
+# PHP process/CLI builtin coverage.
+add_executable(test_php_process test_php_process.cpp)
+target_link_libraries(test_php_process PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_php_process COMMAND test_php_process)
+
 # mysqli connect/close smoke coverage for the first vertical slice.
 # Disabled by default because many local/sandbox builds do not have a runnable MariaDB/MySQL test target.
 option(SCPP_ENABLE_MYSQLI_TESTS "Build and register mysqli runtime smoke tests" OFF)
