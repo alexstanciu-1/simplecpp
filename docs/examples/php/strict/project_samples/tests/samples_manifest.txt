@@ -1,0 +1,3 @@
+strict_fs_json
+strict_str_io
+strict_error_paths
