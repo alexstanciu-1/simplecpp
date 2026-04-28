@@ -39,6 +39,14 @@ This creates:
 
 The current default PHP profile is `legacy`.
 
+For profile-specific example projects and agent-facing usage guidance, see:
+
+- `docs/examples/php/README.md`
+- `docs/examples/php/strict/README.md`
+- `docs/examples/php/legacy/README.md`
+
+When starting a new strict-profile project, prefer the strict examples first and avoid mixing strict and legacy library surfaces in the same project.
+
 `scpp init` first looks for a common non-web-first entrypoint such as:
 
 - `main.php`
