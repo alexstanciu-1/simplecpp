@@ -226,6 +226,32 @@ public:
 		return require_value("at(int_t) const").at(index);
 	}
 
+	template <typename Index, typename U = T>
+	requires requires(U &wrapped, const Index &index) { wrapped[index]; }
+	decltype(auto) operator[](const Index &index) {
+		return require_value("operator[]")[index];
+	}
+
+	template <typename Index, typename U = T>
+	requires requires(const U &wrapped, const Index &index) { wrapped[index]; }
+	decltype(auto) operator[](const Index &index) const {
+		return require_value("operator[] const")[index];
+	}
+
+	template <typename Index, typename U = T>
+	requires (!requires(U &wrapped, const Index &index) { wrapped[index]; })
+		&& requires(U &wrapped, const Index &index) { wrapped.at(index); }
+	decltype(auto) operator[](const Index &index) {
+		return require_value("operator[]").at(index);
+	}
+
+	template <typename Index, typename U = T>
+	requires (!requires(const U &wrapped, const Index &index) { wrapped[index]; })
+		&& requires(const U &wrapped, const Index &index) { wrapped.at(index); }
+	decltype(auto) operator[](const Index &index) const {
+		return require_value("operator[] const").at(index);
+	}
+
 	template <typename U = T>
 	requires requires(U &wrapped) { wrapped.begin_entries(); wrapped.end_entries(); }
 	decltype(auto) begin_entries() {

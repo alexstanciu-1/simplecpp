@@ -1,0 +1,21 @@
+<?php
+declare(strict_types=1);
+
+$missing = "strict_missing_alpha.txt";
+$seed /** string */ = "seed";
+$err /** error_t */;
+
+echo take($seed, $err, fs_get($missing)) ? "T\n" : "F\n";
+echo $seed, "\n";
+
+$real /** string */ = "fallback";
+echo take($real, $err, fs_realpath($missing)) ? "T\n" : "F\n";
+echo $real, "\n";
+
+echo fs_exists($missing) ? "Y\n" : "N\n";
+
+fs_mkdir("strict_fs_errors");
+$out /** vector<string> */ = [];
+echo take($out, $err, fs_scan("strict_fs_errors")) ? "T\n" : "F\n";
+echo count($out), "\n";
+fs_rmdir("strict_fs_errors");

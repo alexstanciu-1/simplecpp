@@ -108,7 +108,9 @@ A runtime module is reusable runtime functionality that is not owned by one lang
 Examples already on this path:
 
 - JSON -> `modules/json/` -> `namespace scpp::json`
-- filesystem -> `modules/filesystem/` -> `namespace scpp::filesystem`
+- filesystem -> `modules/filesystem/` -> `namespace scpp::fs`
+- shared string family -> runtime-owned `namespace scpp::str`
+- shared stdio/resource I/O family -> runtime-owned `namespace scpp::io`
 
 Module rules:
 
@@ -138,10 +140,20 @@ Examples that may remain language-owned:
 
 ## Generator-facing rule
 
-Generated/frontend-facing code should target language entrypoints such as `scpp::php::*`.
+Generated/frontend-facing code must follow the active language-profile surface.
 
-Language entrypoints may forward to shared `scpp::*` semantic families.
-Generated code should not call shared `scpp::*` semantic families directly.
+Current PHP rule:
+
+- legacy PHP generated/frontend-facing code targets language entrypoints such as `scpp::php::*`
+- strict PHP generated/frontend-facing code may target shared runtime families such as `scpp::fs::*`, `scpp::str::*`, `scpp::io::*`, and `scpp::json::*` directly when those symbols are declared by the active strict profile registry
+
+Direct shared-family calls from generated code are allowed only through the active profile registry and must not be introduced ad hoc.
+
+Language entrypoints remain required for:
+
+- legacy PHP surfaces
+- PHP-owned semantics
+- helper/support behavior that is not owned by a shared runtime family
 
 ## Build composition target
 
@@ -183,10 +195,16 @@ When reorganizing runtime code:
 ```json
 {
   "runtime": {
-    "languages": ["php"],
+    "languages": {
+      "php": {
+        "profile": "legacy"
+      }
+    },
     "modules": ["json", "filesystem", "mysqli"]
   }
 }
 ```
+
+Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
 Current default behavior keeps all known runtime modules active. Unsupported language or module names must fail clearly during build configuration.

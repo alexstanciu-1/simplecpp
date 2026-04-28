@@ -48,8 +48,9 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - `value_p<T>` is opt-in inline storage and is never the default lowering for PHP object types
 - runtime `null` is the canonical null literal for generated code where null is supported
 - null comparisons/checks must use the configured runtime helpers such as `php::is_null(...)` and `php::not_null(...)`
-- generated/frontend-facing semantic calls should target `scpp::php::*` entrypoints
-- generated code should not call shared `scpp::*` semantic families directly
+- generated/frontend-facing semantic calls should follow the active PHP profile surface
+- legacy-profile generated calls target `scpp::php::*` entrypoints
+- strict-profile generated calls may lower directly to shared `scpp::*` runtime families only through symbols declared by the active strict profile registry
 - `scpp::php::*` may forward to shared `scpp::*` authorities when PHP semantics match the shared Prism++ semantics
 
 ---
@@ -201,9 +202,9 @@ Examples:
 - `scpp::cmp`
 
 Current architectural rule:
-- generated PHP-facing lowering targets `scpp::php::*`
-- those language entrypoints are the stable generator-facing surface
-- they may forward to shared `scpp::*` family authorities by default
+- legacy PHP-facing lowering targets `scpp::php::*`
+- strict PHP-facing lowering may target shared `scpp::*` runtime families when the active strict profile registry declares those symbols
+- language entrypoints remain the stable generator-facing surface for legacy and PHP-owned semantics
 
 ---
 
@@ -1235,25 +1236,36 @@ The runtime may still contain legacy helper/proxy infrastructure, but that legac
 
 ## PHP runtime relative symbol registry
 
-Generator-emitted calls that are known Prism++ runtime intrinsics may be emitted as `php::name(...)` inside `namespace scpp { ... }`. The allow-list is stored in `generators/php/specs/php_runtime_symbols.json`. User-defined functions must not be rewritten through this registry when the generator has already resolved them as user declarations.
+Generator-emitted calls that are known Prism++ runtime intrinsics may be emitted through a runtime-symbol registry inside `namespace scpp { ... }`. The registry is profile-specific and is stored in `generators/php/specs/php_runtime_symbols_legacy.json` or `generators/php/specs/php_runtime_symbols_strict.json`. Entries are recorded as relative symbol paths under `scpp`, or as visible-to-target mappings relative to `scpp` for strict profile flat names such as `fs_is_file -> fs::is_file`. User-defined functions must not be rewritten through this registry when the generator has already resolved them as user declarations.
+
+Architecture note:
+
+- strict-profile direct emission to shared runtime families is allowed only for symbols declared by the active profile registry
+- the registry is the approved bridge between visible/source strict names and shared runtime-family targets
 
 
-## Runtime Symbol Registry (scpp::php)
+## Runtime Symbol Registry (relative to scpp)
 
-Any runtime function defined under `scpp::php` that is intended to be callable from transpiled PHP code **must be registered** in:
+Any runtime function intended to be callable from transpiled PHP code through the registry **must be registered** in the active profile file:
 
-`generators/php/specs/php_runtime_symbols.json`
+`generators/php/specs/php_runtime_symbols_legacy.json`
 
-The S2S generator uses this registry to qualify calls as:
+`generators/php/specs/php_runtime_symbols_strict.json`
+
+The S2S generator uses this registry to emit the registered relative path directly. For example:
 
     php::function_name(...)
 
+Or, for strict flat visible names:
+
+    fs_is_file(...)  ->  fs::is_file(...)
+
 ### Precedence
 User-defined PHP functions take precedence over runtime symbols with the same name.  
-The registry is only applied when no user-defined function is resolved.
+The registry is only applied when no user-defined function is resolved. Bare source calls may resolve through the registry by unique tail-name match.
 
 ### Important
-If a symbol is not present in the registry, the generator will **not** qualify it with `php::`, even if it exists in the runtime.
+If a symbol is not present in the registry, the generator will **not** rewrite it through the runtime-symbol registry, even if it exists in the runtime.
 
 
 

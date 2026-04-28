@@ -1,0 +1,32 @@
+<?php
+declare(strict_types=1);
+
+echo str_substr("abcdef", 2), "\n";
+echo str_substr("abcdef", 1, 3), "\n";
+echo str_substr_compare("abcdef", "cde", 2), "\n";
+echo str_substr_replace("abcdef", "ZZ", 2, 2), "\n";
+echo str_pad("x", 3, "."), "\n";
+echo str_replace("bc", "XX", "abcdbc"), "\n";
+
+$parts = str_explode(",", "a,b,c");
+echo str_implode("-", $parts), "\n";
+
+$decoded /** string */ = "";
+$decode_error /** error_t */;
+take($decoded, $decode_error, str_hex2bin("4142"));
+echo $decoded, "\n";
+echo str_bin2hex("AB"), "\n";
+echo str_number_format(12345), "\n";
+echo str_strlen("hello"), "\n";
+echo (str_strpos("banana", "na") ?? -1), "\n";
+echo (str_strrpos("banana", "na") ?? -1), "\n";
+echo (str_strpos("banana", "zz") ?? -1), "\n";
+echo str_strtolower("AbC"), "\n";
+echo str_strtoupper("AbC"), "\n";
+echo str_lcfirst("Hello"), "\n";
+echo str_ucfirst("hello"), "\n";
+echo str_starts_with("hello", "he") ? "Y\n" : "N\n";
+echo str_ends_with("hello", "lo") ? "Y\n" : "N\n";
+echo "[", str_trim("  hi  "), "]\n";
+echo "[", str_ltrim("  hi  "), "]\n";
+echo "[", str_rtrim("  hi  "), "]\n";

@@ -174,3 +174,50 @@ struct file_open_mode_info final {
 }
 
 } // namespace scpp
+
+namespace scpp::io {
+
+using ::scpp::file_open_mode_info;
+using ::scpp::parse_file_open_mode;
+
+[[nodiscard]] inline falseable_resource_handle_t open(const string_t &path, const string_t &mode) {
+	return ::scpp::open_file_resource(path, mode);
+}
+
+[[nodiscard]] inline nullable<int_t> seek(const falseable_resource_handle_t &resource, const int_t &offset, const int_t &whence = int_t(SEEK_SET)) {
+	return ::scpp::seek_file_resource(resource, offset, whence);
+}
+
+[[nodiscard]] inline result_or_false<int_t> tell(const falseable_resource_handle_t &resource) {
+	return ::scpp::tell_file_resource(resource);
+}
+
+[[nodiscard]] inline result_or_false<string_t> read_line(const falseable_resource_handle_t &resource, const nullable<int_t> &length = null) {
+	return ::scpp::read_file_line(resource, length);
+}
+
+[[nodiscard]] inline result_or_false<string_t> read(const falseable_resource_handle_t &resource, const int_t &length) {
+	return ::scpp::read_file_bytes(resource, length);
+}
+
+[[nodiscard]] inline result_or_false<int_t> write(const falseable_resource_handle_t &resource, const string_t &data) {
+	return ::scpp::write_file_bytes(resource, data);
+}
+
+[[nodiscard]] inline bool_t rewind(const falseable_resource_handle_t &resource) {
+	return ::scpp::rewind_file_resource(resource);
+}
+
+[[nodiscard]] inline bool_t flush(const falseable_resource_handle_t &resource) {
+	return ::scpp::flush_file_resource(resource);
+}
+
+[[nodiscard]] inline bool_t eof(const falseable_resource_handle_t &resource) {
+	return ::scpp::eof_file_resource(resource);
+}
+
+[[nodiscard]] inline bool_t close(const falseable_resource_handle_t &resource) {
+	return ::scpp::close_file_resource(resource);
+}
+
+} // namespace scpp::io

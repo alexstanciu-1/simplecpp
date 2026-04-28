@@ -17,7 +17,10 @@ private:
 
 public:
 	temp_dir_guard()
-		: path_(std::filesystem::temp_directory_path() / ("scpp_fs_test_" + std::to_string(static_cast<long long>(std::chrono::steady_clock::now().time_since_epoch().count())))) {
+		: path_(([]() {
+			const auto base = std::filesystem::path("/tmp");
+			return base / ("scpp_fs_test_" + std::to_string(static_cast<long long>(std::chrono::steady_clock::now().time_since_epoch().count())));
+		}())) {
 		std::filesystem::create_directories(path_);
 	}
 
@@ -356,6 +359,40 @@ static void test_failure_contracts() {
 	assert(!scpp::php::rmdir(to_string_t(missing_dir)).native_value());
 }
 
+static void test_shared_surfaces() {
+	temp_dir_guard guard;
+	const auto file_path = guard.path() / "shared.txt";
+	const auto dir_path = guard.path() / "shared_dir";
+	std::filesystem::create_directories(dir_path);
+	std::ofstream(dir_path / "b.txt").put('b');
+	std::ofstream(dir_path / "a.txt").put('a');
+
+	const auto put_status = scpp::fs::put(to_string_t(file_path), scpp::string_t("payload"));
+	assert(put_status.has_value().native_value());
+	assert(put_status.value().native_value() == 7);
+
+	const auto get_status = scpp::fs::get(to_string_t(file_path));
+	assert(get_status.has_value().native_value());
+	assert(get_status.value().native_value() == "payload");
+
+	const auto size_status = scpp::fs::size(to_string_t(file_path));
+	assert(size_status.has_value().native_value());
+	assert(size_status.value().native_value() == 7);
+
+	const auto list_status = scpp::fs::scan(to_string_t(dir_path));
+	assert(list_status.has_value().native_value());
+	assert(list_status.value().size() == 2);
+	assert(list_status.value().native_value()[0].native_value() == "a.txt");
+	assert(list_status.value().native_value()[1].native_value() == "b.txt");
+
+	auto file = scpp::io::open(to_string_t(file_path), scpp::string_t("rb"));
+	assert(file.has_value().native_value());
+	const auto bytes = scpp::io::read(file, scpp::int_t(7));
+	assert(bytes.has_value().native_value());
+	assert(bytes.value().native_value() == "payload");
+	assert(scpp::io::close(file).native_value());
+}
+
 } // namespace
 
 int main() {
@@ -368,5 +405,6 @@ int main() {
 	test_touch_and_filemtime();
 	test_scandir_sorted_names();
 	test_failure_contracts();
+	test_shared_surfaces();
 	return 0;
 }

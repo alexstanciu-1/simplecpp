@@ -31,8 +31,8 @@ Runtime: call `std::filesystem::is_regular_file` with `std::error_code`.
 - Filesystem wrappers are available when the dedicated filesystem/stdio module is included by project policy.
 
 ## Compile plan summary
-Implemented in `runtime/include/scpp/support/filesystem module (scpp::filesystem).hpp`.
-- Registered in `generators/php/specs/php_runtime_symbols.json`.
+Implemented in shared filesystem runtime support under `runtime/include/modules/filesystem/filesystem.hpp` (`scpp::fs`) with PHP wrapper exposure in `runtime/include/lang/php/php_filesystem.hpp`.
+- Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
 ## Test matrix
 - regular file true
