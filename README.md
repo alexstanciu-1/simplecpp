@@ -158,8 +158,12 @@ AI-facing repo guidance now lives under:
 
 - `docs/ai_onboarding/README.md`
 - `docs/ai_onboarding/coding_style.md`
+- `docs/examples/php/README.md`
+- `docs/examples/php/strict/README.md`
+- `docs/examples/php/legacy/README.md`
 
 Start there when orienting Codex or another assistant to the project structure, semantic authority order, and validation workflow.
+For PHP authoring examples, prefer the strict examples first when the project profile is `strict`, and use the legacy examples only for explicitly legacy-profiled projects.
 
 ## Usability Harness
 
