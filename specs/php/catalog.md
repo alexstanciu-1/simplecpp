@@ -14,6 +14,10 @@ It is:
 - short and enforceable
 - aligned with runtime semantics
 
+Profile selection for the PHP library surface is defined separately in:
+
+- `specs/php/library_profiles.md`
+
 ---
 
 ## 2. Interpretation Rules
