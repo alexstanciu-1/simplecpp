@@ -2,6 +2,18 @@
 
 declare(strict_types=1);
 
+$versionFile = dirname(__DIR__, 2) . '/VERSION.txt';
+$uiVersion = 'unknown';
+if (is_file($versionFile)) {
+	$versionText = file_get_contents($versionFile);
+	if (is_string($versionText)) {
+		$trimmedVersion = trim($versionText);
+		if ($trimmedVersion !== '') {
+			$uiVersion = $trimmedVersion;
+		}
+	}
+}
+
 ?><!doctype html>
 <html lang="en">
 <head>
@@ -18,6 +30,7 @@ declare(strict_types=1);
 					<div class="pane-header">
 						<h2>PHP input</h2>
 						<div class="pane-actions">
+							<span class="status-chip">Version <?= htmlspecialchars($uiVersion, ENT_QUOTES, 'UTF-8') ?></span>
 							<label class="toggle-option" for="mem-test-enabled">
 								<input type="checkbox" id="mem-test-enabled">
 								<span>Mem test (ASan)</span>
