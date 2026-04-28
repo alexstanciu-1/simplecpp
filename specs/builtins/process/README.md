@@ -13,4 +13,5 @@ This folder contains one contract file per process/CLI builtin in the current Pr
 See also:
 
 - `specs/builtin_intake_procedure.md`
-- `generators/php/specs/php_runtime_symbols.json`
+- `generators/php/specs/php_runtime_symbols_legacy.json`
+- `generators/php/specs/php_runtime_symbols_strict.json`
