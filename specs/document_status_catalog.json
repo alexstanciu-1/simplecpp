@@ -654,6 +654,11 @@
                         "doc_status":  "normative"
                     },
                     {
+                        "path":  "specs/php/library_profiles.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
                         "path":  "specs/project_build_v1.md",
                         "kind":  "markdown",
                         "doc_status":  "normative"

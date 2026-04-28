@@ -190,3 +190,7 @@ The FastCGI host expects a handwritten `scpp::fcgi::http_handle(const scpp::fcgi
 Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
 Current default behavior keeps all known runtime modules active. Unsupported language or module names must fail clearly during build configuration.
+
+The normative meaning of PHP profile selection itself is defined in:
+
+- `specs/php/library_profiles.md`
