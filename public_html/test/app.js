@@ -1,3 +1,8 @@
+const TEST_UI_CONFIG = {
+	showSandboxPanel: false,
+	enableSandboxPanelMutations: false,
+};
+
 const form = document.getElementById('runner-form');
 const runButton = document.getElementById('run-button');
 const compileRunButton = document.getElementById('compile-run-button');
@@ -29,11 +34,26 @@ const cppPane = document.getElementById('cpp-pane');
 const memTestEnabledBox = document.getElementById('mem-test-enabled');
 const cppTabButtons = Array.from(document.querySelectorAll('.cpp-tab'));
 const cppTabPanels = Array.from(document.querySelectorAll('.cpp-tab-panel'));
+const fileTreePanel = document.querySelector('.file-tree-panel');
 
 let selectedSandboxPath = '';
 let selectedSandboxPathDirty = false;
 let selectedSandboxEntryType = '';
 let sandboxTreeOpenPaths = new Set();
+
+function applySandboxPanelConfig() {
+	document.body.classList.toggle('hide-sandbox-file-tree-panel', !TEST_UI_CONFIG.showSandboxPanel);
+
+	const mutationsEnabled = TEST_UI_CONFIG.enableSandboxPanelMutations;
+	for (const button of [newFileButton, newDirButton, renameEntryButton, deleteEntryButton]) {
+		button.disabled = !mutationsEnabled;
+		button.hidden = !mutationsEnabled;
+	}
+
+	if (fileTreePanel) {
+		fileTreePanel.setAttribute('aria-hidden', TEST_UI_CONFIG.showSandboxPanel ? 'false' : 'true');
+	}
+}
 
 function buildNoCacheUrl(path, params = {}) {
 	const url = new URL(path, window.location.href);
@@ -414,9 +434,14 @@ function createTreeActionButton(label, title, className, onClick) {
 	button.className = `secondary-button tree-action-button ${className}`;
 	button.textContent = label;
 	button.title = title;
+	button.disabled = !TEST_UI_CONFIG.enableSandboxPanelMutations;
+	button.hidden = !TEST_UI_CONFIG.enableSandboxPanelMutations;
 	button.addEventListener('click', (event) => {
 		event.preventDefault();
 		event.stopPropagation();
+		if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+			return;
+		}
 		onClick();
 	});
 	return button;
@@ -428,6 +453,10 @@ function selectSandboxEntry(path, entryType) {
 }
 
 async function promptAndCreateDirectory(parentPath) {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		return;
+	}
+
 	const directoryName = window.prompt('New directory name:', 'new_dir');
 	if (directoryName === null) {
 		return;
@@ -440,6 +469,10 @@ async function promptAndCreateDirectory(parentPath) {
 }
 
 async function promptAndCreateFile(parentPath) {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		return;
+	}
+
 	const fileName = window.prompt('New file name:', 'new_file.php');
 	if (fileName === null) {
 		return;
@@ -456,6 +489,10 @@ async function promptAndCreateFile(parentPath) {
 }
 
 async function promptAndRenameEntry(path, entryType) {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		return;
+	}
+
 	const currentName = path.split('/').filter(Boolean).pop() || '';
 	const nextName = window.prompt(`Rename ${entryType}:`, currentName);
 	if (nextName === null) {
@@ -469,6 +506,10 @@ async function promptAndRenameEntry(path, entryType) {
 }
 
 async function confirmAndDeleteEntry(path, entryType) {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		return;
+	}
+
 	const confirmed = window.confirm(`Delete ${entryType} "${path}"?`);
 	if (!confirmed) {
 		return;
@@ -650,6 +691,10 @@ async function fetchJson(url, options = {}) {
 }
 
 async function mutateSandbox(action, data) {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		throw new Error('Sandbox file-tree mutations are disabled in this UI.');
+	}
+
 	const payload = await fetchJson(`run.php?action=${encodeURIComponent(action)}`, {
 		method: 'POST',
 		headers: {
@@ -855,16 +900,25 @@ refreshTreeButton.addEventListener('click', () => {
 });
 
 newFileButton.addEventListener('click', () => {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		return;
+	}
 	const parentPath = selectedSandboxEntryType === 'dir' ? selectedSandboxPath : '';
 	void promptAndCreateFile(parentPath);
 });
 
 newDirButton.addEventListener('click', () => {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		return;
+	}
 	const parentPath = selectedSandboxEntryType === 'dir' ? selectedSandboxPath : '';
 	void promptAndCreateDirectory(parentPath);
 });
 
 renameEntryButton.addEventListener('click', () => {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		return;
+	}
 	if (selectedSandboxPath === '') {
 		window.alert('Select a sandbox file or directory first.');
 		return;
@@ -873,6 +927,9 @@ renameEntryButton.addEventListener('click', () => {
 });
 
 deleteEntryButton.addEventListener('click', () => {
+	if (!TEST_UI_CONFIG.enableSandboxPanelMutations) {
+		return;
+	}
 	if (selectedSandboxPath === '') {
 		window.alert('Select a sandbox file or directory first.');
 		return;
@@ -921,6 +978,7 @@ compileRunButton.addEventListener('click', () => {
 
 setActiveCppTab('header');
 
+applySandboxPanelConfig();
 updateSelectedFileLabel('');
 void loadSandboxTree();
 async function parseJsonResponseSafe(response) {
@@ -943,5 +1001,3 @@ async function parseJsonResponseSafe(response) {
 		};
 	}
 }
-
-
