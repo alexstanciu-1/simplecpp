@@ -331,60 +331,6 @@
                                    ]
                      },
                      {
-                         "family_id":  "language_probes_and_reset",
-                         "subfamily_id":  "probe",
-                         "arity":  1,
-                         "source_family_refs":  [
-                                                    "specs/count_empty_isset_contract.md",
-                                                    "specs/array_semantics.md",
-                                                    "runtime/specs/spec.md"
-                                                ],
-                         "items":  [
-                                       {
-                                           "item_id":  "isset_value",
-                                           "source_item_refs":  [
-
-                                                                ]
-                                       },
-                                       {
-                                           "item_id":  "empty_value",
-                                           "source_item_refs":  [
-
-                                                                ]
-                                       },
-                                       {
-                                           "item_id":  "count_value",
-                                           "source_item_refs":  [
-
-                                                                ]
-                                       },
-                                       {
-                                           "item_id":  "isset_keyed",
-                                           "source_item_refs":  [
-
-                                                                ]
-                                       },
-                                       {
-                                           "item_id":  "empty_keyed",
-                                           "source_item_refs":  [
-
-                                                                ]
-                                       },
-                                       {
-                                           "item_id":  "unset_value",
-                                           "source_item_refs":  [
-
-                                                                ]
-                                       },
-                                       {
-                                           "item_id":  "unset_keyed",
-                                           "source_item_refs":  [
-
-                                                                ]
-                                       }
-                                   ]
-                     },
-                     {
                          "family_id":  "operators_compound_assignment",
                          "subfamily_id":  "assignment",
                          "arity":  2,
