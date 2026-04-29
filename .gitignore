@@ -46,6 +46,7 @@ sandbox/*.hpp
 sandbox/*.out
 
 # Runtime test outputs
+tests/.runtime/
 tests/runtime/native/output/
 tests/runtime/native/*.out
 
@@ -101,4 +102,3 @@ build/
 # Cache / temp
 nbproject/private/cache/
 .nb-gradle/
-

@@ -96,8 +96,8 @@ Example:
 <?php
 declare(strict_types=1);
 
-$value = 11;
-$other = $value;
+$value /** int */ = 11;
+$other /** int */ = $value;
 $value = 14;
 
 echo $other, "\n";
@@ -125,7 +125,7 @@ Example:
 <?php
 declare(strict_types=1);
 
-$value = 5;
+$value /** int */ = 5;
 $value = $value + 3;
 
 echo $value, "\n";
@@ -151,7 +151,7 @@ Example:
 <?php
 declare(strict_types=1);
 
-$value = 1.5;
+$value /** float */ = 1.5;
 $value = $value + 2.0;
 
 echo $value, "\n";
@@ -177,7 +177,7 @@ Example:
 <?php
 declare(strict_types=1);
 
-$flag = true;
+$flag /** bool */ = true;
 $flag = false;
 
 if ($flag) {
@@ -207,7 +207,7 @@ Example:
 <?php
 declare(strict_types=1);
 
-$text = "alpha";
+$text /** string */ = "alpha";
 $text = "beta";
 
 echo $text, "\n";
@@ -263,7 +263,7 @@ Example: append and read
 <?php
 declare(strict_types=1);
 
-$items = [];
+$items /** vector<int> */ = [];
 $items[] = 4;
 $items[] = 9;
 
@@ -284,7 +284,7 @@ Example: string keys
 <?php
 declare(strict_types=1);
 
-$row = ["name" => "alex", "age" => 30];
+$row /** array<string, mixed> */ = ["name" => "alex", "age" => 30];
 
 echo $row["name"], "\n";
 echo $row["age"], "\n";
@@ -303,7 +303,7 @@ Example: nested read
 <?php
 declare(strict_types=1);
 
-$x = [
+$x /** array<string, mixed> */ = [
 	"outer" => [
 		"inner" => [
 			"value" => 42

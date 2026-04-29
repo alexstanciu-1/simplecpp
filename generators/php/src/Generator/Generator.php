@@ -67,7 +67,7 @@ final class Generator
 	private ?string $currentParentClass = null;
 	private int $tempCounter = 0;
 	private AnnotationExpressionParser $annotationExpressionParser;
-	/** @var array{exact: array<string, string>, bare: array<string, string>} */
+	/** @var array<string, string> */
 	private array $phpRuntimeRelativeSymbols = [];
 	/** @var array<string, string> */
 	private array $currentPhpVarToCpp = [];
@@ -96,7 +96,6 @@ final class Generator
 
 	public function __construct(
 		private readonly TypeMapper $typeMapper = new TypeMapper(),
-		private readonly string $phpProfile = 'legacy',
 	) {
 		$this->predefinedConstants = $this->loadPredefinedConstants();
 		$this->phpRuntimeRelativeSymbols = $this->loadPhpRuntimeRelativeSymbols();
@@ -182,9 +181,8 @@ final class Generator
 		}
 
 		if ($emitProgramEntry && $file->rootStatements !== []) {
-			$source[] = 'int main(int __scpp_argc, char** __scpp_argv) {';
+			$source[] = 'int main() {';
 			$source[] = $this->indent(1) . 'try {';
-			$source[] = $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);';
 			$source[] = $this->indent(2) . 'return scpp::' . $unitMainName . '();';
 			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
 			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
@@ -193,9 +191,8 @@ final class Generator
 			$source[] = '}';
 			$source[] = '';
 		} elseif ($emitProgramEntry && $namespaceMainTargets !== []) {
-			$source[] = 'int main(int __scpp_argc, char** __scpp_argv) {';
+			$source[] = 'int main() {';
 			$source[] = $this->indent(1) . 'try {';
-			$source[] = $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);';
 			$source[] = $this->indent(2) . 'return ' . $namespaceMainTargets[0] . ';';
 			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
 			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
@@ -1084,14 +1081,6 @@ final class Generator
 		$source[] = $this->indent(1) . 'using namespace ::scpp;';
 		$source[] = '';
 
-		$forwardDecls = $this->collectNamespaceForwardDecls($classes);
-		foreach ($forwardDecls as $forwardDecl) {
-			$header[] = $forwardDecl;
-		}
-		if ($forwardDecls !== []) {
-			$header[] = '';
-		}
-
 		foreach ($uses as $use) {
 			$useLine = $this->renderUseDeclaration($use);
 
@@ -1130,90 +1119,6 @@ final class Generator
 		$header[] = '';
 		$source[] = '}';
 		$source[] = '';
-	}
-
-	/** @param list<ClassDecl> $classes @return list<string> */
-	private function collectNamespaceForwardDecls(array $classes): array
-	{
-		$names = [];
-		foreach ($classes as $class) {
-			if ($class->isEnum) {
-				continue;
-			}
-
-			$names[$class->name] = true;
-			foreach ($this->collectClassReferencedTypeNames($class) as $referencedName) {
-				$names[$referencedName] = true;
-			}
-		}
-
-		$out = [];
-		foreach (array_keys($names) as $name) {
-			$out[] = 'class ' . $name . ';';
-		}
-
-		return $out;
-	}
-
-	/** @return list<string> */
-	private function collectClassReferencedTypeNames(ClassDecl $class): array
-	{
-		$out = [];
-
-		foreach ($class->properties as $property) {
-			foreach ($this->collectForwardDeclarableTypeNames($property->type) as $typeName) {
-				$out[$typeName] = true;
-			}
-		}
-
-		foreach ($class->methods as $method) {
-			foreach ($this->collectForwardDeclarableTypeNames($method->returnType) as $typeName) {
-				$out[$typeName] = true;
-			}
-
-			foreach ($method->params as $param) {
-				foreach ($this->collectForwardDeclarableTypeNames($param->type) as $typeName) {
-					$out[$typeName] = true;
-				}
-			}
-		}
-
-		return array_values(array_keys($out));
-	}
-
-	/** @return list<string> */
-	private function collectForwardDeclarableTypeNames(?string $declaredType): array
-	{
-		if ($declaredType === null) {
-			return [];
-		}
-
-		$type = trim($this->typeMapper->getPrimaryDeclaredType($declaredType));
-		if ($type === '') {
-			return [];
-		}
-
-		if (str_starts_with($type, '?')) {
-			return $this->collectForwardDeclarableTypeNames(substr($type, 1));
-		}
-
-		if (preg_match('/^\s*callable\s*\(/', $type) === 1) {
-			return [];
-		}
-
-		if (preg_match('/^(?:vector|vector_t|nullable|result_or_false|result_or_bool|result|shared|shared_p|unique|unique_p|weak|weak_p|weakref|value)\s*<\s*(.+)\s*>$/', $type, $matches) === 1) {
-			return $this->collectForwardDeclarableTypeNames(trim($matches[1]));
-		}
-
-		if (preg_match('/^(?:int|float|bool|string|array|mixed|void|null|never|callable|iterable|object|false|true)$/i', $type) === 1) {
-			return [];
-		}
-
-		if (str_contains($type, '\\')) {
-			return [];
-		}
-
-		return [$type];
 	}
 
 	/** @param list<UseDecl> $uses @return list<string> */
@@ -1919,13 +1824,7 @@ final class Generator
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
-		$this->declaredLocals['argc'] = true;
-		$this->declaredLocals['argv'] = true;
-		$this->declaredLocalTypes['argc'] = 'int_t';
-		$this->declaredLocalTypes['argv'] = 'mixed_t';
 		$this->currentReturnType = 'int';
-		$source[] = $this->indent(1) . 'int_t argc = php::cli_argc();';
-		$source[] = $this->indent(1) . 'mixed_t argv = php::cli_argv();';
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
 			$source[] = $this->indent(1) . $line;
 		}
@@ -3742,63 +3641,70 @@ final class Generator
 			return ['// ERROR: unsupported foreach key target'];
 		}
 
-		$sourceName = '__scpp_foreach_source_' . $statement->line;
-		$rangeName = '__scpp_foreach_range_' . $statement->line;
-		$iterName = '__scpp_foreach_it_' . $statement->line;
-		$endName = '__scpp_foreach_end_' . $statement->line;
+		$indexName = '__scpp_foreach_i_' . $statement->line;
+		$entryName = '__scpp_foreach_entry_' . $statement->line;
 		$sourceType = $this->inferExprType($payload['expr'] ?? null);
+		$foreachByRefSourceShape = $this->inferForeachByRefSourceShape($payload['expr'] ?? null);
+		$isMixedTableForeach = $sourceType === 'mixed_t' && $foreachByRefSourceShape !== 'unknown';
+		$sourceAccessExpr = $this->isUntypedTableHandleType($sourceType)
+			? '(*(' . $sourceExpr . '))'
+			: ($isMixedTableForeach ? '(' . $sourceExpr . ').get_hash()' : $sourceExpr);
+		$isUntypedTableForeach = $this->isUntypedTableType($sourceType) || $isMixedTableForeach;
+		$elementExpr = $sourceAccessExpr . '.at(' . $indexName . ')';
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
-		} elseif (preg_match('/^result<vector_t<(.+)>>$/', $sourceType, $matches) === 1) {
-			$valueStoredType = $matches[1];
-		} elseif (preg_match('/^result_or_false<vector_t<(.+)>>$/', $sourceType, $matches) === 1) {
-			$valueStoredType = $matches[1];
-		} elseif (preg_match('/^result_or_bool<vector_t<(.+)>>$/', $sourceType, $matches) === 1) {
-			$valueStoredType = $matches[1];
-		} elseif (
-			$this->isUntypedTableType($sourceType)
-			|| $sourceType === 'mixed_t'
-			|| preg_match('/^result<mixed_t>$/', $sourceType) === 1
-			|| preg_match('/^result_or_false<mixed_t>$/', $sourceType) === 1
-			|| preg_match('/^result_or_bool<mixed_t>$/', $sourceType) === 1
-			|| preg_match('/^result<hash_t<mixed_t>>$/', $sourceType) === 1
-			|| preg_match('/^result_or_false<hash_t<mixed_t>>$/', $sourceType) === 1
-			|| preg_match('/^result_or_bool<hash_t<mixed_t>>$/', $sourceType) === 1
-			|| preg_match('/^result<::scpp::hash_t<mixed_t>>$/', $sourceType) === 1
-			|| preg_match('/^result_or_false<::scpp::hash_t<mixed_t>>$/', $sourceType) === 1
-			|| preg_match('/^result_or_bool<::scpp::hash_t<mixed_t>>$/', $sourceType) === 1
-		) {
+		} elseif ($isUntypedTableForeach) {
 			$valueStoredType = 'mixed_t';
 		}
 
-		$lines = [
-			'auto&& ' . $sourceName . ' = ' . $sourceExpr . ';',
-			'auto ' . $rangeName . ' = ::scpp::foreach_range(' . $sourceName . ');',
-			'for (auto ' . $iterName . ' = ' . $rangeName . '.begin(), ' . $endName . ' = ' . $rangeName . '.end(); ' . $iterName . ' != ' . $endName . '; ++' . $iterName . ') {',
-			$this->indent(1) . 'auto __scpp_foreach_entry_view = *' . $iterName . ';',
-		];
+		if ($byRef && !$isUntypedTableForeach && $foreachByRefSourceShape === 'non_vector') {
+			$this->errors[] = 'foreach by reference is currently supported for vector-like arrays only at line ' . $statement->line . '.';
+			return ['// ERROR: foreach by reference currently rejects non-vector arrays'];
+		}
+
+		if ($isUntypedTableForeach) {
+			$lines = [
+				'for (auto ' . $entryName . ' = ' . $sourceAccessExpr . '.begin_entries(); ' . $entryName . ' != ' . $sourceAccessExpr . '.end_entries(); ++' . $entryName . ') {',
+				$this->indent(1) . 'auto __scpp_foreach_entry_view = *' . $entryName . ';',
+			];
+		} else {
+			$lines = [
+				'for (int_t ' . $indexName . ' = static_cast<int_t>(0); static_cast<bool>(' . $indexName . ' < static_cast<int_t>(' . $sourceAccessExpr . '.size())); ++' . $indexName . ') {',
+			];
+		}
 
 		$scopedLocals = $this->declaredLocals;
 		$scopedLocalTypes = $this->declaredLocalTypes;
 		$scopedReferenceLocals = $this->predefinedReferenceLocals;
 
 		$keyCppName = null;
+		$keyAccessExpr = $indexName;
 		if ($keyName !== null) {
 			$keyCppName = $this->localCppName($keyName);
-			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = __scpp_foreach_entry_view.key();';
+			if ($isUntypedTableForeach) {
+				$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = __scpp_foreach_entry_view.key();';
+				$this->declaredLocalTypes[$keyName] = 'mixed_t';
+			} else {
+				$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
+				$this->declaredLocalTypes[$keyName] = 'int_t';
+			}
 			$this->declaredLocals[$keyName] = true;
-			$this->declaredLocalTypes[$keyName] = 'mixed_t';
+			$keyAccessExpr = $keyCppName;
+		} elseif ($byRef && !$isUntypedTableForeach) {
+			$keyCppName = $this->allocateGeneratedLocalName('_' . $valueName . '_key_');
+			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
+			$keyAccessExpr = $keyCppName;
 		}
 
 		if ($byRef) {
 			$this->foreachReferenceSlotStack[] = [
-				$valueName => '__scpp_foreach_entry_view.value_ref()',
+				$valueName => $isUntypedTableForeach ? '__scpp_foreach_entry_view.value_ref()' : ($sourceAccessExpr . '.at(' . $keyAccessExpr . ')'),
 			];
 		} else {
 			$valueCppName = $this->localCppName($valueName);
 			$hasOuterValueBinding = isset($scopedLocals[$valueName]);
-			$currentElementExpr = '__scpp_foreach_entry_view.value_copy()';
+			$currentElementExpr = $isUntypedTableForeach ? '__scpp_foreach_entry_view.value_copy()' : $elementExpr;
 			if ($hasOuterValueBinding) {
 				$lines[] = $this->indent(1) . $valueCppName . ' = ' . $currentElementExpr . ';';
 			} else {
@@ -4101,13 +4007,6 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if (
-			preg_match('/^result<vector_t<(.+)>>$/', $baseType) === 1
-			|| preg_match('/^result_or_false<vector_t<(.+)>>$/', $baseType) === 1
-			|| preg_match('/^result_or_bool<vector_t<(.+)>>$/', $baseType) === 1
-		) {
-			return $base . '.at(' . $dim . ')';
-		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '.get(' . $dim . ')';
 		}
@@ -4157,10 +4056,6 @@ final class Generator
 			|| $type === '::scpp::hash_t'
 			|| $type === 'hash_t<mixed_t>'
 			|| $type === '::scpp::hash_t<mixed_t>'
-			|| $type === 'shared_p<hash_t<mixed_t>>'
-			|| $type === 'shared_p<::scpp::hash_t<mixed_t>>'
-			|| $type === '::scpp::shared_p<hash_t<mixed_t>>'
-			|| $type === '::scpp::shared_p<::scpp::hash_t<mixed_t>>'
 			|| $type === 'unique_p<hash_t<mixed_t>>'
 			|| $type === 'unique_p<::scpp::hash_t<mixed_t>>'
 			|| $type === '::scpp::unique_p<hash_t<mixed_t>>'
@@ -4169,11 +4064,7 @@ final class Generator
 
 	private function isUntypedTableHandleType(string $type): bool
 	{
-		return $type === 'shared_p<hash_t<mixed_t>>'
-			|| $type === 'shared_p<::scpp::hash_t<mixed_t>>'
-			|| $type === '::scpp::shared_p<hash_t<mixed_t>>'
-			|| $type === '::scpp::shared_p<::scpp::hash_t<mixed_t>>'
-			|| $type === 'unique_p<hash_t<mixed_t>>'
+		return $type === 'unique_p<hash_t<mixed_t>>'
 			|| $type === 'unique_p<::scpp::hash_t<mixed_t>>'
 			|| $type === '::scpp::unique_p<hash_t<mixed_t>>'
 			|| $type === '::scpp::unique_p<::scpp::hash_t<mixed_t>>';
@@ -5631,27 +5522,12 @@ final class Generator
 			$baseExpr = $expr->children['expr'] ?? null;
 			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
-			$baseType = $this->inferExprType($baseExpr);
-			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
-				return $base . '.get(string_t(' . json_encode((string) ($expr->children['prop'] ?? 'prop'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '))';
-			}
-			if ($this->isUntypedTableType($baseType)) {
-				return $this->renderUntypedTableAccessBase($base, $baseType) . '._find_val(string_t(' . json_encode((string) ($expr->children['prop'] ?? 'prop'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '))';
-			}
 			return $base === 'this' ? 'this->' . $prop : $base . '->' . $prop;
 		}
 		if ($kind === AstKind::NULLSAFE_PROP) {
 			$baseExpr = $expr->children['expr'] ?? null;
 			$base = $this->renderExpr($baseExpr, $namespacePhp);
 			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
-			$propLiteral = 'string_t(' . json_encode((string) ($expr->children['prop'] ?? 'prop'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')';
-			$baseType = $this->inferExprType($baseExpr);
-			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
-				return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(isset(__scpp_tmp)) ? __scpp_tmp.get(' . $propLiteral . ') : null; }())';
-			}
-			if ($this->isUntypedTableType($baseType)) {
-				return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(isset(__scpp_tmp)) ? ' . $this->renderUntypedTableAccessBase('__scpp_tmp', $baseType) . '._find_val(' . $propLiteral . ') : null; }())';
-			}
 			return '([&]() -> auto { auto __scpp_tmp = ' . $base . '; return static_cast<bool>(isset(__scpp_tmp)) ? __scpp_tmp->' . $prop . ' : null; }())';
 		}
 		if ($kind === AstKind::STATIC_PROP) {
@@ -6064,114 +5940,60 @@ final class Generator
 		return $this->renderNameExpr($expr, $namespacePhp);
 	}
 
-	/** @return array{exact: array<string, string>, bare: array<string, string>} */
+	/** @return array<string, string> */
 	private function loadPhpRuntimeRelativeSymbols(): array
 	{
-		$profile = strtolower(trim($this->phpProfile));
-		if (!in_array($profile, ['legacy', 'strict'], true)) {
-			throw new \RuntimeException('Unsupported PHP runtime symbol profile `' . $this->phpProfile . '`.');
-		}
-		$path = dirname(__DIR__, 2) . '/specs/php_runtime_symbols_' . $profile . '.json';
-		if (!is_file($path)) {
-			throw new \RuntimeException('Missing mandatory PHP runtime symbols registry: ' . $path);
-		}
-
-		$content = file_get_contents($path);
-		if ($content === false) {
-			throw new \RuntimeException('Failed to read mandatory PHP runtime symbols registry: ' . $path);
-		}
-
-		try {
-			$data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-		} catch (\Throwable $e) {
-			throw new \RuntimeException('Invalid JSON in mandatory PHP runtime symbols registry: ' . $path . ' (' . $e->getMessage() . ')', 0, $e);
-		}
-
-		if (!is_array($data)) {
-			throw new \RuntimeException('Mandatory PHP runtime symbols registry must decode to an object: ' . $path);
-		}
-
-		$symbols = $data['php_runtime_relative_symbols'] ?? null;
-		$targets = $data['php_runtime_symbol_targets'] ?? null;
-		if ($symbols !== null && $targets !== null) {
-			throw new \RuntimeException('Mandatory PHP runtime symbols registry must not contain both php_runtime_relative_symbols and php_runtime_symbol_targets: ' . $path);
-		}
-		$exact = [];
-		$bareBuckets = [];
-		if (is_array($symbols)) {
-			foreach ($symbols as $index => $symbol) {
-				if (!is_string($symbol) || $symbol === '') {
-					throw new \RuntimeException('Invalid symbol entry in mandatory PHP runtime symbols registry at index ' . $index . ': ' . $path);
-				}
-				$this->registerPhpRuntimeRelativeSymbol($exact, $bareBuckets, $symbol, $symbol);
-			}
-		} elseif (is_array($targets)) {
-			foreach ($targets as $visibleSymbol => $targetSymbol) {
-				if (!is_string($visibleSymbol) || $visibleSymbol === '' || !is_string($targetSymbol) || $targetSymbol === '') {
-					throw new \RuntimeException('Invalid symbol mapping entry in mandatory PHP runtime symbols registry: ' . $path);
-				}
-				$this->registerPhpRuntimeRelativeSymbol($exact, $bareBuckets, $visibleSymbol, $targetSymbol);
-			}
-		} else {
-			throw new \RuntimeException('Mandatory PHP runtime symbols registry must contain array key php_runtime_relative_symbols or object key php_runtime_symbol_targets: ' . $path);
-		}
-
-		$bare = [];
-		foreach ($bareBuckets as $tail => $matches) {
-			$uniqueMatches = array_values(array_unique($matches));
-			if (count($uniqueMatches) === 1) {
-				$bare[$tail] = $uniqueMatches[0];
-			}
-		}
-
-		return [
-			'exact' => $exact,
-			'bare' => $bare,
+		$specsRoot = dirname(__DIR__, 2) . '/specs';
+		$paths = [
+			$specsRoot . '/php_runtime_symbols_legacy.json',
+			$specsRoot . '/php_runtime_symbols_strict.json',
 		];
-	}
 
-	/**
-	 * @param array<string,string> $exact
-	 * @param array<string,list<string>> $bareBuckets
-	 */
-	private function registerPhpRuntimeRelativeSymbol(array &$exact, array &$bareBuckets, string $visibleSymbol, string $targetSymbol): void
-	{
-		$visible = ltrim($visibleSymbol, '\\');
-		$target = ltrim($targetSymbol, '\\');
-		$normalizedVisible = strtolower(str_replace('\\', '::', $visible));
-		$exact[$normalizedVisible] = $target;
-		$tail = str_contains($normalizedVisible, '::')
-			? substr($normalizedVisible, (int) strrpos($normalizedVisible, '::') + 2)
-			: $normalizedVisible;
-		$bareBuckets[$tail][] = $target;
+		$out = [];
+		foreach ($paths as $path) {
+			if (!is_file($path)) {
+				throw new \RuntimeException('Missing mandatory PHP runtime symbols registry: ' . $path);
+			}
+
+			$content = file_get_contents($path);
+			if ($content === false) {
+				throw new \RuntimeException('Failed to read mandatory PHP runtime symbols registry: ' . $path);
+			}
+
+			try {
+				$data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+			} catch (\Throwable $e) {
+				throw new \RuntimeException('Invalid JSON in mandatory PHP runtime symbols registry: ' . $path . ' (' . $e->getMessage() . ')', 0, $e);
+			}
+
+			if (!is_array($data)) {
+				throw new \RuntimeException('Mandatory PHP runtime symbols registry must decode to an object: ' . $path);
+			}
+
+			$targets = $data['php_runtime_symbol_targets'] ?? null;
+			if (!is_array($targets)) {
+				throw new \RuntimeException('Mandatory PHP runtime symbols registry must contain object key php_runtime_symbol_targets: ' . $path);
+			}
+
+			foreach ($targets as $symbol => $target) {
+				if (!is_string($symbol) || $symbol === '' || !is_string($target) || $target === '') {
+					throw new \RuntimeException('Invalid symbol target entry in mandatory PHP runtime symbols registry: ' . $path);
+				}
+				$out[strtolower($symbol)] = $target;
+			}
+		}
+
+		return $out;
 	}
 
 	private function isKnownPhpRuntimeRelativeSymbol(string $symbol): bool
 	{
-		return $this->resolveKnownPhpRuntimeRelativeSymbol($symbol) !== null;
+		return isset($this->phpRuntimeRelativeSymbols[strtolower($symbol)]);
 	}
 
 	private function qualifyKnownPhpRuntimeSymbol(string $symbol): string
 	{
-		return $this->resolveKnownPhpRuntimeRelativeSymbol($symbol) ?? $symbol;
-	}
-
-	private function resolveKnownPhpRuntimeRelativeSymbol(string $symbol): ?string
-	{
-		$normalized = strtolower(str_replace('\\', '::', ltrim($symbol, '\\')));
-		if ($normalized === '') {
-			return null;
-		}
-
-		if (isset($this->phpRuntimeRelativeSymbols['exact'][$normalized])) {
-			return $this->phpRuntimeRelativeSymbols['exact'][$normalized];
-		}
-
-		if (!str_contains($normalized, '\\') && isset($this->phpRuntimeRelativeSymbols['bare'][$normalized])) {
-			return $this->phpRuntimeRelativeSymbols['bare'][$normalized];
-		}
-
-		return null;
+		return $this->phpRuntimeRelativeSymbols[strtolower($symbol)] ?? $symbol;
 	}
 
 	/**
