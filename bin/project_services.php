@@ -428,8 +428,8 @@ function build_php_script_command(string $repoRoot, string $scriptPath, array $a
 {
 	$phpBinary = resolve_php_cli_binary();
 	$command = [$phpBinary];
-	$astSoPath = normalize_path($repoRoot . '/ext/8.4-deb/ast.so');
-	if ($needsAst && !extension_loaded('ast') && is_file($astSoPath)) {
+	$astSoPath = resolve_bundled_ast_extension_path($repoRoot);
+	if ($needsAst && $astSoPath !== null) {
 		$command[] = '-dextension=' . $astSoPath;
 	}
 	$command[] = $scriptPath;
@@ -437,6 +437,22 @@ function build_php_script_command(string $repoRoot, string $scriptPath, array $a
 		$command[] = $arg;
 	}
 	return $command;
+}
+
+function resolve_bundled_ast_extension_path(string $repoRoot): ?string
+{
+	$candidates = [
+		$repoRoot . '/ext/8.4-deb/ast.so',
+		$repoRoot . '/ext/8.4-deb_php_ast.so',
+		$repoRoot . '/ext/ast.so',
+	];
+	foreach ($candidates as $candidate) {
+		$normalized = normalize_path($candidate);
+		if (is_file($normalized)) {
+			return $normalized;
+		}
+	}
+	return null;
 }
 
 function resolve_php_cli_binary(): string
