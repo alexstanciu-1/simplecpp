@@ -18,7 +18,11 @@
     "max_requests": 0
   },
   "runtime": {
-    "languages": ["php"],
+    "languages": {
+      "php": {
+        "profile": "legacy"
+      }
+    },
     "modules": ["json", "filesystem"]
   }
 }

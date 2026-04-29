@@ -1,0 +1,29 @@
+<?php
+declare(strict_types=1);
+
+$root = "strict_str_io_root";
+$path = $root . "/data.txt";
+if (!fs_mkdir($root)) {
+	echo "MKDIR_FAIL\n";
+} else {
+	$fh /** resource_handle_t */;
+	echo take($fh, io_open($path, "wb+")) ? "T\n" : "F\n";
+	$bytes /** int */ = 0;
+	if (!take($bytes, io_write($fh, str_implode("|", str_explode(",", "a,b,c"))))) {
+		echo "WRITE_FAIL\n";
+	} else {
+		echo $bytes, "\n";
+		echo io_rewind($fh) ? "R\n" : "r\n";
+
+		$line /** string */ = "";
+		if (!take($line, io_read($fh, 64))) {
+			echo "READ_FAIL\n";
+		} else {
+			echo str_strtoupper($line), "\n";
+		}
+	}
+	echo io_close($fh) ? "C\n" : "c\n";
+
+	echo fs_remove($path) ? "U\n" : "u\n";
+	echo fs_rmdir($root) ? "D\n" : "d\n";
+}

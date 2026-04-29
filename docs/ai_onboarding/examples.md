@@ -9,6 +9,7 @@ Start here for preferred PHP authoring patterns:
 
 - `specs/php/canonical_examples.md`
 - `docs/examples/php/README.md`
+- `docs/examples/php/strict/README.md`
 
 Use `docs/examples/php/` when you want tested, project-mode PHP examples for agents rather than abstract style guidance alone.
 
@@ -18,6 +19,7 @@ These examples are especially useful for:
 - explicit false/null handling
 - typed function boundaries
 - avoiding ambiguous truthiness
+- strict-vs-legacy profile selection
 
 ## 2. Generator Sample Suites
 
@@ -79,6 +81,8 @@ Preferred AI behavior:
 Choose examples based on the task:
 
 - semantic intent example -> `specs/php/canonical_examples.md`
+- strict profile example -> `docs/examples/php/strict/`
+- legacy profile example -> `docs/examples/php/legacy/`
 - lowering shape example -> `generators/php/samples/stage_*`
 - AST/exporter reality example -> `generators/php/samples/know_how/`
 - project workflow example -> `docs/getting_started.md` and usability harness docs
