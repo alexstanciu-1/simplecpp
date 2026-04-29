@@ -589,7 +589,11 @@ template <typename T, typename Right>
 	if (!lhs.has_value().native_value()) {
 		return bool_t(bool_t(false) == rhs);
 	}
-	return lhs.value() == rhs;
+	if constexpr (is_bool<Right> && !is_bool<T>) {
+		return bool_t(false);
+	} else {
+		return lhs.value() == rhs;
+	}
 }
 
 template <typename Left, typename T>
@@ -598,7 +602,31 @@ template <typename Left, typename T>
 	if (!rhs.has_value().native_value()) {
 		return bool_t(lhs == bool_t(false));
 	}
-	return lhs == rhs.value();
+	if constexpr (is_bool<Left> && !is_bool<T>) {
+		return bool_t(false);
+	} else {
+		return lhs == rhs.value();
+	}
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, false_sentinel_t) noexcept {
+	return bool_t(!lhs.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(false_sentinel_t, const result_or_false<T> &rhs) noexcept {
+	return bool_t(!rhs.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_false<T> &lhs, false_sentinel_t) noexcept {
+	return bool_t(lhs.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(false_sentinel_t, const result_or_false<T> &rhs) noexcept {
+	return bool_t(rhs.has_value().native_value());
 }
 
 template <typename T, typename U>
@@ -638,7 +666,11 @@ template <typename T, typename Right>
 	if (!lhs.has_value().native_value()) {
 		return bool_t(bool_t(lhs.is_true().native_value()) == rhs);
 	}
-	return lhs.value() == rhs;
+	if constexpr (is_bool<Right> && !is_bool<T>) {
+		return bool_t(false);
+	} else {
+		return lhs.value() == rhs;
+	}
 }
 
 template <typename Left, typename T>
@@ -647,7 +679,51 @@ template <typename Left, typename T>
 	if (!rhs.has_value().native_value()) {
 		return bool_t(lhs == bool_t(rhs.is_true().native_value()));
 	}
-	return lhs == rhs.value();
+	if constexpr (is_bool<Left> && !is_bool<T>) {
+		return bool_t(false);
+	} else {
+		return lhs == rhs.value();
+	}
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, false_sentinel_t) noexcept {
+	return bool_t(lhs.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(false_sentinel_t, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(rhs.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, false_sentinel_t) noexcept {
+	return bool_t(!lhs.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(false_sentinel_t, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(!rhs.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, true_sentinel_t) noexcept {
+	return bool_t(lhs.is_true().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(true_sentinel_t, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(rhs.is_true().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, true_sentinel_t) noexcept {
+	return bool_t(!lhs.is_true().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(true_sentinel_t, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(!rhs.is_true().native_value());
 }
 
 template <typename T, typename U>

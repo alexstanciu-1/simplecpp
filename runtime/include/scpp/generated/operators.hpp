@@ -25,7 +25,7 @@
 
 namespace scpp {
 
-// Generated from runtime/specs/config.json on 2026-04-24T15:03:09+00:00.
+// Generated from runtime/specs/config.json on 2026-04-29T08:49:38+00:00.
 // Enabled config families: bool_logical, float_arithmetic, float_logical, float_mutation, int_arithmetic, int_bitwise_and_mutation, int_logical, mixed_numeric, mixed_numeric_logical, null_comparisons, nullable_lifted_ops, nullable_ops, pointer_null_comparisons, string_ops, table_identity_comparisons.
 // Do not edit manually.
 
@@ -514,7 +514,11 @@ template <typename T, typename Right>
 	if (!lhs.has_value().native_value()) {
 		return bool_t(bool_t(false) == rhs);
 	}
-	return lhs.value() == rhs;
+	if constexpr (is_bool<Right> && !is_bool<T>) {
+		return bool_t(false);
+	} else {
+		return lhs.value() == rhs;
+	}
 }
 
 template <typename Left, typename T>
@@ -523,7 +527,31 @@ template <typename Left, typename T>
 	if (!rhs.has_value().native_value()) {
 		return bool_t(lhs == bool_t(false));
 	}
-	return lhs == rhs.value();
+	if constexpr (is_bool<Left> && !is_bool<T>) {
+		return bool_t(false);
+	} else {
+		return lhs == rhs.value();
+	}
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_false<T> &lhs, false_sentinel_t) noexcept {
+	return bool_t(!lhs.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(false_sentinel_t, const result_or_false<T> &rhs) noexcept {
+	return bool_t(!rhs.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_false<T> &lhs, false_sentinel_t) noexcept {
+	return bool_t(lhs.has_value().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(false_sentinel_t, const result_or_false<T> &rhs) noexcept {
+	return bool_t(rhs.has_value().native_value());
 }
 
 template <typename T, typename U>
@@ -563,7 +591,11 @@ template <typename T, typename Right>
 	if (!lhs.has_value().native_value()) {
 		return bool_t(bool_t(lhs.is_true().native_value()) == rhs);
 	}
-	return lhs.value() == rhs;
+	if constexpr (is_bool<Right> && !is_bool<T>) {
+		return bool_t(false);
+	} else {
+		return lhs.value() == rhs;
+	}
 }
 
 template <typename Left, typename T>
@@ -572,7 +604,51 @@ template <typename Left, typename T>
 	if (!rhs.has_value().native_value()) {
 		return bool_t(lhs == bool_t(rhs.is_true().native_value()));
 	}
-	return lhs == rhs.value();
+	if constexpr (is_bool<Left> && !is_bool<T>) {
+		return bool_t(false);
+	} else {
+		return lhs == rhs.value();
+	}
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, false_sentinel_t) noexcept {
+	return bool_t(lhs.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(false_sentinel_t, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(rhs.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, false_sentinel_t) noexcept {
+	return bool_t(!lhs.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(false_sentinel_t, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(!rhs.is_false().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(const result_or_bool<T> &lhs, true_sentinel_t) noexcept {
+	return bool_t(lhs.is_true().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator==(true_sentinel_t, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(rhs.is_true().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(const result_or_bool<T> &lhs, true_sentinel_t) noexcept {
+	return bool_t(!lhs.is_true().native_value());
+}
+
+template <typename T>
+[[nodiscard]] inline bool_t operator!=(true_sentinel_t, const result_or_bool<T> &rhs) noexcept {
+	return bool_t(!rhs.is_true().native_value());
 }
 
 template <typename T, typename U>
