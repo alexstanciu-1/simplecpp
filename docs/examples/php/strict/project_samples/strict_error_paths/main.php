@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+$err /** error_t */;
+$text /** string */ = "seed";
+echo take($text, $err, fs_get("missing_strict_sample.txt")) ? "T\n" : "F\n";
+echo $text, "\n";
+
+echo take($text, $err, str_hex2bin("4142")) ? "T\n" : "F\n";
+echo $text, "\n";
+
+echo take($text, $err, str_hex2bin("4")) ? "T\n" : "F\n";
+echo $text, "\n";

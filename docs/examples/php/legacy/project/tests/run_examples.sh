@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
-repo_root="$(cd "$project_dir/../../../.." && pwd)"
+repo_root="$(cd "$project_dir/../../../../.." && pwd)"
 scpp_cmd=(php "$repo_root/bin/scpp.php")
 manifest_path="$project_dir/tests/examples_manifest.txt"
 binary_path="$project_dir/.prism/build/main"
