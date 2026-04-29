@@ -13,6 +13,8 @@ ob_start();
 
 $__jsonResponseSent = false;
 
+const TEST_UI_ENABLE_SANDBOX_PANEL_MUTATIONS = false;
+
 function emitJsonResponse(array $payload, int $statusCode = 200): void
 {
 	global $__jsonResponseSent;
@@ -345,6 +347,17 @@ function handleUtilityAction(string $action): void
 
 	$input = readJsonRequestBody();
 
+	if (in_array($action, [
+		'sandbox_save_file',
+		'sandbox_create_file',
+		'sandbox_create_dir',
+		'sandbox_rename',
+		'sandbox_delete_file',
+		'sandbox_delete_dir',
+	], true)) {
+		assertSandboxPanelMutationsEnabled();
+	}
+
 	if ($action === 'compile_edited_cpp') {
 		$payload = compileEditedCppPayload($input);
 		emitJsonResponse($payload);
@@ -487,6 +500,15 @@ function handleUtilityAction(string $action): void
 	}
 
 	throw new RuntimeException('Unknown action: ' . $action);
+}
+
+function assertSandboxPanelMutationsEnabled(): void
+{
+	if (TEST_UI_ENABLE_SANDBOX_PANEL_MUTATIONS) {
+		return;
+	}
+
+	throw new RuntimeException('Sandbox file-tree mutations are disabled by test UI configuration.');
 }
 
 function readJsonRequestBody(): array
