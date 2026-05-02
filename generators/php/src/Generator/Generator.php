@@ -181,8 +181,9 @@ final class Generator
 		}
 
 		if ($emitProgramEntry && $file->rootStatements !== []) {
-			$source[] = 'int main() {';
+			$source[] = 'int main(int __scpp_argc, char** __scpp_argv) {';
 			$source[] = $this->indent(1) . 'try {';
+			$source[] = $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);';
 			$source[] = $this->indent(2) . 'return scpp::' . $unitMainName . '();';
 			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
 			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
@@ -191,8 +192,9 @@ final class Generator
 			$source[] = '}';
 			$source[] = '';
 		} elseif ($emitProgramEntry && $namespaceMainTargets !== []) {
-			$source[] = 'int main() {';
+			$source[] = 'int main(int __scpp_argc, char** __scpp_argv) {';
 			$source[] = $this->indent(1) . 'try {';
+			$source[] = $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);';
 			$source[] = $this->indent(2) . 'return ' . $namespaceMainTargets[0] . ';';
 			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
 			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
@@ -560,7 +562,12 @@ final class Generator
 			}
 		}
 
+		$previousDeclaredLocals = $this->declaredLocals;
+		$previousDeclaredLocalTypes = $this->declaredLocalTypes;
+		$this->seedSyntheticMainCliLocals();
 		$this->validateStatementList($file->rootStatements, null);
+		$this->declaredLocals = $previousDeclaredLocals;
+		$this->declaredLocalTypes = $previousDeclaredLocalTypes;
 		foreach ($file->functions as $function) {
 			$this->validateFunctionLikeParameters($function->params, 'function ' . $function->name);
 			$this->validateReferenceRulesForFunctionLike($function->params, $function->statements, $function->returnsByReference, 'function ' . $function->name, null);
@@ -580,7 +587,12 @@ final class Generator
 			$this->currentClassName = $prevClassName;
 		}
 		foreach ($file->namespaces as $namespace) {
+			$previousDeclaredLocals = $this->declaredLocals;
+			$previousDeclaredLocalTypes = $this->declaredLocalTypes;
+			$this->seedSyntheticMainCliLocals();
 			$this->validateStatementList($namespace->statements, $namespace->name);
+			$this->declaredLocals = $previousDeclaredLocals;
+			$this->declaredLocalTypes = $previousDeclaredLocalTypes;
 			foreach ($namespace->functions as $function) {
 				$this->validateFunctionLikeParameters($function->params, 'function ' . $function->name);
 				$this->validateReferenceRulesForFunctionLike($function->params, $function->statements, $function->returnsByReference, 'function ' . $function->name, $namespace->name);
@@ -1104,6 +1116,14 @@ final class Generator
 		if ($constants !== []) {
 			$header[] = '';
 		}
+		foreach ($classes as $class) {
+			if (!$class->isEnum) {
+				$header[] = 'class ' . $class->name . ';';
+			}
+		}
+		if ($classes !== []) {
+			$header[] = '';
+		}
 
 		foreach ($classes as $class) {
 			$this->emitClass($header, $source, $class, $namespacePhp);
@@ -1360,6 +1380,9 @@ final class Generator
 		}
 
 		if ($kind !== AstKind::ARRAY) {
+			if ($kind === AstKind::CAST && ((int) ($expr->flags ?? 0) === AstKind::TYPE_OBJECT)) {
+				return 'non_vector';
+			}
 			return 'unknown';
 		}
 
@@ -1825,6 +1848,10 @@ final class Generator
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
 		$this->currentReturnType = 'int';
+		$this->seedSyntheticMainCliLocals();
+		foreach ($this->renderSyntheticMainCliPreamble() as $line) {
+			$source[] = $this->indent(1) . $line;
+		}
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
 			$source[] = $this->indent(1) . $line;
 		}
@@ -2862,6 +2889,23 @@ final class Generator
 		return $lines;
 	}
 
+	/** @return list<string> */
+	private function renderSyntheticMainCliPreamble(): array
+	{
+		return [
+			'int_t argc = php::cli_argc();',
+			'mixed_t argv = php::cli_argv();',
+		];
+	}
+
+	private function seedSyntheticMainCliLocals(): void
+	{
+		$this->declaredLocals['argc'] = true;
+		$this->declaredLocals['argv'] = true;
+		$this->declaredLocalTypes['argc'] = 'int';
+		$this->declaredLocalTypes['argv'] = 'mixed';
+	}
+
 	private function renderParamName(ParamDecl $param, bool $useStorageNames): string
 	{
 		return $useStorageNames ? $this->renderParamStorageName($param) : $this->localCppName($param->name);
@@ -3641,70 +3685,44 @@ final class Generator
 			return ['// ERROR: unsupported foreach key target'];
 		}
 
-		$indexName = '__scpp_foreach_i_' . $statement->line;
 		$entryName = '__scpp_foreach_entry_' . $statement->line;
 		$sourceType = $this->inferExprType($payload['expr'] ?? null);
-		$foreachByRefSourceShape = $this->inferForeachByRefSourceShape($payload['expr'] ?? null);
-		$isMixedTableForeach = $sourceType === 'mixed_t' && $foreachByRefSourceShape !== 'unknown';
-		$sourceAccessExpr = $this->isUntypedTableHandleType($sourceType)
-			? '(*(' . $sourceExpr . '))'
-			: ($isMixedTableForeach ? '(' . $sourceExpr . ').get_hash()' : $sourceExpr);
-		$isUntypedTableForeach = $this->isUntypedTableType($sourceType) || $isMixedTableForeach;
-		$elementExpr = $sourceAccessExpr . '.at(' . $indexName . ')';
+		$isVectorLikeForeach = $this->isForeachVectorLikeType($sourceType);
+		$sourceTempName = $this->allocateGeneratedLocalName('__scpp_foreach_source_' . $statement->line);
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
-		} elseif ($isUntypedTableForeach) {
+		} elseif (!$isVectorLikeForeach) {
 			$valueStoredType = 'mixed_t';
 		}
-
-		if ($byRef && !$isUntypedTableForeach && $foreachByRefSourceShape === 'non_vector') {
-			$this->errors[] = 'foreach by reference is currently supported for vector-like arrays only at line ' . $statement->line . '.';
-			return ['// ERROR: foreach by reference currently rejects non-vector arrays'];
-		}
-
-		if ($isUntypedTableForeach) {
-			$lines = [
-				'for (auto ' . $entryName . ' = ' . $sourceAccessExpr . '.begin_entries(); ' . $entryName . ' != ' . $sourceAccessExpr . '.end_entries(); ++' . $entryName . ') {',
-				$this->indent(1) . 'auto __scpp_foreach_entry_view = *' . $entryName . ';',
-			];
-		} else {
-			$lines = [
-				'for (int_t ' . $indexName . ' = static_cast<int_t>(0); static_cast<bool>(' . $indexName . ' < static_cast<int_t>(' . $sourceAccessExpr . '.size())); ++' . $indexName . ') {',
-			];
-		}
+		$sourceBinding = $this->isLvalueCapableExpr($payload['expr'] ?? null, $namespacePhp)
+			? 'auto& ' . $sourceTempName . ' = ' . $this->renderLvalueExpr($payload['expr'] ?? null, $namespacePhp) . ';'
+			: 'auto ' . $sourceTempName . ' = ' . $sourceExpr . ';';
+		$lines = [
+			$sourceBinding,
+			'for (auto ' . $entryName . ' : foreach_range(' . $sourceTempName . ')) {',
+		];
 
 		$scopedLocals = $this->declaredLocals;
 		$scopedLocalTypes = $this->declaredLocalTypes;
 		$scopedReferenceLocals = $this->predefinedReferenceLocals;
 
 		$keyCppName = null;
-		$keyAccessExpr = $indexName;
 		if ($keyName !== null) {
 			$keyCppName = $this->localCppName($keyName);
-			if ($isUntypedTableForeach) {
-				$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = __scpp_foreach_entry_view.key();';
-				$this->declaredLocalTypes[$keyName] = 'mixed_t';
-			} else {
-				$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
-				$this->declaredLocalTypes[$keyName] = 'int_t';
-			}
+			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $entryName . '.key();';
+			$this->declaredLocalTypes[$keyName] = $isVectorLikeForeach ? 'int_t' : 'mixed_t';
 			$this->declaredLocals[$keyName] = true;
-			$keyAccessExpr = $keyCppName;
-		} elseif ($byRef && !$isUntypedTableForeach) {
-			$keyCppName = $this->allocateGeneratedLocalName('_' . $valueName . '_key_');
-			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $indexName . ';';
-			$keyAccessExpr = $keyCppName;
 		}
 
 		if ($byRef) {
 			$this->foreachReferenceSlotStack[] = [
-				$valueName => $isUntypedTableForeach ? '__scpp_foreach_entry_view.value_ref()' : ($sourceAccessExpr . '.at(' . $keyAccessExpr . ')'),
+				$valueName => $entryName . '.value_ref()',
 			];
 		} else {
 			$valueCppName = $this->localCppName($valueName);
 			$hasOuterValueBinding = isset($scopedLocals[$valueName]);
-			$currentElementExpr = $isUntypedTableForeach ? '__scpp_foreach_entry_view.value_copy()' : $elementExpr;
+			$currentElementExpr = $entryName . '.value_copy()';
 			if ($hasOuterValueBinding) {
 				$lines[] = $this->indent(1) . $valueCppName . ' = ' . $currentElementExpr . ';';
 			} else {
@@ -4248,6 +4266,16 @@ final class Generator
 
 		if (is_object($expr) && (($expr->kind ?? null) === AstKind::DIM)) {
 			return $this->renderDimWriteAccess($expr, $namespacePhp);
+		}
+
+		if (is_object($expr) && (($expr->kind ?? null) === AstKind::PROP)) {
+			$baseExpr = $expr->children['expr'] ?? null;
+			$baseType = $this->inferExprType($baseExpr);
+			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
+				$base = $this->renderExpr($baseExpr, $namespacePhp);
+				$propName = (string) ($expr->children['prop'] ?? 'prop');
+				return $base . '[string_t(' . json_encode($propName, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ')]';
+			}
 		}
 
 		return $this->renderExpr($expr, $namespacePhp);
@@ -5521,7 +5549,12 @@ final class Generator
 		if ($kind === AstKind::PROP) {
 			$baseExpr = $expr->children['expr'] ?? null;
 			$base = $this->renderExpr($baseExpr, $namespacePhp);
-			$prop = $this->cppIdentifier((string) ($expr->children['prop'] ?? 'prop'));
+			$propName = (string) ($expr->children['prop'] ?? 'prop');
+			$baseType = $this->inferExprType($baseExpr);
+			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
+				return $base . '.get(string_t(' . json_encode($propName, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '))';
+			}
+			$prop = $this->cppIdentifier($propName);
 			return $base === 'this' ? 'this->' . $prop : $base . '->' . $prop;
 		}
 		if ($kind === AstKind::NULLSAFE_PROP) {
@@ -6410,6 +6443,11 @@ final class Generator
 		}
 
 		return 'auto';
+	}
+
+	private function isForeachVectorLikeType(string $sourceType): bool
+	{
+		return str_contains($sourceType, 'vector_t<');
 	}
 
 private function isStdClassNameNode(mixed $classNode): bool
