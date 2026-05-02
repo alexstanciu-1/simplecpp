@@ -15,7 +15,7 @@ use Scpp\S2S\Transpiler;
  * Notes:
  * - reads static test metadata from *.test-info.json
  * - writes only volatile execution data into *.test-results.json
- * - preserves source.php.json for generator AST fixtures
+ * - preserves source.<ext>.json for generator AST fixtures
  * - supports --level and --test filters
  */
 final class Phase1TestRunner
@@ -326,7 +326,9 @@ TXT;
 			'runtime-matrix' => $this->runtimeMatrixTestsRoot,
 			default => throw new RuntimeException('Unknown suite: ' . $suite),
 		};
-		$expectedExtension = in_array($suite, ['runtime', 'runtime-matrix'], true) ? 'cpp' : 'php';
+		$expectedExtensions = in_array($suite, ['runtime', 'runtime-matrix'], true)
+			? ['cpp']
+			: ['phs', 'php'];
 
 		$iterator = new RecursiveIteratorIterator(
 			new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)
@@ -337,7 +339,7 @@ TXT;
 			if (!$fileInfo->isFile()) {
 				continue;
 			}
-			if ($fileInfo->getExtension() !== $expectedExtension) {
+			if (!in_array(strtolower($fileInfo->getExtension()), $expectedExtensions, true)) {
 				continue;
 			}
 
@@ -1517,12 +1519,17 @@ private function buildSanitizerRunEnvironment(string $sanValue): array
 		}
 
 		$stem = substr($infoPath, 0, -strlen('.test-info.json'));
+		$phsPath = $stem . '.phs';
 		$phpPath = $stem . '.php';
 		$cppPath = $stem . '.cpp';
+		$hasPhs = is_file($phsPath);
 		$hasPhp = is_file($phpPath);
 		$hasCpp = is_file($cppPath);
-		if ($hasPhp && $hasCpp) {
-			throw new RuntimeException('Basename overlap detected for test definition: ' . $stem . ' (.php and .cpp both exist in the same folder).');
+		if (($hasPhs && $hasPhp) || ($hasPhs && $hasCpp) || ($hasPhp && $hasCpp)) {
+			throw new RuntimeException('Basename overlap detected for test definition: ' . $stem . ' (.phs, .php, and .cpp variants must not coexist in the same folder).');
+		}
+		if ($hasPhs) {
+			return $phsPath;
 		}
 		if ($hasPhp) {
 			return $phpPath;
@@ -1537,10 +1544,22 @@ private function buildSanitizerRunEnvironment(string $sanValue): array
 	private function assertNoCrossSuiteBasenameOverlap(string $sourcePath): void
 	{
 		$stem = $this->buildSharedTestStem($sourcePath);
-		$extension = pathinfo($sourcePath, PATHINFO_EXTENSION);
-		$otherPath = $stem . ($extension === 'php' ? '.cpp' : '.php');
-		if (is_file($otherPath)) {
-			throw new RuntimeException('Basename overlap detected: ' . $sourcePath . ' conflicts with ' . $otherPath . '. Keep PHP and runtime tests in separate folders when they share the same basename.');
+		$extension = strtolower((string) pathinfo($sourcePath, PATHINFO_EXTENSION));
+		$conflicts = [];
+		if ($extension !== 'phs') {
+			$conflicts[] = $stem . '.phs';
+		}
+		if ($extension !== 'php') {
+			$conflicts[] = $stem . '.php';
+		}
+		if ($extension !== 'cpp') {
+			$conflicts[] = $stem . '.cpp';
+		}
+		foreach ($conflicts as $otherPath) {
+			if (!is_file($otherPath)) {
+				continue;
+			}
+			throw new RuntimeException('Basename overlap detected: ' . $sourcePath . ' conflicts with ' . $otherPath . '. Keep PHP++ and runtime tests in separate folders when they share the same basename.');
 		}
 	}
 

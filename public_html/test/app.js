@@ -473,7 +473,7 @@ async function promptAndCreateFile(parentPath) {
 		return;
 	}
 
-	const fileName = window.prompt('New file name:', 'new_file.php');
+	const fileName = window.prompt('New file name:', 'new_file.phs');
 	if (fileName === null) {
 		return;
 	}

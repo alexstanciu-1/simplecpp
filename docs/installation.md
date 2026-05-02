@@ -185,7 +185,7 @@ scpp usability-harness --template scenario_bool_null_gate_001
 Transpile one PHP file to generated C++ printed on stdout:
 
 ```bash
-scpp input.php
+scpp input.phs
 ```
 
 Show help:

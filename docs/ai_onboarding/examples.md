@@ -35,7 +35,7 @@ Use these to answer:
 - what lowering style is already established?
 - is there an existing nearby sample to extend instead of inventing a new one?
 
-Treat `stage_01` to `stage_03` as the main compatibility-oriented sample progression, and treat `10_negative_cases.php` or explicit rejection fixtures as rejection anchors.
+Treat `stage_01` to `stage_03` as the main compatibility-oriented sample progression, and treat `10_negative_cases.phs` or explicit rejection fixtures as rejection anchors.
 
 ## 3. `know_how` Reconnaissance Fixtures
 

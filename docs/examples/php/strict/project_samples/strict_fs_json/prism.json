@@ -1,7 +1,7 @@
 {
     "config_version": 1,
     "project_name": "strict_fs_json",
-    "entrypoint": "main.php",
+    "entrypoint": "main.phs",
     "build_dir": ".prism/build",
     "generated_dir": ".prism/generated",
     "cache_dir": ".prism/cache",

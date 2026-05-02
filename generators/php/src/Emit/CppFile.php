@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Scpp\S2S\Emit;
 
 /**
- * C++ output pair for one PHP input file.
+ * C++ output pair for one PHP++ input file.
  */
 final class CppFile
 {

@@ -16,10 +16,10 @@ without trying to expand the supported subset too aggressively.
 
 ## Files
 
-- `01_cross_namespace_use_and_service_flow.php`
-- `02_nullable_references_and_defaults_pipeline.php`
-- `03_interfaces_abstracts_construction_and_exec.php`
-- `04_constants_methods_and_state_roundtrip.php`
+- `01_cross_namespace_use_and_service_flow.phs`
+- `02_nullable_references_and_defaults_pipeline.phs`
+- `03_interfaces_abstracts_construction_and_exec.phs`
+- `04_constants_methods_and_state_roundtrip.phs`
 
 ## Notes
 
@@ -27,7 +27,7 @@ These files are provided as PHP source only.
 Export the matching parser output beside each PHP file using the same basename,
 for example:
 
-- `01_cross_namespace_use_and_service_flow.php.json`
-- `02_nullable_references_and_defaults_pipeline.php.json`
+- `01_cross_namespace_use_and_service_flow.phs.json`
+- `02_nullable_references_and_defaults_pipeline.phs.json`
 
 That keeps them aligned with the current fixture workflow.

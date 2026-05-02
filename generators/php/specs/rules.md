@@ -421,7 +421,7 @@ Known semantic edge:
 
 ## 15. File Emission Model
 
-- one PHP input file generates one `.hpp` file and one `.cpp` file
+- one PHP++ input file generates one `.hpp` file and one `.cpp` file
 - generation is organized per input file, not per class
 - the generated header contains declarations and the generated source contains out-of-line definitions
 - generated files may always include a broad runtime/project header

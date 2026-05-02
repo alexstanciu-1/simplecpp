@@ -6,7 +6,7 @@ namespace Scpp\S2S\Loader;
 use Scpp\S2S\Support\InputException;
 
 /**
- * Loads a PHP input file together with its sidecar JSON fixture.
+ * Loads a PHP++ input file together with its sidecar JSON fixture.
  *
  * The generator starts in fixture-driven mode on purpose:
  * - deterministic development
@@ -16,7 +16,7 @@ use Scpp\S2S\Support\InputException;
 final class InputLoader
 {
 	/**
-	 * Loads exported AST and token data for one PHP source file and validates the expected JSON sidecar shape.
+	 * Loads exported AST and token data for one PHP++ source file and validates the expected JSON sidecar shape.
 	 *
 	 * Accepted JSON sidecars:
 	 * - legacy wrapper object with {ast, tokens}

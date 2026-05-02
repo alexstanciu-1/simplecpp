@@ -1,0 +1,32 @@
+{
+    "config_version": 1,
+    "project_name": "simple_cpp_01",
+    "entrypoint": "main.phs",
+    "build_dir": ".prism/build",
+    "generated_dir": ".prism/generated",
+    "cache_dir": ".prism/cache",
+    "native_cpp_dir": "native_cpp",
+    "build": {
+        "backend": "ninja",
+        "mode": "debug",
+        "cxx": null
+    },
+    "fastcgi": {
+        "enabled": false,
+        "workers": 1,
+        "max_body_size": 4194304,
+        "max_requests": 0
+    },
+    "runtime": {
+        "languages": {
+            "php": {
+                "profile": "legacy"
+            }
+        },
+        "modules": [
+            "json",
+            "filesystem",
+            "mysqli"
+        ]
+    }
+}

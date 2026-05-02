@@ -109,7 +109,7 @@ This launcher config is separate from the project config `prism.json`.
 
 Required commands:
 
-- `scpp <input.php>`
+- `scpp <input.phs>`
 - `scpp init`
 - `scpp build`
 - `scpp --help`
@@ -160,7 +160,7 @@ Minimum shape:
 {
   "config_version": 1,
   "project_name": "my_project",
-  "entrypoint": "main.php",
+  "entrypoint": "main.phs",
   "build_dir": ".prism/build",
   "generated_dir": ".prism/generated",
   "cache_dir": ".prism/cache",
@@ -171,7 +171,7 @@ Minimum shape:
 }
 ```
 
-The default project shape is not web-first. `scpp init` should prefer a conventional CLI-style entrypoint such as `main.php` before any index-based candidate.
+The default project shape is not web-first. `scpp init` should prefer a conventional CLI-style entrypoint such as `main.phs` before any index-based candidate.
 
 Compiler policy for this milestone:
 
