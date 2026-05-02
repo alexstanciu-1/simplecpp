@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+
+namespace demo\schema;
+
+class model_property {
+	public string $name = "";
+}
+
+class model {
+	public $properties /** vector<model_property> */ = [];
+}
+
+namespace demo\app;
+
+use demo\schema\model;
+use demo\schema\model_property;
+
+$m = new model();
+$p = new model_property();
+$p->name = "Id";
+$m->properties[] = $p;
+
+echo $m->properties[0]->name, "\n";

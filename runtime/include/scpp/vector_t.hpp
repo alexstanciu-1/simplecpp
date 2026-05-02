@@ -74,6 +74,22 @@ public:
 		return value_.at(static_cast<std::size_t>(native));
 	}
 
+	T &operator[](std::size_t index) {
+		return at(index);
+	}
+
+	const T &operator[](std::size_t index) const {
+		return at(index);
+	}
+
+	T &operator[](const int_t &index) {
+		return at(index);
+	}
+
+	const T &operator[](const int_t &index) const {
+		return at(index);
+	}
+
 	// Alias used by generated code where source semantics map to indexing.
 	T &index(std::size_t index_value) {
 		return value_.at(index_value);
