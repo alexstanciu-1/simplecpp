@@ -182,7 +182,7 @@ try {
 	$timingResources['project_config'] = [
 		'label' => 'Project config',
 		'config_path' => normalizeConfigPathForUi(relative_path($projectConfig['project_root'], $buildConfigPath)),
-		'entrypoint' => normalizeConfigPathForUi((string) ($buildConfig['entrypoint'] ?? 'main.php')),
+		'entrypoint' => normalizeConfigPathForUi((string) ($buildConfig['entrypoint'] ?? 'main.phs')),
 	];
 
 	$phpPath = $entrypointAbsolutePath;
@@ -265,7 +265,7 @@ try {
 		$compileMetrics = stageMetricsFromMeasured($buildStage, 'scpp build');
 		$compileMetrics['exit_code'] = $buildResult['exit_code'];
 		$compileMetrics['mode'] = (string) (($buildConfig['build']['mode'] ?? 'debug'));
-		$compileMetrics['entrypoint'] = normalizeConfigPathForUi((string) ($buildConfig['entrypoint'] ?? 'main.php'));
+		$compileMetrics['entrypoint'] = normalizeConfigPathForUi((string) ($buildConfig['entrypoint'] ?? 'main.phs'));
 		$compileMetrics['command'] = $buildResult['command'];
 		$timingResources['compile_cpp'] = $compileMetrics;
 
@@ -294,7 +294,7 @@ try {
 		} else {
 			$generatedBase = build_generated_base(
 				normalize_path($projectConfig['project_root'] . '/' . normalize_config_path((string) ($buildConfig['generated_dir'] ?? '.prism/generated'))),
-				normalize_config_path((string) ($buildConfig['entrypoint'] ?? 'main.php'))
+				normalize_config_path((string) ($buildConfig['entrypoint'] ?? 'main.phs'))
 			);
 			$generatedHeaderPath = $generatedBase . '.hpp';
 			$generatedSourcePath = $generatedBase . '.cpp';
@@ -706,19 +706,19 @@ function resolveUiEntrypointRelativePath(string $root, string $selectedSandboxPa
 	$project = find_project_config($root);
 	if ($project !== null) {
 		$config = load_project_config($project['config_path']);
-		$entrypoint = normalize_config_path((string) ($config['entrypoint'] ?? 'main.php'));
+		$entrypoint = normalize_config_path((string) ($config['entrypoint'] ?? 'main.phs'));
 		if ($entrypoint !== '') {
 			return $entrypoint;
 		}
 	}
 
-	return 'main.php';
+	return 'main.phs';
 }
 
 function prepareUiBuildConfigPath(string $projectRoot, string $configPath, string $entrypointRelativePath): string
 {
 	$config = load_project_config($configPath);
-	$currentEntrypoint = normalize_config_path((string) ($config['entrypoint'] ?? 'main.php'));
+	$currentEntrypoint = normalize_config_path((string) ($config['entrypoint'] ?? 'main.phs'));
 	$targetEntrypoint = normalize_config_path($entrypointRelativePath);
 	if ($currentEntrypoint === $targetEntrypoint) {
 		return $configPath;

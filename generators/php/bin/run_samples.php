@@ -11,7 +11,10 @@ $outDir = $argv[2] ?? (__DIR__ . '/../../build/samples_out');
 @mkdir($outDir, 0777, true);
 
 $transpiler = new Transpiler();
-$files = glob(rtrim($samplesDir, '/') . '/*.php') ?: [];
+$files = array_merge(
+	glob(rtrim($samplesDir, '/') . '/*.phs') ?: [],
+	glob(rtrim($samplesDir, '/') . '/*.php') ?: []
+);
 sort($files);
 
 $report = [];

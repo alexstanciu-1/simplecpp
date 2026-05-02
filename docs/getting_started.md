@@ -37,7 +37,7 @@ This creates:
 - `.prism/generated/`
 - `.prism/cache/`
 
-The current default PHP profile is `legacy`.
+The current default PHP runtime profile is `legacy`.
 
 For profile-specific example projects and agent-facing usage guidance, see:
 
@@ -47,8 +47,13 @@ For profile-specific example projects and agent-facing usage guidance, see:
 
 When starting a new strict-profile project, prefer the strict examples first and avoid mixing strict and legacy library surfaces in the same project.
 
-`scpp init` first looks for a common non-web-first entrypoint such as:
+`scpp init` first looks for a common non-web-first PHP++ entrypoint such as:
 
+- `main.phs`
+- `src/main.phs`
+- `app/main.phs`
+- `index.phs`
+- `src/index.phs`
 - `main.php`
 - `src/main.php`
 - `app/main.php`
@@ -105,20 +110,20 @@ Compiler selection:
 - generated C++ kept on disk
 - Ninja invoked automatically by `scpp build` and `scpp run`
 - output executable written under `.prism/build/`
-- recursive S2S generation for all project `*.php` files
+- recursive S2S generation for all project `*.phs` files plus compatible `*.php` files
 - cached S2S state in `.prism/cache/s2s_state.php` using file size + mtime
 
 ## 4. Single-file transpile remains available
 
 ```bash
-scpp input.php
+scpp input.phs
 ```
 
 This still prints generated C++ to stdout and remains useful for narrow fixture work.
 
 ## 5. Current boundary
 
-The project command shape is now fixed around `scpp init` + `scpp build` / `scpp run`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` and `scpp run` recursively transpile project PHP files and use cached file metadata, while still relying on the configured single entrypoint and the repo runtime directly.
+The project command shape is now fixed around `scpp init` + `scpp build` / `scpp run`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` and `scpp run` recursively transpile project PHP++ files and compatible `.php` inputs, and use cached file metadata, while still relying on the configured single entrypoint and the repo runtime directly.
 
 ## 6. AI onboarding
 

@@ -36,8 +36,11 @@ For a new task, default to this sequence:
 - Treat top-level normative specs under `specs/` as the primary semantic authority.
 - Treat architecture and runtime/generator subsystem specs as subordinate to top-level language semantics.
 - Treat implementation behavior and tests as evidence, not as the semantic source of truth.
-- Treat PHP as the current authoring language surface.
+- Treat PHP++ as the current authoring language surface.
 - Treat the source syntax as PHP-like, not full PHP.
+- Treat `.phs` as the canonical PHP++ source extension.
+- Treat `.php` source files as compatibility inputs only.
+- Treat `PHP` references in repo code/docs as host tooling unless the surrounding text clearly means PHP++.
 - Treat generated C++ as a lowering/debug artifact unless the task is specifically about runtime, native integration, or generator output.
 
 ## S2S Generator Model
@@ -67,7 +70,7 @@ Do not casually patch generated output as if it were the primary source.
 
 Prism++ currently works as:
 
-- PHP source as the authoring surface
+- PHP++ source as the authoring surface
 - structured source-to-source lowering into C++
 - generated code targeting the `scpp` runtime
 - project-mode builds through `scpp init`, `scpp build`, and `scpp run`

@@ -8,6 +8,8 @@ const SCPP_VERSION = '0.1.0-dev';
 const SCPP_PROJECT_CONFIG = 'prism.json';
 const SCPP_STATE_FILE = 's2s_state.php';
 const SCPP_S2S_SIGNATURE_VERSION = 2;
+const SCPP_CANONICAL_SOURCE_EXTENSION = 'phs';
+const SCPP_COMPAT_SOURCE_EXTENSIONS = ['phs', 'php'];
 
 final class ScppCliException extends RuntimeException
 {
@@ -167,7 +169,7 @@ final class ProjectInitCommand
 		$config = [
 			'config_version' => 1,
 			'project_name' => basename($projectRoot),
-			'entrypoint' => $entrypoint ?? 'main.php',
+			'entrypoint' => $entrypoint ?? 'main.phs',
 			'build_dir' => '.prism/build',
 			'generated_dir' => '.prism/generated',
 			'cache_dir' => '.prism/cache',
@@ -272,7 +274,7 @@ function print_help(): void
 {
 	echo "Prism++ CLI\n";
 	echo "Usage:\n";
-	echo "  scpp <input.php>\n";
+	echo "  scpp <input.phs>\n";
 	echo "  scpp init [--php-profile=legacy|strict]\n";
 	echo "  scpp build\n";
 	echo "  scpp run [-- <args...>]\n";
@@ -883,6 +885,11 @@ function resolve_runtime_build_config(array $config): array
 function guess_entrypoint(string $projectRoot): ?string
 {
 	$candidates = [
+		'main.phs',
+		'src/main.phs',
+		'app/main.phs',
+		'index.phs',
+		'src/index.phs',
 		'main.php',
 		'src/main.php',
 		'app/main.php',
@@ -895,6 +902,29 @@ function guess_entrypoint(string $projectRoot): ?string
 		}
 	}
 	return null;
+}
+
+/** @return list<string> */
+function scpp_source_extensions(): array
+{
+	return SCPP_COMPAT_SOURCE_EXTENSIONS;
+}
+
+function is_supported_source_extension(string $extension): bool
+{
+	return in_array(strtolower($extension), scpp_source_extensions(), true);
+}
+
+function strip_supported_source_extension(string $path): string
+{
+	$normalized = normalize_config_path($path);
+	foreach (scpp_source_extensions() as $extension) {
+		$suffix = '.' . $extension;
+		if (str_ends_with(strtolower($normalized), $suffix)) {
+			return substr($normalized, 0, -strlen($suffix));
+		}
+	}
+	return $normalized;
 }
 
 function ensure_directory(string $dir): void
@@ -926,7 +956,7 @@ function write_text_file(string $path, string $contents): void
 
 function build_generated_base(string $generatedDir, string $relativePhp): string
 {
-	$trimmed = preg_replace('/\.php$/i', '', $relativePhp);
+	$trimmed = strip_supported_source_extension($relativePhp);
 	if (!is_string($trimmed) || $trimmed === '') {
 		$trimmed = 'entry';
 	}
@@ -1014,6 +1044,7 @@ function build_file_meta(string $path): array
 function collect_project_php_files(string $projectRoot): array
 {
 	$files = [];
+	$byStem = [];
 	$iterator = new RecursiveIteratorIterator(
 		new RecursiveDirectoryIterator($projectRoot, FilesystemIterator::SKIP_DOTS)
 	);
@@ -1026,9 +1057,25 @@ function collect_project_php_files(string $projectRoot): array
 		if ($relative === SCPP_PROJECT_CONFIG || str_starts_with($relative, '.prism/')) {
 			continue;
 		}
-		if (strcasecmp($fileInfo->getExtension(), 'php') !== 0) {
+		$extension = strtolower($fileInfo->getExtension());
+		if (!is_supported_source_extension($extension)) {
 			continue;
 		}
+		$stem = strip_supported_source_extension($relative);
+		if (isset($byStem[$stem])) {
+			scpp_fail(
+				'Conflicting source files detected: `'
+				. $byStem[$stem]
+				. '` and `'
+				. $relative
+				. '` share the same basename. Keep only one of the .'
+				. SCPP_CANONICAL_SOURCE_EXTENSION
+				. ' or .php variants.'
+				. PHP_EOL,
+				1
+			);
+		}
+		$byStem[$stem] = $relative;
 		$files[] = $path;
 	}
 	sort($files, SORT_STRING);
@@ -1116,7 +1163,7 @@ function delete_file_if_exists(string $path): void
 
 function build_object_path(string $buildDir, string $relativePhp, string $compilerKind): string
 {
-	$trimmed = preg_replace('/\.php$/i', '', $relativePhp);
+	$trimmed = strip_supported_source_extension($relativePhp);
 	if (!is_string($trimmed) || $trimmed === '') {
 		$trimmed = 'entry';
 	}
@@ -1125,7 +1172,7 @@ function build_object_path(string $buildDir, string $relativePhp, string $compil
 
 function build_generated_fcgi_base(string $generatedDir, string $relativePhp): string
 {
-	$trimmed = preg_replace('/\.php$/i', '', $relativePhp);
+	$trimmed = strip_supported_source_extension($relativePhp);
 	if (!is_string($trimmed) || $trimmed === '') {
 		$trimmed = 'entry';
 	}
@@ -1134,7 +1181,7 @@ function build_generated_fcgi_base(string $generatedDir, string $relativePhp): s
 
 function build_fcgi_object_path(string $buildDir, string $relativePhp, string $compilerKind): string
 {
-	$trimmed = preg_replace('/\.php$/i', '', $relativePhp);
+	$trimmed = strip_supported_source_extension($relativePhp);
 	if (!is_string($trimmed) || $trimmed === '') {
 		$trimmed = 'entry';
 	}

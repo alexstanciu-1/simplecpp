@@ -82,6 +82,11 @@ The current architecture direction is layered composition rather than one monoli
 - `scpp_lang_php` = PHP runtime layer
 - runtime modules such as `scpp_json` and `scpp_filesystem` are linked explicitly
 
+The active frontend language is `PHP++`.
+Its canonical source extension is `.phs`.
+Source files with the `.php` extension remain accepted as compatibility inputs in v1, but `.phs` is the preferred project-facing extension.
+Inside docs and code, `PHP` refers to host tooling/runtime unless the surrounding text explicitly means `PHP++`.
+
 Future `scpp build` composition must be able to select language layers and runtime modules deliberately rather than assuming one fixed all-in-one runtime surface.
 
 ### Path policy
@@ -97,7 +102,7 @@ Paths emitted into `build.ninja` are:
 {
   "config_version": 1,
   "project_name": "my_project",
-  "entrypoint": "main.php",
+  "entrypoint": "main.phs",
   "build_dir": ".prism/build",
   "generated_dir": ".prism/generated",
   "cache_dir": ".prism/cache",
@@ -127,13 +132,18 @@ The current default is `legacy`.
 
 Entrypoint guessing checks these common candidates in order:
 
+- `main.phs`
+- `src/main.phs`
+- `app/main.phs`
+- `index.phs`
+- `src/index.phs`
 - `main.php`
 - `src/main.php`
 - `app/main.php`
 - `index.php`
 - `src/index.php`
 
-If none exists, `prism.json` still gets written with the placeholder entrypoint `main.php` and the command tells the user to edit it.
+If none exists, `prism.json` still gets written with the placeholder entrypoint `main.phs` and the command tells the user to edit it.
 
 ## `scpp build` behavior
 
@@ -143,14 +153,15 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 2. validates the configured entrypoint
 3. checks for Ninja
 4. resolves a compiler from config override or sane defaults
-5. recursively scans the project tree for `*.php` files (excluding `.prism/`)
-6. uses the S2S generator on all discovered PHP files
-7. stores S2S file state in `.prism/cache/s2s_state.php` using PHP `return [...]` data for fast load
-8. skips unchanged files when both file size and mtime match and generated outputs already exist
-9. generates C++ into `.prism/generated/`
-10. emits `.prism/build/build.ninja`
-11. runs Ninja
-12. leaves the output executable under `.prism/build/`
+5. recursively scans the project tree for `*.phs` files and compatible `*.php` files (excluding `.prism/`)
+6. uses the S2S generator on all discovered PHP++ source files
+7. fails if both `<name>.phs` and `<name>.php` exist in the same directory
+8. stores S2S file state in `.prism/cache/s2s_state.php` using PHP `return [...]` data for fast load
+9. skips unchanged files when both file size and mtime match and generated outputs already exist
+10. generates C++ into `.prism/generated/`
+11. emits `.prism/build/build.ninja`
+12. runs Ninja
+13. leaves the output executable under `.prism/build/`
 
 ## What this document intentionally does not solve
 
