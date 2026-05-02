@@ -43,8 +43,8 @@ Start with:
 
 - `specs/project_build_v1.md`
 - `docs/getting_started.md`
-- `bin/scpp.php`
-- `bin/project_services.php`
+- `bin/scpp.phs`
+- `bin/project_services.phs`
 
 Then validate through `scpp init`, `scpp build`, or `scpp run` as appropriate.
 
@@ -75,7 +75,7 @@ Use the smallest proof that matches the layer of the change.
 
 Use when changing lowering or syntax support:
 
-- focused transpilation through `scpp <file.php>` or generator scripts
+- focused transpilation through `scpp <file.phs>` or generator scripts
 - staged samples under `generators/php/samples/`
 - `know_how` fixtures when AST/exporter reality matters
 - nearby tests under `tests/`
@@ -107,7 +107,7 @@ See:
 
 Use when changing runtime helpers, operators, ownership, or module behavior:
 
-- `php tests/tools/run_tests.php run --suite=runtime --jobs=12`
+- `php tests/tools/run_tests.phs run --suite=runtime --jobs=12`
 - sanitizer or gate runs when the change touches memory/ownership-sensitive paths
 
 See:
@@ -123,7 +123,7 @@ Check in this order:
 1. `specs/dynamic_types.md`
 2. the source pattern that creates the boundary
 3. `generators/php/specs/rules.md`
-4. `generators/php/src/Lowering/TypeMapper.php`
+4. `generators/php/src/Lowering/TypeMapper.phs`
 5. runtime mixed helpers
 
 ### For array/table issues
@@ -156,7 +156,7 @@ Check:
 Check:
 
 - `specs/project_build_v1.md`
-- `bin/project_services.php`
+- `bin/project_services.phs`
 - `docs/getting_started.md`
 - current `prism.json` expectations
 

@@ -2,6 +2,6 @@
 
 declare(strict_types=1);
 
-require_once "lib/ExampleRegistry.php";
+require_once "lib/ExampleRegistry.phs";
 
 run_all_examples();

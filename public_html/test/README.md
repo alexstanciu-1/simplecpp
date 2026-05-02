@@ -9,7 +9,7 @@ Assumptions:
 - the project layout stays the same relative to `public_html/test`
 
 Behavior:
-- top-left: PHP source input
+- top-left: PHP++ source input
 - top-right: generated C++ code, or generator error text when generation fails
 - bottom-left: PHP output, or PHP execution error text when PHP execution fails
 - bottom-right: C++ output, or C++ compile/runtime error text when the generated code fails

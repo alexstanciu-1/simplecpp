@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-require_once "examples/01_typed_boundaries.php";
-require_once "examples/02_null_vs_false.php";
-require_once "examples/03_strict_comparisons.php";
-require_once "examples/04_arrays_and_tables.php";
-require_once "examples/05_json_decode_basic.php";
-require_once "examples/06_filesystem_read_basic.php";
-require_once "lib/Cli.php";
+require_once "examples/01_typed_boundaries.phs";
+require_once "examples/02_null_vs_false.phs";
+require_once "examples/03_strict_comparisons.phs";
+require_once "examples/04_arrays_and_tables.phs";
+require_once "examples/05_json_decode_basic.phs";
+require_once "examples/06_filesystem_read_basic.phs";
+require_once "lib/Cli.phs";
 
 function example_ids(): array
 {

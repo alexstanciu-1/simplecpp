@@ -4,16 +4,16 @@ This set is designed to exercise the currently decided rules in `specs/rules_cat
 
 ## Files
 
-- `01_literals_and_assignments.php` - literals, first assignment, reassignment, variable chains
-- `02_functions_basic.php` - basic free functions and simple call flow
-- `03_namespace_exec_ok.php` - executable flow in one namespace
-- `04_namespace_nested_decl_only.php` - parent execution with nested declaration-only namespace
-- `05_class_basic.php` - same-namespace class construction
-- `06_class_static_access.php` - same-namespace, rooted, and instance-based static access
-- `07_typed_locals_phpdoc.php` - explicit typed local variables via PHPDoc comments
-- `08_references.php` - explicit reference params and returns
-- `09_constants_and_strings.php` - constants and strings
-- `10_negative_cases.php` - intentionally rejected constructs
+- `01_literals_and_assignments.phs` - literals, first assignment, reassignment, variable chains
+- `02_functions_basic.phs` - basic free functions and simple call flow
+- `03_namespace_exec_ok.phs` - executable flow in one namespace
+- `04_namespace_nested_decl_only.phs` - parent execution with nested declaration-only namespace
+- `05_class_basic.phs` - same-namespace class construction
+- `06_class_static_access.phs` - same-namespace, rooted, and instance-based static access
+- `07_typed_locals_phpdoc.phs` - explicit typed local variables via PHPDoc comments
+- `08_references.phs` - explicit reference params and returns
+- `09_constants_and_strings.phs` - constants and strings
+- `10_negative_cases.phs` - intentionally rejected constructs
 
 ## Suggested use
 
