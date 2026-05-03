@@ -242,7 +242,7 @@ final class IrBuilder
 			return null;
 		}
 
-		return preg_replace('/\.php$/', '.hpp', $expr) ?? $expr;
+		return $expr;
 	}
 
 	/**

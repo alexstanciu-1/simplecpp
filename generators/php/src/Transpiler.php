@@ -31,8 +31,10 @@ final class Transpiler
 		private readonly IrBuilder $builder = new IrBuilder(),
 		?Generator $generator = null,
 		string $phpProfile = 'legacy',
+		?string $projectRoot = null,
+		?string $generatedDir = null,
 	) {
-		$this->generator = $generator ?? new Generator(new TypeMapper(), $phpProfile);
+		$this->generator = $generator ?? new Generator(new TypeMapper(), $phpProfile, $projectRoot, $generatedDir);
 	}
 
 	/**
