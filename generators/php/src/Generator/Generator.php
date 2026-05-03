@@ -1116,10 +1116,8 @@ final class Generator
 		if ($constants !== []) {
 			$header[] = '';
 		}
-		foreach ($classes as $class) {
-			if (!$class->isEnum) {
-				$header[] = 'class ' . $class->name . ';';
-			}
+		foreach ($this->collectNamespaceForwardClassNames($classes, $functions) as $className) {
+			$header[] = 'class ' . $className . ';';
 		}
 		if ($classes !== []) {
 			$header[] = '';
@@ -1139,6 +1137,84 @@ final class Generator
 		$header[] = '';
 		$source[] = '}';
 		$source[] = '';
+	}
+
+	/** @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @return list<string> */
+	private function collectNamespaceForwardClassNames(array $classes, array $functions): array
+	{
+		$out = [];
+		foreach ($classes as $class) {
+			if (!$class->isEnum) {
+				$out[$class->name] = true;
+			}
+			if ($class->parentClass !== null) {
+				$this->collectForwardClassNamesFromType($class->parentClass, $out);
+			}
+			foreach ($class->interfaces as $interface) {
+				$this->collectForwardClassNamesFromType($interface, $out);
+			}
+			foreach ($class->properties as $property) {
+				if ($property->type !== null) {
+					$this->collectForwardClassNamesFromType($property->type, $out);
+				}
+			}
+			foreach ($class->methods as $method) {
+				if ($method->returnType !== null) {
+					$this->collectForwardClassNamesFromType($method->returnType, $out);
+				}
+				foreach ($method->params as $param) {
+					if ($param->type !== null) {
+						$this->collectForwardClassNamesFromType($param->type, $out);
+					}
+				}
+			}
+		}
+		foreach ($functions as $function) {
+			if ($function->returnType !== null) {
+				$this->collectForwardClassNamesFromType($function->returnType, $out);
+			}
+			foreach ($function->params as $param) {
+				if ($param->type !== null) {
+					$this->collectForwardClassNamesFromType($param->type, $out);
+				}
+			}
+		}
+
+		$names = array_keys($out);
+		sort($names);
+		return $names;
+	}
+
+	/** @param array<string, bool> $out */
+	private function collectForwardClassNamesFromType(string $type, array &$out): void
+	{
+		$normalized = trim($type);
+		if ($normalized === '') {
+			return;
+		}
+		if (str_starts_with($normalized, '?')) {
+			$this->collectForwardClassNamesFromType(substr($normalized, 1), $out);
+			return;
+		}
+		if (preg_match('/^(?:vector|vector_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+			$this->collectForwardClassNamesFromType(trim($matches[1]), $out);
+			return;
+		}
+		if (str_starts_with($normalized, 'value ')) {
+			$this->collectForwardClassNamesFromType(trim(substr($normalized, strlen('value '))), $out);
+			return;
+		}
+		if (str_starts_with($normalized, 'ref ')) {
+			$this->collectForwardClassNamesFromType(trim(substr($normalized, strlen('ref '))), $out);
+			return;
+		}
+		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
+			return;
+		}
+		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'false', 'null', 'vector_t', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'error_t', 'hash_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+			return;
+		}
+		$out[$normalized] = true;
 	}
 
 	/** @param list<UseDecl> $uses @return list<string> */
