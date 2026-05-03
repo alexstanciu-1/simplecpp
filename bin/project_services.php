@@ -191,7 +191,7 @@ final class ProjectInitCommand
 						'profile' => $phpProfile,
 					],
 				],
-				'modules' => ['json', 'filesystem', 'mysqli'],
+				'modules' => ['json', 'filesystem'],
 			],
 		];
 
@@ -824,7 +824,7 @@ function resolve_runtime_build_config(array $config): array
 {
 	$runtime = is_array($config['runtime'] ?? null) ? $config['runtime'] : [];
 	$languagesRaw = $runtime['languages'] ?? ['php'];
-	$modules = $runtime['modules'] ?? ['json', 'filesystem', 'mysqli'];
+	$modules = $runtime['modules'] ?? ['json', 'filesystem'];
 	if (!is_array($languagesRaw) || !is_array($modules)) {
 		scpp_fail('Invalid runtime config in ' . SCPP_PROJECT_CONFIG . '; expected runtime.languages as either a list or object, and runtime.modules as an array.' . PHP_EOL, 2);
 	}
@@ -1693,7 +1693,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 function render_runtime_composition_source(array $runtimeConfig): string
 {
 	$languages = is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'];
-	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'mysqli'];
+	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem'];
 	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
 	$lines = [
 		'#include "core/runtime.cpp"',
@@ -1812,7 +1812,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	$compositionSource = $runtimeCacheDir . '/runtime_build.cpp';
 	write_text_file($compositionSource, render_runtime_composition_source($runtimeConfig));
 	$sourcePath = normalize_config_path(relative_path($projectRoot, $compositionSource));
-	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'mysqli'];
+	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem'];
 	$extraCxxFlags = [];
 	$extraLinkFlags = [];
 	if (in_array('php', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'], true)) {
