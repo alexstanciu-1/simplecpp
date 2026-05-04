@@ -77,6 +77,41 @@ Prism++ currently works as:
 
 The generator is intentionally a deterministic structured lowerer, not a semantic compiler.
 
+For project composition:
+
+- use `dependencies` in `prism.json` for other Prism projects built from source
+- use `libraries` in `prism.json` for linker-owned native libraries or native artifacts
+- use `/** @lib-export */` on dependency-visible top-level functions, classes, interfaces, and constants
+- do not model cross-project composition as PHP `require`/`include`
+
+Tiny example:
+
+`shared/lib.phs`
+
+```php
+<?php
+/** @lib-export */
+function shared_value(): int { return 7; }
+```
+
+`app/prism.json`
+
+```json
+{
+  "entrypoint": "main.phs",
+  "dependencies": [
+    "../shared"
+  ]
+}
+```
+
+`app/main.phs`
+
+```php
+<?php
+echo shared_value(), "\n";
+```
+
 ## When Docs and Code Disagree
 
 Use the authority order from `specs/spec_map.md`.

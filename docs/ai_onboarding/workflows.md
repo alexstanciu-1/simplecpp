@@ -48,6 +48,33 @@ Start with:
 
 Then validate through `scpp init`, `scpp build`, or `scpp run` as appropriate.
 
+When the task touches multi-project composition, also check:
+
+- `dependencies` versus `libraries` usage in `prism.json`
+- whether dependency-visible declarations are intentionally marked with `/** @lib-export */`
+- whether the change belongs in project build orchestration or in generator export/header composition
+
+Quick shape to keep in mind:
+
+```php
+<?php
+/** @lib-export */
+function shared_value(): int { return 7; }
+```
+
+```json
+{
+  "dependencies": [
+    "../shared"
+  ]
+}
+```
+
+```php
+<?php
+echo shared_value(), "\n";
+```
+
 ### If the task is unclear or cross-cutting
 
 Use this triage order:
