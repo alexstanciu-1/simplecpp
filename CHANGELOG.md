@@ -9,6 +9,26 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - No release notes recorded yet.
 
+## 0.1.8 - 2026-05-04
+
+### Additions
+
+- Added first-class PHP-surface `hash<T>` support that lowers to runtime `hash_t<T>`
+- Added typed hash coverage for keyed literals, keyed access, properties, mixed keyed-plus-append literals, and `foreach` including by-reference forms
+
+### Fixes
+
+- Fixed typed hash lowering across `isset`, `empty`, dim access, append, and typed `foreach` value preservation
+- Fixed runtime `foreach` bridge support so typed `hash_t<T>` containers iterate correctly without falling back to mixed-only handling
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Replace PHP-surface `hash_t<T>` examples with `hash<T>` in authored code and docs
+
 ## 0.1.7 - 2026-05-04
 
 ### Additions
