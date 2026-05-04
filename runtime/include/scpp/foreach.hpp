@@ -88,12 +88,13 @@ private:
 	vector_t<T> *owner_;
 };
 
+template <typename T>
 class foreach_hash_range final {
 public:
 	foreach_hash_range() noexcept
 		: owner_(&empty_owner()) {}
 
-	foreach_hash_range(hash_t<mixed_t> &owner) noexcept
+	foreach_hash_range(hash_t<T> &owner) noexcept
 		: owner_(&owner) {}
 
 	[[nodiscard]] auto begin() const noexcept {
@@ -105,12 +106,12 @@ public:
 	}
 
 private:
-	static hash_t<mixed_t> &empty_owner() {
-		static hash_t<mixed_t> empty;
+	static hash_t<T> &empty_owner() {
+		static hash_t<T> empty;
 		return empty;
 	}
 
-	hash_t<mixed_t> *owner_;
+	hash_t<T> *owner_;
 };
 
 template <typename T>
@@ -118,15 +119,16 @@ template <typename T>
 	return foreach_vector_range<T>(value);
 }
 
-[[nodiscard]] inline foreach_hash_range foreach_range(hash_t<mixed_t> &value) noexcept {
-	return foreach_hash_range(value);
+template <typename T>
+[[nodiscard]] inline foreach_hash_range<T> foreach_range(hash_t<T> &value) noexcept {
+	return foreach_hash_range<T>(value);
 }
 
-[[nodiscard]] inline foreach_hash_range foreach_range(mixed_t &value) noexcept {
+[[nodiscard]] inline foreach_hash_range<mixed_t> foreach_range(mixed_t &value) noexcept {
 	if (auto table = value.try_get_hash()) {
-		return foreach_hash_range(*table);
+		return foreach_hash_range<mixed_t>(*table);
 	}
-	return foreach_hash_range();
+	return foreach_hash_range<mixed_t>();
 }
 
 template <typename T>
@@ -153,46 +155,49 @@ template <typename T>
 	return foreach_vector_range<T>();
 }
 
-[[nodiscard]] inline foreach_hash_range foreach_range(result<hash_t<mixed_t>> &value) noexcept {
+template <typename T>
+[[nodiscard]] inline foreach_hash_range<T> foreach_range(result<hash_t<T>> &value) noexcept {
 	if (value.has_value().native_value()) {
-		return foreach_hash_range(value.value());
+		return foreach_hash_range<T>(value.value());
 	}
-	return foreach_hash_range();
+	return foreach_hash_range<T>();
 }
 
-[[nodiscard]] inline foreach_hash_range foreach_range(result_or_false<hash_t<mixed_t>> &value) noexcept {
+template <typename T>
+[[nodiscard]] inline foreach_hash_range<T> foreach_range(result_or_false<hash_t<T>> &value) noexcept {
 	if (value.has_value().native_value()) {
-		return foreach_hash_range(value.value());
+		return foreach_hash_range<T>(value.value());
 	}
-	return foreach_hash_range();
+	return foreach_hash_range<T>();
 }
 
-[[nodiscard]] inline foreach_hash_range foreach_range(result_or_bool<hash_t<mixed_t>> &value) noexcept {
+template <typename T>
+[[nodiscard]] inline foreach_hash_range<T> foreach_range(result_or_bool<hash_t<T>> &value) noexcept {
 	if (value.has_value().native_value()) {
-		return foreach_hash_range(value.value());
+		return foreach_hash_range<T>(value.value());
 	}
-	return foreach_hash_range();
+	return foreach_hash_range<T>();
 }
 
-[[nodiscard]] inline foreach_hash_range foreach_range(result<mixed_t> &value) noexcept {
+[[nodiscard]] inline foreach_hash_range<mixed_t> foreach_range(result<mixed_t> &value) noexcept {
 	if (value.has_value().native_value()) {
 		return foreach_range(value.value());
 	}
-	return foreach_hash_range();
+	return foreach_hash_range<mixed_t>();
 }
 
-[[nodiscard]] inline foreach_hash_range foreach_range(result_or_false<mixed_t> &value) noexcept {
+[[nodiscard]] inline foreach_hash_range<mixed_t> foreach_range(result_or_false<mixed_t> &value) noexcept {
 	if (value.has_value().native_value()) {
 		return foreach_range(value.value());
 	}
-	return foreach_hash_range();
+	return foreach_hash_range<mixed_t>();
 }
 
-[[nodiscard]] inline foreach_hash_range foreach_range(result_or_bool<mixed_t> &value) noexcept {
+[[nodiscard]] inline foreach_hash_range<mixed_t> foreach_range(result_or_bool<mixed_t> &value) noexcept {
 	if (value.has_value().native_value()) {
 		return foreach_range(value.value());
 	}
-	return foreach_hash_range();
+	return foreach_hash_range<mixed_t>();
 }
 
 } // namespace scpp

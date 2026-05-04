@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+
+$items /** hash<int> */ = ["a" => 4, "b" => 5];
+
+foreach ($items as $k => $value) {
+	echo $k, "\n";
+	echo $value, "\n";
+}

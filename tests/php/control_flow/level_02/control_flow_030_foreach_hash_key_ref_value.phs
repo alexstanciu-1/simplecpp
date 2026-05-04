@@ -1,0 +1,12 @@
+<?php
+declare(strict_types=1);
+
+$data /** hash<int> */ = ["a" => 1, "b" => 2];
+
+foreach ($data as $k => &$v) {
+	$v = $v + 10;
+	echo $k, ":", $v, "\n";
+}
+
+echo $data["a"], "\n";
+echo $data["b"], "\n";

@@ -112,6 +112,7 @@ The current catalog now keeps generalized array rules instead of one row per tri
 Core rule families:
 - untyped literals lower through `table_`, `table_item_`, and `table_kv_`, producing `mixed_t`-based PHP-array values
 - typed `vector<T>` literals lower to `vector_t<T>{...}`
+- typed `hash<T>` literals lower to typed `hash_t<T>` construction/update code
 - PHP array reads lower directly to `operator[]` on `hash_t` / `mixed_t`
 - keyed writes lower to direct `operator[]` assignment
 - append writes lower to `append(...)`; simple right-hand sides inline directly, while non-trivial right-hand sides may spill into a temporary

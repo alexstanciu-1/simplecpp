@@ -1,0 +1,6 @@
+<?php
+declare(strict_types=1);
+
+$items /** hash<int> */ = [];
+
+echo count($items), "\n";
