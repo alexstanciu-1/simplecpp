@@ -1196,7 +1196,7 @@ final class Generator
 			$this->collectForwardClassNamesFromType(substr($normalized, 1), $out);
 			return;
 		}
-		if (preg_match('/^(?:vector|vector_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(?:vector|vector_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			$this->collectForwardClassNamesFromType(trim($matches[1]), $out);
 			return;
 		}
@@ -1211,7 +1211,7 @@ final class Generator
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
 		}
-		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'false', 'null', 'vector_t', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'error_t', 'hash_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
 			return;
 		}
 		$out[$normalized] = true;
@@ -1482,9 +1482,15 @@ final class Generator
 			return;
 		}
 
-		if ($effectiveTyped !== null && $this->mapTypedVectorLocalType($effectiveTyped) !== null) {
-			$this->currentLocalArrayShapes[$name] = 'vector';
-			return;
+		if ($effectiveTyped !== null) {
+			if ($this->mapTypedVectorLocalType($effectiveTyped) !== null) {
+				$this->currentLocalArrayShapes[$name] = 'vector';
+				return;
+			}
+			if ($this->mapTypedHashLocalType($effectiveTyped) !== null) {
+				$this->currentLocalArrayShapes[$name] = 'non_vector';
+				return;
+			}
 		}
 
 		$shape = $this->inferForeachByRefSourceShape($exprNode);
@@ -1757,7 +1763,7 @@ final class Generator
 			}
 
 			$mapped = $this->typeMapper->mapDeclaredType($param->type);
-			if ($mapped !== 'string_t' && $mapped !== 'mixed_t' && !str_starts_with($mapped, 'vector_t<')) {
+			if ($mapped !== 'string_t' && $mapped !== 'mixed_t' && !str_starts_with($mapped, 'vector_t<') && !str_starts_with($mapped, 'hash_t<')) {
 				continue;
 			}
 
@@ -2904,7 +2910,7 @@ final class Generator
 			return $this->typeMapper->mapParamType($param->type, true);
 		}
 
-		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'mixed_t' || str_starts_with($mapped, 'vector_t<'))) {
+		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'mixed_t' || str_starts_with($mapped, 'vector_t<') || str_starts_with($mapped, 'hash_t<'))) {
 			return $mapped;
 		}
 
@@ -3156,7 +3162,9 @@ final class Generator
 				}
 			}
 			$typedVectorType = $effectiveTyped !== null ? $this->mapTypedVectorLocalType($effectiveTyped) : null;
-			$isTypedEmptyVectorLiteral = $statement->kind === 'assign' && $typedVectorType !== null && $this->isEmptyPositionalArrayLiteral($exprNode);
+			$typedHashType = $effectiveTyped !== null ? $this->mapTypedHashLocalType($effectiveTyped) : null;
+			$typedArrayContainerType = $typedVectorType ?? $typedHashType;
+			$isTypedEmptyArrayLiteral = $statement->kind === 'assign' && $typedArrayContainerType !== null && $this->isEmptyPositionalArrayLiteral($exprNode);
 			if ($statement->kind === 'assign_ref') {
 				if ($name === null) {
 					$error = 'reference assignment requires a fresh simple local target at line ' . $statement->line . '.';
@@ -3187,8 +3195,8 @@ final class Generator
 					$this->declaredLocalTypes[$name] = $effectiveTyped !== null ? $this->normalizeStoredLocalType($effectiveTyped) : $inferredType;
 				}
 				if ($effectiveTyped !== null) {
-					if ($isTypedEmptyVectorLiteral) {
-						return [$typedVectorType . ' ' . $this->localCppName($name) . ' = {};'];
+					if ($isTypedEmptyArrayLiteral) {
+						return [$typedArrayContainerType . ' ' . $this->localCppName($name) . ' = {};'];
 					}
 					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
 				}
@@ -3229,8 +3237,8 @@ final class Generator
 				$value = $this->renderExpr($exprNode, $namespacePhp);
 				return [$target . ' = ' . $value . ';'];
 			}
-			if ($isTypedEmptyVectorLiteral && $name !== null) {
-				return [$this->localCppName($name) . ' = ' . $typedVectorType . '{};'];
+			if ($isTypedEmptyArrayLiteral && $name !== null) {
+				return [$this->localCppName($name) . ' = ' . $typedArrayContainerType . '{};'];
 			}
 			$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
 			return [$target . ' = ' . $expr . ';'];
@@ -3768,6 +3776,8 @@ final class Generator
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
+		} elseif (preg_match('/^hash_t<(.+)>$/', $sourceType, $matches) === 1) {
+			$valueStoredType = $matches[1];
 		} elseif (!$isVectorLikeForeach) {
 			$valueStoredType = 'mixed_t';
 		}
@@ -4101,6 +4111,9 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
+		if (preg_match('/^hash_t<(.+)>$/', $baseType) === 1) {
+			return $base . '.at(' . $dim . ')';
+		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '.get(' . $dim . ')';
 		}
@@ -4134,6 +4147,9 @@ final class Generator
 		$baseType = $this->inferExprType($baseExpr);
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
+		}
+		if (preg_match('/^hash_t<(.+)>$/', $baseType) === 1) {
+			return $base . '[' . $dim . ']';
 		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '[' . $dim . ']';
@@ -4560,6 +4576,15 @@ final class Generator
 		return $this->typeMapper->mapTypedLocalType($typedLocalType);
 	}
 
+	private function mapTypedHashLocalType(string $typedLocalType): ?string
+	{
+		if (!$this->typeMapper->isHashType($typedLocalType)) {
+			return null;
+		}
+
+		return $this->typeMapper->mapTypedLocalType($typedLocalType);
+	}
+
 	private function renderInitializerExpr(mixed $expr, ?string $typedLocalType, ?string $namespacePhp): string
 	{
 		if ($typedLocalType !== null && is_object($expr) && (($expr->kind ?? null) === AstKind::NEW)) {
@@ -4721,6 +4746,57 @@ final class Generator
 			}
 
 			return $mappedVectorType . '{' . implode(', ', $values) . '}';
+		}
+
+		$mappedHashType = $typedLocalType !== null ? $this->mapTypedHashLocalType($typedLocalType) : null;
+		if ($mappedHashType !== null) {
+			if (preg_match('/^hash_t<(.+)>$/', $mappedHashType, $matches) !== 1) {
+				$this->errors[] = 'Unsupported typed hash mapping for ' . $typedLocalType . '.';
+				return '/* unsupported-typed-hash */';
+			}
+
+			$valueType = $matches[1];
+			$lines = [
+				'[&]() -> ' . $mappedHashType . ' {',
+				$this->indent(1) . $mappedHashType . ' __scpp_hash_value{};',
+			];
+
+			foreach ($elements as $element) {
+				if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+					$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+					return '/* unsupported-array-literal */';
+				}
+
+				$valueNode = $element->children['value'] ?? null;
+				if ($valueNode === null) {
+					$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+					return '/* unsupported-array-element */';
+				}
+
+				$wrappedValue = $this->wrapExprForExpectedType(
+					$this->renderExpr($valueNode, $namespacePhp),
+					$this->inferExprType($valueNode),
+					$valueType
+				);
+
+				$keyNode = $element->children['key'] ?? null;
+				if ($keyNode === null) {
+					$lines[] = $this->indent(1) . '(void) __scpp_hash_value.append(' . $wrappedValue . ');';
+					continue;
+				}
+
+				$unsupportedKeyMessage = $this->unsupportedPhpArrayKeyMessage($keyNode);
+				if ($unsupportedKeyMessage !== null) {
+					$this->errors[] = $unsupportedKeyMessage;
+					return '/* unsupported-array-key */';
+				}
+
+				$lines[] = $this->indent(1) . '__scpp_hash_value.set(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $wrappedValue . ');';
+			}
+
+			$lines[] = $this->indent(1) . 'return __scpp_hash_value;';
+			$lines[] = '}()';
+			return implode("\n", $lines);
 		}
 
 		if ($elements === []) {
@@ -5670,12 +5746,22 @@ final class Generator
 			// AST_ISSET itself carries exactly one operand in `children['var']`.
 			// Keyed reads must stay on the runtime helper path so missing and existing-null do not collapse into pure key-existence semantics.
 			$varNode = $expr->children['var'] ?? null;
+			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM) && (($varNode->children['dim'] ?? null) !== null)) {
+				return $this->qualifyKnownPhpRuntimeSymbol('isset') . '('
+					. $this->renderExpr($varNode->children['expr'] ?? null, $namespacePhp) . ', '
+					. $this->renderExpr($varNode->children['dim'] ?? null, $namespacePhp) . ')';
+			}
 			return $this->qualifyKnownPhpRuntimeSymbol('isset') . '(' . $this->renderExpr($varNode, $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::AST_EMPTY) {
 			// empty() must evaluate the operand expression through the runtime helper so missing keyed reads,
 			// existing null, empty string, and countable-empty values follow the unified narrowed contract.
 			$exprNode = $expr->children['expr'] ?? null;
+			if (is_object($exprNode) && (($exprNode->kind ?? null) === AstKind::DIM) && (($exprNode->children['dim'] ?? null) !== null)) {
+				return $this->qualifyKnownPhpRuntimeSymbol('empty') . '('
+					. $this->renderExpr($exprNode->children['expr'] ?? null, $namespacePhp) . ', '
+					. $this->renderExpr($exprNode->children['dim'] ?? null, $namespacePhp) . ')';
+			}
 			return $this->qualifyKnownPhpRuntimeSymbol('empty') . '(' . $this->renderExpr($exprNode, $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::CALL) {
@@ -6469,7 +6555,7 @@ final class Generator
 			if ($declared === null) {
 				return 'auto';
 			}
-			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
+			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || str_starts_with($declared, 'hash_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
 				return $declared;
 			}
 			return $this->typeMapper->mapDeclaredType($declared);
@@ -6510,6 +6596,9 @@ final class Generator
 		if ($kind === AstKind::DIM) {
 			$baseType = $this->inferExprType($expr->children['expr'] ?? null);
 			if (preg_match('/^vector_t<(.+)>$/', $baseType, $matches) === 1) {
+				return $matches[1];
+			}
+			if (preg_match('/^hash_t<(.+)>$/', $baseType, $matches) === 1) {
 				return $matches[1];
 			}
 			if ($this->isUntypedTableType($baseType) || $baseType === 'mixed_t' || $baseType === 'maybe_value_t') {

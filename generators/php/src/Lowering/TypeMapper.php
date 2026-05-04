@@ -125,7 +125,7 @@ final class TypeMapper
 			return $this->appendLvalueReference($mapped);
 		}
 
-		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<')) {
+		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<') || str_starts_with($mapped, 'hash_t<')) {
 			return 'const ' . $mapped . '&';
 		}
 
@@ -213,6 +213,23 @@ final class TypeMapper
 
 		$inner = trim($matches[1]);
 		return 'vector_t<' . $this->mapDeclaredType($inner) . '>';
+	}
+
+	public function isHashType(string $phpType): bool
+	{
+		$normalized = trim($phpType);
+		return preg_match('/^(?:hash|hash_t)<.+>$/', $normalized) === 1;
+	}
+
+	public function mapHashType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^(?:hash|hash_t)<(.+)>$/', $normalized, $matches) !== 1) {
+			return $this->mapDeclaredType($phpType);
+		}
+
+		$inner = trim($matches[1]);
+		return 'hash_t<' . $this->mapDeclaredType($inner) . '>';
 	}
 
 	public function isInlineValueType(string $phpType): bool
@@ -560,7 +577,7 @@ final class TypeMapper
 		if (str_contains($normalized, '?') && !str_starts_with($normalized, '?') && preg_match('/^value\s*<\s*\?\s*.+\s*>$/', $normalized) !== 1) {
 			throw new GenerationException('Nullable marker (?) is only supported as a leading type marker or in value<?T>: ' . $phpType);
 		}
-		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
+		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
 			throw new GenerationException('Unsupported explicit type syntax: ' . $phpType);
 		}
 		if (preg_match('/^value\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
@@ -583,6 +600,10 @@ final class TypeMapper
 	{
 		if ($this->isVectorType($phpType)) {
 			return $this->mapVectorType($phpType);
+		}
+
+		if ($this->isHashType($phpType)) {
+			return $this->mapHashType($phpType);
 		}
 
 		if ($this->isDirectHandleType($phpType)) {
@@ -680,6 +701,10 @@ final class TypeMapper
 	private function isObjectType(string $phpType): bool
 	{
 		if ($this->isVectorType($phpType)) {
+			return false;
+		}
+
+		if ($this->isHashType($phpType)) {
 			return false;
 		}
 

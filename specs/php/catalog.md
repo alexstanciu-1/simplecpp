@@ -99,6 +99,7 @@ foreach ($data as $item) {
 
 Contract:
 - Iteration over arrays/dynamic structures is supported
+- Iteration over typed `vector<T>` and `hash<T>` containers is supported
 - Iteration over approved wrappers carrying iterable success payloads is supported
 - Direct iteration over a non-success wrapper state fails at runtime rather than silently acting as empty
 
@@ -117,6 +118,19 @@ $data['name'] = "Alex";
 Contract:
 - Mixed keys supported
 - Maps to dynamic runtime structure
+
+### Typed containers â€” Stable
+
+```php
+$list /** vector<int> */ = [1, 2, 3];
+$by_name /** hash<int> */ = ["a" => 1, "b" => 2];
+```
+
+Contract:
+- `vector<T>` is the typed sequential container surface
+- `hash<T>` is the typed keyed container surface
+- typed `vector<T>` literals must remain positional
+- typed `hash<T>` literals may use keyed or append-style entries
 
 ## 7a. CLI Globals
 

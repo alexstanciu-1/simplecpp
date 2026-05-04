@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+$row /** hash<mixed> */ = [];
+$row["id"] = 1;
+$row["maybe"] = null;
+
+echo isset($row["id"]) ? "T\n" : "F\n";
+echo isset($row["maybe"]) ? "T\n" : "F\n";
+echo isset($row["missing"]) ? "T\n" : "F\n";
+echo empty($row["id"]) ? "T\n" : "F\n";
+echo empty($row["maybe"]) ? "T\n" : "F\n";
+echo empty($row["missing"]) ? "T\n" : "F\n";

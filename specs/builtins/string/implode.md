@@ -10,16 +10,16 @@ Doc Status: normative
 
 ## Signature
 - Supported forms:
-  - `implode(string $separator, hash_t<string_t> $pieces): string`
-  - `implode(string $separator, vector_t<string_t> $pieces): string`
-- Accepted argument types: `string_t` separator with `hash_t<string_t>` or `vector_t<string_t>` pieces
+  - `implode(string $separator, hash<string> $pieces): string`
+  - `implode(string $separator, vector<string> $pieces): string`
+- Accepted argument types: `string_t` separator with `hash<string>` or `vector<string>` pieces
 - Current scope: canonical separator-first form only
 
 ## Behavior
 - Joins element values in container iteration order using `separator` between elements.
 - Empty input returns the empty string.
-- `hash_t<string_t>` support uses stored entry iteration order.
-- `vector_t<string_t>` support is included as a practical extension.
+- `hash<string>` support uses stored entry iteration order.
+- `vector<string>` support is included as a practical extension.
 - Behavior is byte-oriented and binary-safe.
 
 ## Compatibility table
