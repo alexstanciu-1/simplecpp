@@ -9,12 +9,14 @@ Before making changes, read in this order:
 1. `specs/spec_map.md`
 2. `docs/ai_onboarding/README.md`
 3. `docs/ai_onboarding/coding_style.md`
+4. `specs/simple_cpp_php_strict_quick_learn.md`
 
 Then read the owning spec for the task.
 
 ## Core Rules
 
 - PHP is the current authoring surface.
+- For PHP++ / PHS authoring, `specs/simple_cpp_php_strict_quick_learn.md` is a mandatory read.
 - The source syntax is PHP-like, but source code must target the supported Prism++ / Simple C++ subset, not standard PHP.
 - Do not use a PHP feature merely because normal PHP accepts it.
 - Generated C++ is a lowering/debugging artifact, not the primary source of truth.
