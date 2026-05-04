@@ -103,6 +103,13 @@ Pass program arguments after `--`:
 scpp run -- arg1 arg2
 ```
 
+### CLI maintenance
+
+- `scpp --version`: show installed CLI version
+- `scpp --doctor`: show install/toolchain/Git status
+- `scpp update`: fast-forward installed checkout from `origin/main`
+- `scpp clean`: remove generated `.prism/` state for a cold rebuild
+
 ### Single-file transpile
 
 ```bash
