@@ -161,8 +161,10 @@ AI-facing repo guidance now lives under:
 - `docs/examples/php/README.md`
 - `docs/examples/php/strict/README.md`
 - `docs/examples/php/legacy/README.md`
+- `specs/simple_cpp_php_strict_quick_learn.md` - mandatory quick-learn for PHP++ / PHS strict authoring
 
 Start there when orienting Codex or another assistant to the project structure, semantic authority order, and validation workflow.
+For PHP++ / PHS work, `specs/simple_cpp_php_strict_quick_learn.md` is a mandatory read before making coding decisions.
 For PHP authoring examples, prefer the strict examples first when the project profile is `strict`, and use the legacy examples only for explicitly legacy-profiled projects.
 
 ## Usability Harness
