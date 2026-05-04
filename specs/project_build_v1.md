@@ -107,6 +107,8 @@ Paths emitted into `build.ninja` are:
   "generated_dir": ".prism/generated",
   "cache_dir": ".prism/cache",
   "native_cpp_dir": "native_cpp",
+  "dependencies": [],
+  "libraries": [],
   "build": {
     "backend": "ninja",
     "cxx": null
@@ -151,29 +153,171 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 
 1. finds `prism.json` by walking upward from the current directory
 2. validates the configured entrypoint
-3. checks for Ninja
-4. resolves a compiler from config override or sane defaults
-5. recursively scans the project tree for `*.phs` files and compatible `*.php` files (excluding `.prism/`)
-6. uses the S2S generator on all discovered PHP++ source files
-7. fails if both `<name>.phs` and `<name>.php` exist in the same directory
-8. stores S2S file state in `.prism/cache/s2s_state.php` using PHP `return [...]` data for fast load
-9. skips unchanged files when both file size and mtime match and generated outputs already exist
-10. generates C++ into `.prism/generated/`
-11. emits `.prism/build/build.ninja`
-12. runs Ninja
-13. leaves the output executable under `.prism/build/`
+3. resolves `dependencies` declared in `prism.json` as Prism project dependencies
+4. recursively loads dependency project configs before build planning continues
+5. checks for dependency cycles and fails clearly if one is found
+6. checks for Ninja
+7. resolves a compiler from config override or sane defaults
+8. recursively scans the root project tree and all dependency project trees for `*.phs` files and compatible `*.php` files (excluding each project's `.prism/`)
+9. uses the S2S generator on all discovered PHP++ source files
+10. fails if both `<name>.phs` and `<name>.php` exist in the same directory
+11. stores S2S file state in each project's `.prism/cache/s2s_state.php` using PHP `return [...]` data for fast load
+12. skips unchanged files when both file size and mtime match and generated outputs already exist
+13. generates C++ into each project's `.prism/generated/`
+14. emits `.prism/build/build.ninja`
+15. links dependency project outputs in dependency order together with the root project output and configured `libraries`
+16. runs Ninja
+17. leaves the root project executable under `.prism/build/`
+
+## Project dependencies
+
+Project composition is controlled by `scpp build`, not by source-language `require` or `include`.
+
+`prism.json` may declare:
+
+- `dependencies`
+  - other Prism projects that are built from source as part of the same build graph
+- `libraries`
+  - native prebuilt artifacts or linker-owned dependencies
+
+Minimal example:
+
+```json
+{
+  "dependencies": [
+    "../shared/prism-utils",
+    "../shared/prism-http"
+  ],
+  "libraries": [
+    "sqlite3"
+  ]
+}
+```
+
+For v1, the dependency contract is:
+
+- dependencies are explicit and project-level, not file-level
+- source files in the root project do not need `require` or `include` statements to activate dependency projects
+- dependency projects may declare their own `dependencies`, and `scpp build` must resolve that graph transitively
+- duplicate dependency visits should be deduplicated by normalized project root
+- symbol collisions across participating projects must fail clearly during build or link
+- shared-library packaging is a later build mode and is not the semantic meaning of `dependencies` in v1
+
+## Project exports
+
+Cross-project declaration visibility in v1 is controlled by explicit source-level export markers, not by exporting every declaration by default.
+
+The current export marker is:
+
+- `/** @lib-export */`
+
+The v1 export contract is:
+
+- `@lib-export` marks a declaration as part of the dependency-visible project surface
+- dependency projects compose exported declarations into a generated project header under `.prism/generated/__project.hpp`
+- consuming projects receive dependency project headers through `scpp build`; they do not activate dependencies through source-language `require` or `include`
+- unexported declarations remain project-internal by default for cross-project use
+
+The current supported exported declaration kinds are:
+
+- top-level functions
+- top-level classes
+- top-level interfaces
+- top-level constants
+
+Minimal examples:
+
+```php
+<?php
+/** @lib-export */
+function shared_value(): int { return 7; }
+
+/** @lib-export */
+interface NamedThing {
+    public function getName(): string;
+}
+
+/** @lib-export */
+class NamedBox implements NamedThing {
+    public function getName(): string { return "box"; }
+}
+
+/** @lib-export */
+const SHARED_OFFSET = 5;
+```
+
+Producer/consumer example:
+
+`shared/prism-utils/lib.phs`
+
+```php
+<?php
+/** @lib-export */
+function shared_value(): int { return 7; }
+
+/** @lib-export */
+const SHARED_OFFSET = 5;
+```
+
+`app/prism.json`
+
+```json
+{
+  "entrypoint": "main.phs",
+  "dependencies": [
+    "../shared/prism-utils"
+  ]
+}
+```
+
+`app/main.phs`
+
+```php
+<?php
+echo shared_value() + SHARED_OFFSET, "\n";
+```
+
+Interface/class example:
+
+`contracts/lib.phs`
+
+```php
+<?php
+/** @lib-export */
+interface NamedThing {
+    public function getName(): string;
+}
+```
+
+`models/lib.phs`
+
+```php
+<?php
+/** @lib-export */
+class NamedBox implements NamedThing {
+    public function getName(): string { return "box"; }
+}
+```
+
+`app/main.phs`
+
+```php
+<?php
+$box = new NamedBox();
+echo $box->getName(), "\n";
+```
 
 ## What this document intentionally does not solve
 
 This is not the final deliberate multi-file semantic model. It does not yet freeze:
 
-- include / require graph semantics
+- source-language include / require graph semantics
 - static `__DIR__` expression evaluation rules
 - cross-file declaration merge rules
 - duplicate-definition semantics
 - file-init execution order across multiple source units
 
-Those belong to the dedicated multi-file model spec.
+Those belong to the dedicated multi-file model spec. The v1 project dependency model above is only a build-composition contract for whole Prism projects.
 
 ## FastCGI companion build
 

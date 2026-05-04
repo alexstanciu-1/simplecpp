@@ -157,7 +157,7 @@ final class IrBuilder
 						$bucket['uses'][] = $use;
 					}
 				} elseif ($kind === AstKind::CONST_DECL) {
-					foreach ($this->buildConstants($node) as $constant) {
+					foreach ($this->buildConstants($node, $this->hasLibExportTag($node->children['docComment'] ?? null)) as $constant) {
 						$bucket['constants'][] = $constant;
 					}
 				} elseif ($kind === AstKind::CLASS_) {
@@ -182,7 +182,7 @@ final class IrBuilder
 			}
 
 			if ($kind === AstKind::CONST_DECL) {
-				foreach ($this->buildConstants($node) as $constant) {
+				foreach ($this->buildConstants($node, $this->hasLibExportTag($node->children['docComment'] ?? null)) as $constant) {
 					$constants[] = $constant;
 				}
 				continue;
@@ -352,6 +352,7 @@ final class IrBuilder
 			isEnum: $enumCases !== [],
 			enumBackingType: $this->readTypeName($children['type'] ?? null),
 			enumCases: $enumCases,
+			isLibExport: $this->hasLibExportTag($children['docComment'] ?? null),
 		);
 	}
 
@@ -383,6 +384,7 @@ final class IrBuilder
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
 			argNormalizationRules: $this->validateArgNormalizationRules($argRuleParse['rules'], $params, 'function ' . (string) ($children['name'] ?? '')),
+			isLibExport: $this->hasLibExportTag($children['docComment'] ?? null),
 		);
 	}
 
@@ -428,6 +430,14 @@ final class IrBuilder
 			$this->errors[] = $error;
 		}
 		return $parsed;
+	}
+
+	private function hasLibExportTag(mixed $docComment): bool
+	{
+		if (!is_string($docComment) || trim($docComment) === '') {
+			return false;
+		}
+		return preg_match('/@lib-export\b/', $docComment) === 1;
 	}
 
 	/**
@@ -522,7 +532,7 @@ final class IrBuilder
 
 
 	/** @return list<ConstantDecl> */
-	private function buildConstants(mixed $node): array
+	private function buildConstants(mixed $node, bool $isLibExport = false): array
 	{
 		$out = [];
 		foreach (($node->children ?? []) as $child) {
@@ -532,6 +542,7 @@ final class IrBuilder
 			$out[] = new ConstantDecl(
 				name: (string) ($child->children['name'] ?? ''),
 				value: $child->children['value'] ?? null,
+				isLibExport: $isLibExport || $this->hasLibExportTag($child->children['docComment'] ?? null),
 			);
 		}
 		return $out;

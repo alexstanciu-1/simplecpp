@@ -9,6 +9,31 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - No release notes recorded yet.
 
+## 0.1.7 - 2026-05-04
+
+### Additions
+
+- Added project-level Prism dependencies through `dependencies` in `prism.json`
+- Added native library configuration through `libraries` in `prism.json`
+- Added `/** @lib-export */` support for dependency-visible top-level functions, classes, interfaces, and constants
+- Added generated per-project export manifests and composed project export headers for dependency builds
+- Added documentation for project dependencies, project exports, and `@lib-export` usage in the build and AI onboarding docs
+
+### Fixes
+
+- Fixed multi-project build planning so dependency projects are scanned, generated, and linked as part of one build graph
+- Fixed transitive dependency resolution with deduplication and cycle detection
+- Fixed constant export detection for doc-comment based `@lib-export`
+- Removed the generated PCH warning caused by emitting `#pragma once` in PCH main files
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Projects that want cross-project declaration visibility should mark public dependency surfaces explicitly with `/** @lib-export */`
+
 ## 0.1.4 - 2026-04-26
 
 ### Additions
