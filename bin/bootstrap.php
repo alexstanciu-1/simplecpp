@@ -5,7 +5,6 @@ require_once __DIR__ . '/../generators/php/src/Support/AstKindPhp84.php';
 require_once __DIR__ . '/../generators/php/src/Support/AstKindPhp85.php';
 require_once __DIR__ . '/../generators/php/src/Support/AstKind.php';
 require_once __DIR__ . '/../generators/php/src/Support/AnnotationExpressionParser.php';
-require_once __DIR__ . '/../generators/php/src/Support/IncludePathResolver.php';
 require_once __DIR__ . '/../generators/php/src/Support/S2SException.php';
 require_once __DIR__ . '/../generators/php/src/Loader/ParsedInput.php';
 require_once __DIR__ . '/../generators/php/src/Loader/InputLoader.php';
