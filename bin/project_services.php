@@ -518,7 +518,7 @@ function execute_build(string $projectRoot, string $configPath): array
 	$phpFiles = collect_project_php_files($projectRoot);
 	$runtimeBuildSignature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode, $runtimeConfig);
 	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
-	$transpiler = new Transpiler(phpProfile: $phpProfile, projectRoot: $projectRoot, generatedDir: $generatedDir);
+	$transpiler = new Transpiler(phpProfile: $phpProfile);
 	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile);
 	$generatedUnits = [];
 	$nativeCppFiles = collect_project_native_cpp_files($nativeCppDir);
