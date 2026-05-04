@@ -272,7 +272,7 @@ Current architectural rule:
 
 - reduced PHP array subset (see catalog rows `ARR-*`)
 - `stdClass` / object iteration
-- `foreach` by value is supported for `vector_t`, for the current packed `hash_t<mixed_t>` surface, and for approved wrappers that delegate an iterable success payload through the runtime iterable surface
+- `foreach` by value is supported for typed `vector<T>` / `hash<T>` surfaces, for the current packed `hash_t<mixed_t>` dynamic-array surface, and for approved wrappers that delegate an iterable success payload through the runtime iterable surface
 - foreach key/value variables are always emitted as fresh loop-local variables in the generated C++; they shadow outer locals of the same PHP name inside the loop body
 - by-reference foreach is currently lowered through source-slot rewriting rather than a standalone alias local
 - value-only form synthesizes a hidden key local such as `_<value>_key_`
@@ -329,6 +329,13 @@ Priority note:
 - `/** vector<T> */ []` lowers to `vector_t<T>{}`
 - `/** vector<T> */ [e1, e2, ...]` lowers to `vector_t<T>{e1, e2, ...}`
 - typed vector literals must remain positional; explicit keys are rejected
+
+### Typed hashes
+- `/** hash<T> */ []` lowers to `hash_t<T>{}`
+- `/** hash<T> */ ["k" => v, ...]` lowers to a typed `hash_t<T>` initializer sequence
+- typed hash literals may mix explicit keyed entries and append-style entries
+- typed hash read-only dim access lowers through checked keyed access
+- typed hash write dim access lowers through mutating keyed access / append on `hash_t<T>`
 
 ### Intentional v1 deviations from PHP
 - `hash_t` keeps integer keys and string keys distinct (`1` != `"1"`)
