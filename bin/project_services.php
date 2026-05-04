@@ -106,6 +106,52 @@ function scpp_run_build_service(string $projectRoot, string $configPath): array
 	}
 }
 
+/** @return array{ok:bool,output:string,error:string,exit_code:int|null} */
+function scpp_run_update_service(string $repoRoot): array
+{
+	ob_start();
+	try {
+		$command = new ScppUpdateCommand($repoRoot);
+		$command->run();
+		return [
+			'ok' => true,
+			'output' => (string) ob_get_clean(),
+			'error' => '',
+			'exit_code' => 0,
+		];
+	} catch (ScppCliException $exception) {
+		return [
+			'ok' => false,
+			'output' => (string) ob_get_clean(),
+			'error' => $exception->getMessage(),
+			'exit_code' => $exception->exitCode,
+		];
+	}
+}
+
+/** @return array{ok:bool,output:string,error:string,exit_code:int|null} */
+function scpp_run_clean_service(string $projectRoot, string $configPath): array
+{
+	ob_start();
+	try {
+		$command = new ProjectCleanCommand($projectRoot, $configPath);
+		$command->run();
+		return [
+			'ok' => true,
+			'output' => (string) ob_get_clean(),
+			'error' => '',
+			'exit_code' => 0,
+		];
+	} catch (ScppCliException $exception) {
+		return [
+			'ok' => false,
+			'output' => (string) ob_get_clean(),
+			'error' => $exception->getMessage(),
+			'exit_code' => $exception->exitCode,
+		];
+	}
+}
+
 /** @return array{command:list<string>,exit_code:int,stdout:string,stderr:string} */
 function scpp_run_binary_service(string $workingDirectory, string $binaryPath, array $args = []): array
 {
@@ -134,6 +180,241 @@ function scpp_run_binary_service(string $workingDirectory, string $binaryPath, a
 		'stdout' => is_string($stdout) ? $stdout : '',
 		'stderr' => is_string($stderr) ? $stderr : '',
 	];
+}
+
+/**
+ * Safe self-update command for Git checkouts installed from GitHub.
+ */
+final class ScppUpdateCommand
+{
+	public function __construct(
+		private readonly string $repoRoot,
+	)
+	{
+	}
+
+	public function run(): void
+	{
+		$repoRoot = normalize_path($this->repoRoot);
+		$git = find_command_path(['git']);
+		if ($git === null) {
+			scpp_fail('Git not found. Install Git and retry `scpp update`.' . PHP_EOL, 1);
+		}
+
+		$topLevel = $this->readGitLine($git, $repoRoot, ['rev-parse', '--show-toplevel'], 'Failed to inspect the scpp Git checkout.');
+		$topLevel = normalize_path($topLevel);
+		if ($topLevel === '') {
+			scpp_fail('Current scpp repo root is not inside a Git checkout: ' . $repoRoot . PHP_EOL, 1);
+		}
+
+		$currentBranch = $this->readGitLine($git, $topLevel, ['branch', '--show-current'], 'Failed to inspect the current Git branch.');
+		if ($currentBranch === '') {
+			scpp_fail('Cannot update a detached scpp checkout. Check out `main` and retry `scpp update`.' . PHP_EOL, 1);
+		}
+		if ($currentBranch !== 'main') {
+			scpp_fail('`scpp update` updates from GitHub main and must run on branch `main`; current branch is `' . $currentBranch . '`.' . PHP_EOL, 1);
+		}
+
+		$this->readGitLine($git, $topLevel, ['remote', 'get-url', 'origin'], 'Git remote `origin` is not configured for this scpp checkout.');
+		$status = $this->runGit($git, $topLevel, ['status', '--porcelain', '--untracked-files=all']);
+		if ($status['exit_code'] !== 0) {
+			scpp_fail('Failed to inspect the scpp checkout status.' . PHP_EOL . $this->formatGitError($status), 1);
+		}
+		if (trim($status['stdout']) !== '') {
+			scpp_fail('Cannot update scpp because the repository has local changes. Commit, stash, or remove them before running `scpp update`.' . PHP_EOL, 1);
+		}
+
+		$before = $this->readGitLine($git, $topLevel, ['rev-parse', '--short', 'HEAD'], 'Failed to inspect the current scpp revision.');
+
+		echo 'Updating scpp repository from origin/main' . PHP_EOL;
+		echo 'Repository: ' . $topLevel . PHP_EOL;
+		echo 'Current revision: ' . $before . PHP_EOL;
+
+		$fetch = $this->runGit($git, $topLevel, ['fetch', 'origin', 'main']);
+		if ($fetch['exit_code'] !== 0) {
+			scpp_fail('Failed to fetch GitHub main for scpp update.' . PHP_EOL . $this->formatGitError($fetch), 1);
+		}
+
+		$merge = $this->runGit($git, $topLevel, ['merge', '--ff-only', 'origin/main']);
+		if ($merge['exit_code'] !== 0) {
+			scpp_fail('Failed to fast-forward scpp to origin/main.' . PHP_EOL . $this->formatGitError($merge), 1);
+		}
+
+		$after = $this->readGitLine($git, $topLevel, ['rev-parse', '--short', 'HEAD'], 'Failed to inspect the updated scpp revision.');
+		if ($before === $after) {
+			echo 'Already up to date.' . PHP_EOL;
+			return;
+		}
+		echo 'Updated scpp: ' . $before . ' -> ' . $after . PHP_EOL;
+	}
+
+	/** @param list<string> $args */
+	private function readGitLine(string $git, string $cwd, array $args, string $failureMessage): string
+	{
+		$result = $this->runGit($git, $cwd, $args);
+		if ($result['exit_code'] !== 0) {
+			scpp_fail($failureMessage . PHP_EOL . $this->formatGitError($result), 1);
+		}
+		return trim($result['stdout']);
+	}
+
+	/** @param list<string> $args @return array{exit_code:int,stdout:string,stderr:string} */
+	private function runGit(string $git, string $cwd, array $args): array
+	{
+		$command = array_merge([$git], $args);
+		$descriptor = [
+			0 => ['pipe', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment());
+		if (!is_resource($process)) {
+			scpp_fail('Failed to start Git for scpp update.' . PHP_EOL, 4);
+		}
+		fclose($pipes[0]);
+		$stdout = stream_get_contents($pipes[1]);
+		$stderr = stream_get_contents($pipes[2]);
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		$status = proc_close($process);
+		return [
+			'exit_code' => is_int($status) ? $status : 4,
+			'stdout' => is_string($stdout) ? $stdout : '',
+			'stderr' => is_string($stderr) ? $stderr : '',
+		];
+	}
+
+	/** @param array{exit_code:int,stdout:string,stderr:string} $result */
+	private function formatGitError(array $result): string
+	{
+		$message = trim($result['stderr']);
+		if ($message === '') {
+			$message = trim($result['stdout']);
+		}
+		if ($message === '') {
+			$message = 'Git exited with status ' . $result['exit_code'] . '.';
+		}
+		return $message . PHP_EOL;
+	}
+}
+
+/**
+ * Removes generated project state so the next build is a cold rebuild.
+ */
+final class ProjectCleanCommand
+{
+	public function __construct(
+		private readonly string $projectRoot,
+		private readonly string $configPath,
+	)
+	{
+	}
+
+	public function run(): void
+	{
+		$projectRoot = normalize_path($this->projectRoot);
+		$configPath = normalize_path($this->configPath);
+		$config = load_project_config($configPath);
+		$projectGraph = resolve_project_dependency_graph($projectRoot, $configPath, $config);
+		$contexts = build_project_contexts($projectGraph);
+		$targets = [];
+
+		foreach ($contexts as $context) {
+			$contextProjectRoot = normalize_path($context['project_root']);
+			$projectWorkspace = normalize_path($contextProjectRoot . '/.prism');
+			$configuredDirs = [
+				normalize_path($context['build_dir']),
+				normalize_path($context['generated_dir']),
+				normalize_path($context['cache_dir']),
+			];
+			$allInProjectWorkspace = true;
+			foreach ($configuredDirs as $configuredDir) {
+				if ($configuredDir !== $projectWorkspace && !path_is_inside($projectWorkspace, $configuredDir)) {
+					$allInProjectWorkspace = false;
+					break;
+				}
+			}
+
+			if ($allInProjectWorkspace) {
+				$targets[] = [
+					'project_root' => $contextProjectRoot,
+					'path' => $projectWorkspace,
+				];
+				continue;
+			}
+
+			foreach ($configuredDirs as $configuredDir) {
+				$targets[] = [
+					'project_root' => $contextProjectRoot,
+					'path' => $configuredDir,
+				];
+			}
+		}
+
+		$targets = $this->deduplicateTargets($targets);
+		echo 'Cleaning Prism++ generated state for ' . count($contexts) . ' project(s)' . PHP_EOL;
+
+		$removed = 0;
+		foreach ($targets as $target) {
+			$targetProjectRoot = $target['project_root'];
+			$targetPath = $target['path'];
+			$this->assertSafeCleanTarget($targetProjectRoot, $targetPath);
+			$label = normalize_config_path(relative_path($targetProjectRoot, $targetPath));
+			if (!file_exists($targetPath) && !is_link($targetPath)) {
+				echo 'Already clean: ' . $label . PHP_EOL;
+				continue;
+			}
+			if (!is_dir($targetPath) || is_link($targetPath)) {
+				scpp_fail('Refusing to clean non-directory path: ' . $targetPath . PHP_EOL, 2);
+			}
+			remove_directory_tree($targetPath);
+			echo 'Removed: ' . $label . PHP_EOL;
+			$removed++;
+		}
+
+		echo 'Clean completed: removed ' . $removed . ' director' . ($removed === 1 ? 'y' : 'ies') . PHP_EOL;
+	}
+
+	/**
+	 * @param list<array{project_root:string,path:string}> $targets
+	 * @return list<array{project_root:string,path:string}>
+	 */
+	private function deduplicateTargets(array $targets): array
+	{
+		$unique = [];
+		foreach ($targets as $target) {
+			$key = normalize_path($target['project_root']) . "\0" . normalize_path($target['path']);
+			$unique[$key] = [
+				'project_root' => normalize_path($target['project_root']),
+				'path' => normalize_path($target['path']),
+			];
+		}
+		$targets = array_values($unique);
+		usort($targets, static fn (array $a, array $b): int => strlen($a['path']) <=> strlen($b['path']));
+
+		$result = [];
+		foreach ($targets as $target) {
+			foreach ($result as $kept) {
+				if ($target['project_root'] === $kept['project_root'] && path_is_inside($kept['path'], $target['path'])) {
+					continue 2;
+				}
+			}
+			$result[] = $target;
+		}
+		return $result;
+	}
+
+	private function assertSafeCleanTarget(string $projectRoot, string $targetPath): void
+	{
+		$projectRoot = normalize_path($projectRoot);
+		$targetPath = normalize_path($targetPath);
+		if ($targetPath === '/' || $targetPath === '.' || $targetPath === $projectRoot) {
+			scpp_fail('Refusing to clean unsafe project path: ' . $targetPath . PHP_EOL, 2);
+		}
+		if (!path_is_inside($projectRoot, $targetPath)) {
+			scpp_fail('Refusing to clean path outside project root: ' . $targetPath . PHP_EOL, 2);
+		}
+	}
 }
 
 /**
@@ -246,6 +527,16 @@ function main(array $argv): void
 		return;
 	}
 
+	if ($args[0] === 'clean') {
+		handle_clean(getcwd() === false ? '.' : getcwd());
+		return;
+	}
+
+	if ($args[0] === 'update') {
+		handle_update();
+		return;
+	}
+
 	if ($args[0] === 'run') {
 		handle_run(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
 		return;
@@ -279,9 +570,13 @@ function print_help(): void
 	echo "  scpp <input.phs>\n";
 	echo "  scpp init [--php-profile=legacy|strict]\n";
 	echo "  scpp build\n";
+	echo "  scpp clean\n";
+	echo "  scpp update\n";
 	echo "  scpp run [-- <args...>]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
+	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
+	echo "  scpp update fast-forwards the scpp repository from origin/main\n";
 	echo "  scpp run builds first, then executes the primary output\n";
 	echo "  scpp usability-harness generates deterministic spec-driven trial projects\n";
 	echo "  scpp --help\n";
@@ -310,6 +605,7 @@ function print_doctor(): void
 		? resolve_compiler_launcher($compiler['command'])
 		: null;
 	$projectConfig = find_project_config(getcwd() === false ? $repoRoot : getcwd());
+	$git = resolve_repo_git_diagnostics($repoRoot);
 
 	echo "scpp doctor\n";
 	echo 'version: ' . SCPP_VERSION . PHP_EOL;
@@ -323,11 +619,106 @@ function print_doctor(): void
 	echo 'argv0: ' . ((string) ($GLOBALS['argv'][0] ?? __FILE__)) . PHP_EOL;
 	echo 'config_path: ' . (is_file($configPath) ? $configPath : '(none)') . PHP_EOL;
 	echo 'project_config: ' . ($projectConfig['config_path'] ?? '(none)') . PHP_EOL;
+	echo 'git_repo: ' . $git['repo'] . PHP_EOL;
+	echo 'git_branch: ' . $git['branch'] . PHP_EOL;
+	echo 'git_commit: ' . $git['commit'] . PHP_EOL;
+	echo 'git_origin_url: ' . $git['origin_url'] . PHP_EOL;
+	echo 'git_origin_main_commit: ' . $git['origin_main_commit'] . PHP_EOL;
+	echo 'git_up_to_date_with_origin_main: ' . $git['up_to_date_with_origin_main'] . PHP_EOL;
 	echo 'ninja: ' . ($ninja ?? '(not found)') . PHP_EOL;
 	echo 'cxx_launcher: ' . ($compilerLauncher ?? '(not found)') . PHP_EOL;
 	echo 'resolved_cxx: ' . ($compiler !== null ? compiler_display_command($compiler) : '(not found)') . PHP_EOL;
 	echo 'env_SCPP_CXX: ' . (getenv('SCPP_CXX') !== false ? (string) getenv('SCPP_CXX') : '(unset)') . PHP_EOL;
 	echo 'env_SCPP_CXX_LAUNCHER: ' . (getenv('SCPP_CXX_LAUNCHER') !== false ? (string) getenv('SCPP_CXX_LAUNCHER') : '(unset)') . PHP_EOL;
+}
+
+/** @return array{repo:string,branch:string,commit:string,origin_url:string,origin_main_commit:string,up_to_date_with_origin_main:string} */
+function resolve_repo_git_diagnostics(string $repoRoot): array
+{
+	$unknown = [
+		'repo' => 'no',
+		'branch' => '(unknown)',
+		'commit' => '(unknown)',
+		'origin_url' => '(unknown)',
+		'origin_main_commit' => '(unknown)',
+		'up_to_date_with_origin_main' => 'unknown',
+	];
+	$git = find_command_path(['git']);
+	if ($git === null) {
+		return $unknown;
+	}
+
+	$topLevel = scpp_run_optional_command($repoRoot, [$git, 'rev-parse', '--show-toplevel']);
+	if ($topLevel['exit_code'] !== 0 || trim($topLevel['stdout']) === '') {
+		return $unknown;
+	}
+
+	$diagnostics = $unknown;
+	$diagnostics['repo'] = normalize_path(trim($topLevel['stdout']));
+
+	$branch = scpp_run_optional_command($diagnostics['repo'], [$git, 'branch', '--show-current']);
+	if ($branch['exit_code'] === 0 && trim($branch['stdout']) !== '') {
+		$diagnostics['branch'] = trim($branch['stdout']);
+	} else {
+		$diagnostics['branch'] = '(detached)';
+	}
+
+	$commit = scpp_run_optional_command($diagnostics['repo'], [$git, 'rev-parse', '--short=12', 'HEAD']);
+	if ($commit['exit_code'] === 0 && trim($commit['stdout']) !== '') {
+		$diagnostics['commit'] = trim($commit['stdout']);
+	}
+
+	$origin = scpp_run_optional_command($diagnostics['repo'], [$git, 'remote', 'get-url', 'origin']);
+	if ($origin['exit_code'] === 0 && trim($origin['stdout']) !== '') {
+		$diagnostics['origin_url'] = trim($origin['stdout']);
+	}
+
+	$remote = scpp_run_optional_command($diagnostics['repo'], [$git, '-c', 'credential.interactive=false', 'ls-remote', 'origin', 'refs/heads/main'], [
+		'GIT_TERMINAL_PROMPT' => '0',
+		'GCM_INTERACTIVE' => 'Never',
+	]);
+	if ($remote['exit_code'] !== 0 || trim($remote['stdout']) === '') {
+		return $diagnostics;
+	}
+
+	$parts = preg_split('/\s+/', trim($remote['stdout']));
+	if (is_array($parts) && isset($parts[0]) && preg_match('/^[0-9a-f]{40}$/i', $parts[0]) === 1) {
+		$diagnostics['origin_main_commit'] = substr(strtolower($parts[0]), 0, 12);
+		if ($diagnostics['commit'] !== '(unknown)') {
+			$diagnostics['up_to_date_with_origin_main'] = $diagnostics['commit'] === $diagnostics['origin_main_commit'] ? 'yes' : 'no';
+		}
+	}
+
+	return $diagnostics;
+}
+
+/** @param list<string> $command @param array<string,string> $extraEnv @return array{exit_code:int,stdout:string,stderr:string} */
+function scpp_run_optional_command(string $cwd, array $command, array $extraEnv = []): array
+{
+	$descriptor = [
+		0 => ['pipe', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w'],
+	];
+	$process = @proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment($extraEnv));
+	if (!is_resource($process)) {
+		return [
+			'exit_code' => 127,
+			'stdout' => '',
+			'stderr' => '',
+		];
+	}
+	fclose($pipes[0]);
+	$stdout = stream_get_contents($pipes[1]);
+	$stderr = stream_get_contents($pipes[2]);
+	fclose($pipes[1]);
+	fclose($pipes[2]);
+	$status = proc_close($process);
+	return [
+		'exit_code' => is_int($status) ? $status : 1,
+		'stdout' => is_string($stdout) ? $stdout : '',
+		'stderr' => is_string($stderr) ? $stderr : '',
+	];
 }
 
 function resolve_repo_root(): string
@@ -361,6 +752,23 @@ function handle_init(string $cwd, array $args = []): void
 		scpp_fail('Unknown option for `scpp init`: ' . $arg . PHP_EOL, 1);
 	}
 	$command = new ProjectInitCommand($cwd, $phpProfile);
+	$command->run();
+}
+
+function handle_clean(string $cwd): void
+{
+	$project = find_project_config($cwd);
+	if ($project === null) {
+		scpp_fail('No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL . 'Run `scpp init` in the project root first.' . PHP_EOL, 1);
+	}
+
+	$command = new ProjectCleanCommand($project['project_root'], $project['config_path']);
+	$command->run();
+}
+
+function handle_update(): void
+{
+	$command = new ScppUpdateCommand(resolve_repo_root());
 	$command->run();
 }
 
@@ -1528,6 +1936,34 @@ function ensure_directory(string $dir): void
 	}
 	if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
 		scpp_fail('Failed to create directory: ' . $dir . PHP_EOL, 2);
+	}
+}
+
+function remove_directory_tree(string $path): void
+{
+	$path = normalize_path($path);
+	if (!is_dir($path) || is_link($path)) {
+		scpp_fail('Cannot remove directory: ' . $path . PHP_EOL, 2);
+	}
+	$items = scandir($path);
+	if ($items === false) {
+		scpp_fail('Failed to read directory while cleaning: ' . $path . PHP_EOL, 2);
+	}
+	foreach ($items as $item) {
+		if ($item === '.' || $item === '..') {
+			continue;
+		}
+		$child = $path . '/' . $item;
+		if (is_dir($child) && !is_link($child)) {
+			remove_directory_tree($child);
+			continue;
+		}
+		if (!@unlink($child)) {
+			scpp_fail('Failed to remove file while cleaning: ' . $child . PHP_EOL, 2);
+		}
+	}
+	if (!@rmdir($path)) {
+		scpp_fail('Failed to remove directory while cleaning: ' . $path . PHP_EOL, 2);
 	}
 }
 
@@ -2739,6 +3175,16 @@ function normalize_path(string $path): string
 		return $absolute ? '/' : ($prefix !== '' ? $prefix . '/' : '.');
 	}
 	return $result;
+}
+
+function path_is_inside(string $parent, string $child): bool
+{
+	$parent = rtrim(normalize_path($parent), '/');
+	$child = normalize_path($child);
+	if ($parent === '') {
+		return false;
+	}
+	return str_starts_with($child, $parent . '/');
 }
 
 function is_absolute_path(string $path): bool

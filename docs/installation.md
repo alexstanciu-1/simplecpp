@@ -142,7 +142,7 @@ scpp --doctor
 Expected:
 
 - `--version` prints the current CLI version
-- `--doctor` prints PHP binary, PHP version, ini path, `php-ast` status, repo root, CLI entrypoint, detected project config, Ninja path, and default compiler
+- `--doctor` prints PHP binary, PHP version, ini path, `php-ast` status, repo root, CLI entrypoint, detected project config, optional Git branch/commit and `origin/main` status, Ninja path, and default compiler
 
 ---
 
@@ -160,11 +160,27 @@ Build the configured entrypoint from `prism.json`:
 scpp build
 ```
 
+Remove generated build state for a cold rebuild:
+
+```bash
+scpp clean
+```
+
+With the standard layout, this removes the project `.prism/` working tree.
+
 Build then run the configured entrypoint:
 
 ```bash
 scpp run
 ```
+
+Update the installed `scpp` checkout from GitHub main:
+
+```bash
+scpp update
+```
+
+This is fast-forward only and requires a clean checkout on branch `main`.
 
 Pass program arguments after `--` when needed:
 
