@@ -24,6 +24,7 @@ final class FunctionDecl
 		public readonly bool $returnsByReference,
 		public readonly array $statements,
 		public readonly array $argNormalizationRules = [],
+		public readonly bool $isLibExport = false,
 	) {
 	}
 }

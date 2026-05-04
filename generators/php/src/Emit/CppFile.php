@@ -17,6 +17,7 @@ final class CppFile
 	public function __construct(
 		public readonly string $baseName,
 		public readonly array $headerLines,
+		public readonly array $exportManifest,
 		public readonly array $sourceLines,
 		public readonly array $errors,
 		public readonly array $warnings = [],

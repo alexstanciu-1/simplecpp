@@ -206,7 +206,92 @@ final class Generator
 
 		$this->throwIfErrors();
 
-		return new CppFile($baseName, $header, $source, $this->errors, $this->warnings);
+		return new CppFile($baseName, $header, $this->buildExportManifest($file), $source, $this->errors, $this->warnings);
+	}
+
+	/** @return array<string,mixed> */
+	private function buildExportManifest(PhpFile $file): array
+	{
+		$manifest = [
+			'source' => basename($file->path),
+			'prologue_includes' => array_values($file->prologueIncludes),
+			'namespaces' => [],
+		];
+
+		$rootConstants = array_values(array_filter($file->constants, static fn (ConstantDecl $constant): bool => $constant->isLibExport));
+		$rootClasses = array_values(array_filter($file->classes, static fn (ClassDecl $class): bool => $class->isLibExport));
+		$rootFunctions = array_values(array_filter($file->functions, static fn (FunctionDecl $function): bool => $function->isLibExport));
+		if ($rootConstants !== [] || $rootClasses !== [] || $rootFunctions !== []) {
+			$manifest['namespaces'][] = $this->buildExportNamespaceManifest('scpp', null, $rootConstants, $rootClasses, $rootFunctions);
+		}
+
+		foreach ($file->namespaces as $namespace) {
+			$constants = array_values(array_filter($namespace->constants, static fn (ConstantDecl $constant): bool => $constant->isLibExport));
+			$classes = array_values(array_filter($namespace->classes, static fn (ClassDecl $class): bool => $class->isLibExport));
+			$functions = array_values(array_filter($namespace->functions, static fn (FunctionDecl $function): bool => $function->isLibExport));
+			if ($constants === [] && $classes === [] && $functions === []) {
+				continue;
+			}
+			$manifest['namespaces'][] = $this->buildExportNamespaceManifest($this->buildNamespaceCppName($namespace->name), $namespace->name, $constants, $classes, $functions);
+		}
+
+		return $manifest;
+	}
+
+	/** @param list<ConstantDecl> $constants @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @return array<string,mixed> */
+	private function buildExportNamespaceManifest(string $namespaceCpp, ?string $namespacePhp, array $constants, array $classes, array $functions): array
+	{
+		$headerLines = ['namespace ' . $namespaceCpp . ' {', ''];
+		$constantEntries = [];
+		foreach ($constants as $constant) {
+			$start = count($headerLines);
+			$this->emitConstant($headerLines, $constant, $namespacePhp);
+			$constantEntries[] = [
+				'kind' => 'constant',
+				'name' => $constant->name,
+				'declaration_lines' => array_values(array_slice($headerLines, $start)),
+			];
+		}
+		if ($constants !== []) {
+			$headerLines[] = '';
+		}
+		foreach ($this->collectNamespaceForwardClassNames($classes, $functions) as $className) {
+			$headerLines[] = 'class ' . $className . ';';
+		}
+		if ($classes !== []) {
+			$headerLines[] = '';
+		}
+		$discardSource = [];
+		$classEntries = [];
+		foreach ($classes as $class) {
+			$start = count($headerLines);
+			$this->emitClass($headerLines, $discardSource, $class, $namespacePhp);
+			$classEntries[] = [
+				'kind' => 'class',
+				'name' => $class->name,
+				'declaration_lines' => array_values(array_slice($headerLines, $start)),
+			];
+		}
+		$functionEntries = [];
+		foreach ($functions as $function) {
+			$start = count($headerLines);
+			$this->emitFunction($headerLines, $discardSource, $function, $namespacePhp);
+			$functionEntries[] = [
+				'kind' => 'function',
+				'name' => $function->name,
+				'declaration_lines' => array_values(array_slice($headerLines, $start)),
+			];
+		}
+		$headerLines[] = '}';
+		$headerLines[] = '';
+		return [
+			'namespace_cpp' => $namespaceCpp,
+			'namespace_php' => $namespacePhp,
+			'constants' => $constantEntries,
+			'classes' => $classEntries,
+			'functions' => $functionEntries,
+			'header_lines' => $headerLines,
+		];
 	}
 
 
