@@ -15,6 +15,14 @@ scpp --version
 scpp --doctor
 ```
 
+Update the installed `scpp` checkout later:
+
+```bash
+scpp update
+```
+
+`scpp update` fetches GitHub `origin/main` and fast-forwards the checkout. It requires the checkout to be on `main` with no local changes.
+
 ## 2. Start a project
 
 From the project root:
@@ -69,6 +77,15 @@ Build only:
 ```bash
 scpp build
 ```
+
+Remove generated state for a full cold rebuild:
+
+```bash
+scpp clean
+```
+
+`scpp clean` removes configured build, generated, and cache directories for the root project and resolved project dependencies.
+With the standard layout, that means removing the whole `.prism/` working tree.
 
 Build then run:
 

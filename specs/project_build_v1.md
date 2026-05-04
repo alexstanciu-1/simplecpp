@@ -169,6 +169,34 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 16. runs Ninja
 17. leaves the root project executable under `.prism/build/`
 
+## `scpp clean` behavior
+
+`scpp clean` removes generated project state so the next `scpp build` is a cold rebuild.
+
+The command:
+
+1. finds `prism.json` by walking upward from the current directory
+2. resolves the root project and its Prism project dependency graph
+3. removes each participating project's `.prism/` working tree when the configured `build_dir`, `generated_dir`, and `cache_dir` all live inside it
+4. otherwise removes each participating project's configured `build_dir`, `generated_dir`, and `cache_dir`
+5. treats missing clean targets as already clean
+6. refuses to remove the project root, filesystem root, non-directory targets, or paths outside the owning project root
+
+## `scpp update` behavior
+
+`scpp update` updates the installed `scpp` repository checkout from GitHub `main`.
+
+The command:
+
+1. resolves the active `scpp` repository root
+2. requires Git to be available
+3. requires the checkout to be on branch `main`
+4. requires a configured `origin` remote
+5. requires a clean working tree
+6. fetches `origin main`
+7. fast-forwards the checkout to `origin/main`
+8. fails clearly instead of creating merge commits or overwriting local changes
+
 ## Project dependencies
 
 Project composition is controlled by `scpp build`, not by source-language `require` or `include`.

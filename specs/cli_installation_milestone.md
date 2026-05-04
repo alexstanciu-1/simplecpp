@@ -112,6 +112,8 @@ Required commands:
 - `scpp <input.phs>`
 - `scpp init`
 - `scpp build`
+- `scpp clean`
+- `scpp update`
 - `scpp --help`
 - `scpp --version`
 - `scpp --doctor`
@@ -134,6 +136,23 @@ Required commands:
 - use project-root-relative normalized forward-slash paths in the emitted Ninja file
 - compile the runtime directly from the repo checkout
 
+`scpp clean` must:
+
+- discover `prism.json` by walking upward from the current directory
+- remove the `.prism/` working tree when configured build, generated, and cache directories all live inside it
+- otherwise remove configured build, generated, and cache directories
+- include resolved Prism project dependencies
+- leave source files and `prism.json` in place
+- refuse unsafe clean targets outside the owning project root
+
+`scpp update` must:
+
+- update the installed repo checkout from `origin/main`
+- require branch `main`
+- require a clean working tree
+- use fast-forward-only Git operations
+- fail clearly instead of overwriting local changes or creating a merge commit
+
 `--doctor` must report enough information to debug install and build failures quickly, including:
 
 - PHP binary
@@ -143,6 +162,8 @@ Required commands:
 - repo root
 - CLI entrypoint path
 - detected project config path when present
+- Git checkout branch and commit when the installed repo root is a Git checkout
+- best-effort `origin/main` commit and up-to-date status when the remote can be queried non-interactively
 - Ninja path when present
 - detected default compiler when present
 
