@@ -148,6 +148,7 @@ Required commands:
 `scpp update` must:
 
 - update the installed repo checkout from `origin/main`
+- fetch release tags while updating
 - require branch `main`
 - require a clean working tree
 - use fast-forward-only Git operations
@@ -157,6 +158,7 @@ Required commands:
 
 - PHP binary
 - PHP version
+- CLI version resolved from the latest reachable `v*` release tag when the installed repo root is a Git checkout, falling back to the built-in dev version otherwise
 - php.ini path
 - whether `php-ast` is loaded
 - repo root

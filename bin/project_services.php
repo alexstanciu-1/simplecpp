@@ -230,7 +230,7 @@ final class ScppUpdateCommand
 		echo 'Repository: ' . $topLevel . PHP_EOL;
 		echo 'Current revision: ' . $before . PHP_EOL;
 
-		$fetch = $this->runGit($git, $topLevel, ['fetch', 'origin', 'main']);
+		$fetch = $this->runGit($git, $topLevel, ['fetch', 'origin', 'main', '--tags']);
 		if ($fetch['exit_code'] !== 0) {
 			scpp_fail('Failed to fetch GitHub main for scpp update.' . PHP_EOL . $this->formatGitError($fetch), 1);
 		}
@@ -590,7 +590,27 @@ function print_help(): void
 
 function print_version(): void
 {
-	echo 'scpp ' . SCPP_VERSION . PHP_EOL;
+	echo 'scpp ' . scpp_version() . PHP_EOL;
+}
+
+function scpp_version(): string
+{
+	$repoRoot = resolve_repo_root();
+	$git = find_command_path(['git']);
+	if ($git === null) {
+		return SCPP_VERSION;
+	}
+
+	$tag = scpp_run_optional_command($repoRoot, [$git, 'describe', '--tags', '--match', 'v[0-9]*', '--abbrev=0']);
+	if ($tag['exit_code'] !== 0) {
+		return SCPP_VERSION;
+	}
+
+	$version = trim($tag['stdout']);
+	if (preg_match('/^v([0-9][0-9A-Za-z.\-]*)$/', $version, $matches) !== 1) {
+		return SCPP_VERSION;
+	}
+	return $matches[1];
 }
 
 function print_doctor(): void
@@ -608,7 +628,7 @@ function print_doctor(): void
 	$git = resolve_repo_git_diagnostics($repoRoot);
 
 	echo "scpp doctor\n";
-	echo 'version: ' . SCPP_VERSION . PHP_EOL;
+	echo 'version: ' . scpp_version() . PHP_EOL;
 	echo 'php_binary: ' . PHP_BINARY . PHP_EOL;
 	echo 'php_version: ' . PHP_VERSION . PHP_EOL;
 	echo 'php_ini: ' . ($phpIni === false ? '(none)' : $phpIni) . PHP_EOL;

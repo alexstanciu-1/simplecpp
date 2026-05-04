@@ -141,7 +141,7 @@ scpp --doctor
 
 Expected:
 
-- `--version` prints the current CLI version
+- `--version` prints the current CLI version from the latest reachable `v*` release tag when available
 - `--doctor` prints PHP binary, PHP version, ini path, `php-ast` status, repo root, CLI entrypoint, detected project config, optional Git branch/commit and `origin/main` status, Ninja path, and default compiler
 
 ---
