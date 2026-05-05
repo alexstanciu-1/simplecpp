@@ -227,6 +227,10 @@ TXT;
 		$sanLabel = $this->formatSanLabel((string) ($options['san'] ?? ''));
 		echo "Running {$total} test(s) with up to {$jobs} worker(s){$sanLabel}.\n";
 
+		if ($jobs === 1) {
+			return $this->runTestsSequentially($tests, (string) ($options['san'] ?? ''));
+		}
+
 		$queue = array_values($tests);
 		$active = [];
 		$completed = 0;
@@ -259,7 +263,9 @@ TXT;
 
 				fclose($item['pipes'][1]);
 				fclose($item['pipes'][2]);
-				$exitCode = proc_close($item['proc']);
+				$exitCode = (is_int($status['exitcode'] ?? null) && (int) $status['exitcode'] >= 0)
+					? (int) $status['exitcode']
+					: proc_close($item['proc']);
 				$completed++;
 
 				$ok = ($exitCode === 0);
@@ -281,6 +287,52 @@ TXT;
 
 			$active = array_values($active);
 			usleep(100000);
+		}
+
+		$duration = microtime(true) - $startedAt;
+		echo sprintf(
+			"Done. Passed: %d, Failed: %d, Total: %d, Duration: %.2fs\n",
+			$passed,
+			$failed,
+			$total,
+			$duration
+		);
+
+		return $failed === 0 ? 0 : 1;
+	}
+
+	/**
+	 * @param list<array<string, mixed>> $tests
+	 */
+	private function runTestsSequentially(array $tests, string $sanitizers = ''): int
+	{
+		$total = count($tests);
+		$passed = 0;
+		$failed = 0;
+		$startedAt = microtime(true);
+
+		foreach (array_values($tests) as $index => $test) {
+			$ok = true;
+			$stderr = '';
+			try {
+				$this->runSingleTest((string) $test['info_path'], $sanitizers);
+			} catch (Throwable $throwable) {
+				$ok = false;
+				$stderr = $throwable->getMessage();
+			}
+
+			if ($ok) {
+				++$passed;
+			} else {
+				++$failed;
+			}
+
+			$label = $ok ? 'PASS' : 'FAIL';
+			$relPath = (string) $test['relative_source_path'];
+			echo sprintf("[%s] %3d/%3d %s\n", $label, $index + 1, $total, $relPath);
+			if (!$ok && trim($stderr) !== '') {
+				echo $this->indent(trim($stderr)) . "\n";
+			}
 		}
 
 		$duration = microtime(true) - $startedAt;
@@ -1189,11 +1241,10 @@ TXT;
 			1 => ['pipe', 'w'],
 			2 => ['pipe', 'w'],
 		];
-		$commandString = $this->buildShellCommand($command);
 		$procEnv = $env === [] ? null : $this->buildProcessEnvironment($env);
-		$proc = proc_open($commandString, $descriptors, $pipes, $cwd, $procEnv);
+		$proc = proc_open($command, $descriptors, $pipes, $cwd, $procEnv);
 		if (!is_resource($proc)) {
-			throw new RuntimeException('Failed to start command: ' . $commandString);
+			throw new RuntimeException('Failed to start command: ' . $this->buildShellCommand($command));
 		}
 
 		fclose($pipes[0]);
@@ -1204,12 +1255,14 @@ TXT;
 		$stderr = '';
 		$timedOut = false;
 		$startedAt = microtime(true);
+		$finalStatus = null;
 
 		while (true) {
 			$stdout .= stream_get_contents($pipes[1]);
 			$stderr .= stream_get_contents($pipes[2]);
 			$status = proc_get_status($proc);
 			if ($status['running'] === false) {
+				$finalStatus = $status;
 				break;
 			}
 			if ((microtime(true) - $startedAt) > $timeoutSeconds) {
@@ -1229,7 +1282,9 @@ TXT;
 		$stderr .= stream_get_contents($pipes[2]);
 		fclose($pipes[1]);
 		fclose($pipes[2]);
-		$exitCode = proc_close($proc);
+		$exitCode = (is_array($finalStatus) && is_int($finalStatus['exitcode'] ?? null) && (int) $finalStatus['exitcode'] >= 0)
+			? (int) $finalStatus['exitcode']
+			: proc_close($proc);
 		$durationMs = (int) round((microtime(true) - $startedAt) * 1000);
 
 		return [
