@@ -1,0 +1,67 @@
+<?php
+declare(strict_types=1);
+
+namespace demo\schema;
+
+class storage_property {
+	public string $name = "";
+}
+
+class model_property {
+	public string $name = "";
+	public bool $disabled = false;
+	public $attached_storage /** storage_property */ = null;
+}
+
+namespace demo\app;
+
+use demo\schema\model_property;
+use demo\schema\storage_property;
+
+function find_child_property(/** hash<model_property> */ $props, ?string $name): ?model_property {
+	if ($name === null) {
+		return null;
+	}
+
+	if (!isset($props[$name])) {
+		return null;
+	}
+
+	return $props[$name];
+}
+
+$props /** hash<model_property> */ = [];
+$overrides /** hash<model_property> */ = [];
+$out /** hash<model_property> */ = [];
+
+$id = new model_property();
+$id->name = "Id";
+$props["id"] = $id;
+
+$title = new model_property();
+$title->name = "Title";
+$props["title"] = $title;
+
+$override = new model_property();
+$override->name = "Title Override";
+$override->disabled = true;
+$overrides["title"] = $override;
+
+$storage = new storage_property();
+$storage->name = "Storage";
+
+foreach ($props as $property_name => $typed_property) {
+	$typed_override = find_child_property($overrides, $property_name);
+	if ($typed_override !== null) {
+		$typed_property->disabled = $typed_override->disabled;
+	}
+	$typed_property->attached_storage = $storage;
+	$out[$property_name] = $typed_property;
+
+	echo $property_name, "\n";
+	echo $out[$property_name]->name, "\n";
+	echo $out[$property_name]->attached_storage->name, "\n";
+}
+
+echo $out["id"]->disabled ? "yes\n" : "no\n";
+echo $out["title"]->disabled ? "yes\n" : "no\n";

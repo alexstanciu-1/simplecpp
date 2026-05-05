@@ -14,10 +14,15 @@ This file is the authoritative checked-in source for release notes referenced by
 ### Additions
 
 - Added regression coverage for `scpp --doctor` best-effort subprocess timeout handling
+- Added `foreach` planning/checklist notes for the long-term generator cleanup
+- Added targeted PHP regression coverage for typed `hash<shared_p<T>>` `foreach` key/value flows, direct helper-key usage, and direct reindexing into typed hashes
 
 ### Fixes
 
 - Fixed `scpp --doctor` so best-effort Git remote and compiler-launcher probes time out instead of hanging indefinitely
+- Fixed the PHP test harness `--jobs=1` path so focused debugging runs execute sequentially without the flaky worker subprocess layer
+- Fixed typed `hash<shared_p<T>>` generator lowering across direct `foreach` key/helper flows by qualifying declared hash/object types with the active PHP namespace before emission
+- Fixed generator forward-declaration collection so imported object types referenced through doc-typed hash params/returns do not degrade into bogus local forward declarations
 
 ### Breaking Changes
 
