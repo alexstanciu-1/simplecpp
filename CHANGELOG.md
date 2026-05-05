@@ -9,6 +9,25 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - No release notes recorded yet.
 
+## 0.1.12 - 2026-05-05
+
+### Additions
+
+- Added targeted PHP regression coverage for typed `hash<shared_p<T>>` foreach keys passed into method helpers expecting `?string`
+
+### Fixes
+
+- Fixed generator argument wrapping so concrete `T` values passed to `nullable<T>` parameters no longer degrade into synthetic `cast<nullable<T>>(...)` bridges
+- Fixed the reproduced typed-hash foreach key to nullable-string helper boundary seen in real Open M3 traversal flows
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Explicit `(string)` stabilization should no longer be required at typed `hash<T>` foreach-key to `?string` helper boundaries in the reproduced flow
+
 ## 0.1.10 - 2026-05-05
 
 ### Additions

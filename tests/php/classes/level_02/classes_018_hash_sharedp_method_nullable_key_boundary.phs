@@ -1,0 +1,57 @@
+<?php
+declare(strict_types=1);
+
+class model_property {
+	public string $name = "";
+	public bool $disabled = false;
+}
+
+class model_wrapper {
+	public $properties /** hash<model_property> */ = [];
+}
+
+class merger {
+	public function merge(model_wrapper $base, model_wrapper $overrides): string {
+		$out = new model_wrapper();
+
+		foreach ($base->properties as $property_name => $typed_property) {
+			$override = $this->find_child_property($overrides, $property_name);
+			if ($override !== null && $override->disabled) {
+				continue;
+			}
+
+			if ($override !== null) {
+				$out->properties[$property_name] = $override;
+			} else {
+				$out->properties[$property_name] = $typed_property;
+			}
+		}
+
+		return isset($out->properties["id"]) ? $out->properties["id"]->name : "missing";
+	}
+
+	private function find_child_property(model_wrapper $parent, ?string $property_name): ?model_property {
+		if ($property_name === null || $property_name === "") {
+			return null;
+		}
+		if (!isset($parent->properties[$property_name])) {
+			return null;
+		}
+		return $parent->properties[$property_name];
+	}
+}
+
+$base = new model_wrapper();
+$overrides = new model_wrapper();
+
+$id = new model_property();
+$id->name = "Id";
+$base->properties["id"] = $id;
+
+$override = new model_property();
+$override->name = "Override";
+$override->disabled = false;
+$overrides->properties["id"] = $override;
+
+$merger_instance = new merger();
+echo $merger_instance->merge($base, $overrides), "\n";
