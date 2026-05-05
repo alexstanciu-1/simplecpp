@@ -256,7 +256,7 @@ final class Generator
 		if ($constants !== []) {
 			$headerLines[] = '';
 		}
-		foreach ($this->collectNamespaceForwardClassNames($classes, $functions) as $className) {
+		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className) {
 			$headerLines[] = 'class ' . $className . ';';
 		}
 		if ($classes !== []) {
