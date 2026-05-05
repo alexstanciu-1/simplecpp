@@ -9,6 +9,24 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - No release notes recorded yet.
 
+## 0.1.10 - 2026-05-05
+
+### Additions
+
+- Added regression coverage for `scpp --doctor` best-effort subprocess timeout handling
+
+### Fixes
+
+- Fixed `scpp --doctor` so best-effort Git remote and compiler-launcher probes time out instead of hanging indefinitely
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- None
+
 ## 0.1.8 - 2026-05-04
 
 ### Additions

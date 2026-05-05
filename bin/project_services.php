@@ -696,7 +696,7 @@ function resolve_repo_git_diagnostics(string $repoRoot): array
 	$remote = scpp_run_optional_command($diagnostics['repo'], [$git, '-c', 'credential.interactive=false', 'ls-remote', 'origin', 'refs/heads/main'], [
 		'GIT_TERMINAL_PROMPT' => '0',
 		'GCM_INTERACTIVE' => 'Never',
-	]);
+	], 2.0);
 	if ($remote['exit_code'] !== 0 || trim($remote['stdout']) === '') {
 		return $diagnostics;
 	}
@@ -712,8 +712,14 @@ function resolve_repo_git_diagnostics(string $repoRoot): array
 	return $diagnostics;
 }
 
-/** @param list<string> $command @param array<string,string> $extraEnv @return array{exit_code:int,stdout:string,stderr:string} */
-function scpp_run_optional_command(string $cwd, array $command, array $extraEnv = []): array
+/**
+ * Run a best-effort subprocess for diagnostics without risking an indefinite hang.
+ *
+ * @param list<string> $command
+ * @param array<string,string> $extraEnv
+ * @return array{exit_code:int,stdout:string,stderr:string}
+ */
+function scpp_run_optional_command(string $cwd, array $command, array $extraEnv = [], ?float $timeoutSeconds = 3.0): array
 {
 	$descriptor = [
 		0 => ['pipe', 'r'],
@@ -729,13 +735,76 @@ function scpp_run_optional_command(string $cwd, array $command, array $extraEnv 
 		];
 	}
 	fclose($pipes[0]);
-	$stdout = stream_get_contents($pipes[1]);
-	$stderr = stream_get_contents($pipes[2]);
+	stream_set_blocking($pipes[1], false);
+	stream_set_blocking($pipes[2], false);
+	$stdout = '';
+	$stderr = '';
+	$timedOut = false;
+	$deadline = $timeoutSeconds !== null ? microtime(true) + $timeoutSeconds : null;
+	while (true) {
+		$read = [];
+		if (is_resource($pipes[1]) && !feof($pipes[1])) {
+			$read[] = $pipes[1];
+		}
+		if (is_resource($pipes[2]) && !feof($pipes[2])) {
+			$read[] = $pipes[2];
+		}
+
+		if ($read !== []) {
+			$seconds = 0;
+			$micros = 200000;
+			if ($deadline !== null) {
+				$remaining = $deadline - microtime(true);
+				if ($remaining <= 0.0) {
+					$timedOut = true;
+					break;
+				}
+				$seconds = (int) floor($remaining);
+				$micros = (int) max(0, min(999999, floor(($remaining - $seconds) * 1000000)));
+			}
+			$write = null;
+			$except = null;
+			$selected = @stream_select($read, $write, $except, $seconds, $micros);
+			if ($selected === false) {
+				break;
+			}
+			foreach ($read as $stream) {
+				$chunk = stream_get_contents($stream);
+				if (!is_string($chunk) || $chunk === '') {
+					continue;
+				}
+				if ($stream === $pipes[1]) {
+					$stdout .= $chunk;
+					continue;
+				}
+				$stderr .= $chunk;
+			}
+		}
+
+		$status = proc_get_status($process);
+		if (!is_array($status) || ($status['running'] ?? false) !== true) {
+			break;
+		}
+	}
+
+	if ($timedOut) {
+		@proc_terminate($process);
+		$stderr .= ($stderr === '' ? '' : PHP_EOL) . 'Timed out after ' . rtrim(rtrim(sprintf('%.1f', (float) $timeoutSeconds), '0'), '.') . 's';
+	}
+
+	$tailStdout = stream_get_contents($pipes[1]);
+	if (is_string($tailStdout) && $tailStdout !== '') {
+		$stdout .= $tailStdout;
+	}
+	$tailStderr = stream_get_contents($pipes[2]);
+	if (is_string($tailStderr) && $tailStderr !== '') {
+		$stderr .= $tailStderr;
+	}
 	fclose($pipes[1]);
 	fclose($pipes[2]);
 	$status = proc_close($process);
 	return [
-		'exit_code' => is_int($status) ? $status : 1,
+		'exit_code' => $timedOut ? 124 : (is_int($status) ? $status : 1),
 		'stdout' => is_string($stdout) ? $stdout : '',
 		'stderr' => is_string($stderr) ? $stderr : '',
 	];
@@ -2457,24 +2526,8 @@ function detect_compiler_launcher(string $compilerCommand): ?string
 
 function compiler_launcher_is_usable(string $launcherCommand, string $compilerCommand): bool
 {
-	$command = [$launcherCommand, $compilerCommand, '--version'];
-	$descriptor = [
-		0 => ['pipe', 'r'],
-		1 => ['pipe', 'w'],
-		2 => ['pipe', 'w'],
-	];
-	$process = @proc_open($command, $descriptor, $pipes, null, scpp_build_process_environment());
-	if (!is_resource($process)) {
-		return false;
-	}
-
-	fclose($pipes[0]);
-	stream_get_contents($pipes[1]);
-	stream_get_contents($pipes[2]);
-	fclose($pipes[1]);
-	fclose($pipes[2]);
-	$status = proc_close($process);
-	return is_int($status) && $status === 0;
+	$result = scpp_run_optional_command(getcwd() === false ? '.' : getcwd(), [$launcherCommand, $compilerCommand, '--version'], [], 2.0);
+	return $result['exit_code'] === 0;
 }
 
 function detect_archiver_command(string $compilerKind): ?string
