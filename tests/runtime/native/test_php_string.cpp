@@ -180,16 +180,16 @@ static void test_hex_bin_helpers() {
 }
 
 static void test_implode() {
-	scpp::hash_t<scpp::string_t> table;
-	table.append(scpp::string_t("a"));
-	table.append(scpp::string_t("b"));
-	table.append(scpp::string_t("c"));
+	scpp::hash_t<scpp::string_t, scpp::int_t> table;
+	(void)table.append(scpp::string_t("a"));
+	(void)table.append(scpp::string_t("b"));
+	(void)table.append(scpp::string_t("c"));
 	assert(scpp::php::implode(scpp::string_t(","), table).native_value() == "a,b,c");
 
 	scpp::hash_t<scpp::string_t> assoc;
 	assoc.set(scpp::string_t("first"), scpp::string_t("red"));
 	assoc.set(scpp::string_t("second"), scpp::string_t("green"));
-	assoc.set(scpp::int_t(7), scpp::string_t("blue"));
+	assoc.set(scpp::string_t("third"), scpp::string_t("blue"));
 	assert(scpp::php::implode(scpp::string_t("|"), assoc).native_value() == "red|green|blue");
 
 	scpp::vector_t<scpp::string_t> pieces;

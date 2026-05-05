@@ -329,7 +329,7 @@ static void test_value_t_table_access_and_identity() {
 
 
 static void test_dynamic_t_identity_and_explicit_conversion() {
-	scpp::dynamic_t payload = scpp::dynamic_(scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1))).value;
+	scpp::dynamic_t<> payload = scpp::dynamic_(scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1))).value;
 	scpp::mixed_t left(scpp::dynamic_box(payload));
 	scpp::mixed_t right(scpp::dynamic_box(payload));
 

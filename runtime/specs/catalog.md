@@ -162,12 +162,14 @@ Contract:
 - MUST preserve distinction among scalar, null, and dynamic/container forms
 - MUST not erase `null`/`false` distinctions
 
-### `hash_t<T>` â€” Stable
+### `hash_t<T_VALUE, T_KEY = string_t>` â€” Stable
 Runtime table / associative container.
 
 Contract:
 - MUST support keyed access under runtime-defined array/table semantics
 - MUST follow `specs/array_semantics.md`
+- `hash_t<mixed_t, mixed_t>` remains the dynamic PHP-array/storage specialization
+- typed runtime maps default to `string_t` keys and may opt into an explicit supported `T_KEY`
 
 ### `vector_t<T>` â€” Stable
 Runtime vector wrapper.
@@ -180,11 +182,13 @@ Contract:
 Alias for shared dynamic object/table storage.
 
 Definition:
-- `dynamic_t = shared_p<hash_t<mixed_t>>`
+- committed v1 default meaning: `dynamic_t<>`, backed by `shared_p<hash_t<mixed_t, mixed_t>>`
+- runtime implementation note: headers currently expose `dynamic_t<T_VALUE, T_KEY> = shared_p<hash_t<T_VALUE, T_KEY>>`
 
 Contract:
 - MUST represent shared dynamic table/object-like storage
-- MUST remain distinct in meaning from plain `hash_t<mixed_t>`
+- MUST remain distinct in meaning from plain `hash_t<mixed_t, mixed_t>`
+- non-default `dynamic_t<...>` instantiations are runtime-side generalization in the current phase, not a language-surface expansion
 
 ## 4.5 Ownership wrappers
 

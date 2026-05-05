@@ -374,7 +374,8 @@ inline vector_t<string_t> split(const string_t &separator, const string_t &value
 	return split(separator, value, PHP_INT_MAX);
 }
 
-inline string_t join(const string_t &separator, const hash_t<string_t> &pieces) {
+template <typename K>
+inline string_t join(const string_t &separator, const hash_t<string_t, K> &pieces) {
 	std::string out;
 	bool first = true;
 	pieces.debug_visit_entries([&](const auto &, const string_t &entry) {

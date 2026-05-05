@@ -435,14 +435,16 @@ Table-carrier exceptions:
 
 `dynamic_t` is the runtime dynamic-object form used for shared property-bag semantics.
 
-- public runtime handle: `using dynamic_t = shared_p<hash_t<mixed_t>>;`
+- committed v1 language/runtime-facing default handle: `dynamic_t<>`, meaning shared storage backed by `hash_t<mixed_t, mixed_t>`
+- the runtime headers currently define `dynamic_t` as a template alias family whose default instantiation is that v1 handle
+- non-default `dynamic_t<...>` instantiations are runtime-side generalization only for now and do not widen the committed language surface in this phase
 - `mixed_t` stores it under a dedicated `dynamic_v` kind
 - storage is shared
 - plain copy preserves shared identity
 - dynamic/native inheritance or structural mixing is forbidden
 - explicit conversion only:
-	- `to_dynamic(const hash_t<mixed_t>&)`
-	- `to_hash(const dynamic_t&)`
+	- `to_dynamic(const hash_t<mixed_t, mixed_t>&)` for the default v1 dynamic form
+	- `to_hash(const dynamic_t<>&)` for the default v1 dynamic form
 - v1 source lowering currently supported:
 	- `new stdClass()`
 	- `(object)[ ... ]`

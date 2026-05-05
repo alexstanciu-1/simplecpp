@@ -65,8 +65,8 @@ public:
 
 	int_t num_rows = int_t(0);
 
-	dynamic_t fetch_assoc();
-	dynamic_t fetch_row();
+	dynamic_t<> fetch_assoc();
+	dynamic_t<> fetch_row();
 
 private:
 	std::shared_ptr<db::mysql_module::result_handle> handle_;

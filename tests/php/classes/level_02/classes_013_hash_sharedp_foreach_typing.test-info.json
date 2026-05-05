@@ -1,6 +1,6 @@
 {
-    "id": "vector_004_vector_append_basic",
-    "feature": "vector",
+    "id": "classes_013_hash_sharedp_foreach_typing",
+    "feature": "classes",
     "level": "level_02",
     "outcome": "positive",
     "enabled": true,
@@ -21,7 +21,7 @@
         "php": {
             "run": true,
             "exit_code": 0,
-            "stdout": "10\n20\n",
+            "stdout": "Id\nTitle\nId\nTitle\nId\n",
             "stderr": ""
         },
         "generate": {
@@ -35,15 +35,17 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "10\n20\n",
+            "stdout": "Id\nTitle\nId\nTitle\nId\n",
             "stderr": ""
         }
     },
     "tags": [
-        "types",
-        "vector"
+        "classes",
+        "hash",
+        "foreach",
+        "shared_p"
     ],
-    "notes": "Vector append generation lowers to push_back and should compile and run successfully.",
+    "notes": "Typed hash<model_property> foreach should preserve concrete key/value typing across loop values, property access, and assignment into another typed hash.",
     "build": {
         "sanitizers": null
     }

@@ -248,7 +248,7 @@ private:
 		skip_whitespace();
 		if (!at_end() && peek() == ']') {
 			++pos_;
-			return mixed_t(dynamic_box(dynamic_t(out)));
+			return mixed_t(dynamic_box(dynamic_t<>(out)));
 		}
 		while (true) {
 			static_cast<void>(out->append(parse_value()));
@@ -264,7 +264,7 @@ private:
 			}
 			throw_json_error("expected ',' or ']'", pos_);
 		}
-		return mixed_t(dynamic_box(dynamic_t(out)));
+		return mixed_t(dynamic_box(dynamic_t<>(out)));
 	}
 
 	[[nodiscard]] mixed_t parse_object() {
@@ -275,7 +275,7 @@ private:
 		skip_whitespace();
 		if (!at_end() && peek() == '}') {
 			++pos_;
-			return mixed_t(dynamic_box(dynamic_t(out)));
+			return mixed_t(dynamic_box(dynamic_t<>(out)));
 		}
 		while (true) {
 			skip_whitespace();
@@ -301,7 +301,7 @@ private:
 			}
 			throw_json_error("expected ',' or '}'", pos_);
 		}
-		return mixed_t(dynamic_box(dynamic_t(out)));
+		return mixed_t(dynamic_box(dynamic_t<>(out)));
 	}
 
 public:

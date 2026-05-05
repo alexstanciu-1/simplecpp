@@ -72,14 +72,14 @@ static void test_json_encode_shapes() {
 	auto shared_table = scpp::shared<scpp::hash_t<scpp::mixed_t>>();
 	static_cast<void>(shared_table->append(scpp::mixed_t(scpp::int_t(7))));
 	static_cast<void>(shared_table->append(scpp::mixed_t(scpp::string_t("ok"))));
-	assert(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t(shared_table)))).native_value() == "[7,\"ok\"]");
+	assert(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t<>(shared_table)))).native_value() == "[7,\"ok\"]");
 }
 
 static void test_json_encode_key_and_error_contracts() {
 	auto object_like = scpp::shared<scpp::hash_t<scpp::mixed_t>>();
 	object_like->set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t(1)));
 	object_like->set(scpp::int_t(42), scpp::mixed_t(scpp::int_t(2)));
-	assert(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t(object_like)))).native_value() == "{\"a\":1,\"42\":2}");
+	assert(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t<>(object_like)))).native_value() == "{\"a\":1,\"42\":2}");
 
 	scpp_test::expect_throw<std::runtime_error>([]() {
 		static_cast<void>(scpp::json::json_decode(scpp::string_t("{\"x\":1 trailing")));

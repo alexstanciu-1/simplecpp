@@ -44,7 +44,7 @@
         "hash",
         "literal"
     ],
-    "notes": "Typed hash literals should allow mixing explicit keyed entries with append-style entries.",
+    "notes": "Typed hashes with explicit int keys should allow literal initialization plus append-style entries.",
     "build": {
         "sanitizers": null
     }

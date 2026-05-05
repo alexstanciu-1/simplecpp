@@ -332,10 +332,12 @@ Priority note:
 
 ### Typed hashes
 - `/** hash<T> */ []` lowers to `hash_t<T>{}`
-- `/** hash<T> */ ["k" => v, ...]` lowers to a typed `hash_t<T>` initializer sequence
-- typed hash literals may mix explicit keyed entries and append-style entries
+- `/** hash<T> */ ["k" => v, ...]` lowers to a typed `hash_t<T>` initializer sequence with the default `string_t` key surface
+- `/** hash<T, T_KEY> */ ...` lowers to `hash_t<T, T_KEY>` when an explicit typed key family is requested
+- typed hash literals may use keyed entries for all supported key families
+- append-style entries are structurally available on the runtime surface for generator compatibility, but are semantically valid only for integer-keyed typed hashes
 - typed hash read-only dim access lowers through checked keyed access
-- typed hash write dim access lowers through mutating keyed access / append on `hash_t<T>`
+- typed hash write dim access lowers through mutating keyed access / append on `hash_t<T>` or `hash_t<T, T_KEY>` as appropriate
 
 ### Intentional v1 deviations from PHP
 - `hash_t` keeps integer keys and string keys distinct (`1` != `"1"`)

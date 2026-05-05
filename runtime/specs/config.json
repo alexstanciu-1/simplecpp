@@ -150,8 +150,8 @@
 				}
 			},
 			"object_like_form": {
-				"storage_type": "hash_t",
-				"carrier_type": "shared_p<hash_t>",
+				"storage_type": "hash_t<mixed_t, mixed_t>",
+				"carrier_type": "dynamic_t<>",
 				"public_runtime_type": "dynamic_t",
 				"missing_property_read": "null_via__find_val",
 				"identity": "pointer_identity",
@@ -620,15 +620,15 @@
 				},
 				{
 					"name": "table_v",
-					"public_meaning": "owned hash_t<mixed_t>"
+					"public_meaning": "owned hash_t<mixed_t, mixed_t>"
 				},
 				{
 					"name": "shared_table_v",
-					"public_meaning": "shared hash_t<mixed_t>"
+					"public_meaning": "shared hash_t<mixed_t, mixed_t>"
 				},
 				{
 					"name": "weak_table_v",
-					"public_meaning": "weak hash_t<mixed_t>"
+					"public_meaning": "weak hash_t<mixed_t, mixed_t>"
 				}
 			],
 			"current_accessors": {
@@ -640,7 +640,7 @@
 				},
 				"probe_accessors": {
 					"string_if": "returns const string_t* or nullptr",
-					"table_if": "returns hash_t<mixed_t>* / const hash_t<mixed_t>* for owned/shared table; otherwise nullptr",
+					"table_if": "returns hash_t<mixed_t, mixed_t>* / const hash_t<mixed_t, mixed_t>* for owned/shared table; otherwise nullptr",
 					"shared_table_if": "returns shared table handle probe or nullptr",
 					"weak_table_if": "returns weak table handle probe or nullptr"
 				},
@@ -697,10 +697,10 @@
 					"int_v": "int_t",
 					"float_v": "float_t",
 					"string_v": "string_t",
-					"table_v": "hash_t<mixed_t> owned table carrier",
-					"shared_table_v": "shared_p<hash_t<mixed_t>> carrier",
+					"table_v": "hash_t<mixed_t, mixed_t> owned table carrier",
+					"shared_table_v": "shared_p<hash_t<mixed_t, mixed_t>> carrier",
 					"dynamic_v": "dynamic_t carrier",
-					"weak_table_v": "weak_p<hash_t<mixed_t>> carrier"
+					"weak_table_v": "weak_p<hash_t<mixed_t, mixed_t>> carrier"
 				},
 				"operator_surface": {
 					"binary_arithmetic": [
@@ -1208,7 +1208,7 @@
 		},
 		{
 			"from": "mixed_t",
-			"to": "shared_p<hash_t<mixed_t>>",
+			"to": "shared_p<hash_t<mixed_t, mixed_t>>",
 			"kind": "boundary_implicit_v1_visible_intention",
 			"form": "named_cast",
 			"cast_name": "cast",
@@ -1216,7 +1216,7 @@
 		},
 		{
 			"from": "mixed_t",
-			"to": "weak_p<hash_t<mixed_t>>",
+			"to": "weak_p<hash_t<mixed_t, mixed_t>>",
 			"kind": "boundary_implicit_v1_visible_intention",
 			"form": "named_cast",
 			"cast_name": "cast",

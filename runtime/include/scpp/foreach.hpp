@@ -88,13 +88,13 @@ private:
 	vector_t<T> *owner_;
 };
 
-template <typename T>
+template <typename T, typename K = typename default_hash_key<T>::type>
 class foreach_hash_range final {
 public:
 	foreach_hash_range() noexcept
 		: owner_(&empty_owner()) {}
 
-	foreach_hash_range(hash_t<T> &owner) noexcept
+	foreach_hash_range(hash_t<T, K> &owner) noexcept
 		: owner_(&owner) {}
 
 	[[nodiscard]] auto begin() const noexcept {
@@ -106,12 +106,12 @@ public:
 	}
 
 private:
-	static hash_t<T> &empty_owner() {
-		static hash_t<T> empty;
+	static hash_t<T, K> &empty_owner() {
+		static hash_t<T, K> empty;
 		return empty;
 	}
 
-	hash_t<T> *owner_;
+	hash_t<T, K> *owner_;
 };
 
 template <typename T>
@@ -119,9 +119,9 @@ template <typename T>
 	return foreach_vector_range<T>(value);
 }
 
-template <typename T>
-[[nodiscard]] inline foreach_hash_range<T> foreach_range(hash_t<T> &value) noexcept {
-	return foreach_hash_range<T>(value);
+template <typename T, typename K>
+[[nodiscard]] inline foreach_hash_range<T, K> foreach_range(hash_t<T, K> &value) noexcept {
+	return foreach_hash_range<T, K>(value);
 }
 
 [[nodiscard]] inline foreach_hash_range<mixed_t> foreach_range(mixed_t &value) noexcept {
@@ -155,28 +155,28 @@ template <typename T>
 	return foreach_vector_range<T>();
 }
 
-template <typename T>
-[[nodiscard]] inline foreach_hash_range<T> foreach_range(result<hash_t<T>> &value) noexcept {
+template <typename T, typename K>
+[[nodiscard]] inline foreach_hash_range<T, K> foreach_range(result<hash_t<T, K>> &value) noexcept {
 	if (value.has_value().native_value()) {
-		return foreach_hash_range<T>(value.value());
+		return foreach_hash_range<T, K>(value.value());
 	}
-	return foreach_hash_range<T>();
+	return foreach_hash_range<T, K>();
 }
 
-template <typename T>
-[[nodiscard]] inline foreach_hash_range<T> foreach_range(result_or_false<hash_t<T>> &value) noexcept {
+template <typename T, typename K>
+[[nodiscard]] inline foreach_hash_range<T, K> foreach_range(result_or_false<hash_t<T, K>> &value) noexcept {
 	if (value.has_value().native_value()) {
-		return foreach_hash_range<T>(value.value());
+		return foreach_hash_range<T, K>(value.value());
 	}
-	return foreach_hash_range<T>();
+	return foreach_hash_range<T, K>();
 }
 
-template <typename T>
-[[nodiscard]] inline foreach_hash_range<T> foreach_range(result_or_bool<hash_t<T>> &value) noexcept {
+template <typename T, typename K>
+[[nodiscard]] inline foreach_hash_range<T, K> foreach_range(result_or_bool<hash_t<T, K>> &value) noexcept {
 	if (value.has_value().native_value()) {
-		return foreach_hash_range<T>(value.value());
+		return foreach_hash_range<T, K>(value.value());
 	}
-	return foreach_hash_range<T>();
+	return foreach_hash_range<T, K>();
 }
 
 [[nodiscard]] inline foreach_hash_range<mixed_t> foreach_range(result<mixed_t> &value) noexcept {
