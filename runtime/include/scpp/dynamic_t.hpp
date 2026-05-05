@@ -1,22 +1,25 @@
 #pragma once
 
+#include "scpp/detail.hpp"
 #include "scpp/shared_p.hpp"
 
 namespace scpp {
 
-class mixed_t;
-template <typename T_VALUE> class hash_t;
+// dynamic_t is the shared-identity handle form of hash_t.
+// The default dynamic runtime surface remains dynamic_t<mixed_t>.
+template <typename T_VALUE = mixed_t, typename T_KEY = typename default_hash_key<T_VALUE>::type>
+using dynamic_t = shared_p<hash_t<T_VALUE, T_KEY>>;
 
-// dynamic_t is the public runtime handle for shared dynamic-object storage.
-// v1 intentionally aliases the shared hash payload while keeping runtime semantics distinct.
-using dynamic_t = shared_p<hash_t<mixed_t>>;
-
-struct dynamic_init_t final {
-	dynamic_t value;
+template <typename T_VALUE = mixed_t, typename T_KEY = typename default_hash_key<T_VALUE>::type>
+struct dynamic_init_t_of final {
+	dynamic_t<T_VALUE, T_KEY> value;
 };
 
-[[nodiscard]] inline dynamic_init_t dynamic_box(dynamic_t value) {
-	return dynamic_init_t{std::move(value)};
+using dynamic_init_t = dynamic_init_t_of<>;
+
+template <typename T_VALUE = mixed_t, typename T_KEY = typename default_hash_key<T_VALUE>::type>
+[[nodiscard]] inline dynamic_init_t_of<T_VALUE, T_KEY> dynamic_box(dynamic_t<T_VALUE, T_KEY> value) {
+	return dynamic_init_t_of<T_VALUE, T_KEY>{std::move(value)};
 }
 
 } // namespace scpp

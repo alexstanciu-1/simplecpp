@@ -3303,7 +3303,7 @@ final class Generator
 					if ($this->isUntypedTableHandleType($baseType)) {
 						$appendBase = '(' . $base . ')';
 					}
-					$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? 'push_back' : ($this->isUntypedTableHandleType($baseType) ? '->append' : '.append');
+					$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? '.push_back' : ($this->isUntypedTableHandleType($baseType) ? '->append' : '.append');
 					$appendValue = $value;
 					if ($this->shouldInlineAssignmentValue($exprNode)) {
 						return ['(void) ' . $appendBase . $appendMethod . '(' . $appendValue . ');'];
@@ -3855,14 +3855,14 @@ final class Generator
 		}
 
 		$entryName = '__scpp_foreach_entry_' . $statement->line;
-		$sourceType = $this->inferExprType($payload['expr'] ?? null);
+		$sourceType = $this->inferExprTypeWithNamespace($payload['expr'] ?? null, $namespacePhp);
 		$isVectorLikeForeach = $this->isForeachVectorLikeType($sourceType);
 		$sourceTempName = $this->allocateGeneratedLocalName('__scpp_foreach_source_' . $statement->line);
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
-		} elseif (preg_match('/^hash_t<(.+)>$/', $sourceType, $matches) === 1) {
-			$valueStoredType = $matches[1];
+		} elseif (($hashTypeParts = $this->parseHashTypeParts($sourceType)) !== null) {
+			$valueStoredType = $hashTypeParts['value'];
 		} elseif (!$isVectorLikeForeach) {
 			$valueStoredType = 'mixed_t';
 		}
@@ -3881,8 +3881,10 @@ final class Generator
 		$keyCppName = null;
 		if ($keyName !== null) {
 			$keyCppName = $this->localCppName($keyName);
-			$lines[] = $this->indent(1) . 'auto ' . $keyCppName . ' = ' . $entryName . '.key();';
-			$this->declaredLocalTypes[$keyName] = $isVectorLikeForeach ? 'int_t' : 'mixed_t';
+			$lines[] = $this->indent(1) . 'auto&& ' . $keyCppName . ' = ' . $entryName . '.key();';
+			$this->declaredLocalTypes[$keyName] = $isVectorLikeForeach
+				? 'int_t'
+				: (($hashTypeParts = $this->parseHashTypeParts($sourceType)) !== null ? $hashTypeParts['key'] : 'mixed_t');
 			$this->declaredLocals[$keyName] = true;
 		}
 
@@ -3890,12 +3892,19 @@ final class Generator
 			$this->foreachReferenceSlotStack[] = [
 				$valueName => $entryName . '.value_ref()',
 			];
+			$this->declaredLocals[$valueName] = true;
+			if ($valueStoredType !== null) {
+				$this->declaredLocalTypes[$valueName] = $valueStoredType;
+			}
 		} else {
 			$valueCppName = $this->localCppName($valueName);
 			$hasOuterValueBinding = isset($scopedLocals[$valueName]);
 			$currentElementExpr = $entryName . '.value_copy()';
 			if ($hasOuterValueBinding) {
 				$lines[] = $this->indent(1) . $valueCppName . ' = ' . $currentElementExpr . ';';
+				if ($valueStoredType !== null) {
+					$this->declaredLocalTypes[$valueName] = $valueStoredType;
+				}
 			} else {
 				$lines[] = $this->indent(1) . 'auto ' . $valueCppName . ' = ' . $currentElementExpr . ';';
 				$this->declaredLocals[$valueName] = true;
@@ -4196,7 +4205,7 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if (preg_match('/^hash_t<(.+)>$/', $baseType) === 1) {
+		if ($this->parseHashTypeParts($baseType) !== null) {
 			return $base . '.at(' . $dim . ')';
 		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
@@ -4233,7 +4242,7 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if (preg_match('/^hash_t<(.+)>$/', $baseType) === 1) {
+		if ($this->parseHashTypeParts($baseType) !== null) {
 			return $base . '[' . $dim . ']';
 		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
@@ -4263,6 +4272,31 @@ final class Generator
 			|| $type === 'unique_p<::scpp::hash_t<mixed_t>>'
 			|| $type === '::scpp::unique_p<hash_t<mixed_t>>'
 			|| $type === '::scpp::unique_p<::scpp::hash_t<mixed_t>>';
+	}
+
+	/** @return array{value: string, key: string}|null */
+	private function parseHashTypeParts(string $type): ?array
+	{
+		$normalized = trim($type);
+		if (str_starts_with($normalized, '::scpp::')) {
+			$normalized = substr($normalized, strlen('::scpp::'));
+		}
+
+		if (preg_match('/^hash_t<(.+)>$/', $normalized, $matches) !== 1) {
+			return null;
+		}
+
+		$args = $this->typeMapper->splitTopLevelGenericArgs($matches[1]);
+		if (count($args) < 1 || count($args) > 2) {
+			return null;
+		}
+
+		$valueType = trim($args[0]);
+		$keyType = count($args) === 2
+			? trim($args[1])
+			: ($valueType === 'mixed_t' ? 'mixed_t' : 'string_t');
+
+		return ['value' => $valueType, 'key' => $keyType];
 	}
 
 	private function renderUntypedTableAccessBase(string $base, string $type): string
@@ -4834,13 +4868,14 @@ final class Generator
 		}
 
 		$mappedHashType = $typedLocalType !== null ? $this->mapTypedHashLocalType($typedLocalType) : null;
-		if ($mappedHashType !== null) {
-			if (preg_match('/^hash_t<(.+)>$/', $mappedHashType, $matches) !== 1) {
-				$this->errors[] = 'Unsupported typed hash mapping for ' . $typedLocalType . '.';
-				return '/* unsupported-typed-hash */';
-			}
+			if ($mappedHashType !== null) {
+				$hashTypeParts = $this->parseHashTypeParts($mappedHashType);
+				if ($hashTypeParts === null) {
+					$this->errors[] = 'Unsupported typed hash mapping for ' . $typedLocalType . '.';
+					return '/* unsupported-typed-hash */';
+				}
 
-			$valueType = $matches[1];
+				$valueType = $hashTypeParts['value'];
 			$lines = [
 				'[&]() -> ' . $mappedHashType . ' {',
 				$this->indent(1) . $mappedHashType . ' __scpp_hash_value{};',
@@ -6669,8 +6704,18 @@ final class Generator
 		if ($kind === AstKind::STATIC_CALL) {
 			return 'auto';
 		}
-		if ($kind === AstKind::NEW && $this->isStdClassNewExpr($expr)) {
-			return 'mixed_t';
+		if ($kind === AstKind::NEW) {
+			if ($this->isStdClassNewExpr($expr)) {
+				return 'mixed_t';
+			}
+
+			$constructedClass = $this->extractDirectConstructedClassTypeName($expr);
+			if ($constructedClass !== null) {
+				$mappedClass = $this->typeMapper->mapClassName($constructedClass);
+				$classDecl = $this->classDecls[$constructedClass] ?? $this->classDecls[basename(str_replace('\\', '/', $constructedClass))] ?? null;
+				return $classDecl instanceof ClassDecl && $classDecl->isEnum ? $mappedClass : 'shared_p<' . $mappedClass . '>';
+			}
+			return 'auto';
 		}
 		if ($kind === AstKind::ARRAY) {
 			return 'mixed_t';
@@ -6683,16 +6728,77 @@ final class Generator
 			if (preg_match('/^vector_t<(.+)>$/', $baseType, $matches) === 1) {
 				return $matches[1];
 			}
-			if (preg_match('/^hash_t<(.+)>$/', $baseType, $matches) === 1) {
-				return $matches[1];
-			}
+				if (($hashTypeParts = $this->parseHashTypeParts($baseType)) !== null) {
+					return $hashTypeParts['value'];
+				}
 			if ($this->isUntypedTableType($baseType) || $baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
+				return 'mixed_t';
+			}
+			return 'auto';
+		}
+		if ($kind === AstKind::PROP) {
+			$baseType = $this->inferExprType($expr->children['expr'] ?? null);
+			$propName = (string) ($expr->children['prop'] ?? '');
+			$propertyDecl = $this->lookupPropertyDeclByMappedBaseType($baseType, $propName);
+			if ($propertyDecl instanceof PropertyDecl && $propertyDecl->type !== null) {
+				return $this->typeMapper->mapDeclaredType($propertyDecl->type);
+			}
+			if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 				return 'mixed_t';
 			}
 			return 'auto';
 		}
 
 		return 'auto';
+	}
+
+	private function lookupPropertyDeclByMappedBaseType(string $baseType, string $propName): ?PropertyDecl
+	{
+		$classType = $this->extractMappedClassCarrierType($baseType);
+		if ($classType === null) {
+			return null;
+		}
+
+		$normalized = ltrim($classType, ':');
+		if (str_starts_with($normalized, 'scpp::')) {
+			$normalized = substr($normalized, strlen('scpp::'));
+		}
+
+		$phpQualified = str_replace('::', '\\', $normalized);
+		$phpShort = basename(str_replace('\\', '/', $phpQualified));
+		$candidates = array_values(array_unique(array_filter([$phpQualified, $phpShort], static fn ($v) => $v !== '')));
+
+		foreach ($candidates as $candidate) {
+			$classDecl = $this->classDecls[$candidate] ?? null;
+			if (!$classDecl instanceof ClassDecl) {
+				continue;
+			}
+			foreach ($classDecl->properties as $property) {
+				if ($property->name === $propName) {
+					return $property;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private function extractMappedClassCarrierType(string $type): ?string
+	{
+		$trimmed = trim($type);
+		if ($trimmed === '' || $trimmed === 'mixed_t' || $trimmed === 'auto') {
+			return null;
+		}
+
+		if (preg_match('/^(?:shared_p|unique_p|weak_p|value_p)<(.+)>$/', $trimmed, $matches) === 1) {
+			return trim($matches[1]);
+		}
+
+		if (str_contains($trimmed, '<')) {
+			return null;
+		}
+
+		return $trimmed;
 	}
 
 	private function isForeachVectorLikeType(string $sourceType): bool

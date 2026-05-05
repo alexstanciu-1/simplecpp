@@ -1,6 +1,6 @@
 {
-    "id": "vector_004_vector_append_basic",
-    "feature": "vector",
+    "id": "classes_015_hash_sharedp_key_stabilization",
+    "feature": "classes",
     "level": "level_02",
     "outcome": "positive",
     "enabled": true,
@@ -21,7 +21,7 @@
         "php": {
             "run": true,
             "exit_code": 0,
-            "stdout": "10\n20\n",
+            "stdout": "Id\nTitle\n",
             "stderr": ""
         },
         "generate": {
@@ -35,15 +35,18 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "10\n20\n",
+            "stdout": "Id\nTitle\n",
             "stderr": ""
         }
     },
     "tags": [
-        "types",
-        "vector"
+        "classes",
+        "hash",
+        "foreach",
+        "shared_p",
+        "stabilization"
     ],
-    "notes": "Vector append generation lowers to push_back and should compile and run successfully.",
+    "notes": "Typed hash keys and values should stabilize cleanly through typed locals and write back into another hash<model_property>.",
     "build": {
         "sanitizers": null
     }

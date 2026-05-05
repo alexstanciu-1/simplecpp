@@ -182,7 +182,8 @@ Use this order:
 - Prefer explicit types at meaningful boundaries.
 - Avoid `mixed_t` when the shape is known.
 - Prefer `vector<T>` for typed sequential data when possible.
-- Prefer `hash_t<T>` for typed keyed data when possible.
+- Prefer `hash<T>` for typed keyed data when string keys are the natural shape.
+- Use `hash<T, T_KEY>` when the key family is intentionally typed and not the default string-key shape.
 - Use `mixed_t` only when the value is genuinely dynamic.
 - Resolve wrappers early: `nullable<T>`, `result<T>`, `result_or_false<T>`, `result_or_bool<T>`.
 - Keep `null`, `false`, and error as separate states.
@@ -223,7 +224,8 @@ Use this order:
 | `take` with nullable | `if (take($name, $maybe_name)) { ... }` |
 | typed local by doc comment | `$count /** int */ = 0;` |
 | typed vector local | `$items /** vector<int> */ = [1, 2, 3];` |
-| typed hash local | `$by_name /** hash_t<int> */ = ["a" => 1, "b" => 2];` |
+| typed hash local | `$by_name /** hash<int> */ = ["a" => 1, "b" => 2];` |
+| typed int-key hash local | `$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];` |
 | typed class property | `public $list /** vector<T> */ = [];` |
 | vector property with class element | `public $properties /** vector<model_property> */ = [];` |
 | vector literal needs explicit typed context | `$v /** vector<int> */ = [1, 2, 3];` |
@@ -255,21 +257,23 @@ Use this order:
 | `$count /** int */ = $row["count"];` | `$count = $row["count"];` |
 | `if ($status === "ready")` | `if ($status)` |
 | `vector<T>` for typed lists | dynamic list/table when not needed |
-| `hash_t<T>` for typed keyed data | dynamic keyed table when not needed |
+| `hash<T>` for typed string-keyed data | dynamic keyed table when not needed |
+| `hash<T, T_KEY>` for explicit typed keys | forcing everything through dynamic keyed tables |
 | `take($out, $err, fs_get(...))` | carrying wrapper state further than needed |
 | explicit success/failure checks | ambiguous truthiness |
 
 ## Container Guidance
 
 - Use `vector<T>` when the data is sequential and typed.
-- Use `hash_t<T>` when the data is keyed and typed.
+- Use `hash<T>` when the data is keyed, typed, and naturally string-keyed.
+- Use `hash<T, T_KEY>` when the key family itself is intentionally typed.
 - Use `mixed_t` only when the shape is intentionally dynamic or unknown.
 - This is guidance, not a forced rule.
 
 In practice:
 
 - `vector<string>` is a better fit than a dynamic packed container when all elements are strings.
-- `hash_t<int>` is a better fit than a dynamic object-like table when keys are known strings and values are all ints.
+- `hash<int>` is a better fit than a dynamic object-like table when keys are known strings and values are all ints.
 - `mixed_t` remains appropriate for decoded JSON, loose interop surfaces, and truly dynamic payloads.
 
 ## Wrapper Pattern
@@ -498,7 +502,7 @@ This example assumes the decoded JSON has the expected keys and compatible value
 - strict builtin names are not just cosmetic aliases for old PHP names
 - dynamic decoded JSON is not the same as a fully trusted typed structure
 - `null`, `false`, and error should not be collapsed into one “falsy” state
-- `vector<T>` and `hash_t<T>` are deliberate typed choices, not just PHP arrays with extra decoration
+- `vector<T>` and `hash<T>` / `hash<T, T_KEY>` are deliberate typed choices, not just PHP arrays with extra decoration
 - supported `try/catch/finally` does not mean full PHP exception parity in every shape
 
 ## Do Not Assume

@@ -382,10 +382,10 @@ Included initially:
 - explicit bridge use at typed boundaries remains the cleanup direction for sites where the generator can emit it; current v1 non-explicit acceptance at some language/S2S sites is documented in `../../specs/dynamic_types.md` under Explicit Typed Boundaries and Technical Compromises
 - until approved generator parity exists, runtime/operator/cast surface must preserve those v1-visible typed-destination bridges instead of removing them for API purity alone
 - `mixed_t::operator[]` is the primary mutating chained dynamic array access helper
-- mutable `mixed_t::operator[]` autovivifies `null` into an owned `hash_t<mixed_t>`
+- mutable `mixed_t::operator[]` autovivifies `null` into an owned `hash_t<mixed_t, mixed_t>`
 - `mixed_t::get(...)` is the primary non-mutating read helper and returns a null-kind `mixed_t` on missing key or non-array receiver
 - `mixed_t::empty()` and `mixed_t::isset(...)` are convenience methods only; they delegate to the shared `scpp::empty(...)` and `scpp::isset(...)` authorities rather than owning those semantics
-- `_find_val()` remains available as the non-inserting `hash_t<mixed_t>` helper used by generator read paths
+- `_find_val()` remains available as the non-inserting `hash_t<mixed_t, mixed_t>` helper used by generator read paths
 - dynamic arithmetic, comparison, logical operators, mutation, compound assignment, and increment/decrement on `mixed_t` are enabled through runtime-kind dispatch that delegates to the native wrapper rules already defined elsewhere in the config
 - the delegation format is semantic-tuple based: once runtime kinds are established, the runtime resolves the operation as the corresponding native rule such as `int_t + int_t`, `int_t + float_t`, `float_t++`, `string_t += string_t`, or `bool_t && bool_t`
 - `mixed_t` does not define an independent concat operator family; PHP `.` / `.=` must be lowered by the generator into explicit text conversion plus primitive `string_t` concat
@@ -397,7 +397,8 @@ Included initially:
 
 ### 6.14 `hash_t`
 - typed reads/writes/calls originating from dynamic table/value access must follow the compromise notes in `../../specs/dynamic_types.md` when current v1 behavior accepts non-explicit conversion at explicit typed boundary sites
-- `hash_t` remains the underlying ordered-table container, while generator-facing PHP `array` lowering now targets `mixed_t` for the fat-variable path
+- `hash_t` remains the underlying ordered-table container family, while generator-facing PHP `array` lowering now targets `mixed_t` for the fat-variable path
+- `hash_t<mixed_t, mixed_t>` is the preserved dynamic PHP-array specialization; typed runtime maps use `hash_t<T_VALUE, T_KEY>` with `string_t` as the default key type
 - implementation is adapted from the donor `mem_container` storage design, but generated code must target `hash_t` only
 - `find()` is the non-inserting lookup API and returns `maybe_value_t`
 - `at()` is checked non-inserting access and follows throw-style semantics on miss
@@ -567,7 +568,14 @@ Packed-mode optimizations must not violate this invariant.
 
 
 
-- `php::count(const hash_t<mixed_t>&)` is supported and returns the logical size of a lowered PHP array.
+- `php::count(const hash_t<mixed_t, mixed_t>&)` is supported and returns the logical size of a lowered PHP array.
+
+### 6.15 `dynamic_t`
+- the committed v1 public/default meaning of `dynamic_t<>` is shared dynamic storage backed by `hash_t<mixed_t, mixed_t>`
+- `mixed_t` stores that form under the dedicated `dynamic_v` runtime kind
+- runtime headers currently expose a broader alias family `dynamic_t<T_VALUE, T_KEY> = shared_p<hash_t<T_VALUE, T_KEY>>`
+- that broader template form is a runtime-side generalization for now, not a language-surface expansion
+- explicit conversion remains the rule between the default dynamic form and plain hash payloads
 
 ## Compile-time language target
 

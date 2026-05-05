@@ -18,7 +18,7 @@
 
 namespace scpp {
 
-template <typename T_VALUE> class hash_t;
+template <typename T_VALUE, typename T_KEY> class hash_t;
 
 template <typename T> class scalar_ref;
 
@@ -59,7 +59,7 @@ private:
 		unique_p<string_t> string_value_;
 		unique_p<hash_t<mixed_t>> table_value_;
 		shared_p<hash_t<mixed_t>> shared_table_value_;
-		dynamic_t dynamic_value_;
+		dynamic_t<> dynamic_value_;
 		weak_p<hash_t<mixed_t>> weak_table_value_;
 	};
 
@@ -164,8 +164,8 @@ public:
 	[[nodiscard]] const hash_t<mixed_t> *table_if() const noexcept;
 	[[nodiscard]] shared_p<hash_t<mixed_t>> *shared_table_if() noexcept;
 	[[nodiscard]] const shared_p<hash_t<mixed_t>> *shared_table_if() const noexcept;
-	[[nodiscard]] dynamic_t *dynamic_if() noexcept;
-	[[nodiscard]] const dynamic_t *dynamic_if() const noexcept;
+	[[nodiscard]] dynamic_t<> *dynamic_if() noexcept;
+	[[nodiscard]] const dynamic_t<> *dynamic_if() const noexcept;
 	[[nodiscard]] weak_p<hash_t<mixed_t>> *weak_table_if() noexcept;
 	[[nodiscard]] const weak_p<hash_t<mixed_t>> *weak_table_if() const noexcept;
 

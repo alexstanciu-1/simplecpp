@@ -2,10 +2,10 @@
 declare(strict_types=1);
 
 $items /** hash<int> */ = ["a" => 1, "b" => 2];
-$items[5] = 7;
-$items[] = 9;
+$items["c"] = 7;
+$items["d"] = 9;
 
 echo count($items), "\n";
 echo $items["a"], "\n";
-echo $items[5], "\n";
-echo $items[6], "\n";
+echo $items["c"], "\n";
+echo $items["d"], "\n";

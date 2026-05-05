@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-$items /** hash<string> */ = [
-	"abc" => "value #1",
-	"def" => "value #2",
-	"value #3"
+$items /** hash<string,int> */ = [
+	"value #1",
+	"value #2"
 ];
+$items[] = "value #3";
 
 echo count($items), "\n";
-echo $items["abc"], "\n";
-echo $items["def"], "\n";
 echo $items[0], "\n";
+echo $items[1], "\n";
+echo $items[2], "\n";

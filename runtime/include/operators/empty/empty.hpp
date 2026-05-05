@@ -148,8 +148,8 @@ inline bool_t empty(const vector_t<T> &value) {
 	return value.empty();
 }
 
-template <typename T>
-inline bool_t empty(const hash_t<T> &value) {
+template <typename T, typename K>
+inline bool_t empty(const hash_t<T, K> &value) {
 	return value.empty();
 }
 
@@ -238,8 +238,9 @@ inline bool_t empty(const vector_t<T> &value, const int key) {
 	return empty(value, int_t{static_cast<std::int64_t>(key)});
 }
 
-template <typename T>
-inline bool_t empty(const hash_t<T> &value, const int_t &key) {
+template <typename T, typename K>
+	requires std::same_as<K, int_t>
+inline bool_t empty(const hash_t<T, K> &value, const int_t &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(true);
 	}
@@ -250,8 +251,9 @@ inline bool_t empty(const hash_t<T> &value, const int_t &key) {
 	return empty(value.at(key));
 }
 
-template <typename T>
-inline bool_t empty(const hash_t<T> &value, const string_t &key) {
+template <typename T, typename K>
+	requires std::same_as<K, string_t>
+inline bool_t empty(const hash_t<T, K> &value, const string_t &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(true);
 	}
@@ -262,13 +264,52 @@ inline bool_t empty(const hash_t<T> &value, const string_t &key) {
 	return empty(value.at(key));
 }
 
-template <typename T>
-inline bool_t empty(const hash_t<T> &value, const char *key) {
+template <typename T, typename K>
+	requires std::same_as<K, string_t>
+inline bool_t empty(const hash_t<T, K> &value, const char *key) {
 	return empty(value, string_t{key});
 }
 
-template <typename T>
-inline bool_t empty(const hash_t<T> &value, const int key) {
+template <typename T, typename K>
+	requires std::same_as<K, int_t>
+inline bool_t empty(const hash_t<T, K> &value, const int key) {
+	return empty(value, int_t{static_cast<std::int64_t>(key)});
+}
+
+template <typename T, typename K>
+	requires (!std::same_as<K, int_t> && !std::same_as<K, string_t> && !std::same_as<K, mixed_t>)
+inline bool_t empty(const hash_t<T, K> &value, const K &key) {
+	if (!value.has(key).native_value()) {
+		return bool_t(true);
+	}
+	if constexpr (std::is_same_v<T, mixed_t>) {
+		const auto probe = detail::probe_value(value.at(key));
+		return detail::empty_from_probe(probe.state, probe.value);
+	}
+	return empty(value.at(key));
+}
+
+inline bool_t empty(const hash_t<mixed_t, mixed_t> &value, const int_t &key) {
+	if (!value.has(key).native_value()) {
+		return bool_t(true);
+	}
+	const auto probe = detail::probe_value(value.at(key));
+	return detail::empty_from_probe(probe.state, probe.value);
+}
+
+inline bool_t empty(const hash_t<mixed_t, mixed_t> &value, const string_t &key) {
+	if (!value.has(key).native_value()) {
+		return bool_t(true);
+	}
+	const auto probe = detail::probe_value(value.at(key));
+	return detail::empty_from_probe(probe.state, probe.value);
+}
+
+inline bool_t empty(const hash_t<mixed_t, mixed_t> &value, const char *key) {
+	return empty(value, string_t{key});
+}
+
+inline bool_t empty(const hash_t<mixed_t, mixed_t> &value, const int key) {
 	return empty(value, int_t{static_cast<std::int64_t>(key)});
 }
 

@@ -335,7 +335,7 @@ mixed_t::mixed_t(shared_p<hash_t<mixed_t>> value) noexcept : type_(kind_t::share
 	new (&shared_table_value_) shared_p<hash_t<mixed_t>>(std::move(value));
 }
 mixed_t::mixed_t(dynamic_init_t value) noexcept : type_(kind_t::dynamic_v) {
-	new (&dynamic_value_) dynamic_t(std::move(value.value));
+	new (&dynamic_value_) dynamic_t<>(std::move(value.value));
 }
 mixed_t::mixed_t(weak_p<hash_t<mixed_t>> value) noexcept : type_(kind_t::weak_table_v) {
 	new (&weak_table_value_) weak_p<hash_t<mixed_t>>(std::move(value));
@@ -571,10 +571,10 @@ shared_p<hash_t<mixed_t>> *mixed_t::shared_table_if() noexcept {
 const shared_p<hash_t<mixed_t>> *mixed_t::shared_table_if() const noexcept {
 	return (type_ == kind_t::shared_table_v) ? &shared_table_value_ : nullptr;
 }
-dynamic_t *mixed_t::dynamic_if() noexcept {
+dynamic_t<> *mixed_t::dynamic_if() noexcept {
 	return (type_ == kind_t::dynamic_v) ? &dynamic_value_ : nullptr;
 }
-const dynamic_t *mixed_t::dynamic_if() const noexcept {
+const dynamic_t<> *mixed_t::dynamic_if() const noexcept {
 	return (type_ == kind_t::dynamic_v) ? &dynamic_value_ : nullptr;
 }
 
@@ -1154,7 +1154,7 @@ void mixed_t::destroy() noexcept {
 		case kind_t::string_v:       string_value_.~unique_p<string_t>();              break;
 		case kind_t::table_v:        table_value_.~unique_p<hash_t<mixed_t>>();       break;
 		case kind_t::shared_table_v: shared_table_value_.~shared_p<hash_t<mixed_t>>(); break;
-		case kind_t::dynamic_v:      dynamic_value_.~dynamic_t();                      break;
+		case kind_t::dynamic_v:      dynamic_value_.~dynamic_t<>();                    break;
 		case kind_t::weak_table_v:   weak_table_value_.~weak_p<hash_t<mixed_t>>();    break;
 		case kind_t::null_v:         break;
 	}
@@ -1176,7 +1176,7 @@ void mixed_t::move_construct(mixed_t &&other) noexcept {
 		case kind_t::shared_table_v:
 			new (&shared_table_value_) shared_p<hash_t<mixed_t>>(std::move(other.shared_table_value_)); break;
 		case kind_t::dynamic_v:
-			new (&dynamic_value_) dynamic_t(std::move(other.dynamic_value_)); break;
+			new (&dynamic_value_) dynamic_t<>(std::move(other.dynamic_value_)); break;
 		case kind_t::weak_table_v:
 			new (&weak_table_value_) weak_p<hash_t<mixed_t>>(std::move(other.weak_table_value_)); break;
 	}

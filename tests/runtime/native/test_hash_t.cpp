@@ -162,24 +162,24 @@ static void test_table_shared_object_like_contract() {
 
 // Verifies typed hash_t specializations, clear(), and builder helpers remain usable.
 static void test_typed_table_and_builder_contract() {
-	scpp::hash_t<scpp::int_t> ints;
+	scpp::hash_t<scpp::int_t, scpp::int_t> ints;
 	(void)ints.append(scpp::int_t(10));
 	(void)ints.append(scpp::int_t(20));
-	ints.set(scpp::string_t("x"), scpp::int_t(99));
+	ints.set(scpp::int_t(7), scpp::int_t(99));
 	assert(ints.size() == 3);
 	assert(ints.at(scpp::int_t(0)).native_value() == 10);
 	assert(ints.at(scpp::int_t(1)).native_value() == 20);
-	assert(ints.at(scpp::string_t("x")).native_value() == 99);
+	assert(ints.at(scpp::int_t(7)).native_value() == 99);
 	assert(scpp::was_found(ints.find(scpp::int_t(1))).native_value() == true);
 	assert(scpp::is_nullopt(ints.find(scpp::int_t(99))).native_value() == true);
 
-	scpp::hash_t<scpp::string_t> strings;
+	scpp::hash_t<scpp::string_t, scpp::int_t> strings;
 	(void)strings.append(scpp::string_t("alpha"));
 	(void)strings.append(scpp::string_t("beta"));
-	strings.set(scpp::string_t("key"), scpp::string_t("gamma"));
+	strings.set(scpp::int_t(7), scpp::string_t("gamma"));
 	assert(strings.at(scpp::int_t(0)).native_value() == "alpha");
 	assert(strings.at(scpp::int_t(1)).native_value() == "beta");
-	assert(strings.at(scpp::string_t("key")).native_value() == "gamma");
+	assert(strings.at(scpp::int_t(7)).native_value() == "gamma");
 
 	auto built = scpp::table_(
 		scpp::table_item_(scpp::int_t(1)),

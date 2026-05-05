@@ -7,7 +7,7 @@ See `../../specs/spec_map.md` for document hierarchy, authority, and v1 conflict
 
 ## 1. Purpose
 
-`scpp::hash_t` is the Prism++ runtime type used to represent the PHP surface concept of `array`.
+`scpp::hash_t` is the Prism++ runtime container family used to represent the PHP surface concept of `array` and the typed runtime map family.
 
 It is a specialized ordered key/value container with:
 
@@ -17,11 +17,12 @@ It is a specialized ordered key/value container with:
 - packed optimization when keys are `0..n-1`
 - associative behavior when needed
 
-`hash_t` is the runtime semantic type.
-`hash_t` is the only dynamic storage type in this phase.
-PHP-array-like lowering targets `hash_t` directly.
-Object-like lowering uses `shared_p<hash_t>`.
-`dynamic_t/stdClass` wording is explanatory only and does not introduce a separate runtime type.
+`hash_t` is the runtime semantic container family.
+`hash_t<mixed_t, mixed_t>` remains the dynamic PHP-array storage specialization in this phase.
+Typed runtime maps use `hash_t<T_VALUE, T_KEY>`, with `T_KEY = string_t` by default.
+PHP-array-like lowering targets the dynamic `mixed_t` / `hash_t<mixed_t, mixed_t>` path.
+Object-like lowering uses `dynamic_t<>`, whose committed v1 meaning remains shared dynamic storage backed by `hash_t<mixed_t, mixed_t>`.
+The runtime headers may expose a broader template form for `dynamic_t`, but that broader shape is not yet a language-surface commitment.
 
 The donor implementation is `mem_container`, but generated/runtime-facing code must target `hash_t` only.
 
@@ -78,20 +79,31 @@ Rejected public names:
 
 ## 5. Public key model
 
-Allowed public key types:
+For the dynamic specialization `hash_t<mixed_t, mixed_t>`, allowed public key types are:
 
 - `scpp::int_t`
 - `scpp::string_t`
 
+For the typed runtime family `hash_t<T_VALUE, T_KEY>`, the public key type is `T_KEY`.
+Current supported typed key families are:
+
+- `scpp::string_t`
+- `scpp::int_t`
+- `scpp::shared_p<T>`
+- `scpp::weak_p<T>`
+- `scpp::unique_p<T>`
+
 Rules:
 
 - integer keys and string keys are distinct
-- no implicit normalization between `123` and `"123"`
+- no implicit normalization between `123` and `"123"` for the typed runtime family
+- the dynamic PHP-target path keeps its documented runtime key behavior separately
 - overloads are preferred over a public `table_key_t` in v1
 
 ## 6. Public value model
 
-`hash_t` stores `scpp::mixed_t`.
+`hash_t<mixed_t, mixed_t>` stores `scpp::mixed_t`.
+Typed runtime maps `hash_t<T_VALUE, T_KEY>` store `T_VALUE`.
 
 Rules:
 
@@ -101,10 +113,16 @@ Rules:
 
 ## 7. Public lookup result type
 
-Official lookup result type:
+Official lookup result type for the dynamic specialization:
 
 ```cpp
 using maybe_value_t = nullable<mixed_t>;
+```
+
+Typed runtime maps use:
+
+```cpp
+nullable<T_VALUE>
 ```
 
 Semantics:
@@ -132,8 +150,10 @@ Priority note:
 - when current generated/user-visible behavior depends on a temporary dynamic-to-typed bridge at a valid explicit typed boundary site, that bridge remains part of the v1 contract until the generator can materialize the explicit cast itself
 
 
+Dynamic specialization:
+
 ```cpp
-class hash_t {
+class hash_t<mixed_t, mixed_t> {
 public:
 	bool_t empty() const;
 	std::size_t size() const;
@@ -166,6 +186,39 @@ public:
 	bool remove(const string_t& key);
 };
 ```
+
+Typed runtime family:
+
+```cpp
+template <typename T_VALUE, typename T_KEY = string_t>
+class hash_t {
+public:
+	bool_t empty() const;
+	std::size_t size() const;
+	bool_t is_packed() const;
+	void clear();
+
+	int_t append(const T_VALUE& value);
+
+	hash_t& set(const T_KEY& key, const T_VALUE& value);
+
+	bool_t has(const T_KEY& key) const;
+	nullable<T_VALUE> find(const T_KEY& key) const;
+
+	T_VALUE& at(const T_KEY& key);
+	const T_VALUE& at(const T_KEY& key) const;
+
+	T_VALUE& operator[](const T_KEY& key);
+	const T_VALUE& operator[](const T_KEY& key) const;
+
+	bool remove(const T_KEY& key);
+};
+```
+
+Typed-family note:
+- `append(...)` remains present for generator/runtime structural compatibility
+- it is semantically valid only when `T_KEY = int_t`
+- other typed-key modes must fail clearly at runtime rather than pretending append semantics exist
 
 ## 9. Method semantics
 
@@ -387,7 +440,13 @@ The following is forbidden:
 
 ## Dynamic Runtime Integration
 
-`hash_t` operates in conjunction with `mixed_t`. All stored values are dynamic runtime values.
+`hash_t` operates in conjunction with `mixed_t`, but not every instantiation stores dynamic values.
+
+Current rule:
+
+- `hash_t<mixed_t, mixed_t>` stores dynamic runtime values and is the PHP-array storage specialization
+- typed runtime maps `hash_t<T_VALUE, T_KEY>` store typed values directly
+- mixed/dynamic helper behavior such as `_find_val()` is specific to the dynamic specialization and to `mixed_t`-mediated paths
 
 Invalid operations on retrieved values result in runtime errors, not compile-time errors.
 
@@ -399,6 +458,7 @@ Invalid operations on retrieved values result in runtime errors, not compile-tim
 Current rule:
 
 - if `mixed_t` holds an owned or shared `hash_t`, `_find_val()` forwards to that table
+- in current practice this means the dynamic/default `hash_t<mixed_t, mixed_t>` path used by `mixed_t`
 - if `mixed_t` is `null`, `_find_val()` returns `mixed_t(null_t{})`
 - if `mixed_t` holds an expired weak table carrier, `_find_val()` currently returns `mixed_t(null_t{})`
 - other receiver kinds fail at runtime
@@ -409,7 +469,7 @@ This keeps generator read lowering simple for patterns such as chained dynamic r
 ## Nested table dim support
 
 - Nested table dim reads chain through direct `operator[]` access so `$x["inner"][0]` follows the runtime `mixed_t` / `hash_t` contract.
-- Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `mixed_t` / `hash_t<mixed_t>`.
+- Nested append on a table-valued slot is supported through chained `operator[]` plus `append(...)` on `mixed_t` / `hash_t<mixed_t, mixed_t>`.
 - Example: `x[0]["items"].append(1);`
 - Table-valued assignments into table slots now use direct `mixed_t` assignment through the returned `operator[]` reference.
 
@@ -425,20 +485,22 @@ This keeps generator read lowering simple for patterns such as chained dynamic r
 
 ## Runtime helpers
 
-- `php::count(const hash_t<mixed_t>&)` is supported and returns the current logical element count of the PHP array wrapper.
+- `php::count(const hash_t<mixed_t, mixed_t>&)` is supported and returns the current logical element count of the PHP array wrapper.
 
 ## PHP target key semantics
 
-When the runtime is compiled with `-DSCPP_LANGUAGE_TARGET_PHP=1`, `hash_t<mixed_t>` normalizes decimal integer strings to integer keys at runtime through the table key path. This normalization must be shared by set/get/isset/unset/operator[] so behavior stays consistent. Append must continue from the current maximum integer key plus one.
+When the runtime is compiled with `-DSCPP_LANGUAGE_TARGET_PHP=1`, `hash_t<mixed_t, mixed_t>` normalizes decimal integer strings to integer keys at runtime through the table key path. This normalization must be shared by set/get/isset/unset/operator[] so behavior stays consistent. Append must continue from the current maximum integer key plus one.
 
 
 
 ## `dynamic_t` relation
 
-`dynamic_t` reuses `hash_t<mixed_t>` as its v1 payload, but it remains a distinct runtime form.
-Explicit conversion is required between `hash_t` and `dynamic_t`.
+The committed v1 public/default meaning of `dynamic_t<>` reuses `hash_t<mixed_t, mixed_t>` as its payload, but it remains a distinct runtime form.
+Runtime headers currently generalize this to `dynamic_t<T_VALUE, T_KEY> = shared_p<hash_t<T_VALUE, T_KEY>>`.
+That broader template shape is a runtime-side generalization for now, not a language-surface expansion.
+Explicit conversion remains required between the default dynamic form and plain hash payloads.
 
 
 ## `try_ref(...)` in the current safe subset
 
-`hash_t<T_VALUE>::try_ref(...)` is a restricted escape hatch. It currently succeeds only when `T_VALUE` is `shared_p<T>` and returns a copy of that handle. All other element types throw. This preserves memory/lifetime safety without exposing native references or pointers to table interior storage.
+`hash_t<T_VALUE, T_KEY>::try_ref(...)` is a restricted escape hatch. It currently succeeds only when `T_VALUE` is `shared_p<T>` and returns a copy of that handle. All other element types throw. This preserves memory/lifetime safety without exposing native references or pointers to table interior storage.
