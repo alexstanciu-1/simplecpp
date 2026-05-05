@@ -63,6 +63,7 @@ final class Generator
 	private ?array $currentFinallyReturnContext = null;
 	/** @var null|array{returnType:?string,paramTypes:list<string>} */
 	private ?array $currentExpectedClosureSignature = null;
+	private ?string $currentNamespacePhp = null;
 	private ?string $currentClassName = null;
 	private ?string $currentParentClass = null;
 	private int $tempCounter = 0;
@@ -1172,6 +1173,8 @@ final class Generator
 	/** @param list<UseDecl> $uses @param list<ConstantDecl> $constants @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @param list<Statement> $statements */
 	private function emitNamespaceBlock(array &$header, array &$source, string $namespaceCpp, ?string $namespacePhp, array $uses, array $constants, array $classes, array $functions, array $statements, ?string $syntheticMainName = null): void
 	{
+		$previousNamespacePhp = $this->currentNamespacePhp;
+		$this->currentNamespacePhp = $namespacePhp;
 		$header[] = 'namespace ' . $namespaceCpp . ' {';
 		$header[] = '';
 		$source[] = 'namespace ' . $namespaceCpp . ' {';
@@ -1201,7 +1204,7 @@ final class Generator
 		if ($constants !== []) {
 			$header[] = '';
 		}
-		foreach ($this->collectNamespaceForwardClassNames($classes, $functions) as $className) {
+		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className) {
 			$header[] = 'class ' . $className . ';';
 		}
 		if ($classes !== []) {
@@ -1222,10 +1225,11 @@ final class Generator
 		$header[] = '';
 		$source[] = '}';
 		$source[] = '';
+		$this->currentNamespacePhp = $previousNamespacePhp;
 	}
 
 	/** @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @return list<string> */
-	private function collectNamespaceForwardClassNames(array $classes, array $functions): array
+	private function collectNamespaceForwardClassNames(array $classes, array $functions, ?string $namespacePhp): array
 	{
 		$out = [];
 		foreach ($classes as $class) {
@@ -1233,34 +1237,34 @@ final class Generator
 				$out[$class->name] = true;
 			}
 			if ($class->parentClass !== null) {
-				$this->collectForwardClassNamesFromType($class->parentClass, $out);
+				$this->collectForwardClassNamesFromType($class->parentClass, $out, $namespacePhp);
 			}
 			foreach ($class->interfaces as $interface) {
-				$this->collectForwardClassNamesFromType($interface, $out);
+				$this->collectForwardClassNamesFromType($interface, $out, $namespacePhp);
 			}
 			foreach ($class->properties as $property) {
 				if ($property->type !== null) {
-					$this->collectForwardClassNamesFromType($property->type, $out);
+					$this->collectForwardClassNamesFromType($property->type, $out, $namespacePhp);
 				}
 			}
 			foreach ($class->methods as $method) {
 				if ($method->returnType !== null) {
-					$this->collectForwardClassNamesFromType($method->returnType, $out);
+					$this->collectForwardClassNamesFromType($method->returnType, $out, $namespacePhp);
 				}
 				foreach ($method->params as $param) {
 					if ($param->type !== null) {
-						$this->collectForwardClassNamesFromType($param->type, $out);
+						$this->collectForwardClassNamesFromType($param->type, $out, $namespacePhp);
 					}
 				}
 			}
 		}
 		foreach ($functions as $function) {
 			if ($function->returnType !== null) {
-				$this->collectForwardClassNamesFromType($function->returnType, $out);
+				$this->collectForwardClassNamesFromType($function->returnType, $out, $namespacePhp);
 			}
 			foreach ($function->params as $param) {
 				if ($param->type !== null) {
-					$this->collectForwardClassNamesFromType($param->type, $out);
+					$this->collectForwardClassNamesFromType($param->type, $out, $namespacePhp);
 				}
 			}
 		}
@@ -1271,26 +1275,28 @@ final class Generator
 	}
 
 	/** @param array<string, bool> $out */
-	private function collectForwardClassNamesFromType(string $type, array &$out): void
+	private function collectForwardClassNamesFromType(string $type, array &$out, ?string $namespacePhp): void
 	{
-		$normalized = trim($type);
+		$normalized = trim($this->qualifyDeclaredPhpType($type, $namespacePhp) ?? $type);
 		if ($normalized === '') {
 			return;
 		}
 		if (str_starts_with($normalized, '?')) {
-			$this->collectForwardClassNamesFromType(substr($normalized, 1), $out);
+			$this->collectForwardClassNamesFromType(substr($normalized, 1), $out, $namespacePhp);
 			return;
 		}
 		if (preg_match('/^(?:vector|vector_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
-			$this->collectForwardClassNamesFromType(trim($matches[1]), $out);
+			foreach ($this->typeMapper->splitTopLevelGenericArgs($matches[1]) as $arg) {
+				$this->collectForwardClassNamesFromType(trim($arg), $out, $namespacePhp);
+			}
 			return;
 		}
 		if (str_starts_with($normalized, 'value ')) {
-			$this->collectForwardClassNamesFromType(trim(substr($normalized, strlen('value '))), $out);
+			$this->collectForwardClassNamesFromType(trim(substr($normalized, strlen('value '))), $out, $namespacePhp);
 			return;
 		}
 		if (str_starts_with($normalized, 'ref ')) {
-			$this->collectForwardClassNamesFromType(trim(substr($normalized, strlen('ref '))), $out);
+			$this->collectForwardClassNamesFromType(trim(substr($normalized, strlen('ref '))), $out, $namespacePhp);
 			return;
 		}
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
@@ -2306,7 +2312,7 @@ final class Generator
 			return '/* unsupported-ref-return-type */';
 		}
 
-		return $this->typeMapper->mapReturnType($phpType, $explicitRef);
+		return $this->typeMapper->mapReturnType($this->qualifyDeclaredPhpType($phpType, $this->currentNamespacePhp), $explicitRef);
 	}
 
 	/**
@@ -2986,20 +2992,21 @@ final class Generator
 			return $this->renderTemplateTypeName($param) . '&&';
 		}
 
-		$mapped = $this->typeMapper->mapDeclaredType($param->type);
+		$qualifiedType = $this->qualifyDeclaredPhpType($param->type, $this->currentNamespacePhp);
+		$mapped = $this->typeMapper->mapDeclaredType($qualifiedType);
 		if ($param->isReference) {
-			$proxyType = $this->typeMapper->mapReferenceProxyType($param->type);
+			$proxyType = $this->typeMapper->mapReferenceProxyType($qualifiedType);
 			if ($proxyType !== null) {
 				return $proxyType;
 			}
-			return $this->typeMapper->mapParamType($param->type, true);
+			return $this->typeMapper->mapParamType($qualifiedType, true);
 		}
 
 		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'mixed_t' || str_starts_with($mapped, 'vector_t<') || str_starts_with($mapped, 'hash_t<'))) {
 			return $mapped;
 		}
 
-		return $this->typeMapper->mapParamType($param->type, false);
+		return $this->typeMapper->mapParamType($qualifiedType, false);
 	}
 
 	private function renderBody(array $statements, ?string $namespacePhp): string
@@ -5151,7 +5158,7 @@ final class Generator
 
 	private function mapClosureDocParamType(string $docType, bool $isReference): string
 	{
-		return $this->typeMapper->mapParamType($docType, $isReference);
+		return $this->typeMapper->mapParamType($this->qualifyDeclaredPhpType($docType, $this->currentNamespacePhp), $isReference);
 	}
 
 	private function renderArrowFunctionExpr(object $expr, ?string $namespacePhp): string
@@ -5586,7 +5593,7 @@ final class Generator
 		$docType = $this->resolveAstParamDocType($param);
 		$isReference = (((int) ($param->flags ?? 0)) & AstKind::PARAM_REF) !== 0;
 		if ($phpType !== null) {
-			return $this->typeMapper->mapParamType($phpType, $isReference);
+			return $this->typeMapper->mapParamType($this->qualifyDeclaredPhpType($phpType, $this->currentNamespacePhp), $isReference);
 		}
 		if ($docType !== null) {
 			return $this->mapClosureDocParamType($docType, $isReference);
@@ -5610,10 +5617,10 @@ final class Generator
 		$docType = $this->resolveAstParamDocType($param);
 		$isReference = (((int) ($param->flags ?? 0)) & AstKind::PARAM_REF) !== 0;
 		if ($phpType !== null) {
-			return $this->typeMapper->mapParamType($phpType, $isReference);
+			return $this->typeMapper->mapParamType($this->qualifyDeclaredPhpType($phpType, $this->currentNamespacePhp), $isReference);
 		}
 		if ($docType !== null) {
-			return $this->normalizeStoredLocalType($docType);
+			return $this->normalizeStoredLocalType($this->qualifyDeclaredPhpType($docType, $this->currentNamespacePhp));
 		}
 		if (is_string($expectedParamType) && $expectedParamType !== '') {
 			return $expectedParamType;
@@ -5636,7 +5643,7 @@ final class Generator
 			return '/* unsupported-closure-conflicting-return-type */';
 		}
 		if ($phpType !== null) {
-			return $this->typeMapper->mapReturnType($phpType, false);
+			return $this->typeMapper->mapReturnType($this->qualifyDeclaredPhpType($phpType, $this->currentNamespacePhp), false);
 		}
 
 		if ($docFunctionType !== null) {
@@ -5680,6 +5687,68 @@ final class Generator
 			return null;
 		}
 		return $inner;
+	}
+
+	private function qualifyDeclaredPhpType(?string $phpType, ?string $namespacePhp): ?string
+	{
+		if ($phpType === null) {
+			return null;
+		}
+
+		$normalized = trim($phpType);
+		if ($normalized === '') {
+			return $normalized;
+		}
+
+		$unionParts = $this->typeMapper->splitUnionTypes($normalized);
+		if (count($unionParts) > 1) {
+			$qualifiedUnionParts = [];
+			foreach ($unionParts as $part) {
+				$qualifiedUnionParts[] = $this->qualifyDeclaredPhpType($part, $namespacePhp) ?? $part;
+			}
+			return implode('|', $qualifiedUnionParts);
+		}
+
+		if (str_starts_with($normalized, '?')) {
+			$inner = trim(substr($normalized, 1));
+			return '?' . ($this->qualifyDeclaredPhpType($inner, $namespacePhp) ?? $inner);
+		}
+
+		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|vector|vector_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+			$wrapper = $matches[1];
+			$args = $this->typeMapper->splitTopLevelGenericArgs($matches[2]);
+			$qualifiedArgs = [];
+			foreach ($args as $arg) {
+				$qualifiedArgs[] = $this->qualifyDeclaredPhpType($arg, $namespacePhp) ?? trim($arg);
+			}
+			return $wrapper . '<' . implode(', ', $qualifiedArgs) . '>';
+		}
+
+		return $this->resolveDeclaredClassLikeType($normalized, $namespacePhp);
+	}
+
+	private function resolveDeclaredClassLikeType(string $phpType, ?string $namespacePhp): string
+	{
+		$normalized = trim($phpType);
+		if ($normalized === '' || str_contains($normalized, '::')) {
+			return $normalized;
+		}
+
+		if (preg_match('/^(?:int|float|bool|string|array|mixed|void|int_t|float_t|bool_t|string_t|mixed_t|hash_t|vector_t)$/', $normalized) === 1) {
+			return $normalized;
+		}
+
+		if (in_array($normalized, ['self', 'parent', 'static'], true)) {
+			return $normalized;
+		}
+
+		$flags = str_starts_with($normalized, '\\') ? 0 : 1;
+		$resolved = $this->nameRegistry->resolveClass($normalized, $flags, $namespacePhp);
+		if (is_string($resolved) && $resolved !== '') {
+			return $resolved;
+		}
+
+		return $normalized;
 	}
 
 	private function readAstTypeName(mixed $typeNode): ?string
