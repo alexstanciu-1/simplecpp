@@ -524,6 +524,17 @@ final class Generator
 			return $renderedExpr;
 		}
 
+		// Keep nullable value-parameter normalization runtime-owned when the
+		// argument is already a concrete T. The generated C++ can bind through
+		// nullable<T>'s value constructor without inventing a synthetic
+		// cast<nullable<T>>(...) bridge in the S2S layer.
+		if (
+			preg_match('/^nullable<(.+)>$/', $expectedType, $nullableMatches) === 1
+			&& $exprType === $nullableMatches[1]
+		) {
+			return $renderedExpr;
+		}
+
 		if (
 			str_starts_with($expectedType, 'result_or_false<')
 			&& $expectedType !== 'result_or_false<bool_t>'
