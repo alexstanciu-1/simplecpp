@@ -52,8 +52,8 @@ public:
 	virtual ~result_handle() = default;
 
 	[[nodiscard]] virtual std::int64_t num_rows() const = 0;
-	[[nodiscard]] virtual dynamic_t fetch_row() = 0;
-	[[nodiscard]] virtual dynamic_t fetch_assoc() = 0;
+	[[nodiscard]] virtual dynamic_t<> fetch_row() = 0;
+	[[nodiscard]] virtual dynamic_t<> fetch_assoc() = 0;
 	[[nodiscard]] virtual bool has_error() const = 0;
 	[[nodiscard]] virtual status last_status() const = 0;
 };

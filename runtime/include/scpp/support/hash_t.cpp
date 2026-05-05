@@ -7,16 +7,20 @@ namespace scpp {
 // Typed-destination bridging layered on top of those reads is governed by
 // specs/dynamic_types.md sections 1.2 and 1.3, not by hash_t alone.
 
-template <>
-mixed_t hash_t<mixed_t>::_find_val(const int_t &key) const {
-	auto [f, p] = find_int(static_cast<std::uint32_t>(key.native_value()));
+mixed_t hash_t<mixed_t, mixed_t>::_find_val(const int_t &key) const {
+	auto [f, p] = find_int(hash_detail::dyn_keys::pack(key));
 	if (!f) return mixed_t{null_t{}};
 	return p->clone();
 }
 
-template <>
-mixed_t hash_t<mixed_t>::_find_val(const string_t &key) const {
-	auto [f, p] = find_int(make_string_key(key));
+mixed_t hash_t<mixed_t, mixed_t>::_find_val(const string_t &key) const {
+	auto [f, p] = find_int(hash_detail::dyn_keys::pack(key));
+	if (!f) return mixed_t{null_t{}};
+	return p->clone();
+}
+
+mixed_t hash_t<mixed_t, mixed_t>::_find_val(const mixed_t &key) const {
+	auto [f, p] = find_int(hash_detail::dyn_keys::pack(key));
 	if (!f) return mixed_t{null_t{}};
 	return p->clone();
 }
@@ -28,7 +32,7 @@ template class hash_t<bool_t>;
 template class hash_t<int_t>;
 template class hash_t<float_t>;
 template class hash_t<string_t>;
-template class hash_t<mixed_t>;
+template class hash_t<mixed_t, mixed_t>;
 
 // Table-of-table ownership variants.
 template class hash_t<std::shared_ptr<hash_t<mixed_t>>>;

@@ -228,8 +228,56 @@ final class TypeMapper
 			return $this->mapDeclaredType($phpType);
 		}
 
-		$inner = trim($matches[1]);
-		return 'hash_t<' . $this->mapDeclaredType($inner) . '>';
+		$args = $this->splitTopLevelGenericArgs($matches[1]);
+		if (count($args) < 1 || count($args) > 2) {
+			return $this->mapDeclaredType($phpType);
+		}
+
+		$valueType = $this->mapDeclaredType($args[0]);
+		if (count($args) === 1) {
+			return 'hash_t<' . $valueType . '>';
+		}
+
+		$keyType = $this->mapDeclaredType($args[1]);
+		return 'hash_t<' . $valueType . ', ' . $keyType . '>';
+	}
+
+	/** @return list<string> */
+	public function splitTopLevelGenericArgs(string $payload): array
+	{
+		$parts = [];
+		$current = '';
+		$depth = 0;
+		$length = strlen($payload);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $payload[$i];
+			if ($ch === '<') {
+				$depth++;
+				$current .= $ch;
+				continue;
+			}
+			if ($ch === '>') {
+				$depth--;
+				$current .= $ch;
+				continue;
+			}
+			if ($ch === ',' && $depth === 0) {
+				$trimmed = trim($current);
+				if ($trimmed !== '') {
+					$parts[] = $trimmed;
+				}
+				$current = '';
+				continue;
+			}
+			$current .= $ch;
+		}
+
+		$trimmed = trim($current);
+		if ($trimmed !== '') {
+			$parts[] = $trimmed;
+		}
+
+		return $parts;
 	}
 
 	public function isInlineValueType(string $phpType): bool

@@ -28,8 +28,9 @@ inline bool_t isset(const vector_t<T> &value, const int key) {
 
 // Implements container-key isset() for hash wrappers.
 // How: mixed_t payloads stay null-sensitive, while typed payloads treat key presence as value presence because they cannot represent PHP null by default construction.
-template <typename T>
-inline bool_t isset(const hash_t<T> &value, const int_t &key) {
+template <typename T, typename K>
+	requires std::same_as<K, int_t>
+inline bool_t isset(const hash_t<T, K> &value, const int_t &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
 	}
@@ -39,8 +40,9 @@ inline bool_t isset(const hash_t<T> &value, const int_t &key) {
 	return bool_t(true);
 }
 
-template <typename T>
-inline bool_t isset(const hash_t<T> &value, const string_t &key) {
+template <typename T, typename K>
+	requires std::same_as<K, string_t>
+inline bool_t isset(const hash_t<T, K> &value, const string_t &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
 	}
@@ -50,13 +52,49 @@ inline bool_t isset(const hash_t<T> &value, const string_t &key) {
 	return bool_t(true);
 }
 
-template <typename T>
-inline bool_t isset(const hash_t<T> &value, const char *key) {
+template <typename T, typename K>
+	requires std::same_as<K, string_t>
+inline bool_t isset(const hash_t<T, K> &value, const char *key) {
 	return isset(value, string_t{key});
 }
 
-template <typename T>
-inline bool_t isset(const hash_t<T> &value, const int key) {
+template <typename T, typename K>
+	requires std::same_as<K, int_t>
+inline bool_t isset(const hash_t<T, K> &value, const int key) {
+	return isset(value, int_t{static_cast<std::int64_t>(key)});
+}
+
+template <typename T, typename K>
+	requires (!std::same_as<K, int_t> && !std::same_as<K, string_t> && !std::same_as<K, mixed_t>)
+inline bool_t isset(const hash_t<T, K> &value, const K &key) {
+	if (!value.has(key).native_value()) {
+		return bool_t(false);
+	}
+	if constexpr (std::is_same_v<T, mixed_t>) {
+		return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
+	}
+	return bool_t(true);
+}
+
+inline bool_t isset(const hash_t<mixed_t, mixed_t> &value, const int_t &key) {
+	if (!value.has(key).native_value()) {
+		return bool_t(false);
+	}
+	return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
+}
+
+inline bool_t isset(const hash_t<mixed_t, mixed_t> &value, const string_t &key) {
+	if (!value.has(key).native_value()) {
+		return bool_t(false);
+	}
+	return detail::isset_from_probe(detail::probe_value(value.at(key)).state);
+}
+
+inline bool_t isset(const hash_t<mixed_t, mixed_t> &value, const char *key) {
+	return isset(value, string_t{key});
+}
+
+inline bool_t isset(const hash_t<mixed_t, mixed_t> &value, const int key) {
 	return isset(value, int_t{static_cast<std::int64_t>(key)});
 }
 

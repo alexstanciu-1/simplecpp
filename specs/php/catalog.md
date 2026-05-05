@@ -99,7 +99,7 @@ foreach ($data as $item) {
 
 Contract:
 - Iteration over arrays/dynamic structures is supported
-- Iteration over typed `vector<T>` and `hash<T>` containers is supported
+- Iteration over typed `vector<T>`, `hash<T>`, and `hash<T, T_KEY>` containers is supported
 - Iteration over approved wrappers carrying iterable success payloads is supported
 - Direct iteration over a non-success wrapper state fails at runtime rather than silently acting as empty
 
@@ -124,13 +124,16 @@ Contract:
 ```php
 $list /** vector<int> */ = [1, 2, 3];
 $by_name /** hash<int> */ = ["a" => 1, "b" => 2];
+$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];
 ```
 
 Contract:
 - `vector<T>` is the typed sequential container surface
-- `hash<T>` is the typed keyed container surface
+- `hash<T>` is the typed keyed container surface with default `string` keys
+- `hash<T, T_KEY>` is the typed keyed container surface with an explicit supported key family
 - typed `vector<T>` literals must remain positional
-- typed `hash<T>` literals may use keyed or append-style entries
+- typed `hash<T>` literals use keyed entries on the default string-key surface
+- append-style typed hash entries are supported only for integer-keyed typed hashes such as `hash<T, int>`
 
 ## 7a. CLI Globals
 

@@ -7,8 +7,8 @@ class bucket {
 
 $b = new bucket();
 $b->values["a"] = 3;
-$b->values[] = 4;
+$b->values["b"] = 4;
 
 echo count($b->values), "\n";
 echo $b->values["a"], "\n";
-echo $b->values[0], "\n";
+echo $b->values["b"], "\n";

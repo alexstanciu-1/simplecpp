@@ -50,7 +50,18 @@ template <typename T> class result;
 
 // hash_t and value types full declarations in scpp/support/hash_t.hpp
 class mixed_t;
-template <typename T_VALUE = mixed_t> class hash_t;
+template <typename T_VALUE>
+struct default_hash_key {
+	using type = string_t;
+};
+
+template <>
+struct default_hash_key<mixed_t> {
+	using type = mixed_t;
+};
+
+template <typename T_VALUE = mixed_t, typename T_KEY = typename default_hash_key<T_VALUE>::type>
+class hash_t;
 
 // Cast helper forward declaration.
 template <typename To, typename From>

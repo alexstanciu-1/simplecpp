@@ -44,7 +44,7 @@
         "hash",
         "access"
     ],
-    "notes": "Typed hash literals should support keyed writes, append, count, and keyed reads.",
+    "notes": "Typed hash literals should support default string-key writes, count, and keyed reads.",
     "build": {
         "sanitizers": null
     }

@@ -51,7 +51,7 @@ bound_value bound_value::make_string(std::string value) {
 
 namespace {
 
-[[nodiscard]] inline dynamic_t make_empty_dynamic() {
+[[nodiscard]] inline dynamic_t<> make_empty_dynamic() {
 	return ::scpp::to_dynamic(hash_t<mixed_t>{});
 }
 
@@ -128,11 +128,11 @@ public:
 		return num_rows_;
 	}
 
-	[[nodiscard]] dynamic_t fetch_row() override {
+	[[nodiscard]] dynamic_t<> fetch_row() override {
 		return fetch_one(false);
 	}
 
-	[[nodiscard]] dynamic_t fetch_assoc() override {
+	[[nodiscard]] dynamic_t<> fetch_assoc() override {
 		return fetch_one(true);
 	}
 
@@ -151,7 +151,7 @@ private:
 	std::int64_t num_rows_ = 0;
 	status last_status_{};
 
-	[[nodiscard]] dynamic_t fetch_one(bool associative) {
+	[[nodiscard]] dynamic_t<> fetch_one(bool associative) {
 		if (result_ == nullptr) {
 			return make_empty_dynamic();
 		}
@@ -243,11 +243,11 @@ public:
 		return num_rows_;
 	}
 
-	[[nodiscard]] dynamic_t fetch_row() override {
+	[[nodiscard]] dynamic_t<> fetch_row() override {
 		return fetch_one(false);
 	}
 
-	[[nodiscard]] dynamic_t fetch_assoc() override {
+	[[nodiscard]] dynamic_t<> fetch_assoc() override {
 		return fetch_one(true);
 	}
 
@@ -271,7 +271,7 @@ private:
 	std::int64_t num_rows_ = 0;
 	status last_status_{};
 
-	[[nodiscard]] dynamic_t fetch_one(bool associative) {
+	[[nodiscard]] dynamic_t<> fetch_one(bool associative) {
 		if (stmt_ == nullptr) {
 			return make_empty_dynamic();
 		}

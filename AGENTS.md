@@ -72,6 +72,11 @@ Validate at the smallest layer that proves the change:
 
 See `docs/ai_onboarding/workflows.md` for the fuller task-routing and validation guide.
 
+## Planning Notes
+
+- Temporary planning notes for active tasks should default to `specs/planning/` unless a more specific owning folder is clearly better.
+- Planning notes must carry `Doc Status: planning` and must not be treated as semantic authority.
+
 ## Dev Server Linking
 
 - If the user asks the AI agent to link, re-link, activate, or start watch-sync to a dev server, the agent must first find, know, or request the shared `_dev_deploy` folder location.

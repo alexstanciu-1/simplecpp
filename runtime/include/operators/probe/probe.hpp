@@ -137,8 +137,8 @@ struct is_countable_lookup_target : std::false_type {};
 template <typename T>
 struct is_countable_lookup_target<vector_t<T>> : std::true_type {};
 
-template <typename T>
-struct is_countable_lookup_target<hash_t<T>> : std::true_type {};
+template <typename T, typename K>
+struct is_countable_lookup_target<hash_t<T, K>> : std::true_type {};
 
 template <>
 struct is_countable_lookup_target<mixed_t> : std::true_type {};

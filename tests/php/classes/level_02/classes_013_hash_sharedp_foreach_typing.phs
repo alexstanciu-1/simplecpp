@@ -1,0 +1,40 @@
+<?php
+declare(strict_types=1);
+
+namespace demo\schema;
+
+class model_property {
+	public string $name = "";
+}
+
+class model {
+	public $properties /** hash<model_property> */ = [];
+}
+
+namespace demo\app;
+
+use demo\schema\model;
+use demo\schema\model_property;
+
+$m = new model();
+
+$id = new model_property();
+$id->name = "Id";
+$m->properties["id"] = $id;
+
+$title = new model_property();
+$title->name = "Title";
+$m->properties["title"] = $title;
+
+$by_name /** hash<model_property> */ = [];
+
+foreach ($m->properties as $k => $prop) {
+	$by_name[$k] = $prop;
+	echo $prop->name, "\n";
+}
+
+foreach ($by_name as $prop) {
+	echo $prop->name, "\n";
+}
+
+echo $by_name["id"]->name, "\n";

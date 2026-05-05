@@ -151,7 +151,8 @@ inline mixed_t explode(const string_t &separator, const string_t &string) {
 	return explode(separator, string, PHP_INT_MAX);
 }
 
-inline string_t implode(const string_t &separator, const hash_t<string_t> &pieces) {
+template <typename K>
+inline string_t implode(const string_t &separator, const hash_t<string_t, K> &pieces) {
 	return scpp::str::join(separator, pieces);
 }
 
@@ -330,7 +331,6 @@ inline string_t to_string(const mixed_t &value) {
 	}
 	return string_t("");
 }
-
 
 template <typename T>
 // Converts one runtime value into its PHP echo/string representation.

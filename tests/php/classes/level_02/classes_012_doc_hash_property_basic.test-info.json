@@ -44,7 +44,7 @@
         "hash",
         "properties"
     ],
-    "notes": "A class property annotated as /** hash<int> */ should support typed hash initialization and keyed mutations.",
+    "notes": "A class property annotated as /** hash<int> */ should use the default string-key typed hash surface for keyed mutations.",
     "build": {
         "sanitizers": null
     }
