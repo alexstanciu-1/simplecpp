@@ -7,6 +7,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
+-- No release notes recorded yet.
+
+## 0.1.14 - 2026-05-06
+
+### Additions
+
+- None
+
+### Fixes
+
+- None
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- None
+
+## 0.1.13 - 2026-05-06
+
 ### Additions
 
 - Added targeted PHP regression coverage for typed-hash foreach over a fresh local initialized from a method returning a nullable typed object, preserving direct key usage at a `?string` helper boundary
