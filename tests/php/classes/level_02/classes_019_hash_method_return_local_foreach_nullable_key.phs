@@ -1,0 +1,66 @@
+<?php
+declare(strict_types=1);
+
+class model_property {
+	public string $name = "";
+	public bool $disabled = false;
+}
+
+class model_def {
+	public $properties /** hash<model_property> */ = [];
+}
+
+class assembler {
+	public function build(string $key, model_def $base, model_def $overrides): string {
+		$assembled = $this->assemble_path($key, $base);
+		if ($assembled === null) {
+			return "missing";
+		}
+
+		$out = new model_def();
+		foreach ($assembled->properties as $property_name => $typed_property) {
+			$override = $this->find_child_property($overrides, $property_name);
+			if ($override !== null && $override->disabled) {
+				continue;
+			}
+			if ($override !== null) {
+				$out->properties[$property_name] = $override;
+			} else {
+				$out->properties[$property_name] = $typed_property;
+			}
+		}
+
+		return isset($out->properties["id"]) ? $out->properties["id"]->name : "missing";
+	}
+
+	private function assemble_path(string $key, model_def $base): ?model_def {
+		if ($key === "") {
+			return null;
+		}
+		return $base;
+	}
+
+	private function find_child_property(model_def $parent, ?string $property_name): ?model_property {
+		if ($property_name === null || $property_name === "") {
+			return null;
+		}
+		if (!isset($parent->properties[$property_name])) {
+			return null;
+		}
+		return $parent->properties[$property_name];
+	}
+}
+
+$base = new model_def();
+$overrides = new model_def();
+
+$id = new model_property();
+$id->name = "Id";
+$base->properties["id"] = $id;
+
+$override = new model_property();
+$override->name = "Override";
+$overrides->properties["id"] = $override;
+
+$worker = new assembler();
+echo $worker->build("root", $base, $overrides), "\n";

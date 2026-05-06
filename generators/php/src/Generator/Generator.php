@@ -3293,7 +3293,7 @@ final class Generator
 				$this->declaredLocals[$name] = true;
 				$this->trackAssignedArrayShape($name, $exprNode, $effectiveTyped);
 				$closureFunctionType = $effectiveTyped === null ? $this->tryInferStdFunctionTypeFromClosureExpr($exprNode) : null;
-				$inferredType = $effectiveTyped ?? $closureFunctionType ?? $this->inferExprType($exprNode);
+				$inferredType = $effectiveTyped ?? $closureFunctionType ?? $this->inferExprTypeWithNamespace($exprNode, $namespacePhp);
 				if ($inferredType !== 'auto') {
 					$this->declaredLocalTypes[$name] = $effectiveTyped !== null ? $this->normalizeStoredLocalType($effectiveTyped) : $inferredType;
 				}
