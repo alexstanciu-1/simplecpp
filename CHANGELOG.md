@@ -7,7 +7,22 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
-- No release notes recorded yet.
+### Additions
+
+- Added targeted PHP regression coverage for typed-hash foreach over a fresh local initialized from a method returning a nullable typed object, preserving direct key usage at a `?string` helper boundary
+
+### Fixes
+
+- Fixed fresh-local generator type capture to reuse namespace-aware return-type recovery, preserving typed hash property shapes across method-return locals
+- Fixed the remaining reproduced Open M3 typed-hash foreach-key to nullable-string helper boundary by preventing `assembled->properties` loops from degrading foreach keys to `mixed_t`
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Explicit `(string)` stabilization should no longer be required in the reproduced `assemble_path(...): ?model` then `foreach ($assembled->properties as $property_name => ...)` Open M3 flow
 
 ## 0.1.12 - 2026-05-05
 
