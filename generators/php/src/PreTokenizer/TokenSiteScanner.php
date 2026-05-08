@@ -75,6 +75,12 @@ final class TokenSiteScanner
 		$ownerName = $this->readFunctionLikeName($tokens, $functionIndex, $openParenIndex);
 		$sites = $this->scanParameterSites($source, $openParenIndex, $closeParenIndex);
 
+		$inlineReturnSite = $this->scanInlineReturnCommentSite($source, $closeParenIndex + 1, $ownerKind, $ownerName, ['{']);
+		if ($inlineReturnSite !== null) {
+			$sites[] = $inlineReturnSite;
+			return $sites;
+		}
+
 		$returnSite = $this->scanColonReturnSite($source, $closeParenIndex + 1, $ownerKind, $ownerName);
 		if ($returnSite !== null) {
 			$sites[] = $returnSite;
@@ -99,6 +105,12 @@ final class TokenSiteScanner
 
 		$sites = $this->scanParameterSites($source, $openParenIndex, $closeParenIndex);
 
+		$inlineReturnSite = $this->scanInlineReturnCommentSite($source, $closeParenIndex + 1, 'closure_return', null, ['=>']);
+		if ($inlineReturnSite !== null) {
+			$sites[] = $inlineReturnSite;
+			return $sites;
+		}
+
 		$returnSite = $this->scanColonReturnSite($source, $closeParenIndex + 1, 'closure_return', null);
 		if ($returnSite !== null) {
 			$sites[] = $returnSite;
@@ -121,6 +133,12 @@ final class TokenSiteScanner
 		for ($i = $openParenIndex + 1; $i < $closeParenIndex; $i++) {
 			$token = $tokens[$i];
 			if (!$this->isVariableToken($token)) {
+				continue;
+			}
+
+			$inlineDocSite = $this->scanLeadingInlineParamTypeComment($source, $i, $openParenIndex);
+			if ($inlineDocSite !== null) {
+				$sites[] = $inlineDocSite;
 				continue;
 			}
 
@@ -156,6 +174,16 @@ final class TokenSiteScanner
 	private function scanVariableAssignmentSite(LexedSource $source, int $variableIndex): ?array
 	{
 		$tokens = $source->tokens;
+		$inlineTrailingSite = $this->scanTrailingInlineVariableTypeComment($source, $variableIndex);
+		if ($inlineTrailingSite !== null) {
+			return $inlineTrailingSite;
+		}
+
+		$inlineLeadingPropertySite = $this->scanLeadingInlinePropertyTypeComment($source, $variableIndex);
+		if ($inlineLeadingPropertySite !== null) {
+			return $inlineLeadingPropertySite;
+		}
+
 		$nextIndex = $this->findNextMeaningfulIndex($tokens, $variableIndex + 1, null);
 		if ($nextIndex === null) {
 			return null;
@@ -224,6 +252,39 @@ final class TokenSiteScanner
 	}
 
 	/** @return array{kind:string,name:?string,type:string,line:int,startOffset:int,endOffset:int,rewriteStart:int,rewriteEnd:int,replacement:string,ownerName?:?string}|null */
+	private function scanInlineReturnCommentSite(LexedSource $source, int $startIndex, string $returnKind, ?string $ownerName, array $allowedDelimiters): ?array
+	{
+		$tokens = $source->tokens;
+		$docIndex = $this->findNextNonWhitespaceIndex($tokens, $startIndex, null);
+		if ($docIndex === null || !$this->isDocCommentToken($tokens[$docIndex])) {
+			return null;
+		}
+
+		$type = $this->extractInlineCommentType($tokens[$docIndex]['text']);
+		if ($type === null) {
+			return null;
+		}
+
+		$afterDocIndex = $this->findNextMeaningfulIndex($tokens, $docIndex + 1, null);
+		if ($afterDocIndex === null || !in_array($tokens[$afterDocIndex]['text'], $allowedDelimiters, true)) {
+			return null;
+		}
+
+		return [
+			'kind' => $returnKind,
+			'name' => null,
+			'type' => $type,
+			'line' => $tokens[$docIndex]['line'],
+			'startOffset' => $tokens[$docIndex]['offset'],
+			'endOffset' => $tokens[$docIndex]['offset'] + strlen($tokens[$docIndex]['text']),
+			'rewriteStart' => $tokens[$docIndex]['offset'],
+			'rewriteEnd' => $tokens[$docIndex]['offset'] + strlen($tokens[$docIndex]['text']),
+			'replacement' => '',
+			'ownerName' => $ownerName,
+		];
+	}
+
+	/** @return array{kind:string,name:?string,type:string,line:int,startOffset:int,endOffset:int,rewriteStart:int,rewriteEnd:int,replacement:string,ownerName?:?string}|null */
 	private function scanArrowTrailingReturnSite(LexedSource $source, int $startIndex): ?array
 	{
 		$tokens = $source->tokens;
@@ -260,6 +321,114 @@ final class TokenSiteScanner
 			'rewriteEnd' => $slotEndOffset,
 			'replacement' => '',
 			'ownerName' => null,
+		];
+	}
+
+	/** @return array{kind:string,name:?string,type:string,line:int,startOffset:int,endOffset:int,rewriteStart:int,rewriteEnd:int,replacement:string,ownerName?:?string}|null */
+	private function scanLeadingInlineParamTypeComment(LexedSource $source, int $variableIndex, int $openParenIndex): ?array
+	{
+		$tokens = $source->tokens;
+		$docIndex = $this->findPreviousNonWhitespaceIndex($tokens, $variableIndex - 1, $openParenIndex);
+		if ($docIndex === null) {
+			return null;
+		}
+
+		$startRewriteIndex = $docIndex;
+		if ($tokens[$docIndex]['text'] === '&') {
+			$docIndex = $this->findPreviousNonWhitespaceIndex($tokens, $docIndex - 1, $openParenIndex);
+			if ($docIndex === null || !$this->isDocCommentToken($tokens[$docIndex])) {
+				return null;
+			}
+			$startRewriteIndex = $docIndex;
+		} elseif (!$this->isDocCommentToken($tokens[$docIndex])) {
+			return null;
+		}
+
+		$type = $this->extractInlineCommentType($tokens[$docIndex]['text']);
+		if ($type === null) {
+			return null;
+		}
+
+		$variableToken = $tokens[$variableIndex];
+		$rewriteStart = $tokens[$startRewriteIndex]['offset'];
+		$rewriteEnd = $variableToken['offset'];
+
+		return [
+			'kind' => 'param',
+			'name' => ltrim($variableToken['text'], '$'),
+			'type' => $type,
+			'line' => $variableToken['line'],
+			'startOffset' => $tokens[$docIndex]['offset'],
+			'endOffset' => $tokens[$docIndex]['offset'] + strlen($tokens[$docIndex]['text']),
+			'rewriteStart' => $rewriteStart,
+			'rewriteEnd' => $rewriteEnd,
+			'replacement' => '',
+		];
+	}
+
+	/** @return array{kind:string,name:?string,type:string,line:int,startOffset:int,endOffset:int,rewriteStart:int,rewriteEnd:int,replacement:string,ownerName?:?string}|null */
+	private function scanLeadingInlinePropertyTypeComment(LexedSource $source, int $variableIndex): ?array
+	{
+		$tokens = $source->tokens;
+		$docIndex = $this->findPreviousNonWhitespaceIndex($tokens, $variableIndex - 1, null);
+		if ($docIndex === null || !$this->isDocCommentToken($tokens[$docIndex])) {
+			return null;
+		}
+
+		$modifierIndex = $this->findPreviousNonWhitespaceIndex($tokens, $docIndex - 1, null);
+		if ($modifierIndex === null || !$this->isPropertyModifierToken($tokens[$modifierIndex])) {
+			return null;
+		}
+
+		$type = $this->extractInlineCommentType($tokens[$docIndex]['text']);
+		if ($type === null) {
+			return null;
+		}
+
+		$variableToken = $tokens[$variableIndex];
+		return [
+			'kind' => 'property',
+			'name' => ltrim($variableToken['text'], '$'),
+			'type' => $type,
+			'line' => $variableToken['line'],
+			'startOffset' => $tokens[$docIndex]['offset'],
+			'endOffset' => $tokens[$docIndex]['offset'] + strlen($tokens[$docIndex]['text']),
+			'rewriteStart' => $tokens[$docIndex]['offset'],
+			'rewriteEnd' => $variableToken['offset'],
+			'replacement' => '',
+		];
+	}
+
+	/** @return array{kind:string,name:?string,type:string,line:int,startOffset:int,endOffset:int,rewriteStart:int,rewriteEnd:int,replacement:string,ownerName?:?string}|null */
+	private function scanTrailingInlineVariableTypeComment(LexedSource $source, int $variableIndex): ?array
+	{
+		$tokens = $source->tokens;
+		$docIndex = $this->findNextTokenOfKindsIndex($tokens, $variableIndex + 1, [T_DOC_COMMENT], ['=', ';', ',']);
+		if ($docIndex === null) {
+			return null;
+		}
+
+		$type = $this->extractInlineCommentType($tokens[$docIndex]['text']);
+		if ($type === null) {
+			return null;
+		}
+
+		$afterDocIndex = $this->findNextMeaningfulIndex($tokens, $docIndex + 1, null);
+		if ($afterDocIndex === null || !in_array($tokens[$afterDocIndex]['text'], ['=', ';', ','], true)) {
+			return null;
+		}
+
+		$variableToken = $tokens[$variableIndex];
+		return [
+			'kind' => $this->detectVariableKind($tokens, $variableIndex),
+			'name' => ltrim($variableToken['text'], '$'),
+			'type' => $type,
+			'line' => $variableToken['line'],
+			'startOffset' => $tokens[$docIndex]['offset'],
+			'endOffset' => $tokens[$docIndex]['offset'] + strlen($tokens[$docIndex]['text']),
+			'rewriteStart' => $tokens[$docIndex]['offset'],
+			'rewriteEnd' => $tokens[$docIndex]['offset'] + strlen($tokens[$docIndex]['text']),
+			'replacement' => '',
 		];
 	}
 
@@ -471,6 +640,64 @@ final class TokenSiteScanner
 	}
 
 	/** @param list<array{index:int,text:string,line:int,offset:int,is_array:bool,id:int|null}> $tokens */
+	private function findNextNonWhitespaceIndex(array $tokens, int $start, ?int $limit): ?int
+	{
+		$count = $limit ?? count($tokens);
+		for ($i = $start; $i < $count; $i++) {
+			if (!$this->isWhitespaceTrivia($tokens[$i])) {
+				return $i;
+			}
+		}
+		return null;
+	}
+
+	/** @param list<array{index:int,text:string,line:int,offset:int,is_array:bool,id:int|null}> $tokens */
+	private function findPreviousMeaningfulIndex(array $tokens, int $start, ?int $limit): ?int
+	{
+		$lowerBound = $limit ?? 0;
+		for ($i = $start; $i >= $lowerBound; $i--) {
+			if (!$this->isTrivia($tokens[$i])) {
+				return $i;
+			}
+		}
+		return null;
+	}
+
+	/** @param list<array{index:int,text:string,line:int,offset:int,is_array:bool,id:int|null}> $tokens */
+	private function findPreviousNonWhitespaceIndex(array $tokens, int $start, ?int $limit): ?int
+	{
+		$lowerBound = $limit ?? 0;
+		for ($i = $start; $i >= $lowerBound; $i--) {
+			if (!$this->isWhitespaceTrivia($tokens[$i])) {
+				return $i;
+			}
+		}
+		return null;
+	}
+
+	/** @param list<array{index:int,text:string,line:int,offset:int,is_array:bool,id:int|null}> $tokens @param list<int> $allowedTokenIds @param list<string> $allowedDelimiters */
+	private function findNextTokenOfKindsIndex(array $tokens, int $start, array $allowedTokenIds, array $allowedDelimiters): ?int
+	{
+		$count = count($tokens);
+		for ($i = $start; $i < $count; $i++) {
+			$token = $tokens[$i];
+			if ($this->isWhitespaceTrivia($token)) {
+				continue;
+			}
+			if ($this->isArrayTokenWithId($token, $allowedTokenIds)) {
+				return $i;
+			}
+			if (in_array($token['text'], $allowedDelimiters, true)) {
+				return null;
+			}
+			if (!$this->isCommentTrivia($token)) {
+				return null;
+			}
+		}
+		return null;
+	}
+
+	/** @param list<array{index:int,text:string,line:int,offset:int,is_array:bool,id:int|null}> $tokens */
 	private function findNextTokenTextIndex(array $tokens, int $start, string $wanted): ?int
 	{
 		$count = count($tokens);
@@ -508,8 +735,7 @@ final class TokenSiteScanner
 			if ($this->isTrivia($tokens[$i])) {
 				continue;
 			}
-			$text = strtolower($tokens[$i]['text']);
-			if (in_array($text, ['public', 'protected', 'private', 'static', 'var'], true)) {
+			if ($this->isPropertyModifierToken($tokens[$i])) {
 				return 'property';
 			}
 			break;
@@ -522,9 +748,29 @@ final class TokenSiteScanner
 		return $token['is_array'] && in_array($token['id'], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true);
 	}
 
+	private function isWhitespaceTrivia(array $token): bool
+	{
+		return $token['is_array'] && $token['id'] === T_WHITESPACE;
+	}
+
+	private function isCommentTrivia(array $token): bool
+	{
+		return $token['is_array'] && in_array($token['id'], [T_COMMENT, T_DOC_COMMENT], true);
+	}
+
+	private function isDocCommentToken(array $token): bool
+	{
+		return $token['is_array'] && $token['id'] === T_DOC_COMMENT;
+	}
+
 	private function isVariableToken(array $token): bool
 	{
 		return $token['is_array'] && $token['id'] === T_VARIABLE;
+	}
+
+	private function isArrayTokenWithId(array $token, array $allowedTokenIds): bool
+	{
+		return $token['is_array'] && in_array($token['id'], $allowedTokenIds, true);
 	}
 
 	private function isFunctionKeyword(array $token): bool
@@ -581,5 +827,24 @@ final class TokenSiteScanner
 			}
 		}
 		return null;
+	}
+
+	private function isPropertyModifierToken(array $token): bool
+	{
+		$text = strtolower($token['text']);
+		return in_array($text, ['public', 'protected', 'private', 'static', 'var'], true);
+	}
+
+	private function extractInlineCommentType(string $comment): ?string
+	{
+		$inner = trim($comment);
+		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
+			return null;
+		}
+		$inner = trim(substr($inner, 3, -2));
+		if ($inner === '' || str_starts_with($inner, '@')) {
+			return null;
+		}
+		return $this->looksLikePrismType($inner) ? (preg_replace('/\s+/', ' ', $inner) ?? $inner) : null;
 	}
 }

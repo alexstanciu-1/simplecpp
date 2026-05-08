@@ -12,7 +12,6 @@ require_once __DIR__ . '/../generators/php/src/PreTokenizer/LexedSource.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/PreTokenizedInput.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/TokenSiteScanner.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/PreTokenizer.php';
-require_once __DIR__ . '/../generators/php/src/Metadata/TypeCommentExtractor.php';
 require_once __DIR__ . '/../generators/php/src/Metadata/ArgNormalizationCommentParser.php';
 require_once __DIR__ . '/../generators/php/src/IR/PhpFile.php';
 require_once __DIR__ . '/../generators/php/src/IR/NamespaceBlock.php';

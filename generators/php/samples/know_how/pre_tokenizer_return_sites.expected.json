@@ -1,5 +1,5 @@
 {
-    "source": "<?php\n\nfunction build_lookup(/** vector<string> */ $items) {\n\treturn [];\n}\n\nclass ReturnSites {\n\tpublic function names() {\n\t\treturn [];\n\t}\n}\n\n$factory = fn(/** int */ $seed) =>\n\tfn(/** int */ $value): int => $seed + $value;\n\n$typedFactory /** function<function<int(int)>(int)> */ = $factory;\n",
+    "source": "<?php\n\nfunction build_lookup(/** vector<string> */ $items) {\n\treturn [];\n}\n\nclass ReturnSites {\n\tpublic function names() {\n\t\treturn [];\n\t}\n}\n\n$factory = fn(/** int */ $seed) =>\n\tfn(/** int */ $value): int => $seed + $value;\n\n$typedFactory  = $factory;\n",
     "annotations": [
         {
             "kind": "param",
@@ -48,6 +48,14 @@
             "line": 14,
             "startOffset": 236,
             "endOffset": 246
+        },
+        {
+            "kind": "local",
+            "name": "typedFactory",
+            "type": "function<function<int(int)>(int)>",
+            "line": 16,
+            "startOffset": 287,
+            "endOffset": 327
         }
     ]
 }

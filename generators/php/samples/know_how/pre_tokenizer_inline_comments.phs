@@ -1,0 +1,20 @@
+<?php
+
+$count /** int */ = 0;
+$err /** error_t */;
+
+function build_lookup(/** vector<string> */ $items) /** hash<string, int> */ {
+	return [];
+}
+
+class InlineComments {
+	public /** vector<string> */ $items = [];
+	public $lookup /** hash<string, int> */ = [];
+
+	public function make(/** vector<string> */ $items) /** hash<string, int> */ {
+		return [];
+	}
+}
+
+$make = fn(/** int */ $x) /** function<function<int(int)>(int)> */ =>
+	fn(/** int */ $y): int => $x + $y;

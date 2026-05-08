@@ -5223,26 +5223,12 @@ final class Generator
 	{
 		$name = (string) ($param->children['name'] ?? '');
 		$line = (int) ($param->lineno ?? 0);
-		if ($name !== '') {
-			$key = $line . ':' . $name;
-			$fromMap = $this->localTypeComments[$key] ?? null;
-			if (is_string($fromMap) && $fromMap !== '') {
-				return $fromMap;
-			}
-		}
-
-		$docComment = $param->children['docComment'] ?? null;
-		if (!is_string($docComment)) {
+		if ($name === '' || $line <= 0) {
 			return null;
 		}
-
-		$inner = trim($docComment);
-		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
-			return null;
-		}
-
-		$inner = trim(substr($inner, 3, -2));
-		return $inner === '' ? null : $inner;
+		$key = $line . ':' . $name;
+		$fromMap = $this->localTypeComments[$key] ?? null;
+		return is_string($fromMap) && $fromMap !== '' ? $fromMap : null;
 	}
 
 	private function appendLvalueReferenceType(string $mappedType): string
@@ -5731,10 +5717,7 @@ final class Generator
 	private function renderClosureReturnType(mixed $returnTypeNode, array $statements, object $expr): ?string
 	{
 		$phpType = $this->readAstTypeName($returnTypeNode);
-		$docFunctionType = $this->resolveClosureReturnDocFunctionType($statements);
-		if ($docFunctionType === null) {
-			$docFunctionType = $this->resolveScannerClosureReturnType($expr);
-		}
+		$docFunctionType = $this->resolveScannerClosureReturnType($expr);
 		if ($phpType !== null && $docFunctionType !== null) {
 			$this->errors[] = 'Conflicting closure return type sources at line ' . (int) ($expr->lineno ?? 0) . ': use either a native PHP return type or a doc-comment callable return type, not both.';
 			return '/* unsupported-closure-conflicting-return-type */';
@@ -5768,35 +5751,6 @@ final class Generator
 			return null;
 		}
 		return preg_match('/^function\s*</', $type) === 1 ? $type : null;
-	}
-
-	/** @param list<Statement> $statements */
-	private function resolveClosureReturnDocFunctionType(array $statements): ?string
-	{
-		if (count($statements) !== 1) {
-			return null;
-		}
-		$statement = $statements[0] ?? null;
-		if (!$statement instanceof Statement || $statement->kind !== 'return' || !is_object($statement->payload)) {
-			return null;
-		}
-		$payload = $statement->payload;
-		if (($payload->kind ?? null) !== AstKind::CLOSURE) {
-			return null;
-		}
-		$docComment = $payload->children['docComment'] ?? null;
-		if (!is_string($docComment)) {
-			return null;
-		}
-		$inner = trim($docComment);
-		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
-			return null;
-		}
-		$inner = trim(substr($inner, 3, -2));
-		if ($inner === '' || preg_match('/^function\s*</', $inner) !== 1) {
-			return null;
-		}
-		return $inner;
 	}
 
 	private function qualifyDeclaredPhpType(?string $phpType, ?string $namespacePhp): ?string
