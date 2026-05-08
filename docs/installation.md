@@ -160,12 +160,13 @@ Build the configured entrypoint from `prism.json`:
 scpp build
 ```
 
-Optional warm-build reuse flags:
+By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
 
 ```bash
-scpp build --reuse-runtime
-scpp build --reuse-dependencies
-scpp build --reuse-runtime --reuse-dependencies
+scpp build --build-runtime
+scpp build --build-dependencies
+scpp build --build-runtime --build-dependencies
+scpp build --force
 ```
 
 Remove generated build state for a cold rebuild:
@@ -182,20 +183,30 @@ Build then run the configured entrypoint:
 scpp run
 ```
 
-The same reuse flags are supported on `scpp run`:
+The same explicit rebuild flags are supported on `scpp run`:
 
 ```bash
-scpp run --reuse-runtime
-scpp run --reuse-dependencies -- arg1 arg2
+scpp run --build-runtime
+scpp run --build-dependencies -- arg1 arg2
+scpp run --force
 ```
 
 Update the installed `scpp` checkout from GitHub main:
 
 ```bash
 scpp update
+scpp update --force
 ```
 
-This is fast-forward only and requires a clean checkout on branch `main`.
+This is fast-forward only and requires a clean checkout on branch `main`. A real update also rebuilds the default reusable runtime cache, and `scpp update --force` rebuilds that cache even when no Git update is pulled.
+
+Rebuild the reusable runtime cache directly:
+
+```bash
+scpp runtime-build
+scpp runtime-build --release
+scpp runtime-build --force
+```
 
 Pass program arguments after `--` when needed:
 
@@ -205,10 +216,11 @@ scpp run -- arg1 arg2
 
 Current default behavior:
 
-- `scpp build` compiles the runtime artifact and resolved Prism project dependencies by default
+- `scpp build` reuses existing runtime artifacts and resolved Prism project dependency artifacts by default
 - `scpp run` does the same build step first, then executes the primary output
-- `--reuse-runtime` reuses an already-built runtime artifact
-- `--reuse-dependencies` reuses already-built dependency objects/artifacts
+- `--build-runtime` explicitly recompiles the runtime artifact for the current build
+- `--build-dependencies` explicitly recompiles resolved Prism project dependency units for the current build
+- `--force` forces a runtime rebuild for the current build, even if the reusable artifact already exists
 
 Run the deterministic usability harness:
 

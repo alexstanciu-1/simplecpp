@@ -21,25 +21,44 @@ final class ScppBuildOptionsTest
 			$this->assertSame(false, $defaultBuild['compile_dependencies'], 'service builds should reuse dependency artifacts by default');
 
 			$buildCli = parse_build_command_arguments([]);
-			$this->assertSame(true, $buildCli['compile_runtime'], 'scpp build should compile runtime by default');
-			$this->assertSame(true, $buildCli['compile_dependencies'], 'scpp build should compile dependencies by default');
+			$this->assertSame(false, $buildCli['compile_runtime'], 'scpp build should reuse runtime by default');
+			$this->assertSame(false, $buildCli['compile_dependencies'], 'scpp build should reuse dependencies by default');
+			$this->assertSame(false, $buildCli['force_runtime_rebuild'], 'scpp build should not force runtime rebuild by default');
 
-			$buildReuse = parse_build_command_arguments(['--reuse-runtime', '--reuse-dependencies']);
-			$this->assertSame(false, $buildReuse['compile_runtime'], 'reuse-runtime should disable runtime compilation');
-			$this->assertSame(false, $buildReuse['compile_dependencies'], 'reuse-dependencies should disable dependency compilation');
+			$buildExplicit = parse_build_command_arguments(['--build-runtime', '--build-dependencies']);
+			$this->assertSame(true, $buildExplicit['compile_runtime'], 'build-runtime should enable runtime compilation');
+			$this->assertSame(true, $buildExplicit['compile_dependencies'], 'build-dependencies should enable dependency compilation');
+
+			$buildForce = parse_build_command_arguments(['--force']);
+			$this->assertSame(true, $buildForce['compile_runtime'], 'force should imply runtime compilation');
+			$this->assertSame(true, $buildForce['force_runtime_rebuild'], 'force should request runtime rebuild');
 
 			$runDefault = parse_run_command_arguments(['--', 'arg1', 'arg2']);
-			$this->assertSame(true, $runDefault['build_options']['compile_runtime'], 'scpp run should compile runtime by default');
-			$this->assertSame(true, $runDefault['build_options']['compile_dependencies'], 'scpp run should compile dependencies by default');
+			$this->assertSame(false, $runDefault['build_options']['compile_runtime'], 'scpp run should reuse runtime by default');
+			$this->assertSame(false, $runDefault['build_options']['compile_dependencies'], 'scpp run should reuse dependencies by default');
 			$this->assertSame(['arg1', 'arg2'], $runDefault['run_args'], 'run args after separator should be preserved');
 
-			$runReuse = parse_run_command_arguments(['--reuse-runtime', '--reuse-dependencies', '--', 'arg1']);
-			$this->assertSame(false, $runReuse['build_options']['compile_runtime'], 'run reuse-runtime should disable runtime compilation');
-			$this->assertSame(false, $runReuse['build_options']['compile_dependencies'], 'run reuse-dependencies should disable dependency compilation');
-			$this->assertSame(['arg1'], $runReuse['run_args'], 'run args should stay intact when reuse flags are present');
+			$runExplicit = parse_run_command_arguments(['--build-runtime', '--build-dependencies', '--', 'arg1']);
+			$this->assertSame(true, $runExplicit['build_options']['compile_runtime'], 'run build-runtime should enable runtime compilation');
+			$this->assertSame(true, $runExplicit['build_options']['compile_dependencies'], 'run build-dependencies should enable dependency compilation');
+			$this->assertSame(['arg1'], $runExplicit['run_args'], 'run args should stay intact when build flags are present');
+
+			$runForce = parse_run_command_arguments(['--force', '--', 'arg1']);
+			$this->assertSame(true, $runForce['build_options']['compile_runtime'], 'run force should imply runtime compilation');
+			$this->assertSame(true, $runForce['build_options']['force_runtime_rebuild'], 'run force should request runtime rebuild');
 
 			$runImplicitArgs = parse_run_command_arguments(['hello', 'world']);
 			$this->assertSame(['hello', 'world'], $runImplicitArgs['run_args'], 'plain run args without separator should still work');
+
+			$runtimeBuildDefault = parse_runtime_build_command_arguments([]);
+			$this->assertSame('debug', $runtimeBuildDefault['build_mode'], 'runtime-build should default to debug mode');
+			$this->assertSame(false, $runtimeBuildDefault['force'], 'runtime-build should not force by default');
+
+			$runtimeBuildRelease = parse_runtime_build_command_arguments(['--release', '--force']);
+			$this->assertSame('release', $runtimeBuildRelease['build_mode'], 'runtime-build should accept release mode');
+			$this->assertSame(true, $runtimeBuildRelease['force'], 'runtime-build should accept force');
+
+			$this->assertUpdateArgumentHandling();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
 
@@ -47,6 +66,20 @@ final class ScppBuildOptionsTest
 			return 0;
 		} finally {
 			$this->removeTree($this->root);
+		}
+	}
+
+	private function assertUpdateArgumentHandling(): void
+	{
+		ob_start();
+		try {
+			handle_update(['--definitely-unknown']);
+			throw new RuntimeException('handle_update should reject unknown flags');
+		} catch (ScppCliException $ex) {
+			ob_get_clean();
+			$this->assertSame(1, $ex->exitCode, 'unknown update flags should exit with code 1');
+			$this->assertContains('Unknown option for `scpp update`', $ex->getMessage(), 'unknown update flags should report the offending option');
+			return;
 		}
 	}
 

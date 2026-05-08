@@ -169,24 +169,27 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 16. runs Ninja
 17. leaves the root project executable under `.prism/build/`
 
-By default, the public CLI commands `scpp build` and `scpp run` both compile:
+By default, the public CLI commands `scpp build` and `scpp run` both reuse:
 
 - the runtime artifact
 - resolved Prism project dependencies
 
-The current public opt-out flags are:
+The current public opt-in rebuild flags are:
 
-- `--reuse-runtime`
-- `--reuse-dependencies`
+- `--build-runtime`
+- `--build-dependencies`
+- `--force`
 
-When `--reuse-runtime` is present, `scpp build` or `scpp run` reuses the existing runtime artifact path in the emitted Ninja graph instead of recompiling the runtime. The artifact must already exist or the build fails naturally at compile/link time.
+When `--build-runtime` is present, `scpp build` or `scpp run` recompiles the runtime artifact for the current build instead of reusing the existing runtime artifact path in the emitted Ninja graph.
 
-When `--reuse-dependencies` is present, `scpp build` or `scpp run` still resolves the Prism project dependency graph for source discovery, export composition, and header visibility, but reuses the existing dependency object/artifact paths in the emitted Ninja graph instead of recompiling dependency project units. Those dependency artifacts must already exist or the build fails naturally at compile/link time.
+When `--build-dependencies` is present, `scpp build` or `scpp run` still resolves the Prism project dependency graph for source discovery, export composition, and header visibility, and also recompiles dependency project units instead of reusing their existing object/artifact paths in the emitted Ninja graph.
 
-The lower-level build service path used by helpers/tests may default to reuse mode unless it explicitly opts into runtime/dependency compilation. The public user-facing CLI contract remains:
+When `--force` is present, `scpp build` or `scpp run` forces a runtime rebuild for the current build, even if the reusable runtime artifact already exists. `--force` implies runtime compilation.
 
-- `scpp build` compiles runtime and dependencies by default
-- `scpp run` compiles runtime and dependencies by default, then executes the primary output
+The lower-level build service path used by helpers/tests also defaults to reuse mode unless it explicitly opts into runtime/dependency compilation. The public user-facing CLI contract is:
+
+- `scpp build` reuses runtime and dependencies by default
+- `scpp run` reuses runtime and dependencies by default, then executes the primary output
 
 ## `scpp clean` behavior
 
@@ -214,7 +217,21 @@ The command:
 5. requires a clean working tree
 6. fetches `origin main`
 7. fast-forwards the checkout to `origin/main`
-8. fails clearly instead of creating merge commits or overwriting local changes
+8. rebuilds the default reusable runtime cache when the checkout actually changes
+9. when `--force` is present, rebuilds that default reusable runtime cache even if the checkout was already current
+10. fails clearly instead of creating merge commits or overwriting local changes
+
+## `scpp runtime-build` behavior
+
+`scpp runtime-build` rebuilds the reusable runtime cache explicitly without compiling the current project graph.
+
+The command:
+
+1. resolves the active `scpp` repository root
+2. optionally discovers the current project config to inherit runtime language/module/build settings when run inside a project
+3. defaults to debug runtime mode
+4. accepts `--release` to build the release runtime variant
+5. accepts `--force` to delete and rebuild the selected runtime artifact even if it already exists
 
 ## Project dependencies
 
@@ -249,7 +266,7 @@ For v1, the dependency contract is:
 - duplicate dependency visits should be deduplicated by normalized project root
 - symbol collisions across participating projects must fail clearly during build or link
 - shared-library packaging is a later build mode and is not the semantic meaning of `dependencies` in v1
-- dependency resolution remains active even when `--reuse-dependencies` is used; the flag only suppresses recompilation of already-built dependency units
+- dependency resolution remains active even when dependency compilation is not requested; reuse only suppresses recompilation of already-built dependency units
 
 ## Project exports
 

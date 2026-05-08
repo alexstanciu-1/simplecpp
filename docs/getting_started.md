@@ -21,7 +21,11 @@ Update the installed `scpp` checkout later:
 scpp update
 ```
 
-`scpp update` fetches GitHub `origin/main` and fast-forwards the checkout. It requires the checkout to be on `main` with no local changes.
+```bash
+scpp update --force
+```
+
+`scpp update` fetches GitHub `origin/main` and fast-forwards the checkout. It requires the checkout to be on `main` with no local changes. When a real update is applied, it also rebuilds the default reusable runtime cache. `scpp update --force` rebuilds that default runtime cache even when the checkout is already current.
 
 ## 2. Start a project
 
@@ -78,12 +82,13 @@ Build only:
 scpp build
 ```
 
-Optional warm-build reuse flags:
+By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
 
 ```bash
-scpp build --reuse-runtime
-scpp build --reuse-dependencies
-scpp build --reuse-runtime --reuse-dependencies
+scpp build --build-runtime
+scpp build --build-dependencies
+scpp build --build-runtime --build-dependencies
+scpp build --force
 ```
 
 Remove generated state for a full cold rebuild:
@@ -101,17 +106,26 @@ Build then run:
 scpp run
 ```
 
-The same reuse flags are supported on `scpp run`:
+The same explicit rebuild flags are supported on `scpp run`:
 
 ```bash
-scpp run --reuse-runtime
-scpp run --reuse-dependencies -- arg1 arg2
+scpp run --build-runtime
+scpp run --build-dependencies -- arg1 arg2
+scpp run --force
 ```
 
 Pass program arguments after `--`:
 
 ```bash
 scpp run -- arg1 arg2
+```
+
+Rebuild the reusable runtime cache directly:
+
+```bash
+scpp runtime-build
+scpp runtime-build --release
+scpp runtime-build --force
 ```
 
 Run the deterministic usability harness:
@@ -144,9 +158,10 @@ Compiler selection:
 - output executable written under `.prism/build/`
 - recursive S2S generation for all project `*.phs` files plus compatible `*.php` files
 - cached S2S state in `.prism/cache/s2s_state.php` using file size + mtime
-- `scpp build` and `scpp run` compile runtime and Prism project dependencies by default
-- `--reuse-runtime` reuses an already-built runtime artifact instead of recompiling it
-- `--reuse-dependencies` reuses already-built dependency objects/artifacts instead of recompiling dependency project units
+- `scpp build` and `scpp run` reuse existing runtime and Prism project dependency artifacts by default
+- `--build-runtime` explicitly recompiles the runtime artifact for the current build
+- `--build-dependencies` explicitly recompiles Prism project dependency units for the current build
+- `--force` forces a runtime rebuild for the current build, even if the reusable artifact already exists
 
 ## 4. Single-file transpile remains available
 
@@ -158,7 +173,7 @@ This still prints generated C++ to stdout and remains useful for narrow fixture 
 
 ## 5. Current boundary
 
-The project command shape is now fixed around `scpp init` + `scpp build` / `scpp run`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` and `scpp run` recursively transpile project PHP++ files and compatible `.php` inputs, use cached file metadata, and still rely on the configured single entrypoint plus the repo runtime. Warm-build reuse flags now let callers keep the dependency graph and runtime composition model while skipping recompilation of already-built runtime/dependency artifacts.
+The project command shape is now fixed around `scpp init` + `scpp build` / `scpp run`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` and `scpp run` recursively transpile project PHP++ files and compatible `.php` inputs, use cached file metadata, and still rely on the configured single entrypoint plus the repo runtime. Runtime and dependency artifacts are reused by default, with explicit rebuild flags available when you want a heavier pass.
 
 ## 6. AI onboarding
 
