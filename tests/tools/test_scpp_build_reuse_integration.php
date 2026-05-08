@@ -37,6 +37,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertSame(true, $full['ok'], 'initial full build should succeed');
 			$this->assertContains('Runtime compilation: enabled', $full['output'], 'full build should report runtime compilation');
 			$this->assertContains('Dependency compilation: enabled', $full['output'], 'full build should report dependency compilation');
+			$this->assertDirectNinjaNoWork($app);
 
 			$depObject = $this->findDependencyObject($lib);
 			$runtimeArtifact = $this->resolveRuntimeArtifactPath($app);
@@ -95,6 +96,46 @@ final class ScppBuildReuseIntegrationTest
 		$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
 		$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, resolve_build_mode($config), $runtimeConfig);
 		return normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
+	}
+
+	private function assertDirectNinjaNoWork(string $projectRoot): void
+	{
+		$buildDir = $projectRoot . '/.prism/build';
+		$buildFile = $buildDir . '/build.ninja';
+		$command = [
+			'ninja',
+			'-C',
+			$buildDir,
+			'-f',
+			basename($buildFile),
+			'-d',
+			'explain',
+			'main',
+		];
+		$descriptor = [
+			0 => ['file', 'php://stdin', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = proc_open($command, $descriptor, $pipes, $projectRoot);
+		if (!is_resource($process)) {
+			throw new RuntimeException('Failed to start direct ninja check');
+		}
+		$stdout = stream_get_contents($pipes[1]);
+		$stderr = stream_get_contents($pipes[2]);
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		$status = proc_close($process);
+		$output = (is_string($stdout) ? $stdout : '') . (is_string($stderr) ? $stderr : '');
+		if ($status !== 0) {
+			throw new RuntimeException("Direct ninja check failed:\n" . $output);
+		}
+		if (!str_contains($output, 'no work to do')) {
+			throw new RuntimeException("Direct ninja check was expected to be warm and idle, got:\n" . $output);
+		}
+		if (str_contains($output, 'missing and no known rule to make it')) {
+			throw new RuntimeException("Direct ninja check still reports a missing dependency edge:\n" . $output);
+		}
 	}
 
 	private function findDependencyObject(string $projectRoot): string
