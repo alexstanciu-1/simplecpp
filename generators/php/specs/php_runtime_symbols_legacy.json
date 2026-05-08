@@ -67,6 +67,16 @@
         "cli_argv": "php::cli_argv",
         "cli_args": "php::cli_args",
         "shell_exec": "php::shell_exec",
+        "preg_jit_available": "php::preg_jit_available",
+        "preg_filter": "php::preg_filter",
+        "preg_grep": "php::preg_grep",
+        "preg_match": "php::preg_match",
+        "preg_match_all": "php::preg_match_all",
+        "preg_quote": "php::preg_quote",
+        "preg_replace": "php::preg_replace",
+        "preg_replace_callback": "php::preg_replace_callback",
+        "preg_replace_callback_array": "php::preg_replace_callback_array",
+        "preg_split": "php::preg_split",
         "json_decode": "php::json_decode",
         "json_encode": "php::json_encode"
     }

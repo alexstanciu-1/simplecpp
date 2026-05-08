@@ -80,6 +80,12 @@ add_executable(test_json test_json.cpp)
 target_link_libraries(test_json PRIVATE scpp_lang_php scpp_json scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_json COMMAND test_json)
 
+if(TARGET scpp_regex)
+	add_executable(test_regex test_regex.cpp)
+	target_link_libraries(test_regex PRIVATE scpp_lang_php scpp_regex scpp_runtime scpp_runtime_test_support)
+	add_test(NAME scpp_test_regex COMMAND test_regex)
+endif()
+
 # PHP process/CLI builtin coverage.
 add_executable(test_php_process test_php_process.cpp)
 target_link_libraries(test_php_process PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)

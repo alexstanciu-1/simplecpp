@@ -4,6 +4,7 @@ project(scpp_runtime LANGUAGES CXX)
 
 option(SCPP_LANGUAGE_TARGET_PHP "Build runtime with PHP-target array semantics" ON)
 option(SCPP_WITH_MYSQLI "Build runtime with the optional mysqli module enabled" ON)
+option(SCPP_WITH_REGEX "Build runtime with the optional PCRE2 regex module enabled" OFF)
 
 include(CheckIncludeFileCXX)
 include(FindPkgConfig)
@@ -32,6 +33,19 @@ PUBLIC
 
 target_compile_features(scpp_filesystem PUBLIC cxx_std_23)
 
+if(SCPP_WITH_REGEX)
+	add_library(scpp_regex SHARED
+		include/modules/regex/regex.cpp
+	)
+
+	target_include_directories(scpp_regex
+	PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/include
+	)
+
+	target_compile_features(scpp_regex PUBLIC cxx_std_23)
+endif()
+
 add_library(scpp_runtime
 	include/core/runtime.cpp
 )
@@ -44,11 +58,15 @@ PUBLIC
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 
 target_link_libraries(scpp_runtime PUBLIC scpp_json scpp_filesystem)
+if(SCPP_WITH_REGEX)
+	target_link_libraries(scpp_runtime PUBLIC scpp_regex)
+endif()
 
 add_library(scpp_php_legacy
 	include/lang/php/php_filesystem.cpp
 	include/lang/php/php_json.cpp
 	include/lang/php/php_mysqli.cpp
+	include/lang/php/php_regex.cpp
 )
 
 target_include_directories(scpp_php_legacy
@@ -58,6 +76,9 @@ PUBLIC
 
 target_compile_features(scpp_php_legacy PUBLIC cxx_std_23)
 target_link_libraries(scpp_php_legacy PUBLIC scpp_runtime scpp_json scpp_filesystem)
+if(SCPP_WITH_REGEX)
+	target_link_libraries(scpp_php_legacy PUBLIC scpp_regex)
+endif()
 
 add_library(scpp_lang_php INTERFACE)
 
@@ -72,6 +93,30 @@ if(SCPP_LANGUAGE_TARGET_PHP)
 	target_compile_definitions(scpp_runtime PUBLIC SCPP_LANGUAGE_TARGET_PHP=1)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_LANGUAGE_TARGET_PHP=1)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_LANGUAGE_TARGET_PHP=1)
+endif()
+
+if(SCPP_WITH_REGEX)
+	set(SCPP_REGEX_PKG_NAME "")
+	if(PKG_CONFIG_FOUND)
+		pkg_check_modules(PCRE2_8 QUIET IMPORTED_TARGET libpcre2-8)
+		if(TARGET PkgConfig::PCRE2_8)
+			set(SCPP_REGEX_PKG_NAME "libpcre2-8")
+		endif()
+	endif()
+
+	if(SCPP_REGEX_PKG_NAME STREQUAL "libpcre2-8")
+		target_link_libraries(scpp_regex PUBLIC PkgConfig::PCRE2_8)
+		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_REGEX=1)
+		target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_REGEX=1)
+		target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_REGEX=1)
+		message(STATUS "SCPP regex module: using pkg-config package libpcre2-8")
+	else()
+		message(FATAL_ERROR "SCPP_WITH_REGEX=ON but no supported PCRE2 pkg-config package was found (tried: libpcre2-8).")
+	endif()
+else()
+	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_REGEX=0)
+	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_REGEX=0)
+	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_REGEX=0)
 endif()
 
 if(SCPP_WITH_MYSQLI)

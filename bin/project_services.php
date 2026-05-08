@@ -2026,7 +2026,7 @@ function resolve_runtime_build_config(array $config): array
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'mysqli'];
+	$allowedModules = ['json', 'filesystem', 'mysqli', 'regex'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -2910,6 +2910,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('mysqli', $modules, true)) {
 		$lines[] = '#include "modules/mysql/mysql_module.cpp"';
 	}
+	if (in_array('regex', $modules, true)) {
+		$lines[] = '#include "modules/regex/regex.cpp"';
+	}
 	if (in_array('php', $languages, true) && $phpProfile === 'legacy') {
 		if (in_array('filesystem', $modules, true)) {
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
@@ -2919,6 +2922,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 		}
 		if (in_array('mysqli', $modules, true)) {
 			$lines[] = '#include "lang/php/php_mysqli.cpp"';
+		}
+		if (in_array('regex', $modules, true)) {
+			$lines[] = '#include "lang/php/php_regex.cpp"';
 		}
 	}
 	return implode(PHP_EOL, $lines) . PHP_EOL;
@@ -2962,6 +2968,38 @@ function resolve_runtime_mysqli_build_spec(): array
 		'cflags' => [],
 		'ldflags' => [],
 		'compile_defines' => ['-DSCPP_HAS_MYSQLI=0'],
+	];
+}
+
+/** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
+function resolve_runtime_regex_build_spec(): array
+{
+	$pkgConfig = find_command_path(['pkg-config']);
+	if ($pkgConfig === null) {
+		return [
+			'enabled' => false,
+			'cflags' => [],
+			'ldflags' => [],
+			'compile_defines' => ['-DSCPP_HAS_REGEX=0'],
+		];
+	}
+
+	$cflagsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --cflags libpcre2-8 2>/dev/null');
+	$libsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --libs libpcre2-8 2>/dev/null');
+	if (!is_string($libsOutput) || trim($libsOutput) === '') {
+		return [
+			'enabled' => false,
+			'cflags' => [],
+			'ldflags' => [],
+			'compile_defines' => ['-DSCPP_HAS_REGEX=0'],
+		];
+	}
+
+	return [
+		'enabled' => true,
+		'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
+		'ldflags' => split_shell_tokens($libsOutput),
+		'compile_defines' => ['-DSCPP_HAS_REGEX=1'],
 	];
 }
 
@@ -3033,6 +3071,16 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		$extraLinkFlags = array_merge($extraLinkFlags, $mysqliBuild['ldflags']);
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_MYSQLI=0';
+	}
+	if (in_array('regex', $modules, true)) {
+		$regexBuild = resolve_runtime_regex_build_spec();
+		if (!$regexBuild['enabled']) {
+			scpp_fail('Runtime module `regex` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported PCRE2 pkg-config package was found (tried: libpcre2-8).' . PHP_EOL, 1);
+		}
+		$extraCxxFlags = array_merge($extraCxxFlags, $regexBuild['compile_defines'], $regexBuild['cflags']);
+		$extraLinkFlags = array_merge($extraLinkFlags, $regexBuild['ldflags']);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_HAS_REGEX=0';
 	}
 
 	if ($compiler['kind'] === 'gnu_like') {

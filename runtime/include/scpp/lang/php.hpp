@@ -10,3 +10,4 @@
 #include "lang/php/php_json.hpp"
 #include "lang/php/php_process.hpp"
 #include "lang/php/php_mysqli.hpp"
+#include "lang/php/php_regex.hpp"
