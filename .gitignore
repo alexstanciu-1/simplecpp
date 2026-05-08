@@ -40,10 +40,8 @@ tests/temp**
 # scpp project build output
 .prism/
 
-# Generated C++ (sandbox)
-sandbox/*.cpp
-sandbox/*.hpp
-sandbox/*.out
+# Sandbox
+sandbox/
 
 # Runtime test outputs
 tests/.runtime/
@@ -55,17 +53,16 @@ tests/**/*.json.cpp
 tests/**/*.cpp.json
 tests/**/*.json.php
 tests/**/*.php.json
+tests/**/*.json.phs
+tests/**/*.phs.json
 
 # Generator / AST artifacts
 *.ast.json
 *.tmp.json
 *.dump
+*.phs.json
 
 *.test-results.json
-
-# Sandbox runtime artifacts
-sandbox/tmp/
-sandbox/cache/
 
 mem_container/
 
