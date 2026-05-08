@@ -152,7 +152,7 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 `scpp build`:
 
 1. finds `prism.json` by walking upward from the current directory
-2. validates the configured entrypoint
+2. validates the configured entrypoint, or an explicit `--entry=<path>` override when one is supplied
 3. resolves `dependencies` declared in `prism.json` as Prism project dependencies
 4. recursively loads dependency project configs before build planning continues
 5. checks for dependency cycles and fails clearly if one is found
@@ -190,6 +190,7 @@ The lower-level build service path used by helpers/tests also defaults to reuse 
 
 - `scpp build` reuses runtime and dependencies by default
 - `scpp run` reuses runtime and dependencies by default, then executes the primary output
+- both commands accept `--entry=<path>` to build or run a specific project-local source file instead of the configured `prism.json` entrypoint for that invocation only
 
 ## `scpp clean` behavior
 

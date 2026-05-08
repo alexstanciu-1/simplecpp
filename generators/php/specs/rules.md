@@ -80,11 +80,14 @@ Object construction and ownership helpers are runtime concepts. Current generati
 
 
 ### Variable Typing
-- explicit PHPDoc variable types are authoritative when present
-- explicit local variable typing currently comes from PHPDoc variable annotations
+- explicit scanner-owned inline slot type annotations are authoritative when present
+- accepted inline comment forms are limited to recognized typed slots, not generic PHPDoc tags
 - local variables keep the strict immediate-after-variable form only
 - valid local form example: `$x /** string */ = "test";`
 - parameters and properties additionally support the leading attached form such as `function f(/** vector<int> */ $list): void {}` and `public /** int */ $x;`
+- properties also support the immediate trailing form such as `public $items /** vector<int> */ = [];`
+- function-like returns support the immediate post-signature form such as `function build() /** vector<int> */ { ... }` and `fn(/** int */ $x) /** function<int(int)> */ => ...`
+- detached forms such as `/** @var vector<int> */ $items = [];` are not accepted as typed-slot metadata
 - class constants support the leading attached form such as `const /** int */ X = 1;`
 - constant declarations fall back to initializer-based type deduction in emitted C++ (`const auto ... = ...`)
 - detached or non-adjacent type comments remain invalid
@@ -707,7 +710,7 @@ $make = fn($x int) function<function<int(int)>(int)> =>
 	fn($y int): int => $x + $y;
 ```
 
-The pre-tokenizer rewrites those surfaces into PHP-compatible annotated source while separately preserving explicit site metadata for locals, properties, params, and function-like return slots. Because return-site ownership is scanner-owned, nested closure or arrow return annotations no longer rely on accidental raw `php-ast` doc-comment attachment. Arrow functions (`fn (...) => expr`) are also supported in Safe v1. php-ast exposes them as `AST_ARROW_FUNC` without an explicit `use (...)` list, so the generator infers implicit by-value captures from referenced outer locals and lowers them to native C++ lambdas with value captures.
+The pre-tokenizer normalizes those surfaces into parseable PHP source while separately preserving explicit site metadata for locals, properties, params, and function-like return slots. Because return-site ownership is scanner-owned, nested closure or arrow return annotations no longer rely on accidental raw `php-ast` doc-comment attachment. Arrow functions (`fn (...) => expr`) are also supported in Safe v1. php-ast exposes them as `AST_ARROW_FUNC` without an explicit `use (...)` list, so the generator infers implicit by-value captures from referenced outer locals and lowers them to native C++ lambdas with value captures.
 
 ### 7.2 Untyped null assignment
 Direct untyped `null` assignment is not allowed:
@@ -1030,22 +1033,19 @@ See also: `specs/conditional_expression_matrix.md`.
 
 ## 17. Output rules
 
-- generated code currently routes output through `echo_eval(...)`
+- generated code currently routes output through direct `echo_one(...)` calls
 - lowering must preserve the exporter shape while preserving left-to-right echo operand evaluation
 - for the current exporter:
 	- each `AST_ECHO` node carries one operand
 	- `echo a, b, c;` is exported as multiple sibling `AST_ECHO` nodes
-	- adjacent echo nodes from the same lowered statement stream may be coalesced into one `echo_eval(...)` call
-- each emitted operand must be wrapped as a thunk and evaluated inside the runtime helper in order
+	- adjacent echo nodes from the same lowered statement stream are emitted as sequential `echo_one(...)` calls
+- each emitted operand is evaluated and printed in statement order
 
 Examples:
 ```cpp
-echo_eval([&]() -> decltype(auto) { return a; });
-echo_eval(
-	[&]() -> decltype(auto) { return a; },
-	[&]() -> decltype(auto) { return b; },
-	[&]() -> decltype(auto) { return c; }
-);
+echo_one(a);
+echo_one(b);
+echo_one(c);
 ```
 
 ## 18. Error handling policy

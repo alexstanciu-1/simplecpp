@@ -89,6 +89,7 @@ Common entrypoint names include:
 
 ```bash
 scpp build
+scpp build --entry=tests/php/sample.phs
 ```
 
 By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
@@ -104,6 +105,7 @@ scpp build --force
 
 ```bash
 scpp run
+scpp run --entry=tests/php/sample.phs
 ```
 
 Pass program arguments after `--`:
@@ -251,9 +253,13 @@ Use this order:
 | typed int-key hash local | `$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];` |
 | typed class property shorthand | `public $list vector<T> = [];` |
 | typed class property | `public $list /** vector<T> */ = [];` |
+| typed class property (leading comment) | `public /** vector<T> */ $list = [];` |
 | typed param shorthand | `function build($items vector<string>) { ... }` |
+| typed param by inline comment | `function build(/** vector<string> */ $items) { ... }` |
 | typed return shorthand | `function build(): vector<string> { ... }` |
+| typed return by inline comment | `function build() /** vector<string> */ { ... }` |
 | typed arrow return shorthand | `$make = fn($x int) function<function<int(int)>(int)> => fn($y int): int => $x + $y;` |
+| typed arrow return by inline comment | `$make = fn(/** int */ $x) /** function<function<int(int)>(int)> */ => fn(/** int */ $y): int => $x + $y;` |
 | vector property with class element | `public $properties /** vector<model_property> */ = [];` |
 | vector literal needs explicit typed context | `$v /** vector<int> */ = [1, 2, 3];` |
 | typed read from dynamic value | `$count /** int */ = $data["count"];` |

@@ -9,6 +9,49 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.18 - 2026-05-08
+
+### Additions
+
+- Added `--entry=<path>` support to `scpp build` and `scpp run` so one invocation can target a project-local source file without editing `prism.json`
+- Added persistent `tests/.run-tests/` PHP test workspaces so repeated flow-test runs can reuse warm `.prism` build state instead of recompiling from scratch
+
+### Fixes
+
+- Fixed echo lowering so adjacent exported echo nodes now emit direct sequential `php::echo_one(...)` calls instead of large batched `php::echo_eval(...)` lambda packs
+- Fixed the PHP flow test harness to build through `scpp` project mode rather than one-off direct compiler invocations, while preserving per-test result files and cwd-sensitive fixture behavior
+- Fixed PHP runtime symbol qualification so generated `echo_one` calls resolve through the runtime symbol registry just like other known PHP helpers
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- `scpp build --entry=...` and `scpp run --entry=...` override the configured `prism.json` entrypoint for that invocation only
+- `tests/.run-tests/` is generated state and should remain ignored; warm reruns of individual PHP flow tests now become much faster after the first build
+
+## 0.1.17 - 2026-05-08
+
+### Additions
+
+- Added scanner regression coverage for allowed inline typed comment slots, including leading/trailing property comments, inline parameter comments, and inline function-like return comments
+
+### Fixes
+
+- Fixed type metadata ownership so params, properties, locals, and function/method/closure return comments are now sourced from pre-tokenizer scanner annotations instead of raw `php-ast` doc-comment attachment
+- Fixed the accepted inline type-comment surface so only recognized typed slots are honored, while detached forms such as `/** @var T */` remain non-authoritative
+- Fixed closure and arrow-function typed comment handling so it follows the same scanner-owned slot rules as ordinary function-like sites
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Inline type comments remain supported, but only in recognized typed slots such as `$x /** T */ = ...`, `function (/** T */ $x)`, `public /** T */ $x`, `public $x /** T */ = ...`, and immediate post-signature return slots
+- `TypeCommentExtractor` has been removed from the active pipeline; scanner-owned annotation metadata is now the single type-comment source of truth
+
 ## 0.1.16 - 2026-05-08
 
 ### Additions
