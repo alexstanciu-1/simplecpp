@@ -20,6 +20,15 @@ final class PhpFile
 	 * @param list<string> $prologueIncludes
 	 * @param list<Statement> $rootStatements
 	 * @param array<string, string> $localTypeCommentsByKey
+	 * @param list<array{
+	 *   kind:string,
+	 *   name:?string,
+	 *   type:string,
+	 *   line:int,
+	 *   startOffset:int,
+	 *   endOffset:int,
+	 *   ownerName?:?string
+	 * }> $scannerAnnotations
 	 * @param list<string> $buildErrors
 	 */
 	public function __construct(
@@ -32,6 +41,7 @@ final class PhpFile
 		public readonly array $prologueIncludes,
 		public readonly array $rootStatements,
 		public readonly array $localTypeCommentsByKey,
+		public readonly array $scannerAnnotations = [],
 		public readonly array $buildErrors = [],
 	) {
 	}

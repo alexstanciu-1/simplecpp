@@ -8,6 +8,10 @@ require_once __DIR__ . '/../generators/php/src/Support/AnnotationExpressionParse
 require_once __DIR__ . '/../generators/php/src/Support/S2SException.php';
 require_once __DIR__ . '/../generators/php/src/Loader/ParsedInput.php';
 require_once __DIR__ . '/../generators/php/src/Loader/InputLoader.php';
+require_once __DIR__ . '/../generators/php/src/PreTokenizer/LexedSource.php';
+require_once __DIR__ . '/../generators/php/src/PreTokenizer/PreTokenizedInput.php';
+require_once __DIR__ . '/../generators/php/src/PreTokenizer/TokenSiteScanner.php';
+require_once __DIR__ . '/../generators/php/src/PreTokenizer/PreTokenizer.php';
 require_once __DIR__ . '/../generators/php/src/Metadata/TypeCommentExtractor.php';
 require_once __DIR__ . '/../generators/php/src/Metadata/ArgNormalizationCommentParser.php';
 require_once __DIR__ . '/../generators/php/src/IR/PhpFile.php';

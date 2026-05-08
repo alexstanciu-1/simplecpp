@@ -1,0 +1,15 @@
+<?php
+
+$items vector<string> = [];
+$lookup hash<string, int> = [];
+
+class Demo {
+	public $names vector<string> = [];
+
+	public function merge($left hash<string, int>, $right vector<string>): hash<string, int> {
+		return [];
+	}
+}
+
+$make = fn($x int) function<function<int(int)>(int)> =>
+	fn($y int): int => $x + $y;

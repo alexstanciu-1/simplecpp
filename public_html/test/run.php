@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Scpp\S2S\PreTokenizer\PreTokenizer;
 use Scpp\S2S\Transpiler;
 
 header('Content-Type: application/json; charset=utf-8');
@@ -186,16 +187,26 @@ try {
 	];
 
 	$phpPath = $entrypointAbsolutePath;
+	$preTokenizer = new PreTokenizer();
+	$preTokenized = $preTokenizer->rewrite($phpCode);
+	$phpRuntimePath = buildUiPretokenizedRuntimePath($phpPath, $preTokenized->source);
+	if (file_put_contents($phpRuntimePath, $preTokenized->source) === false) {
+		throw new RuntimeException('Failed to save pre-tokenized PHP runtime file.');
+	}
 
 	$astVersion = max(ast\get_supported_versions());
-	$astStage = measureStage(static function () use ($phpCode, $astVersion): array {
+	$astStage = measureStage(static function () use ($preTokenized, $astVersion): array {
 		$fixture = [
 			'php_version' => PHP_VERSION,
 			'php_ast_extension_version' => phpversion('ast'),
 			'ast_version_used' => $astVersion,
 			'supported_versions' => ast\get_supported_versions(),
-			'tokens' => \token_get_all($phpCode),
-			'ast' => ast\parse_code($phpCode, $astVersion),
+			'pre_tokenized' => [
+				'source' => $preTokenized->source,
+				'annotations' => $preTokenized->annotations,
+			],
+			'tokens' => \token_get_all($preTokenized->source),
+			'ast' => ast\parse_code($preTokenized->source, $astVersion),
 		];
 
 		return [
@@ -206,6 +217,7 @@ try {
 	$phpAstJson = $astStage['result']['json'];
 	file_put_contents($phpPath . '.json', $phpAstJson);
 	$response['php_ast_json'] = $phpAstJson;
+	$response['php_ast_source'] = 'pretokenized-php-ast-json';
 	$timingResources['parse_ast'] = stageMetricsFromMeasured($astStage, 'PHP AST parse + tokens');
 
 	$generatorStage = measureStage(static function () use ($phpPath): array {
@@ -228,7 +240,7 @@ try {
 	$response['generator_source_display'] = $generatorErrors !== '' ? '' : $sourceDisplay;
 
 	$phpRun = runCommandMeasured(
-		['php', __DIR__."/run_include.php", $phpPath],
+		['php', __DIR__."/run_include.php", $phpRuntimePath],
 		$repoRoot,
 		20
 	);
@@ -592,6 +604,14 @@ function normalizeSandboxRelativePath(string $relativePath): string
 	}
 
 	return implode('/', $parts);
+}
+
+function buildUiPretokenizedRuntimePath(string $sourcePath, string $rewrittenSource): string
+{
+	$tempRoot = normalize_path(sys_get_temp_dir() . '/simple_cpp_test_ui_runtime');
+	ensureDirectoryExists($tempRoot);
+	$hash = sha1($sourcePath . "\n" . $rewrittenSource);
+	return $tempRoot . '/' . $hash . '.php';
 }
 
 function resolveSandboxPathInsideRoot(string $root, string $relativePath, bool $mustExist = true): string

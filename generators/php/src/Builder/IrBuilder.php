@@ -29,6 +29,8 @@ final class IrBuilder
 {
 	/** @var array<string, string> */
 	private array $typeCommentsByKey = [];
+	/** @var array<int, string> */
+	private array $returnAnnotationsByLine = [];
 	private ArgNormalizationCommentParser $argNormalizationCommentParser;
 
 
@@ -48,8 +50,22 @@ final class IrBuilder
 		}
 
 		$this->typeCommentsByKey = [];
+		$this->returnAnnotationsByLine = [];
 		foreach ($typeComments as $comment) {
 			$this->typeCommentsByKey[$comment['line'] . ':' . $comment['name']] = $comment['type'];
+		}
+		foreach ($input->annotations as $annotation) {
+			$name = $annotation['name'] ?? null;
+			if (in_array($annotation['kind'], ['local', 'property', 'param'], true)) {
+				if (!is_string($name) || $name === '') {
+					continue;
+				}
+				$this->typeCommentsByKey[$annotation['line'] . ':' . $name] = $annotation['type'];
+				continue;
+			}
+			if (in_array($annotation['kind'], ['function_return', 'method_return', 'closure_return'], true) && is_int($annotation['line']) && $annotation['line'] > 0) {
+				$this->returnAnnotationsByLine[$annotation['line']] = $annotation['type'];
+			}
 		}
 
 		$top = $this->collectBlock($root->children ?? [], null);
@@ -64,6 +80,7 @@ final class IrBuilder
 			prologueIncludes: $top['prologueIncludes'],
 			rootStatements: $top['statements'],
 			localTypeCommentsByKey: $this->typeCommentsByKey,
+			scannerAnnotations: $input->annotations,
 			buildErrors: $top['errors'],
 		);
 	}
@@ -380,7 +397,7 @@ final class IrBuilder
 		return new FunctionDecl(
 			name: (string) ($children['name'] ?? ''),
 			params: $params,
-			returnType: $this->readTypeName($children['returnType'] ?? null),
+			returnType: $this->resolveFunctionLikeReturnType($node),
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
 			argNormalizationRules: $this->validateArgNormalizationRules($argRuleParse['rules'], $params, 'function ' . (string) ($children['name'] ?? '')),
@@ -412,7 +429,7 @@ final class IrBuilder
 		return new MethodDecl(
 			name: (string) ($children['name'] ?? ''),
 			params: $params,
-			returnType: $this->readTypeName($children['returnType'] ?? null),
+			returnType: $this->resolveFunctionLikeReturnType($node),
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			isStatic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
@@ -508,6 +525,17 @@ final class IrBuilder
 	{
 		$key = $line . ':' . $name;
 		return $this->typeCommentsByKey[$key] ?? null;
+	}
+
+	private function resolveFunctionLikeReturnType(object $node): ?string
+	{
+		$native = $this->readTypeName($node->children['returnType'] ?? null);
+		if ($native !== null) {
+			return $native;
+		}
+
+		$line = (int) ($node->lineno ?? 0);
+		return $line > 0 ? ($this->returnAnnotationsByLine[$line] ?? null) : null;
 	}
 
 	private function resolveDocTypeComment(int $line, string $name, mixed $docComment): ?string

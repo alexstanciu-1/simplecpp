@@ -1,0 +1,77 @@
+{
+    "source": "<?php\n\n$items /** vector<string> */ = [];\n$lookup /** hash<string, int> */ = [];\n\nclass Demo {\n\tpublic $names /** vector<string> */ = [];\n\n\tpublic function merge(/** hash<string, int> */ $left, /** vector<string> */ $right) {\n\t\treturn [];\n\t}\n}\n\n$make = fn(/** int */ $x) =>\n\tfn(/** int */ $y): int => $x + $y;\n",
+    "annotations": [
+        {
+            "kind": "local",
+            "name": "items",
+            "type": "vector<string>",
+            "line": 3,
+            "startOffset": 14,
+            "endOffset": 28
+        },
+        {
+            "kind": "local",
+            "name": "lookup",
+            "type": "hash<string, int>",
+            "line": 4,
+            "startOffset": 43,
+            "endOffset": 60
+        },
+        {
+            "kind": "property",
+            "name": "names",
+            "type": "vector<string>",
+            "line": 7,
+            "startOffset": 96,
+            "endOffset": 110
+        },
+        {
+            "kind": "param",
+            "name": "left",
+            "type": "hash<string, int>",
+            "line": 9,
+            "startOffset": 141,
+            "endOffset": 164
+        },
+        {
+            "kind": "param",
+            "name": "right",
+            "type": "vector<string>",
+            "line": 9,
+            "startOffset": 166,
+            "endOffset": 187
+        },
+        {
+            "kind": "method_return",
+            "name": null,
+            "type": "hash<string, int>",
+            "line": 9,
+            "startOffset": 188,
+            "endOffset": 207
+        },
+        {
+            "kind": "param",
+            "name": "x",
+            "type": "int",
+            "line": 14,
+            "startOffset": 240,
+            "endOffset": 246
+        },
+        {
+            "kind": "closure_return",
+            "name": null,
+            "type": "function<function<int(int)>(int)>",
+            "line": 14,
+            "startOffset": 248,
+            "endOffset": 282
+        },
+        {
+            "kind": "param",
+            "name": "y",
+            "type": "int",
+            "line": 15,
+            "startOffset": 289,
+            "endOffset": 295
+        }
+    ]
+}

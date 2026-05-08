@@ -36,6 +36,8 @@ final class Generator
 	private array $warnings = [];
 	/** @var array<string, string> */
 	private array $localTypeComments = [];
+	/** @var array<int, string> */
+	private array $scannerReturnAnnotationsByLine = [];
 	/** @var array<string, string> */
 	private array $declaredLocalTypes = [];
 	/** @var array<string, bool> */
@@ -124,6 +126,7 @@ final class Generator
 		$this->errors = $file->buildErrors;
 		$this->warnings = [];
 		$this->localTypeComments = $file->localTypeCommentsByKey;
+		$this->scannerReturnAnnotationsByLine = $this->indexScannerReturnAnnotations($file);
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
 		$this->currentFinallyReturnContext = null;
@@ -208,6 +211,23 @@ final class Generator
 		$this->throwIfErrors();
 
 		return new CppFile($baseName, $header, $this->buildExportManifest($file), $source, $this->errors, $this->warnings);
+	}
+
+	/** @return array<int, string> */
+	private function indexScannerReturnAnnotations(PhpFile $file): array
+	{
+		$out = [];
+		foreach ($file->scannerAnnotations as $annotation) {
+			if (!in_array(($annotation['kind'] ?? null), ['function_return', 'method_return', 'closure_return'], true)) {
+				continue;
+			}
+			$line = (int) ($annotation['line'] ?? 0);
+			$type = $annotation['type'] ?? null;
+			if ($line > 0 && is_string($type) && $type !== '') {
+				$out[$line] = $type;
+			}
+		}
+		return $out;
 	}
 
 	/** @return array<string,mixed> */
@@ -5025,13 +5045,12 @@ final class Generator
 			return null;
 		}
 		$inner = trim($matches[1]);
-		$open = strpos($inner, '(');
-		$close = strrpos($inner, ')');
-		if ($open === false || $close === false || $close < $open) {
+		$signature = $this->splitFunctionTypeSignature($inner);
+		if ($signature === null) {
 			return null;
 		}
-		$returnPhpType = trim(substr($inner, 0, $open));
-		$paramsInner = trim(substr($inner, $open + 1, $close - $open - 1));
+		$returnPhpType = $signature['return'];
+		$paramsInner = $signature['params'];
 		$returnType = $returnPhpType !== '' ? $this->typeMapper->mapReturnType($returnPhpType, false) : null;
 		$paramTypes = [];
 		foreach ($this->splitTopLevelCommaList($paramsInner) as $param) {
@@ -5050,6 +5069,70 @@ final class Generator
 			$paramTypes[] = $this->typeMapper->mapParamType($param, $byRef);
 		}
 		return ['returnType' => $returnType, 'paramTypes' => $paramTypes];
+	}
+
+	/** @return array{return:string,params:string}|null */
+	private function splitFunctionTypeSignature(string $inner): ?array
+	{
+		$angleDepth = 0;
+		$parenDepth = 0;
+		$open = null;
+		$length = strlen($inner);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $inner[$i];
+			if ($ch === '<') {
+				++$angleDepth;
+				continue;
+			}
+			if ($ch === '>') {
+				--$angleDepth;
+				continue;
+			}
+			if ($ch === '(') {
+				if ($angleDepth === 0 && $parenDepth === 0) {
+					$open = $i;
+					break;
+				}
+				++$parenDepth;
+				continue;
+			}
+			if ($ch === ')' && $parenDepth > 0) {
+				--$parenDepth;
+			}
+		}
+
+		if (!is_int($open)) {
+			return null;
+		}
+
+		$angleDepth = 0;
+		$parenDepth = 0;
+		$close = null;
+		for ($i = $open; $i < $length; ++$i) {
+			$ch = $inner[$i];
+			if ($ch === '<') {
+				++$angleDepth;
+			} elseif ($ch === '>') {
+				--$angleDepth;
+			} elseif ($ch === '(') {
+				++$parenDepth;
+			} elseif ($ch === ')') {
+				--$parenDepth;
+				if ($angleDepth === 0 && $parenDepth === 0) {
+					$close = $i;
+					break;
+				}
+			}
+		}
+
+		if (!is_int($close) || $close < $open) {
+			return null;
+		}
+
+		return [
+			'return' => trim(substr($inner, 0, $open)),
+			'params' => trim(substr($inner, $open + 1, $close - $open - 1)),
+		];
 	}
 
 	/** @return list<string> */
@@ -5649,6 +5732,9 @@ final class Generator
 	{
 		$phpType = $this->readAstTypeName($returnTypeNode);
 		$docFunctionType = $this->resolveClosureReturnDocFunctionType($statements);
+		if ($docFunctionType === null) {
+			$docFunctionType = $this->resolveScannerClosureReturnType($expr);
+		}
 		if ($phpType !== null && $docFunctionType !== null) {
 			$this->errors[] = 'Conflicting closure return type sources at line ' . (int) ($expr->lineno ?? 0) . ': use either a native PHP return type or a doc-comment callable return type, not both.';
 			return '/* unsupported-closure-conflicting-return-type */';
@@ -5669,6 +5755,19 @@ final class Generator
 		}
 
 		return 'void';
+	}
+
+	private function resolveScannerClosureReturnType(object $expr): ?string
+	{
+		$line = (int) ($expr->lineno ?? 0);
+		if ($line <= 0) {
+			return null;
+		}
+		$type = $this->scannerReturnAnnotationsByLine[$line] ?? null;
+		if (!is_string($type) || $type === '') {
+			return null;
+		}
+		return preg_match('/^function\s*</', $type) === 1 ? $type : null;
 	}
 
 	/** @param list<Statement> $statements */

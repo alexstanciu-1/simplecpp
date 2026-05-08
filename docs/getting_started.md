@@ -78,6 +78,14 @@ Build only:
 scpp build
 ```
 
+Optional warm-build reuse flags:
+
+```bash
+scpp build --reuse-runtime
+scpp build --reuse-dependencies
+scpp build --reuse-runtime --reuse-dependencies
+```
+
 Remove generated state for a full cold rebuild:
 
 ```bash
@@ -91,6 +99,13 @@ Build then run:
 
 ```bash
 scpp run
+```
+
+The same reuse flags are supported on `scpp run`:
+
+```bash
+scpp run --reuse-runtime
+scpp run --reuse-dependencies -- arg1 arg2
 ```
 
 Pass program arguments after `--`:
@@ -129,6 +144,9 @@ Compiler selection:
 - output executable written under `.prism/build/`
 - recursive S2S generation for all project `*.phs` files plus compatible `*.php` files
 - cached S2S state in `.prism/cache/s2s_state.php` using file size + mtime
+- `scpp build` and `scpp run` compile runtime and Prism project dependencies by default
+- `--reuse-runtime` reuses an already-built runtime artifact instead of recompiling it
+- `--reuse-dependencies` reuses already-built dependency objects/artifacts instead of recompiling dependency project units
 
 ## 4. Single-file transpile remains available
 
@@ -140,7 +158,7 @@ This still prints generated C++ to stdout and remains useful for narrow fixture 
 
 ## 5. Current boundary
 
-The project command shape is now fixed around `scpp init` + `scpp build` / `scpp run`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` and `scpp run` recursively transpile project PHP++ files and compatible `.php` inputs, and use cached file metadata, while still relying on the configured single entrypoint and the repo runtime directly.
+The project command shape is now fixed around `scpp init` + `scpp build` / `scpp run`, but the full deliberate multi-file semantic model is not complete yet. `scpp build` and `scpp run` recursively transpile project PHP++ files and compatible `.php` inputs, use cached file metadata, and still rely on the configured single entrypoint plus the repo runtime. Warm-build reuse flags now let callers keep the dependency graph and runtime composition model while skipping recompilation of already-built runtime/dependency artifacts.
 
 ## 6. AI onboarding
 

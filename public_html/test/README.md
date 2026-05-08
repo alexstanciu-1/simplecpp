@@ -14,6 +14,7 @@ Behavior:
 - bottom-left: PHP output, or PHP execution error text when PHP execution fails
 - bottom-right: C++ output, or C++ compile/runtime error text when the generated code fails
 - bottom panes get a green outline when both outputs match exactly and neither side has an error
+- when shorthand typed syntax is used, the AST fixture and PHP execution path run on the pre-tokenized PHP-compatible source while the C++ generator/build path still uses the authored source file
 
 Performance notes:
 - the UI now caches a prebuilt C++ runtime archive under `runtime/build/test_ui_cache`

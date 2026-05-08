@@ -160,6 +160,14 @@ Build the configured entrypoint from `prism.json`:
 scpp build
 ```
 
+Optional warm-build reuse flags:
+
+```bash
+scpp build --reuse-runtime
+scpp build --reuse-dependencies
+scpp build --reuse-runtime --reuse-dependencies
+```
+
 Remove generated build state for a cold rebuild:
 
 ```bash
@@ -172,6 +180,13 @@ Build then run the configured entrypoint:
 
 ```bash
 scpp run
+```
+
+The same reuse flags are supported on `scpp run`:
+
+```bash
+scpp run --reuse-runtime
+scpp run --reuse-dependencies -- arg1 arg2
 ```
 
 Update the installed `scpp` checkout from GitHub main:
@@ -187,6 +202,13 @@ Pass program arguments after `--` when needed:
 ```bash
 scpp run -- arg1 arg2
 ```
+
+Current default behavior:
+
+- `scpp build` compiles the runtime artifact and resolved Prism project dependencies by default
+- `scpp run` does the same build step first, then executes the primary output
+- `--reuse-runtime` reuses an already-built runtime artifact
+- `--reuse-dependencies` reuses already-built dependency objects/artifacts
 
 Run the deterministic usability harness:
 

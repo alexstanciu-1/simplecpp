@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Scpp\S2S\Loader;
 
+use Scpp\S2S\PreTokenizer\PreTokenizer;
 use Scpp\S2S\Support\InputException;
 
 /**
@@ -15,6 +16,11 @@ use Scpp\S2S\Support\InputException;
  */
 final class InputLoader
 {
+	public function __construct(
+		private readonly PreTokenizer $preTokenizer = new PreTokenizer(),
+	) {
+	}
+
 	/**
 	 * Loads exported AST and token data for one PHP++ source file and validates the expected JSON sidecar shape.
 	 *
@@ -31,17 +37,23 @@ final class InputLoader
 		if ($code === null) {
 			$code = file_get_contents($path);
 		}
+		if ($code === false) {
+			throw new InputException('Failed to read PHP input: ' . $path);
+		}
+
+		$preTokenized = $this->preTokenizer->rewrite($code);
+		$parseCode = $preTokenized->source;
 		$json_file = $path . ".json";
 		
 		if (extension_loaded('ast')) {
 			$version = max(\ast\get_supported_versions()); # \ast\get_latest_version();
-			$ast = \ast\parse_code($code, $version);
+			$ast = \ast\parse_code($parseCode, $version);
 			
 			if ($save_ast_to_json) {
 				file_put_contents($json_file, json_encode($ast));
 			}
 
-			return new ParsedInput($path, $code, \token_get_all($code), $ast);
+			return new ParsedInput($path, $parseCode, $code, \token_get_all($parseCode), $ast, $preTokenized->annotations);
 		}
 		
 		if (!is_file($json_file)) {
@@ -58,13 +70,13 @@ final class InputLoader
 
 		if (is_object($data) && property_exists($data, 'ast')) {
 			$ast = $this->normalizeDecodedAstShape($data->ast);
-			$tokens = is_array($data->tokens ?? null) ? $data->tokens : \token_get_all($code);
+			$tokens = \token_get_all($parseCode);
 
-			return new ParsedInput($path, $code, $tokens, $ast);
+			return new ParsedInput($path, $parseCode, $code, $tokens, $ast, $preTokenized->annotations);
 		}
 
 		$ast = $this->normalizeDecodedAstShape($data);
-		return new ParsedInput($path, $code, \token_get_all($code), $ast);
+		return new ParsedInput($path, $parseCode, $code, \token_get_all($parseCode), $ast, $preTokenized->annotations);
 	}
 
 	/**

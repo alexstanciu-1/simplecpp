@@ -538,14 +538,13 @@ final class TypeMapper
 		}
 
 		$inner = trim($matches[1]);
-		$open = strpos($inner, '(');
-		$close = strrpos($inner, ')');
-		if ($open === false || $close === false || $close < $open) {
+		$signature = $this->splitFunctionTypeSignature($inner);
+		if ($signature === null) {
 			throw new GenerationException('Invalid function type syntax: ' . $phpType);
 		}
 
-		$returnType = trim(substr($inner, 0, $open));
-		$paramsInner = trim(substr($inner, $open + 1, $close - $open - 1));
+		$returnType = $signature['return'];
+		$paramsInner = $signature['params'];
 		if ($returnType === '') {
 			throw new GenerationException('Function type requires an explicit return type: ' . $phpType);
 		}
@@ -569,6 +568,70 @@ final class TypeMapper
 		}
 
 		return 'std::function<' . $mappedReturn . '(' . implode(', ', $mappedParams) . ')>';
+	}
+
+	/** @return array{return:string,params:string}|null */
+	private function splitFunctionTypeSignature(string $inner): ?array
+	{
+		$angleDepth = 0;
+		$parenDepth = 0;
+		$open = null;
+		$length = strlen($inner);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $inner[$i];
+			if ($ch === '<') {
+				++$angleDepth;
+				continue;
+			}
+			if ($ch === '>') {
+				--$angleDepth;
+				continue;
+			}
+			if ($ch === '(') {
+				if ($angleDepth === 0 && $parenDepth === 0) {
+					$open = $i;
+					break;
+				}
+				++$parenDepth;
+				continue;
+			}
+			if ($ch === ')' && $parenDepth > 0) {
+				--$parenDepth;
+			}
+		}
+
+		if (!is_int($open)) {
+			return null;
+		}
+
+		$angleDepth = 0;
+		$parenDepth = 0;
+		$close = null;
+		for ($i = $open; $i < $length; ++$i) {
+			$ch = $inner[$i];
+			if ($ch === '<') {
+				++$angleDepth;
+			} elseif ($ch === '>') {
+				--$angleDepth;
+			} elseif ($ch === '(') {
+				++$parenDepth;
+			} elseif ($ch === ')') {
+				--$parenDepth;
+				if ($angleDepth === 0 && $parenDepth === 0) {
+					$close = $i;
+					break;
+				}
+			}
+		}
+
+		if (!is_int($close) || $close < $open) {
+			return null;
+		}
+
+		return [
+			'return' => trim(substr($inner, 0, $open)),
+			'params' => trim(substr($inner, $open + 1, $close - $open - 1)),
+		];
 	}
 
 	/** @return list<string> */

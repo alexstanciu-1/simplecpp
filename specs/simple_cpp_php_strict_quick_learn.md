@@ -91,6 +91,14 @@ Common entrypoint names include:
 scpp build
 ```
 
+Optional warm-build reuse flags:
+
+```bash
+scpp build --reuse-runtime
+scpp build --reuse-dependencies
+scpp build --reuse-runtime --reuse-dependencies
+```
+
 ### Run
 
 ```bash
@@ -101,6 +109,13 @@ Pass program arguments after `--`:
 
 ```bash
 scpp run -- arg1 arg2
+```
+
+The same reuse flags are also accepted on `scpp run`:
+
+```bash
+scpp run --reuse-runtime
+scpp run --reuse-dependencies -- arg1 arg2
 ```
 
 ### CLI maintenance
@@ -222,11 +237,19 @@ Use this order:
 | `take` with error output | `if (take($text, $err, fs_get($path))) { ... }` |
 | `take` with wrapper output | `if (take($fh, io_open($path, "rb"))) { ... }` |
 | `take` with nullable | `if (take($name, $maybe_name)) { ... }` |
+| typed local shorthand | `$count int = 0;` |
 | typed local by doc comment | `$count /** int */ = 0;` |
+| typed vector local shorthand | `$items vector<int> = [1, 2, 3];` |
 | typed vector local | `$items /** vector<int> */ = [1, 2, 3];` |
+| typed hash local shorthand | `$by_name hash<int> = ["a" => 1, "b" => 2];` |
 | typed hash local | `$by_name /** hash<int> */ = ["a" => 1, "b" => 2];` |
+| typed two-arg hash shorthand | `$by_id hash<string, int> = [0 => "a", 1 => "b"];` |
 | typed int-key hash local | `$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];` |
+| typed class property shorthand | `public $list vector<T> = [];` |
 | typed class property | `public $list /** vector<T> */ = [];` |
+| typed param shorthand | `function build($items vector<string>) { ... }` |
+| typed return shorthand | `function build(): vector<string> { ... }` |
+| typed arrow return shorthand | `$make = fn($x int) function<function<int(int)>(int)> => fn($y int): int => $x + $y;` |
 | vector property with class element | `public $properties /** vector<model_property> */ = [];` |
 | vector literal needs explicit typed context | `$v /** vector<int> */ = [1, 2, 3];` |
 | typed read from dynamic value | `$count /** int */ = $data["count"];` |
@@ -254,6 +277,7 @@ Use this order:
 
 | Prefer | Over |
 | --- | --- |
+| `$count int = $row["count"];` | `$count = $row["count"];` |
 | `$count /** int */ = $row["count"];` | `$count = $row["count"];` |
 | `if ($status === "ready")` | `if ($status)` |
 | `vector<T>` for typed lists | dynamic list/table when not needed |
@@ -274,7 +298,26 @@ In practice:
 
 - `vector<string>` is a better fit than a dynamic packed container when all elements are strings.
 - `hash<int>` is a better fit than a dynamic object-like table when keys are known strings and values are all ints.
+- `hash<string, int>` is the supported two-argument generic form when the key family itself is intentionally typed.
 - `mixed_t` remains appropriate for decoded JSON, loose interop surfaces, and truly dynamic payloads.
+
+## Typed shorthand note
+
+The current frontend accepts two equivalent explicit type-intent forms at supported sites:
+
+- shorthand surface syntax, for example `$count int = 0;`
+- PHP-compatible inline annotation syntax, for example `$count /** int */ = 0;`
+
+The pre-tokenizer normalizes the shorthand form into a PHP-compatible annotated form before `php-ast` parsing, while separately preserving site ownership metadata for:
+
+- locals
+- properties
+- parameters
+- function returns
+- method returns
+- closure and arrow-function returns
+
+This scanner-owned metadata is what keeps nested closure return annotations attached to the correct outer site instead of relying on raw `php-ast` doc-comment attachment quirks.
 
 ## Wrapper Pattern
 

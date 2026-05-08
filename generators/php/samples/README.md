@@ -42,6 +42,11 @@ Interpolation AST finding:
 - generator lowering should join each part in order and cast interpolated non-string values to `string_t` explicitly
 - `samples/know_how/` remains the exporter-behavior reference folder for these checks
 
+Pre-tokenizer note:
+- `know_how/pre_tokenizer_preview.phs` is the broad scanner-owned rewrite demo for locals, properties, params, and outer-arrow return ownership.
+- `know_how/pre_tokenizer_return_sites.phs` is the focused integration sample for function/method return shorthand and nested callable return ownership.
+- `php bin/check_pre_tokenizer_regressions.php` verifies the checked-in rewritten-source and annotation-memory snapshots for those samples.
+
 
 Generator namespace/import note:
 - generated `.cpp` namespace blocks inject `using namespace ::scpp;` and `using namespace ::scpp::php;`
