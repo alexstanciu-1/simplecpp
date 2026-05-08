@@ -9,6 +9,27 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.16 - 2026-05-08
+
+### Additions
+
+- Added explicit runtime maintenance commands and flags: `scpp runtime-build`, `--build-runtime`, `--build-dependencies`, and `--force`
+
+### Fixes
+
+- Fixed the public `scpp build` and `scpp run` defaults so they now reuse existing runtime and Prism project dependency artifacts unless explicit rebuild flags are requested
+- Fixed `scpp update` so a real fast-forward rebuilds the default reusable runtime cache automatically, and `scpp update --force` rebuilds that cache even when the checkout is already current
+
+### Breaking Changes
+
+- `--reuse-runtime` and `--reuse-dependencies` are replaced by `--build-runtime` and `--build-dependencies`
+
+### Migration Notes
+
+- `scpp build` and `scpp run` now default to warm-build reuse for runtime and dependency artifacts
+- Use `--build-runtime` and `--build-dependencies` when you explicitly want those heavier rebuild steps
+- Use `scpp runtime-build [--debug|--release] [--force]` to rebuild the reusable runtime cache directly
+- Use `scpp update --force` to rebuild the default reusable runtime cache even when no Git update is pulled
 ## 0.1.15 - 2026-05-08
 
 ### Additions
@@ -16,7 +37,6 @@ This file is the authoritative checked-in source for release notes referenced by
 - Added a scanner-owned pre-tokenizer path for PHP++ shorthand type syntax across locals, properties, parameters, and function-like return sites
 - Added shorthand-type regression fixtures and regression scripts for rewritten-source and annotation-ownership validation
 - Added build option coverage and integration coverage for runtime/dependency warm-build reuse behavior
-- Added `scpp build` / `scpp run` warm-build reuse flags: `--reuse-runtime` and `--reuse-dependencies`
 - Added `public_html/test` pre-tokenized AST/PHP execution support so browser-driven test runs can exercise shorthand typed syntax
 
 ### Fixes
@@ -32,7 +52,6 @@ This file is the authoritative checked-in source for release notes referenced by
 ### Migration Notes
 
 - Typed doc-comment forms such as `$count /** int */ = 0;` remain supported, but shorthand surface forms such as `$count int = 0;` are now first-class and normalize through the pre-tokenizer
-- Public `scpp build` and `scpp run` still compile runtime and Prism project dependencies by default; use `--reuse-runtime` and `--reuse-dependencies` for warm-build reuse behavior
 
 ## 0.1.14 - 2026-05-06
 

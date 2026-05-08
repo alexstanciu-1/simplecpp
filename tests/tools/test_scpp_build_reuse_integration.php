@@ -61,7 +61,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertSame($depBeforeReuse, $this->mtime($depObject), 'dependency object should remain untouched until dependency compilation is requested');
 
 			$this->sleepForTimestamp();
-			$depFull = scpp_run_build_service($app, $app . '/prism.json', parse_build_command_arguments([]));
+			$depFull = scpp_run_build_service($app, $app . '/prism.json', parse_build_command_arguments(['--build-dependencies']));
 			$this->assertSame(true, $depFull['ok'], 'full build should rebuild dependency artifacts');
 			$this->assertContains('Dependency compilation: enabled', $depFull['output'], 'full build should re-enable dependency compilation');
 			$depAfterFull = $this->mtime($depObject);

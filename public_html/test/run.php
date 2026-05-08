@@ -268,7 +268,7 @@ try {
 		];
 	} else {
 		$buildStage = measureStage(static function () use ($projectConfig, $repoRoot): array {
-			return runScppCliService($repoRoot, $projectConfig['project_root'], ['build']);
+			return runScppCliService($repoRoot, $projectConfig['project_root'], ['build', '--build-runtime']);
 		});
 		$buildResult = $buildStage['result'];
 		$response['cpp_compile_output'] = normalizeCommandOutput((string) $buildResult['output']);
