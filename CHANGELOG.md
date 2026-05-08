@@ -9,6 +9,31 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.15 - 2026-05-08
+
+### Additions
+
+- Added a scanner-owned pre-tokenizer path for PHP++ shorthand type syntax across locals, properties, parameters, and function-like return sites
+- Added shorthand-type regression fixtures and regression scripts for rewritten-source and annotation-ownership validation
+- Added build option coverage and integration coverage for runtime/dependency warm-build reuse behavior
+- Added `scpp build` / `scpp run` warm-build reuse flags: `--reuse-runtime` and `--reuse-dependencies`
+- Added `public_html/test` pre-tokenized AST/PHP execution support so browser-driven test runs can exercise shorthand typed syntax
+
+### Fixes
+
+- Fixed nested closure and arrow return-type ownership so callable annotations no longer depend on raw `php-ast` doc-comment attachment quirks
+- Fixed the project build graph so lower-level build-service calls can reuse existing runtime and dependency artifacts without recompiling them unless explicitly requested
+- Fixed the `public_html/test` harness so shorthand typed syntax is parsed and executed through the pre-tokenized source path instead of failing in raw PHP parsing
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Typed doc-comment forms such as `$count /** int */ = 0;` remain supported, but shorthand surface forms such as `$count int = 0;` are now first-class and normalize through the pre-tokenizer
+- Public `scpp build` and `scpp run` still compile runtime and Prism project dependencies by default; use `--reuse-runtime` and `--reuse-dependencies` for warm-build reuse behavior
+
 ## 0.1.14 - 2026-05-06
 
 ### Additions

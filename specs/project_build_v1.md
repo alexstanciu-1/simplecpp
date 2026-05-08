@@ -169,6 +169,25 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 16. runs Ninja
 17. leaves the root project executable under `.prism/build/`
 
+By default, the public CLI commands `scpp build` and `scpp run` both compile:
+
+- the runtime artifact
+- resolved Prism project dependencies
+
+The current public opt-out flags are:
+
+- `--reuse-runtime`
+- `--reuse-dependencies`
+
+When `--reuse-runtime` is present, `scpp build` or `scpp run` reuses the existing runtime artifact path in the emitted Ninja graph instead of recompiling the runtime. The artifact must already exist or the build fails naturally at compile/link time.
+
+When `--reuse-dependencies` is present, `scpp build` or `scpp run` still resolves the Prism project dependency graph for source discovery, export composition, and header visibility, but reuses the existing dependency object/artifact paths in the emitted Ninja graph instead of recompiling dependency project units. Those dependency artifacts must already exist or the build fails naturally at compile/link time.
+
+The lower-level build service path used by helpers/tests may default to reuse mode unless it explicitly opts into runtime/dependency compilation. The public user-facing CLI contract remains:
+
+- `scpp build` compiles runtime and dependencies by default
+- `scpp run` compiles runtime and dependencies by default, then executes the primary output
+
 ## `scpp clean` behavior
 
 `scpp clean` removes generated project state so the next `scpp build` is a cold rebuild.
@@ -230,6 +249,7 @@ For v1, the dependency contract is:
 - duplicate dependency visits should be deduplicated by normalized project root
 - symbol collisions across participating projects must fail clearly during build or link
 - shared-library packaging is a later build mode and is not the semantic meaning of `dependencies` in v1
+- dependency resolution remains active even when `--reuse-dependencies` is used; the flag only suppresses recompilation of already-built dependency units
 
 ## Project exports
 

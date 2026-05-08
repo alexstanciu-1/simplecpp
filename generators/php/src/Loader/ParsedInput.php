@@ -10,12 +10,23 @@ final class ParsedInput
 {
 	/**
 	 * @param array<int, mixed> $tokens
+	 * @param list<array{
+	 *   kind:string,
+	 *   name:?string,
+	 *   type:string,
+	 *   line:int,
+	 *   startOffset:int,
+	 *   endOffset:int,
+	 *   ownerName?:?string
+	 * }> $annotations
 	 */
 	public function __construct(
 		public readonly string $path,
 		public readonly string $source,
+		public readonly string $originalSource,
 		public readonly array $tokens,
 		public readonly mixed $ast,
+		public readonly array $annotations = [],
 	) {
 	}
 }

@@ -1,27 +1,24 @@
 Doc Status: planning
 
+Resolved in current scanner-owned pre-tokenizer path:
 
-Your intended syntax is:
+The earlier php-ast attachment problem for outer closure/arrow return annotations is no longer handled by trusting raw `docComment` ownership.
 
-$make = fn(int $x) /** function<function<int(int)>(int)> */ =>
-	fn(int $y): int => $x + $y + $a;
+The current frontend path:
 
-But php-ast is not attaching that doc comment to the outer arrow.
+- scans supported shorthand or annotation sites before `php-ast`
+- rewrites source into a PHP-compatible form
+- preserves explicit site ownership metadata for function/method/closure return slots
 
-What the AST shows
+So a form such as:
 
-Outer arrow at line 6:
+```php
+$make = fn($x int) function<function<int(int)>(int)> =>
+	fn($y int): int => $x + $y;
+```
 
-kind: 72
-docComment: null
-returnType: null
+is now handled through scanner-owned return-site metadata rather than relying on php-ast to attach the outer annotation to the correct arrow node.
 
-Inner arrow at line 7:
-
-kind: 72
-docComment: "/** function<function<int(int)>(int)> */"
-
-So the annotation written after the outer arrow signature is being attached by php-ast to the inner returned arrow expression.
-
+This note remains useful only as background on why the pre-tokenizer/scanner ownership layer exists.
 
 

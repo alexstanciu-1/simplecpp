@@ -695,7 +695,19 @@ $f /** function<int(int)> */;
 
 This form exists so an outer block can predeclare a local that will later be assigned inside child blocks while still respecting block-local visibility. Bare `callable` is not sufficient; use a concrete `function<return_type(arg_types)>` annotation.
 
-The same concrete `function<return_type(arg_types)>` annotation form is also accepted on closure parameters when PHP syntax cannot express a native callable signature directly, for example `function (/** function<int(int)> */ $fn, int $x): int { ... }`. For closure factories that return another closure, Safe v1 also accepts the post-signature doc-comment form `$make = function () /** function<int(int)> */ { return function (int $x): int { ... }; };`, which php-ast attaches to the returned inner closure; the generator treats that doc-comment as the outer closure's explicit return type in the simple single-return factory shape. Arrow functions (`fn (...) => expr`) are also supported in Safe v1. php-ast exposes them as `AST_ARROW_FUNC` without an explicit `use (...)` list, so the generator infers implicit by-value captures from referenced outer locals and lowers them to native C++ lambdas with value captures.
+The same concrete `function<return_type(arg_types)>` annotation form is also accepted on closure parameters when PHP syntax cannot express a native callable signature directly, for example `function (/** function<int(int)> */ $fn, int $x): int { ... }`.
+
+Safe v1 also accepts scanner-owned shorthand type sites that are normalized before `php-ast` parsing, for example:
+
+```php
+$count int = 0;
+public $items vector<string> = [];
+function build($items vector<string>): vector<string> { ... }
+$make = fn($x int) function<function<int(int)>(int)> =>
+	fn($y int): int => $x + $y;
+```
+
+The pre-tokenizer rewrites those surfaces into PHP-compatible annotated source while separately preserving explicit site metadata for locals, properties, params, and function-like return slots. Because return-site ownership is scanner-owned, nested closure or arrow return annotations no longer rely on accidental raw `php-ast` doc-comment attachment. Arrow functions (`fn (...) => expr`) are also supported in Safe v1. php-ast exposes them as `AST_ARROW_FUNC` without an explicit `use (...)` list, so the generator infers implicit by-value captures from referenced outer locals and lowers them to native C++ lambdas with value captures.
 
 ### 7.2 Untyped null assignment
 Direct untyped `null` assignment is not allowed:
