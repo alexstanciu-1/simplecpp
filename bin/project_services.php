@@ -1220,8 +1220,10 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 
 	$command = [
 		$ninjaPath,
+		'-C',
+		normalize_config_path(relative_path($projectRoot, $buildDir)),
 		'-f',
-		normalize_config_path(relative_path($projectRoot, $buildNinjaPath)),
+		basename($buildNinjaPath),
 	];
 	if (build_ninja_verbose_requested()) {
 		$command[] = '-v';
@@ -2754,18 +2756,18 @@ function compiler_display_command(array $compiler): string
  */
 function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppUnits, string $outputName, array $compiler, string $buildMode, array $runtimeConfig, array $projectLibraryFlags = [], ?array $fastcgiBuild = null, array $options = ['compile_runtime' => true, 'compile_dependencies' => true]): string
 {
-	$generatedIncludeDir = normalize_config_path(relative_path($projectRoot, $generatedDir));
-	$runtimeIncludeDir = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include'));
-	$output = normalize_config_path(relative_path($projectRoot, $buildDir . '/' . $outputName));
-	$appPchHeader = normalize_config_path(relative_path($projectRoot, build_app_pch_header_path($buildDir)));
-	$appPchArtifact = normalize_config_path(relative_path($projectRoot, build_app_pch_artifact_path($buildDir, $compiler['kind'])));
-	$runtimePchHeader = normalize_config_path(relative_path($projectRoot, build_runtime_pch_header_path($buildDir)));
-	$runtimePchArtifact = normalize_config_path(relative_path($projectRoot, build_runtime_pch_artifact_path($buildDir, $compiler['kind'])));
+	$generatedIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $generatedDir);
+	$runtimeIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $repoRoot . '/runtime/include');
+	$output = build_ninja_relative_path($projectRoot, $buildDir, $buildDir . '/' . $outputName);
+	$appPchHeader = build_ninja_relative_path($projectRoot, $buildDir, build_app_pch_header_path($buildDir));
+	$appPchArtifact = build_ninja_relative_path($projectRoot, $buildDir, build_app_pch_artifact_path($buildDir, $compiler['kind']));
+	$runtimePchHeader = build_ninja_relative_path($projectRoot, $buildDir, build_runtime_pch_header_path($buildDir));
+	$runtimePchArtifact = build_ninja_relative_path($projectRoot, $buildDir, build_runtime_pch_artifact_path($buildDir, $compiler['kind']));
 	$compilerCommand = $compiler['command'];
 	$compilerLauncher = $compiler['launcher'] ?? null;
 	$linkerFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig);
-	$runtimeSignatureStamp = normalize_config_path(relative_path($projectRoot, $buildDir . '/runtime_signature.txt'));
+	$runtimeSignatureStamp = build_ninja_relative_path($projectRoot, $buildDir, $buildDir . '/runtime_signature.txt');
 	$runtimeLinkFlags = $options['compile_runtime'] && is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
 	$runtimeExtraCxxFlags = $options['compile_runtime'] && is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
 	$fastcgiCxxFlags = is_array($fastcgiBuild['cxxflags'] ?? null) ? $fastcgiBuild['cxxflags'] : [];
@@ -2881,11 +2883,11 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	}
 	foreach ($generatedUnits as $unit) {
 		if (!$options['compile_dependencies'] && normalize_path($unit['project_root']) !== normalize_path($projectRoot)) {
-			$objectPaths[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $unit['object_path'])));
+			$objectPaths[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $unit['object_path']));
 			continue;
 		}
-		$generatedCpp = normalize_config_path(relative_path($projectRoot, $unit['generated_cpp']));
-		$objectPath = normalize_config_path(relative_path($projectRoot, $unit['object_path']));
+		$generatedCpp = build_ninja_relative_path($projectRoot, $buildDir, $unit['generated_cpp']);
+		$objectPath = build_ninja_relative_path($projectRoot, $buildDir, $unit['object_path']);
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if (supports_compiler_pch($compiler)) {
 			$implicitDeps[] = ninja_escape_path($appPchArtifact);
@@ -2893,17 +2895,17 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		$lines[] = 'build ' . ninja_escape_path($objectPath) . ': compile ' . ninja_escape_path($generatedCpp) . ' | ' . implode(' ', $implicitDeps);
 		$unitForceIncludeHeader = is_string($unit['force_include_header'] ?? null) ? $unit['force_include_header'] : null;
 		if ($unitForceIncludeHeader !== null && $unitForceIncludeHeader !== '') {
-			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [normalize_config_path(relative_path($projectRoot, $unitForceIncludeHeader))]);
+			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [build_ninja_relative_path($projectRoot, $buildDir, $unitForceIncludeHeader)]);
 		}
 		$objectPaths[] = ninja_escape_path($objectPath);
 	}
 	foreach ($nativeCppUnits as $nativeUnit) {
 		if (!$options['compile_dependencies'] && normalize_path($nativeUnit['project_root']) !== normalize_path($projectRoot)) {
-			$objectPaths[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $nativeUnit['object_path'])));
+			$objectPaths[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['object_path']));
 			continue;
 		}
-		$nativeRelative = normalize_config_path(relative_path($projectRoot, $nativeUnit['source_path']));
-		$nativeObject = normalize_config_path(relative_path($projectRoot, $nativeUnit['object_path']));
+		$nativeRelative = build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['source_path']);
+		$nativeObject = build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['object_path']);
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if (supports_compiler_pch($compiler)) {
 			$implicitDeps[] = ninja_escape_path($appPchArtifact);
@@ -2911,29 +2913,33 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		$lines[] = 'build ' . ninja_escape_path($nativeObject) . ': compile ' . ninja_escape_path($nativeRelative) . ' | ' . implode(' ', $implicitDeps);
 		$unitForceIncludeHeader = is_string($nativeUnit['force_include_header'] ?? null) ? $nativeUnit['force_include_header'] : null;
 		if ($unitForceIncludeHeader !== null && $unitForceIncludeHeader !== '') {
-			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [normalize_config_path(relative_path($projectRoot, $unitForceIncludeHeader))]);
+			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [build_ninja_relative_path($projectRoot, $buildDir, $unitForceIncludeHeader)]);
 		}
 		$objectPaths[] = ninja_escape_path($nativeObject);
 	}
 	if ($options['compile_runtime']) {
+		$runtimeArtifactPath = build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['artifact_path']);
 		if ($runtimeBuild['kind'] === 'shared') {
+			$runtimeObjectPath = build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['object_path']);
+			$runtimeSourcePath = build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['source_path']);
 			$runtimeImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 			if (supports_compiler_pch($compiler)) {
 				$runtimeImplicitDeps[] = ninja_escape_path($runtimePchArtifact);
 			}
-			$lines[] = 'build ' . ninja_escape_path($runtimeBuild['object_path']) . ': compile_runtime ' . ninja_escape_path($runtimeBuild['source_path']) . ' | ' . implode(' ', $runtimeImplicitDeps);
-			$lines[] = 'build ' . ninja_escape_path($runtimeBuild['artifact_path']) . ': link_runtime_shared ' . ninja_escape_path($runtimeBuild['object_path']);
-			$objectPaths[] = ninja_escape_path($runtimeBuild['artifact_path']);
+			$lines[] = 'build ' . ninja_escape_path($runtimeObjectPath) . ': compile_runtime ' . ninja_escape_path($runtimeSourcePath) . ' | ' . implode(' ', $runtimeImplicitDeps);
+			$lines[] = 'build ' . ninja_escape_path($runtimeArtifactPath) . ': link_runtime_shared ' . ninja_escape_path($runtimeObjectPath);
+			$objectPaths[] = ninja_escape_path($runtimeArtifactPath);
 		} else {
+			$runtimeSourcePath = build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['source_path']);
 			$runtimeImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 			if (supports_compiler_pch($compiler)) {
 				$runtimeImplicitDeps[] = ninja_escape_path($runtimePchArtifact);
 			}
-			$lines[] = 'build ' . ninja_escape_path($runtimeBuild['artifact_path']) . ': compile_runtime_fallback ' . ninja_escape_path($runtimeBuild['source_path']) . ' | ' . implode(' ', $runtimeImplicitDeps);
-			$objectPaths[] = ninja_escape_path($runtimeBuild['artifact_path']);
+			$lines[] = 'build ' . ninja_escape_path($runtimeArtifactPath) . ': compile_runtime_fallback ' . ninja_escape_path($runtimeSourcePath) . ' | ' . implode(' ', $runtimeImplicitDeps);
+			$objectPaths[] = ninja_escape_path($runtimeArtifactPath);
 		}
 	} else {
-		$objectPaths[] = ninja_escape_path($runtimeBuild['artifact_path']);
+		$objectPaths[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['artifact_path']));
 	}
 	$lines[] = '';
 	$lines[] = 'build ' . ninja_escape_path($output) . ': link ' . implode(' ', $objectPaths);
@@ -2943,14 +2949,14 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 			if (($unit['is_entrypoint'] ?? false) === true && ($fastcgiBuild['entrypoint_generated_cpp'] ?? '') !== '' && ($fastcgiBuild['entrypoint_object_path'] ?? '') !== '') {
 				continue;
 			}
-			$fcgiObjects[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $unit['object_path'])));
+			$fcgiObjects[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $unit['object_path']));
 		}
 		foreach ($nativeCppUnits as $nativeUnit) {
-			$fcgiObjects[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $nativeUnit['object_path'])));
+			$fcgiObjects[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['object_path']));
 		}
 		if (($fastcgiBuild['entrypoint_generated_cpp'] ?? '') !== '' && ($fastcgiBuild['entrypoint_object_path'] ?? '') !== '') {
-			$fcgiGeneratedCpp = normalize_config_path($fastcgiBuild['entrypoint_generated_cpp']);
-			$fcgiGeneratedObject = normalize_config_path($fastcgiBuild['entrypoint_object_path']);
+			$fcgiGeneratedCpp = build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['entrypoint_generated_cpp']);
+			$fcgiGeneratedObject = build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['entrypoint_object_path']);
 			$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 			if (supports_compiler_pch($compiler)) {
 				$implicitDeps[] = ninja_escape_path($appPchArtifact);
@@ -2958,16 +2964,16 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 			$lines[] = 'build ' . ninja_escape_path($fcgiGeneratedObject) . ': compile ' . ninja_escape_path($fcgiGeneratedCpp) . ' | ' . implode(' ', $implicitDeps);
 			$fcgiObjects[] = ninja_escape_path($fcgiGeneratedObject);
 		}
-		$fcgiMainSource = normalize_config_path($fastcgiBuild['source_path']);
-		$fcgiMainObject = normalize_config_path($fastcgiBuild['main_object_path']);
+		$fcgiMainSource = build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['source_path']);
+		$fcgiMainObject = build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['main_object_path']);
 		$fcgiMainImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if (supports_compiler_pch($compiler)) {
 			$fcgiMainImplicitDeps[] = ninja_escape_path($appPchArtifact);
 		}
 		$lines[] = 'build ' . ninja_escape_path($fcgiMainObject) . ': compile_fcgi ' . ninja_escape_path($fcgiMainSource) . ' | ' . implode(' ', $fcgiMainImplicitDeps);
 		$fcgiObjects[] = ninja_escape_path($fcgiMainObject);
-		$fcgiObjects[] = ninja_escape_path($runtimeBuild['artifact_path']);
-		$lines[] = 'build ' . ninja_escape_path(normalize_config_path(relative_path($projectRoot, $fastcgiBuild['output_path']))) . ': link_fcgi ' . implode(' ', $fcgiObjects);
+		$fcgiObjects[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['artifact_path']));
+		$lines[] = 'build ' . ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['output_path'])) . ': link_fcgi ' . implode(' ', $fcgiObjects);
 	}
 	$lines[] = '';
 	$defaults = [ninja_escape_path($output)];
@@ -3610,6 +3616,14 @@ function relative_or_absolute(string $projectRoot, string $path): string
 {
 	$relative = relative_path($projectRoot, $path);
 	return str_starts_with($relative, '..') ? normalize_path($path) : normalize_config_path($relative);
+}
+
+function build_ninja_relative_path(string $projectRoot, string $buildDir, string $path): string
+{
+	$absolutePath = is_absolute_path($path)
+		? normalize_path($path)
+		: normalize_path($projectRoot . '/' . normalize_config_path($path));
+	return normalize_config_path(relative_path($buildDir, $absolutePath));
 }
 
 function install_hint_for_ninja(): string

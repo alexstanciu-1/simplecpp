@@ -144,7 +144,7 @@ final class ScppBuildOptionsTest
 		);
 		$this->assertNotContains('rule compile_runtime', $reuseNinja, 'reuse runtime mode should omit runtime compile rules');
 		$this->assertNotContains('compile_pch_runtime', $reuseNinja, 'reuse runtime mode should omit runtime pch rules');
-		$this->assertNotContains('build ../dep/.prism/build/dep.o: compile', $reuseNinja, 'reuse dependency mode should omit dependency compile edges');
+		$this->assertNotContains('build ../../../dep/.prism/build/dep.o: compile', $reuseNinja, 'reuse dependency mode should omit dependency compile edges');
 
 		$fullNinja = render_build_ninja(
 			$projectRoot,
@@ -163,7 +163,8 @@ final class ScppBuildOptionsTest
 		);
 		$this->assertContains('rule compile_runtime', $fullNinja, 'full build mode should include runtime compile rules');
 		$this->assertContains('compile_pch_runtime', $fullNinja, 'full build mode should include runtime pch rules');
-		$this->assertContains('build ../dep/.prism/build/dep.o: compile', $fullNinja, 'full build mode should include dependency compile edges');
+		$this->assertContains('build main.o: compile ../generated/main.cpp', $fullNinja, 'root project compile edges should be relative to build_dir');
+		$this->assertContains('build ../../../dep/.prism/build/dep.o: compile', $fullNinja, 'full build mode should include dependency compile edges');
 	}
 
 	private function assertSame(mixed $expected, mixed $actual, string $message): void

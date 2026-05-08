@@ -93,7 +93,7 @@ Future `scpp build` composition must be able to select language layers and runti
 
 Paths emitted into `build.ninja` are:
 
-- relative to project root
+- relative to the configured `build_dir`
 - normalized to forward slashes
 
 ## Minimal config
