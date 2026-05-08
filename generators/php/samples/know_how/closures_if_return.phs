@@ -1,5 +1,3 @@
-<?php
-
 $f = function (int $v) {
 	if ($v === 1) {
 		echo "one\n";

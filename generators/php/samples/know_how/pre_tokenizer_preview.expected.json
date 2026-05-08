@@ -1,5 +1,5 @@
 {
-    "source": "<?php\n\n$items /** vector<string> */ = [];\n$lookup /** hash<string, int> */ = [];\n\nclass Demo {\n\tpublic $names /** vector<string> */ = [];\n\n\tpublic function merge(/** hash<string, int> */ $left, /** vector<string> */ $right) {\n\t\treturn [];\n\t}\n}\n\n$make = fn(/** int */ $x) =>\n\tfn(/** int */ $y): int => $x + $y;\n",
+    "source": "$items /** vector<string> */ = [];\n$lookup /** hash<string, int> */ = [];\n\nclass Demo {\n\tpublic $names /** vector<string> */ = [];\n\n\tpublic function merge(/** hash<string, int> */ $left, /** vector<string> */ $right) {\n\t\treturn [];\n\t}\n}\n\n$make = fn(/** int */ $x) =>\n\tfn(/** int */ $y): int => $x + $y;\n",
     "annotations": [
         {
             "kind": "local",

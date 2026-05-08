@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // NEG-REF-010
 // Expected: reject. Rebinding through a chain is outside the model.
 

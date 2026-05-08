@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 $out /** string */ = "seed";
 $err /** error_t */;
 

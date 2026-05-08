@@ -1,7 +1,3 @@
-<?php
-
-declare(strict_types=1);
-
 namespace Stage3\Numbers;
 
 function bump(int &$value, int $step = 1): int {

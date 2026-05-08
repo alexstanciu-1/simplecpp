@@ -1,3 +1,5 @@
 strict_fs_json
 strict_str_io
 strict_error_paths
+strict_compile_missing_symbol
+strict_compile_type_mismatch

@@ -356,6 +356,7 @@ final class IrBuilder
 			properties: $properties,
 			constants: $constants,
 			methods: $methods,
+			line: (int) ($node->lineno ?? 0),
 			parentClass: ($name = $this->readNameString($children['extends'] ?? null)) !== '' ? $name : null,
 			interfaces: $interfaces,
 			isInterface: (((int) ($node->flags ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
@@ -394,6 +395,7 @@ final class IrBuilder
 			returnType: $this->resolveFunctionLikeReturnType($node),
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
+			line: (int) ($node->lineno ?? 0),
 			argNormalizationRules: $this->validateArgNormalizationRules($argRuleParse['rules'], $params, 'function ' . (string) ($children['name'] ?? '')),
 			isLibExport: $this->hasLibExportTag($children['docComment'] ?? null),
 		);
@@ -427,6 +429,7 @@ final class IrBuilder
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			isStatic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
+			line: (int) ($node->lineno ?? 0),
 			argNormalizationRules: $this->validateArgNormalizationRules($this->parseArgNormalizationRules($children['docComment'] ?? null, $owner)['rules'], $params, $owner),
 		);
 	}

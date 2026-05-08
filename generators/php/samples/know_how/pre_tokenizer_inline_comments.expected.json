@@ -1,5 +1,5 @@
 {
-    "source": "<?php\n\n$count  = 0;\n$err ;\n\nfunction build_lookup($items)  {\n\treturn [];\n}\n\nclass InlineComments {\n\tpublic $items = [];\n\tpublic $lookup  = [];\n\n\tpublic function make($items)  {\n\t\treturn [];\n\t}\n}\n\n$make = fn($x)  =>\n\tfn($y): int => $x + $y;\n",
+    "source": "$count  = 0;\n$err ;\n\nfunction build_lookup($items)  {\n\treturn [];\n}\n\nclass InlineComments {\n\tpublic $items = [];\n\tpublic $lookup  = [];\n\n\tpublic function make($items)  {\n\t\treturn [];\n\t}\n}\n\n$make = fn($x)  =>\n\tfn($y): int => $x + $y;\n",
     "annotations": [
         {
             "kind": "local",

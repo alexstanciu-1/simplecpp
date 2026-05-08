@@ -1,5 +1,3 @@
-<?php
-
 class MyBox {
 	public int $value = 10;
 }

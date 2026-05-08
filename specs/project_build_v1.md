@@ -85,6 +85,7 @@ The current architecture direction is layered composition rather than one monoli
 The active frontend language is `PHP++`.
 Its canonical source extension is `.phs`.
 Source files with the `.php` extension remain accepted as compatibility inputs in v1, but `.phs` is the preferred project-facing extension.
+Prism++ source files start directly with Prism++ declarations or executable code. They must not rely on a leading `<?php` header or `declare(strict_types=1);`.
 Inside docs and code, `PHP` refers to host tooling/runtime unless the surrounding text explicitly means `PHP++`.
 
 Future `scpp build` composition must be able to select language layers and runtime modules deliberately rather than assuming one fixed all-in-one runtime surface.
@@ -294,7 +295,6 @@ The current supported exported declaration kinds are:
 Minimal examples:
 
 ```php
-<?php
 /** @lib-export */
 function shared_value(): int { return 7; }
 
@@ -317,7 +317,6 @@ Producer/consumer example:
 `shared/prism-utils/lib.phs`
 
 ```php
-<?php
 /** @lib-export */
 function shared_value(): int { return 7; }
 
@@ -339,7 +338,6 @@ const SHARED_OFFSET = 5;
 `app/main.phs`
 
 ```php
-<?php
 echo shared_value() + SHARED_OFFSET, "\n";
 ```
 
@@ -348,7 +346,6 @@ Interface/class example:
 `contracts/lib.phs`
 
 ```php
-<?php
 /** @lib-export */
 interface NamedThing {
     public function getName(): string;
@@ -358,7 +355,6 @@ interface NamedThing {
 `models/lib.phs`
 
 ```php
-<?php
 /** @lib-export */
 class NamedBox implements NamedThing {
     public function getName(): string { return "box"; }
@@ -368,7 +364,6 @@ class NamedBox implements NamedThing {
 `app/main.phs`
 
 ```php
-<?php
 $box = new NamedBox();
 echo $box->getName(), "\n";
 ```

@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 function arrays_split_view(int $copy, int &$live, array &$row): void
 {
     $row["before"] = $copy;
