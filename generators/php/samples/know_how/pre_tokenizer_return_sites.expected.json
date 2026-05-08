@@ -1,0 +1,53 @@
+{
+    "source": "<?php\n\nfunction build_lookup(/** vector<string> */ $items) {\n\treturn [];\n}\n\nclass ReturnSites {\n\tpublic function names() {\n\t\treturn [];\n\t}\n}\n\n$factory = fn(/** int */ $seed) =>\n\tfn(/** int */ $value): int => $seed + $value;\n\n$typedFactory /** function<function<int(int)>(int)> */ = $factory;\n",
+    "annotations": [
+        {
+            "kind": "param",
+            "name": "items",
+            "type": "vector<string>",
+            "line": 3,
+            "startOffset": 29,
+            "endOffset": 50
+        },
+        {
+            "kind": "function_return",
+            "name": null,
+            "type": "hash<string, int>",
+            "line": 3,
+            "startOffset": 51,
+            "endOffset": 70
+        },
+        {
+            "kind": "method_return",
+            "name": null,
+            "type": "vector<string>",
+            "line": 8,
+            "startOffset": 132,
+            "endOffset": 148
+        },
+        {
+            "kind": "param",
+            "name": "seed",
+            "type": "int",
+            "line": 13,
+            "startOffset": 184,
+            "endOffset": 193
+        },
+        {
+            "kind": "closure_return",
+            "name": null,
+            "type": "function<function<int(int)>(int)>",
+            "line": 13,
+            "startOffset": 195,
+            "endOffset": 229
+        },
+        {
+            "kind": "param",
+            "name": "value",
+            "type": "int",
+            "line": 14,
+            "startOffset": 236,
+            "endOffset": 246
+        }
+    ]
+}
