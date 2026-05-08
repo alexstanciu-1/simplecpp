@@ -91,12 +91,13 @@ Common entrypoint names include:
 scpp build
 ```
 
-Optional warm-build reuse flags:
+By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
 
 ```bash
-scpp build --reuse-runtime
-scpp build --reuse-dependencies
-scpp build --reuse-runtime --reuse-dependencies
+scpp build --build-runtime
+scpp build --build-dependencies
+scpp build --build-runtime --build-dependencies
+scpp build --force
 ```
 
 ### Run
@@ -111,18 +112,21 @@ Pass program arguments after `--`:
 scpp run -- arg1 arg2
 ```
 
-The same reuse flags are also accepted on `scpp run`:
+The same explicit rebuild flags are also accepted on `scpp run`:
 
 ```bash
-scpp run --reuse-runtime
-scpp run --reuse-dependencies -- arg1 arg2
+scpp run --build-runtime
+scpp run --build-dependencies -- arg1 arg2
+scpp run --force
 ```
 
 ### CLI maintenance
 
 - `scpp --version`: show installed CLI version
 - `scpp --doctor`: show install/toolchain/Git status
-- `scpp update`: fast-forward installed checkout from `origin/main`
+- `scpp update`: fast-forward installed checkout from `origin/main` and rebuild the default reusable runtime cache when a real update lands
+- `scpp update --force`: rebuild that default reusable runtime cache even when already current
+- `scpp runtime-build [--debug|--release] [--force]`: rebuild the reusable runtime cache explicitly
 - `scpp clean`: remove generated `.prism/` state for a cold rebuild
 
 ### Single-file transpile

@@ -107,11 +107,11 @@ function scpp_run_build_service(string $projectRoot, string $configPath, array $
 }
 
 /** @return array{ok:bool,output:string,error:string,exit_code:int|null} */
-function scpp_run_update_service(string $repoRoot): array
+function scpp_run_update_service(string $repoRoot, array $options = []): array
 {
 	ob_start();
 	try {
-		$command = new ScppUpdateCommand($repoRoot);
+		$command = new ScppUpdateCommand($repoRoot, $options);
 		$command->run();
 		return [
 			'ok' => true,
@@ -189,6 +189,7 @@ final class ScppUpdateCommand
 {
 	public function __construct(
 		private readonly string $repoRoot,
+		private readonly array $options = [],
 	)
 	{
 	}
@@ -241,11 +242,17 @@ final class ScppUpdateCommand
 		}
 
 		$after = $this->readGitLine($git, $topLevel, ['rev-parse', '--short', 'HEAD'], 'Failed to inspect the updated scpp revision.');
+		$force = (bool) ($this->options['force'] ?? false);
 		if ($before === $after) {
 			echo 'Already up to date.' . PHP_EOL;
+			if ($force) {
+				echo 'Forcing runtime rebuild after update check.' . PHP_EOL;
+				scpp_build_default_runtime($topLevel, true);
+			}
 			return;
 		}
 		echo 'Updated scpp: ' . $before . ' -> ' . $after . PHP_EOL;
+		scpp_build_default_runtime($topLevel, true);
 	}
 
 	/** @param list<string> $args */
@@ -533,12 +540,17 @@ function main(array $argv): void
 	}
 
 	if ($args[0] === 'update') {
-		handle_update();
+		handle_update(array_slice($args, 1));
 		return;
 	}
 
 	if ($args[0] === 'run') {
 		handle_run(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
+	if ($args[0] === 'runtime-build') {
+		handle_runtime_build(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
 		return;
 	}
 
@@ -569,15 +581,17 @@ function print_help(): void
 	echo "Usage:\n";
 	echo "  scpp <input.phs>\n";
 	echo "  scpp init [--php-profile=legacy|strict]\n";
-	echo "  scpp build [--reuse-runtime] [--reuse-dependencies]\n";
+	echo "  scpp build [--build-runtime] [--build-dependencies]\n";
 	echo "  scpp clean\n";
-	echo "  scpp update\n";
-	echo "  scpp run [--reuse-runtime] [--reuse-dependencies] [-- <args...>]\n";
+	echo "  scpp update [--force]\n";
+	echo "  scpp run [--build-runtime] [--build-dependencies] [--force] [-- <args...>]\n";
+	echo "  scpp runtime-build [--debug|--release] [--force]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
-	echo "  scpp update fast-forwards the scpp repository from origin/main\n";
+	echo "  scpp update fast-forwards the scpp repository from origin/main and rebuilds the default runtime when it changes\n";
 	echo "  scpp run builds first, then executes the primary output\n";
+	echo "  scpp runtime-build compiles the reusable runtime cache explicitly\n";
 	echo "  scpp usability-harness generates deterministic spec-driven trial projects\n";
 	echo "  scpp --help\n";
 	echo "  scpp --version\n";
@@ -855,9 +869,19 @@ function handle_clean(string $cwd): void
 	$command->run();
 }
 
-function handle_update(): void
+function handle_update(array $args = []): void
 {
-	$command = new ScppUpdateCommand(resolve_repo_root());
+	$options = [
+		'force' => false,
+	];
+	foreach ($args as $arg) {
+		if ($arg === '--force') {
+			$options['force'] = true;
+			continue;
+		}
+		scpp_fail('Unknown option for `scpp update`: ' . $arg . PHP_EOL, 1);
+	}
+	$command = new ScppUpdateCommand(resolve_repo_root(), $options);
 	$command->run();
 }
 
@@ -976,8 +1000,21 @@ function handle_build(string $cwd, array $args = []): void
 	execute_build($project['project_root'], $project['config_path'], parse_build_command_arguments($args));
 }
 
+function handle_runtime_build(string $cwd, array $args = []): void
+{
+	$options = parse_runtime_build_command_arguments($args);
+	$project = find_project_config($cwd);
+	$config = null;
+	if ($project !== null) {
+		$config = load_project_config($project['config_path']);
+	}
+	$result = scpp_build_runtime_from_config(resolve_repo_root(), $config, $options['build_mode'], $options['force']);
+	echo 'Runtime build completed: ' . $result['artifact_path'] . PHP_EOL;
+	echo 'Runtime build mode: ' . $result['build_mode'] . PHP_EOL;
+}
+
 /**
- * @param array{compile_runtime?:bool,compile_dependencies?:bool} $options
+ * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool} $options
  * @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string,runtime_library_dir:?string}
  */
 function execute_build(string $projectRoot, string $configPath, array $options = []): array
@@ -1160,6 +1197,13 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig);
+	if ($options['force_runtime_rebuild']) {
+		delete_file_if_exists(normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path'])));
+		$runtimeObjectPath = $runtimeBuild['object_path'] ?? null;
+		if (is_string($runtimeObjectPath) && $runtimeObjectPath !== '') {
+			delete_file_if_exists(normalize_path($projectRoot . '/' . normalize_config_path($runtimeObjectPath)));
+		}
+	}
 	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppUnits, $runtimeBuild, $buildDir, $compiler['kind'], $outputName, $fastcgiBuild, $projectRoot, $options);
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
@@ -1256,29 +1300,36 @@ function normalize_run_arguments(array $args): array
 	return array_slice($args, $separatorIndex + 1);
 }
 
-/** @param array{compile_runtime?:bool,compile_dependencies?:bool} $options @return array{compile_runtime:bool,compile_dependencies:bool} */
+/** @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool} $options @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool} */
 function normalize_build_execution_options(array $options): array
 {
 	return [
 		'compile_runtime' => (bool) ($options['compile_runtime'] ?? false),
 		'compile_dependencies' => (bool) ($options['compile_dependencies'] ?? false),
+		'force_runtime_rebuild' => (bool) ($options['force_runtime_rebuild'] ?? false),
 	];
 }
 
-/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool} */
+/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool} */
 function parse_build_command_arguments(array $args): array
 {
 	$options = [
-		'compile_runtime' => true,
-		'compile_dependencies' => true,
+		'compile_runtime' => false,
+		'compile_dependencies' => false,
+		'force_runtime_rebuild' => false,
 	];
 	foreach ($args as $arg) {
-		if ($arg === '--reuse-runtime') {
-			$options['compile_runtime'] = false;
+		if ($arg === '--build-runtime') {
+			$options['compile_runtime'] = true;
 			continue;
 		}
-		if ($arg === '--reuse-dependencies') {
-			$options['compile_dependencies'] = false;
+		if ($arg === '--build-dependencies') {
+			$options['compile_dependencies'] = true;
+			continue;
+		}
+		if ($arg === '--force') {
+			$options['compile_runtime'] = true;
+			$options['force_runtime_rebuild'] = true;
 			continue;
 		}
 		scpp_fail('Unknown option for `scpp build`: ' . $arg . PHP_EOL, 1);
@@ -1286,12 +1337,13 @@ function parse_build_command_arguments(array $args): array
 	return $options;
 }
 
-/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool},run_args:list<string>} */
+/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool},run_args:list<string>} */
 function parse_run_command_arguments(array $args): array
 {
 	$buildOptions = [
-		'compile_runtime' => true,
-		'compile_dependencies' => true,
+		'compile_runtime' => false,
+		'compile_dependencies' => false,
+		'force_runtime_rebuild' => false,
 	];
 	$runArgs = [];
 	$inRunArgs = false;
@@ -1304,12 +1356,17 @@ function parse_run_command_arguments(array $args): array
 			$inRunArgs = true;
 			continue;
 		}
-		if ($arg === '--reuse-runtime') {
-			$buildOptions['compile_runtime'] = false;
+		if ($arg === '--build-runtime') {
+			$buildOptions['compile_runtime'] = true;
 			continue;
 		}
-		if ($arg === '--reuse-dependencies') {
-			$buildOptions['compile_dependencies'] = false;
+		if ($arg === '--build-dependencies') {
+			$buildOptions['compile_dependencies'] = true;
+			continue;
+		}
+		if ($arg === '--force') {
+			$buildOptions['compile_runtime'] = true;
+			$buildOptions['force_runtime_rebuild'] = true;
 			continue;
 		}
 		$runArgs[] = $arg;
@@ -1319,6 +1376,31 @@ function parse_run_command_arguments(array $args): array
 		'build_options' => $buildOptions,
 		'run_args' => normalize_run_arguments($runArgs),
 	];
+}
+
+/** @param list<string> $args @return array{build_mode:string,force:bool} */
+function parse_runtime_build_command_arguments(array $args): array
+{
+	$options = [
+		'build_mode' => 'debug',
+		'force' => false,
+	];
+	foreach ($args as $arg) {
+		if ($arg === '--debug') {
+			$options['build_mode'] = 'debug';
+			continue;
+		}
+		if ($arg === '--release') {
+			$options['build_mode'] = 'release';
+			continue;
+		}
+		if ($arg === '--force') {
+			$options['force'] = true;
+			continue;
+		}
+		scpp_fail('Unknown option for `scpp runtime-build`: ' . $arg . PHP_EOL, 1);
+	}
+	return $options;
 }
 
 
@@ -3108,6 +3190,114 @@ function compute_runtime_build_signature(string $repoRoot, array $compiler, stri
 
 	sort($parts, SORT_STRING);
 	return substr(hash('sha256', implode("\n", $parts)), 0, 16);
+}
+
+/** @return array{artifact_path:string,build_mode:string} */
+function scpp_build_default_runtime(string $repoRoot, bool $force = false): array
+{
+	return scpp_build_runtime_from_config($repoRoot, null, 'debug', $force);
+}
+
+/** @param ?array<string,mixed> $config @return array{artifact_path:string,build_mode:string} */
+function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string $buildMode = 'debug', bool $force = false): array
+{
+	$repoRoot = normalize_path($repoRoot);
+	$config = is_array($config) ? $config : [];
+	$compiler = resolve_compiler($config);
+	if ($compiler === null) {
+		scpp_fail("No supported C++ compiler found.\n" . install_hint_for_compiler() . PHP_EOL, 1);
+	}
+	$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
+	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $repoRoot, $compiler, $buildMode, $runtimeConfig);
+	$artifactPath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
+	$objectPath = is_string($runtimeBuild['object_path'] ?? null) && $runtimeBuild['object_path'] !== ''
+		? normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['object_path']))
+		: null;
+
+	if (!$force && is_file($artifactPath)) {
+		echo 'Runtime artifact already up to date: ' . normalize_config_path(relative_path($repoRoot, $artifactPath)) . PHP_EOL;
+		return [
+			'artifact_path' => normalize_config_path(relative_path($repoRoot, $artifactPath)),
+			'build_mode' => $buildMode,
+		];
+	}
+
+	if ($force) {
+		delete_file_if_exists($artifactPath);
+		if (is_string($objectPath)) {
+			delete_file_if_exists($objectPath);
+		}
+	}
+
+	$compileFlags = split_shell_tokens(build_runtime_compiler_flags($compiler['kind'], $buildMode, normalize_path($repoRoot . '/runtime/include')));
+	$extraCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
+	$sourcePath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['source_path']));
+	$compileCommand = array_merge(
+		scpp_compiler_command_prefix($compiler),
+		[$compiler['command']],
+		$compileFlags,
+		$extraCxxFlags
+	);
+
+	if ($compiler['kind'] === 'gnu_like' && is_string($objectPath)) {
+		$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $objectPath]);
+		scpp_run_or_fail_process($compileCommand, $repoRoot, 'Failed to compile runtime object.');
+		$linkFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
+		$runtimeLinkFlags = is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
+		$linkCommand = array_merge(
+			scpp_compiler_command_prefix($compiler),
+			[$compiler['command']],
+			$linkFlags,
+			$runtimeLinkFlags,
+			[$objectPath, '-o', $artifactPath]
+		);
+		scpp_run_or_fail_process($linkCommand, $repoRoot, 'Failed to link runtime artifact.');
+	} else {
+		$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $artifactPath]);
+		scpp_run_or_fail_process($compileCommand, $repoRoot, 'Failed to compile runtime artifact.');
+	}
+
+	return [
+		'artifact_path' => normalize_config_path(relative_path($repoRoot, $artifactPath)),
+		'build_mode' => $buildMode,
+	];
+}
+
+/** @return list<string> */
+function scpp_compiler_command_prefix(array $compiler): array
+{
+	$launcher = $compiler['launcher'] ?? null;
+	if (!is_string($launcher) || $launcher === '') {
+		return [];
+	}
+	return [$launcher];
+}
+
+/** @param list<string> $command */
+function scpp_run_or_fail_process(array $command, string $cwd, string $failureMessage): void
+{
+	$descriptor = [
+		0 => ['pipe', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w'],
+	];
+	$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment());
+	if (!is_resource($process)) {
+		scpp_fail($failureMessage . PHP_EOL, 4);
+	}
+	fclose($pipes[0]);
+	$stdout = stream_get_contents($pipes[1]);
+	$stderr = stream_get_contents($pipes[2]);
+	fclose($pipes[1]);
+	fclose($pipes[2]);
+	$status = proc_close($process);
+	if ($status !== 0) {
+		$message = trim((is_string($stderr) ? $stderr : '') . PHP_EOL . (is_string($stdout) ? $stdout : ''));
+		if ($message === '') {
+			$message = 'Process exited with status ' . $status . '.';
+		}
+		scpp_fail($failureMessage . PHP_EOL . $message . PHP_EOL, is_int($status) ? $status : 1);
+	}
 }
 
 /** @param list<string> $forceIncludeHeaders */
