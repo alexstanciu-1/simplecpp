@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Scpp\S2S\Loader;
 
 use Scpp\S2S\PreTokenizer\PreTokenizer;
+use Scpp\S2S\Support\PhpParserCompatibility;
 use Scpp\S2S\Support\InputException;
 
 /**
@@ -43,7 +44,8 @@ final class InputLoader
 		$this->rejectUnsupportedPhpStrictTypesDirective($path, $code);
 
 		$preTokenized = $this->preTokenizer->rewrite($code);
-		$parseCode = $preTokenized->source;
+		$rewrittenSource = $preTokenized->source;
+		$parseCode = PhpParserCompatibility::wrapSource($rewrittenSource);
 		$json_file = $path . ".json";
 		
 		if (extension_loaded('ast')) {
@@ -54,7 +56,7 @@ final class InputLoader
 				file_put_contents($json_file, json_encode($ast));
 			}
 
-			return new ParsedInput($path, $parseCode, $code, \token_get_all($parseCode), $ast, $preTokenized->annotations);
+			return new ParsedInput($path, $rewrittenSource, $code, PhpParserCompatibility::tokenizeSource($rewrittenSource), $ast, $preTokenized->annotations);
 		}
 		
 		if (!is_file($json_file)) {
@@ -71,13 +73,13 @@ final class InputLoader
 
 		if (is_object($data) && property_exists($data, 'ast')) {
 			$ast = $this->normalizeDecodedAstShape($data->ast);
-			$tokens = \token_get_all($parseCode);
+			$tokens = PhpParserCompatibility::tokenizeSource($rewrittenSource);
 
-			return new ParsedInput($path, $parseCode, $code, $tokens, $ast, $preTokenized->annotations);
+			return new ParsedInput($path, $rewrittenSource, $code, $tokens, $ast, $preTokenized->annotations);
 		}
 
 		$ast = $this->normalizeDecodedAstShape($data);
-		return new ParsedInput($path, $parseCode, $code, \token_get_all($parseCode), $ast, $preTokenized->annotations);
+		return new ParsedInput($path, $rewrittenSource, $code, PhpParserCompatibility::tokenizeSource($rewrittenSource), $ast, $preTokenized->annotations);
 	}
 
 	/**
