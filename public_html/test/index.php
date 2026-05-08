@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 $versionFile = dirname(__DIR__, 2) . '/VERSION.txt';
 $uiVersion = 'unknown';
 if (is_file($versionFile)) {
@@ -63,9 +61,7 @@ if (is_file($versionFile)) {
 								</div>
 							</div>
 							<textarea id="php-code" spellcheck="false"><?php
-								echo htmlentities('<?php'."
-
-".'function add(int $left, int $right): int {
+								echo htmlentities('function add(int $left, int $right): int {
 	return $left + $right;
 }
 

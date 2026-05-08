@@ -239,8 +239,8 @@ Example:
 
 Unless the test specifically requires otherwise, generated PHP source SHOULD follow these rules:
 
-1. Start with `<?php`.
-2. Use `declare(strict_types=1);` when the tested behavior is compatible with strict typing.
+1. Start directly with Prism++ declarations or executable code, not with `<?php`.
+2. Do not use `declare(strict_types=1);`.
 3. Avoid trailing spaces.
 4. End the file with a newline.
 5. Keep helper declarations inside the same file unless the test explicitly targets include/module behavior.

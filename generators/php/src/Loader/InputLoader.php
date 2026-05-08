@@ -40,6 +40,7 @@ final class InputLoader
 		if ($code === false) {
 			throw new InputException('Failed to read PHP input: ' . $path);
 		}
+		$this->rejectUnsupportedPhpStrictTypesDirective($path, $code);
 
 		$preTokenized = $this->preTokenizer->rewrite($code);
 		$parseCode = $preTokenized->source;
@@ -110,5 +111,23 @@ final class InputLoader
 		}
 
 		return $value;
+	}
+
+	private function rejectUnsupportedPhpStrictTypesDirective(string $path, string $code): void
+	{
+		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+		if ($extension !== 'phs' && $extension !== 'php') {
+			return;
+		}
+		if (preg_match('/declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;/i', $code, $matches, PREG_OFFSET_CAPTURE) !== 1) {
+			return;
+		}
+		$offset = (int) ($matches[0][1] ?? 0);
+		$line = substr_count(substr($code, 0, $offset), "\n") + 1;
+		throw new InputException(
+			'Unsupported directive in ' . $path . ':' . $line . '. '
+			. "`declare(strict_types=1);` is not supported in Prism++ source files. "
+			. 'Remove it; Prism++ typing rules do not use PHP strict_types.'
+		);
 	}
 }

@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 function a(): mixed { return false; }
 function b(): mixed { return 22; }
 function c(): mixed { return 0; }

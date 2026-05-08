@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 echo str_substr("abcdef", 2), "\n";
 echo str_substr("abcdef", 1, 3), "\n";
 echo str_substr_compare("abcdef", "cde", 2), "\n";

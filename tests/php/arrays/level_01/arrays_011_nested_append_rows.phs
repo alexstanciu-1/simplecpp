@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Appending row arrays builds a list of records.
 $x = [];
 $x[] = ["id" => 1, "name" => "A"];

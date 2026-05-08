@@ -1,5 +1,3 @@
-<?php
-
 require_once "lib/math.php";
 require_once "lib/strings.php";
 

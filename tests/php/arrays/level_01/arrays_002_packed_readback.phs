@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Read back packed indexes after multiple appends.
 $x = [];
 $x[] = 4;

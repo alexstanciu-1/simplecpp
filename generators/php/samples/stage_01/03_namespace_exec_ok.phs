@@ -1,5 +1,3 @@
-<?php
-
 // Coverage:
 // - namespace executable flow consolidation
 // - same-namespace function resolution

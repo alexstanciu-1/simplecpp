@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 function arrays_duplicate_row_refs(array &$rows, array &$r1, array &$r2, int &$id): void
 {
     $r1["left"] = 1;

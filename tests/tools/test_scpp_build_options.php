@@ -185,8 +185,8 @@ final class ScppBuildOptionsTest
 
 		$projectRoot = $this->root . '/entry_project';
 		$this->mkdir($projectRoot . '/native_cpp');
-		$this->write($projectRoot . '/main.phs', "<?php\necho \"main\\n\";\n");
-		$this->write($projectRoot . '/alt.phs', "<?php\necho \"alt\\n\";\n");
+		$this->write($projectRoot . '/main.phs', "echo \"main\\n\";\n");
+		$this->write($projectRoot . '/alt.phs', "echo \"alt\\n\";\n");
 		$config = [
 			'config_version' => 1,
 			'project_name' => 'entry_project',

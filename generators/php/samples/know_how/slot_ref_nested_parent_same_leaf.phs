@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Nested parent by-ref plus same leaf passed twice by-ref.
 // Purpose: stress stable slot-backed references under parent growth and alias reuse.
 

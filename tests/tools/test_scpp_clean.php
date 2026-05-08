@@ -57,7 +57,7 @@ final class ScppCleanTest
 	private function writeProject(string $path, array $dependencies, array $overrides = []): void
 	{
 		$this->mkdir($path);
-		$this->write($path . '/main.phs', "<?php\necho \"ok\\n\";\n");
+		$this->write($path . '/main.phs', "echo \"ok\\n\";\n");
 		$config = array_merge([
 			'config_version' => 1,
 			'project_name' => basename($path),

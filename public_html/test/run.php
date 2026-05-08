@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 use Scpp\S2S\PreTokenizer\PreTokenizer;
 use Scpp\S2S\Transpiler;
 
@@ -117,10 +115,6 @@ try {
 	$memTestEnabled = (bool) ($data['mem_test_enabled'] ?? false);
 	if ($phpCode === '') {
 		throw new RuntimeException('PHP code is empty.');
-	}
-
-	if (!str_starts_with(ltrim($phpCode), '<?php')) {
-		$phpCode = "<?php\n" . $phpCode;
 	}
 
 	if (!extension_loaded('ast')) {

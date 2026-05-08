@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // PHP-aligned Prism++ empty() contract: false, 0, and 0.0 are empty; the one deliberate deviation is that "0" is not empty.
 $none = null;
 $blank = "";

@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 $root = "strict_fs_root";
 $dir = $root . "/dir";
 $file = $dir . "/alpha.txt";

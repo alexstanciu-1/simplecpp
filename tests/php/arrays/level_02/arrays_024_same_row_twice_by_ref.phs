@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 function arrays_same_twice(array &$a, array &$b): void
 {
     $a["left"] = 1;

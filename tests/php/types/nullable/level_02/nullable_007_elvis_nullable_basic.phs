@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Nullable elvis should evaluate the left side once.
 function pick(bool $flag): ?int {
 	if ($flag) {

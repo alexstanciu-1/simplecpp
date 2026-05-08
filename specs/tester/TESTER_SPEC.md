@@ -67,9 +67,11 @@ Use normal PHP-like syntax.
 Preferred starting shape:
 
 ```php
-<?php
-declare(strict_types=1);
+echo "hello\n";
 ```
+
+Do not start Prism++ source files with `<?php`.
+Do not use `declare(strict_types=1);` in Prism++ `.phs` or compatibility `.php` source files.
 
 ## General Testing Rules
 
@@ -93,9 +95,6 @@ What to test:
 Example:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $value /** int */ = 11;
 $other /** int */ = $value;
 $value = 14;
@@ -122,9 +121,6 @@ What to test:
 Example:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $value /** int */ = 5;
 $value = $value + 3;
 
@@ -148,9 +144,6 @@ What to test:
 Example:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $value /** float */ = 1.5;
 $value = $value + 2.0;
 
@@ -174,9 +167,6 @@ What to test:
 Example:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $flag /** bool */ = true;
 $flag = false;
 
@@ -204,9 +194,6 @@ What to test:
 Example:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $text /** string */ = "alpha";
 $text = "beta";
 
@@ -230,9 +217,6 @@ What to test:
 Example:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $value /** ?int */ = null;
 $value = 7;
 
@@ -260,9 +244,6 @@ What to test:
 Example: append and read
 
 ```php
-<?php
-declare(strict_types=1);
-
 $items /** vector<int> */ = [];
 $items[] = 4;
 $items[] = 9;
@@ -281,9 +262,6 @@ Expected:
 Example: string keys
 
 ```php
-<?php
-declare(strict_types=1);
-
 $row /** array<string, mixed> */ = ["name" => "alex", "age" => 30];
 
 echo $row["name"], "\n";
@@ -300,9 +278,6 @@ alex
 Example: nested read
 
 ```php
-<?php
-declare(strict_types=1);
-
 $x /** array<string, mixed> */ = [
 	"outer" => [
 		"inner" => [
@@ -325,9 +300,6 @@ Expected:
 ### Addition
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo 10 + 3, "\n";
 ```
 
@@ -340,9 +312,6 @@ Expected:
 ### Subtraction
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo 10 - 3, "\n";
 ```
 
@@ -355,9 +324,6 @@ Expected:
 ### Multiplication
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo 6 * 4, "\n";
 ```
 
@@ -370,9 +336,6 @@ Expected:
 ### Division
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo 12 / 3, "\n";
 ```
 
@@ -385,9 +348,6 @@ Expected:
 ### String Concatenation
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo "A" . "B", "\n";
 echo "N=" . 3, "\n";
 ```
@@ -412,9 +372,6 @@ What to test:
 Property read example:
 
 ```php
-<?php
-declare(strict_types=1);
-
 class Box
 {
 	public int $value = 15;
@@ -435,9 +392,6 @@ Expected:
 ### Assignment
 
 ```php
-<?php
-declare(strict_types=1);
-
 $left = 2;
 $right = 5;
 $left = $right;
@@ -456,9 +410,6 @@ Expected:
 Single value:
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo "hello", "\n";
 ```
 
@@ -471,9 +422,6 @@ hello
 Multiple values:
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo "x=", 4, "\n";
 ```
 
@@ -486,9 +434,6 @@ x=4
 ### `return`
 
 ```php
-<?php
-declare(strict_types=1);
-
 function pick(bool $flag): int
 {
 	if ($flag) {
@@ -519,9 +464,6 @@ What to test:
 Typed parameter and return:
 
 ```php
-<?php
-declare(strict_types=1);
-
 function add_one(int $value): int
 {
 	return $value + 1;
@@ -539,9 +481,6 @@ Expected:
 Default parameter:
 
 ```php
-<?php
-declare(strict_types=1);
-
 function add(int $left, int $right = 2): int
 {
 	return $left + $right;
@@ -561,9 +500,6 @@ Expected:
 ### `if`
 
 ```php
-<?php
-declare(strict_types=1);
-
 if (3 > 1) {
 	echo "yes\n";
 }
@@ -578,9 +514,6 @@ yes
 ### `if/else`
 
 ```php
-<?php
-declare(strict_types=1);
-
 $value = 2;
 
 if ($value > 3) {
@@ -599,9 +532,6 @@ small
 ### `while`
 
 ```php
-<?php
-declare(strict_types=1);
-
 $i = 0;
 while ($i < 3) {
 	echo $i, "\n";
@@ -620,9 +550,6 @@ Expected:
 ### `do/while`
 
 ```php
-<?php
-declare(strict_types=1);
-
 $i = 0;
 do {
 	echo $i, "\n";
@@ -640,9 +567,6 @@ Expected:
 ### `for`
 
 ```php
-<?php
-declare(strict_types=1);
-
 for ($i = 1; $i <= 3; $i = $i + 1) {
 	echo $i, "\n";
 }
@@ -659,9 +583,6 @@ Expected:
 ### `foreach` by value
 
 ```php
-<?php
-declare(strict_types=1);
-
 $items /** vector<int> */ = [4, 5];
 
 foreach ($items as $item) {
@@ -681,9 +602,6 @@ Expected:
 ### Top-level constant
 
 ```php
-<?php
-declare(strict_types=1);
-
 const LIMIT = 9;
 
 echo LIMIT, "\n";
@@ -698,9 +616,6 @@ Expected:
 ### Class constant
 
 ```php
-<?php
-declare(strict_types=1);
-
 class Box
 {
 	public const SIZE = 12;
@@ -727,9 +642,6 @@ What to test:
 Property write and read:
 
 ```php
-<?php
-declare(strict_types=1);
-
 class Box
 {
 	public int $value = 0;
@@ -750,9 +662,6 @@ Expected:
 Method call:
 
 ```php
-<?php
-declare(strict_types=1);
-
 class Box
 {
 	public function getValue(): int
@@ -776,9 +685,6 @@ Expected:
 ### Namespace declaration and local class use
 
 ```php
-<?php
-declare(strict_types=1);
-
 namespace Demo;
 
 class Box
@@ -801,9 +707,6 @@ Expected:
 ### Fully qualified access
 
 ```php
-<?php
-declare(strict_types=1);
-
 namespace Demo;
 
 class Box
@@ -830,9 +733,6 @@ Expected:
 ### Basic import
 
 ```php
-<?php
-declare(strict_types=1);
-
 namespace Lib;
 
 class Box
@@ -859,9 +759,6 @@ Expected:
 ### Namespace alias
 
 ```php
-<?php
-declare(strict_types=1);
-
 namespace Lib\Math;
 
 class Box
@@ -890,9 +787,6 @@ Expected:
 ### Local reference alias
 
 ```php
-<?php
-declare(strict_types=1);
-
 $value = 5;
 $alias =& $value;
 $alias = 9;
@@ -909,9 +803,6 @@ Expected:
 ### Simple reference assignment
 
 ```php
-<?php
-declare(strict_types=1);
-
 $left = 3;
 $right = 8;
 $alias =& $left;
@@ -936,9 +827,6 @@ Use small combinations like these:
 Typed variable + arithmetic + `echo`:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $value = 4;
 echo $value + 6, "\n";
 ```
@@ -946,9 +834,6 @@ echo $value + 6, "\n";
 Function + typed parameter + return:
 
 ```php
-<?php
-declare(strict_types=1);
-
 function twice(int $v): int
 {
 	return $v * 2;
@@ -960,9 +845,6 @@ echo twice(7), "\n";
 Loop + array read:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $items = [10, 20];
 for ($i = 0; $i < 2; $i = $i + 1) {
 	echo $items[$i], "\n";
@@ -972,9 +854,6 @@ for ($i = 0; $i < 2; $i = $i + 1) {
 Nested array + deep read:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $row = ["a" => ["b" => 5]];
 echo $row["a"]["b"], "\n";
 ```
@@ -982,9 +861,6 @@ echo $row["a"]["b"], "\n";
 Class + method + `echo`:
 
 ```php
-<?php
-declare(strict_types=1);
-
 class User
 {
 	public function id(): int
@@ -1000,9 +876,6 @@ echo $u->id(), "\n";
 Namespace + class + static call:
 
 ```php
-<?php
-declare(strict_types=1);
-
 namespace N;
 
 class Util
@@ -1019,9 +892,6 @@ echo Util::code(), "\n";
 Reference + reassignment + readback:
 
 ```php
-<?php
-declare(strict_types=1);
-
 $v = 1;
 $r =& $v;
 $r = 6;

@@ -1,5 +1,3 @@
-<?php
-
 // Coverage:
 // - FUNC-DECL-* basic free function declaration/use
 // - VAR-CHAIN-002

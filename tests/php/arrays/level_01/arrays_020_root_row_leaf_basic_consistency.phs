@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Root, row, and leaf views stay coherent in a simple non-ref flow.
 $x = [];
 $x[] = ["id" => 1, "name" => "Alex"];
