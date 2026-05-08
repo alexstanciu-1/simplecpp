@@ -839,22 +839,19 @@ Rules:
 
 ## 17. Output rules
 
-- generated code currently routes output through `echo_eval(...)`
+- generated code currently routes output through direct `echo_one(...)` calls
 - lowering must preserve the exporter shape while preserving left-to-right echo operand evaluation
 - for the current exporter:
 	- each `AST_ECHO` node carries one operand
 	- `echo a, b, c;` is exported as multiple sibling `AST_ECHO` nodes
-	- adjacent echo nodes from the same lowered statement stream may be coalesced into one `echo_eval(...)` call
-- each emitted operand must be wrapped as a thunk and evaluated inside the runtime helper in order
+	- adjacent echo nodes from the same lowered statement stream are emitted as sequential `echo_one(...)` calls
+- each emitted operand is evaluated and printed in statement order
 
 Examples:
 ```cpp
-echo_eval([&]() -> decltype(auto) { return a; });
-echo_eval(
-	[&]() -> decltype(auto) { return a; },
-	[&]() -> decltype(auto) { return b; },
-	[&]() -> decltype(auto) { return c; }
-);
+echo_one(a);
+echo_one(b);
+echo_one(c);
 ```
 
 ## 18. Error handling policy

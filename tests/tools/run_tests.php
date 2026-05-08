@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../bin/bootstrap.php';
+require_once __DIR__ . '/../../bin/project_services.php';
+
 use Scpp\S2S\Transpiler;
 
 /**
@@ -32,6 +35,7 @@ final class Phase1TestRunner
 	private string $phpMatrixTestsRoot;
 	private string $runtimeMatrixTestsRoot;
 	private string $stateRoot;
+	private string $runTestsRoot;
 	private string $selfPath;
 
 	public function __construct()
@@ -42,6 +46,7 @@ final class Phase1TestRunner
 		$this->phpMatrixTestsRoot = $this->projectRoot . '/tests/php-matrix';
 		$this->runtimeMatrixTestsRoot = $this->projectRoot . '/tests/runtime-matrix';
 		$this->stateRoot = $this->projectRoot . '/tests/.runtime';
+		$this->runTestsRoot = $this->projectRoot . '/tests/.run-tests';
 		$this->selfPath = realpath(__FILE__) ?: __FILE__;
 	}
 
@@ -511,6 +516,8 @@ TXT;
 		];
 
 		$tempDir = $this->createTempDirForTest($meta, $phpPath);
+		$phpProfile = $this->resolvePhpTestProfile();
+		$runTestsProject = $this->materializePhpRunTestProject($meta, $phpPath, $phpProfile);
 
 		try {
 			$expect = is_array($meta['expect'] ?? null) ? $meta['expect'] : [];
@@ -575,13 +582,13 @@ TXT;
 			$results['last_run']['stages']['generate']['comparison_notes'] = $generateComparison['notes'];
 
 			if ($generatorResult['success'] === true) {
-				$compileRun = $this->runCompileStage((string) $generatorResult['compile_unit_path'], $tempDir);
+				$compileRun = $this->runPhpProjectCompileStage($runTestsProject);
 				$results['last_run']['stages']['compile'] = [
-					'success' => ($compileRun['exit_code'] === 0 && $compileRun['timed_out'] === false),
+					'success' => $compileRun['success'],
 					'exit_code' => $compileRun['exit_code'],
 					'stdout' => $this->normalizeOutput((string) $compileRun['stdout'], $compare, 'stdout'),
 					'stderr' => $this->normalizeOutput((string) $compileRun['stderr'], $compare, 'stderr'),
-					'timed_out' => $compileRun['timed_out'],
+					'timed_out' => false,
 					'duration_ms' => $compileRun['duration_ms'],
 					'binary_path' => $this->relativePath((string) $compileRun['binary_path']),
 					'comparison_ok' => true,
@@ -592,7 +599,7 @@ TXT;
 					(bool) ($compileExpect['success'] ?? false),
 					$results['last_run']['stages']['compile']['success'],
 					(array) ($compileExpect['error_contains'] ?? []),
-					$results['last_run']['stages']['compile']['stderr'],
+					$results['last_run']['stages']['compile']['stdout'] . "\n" . $results['last_run']['stages']['compile']['stderr'],
 					(bool) ($compare['case_sensitive_errors'] ?? true),
 					'compile'
 				);
@@ -602,6 +609,16 @@ TXT;
 				if ($results['last_run']['stages']['compile']['success'] === true) {
 					$runExpect = is_array($expect['run'] ?? null) ? $expect['run'] : [];
 					$runtimeEnv = [];
+					if (is_string($compileRun['runtime_library_dir'] ?? null) && $compileRun['runtime_library_dir'] !== '') {
+						$existingLdLibraryPath = getenv('LD_LIBRARY_PATH');
+						$runtimeEnv['LD_LIBRARY_PATH'] = $compileRun['runtime_library_dir']
+							. PATH_SEPARATOR
+							. (is_string($existingLdLibraryPath) ? $existingLdLibraryPath : '');
+						$existingDyldLibraryPath = getenv('DYLD_LIBRARY_PATH');
+						$runtimeEnv['DYLD_LIBRARY_PATH'] = $compileRun['runtime_library_dir']
+							. PATH_SEPARATOR
+							. (is_string($existingDyldLibraryPath) ? $existingDyldLibraryPath : '');
+					}
 					if ($this->shouldEnableRuntimeErrorJson($expect)) {
 						$runtimeEnv['SCPP_ERROR_FORMAT'] = 'json';
 					}
@@ -609,7 +626,7 @@ TXT;
 					foreach ((array) ($build['run_args'] ?? []) as $arg) {
 						$runCommand[] = (string) $arg;
 					}
-					$cppRun = $this->runCommand($runCommand, $tempDir, self::RUN_TIMEOUT_SECONDS, $runtimeEnv);
+					$cppRun = $this->runCommand($runCommand, $runTestsProject['run_cwd'], self::RUN_TIMEOUT_SECONDS, $runtimeEnv);
 					$results['last_run']['stages']['run'] = [
 						'success' => ($cppRun['exit_code'] === 0 && $cppRun['timed_out'] === false),
 						'exit_code' => $cppRun['exit_code'],
@@ -728,7 +745,7 @@ TXT;
 				(bool) ($compileExpect['success'] ?? false),
 				$results['last_run']['stages']['compile']['success'],
 				(array) ($compileExpect['error_contains'] ?? []),
-				$results['last_run']['stages']['compile']['stderr'],
+				$results['last_run']['stages']['compile']['stdout'] . "\n" . $results['last_run']['stages']['compile']['stderr'],
 				(bool) ($compare['case_sensitive_errors'] ?? true),
 				'compile'
 			);
@@ -854,6 +871,147 @@ TXT;
 		);
 		$result['binary_path'] = $binaryPath;
 		return $result;
+	}
+
+	/** @return array{project_root:string,config_path:string,entry_relative:string,workspace_source:string,run_cwd:string} */
+	private function materializePhpRunTestProject(array $meta, string $phpPath, string $phpProfile): array
+	{
+		$testId = preg_replace('/[^A-Za-z0-9_.-]+/', '_', (string) ($meta['id'] ?? basename($phpPath, '.php')));
+		$projectRoot = $this->runTestsRoot . '/' . $phpProfile . '/' . $testId . '/tests/.runtime/' . $testId;
+		$this->ensureDirectory($projectRoot);
+		$this->ensureDirectory($projectRoot . '/native_cpp');
+		$this->ensureDirectory($projectRoot . '/.prism/build');
+		$this->ensureDirectory($projectRoot . '/.prism/generated');
+		$this->ensureDirectory($projectRoot . '/.prism/cache');
+
+		$relativeSourcePath = normalize_config_path($this->relativePath($phpPath));
+		$workspaceSource = normalize_path($projectRoot . '/' . $relativeSourcePath);
+		$this->ensureDirectory(dirname($workspaceSource));
+		$source = file_get_contents($phpPath);
+		if (!is_string($source)) {
+			throw new RuntimeException('Failed to read PHP test source: ' . $phpPath);
+		}
+		write_text_file($workspaceSource, $source);
+		$this->mirrorSiblingFixtures($phpPath, $projectRoot, dirname($relativeSourcePath));
+		$runCwd = $projectRoot;
+
+		$config = [
+			'config_version' => 1,
+			'project_name' => 'run_test_' . $testId,
+			'entrypoint' => $relativeSourcePath,
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'native_cpp_dir' => 'native_cpp',
+			'dependencies' => [],
+			'libraries' => [],
+			'build' => [
+				'backend' => 'ninja',
+				'cxx' => null,
+				'mode' => 'debug',
+			],
+			'runtime' => [
+				'languages' => ['php'],
+				'modules' => ['json', 'filesystem'],
+				'language_profiles' => [
+					'php' => ['profile' => $phpProfile],
+				],
+			],
+		];
+		$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+		if (!is_string($json)) {
+			throw new RuntimeException('Failed to encode run-tests prism.json for ' . $phpPath);
+		}
+		write_text_file($projectRoot . '/prism.json', $json . PHP_EOL);
+
+		return [
+			'project_root' => $projectRoot,
+			'config_path' => $projectRoot . '/prism.json',
+			'entry_relative' => $relativeSourcePath,
+			'workspace_source' => $workspaceSource,
+			'run_cwd' => $runCwd,
+		];
+	}
+
+	private function mirrorSiblingFixtures(string $sourcePath, string $projectRoot, string $relativeSourceDir): void
+	{
+		$fixturesDir = dirname($sourcePath) . '/fixtures';
+		if (!is_dir($fixturesDir)) {
+			return;
+		}
+
+		$targetDir = normalize_path($projectRoot . '/' . normalize_config_path($relativeSourceDir) . '/fixtures');
+		$this->ensureDirectory($targetDir);
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator($fixturesDir, FilesystemIterator::SKIP_DOTS)
+		);
+		foreach ($iterator as $fileInfo) {
+			if (!$fileInfo->isFile()) {
+				continue;
+			}
+			$relative = substr($fileInfo->getPathname(), strlen($fixturesDir) + 1);
+			$target = normalize_path($targetDir . '/' . str_replace('\\', '/', $relative));
+			$this->ensureDirectory(dirname($target));
+			$contents = file_get_contents($fileInfo->getPathname());
+			if (!is_string($contents)) {
+				throw new RuntimeException('Failed to read fixture file: ' . $fileInfo->getPathname());
+			}
+			write_text_file($target, $contents);
+		}
+	}
+
+	/**
+	 * @param array{project_root:string,config_path:string,entry_relative:string,workspace_source:string} $project
+	 * @return array{success:bool,exit_code:int,stdout:string,stderr:string,duration_ms:int,binary_path:string,runtime_library_dir:?string}
+	 */
+	private function runPhpProjectCompileStage(array $project): array
+	{
+		$started = microtime(true);
+		$build = scpp_run_build_service($project['project_root'], $project['config_path'], [
+			'entry_override' => $project['entry_relative'],
+		]);
+		$retryForRuntimeSeed = ($build['ok'] ?? false) !== true && (
+			str_contains((string) ($build['error'] ?? ''), 'Runtime artifact')
+			|| str_contains((string) ($build['error'] ?? ''), 'libruntime.')
+			|| str_contains((string) ($build['error'] ?? ''), 'runtime.')
+		);
+		if ($retryForRuntimeSeed) {
+			$build = scpp_run_build_service($project['project_root'], $project['config_path'], [
+				'entry_override' => $project['entry_relative'],
+				'compile_runtime' => true,
+			]);
+		}
+
+		$binaryPath = '';
+		if (($build['ok'] ?? false) === true && is_array($build['result'] ?? null) && is_string($build['result']['output_path'] ?? null)) {
+			$binaryPath = (string) $build['result']['output_path'];
+		}
+		$runtimeLibraryDir = $this->resolveProjectRuntimeLibraryDir($project['project_root'], $project['config_path']);
+
+		return [
+			'success' => (bool) ($build['ok'] ?? false),
+			'exit_code' => (int) ($build['exit_code'] ?? (($build['ok'] ?? false) ? 0 : 1)),
+			'stdout' => (string) ($build['output'] ?? ''),
+			'stderr' => (string) ($build['error'] ?? ''),
+			'duration_ms' => (int) round((microtime(true) - $started) * 1000),
+			'binary_path' => $binaryPath,
+			'runtime_library_dir' => $runtimeLibraryDir,
+		];
+	}
+
+	private function resolveProjectRuntimeLibraryDir(string $projectRoot, string $configPath): ?string
+	{
+		$config = load_project_config($configPath);
+		$compiler = resolve_compiler($config);
+		if ($compiler === null) {
+			return null;
+		}
+		$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
+		$runtimeBuild = build_runtime_artifact_spec(resolve_repo_root(), $projectRoot, $compiler, resolve_build_mode($config), $runtimeConfig);
+		if (!is_string($runtimeBuild['artifact_path'] ?? null) || $runtimeBuild['artifact_path'] === '') {
+			return null;
+		}
+		return normalize_path(dirname($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path'])));
 	}
 
 	private function runRuntimeCompileStage(string $sourcePath, string $workDir, array $build): array

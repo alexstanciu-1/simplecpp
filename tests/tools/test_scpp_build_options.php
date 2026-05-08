@@ -33,6 +33,9 @@ final class ScppBuildOptionsTest
 			$this->assertSame(true, $buildForce['compile_runtime'], 'force should imply runtime compilation');
 			$this->assertSame(true, $buildForce['force_runtime_rebuild'], 'force should request runtime rebuild');
 
+			$buildEntry = parse_build_command_arguments(['--entry=tests/sample.phs']);
+			$this->assertSame('tests/sample.phs', $buildEntry['entry_override'], 'build should accept an entry override');
+
 			$runDefault = parse_run_command_arguments(['--', 'arg1', 'arg2']);
 			$this->assertSame(false, $runDefault['build_options']['compile_runtime'], 'scpp run should reuse runtime by default');
 			$this->assertSame(false, $runDefault['build_options']['compile_dependencies'], 'scpp run should reuse dependencies by default');
@@ -46,6 +49,9 @@ final class ScppBuildOptionsTest
 			$runForce = parse_run_command_arguments(['--force', '--', 'arg1']);
 			$this->assertSame(true, $runForce['build_options']['compile_runtime'], 'run force should imply runtime compilation');
 			$this->assertSame(true, $runForce['build_options']['force_runtime_rebuild'], 'run force should request runtime rebuild');
+
+			$runEntry = parse_run_command_arguments(['--entry=tests/sample.phs', '--', 'arg1']);
+			$this->assertSame('tests/sample.phs', $runEntry['build_options']['entry_override'], 'run should accept an entry override');
 
 			$runImplicitArgs = parse_run_command_arguments(['hello', 'world']);
 			$this->assertSame(['hello', 'world'], $runImplicitArgs['run_args'], 'plain run args without separator should still work');
@@ -61,6 +67,7 @@ final class ScppBuildOptionsTest
 			$this->assertUpdateArgumentHandling();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
+			$this->assertEntryOverrideCanSelectAnotherFile();
 
 			echo "PASS: scpp build options\n";
 			return 0;
@@ -166,6 +173,60 @@ final class ScppBuildOptionsTest
 		$this->assertContains('build ../dep/.prism/build/dep.o: compile', $fullNinja, 'full build mode should include dependency compile edges');
 	}
 
+	private function assertEntryOverrideCanSelectAnotherFile(): void
+	{
+		if (find_command_path(['ninja']) === null) {
+			return;
+		}
+		if (resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+
+		$projectRoot = $this->root . '/entry_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', "<?php\necho \"main\\n\";\n");
+		$this->write($projectRoot . '/alt.phs', "<?php\necho \"alt\\n\";\n");
+		$config = [
+			'config_version' => 1,
+			'project_name' => 'entry_project',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'native_cpp_dir' => 'native_cpp',
+			'dependencies' => [],
+			'libraries' => [],
+			'build' => [
+				'backend' => 'ninja',
+				'cxx' => null,
+				'mode' => 'debug',
+			],
+			'runtime' => [
+				'languages' => ['php'],
+				'modules' => ['json', 'filesystem'],
+				'language_profiles' => [
+					'php' => ['profile' => 'legacy'],
+				],
+			],
+		];
+		$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+		if (!is_string($json)) {
+			throw new RuntimeException('Failed to encode entry override prism.json');
+		}
+		$this->write($projectRoot . '/prism.json', $json . PHP_EOL);
+
+		$runtimeSeed = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', [
+			'compile_runtime' => true,
+		]);
+		$this->assertSame(true, $runtimeSeed['ok'], 'initial runtime-seeded build should succeed');
+
+		$overrideBuild = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', [
+			'entry_override' => 'alt.phs',
+		]);
+		$this->assertSame(true, $overrideBuild['ok'], 'entry override build should succeed');
+		$this->assertContains('.prism/build/alt', $overrideBuild['output'], 'entry override build should target the alternate entry output');
+	}
+
 	private function assertSame(mixed $expected, mixed $actual, string $message): void
 	{
 		if ($expected !== $actual) {
@@ -191,6 +252,17 @@ final class ScppBuildOptionsTest
 	{
 		if (!is_dir($path) && !mkdir($path, 0777, true)) {
 			throw new RuntimeException('Failed to create ' . $path);
+		}
+	}
+
+	private function write(string $path, string $contents): void
+	{
+		$dir = dirname($path);
+		if (!is_dir($dir)) {
+			$this->mkdir($dir);
+		}
+		if (file_put_contents($path, $contents) === false) {
+			throw new RuntimeException('Failed to write ' . $path);
 		}
 	}
 

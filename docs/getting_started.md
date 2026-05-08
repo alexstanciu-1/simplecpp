@@ -80,6 +80,7 @@ Build only:
 
 ```bash
 scpp build
+scpp build --entry=tests/php/sample.phs
 ```
 
 By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
@@ -104,6 +105,7 @@ Build then run:
 
 ```bash
 scpp run
+scpp run --entry=tests/php/sample.phs
 ```
 
 The same explicit rebuild flags are supported on `scpp run`:

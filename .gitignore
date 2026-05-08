@@ -47,6 +47,7 @@ sandbox/*.out
 
 # Runtime test outputs
 tests/.runtime/
+tests/.run-tests/
 tests/runtime/native/output/
 tests/runtime/native/*.out
 
