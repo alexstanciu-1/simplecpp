@@ -3394,8 +3394,7 @@ final class Generator
 		}
 
 		if ($statement->kind === 'echo') {
-			// Keep the single-statement fallback lazy as well so operand evaluation order stays explicit.
-			return [$this->qualifyKnownPhpRuntimeSymbol('echo_eval') . '(' . $this->renderEchoThunk($statement->payload, $namespacePhp) . ');'];
+			return [$this->qualifyKnownPhpRuntimeSymbol('echo_one') . '(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
 		}
 
 		if ($statement->kind === 'unset') {
@@ -4022,32 +4021,13 @@ final class Generator
 	private function renderStatementSequence(array $statements, ?string $namespacePhp): array
 	{
 		$lines = [];
-		$count = count($statements);
-
-		for ($i = 0; $i < $count; ++$i) {
-			$statement = $statements[$i];
-			if ($statement->kind === 'echo') {
-				$thunks = [];
-				while ($i < $count && $statements[$i]->kind === 'echo') {
-					$thunks[] = $this->renderEchoThunk($statements[$i]->payload, $namespacePhp);
-					++$i;
-				}
-				--$i;
-				$lines[] = $this->qualifyKnownPhpRuntimeSymbol('echo_eval') . '(' . implode(', ', $thunks) . ');';
-				continue;
-			}
-
+		foreach ($statements as $statement) {
 			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
 				$lines[] = $line;
 			}
 		}
 
 		return $lines;
-	}
-
-	private function renderEchoThunk(mixed $expr, ?string $namespacePhp): string
-	{
-		return '[&]() -> decltype(auto) { return ' . $this->renderExpr($expr, $namespacePhp) . '; }';
 	}
 
 	/** @param list<mixed> $exprs */

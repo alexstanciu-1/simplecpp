@@ -89,6 +89,7 @@ Common entrypoint names include:
 
 ```bash
 scpp build
+scpp build --entry=tests/php/sample.phs
 ```
 
 By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
@@ -104,6 +105,7 @@ scpp build --force
 
 ```bash
 scpp run
+scpp run --entry=tests/php/sample.phs
 ```
 
 Pass program arguments after `--`:

@@ -581,16 +581,16 @@ function print_help(): void
 	echo "Usage:\n";
 	echo "  scpp <input.phs>\n";
 	echo "  scpp init [--php-profile=legacy|strict]\n";
-	echo "  scpp build [--build-runtime] [--build-dependencies]\n";
+	echo "  scpp build [--entry=<path>] [--build-runtime] [--build-dependencies]\n";
 	echo "  scpp clean\n";
 	echo "  scpp update [--force]\n";
-	echo "  scpp run [--build-runtime] [--build-dependencies] [--force] [-- <args...>]\n";
+	echo "  scpp run [--entry=<path>] [--build-runtime] [--build-dependencies] [--force] [-- <args...>]\n";
 	echo "  scpp runtime-build [--debug|--release] [--force]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
 	echo "  scpp update fast-forwards the scpp repository from origin/main and rebuilds the default runtime when it changes\n";
-	echo "  scpp run builds first, then executes the primary output\n";
+	echo "  scpp run builds first, then executes the selected output\n";
 	echo "  scpp runtime-build compiles the reusable runtime cache explicitly\n";
 	echo "  scpp usability-harness generates deterministic spec-driven trial projects\n";
 	echo "  scpp --help\n";
@@ -1014,7 +1014,7 @@ function handle_runtime_build(string $cwd, array $args = []): void
 }
 
 /**
- * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool} $options
+ * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options
  * @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string,runtime_library_dir:?string}
  */
 function execute_build(string $projectRoot, string $configPath, array $options = []): array
@@ -1022,15 +1022,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$options = normalize_build_execution_options($options);
 	$config = load_project_config($configPath);
 	$projectGraph = resolve_project_dependency_graph($projectRoot, $configPath, $config);
-	$entrypoint = normalize_config_path((string) ($config['entrypoint'] ?? ''));
-	if ($entrypoint === '') {
-		scpp_fail('Missing `entrypoint` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 1);
-	}
-
-	$entrypointAbs = normalize_path($projectRoot . '/' . $entrypoint);
-	if (!is_file($entrypointAbs)) {
-		scpp_fail('Configured entrypoint not found: ' . $entrypoint . PHP_EOL, 1);
-	}
+	$entrypointAbs = resolve_build_entrypoint($projectRoot, $config, $options['entry_override']);
 
 	$ninjaPath = find_command_path(['ninja']);
 	if ($ninjaPath === null) {
@@ -1300,25 +1292,33 @@ function normalize_run_arguments(array $args): array
 	return array_slice($args, $separatorIndex + 1);
 }
 
-/** @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool} $options @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool} */
+/** @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string} */
 function normalize_build_execution_options(array $options): array
 {
 	return [
 		'compile_runtime' => (bool) ($options['compile_runtime'] ?? false),
 		'compile_dependencies' => (bool) ($options['compile_dependencies'] ?? false),
 		'force_runtime_rebuild' => (bool) ($options['force_runtime_rebuild'] ?? false),
+		'entry_override' => isset($options['entry_override']) && is_string($options['entry_override']) && trim($options['entry_override']) !== ''
+			? normalize_config_path(trim((string) $options['entry_override']))
+			: null,
 	];
 }
 
-/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool} */
+/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string} */
 function parse_build_command_arguments(array $args): array
 {
 	$options = [
 		'compile_runtime' => false,
 		'compile_dependencies' => false,
 		'force_runtime_rebuild' => false,
+		'entry_override' => null,
 	];
 	foreach ($args as $arg) {
+		if (str_starts_with($arg, '--entry=')) {
+			$options['entry_override'] = normalize_config_path(substr($arg, strlen('--entry=')));
+			continue;
+		}
 		if ($arg === '--build-runtime') {
 			$options['compile_runtime'] = true;
 			continue;
@@ -1337,13 +1337,14 @@ function parse_build_command_arguments(array $args): array
 	return $options;
 }
 
-/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool},run_args:list<string>} */
+/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string},run_args:list<string>} */
 function parse_run_command_arguments(array $args): array
 {
 	$buildOptions = [
 		'compile_runtime' => false,
 		'compile_dependencies' => false,
 		'force_runtime_rebuild' => false,
+		'entry_override' => null,
 	];
 	$runArgs = [];
 	$inRunArgs = false;
@@ -1354,6 +1355,10 @@ function parse_run_command_arguments(array $args): array
 		}
 		if ($arg === '--') {
 			$inRunArgs = true;
+			continue;
+		}
+		if (str_starts_with($arg, '--entry=')) {
+			$buildOptions['entry_override'] = normalize_config_path(substr($arg, strlen('--entry=')));
 			continue;
 		}
 		if ($arg === '--build-runtime') {
@@ -1376,6 +1381,30 @@ function parse_run_command_arguments(array $args): array
 		'build_options' => $buildOptions,
 		'run_args' => normalize_run_arguments($runArgs),
 	];
+}
+
+/** @param array<string,mixed> $config */
+function resolve_build_entrypoint(string $projectRoot, array $config, ?string $entryOverride = null): string
+{
+	$entrypoint = $entryOverride !== null
+		? normalize_config_path($entryOverride)
+		: normalize_config_path((string) ($config['entrypoint'] ?? ''));
+	if ($entrypoint === '') {
+		$label = $entryOverride !== null ? '--entry' : '`entrypoint` in ' . SCPP_PROJECT_CONFIG;
+		scpp_fail('Missing ' . $label . PHP_EOL, 1);
+	}
+
+	$entrypointAbs = normalize_path($projectRoot . '/' . $entrypoint);
+	if (!is_file($entrypointAbs)) {
+		$label = $entryOverride !== null ? 'Requested entrypoint not found: ' : 'Configured entrypoint not found: ';
+		scpp_fail($label . $entrypoint . PHP_EOL, 1);
+	}
+
+	if (!path_is_inside($projectRoot, $entrypointAbs)) {
+		scpp_fail('Entrypoint must stay inside the project root: ' . $entrypoint . PHP_EOL, 1);
+	}
+
+	return $entrypointAbs;
 }
 
 /** @param list<string> $args @return array{build_mode:string,force:bool} */

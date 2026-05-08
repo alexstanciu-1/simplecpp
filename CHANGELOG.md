@@ -9,6 +9,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.18 - 2026-05-08
+
+### Additions
+
+- Added `--entry=<path>` support to `scpp build` and `scpp run` so one invocation can target a project-local source file without editing `prism.json`
+- Added persistent `tests/.run-tests/` PHP test workspaces so repeated flow-test runs can reuse warm `.prism` build state instead of recompiling from scratch
+
+### Fixes
+
+- Fixed echo lowering so adjacent exported echo nodes now emit direct sequential `php::echo_one(...)` calls instead of large batched `php::echo_eval(...)` lambda packs
+- Fixed the PHP flow test harness to build through `scpp` project mode rather than one-off direct compiler invocations, while preserving per-test result files and cwd-sensitive fixture behavior
+- Fixed PHP runtime symbol qualification so generated `echo_one` calls resolve through the runtime symbol registry just like other known PHP helpers
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- `scpp build --entry=...` and `scpp run --entry=...` override the configured `prism.json` entrypoint for that invocation only
+- `tests/.run-tests/` is generated state and should remain ignored; warm reruns of individual PHP flow tests now become much faster after the first build
+
 ## 0.1.17 - 2026-05-08
 
 ### Additions
