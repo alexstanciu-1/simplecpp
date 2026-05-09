@@ -110,6 +110,33 @@ Prefer the remapped original source location. Inspect generated C++ only when th
 
 Strict runtime type failures currently preserve structured runtime details such as the failure code and actual runtime kind. Source attribution for runtime failures should come through generated-location capture plus `.line.tsv` remapping; until that path is complete, inspect generated C++ and line maps when the saved report does not identify the authoring expression.
 
+## Strict Debug Helpers
+
+Use `dbg` when the runtime shape is unclear:
+
+```php
+dbg("cell", $cell);
+dbg("payload", $payload, DBG_SHAPE | DBG_DEPTH_3 | DBG_PTR);
+```
+
+Default `dbg` output is intentionally generous and bounded: source line, caller placeholder, type/kind, value preview, shape, and depth 2. Narrow or deepen it with bit flags such as `DBG_KEYS`, `DBG_LEN`, `DBG_DEPTH_1`, `DBG_DEPTH_3`, `DBG_PTR`, and `DBG_COMPACT`.
+
+For noisy lower-call paths, use gates:
+
+```php
+dbg_set("debug_company_12", $company->Id == 12);
+run_work($company);
+dbg_unset("debug_company_12", $company->Id == 12);
+```
+
+Then inside lower calls:
+
+```php
+dbg_if("debug_company_12", "row", $row, DBG_SHAPE);
+```
+
+`dbg` value inspection is best-effort and non-fatal. Unsupported field/shape details should degrade to a not-inspectable marker. Gate misuse is different: duplicate enabled gates and missing unsets throw intentionally so debug-control mistakes are visible.
+
 ## Generated Artifacts
 
 Generated artifacts are inspection evidence:
