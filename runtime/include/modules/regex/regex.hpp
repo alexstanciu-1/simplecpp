@@ -18,12 +18,18 @@ namespace scpp::regex {
 // Returns a packed vector [full, cap1, cap2, ...].
 // Empty vector means no match. false means invalid pattern.
 [[nodiscard]] result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_t &subject);
+[[nodiscard]] result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_t &subject, const int_t &offset);
 [[nodiscard]] result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern, const string_t &subject);
+[[nodiscard]] result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern, const string_t &subject, const int_t &offset);
 
 // Returns match-order rows [[full, cap1, ...], [full, cap1, ...], ...].
 // Empty outer vector means no matches. false means invalid pattern.
 [[nodiscard]] result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern, const string_t &subject);
+[[nodiscard]] result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern, const string_t &subject, const int_t &offset);
+[[nodiscard]] result_or_false<vector_t<vector_t<string_t>>> match_all_pattern_order(const string_t &pattern, const string_t &subject);
+[[nodiscard]] result_or_false<vector_t<vector_t<string_t>>> match_all_pattern_order(const string_t &pattern, const string_t &subject, const int_t &offset);
 [[nodiscard]] result_or_false<vector_t<hash_t<string_t, string_t>>> match_all_named(const string_t &pattern, const string_t &subject);
+[[nodiscard]] result_or_false<vector_t<hash_t<string_t, string_t>>> match_all_named(const string_t &pattern, const string_t &subject, const int_t &offset);
 
 // Filters packed input strings by pattern match.
 [[nodiscard]] result_or_false<vector_t<string_t>> grep(const string_t &pattern, const vector_t<string_t> &input);

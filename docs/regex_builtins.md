@@ -18,7 +18,7 @@ Use the dedicated headers instead:
 - backend is PCRE2
 - current module activation is opt-in
 - current PCRE2 install expectation is manual host install
-- JIT is intentionally deferred to a later pass
+- JIT is used opportunistically when the installed PCRE2 reports usable runtime support
 - strict and legacy PHP surfaces share one runtime-owned regex core
 - shared runtime and strict-facing regex functions stay typed
 - legacy `preg_*` wrappers adapt typed results into PHP-compatible `mixed_t` arrays where needed
@@ -37,6 +37,7 @@ Use the dedicated headers instead:
 - `regex_match`
 - `regex_match_named`
 - `regex_match_all`
+- `regex_match_all_pattern_order`
 - `regex_match_all_named`
 - `regex_grep`
 - `regex_filter`
@@ -49,8 +50,12 @@ Use the dedicated headers instead:
 
 - patterns must use delimited PCRE2 syntax like `"/foo/i"`
 - supported modifiers are only `i`, `m`, `s`, `u`, `x`, `A`, `D`, and `U`
+- `/u` enables PCRE2 UTF-8 mode and is tested with accented text and four-byte UTF-8 code points
 - replacement strings support positional backreferences `$1`, `${1}`, and `\\1`
+- `preg_match_all` supports `PREG_PATTERN_ORDER` and `PREG_SET_ORDER`
+- `preg_match` and `preg_match_all` support byte offsets, including negative offsets counted from the end
 - `preg_split` currently supports the `NO_EMPTY` and `DELIM_CAPTURE` flag bits, but not offset capture
+- offset-capture and unmatched-as-null output forms raise `ValueError` because they are still deferred
 - `preg_grep` and `preg_filter` preserve original keys in legacy mode
 - legacy `preg_match` and `preg_match_all` include named capture entries when the pattern defines them
 - `preg_replace_callback_array` currently uses a typed callback table, not a dynamic PHP array of callables

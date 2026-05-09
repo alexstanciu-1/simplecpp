@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/string_support.hpp"
 #include "modules/regex/regex.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/int_t.hpp"
@@ -10,8 +11,69 @@
 #include "scpp/vector_t.hpp"
 
 #include <functional>
+#include <utility>
 
 namespace scpp::php::detail {
+
+constexpr std::int64_t preg_pattern_order = 1;
+constexpr std::int64_t preg_set_order = 2;
+constexpr std::int64_t preg_offset_capture = 256;
+constexpr std::int64_t preg_unmatched_as_null = 512;
+
+[[nodiscard]] inline bool string_key_to_int(const string_t &key, std::int64_t &numeric_key) {
+	numeric_key = 0;
+	bool is_numeric = !key.native_value().empty();
+	if (is_numeric) {
+		for (const char ch : key.native_value()) {
+			if (ch < '0' || ch > '9') {
+				is_numeric = false;
+				break;
+			}
+			numeric_key = (numeric_key * 10) + static_cast<std::int64_t>(ch - '0');
+		}
+	}
+	return is_numeric;
+}
+
+inline void set_php_array_key(hash_t<mixed_t> &table, const string_t &key, const mixed_t &value) {
+	std::int64_t numeric_key = 0;
+	if (string_key_to_int(key, numeric_key)) {
+		table.set(int_t(numeric_key), value);
+		return;
+	}
+	table.set(key, value);
+}
+
+inline void validate_preg_match_flags(const int_t &flags) {
+	const auto native_flags = flags.native_value();
+	if ((native_flags & preg_offset_capture) != 0) {
+		throw scpp::ValueError("preg_match(): PREG_OFFSET_CAPTURE is not supported by the regex module yet");
+	}
+	if ((native_flags & preg_unmatched_as_null) != 0) {
+		throw scpp::ValueError("preg_match(): PREG_UNMATCHED_AS_NULL is not supported by the regex module yet");
+	}
+	const auto known = preg_offset_capture | preg_unmatched_as_null;
+	if ((native_flags & ~known) != 0) {
+		throw scpp::ValueError("preg_match(): unsupported flags");
+	}
+}
+
+inline void validate_preg_match_all_flags(const int_t &flags) {
+	const auto native_flags = flags.native_value();
+	if ((native_flags & preg_offset_capture) != 0) {
+		throw scpp::ValueError("preg_match_all(): PREG_OFFSET_CAPTURE is not supported by the regex module yet");
+	}
+	if ((native_flags & preg_unmatched_as_null) != 0) {
+		throw scpp::ValueError("preg_match_all(): PREG_UNMATCHED_AS_NULL is not supported by the regex module yet");
+	}
+	const auto known = preg_pattern_order | preg_set_order | preg_offset_capture | preg_unmatched_as_null;
+	if ((native_flags & ~known) != 0) {
+		throw scpp::ValueError("preg_match_all(): unsupported flags");
+	}
+	if ((native_flags & preg_pattern_order) != 0 && (native_flags & preg_set_order) != 0) {
+		throw scpp::ValueError("preg_match_all(): PREG_PATTERN_ORDER and PREG_SET_ORDER cannot be combined");
+	}
+}
 
 [[nodiscard]] inline mixed_t vector_to_php_array(const vector_t<string_t> &values) {
 	auto table = unique<hash_t<mixed_t>>();
@@ -33,24 +95,7 @@ namespace scpp::php::detail {
 	auto table = unique<hash_t<mixed_t>>();
 	for (auto it = values.begin_entries(); it != values.end_entries(); ++it) {
 		const auto entry = *it;
-		const string_t &key = entry.key();
-		const string_t &value = entry.value_ref();
-		std::int64_t numeric_key = 0;
-		bool is_numeric = !key.native_value().empty();
-		if (is_numeric) {
-			for (const char ch : key.native_value()) {
-				if (ch < '0' || ch > '9') {
-					is_numeric = false;
-					break;
-				}
-				numeric_key = (numeric_key * 10) + static_cast<std::int64_t>(ch - '0');
-			}
-		}
-		if (is_numeric) {
-			table->set(int_t(numeric_key), mixed_t(value));
-		} else {
-			table->set(key, mixed_t(value));
-		}
+		set_php_array_key(*table, entry.key(), mixed_t(entry.value_ref()));
 	}
 	return mixed_t(std::move(table));
 }
@@ -60,6 +105,24 @@ namespace scpp::php::detail {
 	for (std::size_t index = 0; index < rows.size(); ++index) {
 		static_cast<void>(outer->append(named_match_table_to_php_array(rows[index])));
 	}
+	return mixed_t(std::move(outer));
+}
+
+[[nodiscard]] inline mixed_t named_match_tables_to_php_pattern_order(const vector_t<hash_t<string_t, string_t>> &rows) {
+	auto outer = unique<hash_t<mixed_t>>();
+	if (rows.empty().native_value()) {
+		return mixed_t(std::move(outer));
+	}
+
+	for (auto key_it = rows[0].begin_entries(); key_it != rows[0].end_entries(); ++key_it) {
+		const auto key_entry = *key_it;
+		auto column = unique<hash_t<mixed_t>>();
+		for (std::size_t row_index = 0; row_index < rows.size(); ++row_index) {
+			static_cast<void>(column->append(mixed_t(rows[row_index].at(key_entry.key()))));
+		}
+		set_php_array_key(*outer, key_entry.key(), mixed_t(std::move(column)));
+	}
+
 	return mixed_t(std::move(outer));
 }
 
@@ -132,6 +195,28 @@ namespace scpp::php {
 	return int_t(result.value().empty().native_value() ? 0 : 1);
 }
 
+[[nodiscard]] inline result_or_false<int_t> preg_match(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t &flags) {
+	detail::validate_preg_match_flags(flags);
+	const auto result = scpp::regex::match_named(pattern, subject);
+	if (result.is_false().native_value()) {
+		matches = detail::named_match_table_to_php_array(hash_t<string_t, string_t>());
+		return false_sentinel;
+	}
+	matches = detail::named_match_table_to_php_array(result.value());
+	return int_t(result.value().empty().native_value() ? 0 : 1);
+}
+
+[[nodiscard]] inline result_or_false<int_t> preg_match(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t &flags, const int_t &offset) {
+	detail::validate_preg_match_flags(flags);
+	const auto result = scpp::regex::match_named(pattern, subject, offset);
+	if (result.is_false().native_value()) {
+		matches = detail::named_match_table_to_php_array(hash_t<string_t, string_t>());
+		return false_sentinel;
+	}
+	matches = detail::named_match_table_to_php_array(result.value());
+	return int_t(result.value().empty().native_value() ? 0 : 1);
+}
+
 [[nodiscard]] inline result_or_false<int_t> preg_match_all(const string_t &pattern, const string_t &subject) {
 	const auto result = scpp::regex::match_all(pattern, subject);
 	if (result.is_false().native_value()) {
@@ -146,7 +231,37 @@ namespace scpp::php {
 		matches = detail::nested_named_match_tables_to_php_array(vector_t<hash_t<string_t, string_t>>());
 		return false_sentinel;
 	}
-	matches = detail::nested_named_match_tables_to_php_array(result.value());
+	matches = detail::named_match_tables_to_php_pattern_order(result.value());
+	return int_t(static_cast<std::int64_t>(result.value().size()));
+}
+
+[[nodiscard]] inline result_or_false<int_t> preg_match_all(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t &flags) {
+	detail::validate_preg_match_all_flags(flags);
+	const auto result = scpp::regex::match_all_named(pattern, subject);
+	if (result.is_false().native_value()) {
+		matches = detail::nested_named_match_tables_to_php_array(vector_t<hash_t<string_t, string_t>>());
+		return false_sentinel;
+	}
+	if ((flags.native_value() & detail::preg_set_order) != 0) {
+		matches = detail::nested_named_match_tables_to_php_array(result.value());
+	} else {
+		matches = detail::named_match_tables_to_php_pattern_order(result.value());
+	}
+	return int_t(static_cast<std::int64_t>(result.value().size()));
+}
+
+[[nodiscard]] inline result_or_false<int_t> preg_match_all(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t &flags, const int_t &offset) {
+	detail::validate_preg_match_all_flags(flags);
+	const auto result = scpp::regex::match_all_named(pattern, subject, offset);
+	if (result.is_false().native_value()) {
+		matches = detail::nested_named_match_tables_to_php_array(vector_t<hash_t<string_t, string_t>>());
+		return false_sentinel;
+	}
+	if ((flags.native_value() & detail::preg_set_order) != 0) {
+		matches = detail::nested_named_match_tables_to_php_array(result.value());
+	} else {
+		matches = detail::named_match_tables_to_php_pattern_order(result.value());
+	}
 	return int_t(static_cast<std::int64_t>(result.value().size()));
 }
 

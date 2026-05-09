@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace scpp::regex {
 namespace {
@@ -223,6 +224,23 @@ void maybe_enable_jit(pcre2_code *compiled) {
 	return out;
 }
 
+[[nodiscard]] vector_t<vector_t<string_t>> transpose_match_rows(const vector_t<vector_t<string_t>> &rows) {
+	vector_t<vector_t<string_t>> out;
+	if (rows.empty().native_value()) {
+		return out;
+	}
+
+	const std::size_t capture_count = rows[0].size();
+	for (std::size_t capture_index = 0; capture_index < capture_count; ++capture_index) {
+		vector_t<string_t> capture_values;
+		for (std::size_t row_index = 0; row_index < rows.size(); ++row_index) {
+			capture_values.append(rows[row_index][capture_index]);
+		}
+		out.append(std::move(capture_values));
+	}
+	return out;
+}
+
 [[nodiscard]] bool append_capture_by_index(
 	std::string &out,
 	const string_t &subject,
@@ -346,6 +364,22 @@ void maybe_enable_jit(pcre2_code *compiled) {
 	return match_end + 1u;
 }
 
+[[nodiscard]] PCRE2_SIZE normalize_match_offset(const int_t &offset, const std::size_t subject_size) {
+	const auto native_offset = offset.native_value();
+	if (native_offset >= 0) {
+		if (static_cast<std::uint64_t>(native_offset) > subject_size) {
+			return static_cast<PCRE2_SIZE>(subject_size + 1u);
+		}
+		return static_cast<PCRE2_SIZE>(native_offset);
+	}
+
+	const auto from_end = static_cast<std::int64_t>(subject_size) + native_offset;
+	if (from_end <= 0) {
+		return 0;
+	}
+	return static_cast<PCRE2_SIZE>(from_end);
+}
+
 [[nodiscard]] result_or_false<replace_result> replace_impl(
 	const string_t &pattern,
 	const string_t &replacement,
@@ -441,9 +475,19 @@ string_t quote(const string_t &text, const string_t &delimiter) {
 }
 
 result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_t &subject) {
+	return match(pattern, subject, int_t(0));
+}
+
+result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_t &subject, const int_t &offset) {
 	auto compiled = compile_pattern(pattern);
 	if (!compiled.has_value().native_value()) {
 		return false_sentinel;
+	}
+
+	const std::string &text = subject.native_value();
+	const PCRE2_SIZE start_offset = normalize_match_offset(offset, text.size());
+	if (start_offset > text.size()) {
+		return vector_t<string_t>();
 	}
 
 	match_data_ptr match_data(
@@ -455,9 +499,9 @@ result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_
 
 	const int rc = pcre2_match(
 		compiled.value().get(),
-		reinterpret_cast<PCRE2_SPTR>(subject.native_value().c_str()),
-		subject.native_value().size(),
-		0,
+		reinterpret_cast<PCRE2_SPTR>(text.c_str()),
+		text.size(),
+		start_offset,
 		0,
 		match_data.get(),
 		nullptr);
@@ -472,9 +516,19 @@ result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_
 }
 
 result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern, const string_t &subject) {
+	return match_named(pattern, subject, int_t(0));
+}
+
+result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern, const string_t &subject, const int_t &offset) {
 	auto compiled = compile_pattern(pattern);
 	if (!compiled.has_value().native_value()) {
 		return false_sentinel;
+	}
+
+	const std::string &text = subject.native_value();
+	const PCRE2_SIZE start_offset = normalize_match_offset(offset, text.size());
+	if (start_offset > text.size()) {
+		return hash_t<string_t, string_t>();
 	}
 
 	match_data_ptr match_data(
@@ -486,9 +540,9 @@ result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern,
 
 	const int rc = pcre2_match(
 		compiled.value().get(),
-		reinterpret_cast<PCRE2_SPTR>(subject.native_value().c_str()),
-		subject.native_value().size(),
-		0,
+		reinterpret_cast<PCRE2_SPTR>(text.c_str()),
+		text.size(),
+		start_offset,
 		0,
 		match_data.get(),
 		nullptr);
@@ -503,6 +557,10 @@ result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern,
 }
 
 result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern, const string_t &subject) {
+	return match_all(pattern, subject, int_t(0));
+}
+
+result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern, const string_t &subject, const int_t &offset) {
 	auto compiled = compile_pattern(pattern);
 	if (!compiled.has_value().native_value()) {
 		return false_sentinel;
@@ -516,8 +574,11 @@ result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern,
 	}
 
 	const std::string &text = subject.native_value();
-	PCRE2_SIZE start_offset = 0;
+	PCRE2_SIZE start_offset = normalize_match_offset(offset, text.size());
 	vector_t<vector_t<string_t>> out;
+	if (start_offset > text.size()) {
+		return out;
+	}
 
 	while (start_offset <= text.size()) {
 		const int rc = pcre2_match(
@@ -543,7 +604,23 @@ result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern,
 	return out;
 }
 
+result_or_false<vector_t<vector_t<string_t>>> match_all_pattern_order(const string_t &pattern, const string_t &subject) {
+	return match_all_pattern_order(pattern, subject, int_t(0));
+}
+
+result_or_false<vector_t<vector_t<string_t>>> match_all_pattern_order(const string_t &pattern, const string_t &subject, const int_t &offset) {
+	const auto rows = match_all(pattern, subject, offset);
+	if (rows.is_false().native_value()) {
+		return false_sentinel;
+	}
+	return transpose_match_rows(rows.value());
+}
+
 result_or_false<vector_t<hash_t<string_t, string_t>>> match_all_named(const string_t &pattern, const string_t &subject) {
+	return match_all_named(pattern, subject, int_t(0));
+}
+
+result_or_false<vector_t<hash_t<string_t, string_t>>> match_all_named(const string_t &pattern, const string_t &subject, const int_t &offset) {
 	auto compiled = compile_pattern(pattern);
 	if (!compiled.has_value().native_value()) {
 		return false_sentinel;
@@ -557,8 +634,11 @@ result_or_false<vector_t<hash_t<string_t, string_t>>> match_all_named(const stri
 	}
 
 	const std::string &text = subject.native_value();
-	PCRE2_SIZE start_offset = 0;
+	PCRE2_SIZE start_offset = normalize_match_offset(offset, text.size());
 	vector_t<hash_t<string_t, string_t>> out;
+	if (start_offset > text.size()) {
+		return out;
+	}
 
 	while (start_offset <= text.size()) {
 		const int rc = pcre2_match(
@@ -804,7 +884,7 @@ result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_
 	constexpr std::int64_t split_delim_capture = 2;
 	constexpr std::int64_t split_offset_capture = 4;
 	if ((native_flags & split_offset_capture) != 0) {
-		throw scpp::ValueError("preg_split(): PREG_SPLIT_OFFSET_CAPTURE is not supported in the current pass");
+		throw scpp::ValueError("preg_split(): PREG_SPLIT_OFFSET_CAPTURE is not supported by the regex module yet");
 	}
 
 	auto compiled = compile_pattern(pattern);

@@ -40,7 +40,7 @@ Doc Status: normative
 ## Error policy
 - Invalid pattern syntax returns `false`.
 - Negative limit other than `-1` throws `ValueError`.
-- `PREG_SPLIT_OFFSET_CAPTURE` currently throws `ValueError`.
+- `PREG_SPLIT_OFFSET_CAPTURE` currently throws `ValueError` with a "not supported by the regex module yet" message.
 
 ## Runtime and wrapper split
 - Runtime: parse delimiters/modifiers, compile the shared PCRE2 pattern, iterate matches, and pack string segments into `vector_t<string_t>`.

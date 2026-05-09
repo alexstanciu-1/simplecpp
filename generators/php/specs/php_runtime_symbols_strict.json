@@ -22,6 +22,7 @@
         "regex_match": "regex::match",
         "regex_match_all_named": "regex::match_all_named",
         "regex_match_all": "regex::match_all",
+        "regex_match_all_pattern_order": "regex::match_all_pattern_order",
         "regex_match_named": "regex::match_named",
         "regex_quote": "regex::quote",
         "regex_replace": "regex::replace",

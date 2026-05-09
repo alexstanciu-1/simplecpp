@@ -20,7 +20,7 @@ Use the dedicated headers instead:
 - strict reusable namespace root: `scpp::regex`
 - current build policy: opt-in only
 - current dependency policy: manual host install of PCRE2 development files is required
-- current JIT policy: intentionally deferred to a later pass
+- current JIT policy: opportunistic runtime use when PCRE2 reports usable JIT support
 - shared runtime policy: typed-only, no `mixed_t`
 - strict PHP policy: typed-only, no `mixed_t`
 - legacy PHP policy: PHP-compatible array outputs may use `mixed_t`
@@ -61,9 +61,15 @@ Use the dedicated headers instead:
 - `regex_quote(string $text): string_t`
 - `regex_quote(string $text, string $delimiter): string_t`
 - `regex_match(string $pattern, string $subject): result_or_false<vector_t<string_t>>`
+- `regex_match(string $pattern, string $subject, int_t $offset): result_or_false<vector_t<string_t>>`
 - `regex_match_named(string $pattern, string $subject): result_or_false<hash_t<string_t, string_t>>`
+- `regex_match_named(string $pattern, string $subject, int_t $offset): result_or_false<hash_t<string_t, string_t>>`
 - `regex_match_all(string $pattern, string $subject): result_or_false<vector_t<vector_t<string_t>>>`
+- `regex_match_all(string $pattern, string $subject, int_t $offset): result_or_false<vector_t<vector_t<string_t>>>`
+- `regex_match_all_pattern_order(string $pattern, string $subject): result_or_false<vector_t<vector_t<string_t>>>`
+- `regex_match_all_pattern_order(string $pattern, string $subject, int_t $offset): result_or_false<vector_t<vector_t<string_t>>>`
 - `regex_match_all_named(string $pattern, string $subject): result_or_false<vector_t<hash_t<string_t, string_t>>>`
+- `regex_match_all_named(string $pattern, string $subject, int_t $offset): result_or_false<vector_t<hash_t<string_t, string_t>>>`
 - `regex_grep(string $pattern, vector_t<string_t> $input): result_or_false<vector_t<string_t>>`
 - `regex_filter(string $pattern, string $replacement, vector_t<string_t> $input): result_or_false<vector_t<string_t>>`
 - `regex_filter(string $pattern, string $replacement, vector_t<string_t> $input, int_t $limit): result_or_false<vector_t<string_t>>`
@@ -80,15 +86,15 @@ Use the dedicated headers instead:
 
 - pattern input is always a delimited PCRE2-style string such as `"/ab+/i"`
 - supported modifiers are only `i`, `m`, `s`, `u`, `x`, `A`, `D`, and `U`
+- `/u` enables PCRE2 UTF-8 mode and is tested with accented text and four-byte UTF-8 code points
 - replacement strings support positional backreferences `$1`, `${1}`, and `\\1`
 - no offset-capture output forms yet
 - split flags currently support `PREG_SPLIT_NO_EMPTY` and `PREG_SPLIT_DELIM_CAPTURE`, but not offset capture
-- no count-output parameters yet
+- match-all flags currently support `PREG_PATTERN_ORDER` and `PREG_SET_ORDER`, but not offset capture or unmatched-as-null
+- match and match-all offset parameters are supported as byte offsets; negative offsets count back from the end
+- unsupported output-shape flags raise `ValueError` with a "not supported by the regex module yet" message
+- count-output parameters are supported for replacement/filter callback paths
 - `preg_grep` and `preg_filter` currently preserve original keys in legacy mode
 - legacy `preg_match` and `preg_match_all` include named capture entries when the pattern defines them
 - `preg_replace_callback_array` currently narrows the callback table to typed `hash_t<function<...>, string_t>` entries rather than a dynamic PHP array of callables
 - JIT is opportunistic in this pass and falls back silently to interpreted matching when unavailable
-
-## Immediate follow-up work
-
-- add optional JIT configuration in a second pass
