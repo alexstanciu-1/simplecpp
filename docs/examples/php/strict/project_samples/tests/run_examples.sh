@@ -30,7 +30,7 @@ while IFS= read -r sample_id; do
 
 	(
 		cd "$project_dir"
-		"${scpp_cmd[@]}" build >"$build_stdout_path" 2>"$build_stderr_path"
+		"${scpp_cmd[@]}" build --build-runtime >"$build_stdout_path" 2>"$build_stderr_path"
 	)
 
 	if [[ ! -x "$binary_path" ]]; then
