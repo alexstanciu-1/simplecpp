@@ -9,6 +9,30 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.28 - 2026-05-09
+
+### Additions
+
+- Added regression coverage for strict runtime type failures reporting source-level diagnostics through `scpp run` and `scpp error`.
+- Added regression coverage for strict dependency project exports composing before local generated headers after a dependency was previously built standalone.
+
+### Fixes
+
+- Fixed strict runtime cast failures so generated code can attach the original source file, source line, expression, expected type, operation, and actual runtime kind to structured diagnostics.
+- Fixed `scpp run` so structured runtime failures are saved to `.prism/last_error.json` and summarized through source-level context instead of leaking only generated/runtime stderr.
+- Fixed runtime profile normalization so legacy `runtime.language_profiles.php.profile` config and object-style `runtime.languages.php.profile` config are both resolved before build/run diagnostics record project mode.
+- Fixed the remaining strict same-project composition issue from #58 by including dependency project export headers before local generated headers, sorting exported dependency headers with the same base-before-derived rule, and regenerating dependency entrypoints when a standalone project is reused as a dependency.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Re-run failing strict projects and inspect `scpp error` / `scpp full-error`; supported runtime type failures now prefer source `.phs` context when available.
+- Rebuild larger strict multi-project graphs that removed same-project generated `.hpp` includes; dependency export headers now participate in the same generated composition ordering used by project unit headers.
+- Agent Skill review completed: strict diagnostics and composition guidance were updated for this hotfix.
+
 ## 0.1.27 - 2026-05-09
 
 ### Additions
