@@ -1,0 +1,12 @@
+$timestamp = strtotime("2024-02-29 12:34:56");
+if ($timestamp === false) {
+	echo "parse-error\n";
+} else {
+	echo date("Y-m-d H:i:s", $timestamp), "\n";
+}
+
+$bad = strtotime("2024-02-30 12:34:56");
+if ($bad === false) {
+	echo "bad-date\n";
+}
+

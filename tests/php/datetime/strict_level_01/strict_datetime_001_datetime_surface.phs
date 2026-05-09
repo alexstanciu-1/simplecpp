@@ -1,0 +1,17 @@
+$epoch /** int */ = 0;
+$err /** error_t */;
+if (!take($epoch, $err, dt_parse_iso_utc("1970-01-01T00:00:00Z"))) {
+	echo "epoch-error\n";
+}
+echo $epoch, "\n";
+echo dt_format_iso_utc($epoch), "\n";
+
+$leap /** int */ = 0;
+if (!take($leap, $err, dt_parse_iso_utc("2024-02-29T12:34:56Z"))) {
+	echo "leap-error\n";
+}
+echo dt_format_iso_utc($leap), "\n";
+
+if (!take($leap, $err, dt_parse_iso_utc("2024-02-30T00:00:00Z"))) {
+	echo "bad-date\n";
+}

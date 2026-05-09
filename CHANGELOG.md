@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.29 - 2026-05-09
+
+### Additions
+
+- Added the default `datetime` runtime module with reusable `scpp::dt` APIs for Unix timestamps, monotonic timing, sleeps, UTC ISO helpers, common local datetime formatting, and common local datetime parsing.
+- Added strict PHP++ `dt_*` datetime helpers backed by the shared runtime API, including `dt_now`, `dt_now_ms`, `dt_monotonic_ms`, `dt_sleep_ms`, `dt_format`, `dt_format_now`, `dt_parse`, `dt_format_iso_utc`, and `dt_parse_iso_utc`.
+- Added legacy PHP wrapper support for `time()`, `date()`, and `strtotime()` on top of the same runtime implementation.
+- Added datetime docs, strict quick-learn guidance, Agent Skill guidance, native runtime tests, and PHP surface regression fixtures.
+
+### Fixes
+
+- None
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Strict projects should prefer the `dt_*` helpers over legacy PHP-shaped `date()` and `strtotime()` names.
+- Phase 1 intentionally supports common numeric datetime forms only: `YYYY-MM-DD`, `YYYY-MM-DD HH:MM:SS`, `YYYY-MM-DDTHH:MM:SS`, `YYYY-MM-DDTHH:MM:SSZ`, and core format tokens such as `Y-m-d H:i:s`.
+- Named timezones, locale names, calendar arithmetic, and natural-language `strtotime` expressions remain deferred.
+
 ## 0.1.28 - 2026-05-09
 
 ### Additions
