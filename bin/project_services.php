@@ -1392,6 +1392,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$projectContext['state'] = load_s2s_state($projectContext['state_path']);
 		$projectContext['php_files'] = collect_project_php_files($contextProjectRoot);
 		$projectContext['native_cpp_files'] = collect_project_native_cpp_files($projectContext['native_cpp_dir']);
+		$projectContext['generated_headers'] = [];
+		$projectContext['export_manifests'] = [];
 
 		foreach ($projectContext['php_files'] as $phpPathAbs) {
 			$relativePhp = normalize_config_path(relative_path($contextProjectRoot, $phpPathAbs));
@@ -1441,6 +1443,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'is_entrypoint' => $phpPathAbs === $entrypointAbs,
 				'force_include_header' => null,
 			];
+			$projectContext['generated_headers'][] = $generatedHeader;
 			if ($hasExportManifest) {
 				$projectContext['export_manifests'][] = $generatedExportManifest;
 			}
@@ -1504,13 +1507,13 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	unset($projectContext);
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
-	$projectDependencyForceIncludes = write_project_dependency_force_include_headers($projectContexts);
+	$projectUnitForceIncludes = write_project_unit_force_include_headers($projectContexts);
 	foreach ($generatedUnits as &$unit) {
-		$unit['force_include_header'] = $projectDependencyForceIncludes[normalize_path($unit['project_root'])] ?? null;
+		$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
 	}
 	unset($unit);
 	foreach ($nativeCppUnits as &$nativeUnit) {
-		$nativeUnit['force_include_header'] = $projectDependencyForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
+		$nativeUnit['force_include_header'] = $projectUnitForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
 	}
 	unset($nativeUnit);
 
@@ -2020,29 +2023,37 @@ function load_export_manifest(string $path): array
  *   state?:array<string,mixed>,
  *   php_files?:list<string>,
  *   native_cpp_files?:list<string>,
- *   export_headers?:list<string>
+ *   generated_headers?:list<string>,
+ *   export_manifests?:list<string>
  * }> $projectContexts
+ * @return array<string,string>
  */
-function write_project_dependency_force_include_headers(array $projectContexts): array
+function write_project_unit_force_include_headers(array $projectContexts): array
 {
 	$headers = [];
 	foreach ($projectContexts as $projectRoot => $projectContext) {
-		$dependencyHeaders = [];
+		$includeHeaders = [];
+		foreach (($projectContext['generated_headers'] ?? []) as $generatedHeader) {
+			if (!is_string($generatedHeader) || $generatedHeader === '') {
+				continue;
+			}
+			$includeHeaders[] = normalize_path($generatedHeader);
+		}
 		foreach (collect_transitive_project_dependency_roots($projectRoot, $projectContexts) as $dependencyRoot) {
 			$dependencyContext = $projectContexts[$dependencyRoot] ?? null;
 			if (!is_array($dependencyContext)) {
 				continue;
 			}
-			$dependencyHeaders[] = normalize_path($dependencyContext['generated_dir'] . '/__project.hpp');
+			$includeHeaders[] = normalize_path($dependencyContext['generated_dir'] . '/__project.hpp');
 		}
-		$dependencyHeaders = array_values(array_unique($dependencyHeaders));
-		if ($dependencyHeaders === []) {
+		$includeHeaders = array_values(array_unique($includeHeaders));
+		if ($includeHeaders === []) {
 			continue;
 		}
-		$headerPath = normalize_path($projectContext['generated_dir'] . '/__project_deps.hpp');
+		$headerPath = normalize_path($projectContext['generated_dir'] . '/__project_units.hpp');
 		$lines = ['#pragma once', ''];
-		foreach ($dependencyHeaders as $dependencyHeader) {
-			$lines[] = '#include "' . normalize_config_path(relative_path(dirname($headerPath), $dependencyHeader)) . '"';
+		foreach ($includeHeaders as $includeHeader) {
+			$lines[] = '#include "' . normalize_config_path(relative_path(dirname($headerPath), $includeHeader)) . '"';
 		}
 		$lines[] = '';
 		write_text_file($headerPath, implode(PHP_EOL, $lines) . PHP_EOL);

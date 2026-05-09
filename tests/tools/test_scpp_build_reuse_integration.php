@@ -38,6 +38,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertContains('Runtime compilation: enabled', $full['output'], 'full build should report runtime compilation');
 			$this->assertContains('Dependency compilation: enabled', $full['output'], 'full build should report dependency compilation');
 			$this->assertDirectNinjaNoWork($app);
+			$this->assertSameProjectStrictUnitsComposeWithoutSourceIncludes();
 
 			$depObject = $this->findDependencyObject($lib);
 			$runtimeArtifact = $this->resolveRuntimeArtifactPath($app);
@@ -156,6 +157,32 @@ final class ScppBuildReuseIntegrationTest
 		throw new RuntimeException('Failed to locate dependency object in ' . $buildDir);
 	}
 
+	private function assertSameProjectStrictUnitsComposeWithoutSourceIncludes(): void
+	{
+		$project = $this->root . '/strict_units';
+		$this->writeProject($project, [], "echo \"placeholder\\n\";\n", 'strict');
+		$this->write($project . '/model.phs', <<<'PHS'
+class Model {
+    public string $name = "";
+}
+PHS);
+		$this->write($project . '/main.phs', <<<'PHS'
+$m = new Model();
+$m->name = "ok";
+echo $m->name, "\n";
+PHS);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json');
+		$this->assertSame(true, $build['ok'], 'strict same-project units should build without source-level generated-header includes');
+
+		$unitHeader = $project . '/.prism/generated/__project_units.hpp';
+		$buildFile = $project . '/.prism/build/build.ninja';
+		$this->assertFileExists($unitHeader, 'project unit force-include header should be generated');
+		$this->assertFileExists($buildFile, 'strict same-project build should emit build.ninja');
+		$this->assertContains('#include "model.hpp"', $this->read($unitHeader), 'project unit header should include same-project generated model header');
+		$this->assertContains('-include ../generated/__project_units.hpp', $this->read($buildFile), 'generated unit compile edges should force-include the project unit header');
+	}
+
 	private function sleepForTimestamp(): void
 	{
 		usleep(1200000);
@@ -163,7 +190,7 @@ final class ScppBuildReuseIntegrationTest
 	}
 
 	/** @param list<string> $dependencies */
-	private function writeProject(string $path, array $dependencies, string $source): void
+	private function writeProject(string $path, array $dependencies, string $source, string $phpProfile = 'legacy'): void
 	{
 		$this->mkdir($path);
 		$this->mkdir($path . '/native_cpp');
@@ -187,7 +214,7 @@ final class ScppBuildReuseIntegrationTest
 				'languages' => ['php'],
 				'modules' => ['json', 'filesystem'],
 				'language_profiles' => [
-					'php' => ['profile' => 'legacy'],
+					'php' => ['profile' => $phpProfile],
 				],
 			],
 		];
@@ -217,6 +244,15 @@ final class ScppBuildReuseIntegrationTest
 		if (file_put_contents($path, $contents) === false) {
 			throw new RuntimeException('Failed to write ' . $path);
 		}
+	}
+
+	private function read(string $path): string
+	{
+		$contents = file_get_contents($path);
+		if (!is_string($contents)) {
+			throw new RuntimeException('Failed to read ' . $path);
+		}
+		return $contents;
 	}
 
 	private function mkdir(string $path): void
