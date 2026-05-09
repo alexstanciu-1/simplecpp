@@ -109,6 +109,7 @@ Examples already on this path:
 
 - JSON -> `modules/json/` -> `namespace scpp::json`
 - filesystem -> `modules/filesystem/` -> `namespace scpp::fs`
+- datetime -> `modules/datetime/` -> `namespace scpp::dt`
 - regex -> `modules/regex/` -> `namespace scpp::regex`
 - shared string family -> runtime-owned `namespace scpp::str`
 - shared stdio/resource I/O family -> runtime-owned `namespace scpp::io`
@@ -203,11 +204,11 @@ When reorganizing runtime code:
         "profile": "legacy"
       }
     },
-    "modules": ["json", "filesystem", "mysqli"]
+    "modules": ["json", "filesystem", "datetime", "mysqli"]
   }
 }
 ```
 
 Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
-Current default behavior enables the `json` and `filesystem` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.
+Current default behavior enables the `json`, `filesystem`, and `datetime` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.

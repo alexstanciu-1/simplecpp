@@ -912,7 +912,7 @@ TXT;
 			],
 			'runtime' => [
 				'languages' => ['php'],
-				'modules' => ['json', 'filesystem'],
+				'modules' => ['json', 'filesystem', 'datetime'],
 				'language_profiles' => [
 					'php' => ['profile' => $phpProfile],
 				],

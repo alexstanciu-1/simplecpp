@@ -79,6 +79,18 @@
         "preg_replace_callback_array": "php::preg_replace_callback_array",
         "preg_split": "php::preg_split",
         "json_decode": "php::json_decode",
-        "json_encode": "php::json_encode"
+        "json_encode": "php::json_encode",
+        "time": "php::time",
+        "dt_now": "php::dt_now",
+        "dt_now_ms": "php::dt_now_ms",
+        "dt_monotonic_ms": "php::dt_monotonic_ms",
+        "dt_sleep_ms": "php::dt_sleep_ms",
+        "dt_format_iso_utc": "php::dt_format_iso_utc",
+        "dt_parse_iso_utc": "php::dt_parse_iso_utc",
+        "dt_format": "php::dt_format",
+        "dt_format_now": "php::dt_format_now",
+        "dt_parse": "php::dt_parse",
+        "date": "php::date",
+        "strtotime": "php::strtotime"
     }
 }

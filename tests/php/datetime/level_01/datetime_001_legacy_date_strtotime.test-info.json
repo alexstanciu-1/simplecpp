@@ -1,0 +1,51 @@
+{
+    "id": "datetime_001_legacy_date_strtotime",
+    "feature": "datetime",
+    "level": "level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "2024-02-29 12:34:56\nbad-date\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "legacy",
+        "datetime"
+    ],
+    "notes": "Legacy PHP date()/strtotime() supports the common local Y-m-d H:i:s shape.",
+    "build": {
+        "sanitizers": null
+    }
+}
+

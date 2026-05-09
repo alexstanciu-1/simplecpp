@@ -11,7 +11,7 @@ Goals:
 Each sample uses:
 
 - `runtime.languages.php.profile = "strict"`
-- `runtime.modules = ["json", "filesystem"]` by default
+- `runtime.modules = ["json", "filesystem", "datetime"]` by default
 
 Regex-specific samples opt into `"regex"` explicitly.
 

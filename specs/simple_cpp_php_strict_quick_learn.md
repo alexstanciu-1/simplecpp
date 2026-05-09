@@ -182,6 +182,8 @@ In `prism.json`, the important project setting is:
 
 Legacy and strict PHP++ / PHS library surfaces must not be mixed in the same project.
 
+Default runtime modules include `json`, `filesystem`, and `datetime`.
+
 ### Optional runtime modules
 
 Some strict library families are opt-in project modules. Regex support is one of them.
@@ -550,6 +552,42 @@ Visible PHP++ / PHS strict names are flat and family-prefixed.
 | --- | --- | --- |
 | `json_decode` | `json_decode(string $json)` | `mixed_t`; arrays/objects become dynamic/hash-backed |
 | `json_encode` | `json_encode(mixed $value)` | `string` |
+
+### Datetime
+
+Strict datetime code should use the family-prefixed `dt_*` surface. The PHP-shaped `date()` and `strtotime()` names are legacy wrappers; do not use them as the default style in strict projects.
+
+| Name | Compact signature | Return shape / note |
+| --- | --- | --- |
+| `dt_now` | `dt_now()` | `int`, current Unix wall-clock seconds |
+| `dt_now_ms` | `dt_now_ms()` | `int`, current Unix wall-clock milliseconds |
+| `dt_monotonic_ms` | `dt_monotonic_ms()` | `int`, elapsed-time counter; not a Unix timestamp |
+| `dt_sleep_ms` | `dt_sleep_ms(int $ms)` | `void`; host scheduler precision applies |
+| `dt_format_iso_utc` | `dt_format_iso_utc(int $timestamp)` | `string`, fixed `YYYY-MM-DDTHH:MM:SSZ` UTC format |
+| `dt_parse_iso_utc` | `dt_parse_iso_utc(string $value)` | wrapper result to `int`; accepts only fixed UTC ISO form |
+| `dt_format` | `dt_format(string $format, int $timestamp)` | `string`, common local-time formatter |
+| `dt_format_now` | `dt_format_now(string $format)` | `string`, common local-time formatter using current time |
+| `dt_parse` | `dt_parse(string $value)` | wrapper result to `int`; accepts common local/ISO forms |
+
+Common formatter tokens currently supported: `Y`, `y`, `m`, `n`, `d`, `j`, `H`, `G`, `i`, `s`, and `U`.
+
+Common parser forms currently supported:
+
+- `YYYY-MM-DD`
+- `YYYY-MM-DD HH:MM:SS`
+- `YYYY-MM-DDTHH:MM:SS`
+- `YYYY-MM-DDTHH:MM:SSZ`
+
+Unsupported in the current strict datetime surface: named timezone conversion, locale-aware month/day names, calendar arithmetic, and PHP `strtotime` natural-language expressions such as `next Tuesday` or `+1 day`.
+
+```php
+$stamp /** int */ = 0;
+$err /** error_t */;
+
+if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
+	echo dt_format("Y-m-d H:i:s", $stamp), "\n";
+}
+```
 
 ## Tiny Canonical Example
 

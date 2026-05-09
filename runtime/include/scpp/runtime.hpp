@@ -39,6 +39,7 @@
 #include "scpp/fs.hpp"
 #include "scpp/io.hpp"
 #include "scpp/json.hpp"
+#include "scpp/datetime.hpp"
 #include "scpp/str.hpp"
 #include "hosts/fastcgi/fastcgi.hpp"
 #include "scpp/generated/operators.hpp"
