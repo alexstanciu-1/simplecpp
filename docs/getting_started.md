@@ -130,6 +130,14 @@ scpp runtime-build --release
 scpp runtime-build --force
 ```
 
+Print local documentation without web access:
+
+```bash
+scpp docs
+scpp docs strict
+scpp docs diagnostics
+```
+
 Run the deterministic usability harness:
 
 ```bash
@@ -164,6 +172,7 @@ Compiler selection:
 - `--build-runtime` explicitly recompiles the runtime artifact for the current build
 - `--build-dependencies` explicitly recompiles Prism project dependency units for the current build
 - `--force` forces a runtime rebuild for the current build, even if the reusable artifact already exists
+- `scpp docs <name>` prints curated local Markdown documentation by short name
 
 ## 4. Single-file transpile remains available
 

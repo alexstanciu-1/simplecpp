@@ -235,6 +235,37 @@ The command:
 4. accepts `--release` to build the release runtime variant
 5. accepts `--force` to delete and rebuild the selected runtime artifact even if it already exists
 
+## `scpp docs` behavior
+
+`scpp docs` prints curated local documentation without requiring network access.
+
+The command:
+
+1. resolves the active Simple C++ repository root
+2. maps a short doc name to a checked-in Markdown source
+3. prints the requested name, human-readable title, source path, and document content
+4. lists known doc names when no name, `list`, `-h`, or `--help` is supplied
+5. fails clearly when the requested doc name is unknown or the mapped source is missing
+
+The initial registry includes:
+
+- `strict`
+- `php-strict`
+- `quick-learn`
+- `build`
+- `getting-started`
+- `diagnostics`
+- `profiles`
+- `modules`
+- `dependencies`
+- `examples`
+- `authoring`
+- `gotchas`
+- `skill`
+- `agents`
+
+This command is a documentation discoverability helper. It does not change language semantics or document authority.
+
 ## Project dependencies
 
 Project composition is controlled by `scpp build`, not by source-language `require` or `include`.

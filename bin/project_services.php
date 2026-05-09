@@ -554,6 +554,11 @@ function main(array $argv): void
 		return;
 	}
 
+	if ($args[0] === 'docs') {
+		handle_docs(array_slice($args, 1));
+		return;
+	}
+
 	if ($args[0] === 'error') {
 		handle_error_report(getcwd() === false ? '.' : getcwd(), false);
 		return;
@@ -606,6 +611,7 @@ function print_help(): void
 	echo "  scpp update [--force]\n";
 	echo "  scpp run [--entry=<path>] [--build-runtime] [--build-dependencies] [--force] [-- <args...>]\n";
 	echo "  scpp runtime-build [--debug|--release] [--force]\n";
+	echo "  scpp docs [<name>]\n";
 	echo "  scpp error\n";
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
@@ -616,6 +622,7 @@ function print_help(): void
 	echo "  scpp update fast-forwards the scpp repository from origin/main and rebuilds the default runtime when it changes\n";
 	echo "  scpp run builds first, then executes the selected output\n";
 	echo "  scpp runtime-build compiles the reusable runtime cache explicitly\n";
+	echo "  scpp docs prints curated local documentation by name\n";
 	echo "  scpp usability-harness generates deterministic spec-driven trial projects\n";
 	echo "  scpp --help\n";
 	echo "  scpp --version\n";
@@ -688,6 +695,127 @@ function print_doctor(): void
 	echo 'resolved_cxx: ' . ($compiler !== null ? compiler_display_command($compiler) : '(not found)') . PHP_EOL;
 	echo 'env_SCPP_CXX: ' . (getenv('SCPP_CXX') !== false ? (string) getenv('SCPP_CXX') : '(unset)') . PHP_EOL;
 	echo 'env_SCPP_CXX_LAUNCHER: ' . (getenv('SCPP_CXX_LAUNCHER') !== false ? (string) getenv('SCPP_CXX_LAUNCHER') : '(unset)') . PHP_EOL;
+}
+
+function handle_docs(array $args): void
+{
+	$docs = scpp_docs_registry();
+	if ($args === [] || in_array($args[0], ['-h', '--help', 'list'], true)) {
+		scpp_write(render_docs_index($docs));
+		return;
+	}
+
+	$name = strtolower(trim((string) $args[0]));
+	if ($name === '') {
+		scpp_write(render_docs_index($docs));
+		return;
+	}
+
+	$entry = $docs[$name] ?? null;
+	if ($entry === null) {
+		scpp_fail("Unknown docs name: {$name}\n\n" . render_docs_index($docs), 1);
+	}
+
+	$repoRoot = resolve_repo_root();
+	$path = normalize_path($repoRoot . '/' . $entry['path']);
+	if (!is_file($path)) {
+		scpp_fail('Documentation source is missing: ' . $entry['path'] . PHP_EOL, 1);
+	}
+
+	$content = file_get_contents($path);
+	if (!is_string($content)) {
+		scpp_fail('Failed to read documentation source: ' . $entry['path'] . PHP_EOL, 1);
+	}
+
+	scpp_write('Doc: ' . $name . PHP_EOL);
+	scpp_write('Title: ' . $entry['title'] . PHP_EOL);
+	scpp_write('Source: ' . $entry['path'] . PHP_EOL);
+	scpp_write(str_repeat('-', 72) . PHP_EOL);
+	scpp_write(rtrim($content) . PHP_EOL);
+}
+
+/**
+ * @return array<string,array{title:string,path:string}>
+ */
+function scpp_docs_registry(): array
+{
+	$entries = [
+		'strict' => [
+			'title' => 'PHP++ Strict Quick Learn',
+			'path' => 'specs/simple_cpp_php_strict_quick_learn.md',
+		],
+		'php-strict' => [
+			'title' => 'PHP++ Strict Quick Learn',
+			'path' => 'specs/simple_cpp_php_strict_quick_learn.md',
+		],
+		'quick-learn' => [
+			'title' => 'PHP++ Strict Quick Learn',
+			'path' => 'specs/simple_cpp_php_strict_quick_learn.md',
+		],
+		'build' => [
+			'title' => 'Project Build v1',
+			'path' => 'specs/project_build_v1.md',
+		],
+		'getting-started' => [
+			'title' => 'Getting Started',
+			'path' => 'docs/getting_started.md',
+		],
+		'diagnostics' => [
+			'title' => 'Strict PHP++ Validation And Diagnostics',
+			'path' => '.agents/skills/simple-cpp-php-strict/references/validation-and-diagnostics.md',
+		],
+		'profiles' => [
+			'title' => 'PHP Library Profiles',
+			'path' => 'specs/php/library_profiles.md',
+		],
+		'modules' => [
+			'title' => 'Strict PHP++ Validation And Diagnostics',
+			'path' => '.agents/skills/simple-cpp-php-strict/references/validation-and-diagnostics.md',
+		],
+		'dependencies' => [
+			'title' => 'Project Build v1',
+			'path' => 'specs/project_build_v1.md',
+		],
+		'examples' => [
+			'title' => 'Strict PHP Examples',
+			'path' => 'docs/examples/php/strict/README.md',
+		],
+		'authoring' => [
+			'title' => 'Strict PHP++ Authoring Rules',
+			'path' => '.agents/skills/simple-cpp-php-strict/references/authoring-rules.md',
+		],
+		'gotchas' => [
+			'title' => 'PHP Habit Gotchas',
+			'path' => '.agents/skills/simple-cpp-php-strict/references/php-habit-gotchas.md',
+		],
+		'skill' => [
+			'title' => 'Simple C++ PHP++ Strict Agent Skill',
+			'path' => '.agents/skills/simple-cpp-php-strict/SKILL.md',
+		],
+		'agents' => [
+			'title' => 'AI Onboarding',
+			'path' => 'docs/ai_onboarding/README.md',
+		],
+	];
+	ksort($entries);
+	return $entries;
+}
+
+/**
+ * @param array<string,array{title:string,path:string}> $docs
+ */
+function render_docs_index(array $docs): string
+{
+	$lines = [];
+	$lines[] = 'scpp docs';
+	$lines[] = 'Usage: scpp docs <name>';
+	$lines[] = '';
+	$lines[] = 'Known docs:';
+	foreach ($docs as $name => $entry) {
+		$lines[] = '  ' . str_pad($name, 16) . $entry['title'] . ' (' . $entry['path'] . ')';
+	}
+	$lines[] = '';
+	return implode(PHP_EOL, $lines);
 }
 
 /** @return array{repo:string,branch:string,commit:string,origin_url:string,origin_main_commit:string,up_to_date_with_origin_main:string} */
