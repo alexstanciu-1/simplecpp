@@ -2913,6 +2913,7 @@ function resolve_runtime_build_config(array $config): array
 {
 	$runtime = is_array($config['runtime'] ?? null) ? $config['runtime'] : [];
 	$languagesRaw = $runtime['languages'] ?? ['php'];
+	$profilesRaw = is_array($runtime['language_profiles'] ?? null) ? $runtime['language_profiles'] : [];
 	$modules = $runtime['modules'] ?? ['json', 'filesystem', 'datetime'];
 	if (!is_array($languagesRaw) || !is_array($modules)) {
 		scpp_fail('Invalid runtime config in ' . SCPP_PROJECT_CONFIG . '; expected runtime.languages as either a list or object, and runtime.modules as an array.' . PHP_EOL, 2);

@@ -76,7 +76,7 @@ scpp full-last-run
 ```
 
 Use generated C++ and `.prism/generated/*.line.tsv` artifacts as inspection evidence, not as the primary source to patch.
-For strict runtime type failures, prefer source-level context from `scpp error` / `.prism/last_error.json` first; generated runtime details are supporting evidence.
+For strict runtime type failures, inspect `scpp error` / `.prism/last_error.json` first, then use generated C++ and line maps when the report does not yet include source attribution.
 
 ## Composition
 
