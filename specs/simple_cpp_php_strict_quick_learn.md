@@ -220,9 +220,69 @@ Current regex support is PCRE2-backed and requires the host PCRE2 development fi
 Use this rough checklist:
 
 - source-level issue: check your PHP++ / PHS code first
+- runtime shape issue: add `dbg(...)` or a gated `dbg_if(...)` near the confusing value
 - wrong builtin or unsupported feature: check this doc, then the strict PHP++ / PHS examples
 - generation/lowering issue: inspect generated C++ under `.prism/generated/`
 - compile issue: inspect the C++ compiler error after `scpp build`
+
+### Strict debug helpers
+
+Strict projects can use one debug primitive for runtime value inspection:
+
+```php
+dbg($value);
+dbg("label", $value);
+dbg("label", $value, DBG_SHAPE | DBG_DEPTH_3 | DBG_PTR);
+```
+
+If no `DBG_*` flag is provided, `dbg` uses a generous bounded default:
+
+```php
+DBG_SOURCE | DBG_CALLER | DBG_TYPE | DBG_VALUE | DBG_SHAPE | DBG_DEPTH_2
+```
+
+Useful flags:
+
+- `DBG_TYPE`: static/runtime type and kind information where available
+- `DBG_VALUE`: short scalar or container preview
+- `DBG_SHAPE`: nested container/wrapper shape
+- `DBG_FIELDS`: object fields where reflection exists; otherwise a safe not-inspectable note
+- `DBG_KEYS`: hash/table keys
+- `DBG_LEN`: string/container length
+- `DBG_SOURCE`: source file and line
+- `DBG_CALLER`: caller/function-boundary context where available
+- `DBG_PTR`: compact hex identity for objects and containers
+- `DBG_COMPACT`: smaller limits
+- `DBG_DEPTH_0` through `DBG_DEPTH_5`: explicit shape depth
+
+Flags can be mixed with `|`:
+
+```php
+dbg("row", $row, DBG_KEYS | DBG_DEPTH_1);
+dbg("node", $node, DBG_SHAPE | DBG_DEPTH_3 | DBG_PTR);
+```
+
+Only one depth flag may be provided. Multiple depth flags are treated as a debug API error.
+
+Use debug gates to enable lower-call debugging from a higher-level condition:
+
+```php
+dbg_set("debug_company_12", $company->Id == 12);
+
+process_company($company);
+
+dbg_unset("debug_company_12", $company->Id == 12);
+```
+
+Deep inside:
+
+```php
+dbg_if("debug_company_12", "row", $row, DBG_SHAPE | DBG_DEPTH_2);
+```
+
+`dbg_set($name, false)` and `dbg_unset($name, false)` are no-ops. With a true guard, duplicate `dbg_set` or missing `dbg_unset` throws so mismatched gates are caught immediately.
+
+`dbg` inspection is best-effort and should not crash user code. Unsupported values print type/kind information plus a safe not-inspectable marker.
 
 ### When unsure
 
