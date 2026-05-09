@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../bin/bootstrap.php';
 require_once __DIR__ . '/../../bin/project_services.php';
 
+use Scpp\S2S\PreTokenizer\PreTokenizer;
 use Scpp\S2S\Transpiler;
 
 /**
@@ -527,7 +528,8 @@ TXT;
 			$phpExpect = is_array($expect['php'] ?? null) ? $expect['php'] : [];
 			$shouldRunPhpStage = (($phpExpect['run'] ?? false) === true) || (($meta['php_as_oracle'] ?? false) === true);
 			if ($shouldRunPhpStage) {
-				$phpCommand = ['php', $phpPath];
+				$phpOraclePath = $this->materializePhpOracleSource($phpPath, $tempDir);
+				$phpCommand = ['php', $phpOraclePath];
 				foreach ((array) ($build['run_args'] ?? []) as $arg) {
 					$phpCommand[] = (string) $arg;
 				}
@@ -682,6 +684,23 @@ TXT;
 			$this->writeJsonFile($resultsPath, $results);
 			throw $throwable;
 		}
+	}
+
+	private function materializePhpOracleSource(string $sourcePath, string $tempDir): string
+	{
+		if (strtolower((string) pathinfo($sourcePath, PATHINFO_EXTENSION)) !== 'phs') {
+			return $sourcePath;
+		}
+
+		$source = file_get_contents($sourcePath);
+		if (!is_string($source)) {
+			throw new RuntimeException('Failed to read PHP oracle source: ' . $sourcePath);
+		}
+
+		$rewritten = (new PreTokenizer())->rewrite($source)->source;
+		$oraclePath = $tempDir . '/' . basename($sourcePath, '.phs') . '.oracle.php';
+		write_text_file($oraclePath, "<?php\n" . $rewritten);
+		return $oraclePath;
 	}
 
 	private function runSingleRuntimeTest(string $infoPath, string $sourcePath, string $sanitizers = ''): void

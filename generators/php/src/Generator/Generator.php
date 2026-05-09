@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Scpp\S2S\Generator;
 
+use Scpp\S2S\Emit\CodeBlock;
 use Scpp\S2S\Emit\CppFile;
 use Scpp\S2S\IR\ArgNormalizationRule;
 use Scpp\S2S\IR\ClassDecl;
@@ -38,6 +39,8 @@ final class Generator
 	private array $headerLineMap = [];
 	/** @var list<int> */
 	private array $sourceLineMap = [];
+	private int $currentSourceLine = 0;
+	private int $currentSourceColumn = 0;
 	/** @var array<string, string> */
 	private array $localTypeComments = [];
 	/** @var array<int, string> */
@@ -72,7 +75,6 @@ final class Generator
 	private ?string $currentNamespacePhp = null;
 	private ?string $currentClassName = null;
 	private ?string $currentParentClass = null;
-	private string $currentSourcePath = '';
 	private int $tempCounter = 0;
 	private AnnotationExpressionParser $annotationExpressionParser;
 	/** @var array<string, string> */
@@ -140,7 +142,6 @@ final class Generator
 		$this->currentLocalArrayShapes = [];
 		$this->foreachReferenceSlotStack = [];
 		$this->foreachReferenceSuppressedNamesStack = [];
-		$this->currentSourcePath = $file->path;
 		$this->tempCounter = 0;
 		$this->nameRegistry = NameRegistry::fromPhpFile($file);
 		$this->functionDecls = $this->collectFunctionDecls($file);
@@ -153,19 +154,21 @@ final class Generator
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
 		$header = [];
 		$this->headerLineMap = [];
-		$this->appendHeaderLine($header, '#pragma once');
-		$this->appendHeaderLine($header, '');
-		$this->appendHeaderLine($header, '#include <scpp/lang/php.hpp>');
-		$this->appendHeaderLine($header, '#include <type_traits>');
-		$this->appendHeaderLine($header, '#include <utility>');
+		$this->currentSourceLine = 0;
+		$this->currentSourceColumn = 0;
+		$this->appendHeaderLines($header, $this->code('#pragma once', 0));
+		$this->appendHeaderLines($header, $this->code('', 0));
+		$this->appendHeaderLines($header, $this->code('#include <scpp/lang/php.hpp>', 0));
+		$this->appendHeaderLines($header, $this->code('#include <type_traits>', 0));
+		$this->appendHeaderLines($header, $this->code('#include <utility>', 0));
 		foreach ($file->prologueIncludes as $includePath) {
-			$this->appendHeaderLine($header, '#include "' . $includePath . '"');
+			$this->appendHeaderLines($header, $this->code('#include "' . $includePath . '"', 0));
 		}
-		$this->appendHeaderLine($header, '');
+		$this->appendHeaderLines($header, $this->code('', 0));
 		$source = [];
 		$this->sourceLineMap = [];
-		$this->appendSourceLine($source, '#include "' . $baseName . '.hpp"');
-		$this->appendSourceLine($source, '');
+		$this->appendSourceLines($source, $this->code('#include "' . $baseName . '.hpp"', 0));
+		$this->appendSourceLines($source, $this->code('', 0));
 
 		$hasRootNamespaceContent = ($file->rootUses !== [] || $file->constants !== [] || $file->classes !== [] || $file->functions !== [] || $file->rootStatements !== []);
 		$unitMainName = $this->buildUnitMainName($file, $emitProgramEntry);
@@ -200,51 +203,109 @@ final class Generator
 		}
 
 		if ($emitProgramEntry && $file->rootStatements !== []) {
-			$this->appendSourceLine($source, 'int main(int __scpp_argc, char** __scpp_argv) {');
-			$this->appendSourceLine($source, $this->indent(1) . 'try {');
-			$this->appendSourceLine($source, $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);');
-			$this->appendSourceLine($source, $this->indent(2) . 'return scpp::' . $unitMainName . '();');
-			$this->appendSourceLine($source, $this->indent(1) . '} catch (const std::exception &exception) {');
-			$this->appendSourceLine($source, $this->indent(2) . '::scpp::print_runtime_exception(exception);');
-			$this->appendSourceLine($source, $this->indent(2) . 'return 1;');
-			$this->appendSourceLine($source, $this->indent(1) . '}');
-			$this->appendSourceLine($source, '}');
-			$this->appendSourceLine($source, '');
+			$this->appendSourceLines($source, ...$this->codeLinesFromStrings([
+				'int main(int __scpp_argc, char** __scpp_argv) {',
+				$this->indent(1) . 'try {',
+				$this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);',
+				$this->indent(2) . 'return scpp::' . $unitMainName . '();',
+				$this->indent(1) . '} catch (const std::exception &exception) {',
+				$this->indent(2) . '::scpp::print_runtime_exception(exception);',
+				$this->indent(2) . 'return 1;',
+				$this->indent(1) . '}',
+				'}',
+				'',
+			], 0));
 		} elseif ($emitProgramEntry && $namespaceMainTargets !== []) {
-			$this->appendSourceLine($source, 'int main(int __scpp_argc, char** __scpp_argv) {');
-			$this->appendSourceLine($source, $this->indent(1) . 'try {');
-			$this->appendSourceLine($source, $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);');
-			$this->appendSourceLine($source, $this->indent(2) . 'return ' . $namespaceMainTargets[0] . ';');
-			$this->appendSourceLine($source, $this->indent(1) . '} catch (const std::exception &exception) {');
-			$this->appendSourceLine($source, $this->indent(2) . '::scpp::print_runtime_exception(exception);');
-			$this->appendSourceLine($source, $this->indent(2) . 'return 1;');
-			$this->appendSourceLine($source, $this->indent(1) . '}');
-			$this->appendSourceLine($source, '}');
-			$this->appendSourceLine($source, '');
+			$this->appendSourceLines($source, ...$this->codeLinesFromStrings([
+				'int main(int __scpp_argc, char** __scpp_argv) {',
+				$this->indent(1) . 'try {',
+				$this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);',
+				$this->indent(2) . 'return ' . $namespaceMainTargets[0] . ';',
+				$this->indent(1) . '} catch (const std::exception &exception) {',
+				$this->indent(2) . '::scpp::print_runtime_exception(exception);',
+				$this->indent(2) . 'return 1;',
+				$this->indent(1) . '}',
+				'}',
+				'',
+			], 0));
 		}
 
 		$this->throwIfErrors();
 
-		return new CppFile($baseName, $header, $this->headerLineMap, $this->buildExportManifest($file), $source, $this->sourceLineMap, $this->errors, $this->warnings);
+		return new CppFile($baseName, $this->flattenCodeText($header), $this->flattenCodeLineMap($header), $this->buildExportManifest($file), $this->flattenCodeText($source), $this->flattenCodeLineMap($source), $this->errors, $this->warnings);
 	}
 
-	private function appendHeaderLine(array &$header, string $line, int $originLine = 0): void
+	private function code(string $text, int $srcLine = -1, int $srcColumn = -1): CodeBlock
 	{
-		$header[] = $line;
-		$this->headerLineMap[] = $originLine;
+		return new CodeBlock($text, $srcLine, $srcColumn);
 	}
 
-	private function appendSourceLine(array &$source, string $line, int $originLine = 0): void
+	private function codeWithCurrentOrigin(string $text): CodeBlock
 	{
-		$source[] = $line;
-		$this->sourceLineMap[] = $originLine;
+		return $this->code($text, $this->currentSourceLine, $this->currentSourceColumn);
 	}
 
-	private function appendSourceBlock(array &$source, string $block, int $originLine = 0): void
+	/** @param list<string> $lines @return list<CodeBlock> */
+	private function codeLinesFromStrings(array $lines, int $srcLine = -1, int $srcColumn = -1): array
 	{
-		foreach (explode("\n", $block) as $line) {
-			$this->appendSourceLine($source, $line, $originLine);
+		return array_map(fn (string $line): CodeBlock => $this->code($line, $srcLine, $srcColumn), $lines);
+	}
+
+	/** @return list<CodeBlock> */
+	private function codeLinesFromTextBlock(string $block, int $srcLine = -1, int $srcColumn = -1): array
+	{
+		return $this->codeLinesFromStrings(explode("\n", $block), $srcLine, $srcColumn);
+	}
+
+	/** @param list<CodeBlock> $lines @return list<CodeBlock> */
+	private function indentCodeLines(array $lines, int $level = 1): array
+	{
+		return array_map(fn (CodeBlock $line): CodeBlock => $this->code($this->indent($level) . $line->text, $line->srcLine, $line->srcColumn), $lines);
+	}
+
+	private function appendHeaderLines(array &$header, CodeBlock ...$lines): void
+	{
+		foreach ($lines as $line) {
+			$header[] = $this->normalizeCodeBlock($line);
 		}
+	}
+
+	private function appendSourceLines(array &$source, CodeBlock ...$lines): void
+	{
+		foreach ($lines as $line) {
+			$source[] = $this->normalizeCodeBlock($line);
+		}
+	}
+
+	private function normalizeCodeBlock(CodeBlock $line): CodeBlock
+	{
+		$srcLine = $line->srcLine < 0 ? $this->currentSourceLine : $line->srcLine;
+		$srcColumn = $line->srcColumn < 0 ? $this->currentSourceColumn : $line->srcColumn;
+		return $this->code($line->text, $srcLine, $srcColumn);
+	}
+
+	/** @param list<CodeBlock> $lines @return list<string> */
+	private function flattenCodeText(array $lines): array
+	{
+		return array_map(static fn (CodeBlock $line): string => $line->text, $lines);
+	}
+
+	/** @param list<CodeBlock> $lines @return list<int> */
+	private function flattenCodeLineMap(array $lines): array
+	{
+		return array_map(static fn (CodeBlock $line): int => max(0, $line->srcLine), $lines);
+	}
+
+	/** @param list<CodeBlock> $lines @return list<string> */
+	private function flattenExportCodeText(array $lines): array
+	{
+		return $this->flattenCodeText($lines);
+	}
+
+	/** @param list<string> $lines @return list<CodeBlock> */
+	private function statementCodeLines(Statement $statement, array $lines): array
+	{
+		return $this->codeLinesFromStrings($lines, $statement->line);
 	}
 
 	/** @return array<int, string> */
@@ -296,7 +357,10 @@ final class Generator
 	/** @param list<ConstantDecl> $constants @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @return array<string,mixed> */
 	private function buildExportNamespaceManifest(string $namespaceCpp, ?string $namespacePhp, array $constants, array $classes, array $functions): array
 	{
-		$headerLines = ['namespace ' . $namespaceCpp . ' {', ''];
+		$headerLines = [
+			$this->code('namespace ' . $namespaceCpp . ' {', 0),
+			$this->code('', 0),
+		];
 		$constantEntries = [];
 		foreach ($constants as $constant) {
 			$start = count($headerLines);
@@ -304,17 +368,17 @@ final class Generator
 			$constantEntries[] = [
 				'kind' => 'constant',
 				'name' => $constant->name,
-				'declaration_lines' => array_values(array_slice($headerLines, $start)),
+				'declaration_lines' => $this->flattenExportCodeText(array_values(array_slice($headerLines, $start))),
 			];
 		}
 		if ($constants !== []) {
-			$headerLines[] = '';
+			$headerLines[] = $this->code('', 0);
 		}
 		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className) {
-			$headerLines[] = 'class ' . $className . ';';
+			$headerLines[] = $this->code('class ' . $className . ';', 0);
 		}
 		if ($classes !== []) {
-			$headerLines[] = '';
+			$headerLines[] = $this->code('', 0);
 		}
 		$discardSource = [];
 		$classEntries = [];
@@ -324,7 +388,7 @@ final class Generator
 			$classEntries[] = [
 				'kind' => 'class',
 				'name' => $class->name,
-				'declaration_lines' => array_values(array_slice($headerLines, $start)),
+				'declaration_lines' => $this->flattenExportCodeText(array_values(array_slice($headerLines, $start))),
 			];
 		}
 		$functionEntries = [];
@@ -334,18 +398,18 @@ final class Generator
 			$functionEntries[] = [
 				'kind' => 'function',
 				'name' => $function->name,
-				'declaration_lines' => array_values(array_slice($headerLines, $start)),
+				'declaration_lines' => $this->flattenExportCodeText(array_values(array_slice($headerLines, $start))),
 			];
 		}
-		$headerLines[] = '}';
-		$headerLines[] = '';
+		$headerLines[] = $this->code('}', 0);
+		$headerLines[] = $this->code('', 0);
 		return [
 			'namespace_cpp' => $namespaceCpp,
 			'namespace_php' => $namespacePhp,
 			'constants' => $constantEntries,
 			'classes' => $classEntries,
 			'functions' => $functionEntries,
-			'header_lines' => $headerLines,
+			'header_lines' => $this->flattenExportCodeText($headerLines),
 		];
 	}
 
@@ -1240,11 +1304,11 @@ final class Generator
 	{
 		$previousNamespacePhp = $this->currentNamespacePhp;
 		$this->currentNamespacePhp = $namespacePhp;
-		$this->appendHeaderLine($header, 'namespace ' . $namespaceCpp . ' {');
-		$this->appendHeaderLine($header, '');
-		$this->appendSourceLine($source, 'namespace ' . $namespaceCpp . ' {');
-		$this->appendSourceLine($source, $this->indent(1) . 'using namespace ::scpp;');
-		$this->appendSourceLine($source, '');
+		$this->appendHeaderLines($header, $this->code('namespace ' . $namespaceCpp . ' {', 0));
+		$this->appendHeaderLines($header, $this->code('', 0));
+		$this->appendSourceLines($source, $this->code('namespace ' . $namespaceCpp . ' {', 0));
+		$this->appendSourceLines($source, $this->code($this->indent(1) . 'using namespace ::scpp;', 0));
+		$this->appendSourceLines($source, $this->code('', 0));
 
 		foreach ($uses as $use) {
 			$useLine = $this->renderUseDeclaration($use);
@@ -1256,24 +1320,24 @@ final class Generator
 				if ($line === '') {
 					continue;
 				}
-				$this->appendSourceLine($source, $this->indent(1) . $line, $use->line);
+				$this->appendSourceLines($source, $this->code($this->indent(1) . $line, $use->line));
 			}
 		}
 		if ($uses !== []) {
-			$this->appendSourceLine($source, '');
+			$this->appendSourceLines($source, $this->code('', 0));
 		}
 		
 		foreach ($constants as $constant) {
 			$this->emitConstant($header, $constant, $namespacePhp);
 		}
 		if ($constants !== []) {
-			$this->appendHeaderLine($header, '');
+			$this->appendHeaderLines($header, $this->code('', 0));
 		}
 		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className) {
-			$this->appendHeaderLine($header, 'class ' . $className . ';');
+			$this->appendHeaderLines($header, $this->code('class ' . $className . ';', 0));
 		}
 		if ($classes !== []) {
-			$this->appendHeaderLine($header, '');
+			$this->appendHeaderLines($header, $this->code('', 0));
 		}
 
 		foreach ($classes as $class) {
@@ -1286,10 +1350,10 @@ final class Generator
 			$this->emitNamespaceMain($header, $source, $syntheticMainName, $statements, $namespacePhp);
 		}
 
-		$this->appendHeaderLine($header, '}');
-		$this->appendHeaderLine($header, '');
-		$this->appendSourceLine($source, '}');
-		$this->appendSourceLine($source, '');
+		$this->appendHeaderLines($header, $this->code('}', 0));
+		$this->appendHeaderLines($header, $this->code('', 0));
+		$this->appendSourceLines($source, $this->code('}', 0));
+		$this->appendSourceLines($source, $this->code('', 0));
 		$this->currentNamespacePhp = $previousNamespacePhp;
 	}
 
@@ -1413,7 +1477,7 @@ final class Generator
 
 	private function emitConstant(array &$header, ConstantDecl $constant, ?string $namespacePhp): void
 	{
-		$this->appendHeaderLine($header, 'inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';', $constant->line);
+		$this->appendHeaderLines($header, $this->code('inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';', $constant->line));
 	}
 
 	/**
@@ -1766,17 +1830,17 @@ final class Generator
 			throw new \RuntimeException('Enums must declare at least one case in the current enum lowering');
 		}
 		$storage = $this->enumStorageType($class);
-		$this->appendHeaderLine($header, 'enum class ' . $class->name . ' : ' . $storage . ' {', $class->line);
+		$this->appendHeaderLines($header, $this->code('enum class ' . $class->name . ' : ' . $storage . ' {', $class->line));
 		foreach ($class->enumCases as $index => $case) {
 			$suffix = $index + 1 < count($class->enumCases) ? ',' : '';
 			$line = $this->indent(1) . $this->cppIdentifier($case->name);
 			if ($class->enumBackingType !== null) {
 				$line .= ' = ' . $this->renderEnumCaseValue($case);
 			}
-			$this->appendHeaderLine($header, $line . $suffix, $case->line);
+			$this->appendHeaderLines($header, $this->code($line . $suffix, $case->line));
 		}
-		$this->appendHeaderLine($header, '};', $class->line);
-		$this->appendHeaderLine($header, '');
+		$this->appendHeaderLines($header, $this->code('};', $class->line));
+		$this->appendHeaderLines($header, $this->code('', 0));
 	}
 
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
@@ -1792,8 +1856,8 @@ final class Generator
 		foreach ($class->interfaces as $interface) {
 			$extends[] = 'public ' . $this->typeMapper->mapClassName($interface);
 		}
-		$this->appendHeaderLine($header, 'class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line);
-		$this->appendHeaderLine($header, 'public:', $class->line);
+		$this->appendHeaderLines($header, $this->code('class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line));
+		$this->appendHeaderLines($header, $this->code('public:', $class->line));
 		foreach ($class->properties as $property) {
 			$initializer = $property->hasDefault
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
@@ -1814,10 +1878,10 @@ final class Generator
 			} elseif ($initializer !== null) {
 				$line .= ' = ' . $initializer;
 			}
-			$this->appendHeaderLine($header, $this->indent(1) . rtrim($line, ';') . ';', $property->line);
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . rtrim($line, ';') . ';', $property->line));
 		}
 		foreach ($class->constants as $constant) {
-			$this->appendHeaderLine($header, $this->indent(1) . 'static inline const auto ' . $this->cppIdentifier($constant->name) . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';', $constant->line);
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . 'static inline const auto ' . $this->cppIdentifier($constant->name) . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';', $constant->line));
 		}
 		foreach ($class->methods as $method) {
 			if ($this->methodNeedsNormalizedTemplate($method)) {
@@ -1825,22 +1889,22 @@ final class Generator
 					? $this->renderInlineTemplateMethodArtifactsWithExecSplit($class, $method, $namespacePhp)
 					: $this->renderInlineTemplateMethodArtifacts($class, $method, $namespacePhp);
 				foreach ($artifacts as $line) {
-					$this->appendHeaderLine($header, $this->indent(1) . $line, $method->line);
+					$this->appendHeaderLines($header, $this->code($this->indent(1) . $line, $method->line));
 				}
 				continue;
 			}
-			$this->appendHeaderLine($header, $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';', $method->line);
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';', $method->line));
 			if ($this->methodNeedsValueRefOverload($method, $class)) {
 				$overload = $this->methodRequiresInlineValueRefOverload($method, $class)
 					? $this->renderInlineMethodValueRefOverloadDefinition($class, $method, $namespacePhp)
 					: $this->renderMethodValueRefOverloadDeclaration($method, $class, $namespacePhp) . ';';
 				foreach (explode("\n", $overload) as $line) {
-					$this->appendHeaderLine($header, $this->indent(1) . $line, $method->line);
+					$this->appendHeaderLines($header, $this->code($this->indent(1) . $line, $method->line));
 				}
 			}
 		}
-		$this->appendHeaderLine($header, '};', $class->line);
-		$this->appendHeaderLine($header, '');
+		$this->appendHeaderLines($header, $this->code('};', $class->line));
+		$this->appendHeaderLines($header, $this->code('', 0));
 
 		foreach ($class->properties as $property) {
 			if (!$property->isStatic) {
@@ -1856,10 +1920,10 @@ final class Generator
 			} else {
 				$type = '/* ERROR missing-property-type */';
 			}
-			$this->appendSourceLine($source, $type . ' ' . $class->name . '::' . $this->cppIdentifier($property->name) . ' = ' . ($default ?? ($type . '{}')) . ';', $property->line);
+			$this->appendSourceLines($source, $this->code($type . ' ' . $class->name . '::' . $this->cppIdentifier($property->name) . ' = ' . ($default ?? ($type . '{}')) . ';', $property->line));
 		}
 		if (!$class->isInterface && array_filter($class->properties, static fn ($property): bool => $property->isStatic) !== []) {
-			$this->appendSourceLine($source, '');
+			$this->appendSourceLines($source, $this->code('', 0));
 		}
 
 		if (!$class->isInterface) {
@@ -1873,16 +1937,16 @@ final class Generator
 				}
 				if ($this->methodNeedsNormalizedTemplate($method)) {
 					if ($this->functionLikeUsesExecBodySplit($method->params, $method->statements)) {
-						$this->appendSourceBlock($source, $this->renderMethodExecDefinition($class, $method, $namespacePhp), $method->line);
-						$this->appendSourceLine($source, '');
+						$this->appendSourceLines($source, ...$this->codeLinesFromTextBlock($this->renderMethodExecDefinition($class, $method, $namespacePhp), $method->line));
+						$this->appendSourceLines($source, $this->code('', 0));
 					}
 					continue;
 				}
-				$this->appendSourceBlock($source, $this->renderMethodDefinition($class, $method, $namespacePhp), $method->line);
-				$this->appendSourceLine($source, '');
+				$this->appendSourceLines($source, ...$this->renderMethodDefinition($class, $method, $namespacePhp));
+				$this->appendSourceLines($source, $this->code('', 0));
 				if ($this->methodNeedsValueRefOverload($method, $class) && !$this->methodRequiresInlineValueRefOverload($method, $class)) {
-					$this->appendSourceBlock($source, $this->renderMethodValueRefOverloadDefinition($class, $method, $namespacePhp), $method->line);
-					$this->appendSourceLine($source, '');
+					$this->appendSourceLines($source, ...$this->codeLinesFromTextBlock($this->renderMethodValueRefOverloadDefinition($class, $method, $namespacePhp), $method->line));
+					$this->appendSourceLines($source, $this->code('', 0));
 				}
 			}
 			$this->currentClassName = $prevClassName;
@@ -2041,25 +2105,25 @@ final class Generator
 				? $this->renderFunctionTemplateArtifactsWithExecSplit($function, $namespacePhp)
 				: $this->renderFunctionTemplateArtifacts($function, $namespacePhp);
 			foreach ($artifacts as $line) {
-				$this->appendHeaderLine($header, $line, $function->line);
+				$this->appendHeaderLines($header, $this->code($line, $function->line));
 			}
-			$this->appendHeaderLine($header, '');
+			$this->appendHeaderLines($header, $this->code('', 0));
 			if ($this->functionLikeUsesExecBodySplit($function->params, $function->statements)) {
-				$this->appendSourceBlock($source, $this->renderFunctionExecDefinition($function, $namespacePhp), $function->line);
-				$this->appendSourceLine($source, '');
+				$this->appendSourceLines($source, ...$this->codeLinesFromTextBlock($this->renderFunctionExecDefinition($function, $namespacePhp), $function->line));
+				$this->appendSourceLines($source, $this->code('', 0));
 			}
 			return;
 		}
-		$this->appendHeaderLine($header, $this->renderFunctionDeclaration($function, $namespacePhp) . ';', $function->line);
+		$this->appendHeaderLines($header, $this->code($this->renderFunctionDeclaration($function, $namespacePhp) . ';', $function->line));
 		if ($this->functionNeedsValueRefOverload($function->params)) {
-			$this->appendHeaderLine($header, $this->renderFunctionValueRefOverloadDeclaration($function, $namespacePhp) . ';', $function->line);
+			$this->appendHeaderLines($header, $this->code($this->renderFunctionValueRefOverloadDeclaration($function, $namespacePhp) . ';', $function->line));
 		}
-		$this->appendHeaderLine($header, '');
-		$this->appendSourceBlock($source, $this->renderFunctionDefinition($function, $namespacePhp), $function->line);
-		$this->appendSourceLine($source, '');
+		$this->appendHeaderLines($header, $this->code('', 0));
+		$this->appendSourceLines($source, ...$this->renderFunctionDefinition($function, $namespacePhp));
+		$this->appendSourceLines($source, $this->code('', 0));
 		if ($this->functionNeedsValueRefOverload($function->params)) {
-			$this->appendSourceBlock($source, $this->renderFunctionValueRefOverloadDefinition($function, $namespacePhp), $function->line);
-			$this->appendSourceLine($source, '');
+			$this->appendSourceLines($source, ...$this->codeLinesFromTextBlock($this->renderFunctionValueRefOverloadDefinition($function, $namespacePhp), $function->line));
+			$this->appendSourceLines($source, $this->code('', 0));
 		}
 	}
 
@@ -2079,24 +2143,24 @@ final class Generator
 
 	private function emitNamespaceMain(array &$header, array &$source, string $name, array $statements, ?string $namespacePhp): void
 	{
-		$this->appendHeaderLine($header, 'int ' . $name . '();');
-		$this->appendHeaderLine($header, '');
-		$this->appendSourceLine($source, 'int ' . $name . '() {');
+		$this->appendHeaderLines($header, $this->code('int ' . $name . '();', 0));
+		$this->appendHeaderLines($header, $this->code('', 0));
+		$this->appendSourceLines($source, $this->code('int ' . $name . '() {', 0));
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
 		$this->currentReturnType = 'int';
 		$this->seedSyntheticMainCliLocals();
 		foreach ($this->renderSyntheticMainCliPreamble() as $line) {
-			$this->appendSourceLine($source, $this->indent(1) . $line);
+			$this->appendSourceLines($source, $this->codeWithCurrentOrigin($this->indent(1) . $line));
 		}
 		foreach ($statements as $statement) {
-			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
-				$this->appendSourceLine($source, $this->indent(1) . $line, $statement->line);
-			}
+			$this->currentSourceLine = $statement->line;
+			$this->currentSourceColumn = 0;
+			$this->appendSourceLines($source, ...$this->indentCodeLines($this->renderStatement($statement, $namespacePhp), 1));
 		}
-		$this->appendSourceLine($source, $this->indent(1) . 'return 0;');
-		$this->appendSourceLine($source, '}');
+		$this->appendSourceLines($source, $this->codeWithCurrentOrigin($this->indent(1) . 'return 0;'));
+		$this->appendSourceLines($source, $this->codeWithCurrentOrigin('}'));
 		$this->currentReturnType = null;
 	}
 
@@ -2316,7 +2380,8 @@ final class Generator
 		return $signature . " {\n" . $body . "\n}";
 	}
 
-	private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
+	/** @return list<CodeBlock> */
+	private function renderMethodDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): array
 	{
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
@@ -2366,9 +2431,11 @@ final class Generator
 		$this->currentArgNormalizationRulesByKey = [];
 		$this->currentNormalizationCallableName = null;
 		$this->endFunctionLikeVariableMapping();
-		return $signature . " {
-" . $body . "
-}";
+		return array_merge(
+			[$this->code($signature . ' {', $method->line)],
+			$body,
+			[$this->code('}', $method->line)],
+		);
 	}
 
 
@@ -2653,7 +2720,7 @@ final class Generator
 		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$this->currentReturnType = $returnType;
 		$signature = $returnType . ' ' . $this->renderExecCallableName($function->name) . '(' . $this->renderCanonicalParamsForExec($function->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
-		$body = $this->renderBody($function->statements, $namespacePhp);
+		$body = implode("\n", $this->flattenCodeText($this->renderBody($function->statements, $namespacePhp)));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
@@ -2764,7 +2831,7 @@ final class Generator
 		$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
 		$this->currentReturnType = $returnType;
 		$signature = $returnType . ' ' . $class->name . '::' . $this->renderExecCallableName($method->name) . '(' . $this->renderCanonicalParamsForExec($method->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
-		$body = $this->renderBody($method->statements, $namespacePhp);
+		$body = implode("\n", $this->flattenCodeText($this->renderBody($method->statements, $namespacePhp)));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
@@ -2867,7 +2934,9 @@ final class Generator
 			}
 		}
 		$lines[] = $this->renderTemplateLineForParams($function->params);
-		$lines[] = $this->renderFunctionDefinition($function, $namespacePhp);
+		foreach ($this->flattenCodeText($this->renderFunctionDefinition($function, $namespacePhp)) as $line) {
+			$lines[] = $line;
+		}
 
 		$this->currentArgNormalizationRulesByKey = $prevRules;
 		$this->currentNormalizationCallableName = $prevCallable;
@@ -2925,7 +2994,7 @@ final class Generator
 		$this->currentReturnType = $returnType;
 		$prefix = $method->isStatic ? 'static ' : '';
 		$signature = $prefix . $returnType . ' ' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
-		$body = $this->renderBody($method->statements, $namespacePhp);
+		$body = implode("\n", $this->flattenCodeText($this->renderBody($method->statements, $namespacePhp)));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
@@ -2963,7 +3032,8 @@ final class Generator
 
 	 */
 
-	private function renderFunctionDefinition(FunctionDecl $function, ?string $namespacePhp): string
+	/** @return list<CodeBlock> */
+	private function renderFunctionDefinition(FunctionDecl $function, ?string $namespacePhp): array
 	{
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
@@ -2995,7 +3065,11 @@ final class Generator
 		$this->currentArgNormalizationRulesByKey = [];
 		$this->currentNormalizationCallableName = null;
 		$this->endFunctionLikeVariableMapping();
-		return $signature . " {\n" . $body . "\n}";
+		return array_merge(
+			[$this->code($signature . ' {', $function->line)],
+			$body,
+			[$this->code('}', $function->line)],
+		);
 	}
 
 	/**
@@ -3076,13 +3150,14 @@ final class Generator
 		return $this->typeMapper->mapParamType($qualifiedType, false);
 	}
 
-	private function renderBody(array $statements, ?string $namespacePhp): string
+	/** @param list<Statement> $statements @return list<CodeBlock> */
+	private function renderBody(array $statements, ?string $namespacePhp): array
 	{
-		$lines = array_merge($this->renderCurrentParamEntryAliases(), $this->renderCurrentScalarRefParamAliases(), $this->renderCurrentArrayParamGuards());
+		$lines = $this->codeLinesFromStrings(array_merge($this->renderCurrentParamEntryAliases(), $this->renderCurrentScalarRefParamAliases(), $this->renderCurrentArrayParamGuards()));
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
-			$lines[] = $this->indent(1) . $line;
+			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 		}
-		return implode("\n", $lines);
+		return $lines;
 	}
 
 	/** @return list<string> */
@@ -3279,7 +3354,7 @@ final class Generator
 			}
 			$this->declaredLocals[$name] = true;
 			$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($typed);
-			return [$this->typeMapper->mapTypedLocalType($typed) . ' ' . $this->localCppName($name) . ';'];
+			return $this->statementCodeLines($statement, [$this->typeMapper->mapTypedLocalType($typed) . ' ' . $this->localCppName($name) . ';']);
 		}
 		if ($statement->kind === 'assign' || $statement->kind === 'assign_ref' || $statement->kind === 'assign_op') {
 			$varNode = $statement->payload['var'] ?? null;
@@ -3295,7 +3370,7 @@ final class Generator
 			if ($statement->kind === 'assign' && $name !== null && !isset($this->declaredLocals[$name]) && !$this->hasForeachReferenceSlotAlias($name)) {
 				$chainLines = $this->tryRenderDeclarationAssignChain($varNode, $exprNode, $typed, $namespacePhp);
 				if ($chainLines !== null) {
-					return $chainLines;
+					return $this->statementCodeLines($statement, $chainLines);
 				}
 			}
 
@@ -3339,10 +3414,10 @@ final class Generator
 				$this->predefinedReferenceLocals[$name] = true;
 				if ($effectiveTyped !== null) {
 					$this->declaredLocalTypes[$name] = $this->normalizeStoredLocalType($effectiveTyped);
-					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
+					return $this->statementCodeLines($statement, [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
 				}
 
-				return ['auto& ' . $this->localCppName($name) . ' = ' . $expr . ';'];
+				return $this->statementCodeLines($statement, ['auto& ' . $this->localCppName($name) . ' = ' . $expr . ';']);
 			}
 
 			if ($name !== null && !isset($this->declaredLocals[$name]) && !$this->hasForeachReferenceSlotAlias($name)) {
@@ -3355,15 +3430,15 @@ final class Generator
 				}
 				if ($effectiveTyped !== null) {
 					if ($isTypedEmptyArrayLiteral) {
-						return [$typedArrayContainerType . ' ' . $this->localCppName($name) . ' = {};'];
+						return $this->statementCodeLines($statement, [$typedArrayContainerType . ' ' . $this->localCppName($name) . ' = {};']);
 					}
-					return [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
+					return $this->statementCodeLines($statement, [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
 				}
 				if ($closureFunctionType !== null) {
-					return [$closureFunctionType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
+					return $this->statementCodeLines($statement, [$closureFunctionType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
 				}
 				$declarationType = $this->inferFirstAssignmentDeclarationType($exprNode, $inferredType);
-				return [$declarationType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';'];
+				return $this->statementCodeLines($statement, [$declarationType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
 			}
 			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM)) {
 				if (($varNode->children['dim'] ?? null) === null) {
@@ -3380,27 +3455,27 @@ final class Generator
 					$appendMethod = preg_match('/^vector_t<(.+)>$/', $baseType) === 1 ? '.push_back' : ($this->isUntypedTableHandleType($baseType) ? '->append' : '.append');
 					$appendValue = $value;
 					if ($this->shouldInlineAssignmentValue($exprNode)) {
-						return ['(void) ' . $appendBase . $appendMethod . '(' . $appendValue . ');'];
+						return $this->statementCodeLines($statement, ['(void) ' . $appendBase . $appendMethod . '(' . $appendValue . ');']);
 					}
 
 					$tempName = $this->nextTempName('__append_value');
 					$storedTemp = $tempName;
-					return [
+					return $this->statementCodeLines($statement, [
 						'{',
 							'auto ' . $tempName . ' = ' . $value . ';',
 							'(void) ' . $appendBase . $appendMethod . '(' . $storedTemp . ');',
 						'}',
-					];
+					]);
 				}
 				$target = $this->renderDimWriteAccess($varNode, $namespacePhp);
 				$value = $this->renderExpr($exprNode, $namespacePhp);
-				return [$target . ' = ' . $value . ';'];
+				return $this->statementCodeLines($statement, [$target . ' = ' . $value . ';']);
 			}
 			if ($isTypedEmptyArrayLiteral && $name !== null) {
-				return [$this->localCppName($name) . ' = ' . $typedArrayContainerType . '{};'];
+				return $this->statementCodeLines($statement, [$this->localCppName($name) . ' = ' . $typedArrayContainerType . '{};']);
 			}
 			$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
-			return [$target . ' = ' . $expr . ';'];
+			return $this->statementCodeLines($statement, [$target . ' = ' . $expr . ';']);
 		}
 
 		if ($statement->kind === 'static_var') {
@@ -3408,7 +3483,7 @@ final class Generator
 			$name = (string) (($varNode->children['name'] ?? '') ?: 'tmp');
 			$default = $this->renderExpr($statement->payload['default'] ?? null, $namespacePhp);
 			$this->declaredLocals[$name] = true;
-			return ['static int_t ' . $this->localCppName($name) . ' = ' . $default . ';'];
+			return $this->statementCodeLines($statement, ['static int_t ' . $this->localCppName($name) . ' = ' . $default . ';']);
 		}
 
 		if ($statement->kind === 'return') {
@@ -3416,13 +3491,13 @@ final class Generator
 				return $this->renderFinallyAwareReturnStatement($statement, $namespacePhp);
 			}
 			if ($statement->payload === null) {
-				return ['return;'];
+				return $this->statementCodeLines($statement, ['return;']);
 			}
-			return ['return ' . $this->renderReturnExpr($statement->payload, $namespacePhp) . ';'];
+			return $this->statementCodeLines($statement, ['return ' . $this->renderReturnExpr($statement->payload, $namespacePhp) . ';']);
 		}
 
 		if ($statement->kind === 'throw') {
-			return ['throw ::scpp::php::make_thrown(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
+			return $this->statementCodeLines($statement, ['throw ::scpp::php::make_thrown(' . $this->renderExpr($statement->payload, $namespacePhp) . ');']);
 		}
 
 		if ($statement->kind === 'try') {
@@ -3430,7 +3505,7 @@ final class Generator
 		}
 
 		if ($statement->kind === 'echo') {
-			return [$this->qualifyKnownPhpRuntimeSymbol('echo_one') . '(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
+			return $this->statementCodeLines($statement, [$this->qualifyKnownPhpRuntimeSymbol('echo_one') . '(' . $this->renderExpr($statement->payload, $namespacePhp) . ');']);
 		}
 
 		if ($statement->kind === 'unset') {
@@ -3446,13 +3521,13 @@ final class Generator
 				if ($baseType === 'mixed_t') {
 					$shape = $this->inferForeachByRefSourceShape($baseExpr);
 					if ($shape !== 'non_vector') {
-						return ['unset_keyed(' . $base . ', ' . $dim . ');'];
+						return $this->statementCodeLines($statement, ['unset_keyed(' . $base . ', ' . $dim . ');']);
 					}
 				}
-				return [$base . '.remove(' . $dim . ');'];
+				return $this->statementCodeLines($statement, [$base . '.remove(' . $dim . ');']);
 			}
 			// Preserve the generic runtime fallback for non-array/table forms.
-			return ['unset(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
+			return $this->statementCodeLines($statement, ['unset(' . $this->renderExpr($statement->payload, $namespacePhp) . ');']);
 		}
 
 		if ($statement->kind === 'if') {
@@ -3460,20 +3535,20 @@ final class Generator
 		}
 
 		if ($statement->kind === 'while') {
-			$lines = ['while (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {'];
+			$lines = [$this->code('while (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {', $statement->line)];
 			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
 				$lines[] = $line;
 			}
-			$lines[] = '}';
+			$lines[] = $this->code('}', $statement->line);
 			return $lines;
 		}
 
 		if ($statement->kind === 'do_while') {
-			$lines = ['do {'];
+			$lines = [$this->code('do {', $statement->line)];
 			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
 				$lines[] = $line;
 			}
-			$lines[] = '} while (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ');';
+			$lines[] = $this->code('} while (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ');', $statement->line);
 			return $lines;
 		}
 
@@ -3484,11 +3559,11 @@ final class Generator
 			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
 			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
 			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
-			$lines = ['for (' . $init . '; ' . $cond . '; ' . $loop . ') {'];
+			$lines = [$this->code('for (' . $init . '; ' . $cond . '; ' . $loop . ') {', $statement->line)];
 			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
 				$lines[] = $line;
 			}
-			$lines[] = '}';
+			$lines[] = $this->code('}', $statement->line);
 			$this->declaredLocals = $scopedLocals;
 			$this->declaredLocalTypes = $scopedLocalTypes;
 			$this->predefinedReferenceLocals = $scopedReferenceLocals;
@@ -3500,18 +3575,19 @@ final class Generator
 		}
 
 		if ($statement->kind === 'switch') {
-			$lines = ['switch (' . $this->renderSwitchExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {'];
+			$lines = [$this->code('switch (' . $this->renderSwitchExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {', $statement->line)];
 			foreach (($statement->payload['cases'] ?? []) as $case) {
 				$caseCond = $case['cond'] ?? null;
 				// Each lowered switch case is emitted in source order so generated case/default blocks preserve the catalog shape.
-				$lines[] = $caseCond === null
+				$caseLine = (int) ($case['line'] ?? $statement->line);
+				$lines[] = $this->code($caseCond === null
 					? $this->indent(1) . 'default:'
-					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':';
+					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':', $caseLine);
 				foreach ($this->renderNestedStatements($case['stmts'] ?? [], $namespacePhp) as $line) {
 					$lines[] = $line;
 				}
 			}
-			$lines[] = '}';
+			$lines[] = $this->code('}', $statement->line);
 			return $lines;
 		}
 
@@ -3520,7 +3596,7 @@ final class Generator
 			if (!$this->isSimpleUnitLoopDepth($depth)) {
 				$this->fail('Only break 1 is supported; break depth expressions and depths greater than 1 are not supported at line ' . $statement->line . '.');
 			}
-			return ['break;'];
+			return $this->statementCodeLines($statement, ['break;']);
 		}
 
 		if ($statement->kind === 'continue') {
@@ -3528,11 +3604,11 @@ final class Generator
 			if (!$this->isSimpleUnitLoopDepth($depth)) {
 				$this->fail('Only continue 1 is supported; continue depth expressions and depths greater than 1 are not supported at line ' . $statement->line . '.');
 			}
-			return ['continue;'];
+			return $this->statementCodeLines($statement, ['continue;']);
 		}
 
 		if ($statement->kind === 'expr') {
-			return [$this->renderExpr($statement->payload, $namespacePhp) . ';'];
+			return $this->statementCodeLines($statement, [$this->renderExpr($statement->payload, $namespacePhp) . ';']);
 		}
 
 		if ($statement->kind === 'include_or_eval') {
@@ -3563,56 +3639,56 @@ final class Generator
 			$this->fail($error);
 		}
 
-		$lines = ['{'];
+		$lines = [$this->code('{', $statement->line)];
 		$pendingName = $this->nextTempName('__scpp_pending_exception');
 		$returnContext = $finallyStatements !== [] ? $this->createFinallyReturnContext() : null;
-		$lines[] = $this->indent(1) . 'std::exception_ptr ' . $pendingName . ';';
+		$lines[] = $this->code($this->indent(1) . 'std::exception_ptr ' . $pendingName . ';', $statement->line);
 		if ($returnContext !== null) {
 			if ($returnContext['value'] !== null && $returnContext['type'] !== null) {
-				$lines[] = $this->indent(1) . 'std::optional<' . $returnContext['type'] . '> ' . $returnContext['value'] . ';';
+				$lines[] = $this->code($this->indent(1) . 'std::optional<' . $returnContext['type'] . '> ' . $returnContext['value'] . ';', $statement->line);
 			}
-			$lines[] = $this->indent(1) . 'bool ' . $returnContext['flag'] . ' = false;';
+			$lines[] = $this->code($this->indent(1) . 'bool ' . $returnContext['flag'] . ' = false;', $statement->line);
 		}
-		$lines[] = $this->indent(1) . 'try {';
+		$lines[] = $this->code($this->indent(1) . 'try {', $statement->line);
 		$tryBody = $returnContext !== null
 			? $this->renderFinallyAwareStatementSequence($tryStatements, $namespacePhp, $returnContext)
 			: $this->renderNestedStatements($tryStatements, $namespacePhp);
 		foreach ($tryBody as $line) {
-			$lines[] = $this->indent(1) . $line;
+			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 		}
-		$lines[] = $this->indent(1) . '}';
+		$lines[] = $this->code($this->indent(1) . '}', $statement->line);
 
 		foreach ($catches as $catchSpec) {
 			$lines = array_merge($lines, $this->renderCatchChainArm($catchSpec, $namespacePhp, 1, $returnContext));
 		}
 
-		$lines[] = $this->indent(1) . 'catch (...) {';
-		$lines[] = $this->indent(2) . $pendingName . ' = std::current_exception();';
-		$lines[] = $this->indent(1) . '}';
+		$lines[] = $this->code($this->indent(1) . 'catch (...) {', $statement->line);
+		$lines[] = $this->code($this->indent(2) . $pendingName . ' = std::current_exception();', $statement->line);
+		$lines[] = $this->code($this->indent(1) . '}', $statement->line);
 
 		if ($finallyStatements !== []) {
-			$lines[] = '';
-			$lines[] = $this->indent(1) . '{';
+			$lines[] = $this->code('', $statement->line);
+			$lines[] = $this->code($this->indent(1) . '{', $statement->line);
 			foreach ($this->renderNestedStatements($finallyStatements, $namespacePhp) as $line) {
-				$lines[] = $this->indent(1) . $line;
+				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 			}
-			$lines[] = $this->indent(1) . '}';
-			$lines[] = '';
+			$lines[] = $this->code($this->indent(1) . '}', $statement->line);
+			$lines[] = $this->code('', $statement->line);
 		}
 
-		$lines[] = $this->indent(1) . 'if (' . $pendingName . ') {';
-		$lines[] = $this->indent(2) . 'std::rethrow_exception(' . $pendingName . ');';
-		$lines[] = $this->indent(1) . '}';
+		$lines[] = $this->code($this->indent(1) . 'if (' . $pendingName . ') {', $statement->line);
+		$lines[] = $this->code($this->indent(2) . 'std::rethrow_exception(' . $pendingName . ');', $statement->line);
+		$lines[] = $this->code($this->indent(1) . '}', $statement->line);
 		if ($returnContext !== null) {
-			$lines[] = $this->indent(1) . 'if (' . $returnContext['flag'] . ') {';
+			$lines[] = $this->code($this->indent(1) . 'if (' . $returnContext['flag'] . ') {', $statement->line);
 			if ($returnContext['value'] === null) {
-				$lines[] = $this->indent(2) . 'return;';
+				$lines[] = $this->code($this->indent(2) . 'return;', $statement->line);
 			} else {
-				$lines[] = $this->indent(2) . 'return *' . $returnContext['value'] . ';';
+				$lines[] = $this->code($this->indent(2) . 'return *' . $returnContext['value'] . ';', $statement->line);
 			}
-			$lines[] = $this->indent(1) . '}';
+			$lines[] = $this->code($this->indent(1) . '}', $statement->line);
 		}
-		$lines[] = '}';
+		$lines[] = $this->code('}', $statement->line);
 		return $lines;
 	}
 
@@ -3624,57 +3700,57 @@ final class Generator
 		if ($varName === null) {
 			$error = 'catch handlers require a simple variable name at line ' . $catchLine . '.';
 			$this->errors[] = $error;
-			return [$this->indent($baseIndentLevel) . '// ERROR: ' . $error];
+			return [$this->code($this->indent($baseIndentLevel) . '// ERROR: ' . $error, $catchLine)];
 		}
 
 		$classes = is_array($catchSpec['classes'] ?? null) ? $catchSpec['classes'] : [];
 		if ($classes === []) {
 			$error = 'catch handlers require an explicit exception class at line ' . $catchLine . '.';
 			$this->errors[] = $error;
-			return [$this->indent($baseIndentLevel) . '// ERROR: ' . $error];
+			return [$this->code($this->indent($baseIndentLevel) . '// ERROR: ' . $error, $catchLine)];
 		}
 
 		$throwVar = $this->nextTempName('__scpp_thrown');
-		$lines = [$this->indent($baseIndentLevel) . 'catch (const ::scpp::php::thrown_object& ' . $throwVar . ') {'];
+		$lines = [$this->code($this->indent($baseIndentLevel) . 'catch (const ::scpp::php::thrown_object& ' . $throwVar . ') {', $catchLine)];
 		$matched = false;
 		foreach ($classes as $classNode) {
 			if (!is_object($classNode) || (($classNode->kind ?? null) !== AstKind::NAME)) {
 				$error = 'Only named catch types are supported in v1 at line ' . $catchLine . '.';
 				$this->errors[] = $error;
-				$lines[] = $this->indent($baseIndentLevel + 1) . '// ERROR: ' . $error;
+				$lines[] = $this->code($this->indent($baseIndentLevel + 1) . '// ERROR: ' . $error, $catchLine);
 				continue;
 			}
 			$classType = $this->renderClassName($classNode, $namespacePhp);
 			$caughtVar = $this->nextTempName('__scpp_caught');
 			$prefix = $matched ? 'else if' : 'if';
-			$lines[] = $this->indent($baseIndentLevel + 1) . $prefix . ' (auto ' . $caughtVar . ' = ::scpp::php::catch_as<' . $classType . '>(' . $throwVar . '); static_cast<bool>(' . $caughtVar . ')) {';
+			$lines[] = $this->code($this->indent($baseIndentLevel + 1) . $prefix . ' (auto ' . $caughtVar . ' = ::scpp::php::catch_as<' . $classType . '>(' . $throwVar . '); static_cast<bool>(' . $caughtVar . ')) {', $catchLine);
 			$scopedLocals = $this->declaredLocals;
 			$scopedLocalTypes = $this->declaredLocalTypes;
 			$scopedReferenceLocals = $this->predefinedReferenceLocals;
 			$this->declaredLocals[$varName] = true;
 			$this->declaredLocalTypes[$varName] = 'shared_p<' . $classType . '>' ;
-			$lines[] = $this->indent($baseIndentLevel + 1) . 'auto ' . $varName . ' = ' . $caughtVar . ';';
+			$lines[] = $this->code($this->indent($baseIndentLevel + 1) . 'auto ' . $varName . ' = ' . $caughtVar . ';', $catchLine);
 			$bodyLines = $returnContext !== null
 				? $this->renderFinallyAwareStatementSequence($catchSpec['stmts'] ?? [], $namespacePhp, $returnContext)
 				: $this->renderNestedStatements($catchSpec['stmts'] ?? [], $namespacePhp);
 			foreach ($bodyLines as $line) {
-				$lines[] = $this->indent($baseIndentLevel) . $line;
+				$lines[] = $this->code($this->indent($baseIndentLevel) . $line->text, $line->srcLine, $line->srcColumn);
 			}
 			$this->declaredLocals = $scopedLocals;
 			$this->declaredLocalTypes = $scopedLocalTypes;
 			$this->predefinedReferenceLocals = $scopedReferenceLocals;
-			$lines[] = $this->indent($baseIndentLevel + 1) . '}';
+			$lines[] = $this->code($this->indent($baseIndentLevel + 1) . '}', $catchLine);
 			$matched = true;
 		}
 
 		if ($matched) {
-			$lines[] = $this->indent($baseIndentLevel + 1) . 'else {';
-			$lines[] = $this->indent($baseIndentLevel + 2) . 'throw;';
-			$lines[] = $this->indent($baseIndentLevel + 1) . '}';
+			$lines[] = $this->code($this->indent($baseIndentLevel + 1) . 'else {', $catchLine);
+			$lines[] = $this->code($this->indent($baseIndentLevel + 2) . 'throw;', $catchLine);
+			$lines[] = $this->code($this->indent($baseIndentLevel + 1) . '}', $catchLine);
 		} else {
-			$lines[] = $this->indent($baseIndentLevel + 1) . 'throw;';
+			$lines[] = $this->code($this->indent($baseIndentLevel + 1) . 'throw;', $catchLine);
 		}
-		$lines[] = $this->indent($baseIndentLevel) . '}';
+		$lines[] = $this->code($this->indent($baseIndentLevel) . '}', $catchLine);
 		return $lines;
 	}
 
@@ -3766,19 +3842,19 @@ final class Generator
 	{
 		$context = $this->currentFinallyReturnContext;
 		if ($context === null) {
-			return ['return;'];
+			return $this->statementCodeLines($statement, ['return;']);
 		}
 
 		if ($context['value'] === null) {
-			return [
+			return $this->statementCodeLines($statement, [
 				$context['flag'] . ' = true;',
-			];
+			]);
 		}
 
-		return [
+		return $this->statementCodeLines($statement, [
 			$context['value'] . ' = ' . $this->renderReturnExpr($statement->payload, $namespacePhp) . ';',
 			$context['flag'] . ' = true;',
-		];
+		]);
 	}
 
 	private function renderFinallyAwareStatementSequence(array $statements, ?string $namespacePhp, array $returnContext): array
@@ -3788,9 +3864,15 @@ final class Generator
 		try {
 			$lines = [];
 			foreach ($statements as $statement) {
+				$previousLine = $this->currentSourceLine;
+				$previousColumn = $this->currentSourceColumn;
+				$this->currentSourceLine = $statement->line;
+				$this->currentSourceColumn = 0;
 				foreach ($this->wrapWithReturnGuard($this->renderFinallyAwareStatement($statement, $namespacePhp, $returnContext), $returnContext['flag']) as $line) {
 					$lines[] = $line;
 				}
+				$this->currentSourceLine = $previousLine;
+				$this->currentSourceColumn = $previousColumn;
 			}
 			return $lines;
 		} finally {
@@ -3805,35 +3887,36 @@ final class Generator
 			$branches = is_array($statement->payload) ? $statement->payload : [];
 			$first = true;
 			foreach ($branches as $branch) {
+				$branchLine = (int) ($branch['line'] ?? $statement->line);
 				if (($branch['cond'] ?? null) !== null) {
-					$lines[] = ($first ? 'if' : 'else if') . ' (' . $this->renderConditionExpr($branch['cond'], $namespacePhp) . ') {';
+					$lines[] = $this->code(($first ? 'if' : 'else if') . ' (' . $this->renderConditionExpr($branch['cond'], $namespacePhp) . ') {', $branchLine);
 				} else {
-					$lines[] = 'else {';
+					$lines[] = $this->code('else {', $branchLine);
 				}
 				foreach ($this->renderFinallyAwareStatementSequence($branch['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
-					$lines[] = $this->indent(1) . $line;
+					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 				}
-				$lines[] = '}';
+				$lines[] = $this->code('}', $branchLine);
 				$first = false;
 			}
 			return $lines;
 		}
 
 		if ($statement->kind === 'while') {
-			$lines = ['while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ')) {'];
+			$lines = [$this->code('while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ')) {', $statement->line)];
 			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
-				$lines[] = $this->indent(1) . $line;
+				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 			}
-			$lines[] = '}';
+			$lines[] = $this->code('}', $statement->line);
 			return $lines;
 		}
 
 		if ($statement->kind === 'do_while') {
-			$lines = ['do {'];
+			$lines = [$this->code('do {', $statement->line)];
 			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
-				$lines[] = $this->indent(1) . $line;
+				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 			}
-			$lines[] = '} while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . '));';
+			$lines[] = $this->code('} while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . '));', $statement->line);
 			return $lines;
 		}
 
@@ -3844,21 +3927,21 @@ final class Generator
 			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
 			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
 			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
-			$lines = ['{'];
+			$lines = [$this->code('{', $statement->line)];
 			if ($init !== '') {
-				$lines[] = $this->indent(1) . $init . ';';
+				$lines[] = $this->code($this->indent(1) . $init . ';', $statement->line);
 			}
-			$lines[] = $this->indent(1) . 'while (!' . $returnContext['flag'] . ' && (' . $cond . ')) {';
+			$lines[] = $this->code($this->indent(1) . 'while (!' . $returnContext['flag'] . ' && (' . $cond . ')) {', $statement->line);
 			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
-				$lines[] = $this->indent(2) . $line;
+				$lines[] = $this->code($this->indent(2) . $line->text, $line->srcLine, $line->srcColumn);
 			}
 			if ($loop !== '') {
-				$lines[] = $this->indent(2) . 'if (!' . $returnContext['flag'] . ') {';
-				$lines[] = $this->indent(3) . $loop . ';';
-				$lines[] = $this->indent(2) . '}';
+				$lines[] = $this->code($this->indent(2) . 'if (!' . $returnContext['flag'] . ') {', $statement->line);
+				$lines[] = $this->code($this->indent(3) . $loop . ';', $statement->line);
+				$lines[] = $this->code($this->indent(2) . '}', $statement->line);
 			}
-			$lines[] = $this->indent(1) . '}';
-			$lines[] = '}';
+			$lines[] = $this->code($this->indent(1) . '}', $statement->line);
+			$lines[] = $this->code('}', $statement->line);
 			$this->declaredLocals = $scopedLocals;
 			$this->declaredLocalTypes = $scopedLocalTypes;
 			$this->predefinedReferenceLocals = $scopedReferenceLocals;
@@ -3870,17 +3953,18 @@ final class Generator
 		}
 
 		if ($statement->kind === 'switch') {
-			$lines = ['switch (' . $this->renderSwitchExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {'];
+			$lines = [$this->code('switch (' . $this->renderSwitchExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {', $statement->line)];
 			foreach (($statement->payload['cases'] ?? []) as $case) {
 				$caseCond = $case['cond'] ?? null;
-				$lines[] = $caseCond === null
+				$caseLine = (int) ($case['line'] ?? $statement->line);
+				$lines[] = $this->code($caseCond === null
 					? $this->indent(1) . 'default:'
-					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':';
+					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':', $caseLine);
 				foreach ($this->renderFinallyAwareStatementSequence($case['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
-					$lines[] = $this->indent(1) . $line;
+					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 				}
 			}
-			$lines[] = '}';
+			$lines[] = $this->code('}', $statement->line);
 			return $lines;
 		}
 
@@ -3891,16 +3975,19 @@ final class Generator
 		return $this->renderStatement($statement, $namespacePhp);
 	}
 
+	/** @param list<CodeBlock> $lines @return list<CodeBlock> */
 	private function wrapWithReturnGuard(array $lines, string $returnFlag): array
 	{
 		if ($lines === []) {
 			return [];
 		}
-		$out = ['if (!' . $returnFlag . ') {'];
+		$originLine = $lines[0]->srcLine;
+		$originColumn = $lines[0]->srcColumn;
+		$out = [$this->code('if (!' . $returnFlag . ') {', $originLine, $originColumn)];
 		foreach ($lines as $line) {
-			$out[] = $this->indent(1) . $line;
+			$out[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 		}
-		$out[] = '}';
+		$out[] = $this->code('}', $originLine, $originColumn);
 		return $out;
 	}
 
@@ -3919,12 +4006,12 @@ final class Generator
 
 		if ($valueName === null) {
 			$this->errors[] = 'foreach value target must be a simple variable at line ' . $statement->line . '.';
-			return ['// ERROR: unsupported foreach value target'];
+			return $this->statementCodeLines($statement, ['// ERROR: unsupported foreach value target']);
 		}
 
 		if (($payload['key'] ?? null) !== null && $keyName === null) {
 			$this->errors[] = 'foreach key target must be a simple variable at line ' . $statement->line . '.';
-			return ['// ERROR: unsupported foreach key target'];
+			return $this->statementCodeLines($statement, ['// ERROR: unsupported foreach key target']);
 		}
 
 		$entryName = '__scpp_foreach_entry_' . $statement->line;
@@ -3942,10 +4029,10 @@ final class Generator
 		$sourceBinding = $this->isLvalueCapableExpr($payload['expr'] ?? null, $namespacePhp)
 			? 'auto& ' . $sourceTempName . ' = ' . $this->renderLvalueExpr($payload['expr'] ?? null, $namespacePhp) . ';'
 			: 'auto ' . $sourceTempName . ' = ' . $sourceExpr . ';';
-		$lines = [
+		$lines = $this->statementCodeLines($statement, [
 			$sourceBinding,
 			'for (auto ' . $entryName . ' : foreach_range(' . $sourceTempName . ')) {',
-		];
+		]);
 
 		$scopedLocals = $this->declaredLocals;
 		$scopedLocalTypes = $this->declaredLocalTypes;
@@ -3954,7 +4041,7 @@ final class Generator
 		$keyCppName = null;
 		if ($keyName !== null) {
 			$keyCppName = $this->localCppName($keyName);
-			$lines[] = $this->indent(1) . 'auto&& ' . $keyCppName . ' = ' . $entryName . '.key();';
+			$lines[] = $this->code($this->indent(1) . 'auto&& ' . $keyCppName . ' = ' . $entryName . '.key();', $statement->line);
 			$this->declaredLocalTypes[$keyName] = $isVectorLikeForeach
 				? 'int_t'
 				: (($hashTypeParts = $this->parseHashTypeParts($sourceType)) !== null ? $hashTypeParts['key'] : 'mixed_t');
@@ -3974,12 +4061,12 @@ final class Generator
 			$hasOuterValueBinding = isset($scopedLocals[$valueName]);
 			$currentElementExpr = $entryName . '.value_copy()';
 			if ($hasOuterValueBinding) {
-				$lines[] = $this->indent(1) . $valueCppName . ' = ' . $currentElementExpr . ';';
+				$lines[] = $this->code($this->indent(1) . $valueCppName . ' = ' . $currentElementExpr . ';', $statement->line);
 				if ($valueStoredType !== null) {
 					$this->declaredLocalTypes[$valueName] = $valueStoredType;
 				}
 			} else {
-				$lines[] = $this->indent(1) . 'auto ' . $valueCppName . ' = ' . $currentElementExpr . ';';
+				$lines[] = $this->code($this->indent(1) . 'auto ' . $valueCppName . ' = ' . $currentElementExpr . ';', $statement->line);
 				$this->declaredLocals[$valueName] = true;
 				if ($valueStoredType !== null) {
 					$this->declaredLocalTypes[$valueName] = $valueStoredType;
@@ -3990,11 +4077,11 @@ final class Generator
 		try {
 			if ($returnContext !== null) {
 				$bodyLines = $this->renderFinallyAwareStatementSequence($payload['stmts'] ?? [], $namespacePhp, $returnContext);
-				$lines[] = $this->indent(1) . 'if (' . $returnContext['flag'] . ') {';
-				$lines[] = $this->indent(2) . 'break;';
-				$lines[] = $this->indent(1) . '}';
+				$lines[] = $this->code($this->indent(1) . 'if (' . $returnContext['flag'] . ') {', $statement->line);
+				$lines[] = $this->code($this->indent(2) . 'break;', $statement->line);
+				$lines[] = $this->code($this->indent(1) . '}', $statement->line);
 				foreach ($bodyLines as $line) {
-					$lines[] = $this->indent(1) . $line;
+					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 				}
 			} else {
 				foreach ($this->renderNestedStatements($payload['stmts'] ?? [], $namespacePhp) as $line) {
@@ -4010,32 +4097,33 @@ final class Generator
 			$this->predefinedReferenceLocals = $scopedReferenceLocals;
 		}
 
-		$lines[] = '}';
+		$lines[] = $this->code('}', $statement->line);
 		return $lines;
 	}
 
-	/** @param list<array{cond:mixed,stmts:list<Statement>,line:int}> $branches @return list<string> */
+	/** @param list<array{cond:mixed,stmts:list<Statement>,line:int}> $branches @return list<CodeBlock> */
 	private function renderIfStatement(array $branches, ?string $namespacePhp): array
 	{
 		$lines = [];
 		$index = 0;
 		foreach ($branches as $branch) {
+			$branchLine = (int) ($branch['line'] ?? $this->currentSourceLine);
 			$prefix = $index === 0 ? 'if' : (($branch['cond'] ?? null) === null ? 'else' : 'else if');
 			if ($prefix === 'else') {
-				$lines[] = 'else {';
+				$lines[] = $this->code('else {', $branchLine);
 			} else {
-				$lines[] = $prefix . ' (' . $this->renderConditionExpr($branch['cond'] ?? null, $namespacePhp) . ') {';
+				$lines[] = $this->code($prefix . ' (' . $this->renderConditionExpr($branch['cond'] ?? null, $namespacePhp) . ') {', $branchLine);
 			}
 			foreach ($this->renderNestedStatements($branch['stmts'] ?? [], $namespacePhp) as $line) {
 				$lines[] = $line;
 			}
-			$lines[] = '}';
+			$lines[] = $this->code('}', $branchLine);
 			$index++;
 		}
 		return $lines;
 	}
 
-	/** @param list<Statement> $statements @return list<string> */
+	/** @param list<Statement> $statements @return list<CodeBlock> */
 	private function renderNestedStatements(array $statements, ?string $namespacePhp): array
 	{
 		$scopedLocals = $this->declaredLocals;
@@ -4044,7 +4132,7 @@ final class Generator
 
 		$lines = [];
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
-			$lines[] = $this->indent(1) . $line;
+			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 		}
 
 		$this->declaredLocals = $scopedLocals;
@@ -4058,9 +4146,15 @@ final class Generator
 	{
 		$lines = [];
 		foreach ($statements as $statement) {
+			$previousLine = $this->currentSourceLine;
+			$previousColumn = $this->currentSourceColumn;
+			$this->currentSourceLine = $statement->line;
+			$this->currentSourceColumn = 0;
 			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
 				$lines[] = $line;
 			}
+			$this->currentSourceLine = $previousLine;
+			$this->currentSourceColumn = $previousColumn;
 		}
 
 		return $lines;
@@ -4486,23 +4580,23 @@ final class Generator
 		if ($operator === null) {
 			$error = 'Unsupported compound assignment flag ' . (int) ($statement->payload['flags'] ?? 0) . ' at line ' . $statement->line . '.';
 			$this->errors[] = $error;
-			return ['// ERROR: ' . $error];
+			return $this->statementCodeLines($statement, ['// ERROR: ' . $error]);
 		}
 
 		if ($name !== null && !isset($this->declaredLocals[$name]) && !$this->hasForeachReferenceSlotAlias($name)) {
 			$error = 'Compound assignment requires a previously declared variable $' . $name . ' at line ' . $statement->line . '.';
 			$this->errors[] = $error;
-			return ['// ERROR: ' . $error];
+			return $this->statementCodeLines($statement, ['// ERROR: ' . $error]);
 		}
 
 		$target = $this->renderAssignmentTarget($varNode, $namespacePhp);
 		if ((int) ($statement->payload['flags'] ?? 0) === AstKind::BINARY_CONCAT) {
 			$expr = $this->renderStringOperand($exprNode, $namespacePhp);
-			return [$target . ' = (' . $target . ' + ' . $expr . ');'];
+			return $this->statementCodeLines($statement, [$target . ' = (' . $target . ' + ' . $expr . ');']);
 		}
 
 		$expr = $this->renderExpr($exprNode, $namespacePhp);
-		return [$target . ' ' . $operator . ' ' . $expr . ';'];
+		return $this->statementCodeLines($statement, [$target . ' ' . $operator . ' ' . $expr . ';']);
 	}
 
 	private function mapAssignOpFlagToOperator(int $flag): ?string
@@ -5950,10 +6044,10 @@ final class Generator
 			$inner = $this->renderExpr($innerNode, $namespacePhp);
 			$flags = (int) ($expr->flags ?? 0);
 			return match ($flags) {
-				AstKind::TYPE_STRING => $this->wrapRuntimeContext('cast<string_t>(' . $inner . ')', 'string_t', 'cast<string_t>', $innerNode),
-				AstKind::TYPE_LONG => $this->wrapRuntimeContext('cast<int_t>(' . $inner . ')', 'int_t', 'cast<int_t>', $innerNode),
-				AstKind::TYPE_DOUBLE => $this->wrapRuntimeContext('cast<float_t>(' . $inner . ')', 'float_t', 'cast<float_t>', $innerNode),
-				AstKind::TYPE_BOOL => $this->wrapRuntimeContext('cast<bool_t>(' . $inner . ')', 'bool_t', 'cast<bool_t>', $innerNode),
+				AstKind::TYPE_STRING => 'cast<string_t>(' . $inner . ')',
+				AstKind::TYPE_LONG => 'cast<int_t>(' . $inner . ')',
+				AstKind::TYPE_DOUBLE => 'cast<float_t>(' . $inner . ')',
+				AstKind::TYPE_BOOL => 'cast<bool_t>(' . $inner . ')',
 				AstKind::TYPE_OBJECT => $this->renderObjectCastExpr($innerNode, $namespacePhp),
 				default => '/* unsupported-cast */',
 			};
@@ -6215,7 +6309,7 @@ final class Generator
 		}
 
 		if (is_int($expr) || is_float($expr)) {
-			return $this->wrapRuntimeContext('cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')', 'string_t', 'cast<string_t>', $expr);
+			return 'cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')';
 		}
 
 		if (!is_object($expr)) {
@@ -6226,7 +6320,7 @@ final class Generator
 		if ($kind === AstKind::CONST) {
 			$name = strtolower((string) ($expr->children['name']->children['name'] ?? ''));
 			if ($name === 'null' || $name === 'true' || $name === 'false') {
-				return $this->wrapRuntimeContext('cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')', 'string_t', 'cast<string_t>', $expr);
+				return 'cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')';
 			}
 		}
 
@@ -6248,88 +6342,9 @@ final class Generator
 			AstKind::BINARY_OP,
 			AstKind::ASSIGN,
 			AstKind::CLASS_CONST,
-			AstKind::STATIC_PROP => $this->wrapRuntimeContext('cast<string_t>(' . $rendered . ')', 'string_t', 'cast<string_t>', $expr),
-			default => $this->wrapRuntimeContext('cast<string_t>(' . $rendered . ')', 'string_t', 'cast<string_t>', $expr),
+			AstKind::STATIC_PROP => 'cast<string_t>(' . $rendered . ')',
+			default => 'cast<string_t>(' . $rendered . ')',
 		};
-	}
-
-	private function wrapRuntimeContext(string $renderedExpr, string $expectedType, string $operation, mixed $sourceExpr): string
-	{
-		$line = is_object($sourceExpr) ? (int) ($sourceExpr->lineno ?? 0) : 0;
-		$description = $this->describeRuntimeContextExpr($sourceExpr);
-		return '::scpp::with_runtime_context([&]() -> decltype(auto) { return ' . $renderedExpr . '; }, '
-			. $this->cppStringLiteral($this->currentSourcePath) . ', '
-			. (string) $line . ', '
-			. $this->cppStringLiteral($description) . ', '
-			. $this->cppStringLiteral($expectedType) . ', '
-			. $this->cppStringLiteral($operation) . ')';
-	}
-
-	private function describeRuntimeContextExpr(mixed $expr): string
-	{
-		if (is_string($expr)) {
-			return '"' . $expr . '"';
-		}
-		if (is_int($expr) || is_float($expr)) {
-			return (string) $expr;
-		}
-		if (!is_object($expr)) {
-			return '<unknown>';
-		}
-		$kind = $expr->kind ?? null;
-		if ($kind === AstKind::VAR) {
-			$name = $expr->children['name'] ?? null;
-			return is_string($name) ? '$' . $name : '$<dynamic>';
-		}
-		if ($kind === AstKind::DIM) {
-			return $this->describeRuntimeContextExpr($expr->children['expr'] ?? null)
-				. '[' . $this->describeRuntimeDimKey($expr->children['dim'] ?? null) . ']';
-		}
-		if ($kind === AstKind::PROP) {
-			$property = $expr->children['prop'] ?? null;
-			$propertyName = is_string($property) ? $property : '<dynamic>';
-			return $this->describeRuntimeContextExpr($expr->children['expr'] ?? null) . '->' . $propertyName;
-		}
-		if ($kind === AstKind::CALL) {
-			return 'function call';
-		}
-		if ($kind === AstKind::METHOD_CALL || $kind === AstKind::STATIC_CALL) {
-			return 'method call';
-		}
-		if ($kind === AstKind::CAST) {
-			return 'cast expression';
-		}
-		if ($kind === AstKind::BINARY_OP) {
-			return 'binary expression';
-		}
-		return 'expression';
-	}
-
-	private function describeRuntimeDimKey(mixed $expr): string
-	{
-		if ($expr === null) {
-			return '';
-		}
-		if (is_string($expr)) {
-			return '"' . $expr . '"';
-		}
-		if (is_int($expr) || is_float($expr)) {
-			return (string) $expr;
-		}
-		if (!is_object($expr)) {
-			return '...';
-		}
-		if (($expr->kind ?? null) === AstKind::CONST) {
-			$name = $expr->children['name']->children['name'] ?? null;
-			return is_string($name) ? strtolower($name) : '...';
-		}
-		return '...';
-	}
-
-	private function cppStringLiteral(string $value): string
-	{
-		$encoded = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-		return is_string($encoded) ? $encoded : '""';
 	}
 
 	/**

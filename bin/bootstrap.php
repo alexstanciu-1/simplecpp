@@ -27,6 +27,7 @@ require_once __DIR__ . '/../generators/php/src/IR/ParamDecl.php';
 require_once __DIR__ . '/../generators/php/src/IR/Statement.php';
 require_once __DIR__ . '/../generators/php/src/Builder/IrBuilder.php';
 require_once __DIR__ . '/../generators/php/src/Lowering/TypeMapper.php';
+require_once __DIR__ . '/../generators/php/src/Emit/CodeBlock.php';
 require_once __DIR__ . '/../generators/php/src/Emit/CppFile.php';
 require_once __DIR__ . '/../generators/php/src/Generator/NameRegistry.php';
 require_once __DIR__ . '/../generators/php/src/Generator/Generator.php';
