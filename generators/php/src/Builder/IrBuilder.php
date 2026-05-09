@@ -314,6 +314,7 @@ final class IrBuilder
 				$enumCases[] = new ConstantDecl(
 					name: (string) ($member->children['name'] ?? ''),
 					value: $member->children['expr'] ?? null,
+					line: (int) ($member->lineno ?? 0),
 				);
 				continue;
 			}
@@ -553,6 +554,7 @@ final class IrBuilder
 				name: (string) ($child->children['name'] ?? ''),
 				value: $child->children['value'] ?? null,
 				isLibExport: $isLibExport || $this->hasLibExportTag($child->children['docComment'] ?? null),
+				line: (int) ($child->lineno ?? $node->lineno ?? 0),
 			);
 		}
 		return $out;

@@ -1,0 +1,25 @@
+{
+    "id": "constants_005_top_level_array_const_regression",
+    "source_path": "tests/php/constants/level_02/constants_005_top_level_array_const_regression.phs",
+    "test_info_json": "tests/php/constants/level_02/constants_005_top_level_array_const_regression.test-info.json",
+    "test_results_json": "tests/php/constants/level_02/constants_005_top_level_array_const_regression.test-results.json",
+    "last_run": {
+        "started_at": null,
+        "finished_at": null,
+        "worker": null,
+        "paths": null,
+        "sanitizers": null,
+        "stages": {
+            "php": null,
+            "generate": null,
+            "compile": null,
+            "run": null
+        },
+        "summary": {
+            "pass": null,
+            "message": null,
+            "outcome": "not_run"
+        },
+        "exception": null
+    }
+}

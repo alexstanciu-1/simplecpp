@@ -9,6 +9,26 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.23 - 2026-05-09
+
+### Additions
+
+- Added regression coverage for top-level PHP++ constants with array initializers so the generator cannot regress to missing constant source-line metadata.
+
+### Fixes
+
+- Fixed PHP++ constant IR construction so top-level constants, class constants, and enum cases carry source-line metadata before header emission.
+- Fixed the generator crash on top-level `const` declarations where `ConstantDecl::$line` was missing during header line-map emission.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No migration is required.
+- Agent Skill review completed: no `.agents/skills/*` updates are required because this hotfix restores existing documented constant lowering behavior and does not change authoring guidance.
+
 ## 0.1.22 - 2026-05-09
 
 ### Additions
