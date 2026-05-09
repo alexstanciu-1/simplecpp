@@ -8,8 +8,8 @@ use Scpp\S2S\Emit\CppFile;
 use Scpp\S2S\Generator\Generator;
 use Scpp\S2S\Loader\InputLoader;
 use Scpp\S2S\Lowering\TypeMapper;
-use Scpp\S2S\Metadata\TypeCommentExtractor;
 use Scpp\S2S\Support\InputException;
+use Scpp\S2S\Support\PhpParserCompatibility;
 
 /**
  * Coordinates the generator pipeline for one file.
@@ -27,7 +27,6 @@ final class Transpiler
 	 */
 	public function __construct(
 		private readonly InputLoader $loader = new InputLoader(),
-		private readonly TypeCommentExtractor $typeComments = new TypeCommentExtractor(),
 		private readonly IrBuilder $builder = new IrBuilder(),
 		?Generator $generator = null,
 		string $phpProfile = 'legacy',
@@ -52,15 +51,13 @@ final class Transpiler
 		$this->assertNoSimpleReferenceRebinding($source);
 
 		$input = $this->loader->load($phpPath, $source, $save_ast_to_json);
-
-		$typeComments = $this->typeComments->extract($input->tokens);
-		$ir = $this->builder->build($input, $typeComments);
+		$ir = $this->builder->build($input);
 		return $this->generator->generate($ir, $emitProgramEntry);
 	}
 
 	private function assertNoSimpleReferenceRebinding(string $sourcePhp): void
 	{
-		$tokens = \token_get_all($sourcePhp);
+		$tokens = PhpParserCompatibility::tokenizeSource($sourcePhp);
 		$bindings = [];
 		$count = count($tokens);
 

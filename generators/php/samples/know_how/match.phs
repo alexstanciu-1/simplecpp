@@ -1,4 +1,3 @@
-<?php
 $food = 'cake';
 
 $return_value = match ($food) {

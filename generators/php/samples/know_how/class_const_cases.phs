@@ -1,5 +1,3 @@
-<?php
-
 class B {
 	public const X = 123;
 }

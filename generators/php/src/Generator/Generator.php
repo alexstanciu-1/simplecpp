@@ -34,6 +34,10 @@ final class Generator
 	private array $errors = [];
 	/** @var list<string> */
 	private array $warnings = [];
+	/** @var list<int> */
+	private array $headerLineMap = [];
+	/** @var list<int> */
+	private array $sourceLineMap = [];
 	/** @var array<string, string> */
 	private array $localTypeComments = [];
 	/** @var array<int, string> */
@@ -145,12 +149,21 @@ final class Generator
 		$this->throwIfErrors();
 
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
-		$header = ['#pragma once', '', '#include <scpp/lang/php.hpp>', '#include <type_traits>', '#include <utility>'];
+		$header = [];
+		$this->headerLineMap = [];
+		$this->appendHeaderLine($header, '#pragma once');
+		$this->appendHeaderLine($header, '');
+		$this->appendHeaderLine($header, '#include <scpp/lang/php.hpp>');
+		$this->appendHeaderLine($header, '#include <type_traits>');
+		$this->appendHeaderLine($header, '#include <utility>');
 		foreach ($file->prologueIncludes as $includePath) {
-			$header[] = '#include "' . $includePath . '"';
+			$this->appendHeaderLine($header, '#include "' . $includePath . '"');
 		}
-		$header[] = '';
-		$source = ['#include "' . $baseName . '.hpp"', ''];
+		$this->appendHeaderLine($header, '');
+		$source = [];
+		$this->sourceLineMap = [];
+		$this->appendSourceLine($source, '#include "' . $baseName . '.hpp"');
+		$this->appendSourceLine($source, '');
 
 		$hasRootNamespaceContent = ($file->rootUses !== [] || $file->constants !== [] || $file->classes !== [] || $file->functions !== [] || $file->rootStatements !== []);
 		$unitMainName = $this->buildUnitMainName($file, $emitProgramEntry);
@@ -185,32 +198,51 @@ final class Generator
 		}
 
 		if ($emitProgramEntry && $file->rootStatements !== []) {
-			$source[] = 'int main(int __scpp_argc, char** __scpp_argv) {';
-			$source[] = $this->indent(1) . 'try {';
-			$source[] = $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);';
-			$source[] = $this->indent(2) . 'return scpp::' . $unitMainName . '();';
-			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
-			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
-			$source[] = $this->indent(2) . 'return 1;';
-			$source[] = $this->indent(1) . '}';
-			$source[] = '}';
-			$source[] = '';
+			$this->appendSourceLine($source, 'int main(int __scpp_argc, char** __scpp_argv) {');
+			$this->appendSourceLine($source, $this->indent(1) . 'try {');
+			$this->appendSourceLine($source, $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);');
+			$this->appendSourceLine($source, $this->indent(2) . 'return scpp::' . $unitMainName . '();');
+			$this->appendSourceLine($source, $this->indent(1) . '} catch (const std::exception &exception) {');
+			$this->appendSourceLine($source, $this->indent(2) . '::scpp::print_runtime_exception(exception);');
+			$this->appendSourceLine($source, $this->indent(2) . 'return 1;');
+			$this->appendSourceLine($source, $this->indent(1) . '}');
+			$this->appendSourceLine($source, '}');
+			$this->appendSourceLine($source, '');
 		} elseif ($emitProgramEntry && $namespaceMainTargets !== []) {
-			$source[] = 'int main(int __scpp_argc, char** __scpp_argv) {';
-			$source[] = $this->indent(1) . 'try {';
-			$source[] = $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);';
-			$source[] = $this->indent(2) . 'return ' . $namespaceMainTargets[0] . ';';
-			$source[] = $this->indent(1) . '} catch (const std::exception &exception) {';
-			$source[] = $this->indent(2) . '::scpp::print_runtime_exception(exception);';
-			$source[] = $this->indent(2) . 'return 1;';
-			$source[] = $this->indent(1) . '}';
-			$source[] = '}';
-			$source[] = '';
+			$this->appendSourceLine($source, 'int main(int __scpp_argc, char** __scpp_argv) {');
+			$this->appendSourceLine($source, $this->indent(1) . 'try {');
+			$this->appendSourceLine($source, $this->indent(2) . '::scpp::php::set_cli_args(__scpp_argc, __scpp_argv);');
+			$this->appendSourceLine($source, $this->indent(2) . 'return ' . $namespaceMainTargets[0] . ';');
+			$this->appendSourceLine($source, $this->indent(1) . '} catch (const std::exception &exception) {');
+			$this->appendSourceLine($source, $this->indent(2) . '::scpp::print_runtime_exception(exception);');
+			$this->appendSourceLine($source, $this->indent(2) . 'return 1;');
+			$this->appendSourceLine($source, $this->indent(1) . '}');
+			$this->appendSourceLine($source, '}');
+			$this->appendSourceLine($source, '');
 		}
 
 		$this->throwIfErrors();
 
-		return new CppFile($baseName, $header, $this->buildExportManifest($file), $source, $this->errors, $this->warnings);
+		return new CppFile($baseName, $header, $this->headerLineMap, $this->buildExportManifest($file), $source, $this->sourceLineMap, $this->errors, $this->warnings);
+	}
+
+	private function appendHeaderLine(array &$header, string $line, int $originLine = 0): void
+	{
+		$header[] = $line;
+		$this->headerLineMap[] = $originLine;
+	}
+
+	private function appendSourceLine(array &$source, string $line, int $originLine = 0): void
+	{
+		$source[] = $line;
+		$this->sourceLineMap[] = $originLine;
+	}
+
+	private function appendSourceBlock(array &$source, string $block, int $originLine = 0): void
+	{
+		foreach (explode("\n", $block) as $line) {
+			$this->appendSourceLine($source, $line, $originLine);
+		}
 	}
 
 	/** @return array<int, string> */
@@ -1206,11 +1238,11 @@ final class Generator
 	{
 		$previousNamespacePhp = $this->currentNamespacePhp;
 		$this->currentNamespacePhp = $namespacePhp;
-		$header[] = 'namespace ' . $namespaceCpp . ' {';
-		$header[] = '';
-		$source[] = 'namespace ' . $namespaceCpp . ' {';
-		$source[] = $this->indent(1) . 'using namespace ::scpp;';
-		$source[] = '';
+		$this->appendHeaderLine($header, 'namespace ' . $namespaceCpp . ' {');
+		$this->appendHeaderLine($header, '');
+		$this->appendSourceLine($source, 'namespace ' . $namespaceCpp . ' {');
+		$this->appendSourceLine($source, $this->indent(1) . 'using namespace ::scpp;');
+		$this->appendSourceLine($source, '');
 
 		foreach ($uses as $use) {
 			$useLine = $this->renderUseDeclaration($use);
@@ -1222,24 +1254,24 @@ final class Generator
 				if ($line === '') {
 					continue;
 				}
-				$source[] = $this->indent(1) . $line;
+				$this->appendSourceLine($source, $this->indent(1) . $line, $use->line);
 			}
 		}
 		if ($uses !== []) {
-			$source[] = '';
+			$this->appendSourceLine($source, '');
 		}
 		
 		foreach ($constants as $constant) {
 			$this->emitConstant($header, $constant, $namespacePhp);
 		}
 		if ($constants !== []) {
-			$header[] = '';
+			$this->appendHeaderLine($header, '');
 		}
 		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className) {
-			$header[] = 'class ' . $className . ';';
+			$this->appendHeaderLine($header, 'class ' . $className . ';');
 		}
 		if ($classes !== []) {
-			$header[] = '';
+			$this->appendHeaderLine($header, '');
 		}
 
 		foreach ($classes as $class) {
@@ -1252,10 +1284,10 @@ final class Generator
 			$this->emitNamespaceMain($header, $source, $syntheticMainName, $statements, $namespacePhp);
 		}
 
-		$header[] = '}';
-		$header[] = '';
-		$source[] = '}';
-		$source[] = '';
+		$this->appendHeaderLine($header, '}');
+		$this->appendHeaderLine($header, '');
+		$this->appendSourceLine($source, '}');
+		$this->appendSourceLine($source, '');
 		$this->currentNamespacePhp = $previousNamespacePhp;
 	}
 
@@ -1379,7 +1411,7 @@ final class Generator
 
 	private function emitConstant(array &$header, ConstantDecl $constant, ?string $namespacePhp): void
 	{
-		$header[] = 'inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
+		$this->appendHeaderLine($header, 'inline const auto ' . $constant->name . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';', $constant->line);
 	}
 
 	/**
@@ -1732,17 +1764,17 @@ final class Generator
 			throw new \RuntimeException('Enums must declare at least one case in the current enum lowering');
 		}
 		$storage = $this->enumStorageType($class);
-		$header[] = 'enum class ' . $class->name . ' : ' . $storage . ' {';
+		$this->appendHeaderLine($header, 'enum class ' . $class->name . ' : ' . $storage . ' {', $class->line);
 		foreach ($class->enumCases as $index => $case) {
 			$suffix = $index + 1 < count($class->enumCases) ? ',' : '';
 			$line = $this->indent(1) . $this->cppIdentifier($case->name);
 			if ($class->enumBackingType !== null) {
 				$line .= ' = ' . $this->renderEnumCaseValue($case);
 			}
-			$header[] = $line . $suffix;
+			$this->appendHeaderLine($header, $line . $suffix, $case->line);
 		}
-		$header[] = '};';
-		$header[] = '';
+		$this->appendHeaderLine($header, '};', $class->line);
+		$this->appendHeaderLine($header, '');
 	}
 
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
@@ -1758,8 +1790,8 @@ final class Generator
 		foreach ($class->interfaces as $interface) {
 			$extends[] = 'public ' . $this->typeMapper->mapClassName($interface);
 		}
-		$header[] = 'class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {';
-		$header[] = 'public:';
+		$this->appendHeaderLine($header, 'class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line);
+		$this->appendHeaderLine($header, 'public:', $class->line);
 		foreach ($class->properties as $property) {
 			$initializer = $property->hasDefault
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
@@ -1780,10 +1812,10 @@ final class Generator
 			} elseif ($initializer !== null) {
 				$line .= ' = ' . $initializer;
 			}
-			$header[] = $this->indent(1) . rtrim($line, ';') . ';';
+			$this->appendHeaderLine($header, $this->indent(1) . rtrim($line, ';') . ';', $property->line);
 		}
 		foreach ($class->constants as $constant) {
-			$header[] = $this->indent(1) . 'static inline const auto ' . $this->cppIdentifier($constant->name) . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';';
+			$this->appendHeaderLine($header, $this->indent(1) . 'static inline const auto ' . $this->cppIdentifier($constant->name) . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';', $constant->line);
 		}
 		foreach ($class->methods as $method) {
 			if ($this->methodNeedsNormalizedTemplate($method)) {
@@ -1791,22 +1823,22 @@ final class Generator
 					? $this->renderInlineTemplateMethodArtifactsWithExecSplit($class, $method, $namespacePhp)
 					: $this->renderInlineTemplateMethodArtifacts($class, $method, $namespacePhp);
 				foreach ($artifacts as $line) {
-					$header[] = $this->indent(1) . $line;
+					$this->appendHeaderLine($header, $this->indent(1) . $line, $method->line);
 				}
 				continue;
 			}
-			$header[] = $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';';
+			$this->appendHeaderLine($header, $this->indent(1) . $this->renderMethodDeclaration($method, $class, $namespacePhp) . ';', $method->line);
 			if ($this->methodNeedsValueRefOverload($method, $class)) {
 				$overload = $this->methodRequiresInlineValueRefOverload($method, $class)
 					? $this->renderInlineMethodValueRefOverloadDefinition($class, $method, $namespacePhp)
 					: $this->renderMethodValueRefOverloadDeclaration($method, $class, $namespacePhp) . ';';
 				foreach (explode("\n", $overload) as $line) {
-					$header[] = $this->indent(1) . $line;
+					$this->appendHeaderLine($header, $this->indent(1) . $line, $method->line);
 				}
 			}
 		}
-		$header[] = '};';
-		$header[] = '';
+		$this->appendHeaderLine($header, '};', $class->line);
+		$this->appendHeaderLine($header, '');
 
 		foreach ($class->properties as $property) {
 			if (!$property->isStatic) {
@@ -1822,10 +1854,10 @@ final class Generator
 			} else {
 				$type = '/* ERROR missing-property-type */';
 			}
-			$source[] = $type . ' ' . $class->name . '::' . $this->cppIdentifier($property->name) . ' = ' . ($default ?? ($type . '{}')) . ';';
+			$this->appendSourceLine($source, $type . ' ' . $class->name . '::' . $this->cppIdentifier($property->name) . ' = ' . ($default ?? ($type . '{}')) . ';', $property->line);
 		}
 		if (!$class->isInterface && array_filter($class->properties, static fn ($property): bool => $property->isStatic) !== []) {
-			$source[] = '';
+			$this->appendSourceLine($source, '');
 		}
 
 		if (!$class->isInterface) {
@@ -1839,16 +1871,16 @@ final class Generator
 				}
 				if ($this->methodNeedsNormalizedTemplate($method)) {
 					if ($this->functionLikeUsesExecBodySplit($method->params, $method->statements)) {
-						$source[] = $this->renderMethodExecDefinition($class, $method, $namespacePhp);
-						$source[] = '';
+						$this->appendSourceBlock($source, $this->renderMethodExecDefinition($class, $method, $namespacePhp), $method->line);
+						$this->appendSourceLine($source, '');
 					}
 					continue;
 				}
-				$source[] = $this->renderMethodDefinition($class, $method, $namespacePhp);
-				$source[] = '';
+				$this->appendSourceBlock($source, $this->renderMethodDefinition($class, $method, $namespacePhp), $method->line);
+				$this->appendSourceLine($source, '');
 				if ($this->methodNeedsValueRefOverload($method, $class) && !$this->methodRequiresInlineValueRefOverload($method, $class)) {
-					$source[] = $this->renderMethodValueRefOverloadDefinition($class, $method, $namespacePhp);
-					$source[] = '';
+					$this->appendSourceBlock($source, $this->renderMethodValueRefOverloadDefinition($class, $method, $namespacePhp), $method->line);
+					$this->appendSourceLine($source, '');
 				}
 			}
 			$this->currentClassName = $prevClassName;
@@ -2007,25 +2039,25 @@ final class Generator
 				? $this->renderFunctionTemplateArtifactsWithExecSplit($function, $namespacePhp)
 				: $this->renderFunctionTemplateArtifacts($function, $namespacePhp);
 			foreach ($artifacts as $line) {
-				$header[] = $line;
+				$this->appendHeaderLine($header, $line, $function->line);
 			}
-			$header[] = '';
+			$this->appendHeaderLine($header, '');
 			if ($this->functionLikeUsesExecBodySplit($function->params, $function->statements)) {
-				$source[] = $this->renderFunctionExecDefinition($function, $namespacePhp);
-				$source[] = '';
+				$this->appendSourceBlock($source, $this->renderFunctionExecDefinition($function, $namespacePhp), $function->line);
+				$this->appendSourceLine($source, '');
 			}
 			return;
 		}
-		$header[] = $this->renderFunctionDeclaration($function, $namespacePhp) . ';';
+		$this->appendHeaderLine($header, $this->renderFunctionDeclaration($function, $namespacePhp) . ';', $function->line);
 		if ($this->functionNeedsValueRefOverload($function->params)) {
-			$header[] = $this->renderFunctionValueRefOverloadDeclaration($function, $namespacePhp) . ';';
+			$this->appendHeaderLine($header, $this->renderFunctionValueRefOverloadDeclaration($function, $namespacePhp) . ';', $function->line);
 		}
-		$header[] = '';
-		$source[] = $this->renderFunctionDefinition($function, $namespacePhp);
-		$source[] = '';
+		$this->appendHeaderLine($header, '');
+		$this->appendSourceBlock($source, $this->renderFunctionDefinition($function, $namespacePhp), $function->line);
+		$this->appendSourceLine($source, '');
 		if ($this->functionNeedsValueRefOverload($function->params)) {
-			$source[] = $this->renderFunctionValueRefOverloadDefinition($function, $namespacePhp);
-			$source[] = '';
+			$this->appendSourceBlock($source, $this->renderFunctionValueRefOverloadDefinition($function, $namespacePhp), $function->line);
+			$this->appendSourceLine($source, '');
 		}
 	}
 
@@ -2045,22 +2077,24 @@ final class Generator
 
 	private function emitNamespaceMain(array &$header, array &$source, string $name, array $statements, ?string $namespacePhp): void
 	{
-		$header[] = 'int ' . $name . '();';
-		$header[] = '';
-		$source[] = 'int ' . $name . '() {';
+		$this->appendHeaderLine($header, 'int ' . $name . '();');
+		$this->appendHeaderLine($header, '');
+		$this->appendSourceLine($source, 'int ' . $name . '() {');
 		$this->declaredLocals = [];
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
 		$this->currentReturnType = 'int';
 		$this->seedSyntheticMainCliLocals();
 		foreach ($this->renderSyntheticMainCliPreamble() as $line) {
-			$source[] = $this->indent(1) . $line;
+			$this->appendSourceLine($source, $this->indent(1) . $line);
 		}
-		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
-			$source[] = $this->indent(1) . $line;
+		foreach ($statements as $statement) {
+			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
+				$this->appendSourceLine($source, $this->indent(1) . $line, $statement->line);
+			}
 		}
-		$source[] = $this->indent(1) . 'return 0;';
-		$source[] = '}';
+		$this->appendSourceLine($source, $this->indent(1) . 'return 0;');
+		$this->appendSourceLine($source, '}');
 		$this->currentReturnType = null;
 	}
 
@@ -3394,8 +3428,7 @@ final class Generator
 		}
 
 		if ($statement->kind === 'echo') {
-			// Keep the single-statement fallback lazy as well so operand evaluation order stays explicit.
-			return [$this->qualifyKnownPhpRuntimeSymbol('echo_eval') . '(' . $this->renderEchoThunk($statement->payload, $namespacePhp) . ');'];
+			return [$this->qualifyKnownPhpRuntimeSymbol('echo_one') . '(' . $this->renderExpr($statement->payload, $namespacePhp) . ');'];
 		}
 
 		if ($statement->kind === 'unset') {
@@ -4022,32 +4055,13 @@ final class Generator
 	private function renderStatementSequence(array $statements, ?string $namespacePhp): array
 	{
 		$lines = [];
-		$count = count($statements);
-
-		for ($i = 0; $i < $count; ++$i) {
-			$statement = $statements[$i];
-			if ($statement->kind === 'echo') {
-				$thunks = [];
-				while ($i < $count && $statements[$i]->kind === 'echo') {
-					$thunks[] = $this->renderEchoThunk($statements[$i]->payload, $namespacePhp);
-					++$i;
-				}
-				--$i;
-				$lines[] = $this->qualifyKnownPhpRuntimeSymbol('echo_eval') . '(' . implode(', ', $thunks) . ');';
-				continue;
-			}
-
+		foreach ($statements as $statement) {
 			foreach ($this->renderStatement($statement, $namespacePhp) as $line) {
 				$lines[] = $line;
 			}
 		}
 
 		return $lines;
-	}
-
-	private function renderEchoThunk(mixed $expr, ?string $namespacePhp): string
-	{
-		return '[&]() -> decltype(auto) { return ' . $this->renderExpr($expr, $namespacePhp) . '; }';
 	}
 
 	/** @param list<mixed> $exprs */
@@ -5223,26 +5237,12 @@ final class Generator
 	{
 		$name = (string) ($param->children['name'] ?? '');
 		$line = (int) ($param->lineno ?? 0);
-		if ($name !== '') {
-			$key = $line . ':' . $name;
-			$fromMap = $this->localTypeComments[$key] ?? null;
-			if (is_string($fromMap) && $fromMap !== '') {
-				return $fromMap;
-			}
-		}
-
-		$docComment = $param->children['docComment'] ?? null;
-		if (!is_string($docComment)) {
+		if ($name === '' || $line <= 0) {
 			return null;
 		}
-
-		$inner = trim($docComment);
-		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
-			return null;
-		}
-
-		$inner = trim(substr($inner, 3, -2));
-		return $inner === '' ? null : $inner;
+		$key = $line . ':' . $name;
+		$fromMap = $this->localTypeComments[$key] ?? null;
+		return is_string($fromMap) && $fromMap !== '' ? $fromMap : null;
 	}
 
 	private function appendLvalueReferenceType(string $mappedType): string
@@ -5731,10 +5731,7 @@ final class Generator
 	private function renderClosureReturnType(mixed $returnTypeNode, array $statements, object $expr): ?string
 	{
 		$phpType = $this->readAstTypeName($returnTypeNode);
-		$docFunctionType = $this->resolveClosureReturnDocFunctionType($statements);
-		if ($docFunctionType === null) {
-			$docFunctionType = $this->resolveScannerClosureReturnType($expr);
-		}
+		$docFunctionType = $this->resolveScannerClosureReturnType($expr);
 		if ($phpType !== null && $docFunctionType !== null) {
 			$this->errors[] = 'Conflicting closure return type sources at line ' . (int) ($expr->lineno ?? 0) . ': use either a native PHP return type or a doc-comment callable return type, not both.';
 			return '/* unsupported-closure-conflicting-return-type */';
@@ -5768,35 +5765,6 @@ final class Generator
 			return null;
 		}
 		return preg_match('/^function\s*</', $type) === 1 ? $type : null;
-	}
-
-	/** @param list<Statement> $statements */
-	private function resolveClosureReturnDocFunctionType(array $statements): ?string
-	{
-		if (count($statements) !== 1) {
-			return null;
-		}
-		$statement = $statements[0] ?? null;
-		if (!$statement instanceof Statement || $statement->kind !== 'return' || !is_object($statement->payload)) {
-			return null;
-		}
-		$payload = $statement->payload;
-		if (($payload->kind ?? null) !== AstKind::CLOSURE) {
-			return null;
-		}
-		$docComment = $payload->children['docComment'] ?? null;
-		if (!is_string($docComment)) {
-			return null;
-		}
-		$inner = trim($docComment);
-		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
-			return null;
-		}
-		$inner = trim(substr($inner, 3, -2));
-		if ($inner === '' || preg_match('/^function\s*</', $inner) !== 1) {
-			return null;
-		}
-		return $inner;
 	}
 
 	private function qualifyDeclaredPhpType(?string $phpType, ?string $namespacePhp): ?string

@@ -23,6 +23,176 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - Enable the `regex` runtime module explicitly and install PCRE2 development files manually for now; full PHP parity for `PREG_OFFSET_CAPTURE`, `PREG_UNMATCHED_AS_NULL`, and dynamic callable-array handling remains deferred
 
+## 0.1.26 - 2026-05-09
+
+### Additions
+
+- Added regression coverage for strict same-project namespaced units whose generated header order would otherwise reference a later namespace/class.
+- Added regression coverage for same-project derived-class headers needing base-class headers before derived headers.
+
+### Fixes
+
+- Fixed generated same-project composition so `__project_units.hpp` includes a project-wide `__project_fwd.hpp` before generated unit headers.
+- Fixed same-project generated header ordering so base-class headers are emitted before derived-class headers when both are discovered in the project unit set.
+- Updated the repo-local strict Agent Skill guidance to reflect that same-project `.phs` files are composed by `scpp build` and must not include generated `.hpp` files.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Retry removing same-project generated `.hpp` `require` / `include` lines after updating; nested namespaces and common base/derived ordering cases are now covered by generated project composition.
+- Keep `/** @lib-export */` for dependency-visible cross-project declarations.
+
+## 0.1.25 - 2026-05-09
+
+### Additions
+
+- Added regression coverage for strict same-project `.phs` files composing without source-level generated `.hpp` includes.
+
+### Fixes
+
+- Fixed strict project builds so same-project generated headers are force-included through an internal `.prism/generated/__project_units.hpp` build artifact.
+- Fixed project composition guidance to make generated `.hpp` names an internal build detail rather than a PHP++ source authoring surface.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Remove source-level `require` or `include` statements that point at generated `.hpp` files; same-project `.phs` composition is handled by `scpp build`.
+- Agent Skill review completed: strict project composition guidance remains aligned with the existing repo-local skill; no `.agents/skills/*` updates are required.
+
+## 0.1.24 - 2026-05-09
+
+### Additions
+
+- Added focused regression coverage for `scpp run` runtime-library launch environment handling and Linux shared-runtime SONAME emission.
+
+### Fixes
+
+- Fixed `scpp run` for strict projects that built successfully but failed to launch from the project root because `libruntime.so` could not be resolved.
+- Fixed Linux reusable runtime linking so `libruntime.so` declares a stable SONAME instead of allowing executables to record a project-relative shared-library path.
+- Fixed the `scpp run` launch environment so Unix-like systems prepend the runtime directory through the platform loader path (`LD_LIBRARY_PATH` on Linux/Unix, `DYLD_LIBRARY_PATH` on macOS) while Windows continues to use `PATH`.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Rebuild the reusable runtime or run `scpp run --force` once after updating if an existing project still has a binary linked against the old slash-containing runtime dependency path.
+- Agent Skill review completed: no `.agents/skills/*` updates are required because existing `scpp run` validation guidance remains correct.
+
+## 0.1.23 - 2026-05-09
+
+### Additions
+
+- Added regression coverage for top-level PHP++ constants with array initializers so the generator cannot regress to missing constant source-line metadata.
+
+### Fixes
+
+- Fixed PHP++ constant IR construction so top-level constants, class constants, and enum cases carry source-line metadata before header emission.
+- Fixed the generator crash on top-level `const` declarations where `ConstantDecl::$line` was missing during header line-map emission.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No migration is required.
+- Agent Skill review completed: no `.agents/skills/*` updates are required because this hotfix restores existing documented constant lowering behavior and does not change authoring guidance.
+
+## 0.1.22 - 2026-05-09
+
+### Additions
+
+- Added a repo-local Agent Skill at `.agents/skills/simple-cpp-php-strict/` for strict PHP++ / PHS app authoring, validation, diagnostics, project composition, and common PHP-habit pitfalls
+- Added `scpp docs <name>` to print curated local Markdown documentation without requiring web access
+- Added local documentation entries for strict authoring, diagnostics, build workflow, profiles, examples, Agent Skill guidance, and AI onboarding
+- Added focused regression coverage for the `scpp docs` registry, successful doc lookup, and unknown-doc failure path
+
+### Fixes
+
+- Updated release workflow rules so `.agents/skills/*` must be reviewed and kept current before release publication
+- Updated strict PHP++ quick-learn, getting-started, README, and project build docs to surface the new local docs workflow
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Use `scpp docs` to list local documentation names.
+- Use `scpp docs strict` or `scpp docs diagnostics` when an agent or user needs local strict PHP++ guidance without browsing the web.
+
+## 0.1.18 - 2026-05-08
+
+### Additions
+
+- Added `--entry=<path>` support to `scpp build` and `scpp run` so one invocation can target a project-local source file without editing `prism.json`
+- Added persistent `tests/.run-tests/` PHP test workspaces so repeated flow-test runs can reuse warm `.prism` build state instead of recompiling from scratch
+
+### Fixes
+
+- Fixed echo lowering so adjacent exported echo nodes now emit direct sequential `php::echo_one(...)` calls instead of large batched `php::echo_eval(...)` lambda packs
+- Fixed the PHP flow test harness to build through `scpp` project mode rather than one-off direct compiler invocations, while preserving per-test result files and cwd-sensitive fixture behavior
+- Fixed PHP runtime symbol qualification so generated `echo_one` calls resolve through the runtime symbol registry just like other known PHP helpers
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- `scpp build --entry=...` and `scpp run --entry=...` override the configured `prism.json` entrypoint for that invocation only
+- `tests/.run-tests/` is generated state and should remain ignored; warm reruns of individual PHP flow tests now become much faster after the first build
+
+## 0.1.17 - 2026-05-08
+
+### Additions
+
+- Added scanner regression coverage for allowed inline typed comment slots, including leading/trailing property comments, inline parameter comments, and inline function-like return comments
+
+### Fixes
+
+- Fixed type metadata ownership so params, properties, locals, and function/method/closure return comments are now sourced from pre-tokenizer scanner annotations instead of raw `php-ast` doc-comment attachment
+- Fixed the accepted inline type-comment surface so only recognized typed slots are honored, while detached forms such as `/** @var T */` remain non-authoritative
+- Fixed closure and arrow-function typed comment handling so it follows the same scanner-owned slot rules as ordinary function-like sites
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Inline type comments remain supported, but only in recognized typed slots such as `$x /** T */ = ...`, `function (/** T */ $x)`, `public /** T */ $x`, `public $x /** T */ = ...`, and immediate post-signature return slots
+- `TypeCommentExtractor` has been removed from the active pipeline; scanner-owned annotation metadata is now the single type-comment source of truth
+
+## 0.1.16 - 2026-05-08
+
+### Additions
+
+- Added explicit runtime maintenance commands and flags: `scpp runtime-build`, `--build-runtime`, `--build-dependencies`, and `--force`
+
+### Fixes
+
+- Fixed the public `scpp build` and `scpp run` defaults so they now reuse existing runtime and Prism project dependency artifacts unless explicit rebuild flags are requested
+- Fixed `scpp update` so a real fast-forward rebuilds the default reusable runtime cache automatically, and `scpp update --force` rebuilds that cache even when the checkout is already current
+
+### Breaking Changes
+
+- `--reuse-runtime` and `--reuse-dependencies` are replaced by `--build-runtime` and `--build-dependencies`
+
+### Migration Notes
+
+- `scpp build` and `scpp run` now default to warm-build reuse for runtime and dependency artifacts
+- Use `--build-runtime` and `--build-dependencies` when you explicitly want those heavier rebuild steps
+- Use `scpp runtime-build [--debug|--release] [--force]` to rebuild the reusable runtime cache directly
+- Use `scpp update --force` to rebuild the default reusable runtime cache even when no Git update is pulled
 ## 0.1.15 - 2026-05-08
 
 ### Additions
@@ -30,7 +200,6 @@ This file is the authoritative checked-in source for release notes referenced by
 - Added a scanner-owned pre-tokenizer path for PHP++ shorthand type syntax across locals, properties, parameters, and function-like return sites
 - Added shorthand-type regression fixtures and regression scripts for rewritten-source and annotation-ownership validation
 - Added build option coverage and integration coverage for runtime/dependency warm-build reuse behavior
-- Added `scpp build` / `scpp run` warm-build reuse flags: `--reuse-runtime` and `--reuse-dependencies`
 - Added `public_html/test` pre-tokenized AST/PHP execution support so browser-driven test runs can exercise shorthand typed syntax
 
 ### Fixes
@@ -46,7 +215,6 @@ This file is the authoritative checked-in source for release notes referenced by
 ### Migration Notes
 
 - Typed doc-comment forms such as `$count /** int */ = 0;` remain supported, but shorthand surface forms such as `$count int = 0;` are now first-class and normalize through the pre-tokenizer
-- Public `scpp build` and `scpp run` still compile runtime and Prism project dependencies by default; use `--reuse-runtime` and `--reuse-dependencies` for warm-build reuse behavior
 
 ## 0.1.14 - 2026-05-06
 

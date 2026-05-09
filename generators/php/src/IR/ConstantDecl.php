@@ -23,6 +23,7 @@ final class ConstantDecl
 		public readonly string $name,
 		public readonly mixed $value,
 		public readonly bool $isLibExport = false,
+		public readonly int $line = 0,
 	) {
 	}
 }

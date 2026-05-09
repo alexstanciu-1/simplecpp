@@ -107,11 +107,11 @@ function scpp_run_build_service(string $projectRoot, string $configPath, array $
 }
 
 /** @return array{ok:bool,output:string,error:string,exit_code:int|null} */
-function scpp_run_update_service(string $repoRoot): array
+function scpp_run_update_service(string $repoRoot, array $options = []): array
 {
 	ob_start();
 	try {
-		$command = new ScppUpdateCommand($repoRoot);
+		$command = new ScppUpdateCommand($repoRoot, $options);
 		$command->run();
 		return [
 			'ok' => true,
@@ -189,6 +189,7 @@ final class ScppUpdateCommand
 {
 	public function __construct(
 		private readonly string $repoRoot,
+		private readonly array $options = [],
 	)
 	{
 	}
@@ -241,11 +242,17 @@ final class ScppUpdateCommand
 		}
 
 		$after = $this->readGitLine($git, $topLevel, ['rev-parse', '--short', 'HEAD'], 'Failed to inspect the updated scpp revision.');
+		$force = (bool) ($this->options['force'] ?? false);
 		if ($before === $after) {
 			echo 'Already up to date.' . PHP_EOL;
+			if ($force) {
+				echo 'Forcing runtime rebuild after update check.' . PHP_EOL;
+				scpp_build_default_runtime($topLevel, true);
+			}
 			return;
 		}
 		echo 'Updated scpp: ' . $before . ' -> ' . $after . PHP_EOL;
+		scpp_build_default_runtime($topLevel, true);
 	}
 
 	/** @param list<string> $args */
@@ -533,12 +540,42 @@ function main(array $argv): void
 	}
 
 	if ($args[0] === 'update') {
-		handle_update();
+		handle_update(array_slice($args, 1));
 		return;
 	}
 
 	if ($args[0] === 'run') {
 		handle_run(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
+	if ($args[0] === 'runtime-build') {
+		handle_runtime_build(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
+	if ($args[0] === 'docs') {
+		handle_docs(array_slice($args, 1));
+		return;
+	}
+
+	if ($args[0] === 'error') {
+		handle_error_report(getcwd() === false ? '.' : getcwd(), false);
+		return;
+	}
+
+	if ($args[0] === 'full-error') {
+		handle_error_report(getcwd() === false ? '.' : getcwd(), true);
+		return;
+	}
+
+	if ($args[0] === 'last-run') {
+		handle_last_run_report(getcwd() === false ? '.' : getcwd(), false);
+		return;
+	}
+
+	if ($args[0] === 'full-last-run') {
+		handle_last_run_report(getcwd() === false ? '.' : getcwd(), true);
 		return;
 	}
 
@@ -569,15 +606,23 @@ function print_help(): void
 	echo "Usage:\n";
 	echo "  scpp <input.phs>\n";
 	echo "  scpp init [--php-profile=legacy|strict]\n";
-	echo "  scpp build [--reuse-runtime] [--reuse-dependencies]\n";
+	echo "  scpp build [--entry=<path>] [--build-runtime] [--build-dependencies]\n";
 	echo "  scpp clean\n";
-	echo "  scpp update\n";
-	echo "  scpp run [--reuse-runtime] [--reuse-dependencies] [-- <args...>]\n";
+	echo "  scpp update [--force]\n";
+	echo "  scpp run [--entry=<path>] [--build-runtime] [--build-dependencies] [--force] [-- <args...>]\n";
+	echo "  scpp runtime-build [--debug|--release] [--force]\n";
+	echo "  scpp docs [<name>]\n";
+	echo "  scpp error\n";
+	echo "  scpp full-error\n";
+	echo "  scpp last-run\n";
+	echo "  scpp full-last-run\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
-	echo "  scpp update fast-forwards the scpp repository from origin/main\n";
-	echo "  scpp run builds first, then executes the primary output\n";
+	echo "  scpp update fast-forwards the scpp repository from origin/main and rebuilds the default runtime when it changes\n";
+	echo "  scpp run builds first, then executes the selected output\n";
+	echo "  scpp runtime-build compiles the reusable runtime cache explicitly\n";
+	echo "  scpp docs prints curated local documentation by name\n";
 	echo "  scpp usability-harness generates deterministic spec-driven trial projects\n";
 	echo "  scpp --help\n";
 	echo "  scpp --version\n";
@@ -650,6 +695,127 @@ function print_doctor(): void
 	echo 'resolved_cxx: ' . ($compiler !== null ? compiler_display_command($compiler) : '(not found)') . PHP_EOL;
 	echo 'env_SCPP_CXX: ' . (getenv('SCPP_CXX') !== false ? (string) getenv('SCPP_CXX') : '(unset)') . PHP_EOL;
 	echo 'env_SCPP_CXX_LAUNCHER: ' . (getenv('SCPP_CXX_LAUNCHER') !== false ? (string) getenv('SCPP_CXX_LAUNCHER') : '(unset)') . PHP_EOL;
+}
+
+function handle_docs(array $args): void
+{
+	$docs = scpp_docs_registry();
+	if ($args === [] || in_array($args[0], ['-h', '--help', 'list'], true)) {
+		scpp_write(render_docs_index($docs));
+		return;
+	}
+
+	$name = strtolower(trim((string) $args[0]));
+	if ($name === '') {
+		scpp_write(render_docs_index($docs));
+		return;
+	}
+
+	$entry = $docs[$name] ?? null;
+	if ($entry === null) {
+		scpp_fail("Unknown docs name: {$name}\n\n" . render_docs_index($docs), 1);
+	}
+
+	$repoRoot = resolve_repo_root();
+	$path = normalize_path($repoRoot . '/' . $entry['path']);
+	if (!is_file($path)) {
+		scpp_fail('Documentation source is missing: ' . $entry['path'] . PHP_EOL, 1);
+	}
+
+	$content = file_get_contents($path);
+	if (!is_string($content)) {
+		scpp_fail('Failed to read documentation source: ' . $entry['path'] . PHP_EOL, 1);
+	}
+
+	scpp_write('Doc: ' . $name . PHP_EOL);
+	scpp_write('Title: ' . $entry['title'] . PHP_EOL);
+	scpp_write('Source: ' . $entry['path'] . PHP_EOL);
+	scpp_write(str_repeat('-', 72) . PHP_EOL);
+	scpp_write(rtrim($content) . PHP_EOL);
+}
+
+/**
+ * @return array<string,array{title:string,path:string}>
+ */
+function scpp_docs_registry(): array
+{
+	$entries = [
+		'strict' => [
+			'title' => 'PHP++ Strict Quick Learn',
+			'path' => 'specs/simple_cpp_php_strict_quick_learn.md',
+		],
+		'php-strict' => [
+			'title' => 'PHP++ Strict Quick Learn',
+			'path' => 'specs/simple_cpp_php_strict_quick_learn.md',
+		],
+		'quick-learn' => [
+			'title' => 'PHP++ Strict Quick Learn',
+			'path' => 'specs/simple_cpp_php_strict_quick_learn.md',
+		],
+		'build' => [
+			'title' => 'Project Build v1',
+			'path' => 'specs/project_build_v1.md',
+		],
+		'getting-started' => [
+			'title' => 'Getting Started',
+			'path' => 'docs/getting_started.md',
+		],
+		'diagnostics' => [
+			'title' => 'Strict PHP++ Validation And Diagnostics',
+			'path' => '.agents/skills/simple-cpp-php-strict/references/validation-and-diagnostics.md',
+		],
+		'profiles' => [
+			'title' => 'PHP Library Profiles',
+			'path' => 'specs/php/library_profiles.md',
+		],
+		'modules' => [
+			'title' => 'Strict PHP++ Validation And Diagnostics',
+			'path' => '.agents/skills/simple-cpp-php-strict/references/validation-and-diagnostics.md',
+		],
+		'dependencies' => [
+			'title' => 'Project Build v1',
+			'path' => 'specs/project_build_v1.md',
+		],
+		'examples' => [
+			'title' => 'Strict PHP Examples',
+			'path' => 'docs/examples/php/strict/README.md',
+		],
+		'authoring' => [
+			'title' => 'Strict PHP++ Authoring Rules',
+			'path' => '.agents/skills/simple-cpp-php-strict/references/authoring-rules.md',
+		],
+		'gotchas' => [
+			'title' => 'PHP Habit Gotchas',
+			'path' => '.agents/skills/simple-cpp-php-strict/references/php-habit-gotchas.md',
+		],
+		'skill' => [
+			'title' => 'Simple C++ PHP++ Strict Agent Skill',
+			'path' => '.agents/skills/simple-cpp-php-strict/SKILL.md',
+		],
+		'agents' => [
+			'title' => 'AI Onboarding',
+			'path' => 'docs/ai_onboarding/README.md',
+		],
+	];
+	ksort($entries);
+	return $entries;
+}
+
+/**
+ * @param array<string,array{title:string,path:string}> $docs
+ */
+function render_docs_index(array $docs): string
+{
+	$lines = [];
+	$lines[] = 'scpp docs';
+	$lines[] = 'Usage: scpp docs <name>';
+	$lines[] = '';
+	$lines[] = 'Known docs:';
+	foreach ($docs as $name => $entry) {
+		$lines[] = '  ' . str_pad($name, 16) . $entry['title'] . ' (' . $entry['path'] . ')';
+	}
+	$lines[] = '';
+	return implode(PHP_EOL, $lines);
 }
 
 /** @return array{repo:string,branch:string,commit:string,origin_url:string,origin_main_commit:string,up_to_date_with_origin_main:string} */
@@ -855,14 +1021,25 @@ function handle_clean(string $cwd): void
 	$command->run();
 }
 
-function handle_update(): void
+function handle_update(array $args = []): void
 {
-	$command = new ScppUpdateCommand(resolve_repo_root());
+	$options = [
+		'force' => false,
+	];
+	foreach ($args as $arg) {
+		if ($arg === '--force') {
+			$options['force'] = true;
+			continue;
+		}
+		scpp_fail('Unknown option for `scpp update`: ' . $arg . PHP_EOL, 1);
+	}
+	$command = new ScppUpdateCommand(resolve_repo_root(), $options);
 	$command->run();
 }
 
 function handle_run(string $cwd, array $args): void
 {
+	$startedAt = microtime(true);
 	$project = find_project_config($cwd);
 	if ($project === null) {
 		scpp_fail('No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL . 'Run `scpp init` in the project root first.' . PHP_EOL, 1);
@@ -882,13 +1059,9 @@ function handle_run(string $cwd, array $args): void
 		1 => ['file', 'php://stdout', 'w'],
 		2 => ['file', 'php://stderr', 'w'],
 	];
-	$processEnv = [];
-	if (is_string($buildResult['runtime_library_dir'] ?? null) && $buildResult['runtime_library_dir'] !== '') {
-		$existingPath = getenv('PATH');
-		$processEnv['PATH'] = $buildResult['runtime_library_dir']
-			. PATH_SEPARATOR
-			. (is_string($existingPath) ? $existingPath : '');
-	}
+	$processEnv = scpp_runtime_library_process_environment(
+		is_string($buildResult['runtime_library_dir'] ?? null) ? $buildResult['runtime_library_dir'] : null
+	);
 	$process = proc_open($command, $descriptor, $pipes, $project['project_root'], scpp_build_process_environment($processEnv));
 	if (!is_resource($process)) {
 		scpp_fail('Failed to start built program.' . PHP_EOL, 4);
@@ -897,7 +1070,53 @@ function handle_run(string $cwd, array $args): void
 	if (!is_int($status)) {
 		scpp_fail('Failed to read program exit status.' . PHP_EOL, 4);
 	}
+	write_last_run_report(
+		$project['project_root'],
+		'run',
+		$GLOBALS['argv'] ?? ['scpp', 'run'],
+		$status,
+		$startedAt,
+		microtime(true),
+		[
+			'entrypoint_output' => $buildResult['output_path'],
+			'runtime_library_dir' => $buildResult['runtime_library_dir'],
+			'run_args' => array_values($runArgs),
+		]
+	);
 	exit($status);
+}
+
+/** @return array<string,string> */
+function scpp_runtime_library_process_environment(?string $runtimeLibraryDir): array
+{
+	if ($runtimeLibraryDir === null || $runtimeLibraryDir === '') {
+		return [];
+	}
+
+	if (PHP_OS_FAMILY === 'Windows') {
+		return [
+			'PATH' => prepend_path_env_value('PATH', $runtimeLibraryDir),
+		];
+	}
+
+	if (PHP_OS_FAMILY === 'Darwin') {
+		return [
+			'DYLD_LIBRARY_PATH' => prepend_path_env_value('DYLD_LIBRARY_PATH', $runtimeLibraryDir),
+		];
+	}
+
+	return [
+		'LD_LIBRARY_PATH' => prepend_path_env_value('LD_LIBRARY_PATH', $runtimeLibraryDir),
+	];
+}
+
+function prepend_path_env_value(string $name, string $path): string
+{
+	$existing = getenv($name);
+	if (!is_string($existing) || $existing === '') {
+		return $path;
+	}
+	return $path . PATH_SEPARATOR . $existing;
 }
 
 
@@ -976,24 +1195,159 @@ function handle_build(string $cwd, array $args = []): void
 	execute_build($project['project_root'], $project['config_path'], parse_build_command_arguments($args));
 }
 
+function handle_runtime_build(string $cwd, array $args = []): void
+{
+	$startedAt = microtime(true);
+	$options = parse_runtime_build_command_arguments($args);
+	$project = find_project_config($cwd);
+	$config = null;
+	$projectRoot = $cwd;
+	if ($project !== null) {
+		$config = load_project_config($project['config_path']);
+		$projectRoot = $project['project_root'];
+	}
+	$result = scpp_build_runtime_from_config(resolve_repo_root(), $config, $options['build_mode'], $options['force']);
+	write_last_run_report(
+		$projectRoot,
+		'runtime-build',
+		$GLOBALS['argv'] ?? ['scpp', 'runtime-build'],
+		0,
+		$startedAt,
+		microtime(true),
+		[
+			'build_mode' => $result['build_mode'],
+			'runtime_artifact' => $result['artifact_path'],
+		]
+	);
+	echo 'Runtime build completed: ' . $result['artifact_path'] . PHP_EOL;
+	echo 'Runtime build mode: ' . $result['build_mode'] . PHP_EOL;
+}
+
+function handle_error_report(string $cwd, bool $full): void
+{
+	[$project, $path, $data] = load_project_report($cwd, '.prism/last_error.json', 'error');
+	if ($full) {
+		scpp_write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+		return;
+	}
+	$output = [];
+	$output[] = (string) ($data['short_message'] ?? 'Unknown error.');
+	$projectMode = trim((string) ($data['project_mode'] ?? ''));
+	if ($projectMode === 'strict') {
+		$output[] = 'Project mode: strict';
+	}
+	$output[] = 'Saved report: ' . normalize_config_path(relative_path($project['project_root'], $path));
+	if (isset($data['category'], $data['subcategory'])) {
+		$output[] = 'Category: ' . $data['category'] . ' / ' . $data['subcategory'];
+	}
+	if (isset($data['duration_ms'])) {
+		$output[] = 'Duration: ' . (int) $data['duration_ms'] . 'ms';
+	}
+	$guidance = is_array($data['guidance'] ?? null) ? $data['guidance'] : [];
+	foreach ($guidance as $item) {
+		if (is_string($item) && $item !== '') {
+			$output[] = 'Next: ' . $item;
+		}
+	}
+	$diagnostics = is_array($data['diagnostics'] ?? null) ? $data['diagnostics'] : [];
+	foreach (array_slice($diagnostics, 0, 2) as $diagnostic) {
+		if (!is_array($diagnostic)) {
+			continue;
+		}
+		$message = trim((string) ($diagnostic['message'] ?? ''));
+		$originalFile = $diagnostic['original_file'] ?? null;
+		$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
+		if (is_string($originalFile) && $originalFile !== '' && $originalLine > 0) {
+			$output[] = 'Mapped: ' . normalize_config_path(relative_path($project['project_root'], $originalFile)) . ':' . $originalLine . ($message !== '' ? ' - ' . $message : '');
+			continue;
+		}
+		if ($message !== '') {
+			$output[] = 'Detail: ' . $message;
+		}
+	}
+	if ($diagnostics === []) {
+		$rawOutput = is_array($data['raw_output'] ?? null) ? $data['raw_output'] : [];
+		$stderr = trim((string) ($rawOutput['stderr'] ?? ''));
+		if ($stderr !== '') {
+			$firstLine = preg_split('/\R/', $stderr, 2);
+			if (is_array($firstLine) && isset($firstLine[0]) && trim((string) $firstLine[0]) !== '') {
+				$output[] = 'Raw: ' . trim((string) $firstLine[0]);
+			}
+		}
+	}
+	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
+}
+
+function handle_last_run_report(string $cwd, bool $full): void
+{
+	[$project, $path, $data] = load_project_report($cwd, '.prism/last_run.json', 'last run');
+	if ($full) {
+		scpp_write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+		return;
+	}
+	$output = [];
+	$output[] = 'Last run: ' . (string) ($data['command'] ?? 'unknown');
+	$output[] = 'Saved report: ' . normalize_config_path(relative_path($project['project_root'], $path));
+	if (isset($data['status'], $data['exit_code'])) {
+		$output[] = 'Status: ' . $data['status'] . ' (exit ' . $data['exit_code'] . ')';
+	}
+	if (isset($data['duration_ms'])) {
+		$output[] = 'Duration: ' . $data['duration_ms'] . ' ms';
+	}
+	if (isset($data['started_at'])) {
+		$output[] = 'Started: ' . $data['started_at'];
+	}
+	if (isset($data['finished_at'])) {
+		$output[] = 'Finished: ' . $data['finished_at'];
+	}
+	$details = is_array($data['details'] ?? null) ? $data['details'] : [];
+	if (isset($details['compiler'])) {
+		$output[] = 'Compiler: ' . $details['compiler'];
+	}
+	if (isset($details['ninja_command']) && is_array($details['ninja_command'])) {
+		$output[] = 'Ninja: ' . implode(' ', array_map(static fn ($value): string => (string) $value, $details['ninja_command']));
+	}
+	if (isset($details['output_path'])) {
+		$output[] = 'Output: ' . normalize_config_path(relative_path($project['project_root'], (string) $details['output_path']));
+	}
+	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
+}
+
 /**
- * @param array{compile_runtime?:bool,compile_dependencies?:bool} $options
+ * @return array{array{project_root:string,config_path:string},string,array<string,mixed>}
+ */
+function load_project_report(string $cwd, string $relativePath, string $label): array
+{
+	$project = find_project_config($cwd);
+	if ($project === null) {
+		scpp_fail('No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL, 1);
+	}
+	$path = normalize_path($project['project_root'] . '/' . ltrim($relativePath, '/'));
+	if (!is_file($path)) {
+		scpp_fail('No saved ' . $label . ' report found at ' . normalize_config_path(relative_path($project['project_root'], $path)) . PHP_EOL, 1);
+	}
+	$json = file_get_contents($path);
+	if (!is_string($json) || trim($json) === '') {
+		scpp_fail('Saved ' . $label . ' report is empty: ' . $path . PHP_EOL, 1);
+	}
+	$data = json_decode($json, true);
+	if (!is_array($data)) {
+		scpp_fail('Saved ' . $label . ' report is invalid JSON: ' . $path . PHP_EOL, 1);
+	}
+	return [$project, $path, $data];
+}
+
+/**
+ * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options
  * @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string,runtime_library_dir:?string}
  */
 function execute_build(string $projectRoot, string $configPath, array $options = []): array
 {
+	$startedAt = microtime(true);
 	$options = normalize_build_execution_options($options);
 	$config = load_project_config($configPath);
 	$projectGraph = resolve_project_dependency_graph($projectRoot, $configPath, $config);
-	$entrypoint = normalize_config_path((string) ($config['entrypoint'] ?? ''));
-	if ($entrypoint === '') {
-		scpp_fail('Missing `entrypoint` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 1);
-	}
-
-	$entrypointAbs = normalize_path($projectRoot . '/' . $entrypoint);
-	if (!is_file($entrypointAbs)) {
-		scpp_fail('Configured entrypoint not found: ' . $entrypoint . PHP_EOL, 1);
-	}
+	$entrypointAbs = resolve_build_entrypoint($projectRoot, $config, $options['entry_override']);
 
 	$ninjaPath = find_command_path(['ninja']);
 	if ($ninjaPath === null) {
@@ -1026,6 +1380,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectLibraryFlags = resolve_project_library_link_flags($projectRoot, $projectGraph, $compiler);
 	$generatedUnits = [];
 	$nativeCppUnits = [];
+	/** @var array<string,string> $generatedArtifactOrigins */
+	$generatedArtifactOrigins = [];
 	$transpiledCount = 0;
 	$skippedCount = 0;
 
@@ -1036,6 +1392,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$projectContext['state'] = load_s2s_state($projectContext['state_path']);
 		$projectContext['php_files'] = collect_project_php_files($contextProjectRoot);
 		$projectContext['native_cpp_files'] = collect_project_native_cpp_files($projectContext['native_cpp_dir']);
+		$projectContext['generated_headers'] = [];
+		$projectContext['export_manifests'] = [];
 
 		foreach ($projectContext['php_files'] as $phpPathAbs) {
 			$relativePhp = normalize_config_path(relative_path($contextProjectRoot, $phpPathAbs));
@@ -1043,6 +1401,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$generatedHeader = $generatedBase . '.hpp';
 			$generatedExportManifest = $generatedBase . '.exports.json';
 			$generatedCpp = $generatedBase . '.cpp';
+			$generatedArtifactOrigins[normalize_path($generatedHeader)] = normalize_path($phpPathAbs);
+			$generatedArtifactOrigins[normalize_path($generatedCpp)] = normalize_path($phpPathAbs);
 			$meta = build_file_meta($phpPathAbs);
 			$previous = is_array($projectContext['state']['files'][$relativePhp] ?? null) ? $projectContext['state']['files'][$relativePhp] : null;
 			$needsTranspile = !is_array($previous)
@@ -1065,7 +1425,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				}
 
 				write_text_file($generatedHeader, implode(PHP_EOL, $cppFile->headerLines) . PHP_EOL);
+				write_generated_line_map_file($generatedHeader . '.line.tsv', $cppFile->headerLineMap);
 				write_text_file($generatedCpp, implode(PHP_EOL, $cppFile->sourceLines) . PHP_EOL);
+				write_generated_line_map_file($generatedCpp . '.line.tsv', $cppFile->sourceLineMap);
 				write_export_manifest_file($generatedExportManifest, $cppFile->exportManifest);
 				$transpiledCount++;
 			} else {
@@ -1081,6 +1443,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'is_entrypoint' => $phpPathAbs === $entrypointAbs,
 				'force_include_header' => null,
 			];
+			$projectContext['generated_headers'][] = $generatedHeader;
 			if ($hasExportManifest) {
 				$projectContext['export_manifests'][] = $generatedExportManifest;
 			}
@@ -1094,8 +1457,12 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					scpp_fail('internal error: ' . $e->getMessage() . PHP_EOL, 4);
 				}
 				$fcgiBase = build_generated_fcgi_base($generatedDir, $relativePhp);
+				$generatedArtifactOrigins[normalize_path($fcgiBase . '.hpp')] = normalize_path($phpPathAbs);
+				$generatedArtifactOrigins[normalize_path($fcgiBase . '.cpp')] = normalize_path($phpPathAbs);
 				write_text_file($fcgiBase . '.hpp', implode(PHP_EOL, $fcgiCppFile->headerLines) . PHP_EOL);
+				write_generated_line_map_file($fcgiBase . '.hpp.line.tsv', $fcgiCppFile->headerLineMap);
 				write_text_file($fcgiBase . '.cpp', implode(PHP_EOL, $fcgiCppFile->sourceLines) . PHP_EOL);
+				write_generated_line_map_file($fcgiBase . '.cpp.line.tsv', $fcgiCppFile->sourceLineMap);
 				$fastcgiBuild['entrypoint_generated_cpp'] = normalize_config_path(relative_path($projectRoot, $fcgiBase . '.cpp'));
 				$fastcgiBuild['entrypoint_object_path'] = normalize_config_path(relative_path($projectRoot, build_fcgi_object_path($buildDir, $relativePhp, $compiler['kind'])));
 			}
@@ -1136,17 +1503,18 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$projectContext['state']['project_root'] = $contextProjectRoot;
 		$projectContext['state']['updated_at'] = time();
 		save_s2s_state($projectContext['state_path'], $projectContext['state']);
+		write_project_forward_declaration_header($projectContext['generated_dir'], $projectContext['generated_headers'] ?? []);
 		write_text_file($projectContext['generated_dir'] . '/__project.hpp', render_project_export_header($projectContext['generated_dir'], $projectContext['export_manifests'] ?? []));
 	}
 	unset($projectContext);
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
-	$projectDependencyForceIncludes = write_project_dependency_force_include_headers($projectContexts);
+	$projectUnitForceIncludes = write_project_unit_force_include_headers($projectContexts);
 	foreach ($generatedUnits as &$unit) {
-		$unit['force_include_header'] = $projectDependencyForceIncludes[normalize_path($unit['project_root'])] ?? null;
+		$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
 	}
 	unset($unit);
 	foreach ($nativeCppUnits as &$nativeUnit) {
-		$nativeUnit['force_include_header'] = $projectDependencyForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
+		$nativeUnit['force_include_header'] = $projectUnitForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
 	}
 	unset($nativeUnit);
 
@@ -1160,6 +1528,13 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig);
+	if ($options['force_runtime_rebuild']) {
+		delete_file_if_exists(normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path'])));
+		$runtimeObjectPath = $runtimeBuild['object_path'] ?? null;
+		if (is_string($runtimeObjectPath) && $runtimeObjectPath !== '') {
+			delete_file_if_exists(normalize_path($projectRoot . '/' . normalize_config_path($runtimeObjectPath)));
+		}
+	}
 	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppUnits, $runtimeBuild, $buildDir, $compiler['kind'], $outputName, $fastcgiBuild, $projectRoot, $options);
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
@@ -1176,8 +1551,10 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 
 	$command = [
 		$ninjaPath,
+		'-C',
+		normalize_config_path(relative_path($projectRoot, $buildDir)),
 		'-f',
-		normalize_config_path(relative_path($projectRoot, $buildNinjaPath)),
+		basename($buildNinjaPath),
 	];
 	if (build_ninja_verbose_requested()) {
 		$command[] = '-v';
@@ -1185,28 +1562,103 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$captureSubprocessOutput = scpp_capture_subprocess_output_enabled();
 	$descriptor = [
 		0 => ['file', 'php://stdin', 'r'],
-		1 => $captureSubprocessOutput ? ['pipe', 'w'] : ['file', 'php://stdout', 'w'],
-		2 => $captureSubprocessOutput ? ['pipe', 'w'] : ['file', 'php://stderr', 'w'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w'],
 	];
 	$process = proc_open($command, $descriptor, $pipes, $projectRoot, scpp_build_process_environment());
 	if (!is_resource($process)) {
 		scpp_fail("Failed to start Ninja.
 ", 4);
 	}
-	$ninjaStdout = '';
-	$ninjaStderr = '';
-	if ($captureSubprocessOutput) {
-		$ninjaStdout = stream_get_contents($pipes[1]);
-		$ninjaStderr = stream_get_contents($pipes[2]);
-		fclose($pipes[1]);
-		fclose($pipes[2]);
-	}
+	$ninjaStdout = stream_get_contents($pipes[1]);
+	$ninjaStderr = stream_get_contents($pipes[2]);
+	fclose($pipes[1]);
+	fclose($pipes[2]);
 	$status = proc_close($process);
+	$ninjaStdout = is_string($ninjaStdout) ? $ninjaStdout : '';
+	$ninjaStderr = is_string($ninjaStderr) ? $ninjaStderr : '';
 	if ($captureSubprocessOutput) {
-		scpp_append_captured_subprocess_output(is_string($ninjaStdout) ? $ninjaStdout : '', is_string($ninjaStderr) ? $ninjaStderr : '');
+		scpp_append_captured_subprocess_output($ninjaStdout, $ninjaStderr);
+	} else {
+		if ($ninjaStdout !== '') {
+			scpp_write($ninjaStdout, 'stdout');
+		}
+		if ($ninjaStderr !== '') {
+			scpp_write($ninjaStderr, 'stderr');
+		}
 	}
 	if ($status !== 0) {
-		$message = 'Ninja build failed. Generated file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
+		$diagnostics = collect_compiler_diagnostics($projectRoot, $buildDir, $ninjaStdout, $ninjaStderr, $generatedArtifactOrigins);
+		$finishedAt = microtime(true);
+		write_last_run_report(
+			$projectRoot,
+			'build',
+			$GLOBALS['argv'] ?? ['scpp', 'build'],
+			$status,
+			$startedAt,
+			$finishedAt,
+			[
+				'build_dir' => $buildDir,
+				'output_name' => $outputName,
+				'compiler' => compiler_display_command($compiler),
+				'compiler_kind' => $compiler['kind'],
+				'build_mode' => $buildMode,
+				'entry_override' => $options['entry_override'],
+				'compile_runtime' => $options['compile_runtime'],
+				'compile_dependencies' => $options['compile_dependencies'],
+				'ninja_command' => $command,
+				'diagnostic_count' => count($diagnostics),
+			]
+		);
+		if ($diagnostics !== []) {
+			$compileFailure = classify_compile_failure($diagnostics, $ninjaStdout, $ninjaStderr);
+			$guidance = diagnostic_guidance($compileFailure['category'], $compileFailure['subcategory'], $diagnostics, $ninjaStdout, $ninjaStderr);
+			$shortMessage = render_short_compiler_failure($diagnostics, $projectRoot, $phpProfile);
+			write_last_error_report(
+				$projectRoot,
+				'build',
+				$GLOBALS['argv'] ?? ['scpp', 'build'],
+				$status,
+				$startedAt,
+				$finishedAt,
+				$compileFailure['category'],
+				$compileFailure['subcategory'],
+				$shortMessage,
+				$diagnostics,
+				$ninjaStdout,
+				$ninjaStderr,
+				$guidance,
+				$phpProfile
+			);
+			scpp_fail($shortMessage, $status);
+		}
+		$buildFailure = classify_build_failure($ninjaStdout, $ninjaStderr);
+		write_last_error_report(
+			$projectRoot,
+			'build',
+			$GLOBALS['argv'] ?? ['scpp', 'build'],
+			$status,
+			$startedAt,
+			$finishedAt,
+			$buildFailure['category'],
+			$buildFailure['subcategory'],
+			$buildFailure['short_message'],
+			[],
+			$ninjaStdout,
+			$ninjaStderr,
+			$buildFailure['guidance'],
+			$phpProfile
+		);
+		$message = '';
+		$strictHint = strict_project_error_hint($phpProfile);
+		if ($strictHint !== null) {
+			$message .= $strictHint . PHP_EOL;
+		}
+		$message .= $buildFailure['short_message'] . PHP_EOL;
+		foreach ($buildFailure['guidance'] as $item) {
+			$message .= 'Next: ' . $item . PHP_EOL;
+		}
+		$message .= 'Generated file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
 		$message .= "First lines of build.ninja:" . PHP_EOL;
 		foreach (preview_file_lines($buildNinjaPath, 40) as $line) {
 			$message .= $line . PHP_EOL;
@@ -1225,6 +1677,29 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		echo 'Tip: set SCPP_NINJA_VERBOSE=1 to show full Ninja command lines.' . PHP_EOL;
 	}
 	$outputPath = normalize_path($buildDir . '/' . $outputName);
+	write_last_run_report(
+		$projectRoot,
+		'build',
+		$GLOBALS['argv'] ?? ['scpp', 'build'],
+		0,
+		$startedAt,
+		microtime(true),
+		[
+			'build_dir' => $buildDir,
+			'output_name' => $outputName,
+			'output_path' => $outputPath,
+			'compiler' => compiler_display_command($compiler),
+			'compiler_kind' => $compiler['kind'],
+			'build_mode' => $buildMode,
+			'entry_override' => $options['entry_override'],
+			'compile_runtime' => $options['compile_runtime'],
+			'compile_dependencies' => $options['compile_dependencies'],
+			'transpiled_count' => $transpiledCount,
+			'skipped_count' => $skippedCount,
+			'rebuilt_outputs' => array_values(array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)),
+			'ninja_command' => $command,
+		]
+	);
 	echo 'Build completed: ' . normalize_config_path(relative_path($projectRoot, $outputPath)) . PHP_EOL;
 	$fastcgiOutputPath = null;
 	if ($fastcgiBuild !== null) {
@@ -1256,29 +1731,44 @@ function normalize_run_arguments(array $args): array
 	return array_slice($args, $separatorIndex + 1);
 }
 
-/** @param array{compile_runtime?:bool,compile_dependencies?:bool} $options @return array{compile_runtime:bool,compile_dependencies:bool} */
+/** @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string} */
 function normalize_build_execution_options(array $options): array
 {
 	return [
 		'compile_runtime' => (bool) ($options['compile_runtime'] ?? false),
 		'compile_dependencies' => (bool) ($options['compile_dependencies'] ?? false),
+		'force_runtime_rebuild' => (bool) ($options['force_runtime_rebuild'] ?? false),
+		'entry_override' => isset($options['entry_override']) && is_string($options['entry_override']) && trim($options['entry_override']) !== ''
+			? normalize_config_path(trim((string) $options['entry_override']))
+			: null,
 	];
 }
 
-/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool} */
+/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string} */
 function parse_build_command_arguments(array $args): array
 {
 	$options = [
-		'compile_runtime' => true,
-		'compile_dependencies' => true,
+		'compile_runtime' => false,
+		'compile_dependencies' => false,
+		'force_runtime_rebuild' => false,
+		'entry_override' => null,
 	];
 	foreach ($args as $arg) {
-		if ($arg === '--reuse-runtime') {
-			$options['compile_runtime'] = false;
+		if (str_starts_with($arg, '--entry=')) {
+			$options['entry_override'] = normalize_config_path(substr($arg, strlen('--entry=')));
 			continue;
 		}
-		if ($arg === '--reuse-dependencies') {
-			$options['compile_dependencies'] = false;
+		if ($arg === '--build-runtime') {
+			$options['compile_runtime'] = true;
+			continue;
+		}
+		if ($arg === '--build-dependencies') {
+			$options['compile_dependencies'] = true;
+			continue;
+		}
+		if ($arg === '--force') {
+			$options['compile_runtime'] = true;
+			$options['force_runtime_rebuild'] = true;
 			continue;
 		}
 		scpp_fail('Unknown option for `scpp build`: ' . $arg . PHP_EOL, 1);
@@ -1286,12 +1776,14 @@ function parse_build_command_arguments(array $args): array
 	return $options;
 }
 
-/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool},run_args:list<string>} */
+/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string},run_args:list<string>} */
 function parse_run_command_arguments(array $args): array
 {
 	$buildOptions = [
-		'compile_runtime' => true,
-		'compile_dependencies' => true,
+		'compile_runtime' => false,
+		'compile_dependencies' => false,
+		'force_runtime_rebuild' => false,
+		'entry_override' => null,
 	];
 	$runArgs = [];
 	$inRunArgs = false;
@@ -1304,12 +1796,21 @@ function parse_run_command_arguments(array $args): array
 			$inRunArgs = true;
 			continue;
 		}
-		if ($arg === '--reuse-runtime') {
-			$buildOptions['compile_runtime'] = false;
+		if (str_starts_with($arg, '--entry=')) {
+			$buildOptions['entry_override'] = normalize_config_path(substr($arg, strlen('--entry=')));
 			continue;
 		}
-		if ($arg === '--reuse-dependencies') {
-			$buildOptions['compile_dependencies'] = false;
+		if ($arg === '--build-runtime') {
+			$buildOptions['compile_runtime'] = true;
+			continue;
+		}
+		if ($arg === '--build-dependencies') {
+			$buildOptions['compile_dependencies'] = true;
+			continue;
+		}
+		if ($arg === '--force') {
+			$buildOptions['compile_runtime'] = true;
+			$buildOptions['force_runtime_rebuild'] = true;
 			continue;
 		}
 		$runArgs[] = $arg;
@@ -1319,6 +1820,55 @@ function parse_run_command_arguments(array $args): array
 		'build_options' => $buildOptions,
 		'run_args' => normalize_run_arguments($runArgs),
 	];
+}
+
+/** @param array<string,mixed> $config */
+function resolve_build_entrypoint(string $projectRoot, array $config, ?string $entryOverride = null): string
+{
+	$entrypoint = $entryOverride !== null
+		? normalize_config_path($entryOverride)
+		: normalize_config_path((string) ($config['entrypoint'] ?? ''));
+	if ($entrypoint === '') {
+		$label = $entryOverride !== null ? '--entry' : '`entrypoint` in ' . SCPP_PROJECT_CONFIG;
+		scpp_fail('Missing ' . $label . PHP_EOL, 1);
+	}
+
+	$entrypointAbs = normalize_path($projectRoot . '/' . $entrypoint);
+	if (!is_file($entrypointAbs)) {
+		$label = $entryOverride !== null ? 'Requested entrypoint not found: ' : 'Configured entrypoint not found: ';
+		scpp_fail($label . $entrypoint . PHP_EOL, 1);
+	}
+
+	if (!path_is_inside($projectRoot, $entrypointAbs)) {
+		scpp_fail('Entrypoint must stay inside the project root: ' . $entrypoint . PHP_EOL, 1);
+	}
+
+	return $entrypointAbs;
+}
+
+/** @param list<string> $args @return array{build_mode:string,force:bool} */
+function parse_runtime_build_command_arguments(array $args): array
+{
+	$options = [
+		'build_mode' => 'debug',
+		'force' => false,
+	];
+	foreach ($args as $arg) {
+		if ($arg === '--debug') {
+			$options['build_mode'] = 'debug';
+			continue;
+		}
+		if ($arg === '--release') {
+			$options['build_mode'] = 'release';
+			continue;
+		}
+		if ($arg === '--force') {
+			$options['force'] = true;
+			continue;
+		}
+		scpp_fail('Unknown option for `scpp runtime-build`: ' . $arg . PHP_EOL, 1);
+	}
+	return $options;
 }
 
 
@@ -1416,7 +1966,11 @@ function write_export_manifest_file(string $path, array $manifest): void
 /** @param list<string> $exportManifestPaths */
 function render_project_export_header(string $generatedDir, array $exportManifestPaths): string
 {
+	$forwardHeader = normalize_path($generatedDir . '/__project_fwd.hpp');
 	$lines = ['#pragma once', '', '#include <scpp/lang/php.hpp>'];
+	if (is_file($forwardHeader)) {
+		$lines[] = '#include "__project_fwd.hpp"';
+	}
 	$seenHeaders = [];
 	foreach (array_values(array_unique($exportManifestPaths)) as $manifestPath) {
 		$headerPath = export_manifest_header_path($manifestPath);
@@ -1474,35 +2028,201 @@ function load_export_manifest(string $path): array
  *   state?:array<string,mixed>,
  *   php_files?:list<string>,
  *   native_cpp_files?:list<string>,
- *   export_headers?:list<string>
+ *   generated_headers?:list<string>,
+ *   export_manifests?:list<string>
  * }> $projectContexts
+ * @return array<string,string>
  */
-function write_project_dependency_force_include_headers(array $projectContexts): array
+function write_project_unit_force_include_headers(array $projectContexts): array
 {
 	$headers = [];
 	foreach ($projectContexts as $projectRoot => $projectContext) {
-		$dependencyHeaders = [];
+		$includeHeaders = [];
+		foreach (($projectContext['generated_headers'] ?? []) as $generatedHeader) {
+			if (!is_string($generatedHeader) || $generatedHeader === '') {
+				continue;
+			}
+			$includeHeaders[] = normalize_path($generatedHeader);
+		}
 		foreach (collect_transitive_project_dependency_roots($projectRoot, $projectContexts) as $dependencyRoot) {
 			$dependencyContext = $projectContexts[$dependencyRoot] ?? null;
 			if (!is_array($dependencyContext)) {
 				continue;
 			}
-			$dependencyHeaders[] = normalize_path($dependencyContext['generated_dir'] . '/__project.hpp');
+			$includeHeaders[] = normalize_path($dependencyContext['generated_dir'] . '/__project.hpp');
 		}
-		$dependencyHeaders = array_values(array_unique($dependencyHeaders));
-		if ($dependencyHeaders === []) {
+		$includeHeaders = sort_project_unit_include_headers(array_values(array_unique($includeHeaders)));
+		if ($includeHeaders === []) {
 			continue;
 		}
-		$headerPath = normalize_path($projectContext['generated_dir'] . '/__project_deps.hpp');
+		$headerPath = normalize_path($projectContext['generated_dir'] . '/__project_units.hpp');
 		$lines = ['#pragma once', ''];
-		foreach ($dependencyHeaders as $dependencyHeader) {
-			$lines[] = '#include "' . normalize_config_path(relative_path(dirname($headerPath), $dependencyHeader)) . '"';
+		$forwardHeader = normalize_path($projectContext['generated_dir'] . '/__project_fwd.hpp');
+		if (is_file($forwardHeader)) {
+			$lines[] = '#include "__project_fwd.hpp"';
+		}
+		foreach ($includeHeaders as $includeHeader) {
+			$lines[] = '#include "' . normalize_config_path(relative_path(dirname($headerPath), $includeHeader)) . '"';
 		}
 		$lines[] = '';
 		write_text_file($headerPath, implode(PHP_EOL, $lines) . PHP_EOL);
 		$headers[normalize_path($projectRoot)] = $headerPath;
 	}
 	return $headers;
+}
+
+/** @param list<string> $headerPaths */
+function write_project_forward_declaration_header(string $generatedDir, array $headerPaths): void
+{
+	$declarations = collect_project_header_declarations($headerPaths);
+	$headerPath = normalize_path($generatedDir . '/__project_fwd.hpp');
+	$lines = ['#pragma once', ''];
+	foreach ($declarations as $namespace => $classNames) {
+		if ($classNames === []) {
+			continue;
+		}
+		$lines[] = 'namespace ' . $namespace . ' {';
+		foreach ($classNames as $className) {
+			$lines[] = 'class ' . $className . ';';
+		}
+		$lines[] = '}';
+		$lines[] = '';
+	}
+	write_text_file($headerPath, implode(PHP_EOL, $lines) . PHP_EOL);
+}
+
+/**
+ * @param list<string> $headerPaths
+ * @return array<string,list<string>>
+ */
+function collect_project_header_declarations(array $headerPaths): array
+{
+	$declarations = [];
+	foreach ($headerPaths as $headerPath) {
+		foreach (read_project_header_class_metadata($headerPath)['classes'] as $class) {
+			$namespace = $class['namespace'];
+			$name = $class['name'];
+			if (!isset($declarations[$namespace])) {
+				$declarations[$namespace] = [];
+			}
+			$declarations[$namespace][$name] = $name;
+		}
+	}
+	ksort($declarations, SORT_STRING);
+	foreach ($declarations as &$classNames) {
+		ksort($classNames, SORT_STRING);
+		$classNames = array_values($classNames);
+	}
+	unset($classNames);
+	return $declarations;
+}
+
+/**
+ * @param list<string> $includeHeaders
+ * @return list<string>
+ */
+function sort_project_unit_include_headers(array $includeHeaders): array
+{
+	$knownClasses = [];
+	$headerClasses = [];
+	foreach ($includeHeaders as $headerPath) {
+		if (!is_file($headerPath)) {
+			continue;
+		}
+		$metadata = read_project_header_class_metadata($headerPath);
+		foreach ($metadata['classes'] as $class) {
+			$key = $class['namespace'] . '::' . $class['name'];
+			$knownClasses[$key] = $headerPath;
+			$headerClasses[$headerPath][] = $class;
+		}
+	}
+
+	$dependencies = [];
+	foreach ($includeHeaders as $headerPath) {
+		$dependencies[$headerPath] = [];
+		foreach (($headerClasses[$headerPath] ?? []) as $class) {
+			$parent = $class['parent'];
+			if ($parent === null || $parent === '') {
+				continue;
+			}
+			$parentKey = resolve_project_header_class_reference($parent, $class['namespace']);
+			$parentHeader = $knownClasses[$parentKey] ?? null;
+			if ($parentHeader === null || $parentHeader === $headerPath) {
+				continue;
+			}
+			$dependencies[$headerPath][$parentHeader] = $parentHeader;
+		}
+	}
+
+	$ordered = [];
+	$temporary = [];
+	$permanent = [];
+	foreach ($includeHeaders as $headerPath) {
+		visit_project_unit_include_header($headerPath, $dependencies, $temporary, $permanent, $ordered);
+	}
+	return $ordered;
+}
+
+/**
+ * @param array<string,array<string,string>> $dependencies
+ * @param array<string,bool> $temporary
+ * @param array<string,bool> $permanent
+ * @param list<string> $ordered
+ */
+function visit_project_unit_include_header(string $headerPath, array $dependencies, array &$temporary, array &$permanent, array &$ordered): void
+{
+	if (isset($permanent[$headerPath])) {
+		return;
+	}
+	if (isset($temporary[$headerPath])) {
+		return;
+	}
+	$temporary[$headerPath] = true;
+	foreach (($dependencies[$headerPath] ?? []) as $dependencyHeader) {
+		visit_project_unit_include_header($dependencyHeader, $dependencies, $temporary, $permanent, $ordered);
+	}
+	unset($temporary[$headerPath]);
+	$permanent[$headerPath] = true;
+	$ordered[] = $headerPath;
+}
+
+/** @return array{classes:list<array{namespace:string,name:string,parent:?string}>} */
+function read_project_header_class_metadata(string $headerPath): array
+{
+	$contents = @file_get_contents($headerPath);
+	if (!is_string($contents)) {
+		return ['classes' => []];
+	}
+	if (preg_match('/^namespace\s+([A-Za-z_][A-Za-z0-9_:]*)\s*\{/m', $contents, $namespaceMatch) !== 1) {
+		return ['classes' => []];
+	}
+	$namespace = $namespaceMatch[1];
+	$classes = [];
+	if (preg_match_all('/^class\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))?\s*([;{])/m', $contents, $matches, PREG_SET_ORDER) !== false) {
+		foreach ($matches as $match) {
+			if (($match[3] ?? '') !== '{') {
+				continue;
+			}
+			$classes[] = [
+				'namespace' => $namespace,
+				'name' => $match[1],
+				'parent' => isset($match[2]) && $match[2] !== '' ? $match[2] : null,
+			];
+		}
+	}
+	return ['classes' => $classes];
+}
+
+function resolve_project_header_class_reference(string $classReference, string $currentNamespace): string
+{
+	$reference = ltrim($classReference, ':');
+	if (str_starts_with($reference, 'scpp::')) {
+		return $reference;
+	}
+	if (str_contains($reference, '::')) {
+		return 'scpp::' . $reference;
+	}
+	return $currentNamespace . '::' . $reference;
 }
 
 /**
@@ -2147,6 +2867,589 @@ function write_text_file(string $path, string $contents): void
 	}
 }
 
+/** @param list<int> $lineMap */
+function write_generated_line_map_file(string $path, array $lineMap): void
+{
+	$lines = ["generated_line\toriginal_line"];
+	foreach ($lineMap as $index => $originalLine) {
+		$lines[] = (string) ($index + 1) . "\t" . (string) max(0, (int) $originalLine);
+	}
+	write_text_file($path, implode(PHP_EOL, $lines) . PHP_EOL);
+}
+
+function write_last_error_report(
+	string $projectRoot,
+	string $command,
+	array $argv,
+	int $exitCode,
+	float $startedAt,
+	float $finishedAt,
+	string $category,
+	string $subcategory,
+	string $shortMessage,
+	array $diagnostics,
+	string $stdout,
+	string $stderr,
+	array $guidance = [],
+	?string $projectMode = null,
+): void {
+	$payload = [
+		'version' => 1,
+		'command' => $command,
+		'argv' => array_values(array_map(static fn ($value): string => (string) $value, $argv)),
+		'cwd' => getcwd() === false ? $projectRoot : normalize_path((string) getcwd()),
+		'project_root' => normalize_path($projectRoot),
+		'project_mode' => $projectMode,
+		'category' => $category,
+		'subcategory' => $subcategory,
+		'short_message' => rtrim($shortMessage),
+		'exit_code' => $exitCode,
+		'started_at' => gmdate('c', (int) floor($startedAt)),
+		'finished_at' => gmdate('c', (int) floor($finishedAt)),
+		'duration_ms' => (int) round(max(0, ($finishedAt - $startedAt) * 1000)),
+		'guidance' => array_values($guidance !== [] ? $guidance : [
+			"Run 'scpp error' for a compact explanation.",
+			"Run 'scpp full-error' for the full saved report.",
+		]),
+		'diagnostics' => array_values(array_map(static function (array $diagnostic): array {
+			return [
+				'severity' => (string) ($diagnostic['severity'] ?? ''),
+				'message' => (string) ($diagnostic['message'] ?? ''),
+				'generated_file' => isset($diagnostic['generated_file']) ? normalize_path((string) $diagnostic['generated_file']) : null,
+				'generated_line' => isset($diagnostic['generated_line']) ? (int) $diagnostic['generated_line'] : null,
+				'generated_column' => isset($diagnostic['generated_column']) ? (is_int($diagnostic['generated_column']) ? $diagnostic['generated_column'] : null) : null,
+				'original_file' => isset($diagnostic['original_file']) ? normalize_path((string) $diagnostic['original_file']) : null,
+				'original_line' => isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : null,
+			];
+		}, $diagnostics)),
+		'raw_output' => [
+			'stdout' => $stdout,
+			'stderr' => $stderr,
+		],
+	];
+	$json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if ($json === false) {
+		return;
+	}
+	write_text_file(normalize_path($projectRoot . '/.prism/last_error.json'), $json . PHP_EOL);
+}
+
+function write_last_run_report(
+	string $projectRoot,
+	string $command,
+	array $argv,
+	int $exitCode,
+	float $startedAt,
+	float $finishedAt,
+	array $details,
+): void {
+	$payload = [
+		'version' => 1,
+		'command' => $command,
+		'argv' => array_values(array_map(static fn ($value): string => (string) $value, $argv)),
+		'cwd' => getcwd() === false ? $projectRoot : normalize_path((string) getcwd()),
+		'project_root' => normalize_path($projectRoot),
+		'status' => $exitCode === 0 ? 'success' : 'failure',
+		'exit_code' => $exitCode,
+		'started_at' => gmdate('c', (int) floor($startedAt)),
+		'finished_at' => gmdate('c', (int) floor($finishedAt)),
+		'duration_ms' => (int) round(max(0, ($finishedAt - $startedAt) * 1000)),
+		'details' => $details,
+	];
+	$json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if ($json === false) {
+		return;
+	}
+	write_text_file(normalize_path($projectRoot . '/.prism/last_run.json'), $json . PHP_EOL);
+}
+
+/**
+ * @param list<array<string,mixed>> $diagnostics
+ * @return list<string>
+ */
+function diagnostic_guidance(string $category, string $subcategory, array $diagnostics, string $stdout, string $stderr): array
+{
+	$guidance = [];
+	if ($category === 'compile') {
+		$first = is_array($diagnostics[0] ?? null) ? $diagnostics[0] : null;
+		if ($first !== null) {
+			$originalFile = $first['original_file'] ?? null;
+			$originalLine = isset($first['original_line']) ? (int) $first['original_line'] : 0;
+			if (is_string($originalFile) && $originalFile !== '' && $originalLine > 0) {
+				$guidance[] = 'Check the original source first: ' . basename($originalFile) . ':' . $originalLine . '.';
+			}
+		}
+		$guidance = array_merge($guidance, compile_failure_guidance($subcategory, $diagnostics));
+		return append_standard_report_guidance($guidance, true);
+	}
+
+	return append_standard_report_guidance(build_failure_guidance($subcategory, $stdout, $stderr), false);
+}
+
+/**
+ * @param list<string> $guidance
+ * @return list<string>
+ */
+function append_standard_report_guidance(array $guidance, bool $remapped): array
+{
+	$guidance[] = $remapped
+		? "Run 'scpp error' for the remapped summary."
+		: "Run 'scpp error' for the saved summary.";
+	$guidance[] = "Run 'scpp full-error' for the full saved report.";
+	$out = [];
+	foreach ($guidance as $item) {
+		$item = trim($item);
+		if ($item === '' || in_array($item, $out, true)) {
+			continue;
+		}
+		$out[] = $item;
+	}
+	return $out;
+}
+
+/**
+ * @return array{category:string,subcategory:string,short_message:string,guidance:list<string>}
+ */
+function classify_build_failure(string $stdout, string $stderr): array
+{
+	$combined = $stderr . ($stderr !== '' && $stdout !== '' ? "\n" : '') . $stdout;
+	if (preg_match('/missing and no known rule to make it/i', $combined) === 1 && preg_match('/libruntime\.(so|a|dylib|dll)/i', $combined) === 1) {
+		return [
+			'category' => 'runtime_cache',
+			'subcategory' => 'missing_runtime_artifact',
+			'short_message' => 'Required runtime artifact is missing.',
+			'guidance' => append_standard_report_guidance(build_failure_guidance('missing_runtime_artifact', $stdout, $stderr), false),
+		];
+	}
+	if (preg_match('/(sscache|ccache).*(error|failed|cannot|could not)/i', $combined) === 1) {
+		return [
+			'category' => 'launcher',
+			'subcategory' => 'launcher_failure',
+			'short_message' => 'Compiler launcher failed before the build completed.',
+			'guidance' => append_standard_report_guidance(build_failure_guidance('launcher_failure', $stdout, $stderr), false),
+		];
+	}
+	if (preg_match('/(permission denied|read-only file system|operation not permitted)/i', $combined) === 1) {
+		return [
+			'category' => 'filesystem',
+			'subcategory' => 'permission_denied',
+			'short_message' => 'Build failed because the project or cache path is not writable.',
+			'guidance' => append_standard_report_guidance(build_failure_guidance('permission_denied', $stdout, $stderr), false),
+		];
+	}
+	if (preg_match('/(ninja: fatal:|ninja: error:.*(not found|unknown target|loading build|lexing|parse))/i', $combined) === 1) {
+		return [
+			'category' => 'ninja_backend',
+			'subcategory' => 'ninja_backend_error',
+			'short_message' => 'Ninja failed before the compiler completed the build.',
+			'guidance' => append_standard_report_guidance(build_failure_guidance('ninja_backend_error', $stdout, $stderr), false),
+		];
+	}
+	return [
+		'category' => 'ninja_backend',
+		'subcategory' => 'build_failed',
+		'short_message' => 'Ninja build failed.',
+		'guidance' => append_standard_report_guidance(build_failure_guidance('build_failed', $stdout, $stderr), false),
+	];
+}
+
+/**
+ * @return list<string>
+ */
+function build_failure_guidance(string $subcategory, string $stdout, string $stderr): array
+{
+	return match ($subcategory) {
+		'missing_runtime_artifact' => [
+			"Run 'scpp runtime-build' to rebuild the reusable runtime artifact.",
+			"Retry with 'scpp build --build-runtime' if you want the build command to refresh the runtime now.",
+		],
+		'launcher_failure' => [
+			'Check your compiler launcher configuration, then retry.',
+			'If you are using sscache or ccache, try disabling it once to confirm the root cause.',
+		],
+		'permission_denied' => [
+			'Check write access for the project .prism folder and any runtime/cache directories.',
+			'Retry from a writable workspace after fixing permissions or mount mode.',
+		],
+		'ninja_backend_error' => [
+			'Inspect the saved raw output for the backend failure details.',
+			'Retry after regenerating the build with a clean workspace if the Ninja graph looks stale.',
+		],
+		default => [
+			'Inspect the saved raw output first to see whether the failure came from Ninja, the compiler, or the environment.',
+		],
+	};
+}
+
+/**
+ * @param list<array<string,mixed>> $diagnostics
+ * @return array{category:string,subcategory:string}
+ */
+function classify_compile_failure(array $diagnostics, string $stdout, string $stderr): array
+{
+	$messages = [];
+	foreach ($diagnostics as $diagnostic) {
+		if (!is_array($diagnostic)) {
+			continue;
+		}
+		$message = trim((string) ($diagnostic['message'] ?? ''));
+		if ($message !== '') {
+			$messages[] = $message;
+		}
+	}
+	$combined = strtolower(implode("\n", $messages));
+	if ($combined === '') {
+		$combined = strtolower($stderr . "\n" . $stdout);
+	}
+
+	if (preg_match('/(was not declared in this scope|undeclared identifier|no member named|not a member of)/', $combined) === 1) {
+		return ['category' => 'compile', 'subcategory' => 'missing_symbol'];
+	}
+	if (preg_match('/(cannot convert|no matching function for call|invalid conversion|conversion from|could not convert|candidate function not viable|incompatible)/', $combined) === 1) {
+		return ['category' => 'compile', 'subcategory' => 'type_mismatch'];
+	}
+	if (preg_match('/(fatal error: .*no such file or directory|cannot open include file|file not found)/', $combined) === 1) {
+		return ['category' => 'compile', 'subcategory' => 'missing_header'];
+	}
+	if (preg_match('/(expected .* before|expected unqualified-id|expected [^\\n]*;|syntax error|parse error|does not name a type)/', $combined) === 1) {
+		return ['category' => 'compile', 'subcategory' => 'syntax_or_lowering'];
+	}
+	if (preg_match('/(static assertion failed|assertion.*failed|concept.*not satisfied)/', $combined) === 1) {
+		return ['category' => 'compile', 'subcategory' => 'contract_violation'];
+	}
+	return ['category' => 'compile', 'subcategory' => 'generated_compile_error'];
+}
+
+/**
+ * @param list<array<string,mixed>> $diagnostics
+ * @return list<string>
+ */
+function compile_failure_guidance(string $subcategory, array $diagnostics): array
+{
+	$first = is_array($diagnostics[0] ?? null) ? $diagnostics[0] : null;
+	$originHint = null;
+	if ($first !== null) {
+		$originalFile = $first['original_file'] ?? null;
+		$originalLine = isset($first['original_line']) ? (int) $first['original_line'] : 0;
+		if (is_string($originalFile) && $originalFile !== '' && $originalLine > 0) {
+			$originHint = basename($originalFile) . ':' . $originalLine;
+		}
+	}
+	return match ($subcategory) {
+		'missing_symbol' => [
+			$originHint !== null
+				? 'Check for a misspelled name or missing declaration near ' . $originHint . '.'
+				: 'Check for a misspelled name or missing declaration near the mapped source line.',
+			'If the code looks valid in source, inspect the saved remapped diagnostics for lowering context.',
+		],
+		'type_mismatch' => [
+			'Check the types at the mapped source line and stabilize mixed values earlier if needed.',
+			'Look for an argument, return value, or assignment that now needs a more explicit type shape.',
+		],
+		'missing_header' => [
+			'Check whether the generated dependency or include should exist before the compile step.',
+			'If this came from generated code, inspect the saved report to see which generated file triggered it.',
+		],
+		'syntax_or_lowering' => [
+			'Check the mapped source line for a construct that may not lower cleanly into the supported subset.',
+			'If the source looks valid, inspect the generated location in the saved report for lowering clues.',
+		],
+		'contract_violation' => [
+			'Check the mapped source line for a runtime or template contract that the generated code is violating.',
+			'The saved report usually has the closest generated location if more context is needed.',
+		],
+		default => [
+			'Check the mapped source line first, then inspect the generated location if the source-level cause is still unclear.',
+		],
+	};
+}
+
+/**
+ * @param array<string,string> $generatedArtifactOrigins
+ */
+function collect_compiler_diagnostics(string $projectRoot, string $buildDir, string $stdout, string $stderr, array $generatedArtifactOrigins): array
+{
+	$output = trim($stderr . ($stderr !== '' && $stdout !== '' ? PHP_EOL : '') . $stdout);
+	if ($output === '') {
+		return [];
+	}
+
+	$results = [];
+	foreach (preg_split('/\R/', $output) ?: [] as $line) {
+		foreach (parse_compiler_diagnostic_line($line) as $diagnostic) {
+			$generatedAbs = resolve_diagnostic_reported_path($projectRoot, $buildDir, $diagnostic['file']);
+			if ($generatedAbs === null) {
+				continue;
+			}
+			$originSource = $generatedArtifactOrigins[$generatedAbs] ?? null;
+			if (!is_string($originSource) || $originSource === '') {
+				continue;
+			}
+			$originalLine = lookup_original_line_from_generated_map($generatedAbs, $diagnostic['line']);
+			if ($originalLine <= 0) {
+				continue;
+			}
+			$key = $generatedAbs . ':' . $diagnostic['line'] . ':' . ($diagnostic['column'] ?? 0) . ':' . $diagnostic['severity'] . ':' . $diagnostic['message'];
+			if (isset($results[$key])) {
+				continue;
+			}
+			$results[$key] = [
+				'severity' => $diagnostic['severity'],
+				'message' => $diagnostic['message'],
+				'generated_file' => $generatedAbs,
+				'generated_line' => $diagnostic['line'],
+				'generated_column' => $diagnostic['column'],
+				'original_file' => normalize_path($originSource),
+				'original_line' => $originalLine,
+			];
+		}
+	}
+
+	return array_values($results);
+}
+
+function render_short_compiler_failure(array $diagnostics, string $projectRoot, ?string $projectMode = null): string
+{
+	$lines = [];
+	$strictHint = strict_project_error_hint($projectMode);
+	if ($strictHint !== null) {
+		$lines[] = $strictHint;
+	}
+	$primary = array_slice($diagnostics, 0, 3);
+	foreach ($primary as $diagnostic) {
+		$originLabel = normalize_config_path(relative_path($projectRoot, $diagnostic['original_file']));
+		$generatedLabel = normalize_config_path(relative_path($projectRoot, $diagnostic['generated_file']));
+		$line = 'Compile ' . $diagnostic['severity'] . ' in ' . $originLabel . ':' . $diagnostic['original_line'];
+		if ($diagnostic['message'] !== '') {
+			$line .= ': ' . $diagnostic['message'];
+		}
+		$lines[] = $line;
+		$generatedLocation = 'Generated location: ' . $generatedLabel . ':' . $diagnostic['generated_line'];
+		if ($diagnostic['generated_column'] !== null) {
+			$generatedLocation .= ':' . $diagnostic['generated_column'];
+		}
+		$lines[] = $generatedLocation;
+	}
+	if (count($diagnostics) > count($primary)) {
+		$lines[] = 'Additional remapped diagnostics: ' . (count($diagnostics) - count($primary));
+	}
+	$lines[] = 'Raw compiler excerpt:';
+	foreach (build_raw_output_excerpt_from_diagnostics($diagnostics) as $excerptLine) {
+		$lines[] = $excerptLine;
+	}
+	$lines[] = "Run 'scpp error' for more details.";
+	$lines[] = "Run 'scpp full-error' for the saved JSON report.";
+	return implode(PHP_EOL, $lines) . PHP_EOL;
+}
+
+function strict_project_error_hint(?string $projectMode): ?string
+{
+	return $projectMode === 'strict'
+		? 'Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.'
+		: null;
+}
+
+function build_raw_output_excerpt_from_diagnostics(array $diagnostics): array
+{
+	$out = [];
+	foreach (array_slice($diagnostics, 0, 3) as $diagnostic) {
+		$line = basename($diagnostic['generated_file']) . ':' . $diagnostic['generated_line'];
+		if ($diagnostic['generated_column'] !== null) {
+			$line .= ':' . $diagnostic['generated_column'];
+		}
+		$line .= ': ' . $diagnostic['severity'] . ': ' . $diagnostic['message'];
+		$out[] = $line;
+	}
+	return $out;
+}
+
+/**
+ * @return list<array{file:string,line:int,column:?int,severity:string,message:string}>
+ */
+function parse_compiler_diagnostic_line(string $line): array
+{
+	$line = trim($line);
+	if ($line === '' || str_starts_with($line, 'In file included from ')) {
+		return [];
+	}
+	$jsonDiagnostics = parse_json_compiler_diagnostics($line);
+	if ($jsonDiagnostics !== []) {
+		return $jsonDiagnostics;
+	}
+	if (preg_match('/^(.+?):(\d+):(\d+):\s+(fatal error|error|warning|note):\s+(.*)$/', $line, $matches) === 1) {
+		return [[
+			'file' => trim((string) $matches[1]),
+			'line' => (int) $matches[2],
+			'column' => (int) $matches[3],
+			'severity' => (string) $matches[4],
+			'message' => trim((string) $matches[5]),
+		]];
+	}
+	if (preg_match('/^(.+?):(\d+):\s+(fatal error|error|warning|note):\s+(.*)$/', $line, $matches) === 1) {
+		return [[
+			'file' => trim((string) $matches[1]),
+			'line' => (int) $matches[2],
+			'column' => null,
+			'severity' => (string) $matches[3],
+			'message' => trim((string) $matches[4]),
+		]];
+	}
+	if (preg_match('/^(.+?)\((\d+),(\d+)\):\s+(fatal error|error|warning|note):\s+(.*)$/', $line, $matches) === 1) {
+		return [[
+			'file' => trim((string) $matches[1]),
+			'line' => (int) $matches[2],
+			'column' => (int) $matches[3],
+			'severity' => (string) $matches[4],
+			'message' => trim((string) $matches[5]),
+		]];
+	}
+	if (preg_match('/^(.+?)\((\d+)\):\s+(fatal error|error|warning|note):\s+(.*)$/', $line, $matches) === 1) {
+		return [[
+			'file' => trim((string) $matches[1]),
+			'line' => (int) $matches[2],
+			'column' => null,
+			'severity' => (string) $matches[3],
+			'message' => trim((string) $matches[4]),
+		]];
+	}
+	if (preg_match('/^(.+?)\((\d+),(\d+)\)\s*:\s*(fatal error|error|warning|note)\s*[A-Z]?\d*\s*:\s*(.*)$/', $line, $matches) === 1) {
+		return [[
+			'file' => trim((string) $matches[1]),
+			'line' => (int) $matches[2],
+			'column' => (int) $matches[3],
+			'severity' => (string) $matches[4],
+			'message' => trim((string) $matches[5]),
+		]];
+	}
+	if (preg_match('/^(.+?)\((\d+)\)\s*:\s*(fatal error|error|warning|note)\s*[A-Z]?\d*\s*:\s*(.*)$/', $line, $matches) === 1) {
+		return [[
+			'file' => trim((string) $matches[1]),
+			'line' => (int) $matches[2],
+			'column' => null,
+			'severity' => (string) $matches[3],
+			'message' => trim((string) $matches[4]),
+		]];
+	}
+	if (preg_match('/^(.+?):(\d+):(\d+):\s+(.*)$/', $line, $matches) === 1 && str_contains($matches[4], 'error')) {
+		return [[
+			'file' => trim((string) $matches[1]),
+			'line' => (int) $matches[2],
+			'column' => (int) $matches[3],
+			'severity' => 'error',
+			'message' => trim((string) $matches[4]),
+		]];
+	}
+	return [];
+}
+
+/**
+ * @return list<array{file:string,line:int,column:?int,severity:string,message:string}>
+ */
+function parse_json_compiler_diagnostics(string $line): array
+{
+	if ($line === '' || ($line[0] !== '{' && $line[0] !== '[')) {
+		return [];
+	}
+	$decoded = json_decode($line, true);
+	if (!is_array($decoded)) {
+		return [];
+	}
+	$entries = array_is_list($decoded) ? $decoded : [$decoded];
+	$results = [];
+	foreach ($entries as $entry) {
+		if (!is_array($entry)) {
+			continue;
+		}
+		$results = array_merge($results, flatten_json_diagnostic_entry($entry));
+	}
+	return $results;
+}
+
+/**
+ * @return list<array{file:string,line:int,column:?int,severity:string,message:string}>
+ */
+function flatten_json_diagnostic_entry(array $entry): array
+{
+	$results = [];
+	$kind = strtolower((string) ($entry['kind'] ?? $entry['level'] ?? ''));
+	$message = trim((string) ($entry['message'] ?? ''));
+	$locations = $entry['locations'] ?? null;
+	if ($message !== '' && is_array($locations) && $locations !== []) {
+		$caret = $locations[0]['caret'] ?? null;
+		if (is_array($caret)) {
+			$file = trim((string) ($caret['file'] ?? ''));
+			$line = (int) ($caret['line'] ?? 0);
+			$column = isset($caret['column']) ? (int) $caret['column'] : null;
+			if ($file !== '' && $line > 0) {
+				$results[] = [
+					'file' => $file,
+					'line' => $line,
+					'column' => $column !== null && $column > 0 ? $column : null,
+					'severity' => normalize_json_diagnostic_severity($kind),
+					'message' => $message,
+				];
+			}
+		}
+	}
+	$children = $entry['children'] ?? null;
+	if (is_array($children)) {
+		foreach ($children as $child) {
+			if (is_array($child)) {
+				$results = array_merge($results, flatten_json_diagnostic_entry($child));
+			}
+		}
+	}
+	return $results;
+}
+
+function normalize_json_diagnostic_severity(string $kind): string
+{
+	return match ($kind) {
+		'warning' => 'warning',
+		'note' => 'note',
+		'fatal error' => 'fatal error',
+		default => 'error',
+	};
+}
+
+function resolve_diagnostic_reported_path(string $projectRoot, string $buildDir, string $reportedPath): ?string
+{
+	$reportedPath = trim($reportedPath);
+	if ($reportedPath === '') {
+		return null;
+	}
+	if (is_absolute_path($reportedPath)) {
+		return normalize_path($reportedPath);
+	}
+	return normalize_path($buildDir . '/' . normalize_config_path($reportedPath));
+}
+
+function lookup_original_line_from_generated_map(string $generatedArtifactPath, int $generatedLine): int
+{
+	if ($generatedLine <= 0) {
+		return 0;
+	}
+	$mapPath = $generatedArtifactPath . '.line.tsv';
+	$rows = @file($mapPath, FILE_IGNORE_NEW_LINES);
+	if (!is_array($rows) || count($rows) < 2) {
+		return 0;
+	}
+	foreach (array_slice($rows, 1) as $row) {
+		if (!is_string($row) || $row === '') {
+			continue;
+		}
+		$parts = explode("\t", $row);
+		if (count($parts) < 2) {
+			continue;
+		}
+		if ((int) $parts[0] !== $generatedLine) {
+			continue;
+		}
+		return max(0, (int) $parts[1]);
+	}
+	return 0;
+}
+
 function build_generated_base(string $generatedDir, string $relativePhp): string
 {
 	$trimmed = strip_supported_source_extension($relativePhp);
@@ -2672,18 +3975,18 @@ function compiler_display_command(array $compiler): string
  */
 function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppUnits, string $outputName, array $compiler, string $buildMode, array $runtimeConfig, array $projectLibraryFlags = [], ?array $fastcgiBuild = null, array $options = ['compile_runtime' => true, 'compile_dependencies' => true]): string
 {
-	$generatedIncludeDir = normalize_config_path(relative_path($projectRoot, $generatedDir));
-	$runtimeIncludeDir = normalize_config_path(relative_path($projectRoot, $repoRoot . '/runtime/include'));
-	$output = normalize_config_path(relative_path($projectRoot, $buildDir . '/' . $outputName));
-	$appPchHeader = normalize_config_path(relative_path($projectRoot, build_app_pch_header_path($buildDir)));
-	$appPchArtifact = normalize_config_path(relative_path($projectRoot, build_app_pch_artifact_path($buildDir, $compiler['kind'])));
-	$runtimePchHeader = normalize_config_path(relative_path($projectRoot, build_runtime_pch_header_path($buildDir)));
-	$runtimePchArtifact = normalize_config_path(relative_path($projectRoot, build_runtime_pch_artifact_path($buildDir, $compiler['kind'])));
+	$generatedIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $generatedDir);
+	$runtimeIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $repoRoot . '/runtime/include');
+	$output = build_ninja_relative_path($projectRoot, $buildDir, $buildDir . '/' . $outputName);
+	$appPchHeader = build_ninja_relative_path($projectRoot, $buildDir, build_app_pch_header_path($buildDir));
+	$appPchArtifact = build_ninja_relative_path($projectRoot, $buildDir, build_app_pch_artifact_path($buildDir, $compiler['kind']));
+	$runtimePchHeader = build_ninja_relative_path($projectRoot, $buildDir, build_runtime_pch_header_path($buildDir));
+	$runtimePchArtifact = build_ninja_relative_path($projectRoot, $buildDir, build_runtime_pch_artifact_path($buildDir, $compiler['kind']));
 	$compilerCommand = $compiler['command'];
 	$compilerLauncher = $compiler['launcher'] ?? null;
 	$linkerFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig);
-	$runtimeSignatureStamp = normalize_config_path(relative_path($projectRoot, $buildDir . '/runtime_signature.txt'));
+	$runtimeSignatureStamp = build_ninja_relative_path($projectRoot, $buildDir, $buildDir . '/runtime_signature.txt');
 	$runtimeLinkFlags = $options['compile_runtime'] && is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
 	$runtimeExtraCxxFlags = $options['compile_runtime'] && is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
 	$fastcgiCxxFlags = is_array($fastcgiBuild['cxxflags'] ?? null) ? $fastcgiBuild['cxxflags'] : [];
@@ -2799,11 +4102,11 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	}
 	foreach ($generatedUnits as $unit) {
 		if (!$options['compile_dependencies'] && normalize_path($unit['project_root']) !== normalize_path($projectRoot)) {
-			$objectPaths[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $unit['object_path'])));
+			$objectPaths[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $unit['object_path']));
 			continue;
 		}
-		$generatedCpp = normalize_config_path(relative_path($projectRoot, $unit['generated_cpp']));
-		$objectPath = normalize_config_path(relative_path($projectRoot, $unit['object_path']));
+		$generatedCpp = build_ninja_relative_path($projectRoot, $buildDir, $unit['generated_cpp']);
+		$objectPath = build_ninja_relative_path($projectRoot, $buildDir, $unit['object_path']);
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if (supports_compiler_pch($compiler)) {
 			$implicitDeps[] = ninja_escape_path($appPchArtifact);
@@ -2811,17 +4114,17 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		$lines[] = 'build ' . ninja_escape_path($objectPath) . ': compile ' . ninja_escape_path($generatedCpp) . ' | ' . implode(' ', $implicitDeps);
 		$unitForceIncludeHeader = is_string($unit['force_include_header'] ?? null) ? $unit['force_include_header'] : null;
 		if ($unitForceIncludeHeader !== null && $unitForceIncludeHeader !== '') {
-			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [normalize_config_path(relative_path($projectRoot, $unitForceIncludeHeader))]);
+			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [build_ninja_relative_path($projectRoot, $buildDir, $unitForceIncludeHeader)]);
 		}
 		$objectPaths[] = ninja_escape_path($objectPath);
 	}
 	foreach ($nativeCppUnits as $nativeUnit) {
 		if (!$options['compile_dependencies'] && normalize_path($nativeUnit['project_root']) !== normalize_path($projectRoot)) {
-			$objectPaths[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $nativeUnit['object_path'])));
+			$objectPaths[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['object_path']));
 			continue;
 		}
-		$nativeRelative = normalize_config_path(relative_path($projectRoot, $nativeUnit['source_path']));
-		$nativeObject = normalize_config_path(relative_path($projectRoot, $nativeUnit['object_path']));
+		$nativeRelative = build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['source_path']);
+		$nativeObject = build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['object_path']);
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if (supports_compiler_pch($compiler)) {
 			$implicitDeps[] = ninja_escape_path($appPchArtifact);
@@ -2829,29 +4132,33 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		$lines[] = 'build ' . ninja_escape_path($nativeObject) . ': compile ' . ninja_escape_path($nativeRelative) . ' | ' . implode(' ', $implicitDeps);
 		$unitForceIncludeHeader = is_string($nativeUnit['force_include_header'] ?? null) ? $nativeUnit['force_include_header'] : null;
 		if ($unitForceIncludeHeader !== null && $unitForceIncludeHeader !== '') {
-			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [normalize_config_path(relative_path($projectRoot, $unitForceIncludeHeader))]);
+			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [build_ninja_relative_path($projectRoot, $buildDir, $unitForceIncludeHeader)]);
 		}
 		$objectPaths[] = ninja_escape_path($nativeObject);
 	}
 	if ($options['compile_runtime']) {
+		$runtimeArtifactPath = build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['artifact_path']);
 		if ($runtimeBuild['kind'] === 'shared') {
+			$runtimeObjectPath = build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['object_path']);
+			$runtimeSourcePath = build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['source_path']);
 			$runtimeImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 			if (supports_compiler_pch($compiler)) {
 				$runtimeImplicitDeps[] = ninja_escape_path($runtimePchArtifact);
 			}
-			$lines[] = 'build ' . ninja_escape_path($runtimeBuild['object_path']) . ': compile_runtime ' . ninja_escape_path($runtimeBuild['source_path']) . ' | ' . implode(' ', $runtimeImplicitDeps);
-			$lines[] = 'build ' . ninja_escape_path($runtimeBuild['artifact_path']) . ': link_runtime_shared ' . ninja_escape_path($runtimeBuild['object_path']);
-			$objectPaths[] = ninja_escape_path($runtimeBuild['artifact_path']);
+			$lines[] = 'build ' . ninja_escape_path($runtimeObjectPath) . ': compile_runtime ' . ninja_escape_path($runtimeSourcePath) . ' | ' . implode(' ', $runtimeImplicitDeps);
+			$lines[] = 'build ' . ninja_escape_path($runtimeArtifactPath) . ': link_runtime_shared ' . ninja_escape_path($runtimeObjectPath);
+			$objectPaths[] = ninja_escape_path($runtimeArtifactPath);
 		} else {
+			$runtimeSourcePath = build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['source_path']);
 			$runtimeImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 			if (supports_compiler_pch($compiler)) {
 				$runtimeImplicitDeps[] = ninja_escape_path($runtimePchArtifact);
 			}
-			$lines[] = 'build ' . ninja_escape_path($runtimeBuild['artifact_path']) . ': compile_runtime_fallback ' . ninja_escape_path($runtimeBuild['source_path']) . ' | ' . implode(' ', $runtimeImplicitDeps);
-			$objectPaths[] = ninja_escape_path($runtimeBuild['artifact_path']);
+			$lines[] = 'build ' . ninja_escape_path($runtimeArtifactPath) . ': compile_runtime_fallback ' . ninja_escape_path($runtimeSourcePath) . ' | ' . implode(' ', $runtimeImplicitDeps);
+			$objectPaths[] = ninja_escape_path($runtimeArtifactPath);
 		}
 	} else {
-		$objectPaths[] = ninja_escape_path($runtimeBuild['artifact_path']);
+		$objectPaths[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['artifact_path']));
 	}
 	$lines[] = '';
 	$lines[] = 'build ' . ninja_escape_path($output) . ': link ' . implode(' ', $objectPaths);
@@ -2861,14 +4168,14 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 			if (($unit['is_entrypoint'] ?? false) === true && ($fastcgiBuild['entrypoint_generated_cpp'] ?? '') !== '' && ($fastcgiBuild['entrypoint_object_path'] ?? '') !== '') {
 				continue;
 			}
-			$fcgiObjects[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $unit['object_path'])));
+			$fcgiObjects[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $unit['object_path']));
 		}
 		foreach ($nativeCppUnits as $nativeUnit) {
-			$fcgiObjects[] = ninja_escape_path(normalize_config_path(relative_path($projectRoot, $nativeUnit['object_path'])));
+			$fcgiObjects[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['object_path']));
 		}
 		if (($fastcgiBuild['entrypoint_generated_cpp'] ?? '') !== '' && ($fastcgiBuild['entrypoint_object_path'] ?? '') !== '') {
-			$fcgiGeneratedCpp = normalize_config_path($fastcgiBuild['entrypoint_generated_cpp']);
-			$fcgiGeneratedObject = normalize_config_path($fastcgiBuild['entrypoint_object_path']);
+			$fcgiGeneratedCpp = build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['entrypoint_generated_cpp']);
+			$fcgiGeneratedObject = build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['entrypoint_object_path']);
 			$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 			if (supports_compiler_pch($compiler)) {
 				$implicitDeps[] = ninja_escape_path($appPchArtifact);
@@ -2876,16 +4183,16 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 			$lines[] = 'build ' . ninja_escape_path($fcgiGeneratedObject) . ': compile ' . ninja_escape_path($fcgiGeneratedCpp) . ' | ' . implode(' ', $implicitDeps);
 			$fcgiObjects[] = ninja_escape_path($fcgiGeneratedObject);
 		}
-		$fcgiMainSource = normalize_config_path($fastcgiBuild['source_path']);
-		$fcgiMainObject = normalize_config_path($fastcgiBuild['main_object_path']);
+		$fcgiMainSource = build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['source_path']);
+		$fcgiMainObject = build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['main_object_path']);
 		$fcgiMainImplicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if (supports_compiler_pch($compiler)) {
 			$fcgiMainImplicitDeps[] = ninja_escape_path($appPchArtifact);
 		}
 		$lines[] = 'build ' . ninja_escape_path($fcgiMainObject) . ': compile_fcgi ' . ninja_escape_path($fcgiMainSource) . ' | ' . implode(' ', $fcgiMainImplicitDeps);
 		$fcgiObjects[] = ninja_escape_path($fcgiMainObject);
-		$fcgiObjects[] = ninja_escape_path($runtimeBuild['artifact_path']);
-		$lines[] = 'build ' . ninja_escape_path(normalize_config_path(relative_path($projectRoot, $fastcgiBuild['output_path']))) . ': link_fcgi ' . implode(' ', $fcgiObjects);
+		$fcgiObjects[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $runtimeBuild['artifact_path']));
+		$lines[] = 'build ' . ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['output_path'])) . ': link_fcgi ' . implode(' ', $fcgiObjects);
 	}
 	$lines[] = '';
 	$defaults = [ninja_escape_path($output)];
@@ -3088,6 +4395,8 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		$linkFlags = ['-shared'];
 		if (PHP_OS_FAMILY === 'Darwin') {
 			$linkFlags[] = '-Wl,-install_name,@rpath/' . $libraryName;
+		} elseif (PHP_OS_FAMILY === 'Linux') {
+			$linkFlags[] = '-Wl,-soname,' . $libraryName;
 		}
 		$linkFlags = array_merge($linkFlags, $extraLinkFlags);
 
@@ -3156,6 +4465,114 @@ function compute_runtime_build_signature(string $repoRoot, array $compiler, stri
 
 	sort($parts, SORT_STRING);
 	return substr(hash('sha256', implode("\n", $parts)), 0, 16);
+}
+
+/** @return array{artifact_path:string,build_mode:string} */
+function scpp_build_default_runtime(string $repoRoot, bool $force = false): array
+{
+	return scpp_build_runtime_from_config($repoRoot, null, 'debug', $force);
+}
+
+/** @param ?array<string,mixed> $config @return array{artifact_path:string,build_mode:string} */
+function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string $buildMode = 'debug', bool $force = false): array
+{
+	$repoRoot = normalize_path($repoRoot);
+	$config = is_array($config) ? $config : [];
+	$compiler = resolve_compiler($config);
+	if ($compiler === null) {
+		scpp_fail("No supported C++ compiler found.\n" . install_hint_for_compiler() . PHP_EOL, 1);
+	}
+	$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
+	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $repoRoot, $compiler, $buildMode, $runtimeConfig);
+	$artifactPath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
+	$objectPath = is_string($runtimeBuild['object_path'] ?? null) && $runtimeBuild['object_path'] !== ''
+		? normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['object_path']))
+		: null;
+
+	if (!$force && is_file($artifactPath)) {
+		echo 'Runtime artifact already up to date: ' . normalize_config_path(relative_path($repoRoot, $artifactPath)) . PHP_EOL;
+		return [
+			'artifact_path' => normalize_config_path(relative_path($repoRoot, $artifactPath)),
+			'build_mode' => $buildMode,
+		];
+	}
+
+	if ($force) {
+		delete_file_if_exists($artifactPath);
+		if (is_string($objectPath)) {
+			delete_file_if_exists($objectPath);
+		}
+	}
+
+	$compileFlags = split_shell_tokens(build_runtime_compiler_flags($compiler['kind'], $buildMode, normalize_path($repoRoot . '/runtime/include')));
+	$extraCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
+	$sourcePath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['source_path']));
+	$compileCommand = array_merge(
+		scpp_compiler_command_prefix($compiler),
+		[$compiler['command']],
+		$compileFlags,
+		$extraCxxFlags
+	);
+
+	if ($compiler['kind'] === 'gnu_like' && is_string($objectPath)) {
+		$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $objectPath]);
+		scpp_run_or_fail_process($compileCommand, $repoRoot, 'Failed to compile runtime object.');
+		$linkFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
+		$runtimeLinkFlags = is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
+		$linkCommand = array_merge(
+			scpp_compiler_command_prefix($compiler),
+			[$compiler['command']],
+			$linkFlags,
+			$runtimeLinkFlags,
+			[$objectPath, '-o', $artifactPath]
+		);
+		scpp_run_or_fail_process($linkCommand, $repoRoot, 'Failed to link runtime artifact.');
+	} else {
+		$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $artifactPath]);
+		scpp_run_or_fail_process($compileCommand, $repoRoot, 'Failed to compile runtime artifact.');
+	}
+
+	return [
+		'artifact_path' => normalize_config_path(relative_path($repoRoot, $artifactPath)),
+		'build_mode' => $buildMode,
+	];
+}
+
+/** @return list<string> */
+function scpp_compiler_command_prefix(array $compiler): array
+{
+	$launcher = $compiler['launcher'] ?? null;
+	if (!is_string($launcher) || $launcher === '') {
+		return [];
+	}
+	return [$launcher];
+}
+
+/** @param list<string> $command */
+function scpp_run_or_fail_process(array $command, string $cwd, string $failureMessage): void
+{
+	$descriptor = [
+		0 => ['pipe', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w'],
+	];
+	$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment());
+	if (!is_resource($process)) {
+		scpp_fail($failureMessage . PHP_EOL, 4);
+	}
+	fclose($pipes[0]);
+	$stdout = stream_get_contents($pipes[1]);
+	$stderr = stream_get_contents($pipes[2]);
+	fclose($pipes[1]);
+	fclose($pipes[2]);
+	$status = proc_close($process);
+	if ($status !== 0) {
+		$message = trim((is_string($stderr) ? $stderr : '') . PHP_EOL . (is_string($stdout) ? $stdout : ''));
+		if ($message === '') {
+			$message = 'Process exited with status ' . $status . '.';
+		}
+		scpp_fail($failureMessage . PHP_EOL . $message . PHP_EOL, is_int($status) ? $status : 1);
+	}
 }
 
 /** @param list<string> $forceIncludeHeaders */
@@ -3468,6 +4885,14 @@ function relative_or_absolute(string $projectRoot, string $path): string
 {
 	$relative = relative_path($projectRoot, $path);
 	return str_starts_with($relative, '..') ? normalize_path($path) : normalize_config_path($relative);
+}
+
+function build_ninja_relative_path(string $projectRoot, string $buildDir, string $path): string
+{
+	$absolutePath = is_absolute_path($path)
+		? normalize_path($path)
+		: normalize_path($projectRoot . '/' . normalize_config_path($path));
+	return normalize_config_path(relative_path($buildDir, $absolutePath));
 }
 
 function install_hint_for_ninja(): string

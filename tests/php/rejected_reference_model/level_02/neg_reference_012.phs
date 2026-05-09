@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // NEG-REF-012
 // Expected: reject. Returning one of multiple potential bindings by reference is outside the model.
 

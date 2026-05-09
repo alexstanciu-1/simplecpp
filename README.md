@@ -140,6 +140,7 @@ Prism++ now has an explicit project-mode staging contract:
 - `scpp init` creates `prism.json` and a local `.prism/` work tree
 - `scpp build` is the first public build command
 - `scpp run` builds the configured entrypoint and then executes it
+- `scpp docs <name>` prints curated local documentation without requiring web access
 - `scpp usability-harness` generates deterministic spec-driven trial projects and classifies results
 - build output is rooted under `.prism/build` and `.prism/generated`
 - Ninja is the default backend

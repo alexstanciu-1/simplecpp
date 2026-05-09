@@ -85,6 +85,7 @@ The current architecture direction is layered composition rather than one monoli
 The active frontend language is `PHP++`.
 Its canonical source extension is `.phs`.
 Source files with the `.php` extension remain accepted as compatibility inputs in v1, but `.phs` is the preferred project-facing extension.
+Prism++ source files start directly with Prism++ declarations or executable code. They must not rely on a leading `<?php` header or `declare(strict_types=1);`.
 Inside docs and code, `PHP` refers to host tooling/runtime unless the surrounding text explicitly means `PHP++`.
 
 Future `scpp build` composition must be able to select language layers and runtime modules deliberately rather than assuming one fixed all-in-one runtime surface.
@@ -93,7 +94,7 @@ Future `scpp build` composition must be able to select language layers and runti
 
 Paths emitted into `build.ninja` are:
 
-- relative to project root
+- relative to the configured `build_dir`
 - normalized to forward slashes
 
 ## Minimal config
@@ -152,7 +153,7 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 `scpp build`:
 
 1. finds `prism.json` by walking upward from the current directory
-2. validates the configured entrypoint
+2. validates the configured entrypoint, or an explicit `--entry=<path>` override when one is supplied
 3. resolves `dependencies` declared in `prism.json` as Prism project dependencies
 4. recursively loads dependency project configs before build planning continues
 5. checks for dependency cycles and fails clearly if one is found
@@ -169,24 +170,28 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 16. runs Ninja
 17. leaves the root project executable under `.prism/build/`
 
-By default, the public CLI commands `scpp build` and `scpp run` both compile:
+By default, the public CLI commands `scpp build` and `scpp run` both reuse:
 
 - the runtime artifact
 - resolved Prism project dependencies
 
-The current public opt-out flags are:
+The current public opt-in rebuild flags are:
 
-- `--reuse-runtime`
-- `--reuse-dependencies`
+- `--build-runtime`
+- `--build-dependencies`
+- `--force`
 
-When `--reuse-runtime` is present, `scpp build` or `scpp run` reuses the existing runtime artifact path in the emitted Ninja graph instead of recompiling the runtime. The artifact must already exist or the build fails naturally at compile/link time.
+When `--build-runtime` is present, `scpp build` or `scpp run` recompiles the runtime artifact for the current build instead of reusing the existing runtime artifact path in the emitted Ninja graph.
 
-When `--reuse-dependencies` is present, `scpp build` or `scpp run` still resolves the Prism project dependency graph for source discovery, export composition, and header visibility, but reuses the existing dependency object/artifact paths in the emitted Ninja graph instead of recompiling dependency project units. Those dependency artifacts must already exist or the build fails naturally at compile/link time.
+When `--build-dependencies` is present, `scpp build` or `scpp run` still resolves the Prism project dependency graph for source discovery, export composition, and header visibility, and also recompiles dependency project units instead of reusing their existing object/artifact paths in the emitted Ninja graph.
 
-The lower-level build service path used by helpers/tests may default to reuse mode unless it explicitly opts into runtime/dependency compilation. The public user-facing CLI contract remains:
+When `--force` is present, `scpp build` or `scpp run` forces a runtime rebuild for the current build, even if the reusable runtime artifact already exists. `--force` implies runtime compilation.
 
-- `scpp build` compiles runtime and dependencies by default
-- `scpp run` compiles runtime and dependencies by default, then executes the primary output
+The lower-level build service path used by helpers/tests also defaults to reuse mode unless it explicitly opts into runtime/dependency compilation. The public user-facing CLI contract is:
+
+- `scpp build` reuses runtime and dependencies by default
+- `scpp run` reuses runtime and dependencies by default, then executes the primary output
+- both commands accept `--entry=<path>` to build or run a specific project-local source file instead of the configured `prism.json` entrypoint for that invocation only
 
 ## `scpp clean` behavior
 
@@ -214,7 +219,52 @@ The command:
 5. requires a clean working tree
 6. fetches `origin main`
 7. fast-forwards the checkout to `origin/main`
-8. fails clearly instead of creating merge commits or overwriting local changes
+8. rebuilds the default reusable runtime cache when the checkout actually changes
+9. when `--force` is present, rebuilds that default reusable runtime cache even if the checkout was already current
+10. fails clearly instead of creating merge commits or overwriting local changes
+
+## `scpp runtime-build` behavior
+
+`scpp runtime-build` rebuilds the reusable runtime cache explicitly without compiling the current project graph.
+
+The command:
+
+1. resolves the active `scpp` repository root
+2. optionally discovers the current project config to inherit runtime language/module/build settings when run inside a project
+3. defaults to debug runtime mode
+4. accepts `--release` to build the release runtime variant
+5. accepts `--force` to delete and rebuild the selected runtime artifact even if it already exists
+
+## `scpp docs` behavior
+
+`scpp docs` prints curated local documentation without requiring network access.
+
+The command:
+
+1. resolves the active Simple C++ repository root
+2. maps a short doc name to a checked-in Markdown source
+3. prints the requested name, human-readable title, source path, and document content
+4. lists known doc names when no name, `list`, `-h`, or `--help` is supplied
+5. fails clearly when the requested doc name is unknown or the mapped source is missing
+
+The initial registry includes:
+
+- `strict`
+- `php-strict`
+- `quick-learn`
+- `build`
+- `getting-started`
+- `diagnostics`
+- `profiles`
+- `modules`
+- `dependencies`
+- `examples`
+- `authoring`
+- `gotchas`
+- `skill`
+- `agents`
+
+This command is a documentation discoverability helper. It does not change language semantics or document authority.
 
 ## Project dependencies
 
@@ -244,12 +294,23 @@ Minimal example:
 For v1, the dependency contract is:
 
 - dependencies are explicit and project-level, not file-level
+- source files inside the same project may refer to same-project declarations discovered by `scpp build` without source-language `require` or `include` statements
 - source files in the root project do not need `require` or `include` statements to activate dependency projects
 - dependency projects may declare their own `dependencies`, and `scpp build` must resolve that graph transitively
 - duplicate dependency visits should be deduplicated by normalized project root
 - symbol collisions across participating projects must fail clearly during build or link
 - shared-library packaging is a later build mode and is not the semantic meaning of `dependencies` in v1
-- dependency resolution remains active even when `--reuse-dependencies` is used; the flag only suppresses recompilation of already-built dependency units
+- dependency resolution remains active even when dependency compilation is not requested; reuse only suppresses recompilation of already-built dependency units
+
+`scpp build` generates internal project unit headers under `.prism/generated/` and force-includes `.prism/generated/__project_units.hpp` when compiling the project's generated and native C++ units. These headers are build artifacts only. PHP++ source must not name generated `.hpp` files.
+
+The project unit headers include:
+
+- `__project_fwd.hpp`, a namespace-correct forward declaration header for same-project classes
+- all generated headers for the same project
+- generated `__project.hpp` export headers from transitive Prism project dependencies
+
+When same-project generated headers contain inheritance relationships discovered from the generated class declarations, base-class headers are emitted before derived-class headers in `__project_units.hpp`.
 
 ## Project exports
 
@@ -276,7 +337,6 @@ The current supported exported declaration kinds are:
 Minimal examples:
 
 ```php
-<?php
 /** @lib-export */
 function shared_value(): int { return 7; }
 
@@ -299,7 +359,6 @@ Producer/consumer example:
 `shared/prism-utils/lib.phs`
 
 ```php
-<?php
 /** @lib-export */
 function shared_value(): int { return 7; }
 
@@ -321,7 +380,6 @@ const SHARED_OFFSET = 5;
 `app/main.phs`
 
 ```php
-<?php
 echo shared_value() + SHARED_OFFSET, "\n";
 ```
 
@@ -330,7 +388,6 @@ Interface/class example:
 `contracts/lib.phs`
 
 ```php
-<?php
 /** @lib-export */
 interface NamedThing {
     public function getName(): string;
@@ -340,7 +397,6 @@ interface NamedThing {
 `models/lib.phs`
 
 ```php
-<?php
 /** @lib-export */
 class NamedBox implements NamedThing {
     public function getName(): string { return "box"; }
@@ -350,7 +406,6 @@ class NamedBox implements NamedThing {
 `app/main.phs`
 
 ```php
-<?php
 $box = new NamedBox();
 echo $box->getName(), "\n";
 ```

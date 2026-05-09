@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Scpp\S2S\PreTokenizer;
 
+use Scpp\S2S\Support\PhpParserCompatibility;
+
 /**
  * Wraps token_get_all output with stable offsets into the original source text.
  */
@@ -14,7 +16,7 @@ final class LexedSource
 	public function __construct(
 		public readonly string $source,
 	) {
-		$rawTokens = token_get_all($source);
+		$rawTokens = PhpParserCompatibility::tokenizeSource($source);
 		$tokens = [];
 		$offset = 0;
 

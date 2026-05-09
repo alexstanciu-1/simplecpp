@@ -1,0 +1,93 @@
+{
+    "source": "$count  = 0;\n$err ;\n\nfunction build_lookup($items)  {\n\treturn [];\n}\n\nclass InlineComments {\n\tpublic $items = [];\n\tpublic $lookup  = [];\n\n\tpublic function make($items)  {\n\t\treturn [];\n\t}\n}\n\n$make = fn($x)  =>\n\tfn($y): int => $x + $y;\n",
+    "annotations": [
+        {
+            "kind": "local",
+            "name": "count",
+            "type": "int",
+            "line": 3,
+            "startOffset": 14,
+            "endOffset": 24
+        },
+        {
+            "kind": "local",
+            "name": "err",
+            "type": "error_t",
+            "line": 4,
+            "startOffset": 35,
+            "endOffset": 49
+        },
+        {
+            "kind": "param",
+            "name": "items",
+            "type": "vector<string>",
+            "line": 6,
+            "startOffset": 74,
+            "endOffset": 95
+        },
+        {
+            "kind": "function_return",
+            "name": null,
+            "type": "hash<string, int>",
+            "line": 6,
+            "startOffset": 104,
+            "endOffset": 128
+        },
+        {
+            "kind": "property",
+            "name": "items",
+            "type": "vector<string>",
+            "line": 11,
+            "startOffset": 177,
+            "endOffset": 198
+        },
+        {
+            "kind": "property",
+            "name": "lookup",
+            "type": "hash<string, int>",
+            "line": 12,
+            "startOffset": 228,
+            "endOffset": 252
+        },
+        {
+            "kind": "param",
+            "name": "items",
+            "type": "vector<string>",
+            "line": 14,
+            "startOffset": 282,
+            "endOffset": 303
+        },
+        {
+            "kind": "method_return",
+            "name": null,
+            "type": "hash<string, int>",
+            "line": 14,
+            "startOffset": 312,
+            "endOffset": 336
+        },
+        {
+            "kind": "param",
+            "name": "x",
+            "type": "int",
+            "line": 19,
+            "startOffset": 369,
+            "endOffset": 379
+        },
+        {
+            "kind": "closure_return",
+            "name": null,
+            "type": "function<function<int(int)>(int)>",
+            "line": 19,
+            "startOffset": 384,
+            "endOffset": 424
+        },
+        {
+            "kind": "param",
+            "name": "y",
+            "type": "int",
+            "line": 20,
+            "startOffset": 432,
+            "endOffset": 442
+        }
+    ]
+}

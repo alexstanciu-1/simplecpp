@@ -1,4 +1,3 @@
-<?php
 while (true) {
     try {
         continue 3;

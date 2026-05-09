@@ -659,6 +659,11 @@
                         "doc_status":  "normative"
                     },
                     {
+                        "path":  "specs/planning/scpp_docs_command.md",
+                        "kind":  "markdown",
+                        "doc_status":  "planning"
+                    },
+                    {
                         "path":  "specs/project_build_v1.md",
                         "kind":  "markdown",
                         "doc_status":  "normative"

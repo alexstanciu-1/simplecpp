@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Same nested table passed into two by-ref array params, plus a live leaf ref into that table.
 // Purpose: stress duplicate table aliases plus leaf alias under mixed writes.
 

@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // POS-ASSIGNREF-036
 
 $x = [];

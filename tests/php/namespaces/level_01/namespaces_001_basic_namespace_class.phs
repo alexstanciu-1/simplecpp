@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Basic namespace class definition and use.
 namespace Demo;
 

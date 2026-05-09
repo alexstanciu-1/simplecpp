@@ -39,10 +39,7 @@ final class IrBuilder
 		$this->argNormalizationCommentParser = $argNormalizationCommentParser ?? new ArgNormalizationCommentParser();
 	}
 
-	/**
-	 * @param array<int, array{name:string,type:string,line:int}> $typeComments
-	 */
-	public function build(ParsedInput $input, array $typeComments): PhpFile
+	public function build(ParsedInput $input): PhpFile
 	{
 		$root = $input->ast;
 		if (!is_object($root) || ($root->kind ?? null) !== AstKind::STMT_LIST) {
@@ -51,9 +48,6 @@ final class IrBuilder
 
 		$this->typeCommentsByKey = [];
 		$this->returnAnnotationsByLine = [];
-		foreach ($typeComments as $comment) {
-			$this->typeCommentsByKey[$comment['line'] . ':' . $comment['name']] = $comment['type'];
-		}
 		foreach ($input->annotations as $annotation) {
 			$name = $annotation['name'] ?? null;
 			if (in_array($annotation['kind'], ['local', 'property', 'param'], true)) {
@@ -320,6 +314,7 @@ final class IrBuilder
 				$enumCases[] = new ConstantDecl(
 					name: (string) ($member->children['name'] ?? ''),
 					value: $member->children['expr'] ?? null,
+					line: (int) ($member->lineno ?? 0),
 				);
 				continue;
 			}
@@ -339,7 +334,7 @@ final class IrBuilder
 					$properties[] = new PropertyDecl(
 						name: $propertyName,
 						nativeType: $this->readTypeName($member->children['type'] ?? null),
-						docType: $this->resolveDocTypeComment($propertyLine, $propertyName, $prop->children['docComment'] ?? null),
+						docType: $this->resolveDocTypeComment($propertyLine, $propertyName),
 						default: $default,
 						hasDefault: $default !== null,
 						isStatic: $isStatic,
@@ -362,6 +357,7 @@ final class IrBuilder
 			properties: $properties,
 			constants: $constants,
 			methods: $methods,
+			line: (int) ($node->lineno ?? 0),
 			parentClass: ($name = $this->readNameString($children['extends'] ?? null)) !== '' ? $name : null,
 			interfaces: $interfaces,
 			isInterface: (((int) ($node->flags ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
@@ -400,6 +396,7 @@ final class IrBuilder
 			returnType: $this->resolveFunctionLikeReturnType($node),
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
+			line: (int) ($node->lineno ?? 0),
 			argNormalizationRules: $this->validateArgNormalizationRules($argRuleParse['rules'], $params, 'function ' . (string) ($children['name'] ?? '')),
 			isLibExport: $this->hasLibExportTag($children['docComment'] ?? null),
 		);
@@ -433,6 +430,7 @@ final class IrBuilder
 			returnsByReference: (($node->flags ?? 0) & AstKind::RETURN_REF) !== 0,
 			isStatic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
+			line: (int) ($node->lineno ?? 0),
 			argNormalizationRules: $this->validateArgNormalizationRules($this->parseArgNormalizationRules($children['docComment'] ?? null, $owner)['rules'], $params, $owner),
 		);
 	}
@@ -511,7 +509,7 @@ final class IrBuilder
 			$params[] = new ParamDecl(
 				name: $paramName,
 				nativeType: $this->readTypeName($children['type'] ?? null),
-				docType: $this->resolveDocTypeComment($paramLine, $paramName, $children['docComment'] ?? null),
+				docType: $this->resolveDocTypeComment($paramLine, $paramName),
 				isReference: (($node->flags ?? 0) & AstKind::PARAM_REF) !== 0,
 				isVariadic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 				default: $children['default'] ?? null,
@@ -538,24 +536,9 @@ final class IrBuilder
 		return $line > 0 ? ($this->returnAnnotationsByLine[$line] ?? null) : null;
 	}
 
-	private function resolveDocTypeComment(int $line, string $name, mixed $docComment): ?string
+	private function resolveDocTypeComment(int $line, string $name): ?string
 	{
-		$fromMap = $this->lookupTypeComment($line, $name);
-		if ($fromMap !== null) {
-			return $fromMap;
-		}
-
-		if (!is_string($docComment)) {
-			return null;
-		}
-
-		$inner = trim($docComment);
-		if (!str_starts_with($inner, '/**') || !str_ends_with($inner, '*/')) {
-			return null;
-		}
-
-		$inner = trim(substr($inner, 3, -2));
-		return $inner === '' ? null : $inner;
+		return $this->lookupTypeComment($line, $name);
 	}
 
 
@@ -571,6 +554,7 @@ final class IrBuilder
 				name: (string) ($child->children['name'] ?? ''),
 				value: $child->children['value'] ?? null,
 				isLibExport: $isLibExport || $this->hasLibExportTag($child->children['docComment'] ?? null),
+				line: (int) ($child->lineno ?? $node->lineno ?? 0),
 			);
 		}
 		return $out;

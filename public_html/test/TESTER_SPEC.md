@@ -91,16 +91,16 @@ Avoid:
 
 ## Source Shape
 
-Use normal PHP-like syntax with `<?php`.
+Use normal PHP-like syntax without a PHP file header.
 
-Typical files in this project often include:
+Typical Prism++ source starts directly with declarations or executable code:
 
 ```php
-<?php
-declare(strict_types=1);
+echo "hello\n";
 ```
 
-For this tester pass, treat `declare(strict_types=1);` as normal and expected.
+Do not add `<?php`.
+Do not add `declare(strict_types=1);`.
 
 ## Data Types
 

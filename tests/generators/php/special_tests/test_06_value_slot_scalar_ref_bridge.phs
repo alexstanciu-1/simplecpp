@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 function bump_slot(int &$slot): void
 {
 	$slot += 1;

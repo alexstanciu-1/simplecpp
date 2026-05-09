@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Nullable ternary branch normalization.
 function pick(bool $flag): ?int {
 	if ($flag) {

@@ -1,7 +1,3 @@
-<?php
-
-declare(strict_types=1);
-
 namespace Stage3\Config;
 
 const START = 2;

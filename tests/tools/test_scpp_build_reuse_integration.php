@@ -27,8 +27,8 @@ final class ScppBuildReuseIntegrationTest
 		try {
 			$app = $this->root . '/app';
 			$lib = $this->root . '/lib';
-			$this->writeProject($lib, [], "<?php\nfunction helper_value(): int { return 7; }\n");
-			$this->writeProject($app, ['../lib'], "<?php\necho \"app\\n\";\n");
+			$this->writeProject($lib, [], "function helper_value(): int { return 7; }\n");
+			$this->writeProject($app, ['../lib'], "echo \"app\\n\";\n");
 
 			$full = scpp_run_build_service($app, $app . '/prism.json', [
 				'compile_runtime' => true,
@@ -37,6 +37,9 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertSame(true, $full['ok'], 'initial full build should succeed');
 			$this->assertContains('Runtime compilation: enabled', $full['output'], 'full build should report runtime compilation');
 			$this->assertContains('Dependency compilation: enabled', $full['output'], 'full build should report dependency compilation');
+			$this->assertDirectNinjaNoWork($app);
+			$this->assertSameProjectStrictUnitsComposeWithoutSourceIncludes();
+			$this->assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder();
 
 			$depObject = $this->findDependencyObject($lib);
 			$runtimeArtifact = $this->resolveRuntimeArtifactPath($app);
@@ -46,7 +49,7 @@ final class ScppBuildReuseIntegrationTest
 			$runtimeBeforeReuse = $this->mtime($runtimeArtifact);
 
 			$this->sleepForTimestamp();
-			$this->write($app . '/main.phs', "<?php\necho \"app reuse\\n\";\n");
+			$this->write($app . '/main.phs', "echo \"app reuse\\n\";\n");
 			$reuse = scpp_run_build_service($app, $app . '/prism.json');
 			$this->assertSame(true, $reuse['ok'], 'warm service build should succeed');
 			$this->assertContains('Runtime compilation: reuse existing artifact only', $reuse['output'], 'service build should reuse runtime by default');
@@ -55,13 +58,13 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertSame($runtimeBeforeReuse, $this->mtime($runtimeArtifact), 'runtime artifact should not rebuild in default reuse mode');
 
 			$this->sleepForTimestamp();
-			$this->write($lib . '/main.phs', "<?php\nfunction helper_value(): int { return 8; }\n");
+			$this->write($lib . '/main.phs', "function helper_value(): int { return 8; }\n");
 			$depReuse = scpp_run_build_service($app, $app . '/prism.json');
 			$this->assertSame(true, $depReuse['ok'], 'service build with changed dependency source should still succeed in reuse mode');
 			$this->assertSame($depBeforeReuse, $this->mtime($depObject), 'dependency object should remain untouched until dependency compilation is requested');
 
 			$this->sleepForTimestamp();
-			$depFull = scpp_run_build_service($app, $app . '/prism.json', parse_build_command_arguments([]));
+			$depFull = scpp_run_build_service($app, $app . '/prism.json', parse_build_command_arguments(['--build-dependencies']));
 			$this->assertSame(true, $depFull['ok'], 'full build should rebuild dependency artifacts');
 			$this->assertContains('Dependency compilation: enabled', $depFull['output'], 'full build should re-enable dependency compilation');
 			$depAfterFull = $this->mtime($depObject);
@@ -97,6 +100,46 @@ final class ScppBuildReuseIntegrationTest
 		return normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
 	}
 
+	private function assertDirectNinjaNoWork(string $projectRoot): void
+	{
+		$buildDir = $projectRoot . '/.prism/build';
+		$buildFile = $buildDir . '/build.ninja';
+		$command = [
+			'ninja',
+			'-C',
+			$buildDir,
+			'-f',
+			basename($buildFile),
+			'-d',
+			'explain',
+			'main',
+		];
+		$descriptor = [
+			0 => ['file', 'php://stdin', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = proc_open($command, $descriptor, $pipes, $projectRoot);
+		if (!is_resource($process)) {
+			throw new RuntimeException('Failed to start direct ninja check');
+		}
+		$stdout = stream_get_contents($pipes[1]);
+		$stderr = stream_get_contents($pipes[2]);
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		$status = proc_close($process);
+		$output = (is_string($stdout) ? $stdout : '') . (is_string($stderr) ? $stderr : '');
+		if ($status !== 0) {
+			throw new RuntimeException("Direct ninja check failed:\n" . $output);
+		}
+		if (!str_contains($output, 'no work to do')) {
+			throw new RuntimeException("Direct ninja check was expected to be warm and idle, got:\n" . $output);
+		}
+		if (str_contains($output, 'missing and no known rule to make it')) {
+			throw new RuntimeException("Direct ninja check still reports a missing dependency edge:\n" . $output);
+		}
+	}
+
 	private function findDependencyObject(string $projectRoot): string
 	{
 		$buildDir = $projectRoot . '/.prism/build';
@@ -115,6 +158,83 @@ final class ScppBuildReuseIntegrationTest
 		throw new RuntimeException('Failed to locate dependency object in ' . $buildDir);
 	}
 
+	private function assertSameProjectStrictUnitsComposeWithoutSourceIncludes(): void
+	{
+		$project = $this->root . '/strict_units';
+		$this->writeProject($project, [], "echo \"placeholder\\n\";\n", 'strict');
+		$this->write($project . '/model.phs', <<<'PHS'
+class Model {
+    public string $name = "";
+}
+PHS);
+		$this->write($project . '/main.phs', <<<'PHS'
+$m = new Model();
+$m->name = "ok";
+echo $m->name, "\n";
+PHS);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json');
+		$this->assertSame(true, $build['ok'], 'strict same-project units should build without source-level generated-header includes');
+
+		$unitHeader = $project . '/.prism/generated/__project_units.hpp';
+		$buildFile = $project . '/.prism/build/build.ninja';
+		$this->assertFileExists($unitHeader, 'project unit force-include header should be generated');
+		$this->assertFileExists($buildFile, 'strict same-project build should emit build.ninja');
+		$this->assertContains('#include "model.hpp"', $this->read($unitHeader), 'project unit header should include same-project generated model header');
+		$this->assertContains('-include ../generated/__project_units.hpp', $this->read($buildFile), 'generated unit compile edges should force-include the project unit header');
+	}
+
+	private function assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder(): void
+	{
+		$project = $this->root . '/strict_namespaced_units';
+		$this->writeProject($project, [], "echo \"placeholder\\n\";\n", 'strict');
+		$this->mkdir($project . '/db');
+		$this->mkdir($project . '/orm');
+		$this->mkdir($project . '/schema');
+		$this->write($project . '/db/holder.phs', <<<'PHS'
+namespace App\Db;
+
+class Holder {
+    public \App\Schema\Item $item;
+}
+PHS);
+		$this->write($project . '/orm/child_node.phs', <<<'PHS'
+namespace App\Orm;
+
+class ChildNode extends \App\Schema\BaseNode {
+}
+PHS);
+		$this->write($project . '/schema/base_node.phs', <<<'PHS'
+namespace App\Schema;
+
+class BaseNode {
+}
+PHS);
+		$this->write($project . '/schema/item.phs', <<<'PHS'
+namespace App\Schema;
+
+class Item {
+    public string $name = "";
+}
+PHS);
+		$this->write($project . '/main.phs', <<<'PHS'
+$i = new App\Schema\Item();
+$i->name = "ok";
+echo $i->name, "\n";
+PHS);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json');
+		$this->assertSame(true, $build['ok'], 'strict namespaced same-project units should build without generated-header source includes');
+
+		$forwardHeader = $project . '/.prism/generated/__project_fwd.hpp';
+		$unitHeader = $project . '/.prism/generated/__project_units.hpp';
+		$this->assertFileExists($forwardHeader, 'project forward declaration header should be generated');
+		$this->assertContains('namespace scpp::App::Schema {', $this->read($forwardHeader), 'forward header should declare nested source namespaces');
+		$this->assertContains('class Item;', $this->read($forwardHeader), 'forward header should declare referenced cross-unit classes');
+		$this->assertContains('#include "__project_fwd.hpp"', $this->read($unitHeader), 'project unit header should include project forward declarations before generated headers');
+		$this->assertOrderBefore('#include "schema/base_node.hpp"', '#include "orm/child_node.hpp"', $this->read($unitHeader), 'base-class header should be included before derived-class header');
+	}
+
 	private function sleepForTimestamp(): void
 	{
 		usleep(1200000);
@@ -122,7 +242,7 @@ final class ScppBuildReuseIntegrationTest
 	}
 
 	/** @param list<string> $dependencies */
-	private function writeProject(string $path, array $dependencies, string $source): void
+	private function writeProject(string $path, array $dependencies, string $source, string $phpProfile = 'legacy'): void
 	{
 		$this->mkdir($path);
 		$this->mkdir($path . '/native_cpp');
@@ -146,7 +266,7 @@ final class ScppBuildReuseIntegrationTest
 				'languages' => ['php'],
 				'modules' => ['json', 'filesystem'],
 				'language_profiles' => [
-					'php' => ['profile' => 'legacy'],
+					'php' => ['profile' => $phpProfile],
 				],
 			],
 		];
@@ -176,6 +296,15 @@ final class ScppBuildReuseIntegrationTest
 		if (file_put_contents($path, $contents) === false) {
 			throw new RuntimeException('Failed to write ' . $path);
 		}
+	}
+
+	private function read(string $path): string
+	{
+		$contents = file_get_contents($path);
+		if (!is_string($contents)) {
+			throw new RuntimeException('Failed to read ' . $path);
+		}
+		return $contents;
 	}
 
 	private function mkdir(string $path): void
@@ -226,6 +355,15 @@ final class ScppBuildReuseIntegrationTest
 	{
 		if (!str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' missing `' . $needle . '`');
+		}
+	}
+
+	private function assertOrderBefore(string $left, string $right, string $haystack, string $message): void
+	{
+		$leftPos = strpos($haystack, $left);
+		$rightPos = strpos($haystack, $right);
+		if (!is_int($leftPos) || !is_int($rightPos) || $leftPos >= $rightPos) {
+			throw new RuntimeException($message . ' expected `' . $left . '` before `' . $right . '`');
 		}
 	}
 

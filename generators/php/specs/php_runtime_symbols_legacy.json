@@ -9,6 +9,7 @@
         "condition_truthy": "php::condition_truthy",
         "take": "php::take",
         "var_dump": "php::var_dump",
+        "echo_one": "php::echo_one",
         "echo_eval": "php::echo_eval",
         "identical": "php::identical",
         "not_identical": "php::not_identical",

@@ -24,6 +24,7 @@ final class MethodDecl
 		public readonly bool $returnsByReference,
 		public readonly bool $isStatic,
 		public readonly array $statements,
+		public readonly int $line = 0,
 		public readonly array $argNormalizationRules = [],
 	) {
 	}

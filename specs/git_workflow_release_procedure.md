@@ -13,6 +13,7 @@ This document is the authoritative workflow procedure for:
 - GitHub pull request targets
 - release branch handling
 - release notes handling
+- release-time agent skill maintenance
 - AI behavior when required tooling is missing
 
 If another supporting or planning document describes a different Git workflow, this document takes priority for repository operations.
@@ -99,7 +100,21 @@ The release tag must reference the release-ready commit on `main` that carries t
 
 ---
 
-## 5. Standard Feature Procedure
+## 5. Agent Skill Release Hygiene
+
+Before a release is published, the release branch must review repo-local Agent Skills under:
+
+- `.agents/skills/`
+
+If a release changes user-facing language behavior, project workflow, diagnostics, library surfaces, examples, module usage, dependency composition, or other guidance an AI agent would rely on, the relevant skill files must be updated before the release PR is merged.
+
+This check is mandatory even when no skill changes are needed. In that case, the release review should explicitly conclude that `.agents/skills/*` remains current.
+
+Agent Skills are not the highest semantic authority. They are operational guidance derived from specs, docs, examples, and current tooling. Do not change a skill to invent semantics; update the owning spec/doc/code first, then update the skill to reflect it.
+
+---
+
+## 6. Standard Feature Procedure
 
 1. Start from updated `develop`.
 2. Create a `feature/<name>` branch.
@@ -112,7 +127,7 @@ Feature branches do not go directly to `main`.
 
 ---
 
-## 6. Release Procedure
+## 7. Release Procedure
 
 1. Ensure `develop` is in the intended release state.
 2. Create `release/<version>` from `develop`.
@@ -120,6 +135,7 @@ Feature branches do not go directly to `main`.
    - stabilize only
    - update version markers if the repo uses them
    - update `CHANGELOG.md`
+   - review `.agents/skills/*` and update affected Agent Skills before release, or record that no skill update is needed
    - run the required validation/test suites
 4. Open a GitHub pull request from `release/<version>` into `main`.
 5. After approval and merge into `main`:
@@ -137,28 +153,30 @@ Release branches are not for new feature development.
 
 ---
 
-## 7. Hotfix Procedure
+## 8. Hotfix Procedure
 
 1. Create `hotfix/<version>` from `main`.
 2. Apply the minimal required fix.
 3. Update `CHANGELOG.md` for the patch release.
-4. Open a GitHub pull request from `hotfix/<version>` into `main`.
-5. After merge:
+4. Review `.agents/skills/*` and update affected Agent Skills when the hotfix changes user-facing behavior or agent guidance, or record that no skill update is needed.
+5. Open a GitHub pull request from `hotfix/<version>` into `main`.
+6. After merge:
    - fast-forward local `main`
    - create tag `v<version>` on the release-ready `main` commit
    - push the tag
    - publish the GitHub Release from the checked-in release notes
-6. Merge the hotfix result back into `develop`.
-7. Delete `hotfix/<version>` locally and remotely after publication.
+7. Merge the hotfix result back into `develop`.
+8. Delete `hotfix/<version>` locally and remotely after publication.
 
 ---
 
-## 8. Standard Release Output Checklist
+## 9. Standard Release Output Checklist
 
 Every published release should leave the repository in this state:
 
 - `main` contains the merged release PR
 - `CHANGELOG.md` contains the release notes for that version
+- `.agents/skills/*` has been reviewed and any release-relevant skill updates are included
 - tag `v<version>` exists on GitHub
 - a GitHub Release exists for that tag
 - `develop` is synchronized with the release-note/bookkeeping outcome
@@ -166,7 +184,7 @@ Every published release should leave the repository in this state:
 
 ---
 
-## 9. Tooling Requirements
+## 10. Tooling Requirements
 
 The following tooling is required before the AI or a contributor executes this workflow:
 
@@ -187,7 +205,7 @@ Examples:
 
 ---
 
-## 10. AI Mandatory Behavior
+## 11. AI Mandatory Behavior
 
 When operating on this repository, the AI must follow these rules:
 
@@ -195,6 +213,7 @@ When operating on this repository, the AI must follow these rules:
 - do not invent alternate branch roles
 - do not merge feature work directly into `main`
 - do not skip release notes for a release or hotfix
+- do not skip the `.agents/skills/*` release-hygiene check
 - do not treat a merged release PR as a complete published release until the tag and GitHub Release also exist
 - do not silently continue when required Git or GitHub tooling is unavailable
 - explicitly tell the user what tool is missing and what assistance is needed
@@ -203,7 +222,7 @@ If a requested action conflicts with this procedure, the AI should pause and sur
 
 ---
 
-## 11. Relationship to Other Workflow Docs
+## 12. Relationship to Other Workflow Docs
 
 - `specs/AI_WORKFLOW.md`
   - operational chat/session guidance

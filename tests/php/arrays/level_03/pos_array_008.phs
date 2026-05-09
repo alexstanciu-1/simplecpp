@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // POS-ARR-008
 // Safe positive array case within the documented reduced PHP-array subset.
 

@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // NEG-REF-008
 // Expected: reject. Conditional binding is outside the Simple C++ reference model.
 

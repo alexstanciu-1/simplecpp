@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Keyed isset() must be null-sensitive: present value => true, null => false, missing => false.
 $row = [];
 $row["id"] = 123;

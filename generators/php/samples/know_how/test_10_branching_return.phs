@@ -1,4 +1,3 @@
-<?php
 function f(bool $x): int {
     try {
         if ($x) {

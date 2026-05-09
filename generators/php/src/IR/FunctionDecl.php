@@ -23,6 +23,7 @@ final class FunctionDecl
 		public readonly ?string $returnType,
 		public readonly bool $returnsByReference,
 		public readonly array $statements,
+		public readonly int $line = 0,
 		public readonly array $argNormalizationRules = [],
 		public readonly bool $isLibExport = false,
 	) {

@@ -89,20 +89,25 @@ Common entrypoint names include:
 
 ```bash
 scpp build
+scpp build --entry=tests/php/sample.phs
 ```
 
-Optional warm-build reuse flags:
+`scpp build` composes `.phs` files inside the same project. Do not write PHP++ source-level `require` or `include` statements for generated `.hpp` files.
+
+By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
 
 ```bash
-scpp build --reuse-runtime
-scpp build --reuse-dependencies
-scpp build --reuse-runtime --reuse-dependencies
+scpp build --build-runtime
+scpp build --build-dependencies
+scpp build --build-runtime --build-dependencies
+scpp build --force
 ```
 
 ### Run
 
 ```bash
 scpp run
+scpp run --entry=tests/php/sample.phs
 ```
 
 Pass program arguments after `--`:
@@ -111,18 +116,24 @@ Pass program arguments after `--`:
 scpp run -- arg1 arg2
 ```
 
-The same reuse flags are also accepted on `scpp run`:
+The same explicit rebuild flags are also accepted on `scpp run`:
 
 ```bash
-scpp run --reuse-runtime
-scpp run --reuse-dependencies -- arg1 arg2
+scpp run --build-runtime
+scpp run --build-dependencies -- arg1 arg2
+scpp run --force
 ```
 
 ### CLI maintenance
 
 - `scpp --version`: show installed CLI version
 - `scpp --doctor`: show install/toolchain/Git status
-- `scpp update`: fast-forward installed checkout from `origin/main`
+- `scpp docs`: list curated local documentation names
+- `scpp docs strict`: print the local strict PHP++ quick-learn
+- `scpp docs diagnostics`: print local strict validation and diagnostics guidance
+- `scpp update`: fast-forward installed checkout from `origin/main` and rebuild the default reusable runtime cache when a real update lands
+- `scpp update --force`: rebuild that default reusable runtime cache even when already current
+- `scpp runtime-build [--debug|--release] [--force]`: rebuild the reusable runtime cache explicitly
 - `scpp clean`: remove generated `.prism/` state for a cold rebuild
 
 ### Single-file transpile
@@ -144,11 +155,14 @@ This prints generated C++ to stdout.
 ### Minimal strict example
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo "hello\n";
 ```
+
+For Prism++ source files:
+
+- do not start `.phs` files with `<?php`
+- do not use `declare(strict_types=1);` in `.phs` or compatibility `.php` source files
+- the Prism++ type/runtime contract is defined by Prism++ rules, not by PHP `strict_types`
 
 ### Strict config hint
 
@@ -247,9 +261,13 @@ Use this order:
 | typed int-key hash local | `$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];` |
 | typed class property shorthand | `public $list vector<T> = [];` |
 | typed class property | `public $list /** vector<T> */ = [];` |
+| typed class property (leading comment) | `public /** vector<T> */ $list = [];` |
 | typed param shorthand | `function build($items vector<string>) { ... }` |
+| typed param by inline comment | `function build(/** vector<string> */ $items) { ... }` |
 | typed return shorthand | `function build(): vector<string> { ... }` |
+| typed return by inline comment | `function build() /** vector<string> */ { ... }` |
 | typed arrow return shorthand | `$make = fn($x int) function<function<int(int)>(int)> => fn($y int): int => $x + $y;` |
+| typed arrow return by inline comment | `$make = fn(/** int */ $x) /** function<function<int(int)>(int)> */ => fn(/** int */ $y): int => $x + $y;` |
 | vector property with class element | `public $properties /** vector<model_property> */ = [];` |
 | vector literal needs explicit typed context | `$v /** vector<int> */ = [1, 2, 3];` |
 | typed read from dynamic value | `$count /** int */ = $data["count"];` |
@@ -267,7 +285,7 @@ Use this order:
 | strict filesystem builtin | `take($data, $err, fs_get($file));` |
 | strict IO builtin | `take($written, io_write($fh, "abc"));` |
 | strict JSON builtin | `$data = json_decode($json);` |
-| strict header | `declare(strict_types=1);` |
+| Prism++ file start | `echo "hello\n";` |
 | nullable local | `$id /** ?int */ = null;` |
 | strict comparison | `if ($value === 0) { ... }` |
 | namespace + typed property example | `namespace demo\schema; class model { public $properties /** vector<model_property> */ = []; }` |
@@ -511,9 +529,6 @@ Visible PHP++ / PHS strict names are flat and family-prefixed.
 ## Tiny Canonical Example
 
 ```php
-<?php
-declare(strict_types=1);
-
 $file = "sample.txt";
 $err /** error_t */;
 $written /** int */ = 0;

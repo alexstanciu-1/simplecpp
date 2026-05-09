@@ -11,6 +11,10 @@ $fixtures = [
 		'input' => $root . '/samples/know_how/pre_tokenizer_return_sites.phs',
 		'expected' => $root . '/samples/know_how/pre_tokenizer_return_sites.expected.json',
 	],
+	[
+		'input' => $root . '/samples/know_how/pre_tokenizer_inline_comments.phs',
+		'expected' => $root . '/samples/know_how/pre_tokenizer_inline_comments.expected.json',
+	],
 ];
 
 $script = __DIR__ . '/check_pre_tokenizer_fixture.php';
