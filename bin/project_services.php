@@ -1059,13 +1059,9 @@ function handle_run(string $cwd, array $args): void
 		1 => ['file', 'php://stdout', 'w'],
 		2 => ['file', 'php://stderr', 'w'],
 	];
-	$processEnv = [];
-	if (is_string($buildResult['runtime_library_dir'] ?? null) && $buildResult['runtime_library_dir'] !== '') {
-		$existingPath = getenv('PATH');
-		$processEnv['PATH'] = $buildResult['runtime_library_dir']
-			. PATH_SEPARATOR
-			. (is_string($existingPath) ? $existingPath : '');
-	}
+	$processEnv = scpp_runtime_library_process_environment(
+		is_string($buildResult['runtime_library_dir'] ?? null) ? $buildResult['runtime_library_dir'] : null
+	);
 	$process = proc_open($command, $descriptor, $pipes, $project['project_root'], scpp_build_process_environment($processEnv));
 	if (!is_resource($process)) {
 		scpp_fail('Failed to start built program.' . PHP_EOL, 4);
@@ -1088,6 +1084,39 @@ function handle_run(string $cwd, array $args): void
 		]
 	);
 	exit($status);
+}
+
+/** @return array<string,string> */
+function scpp_runtime_library_process_environment(?string $runtimeLibraryDir): array
+{
+	if ($runtimeLibraryDir === null || $runtimeLibraryDir === '') {
+		return [];
+	}
+
+	if (PHP_OS_FAMILY === 'Windows') {
+		return [
+			'PATH' => prepend_path_env_value('PATH', $runtimeLibraryDir),
+		];
+	}
+
+	if (PHP_OS_FAMILY === 'Darwin') {
+		return [
+			'DYLD_LIBRARY_PATH' => prepend_path_env_value('DYLD_LIBRARY_PATH', $runtimeLibraryDir),
+		];
+	}
+
+	return [
+		'LD_LIBRARY_PATH' => prepend_path_env_value('LD_LIBRARY_PATH', $runtimeLibraryDir),
+	];
+}
+
+function prepend_path_env_value(string $name, string $path): string
+{
+	$existing = getenv($name);
+	if (!is_string($existing) || $existing === '') {
+		return $path;
+	}
+	return $path . PATH_SEPARATOR . $existing;
 }
 
 
@@ -4144,6 +4173,8 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		$linkFlags = ['-shared'];
 		if (PHP_OS_FAMILY === 'Darwin') {
 			$linkFlags[] = '-Wl,-install_name,@rpath/' . $libraryName;
+		} elseif (PHP_OS_FAMILY === 'Linux') {
+			$linkFlags[] = '-Wl,-soname,' . $libraryName;
 		}
 		$linkFlags = array_merge($linkFlags, $extraLinkFlags);
 
