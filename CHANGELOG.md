@@ -9,6 +9,30 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.31 - 2026-05-09
+
+### Additions
+
+- Added strict-safe PHP++ debug helpers: `dbg`, `dbg_if`, `dbg_set`, `dbg_unset`, and `dbg_enabled`.
+- Added composable `DBG_*` inspection flags for type, value, shape, fields, keys, length, source, caller, JSON, raw text, pointer identity, compact output, and explicit depth controls.
+- Added best-effort runtime inspection for scalars, `mixed_t`, hashes, vectors, wrappers, nullable-like values, pointers, and handles with recursion protection and compact hex pointer IDs.
+- Added source-aware lowering for `dbg(...)` and `dbg_if(...)` so debug output can report the originating `.phs` file and line.
+- Added strict debug helper guidance to the PHP++ strict quick-learn and repo-local Agent Skill docs.
+
+### Fixes
+
+- None
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Strict projects can use `dbg("label", $value, DBG_SHAPE | DBG_DEPTH_2 | DBG_PTR)` for focused runtime shape inspection without ad hoc generated-C++ probes.
+- Use `dbg_set("gate", $condition)`, lower-call `dbg_if("gate", ...)`, and `dbg_unset("gate", $condition)` for scoped debugging. Duplicate gate sets and missing unsets intentionally fail loudly.
+- Object field reflection remains best-effort and may report unsupported details instead of crashing.
+
 ## 0.1.30 - 2026-05-09
 
 ### Additions
