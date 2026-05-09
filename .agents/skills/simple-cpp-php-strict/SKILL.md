@@ -1,6 +1,6 @@
 ---
 name: simple-cpp-php-strict
-description: Write, review, debug, and fix strict-mode Simple C++ PHP++ applications. Use for PHP++ app authoring with PHS/.phs files, scpp strict-profile projects, family-prefixed strict APIs such as fs_*, str_*, io_*, json_*, typed containers, wrappers, modules, project dependencies, and diagnostics. Do not use for legacy-profile PHP++ projects except to say the strict skill does not apply.
+description: Write, review, debug, and fix strict-mode Simple C++ PHP++ applications. Use for PHP++ app authoring with PHS/.phs files, scpp strict-profile projects, family-prefixed strict APIs such as fs_*, str_*, io_*, json_*, dt_*, typed containers, wrappers, modules, project dependencies, and diagnostics. Do not use for legacy-profile PHP++ projects except to say the strict skill does not apply.
 ---
 
 # Simple C++ PHP++ Strict
@@ -52,7 +52,8 @@ Write PHP++ source, not generated C++.
 - Resolve wrappers near meaningful boundaries with `take(...)`.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.
-- Use strict profile APIs such as `fs_get`, `fs_put`, `str_strlen`, `io_open`, and `json_encode`; do not substitute legacy PHP names unless a local strict doc explicitly says the helper remains shared.
+- Use strict profile APIs such as `fs_get`, `fs_put`, `str_strlen`, `io_open`, `json_encode`, and `dt_format`; do not substitute legacy PHP names unless a local strict doc explicitly says the helper remains shared.
+- For datetime work in strict projects, prefer `dt_now`, `dt_format`, `dt_format_now`, `dt_parse`, `dt_format_iso_utc`, and `dt_parse_iso_utc`. Treat PHP-shaped `date()` and `strtotime()` as legacy wrapper names, not the strict authoring style.
 
 ## Project Workflow
 

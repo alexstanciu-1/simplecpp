@@ -481,7 +481,7 @@ final class ProjectInitCommand
 						'profile' => $phpProfile,
 					],
 				],
-				'modules' => ['json', 'filesystem'],
+				'modules' => ['json', 'filesystem', 'datetime'],
 			],
 		];
 
@@ -2913,8 +2913,7 @@ function resolve_runtime_build_config(array $config): array
 {
 	$runtime = is_array($config['runtime'] ?? null) ? $config['runtime'] : [];
 	$languagesRaw = $runtime['languages'] ?? ['php'];
-	$modules = $runtime['modules'] ?? ['json', 'filesystem'];
-	$profilesRaw = is_array($runtime['language_profiles'] ?? null) ? $runtime['language_profiles'] : [];
+	$modules = $runtime['modules'] ?? ['json', 'filesystem', 'datetime'];
 	if (!is_array($languagesRaw) || !is_array($modules)) {
 		scpp_fail('Invalid runtime config in ' . SCPP_PROJECT_CONFIG . '; expected runtime.languages as either a list or object, and runtime.modules as an array.' . PHP_EOL, 2);
 	}
@@ -2956,7 +2955,7 @@ function resolve_runtime_build_config(array $config): array
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'mysqli', 'regex'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -4429,13 +4428,16 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 function render_runtime_composition_source(array $runtimeConfig): string
 {
 	$languages = is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'];
-	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem'];
+	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'datetime'];
 	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
 	$lines = [
 		'#include "core/runtime.cpp"',
 	];
 	if (in_array('json', $modules, true)) {
 		$lines[] = '#include "modules/json/json.cpp"';
+	}
+	if (in_array('datetime', $modules, true)) {
+		$lines[] = '#include "modules/datetime/datetime.cpp"';
 	}
 	if (in_array('mysqli', $modules, true)) {
 		$lines[] = '#include "modules/mysql/mysql_module.cpp"';
@@ -4449,6 +4451,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 		}
 		if (in_array('json', $modules, true)) {
 			$lines[] = '#include "lang/php/php_json.cpp"';
+		}
+		if (in_array('datetime', $modules, true)) {
+			$lines[] = '#include "lang/php/php_datetime.cpp"';
 		}
 		if (in_array('mysqli', $modules, true)) {
 			$lines[] = '#include "lang/php/php_mysqli.cpp"';
@@ -4586,7 +4591,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	$compositionSource = $runtimeCacheDir . '/runtime_build.cpp';
 	write_text_file($compositionSource, render_runtime_composition_source($runtimeConfig));
 	$sourcePath = normalize_config_path(relative_path($projectRoot, $compositionSource));
-	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem'];
+	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'datetime'];
 	$extraCxxFlags = [];
 	$extraLinkFlags = [];
 	if (in_array('php', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : ['php'], true)) {

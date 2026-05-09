@@ -1,0 +1,51 @@
+{
+    "id": "strict_datetime_001_datetime_surface",
+    "feature": "datetime",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "0\n1970-01-01T00:00:00Z\n2024-02-29T12:34:56Z\nbad-date\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "datetime"
+    ],
+    "notes": "Strict datetime profile surface maps directly to scpp::dt::* runtime functions.",
+    "build": {
+        "sanitizers": null
+    }
+}
+

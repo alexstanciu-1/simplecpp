@@ -22,7 +22,8 @@ Current runtime targets include:
 - `scpp_runtime` â†’ non-language runtime core
 - `scpp_lang_php` â†’ PHP runtime layer
 - `scpp_json` â†’ JSON runtime module
-- `scpp_filesystem` â†’ filesystem runtime module
+- `scpp_filesystem` -> filesystem runtime module
+- `scpp_datetime` -> datetime runtime module
 
 ## Dependency rule
 
@@ -40,6 +41,7 @@ Current examples:
 
 - JSON implementation lives in `modules/json/` and `namespace scpp::json`
 - filesystem implementation lives in `modules/filesystem/` and `namespace scpp::fs`
+- datetime implementation lives in `modules/datetime/` and `namespace scpp::dt`
 - regex implementation lives in `modules/regex/` and `namespace scpp::regex`
 - PHP keeps wrapper headers in `lang/php/`
 
@@ -56,11 +58,11 @@ Current examples:
         "profile": "legacy"
       }
     },
-    "modules": ["json", "filesystem"]
+    "modules": ["json", "filesystem", "datetime"]
   }
 }
 ```
 
 Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
-Current default behavior enables the `json` and `filesystem` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.
+Current default behavior enables the `json`, `filesystem`, and `datetime` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.

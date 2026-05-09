@@ -80,6 +80,11 @@ add_executable(test_json test_json.cpp)
 target_link_libraries(test_json PRIVATE scpp_lang_php scpp_json scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_json COMMAND test_json)
 
+# datetime runtime and PHP wrapper coverage.
+add_executable(test_datetime test_datetime.cpp)
+target_link_libraries(test_datetime PRIVATE scpp_lang_php scpp_datetime scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_datetime COMMAND test_datetime)
+
 if(TARGET scpp_regex)
 	add_executable(test_regex test_regex.cpp)
 	target_link_libraries(test_regex PRIVATE scpp_lang_php scpp_regex scpp_runtime scpp_runtime_test_support)
