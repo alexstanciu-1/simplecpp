@@ -182,6 +182,31 @@ In `prism.json`, the important project setting is:
 
 Legacy and strict PHP++ / PHS library surfaces must not be mixed in the same project.
 
+### Optional runtime modules
+
+Some strict library families are opt-in project modules. Regex support is one of them.
+
+For strict regex code, enable the `regex` module explicitly and use the typed `regex_*` surface:
+
+```json
+{
+  "runtime": {
+    "modules": ["regex"]
+  }
+}
+```
+
+```php
+$captures /** vector<string> */ = [];
+if (take($captures, regex_match("/(ab+)-(cd+)/i", "xxAbb-cDDyy"))) {
+	echo $captures[0], "\n";
+}
+```
+
+Do not use legacy `preg_*` names in strict projects. Those names belong to the PHP legacy surface, where PHP-compatible arrays may use `mixed_t`.
+
+Current regex support is PCRE2-backed and requires the host PCRE2 development files to be installed manually. For the full supported surface and deferred PHP-compatibility flags, see `specs/builtins/regex/first_pass.md` and `docs/regex_builtins.md`.
+
 ### Where build output goes
 
 - generated C++: `.prism/generated/`
