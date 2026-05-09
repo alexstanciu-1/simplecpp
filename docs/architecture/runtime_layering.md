@@ -40,6 +40,7 @@ Current examples:
 
 - JSON implementation lives in `modules/json/` and `namespace scpp::json`
 - filesystem implementation lives in `modules/filesystem/` and `namespace scpp::fs`
+- regex implementation lives in `modules/regex/` and `namespace scpp::regex`
 - PHP keeps wrapper headers in `lang/php/`
 
 
@@ -62,4 +63,4 @@ Current examples:
 
 Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
-Current default behavior enables the `json` and `filesystem` runtime modules. `mysqli` remains opt-in. Unsupported language or module names must fail clearly during build configuration.
+Current default behavior enables the `json` and `filesystem` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.

@@ -7,7 +7,21 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
--- No release notes recorded yet.
+### Additions
+
+- Added the opt-in PCRE2-backed regex runtime module with typed `regex_*` APIs, legacy PHP `preg_*` wrappers, opportunistic JIT use, UTF-8 `/u` coverage, match offsets, named captures, replacement backreferences, practical split/match-all flags, and explicit runtime errors for deferred offset-capture and unmatched-as-null output forms
+
+### Fixes
+
+- None
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Enable the `regex` runtime module explicitly and install PCRE2 development files manually for now; full PHP parity for `PREG_OFFSET_CAPTURE`, `PREG_UNMATCHED_AS_NULL`, and dynamic callable-array handling remains deferred
 
 ## 0.1.26 - 2026-05-09
 
