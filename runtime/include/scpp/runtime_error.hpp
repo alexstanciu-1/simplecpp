@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -52,6 +53,46 @@ inline bool runtime_error_json_enabled() {
 inline bool runtime_error_debug_trace_enabled() {
 	const char *value = std::getenv("SCPP_DEBUG_TRACE");
 	return value != nullptr && std::string_view(value) == "1";
+}
+
+inline void runtime_error_add_detail_if_missing(
+	std::vector<runtime_error_detail_t> &details,
+	std::string key,
+	std::string value
+) {
+	if (value.empty()) {
+		return;
+	}
+	for (const auto &detail : details) {
+		if (detail.key == key) {
+			return;
+		}
+	}
+	details.push_back(runtime_error_detail_t{std::move(key), std::move(value)});
+}
+
+template <typename Fn>
+decltype(auto) with_runtime_context(
+	Fn &&fn,
+	const char *source_file,
+	int source_line,
+	const char *expression,
+	const char *expected_type,
+	const char *operation
+) {
+	try {
+		return std::forward<Fn>(fn)();
+	} catch (const runtime_error &error) {
+		auto details = error.details();
+		runtime_error_add_detail_if_missing(details, "source_file", source_file == nullptr ? "" : source_file);
+		if (source_line > 0) {
+			runtime_error_add_detail_if_missing(details, "source_line", std::to_string(source_line));
+		}
+		runtime_error_add_detail_if_missing(details, "expression", expression == nullptr ? "" : expression);
+		runtime_error_add_detail_if_missing(details, "expected_type", expected_type == nullptr ? "" : expected_type);
+		runtime_error_add_detail_if_missing(details, "operation", operation == nullptr ? "" : operation);
+		throw runtime_error(error.what(), error.code(), error.component(), error.operator_symbol(), std::move(details));
+	}
 }
 
 inline std::string runtime_error_json_escape(std::string_view value) {
