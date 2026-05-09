@@ -65,6 +65,7 @@ final class ScppBuildOptionsTest
 			$this->assertSame(true, $runtimeBuildRelease['force'], 'runtime-build should accept force');
 
 			$this->assertUpdateArgumentHandling();
+			$this->assertRuntimeLaunchEnvironment();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
 			$this->assertEntryOverrideCanSelectAnotherFile();
@@ -88,6 +89,23 @@ final class ScppBuildOptionsTest
 			$this->assertContains('Unknown option for `scpp update`', $ex->getMessage(), 'unknown update flags should report the offending option');
 			return;
 		}
+	}
+
+	private function assertRuntimeLaunchEnvironment(): void
+	{
+		$env = scpp_runtime_library_process_environment('/tmp/scpp-runtime');
+		if (PHP_OS_FAMILY === 'Windows') {
+			$this->assertSame(true, isset($env['PATH']), 'Windows runtime launch should prepend PATH');
+			$this->assertContains('/tmp/scpp-runtime', $env['PATH'], 'Windows PATH should include the runtime directory');
+			return;
+		}
+		if (PHP_OS_FAMILY === 'Darwin') {
+			$this->assertSame(true, isset($env['DYLD_LIBRARY_PATH']), 'macOS runtime launch should prepend DYLD_LIBRARY_PATH');
+			$this->assertContains('/tmp/scpp-runtime', $env['DYLD_LIBRARY_PATH'], 'macOS DYLD_LIBRARY_PATH should include the runtime directory');
+			return;
+		}
+		$this->assertSame(true, isset($env['LD_LIBRARY_PATH']), 'Unix runtime launch should prepend LD_LIBRARY_PATH');
+		$this->assertContains('/tmp/scpp-runtime', $env['LD_LIBRARY_PATH'], 'Unix LD_LIBRARY_PATH should include the runtime directory');
 	}
 
 	private function assertNinjaRenderingRespectsReuseFlags(): void
@@ -172,6 +190,9 @@ final class ScppBuildOptionsTest
 		$this->assertContains('compile_pch_runtime', $fullNinja, 'full build mode should include runtime pch rules');
 		$this->assertContains('build main.o: compile ../generated/main.cpp', $fullNinja, 'root project compile edges should be relative to build_dir');
 		$this->assertContains('build ../../../dep/.prism/build/dep.o: compile', $fullNinja, 'full build mode should include dependency compile edges');
+		if (PHP_OS_FAMILY === 'Linux') {
+			$this->assertContains('-Wl,-soname,libruntime.so', $fullNinja, 'Linux shared runtime should declare a SONAME so executables do not need a slash-containing DT_NEEDED path');
+		}
 	}
 
 	private function assertEntryOverrideCanSelectAnotherFile(): void
