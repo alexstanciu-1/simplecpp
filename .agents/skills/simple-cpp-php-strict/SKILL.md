@@ -81,6 +81,7 @@ Use generated C++ and `.prism/generated/*.line.tsv` artifacts as inspection evid
 For multi-file and multi-project work:
 
 - Add runtime modules in `prism.json` when strict builtins require them.
+- Let `scpp build` compose files inside the same project; same-project `.phs` files should not include generated `.hpp` files.
 - Use `dependencies` for other Simple C++/Prism projects built from source.
 - Use `libraries` for linker-owned native artifacts.
 - Mark dependency-visible top-level declarations with `/** @lib-export */`.

@@ -146,6 +146,8 @@ Use the module set required by the APIs the app calls. When module ownership is 
 
 Use project-level composition, not PHP file inclusion.
 
+Inside one project, `scpp build` discovers same-project `.phs` files and makes their generated declarations visible through an internal build header. Do not write source-level includes that name `.prism/generated/*.hpp` files.
+
 In `prism.json`:
 
 ```json

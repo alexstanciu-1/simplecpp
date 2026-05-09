@@ -47,6 +47,8 @@ If the project is legacy, use legacy guidance instead of this skill.
 
 Do not use PHP `require`, `require_once`, `include`, or `include_once` as the default project composition mechanism.
 
+For same-project files, let `scpp build` discover and compose `.phs` units. Do not include generated `.hpp` files from PHP++ source.
+
 Use `prism.json` project dependencies and `/** @lib-export */` for cross-project visibility.
 
 ## Truthiness
