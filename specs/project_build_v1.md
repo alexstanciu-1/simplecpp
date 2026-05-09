@@ -294,12 +294,20 @@ Minimal example:
 For v1, the dependency contract is:
 
 - dependencies are explicit and project-level, not file-level
+- source files inside the same project may refer to same-project declarations discovered by `scpp build` without source-language `require` or `include` statements
 - source files in the root project do not need `require` or `include` statements to activate dependency projects
 - dependency projects may declare their own `dependencies`, and `scpp build` must resolve that graph transitively
 - duplicate dependency visits should be deduplicated by normalized project root
 - symbol collisions across participating projects must fail clearly during build or link
 - shared-library packaging is a later build mode and is not the semantic meaning of `dependencies` in v1
 - dependency resolution remains active even when dependency compilation is not requested; reuse only suppresses recompilation of already-built dependency units
+
+`scpp build` generates an internal project unit header under `.prism/generated/__project_units.hpp` and force-includes it when compiling the project's generated and native C++ units. This header is a build artifact only. PHP++ source must not name generated `.hpp` files.
+
+The project unit header includes:
+
+- all generated headers for the same project
+- generated `__project.hpp` export headers from transitive Prism project dependencies
 
 ## Project exports
 

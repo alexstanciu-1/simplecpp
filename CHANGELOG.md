@@ -9,6 +9,26 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.25 - 2026-05-09
+
+### Additions
+
+- Added regression coverage for strict same-project `.phs` files composing without source-level generated `.hpp` includes.
+
+### Fixes
+
+- Fixed strict project builds so same-project generated headers are force-included through an internal `.prism/generated/__project_units.hpp` build artifact.
+- Fixed project composition guidance to make generated `.hpp` names an internal build detail rather than a PHP++ source authoring surface.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Remove source-level `require` or `include` statements that point at generated `.hpp` files; same-project `.phs` composition is handled by `scpp build`.
+- Agent Skill review completed: strict project composition guidance remains aligned with the existing repo-local skill; no `.agents/skills/*` updates are required.
+
 ## 0.1.24 - 2026-05-09
 
 ### Additions
