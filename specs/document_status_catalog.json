@@ -14,6 +14,11 @@
                         "doc_status":  "supporting"
                     },
                     {
+                        "path":  "docs/datetime_builtins.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
                         "path":  "docs/examples.md",
                         "kind":  "markdown",
                         "doc_status":  "supporting"
@@ -245,6 +250,66 @@
                     },
                     {
                         "path":  "specs/builtins/db/mysqli.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/README.md",
+                        "kind":  "markdown",
+                        "doc_status":  "supporting"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/date.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/dt_format.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/dt_format_iso_utc.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/dt_monotonic_ms.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/dt_now_ms.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/dt_now.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/dt_parse_iso_utc.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/dt_parse.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/dt_sleep_ms.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/first_pass.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/datetime/strtotime.md",
                         "kind":  "markdown",
                         "doc_status":  "normative"
                     },

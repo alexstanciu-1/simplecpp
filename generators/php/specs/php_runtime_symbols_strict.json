@@ -81,6 +81,15 @@
         "fs_dirname": "fs::dirname",
         "fs_basename": "fs::basename",
         "json_decode": "json::decode",
-        "json_encode": "json::encode"
+        "json_encode": "json::encode",
+        "dt_now": "dt::now_unix_seconds",
+        "dt_now_ms": "dt::now_unix_millis",
+        "dt_monotonic_ms": "dt::monotonic_millis",
+        "dt_sleep_ms": "dt::sleep_millis",
+        "dt_format_iso_utc": "dt::format_iso_utc",
+        "dt_parse_iso_utc": "dt::parse_iso_utc",
+        "dt_format": "dt::format_local",
+        "dt_format_now": "dt::format_local_now",
+        "dt_parse": "dt::parse_common_local"
     }
 }

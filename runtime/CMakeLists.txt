@@ -33,6 +33,17 @@ PUBLIC
 
 target_compile_features(scpp_filesystem PUBLIC cxx_std_23)
 
+add_library(scpp_datetime SHARED
+	include/modules/datetime/datetime.cpp
+)
+
+target_include_directories(scpp_datetime
+PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_compile_features(scpp_datetime PUBLIC cxx_std_23)
+
 if(SCPP_WITH_REGEX)
 	add_library(scpp_regex SHARED
 		include/modules/regex/regex.cpp
@@ -57,7 +68,7 @@ PUBLIC
 
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 
-target_link_libraries(scpp_runtime PUBLIC scpp_json scpp_filesystem)
+target_link_libraries(scpp_runtime PUBLIC scpp_json scpp_filesystem scpp_datetime)
 if(SCPP_WITH_REGEX)
 	target_link_libraries(scpp_runtime PUBLIC scpp_regex)
 endif()
@@ -65,6 +76,7 @@ endif()
 add_library(scpp_php_legacy
 	include/lang/php/php_filesystem.cpp
 	include/lang/php/php_json.cpp
+	include/lang/php/php_datetime.cpp
 	include/lang/php/php_mysqli.cpp
 	include/lang/php/php_regex.cpp
 )
@@ -75,7 +87,7 @@ PUBLIC
 )
 
 target_compile_features(scpp_php_legacy PUBLIC cxx_std_23)
-target_link_libraries(scpp_php_legacy PUBLIC scpp_runtime scpp_json scpp_filesystem)
+target_link_libraries(scpp_php_legacy PUBLIC scpp_runtime scpp_json scpp_filesystem scpp_datetime)
 if(SCPP_WITH_REGEX)
 	target_link_libraries(scpp_php_legacy PUBLIC scpp_regex)
 endif()
