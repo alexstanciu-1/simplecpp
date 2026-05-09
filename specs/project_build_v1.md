@@ -302,12 +302,15 @@ For v1, the dependency contract is:
 - shared-library packaging is a later build mode and is not the semantic meaning of `dependencies` in v1
 - dependency resolution remains active even when dependency compilation is not requested; reuse only suppresses recompilation of already-built dependency units
 
-`scpp build` generates an internal project unit header under `.prism/generated/__project_units.hpp` and force-includes it when compiling the project's generated and native C++ units. This header is a build artifact only. PHP++ source must not name generated `.hpp` files.
+`scpp build` generates internal project unit headers under `.prism/generated/` and force-includes `.prism/generated/__project_units.hpp` when compiling the project's generated and native C++ units. These headers are build artifacts only. PHP++ source must not name generated `.hpp` files.
 
-The project unit header includes:
+The project unit headers include:
 
+- `__project_fwd.hpp`, a namespace-correct forward declaration header for same-project classes
 - all generated headers for the same project
 - generated `__project.hpp` export headers from transitive Prism project dependencies
+
+When same-project generated headers contain inheritance relationships discovered from the generated class declarations, base-class headers are emitted before derived-class headers in `__project_units.hpp`.
 
 ## Project exports
 

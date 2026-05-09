@@ -9,6 +9,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.26 - 2026-05-09
+
+### Additions
+
+- Added regression coverage for strict same-project namespaced units whose generated header order would otherwise reference a later namespace/class.
+- Added regression coverage for same-project derived-class headers needing base-class headers before derived headers.
+
+### Fixes
+
+- Fixed generated same-project composition so `__project_units.hpp` includes a project-wide `__project_fwd.hpp` before generated unit headers.
+- Fixed same-project generated header ordering so base-class headers are emitted before derived-class headers when both are discovered in the project unit set.
+- Updated the repo-local strict Agent Skill guidance to reflect that same-project `.phs` files are composed by `scpp build` and must not include generated `.hpp` files.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Retry removing same-project generated `.hpp` `require` / `include` lines after updating; nested namespaces and common base/derived ordering cases are now covered by generated project composition.
+- Keep `/** @lib-export */` for dependency-visible cross-project declarations.
+
 ## 0.1.25 - 2026-05-09
 
 ### Additions

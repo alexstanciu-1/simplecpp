@@ -39,6 +39,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertContains('Dependency compilation: enabled', $full['output'], 'full build should report dependency compilation');
 			$this->assertDirectNinjaNoWork($app);
 			$this->assertSameProjectStrictUnitsComposeWithoutSourceIncludes();
+			$this->assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder();
 
 			$depObject = $this->findDependencyObject($lib);
 			$runtimeArtifact = $this->resolveRuntimeArtifactPath($app);
@@ -183,6 +184,57 @@ PHS);
 		$this->assertContains('-include ../generated/__project_units.hpp', $this->read($buildFile), 'generated unit compile edges should force-include the project unit header');
 	}
 
+	private function assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder(): void
+	{
+		$project = $this->root . '/strict_namespaced_units';
+		$this->writeProject($project, [], "echo \"placeholder\\n\";\n", 'strict');
+		$this->mkdir($project . '/db');
+		$this->mkdir($project . '/orm');
+		$this->mkdir($project . '/schema');
+		$this->write($project . '/db/holder.phs', <<<'PHS'
+namespace App\Db;
+
+class Holder {
+    public \App\Schema\Item $item;
+}
+PHS);
+		$this->write($project . '/orm/child_node.phs', <<<'PHS'
+namespace App\Orm;
+
+class ChildNode extends \App\Schema\BaseNode {
+}
+PHS);
+		$this->write($project . '/schema/base_node.phs', <<<'PHS'
+namespace App\Schema;
+
+class BaseNode {
+}
+PHS);
+		$this->write($project . '/schema/item.phs', <<<'PHS'
+namespace App\Schema;
+
+class Item {
+    public string $name = "";
+}
+PHS);
+		$this->write($project . '/main.phs', <<<'PHS'
+$i = new App\Schema\Item();
+$i->name = "ok";
+echo $i->name, "\n";
+PHS);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json');
+		$this->assertSame(true, $build['ok'], 'strict namespaced same-project units should build without generated-header source includes');
+
+		$forwardHeader = $project . '/.prism/generated/__project_fwd.hpp';
+		$unitHeader = $project . '/.prism/generated/__project_units.hpp';
+		$this->assertFileExists($forwardHeader, 'project forward declaration header should be generated');
+		$this->assertContains('namespace scpp::App::Schema {', $this->read($forwardHeader), 'forward header should declare nested source namespaces');
+		$this->assertContains('class Item;', $this->read($forwardHeader), 'forward header should declare referenced cross-unit classes');
+		$this->assertContains('#include "__project_fwd.hpp"', $this->read($unitHeader), 'project unit header should include project forward declarations before generated headers');
+		$this->assertOrderBefore('#include "schema/base_node.hpp"', '#include "orm/child_node.hpp"', $this->read($unitHeader), 'base-class header should be included before derived-class header');
+	}
+
 	private function sleepForTimestamp(): void
 	{
 		usleep(1200000);
@@ -303,6 +355,15 @@ PHS);
 	{
 		if (!str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' missing `' . $needle . '`');
+		}
+	}
+
+	private function assertOrderBefore(string $left, string $right, string $haystack, string $message): void
+	{
+		$leftPos = strpos($haystack, $left);
+		$rightPos = strpos($haystack, $right);
+		if (!is_int($leftPos) || !is_int($rightPos) || $leftPos >= $rightPos) {
+			throw new RuntimeException($message . ' expected `' . $left . '` before `' . $right . '`');
 		}
 	}
 
