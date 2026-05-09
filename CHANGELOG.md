@@ -7,13 +7,18 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
+-- No release notes recorded yet.
+
+## 0.1.27 - 2026-05-09
+
 ### Additions
 
 - Added the opt-in PCRE2-backed regex runtime module with typed `regex_*` APIs, legacy PHP `preg_*` wrappers, opportunistic JIT use, UTF-8 `/u` coverage, match offsets, named captures, replacement backreferences, practical split/match-all flags, and explicit runtime errors for deferred offset-capture and unmatched-as-null output forms
 
 ### Fixes
 
-- None
+- Stabilized strict project sample validation so checked runnable samples rebuild required runtime artifacts instead of depending on a warm local runtime cache.
+- Normalized the regex sample source files to the current Prism++ `.phs` source format without PHP opening tags or `declare(strict_types=1)`.
 
 ### Breaking Changes
 

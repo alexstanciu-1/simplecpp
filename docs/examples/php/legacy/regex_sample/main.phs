@@ -1,7 +1,3 @@
-<?php
-
-declare(strict_types=1);
-
 $err /** error_t */;
 $matches = [];
 $count /** int */ = 0;
