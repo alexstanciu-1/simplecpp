@@ -47,17 +47,17 @@ final class ScppRuntimeDiagnosticsTest
 
 			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
 			$this->assertNotSame(0, $run['exit_code'], 'runtime type failure should make scpp run fail');
-			$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'run stderr should report original source line');
-			$this->assertContains('Cannot convert value used for $data["name"] to string_t.', $run['stderr'], 'run stderr should report expression and expected type');
+			$this->assertContains('Runtime error while running the built program.', $run['stderr'], 'run stderr should report a structured runtime failure');
 			$this->assertContains('Actual runtime kind: shared_hash_t', $run['stderr'], 'run stderr should report actual runtime kind');
-			$this->assertContains('Operation: cast<string_t>', $run['stderr'], 'run stderr should report failing runtime operation');
+			$this->assertFileDoesNotContain($project . '/.prism/generated/main.cpp', 'with_runtime_context', 'generated code should not use expression-level runtime context wrappers');
+			$generatedCppLines = explode("\n", rtrim($this->read($project . '/.prism/generated/main.cpp'), "\n"));
+			$lineMap = $this->readGeneratedLineMap($project . '/.prism/generated/main.cpp.line.tsv');
+			$echoGeneratedLine = $this->findGeneratedLine($generatedCppLines, 'php::echo_one');
+			$this->assertSame(3, $lineMap[$echoGeneratedLine] ?? null, 'generated echo statement should map back to its source statement line');
 
 			$error = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $project, 30);
 			$this->assertSame(0, $error['exit_code'], 'scpp error should read saved runtime diagnostics');
 			$this->assertContains('Category: runtime / invalid_mixed_kind_for_cast_string', $error['stdout'], 'saved summary should preserve runtime error code');
-			$this->assertContains('Project mode: strict', $error['stdout'], 'saved summary should preserve strict project mode');
-			$this->assertContains('Source: main.phs:3 - $data["name"]', $error['stdout'], 'saved summary should report source expression');
-			$this->assertContains('Actual runtime kind: shared_hash_t', $error['stdout'], 'saved summary should report actual runtime kind');
 
 			$report = json_decode($this->read($project . '/.prism/last_error.json'), true);
 			if (!is_array($report)) {
@@ -68,10 +68,10 @@ final class ScppRuntimeDiagnosticsTest
 				throw new RuntimeException('last_error.json should contain at least one runtime diagnostic');
 			}
 			$this->assertSame('strict', $report['project_mode'] ?? null, 'last_error.json should store strict project mode');
-			$this->assertSame('main.phs', basename((string) ($diagnostic['source_file'] ?? '')), 'runtime diagnostic should preserve source file');
-			$this->assertSame(3, $diagnostic['source_line'] ?? null, 'runtime diagnostic should preserve source line');
-			$this->assertSame('$data["name"]', $diagnostic['expression'] ?? null, 'runtime diagnostic should preserve source expression');
-			$this->assertSame('string_t', $diagnostic['expected_type'] ?? null, 'runtime diagnostic should preserve expected type');
+			$this->assertSame(null, $diagnostic['source_file'] ?? null, 'runtime diagnostics should not use removed source-context wrapper fields');
+			$this->assertSame(null, $diagnostic['source_line'] ?? null, 'runtime diagnostics should not use removed source-context wrapper fields');
+			$this->assertSame(null, $diagnostic['expression'] ?? null, 'runtime diagnostics should not use removed source-context wrapper fields');
+			$this->assertSame(null, $diagnostic['expected_type'] ?? null, 'runtime diagnostics should not use removed source-context wrapper fields');
 			$this->assertSame('shared_hash_t', $diagnostic['actual_runtime_kind'] ?? null, 'runtime diagnostic should preserve actual runtime kind');
 
 			echo "PASS: scpp runtime diagnostics\n";
@@ -192,6 +192,44 @@ final class ScppRuntimeDiagnosticsTest
 		if (!str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' missing `' . $needle . '` in: ' . $haystack);
 		}
+	}
+
+	private function assertFileDoesNotContain(string $path, string $needle, string $message): void
+	{
+		$contents = $this->read($path);
+		if (str_contains($contents, $needle)) {
+			throw new RuntimeException($message . ' found `' . $needle . '` in ' . $path);
+		}
+	}
+
+	/** @param list<string> $lines */
+	private function findGeneratedLine(array $lines, string $needle): int
+	{
+		foreach ($lines as $index => $line) {
+			if (str_contains($line, $needle)) {
+				return $index + 1;
+			}
+		}
+		throw new RuntimeException('Could not find generated line containing `' . $needle . '`');
+	}
+
+	/** @return array<int,int> */
+	private function readGeneratedLineMap(string $path): array
+	{
+		$lines = explode("\n", trim($this->read($path)));
+		array_shift($lines);
+		$map = [];
+		foreach ($lines as $line) {
+			if ($line === '') {
+				continue;
+			}
+			$parts = explode("\t", $line);
+			if (count($parts) !== 2) {
+				throw new RuntimeException('Malformed line-map row: ' . $line);
+			}
+			$map[(int) $parts[0]] = (int) $parts[1];
+		}
+		return $map;
 	}
 }
 

@@ -7,7 +7,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
--- No release notes recorded yet.
+### Changes
+
+## 0.1.30 - 2026-05-09
+
+### Additions
+
+- Added generated-line `CodeBlock` records so source and header buffers carry source line/column metadata until final render.
+- Added regression coverage that verifies generated `.line.tsv` output maps a lowered `php::echo_one(...)` call back to the original `.phs` source line.
+
+### Fixes
+
+- Fixed the PHP flow test harness so `.phs` oracle runs execute a temporary pre-tokenized PHP-compatible copy instead of the raw PHP++ source.
+- Fixed runtime config normalization so an already-normalized `runtime.language_profiles.php.profile` value is preserved on later config passes instead of falling back to `legacy`.
+- Removed the expression-level `with_runtime_context` runtime diagnostic wrapper from generated C++ and the runtime support header so runtime source attribution can move to generated-location capture plus `.line.tsv` remapping.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Rebuild projects that rely on generated source maps so `.line.tsv` files are regenerated with statement-level source line metadata.
+- Agent Skill review completed: strict diagnostics guidance now points agents at saved runtime reports first, then generated C++ and `.line.tsv` artifacts when source attribution is not yet present.
 
 ## 0.1.29 - 2026-05-09
 
