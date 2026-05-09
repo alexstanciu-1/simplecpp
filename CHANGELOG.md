@@ -17,7 +17,8 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Fixes
 
-- None
+- Stabilized strict project sample validation so checked runnable samples rebuild required runtime artifacts instead of depending on a warm local runtime cache.
+- Normalized the regex sample source files to the current Prism++ `.phs` source format without PHP opening tags or `declare(strict_types=1)`.
 
 ### Breaking Changes
 
