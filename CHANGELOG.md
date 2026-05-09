@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.22 - 2026-05-09
+
+### Additions
+
+- Added a repo-local Agent Skill at `.agents/skills/simple-cpp-php-strict/` for strict PHP++ / PHS app authoring, validation, diagnostics, project composition, and common PHP-habit pitfalls
+- Added `scpp docs <name>` to print curated local Markdown documentation without requiring web access
+- Added local documentation entries for strict authoring, diagnostics, build workflow, profiles, examples, Agent Skill guidance, and AI onboarding
+- Added focused regression coverage for the `scpp docs` registry, successful doc lookup, and unknown-doc failure path
+
+### Fixes
+
+- Updated release workflow rules so `.agents/skills/*` must be reviewed and kept current before release publication
+- Updated strict PHP++ quick-learn, getting-started, README, and project build docs to surface the new local docs workflow
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Use `scpp docs` to list local documentation names.
+- Use `scpp docs strict` or `scpp docs diagnostics` when an agent or user needs local strict PHP++ guidance without browsing the web.
+
 ## 0.1.18 - 2026-05-08
 
 ### Additions

@@ -126,6 +126,9 @@ scpp run --force
 
 - `scpp --version`: show installed CLI version
 - `scpp --doctor`: show install/toolchain/Git status
+- `scpp docs`: list curated local documentation names
+- `scpp docs strict`: print the local strict PHP++ quick-learn
+- `scpp docs diagnostics`: print local strict validation and diagnostics guidance
 - `scpp update`: fast-forward installed checkout from `origin/main` and rebuild the default reusable runtime cache when a real update lands
 - `scpp update --force`: rebuild that default reusable runtime cache even when already current
 - `scpp runtime-build [--debug|--release] [--force]`: rebuild the reusable runtime cache explicitly
