@@ -1503,6 +1503,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$projectContext['state']['project_root'] = $contextProjectRoot;
 		$projectContext['state']['updated_at'] = time();
 		save_s2s_state($projectContext['state_path'], $projectContext['state']);
+		write_project_forward_declaration_header($projectContext['generated_dir'], $projectContext['generated_headers'] ?? []);
 		write_text_file($projectContext['generated_dir'] . '/__project.hpp', render_project_export_header($projectContext['generated_dir'], $projectContext['export_manifests'] ?? []));
 	}
 	unset($projectContext);
@@ -1965,7 +1966,11 @@ function write_export_manifest_file(string $path, array $manifest): void
 /** @param list<string> $exportManifestPaths */
 function render_project_export_header(string $generatedDir, array $exportManifestPaths): string
 {
+	$forwardHeader = normalize_path($generatedDir . '/__project_fwd.hpp');
 	$lines = ['#pragma once', '', '#include <scpp/lang/php.hpp>'];
+	if (is_file($forwardHeader)) {
+		$lines[] = '#include "__project_fwd.hpp"';
+	}
 	$seenHeaders = [];
 	foreach (array_values(array_unique($exportManifestPaths)) as $manifestPath) {
 		$headerPath = export_manifest_header_path($manifestPath);
@@ -2046,12 +2051,16 @@ function write_project_unit_force_include_headers(array $projectContexts): array
 			}
 			$includeHeaders[] = normalize_path($dependencyContext['generated_dir'] . '/__project.hpp');
 		}
-		$includeHeaders = array_values(array_unique($includeHeaders));
+		$includeHeaders = sort_project_unit_include_headers(array_values(array_unique($includeHeaders)));
 		if ($includeHeaders === []) {
 			continue;
 		}
 		$headerPath = normalize_path($projectContext['generated_dir'] . '/__project_units.hpp');
 		$lines = ['#pragma once', ''];
+		$forwardHeader = normalize_path($projectContext['generated_dir'] . '/__project_fwd.hpp');
+		if (is_file($forwardHeader)) {
+			$lines[] = '#include "__project_fwd.hpp"';
+		}
 		foreach ($includeHeaders as $includeHeader) {
 			$lines[] = '#include "' . normalize_config_path(relative_path(dirname($headerPath), $includeHeader)) . '"';
 		}
@@ -2060,6 +2069,160 @@ function write_project_unit_force_include_headers(array $projectContexts): array
 		$headers[normalize_path($projectRoot)] = $headerPath;
 	}
 	return $headers;
+}
+
+/** @param list<string> $headerPaths */
+function write_project_forward_declaration_header(string $generatedDir, array $headerPaths): void
+{
+	$declarations = collect_project_header_declarations($headerPaths);
+	$headerPath = normalize_path($generatedDir . '/__project_fwd.hpp');
+	$lines = ['#pragma once', ''];
+	foreach ($declarations as $namespace => $classNames) {
+		if ($classNames === []) {
+			continue;
+		}
+		$lines[] = 'namespace ' . $namespace . ' {';
+		foreach ($classNames as $className) {
+			$lines[] = 'class ' . $className . ';';
+		}
+		$lines[] = '}';
+		$lines[] = '';
+	}
+	write_text_file($headerPath, implode(PHP_EOL, $lines) . PHP_EOL);
+}
+
+/**
+ * @param list<string> $headerPaths
+ * @return array<string,list<string>>
+ */
+function collect_project_header_declarations(array $headerPaths): array
+{
+	$declarations = [];
+	foreach ($headerPaths as $headerPath) {
+		foreach (read_project_header_class_metadata($headerPath)['classes'] as $class) {
+			$namespace = $class['namespace'];
+			$name = $class['name'];
+			if (!isset($declarations[$namespace])) {
+				$declarations[$namespace] = [];
+			}
+			$declarations[$namespace][$name] = $name;
+		}
+	}
+	ksort($declarations, SORT_STRING);
+	foreach ($declarations as &$classNames) {
+		ksort($classNames, SORT_STRING);
+		$classNames = array_values($classNames);
+	}
+	unset($classNames);
+	return $declarations;
+}
+
+/**
+ * @param list<string> $includeHeaders
+ * @return list<string>
+ */
+function sort_project_unit_include_headers(array $includeHeaders): array
+{
+	$knownClasses = [];
+	$headerClasses = [];
+	foreach ($includeHeaders as $headerPath) {
+		if (!is_file($headerPath)) {
+			continue;
+		}
+		$metadata = read_project_header_class_metadata($headerPath);
+		foreach ($metadata['classes'] as $class) {
+			$key = $class['namespace'] . '::' . $class['name'];
+			$knownClasses[$key] = $headerPath;
+			$headerClasses[$headerPath][] = $class;
+		}
+	}
+
+	$dependencies = [];
+	foreach ($includeHeaders as $headerPath) {
+		$dependencies[$headerPath] = [];
+		foreach (($headerClasses[$headerPath] ?? []) as $class) {
+			$parent = $class['parent'];
+			if ($parent === null || $parent === '') {
+				continue;
+			}
+			$parentKey = resolve_project_header_class_reference($parent, $class['namespace']);
+			$parentHeader = $knownClasses[$parentKey] ?? null;
+			if ($parentHeader === null || $parentHeader === $headerPath) {
+				continue;
+			}
+			$dependencies[$headerPath][$parentHeader] = $parentHeader;
+		}
+	}
+
+	$ordered = [];
+	$temporary = [];
+	$permanent = [];
+	foreach ($includeHeaders as $headerPath) {
+		visit_project_unit_include_header($headerPath, $dependencies, $temporary, $permanent, $ordered);
+	}
+	return $ordered;
+}
+
+/**
+ * @param array<string,array<string,string>> $dependencies
+ * @param array<string,bool> $temporary
+ * @param array<string,bool> $permanent
+ * @param list<string> $ordered
+ */
+function visit_project_unit_include_header(string $headerPath, array $dependencies, array &$temporary, array &$permanent, array &$ordered): void
+{
+	if (isset($permanent[$headerPath])) {
+		return;
+	}
+	if (isset($temporary[$headerPath])) {
+		return;
+	}
+	$temporary[$headerPath] = true;
+	foreach (($dependencies[$headerPath] ?? []) as $dependencyHeader) {
+		visit_project_unit_include_header($dependencyHeader, $dependencies, $temporary, $permanent, $ordered);
+	}
+	unset($temporary[$headerPath]);
+	$permanent[$headerPath] = true;
+	$ordered[] = $headerPath;
+}
+
+/** @return array{classes:list<array{namespace:string,name:string,parent:?string}>} */
+function read_project_header_class_metadata(string $headerPath): array
+{
+	$contents = @file_get_contents($headerPath);
+	if (!is_string($contents)) {
+		return ['classes' => []];
+	}
+	if (preg_match('/^namespace\s+([A-Za-z_][A-Za-z0-9_:]*)\s*\{/m', $contents, $namespaceMatch) !== 1) {
+		return ['classes' => []];
+	}
+	$namespace = $namespaceMatch[1];
+	$classes = [];
+	if (preg_match_all('/^class\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))?\s*([;{])/m', $contents, $matches, PREG_SET_ORDER) !== false) {
+		foreach ($matches as $match) {
+			if (($match[3] ?? '') !== '{') {
+				continue;
+			}
+			$classes[] = [
+				'namespace' => $namespace,
+				'name' => $match[1],
+				'parent' => isset($match[2]) && $match[2] !== '' ? $match[2] : null,
+			];
+		}
+	}
+	return ['classes' => $classes];
+}
+
+function resolve_project_header_class_reference(string $classReference, string $currentNamespace): string
+{
+	$reference = ltrim($classReference, ':');
+	if (str_starts_with($reference, 'scpp::')) {
+		return $reference;
+	}
+	if (str_contains($reference, '::')) {
+		return 'scpp::' . $reference;
+	}
+	return $currentNamespace . '::' . $reference;
 }
 
 /**
