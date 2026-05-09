@@ -24,6 +24,7 @@ final class ClassDecl
 		public readonly array $properties,
 		public readonly array $constants,
 		public readonly array $methods,
+		public readonly int $line = 0,
 		public readonly ?string $parentClass = null,
 		public readonly array $interfaces = [],
 		public readonly bool $isInterface = false,

@@ -1,4 +1,3 @@
-<?php
 // 118_sentinels_18.php
 
 $a = null;

@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 $x = [];
 $x["5"] = "five-as-string";
 $x[5] = "five-as-int";

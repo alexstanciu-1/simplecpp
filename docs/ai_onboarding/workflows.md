@@ -57,7 +57,6 @@ When the task touches multi-project composition, also check:
 Quick shape to keep in mind:
 
 ```php
-<?php
 /** @lib-export */
 function shared_value(): int { return 7; }
 ```
@@ -71,7 +70,6 @@ function shared_value(): int { return 7; }
 ```
 
 ```php
-<?php
 echo shared_value(), "\n";
 ```
 

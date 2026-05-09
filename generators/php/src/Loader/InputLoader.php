@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Scpp\S2S\Loader;
 
 use Scpp\S2S\PreTokenizer\PreTokenizer;
+use Scpp\S2S\Support\PhpParserCompatibility;
 use Scpp\S2S\Support\InputException;
 
 /**
@@ -40,9 +41,11 @@ final class InputLoader
 		if ($code === false) {
 			throw new InputException('Failed to read PHP input: ' . $path);
 		}
+		$this->rejectUnsupportedPhpStrictTypesDirective($path, $code);
 
 		$preTokenized = $this->preTokenizer->rewrite($code);
-		$parseCode = $preTokenized->source;
+		$rewrittenSource = $preTokenized->source;
+		$parseCode = PhpParserCompatibility::wrapSource($rewrittenSource);
 		$json_file = $path . ".json";
 		
 		if (extension_loaded('ast')) {
@@ -53,7 +56,7 @@ final class InputLoader
 				file_put_contents($json_file, json_encode($ast));
 			}
 
-			return new ParsedInput($path, $parseCode, $code, \token_get_all($parseCode), $ast, $preTokenized->annotations);
+			return new ParsedInput($path, $rewrittenSource, $code, PhpParserCompatibility::tokenizeSource($rewrittenSource), $ast, $preTokenized->annotations);
 		}
 		
 		if (!is_file($json_file)) {
@@ -70,13 +73,13 @@ final class InputLoader
 
 		if (is_object($data) && property_exists($data, 'ast')) {
 			$ast = $this->normalizeDecodedAstShape($data->ast);
-			$tokens = \token_get_all($parseCode);
+			$tokens = PhpParserCompatibility::tokenizeSource($rewrittenSource);
 
-			return new ParsedInput($path, $parseCode, $code, $tokens, $ast, $preTokenized->annotations);
+			return new ParsedInput($path, $rewrittenSource, $code, $tokens, $ast, $preTokenized->annotations);
 		}
 
 		$ast = $this->normalizeDecodedAstShape($data);
-		return new ParsedInput($path, $parseCode, $code, \token_get_all($parseCode), $ast, $preTokenized->annotations);
+		return new ParsedInput($path, $rewrittenSource, $code, PhpParserCompatibility::tokenizeSource($rewrittenSource), $ast, $preTokenized->annotations);
 	}
 
 	/**
@@ -110,5 +113,23 @@ final class InputLoader
 		}
 
 		return $value;
+	}
+
+	private function rejectUnsupportedPhpStrictTypesDirective(string $path, string $code): void
+	{
+		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+		if ($extension !== 'phs' && $extension !== 'php') {
+			return;
+		}
+		if (preg_match('/declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;/i', $code, $matches, PREG_OFFSET_CAPTURE) !== 1) {
+			return;
+		}
+		$offset = (int) ($matches[0][1] ?? 0);
+		$line = substr_count(substr($code, 0, $offset), "\n") + 1;
+		throw new InputException(
+			'Unsupported directive in ' . $path . ':' . $line . '. '
+			. "`declare(strict_types=1);` is not supported in Prism++ source files. "
+			. 'Remove it; Prism++ typing rules do not use PHP strict_types.'
+		);
 	}
 }

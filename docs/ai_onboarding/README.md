@@ -89,7 +89,6 @@ Tiny example:
 `shared/lib.phs`
 
 ```php
-<?php
 /** @lib-export */
 function shared_value(): int { return 7; }
 ```
@@ -108,7 +107,6 @@ function shared_value(): int { return 7; }
 `app/main.phs`
 
 ```php
-<?php
 echo shared_value(), "\n";
 ```
 

@@ -9,6 +9,7 @@ use Scpp\S2S\Generator\Generator;
 use Scpp\S2S\Loader\InputLoader;
 use Scpp\S2S\Lowering\TypeMapper;
 use Scpp\S2S\Support\InputException;
+use Scpp\S2S\Support\PhpParserCompatibility;
 
 /**
  * Coordinates the generator pipeline for one file.
@@ -56,7 +57,7 @@ final class Transpiler
 
 	private function assertNoSimpleReferenceRebinding(string $sourcePhp): void
 	{
-		$tokens = \token_get_all($sourcePhp);
+		$tokens = PhpParserCompatibility::tokenizeSource($sourcePhp);
 		$bindings = [];
 		$count = count($tokens);
 

@@ -150,11 +150,14 @@ This prints generated C++ to stdout.
 ### Minimal strict example
 
 ```php
-<?php
-declare(strict_types=1);
-
 echo "hello\n";
 ```
+
+For Prism++ source files:
+
+- do not start `.phs` files with `<?php`
+- do not use `declare(strict_types=1);` in `.phs` or compatibility `.php` source files
+- the Prism++ type/runtime contract is defined by Prism++ rules, not by PHP `strict_types`
 
 ### Strict config hint
 
@@ -277,7 +280,7 @@ Use this order:
 | strict filesystem builtin | `take($data, $err, fs_get($file));` |
 | strict IO builtin | `take($written, io_write($fh, "abc"));` |
 | strict JSON builtin | `$data = json_decode($json);` |
-| strict header | `declare(strict_types=1);` |
+| Prism++ file start | `echo "hello\n";` |
 | nullable local | `$id /** ?int */ = null;` |
 | strict comparison | `if ($value === 0) { ... }` |
 | namespace + typed property example | `namespace demo\schema; class model { public $properties /** vector<model_property> */ = []; }` |
@@ -521,9 +524,6 @@ Visible PHP++ / PHS strict names are flat and family-prefixed.
 ## Tiny Canonical Example
 
 ```php
-<?php
-declare(strict_types=1);
-
 $file = "sample.txt";
 $err /** error_t */;
 $written /** int */ = 0;

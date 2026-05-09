@@ -1,5 +1,3 @@
-<?php
-
 class Counter {
 	public $v = 0;
 

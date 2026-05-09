@@ -1,5 +1,3 @@
-<?php
-
 $count /** int */ = 0;
 $err /** error_t */;
 

@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 $bad /** result<int> */ = error;
 $ok /** result<int> */ = 13;
 $out /** int */ = 0;

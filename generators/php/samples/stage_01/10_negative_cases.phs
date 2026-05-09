@@ -1,5 +1,3 @@
-<?php
-
 // Coverage:
 // - NS-EXEC-006 (should be rejected)
 // - LIT-NULL-001 untyped null assignment (should be rejected)

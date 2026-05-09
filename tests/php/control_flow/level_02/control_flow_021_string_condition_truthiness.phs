@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // String condition truthiness stays PHP-like for control flow, even though string->bool normalization is stricter.
 $empty = "";
 $zero = "0";

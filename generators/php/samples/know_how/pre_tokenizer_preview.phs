@@ -1,5 +1,3 @@
-<?php
-
 $items vector<string> = [];
 $lookup hash<string, int> = [];
 

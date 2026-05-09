@@ -1,6 +1,3 @@
-<?php
-declare(strict_types=1);
-
 // Append scalars into an empty packed array.
 $x = [];
 $x[] = 10;

@@ -27,8 +27,8 @@ final class ScppBuildReuseIntegrationTest
 		try {
 			$app = $this->root . '/app';
 			$lib = $this->root . '/lib';
-			$this->writeProject($lib, [], "<?php\nfunction helper_value(): int { return 7; }\n");
-			$this->writeProject($app, ['../lib'], "<?php\necho \"app\\n\";\n");
+			$this->writeProject($lib, [], "function helper_value(): int { return 7; }\n");
+			$this->writeProject($app, ['../lib'], "echo \"app\\n\";\n");
 
 			$full = scpp_run_build_service($app, $app . '/prism.json', [
 				'compile_runtime' => true,
@@ -47,7 +47,7 @@ final class ScppBuildReuseIntegrationTest
 			$runtimeBeforeReuse = $this->mtime($runtimeArtifact);
 
 			$this->sleepForTimestamp();
-			$this->write($app . '/main.phs', "<?php\necho \"app reuse\\n\";\n");
+			$this->write($app . '/main.phs', "echo \"app reuse\\n\";\n");
 			$reuse = scpp_run_build_service($app, $app . '/prism.json');
 			$this->assertSame(true, $reuse['ok'], 'warm service build should succeed');
 			$this->assertContains('Runtime compilation: reuse existing artifact only', $reuse['output'], 'service build should reuse runtime by default');
@@ -56,7 +56,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertSame($runtimeBeforeReuse, $this->mtime($runtimeArtifact), 'runtime artifact should not rebuild in default reuse mode');
 
 			$this->sleepForTimestamp();
-			$this->write($lib . '/main.phs', "<?php\nfunction helper_value(): int { return 8; }\n");
+			$this->write($lib . '/main.phs', "function helper_value(): int { return 8; }\n");
 			$depReuse = scpp_run_build_service($app, $app . '/prism.json');
 			$this->assertSame(true, $depReuse['ok'], 'service build with changed dependency source should still succeed in reuse mode');
 			$this->assertSame($depBeforeReuse, $this->mtime($depObject), 'dependency object should remain untouched until dependency compilation is requested');

@@ -1,7 +1,3 @@
-<?php
-
-declare(strict_types=1);
-
 require_once "examples/01_typed_boundaries.phs";
 require_once "examples/02_null_vs_false.phs";
 require_once "examples/03_strict_comparisons.phs";

@@ -1,5 +1,3 @@
-<?php
-
 $arr = ["a" => 1, "b" => ["c" => 2]];
 echo $arr["a"], "\n";
 echo $arr["b"]["c"], "\n";

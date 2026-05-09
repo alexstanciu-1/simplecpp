@@ -1,5 +1,3 @@
-<?php
-
 function build_lookup($items vector<string>): hash<string, int> {
 	return [];
 }

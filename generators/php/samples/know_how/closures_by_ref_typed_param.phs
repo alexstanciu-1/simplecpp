@@ -1,5 +1,3 @@
-<?php
-
 $inc = function (int &$x): void {
     $x = $x + 1;
 };
