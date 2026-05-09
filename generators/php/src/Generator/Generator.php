@@ -6133,6 +6133,12 @@ final class Generator
 			if ($this->isTakeCallName($nameExpr)) {
 				return $this->renderTakeCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
 			}
+			if ($this->isDbgCallName($nameExpr)) {
+				return $this->renderDbgCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
+			if ($this->isDbgIfCallName($nameExpr)) {
+				return $this->renderDbgIfCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			$name = $functionDecl !== null
 				? $this->renderNameExpr($nameExpr, $namespacePhp)
@@ -6381,6 +6387,93 @@ final class Generator
 		}
 
 		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'take';
+	}
+
+	private function isDbgCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'dbg';
+	}
+
+	private function isDbgIfCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'dbg_if';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderDbgCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) < 1) {
+			$this->fail('dbg() expects at least one value or label/value pair at line ' . $line . '.');
+		}
+		if (count($args) > 3) {
+			$this->fail('dbg() expects value, label/value, or label/value/flags at line ' . $line . '.');
+		}
+
+		$renderedArgs = [];
+		foreach ($args as $arg) {
+			$renderedArgs[] = $this->renderExpr($arg, $namespacePhp);
+		}
+
+		if (count($args) === 2 && $this->isDbgFlagsExpr($args[1])) {
+			return 'php::dbg_at('
+				. $this->cppStringLiteral($this->currentSourcePath) . ', '
+				. (string) $line . ', '
+				. 'string_t(""), '
+				. $renderedArgs[0] . ', '
+				. $renderedArgs[1]
+				. ')';
+		}
+
+		return 'php::dbg_at('
+			. $this->cppStringLiteral($this->currentSourcePath) . ', '
+			. (string) $line
+			. ($renderedArgs === [] ? '' : ', ' . implode(', ', $renderedArgs))
+			. ')';
+	}
+
+	private function isDbgFlagsExpr(mixed $expr): bool
+	{
+		if (!is_object($expr)) {
+			return false;
+		}
+		if (($expr->kind ?? null) === AstKind::CONST) {
+			$name = $expr->children['name']->children['name'] ?? null;
+			return is_string($name) && str_starts_with($name, 'DBG_');
+		}
+		if (($expr->kind ?? null) === AstKind::BINARY_OP && ((int) ($expr->flags ?? 0)) === AstKind::BITWISE_OR) {
+			return $this->isDbgFlagsExpr($expr->children['left'] ?? null)
+				&& $this->isDbgFlagsExpr($expr->children['right'] ?? null);
+		}
+		return false;
+	}
+
+	/** @param list<mixed> $args */
+	private function renderDbgIfCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) < 2) {
+			$this->fail('dbg_if() expects a gate name plus dbg() arguments at line ' . $line . '.');
+		}
+
+		$renderedArgs = [];
+		foreach ($args as $arg) {
+			$renderedArgs[] = $this->renderExpr($arg, $namespacePhp);
+		}
+
+		$key = array_shift($renderedArgs);
+		return 'php::dbg_if_at('
+			. $key . ', '
+			. $this->cppStringLiteral($this->currentSourcePath) . ', '
+			. (string) $line
+			. ($renderedArgs === [] ? '' : ', ' . implode(', ', $renderedArgs))
+			. ')';
 	}
 
 	/** @param list<mixed> $args */

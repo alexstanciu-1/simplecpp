@@ -20,6 +20,7 @@
 #include "scpp/unique_p.hpp"
 #include "scpp/weak_p.hpp"
 #include "scpp/hash_t.hpp"
+#include "scpp/support/dbg.hpp"
 #include "scpp/support/var_dump.hpp"
 #include "core/dynamic_helpers.hpp"
 
@@ -50,6 +51,25 @@ using ::scpp::PHP_INT_MAX;
 using ::scpp::STR_PAD_LEFT;
 using ::scpp::STR_PAD_RIGHT;
 using ::scpp::STR_PAD_BOTH;
+using ::scpp::DBG_CALLER;
+using ::scpp::DBG_COMPACT;
+using ::scpp::DBG_DEFAULT;
+using ::scpp::DBG_DEPTH_0;
+using ::scpp::DBG_DEPTH_1;
+using ::scpp::DBG_DEPTH_2;
+using ::scpp::DBG_DEPTH_3;
+using ::scpp::DBG_DEPTH_4;
+using ::scpp::DBG_DEPTH_5;
+using ::scpp::DBG_FIELDS;
+using ::scpp::DBG_JSON;
+using ::scpp::DBG_KEYS;
+using ::scpp::DBG_LEN;
+using ::scpp::DBG_PTR;
+using ::scpp::DBG_RAW;
+using ::scpp::DBG_SHAPE;
+using ::scpp::DBG_SOURCE;
+using ::scpp::DBG_TYPE;
+using ::scpp::DBG_VALUE;
 
 // Validates a PHP array / ?array argument that has been lowered to mixed_t.
 // How: reject invalid kinds before executing any user code inside the callee.

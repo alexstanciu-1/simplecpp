@@ -7,6 +7,7 @@
 #include "../scpp/util/global_string_pool.cpp"
 #include "../scpp/support/hash_t.cpp"
 #include "../scpp/support/mixed_t.cpp"
+#include "../scpp/support/dbg.cpp"
 #include "../scpp/support/var_dump.cpp"
 
 // PHP-flow tests link against this single runtime object, so wrapper-backed

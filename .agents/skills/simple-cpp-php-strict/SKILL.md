@@ -77,6 +77,15 @@ scpp full-last-run
 
 Use generated C++ and `.prism/generated/*.line.tsv` artifacts as inspection evidence, not as the primary source to patch.
 For strict runtime type failures, inspect `scpp error` / `.prism/last_error.json` first, then use generated C++ and line maps when the report does not yet include source attribution.
+For runtime shape confusion, use strict-safe debug helpers before ad hoc probes:
+
+```php
+dbg("value", $value);
+dbg("shape", $value, DBG_SHAPE | DBG_DEPTH_3 | DBG_PTR);
+dbg_if("gate", "deep value", $value, DBG_SHAPE);
+```
+
+Use `dbg_set("gate", $condition)` and `dbg_unset("gate", $condition)` to activate focused lower-call debugging. Duplicate enabled gates and missing unsets are intentionally loud.
 
 ## Composition
 
