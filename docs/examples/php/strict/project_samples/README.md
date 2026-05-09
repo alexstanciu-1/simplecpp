@@ -11,7 +11,9 @@ Goals:
 Each sample uses:
 
 - `runtime.languages.php.profile = "strict"`
-- `runtime.modules = ["json", "filesystem"]`
+- `runtime.modules = ["json", "filesystem"]` by default
+
+Regex-specific samples opt into `"regex"` explicitly.
 
 The visible strict API uses flat family-prefixed names such as:
 

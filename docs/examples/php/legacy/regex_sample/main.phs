@@ -1,0 +1,25 @@
+$err /** error_t */;
+$matches = [];
+$count /** int */ = 0;
+if (!take($count, preg_match("/(ab+)-(cd+)/i", "xxAbb-cDDyy", $matches))) {
+	echo "MATCH_ERROR\n";
+} else {
+	echo "count=", $count, "\n";
+	echo "full=", $matches[0], "\n";
+	echo "left=", $matches[1], "\n";
+	echo "right=", $matches[2], "\n";
+}
+
+$replaced /** string */ = "";
+if (!take($replaced, preg_replace("/ab+/i", "X", "ab xx ABB yy"))) {
+	echo "REPLACE_ERROR\n";
+} else {
+	echo "replaced=", $replaced, "\n";
+}
+
+$parts = [];
+if (!take($parts, preg_split("/,/", "a,b,c"))) {
+	echo "SPLIT_ERROR\n";
+} else {
+	echo "parts=", $parts[0], "|", $parts[1], "|", $parts[2], "\n";
+}

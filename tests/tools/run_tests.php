@@ -1200,6 +1200,7 @@ TXT;
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
 			$lines[] = '#include "lang/php/php_json.cpp"';
 			$lines[] = '#include "lang/php/php_mysqli.cpp"';
+			$lines[] = '#include "lang/php/php_regex.cpp"';
 		}
 		return implode("\n", $lines) . "\n";
 	}

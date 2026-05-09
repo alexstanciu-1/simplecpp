@@ -109,6 +109,7 @@ Examples already on this path:
 
 - JSON -> `modules/json/` -> `namespace scpp::json`
 - filesystem -> `modules/filesystem/` -> `namespace scpp::fs`
+- regex -> `modules/regex/` -> `namespace scpp::regex`
 - shared string family -> runtime-owned `namespace scpp::str`
 - shared stdio/resource I/O family -> runtime-owned `namespace scpp::io`
 
@@ -146,6 +147,7 @@ Current PHP rule:
 
 - legacy PHP generated/frontend-facing code targets language entrypoints such as `scpp::php::*`
 - strict PHP generated/frontend-facing code may target shared runtime families such as `scpp::fs::*`, `scpp::str::*`, `scpp::io::*`, and `scpp::json::*` directly when those symbols are declared by the active strict profile registry
+- regex follows the same rule through `scpp::regex::*` once strict profile symbols are registered
 
 Direct shared-family calls from generated code are allowed only through the active profile registry and must not be introduced ad hoc.
 
@@ -173,6 +175,7 @@ scpp_runtime
 + scpp_lang_php
 + scpp_json
 + scpp_filesystem
++ scpp_regex
 + optional database module(s)
 ```
 
@@ -207,4 +210,4 @@ When reorganizing runtime code:
 
 Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
-Current default behavior keeps all known runtime modules active. Unsupported language or module names must fail clearly during build configuration.
+Current default behavior enables the `json` and `filesystem` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.
