@@ -9,6 +9,27 @@ This file is the authoritative checked-in source for release notes referenced by
 
 -- No release notes recorded yet.
 
+## 0.1.24 - 2026-05-09
+
+### Additions
+
+- Added focused regression coverage for `scpp run` runtime-library launch environment handling and Linux shared-runtime SONAME emission.
+
+### Fixes
+
+- Fixed `scpp run` for strict projects that built successfully but failed to launch from the project root because `libruntime.so` could not be resolved.
+- Fixed Linux reusable runtime linking so `libruntime.so` declares a stable SONAME instead of allowing executables to record a project-relative shared-library path.
+- Fixed the `scpp run` launch environment so Unix-like systems prepend the runtime directory through the platform loader path (`LD_LIBRARY_PATH` on Linux/Unix, `DYLD_LIBRARY_PATH` on macOS) while Windows continues to use `PATH`.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Rebuild the reusable runtime or run `scpp run --force` once after updating if an existing project still has a binary linked against the old slash-containing runtime dependency path.
+- Agent Skill review completed: no `.agents/skills/*` updates are required because existing `scpp run` validation guidance remains correct.
+
 ## 0.1.23 - 2026-05-09
 
 ### Additions
