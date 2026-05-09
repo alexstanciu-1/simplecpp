@@ -1056,19 +1056,33 @@ function handle_run(string $cwd, array $args): void
 	echo 'Running: ' . normalize_config_path(relative_path($project['project_root'], $buildResult['output_path'])) . PHP_EOL;
 	$descriptor = [
 		0 => ['file', 'php://stdin', 'r'],
-		1 => ['file', 'php://stdout', 'w'],
-		2 => ['file', 'php://stderr', 'w'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w'],
 	];
 	$processEnv = scpp_runtime_library_process_environment(
 		is_string($buildResult['runtime_library_dir'] ?? null) ? $buildResult['runtime_library_dir'] : null
 	);
+	$processEnv['SCPP_ERROR_FORMAT'] = 'json';
 	$process = proc_open($command, $descriptor, $pipes, $project['project_root'], scpp_build_process_environment($processEnv));
 	if (!is_resource($process)) {
 		scpp_fail('Failed to start built program.' . PHP_EOL, 4);
 	}
-	$status = proc_close($process);
+	$runOutput = scpp_collect_process_output($process, $pipes);
+	$status = $runOutput['status'];
+	$programStdout = $runOutput['stdout'];
+	$programStderr = $runOutput['stderr'];
+	if ($programStdout !== '') {
+		scpp_write($programStdout, 'stdout');
+	}
 	if (!is_int($status)) {
 		scpp_fail('Failed to read program exit status.' . PHP_EOL, 4);
+	}
+	$runtimeDiagnostic = $status !== 0 ? collect_runtime_error_diagnostic($programStderr) : null;
+	if ($programStderr !== '') {
+		$stderrToShow = $runtimeDiagnostic !== null ? trim(remove_runtime_error_json_lines($programStderr)) : trim($programStderr);
+		if ($stderrToShow !== '') {
+			scpp_write($stderrToShow . PHP_EOL, 'stderr');
+		}
 	}
 	write_last_run_report(
 		$project['project_root'],
@@ -1083,7 +1097,71 @@ function handle_run(string $cwd, array $args): void
 			'run_args' => array_values($runArgs),
 		]
 	);
+	if ($runtimeDiagnostic !== null) {
+		$finishedAt = microtime(true);
+		$config = load_project_config($project['config_path']);
+		$phpProfile = resolve_php_runtime_profile(resolve_runtime_build_config($config));
+		$shortMessage = render_short_runtime_failure($runtimeDiagnostic, $project['project_root'], $phpProfile);
+		write_last_error_report(
+			$project['project_root'],
+			'run',
+			$GLOBALS['argv'] ?? ['scpp', 'run'],
+			$status,
+			$startedAt,
+			$finishedAt,
+			'runtime',
+			(string) ($runtimeDiagnostic['code'] ?? 'runtime_error'),
+			$shortMessage,
+			[$runtimeDiagnostic],
+			$programStdout,
+			$programStderr,
+			runtime_failure_guidance($runtimeDiagnostic),
+			$phpProfile
+		);
+		scpp_write($shortMessage, 'stderr');
+	}
 	exit($status);
+}
+
+/**
+ * @param resource $process
+ * @param array<int, resource> $pipes
+ * @return array{status:int,stdout:string,stderr:string}
+ */
+function scpp_collect_process_output($process, array $pipes): array
+{
+	$stdout = '';
+	$stderr = '';
+	$observedExitCode = null;
+	foreach ([1, 2] as $index) {
+		if (is_resource($pipes[$index] ?? null)) {
+			stream_set_blocking($pipes[$index], false);
+		}
+	}
+	while (true) {
+		$status = proc_get_status($process);
+		$stdout .= is_resource($pipes[1] ?? null) ? (string) stream_get_contents($pipes[1]) : '';
+		$stderr .= is_resource($pipes[2] ?? null) ? (string) stream_get_contents($pipes[2]) : '';
+		if (($status['running'] ?? false) !== true) {
+			$exitCode = $status['exitcode'] ?? null;
+			$observedExitCode = is_int($exitCode) ? $exitCode : null;
+			break;
+		}
+		usleep(10000);
+	}
+	$stdout .= is_resource($pipes[1] ?? null) ? (string) stream_get_contents($pipes[1]) : '';
+	$stderr .= is_resource($pipes[2] ?? null) ? (string) stream_get_contents($pipes[2]) : '';
+	foreach ([1, 2] as $index) {
+		if (is_resource($pipes[$index] ?? null)) {
+			fclose($pipes[$index]);
+		}
+	}
+	$closedStatus = proc_close($process);
+	return [
+		'status' => $observedExitCode ?? (is_int($closedStatus) ? $closedStatus : 1),
+		'stdout' => $stdout,
+		'stderr' => $stderr,
+	];
 }
 
 /** @return array<string,string> */
@@ -1108,6 +1186,105 @@ function scpp_runtime_library_process_environment(?string $runtimeLibraryDir): a
 	return [
 		'LD_LIBRARY_PATH' => prepend_path_env_value('LD_LIBRARY_PATH', $runtimeLibraryDir),
 	];
+}
+
+/** @return array<string,mixed>|null */
+function collect_runtime_error_diagnostic(string $stderr): ?array
+{
+	foreach (preg_split('/\R/', trim($stderr)) ?: [] as $line) {
+		$line = trim($line);
+		if ($line === '' || !str_starts_with($line, '{"error":')) {
+			continue;
+		}
+		try {
+			$data = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+		} catch (JsonException) {
+			continue;
+		}
+		$error = is_array($data['error'] ?? null) ? $data['error'] : null;
+		if ($error === null) {
+			continue;
+		}
+		$details = is_array($error['details'] ?? null) ? $error['details'] : [];
+		return [
+			'severity' => 'error',
+			'message' => (string) ($error['message'] ?? 'Runtime error.'),
+			'code' => (string) ($error['code'] ?? 'runtime_error'),
+			'operation' => (string) ($details['operation'] ?? ($error['operator'] ?? '')),
+			'source_file' => isset($details['source_file']) ? normalize_path((string) $details['source_file']) : null,
+			'source_line' => isset($details['source_line']) ? (int) $details['source_line'] : null,
+			'expression' => isset($details['expression']) ? (string) $details['expression'] : null,
+			'expected_type' => isset($details['expected_type']) ? (string) $details['expected_type'] : null,
+			'actual_runtime_kind' => isset($details['runtime_kind']) ? (string) $details['runtime_kind'] : null,
+		];
+	}
+	return null;
+}
+
+function remove_runtime_error_json_lines(string $stderr): string
+{
+	$lines = [];
+	foreach (preg_split('/\R/', $stderr) ?: [] as $line) {
+		if (str_starts_with(trim($line), '{"error":')) {
+			continue;
+		}
+		$lines[] = $line;
+	}
+	return implode(PHP_EOL, $lines);
+}
+
+/** @param array<string,mixed> $diagnostic */
+function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?string $projectMode = null): string
+{
+	$lines = [];
+	$strictHint = strict_project_error_hint($projectMode);
+	if ($strictHint !== null) {
+		$lines[] = $strictHint;
+	}
+	$sourceFile = is_string($diagnostic['source_file'] ?? null) ? (string) $diagnostic['source_file'] : '';
+	$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
+	if ($sourceFile !== '' && $sourceLine > 0) {
+		$lines[] = 'Runtime error in ' . normalize_config_path(relative_path($projectRoot, $sourceFile)) . ':' . $sourceLine;
+	} else {
+		$lines[] = 'Runtime error while running the built program.';
+	}
+	$expression = trim((string) ($diagnostic['expression'] ?? ''));
+	$expected = trim((string) ($diagnostic['expected_type'] ?? ''));
+	$actual = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
+	$operation = trim((string) ($diagnostic['operation'] ?? ''));
+	if ($expression !== '') {
+		$line = 'Cannot convert value used for ' . $expression;
+		if ($expected !== '') {
+			$line .= ' to ' . $expected;
+		}
+		$lines[] = $line . '.';
+	}
+	if ($actual !== '') {
+		$lines[] = 'Actual runtime kind: ' . $actual;
+	}
+	if ($operation !== '') {
+		$lines[] = 'Operation: ' . $operation;
+	}
+	$message = trim((string) ($diagnostic['message'] ?? ''));
+	if ($message !== '') {
+		$lines[] = 'Runtime message: ' . $message;
+	}
+	$lines[] = "Run 'scpp error' for more details.";
+	$lines[] = "Run 'scpp full-error' for the saved JSON report.";
+	return implode(PHP_EOL, $lines) . PHP_EOL;
+}
+
+/** @param array<string,mixed> $diagnostic @return list<string> */
+function runtime_failure_guidance(array $diagnostic): array
+{
+	$guidance = [
+		'Check the source line reported above and stabilize mixed values before the failing cast or typed boundary.',
+	];
+	$actual = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
+	if ($actual !== '') {
+		$guidance[] = 'Actual runtime kind was ' . $actual . '; inspect the JSON/hash shape that produced that value.';
+	}
+	return append_standard_report_guidance($guidance, false);
 }
 
 function prepend_path_env_value(string $name, string $path): string
@@ -1255,6 +1432,21 @@ function handle_error_report(string $cwd, bool $full): void
 			continue;
 		}
 		$message = trim((string) ($diagnostic['message'] ?? ''));
+		$sourceFile = $diagnostic['source_file'] ?? null;
+		$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
+		if (is_string($sourceFile) && $sourceFile !== '' && $sourceLine > 0) {
+			$line = 'Source: ' . normalize_config_path(relative_path($project['project_root'], $sourceFile)) . ':' . $sourceLine;
+			$expression = trim((string) ($diagnostic['expression'] ?? ''));
+			if ($expression !== '') {
+				$line .= ' - ' . $expression;
+			}
+			$output[] = $line;
+			$actualKind = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
+			if ($actualKind !== '') {
+				$output[] = 'Actual runtime kind: ' . $actualKind;
+			}
+			continue;
+		}
 		$originalFile = $diagnostic['original_file'] ?? null;
 		$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
 		if (is_string($originalFile) && $originalFile !== '' && $originalLine > 0) {
@@ -1359,7 +1551,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		scpp_fail("No supported C++ compiler found.\n" . install_hint_for_compiler() . PHP_EOL, 1);
 	}
 	$buildMode = resolve_build_mode($config);
-	$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
+	$runtimeConfig = resolve_runtime_build_config($config);
 
 	$buildDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['build_dir'] ?? '.prism/build')));
 	$repoRoot = resolve_repo_root();
@@ -1403,6 +1595,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$generatedCpp = $generatedBase . '.cpp';
 			$generatedArtifactOrigins[normalize_path($generatedHeader)] = normalize_path($phpPathAbs);
 			$generatedArtifactOrigins[normalize_path($generatedCpp)] = normalize_path($phpPathAbs);
+			$emitProgramEntry = normalize_path($contextProjectRoot) === normalize_path($projectRoot) && $phpPathAbs === $entrypointAbs;
 			$meta = build_file_meta($phpPathAbs);
 			$previous = is_array($projectContext['state']['files'][$relativePhp] ?? null) ? $projectContext['state']['files'][$relativePhp] : null;
 			$needsTranspile = !is_array($previous)
@@ -1412,12 +1605,14 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				|| (string) $previous['content_hash'] !== $meta['content_hash']
 				|| !is_file($generatedHeader)
 				|| !is_file($generatedCpp)
+				|| (bool) ($previous['emit_program_entry'] ?? false) !== $emitProgramEntry
+				|| (!$emitProgramEntry && generated_cpp_contains_program_entry($generatedCpp))
 				|| ((bool) ($previous['has_export_manifest'] ?? false) && !is_file($generatedExportManifest));
 
 			$cppFile = null;
 			if ($needsTranspile) {
 				try {
-					$cppFile = $transpiler->transpile($phpPathAbs, false, $phpPathAbs === $entrypointAbs);
+					$cppFile = $transpiler->transpile($phpPathAbs, false, $emitProgramEntry);
 				} catch (S2SException $e) {
 					scpp_fail($e->getMessage() . PHP_EOL, 3);
 				} catch (Throwable $e) {
@@ -1440,7 +1635,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'relative_php' => $relativePhp,
 				'generated_cpp' => $generatedCpp,
 				'object_path' => build_object_path($projectContext['build_dir'], build_project_scoped_relative_path($projectRoot, $contextProjectRoot, $relativePhp), $compiler['kind']),
-				'is_entrypoint' => $phpPathAbs === $entrypointAbs,
+				'is_entrypoint' => $emitProgramEntry,
 				'force_include_header' => null,
 			];
 			$projectContext['generated_headers'][] = $generatedHeader;
@@ -1472,6 +1667,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'content_hash' => $meta['content_hash'],
 				'generator_signature' => $generatorSignature,
 				'generated_base' => normalize_config_path(relative_path($contextProjectRoot, $generatedBase)),
+				'emit_program_entry' => $emitProgramEntry,
 				'has_export_manifest' => $hasExportManifest,
 			];
 		}
@@ -1972,11 +2168,15 @@ function render_project_export_header(string $generatedDir, array $exportManifes
 		$lines[] = '#include "__project_fwd.hpp"';
 	}
 	$seenHeaders = [];
+	$headerPaths = [];
 	foreach (array_values(array_unique($exportManifestPaths)) as $manifestPath) {
 		$headerPath = export_manifest_header_path($manifestPath);
 		if ($headerPath === null) {
 			continue;
 		}
+		$headerPaths[] = normalize_path($headerPath);
+	}
+	foreach (sort_project_unit_include_headers(array_values(array_unique($headerPaths))) as $headerPath) {
 		$includeTarget = normalize_config_path(relative_path($generatedDir, $headerPath));
 		if ($includeTarget === '' || isset($seenHeaders[$includeTarget])) {
 			continue;
@@ -2037,21 +2237,25 @@ function write_project_unit_force_include_headers(array $projectContexts): array
 {
 	$headers = [];
 	foreach ($projectContexts as $projectRoot => $projectContext) {
-		$includeHeaders = [];
+		$dependencyHeaders = [];
+		$localHeaders = [];
 		foreach (($projectContext['generated_headers'] ?? []) as $generatedHeader) {
 			if (!is_string($generatedHeader) || $generatedHeader === '') {
 				continue;
 			}
-			$includeHeaders[] = normalize_path($generatedHeader);
+			$localHeaders[] = normalize_path($generatedHeader);
 		}
 		foreach (collect_transitive_project_dependency_roots($projectRoot, $projectContexts) as $dependencyRoot) {
 			$dependencyContext = $projectContexts[$dependencyRoot] ?? null;
 			if (!is_array($dependencyContext)) {
 				continue;
 			}
-			$includeHeaders[] = normalize_path($dependencyContext['generated_dir'] . '/__project.hpp');
+			$dependencyHeaders[] = normalize_path($dependencyContext['generated_dir'] . '/__project.hpp');
 		}
-		$includeHeaders = sort_project_unit_include_headers(array_values(array_unique($includeHeaders)));
+		$includeHeaders = array_merge(
+			array_values(array_unique($dependencyHeaders)),
+			sort_project_unit_include_headers(array_values(array_unique($localHeaders)))
+		);
 		if ($includeHeaders === []) {
 			continue;
 		}
@@ -2710,6 +2914,7 @@ function resolve_runtime_build_config(array $config): array
 	$runtime = is_array($config['runtime'] ?? null) ? $config['runtime'] : [];
 	$languagesRaw = $runtime['languages'] ?? ['php'];
 	$modules = $runtime['modules'] ?? ['json', 'filesystem'];
+	$profilesRaw = is_array($runtime['language_profiles'] ?? null) ? $runtime['language_profiles'] : [];
 	if (!is_array($languagesRaw) || !is_array($modules)) {
 		scpp_fail('Invalid runtime config in ' . SCPP_PROJECT_CONFIG . '; expected runtime.languages as either a list or object, and runtime.modules as an array.' . PHP_EOL, 2);
 	}
@@ -2719,7 +2924,12 @@ function resolve_runtime_build_config(array $config): array
 		$languages = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $languagesRaw)));
 		foreach ($languages as $language) {
 			if ($language !== '') {
-				$languageProfiles[$language] = ['profile' => 'legacy'];
+				$languageProfile = is_array($profilesRaw[$language] ?? null) ? $profilesRaw[$language] : [];
+				$profile = strtolower(trim((string) ($languageProfile['profile'] ?? 'legacy')));
+				if (!in_array($profile, ['legacy', 'strict'], true)) {
+					scpp_fail('Unsupported runtime language profile `' . $profile . '` for `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
+				}
+				$languageProfiles[$language] = ['profile' => $profile];
 			}
 		}
 	} else {
@@ -2920,6 +3130,13 @@ function write_last_error_report(
 				'generated_column' => isset($diagnostic['generated_column']) ? (is_int($diagnostic['generated_column']) ? $diagnostic['generated_column'] : null) : null,
 				'original_file' => isset($diagnostic['original_file']) ? normalize_path((string) $diagnostic['original_file']) : null,
 				'original_line' => isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : null,
+				'source_file' => isset($diagnostic['source_file']) ? normalize_path((string) $diagnostic['source_file']) : null,
+				'source_line' => isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : null,
+				'expression' => isset($diagnostic['expression']) ? (string) $diagnostic['expression'] : null,
+				'expected_type' => isset($diagnostic['expected_type']) ? (string) $diagnostic['expected_type'] : null,
+				'actual_runtime_kind' => isset($diagnostic['actual_runtime_kind']) ? (string) $diagnostic['actual_runtime_kind'] : null,
+				'operation' => isset($diagnostic['operation']) ? (string) $diagnostic['operation'] : null,
+				'code' => isset($diagnostic['code']) ? (string) $diagnostic['code'] : null,
 			];
 		}, $diagnostics)),
 		'raw_output' => [
@@ -3623,6 +3840,12 @@ function save_s2s_state(string $statePath, array $state): void
 {
 	$contents = "<?php\nreturn " . var_export($state, true) . ";\n";
 	write_text_file($statePath, $contents);
+}
+
+function generated_cpp_contains_program_entry(string $path): bool
+{
+	$contents = @file_get_contents($path);
+	return is_string($contents) && preg_match('/^int\s+main\s*\(/m', $contents) === 1;
 }
 
 /** @param list<string> $phpFiles */
@@ -4482,7 +4705,7 @@ function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string
 	if ($compiler === null) {
 		scpp_fail("No supported C++ compiler found.\n" . install_hint_for_compiler() . PHP_EOL, 1);
 	}
-	$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
+	$runtimeConfig = resolve_runtime_build_config($config);
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $repoRoot, $compiler, $buildMode, $runtimeConfig);
 	$artifactPath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
 	$objectPath = is_string($runtimeBuild['object_path'] ?? null) && $runtimeBuild['object_path'] !== ''

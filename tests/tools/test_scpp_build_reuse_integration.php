@@ -40,6 +40,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertDirectNinjaNoWork($app);
 			$this->assertSameProjectStrictUnitsComposeWithoutSourceIncludes();
 			$this->assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder();
+			$this->assertStrictProjectDependencyHeadersComposeBeforeLocalUnits();
 
 			$depObject = $this->findDependencyObject($lib);
 			$runtimeArtifact = $this->resolveRuntimeArtifactPath($app);
@@ -233,6 +234,62 @@ PHS);
 		$this->assertContains('class Item;', $this->read($forwardHeader), 'forward header should declare referenced cross-unit classes');
 		$this->assertContains('#include "__project_fwd.hpp"', $this->read($unitHeader), 'project unit header should include project forward declarations before generated headers');
 		$this->assertOrderBefore('#include "schema/base_node.hpp"', '#include "orm/child_node.hpp"', $this->read($unitHeader), 'base-class header should be included before derived-class header');
+	}
+
+	private function assertStrictProjectDependencyHeadersComposeBeforeLocalUnits(): void
+	{
+		$dependency = $this->root . '/strict_dependency_export';
+		$project = $this->root . '/strict_dependency_consumer';
+		$this->writeProject($dependency, [], "echo \"dependency\\n\";\n", 'strict');
+		$this->mkdir($dependency . '/base');
+		$this->write($dependency . '/base/node_base.phs', <<<'PHS'
+namespace Vendor\Base;
+
+/** @lib-export */
+class NodeBase {
+    public string $name = "";
+}
+PHS);
+		$this->write($dependency . '/base/node.phs', <<<'PHS'
+namespace Vendor\Base;
+
+/** @lib-export */
+class Node extends NodeBase {
+}
+PHS);
+		$standaloneDependencyBuild = scpp_run_build_service($dependency, $dependency . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(true, $standaloneDependencyBuild['ok'], 'strict dependency should build standalone before it is reused as a dependency');
+
+		$this->writeProject($project, ['../strict_dependency_export'], "echo \"consumer\\n\";\n", 'strict');
+		$this->write($project . '/consumer.phs', <<<'PHS'
+namespace App;
+
+class Reporter {
+    public static function printNode(\Vendor\Base\Node $node): void {
+        echo $node->name, "\n";
+    }
+}
+PHS);
+		$this->write($project . '/main.phs', <<<'PHS'
+$node = new Vendor\Base\Node();
+$node->name = "ok";
+App\Reporter::printNode($node);
+PHS);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(true, $build['ok'], 'strict dependency project exports should be visible before local generated headers');
+
+		$dependencyProjectHeader = $dependency . '/.prism/generated/__project.hpp';
+		$unitHeader = $project . '/.prism/generated/__project_units.hpp';
+		$this->assertFileExists($dependencyProjectHeader, 'dependency project export header should be generated');
+		$this->assertOrderBefore('#include "base/node_base.hpp"', '#include "base/node.hpp"', $this->read($dependencyProjectHeader), 'dependency project export header should include base headers before derived headers');
+		$this->assertOrderBefore('#include "../../../strict_dependency_export/.prism/generated/__project.hpp"', '#include "consumer.hpp"', $this->read($unitHeader), 'dependency project header should be included before local generated headers');
 	}
 
 	private function sleepForTimestamp(): void

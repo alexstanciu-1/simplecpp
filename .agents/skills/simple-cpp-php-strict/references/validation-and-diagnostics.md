@@ -108,6 +108,8 @@ Compiler diagnostics may be remapped from generated C++ back to original `.phs` 
 
 Prefer the remapped original source location. Inspect generated C++ only when the source looks valid and the failure suggests a lowering or runtime-boundary issue.
 
+Strict runtime type failures may also carry source-level context in `scpp error` and `.prism/last_error.json`, including the original file, line, expression, expected type, runtime operation, and actual runtime kind. Treat that source context as the first debugging target; use the generated C++ location only as supporting evidence when the saved report cannot identify the authoring expression.
+
 ## Generated Artifacts
 
 Generated artifacts are inspection evidence:
