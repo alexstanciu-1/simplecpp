@@ -72,6 +72,7 @@ final class Generator
 	private ?string $currentNamespacePhp = null;
 	private ?string $currentClassName = null;
 	private ?string $currentParentClass = null;
+	private string $currentSourcePath = '';
 	private int $tempCounter = 0;
 	private AnnotationExpressionParser $annotationExpressionParser;
 	/** @var array<string, string> */
@@ -139,6 +140,7 @@ final class Generator
 		$this->currentLocalArrayShapes = [];
 		$this->foreachReferenceSlotStack = [];
 		$this->foreachReferenceSuppressedNamesStack = [];
+		$this->currentSourcePath = $file->path;
 		$this->tempCounter = 0;
 		$this->nameRegistry = NameRegistry::fromPhpFile($file);
 		$this->functionDecls = $this->collectFunctionDecls($file);
@@ -5948,10 +5950,10 @@ final class Generator
 			$inner = $this->renderExpr($innerNode, $namespacePhp);
 			$flags = (int) ($expr->flags ?? 0);
 			return match ($flags) {
-				AstKind::TYPE_STRING => 'cast<string_t>(' . $inner . ')',
-				AstKind::TYPE_LONG => 'cast<int_t>(' . $inner . ')',
-				AstKind::TYPE_DOUBLE => 'cast<float_t>(' . $inner . ')',
-				AstKind::TYPE_BOOL => 'cast<bool_t>(' . $inner . ')',
+				AstKind::TYPE_STRING => $this->wrapRuntimeContext('cast<string_t>(' . $inner . ')', 'string_t', 'cast<string_t>', $innerNode),
+				AstKind::TYPE_LONG => $this->wrapRuntimeContext('cast<int_t>(' . $inner . ')', 'int_t', 'cast<int_t>', $innerNode),
+				AstKind::TYPE_DOUBLE => $this->wrapRuntimeContext('cast<float_t>(' . $inner . ')', 'float_t', 'cast<float_t>', $innerNode),
+				AstKind::TYPE_BOOL => $this->wrapRuntimeContext('cast<bool_t>(' . $inner . ')', 'bool_t', 'cast<bool_t>', $innerNode),
 				AstKind::TYPE_OBJECT => $this->renderObjectCastExpr($innerNode, $namespacePhp),
 				default => '/* unsupported-cast */',
 			};
@@ -6213,7 +6215,7 @@ final class Generator
 		}
 
 		if (is_int($expr) || is_float($expr)) {
-			return 'cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')';
+			return $this->wrapRuntimeContext('cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')', 'string_t', 'cast<string_t>', $expr);
 		}
 
 		if (!is_object($expr)) {
@@ -6224,7 +6226,7 @@ final class Generator
 		if ($kind === AstKind::CONST) {
 			$name = strtolower((string) ($expr->children['name']->children['name'] ?? ''));
 			if ($name === 'null' || $name === 'true' || $name === 'false') {
-				return 'cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')';
+				return $this->wrapRuntimeContext('cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')', 'string_t', 'cast<string_t>', $expr);
 			}
 		}
 
@@ -6246,9 +6248,88 @@ final class Generator
 			AstKind::BINARY_OP,
 			AstKind::ASSIGN,
 			AstKind::CLASS_CONST,
-			AstKind::STATIC_PROP => 'cast<string_t>(' . $rendered . ')',
-			default => 'cast<string_t>(' . $rendered . ')',
+			AstKind::STATIC_PROP => $this->wrapRuntimeContext('cast<string_t>(' . $rendered . ')', 'string_t', 'cast<string_t>', $expr),
+			default => $this->wrapRuntimeContext('cast<string_t>(' . $rendered . ')', 'string_t', 'cast<string_t>', $expr),
 		};
+	}
+
+	private function wrapRuntimeContext(string $renderedExpr, string $expectedType, string $operation, mixed $sourceExpr): string
+	{
+		$line = is_object($sourceExpr) ? (int) ($sourceExpr->lineno ?? 0) : 0;
+		$description = $this->describeRuntimeContextExpr($sourceExpr);
+		return '::scpp::with_runtime_context([&]() -> decltype(auto) { return ' . $renderedExpr . '; }, '
+			. $this->cppStringLiteral($this->currentSourcePath) . ', '
+			. (string) $line . ', '
+			. $this->cppStringLiteral($description) . ', '
+			. $this->cppStringLiteral($expectedType) . ', '
+			. $this->cppStringLiteral($operation) . ')';
+	}
+
+	private function describeRuntimeContextExpr(mixed $expr): string
+	{
+		if (is_string($expr)) {
+			return '"' . $expr . '"';
+		}
+		if (is_int($expr) || is_float($expr)) {
+			return (string) $expr;
+		}
+		if (!is_object($expr)) {
+			return '<unknown>';
+		}
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::VAR) {
+			$name = $expr->children['name'] ?? null;
+			return is_string($name) ? '$' . $name : '$<dynamic>';
+		}
+		if ($kind === AstKind::DIM) {
+			return $this->describeRuntimeContextExpr($expr->children['expr'] ?? null)
+				. '[' . $this->describeRuntimeDimKey($expr->children['dim'] ?? null) . ']';
+		}
+		if ($kind === AstKind::PROP) {
+			$property = $expr->children['prop'] ?? null;
+			$propertyName = is_string($property) ? $property : '<dynamic>';
+			return $this->describeRuntimeContextExpr($expr->children['expr'] ?? null) . '->' . $propertyName;
+		}
+		if ($kind === AstKind::CALL) {
+			return 'function call';
+		}
+		if ($kind === AstKind::METHOD_CALL || $kind === AstKind::STATIC_CALL) {
+			return 'method call';
+		}
+		if ($kind === AstKind::CAST) {
+			return 'cast expression';
+		}
+		if ($kind === AstKind::BINARY_OP) {
+			return 'binary expression';
+		}
+		return 'expression';
+	}
+
+	private function describeRuntimeDimKey(mixed $expr): string
+	{
+		if ($expr === null) {
+			return '';
+		}
+		if (is_string($expr)) {
+			return '"' . $expr . '"';
+		}
+		if (is_int($expr) || is_float($expr)) {
+			return (string) $expr;
+		}
+		if (!is_object($expr)) {
+			return '...';
+		}
+		if (($expr->kind ?? null) === AstKind::CONST) {
+			$name = $expr->children['name']->children['name'] ?? null;
+			return is_string($name) ? strtolower($name) : '...';
+		}
+		return '...';
+	}
+
+	private function cppStringLiteral(string $value): string
+	{
+		$encoded = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return is_string($encoded) ? $encoded : '""';
 	}
 
 	/**

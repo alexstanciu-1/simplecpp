@@ -76,6 +76,7 @@ scpp full-last-run
 ```
 
 Use generated C++ and `.prism/generated/*.line.tsv` artifacts as inspection evidence, not as the primary source to patch.
+For strict runtime type failures, prefer source-level context from `scpp error` / `.prism/last_error.json` first; generated runtime details are supporting evidence.
 
 ## Composition
 
@@ -84,6 +85,7 @@ For multi-file and multi-project work:
 - Add runtime modules in `prism.json` when strict builtins require them.
 - Let `scpp build` compose files inside the same project; same-project `.phs` files should not include generated `.hpp` files.
 - Use `dependencies` for other Simple C++/Prism projects built from source.
+- Dependency project export headers are generated build artifacts too; do not add generated dependency `.hpp` names to PHP++ source to force ordering.
 - Use `libraries` for linker-owned native artifacts.
 - Mark dependency-visible top-level declarations with `/** @lib-export */`.
 - Do not use PHP `require` or `include` as the project composition mechanism.
