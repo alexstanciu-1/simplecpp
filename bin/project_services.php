@@ -1077,7 +1077,15 @@ function handle_run(string $cwd, array $args): void
 	if (!is_int($status)) {
 		scpp_fail('Failed to read program exit status.' . PHP_EOL, 4);
 	}
-	$runtimeDiagnostic = $status !== 0 ? collect_runtime_error_diagnostic($programStderr) : null;
+		$runtimeDiagnostic = $status !== 0 ? collect_runtime_error_diagnostic($programStderr) : null;
+		if ($runtimeDiagnostic !== null) {
+			$runtimeDiagnostic = remap_runtime_diagnostic(
+				$project['project_root'],
+				$buildResult['build_dir'],
+				$runtimeDiagnostic,
+				is_array($buildResult['generated_artifact_origins'] ?? null) ? $buildResult['generated_artifact_origins'] : []
+			);
+		}
 	if ($programStderr !== '') {
 		$stderrToShow = $runtimeDiagnostic !== null ? trim(remove_runtime_error_json_lines($programStderr)) : trim($programStderr);
 		if ($stderrToShow !== '') {
@@ -1206,19 +1214,50 @@ function collect_runtime_error_diagnostic(string $stderr): ?array
 			continue;
 		}
 		$details = is_array($error['details'] ?? null) ? $error['details'] : [];
-		return [
-			'severity' => 'error',
-			'message' => (string) ($error['message'] ?? 'Runtime error.'),
-			'code' => (string) ($error['code'] ?? 'runtime_error'),
-			'operation' => (string) ($details['operation'] ?? ($error['operator'] ?? '')),
-			'source_file' => isset($details['source_file']) ? normalize_path((string) $details['source_file']) : null,
-			'source_line' => isset($details['source_line']) ? (int) $details['source_line'] : null,
-			'expression' => isset($details['expression']) ? (string) $details['expression'] : null,
-			'expected_type' => isset($details['expected_type']) ? (string) $details['expected_type'] : null,
-			'actual_runtime_kind' => isset($details['runtime_kind']) ? (string) $details['runtime_kind'] : null,
+			return [
+				'severity' => 'error',
+				'message' => (string) ($error['message'] ?? 'Runtime error.'),
+				'code' => (string) ($error['code'] ?? 'runtime_error'),
+				'operation' => (string) ($details['operation'] ?? ($error['operator'] ?? ($error['component'] ?? ''))),
+				'generated_file' => isset($details['generated_file']) ? (string) $details['generated_file'] : null,
+				'generated_line' => isset($details['generated_line']) ? (int) $details['generated_line'] : null,
+				'generated_column' => isset($details['generated_column']) ? (int) $details['generated_column'] : null,
+				'original_file' => null,
+				'original_line' => null,
+				'source_file' => isset($details['source_file']) ? normalize_path((string) $details['source_file']) : null,
+				'source_line' => isset($details['source_line']) ? (int) $details['source_line'] : null,
+				'expression' => isset($details['expression']) ? (string) $details['expression'] : null,
+				'expected_type' => isset($details['expected_type']) ? (string) $details['expected_type'] : null,
+				'actual_runtime_kind' => isset($details['runtime_kind']) ? (string) $details['runtime_kind'] : null,
 		];
 	}
 	return null;
+}
+
+/** @param array<string,mixed> $diagnostic @param array<string,string> $generatedArtifactOrigins @return array<string,mixed> */
+function remap_runtime_diagnostic(string $projectRoot, string $buildDir, array $diagnostic, array $generatedArtifactOrigins): array
+{
+	$generatedFile = trim((string) ($diagnostic['generated_file'] ?? ''));
+	$generatedLine = isset($diagnostic['generated_line']) ? (int) $diagnostic['generated_line'] : 0;
+	if ($generatedFile === '' || $generatedLine <= 0) {
+		return $diagnostic;
+	}
+	$generatedAbs = resolve_diagnostic_reported_path($projectRoot, $buildDir, $generatedFile);
+	if ($generatedAbs === null) {
+		return $diagnostic;
+	}
+	$diagnostic['generated_file'] = $generatedAbs;
+	$originSource = $generatedArtifactOrigins[$generatedAbs] ?? null;
+	if (!is_string($originSource) || $originSource === '') {
+		return $diagnostic;
+	}
+	$originalLine = lookup_original_line_from_generated_map($generatedAbs, $generatedLine);
+	if ($originalLine <= 0) {
+		return $diagnostic;
+	}
+	$diagnostic['original_file'] = normalize_path($originSource);
+	$diagnostic['original_line'] = $originalLine;
+	return $diagnostic;
 }
 
 function remove_runtime_error_json_lines(string $stderr): string
@@ -1241,10 +1280,14 @@ function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?s
 	if ($strictHint !== null) {
 		$lines[] = $strictHint;
 	}
-	$sourceFile = is_string($diagnostic['source_file'] ?? null) ? (string) $diagnostic['source_file'] : '';
-	$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
-	if ($sourceFile !== '' && $sourceLine > 0) {
-		$lines[] = 'Runtime error in ' . normalize_config_path(relative_path($projectRoot, $sourceFile)) . ':' . $sourceLine;
+		$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
+		$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
+		$sourceFile = is_string($diagnostic['source_file'] ?? null) ? (string) $diagnostic['source_file'] : '';
+		$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
+		$displayFile = $originalFile !== '' ? $originalFile : $sourceFile;
+		$displayLine = $originalLine > 0 ? $originalLine : $sourceLine;
+		if ($displayFile !== '' && $displayLine > 0) {
+			$lines[] = 'Runtime error in ' . normalize_config_path(relative_path($projectRoot, $displayFile)) . ':' . $displayLine;
 	} else {
 		$lines[] = 'Runtime error while running the built program.';
 	}
@@ -1432,27 +1475,27 @@ function handle_error_report(string $cwd, bool $full): void
 			continue;
 		}
 		$message = trim((string) ($diagnostic['message'] ?? ''));
-		$sourceFile = $diagnostic['source_file'] ?? null;
-		$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
-		if (is_string($sourceFile) && $sourceFile !== '' && $sourceLine > 0) {
-			$line = 'Source: ' . normalize_config_path(relative_path($project['project_root'], $sourceFile)) . ':' . $sourceLine;
-			$expression = trim((string) ($diagnostic['expression'] ?? ''));
-			if ($expression !== '') {
-				$line .= ' - ' . $expression;
+			$originalFile = $diagnostic['original_file'] ?? null;
+			$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
+			if (is_string($originalFile) && $originalFile !== '' && $originalLine > 0) {
+				$line = 'Source: ' . normalize_config_path(relative_path($project['project_root'], $originalFile)) . ':' . $originalLine;
+				$expression = trim((string) ($diagnostic['expression'] ?? ''));
+				if ($expression !== '') {
+					$line .= ' - ' . $expression;
+				}
+				$output[] = $line;
+				$actualKind = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
+				if ($actualKind !== '') {
+					$output[] = 'Actual runtime kind: ' . $actualKind;
+				}
+				continue;
 			}
-			$output[] = $line;
-			$actualKind = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
-			if ($actualKind !== '') {
-				$output[] = 'Actual runtime kind: ' . $actualKind;
+			$sourceFile = $diagnostic['source_file'] ?? null;
+			$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
+			if (is_string($sourceFile) && $sourceFile !== '' && $sourceLine > 0) {
+				$output[] = 'Source: ' . normalize_config_path(relative_path($project['project_root'], $sourceFile)) . ':' . $sourceLine . ($message !== '' ? ' - ' . $message : '');
+				continue;
 			}
-			continue;
-		}
-		$originalFile = $diagnostic['original_file'] ?? null;
-		$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
-		if (is_string($originalFile) && $originalFile !== '' && $originalLine > 0) {
-			$output[] = 'Mapped: ' . normalize_config_path(relative_path($project['project_root'], $originalFile)) . ':' . $originalLine . ($message !== '' ? ' - ' . $message : '');
-			continue;
-		}
 		if ($message !== '') {
 			$output[] = 'Detail: ' . $message;
 		}
@@ -1531,7 +1574,7 @@ function load_project_report(string $cwd, string $relativePath, string $label): 
 
 /**
  * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options
- * @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string,runtime_library_dir:?string}
+ * @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string,runtime_library_dir:?string,generated_artifact_origins:array<string,string>}
  */
 function execute_build(string $projectRoot, string $configPath, array $options = []): array
 {
@@ -1912,6 +1955,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		'runtime_library_dir' => is_string($runtimeBuild['artifact_path'] ?? null)
 			? normalize_path(dirname($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path'])))
 			: null,
+		'generated_artifact_origins' => $generatedArtifactOrigins,
 	];
 }
 

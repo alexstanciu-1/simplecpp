@@ -245,6 +245,11 @@ final class Generator
 		return $this->code($text, $this->currentSourceLine, $this->currentSourceColumn);
 	}
 
+	private function renderGeneratedCast(string $type, string $expr): string
+	{
+		return 'cast_with_generated_location<' . $type . '>(' . $expr . ')';
+	}
+
 	/** @param list<string> $lines @return list<CodeBlock> */
 	private function codeLinesFromStrings(array $lines, int $srcLine = -1, int $srcColumn = -1): array
 	{
@@ -662,11 +667,11 @@ final class Generator
 		}
 
 		if ($exprType === 'mixed_t') {
-			return 'cast<' . $expectedType . '>(' . $renderedExpr . ')';
+			return $this->renderGeneratedCast($expectedType, $renderedExpr);
 		}
 
 		if ($exprType === 'nullable<' . $expectedType . '>' || $exprType === 'result_or_false<' . $expectedType . '>' || $exprType === 'result_or_bool<' . $expectedType . '>' || $exprType === 'result<' . $expectedType . '>') {
-			return 'cast<' . $expectedType . '>(' . $renderedExpr . ')';
+			return $this->renderGeneratedCast($expectedType, $renderedExpr);
 		}
 
 		return $renderedExpr;
@@ -2612,15 +2617,15 @@ final class Generator
 		if ($rule === null) {
 			if (($param->primaryType ?? $param->type) === $unionType) {
 				if ($sourceIsMixed) {
-					return ['return cast<' . $mappedPrimaryType . '>(' . $sourceExpr . ');'];
+					return ['return ' . $this->renderGeneratedCast($mappedPrimaryType, $sourceExpr) . ';'];
 				}
 				return ['return ' . $sourceExpr . ';'];
 			}
-			return ['return cast<' . $mappedPrimaryType . '>(' . $sourceExpr . ');'];
+			return ['return ' . $this->renderGeneratedCast($mappedPrimaryType, $sourceExpr) . ';'];
 		}
 		$expr = $this->renderNormalizationRuleExpression($rule, $param, $unionType, $namespacePhp);
 		return [
-			$mappedSourceType . ' ' . $this->parameterCppName($param) . ' = cast<' . $mappedSourceType . '>(' . $sourceExpr . ');',
+			$mappedSourceType . ' ' . $this->parameterCppName($param) . ' = ' . $this->renderGeneratedCast($mappedSourceType, $sourceExpr) . ';',
 			'return ' . $expr . ';',
 		];
 	}
@@ -3274,7 +3279,7 @@ final class Generator
 	{
 		$mappedSourceType = $this->typeMapper->mapDeclaredType($rule->sourceType);
 		$expression = $this->renderNormalizationRuleExpression($rule, $param, $rule->sourceType, $namespacePhp);
-		return '([&]() -> ' . $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type) . ' { ' . $mappedSourceType . ' ' . $this->parameterCppName($param) . ' = cast<' . $mappedSourceType . '>(' . $storageName . '); return ' . $expression . '; })()';
+		return '([&]() -> ' . $this->typeMapper->mapDeclaredType($param->primaryType ?? $param->type) . ' { ' . $mappedSourceType . ' ' . $this->parameterCppName($param) . ' = ' . $this->renderGeneratedCast($mappedSourceType, $storageName) . '; return ' . $expression . '; })()';
 	}
 
 	private function buildMixedCarrierNormalizationLines(ParamDecl $param, string $storageName, ?string $namespacePhp): array
@@ -3293,7 +3298,7 @@ final class Generator
 			$rule = $this->lookupArgNormalizationRule($param, $unionType);
 			$assignmentExpr = $rule !== null
 				? $this->renderForwardedNormalizationExpression($rule, $param, $storageName, $namespacePhp)
-				: 'cast<' . $mappedPrimaryType . '>(' . $storageName . ')';
+					: $this->renderGeneratedCast($mappedPrimaryType, $storageName);
 			$lines[] = $branchPrefix . ' (' . $condition . ') {';
 			$lines[] = $this->indent(1) . $this->parameterCppName($param) . ' = ' . $assignmentExpr . ';';
 			$lines[] = '}';
@@ -6044,10 +6049,10 @@ final class Generator
 			$inner = $this->renderExpr($innerNode, $namespacePhp);
 			$flags = (int) ($expr->flags ?? 0);
 			return match ($flags) {
-				AstKind::TYPE_STRING => 'cast<string_t>(' . $inner . ')',
-				AstKind::TYPE_LONG => 'cast<int_t>(' . $inner . ')',
-				AstKind::TYPE_DOUBLE => 'cast<float_t>(' . $inner . ')',
-				AstKind::TYPE_BOOL => 'cast<bool_t>(' . $inner . ')',
+				AstKind::TYPE_STRING => $this->renderGeneratedCast('string_t', $inner),
+				AstKind::TYPE_LONG => $this->renderGeneratedCast('int_t', $inner),
+				AstKind::TYPE_DOUBLE => $this->renderGeneratedCast('float_t', $inner),
+				AstKind::TYPE_BOOL => $this->renderGeneratedCast('bool_t', $inner),
 				AstKind::TYPE_OBJECT => $this->renderObjectCastExpr($innerNode, $namespacePhp),
 				default => '/* unsupported-cast */',
 			};
@@ -6315,7 +6320,7 @@ final class Generator
 		}
 
 		if (is_int($expr) || is_float($expr)) {
-			return 'cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')';
+			return $this->renderGeneratedCast('string_t', $this->renderExpr($expr, $namespacePhp));
 		}
 
 		if (!is_object($expr)) {
@@ -6326,7 +6331,7 @@ final class Generator
 		if ($kind === AstKind::CONST) {
 			$name = strtolower((string) ($expr->children['name']->children['name'] ?? ''));
 			if ($name === 'null' || $name === 'true' || $name === 'false') {
-				return 'cast<string_t>(' . $this->renderExpr($expr, $namespacePhp) . ')';
+				return $this->renderGeneratedCast('string_t', $this->renderExpr($expr, $namespacePhp));
 			}
 		}
 
@@ -6348,10 +6353,10 @@ final class Generator
 			AstKind::BINARY_OP,
 			AstKind::ASSIGN,
 			AstKind::CLASS_CONST,
-			AstKind::STATIC_PROP => 'cast<string_t>(' . $rendered . ')',
-			default => 'cast<string_t>(' . $rendered . ')',
-		};
-	}
+				AstKind::STATIC_PROP => $this->renderGeneratedCast('string_t', $rendered),
+				default => $this->renderGeneratedCast('string_t', $rendered),
+			};
+		}
 
 	/**
 

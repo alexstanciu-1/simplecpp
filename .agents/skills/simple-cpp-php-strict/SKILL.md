@@ -76,7 +76,7 @@ scpp full-last-run
 ```
 
 Use generated C++ and `.prism/generated/*.line.tsv` artifacts as inspection evidence, not as the primary source to patch.
-For strict runtime type failures, inspect `scpp error` / `.prism/last_error.json` first, then use generated C++ and line maps when the report does not yet include source attribution.
+For strict runtime type failures, inspect `scpp error` / `.prism/last_error.json` first. Recent generated-location remapping can populate `original_file` / `original_line` there; use generated C++ and line maps only when the saved report still lacks the needed attribution.
 For runtime shape confusion, use strict-safe debug helpers before ad hoc probes:
 
 ```php
