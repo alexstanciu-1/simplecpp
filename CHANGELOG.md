@@ -9,6 +9,27 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.32 - 2026-05-10
+
+### Additions
+
+- Added regression coverage for strict runtime cast failures remapping back to the original `.phs` file and line through generated `.line.tsv` artifacts.
+
+### Fixes
+
+- Fixed strict runtime cast diagnostics so generated `mixed_t -> typed` cast failures carry generated call-site metadata and `scpp run` remaps that back to `original_file` / `original_line` in saved reports.
+- Fixed strict runtime diagnostic summaries and `scpp error` output to prefer the remapped original source location for these failures instead of stopping at generated/runtime context.
+- Updated the repo-local strict Agent Skill guidance to reflect that saved runtime reports may now expose remapped `original_file` / `original_line` attribution directly.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Re-run strict projects that previously stopped at `Runtime error while running the built program.` for `cast<...>(mixed_t)` failures; the saved report and short summary should now point back to the original authoring line when generated line maps are available.
+- Agent Skill review completed: strict diagnostics guidance was updated for this hotfix.
+
 ## 0.1.31 - 2026-05-09
 
 ### Additions
