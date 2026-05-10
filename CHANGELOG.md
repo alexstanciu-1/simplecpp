@@ -9,6 +9,25 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.33 - 2026-05-10
+
+### Additions
+
+- None
+
+### Fixes
+
+- Fixed strict `dbg(...)` and `dbg_if(...)` release lowering so generated C++ carries the original `.phs` source path and compiles cleanly against the runtime `dbg_at(const char *, ...)` API.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Retry strict projects that started failing in `v0.1.32` with `Call to undefined method Scpp\\S2S\\Generator\\Generator::cppStringLiteral()`, `Undefined property ... $currentSourcePath`, or a generated `dbg_at(string_t(...), ...)` compile error.
+- Agent Skill review completed: no `.agents/skills/*` updates are required for this hotfix because the existing strict debug-helper guidance remains correct.
+
 ## 0.1.32 - 2026-05-10
 
 ### Additions
