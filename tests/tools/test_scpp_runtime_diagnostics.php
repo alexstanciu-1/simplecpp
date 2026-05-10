@@ -47,7 +47,7 @@ final class ScppRuntimeDiagnosticsTest
 
 			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
 			$this->assertNotSame(0, $run['exit_code'], 'runtime type failure should make scpp run fail');
-			$this->assertContains('Runtime error while running the built program.', $run['stderr'], 'run stderr should report a structured runtime failure');
+				$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'run stderr should report the remapped source location');
 			$this->assertContains('Actual runtime kind: shared_hash_t', $run['stderr'], 'run stderr should report actual runtime kind');
 			$this->assertFileDoesNotContain($project . '/.prism/generated/main.cpp', 'with_runtime_context', 'generated code should not use expression-level runtime context wrappers');
 			$generatedCppLines = explode("\n", rtrim($this->read($project . '/.prism/generated/main.cpp'), "\n"));
@@ -68,11 +68,11 @@ final class ScppRuntimeDiagnosticsTest
 				throw new RuntimeException('last_error.json should contain at least one runtime diagnostic');
 			}
 			$this->assertSame('strict', $report['project_mode'] ?? null, 'last_error.json should store strict project mode');
-			$this->assertSame(null, $diagnostic['source_file'] ?? null, 'runtime diagnostics should not use removed source-context wrapper fields');
-			$this->assertSame(null, $diagnostic['source_line'] ?? null, 'runtime diagnostics should not use removed source-context wrapper fields');
-			$this->assertSame(null, $diagnostic['expression'] ?? null, 'runtime diagnostics should not use removed source-context wrapper fields');
-			$this->assertSame(null, $diagnostic['expected_type'] ?? null, 'runtime diagnostics should not use removed source-context wrapper fields');
-			$this->assertSame('shared_hash_t', $diagnostic['actual_runtime_kind'] ?? null, 'runtime diagnostic should preserve actual runtime kind');
+				$this->assertSame(normalize_path($project . '/main.phs'), $diagnostic['original_file'] ?? null, 'runtime diagnostics should remap back to the original source file');
+				$this->assertSame(3, $diagnostic['original_line'] ?? null, 'runtime diagnostics should remap back to the original source line');
+				$this->assertSame('string_t', $diagnostic['expected_type'] ?? null, 'runtime diagnostics should preserve the expected target type');
+				$this->assertSame('scpp::cast<string_t>', $diagnostic['operation'] ?? null, 'runtime diagnostics should preserve the failing operation');
+				$this->assertSame('shared_hash_t', $diagnostic['actual_runtime_kind'] ?? null, 'runtime diagnostic should preserve actual runtime kind');
 
 			echo "PASS: scpp runtime diagnostics\n";
 			return 0;
@@ -89,7 +89,9 @@ final class ScppRuntimeDiagnosticsTest
 			1 => ['pipe', 'w'],
 			2 => ['pipe', 'w'],
 		];
-		$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment());
+			$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment([
+				'SCPP_CXX_LAUNCHER' => ' ',
+			]));
 		if (!is_resource($process)) {
 			throw new RuntimeException('Failed to start command: ' . implode(' ', $command));
 		}
