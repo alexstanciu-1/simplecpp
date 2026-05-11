@@ -79,11 +79,11 @@ The generator is intentionally a deterministic structured lowerer, not a semanti
 
 For project composition:
 
-- let `scpp build` compose files inside the same project; do not add source-level includes for generated `.hpp` files
+- let `scpp build` compose files inside the same project; do not use source-level `require`, `require_once`, `include`, or `include_once` for project composition, and do not add source-level includes for generated `.hpp` files
 - use `dependencies` in `prism.json` for other Prism projects built from source
 - use `libraries` in `prism.json` for linker-owned native libraries or native artifacts
 - use `/** @lib-export */` on dependency-visible top-level functions, classes, interfaces, and constants
-- do not model cross-project composition as PHP `require`/`include`
+- do not model cross-project composition with PHP file-inclusion forms such as `require`, `require_once`, `include`, or `include_once`
 
 Tiny example:
 

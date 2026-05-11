@@ -92,7 +92,7 @@ scpp build
 scpp build --entry=tests/php/sample.phs
 ```
 
-`scpp build` composes `.phs` files inside the same project. Do not write PHP++ source-level `require` or `include` statements for generated `.hpp` files.
+`scpp build` composes `.phs` files inside the same project. Do not use source-level `require`, `require_once`, `include`, or `include_once` for project composition, and do not name generated `.hpp` files from source.
 
 By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
 

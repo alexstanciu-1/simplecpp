@@ -167,6 +167,7 @@ Compiler selection:
 - Ninja invoked automatically by `scpp build` and `scpp run`
 - output executable written under `.prism/build/`
 - recursive S2S generation for all project `*.phs` files plus compatible `*.php` files
+- same-project and project-dependency composition is handled by `scpp build`; do not use source-level `require`, `require_once`, `include`, or `include_once` for current strict-project composition
 - cached S2S state in `.prism/cache/s2s_state.php` using file size + mtime
 - `scpp build` and `scpp run` reuse existing runtime and Prism project dependency artifacts by default
 - `--build-runtime` explicitly recompiles the runtime artifact for the current build

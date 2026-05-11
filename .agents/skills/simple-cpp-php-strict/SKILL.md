@@ -97,7 +97,7 @@ For multi-file and multi-project work:
 - Dependency project export headers are generated build artifacts too; do not add generated dependency `.hpp` names to PHP++ source to force ordering.
 - Use `libraries` for linker-owned native artifacts.
 - Mark dependency-visible top-level declarations with `/** @lib-export */`.
-- Do not use PHP `require` or `include` as the project composition mechanism.
+- Do not use PHP `require`, `require_once`, `include`, or `include_once` for project composition in the current strict-project model.
 
 ## Before Finishing
 
