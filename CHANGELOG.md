@@ -9,6 +9,31 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.35 - 2026-05-11
+
+### Additions
+
+- Added relation-aware generated line maps so generated `.line.tsv` data can describe whether a generated line maps `exact`, `above`, `below`, or `around` the originating source line.
+- Added helper-free runtime diagnostics recovery that records generated locations from runtime error traces and remaps them back to original `.phs` lines through `.line.tsv`.
+- Added source-facing strict aliases `error`, `resource_handle`, `nullable_resource_handle`, and `falseable_resource_handle` for authoring and examples while preserving the existing runtime lowerings.
+
+### Fixes
+
+- Fixed strict runtime diagnostics so generated cast failures no longer depend on generated helper wrappers and still resolve back to the original authoring line.
+- Fixed debug builds used for runtime diagnostics to emit line information needed for generated-frame recovery.
+- Fixed strict typed-local shorthand scanning so source-facing alias declarations work for both initialized and uninitialized typed locals.
+- Normalized strict docs, examples, and tests to the source-facing `error` and `resource_handle` aliases.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Rebuild strict projects if you rely on runtime source remapping; debug builds now emit relation-aware `.line.tsv` files and runtime reports resolve generated failures through the catch-time trace path.
+- Source-facing strict code should prefer `error` and `resource_handle` aliases over the runtime-shaped `error_t` and `resource_handle_t` names.
+- Agent Skill review completed: the strict diagnostics reference was updated and no additional `.agents/skills/*` changes are required for this release.
+
 ## 0.1.33 - 2026-05-10
 
 ### Additions

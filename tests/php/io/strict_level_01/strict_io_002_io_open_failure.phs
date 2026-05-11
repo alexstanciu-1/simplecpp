@@ -1,4 +1,4 @@
-$fh /** resource_handle_t */;
+$fh /** resource_handle */;
 echo take($fh, io_open("strict_missing_beta.txt", "rb")) ? "T\n" : "F\n";
 
 fs_mkdir("strict_io_errors");

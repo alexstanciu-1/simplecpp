@@ -1461,7 +1461,7 @@ final class Generator
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
 		}
-		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
 			return;
 		}
 		$out[$normalized] = true;
@@ -6557,7 +6557,7 @@ final class Generator
 				$this->fail('take(result<T>) requires two output variables plus the source expression at line ' . $line . '.');
 			}
 			$this->assertTakeOutputTypeMatches($args[0], $matches[1], $line, 'take(result<T>)');
-			$this->assertTakeOutputTypeMatches($args[1], 'error_t', $line, 'take(result<T>)');
+			$this->assertTakeOutputTypeMatches($args[1], 'error', $line, 'take(result<T>)');
 			return;
 		}
 

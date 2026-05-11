@@ -432,7 +432,7 @@ Common pattern:
 
 ```php
 $text /** string */ = "";
-$err /** error_t */;
+$err /** error */;
 
 if (!take($text, $err, fs_get($path))) {
 	echo "read failed\n";
@@ -450,7 +450,7 @@ Rule of thumb:
 
 - `take($out, nullable<T>)` writes the present value and returns `true`
 - `take($out, result_or_false<T>)` writes the success value and returns `true`
-- `take($out, $err, result<T>)` writes either the success value or the `error_t`
+- `take($out, $err, result<T>)` writes either the success value or the `error`
 - `take($out, $flag, result_or_bool<T>)` keeps the bool sentinel branch separate
 
 For PHP++ / PHS code, that is the main mental model you need. You usually do not need to think about the generated C++ lowering to use it correctly.
@@ -472,13 +472,13 @@ are stabilization steps.
 Decoded JSON is still dynamic after `json_decode(...)`.
 Treat typed extraction from it as an assumption about shape, not as free PHP flexibility.
 
-## `error_t` In Practice
+## `error` In Practice
 
-`error_t` is the structured error payload used by `result<T>`-style wrappers.
+`error` is the source-facing structured error payload used by `result<T>`-style wrappers.
 
 - `Guaranteed`: it can carry error information such as message, line, and file
 - `Preferred`: in quick strict code, treat it as a payload you capture when `take(..., $err, ...)` fails
-- `Current`: detailed PHP++ / PHS user-facing accessor patterns for reading `error_t` are not fully documented in this quick-learn yet
+- `Current`: detailed PHP++ / PHS user-facing accessor patterns for reading `error` are not fully documented in this quick-learn yet
 
 If your code depends heavily on inspecting error details, check the deeper runtime/spec docs before standardizing a pattern.
 
@@ -572,16 +572,16 @@ Visible PHP++ / PHS strict names are flat and family-prefixed.
 
 | Name | Compact signature | Return shape / note |
 | --- | --- | --- |
-| `io_open` | `io_open(string $path, string $mode)` | wrapper result to `resource_handle_t`; use `take($fh, ...)` |
-| `io_seek` | `io_seek(resource_handle_t $fh, int $offset)` | current result is seek-status style; see examples/specs if it matters |
-| `io_tell` | `io_tell(resource_handle_t $fh)` | wrapper result to `int`; use `take($pos, ...)` |
-| `io_read_line` | `io_read_line(resource_handle_t $fh)` | wrapper result to `string`; use `take($line, ...)` |
-| `io_read` | `io_read(resource_handle_t $fh, int $len)` | wrapper result to `string`; use `take($data, ...)` |
-| `io_write` | `io_write(resource_handle_t $fh, string $data)` | wrapper result to `int`; use `take($written, ...)` |
-| `io_rewind` | `io_rewind(resource_handle_t $fh)` | `bool` |
-| `io_flush` | `io_flush(resource_handle_t $fh)` | `bool` |
-| `io_eof` | `io_eof(resource_handle_t $fh)` | `bool` |
-| `io_close` | `io_close(resource_handle_t $fh)` | `bool` |
+| `io_open` | `io_open(string $path, string $mode)` | wrapper result to `resource_handle`; use `take($fh, ...)` |
+| `io_seek` | `io_seek(resource_handle $fh, int $offset)` | current result is seek-status style; see examples/specs if it matters |
+| `io_tell` | `io_tell(resource_handle $fh)` | wrapper result to `int`; use `take($pos, ...)` |
+| `io_read_line` | `io_read_line(resource_handle $fh)` | wrapper result to `string`; use `take($line, ...)` |
+| `io_read` | `io_read(resource_handle $fh, int $len)` | wrapper result to `string`; use `take($data, ...)` |
+| `io_write` | `io_write(resource_handle $fh, string $data)` | wrapper result to `int`; use `take($written, ...)` |
+| `io_rewind` | `io_rewind(resource_handle $fh)` | `bool` |
+| `io_flush` | `io_flush(resource_handle $fh)` | `bool` |
+| `io_eof` | `io_eof(resource_handle $fh)` | `bool` |
+| `io_close` | `io_close(resource_handle $fh)` | `bool` |
 
 ### Filesystem
 
@@ -642,7 +642,7 @@ Unsupported in the current strict datetime surface: named timezone conversion, l
 
 ```php
 $stamp /** int */ = 0;
-$err /** error_t */;
+$err /** error */;
 
 if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
 	echo dt_format("Y-m-d H:i:s", $stamp), "\n";
@@ -653,7 +653,7 @@ if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
 
 ```php
 $file = "sample.txt";
-$err /** error_t */;
+$err /** error */;
 $written /** int */ = 0;
 
 if (take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
