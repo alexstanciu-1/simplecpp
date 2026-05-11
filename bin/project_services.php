@@ -1875,6 +1875,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if ($projectLibraryFlags !== []) {
 		echo 'Resolved project libraries: ' . implode(' ', $projectLibraryFlags) . PHP_EOL;
 	}
+	if (!$options['compile_dependencies']) {
+		validate_reused_dependency_artifacts($projectRoot, $generatedUnits, $nativeCppUnits);
+	}
 
 	$command = [
 		$ninjaPath,
@@ -2072,6 +2075,67 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			0
 		),
 	];
+}
+
+/**
+ * @param list<array{project_root:string,relative_php:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @param list<array{project_root:string,source_path:string,object_path:string,force_include_header:?string}> $nativeCppUnits
+ */
+function validate_reused_dependency_artifacts(string $projectRoot, array $generatedUnits, array $nativeCppUnits): void
+{
+	$rootProjectRoot = normalize_path($projectRoot);
+	$problems = [];
+
+	foreach ($generatedUnits as $unit) {
+		$unitProjectRoot = normalize_path($unit['project_root']);
+		if ($unitProjectRoot === $rootProjectRoot) {
+			continue;
+		}
+		$objectPath = normalize_path($unit['object_path']);
+		$generatedCpp = normalize_path($unit['generated_cpp']);
+		$objectMtime = is_file($objectPath) ? filemtime($objectPath) : false;
+		$generatedMtime = is_file($generatedCpp) ? filemtime($generatedCpp) : false;
+		$dependencyLabel = normalize_config_path(relative_path($rootProjectRoot, $unitProjectRoot));
+		$sourceLabel = normalize_config_path(relative_path($unitProjectRoot, $generatedCpp));
+		if (!is_int($objectMtime)) {
+			$problems[] = 'Missing reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' (source: ' . $sourceLabel . ')';
+			continue;
+		}
+		if (is_int($generatedMtime) && $objectMtime < $generatedMtime) {
+			$problems[] = 'Stale reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' is older than ' . $sourceLabel;
+		}
+	}
+
+	foreach ($nativeCppUnits as $nativeUnit) {
+		$unitProjectRoot = normalize_path($nativeUnit['project_root']);
+		if ($unitProjectRoot === $rootProjectRoot) {
+			continue;
+		}
+		$objectPath = normalize_path($nativeUnit['object_path']);
+		$sourcePath = normalize_path($nativeUnit['source_path']);
+		$objectMtime = is_file($objectPath) ? filemtime($objectPath) : false;
+		$sourceMtime = is_file($sourcePath) ? filemtime($sourcePath) : false;
+		$dependencyLabel = normalize_config_path(relative_path($rootProjectRoot, $unitProjectRoot));
+		$sourceLabel = normalize_config_path(relative_path($unitProjectRoot, $sourcePath));
+		if (!is_int($objectMtime)) {
+			$problems[] = 'Missing reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' (source: ' . $sourceLabel . ')';
+			continue;
+		}
+		if (is_int($sourceMtime) && $objectMtime < $sourceMtime) {
+			$problems[] = 'Stale reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' is older than ' . $sourceLabel;
+		}
+	}
+
+	if ($problems === []) {
+		return;
+	}
+
+	$message = 'Dependency compilation is in reuse-only mode, but reusable dependency artifacts are missing or stale.' . PHP_EOL;
+	foreach ($problems as $problem) {
+		$message .= '- ' . $problem . PHP_EOL;
+	}
+	$message .= 'Next: Re-run with --build-dependencies to rebuild dependency artifacts.' . PHP_EOL;
+	scpp_fail($message, 2);
 }
 
 function normalize_run_arguments(array $args): array
