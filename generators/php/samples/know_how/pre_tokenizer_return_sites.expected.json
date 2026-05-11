@@ -5,57 +5,57 @@
             "kind": "param",
             "name": "items",
             "type": "vector<string>",
-            "line": 3,
-            "startOffset": 29,
-            "endOffset": 50
+            "line": 1,
+            "startOffset": 22,
+            "endOffset": 43
         },
         {
             "kind": "function_return",
             "name": null,
             "type": "hash<string, int>",
-            "line": 3,
-            "startOffset": 51,
-            "endOffset": 70
+            "line": 1,
+            "startOffset": 44,
+            "endOffset": 63
         },
         {
             "kind": "method_return",
             "name": null,
             "type": "vector<string>",
-            "line": 8,
-            "startOffset": 132,
-            "endOffset": 148
+            "line": 6,
+            "startOffset": 125,
+            "endOffset": 141
         },
         {
             "kind": "param",
             "name": "seed",
             "type": "int",
-            "line": 13,
-            "startOffset": 184,
-            "endOffset": 193
+            "line": 11,
+            "startOffset": 177,
+            "endOffset": 186
         },
         {
             "kind": "closure_return",
             "name": null,
             "type": "function<function<int(int)>(int)>",
-            "line": 13,
-            "startOffset": 195,
-            "endOffset": 229
+            "line": 11,
+            "startOffset": 188,
+            "endOffset": 222
         },
         {
             "kind": "param",
             "name": "value",
             "type": "int",
-            "line": 14,
-            "startOffset": 236,
-            "endOffset": 246
+            "line": 12,
+            "startOffset": 229,
+            "endOffset": 239
         },
         {
             "kind": "local",
             "name": "typedFactory",
             "type": "function<function<int(int)>(int)>",
-            "line": 16,
-            "startOffset": 287,
-            "endOffset": 327
+            "line": 14,
+            "startOffset": 280,
+            "endOffset": 320
         }
     ]
 }
