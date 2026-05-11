@@ -189,7 +189,7 @@ final class TokenSiteScanner
 			return null;
 		}
 
-		$typeSlot = $this->parseTypeSlot($source, $nextIndex, ['=']);
+		$typeSlot = $this->parseTypeSlot($source, $nextIndex, ['=', ';']);
 		if ($typeSlot === null) {
 			return null;
 		}
