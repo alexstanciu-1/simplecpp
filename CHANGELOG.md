@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.37 - 2026-05-11
+
+### Additions
+
+- Expanded the strict PHP++ quick-learn with clearer authoring, diagnostics, project composition, and dependency workflow guidance for current strict-profile projects.
+- Added a dedicated strict-skill diagnostics reference covering build, run, saved reports, and common validation flows.
+
+### Fixes
+
+- Fixed dependency reuse mode so `scpp build` and `scpp run` now fail clearly when reused dependency artifacts are missing instead of falling through to a later Ninja error.
+- Fixed dependency reuse mode so changed dependency sources no longer allow stale dependency objects to be reused silently during `scpp build` and `scpp run`.
+- Tightened strict skill and quick-learn guidance to steer users toward current `.phs`, strict typing, dependency, and diagnostics workflows.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- If a consumer project reuses dependency artifacts, `scpp build` and `scpp run` now stop early when those artifacts are missing or stale; rerun with `--build-dependencies` to refresh them.
+- Strict projects should prefer the updated quick-learn and strict skill guidance for project composition, diagnostics, and typed authoring patterns.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated for this hotfix.
+
 ## 0.1.35 - 2026-05-11
 
 ### Additions
