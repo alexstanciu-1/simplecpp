@@ -12,6 +12,7 @@ final class CodeBlock
 		public readonly string $text,
 		public readonly int $srcLine = -1,
 		public readonly int $srcColumn = -1,
+		public readonly string $srcRelation = 'exact',
 	) {
 	}
 }

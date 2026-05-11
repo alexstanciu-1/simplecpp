@@ -47,13 +47,14 @@ final class ScppRuntimeDiagnosticsTest
 
 			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
 			$this->assertNotSame(0, $run['exit_code'], 'runtime type failure should make scpp run fail');
-				$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'run stderr should report the remapped source location');
+			$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'run stderr should report the remapped source location');
 			$this->assertContains('Actual runtime kind: shared_hash_t', $run['stderr'], 'run stderr should report actual runtime kind');
 			$this->assertFileDoesNotContain($project . '/.prism/generated/main.cpp', 'with_runtime_context', 'generated code should not use expression-level runtime context wrappers');
+			$this->assertFileDoesNotContain($project . '/.prism/generated/main.cpp', 'cast_with_generated_location', 'generated code should not use generated-location cast helpers');
 			$generatedCppLines = explode("\n", rtrim($this->read($project . '/.prism/generated/main.cpp'), "\n"));
 			$lineMap = $this->readGeneratedLineMap($project . '/.prism/generated/main.cpp.line.tsv');
 			$echoGeneratedLine = $this->findGeneratedLine($generatedCppLines, 'php::echo_one');
-			$this->assertSame(3, $lineMap[$echoGeneratedLine] ?? null, 'generated echo statement should map back to its source statement line');
+			$this->assertSame(3, $lineMap[$echoGeneratedLine]['line'] ?? null, 'generated echo statement should map back to its source statement line');
 
 			$error = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $project, 30);
 			$this->assertSame(0, $error['exit_code'], 'scpp error should read saved runtime diagnostics');
@@ -215,7 +216,7 @@ final class ScppRuntimeDiagnosticsTest
 		throw new RuntimeException('Could not find generated line containing `' . $needle . '`');
 	}
 
-	/** @return array<int,int> */
+	/** @return array<int,array{line:int,relation:string}> */
 	private function readGeneratedLineMap(string $path): array
 	{
 		$lines = explode("\n", trim($this->read($path)));
@@ -226,10 +227,13 @@ final class ScppRuntimeDiagnosticsTest
 				continue;
 			}
 			$parts = explode("\t", $line);
-			if (count($parts) !== 2) {
+			if (count($parts) < 2) {
 				throw new RuntimeException('Malformed line-map row: ' . $line);
 			}
-			$map[(int) $parts[0]] = (int) $parts[1];
+			$map[(int) $parts[0]] = [
+				'line' => (int) $parts[1],
+				'relation' => isset($parts[2]) ? (string) $parts[2] : 'exact',
+			];
 		}
 		return $map;
 	}

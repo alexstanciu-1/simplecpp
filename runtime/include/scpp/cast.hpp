@@ -23,7 +23,6 @@
 #include <iomanip>
 #include <limits>
 #include <sstream>
-#include <source_location>
 #include <string>
 #include <type_traits>
 
@@ -43,11 +42,6 @@ To cast(const From &value) {
 	} else {
 		static_assert(detail::always_false_v<To>, "scpp::cast is not defined for this From/To pair");
 	}
-}
-
-template <typename To, typename From>
-inline To cast_with_generated_location(const From &value, const std::source_location & = std::source_location::current()) {
-	return cast<To>(value);
 }
 
 template <typename To, typename From>
@@ -157,16 +151,13 @@ namespace detail {
 	return "invalid_mixed_kind_for_cast";
 }
 
-[[noreturn]] inline void throw_invalid_mixed_kind_for_cast(const char *target, const mixed_t &value, const std::source_location &location = std::source_location::current()) {
+[[noreturn]] inline void throw_invalid_mixed_kind_for_cast(const char *target, const mixed_t &value) {
 	throw runtime_error(
 		std::string("scpp::cast<") + target + ">(mixed_t): runtime kind is not convertible to " + target,
 		invalid_mixed_kind_code(target),
 		std::string("scpp::cast<") + target + ">",
 		"",
 		std::vector<runtime_error_detail_t>{
-			{"generated_file", location.file_name()},
-			{"generated_line", std::to_string(location.line())},
-			{"generated_column", std::to_string(location.column())},
 			{"expected_type", target},
 			{"operation", std::string("scpp::cast<") + target + ">"},
 			{"source_type", "mixed_t"},
@@ -517,22 +508,6 @@ inline bool_t cast<bool_t, mixed_t>(const mixed_t &value) {
 	}
 }
 
-template <>
-inline bool_t cast_with_generated_location<bool_t, mixed_t>(const mixed_t &value, const std::source_location &location) {
-	switch (value.kind()) {
-		case mixed_t::kind_t::bool_v:
-			return value.bool_value();
-		case mixed_t::kind_t::int_v:
-			return cast<bool_t>(value.int_value());
-		case mixed_t::kind_t::float_v:
-			return cast<bool_t>(value.float_value());
-		case mixed_t::kind_t::string_v:
-			return cast<bool_t>(*value.string_if());
-		default:
-			detail::throw_invalid_mixed_kind_for_cast("bool_t", value, location);
-	}
-}
-
 // mixed_t -> bool
 // Native bool bridge for runtime-dispatched values.
 template <>
@@ -558,22 +533,6 @@ inline int_t cast<int_t, mixed_t>(const mixed_t &value) {
 	}
 }
 
-template <>
-inline int_t cast_with_generated_location<int_t, mixed_t>(const mixed_t &value, const std::source_location &location) {
-	switch (value.kind()) {
-		case mixed_t::kind_t::bool_v:
-			return cast<int_t>(value.bool_value());
-		case mixed_t::kind_t::int_v:
-			return value.int_value();
-		case mixed_t::kind_t::float_v:
-			return cast<int_t>(value.float_value());
-		case mixed_t::kind_t::string_v:
-			return cast<int_t>(*value.string_if());
-		default:
-			detail::throw_invalid_mixed_kind_for_cast("int_t", value, location);
-	}
-}
-
 // mixed_t -> float_t
 // Applies the configured explicit conversion rules after runtime kind dispatch.
 template <>
@@ -589,22 +548,6 @@ inline float_t cast<float_t, mixed_t>(const mixed_t &value) {
 			return cast<float_t>(*value.string_if());
 		default:
 			detail::throw_invalid_mixed_kind_for_cast("float_t", value);
-	}
-}
-
-template <>
-inline float_t cast_with_generated_location<float_t, mixed_t>(const mixed_t &value, const std::source_location &location) {
-	switch (value.kind()) {
-		case mixed_t::kind_t::bool_v:
-			return cast<float_t>(value.bool_value());
-		case mixed_t::kind_t::int_v:
-			return cast<float_t>(value.int_value());
-		case mixed_t::kind_t::float_v:
-			return value.float_value();
-		case mixed_t::kind_t::string_v:
-			return cast<float_t>(*value.string_if());
-		default:
-			detail::throw_invalid_mixed_kind_for_cast("float_t", value, location);
 	}
 }
 
@@ -625,24 +568,6 @@ inline string_t cast<string_t, mixed_t>(const mixed_t &value) {
 			return *value.string_if();
 		default:
 			detail::throw_invalid_mixed_kind_for_cast("string_t", value);
-	}
-}
-
-template <>
-inline string_t cast_with_generated_location<string_t, mixed_t>(const mixed_t &value, const std::source_location &location) {
-	switch (value.kind()) {
-		case mixed_t::kind_t::null_v:
-			return cast<string_t>(null_t{});
-		case mixed_t::kind_t::bool_v:
-			return cast<string_t>(value.bool_value());
-		case mixed_t::kind_t::int_v:
-			return cast<string_t>(value.int_value());
-		case mixed_t::kind_t::float_v:
-			return cast<string_t>(value.float_value());
-		case mixed_t::kind_t::string_v:
-			return *value.string_if();
-		default:
-			detail::throw_invalid_mixed_kind_for_cast("string_t", value, location);
 	}
 }
 

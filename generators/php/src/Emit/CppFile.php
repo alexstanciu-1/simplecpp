@@ -10,9 +10,9 @@ final class CppFile
 {
 	/**
 	 * @param list<string> $headerLines
-	 * @param list<int> $headerLineMap
+	 * @param list<array{line:int,relation:string}> $headerLineMap
 	 * @param list<string> $sourceLines
-	 * @param list<int> $sourceLineMap
+	 * @param list<array{line:int,relation:string}> $sourceLineMap
 	 * @param list<string> $errors
 	 * @param list<string> $warnings
 	 */

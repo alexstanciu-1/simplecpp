@@ -1224,6 +1224,7 @@ function collect_runtime_error_diagnostic(string $stderr): ?array
 				'generated_column' => isset($details['generated_column']) ? (int) $details['generated_column'] : null,
 				'original_file' => null,
 				'original_line' => null,
+				'original_relation' => null,
 				'source_file' => isset($details['source_file']) ? normalize_path((string) $details['source_file']) : null,
 				'source_line' => isset($details['source_line']) ? (int) $details['source_line'] : null,
 				'expression' => isset($details['expression']) ? (string) $details['expression'] : null,
@@ -1255,8 +1256,10 @@ function remap_runtime_diagnostic(string $projectRoot, string $buildDir, array $
 	if ($originalLine <= 0) {
 		return $diagnostic;
 	}
+	$mapEntry = lookup_generated_map_entry($generatedAbs, $generatedLine);
 	$diagnostic['original_file'] = normalize_path($originSource);
 	$diagnostic['original_line'] = $originalLine;
+	$diagnostic['original_relation'] = is_array($mapEntry) ? (string) $mapEntry['relation'] : 'exact';
 	return $diagnostic;
 }
 
@@ -1287,7 +1290,9 @@ function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?s
 		$displayFile = $originalFile !== '' ? $originalFile : $sourceFile;
 		$displayLine = $originalLine > 0 ? $originalLine : $sourceLine;
 		if ($displayFile !== '' && $displayLine > 0) {
-			$lines[] = 'Runtime error in ' . normalize_config_path(relative_path($projectRoot, $displayFile)) . ':' . $displayLine;
+			$relation = $displayFile === $originalFile ? trim((string) ($diagnostic['original_relation'] ?? 'exact')) : 'exact';
+			$prefix = $relation === 'exact' ? '' : ($relation === 'around' ? 'around ' : 'near ');
+			$lines[] = 'Runtime error in ' . $prefix . normalize_config_path(relative_path($projectRoot, $displayFile)) . ':' . $displayLine;
 	} else {
 		$lines[] = 'Runtime error while running the built program.';
 	}
@@ -3121,12 +3126,17 @@ function write_text_file(string $path, string $contents): void
 	}
 }
 
-/** @param list<int> $lineMap */
+/** @param list<array{line:int,relation:string}> $lineMap */
 function write_generated_line_map_file(string $path, array $lineMap): void
 {
-	$lines = ["generated_line\toriginal_line"];
-	foreach ($lineMap as $index => $originalLine) {
-		$lines[] = (string) ($index + 1) . "\t" . (string) max(0, (int) $originalLine);
+	$lines = ["generated_line\toriginal_line\trelation"];
+	foreach ($lineMap as $index => $row) {
+		$originalLine = is_array($row) ? (int) ($row['line'] ?? 0) : 0;
+		$relation = is_array($row) ? (string) ($row['relation'] ?? 'around') : 'around';
+		if (!in_array($relation, ['exact', 'above', 'below', 'around'], true)) {
+			$relation = 'around';
+		}
+		$lines[] = (string) ($index + 1) . "\t" . (string) max(1, $originalLine) . "\t" . $relation;
 	}
 	write_text_file($path, implode(PHP_EOL, $lines) . PHP_EOL);
 }
@@ -3446,7 +3456,8 @@ function collect_compiler_diagnostics(string $projectRoot, string $buildDir, str
 			if (!is_string($originSource) || $originSource === '') {
 				continue;
 			}
-			$originalLine = lookup_original_line_from_generated_map($generatedAbs, $diagnostic['line']);
+			$mapEntry = lookup_generated_map_entry($generatedAbs, $diagnostic['line']);
+			$originalLine = is_array($mapEntry) ? (int) $mapEntry['line'] : 0;
 			if ($originalLine <= 0) {
 				continue;
 			}
@@ -3462,6 +3473,7 @@ function collect_compiler_diagnostics(string $projectRoot, string $buildDir, str
 				'generated_column' => $diagnostic['column'],
 				'original_file' => normalize_path($originSource),
 				'original_line' => $originalLine,
+				'original_relation' => is_array($mapEntry) ? (string) $mapEntry['relation'] : 'exact',
 			];
 		}
 	}
@@ -3480,7 +3492,9 @@ function render_short_compiler_failure(array $diagnostics, string $projectRoot, 
 	foreach ($primary as $diagnostic) {
 		$originLabel = normalize_config_path(relative_path($projectRoot, $diagnostic['original_file']));
 		$generatedLabel = normalize_config_path(relative_path($projectRoot, $diagnostic['generated_file']));
-		$line = 'Compile ' . $diagnostic['severity'] . ' in ' . $originLabel . ':' . $diagnostic['original_line'];
+		$relation = is_string($diagnostic['original_relation'] ?? null) ? (string) $diagnostic['original_relation'] : 'exact';
+		$originPrefix = $relation === 'exact' ? '' : ($relation === 'around' ? 'around ' : 'near ');
+		$line = 'Compile ' . $diagnostic['severity'] . ' in ' . $originPrefix . $originLabel . ':' . $diagnostic['original_line'];
 		if ($diagnostic['message'] !== '') {
 			$line .= ': ' . $diagnostic['message'];
 		}
@@ -3685,15 +3699,16 @@ function resolve_diagnostic_reported_path(string $projectRoot, string $buildDir,
 	return normalize_path($buildDir . '/' . normalize_config_path($reportedPath));
 }
 
-function lookup_original_line_from_generated_map(string $generatedArtifactPath, int $generatedLine): int
+/** @return array{line:int,relation:string}|null */
+function lookup_generated_map_entry(string $generatedArtifactPath, int $generatedLine): ?array
 {
 	if ($generatedLine <= 0) {
-		return 0;
+		return null;
 	}
 	$mapPath = $generatedArtifactPath . '.line.tsv';
 	$rows = @file($mapPath, FILE_IGNORE_NEW_LINES);
 	if (!is_array($rows) || count($rows) < 2) {
-		return 0;
+		return null;
 	}
 	foreach (array_slice($rows, 1) as $row) {
 		if (!is_string($row) || $row === '') {
@@ -3706,9 +3721,22 @@ function lookup_original_line_from_generated_map(string $generatedArtifactPath, 
 		if ((int) $parts[0] !== $generatedLine) {
 			continue;
 		}
-		return max(0, (int) $parts[1]);
+		$relation = isset($parts[2]) ? trim((string) $parts[2]) : 'exact';
+		if (!in_array($relation, ['exact', 'above', 'below', 'around'], true)) {
+			$relation = 'around';
+		}
+		return [
+			'line' => max(1, (int) $parts[1]),
+			'relation' => $relation,
+		];
 	}
-	return 0;
+	return null;
+}
+
+function lookup_original_line_from_generated_map(string $generatedArtifactPath, int $generatedLine): int
+{
+	$entry = lookup_generated_map_entry($generatedArtifactPath, $generatedLine);
+	return is_array($entry) ? (int) $entry['line'] : 0;
 }
 
 function build_generated_base(string $generatedDir, string $relativePhp): string
@@ -4613,10 +4641,7 @@ function build_runtime_compiler_flags(string $compilerKind, string $buildMode, s
 		$flags[] = '-DNDEBUG';
 	} else {
 		$flags[] = '-O0';
-		$flags[] = '-g0';
-		if (PHP_OS_FAMILY === 'Linux') {
-			// No split dwarf output when debug info is disabled.
-		}
+		$flags[] = '-g1';
 		$flags[] = '-pipe';
 	}
 	$flags[] = '-I' . $runtimeIncludeDir;
@@ -4883,10 +4908,7 @@ function build_compiler_flags(string $compilerKind, string $buildMode, string $r
 		$flags[] = '-DNDEBUG';
 	} else {
 		$flags[] = '-O0';
-		$flags[] = '-g0';
-		if (PHP_OS_FAMILY === 'Linux') {
-			// No split dwarf output when debug info is disabled.
-		}
+		$flags[] = '-g1';
 		$flags[] = '-pipe';
 	}
 	$flags[] = '-I' . $runtimeIncludeDir;
