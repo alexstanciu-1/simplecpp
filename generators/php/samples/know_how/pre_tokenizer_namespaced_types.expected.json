@@ -1,0 +1,45 @@
+{
+    "source": "class RouteRegistry {\n\tpublic $route_map /** hash<om3\\base\\orm\\orm_mat> */ = [];\n\tpublic function merge(/** hash<om3\\base\\orm\\orm_mat> */ $left, /** vector<om3\\base\\orm\\orm_mat> */ $right) {\n\t\treturn [];\n\t}\n}\n\n$processed_plain_types /** hash<om3\\base\\orm\\orm_mat> */ = [];\n",
+    "annotations": [
+        {
+            "kind": "property",
+            "name": "route_map",
+            "type": "hash<om3\\base\\orm\\orm_mat>",
+            "line": 2,
+            "startOffset": 41,
+            "endOffset": 67
+        },
+        {
+            "kind": "param",
+            "name": "left",
+            "type": "hash<om3\\base\\orm\\orm_mat>",
+            "line": 3,
+            "startOffset": 97,
+            "endOffset": 129
+        },
+        {
+            "kind": "param",
+            "name": "right",
+            "type": "vector<om3\\base\\orm\\orm_mat>",
+            "line": 3,
+            "startOffset": 131,
+            "endOffset": 166
+        },
+        {
+            "kind": "method_return",
+            "name": null,
+            "type": "hash<om3\\base\\orm\\orm_mat>",
+            "line": 3,
+            "startOffset": 167,
+            "endOffset": 195
+        },
+        {
+            "kind": "local",
+            "name": "processed_plain_types",
+            "type": "hash<om3\\base\\orm\\orm_mat>",
+            "line": 8,
+            "startOffset": 240,
+            "endOffset": 266
+        }
+    ]
+}

@@ -1,0 +1,8 @@
+class RouteRegistry {
+	public $route_map hash<om3\base\orm\orm_mat> = [];
+	public function merge($left hash<om3\base\orm\orm_mat>, $right vector<om3\base\orm\orm_mat>): hash<om3\base\orm\orm_mat> {
+		return [];
+	}
+}
+
+$processed_plain_types hash<om3\base\orm\orm_mat> = [];

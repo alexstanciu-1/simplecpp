@@ -597,6 +597,9 @@ final class TokenSiteScanner
 		if ($text === '') {
 			return false;
 		}
+		if (preg_match('/^[A-Za-z_\\\\][A-Za-z0-9_\\\\]*$/', $text) === 1) {
+			return true;
+		}
 		if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $text) === 1) {
 			return true;
 		}
