@@ -49,6 +49,8 @@ Write PHP++ source, not generated C++.
 - Use `hash<T>` for typed string-keyed data.
 - Use `hash<T, T_KEY>` for intentionally typed key families.
 - Stabilize dynamic values early at explicit typed boundaries.
+- Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
+- If the destination is explicitly `mixed`, no cast is needed and the value remains `mixed`.
 - Resolve wrappers near meaningful boundaries with `take(...)`.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.

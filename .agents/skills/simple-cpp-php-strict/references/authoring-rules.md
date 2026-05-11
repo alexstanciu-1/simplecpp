@@ -101,8 +101,18 @@ Preferred:
 
 ```php
 $row = json_decode($text);
-$name /** string */ = $row["name"];
-$count /** int */ = $row["count"];
+$name string = $row["name"];
+$count int = $row["count"];
+```
+
+```php
+$counts hash<int> = [];
+$counts["id"] = $row["id"];
+```
+
+```php
+$items vector<int> = [];
+$items[] = $row["count"];
 ```
 
 Avoid carrying unresolved dynamic state through the rest of the program:

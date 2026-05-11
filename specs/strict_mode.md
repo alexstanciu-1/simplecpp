@@ -29,9 +29,21 @@ Strict mode aims to:
 
 When working with `mixed_t`, prefer resolving to a concrete type early.
 
+If the left side already provides a stable explicit destination type, that destination is explicit enough. A separate cast is usually unnecessary.
+
 **Preferred:**
 ```php
-$i /* int */ = $arr[10];
+$i int = $arr[10];
+```
+
+```php
+$counts hash<int> = [];
+$counts["id"] = $row["id"];
+```
+
+```php
+$items vector<int> = [];
+$items[] = $row["count"];
 ```
 
 **Discouraged:**
@@ -59,13 +71,23 @@ Typed destinations are preferred over explicit casts when possible.
 
 **Preferred:**
 ```php
-$i /* int */ = $arr[10];
+$i int = $arr[10];
+```
+
+```php
+$obj->name = $row["name"]; // property is string
+```
+
+```php
+$counts["key"] = $row["count"]; // counts is hash<int>
 ```
 
 **Less preferred:**
 ```php
-auto i = cast<int_t>($arr[10]);
+$i int = (int) $arr[10];
 ```
+
+The same rule applies when the typed destination is provided by a stable container or property path rather than by a standalone local.
 
 ---
 
@@ -76,11 +98,31 @@ Avoid relying on implicit extraction from:
 - `nullable<T>`
 - `result*`
 
-Normalize values explicitly before:
+Normalize values at explicit typed destinations before:
 - storage
 - return
 - branching
 - reuse
+
+If a stable explicit destination already exists on the left side, that destination counts as the normalization point.
+
+Examples:
+
+```php
+$name string = $row["name"];
+```
+
+```php
+$obj->count = $row["count"]; // property is int
+```
+
+```php
+$items[] = $row["count"]; // items is vector<int>
+```
+
+```php
+$extra["title"] = $row["title"]; // extra is hash<mixed>; stays mixed
+```
 
 ---
 
