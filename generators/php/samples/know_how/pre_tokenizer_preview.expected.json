@@ -5,73 +5,73 @@
             "kind": "local",
             "name": "items",
             "type": "vector<string>",
-            "line": 3,
-            "startOffset": 14,
-            "endOffset": 28
+            "line": 1,
+            "startOffset": 7,
+            "endOffset": 21
         },
         {
             "kind": "local",
             "name": "lookup",
             "type": "hash<string, int>",
-            "line": 4,
-            "startOffset": 43,
-            "endOffset": 60
+            "line": 2,
+            "startOffset": 36,
+            "endOffset": 53
         },
         {
             "kind": "property",
             "name": "names",
             "type": "vector<string>",
-            "line": 7,
-            "startOffset": 96,
-            "endOffset": 110
+            "line": 5,
+            "startOffset": 89,
+            "endOffset": 103
         },
         {
             "kind": "param",
             "name": "left",
             "type": "hash<string, int>",
-            "line": 9,
-            "startOffset": 141,
-            "endOffset": 164
+            "line": 7,
+            "startOffset": 134,
+            "endOffset": 157
         },
         {
             "kind": "param",
             "name": "right",
             "type": "vector<string>",
-            "line": 9,
-            "startOffset": 166,
-            "endOffset": 187
+            "line": 7,
+            "startOffset": 159,
+            "endOffset": 180
         },
         {
             "kind": "method_return",
             "name": null,
             "type": "hash<string, int>",
-            "line": 9,
-            "startOffset": 188,
-            "endOffset": 207
+            "line": 7,
+            "startOffset": 181,
+            "endOffset": 200
         },
         {
             "kind": "param",
             "name": "x",
             "type": "int",
-            "line": 14,
-            "startOffset": 240,
-            "endOffset": 246
+            "line": 12,
+            "startOffset": 233,
+            "endOffset": 239
         },
         {
             "kind": "closure_return",
             "name": null,
             "type": "function<function<int(int)>(int)>",
-            "line": 14,
-            "startOffset": 248,
-            "endOffset": 282
+            "line": 12,
+            "startOffset": 241,
+            "endOffset": 275
         },
         {
             "kind": "param",
             "name": "y",
             "type": "int",
-            "line": 15,
-            "startOffset": 289,
-            "endOffset": 295
+            "line": 13,
+            "startOffset": 282,
+            "endOffset": 288
         }
     ]
 }

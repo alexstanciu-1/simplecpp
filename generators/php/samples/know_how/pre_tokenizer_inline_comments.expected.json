@@ -5,89 +5,89 @@
             "kind": "local",
             "name": "count",
             "type": "int",
-            "line": 3,
-            "startOffset": 14,
-            "endOffset": 24
+            "line": 1,
+            "startOffset": 7,
+            "endOffset": 17
         },
         {
             "kind": "local",
             "name": "err",
             "type": "error_t",
-            "line": 4,
-            "startOffset": 35,
-            "endOffset": 49
+            "line": 2,
+            "startOffset": 28,
+            "endOffset": 42
         },
         {
             "kind": "param",
             "name": "items",
             "type": "vector<string>",
-            "line": 6,
-            "startOffset": 74,
-            "endOffset": 95
+            "line": 4,
+            "startOffset": 67,
+            "endOffset": 88
         },
         {
             "kind": "function_return",
             "name": null,
             "type": "hash<string, int>",
-            "line": 6,
-            "startOffset": 104,
-            "endOffset": 128
+            "line": 4,
+            "startOffset": 97,
+            "endOffset": 121
         },
         {
             "kind": "property",
             "name": "items",
             "type": "vector<string>",
-            "line": 11,
-            "startOffset": 177,
-            "endOffset": 198
+            "line": 9,
+            "startOffset": 170,
+            "endOffset": 191
         },
         {
             "kind": "property",
             "name": "lookup",
             "type": "hash<string, int>",
-            "line": 12,
-            "startOffset": 228,
-            "endOffset": 252
+            "line": 10,
+            "startOffset": 221,
+            "endOffset": 245
         },
         {
             "kind": "param",
             "name": "items",
             "type": "vector<string>",
-            "line": 14,
-            "startOffset": 282,
-            "endOffset": 303
+            "line": 12,
+            "startOffset": 275,
+            "endOffset": 296
         },
         {
             "kind": "method_return",
             "name": null,
             "type": "hash<string, int>",
-            "line": 14,
-            "startOffset": 312,
-            "endOffset": 336
+            "line": 12,
+            "startOffset": 305,
+            "endOffset": 329
         },
         {
             "kind": "param",
             "name": "x",
             "type": "int",
-            "line": 19,
-            "startOffset": 369,
-            "endOffset": 379
+            "line": 17,
+            "startOffset": 362,
+            "endOffset": 372
         },
         {
             "kind": "closure_return",
             "name": null,
             "type": "function<function<int(int)>(int)>",
-            "line": 19,
-            "startOffset": 384,
-            "endOffset": 424
+            "line": 17,
+            "startOffset": 377,
+            "endOffset": 417
         },
         {
             "kind": "param",
             "name": "y",
             "type": "int",
-            "line": 20,
-            "startOffset": 432,
-            "endOffset": 442
+            "line": 18,
+            "startOffset": 425,
+            "endOffset": 435
         }
     ]
 }
