@@ -1,5 +1,5 @@
 $file = "sample_strict_fs_json.txt";
-$err /** error_t */;
+$err /** error */;
 $written /** int */ = 0;
 if (!take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
 	echo "write_error\n";

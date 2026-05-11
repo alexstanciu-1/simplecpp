@@ -1,5 +1,5 @@
 $out /** string */ = "seed";
-$err /** error_t */;
+$err /** error */;
 
 echo take($out, $err, str_hex2bin("4")) ? "T\n" : "F\n";
 echo $out, "\n";

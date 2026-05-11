@@ -1,4 +1,4 @@
-$err /** error_t */;
+$err /** error */;
 $matches = [];
 $count /** int */ = 0;
 if (!take($count, preg_match("/(ab+)-(cd+)/i", "xxAbb-cDDyy", $matches))) {

@@ -1,4 +1,4 @@
-$err /** error_t */;
+$err /** error */;
 
 $caps /** vector<string> */ = [];
 if (!take($caps, regex_match("/(ab+)-(cd+)/i", "xxAbb-cDDyy"))) {

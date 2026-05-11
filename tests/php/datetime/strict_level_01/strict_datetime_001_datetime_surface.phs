@@ -1,5 +1,5 @@
 $epoch /** int */ = 0;
-$err /** error_t */;
+$err /** error */;
 if (!take($epoch, $err, dt_parse_iso_utc("1970-01-01T00:00:00Z"))) {
 	echo "epoch-error\n";
 }

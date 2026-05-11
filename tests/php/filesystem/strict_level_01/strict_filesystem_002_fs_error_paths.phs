@@ -1,6 +1,6 @@
 $missing = "strict_missing_alpha.txt";
 $seed /** string */ = "seed";
-$err /** error_t */;
+$err /** error */;
 
 echo take($seed, $err, fs_get($missing)) ? "T\n" : "F\n";
 echo $seed, "\n";

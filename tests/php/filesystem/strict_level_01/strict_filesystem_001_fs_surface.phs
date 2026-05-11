@@ -3,7 +3,7 @@ $dir = $root . "/dir";
 $file = $dir . "/alpha.txt";
 $copy = $dir . "/beta.txt";
 $renamed = $dir . "/gamma.txt";
-$err /** error_t */;
+$err /** error */;
 
 fs_mkdir($root);
 fs_mkdir($dir);

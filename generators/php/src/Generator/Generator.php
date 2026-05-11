@@ -237,9 +237,9 @@ final class Generator
 		return new CppFile($baseName, $this->flattenCodeText($header), $this->flattenCodeLineMap($header), $this->buildExportManifest($file), $this->flattenCodeText($source), $this->flattenCodeLineMap($source), $this->errors, $this->warnings);
 	}
 
-	private function code(string $text, int $srcLine = -1, int $srcColumn = -1): CodeBlock
+	private function code(string $text, int $srcLine = -1, int $srcColumn = -1, string $srcRelation = 'exact'): CodeBlock
 	{
-		return new CodeBlock($text, $srcLine, $srcColumn);
+		return new CodeBlock($text, $srcLine, $srcColumn, $srcRelation);
 	}
 
 	private function codeWithCurrentOrigin(string $text): CodeBlock
@@ -259,25 +259,25 @@ final class Generator
 
 	private function renderGeneratedCast(string $type, string $expr): string
 	{
-		return 'cast_with_generated_location<' . $type . '>(' . $expr . ')';
+		return 'cast<' . $type . '>(' . $expr . ')';
 	}
 
 	/** @param list<string> $lines @return list<CodeBlock> */
-	private function codeLinesFromStrings(array $lines, int $srcLine = -1, int $srcColumn = -1): array
+	private function codeLinesFromStrings(array $lines, int $srcLine = -1, int $srcColumn = -1, string $srcRelation = 'exact'): array
 	{
-		return array_map(fn (string $line): CodeBlock => $this->code($line, $srcLine, $srcColumn), $lines);
+		return array_map(fn (string $line): CodeBlock => $this->code($line, $srcLine, $srcColumn, $srcRelation), $lines);
 	}
 
 	/** @return list<CodeBlock> */
-	private function codeLinesFromTextBlock(string $block, int $srcLine = -1, int $srcColumn = -1): array
+	private function codeLinesFromTextBlock(string $block, int $srcLine = -1, int $srcColumn = -1, string $srcRelation = 'exact'): array
 	{
-		return $this->codeLinesFromStrings(explode("\n", $block), $srcLine, $srcColumn);
+		return $this->codeLinesFromStrings(explode("\n", $block), $srcLine, $srcColumn, $srcRelation);
 	}
 
 	/** @param list<CodeBlock> $lines @return list<CodeBlock> */
 	private function indentCodeLines(array $lines, int $level = 1): array
 	{
-		return array_map(fn (CodeBlock $line): CodeBlock => $this->code($this->indent($level) . $line->text, $line->srcLine, $line->srcColumn), $lines);
+		return array_map(fn (CodeBlock $line): CodeBlock => $this->code($this->indent($level) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation), $lines);
 	}
 
 	private function appendHeaderLines(array &$header, CodeBlock ...$lines): void
@@ -298,7 +298,14 @@ final class Generator
 	{
 		$srcLine = $line->srcLine < 0 ? $this->currentSourceLine : $line->srcLine;
 		$srcColumn = $line->srcColumn < 0 ? $this->currentSourceColumn : $line->srcColumn;
-		return $this->code($line->text, $srcLine, $srcColumn);
+		$srcRelation = $line->srcRelation;
+		if ($srcLine <= 0) {
+			$srcLine = max(1, $this->currentSourceLine);
+			if ($srcRelation === 'exact') {
+				$srcRelation = 'around';
+			}
+		}
+		return $this->code($line->text, $srcLine, $srcColumn, $srcRelation);
 	}
 
 	/** @param list<CodeBlock> $lines @return list<string> */
@@ -307,10 +314,16 @@ final class Generator
 		return array_map(static fn (CodeBlock $line): string => $line->text, $lines);
 	}
 
-	/** @param list<CodeBlock> $lines @return list<int> */
+	/** @param list<CodeBlock> $lines @return list<array{line:int,relation:string}> */
 	private function flattenCodeLineMap(array $lines): array
 	{
-		return array_map(static fn (CodeBlock $line): int => max(0, $line->srcLine), $lines);
+		return array_map(
+			static fn (CodeBlock $line): array => [
+				'line' => max(1, $line->srcLine),
+				'relation' => in_array($line->srcRelation, ['exact', 'above', 'below', 'around'], true) ? $line->srcRelation : 'around',
+			],
+			$lines
+		);
 	}
 
 	/** @param list<CodeBlock> $lines @return list<string> */
@@ -1448,7 +1461,7 @@ final class Generator
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
 		}
-		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
 			return;
 		}
 		$out[$normalized] = true;
@@ -6544,7 +6557,7 @@ final class Generator
 				$this->fail('take(result<T>) requires two output variables plus the source expression at line ' . $line . '.');
 			}
 			$this->assertTakeOutputTypeMatches($args[0], $matches[1], $line, 'take(result<T>)');
-			$this->assertTakeOutputTypeMatches($args[1], 'error_t', $line, 'take(result<T>)');
+			$this->assertTakeOutputTypeMatches($args[1], 'error', $line, 'take(result<T>)');
 			return;
 		}
 

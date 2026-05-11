@@ -13,7 +13,7 @@ echo basename($real), "\n";
 echo take($real, realpath($missing)) ? "T\n" : "F\n";
 echo basename($real), "\n";
 
-$fh /** resource_handle_t */;
+$fh /** resource_handle */;
 echo take($fh, fopen($path, "rb")) ? "T\n" : "F\n";
 $line /** string */ = "";
 echo take($line, fgets($fh)) ? "T\n" : "F\n";

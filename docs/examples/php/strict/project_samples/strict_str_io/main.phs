@@ -3,7 +3,7 @@ $path = $root . "/data.txt";
 if (!fs_mkdir($root)) {
 	echo "MKDIR_FAIL\n";
 } else {
-	$fh /** resource_handle_t */;
+	$fh /** resource_handle */;
 	echo take($fh, io_open($path, "wb+")) ? "T\n" : "F\n";
 	$bytes /** int */ = 0;
 	if (!take($bytes, io_write($fh, str_implode("|", str_explode(",", "a,b,c"))))) {

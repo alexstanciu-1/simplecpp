@@ -108,7 +108,7 @@ Compiler diagnostics may be remapped from generated C++ back to original `.phs` 
 
 Prefer the remapped original source location. Inspect generated C++ only when the source looks valid and the failure suggests a lowering or runtime-boundary issue.
 
-Strict runtime type failures preserve structured runtime details such as the failure code and actual runtime kind. When generated-location capture is available, the saved report should also expose remapped `original_file` / `original_line` through `.line.tsv`; inspect generated C++ and line maps only when the saved report still does not identify the authoring location strongly enough.
+Strict runtime type failures preserve structured runtime details such as the failure code and actual runtime kind. When the runtime report includes a generated location that can be remapped through `.line.tsv`, the saved report should also expose `original_file` / `original_line`; inspect generated C++ and line maps only when the saved report still does not identify the authoring location strongly enough.
 
 ## Strict Debug Helpers
 

@@ -1,8 +1,11 @@
 #pragma once
 
+#include <array>
 #include <cstdlib>
+#include <cstdio>
 #include <exception>
 #include <iostream>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -10,12 +13,53 @@
 #include <utility>
 #include <vector>
 
+#if defined(__linux__) || defined(__APPLE__)
+#include <execinfo.h>
+#include <dlfcn.h>
+#include <unistd.h>
+#endif
+
 namespace scpp {
 
 struct runtime_error_detail_t {
 	std::string key;
 	std::string value;
 };
+
+struct runtime_trace_frame_t {
+	std::string module_path;
+	std::string relative_address;
+};
+
+inline std::vector<runtime_trace_frame_t> capture_runtime_trace_frames() {
+	std::vector<runtime_trace_frame_t> trace;
+#if defined(__linux__) || defined(__APPLE__)
+	std::array<void *, 64> frames{};
+	const int frameCount = ::backtrace(frames.data(), static_cast<int>(frames.size()));
+	for (int index = 0; index < frameCount; ++index) {
+		const auto absoluteAddress = reinterpret_cast<std::uintptr_t>(frames[static_cast<std::size_t>(index)]);
+		if (absoluteAddress == 0) {
+			continue;
+		}
+		Dl_info info{};
+		if (::dladdr(frames[static_cast<std::size_t>(index)], &info) == 0 || info.dli_fname == nullptr || info.dli_fbase == nullptr) {
+			continue;
+		}
+		const auto moduleBase = reinterpret_cast<std::uintptr_t>(info.dli_fbase);
+		if (absoluteAddress <= moduleBase) {
+			continue;
+		}
+		const auto relativeAddress = (absoluteAddress - moduleBase) - 1u;
+		char addressBuf[32];
+		std::snprintf(addressBuf, sizeof(addressBuf), "0x%zx", static_cast<std::size_t>(relativeAddress));
+		trace.push_back(runtime_trace_frame_t{
+			std::string(info.dli_fname),
+			std::string(addressBuf),
+		});
+	}
+#endif
+	return trace;
+}
 
 class runtime_error final : public std::runtime_error {
 public:
@@ -30,18 +74,21 @@ public:
 		, code_(std::move(code))
 		, component_(std::move(component))
 		, operator_symbol_(std::move(operator_symbol))
-		, details_(std::move(details)) {}
+		, details_(std::move(details))
+		, trace_(capture_runtime_trace_frames()) {}
 
 	[[nodiscard]] const std::string &code() const noexcept { return code_; }
 	[[nodiscard]] const std::string &component() const noexcept { return component_; }
 	[[nodiscard]] const std::string &operator_symbol() const noexcept { return operator_symbol_; }
 	[[nodiscard]] const std::vector<runtime_error_detail_t> &details() const noexcept { return details_; }
+	[[nodiscard]] const std::vector<runtime_trace_frame_t> &trace() const noexcept { return trace_; }
 
 private:
 	std::string code_;
 	std::string component_;
 	std::string operator_symbol_;
 	std::vector<runtime_error_detail_t> details_;
+	std::vector<runtime_trace_frame_t> trace_;
 };
 
 inline bool runtime_error_json_enabled() {
@@ -80,11 +127,132 @@ inline std::string runtime_error_json_escape(std::string_view value) {
 	return out;
 }
 
+inline bool runtime_error_has_detail_key(const std::vector<runtime_error_detail_t> &details, std::string_view key) {
+	for (const auto &detail : details) {
+		if (detail.key == key) {
+			return true;
+		}
+	}
+	return false;
+}
+
+inline std::string runtime_error_shell_escape(std::string_view value) {
+	std::string out = "'";
+	for (const char ch : value) {
+		if (ch == '\'') {
+			out += "'\\''";
+		} else {
+			out.push_back(ch);
+		}
+	}
+	out += "'";
+	return out;
+}
+
+inline std::string runtime_error_normalize_path(std::string path) {
+	const bool absolute = !path.empty() && path.front() == '/';
+	std::vector<std::string> parts;
+	std::size_t start = 0;
+	while (start <= path.size()) {
+		const std::size_t end = path.find('/', start);
+		const std::string part = path.substr(start, end == std::string::npos ? std::string::npos : end - start);
+		if (!part.empty() && part != ".") {
+			if (part == "..") {
+				if (!parts.empty()) {
+					parts.pop_back();
+				}
+			} else {
+				parts.push_back(part);
+			}
+		}
+		if (end == std::string::npos) {
+			break;
+		}
+		start = end + 1;
+	}
+	std::string out = absolute ? "/" : "";
+	for (std::size_t index = 0; index < parts.size(); ++index) {
+		if (index > 0) {
+			out += "/";
+		}
+		out += parts[index];
+	}
+	return out.empty() ? (absolute ? "/" : ".") : out;
+}
+
+inline std::optional<std::vector<runtime_error_detail_t>> recover_generated_location_details_from_trace(const std::vector<runtime_trace_frame_t> &trace) {
+	for (const auto &frame : trace) {
+		const std::string command = "addr2line -C -f -e " + runtime_error_shell_escape(frame.module_path) + " " + frame.relative_address;
+		FILE *pipe = ::popen(command.c_str(), "r");
+		if (pipe == nullptr) {
+			continue;
+		}
+		std::string output;
+		char buffer[512];
+		while (std::fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+			output += buffer;
+		}
+		::pclose(pipe);
+
+		const std::size_t newlinePos = output.find('\n');
+		if (newlinePos == std::string::npos || newlinePos + 1 >= output.size()) {
+			continue;
+		}
+		std::string location = output.substr(newlinePos + 1);
+		while (!location.empty() && (location.back() == '\n' || location.back() == '\r')) {
+			location.pop_back();
+		}
+		if (location.empty() || location == "??:0") {
+			continue;
+		}
+		const std::size_t lineSep = location.rfind(':');
+		if (lineSep == std::string::npos) {
+			continue;
+		}
+		const std::string file = runtime_error_normalize_path(location.substr(0, lineSep));
+		const std::string line = location.substr(lineSep + 1);
+		if (file.find("/.prism/generated/") == std::string::npos) {
+			continue;
+		}
+		if (line.empty() || line == "0" || line == "?") {
+			continue;
+		}
+		return std::vector<runtime_error_detail_t>{
+			{"generated_file", file},
+			{"generated_line", line},
+		};
+	}
+	return std::nullopt;
+}
+
+inline std::vector<std::string> collect_runtime_debug_trace_lines() {
+	std::vector<std::string> trace;
+	return trace;
+}
+
+inline std::vector<std::string> collect_runtime_debug_trace_lines(const std::vector<runtime_trace_frame_t> &frames) {
+	std::vector<std::string> trace;
+	for (const auto &frame : frames) {
+		trace.push_back(frame.module_path + "@" + frame.relative_address);
+	}
+	return trace;
+}
+
 inline std::string format_runtime_error_json(const std::exception &exception) {
 	const auto *structured = dynamic_cast<const runtime_error *>(&exception);
 	std::string out = "{\"error\":{";
 	out += "\"message\":\"" + runtime_error_json_escape(exception.what()) + "\"";
 	if (structured != nullptr) {
+		std::vector<runtime_error_detail_t> details = structured->details();
+		if (!runtime_error_has_detail_key(details, "generated_file")) {
+			if (auto recovered = recover_generated_location_details_from_trace(structured->trace()); recovered.has_value()) {
+				for (const auto &detail : *recovered) {
+					if (!runtime_error_has_detail_key(details, detail.key)) {
+						details.push_back(detail);
+					}
+				}
+			}
+		}
 		if (!structured->code().empty()) {
 			out += ",\"code\":\"" + runtime_error_json_escape(structured->code()) + "\"";
 		}
@@ -94,10 +262,10 @@ inline std::string format_runtime_error_json(const std::exception &exception) {
 		if (!structured->operator_symbol().empty()) {
 			out += ",\"operator\":\"" + runtime_error_json_escape(structured->operator_symbol()) + "\"";
 		}
-		if (!structured->details().empty()) {
+		if (!details.empty()) {
 			out += ",\"details\":{";
 			bool first = true;
-			for (const auto &detail : structured->details()) {
+			for (const auto &detail : details) {
 				if (!first) {
 					out += ',';
 				}
@@ -108,7 +276,16 @@ inline std::string format_runtime_error_json(const std::exception &exception) {
 		}
 	}
 	if (runtime_error_debug_trace_enabled()) {
-		out += ",\"trace\":[]";
+		out += ",\"trace\":[";
+		bool first = true;
+		for (const auto &traceLine : structured != nullptr ? collect_runtime_debug_trace_lines(structured->trace()) : std::vector<std::string>{}) {
+			if (!first) {
+				out += ',';
+			}
+			first = false;
+			out += "\"" + runtime_error_json_escape(traceLine) + "\"";
+		}
+		out += "]";
 	}
 	out += "}}";
 	return out;

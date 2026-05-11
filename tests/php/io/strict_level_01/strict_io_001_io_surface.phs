@@ -2,7 +2,7 @@ $root = "strict_io_root";
 $path = $root . "/data.txt";
 fs_mkdir($root);
 
-$fh /** resource_handle_t */;
+	$fh /** resource_handle */;
 echo take($fh, io_open($path, "wb+")) ? "O\n" : "X\n";
 $written /** int */ = 0;
 take($written, io_write($fh, "line1\nline2"));
@@ -21,7 +21,7 @@ echo $chunk, "\n";
 echo io_eof($fh) ? "E\n" : "N\n";
 echo io_close($fh) ? "C\n" : "c\n";
 
-$fh2 /** resource_handle_t */;
+	$fh2 /** resource_handle */;
 echo take($fh2, io_open($path, "rb")) ? "O\n" : "X\n";
 echo (io_seek($fh2, 2) ?? -1), "\n";
 $pos2 /** int */ = 0;
