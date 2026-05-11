@@ -39,6 +39,7 @@ final class Generator
 	private array $headerLineMap = [];
 	/** @var list<int> */
 	private array $sourceLineMap = [];
+	private string $currentSourcePath = '';
 	private int $currentSourceLine = 0;
 	private int $currentSourceColumn = 0;
 	/** @var array<string, string> */
@@ -154,6 +155,7 @@ final class Generator
 		$baseName = pathinfo($file->path, PATHINFO_FILENAME);
 		$header = [];
 		$this->headerLineMap = [];
+		$this->currentSourcePath = $file->path;
 		$this->currentSourceLine = 0;
 		$this->currentSourceColumn = 0;
 		$this->appendHeaderLines($header, $this->code('#pragma once', 0));
@@ -243,6 +245,16 @@ final class Generator
 	private function codeWithCurrentOrigin(string $text): CodeBlock
 	{
 		return $this->code($text, $this->currentSourceLine, $this->currentSourceColumn);
+	}
+
+	private function cppStringLiteral(string $value): string
+	{
+		$escaped = str_replace(
+			["\\", "\"", "\n", "\r", "\t", "\v", "\f"],
+			["\\\\", "\\\"", "\\n", "\\r", "\\t", "\\v", "\\f"],
+			$value,
+		);
+		return '"' . $escaped . '"';
 	}
 
 	private function renderGeneratedCast(string $type, string $expr): string
