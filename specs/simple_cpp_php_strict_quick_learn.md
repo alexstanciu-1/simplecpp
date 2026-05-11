@@ -199,7 +199,7 @@ For strict regex code, enable the `regex` module explicitly and use the typed `r
 ```
 
 ```php
-$captures /** vector<string> */ = [];
+$captures vector<string> = [];
 if (take($captures, regex_match("/(ab+)-(cd+)/i", "xxAbb-cDDyy"))) {
 	echo $captures[0], "\n";
 }
@@ -284,6 +284,72 @@ dbg_if("debug_company_12", "row", $row, DBG_SHAPE | DBG_DEPTH_2);
 
 `dbg` inspection is best-effort and should not crash user code. Unsupported values print type/kind information plus a safe not-inspectable marker.
 
+### Runtime-debug playbook for real project failures
+
+Use this sequence when a strict project builds, runs, and then fails at runtime.
+
+1. Run the program normally with `scpp run`.
+2. Read `scpp error` first.
+3. Inspect the saved runtime fields that matter most:
+   - `original_file`
+   - `original_line`
+   - `expected_type`
+   - `actual_runtime_kind`
+   - `operation`
+4. If the failing value shape is still unclear, add `dbg(...)` immediately before the typed boundary or failing operation.
+5. If the noisy part happens deeper in helper calls, use `dbg_set(...)` and `dbg_if(...)` to focus the trace.
+6. Inspect `.prism/last_error.json`, `.line.tsv`, or generated C++ only when the saved diagnostics are not enough.
+
+End-to-end example:
+
+```php
+$row = json_decode($text);
+echo "name=" . $row["name"] . "\n";
+```
+
+Possible failure:
+
+```text
+Runtime error in main.phs:2
+Cannot convert value to required string_t.
+Actual runtime kind: shared_hash_t
+Operation: scpp::cast<string_t>
+```
+
+Recommended next move:
+
+```php
+$row = json_decode($text);
+dbg("name", $row["name"], DBG_SHAPE | DBG_TYPE);
+echo "name=" . $row["name"] . "\n";
+```
+
+Then rewrite into an intentional stabilization pattern:
+
+```php
+$row = json_decode($text);
+if (isset($row["name"])) {
+	$name string = $row["name"];
+	echo "name=" . $name . "\n";
+}
+```
+
+Use each tool for the question it answers:
+
+- `scpp error`: first compact runtime/build failure summary
+- `scpp full-error`: full saved JSON report when you need all fields
+- `scpp last-run`: compact build/run context and recent command outcome
+- `scpp full-last-run`: full saved run metadata and command details
+- `scpp explain-build`: why the tool rebuilt what it rebuilt
+- `dbg(...)`: inspect runtime shape and typed-boundary inputs
+- `.line.tsv`: remap generated locations back to source when the saved report still points into generated artifacts
+- generated C++: inspect lowering only after the source-level diagnostic suggests a generator/runtime-boundary problem
+
+Keep build-debug and runtime-debug separate:
+
+- use `scpp explain-build` and `last-run` when the problem is rebuild causality, entrypoint selection, or build orchestration
+- use `scpp error`, `scpp full-error`, `dbg(...)`, and typed-boundary inspection when the problem is runtime shape or strict type stabilization
+
 ### When unsure
 
 Use this order:
@@ -339,25 +405,25 @@ Use this order:
 | `take` with wrapper output | `if (take($fh, io_open($path, "rb"))) { ... }` |
 | `take` with nullable | `if (take($name, $maybe_name)) { ... }` |
 | typed local shorthand | `$count int = 0;` |
-| typed local by doc comment | `$count /** int */ = 0;` |
+| legacy typed local annotation form | `$count /** int */ = 0;` |
 | typed vector local shorthand | `$items vector<int> = [1, 2, 3];` |
-| typed vector local | `$items /** vector<int> */ = [1, 2, 3];` |
+| typed vector local | `$items vector<int> = [1, 2, 3];` |
 | typed hash local shorthand | `$by_name hash<int> = ["a" => 1, "b" => 2];` |
-| typed hash local | `$by_name /** hash<int> */ = ["a" => 1, "b" => 2];` |
+| legacy typed hash annotation form | `$by_name /** hash<int> */ = ["a" => 1, "b" => 2];` |
 | typed two-arg hash shorthand | `$by_id hash<string, int> = [0 => "a", 1 => "b"];` |
-| typed int-key hash local | `$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];` |
+| legacy typed int-key hash annotation form | `$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];` |
 | typed class property shorthand | `public $list vector<T> = [];` |
-| typed class property | `public $list /** vector<T> */ = [];` |
-| typed class property (leading comment) | `public /** vector<T> */ $list = [];` |
+| legacy typed class property annotation form | `public $list /** vector<T> */ = [];` |
+| legacy typed class property leading annotation form | `public /** vector<T> */ $list = [];` |
 | typed param shorthand | `function build($items vector<string>) { ... }` |
-| typed param by inline comment | `function build(/** vector<string> */ $items) { ... }` |
+| legacy typed param annotation form | `function build(/** vector<string> */ $items) { ... }` |
 | typed return shorthand | `function build(): vector<string> { ... }` |
-| typed return by inline comment | `function build() /** vector<string> */ { ... }` |
+| legacy typed return annotation form | `function build() /** vector<string> */ { ... }` |
 | typed arrow return shorthand | `$make = fn($x int) function<function<int(int)>(int)> => fn($y int): int => $x + $y;` |
-| typed arrow return by inline comment | `$make = fn(/** int */ $x) /** function<function<int(int)>(int)> */ => fn(/** int */ $y): int => $x + $y;` |
-| vector property with class element | `public $properties /** vector<model_property> */ = [];` |
-| vector literal needs explicit typed context | `$v /** vector<int> */ = [1, 2, 3];` |
-| typed read from dynamic value | `$count /** int */ = $data["count"];` |
+| legacy typed arrow return annotation form | `$make = fn(/** int */ $x) /** function<function<int(int)>(int)> */ => fn(/** int */ $y): int => $x + $y;` |
+| legacy vector property with class element annotation form | `public $properties /** vector<model_property> */ = [];` |
+| vector literal needs explicit typed context | `$v vector<int> = [1, 2, 3];` |
+| typed read from dynamic value | `$count int = $data["count"];` |
 | typed hash slot from dynamic value | `$counts hash<int> = []; $counts["id"] = $row["id"];` |
 | typed vector append from dynamic value | `$items vector<int> = []; $items[] = $row["count"];` |
 | typed append on vector | `$items[] = 4;` |
@@ -375,7 +441,7 @@ Use this order:
 | strict IO builtin | `take($written, io_write($fh, "abc"));` |
 | strict JSON builtin | `$data = json_decode($json);` |
 | Prism++ file start | `echo "hello\n";` |
-| nullable local | `$id /** ?int */ = null;` |
+| nullable local | `$id ?int = null;` |
 | strict comparison | `if ($value === 0) { ... }` |
 | namespace + typed property example | `namespace demo\schema; class model { public $properties /** vector<model_property> */ = []; }` |
 | helper semantics | `echo isset($map["a"]) ? "Y\n" : "N\n";` |
@@ -387,7 +453,7 @@ Use this order:
 | `$count int = $row["count"];` | `$count = $row["count"];` |
 | `$counts["id"] = $row["id"];` where `$counts` is `hash<int>` | `$counts["id"] = (int) $row["id"];` |
 | `$items[] = $row["count"];` where `$items` is `vector<int>` | `$items[] = (int) $row["count"];` |
-| `$count /** int */ = $row["count"];` | `$count = $row["count"];` |
+| `$count int = $row["count"];` | `$count = $row["count"];` |
 | `if ($status === "ready")` | `if ($status)` |
 | `vector<T>` for typed lists | dynamic list/table when not needed |
 | `hash<T>` for typed string-keyed data | dynamic keyed table when not needed |
@@ -439,12 +505,13 @@ $meta["title"] = $row["title"];
 
 ## Typed shorthand note
 
-The current frontend accepts two equivalent explicit type-intent forms at supported sites:
+Use shorthand surface syntax in strict code, for example `$count int = 0;`.
 
-- shorthand surface syntax, for example `$count int = 0;`
-- PHP-compatible inline annotation syntax, for example `$count /** int */ = 0;`
+PHP-compatible inline annotation syntax such as `$count /** int */ = 0;` is legacy compatibility syntax.
+Do not use it in new strict code.
+Plan for it to become a hard error in a future version.
 
-The pre-tokenizer normalizes the shorthand form into a PHP-compatible annotated form before `php-ast` parsing, while separately preserving site ownership metadata for:
+The pre-tokenizer currently normalizes shorthand into a PHP-compatible annotated form before `php-ast` parsing, while separately preserving site ownership metadata for:
 
 - locals
 - properties
@@ -462,7 +529,7 @@ Strict code should expect wrapper-shaped operations.
 Common pattern:
 
 ```php
-$text /** string */ = "";
+$text string = "";
 $err /** error */;
 
 if (!take($text, $err, fs_get($path))) {
@@ -491,7 +558,7 @@ For PHP++ / PHS code, that is the main mental model you need. You usually do not
 Typed reads such as:
 
 ```php
-$count /** int */ = $row["count"];
+$count int = $row["count"];
 ```
 
 are stabilization steps.
@@ -502,6 +569,146 @@ are stabilization steps.
 
 Decoded JSON is still dynamic after `json_decode(...)`.
 Treat typed extraction from it as an assumption about shape, not as free PHP flexibility.
+
+## Dynamic-Data Stabilization Cookbook
+
+Use this section when incoming data is dynamic but the next step in the code wants a predictable typed value.
+
+### 1. Required string field from decoded JSON
+
+Use a direct typed read when the field is required and the program genuinely expects that shape:
+
+```php
+$row = json_decode($text);
+$name string = $row["name"];
+echo $name, "\n";
+```
+
+Why this is a good fit:
+
+- the left side is a visible typed boundary
+- the code is making a deliberate shape assumption
+- later code can treat `$name` as ordinary typed data
+
+What assumption it makes:
+
+- `$row["name"]` exists
+- the runtime value is convertible to `string`
+
+If the key is missing, the read produces `null` before typed-boundary conversion is attempted.
+If the value exists but has the wrong runtime kind, expect a strict runtime type failure at that boundary.
+
+### 2. Optional string field
+
+When a field is optional, choose between defaulting and nullable handling on purpose.
+
+Use a default when the rest of the code wants a normal string either way:
+
+```php
+$row = json_decode($text);
+$nickname string = isset($row["nickname"]) ? $row["nickname"] : "";
+```
+
+Use nullable handling when absence is meaningful and should stay distinct:
+
+```php
+$row = json_decode($text);
+$nickname = null;
+if (isset($row["nickname"])) {
+	$nickname string = $row["nickname"];
+}
+```
+
+Rule of thumb:
+
+- default when absence should collapse into a normal fallback value
+- keep the nullable or absent state distinct when later logic cares about that difference
+
+### 3. Stabilizing into typed containers
+
+Typed container writes are ordinary typed boundaries under the stable-left-side rule.
+
+Typed hash slot:
+
+```php
+$row = json_decode($text);
+$counts hash<int> = [];
+$counts["id"] = $row["id"];
+```
+
+Typed vector append:
+
+```php
+$row = json_decode($text);
+$items vector<int> = [];
+$items[] = $row["count"];
+```
+
+Why this pattern is useful:
+
+- the destination type is explicit at the point where data enters the container
+- the container stays typed after the boundary
+- the code avoids ad hoc manual casts scattered around later reads
+
+Prefer this when the program already knows the target container shape.
+
+### 4. When to delay stabilization
+
+Delay the typed boundary when the incoming shape is still genuinely uncertain.
+
+```php
+$row = json_decode($text);
+$value = $row["name"];
+dbg("name", $value, DBG_SHAPE | DBG_TYPE);
+```
+
+After you understand the shape, follow with a guarded typed step:
+
+```php
+if (isset($row["name"])) {
+	$name string = $row["name"];
+	echo $name, "\n";
+}
+```
+
+This is usually the better move when:
+
+- you are onboarding an unfamiliar payload
+- the field may be one of several runtime kinds
+- the saved runtime diagnostic already told you a typed boundary is failing but not why the payload has that shape
+
+### 5. Nullable and mixed boundary guidance
+
+When a field may be absent, `null`, a string, or the wrong kind entirely, keep those states explicit.
+
+```php
+$row = json_decode($text);
+
+if (!isset($row["path"])) {
+	echo "path missing\n";
+	return;
+}
+
+$raw = $row["path"];
+
+if ($raw === null) {
+	echo "path is null\n";
+	return;
+}
+
+$path string = $raw;
+echo $path, "\n";
+```
+
+Mental model:
+
+- absent key: guard with `isset(...)` first when absence is expected
+- explicit `null`: keep it distinct from missing and from wrong-kind values
+- expected string: stabilize at a visible typed boundary
+- wrong-kind container/hash/object: expect strict runtime failure if you force a typed boundary too early, then inspect with `dbg(...)` and adjust the guard pattern
+
+The goal is not to avoid typed boundaries.
+The goal is to place them where the shape assumption is intentional and easy to reason about.
 
 ## `error` In Practice
 
@@ -672,7 +879,7 @@ Common parser forms currently supported:
 Unsupported in the current strict datetime surface: named timezone conversion, locale-aware month/day names, calendar arithmetic, and PHP `strtotime` natural-language expressions such as `next Tuesday` or `+1 day`.
 
 ```php
-$stamp /** int */ = 0;
+$stamp int = 0;
 $err /** error */;
 
 if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
@@ -685,14 +892,14 @@ if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
 ```php
 $file = "sample.txt";
 $err /** error */;
-$written /** int */ = 0;
+$written int = 0;
 
 if (take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
-	$data /** string */ = "";
+	$data string = "";
 	if (take($data, $err, fs_get($file))) {
 		$row = json_decode($data);
-		$name /** string */ = $row["name"];
-		$count /** int */ = $row["count"];
+		$name string = $row["name"];
+		$count int = $row["count"];
 		echo str_strlen($name), "\n";
 		echo $count, "\n";
 	}

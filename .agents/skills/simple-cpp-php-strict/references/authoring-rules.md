@@ -56,7 +56,7 @@ function add(int $left, int $right): int {
 }
 
 $count int = 0;
-$name /** string */ = $row["name"];
+$name string = $row["name"];
 ```
 
 Avoid:
@@ -69,12 +69,15 @@ function add($left, $right) {
 $name = $row["name"];
 ```
 
-Both shorthand and annotation forms are valid at supported typed sites:
+Use shorthand typed syntax in strict code:
 
 ```php
 $count int = 0;
-$count /** int */ = 0;
 ```
+
+Do not use annotation-style type syntax in strict mode, such as `$count /** int */ = 0;` or `$items /** vector<string> */ = [];`.
+Treat it as legacy compatibility syntax that should not appear in new strict examples or new strict code.
+Plan for it to become a hard error in a future version.
 
 ## Containers
 
@@ -127,7 +130,7 @@ Missing-key reads return `null` before typed-boundary conversion is attempted, s
 
 ```php
 if (isset($row["count"])) {
-	$count /** int */ = $row["count"];
+	$count int = $row["count"];
 	echo $count, "\n";
 }
 ```
@@ -138,7 +141,7 @@ Strict APIs commonly return wrapper-shaped results. Resolve them near a meaningf
 
 ```php
 $err /** error_t */;
-$text /** string */ = "";
+$text string = "";
 
 if (!take($text, $err, fs_get($path))) {
 	echo "read failed\n";
