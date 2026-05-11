@@ -138,6 +138,14 @@ scpp docs strict
 scpp docs diagnostics
 ```
 
+Inspect the most recent saved build/run report:
+
+```bash
+scpp last-run
+scpp full-last-run
+scpp explain-build
+```
+
 Run the deterministic usability harness:
 
 ```bash

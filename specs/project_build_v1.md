@@ -258,6 +258,21 @@ The initial registry includes:
 - `profiles`
 - `modules`
 - `dependencies`
+
+## `scpp last-run`, `scpp full-last-run`, and `scpp explain-build` behavior
+
+`scpp last-run` prints a short human-readable summary of the most recent saved build-oriented command.
+
+`scpp full-last-run` prints the complete saved `.prism/last_run.json` payload.
+
+`scpp explain-build` reads `.prism/last_run.json` and explains:
+
+- whether runtime and dependencies were rebuilt or reused
+- which source files were transpiled versus reused
+- why a transpile happened when a source file rebuilt
+- which outputs changed in the most recent saved build
+
+The saved `.prism/last_run.json` payload should include build explanation details gathered during `execute_build()` so the explanation command does not need to reverse-engineer the build after the fact.
 - `examples`
 - `authoring`
 - `gotchas`
