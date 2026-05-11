@@ -1,4 +1,4 @@
-$err /** error_t */;
+$err /** error */;
 $text /** string */ = "seed";
 echo take($text, $err, fs_get("missing_strict_sample.txt")) ? "T\n" : "F\n";
 echo $text, "\n";

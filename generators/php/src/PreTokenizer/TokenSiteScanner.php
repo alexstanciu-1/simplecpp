@@ -195,11 +195,29 @@ final class TokenSiteScanner
 		}
 
 		$delimiterIndex = $this->findNextMeaningfulIndex($tokens, $typeSlot['endTokenIndex'] + 1, null);
-		if ($delimiterIndex === null || $tokens[$delimiterIndex]['text'] !== '=') {
+		if ($delimiterIndex === null) {
 			return null;
 		}
 
 		$token = $tokens[$variableIndex];
+		$delimiter = $tokens[$delimiterIndex]['text'];
+		if ($delimiter === '=') {
+			return [
+				'kind' => $this->detectVariableKind($tokens, $variableIndex),
+				'name' => ltrim($token['text'], '$'),
+				'type' => $typeSlot['type'],
+				'line' => $token['line'],
+				'startOffset' => $typeSlot['slotStartOffset'],
+				'endOffset' => $typeSlot['slotEndOffset'],
+				'rewriteStart' => $typeSlot['slotStartOffset'],
+				'rewriteEnd' => $typeSlot['slotEndOffset'],
+				'replacement' => $typeSlot['leadingTrivia'] . '/** ' . $typeSlot['type'] . ' */' . $typeSlot['trailingTrivia'],
+			];
+		}
+
+		if ($delimiter !== ';') {
+			return null;
+		}
 
 		return [
 			'kind' => $this->detectVariableKind($tokens, $variableIndex),

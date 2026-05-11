@@ -1,7 +1,7 @@
 $bad /** result<int> */ = error;
 $ok /** result<int> */ = 13;
 $out /** int */ = 0;
-$err /** error_t */;
+$err /** error */;
 echo take($out, $err, $ok) ? "T\n" : "F\n";
 echo $out, "\n";
 

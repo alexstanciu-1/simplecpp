@@ -1,5 +1,5 @@
 $parsed /** int */ = 0;
-$err /** error_t */;
+$err /** error */;
 if (!take($parsed, $err, dt_parse("2024-02-29 12:34:56"))) {
 	echo "parse-error\n";
 }
@@ -10,4 +10,3 @@ echo dt_format("Y/n/j G:i:s", $parsed), "\n";
 if (!take($parsed, $err, dt_parse("2024-02-30 12:34:56"))) {
 	echo "bad-date\n";
 }
-
