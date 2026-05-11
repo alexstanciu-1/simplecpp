@@ -28,7 +28,7 @@ Do not mix strict and legacy surfaces.
 Strict examples:
 
 ```php
-$text /** string */ = "";
+$text string = "";
 take($text, $err, fs_get($path));
 echo str_strlen($text), "\n";
 ```
@@ -87,7 +87,7 @@ Preferred:
 $data = json_decode($text);
 
 if (isset($data["name"])) {
-	$name /** string */ = $data["name"];
+	$name string = $data["name"];
 	echo $name, "\n";
 }
 ```
@@ -97,6 +97,21 @@ Avoid assuming decoded JSON is already typed:
 ```php
 $data = json_decode($text);
 $name = $data["name"];
+```
+
+When the field is optional, default or guard on purpose instead of letting ambiguity spread:
+
+```php
+$data = json_decode($text);
+$nickname string = isset($data["nickname"]) ? $data["nickname"] : "";
+```
+
+When the payload shape is still unclear, delay stabilization briefly and inspect it:
+
+```php
+$data = json_decode($text);
+$raw = $data["name"];
+dbg("name", $raw, DBG_SHAPE | DBG_TYPE);
 ```
 
 ## Arrays And Tables
@@ -127,7 +142,7 @@ Preferred:
 
 ```php
 $err /** error_t */;
-$text /** string */ = "";
+$text string = "";
 
 if (!take($text, $err, fs_get($path))) {
 	echo "read failed\n";
@@ -158,5 +173,7 @@ scpp full-error
 scpp last-run
 scpp full-last-run
 ```
+
+For runtime failures, the normal sequence is: `scpp run`, then `scpp error`, then `dbg(...)` near the typed boundary if the runtime shape is still unclear.
 
 Generated C++ and `.line.tsv` files are useful after the saved diagnostics point there.
