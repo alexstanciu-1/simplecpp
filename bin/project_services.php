@@ -1275,37 +1275,97 @@ function remove_runtime_error_json_lines(string $stderr): string
 	return implode(PHP_EOL, $lines);
 }
 
-/** @param array<string,mixed> $diagnostic */
-function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?string $projectMode = null): string
+function scpp_runtime_source_snippet_enabled(): bool
 {
-	$lines = [];
-	$strictHint = strict_project_error_hint($projectMode);
-	if ($strictHint !== null) {
-		$lines[] = $strictHint;
-	}
-		$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
-		$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
-		$sourceFile = is_string($diagnostic['source_file'] ?? null) ? (string) $diagnostic['source_file'] : '';
-		$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
-		$displayFile = $originalFile !== '' ? $originalFile : $sourceFile;
-		$displayLine = $originalLine > 0 ? $originalLine : $sourceLine;
-		if ($displayFile !== '' && $displayLine > 0) {
-			$relation = $displayFile === $originalFile ? trim((string) ($diagnostic['original_relation'] ?? 'exact')) : 'exact';
-			$prefix = $relation === 'exact' ? '' : ($relation === 'around' ? 'around ' : 'near ');
-			$lines[] = 'Runtime error in ' . $prefix . normalize_config_path(relative_path($projectRoot, $displayFile)) . ':' . $displayLine;
-	} else {
-		$lines[] = 'Runtime error while running the built program.';
-	}
+	$value = getenv('SCPP_SHOW_SOURCE_SNIPPETS');
+	return is_string($value) && $value === '1';
+}
+
+function build_runtime_failure_summary(array $diagnostic): string
+{
 	$expression = trim((string) ($diagnostic['expression'] ?? ''));
 	$expected = trim((string) ($diagnostic['expected_type'] ?? ''));
-	$actual = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
-	$operation = trim((string) ($diagnostic['operation'] ?? ''));
 	if ($expression !== '') {
 		$line = 'Cannot convert value used for ' . $expression;
 		if ($expected !== '') {
-			$line .= ' to ' . $expected;
+			$line .= ' to required ' . $expected;
 		}
-		$lines[] = $line . '.';
+		return $line . '.';
+	}
+	if ($expected !== '') {
+		return 'Cannot convert value to required ' . $expected . '.';
+	}
+	return 'Cannot convert value at this typed boundary.';
+}
+
+function trim_runtime_source_snippet_line(string $line, int $limit = 160): string
+{
+	if ($limit <= 0) {
+		return '';
+	}
+	if (strlen($line) <= $limit) {
+		return $line;
+	}
+	if ($limit <= 3) {
+		return substr($line, 0, $limit);
+	}
+	return substr($line, 0, $limit - 3) . '...';
+}
+
+/** @return list<string> */
+function build_runtime_source_snippet_lines(string $projectRoot, array $diagnostic): array
+{
+	if (!scpp_runtime_source_snippet_enabled()) {
+		return [];
+	}
+	$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
+	$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
+	if ($originalFile === '' || $originalLine <= 0 || !is_file($originalFile) || !is_readable($originalFile)) {
+		return [];
+	}
+	$contents = file($originalFile, FILE_IGNORE_NEW_LINES);
+	if (!is_array($contents) || $contents === []) {
+		return [];
+	}
+	$start = max(1, $originalLine - 1);
+	$end = min(count($contents), $originalLine + 1);
+	$lines = ['Around:'];
+	for ($lineNumber = $start; $lineNumber <= $end; $lineNumber++) {
+		$rawLine = rtrim((string) ($contents[$lineNumber - 1] ?? ''));
+		$trimmedLine = trim_runtime_source_snippet_line($rawLine);
+		$prefix = $lineNumber === $originalLine ? '>' : ' ';
+		$lines[] = sprintf('%s %d | %s', $prefix, $lineNumber, $trimmedLine);
+	}
+	$lines[] = 'Source snippet shown because SCPP_SHOW_SOURCE_SNIPPETS=1.';
+	return $lines;
+}
+
+/** @param array<string,mixed> $diagnostic */
+function render_runtime_failure_lines(array $diagnostic, string $projectRoot, bool $includeStrictHint = true, bool $includeFollowupHints = true, ?string $projectMode = null): array
+{
+	$lines = [];
+	$strictHint = $includeStrictHint ? strict_project_error_hint($projectMode) : null;
+	if ($strictHint !== null && $strictHint !== '') {
+		$lines[] = $strictHint;
+	}
+	$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
+	$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
+	$sourceFile = is_string($diagnostic['source_file'] ?? null) ? (string) $diagnostic['source_file'] : '';
+	$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
+	$displayFile = $originalFile !== '' ? $originalFile : $sourceFile;
+	$displayLine = $originalLine > 0 ? $originalLine : $sourceLine;
+	if ($displayFile !== '' && $displayLine > 0) {
+		$relation = $displayFile === $originalFile ? trim((string) ($diagnostic['original_relation'] ?? 'exact')) : 'exact';
+		$prefix = $relation === 'exact' ? '' : ($relation === 'around' ? 'around ' : 'near ');
+		$lines[] = 'Runtime error in ' . $prefix . normalize_config_path(relative_path($projectRoot, $displayFile)) . ':' . $displayLine;
+	} else {
+		$lines[] = 'Runtime error while running the built program.';
+	}
+	$actual = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
+	$operation = trim((string) ($diagnostic['operation'] ?? ''));
+	$lines[] = build_runtime_failure_summary($diagnostic);
+	foreach (build_runtime_source_snippet_lines($projectRoot, $diagnostic) as $snippetLine) {
+		$lines[] = $snippetLine;
 	}
 	if ($actual !== '') {
 		$lines[] = 'Actual runtime kind: ' . $actual;
@@ -1317,9 +1377,17 @@ function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?s
 	if ($message !== '') {
 		$lines[] = 'Runtime message: ' . $message;
 	}
-	$lines[] = "Run 'scpp error' for more details.";
-	$lines[] = "Run 'scpp full-error' for the saved JSON report.";
-	return implode(PHP_EOL, $lines) . PHP_EOL;
+	if ($includeFollowupHints) {
+		$lines[] = "Run 'scpp error' for more details.";
+		$lines[] = "Run 'scpp full-error' for the saved JSON report.";
+	}
+	return $lines;
+}
+
+/** @param array<string,mixed> $diagnostic */
+function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?string $projectMode = null): string
+{
+	return implode(PHP_EOL, render_runtime_failure_lines($diagnostic, $projectRoot, true, true, $projectMode)) . PHP_EOL;
 }
 
 /** @param array<string,mixed> $diagnostic @return list<string> */
@@ -1456,15 +1524,20 @@ function handle_error_report(string $cwd, bool $full): void
 		return;
 	}
 	$output = [];
-	$output[] = (string) ($data['short_message'] ?? 'Unknown error.');
+	$diagnostics = is_array($data['diagnostics'] ?? null) ? $data['diagnostics'] : [];
 	$projectMode = trim((string) ($data['project_mode'] ?? ''));
-	if ($projectMode === 'strict') {
-		$output[] = 'Project mode: strict';
+	$primaryDiagnostic = is_array($diagnostics[0] ?? null) ? $diagnostics[0] : null;
+	if ($primaryDiagnostic !== null) {
+		foreach (render_runtime_failure_lines($primaryDiagnostic, $project['project_root'], false, false, $projectMode) as $line) {
+			$output[] = $line;
+		}
+	} else {
+		$output[] = (string) ($data['short_message'] ?? 'Unknown error.');
 	}
-	$output[] = 'Saved report: ' . normalize_config_path(relative_path($project['project_root'], $path));
 	if (isset($data['category'], $data['subcategory'])) {
 		$output[] = 'Category: ' . $data['category'] . ' / ' . $data['subcategory'];
 	}
+	$output[] = 'Saved report: ' . normalize_config_path(relative_path($project['project_root'], $path));
 	if (isset($data['duration_ms'])) {
 		$output[] = 'Duration: ' . (int) $data['duration_ms'] . 'ms';
 	}
@@ -1472,37 +1545,6 @@ function handle_error_report(string $cwd, bool $full): void
 	foreach ($guidance as $item) {
 		if (is_string($item) && $item !== '') {
 			$output[] = 'Next: ' . $item;
-		}
-	}
-	$diagnostics = is_array($data['diagnostics'] ?? null) ? $data['diagnostics'] : [];
-	foreach (array_slice($diagnostics, 0, 2) as $diagnostic) {
-		if (!is_array($diagnostic)) {
-			continue;
-		}
-		$message = trim((string) ($diagnostic['message'] ?? ''));
-			$originalFile = $diagnostic['original_file'] ?? null;
-			$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
-			if (is_string($originalFile) && $originalFile !== '' && $originalLine > 0) {
-				$line = 'Source: ' . normalize_config_path(relative_path($project['project_root'], $originalFile)) . ':' . $originalLine;
-				$expression = trim((string) ($diagnostic['expression'] ?? ''));
-				if ($expression !== '') {
-					$line .= ' - ' . $expression;
-				}
-				$output[] = $line;
-				$actualKind = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
-				if ($actualKind !== '') {
-					$output[] = 'Actual runtime kind: ' . $actualKind;
-				}
-				continue;
-			}
-			$sourceFile = $diagnostic['source_file'] ?? null;
-			$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
-			if (is_string($sourceFile) && $sourceFile !== '' && $sourceLine > 0) {
-				$output[] = 'Source: ' . normalize_config_path(relative_path($project['project_root'], $sourceFile)) . ':' . $sourceLine . ($message !== '' ? ' - ' . $message : '');
-				continue;
-			}
-		if ($message !== '') {
-			$output[] = 'Detail: ' . $message;
 		}
 	}
 	if ($diagnostics === []) {
