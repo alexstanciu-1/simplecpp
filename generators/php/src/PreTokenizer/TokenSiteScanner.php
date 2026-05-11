@@ -502,6 +502,8 @@ final class TokenSiteScanner
 				$depthAngles++;
 			} elseif ($text === '>') {
 				$depthAngles--;
+			} elseif ($text === '>>') {
+				$depthAngles -= 2;
 			} elseif ($text === '(') {
 				$depthParens++;
 			} elseif ($text === ')') {
@@ -614,6 +616,9 @@ final class TokenSiteScanner
 		}
 		if ($text === '>') {
 			return $depthAngles > 0;
+		}
+		if ($text === '>>') {
+			return $depthAngles > 1;
 		}
 		if ($text === '(') {
 			return true;

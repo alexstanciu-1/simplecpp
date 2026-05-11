@@ -49,6 +49,8 @@ Write PHP++ source, not generated C++.
 - Use `hash<T>` for typed string-keyed data.
 - Use `hash<T, T_KEY>` for intentionally typed key families.
 - Stabilize dynamic values early at explicit typed boundaries.
+- Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
+- If the destination is explicitly `mixed`, no cast is needed and the value remains `mixed`.
 - Resolve wrappers near meaningful boundaries with `take(...)`.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.
@@ -97,7 +99,7 @@ For multi-file and multi-project work:
 - Dependency project export headers are generated build artifacts too; do not add generated dependency `.hpp` names to PHP++ source to force ordering.
 - Use `libraries` for linker-owned native artifacts.
 - Mark dependency-visible top-level declarations with `/** @lib-export */`.
-- Do not use PHP `require` or `include` as the project composition mechanism.
+- Do not use PHP `require`, `require_once`, `include`, or `include_once` for project composition in the current strict-project model.
 
 ## Before Finishing
 

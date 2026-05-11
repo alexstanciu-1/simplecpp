@@ -69,12 +69,26 @@ For accepted current implementation fallback behavior, see `specs/mixed_boundary
 
 If an Explicit Typed Boundary exists, a `mixed` value may be normalized to the target native type there. The current v1 contract still permits approved implementation bridges where the current generator does not materialize that boundary explicitly in emitted C++.
 
+Stable-left-side rule:
+
+> When the receiving side of an assignment or append has a stable explicit destination type, that destination type is explicit enough to authorize ordinary `mixed -> typed` normalization there.
+
+This means the typed destination does not need to appear only as a standalone local or direct property. It may also be provided by:
+
+- a typed container element destination such as `hash<T>[key]`
+- a typed append destination such as `vector<T>[]`
+- a nested destination reached through a typed property or typed local, so long as the final receiving slot still has a stable explicit value type
+
+If the stable explicit destination type is `mixed`, then no normalization occurs and the value remains `mixed_t`.
+
 ### Valid Explicit Typed Boundary sites
 
 | Case | Example | Allowed |
 |---|---|---|
 | Typed variable assignment | `$x /** int */ = $v;` | âœ” |
 | Typed property assignment | `$obj->x = $v; // x is int` | âœ” |
+| Typed container element assignment | `$counts["x"] = $v; // counts is hash<int>` | âœ” |
+| Typed append destination | `$items[] = $v; // items is vector<int>` | âœ” |
 | Typed function argument (by-value) | `f($v); // f(int $x)` | âœ” |
 | Typed method argument (by-value) | `$obj->f($v); // f(int $x)` | âœ” |
 | Typed return | `return $v; // function(): int` | âœ” |
@@ -129,6 +143,8 @@ These are accepted in v1 when an Explicit Typed Boundary exists, even when the c
 | Typed by-value method call | `$obj->setValue($v);` where `setValue(int $v)` | same reason |
 | Typed variable assignment | `$x /** int */ = $v;` | intention is directly visible |
 | Typed property assignment | `$obj->x = $v;` where `x` is `int` | intention is directly visible |
+| Typed container element assignment | `$counts["x"] = $v;` where `counts` is `hash<int>` | the receiving slot value type is directly visible from the stable typed destination |
+| Typed append destination | `$items[] = $v;` where `items` is `vector<int>` | the receiving element type is directly visible from the stable typed destination |
 | Typed return | `return $v;` in `function f(): int` | return type is directly visible |
 
 ### Not accepted, even in v1
@@ -147,6 +163,8 @@ These are accepted in v1 when an Explicit Typed Boundary exists, even when the c
 > Explicit Typed Boundaries and their v1 compromises belong to the **language / S2S layer**; `mixed_t` by itself does not reveal enough compile-time information to invent those boundaries.
 
 The current implementation may therefore accept some non-explicit `mixed â†’ native` conversions at approved boundary sites that are still part of the current v1 contract.
+
+This includes stable-left-side destinations such as typed container slots and typed append targets. The rule is about whether the receiving slot's type is explicit and stable, not about whether the source expression itself is simple.
 
 ---
 
@@ -209,6 +227,7 @@ Examples:
 
 Global rules:
 - implicit `mixed -> native` extraction is allowed only at approved Explicit Typed Boundaries (typed initialization/assignment, typed by-value arg passing, typed return, typed property write)
+- stable explicit typed destinations include typed container element writes and typed append targets
 - operator resolution must **not** use implicit `mixed` extraction to manufacture extra overload candidates
 - compound assignment is valid only when the delegated native binary op exists **and** assignment back into the stored lhs kind also remains valid
 - table carriers are excluded from arithmetic dispatch
@@ -321,6 +340,8 @@ A typed function or method parameter contract counts as an explicit typed bounda
 
 Current v1 typed-boundary bridge rule:
 - non-explicit `mixed -> native` use is accepted only at Explicit Typed Boundary sites for typed initialization/assignment, typed property write, typed by-value arg passing, and typed returns
+- the same rule applies when a stable explicit left side supplies the receiving value type through `hash<T>[...]`, `vector<T>[]`, or the same destinations reached through a typed property/local prefix
+- if the stable explicit destination is `mixed`, no cast is inserted and the value remains `mixed`
 - operator resolution must not use implicit extraction to create extra candidates
 - failed typed extraction remains a runtime error
 

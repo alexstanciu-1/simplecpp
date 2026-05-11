@@ -175,7 +175,7 @@ Use the module set required by the APIs the app calls. When module ownership is 
 
 Use project-level composition, not PHP file inclusion.
 
-Inside one project, `scpp build` discovers same-project `.phs` files and makes their generated declarations visible through an internal build header. Do not write source-level includes that name `.prism/generated/*.hpp` files.
+Inside one project, `scpp build` discovers same-project `.phs` files and makes their generated declarations visible through an internal build header. Do not use source-level `require`, `require_once`, `include`, or `include_once` for project composition, and do not name `.prism/generated/*.hpp` files from source.
 
 In `prism.json`:
 
@@ -204,7 +204,7 @@ function shared_value(): int {
 }
 ```
 
-Do not activate project dependencies with PHP `require` or `include`.
+Do not activate project dependencies with PHP `require`, `require_once`, `include`, or `include_once`.
 
 ## Failure Triage
 

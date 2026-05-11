@@ -685,7 +685,7 @@ final class TypeMapper
 		if (substr_count($normalized, '?') > 1) {
 			throw new GenerationException('Nullable marker (?) appears more than once in type definition: ' . $phpType);
 		}
-		if (str_contains($normalized, '?') && !str_starts_with($normalized, '?') && preg_match('/^value\s*<\s*\?\s*.+\s*>$/', $normalized) !== 1) {
+		if ($this->hasDisallowedNullableMarkerPosition($normalized)) {
 			throw new GenerationException('Nullable marker (?) is only supported as a leading type marker or in value<?T>: ' . $phpType);
 		}
 		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
@@ -705,6 +705,38 @@ final class TypeMapper
 		}
 
 		return $normalized;
+	}
+
+	private function hasDisallowedNullableMarkerPosition(string $phpType): bool
+	{
+		if (!str_contains($phpType, '?')) {
+			return false;
+		}
+		if (str_starts_with($phpType, '?')) {
+			return false;
+		}
+		if (preg_match('/^value\s*<\s*\?\s*.+\s*>$/', $phpType) === 1) {
+			return false;
+		}
+
+		$angleDepth = 0;
+		$length = strlen($phpType);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $phpType[$i];
+			if ($ch === '<') {
+				++$angleDepth;
+				continue;
+			}
+			if ($ch === '>') {
+				--$angleDepth;
+				continue;
+			}
+			if ($ch === '?' && $angleDepth === 0) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private function mapValueType(string $phpType): string

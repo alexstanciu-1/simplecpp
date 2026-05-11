@@ -579,6 +579,11 @@ function main(array $argv): void
 		return;
 	}
 
+	if ($args[0] === 'explain-build') {
+		handle_explain_build_report(getcwd() === false ? '.' : getcwd());
+		return;
+	}
+
 	if ($args[0] === 'usability-harness') {
 		handle_usability_harness(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
 		return;
@@ -616,6 +621,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
+	echo "  scpp explain-build\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -1103,6 +1109,7 @@ function handle_run(string $cwd, array $args): void
 			'entrypoint_output' => $buildResult['output_path'],
 			'runtime_library_dir' => $buildResult['runtime_library_dir'],
 			'run_args' => array_values($runArgs),
+			'build_explanation' => $buildResult['build_explanation'] ?? null,
 		]
 	);
 	if ($runtimeDiagnostic !== null) {
@@ -1275,37 +1282,97 @@ function remove_runtime_error_json_lines(string $stderr): string
 	return implode(PHP_EOL, $lines);
 }
 
-/** @param array<string,mixed> $diagnostic */
-function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?string $projectMode = null): string
+function scpp_runtime_source_snippet_enabled(): bool
 {
-	$lines = [];
-	$strictHint = strict_project_error_hint($projectMode);
-	if ($strictHint !== null) {
-		$lines[] = $strictHint;
-	}
-		$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
-		$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
-		$sourceFile = is_string($diagnostic['source_file'] ?? null) ? (string) $diagnostic['source_file'] : '';
-		$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
-		$displayFile = $originalFile !== '' ? $originalFile : $sourceFile;
-		$displayLine = $originalLine > 0 ? $originalLine : $sourceLine;
-		if ($displayFile !== '' && $displayLine > 0) {
-			$relation = $displayFile === $originalFile ? trim((string) ($diagnostic['original_relation'] ?? 'exact')) : 'exact';
-			$prefix = $relation === 'exact' ? '' : ($relation === 'around' ? 'around ' : 'near ');
-			$lines[] = 'Runtime error in ' . $prefix . normalize_config_path(relative_path($projectRoot, $displayFile)) . ':' . $displayLine;
-	} else {
-		$lines[] = 'Runtime error while running the built program.';
-	}
+	$value = getenv('SCPP_SHOW_SOURCE_SNIPPETS');
+	return is_string($value) && $value === '1';
+}
+
+function build_runtime_failure_summary(array $diagnostic): string
+{
 	$expression = trim((string) ($diagnostic['expression'] ?? ''));
 	$expected = trim((string) ($diagnostic['expected_type'] ?? ''));
-	$actual = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
-	$operation = trim((string) ($diagnostic['operation'] ?? ''));
 	if ($expression !== '') {
 		$line = 'Cannot convert value used for ' . $expression;
 		if ($expected !== '') {
-			$line .= ' to ' . $expected;
+			$line .= ' to required ' . $expected;
 		}
-		$lines[] = $line . '.';
+		return $line . '.';
+	}
+	if ($expected !== '') {
+		return 'Cannot convert value to required ' . $expected . '.';
+	}
+	return 'Cannot convert value at this typed boundary.';
+}
+
+function trim_runtime_source_snippet_line(string $line, int $limit = 160): string
+{
+	if ($limit <= 0) {
+		return '';
+	}
+	if (strlen($line) <= $limit) {
+		return $line;
+	}
+	if ($limit <= 3) {
+		return substr($line, 0, $limit);
+	}
+	return substr($line, 0, $limit - 3) . '...';
+}
+
+/** @return list<string> */
+function build_runtime_source_snippet_lines(string $projectRoot, array $diagnostic): array
+{
+	if (!scpp_runtime_source_snippet_enabled()) {
+		return [];
+	}
+	$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
+	$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
+	if ($originalFile === '' || $originalLine <= 0 || !is_file($originalFile) || !is_readable($originalFile)) {
+		return [];
+	}
+	$contents = file($originalFile, FILE_IGNORE_NEW_LINES);
+	if (!is_array($contents) || $contents === []) {
+		return [];
+	}
+	$start = max(1, $originalLine - 1);
+	$end = min(count($contents), $originalLine + 1);
+	$lines = ['Around:'];
+	for ($lineNumber = $start; $lineNumber <= $end; $lineNumber++) {
+		$rawLine = rtrim((string) ($contents[$lineNumber - 1] ?? ''));
+		$trimmedLine = trim_runtime_source_snippet_line($rawLine);
+		$prefix = $lineNumber === $originalLine ? '>' : ' ';
+		$lines[] = sprintf('%s %d | %s', $prefix, $lineNumber, $trimmedLine);
+	}
+	$lines[] = 'Source snippet shown because SCPP_SHOW_SOURCE_SNIPPETS=1.';
+	return $lines;
+}
+
+/** @param array<string,mixed> $diagnostic */
+function render_runtime_failure_lines(array $diagnostic, string $projectRoot, bool $includeStrictHint = true, bool $includeFollowupHints = true, ?string $projectMode = null): array
+{
+	$lines = [];
+	$strictHint = $includeStrictHint ? strict_project_error_hint($projectMode) : null;
+	if ($strictHint !== null && $strictHint !== '') {
+		$lines[] = $strictHint;
+	}
+	$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
+	$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
+	$sourceFile = is_string($diagnostic['source_file'] ?? null) ? (string) $diagnostic['source_file'] : '';
+	$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
+	$displayFile = $originalFile !== '' ? $originalFile : $sourceFile;
+	$displayLine = $originalLine > 0 ? $originalLine : $sourceLine;
+	if ($displayFile !== '' && $displayLine > 0) {
+		$relation = $displayFile === $originalFile ? trim((string) ($diagnostic['original_relation'] ?? 'exact')) : 'exact';
+		$prefix = $relation === 'exact' ? '' : ($relation === 'around' ? 'around ' : 'near ');
+		$lines[] = 'Runtime error in ' . $prefix . normalize_config_path(relative_path($projectRoot, $displayFile)) . ':' . $displayLine;
+	} else {
+		$lines[] = 'Runtime error while running the built program.';
+	}
+	$actual = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
+	$operation = trim((string) ($diagnostic['operation'] ?? ''));
+	$lines[] = build_runtime_failure_summary($diagnostic);
+	foreach (build_runtime_source_snippet_lines($projectRoot, $diagnostic) as $snippetLine) {
+		$lines[] = $snippetLine;
 	}
 	if ($actual !== '') {
 		$lines[] = 'Actual runtime kind: ' . $actual;
@@ -1317,9 +1384,17 @@ function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?s
 	if ($message !== '') {
 		$lines[] = 'Runtime message: ' . $message;
 	}
-	$lines[] = "Run 'scpp error' for more details.";
-	$lines[] = "Run 'scpp full-error' for the saved JSON report.";
-	return implode(PHP_EOL, $lines) . PHP_EOL;
+	if ($includeFollowupHints) {
+		$lines[] = "Run 'scpp error' for more details.";
+		$lines[] = "Run 'scpp full-error' for the saved JSON report.";
+	}
+	return $lines;
+}
+
+/** @param array<string,mixed> $diagnostic */
+function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?string $projectMode = null): string
+{
+	return implode(PHP_EOL, render_runtime_failure_lines($diagnostic, $projectRoot, true, true, $projectMode)) . PHP_EOL;
 }
 
 /** @param array<string,mixed> $diagnostic @return list<string> */
@@ -1456,15 +1531,20 @@ function handle_error_report(string $cwd, bool $full): void
 		return;
 	}
 	$output = [];
-	$output[] = (string) ($data['short_message'] ?? 'Unknown error.');
+	$diagnostics = is_array($data['diagnostics'] ?? null) ? $data['diagnostics'] : [];
 	$projectMode = trim((string) ($data['project_mode'] ?? ''));
-	if ($projectMode === 'strict') {
-		$output[] = 'Project mode: strict';
+	$primaryDiagnostic = is_array($diagnostics[0] ?? null) ? $diagnostics[0] : null;
+	if ($primaryDiagnostic !== null) {
+		foreach (render_runtime_failure_lines($primaryDiagnostic, $project['project_root'], false, false, $projectMode) as $line) {
+			$output[] = $line;
+		}
+	} else {
+		$output[] = (string) ($data['short_message'] ?? 'Unknown error.');
 	}
-	$output[] = 'Saved report: ' . normalize_config_path(relative_path($project['project_root'], $path));
 	if (isset($data['category'], $data['subcategory'])) {
 		$output[] = 'Category: ' . $data['category'] . ' / ' . $data['subcategory'];
 	}
+	$output[] = 'Saved report: ' . normalize_config_path(relative_path($project['project_root'], $path));
 	if (isset($data['duration_ms'])) {
 		$output[] = 'Duration: ' . (int) $data['duration_ms'] . 'ms';
 	}
@@ -1472,37 +1552,6 @@ function handle_error_report(string $cwd, bool $full): void
 	foreach ($guidance as $item) {
 		if (is_string($item) && $item !== '') {
 			$output[] = 'Next: ' . $item;
-		}
-	}
-	$diagnostics = is_array($data['diagnostics'] ?? null) ? $data['diagnostics'] : [];
-	foreach (array_slice($diagnostics, 0, 2) as $diagnostic) {
-		if (!is_array($diagnostic)) {
-			continue;
-		}
-		$message = trim((string) ($diagnostic['message'] ?? ''));
-			$originalFile = $diagnostic['original_file'] ?? null;
-			$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
-			if (is_string($originalFile) && $originalFile !== '' && $originalLine > 0) {
-				$line = 'Source: ' . normalize_config_path(relative_path($project['project_root'], $originalFile)) . ':' . $originalLine;
-				$expression = trim((string) ($diagnostic['expression'] ?? ''));
-				if ($expression !== '') {
-					$line .= ' - ' . $expression;
-				}
-				$output[] = $line;
-				$actualKind = trim((string) ($diagnostic['actual_runtime_kind'] ?? ''));
-				if ($actualKind !== '') {
-					$output[] = 'Actual runtime kind: ' . $actualKind;
-				}
-				continue;
-			}
-			$sourceFile = $diagnostic['source_file'] ?? null;
-			$sourceLine = isset($diagnostic['source_line']) ? (int) $diagnostic['source_line'] : 0;
-			if (is_string($sourceFile) && $sourceFile !== '' && $sourceLine > 0) {
-				$output[] = 'Source: ' . normalize_config_path(relative_path($project['project_root'], $sourceFile)) . ':' . $sourceLine . ($message !== '' ? ' - ' . $message : '');
-				continue;
-			}
-		if ($message !== '') {
-			$output[] = 'Detail: ' . $message;
 		}
 	}
 	if ($diagnostics === []) {
@@ -1553,6 +1602,27 @@ function handle_last_run_report(string $cwd, bool $full): void
 	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
 }
 
+function handle_explain_build_report(string $cwd): void
+{
+	[$project, $path, $data] = load_project_report($cwd, '.prism/last_run.json', 'last run');
+	$output = [];
+	$command = (string) ($data['command'] ?? 'unknown');
+	$output[] = 'Explain build: ' . $command;
+	$output[] = 'Saved report: ' . normalize_config_path(relative_path($project['project_root'], $path));
+	if ($command !== 'build' && $command !== 'run') {
+		$output[] = 'No build explanation available for this command.';
+		scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
+		return;
+	}
+
+	$details = is_array($data['details'] ?? null) ? $data['details'] : [];
+	$buildExplanation = is_array($details['build_explanation'] ?? null) ? $details['build_explanation'] : [];
+	foreach (render_build_explanation_lines($buildExplanation) as $line) {
+		$output[] = $line;
+	}
+	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
+}
+
 /**
  * @return array{array{project_root:string,config_path:string},string,array<string,mixed>}
  */
@@ -1579,7 +1649,7 @@ function load_project_report(string $cwd, string $relativePath, string $label): 
 
 /**
  * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options
- * @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string,runtime_library_dir:?string,generated_artifact_origins:array<string,string>}
+ * @return array{project_root:string,build_dir:string,output_name:string,output_path:string,fastcgi_output_path:?string,runtime_library_dir:?string,generated_artifact_origins:array<string,string>,build_explanation:array<string,mixed>}
  */
 function execute_build(string $projectRoot, string $configPath, array $options = []): array
 {
@@ -1624,6 +1694,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$generatedArtifactOrigins = [];
 	$transpiledCount = 0;
 	$skippedCount = 0;
+	$sourceRebuildReasons = [];
 
 	foreach ($projectContexts as $contextProjectRoot => &$projectContext) {
 		ensure_directory($projectContext['generated_dir']);
@@ -1646,16 +1717,16 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$emitProgramEntry = normalize_path($contextProjectRoot) === normalize_path($projectRoot) && $phpPathAbs === $entrypointAbs;
 			$meta = build_file_meta($phpPathAbs);
 			$previous = is_array($projectContext['state']['files'][$relativePhp] ?? null) ? $projectContext['state']['files'][$relativePhp] : null;
-			$needsTranspile = !is_array($previous)
-				|| !isset($previous['size'], $previous['mtime'], $previous['content_hash'], $previous['generator_signature'])
-				|| (string) $previous['generator_signature'] !== $generatorSignature
-				|| (int) $previous['size'] !== $meta['size']
-				|| (string) $previous['content_hash'] !== $meta['content_hash']
-				|| !is_file($generatedHeader)
-				|| !is_file($generatedCpp)
-				|| (bool) ($previous['emit_program_entry'] ?? false) !== $emitProgramEntry
-				|| (!$emitProgramEntry && generated_cpp_contains_program_entry($generatedCpp))
-				|| ((bool) ($previous['has_export_manifest'] ?? false) && !is_file($generatedExportManifest));
+			$transpileReasons = collect_transpile_reasons(
+				$previous,
+				$meta,
+				$generatorSignature,
+				$generatedHeader,
+				$generatedCpp,
+				$emitProgramEntry,
+				$generatedExportManifest
+			);
+			$needsTranspile = $transpileReasons !== [];
 
 			$cppFile = null;
 			if ($needsTranspile) {
@@ -1673,8 +1744,20 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				write_generated_line_map_file($generatedCpp . '.line.tsv', $cppFile->sourceLineMap);
 				write_export_manifest_file($generatedExportManifest, $cppFile->exportManifest);
 				$transpiledCount++;
+				$sourceRebuildReasons[] = [
+					'project_root' => normalize_path($contextProjectRoot),
+					'path' => normalize_config_path(relative_path($contextProjectRoot, $phpPathAbs)),
+					'action' => 'transpiled',
+					'reasons' => $transpileReasons,
+				];
 			} else {
 				$skippedCount++;
+				$sourceRebuildReasons[] = [
+					'project_root' => normalize_path($contextProjectRoot),
+					'path' => normalize_config_path(relative_path($contextProjectRoot, $phpPathAbs)),
+					'action' => 'reused',
+					'reasons' => ['source metadata and generated artifacts unchanged'],
+				];
 			}
 
 			$hasExportManifest = is_file($generatedExportManifest);
@@ -1852,6 +1935,15 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'compile_dependencies' => $options['compile_dependencies'],
 				'ninja_command' => $command,
 				'diagnostic_count' => count($diagnostics),
+				'build_explanation' => build_explanation_details(
+					$projectRoot,
+					$options,
+					$transpiledCount,
+					$skippedCount,
+					$sourceRebuildReasons,
+					[],
+					$status
+				),
 			]
 		);
 		if ($diagnostics !== []) {
@@ -1942,6 +2034,15 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			'skipped_count' => $skippedCount,
 			'rebuilt_outputs' => array_values(array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)),
 			'ninja_command' => $command,
+			'build_explanation' => build_explanation_details(
+				$projectRoot,
+				$options,
+				$transpiledCount,
+				$skippedCount,
+				$sourceRebuildReasons,
+				$rebuiltOutputs,
+				0
+			),
 		]
 	);
 	echo 'Build completed: ' . normalize_config_path(relative_path($projectRoot, $outputPath)) . PHP_EOL;
@@ -1961,6 +2062,15 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			? normalize_path(dirname($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path'])))
 			: null,
 		'generated_artifact_origins' => $generatedArtifactOrigins,
+		'build_explanation' => build_explanation_details(
+			$projectRoot,
+			$options,
+			$transpiledCount,
+			$skippedCount,
+			$sourceRebuildReasons,
+			$rebuiltOutputs,
+			0
+		),
 	];
 }
 
@@ -3139,6 +3249,184 @@ function write_generated_line_map_file(string $path, array $lineMap): void
 		$lines[] = (string) ($index + 1) . "\t" . (string) max(1, $originalLine) . "\t" . $relation;
 	}
 	write_text_file($path, implode(PHP_EOL, $lines) . PHP_EOL);
+}
+
+/**
+ * @param array<string,mixed>|null $previous
+ * @param array{size:int,mtime:int,content_hash:string} $meta
+ * @return list<string>
+ */
+function collect_transpile_reasons(
+	?array $previous,
+	array $meta,
+	string $generatorSignature,
+	string $generatedHeader,
+	string $generatedCpp,
+	bool $emitProgramEntry,
+	string $generatedExportManifest,
+): array {
+	$reasons = [];
+	if (!is_array($previous)) {
+		$reasons[] = 'new source file';
+		return $reasons;
+	}
+	if (!isset($previous['size'], $previous['mtime'], $previous['content_hash'], $previous['generator_signature'])) {
+		$reasons[] = 'cached source metadata incomplete';
+	}
+	if ((string) ($previous['generator_signature'] ?? '') !== $generatorSignature) {
+		$reasons[] = 'generator signature changed';
+	}
+	if ((int) ($previous['size'] ?? -1) !== $meta['size']) {
+		$reasons[] = 'source file size changed';
+	}
+	if ((string) ($previous['content_hash'] ?? '') !== $meta['content_hash']) {
+		$reasons[] = 'source file content changed';
+	}
+	if (!is_file($generatedHeader)) {
+		$reasons[] = 'generated header missing';
+	}
+	if (!is_file($generatedCpp)) {
+		$reasons[] = 'generated source missing';
+	}
+	if ((bool) ($previous['emit_program_entry'] ?? false) !== $emitProgramEntry) {
+		$reasons[] = $emitProgramEntry
+			? 'file became the selected entrypoint'
+			: 'file is no longer the selected entrypoint';
+	}
+	if (!$emitProgramEntry && is_file($generatedCpp) && generated_cpp_contains_program_entry($generatedCpp)) {
+		$reasons[] = 'generated source still contains a stale program entry';
+	}
+	if ((bool) ($previous['has_export_manifest'] ?? false) && !is_file($generatedExportManifest)) {
+		$reasons[] = 'generated export manifest missing';
+	}
+	return $reasons;
+}
+
+/**
+ * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options
+ * @param list<array<string,mixed>> $sourceRebuildReasons
+ * @param list<string> $rebuiltOutputs
+ * @return array<string,mixed>
+ */
+function build_explanation_details(
+	string $projectRoot,
+	array $options,
+	int $transpiledCount,
+	int $skippedCount,
+	array $sourceRebuildReasons,
+	array $rebuiltOutputs,
+	int $exitCode,
+): array {
+	$runtimeReasons = $options['compile_runtime']
+		? [($options['force_runtime_rebuild'] ?? false) ? 'runtime rebuild forced for this build' : 'runtime compilation requested for this build']
+		: ['reusing existing runtime artifact by default'];
+	$dependencyReasons = $options['compile_dependencies']
+		? ['dependency compilation requested for this build']
+		: ['reusing dependency artifacts by default'];
+
+	$rebuilt = [];
+	foreach ($rebuiltOutputs as $path) {
+		$rebuilt[] = normalize_config_path(relative_path($projectRoot, $path));
+	}
+
+	return [
+		'status' => $exitCode === 0 ? 'success' : 'failure',
+		'transpiled_count' => $transpiledCount,
+		'skipped_count' => $skippedCount,
+		'runtime' => [
+			'action' => $options['compile_runtime'] ? 'rebuild' : 'reuse',
+			'reasons' => $runtimeReasons,
+		],
+		'dependencies' => [
+			'action' => $options['compile_dependencies'] ? 'rebuild' : 'reuse',
+			'reasons' => $dependencyReasons,
+		],
+		'sources' => array_values($sourceRebuildReasons),
+		'rebuilt_outputs' => $rebuilt,
+	];
+}
+
+/**
+ * @param array<string,mixed> $details
+ * @return list<string>
+ */
+function render_build_explanation_lines(array $details): array
+{
+	$lines = [];
+	$lines[] = 'Build status: ' . (string) ($details['status'] ?? 'unknown');
+	$lines[] = 'PHP transpile decisions: ' . (int) ($details['transpiled_count'] ?? 0) . ' transpiled, ' . (int) ($details['skipped_count'] ?? 0) . ' reused';
+
+	$runtime = is_array($details['runtime'] ?? null) ? $details['runtime'] : [];
+	$runtimeReasons = is_array($runtime['reasons'] ?? null) ? $runtime['reasons'] : [];
+	$lines[] = 'Runtime: ' . (string) ($runtime['action'] ?? 'unknown') . format_reason_suffix($runtimeReasons);
+
+	$dependencies = is_array($details['dependencies'] ?? null) ? $details['dependencies'] : [];
+	$dependencyReasons = is_array($dependencies['reasons'] ?? null) ? $dependencies['reasons'] : [];
+	$lines[] = 'Dependencies: ' . (string) ($dependencies['action'] ?? 'unknown') . format_reason_suffix($dependencyReasons);
+
+	$sources = is_array($details['sources'] ?? null) ? $details['sources'] : [];
+	$transpiled = [];
+	$reused = [];
+	foreach ($sources as $source) {
+		if (!is_array($source)) {
+			continue;
+		}
+		$path = (string) ($source['path'] ?? '(unknown)');
+		$reasons = is_array($source['reasons'] ?? null) ? $source['reasons'] : [];
+		$line = $path . ' -> ' . (string) ($source['action'] ?? 'unknown') . format_reason_suffix($reasons);
+		if (($source['action'] ?? '') === 'transpiled') {
+			$transpiled[] = $line;
+			continue;
+		}
+		$reused[] = $line;
+	}
+
+	if ($transpiled === []) {
+		$lines[] = 'Sources transpiled: none';
+	} else {
+		$lines[] = 'Sources transpiled:';
+		foreach ($transpiled as $line) {
+			$lines[] = '  - ' . $line;
+		}
+	}
+
+	if ($reused === []) {
+		$lines[] = 'Sources reused: none';
+	} else {
+		$lines[] = 'Sources reused:';
+		foreach ($reused as $line) {
+			$lines[] = '  - ' . $line;
+		}
+	}
+
+	$rebuiltOutputs = is_array($details['rebuilt_outputs'] ?? null) ? $details['rebuilt_outputs'] : [];
+	if ($rebuiltOutputs === []) {
+		$lines[] = 'Outputs rebuilt: none (up-to-date)';
+	} else {
+		$lines[] = 'Outputs rebuilt: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $rebuiltOutputs));
+	}
+
+	return $lines;
+}
+
+/** @param list<mixed> $reasons */
+function format_reason_suffix(array $reasons): string
+{
+	$clean = [];
+	foreach ($reasons as $reason) {
+		if (!is_string($reason)) {
+			continue;
+		}
+		$reason = trim($reason);
+		if ($reason === '') {
+			continue;
+		}
+		$clean[] = $reason;
+	}
+	if ($clean === []) {
+		return '';
+	}
+	return ' (' . implode('; ', $clean) . ')';
 }
 
 function write_last_error_report(

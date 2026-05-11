@@ -51,6 +51,8 @@ Typical approved explicit typed boundaries:
 
 - typed local assignment
 - typed property assignment
+- typed container element assignment when the receiving slot type is explicit, such as `hash<T>[...]`
+- typed append destination when the receiving element type is explicit, such as `vector<T>[]`
 - typed by-value function or method parameter
 - typed return
 - explicit cast

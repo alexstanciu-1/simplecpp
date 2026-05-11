@@ -92,7 +92,7 @@ scpp build
 scpp build --entry=tests/php/sample.phs
 ```
 
-`scpp build` composes `.phs` files inside the same project. Do not write PHP++ source-level `require` or `include` statements for generated `.hpp` files.
+`scpp build` composes `.phs` files inside the same project. Do not use source-level `require`, `require_once`, `include`, or `include_once` for project composition, and do not name generated `.hpp` files from source.
 
 By default, `scpp build` reuses existing runtime and dependency artifacts. Build those layers explicitly when needed:
 
@@ -358,6 +358,8 @@ Use this order:
 | vector property with class element | `public $properties /** vector<model_property> */ = [];` |
 | vector literal needs explicit typed context | `$v /** vector<int> */ = [1, 2, 3];` |
 | typed read from dynamic value | `$count /** int */ = $data["count"];` |
+| typed hash slot from dynamic value | `$counts hash<int> = []; $counts["id"] = $row["id"];` |
+| typed vector append from dynamic value | `$items vector<int> = []; $items[] = $row["count"];` |
 | typed append on vector | `$items[] = 4;` |
 | wrapper-friendly coalesce | `$name = $maybe_name ?? "guest";` |
 | `foreach` value | `foreach ($data as $v) { ... }` |
@@ -383,6 +385,8 @@ Use this order:
 | Prefer | Over |
 | --- | --- |
 | `$count int = $row["count"];` | `$count = $row["count"];` |
+| `$counts["id"] = $row["id"];` where `$counts` is `hash<int>` | `$counts["id"] = (int) $row["id"];` |
+| `$items[] = $row["count"];` where `$items` is `vector<int>` | `$items[] = (int) $row["count"];` |
 | `$count /** int */ = $row["count"];` | `$count = $row["count"];` |
 | `if ($status === "ready")` | `if ($status)` |
 | `vector<T>` for typed lists | dynamic list/table when not needed |
@@ -405,6 +409,33 @@ In practice:
 - `hash<int>` is a better fit than a dynamic object-like table when keys are known strings and values are all ints.
 - `hash<string, int>` is the supported two-argument generic form when the key family itself is intentionally typed.
 - `mixed_t` remains appropriate for decoded JSON, loose interop surfaces, and truly dynamic payloads.
+
+Stable-left-side rule in strict code:
+
+- if the receiving side already has a stable explicit destination type, that destination is enough
+- this includes locals, properties, typed hash slots, typed vector appends, typed arguments, and typed returns
+- if the destination is explicitly `mixed`, no cast is needed and the value remains `mixed`
+
+Examples:
+
+```php
+$name string = $row["name"];
+```
+
+```php
+$counts hash<int> = [];
+$counts["id"] = $row["id"];
+```
+
+```php
+$items vector<int> = [];
+$items[] = $row["count"];
+```
+
+```php
+$meta hash<mixed> = [];
+$meta["title"] = $row["title"];
+```
 
 ## Typed shorthand note
 
