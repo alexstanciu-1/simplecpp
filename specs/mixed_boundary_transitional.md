@@ -9,6 +9,8 @@ This document records the currently accepted transitional behavior around implic
 The current runtime permits implicit conversion from `mixed_t` to native types in certain contexts, including:
 - assignment to typed locals
 - typed property assignment
+- assignment to typed container slots such as `hash<T>[...]`
+- append into typed containers such as `vector<T>[]`
 - typed returns
 - typed function argument binding
 

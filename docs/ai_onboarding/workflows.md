@@ -52,6 +52,7 @@ When the task touches multi-project composition, also check:
 
 - `dependencies` versus `libraries` usage in `prism.json`
 - whether dependency-visible declarations are intentionally marked with `/** @lib-export */`
+- whether any source-level `require`, `require_once`, `include`, or `include_once` usage is an outdated composition pattern that should be removed from strict-project guidance
 - whether the change belongs in project build orchestration or in generator export/header composition
 
 Quick shape to keep in mind:

@@ -19,6 +19,10 @@ $fixtures = [
 		'input' => $root . '/samples/know_how/pre_tokenizer_namespaced_types.phs',
 		'expected' => $root . '/samples/know_how/pre_tokenizer_namespaced_types.expected.json',
 	],
+	[
+		'input' => $root . '/samples/know_how/pre_tokenizer_nested_generics.phs',
+		'expected' => $root . '/samples/know_how/pre_tokenizer_nested_generics.expected.json',
+	],
 ];
 
 $script = __DIR__ . '/check_pre_tokenizer_fixture.php';

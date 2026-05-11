@@ -1,0 +1,21 @@
+{
+    "source": "class NestedGenericDemo {\n\tpublic function build_map() {\n\t\t$child_types /** hash<vector<string>> */ = [];\n\t\treturn $child_types;\n\t}\n}\n",
+    "annotations": [
+        {
+            "kind": "method_return",
+            "name": null,
+            "type": "hash<vector<string>>",
+            "line": 2,
+            "startOffset": 54,
+            "endOffset": 76
+        },
+        {
+            "kind": "local",
+            "name": "child_types",
+            "type": "hash<vector<string>>",
+            "line": 3,
+            "startOffset": 94,
+            "endOffset": 114
+        }
+    ]
+}

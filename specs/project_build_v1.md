@@ -258,6 +258,21 @@ The initial registry includes:
 - `profiles`
 - `modules`
 - `dependencies`
+
+## `scpp last-run`, `scpp full-last-run`, and `scpp explain-build` behavior
+
+`scpp last-run` prints a short human-readable summary of the most recent saved build-oriented command.
+
+`scpp full-last-run` prints the complete saved `.prism/last_run.json` payload.
+
+`scpp explain-build` reads `.prism/last_run.json` and explains:
+
+- whether runtime and dependencies were rebuilt or reused
+- which source files were transpiled versus reused
+- why a transpile happened when a source file rebuilt
+- which outputs changed in the most recent saved build
+
+The saved `.prism/last_run.json` payload should include build explanation details gathered during `execute_build()` so the explanation command does not need to reverse-engineer the build after the fact.
 - `examples`
 - `authoring`
 - `gotchas`
@@ -268,7 +283,7 @@ This command is a documentation discoverability helper. It does not change langu
 
 ## Project dependencies
 
-Project composition is controlled by `scpp build`, not by source-language `require` or `include`.
+Project composition is controlled by `scpp build`, not by source-language `require`, `require_once`, `include`, or `include_once`.
 
 `prism.json` may declare:
 
@@ -294,8 +309,9 @@ Minimal example:
 For v1, the dependency contract is:
 
 - dependencies are explicit and project-level, not file-level
-- source files inside the same project may refer to same-project declarations discovered by `scpp build` without source-language `require` or `include` statements
-- source files in the root project do not need `require` or `include` statements to activate dependency projects
+- source files inside the same project may refer to same-project declarations discovered by `scpp build` without source-language `require`, `require_once`, `include`, or `include_once` statements
+- source files in the root project do not need `require`, `require_once`, `include`, or `include_once` statements to activate dependency projects
+- in the current strict-project model, those source-language file-inclusion forms should not be used for project composition
 - dependency projects may declare their own `dependencies`, and `scpp build` must resolve that graph transitively
 - duplicate dependency visits should be deduplicated by normalized project root
 - symbol collisions across participating projects must fail clearly during build or link
@@ -328,7 +344,7 @@ The v1 export contract is:
 
 - `@lib-export` marks a declaration as part of the dependency-visible project surface
 - dependency projects compose exported declarations into a generated project header under `.prism/generated/__project.hpp`
-- consuming projects receive dependency project headers through `scpp build`; they do not activate dependencies through source-language `require` or `include`
+- consuming projects receive dependency project headers through `scpp build`; they do not activate dependencies through source-language `require`, `require_once`, `include`, or `include_once`
 - unexported declarations remain project-internal by default for cross-project use
 
 The current supported exported declaration kinds are:

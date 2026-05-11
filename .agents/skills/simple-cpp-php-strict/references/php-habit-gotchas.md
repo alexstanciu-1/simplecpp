@@ -45,7 +45,7 @@ If the project is legacy, use legacy guidance instead of this skill.
 
 ## Includes And Project Shape
 
-Do not use PHP `require`, `require_once`, `include`, or `include_once` as the default project composition mechanism.
+Do not use PHP `require`, `require_once`, `include`, or `include_once` for current strict-project composition.
 
 For same-project files, let `scpp build` discover and compose `.phs` units. Do not include generated `.hpp` files from PHP++ source.
 
