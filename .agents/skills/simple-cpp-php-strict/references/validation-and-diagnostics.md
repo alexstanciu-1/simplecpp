@@ -95,6 +95,14 @@ Use these as the normal first pass:
 - `scpp last-run`: compact most recent build/run context.
 - `scpp full-last-run`: full saved JSON run report.
 
+Use them for different questions:
+
+- `scpp error`: first compact summary of the failure you just hit
+- `scpp full-error`: full structured runtime/build report for field-level inspection
+- `scpp last-run`: compact execution/build context, useful when the question is what command or phase actually ran
+- `scpp full-last-run`: full run metadata and command context
+- `scpp explain-build`: rebuild causality and build orchestration questions, not runtime shape questions
+
 The toolchain stores diagnostic artifacts under `.prism/`, including:
 
 - `.prism/last_error.json`
@@ -109,6 +117,15 @@ Compiler diagnostics may be remapped from generated C++ back to original `.phs` 
 Prefer the remapped original source location. Inspect generated C++ only when the source looks valid and the failure suggests a lowering or runtime-boundary issue.
 
 Strict runtime type failures preserve structured runtime details such as the failure code and actual runtime kind. When the runtime report includes a generated location that can be remapped through `.line.tsv`, the saved report should also expose `original_file` / `original_line`; inspect generated C++ and line maps only when the saved report still does not identify the authoring location strongly enough.
+
+For a normal strict runtime-debug loop, use this order:
+
+1. run the failing command with `scpp run`
+2. read `scpp error`
+3. inspect `original_file`, `original_line`, `expected_type`, `actual_runtime_kind`, and `operation`
+4. add `dbg(...)` near the typed boundary if the runtime shape is still unclear
+5. use `dbg_set(...)` / `dbg_if(...)` when the interesting value only appears deep in lower calls
+6. inspect `.prism/last_error.json`, `.line.tsv`, or generated C++ only when the saved diagnostics still do not answer the question
 
 ## Strict Debug Helpers
 
@@ -216,6 +233,28 @@ Use the smallest useful loop:
 4. Check typed boundaries around `mixed`, wrappers, nullable values, and falseable results.
 5. Inspect generated artifacts and line maps if remapped diagnostics point to lowering behavior.
 6. Escalate to local specs only when behavior is unclear or appears unsupported.
+
+Runtime-debug example:
+
+```php
+$row = json_decode($text);
+echo "name=" . $row["name"] . "\n";
+```
+
+If `scpp error` reports a cast failure with `actual_runtime_kind=shared_hash_t`, the normal next step is:
+
+```php
+dbg("name", $row["name"], DBG_SHAPE | DBG_TYPE);
+```
+
+Then either guard the field or stabilize it intentionally into a typed local:
+
+```php
+if (isset($row["name"])) {
+	$name string = $row["name"];
+	echo "name=" . $name . "\n";
+}
+```
 
 Useful local docs:
 
