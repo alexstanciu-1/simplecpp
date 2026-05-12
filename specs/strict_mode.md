@@ -16,7 +16,10 @@ Future major versions may introduce enforcement based on this profile.
 
 Strict mode aims to:
 
+- favor explicit, readable code over the shortest possible code
+- support long-lived projects and continuous integration work where clarity pays off over time
 - reduce propagation of `mixed_t`
+- encourage intentional handling of dynamic entry boundaries
 - encourage early resolution of `nullable<T>` and `result*` wrappers
 - minimize implicit conversions
 - improve clarity and predictability of operator behavior
@@ -28,6 +31,10 @@ Strict mode aims to:
 ### 1. Stabilize dynamic values early
 
 When working with `mixed_t`, prefer resolving to a concrete type early.
+
+This does not mean every line of strict code should feel defensive.
+Most strict code should already be typed.
+The important work is usually at a small number of boundaries where dynamic data enters an otherwise typed flow.
 
 If the left side already provides a stable explicit destination type, that destination is explicit enough. A separate cast is usually unnecessary.
 
@@ -62,6 +69,9 @@ For:
 - `result_or_false`
 
 Prefer early unpacking (e.g. via `take(...)`) unless the wrapper itself is required for subsequent logic.
+
+The goal is explicit handling of operations that may fail, be absent, or carry an alternate result state.
+Helpers such as `take(...)` exist so success, failure, absence, and usable values are handled deliberately instead of being blurred into ordinary dynamic state.
 
 ---
 
@@ -206,7 +216,9 @@ The following are tolerated:
 
 Strict mode favors:
 
-- early type stabilization
+- explicit code at important boundaries
+- mostly ordinary typed programming after those boundaries are handled
+- early type stabilization where dynamic values actually enter the flow
 - early wrapper resolution
 - minimal propagation of dynamic state
 - explicit operator semantics
