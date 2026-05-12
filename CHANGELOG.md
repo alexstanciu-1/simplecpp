@@ -9,6 +9,25 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.38 - 2026-05-12
+
+### Additions
+
+- Added regression coverage that locks in the reuse-mode dependency hotfix contract for stale dependency artifacts.
+
+### Fixes
+
+- Fixed the build reuse integration regression test so it now expects `scpp build` reuse mode to fail early and clearly when dependency artifacts are stale, instead of asserting the old silent-success behavior.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- If dependency sources changed and reusable dependency artifacts are stale, default reuse mode should now be expected to stop early and direct the user to rerun with `--build-dependencies`.
+- Agent Skill review completed: no `.agents/skills/*` updates are required for this hotfix because the existing guidance already matches the current reuse-mode behavior.
+
 ## 0.1.37 - 2026-05-11
 
 ### Additions

@@ -61,7 +61,9 @@ final class ScppBuildReuseIntegrationTest
 			$this->sleepForTimestamp();
 			$this->write($lib . '/main.phs', "function helper_value(): int { return 8; }\n");
 			$depReuse = scpp_run_build_service($app, $app . '/prism.json');
-			$this->assertSame(true, $depReuse['ok'], 'service build with changed dependency source should still succeed in reuse mode');
+			$this->assertSame(false, $depReuse['ok'], 'service build with changed dependency source should fail clearly in reuse mode');
+			$this->assertContains('Dependency compilation is in reuse-only mode', $depReuse['error'] ?? '', 'reuse-mode failure should explain why dependency artifacts cannot be reused');
+			$this->assertContains('Next: Re-run with --build-dependencies', $depReuse['error'] ?? '', 'reuse-mode failure should point users at the dependency rebuild flag');
 			$this->assertSame($depBeforeReuse, $this->mtime($depObject), 'dependency object should remain untouched until dependency compilation is requested');
 
 			$this->sleepForTimestamp();
