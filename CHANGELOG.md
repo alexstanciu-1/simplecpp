@@ -9,6 +9,27 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.39 - 2026-05-12
+
+### Additions
+
+- Added explicit strict-mode philosophy guidance to the strict quick-learn, the strict-mode guidance profile, and the strict Agent Skill.
+
+### Fixes
+
+- Clarified that strict mode is aimed at explicit, durable code for long-lived projects rather than the shortest possible code.
+- Clarified that most strict code should stay typed after a small number of well-chosen entry boundaries, instead of framing strict mode as constant stabilization work.
+- Clarified the role of `take(...)` as an explicit boundary helper for wrapper-shaped results, absence, and failure states.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Strict docs and Agent Skill guidance now describe strict mode more explicitly as a long-term readability and maintenance posture, with special attention to typed boundaries and explicit wrapper handling.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated for this hotfix.
+
 ## 0.1.38 - 2026-05-12
 
 ### Additions
