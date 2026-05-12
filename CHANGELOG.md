@@ -9,6 +9,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.40 - 2026-05-12
+
+### Additions
+
+- Added a safer browser-test-ui subprocess environment so PHP, Ninja, and compiler runs no longer inherit unrelated Apache or PHP-FPM request variables.
+
+### Fixes
+
+- Fixed the browser test UI so headerless `.phs` manual input is executed through the same PHP-compatibility wrapper used by the real Prism++ loader, instead of being echoed back as raw source text.
+- Fixed the browser test UI AST and token debug fixture path so pre-tokenized manual input is parsed through the shared PHP-compatibility adapter instead of a raw headerless parse path.
+- Fixed the browser test UI manual-input sandbox flow so a stale legacy `sandbox/src/alt.php` scaffold file no longer poisons unrelated one-file `scpp build` runs.
+- Fixed the browser test UI compile/run path so the stable `/simple-cpp/stable/test/` harness successfully builds and executes the generated C++ sample again.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- The browser test UI now forwards only a small safe allowlist of environment variables into child PHP, Ninja, and compiler processes; ad hoc CGI-style request variables are no longer part of that subprocess contract.
+- Agent Skill review completed: no `.agents/skills/*` updates are required for this hotfix because the existing guidance already matches the current authoring and diagnostics workflow.
+
 ## 0.1.39 - 2026-05-12
 
 ### Additions
