@@ -38,6 +38,18 @@ Think of it as:
 In this document, Strict Mode means the strict PHP++ / PHS profile and its visible library surface.
 It is not full language enforcement yet, but it should shape how code is written.
 
+## Strict-Mode Philosophy
+
+Strict mode is not designed for the shortest possible code.
+It is designed for explicit, readable code that holds up well in long-lived projects.
+
+Most strict code should already be typed.
+The important work is at a small number of boundaries where dynamic data, nullable values, or wrapper-shaped results enter the flow.
+
+After those boundaries are handled intentionally, the rest of the program should read mostly like ordinary typed programming.
+
+Helpers such as `take(...)` exist to keep success, failure, absence, and usable values explicit at those boundaries.
+
 ## Reading This Document
 
 - `Guaranteed`: supported surface or behavior you can rely on
@@ -362,12 +374,13 @@ Use this order:
 
 - Write PHP++ / PHS source, not generated C++.
 - Prefer explicit types at meaningful boundaries.
+- Expect most strict code to stay typed after a small number of well-chosen entry boundaries.
 - Avoid `mixed_t` when the shape is known.
 - Prefer `vector<T>` for typed sequential data when possible.
 - Prefer `hash<T>` for typed keyed data when string keys are the natural shape.
 - Use `hash<T, T_KEY>` when the key family is intentionally typed and not the default string-key shape.
 - Use `mixed_t` only when the value is genuinely dynamic.
-- Resolve wrappers early: `nullable<T>`, `result<T>`, `result_or_false<T>`, `result_or_bool<T>`.
+- Resolve wrappers near meaningful boundaries: `nullable<T>`, `result<T>`, `result_or_false<T>`, `result_or_bool<T>`.
 - Keep `null`, `false`, and error as separate states.
 - Prefer `===` over loose comparison.
 - Treat the strict library surface as its own API, not as renamed PHP builtins.

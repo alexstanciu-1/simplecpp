@@ -40,6 +40,10 @@ Prefer local repository docs over web docs when both are available.
 
 Write PHP++ source, not generated C++.
 
+Treat strict mode as a readability and durability posture, not as a quick-code posture.
+Most strict code should already be typed after a small number of well-chosen boundaries.
+The main job is to identify those boundaries clearly and handle wrapper/dynamic states intentionally.
+
 - Create new source as `.phs`.
 - Start source directly with declarations or executable code.
 - Do not add `<?php`.
@@ -48,10 +52,10 @@ Write PHP++ source, not generated C++.
 - Use `vector<T>` for typed sequential data.
 - Use `hash<T>` for typed string-keyed data.
 - Use `hash<T, T_KEY>` for intentionally typed key families.
-- Stabilize dynamic values early at explicit typed boundaries.
+- Stabilize dynamic values early at explicit typed boundaries, but do not make strict mode sound like every line needs defensive handling.
 - Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
 - If the destination is explicitly `mixed`, no cast is needed and the value remains `mixed`.
-- Resolve wrappers near meaningful boundaries with `take(...)`.
+- Resolve wrappers near meaningful boundaries with `take(...)` so success, failure, absence, and usable values stay explicit.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.
 - Use strict profile APIs such as `fs_get`, `fs_put`, `str_strlen`, `io_open`, `json_encode`, and `dt_format`; do not substitute legacy PHP names unless a local strict doc explicitly says the helper remains shared.
