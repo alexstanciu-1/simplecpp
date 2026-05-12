@@ -1,6 +1,7 @@
 <?php
 
 use Scpp\S2S\PreTokenizer\PreTokenizer;
+use Scpp\S2S\Support\PhpParserCompatibility;
 use Scpp\S2S\Transpiler;
 
 header('Content-Type: application/json; charset=utf-8');
@@ -133,6 +134,7 @@ try {
 	ensureSandboxRootExists($sandboxRoot);
 	$selectedSandboxPath = (string) ($data['selected_sandbox_path'] ?? '');
 	$entrypointRelativePath = resolveUiEntrypointRelativePath($sandboxRoot, $selectedSandboxPath);
+	purgeLegacyManualSandboxSources($sandboxRoot, $selectedSandboxPath, $entrypointRelativePath);
 	$entrypointAbsolutePath = resolveSandboxPathInsideRoot($sandboxRoot, $entrypointRelativePath, false);
 	ensureDirectoryExists(dirname($entrypointAbsolutePath));
 	if (file_put_contents($entrypointAbsolutePath, $phpCode) === false) {
@@ -183,8 +185,9 @@ try {
 	$phpPath = $entrypointAbsolutePath;
 	$preTokenizer = new PreTokenizer();
 	$preTokenized = $preTokenizer->rewrite($phpCode);
-	$phpRuntimePath = buildUiPretokenizedRuntimePath($phpPath, $preTokenized->source);
-	if (file_put_contents($phpRuntimePath, $preTokenized->source) === false) {
+	$phpCompatibleSource = PhpParserCompatibility::wrapSource($preTokenized->source);
+	$phpRuntimePath = buildUiPretokenizedRuntimePath($phpPath, $phpCompatibleSource);
+	if (file_put_contents($phpRuntimePath, $phpCompatibleSource) === false) {
 		throw new RuntimeException('Failed to save pre-tokenized PHP runtime file.');
 	}
 
@@ -199,8 +202,8 @@ try {
 				'source' => $preTokenized->source,
 				'annotations' => $preTokenized->annotations,
 			],
-			'tokens' => \token_get_all($preTokenized->source),
-			'ast' => ast\parse_code($preTokenized->source, $astVersion),
+			'tokens' => PhpParserCompatibility::tokenizeSource($preTokenized->source),
+			'ast' => ast\parse_code($phpCompatibleSource, $astVersion),
 		];
 
 		return [
@@ -606,6 +609,40 @@ function buildUiPretokenizedRuntimePath(string $sourcePath, string $rewrittenSou
 	ensureDirectoryExists($tempRoot);
 	$hash = sha1($sourcePath . "\n" . $rewrittenSource);
 	return $tempRoot . '/' . $hash . '.php';
+}
+
+function purgeLegacyManualSandboxSources(string $root, string $selectedSandboxPath, string $entrypointRelativePath): void
+{
+	if (trim($selectedSandboxPath) !== '') {
+		return;
+	}
+
+	$legacySourcePath = normalize_path($root . '/src/alt.php');
+	if (!is_file($legacySourcePath)) {
+		return;
+	}
+
+	$legacySource = file_get_contents($legacySourcePath);
+	if (!is_string($legacySource)) {
+		return;
+	}
+
+	$normalizedLegacySource = str_replace("\r\n", "\n", trim($legacySource));
+	if ($normalizedLegacySource !== "<?php\necho 9, \"\\n\";") {
+		return;
+	}
+
+	$normalizedEntrypoint = normalizeSandboxRelativePath($entrypointRelativePath);
+	if ($normalizedEntrypoint === 'src/alt.php') {
+		return;
+	}
+
+	@unlink($legacySourcePath);
+	$legacySourceDir = dirname($legacySourcePath);
+	$remainingEntries = @scandir($legacySourceDir);
+	if (is_array($remainingEntries) && count(array_diff($remainingEntries, ['.', '..'])) === 0) {
+		@rmdir($legacySourceDir);
+	}
 }
 
 function resolveSandboxPathInsideRoot(string $root, string $relativePath, bool $mustExist = true): string
@@ -1518,6 +1555,9 @@ function buildProcessEnvironment(array $extra = []): array
 			if (is_array($value) || is_object($value) || $value === null) {
 				continue;
 			}
+			if (!shouldForwardProcessEnvironmentKey($key)) {
+				continue;
+			}
 			$env[$key] = (string) $value;
 		}
 	}
@@ -1532,6 +1572,48 @@ function buildProcessEnvironment(array $extra = []): array
 	}
 	$env['PATH'] = buildEffectivePath($env['PATH'] ?? null);
 	return $env;
+}
+
+function shouldForwardProcessEnvironmentKey(string $key): bool
+{
+	static $exact = [
+		'PATH' => true,
+		'HOME' => true,
+		'USER' => true,
+		'LOGNAME' => true,
+		'LANG' => true,
+		'LC_ALL' => true,
+		'LC_CTYPE' => true,
+		'TMPDIR' => true,
+		'TMP' => true,
+		'TEMP' => true,
+		'SystemRoot' => true,
+		'COMSPEC' => true,
+		'PATHEXT' => true,
+		'WINDIR' => true,
+	];
+	static $prefixes = [
+		'SCPP_',
+		'SCCACHE_',
+		'CCACHE_',
+		'ASAN_',
+		'UBSAN_',
+		'LSAN_',
+		'MSAN_',
+		'TSAN_',
+	];
+
+	if (isset($exact[$key])) {
+		return true;
+	}
+
+	foreach ($prefixes as $prefix) {
+		if (str_starts_with($key, $prefix)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function commandExistsOnPath(string $command): bool
