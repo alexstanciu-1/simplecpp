@@ -9,6 +9,31 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.43 - 2026-05-16
+
+### Additions
+
+- Added an opt-in `curl` runtime module backed by libcurl, with explicit build-time detection and clear failure messages when the module is enabled but libcurl support is unavailable.
+- Added strict `curl_*` authoring support for handle-oriented request flows, including local file transport, local HTTP server flows, and opt-in external HTTPS coverage.
+- Added legacy PHP-curl wrapper coverage over the first-pass runtime surface so legacy-profile projects can exercise matching `curl_*` flows for file, HTTP GET, POST, and JSON round-trips.
+- Added curl-focused native runtime tests, strict sample projects, strict and legacy PHP test suites, and harness support for per-test runtime modules, local PHP test servers, and opt-in external-network runs.
+
+### Fixes
+
+- Fixed runtime-module propagation so app compilation inherits curl module compile definitions consistently when a project enables `runtime.modules = ["curl"]`.
+- Fixed profile-specific runtime symbol loading so legacy PHP generation no longer gets strict runtime symbol mappings merged over legacy entries.
+- Fixed PHP test harness project materialization so reruns do not keep stale per-test files that can interfere with HTTP fixture-backed curl tests.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Projects that want curl support must enable the opt-in `curl` runtime module in `prism.json` and have libcurl development headers available at build time.
+- Network-backed curl regression coverage is intentionally opt-in; pass `--include-network` to `tests/tools/run_tests.php` when you want the GitHub HTTPS integration test to run.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated to reflect curl-capable strict module guidance for this release.
+
 ## 0.1.42 - 2026-05-16
 
 ### Additions
@@ -111,6 +136,11 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - If dependency sources changed and reusable dependency artifacts are stale, default reuse mode should now be expected to stop early and direct the user to rerun with `--build-dependencies`.
 - Agent Skill review completed: no `.agents/skills/*` updates are required for this hotfix because the existing guidance already matches the current reuse-mode behavior.
+=======
+- Projects that want curl support must enable the opt-in `curl` runtime module in `prism.json` and have libcurl development headers available at build time.
+- Network-backed curl regression coverage is intentionally opt-in; pass `--include-network` to `tests/tools/run_tests.php` when you want the GitHub HTTPS integration test to run.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated to reflect curl-capable strict module guidance for this release.
+>>>>>>> dbae954 (Add curl module for release 0.1.38)
 
 ## 0.1.37 - 2026-05-11
 

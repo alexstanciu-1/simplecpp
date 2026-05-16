@@ -3179,7 +3179,7 @@ function resolve_runtime_build_config(array $config): array
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -4636,6 +4636,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$runtimeSignatureStamp = build_ninja_relative_path($projectRoot, $buildDir, $buildDir . '/runtime_signature.txt');
 	$runtimeLinkFlags = $options['compile_runtime'] && is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
 	$runtimeExtraCxxFlags = $options['compile_runtime'] && is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
+	$appRuntimeCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
 	$fastcgiCxxFlags = is_array($fastcgiBuild['cxxflags'] ?? null) ? $fastcgiBuild['cxxflags'] : [];
 	$fastcgiLdFlags = is_array($fastcgiBuild['ldflags'] ?? null) ? $fastcgiBuild['ldflags'] : [];
 	$baseLinkFlags = $linkerFlags;
@@ -4649,7 +4650,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	if (is_string($compilerLauncher) && $compilerLauncher !== '') {
 		$lines[] = 'cxx_launcher = ' . $compilerLauncher;
 	}
-	$lines[] = 'cxxflags = ' . build_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir, $generatedIncludeDir);
+	$lines[] = 'cxxflags = ' . build_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir, $generatedIncludeDir) . ($appRuntimeCxxFlags !== [] ? ' ' . implode(' ', $appRuntimeCxxFlags) : '');
 	$lines[] = 'runtime_cxxflags = ' . build_runtime_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir) . ($runtimeExtraCxxFlags !== [] ? ' ' . implode(' ', $runtimeExtraCxxFlags) : '');
 	$lines[] = 'base_ldflags = ' . implode(' ', $baseLinkFlags);
 	$lines[] = 'ldflags = ' . implode(' ', $binaryLinkFlags);
@@ -4870,6 +4871,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('regex', $modules, true)) {
 		$lines[] = '#include "modules/regex/regex.cpp"';
 	}
+	if (in_array('curl', $modules, true)) {
+		$lines[] = '#include "modules/curl/curl.cpp"';
+	}
 	if (in_array('php', $languages, true) && $phpProfile === 'legacy') {
 		if (in_array('filesystem', $modules, true)) {
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
@@ -4963,6 +4967,45 @@ function resolve_runtime_regex_build_spec(): array
 	];
 }
 
+/** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
+function resolve_runtime_curl_build_spec(): array
+{
+	$pkgConfig = find_command_path(['pkg-config']);
+	if ($pkgConfig !== null) {
+		$cflagsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --cflags libcurl 2>/dev/null');
+		$libsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --libs libcurl 2>/dev/null');
+		if (is_string($libsOutput) && trim($libsOutput) !== '') {
+			return [
+				'enabled' => true,
+				'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
+				'ldflags' => split_shell_tokens($libsOutput),
+				'compile_defines' => ['-DSCPP_HAS_CURL=1'],
+			];
+		}
+	}
+
+	$curlConfig = find_command_path(['curl-config']);
+	if ($curlConfig !== null) {
+		$cflagsOutput = shell_exec(escapeshellarg($curlConfig) . ' --cflags 2>/dev/null');
+		$libsOutput = shell_exec(escapeshellarg($curlConfig) . ' --libs 2>/dev/null');
+		if (is_string($libsOutput) && trim($libsOutput) !== '') {
+			return [
+				'enabled' => true,
+				'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
+				'ldflags' => split_shell_tokens($libsOutput),
+				'compile_defines' => ['-DSCPP_HAS_CURL=1'],
+			];
+		}
+	}
+
+	return [
+		'enabled' => false,
+		'cflags' => [],
+		'ldflags' => [],
+		'compile_defines' => ['-DSCPP_HAS_CURL=0'],
+	];
+}
+
 function build_runtime_compiler_flags(string $compilerKind, string $buildMode, string $runtimeIncludeDir): string
 {
 	if ($compilerKind === 'msvc') {
@@ -5038,6 +5081,16 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		$extraLinkFlags = array_merge($extraLinkFlags, $regexBuild['ldflags']);
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_REGEX=0';
+	}
+	if (in_array('curl', $modules, true)) {
+		$curlBuild = resolve_runtime_curl_build_spec();
+		if (!$curlBuild['enabled']) {
+			scpp_fail('Runtime module `curl` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported libcurl development environment was found. Tried pkg-config `libcurl` and `curl-config`; install libcurl dev files or disable the module.' . PHP_EOL, 1);
+		}
+		$extraCxxFlags = array_merge($extraCxxFlags, $curlBuild['compile_defines'], $curlBuild['cflags']);
+		$extraLinkFlags = array_merge($extraLinkFlags, $curlBuild['ldflags']);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_HAS_CURL=0';
 	}
 
 	if ($compiler['kind'] === 'gnu_like') {

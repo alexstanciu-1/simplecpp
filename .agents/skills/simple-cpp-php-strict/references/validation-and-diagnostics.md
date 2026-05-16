@@ -180,13 +180,14 @@ Example:
     },
     "modules": [
       "json",
-      "filesystem"
+      "filesystem",
+      "curl"
     ]
   }
 }
 ```
 
-Use the module set required by the APIs the app calls. When module ownership is unclear, check the strict examples and local builtin docs first.
+Use the module set required by the APIs the app calls. For example, strict `curl_*` helpers require the opt-in `curl` module and host libcurl development support. When module ownership is unclear, check the strict examples and local builtin docs first.
 
 ## Project Dependencies
 

@@ -1,4 +1,5 @@
 strict_fs_json
+strict_curl
 strict_regex
 strict_str_io
 strict_error_paths
