@@ -9,6 +9,26 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.42 - 2026-05-16
+
+### Additions
+
+- Added a planning catalog for typed `hash<>` `foreach` expectation-gap, control, and regression-guard examples under `specs/planning/`.
+- Added a generator audit note for the typed `hash<>` `foreach` stabilization work, documenting current causes and possible generator-side solution directions.
+
+### Fixes
+
+- None
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- These planning notes do not change runtime, generator, or user-facing language semantics; they are working documents intended to support future implementation passes.
+- Agent Skill review completed: no `.agents/skills/*` updates are required for this release because the release adds planning documentation only.
+
 ## 0.1.41 - 2026-05-16
 
 ### Additions
