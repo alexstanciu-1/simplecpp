@@ -203,6 +203,7 @@ Use strict family-prefixed names:
 - Strings: `str_strlen`, `str_replace`, `str_explode`, `str_implode`, `str_strpos`
 - IO: `io_open`, `io_read`, `io_write`, `io_close`
 - JSON: `json_decode`, `json_encode`
+- Curl: `curl_init`, `curl_setopt`, `curl_exec`, `curl_getinfo`, `curl_errno`, `curl_error`
 
 Some PHP-owned helpers remain shared where documented, such as:
 

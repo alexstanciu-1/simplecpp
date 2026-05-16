@@ -90,6 +90,7 @@ final class Phase1TestRunner
 			'test' => null,
 			'jobs' => self::DEFAULT_JOBS,
 			'include_disabled' => false,
+			'include_network' => false,
 			'json_path' => null,
 			'san' => null,
 			'help' => false,
@@ -103,6 +104,10 @@ final class Phase1TestRunner
 			}
 			if ($arg === '--include-disabled') {
 				$options['include_disabled'] = true;
+				continue;
+			}
+			if ($arg === '--include-network') {
+				$options['include_network'] = true;
 				continue;
 			}
 			if (str_starts_with($arg, '--suite=')) {
@@ -148,8 +153,8 @@ final class Phase1TestRunner
 	{
 		echo <<<TXT
 Usage:
-	php tests/tools/run_tests.php reset [--suite=php|runtime|php-matrix|runtime-matrix] [--profile=legacy|strict] [--level=level_01] [--test=pattern] [--include-disabled] [--san=address,undefined]
-	php tests/tools/run_tests.php run [--suite=php|runtime|php-matrix|runtime-matrix] [--profile=legacy|strict] [--level=level_01] [--test=pattern] [--jobs=12] [--include-disabled] [--san=address,undefined]
+	php tests/tools/run_tests.php reset [--suite=php|runtime|php-matrix|runtime-matrix] [--profile=legacy|strict] [--level=level_01] [--test=pattern] [--include-disabled] [--include-network] [--san=address,undefined]
+	php tests/tools/run_tests.php run [--suite=php|runtime|php-matrix|runtime-matrix] [--profile=legacy|strict] [--level=level_01] [--test=pattern] [--jobs=12] [--include-disabled] [--include-network] [--san=address,undefined]
 	php tests/tools/run_tests.php gate --suite=runtime [--jobs=12] [--include-disabled]
 
 Filters:
@@ -159,6 +164,7 @@ Filters:
 	--level=level_01          Run/reset only one level.
 	--test=needle             Run/reset one specific test id, filename, or relative path fragment.
 	--include-disabled        Include disabled / known-gap tests.
+	--include-network         Include opt-in network/external integration tests.
 	--jobs=12                 Max worker processes for run mode.
 	--san=list                Runtime suite only. Adds sanitizer compile flags, runtime env, and isolated state dirs.
 
@@ -417,6 +423,10 @@ TXT;
 			if (($meta['enabled'] ?? false) !== true && $options['include_disabled'] !== true) {
 				continue;
 			}
+			$buildMeta = is_array($meta['build'] ?? null) ? $meta['build'] : [];
+			if (($buildMeta['external_network'] ?? false) === true && $options['include_network'] !== true) {
+				continue;
+			}
 
 			$relativeSourcePath = $this->relativePath($sourcePath);
 			if ($suite === 'php') {
@@ -530,7 +540,7 @@ TXT;
 			if ($shouldRunPhpStage) {
 				$phpOraclePath = $this->materializePhpOracleSource($phpPath, $tempDir);
 				$phpCommand = ['php', $phpOraclePath];
-				foreach ((array) ($build['run_args'] ?? []) as $arg) {
+				foreach ($this->resolveRunArgs((array) ($build['run_args'] ?? [])) as $arg) {
 					$phpCommand[] = (string) $arg;
 				}
 				$phpRun = $this->runCommand($phpCommand, $this->projectRoot, self::PHP_TIMEOUT_SECONDS);
@@ -624,11 +634,22 @@ TXT;
 					if ($this->shouldEnableRuntimeErrorJson($expect)) {
 						$runtimeEnv['SCPP_ERROR_FORMAT'] = 'json';
 					}
-					$runCommand = [(string) $compileRun['binary_path']];
-					foreach ((array) ($build['run_args'] ?? []) as $arg) {
-						$runCommand[] = (string) $arg;
+					$httpServer = $this->startPhpFlowHttpServer($runTestsProject, $build, $phpPath);
+					try {
+						$placeholders = [];
+						if (is_array($httpServer) && is_string($httpServer['base_url'] ?? null)) {
+							$placeholders['{{http_base_url}}'] = $httpServer['base_url'];
+						}
+						$runCommand = [(string) $compileRun['binary_path']];
+						foreach ($this->resolveRunArgs((array) ($build['run_args'] ?? []), $placeholders) as $arg) {
+							$runCommand[] = (string) $arg;
+						}
+						$cppRun = $this->runCommand($runCommand, $runTestsProject['run_cwd'], self::RUN_TIMEOUT_SECONDS, $runtimeEnv);
+					} finally {
+						if (is_array($httpServer)) {
+							$this->stopBackgroundProcess($httpServer['proc'] ?? null, is_array($httpServer['pipes'] ?? null) ? $httpServer['pipes'] : []);
+						}
 					}
-					$cppRun = $this->runCommand($runCommand, $runTestsProject['run_cwd'], self::RUN_TIMEOUT_SECONDS, $runtimeEnv);
 					$results['last_run']['stages']['run'] = [
 						'success' => ($cppRun['exit_code'] === 0 && $cppRun['timed_out'] === false),
 						'exit_code' => $cppRun['exit_code'],
@@ -701,6 +722,175 @@ TXT;
 		$oraclePath = $tempDir . '/' . basename($sourcePath, '.phs') . '.oracle.php';
 		write_text_file($oraclePath, "<?php\n" . $rewritten);
 		return $oraclePath;
+	}
+
+	/**
+	 * @param array{project_root:string,config_path:string,entry_relative:string,workspace_source:string,run_cwd:string} $runTestsProject
+	 * @param array<string, mixed> $build
+	 * @return array{base_url:string}|null
+	 */
+	private function startPhpFlowHttpServer(array $runTestsProject, array $build, string $sourcePath): ?array
+	{
+		$httpServer = is_array($build['http_server'] ?? null) ? $build['http_server'] : null;
+		if ($httpServer === null) {
+			return null;
+		}
+
+		$workspaceSource = (string) ($runTestsProject['workspace_source'] ?? '');
+		if ($workspaceSource === '') {
+			throw new RuntimeException('HTTP test server setup requires a workspace source path.');
+		}
+
+		$workspaceSourceDir = dirname($workspaceSource);
+		$sourceDir = dirname($sourcePath);
+		$documentRootRaw = trim((string) ($httpServer['document_root'] ?? ''));
+		if ($documentRootRaw === '') {
+			throw new RuntimeException('HTTP test server config requires build.http_server.document_root.');
+		}
+
+		$documentRoot = $this->resolveRunTestHttpPath($workspaceSourceDir, $sourceDir, $documentRootRaw);
+		if (!is_dir($documentRoot)) {
+			throw new RuntimeException('HTTP test server document root does not exist: ' . $documentRoot);
+		}
+
+		$router = null;
+		$routerRaw = trim((string) ($httpServer['router'] ?? ''));
+		if ($routerRaw !== '') {
+			$router = $this->resolveRunTestHttpPath($workspaceSourceDir, $sourceDir, $routerRaw);
+			if (!is_file($router)) {
+				throw new RuntimeException('HTTP test server router does not exist: ' . $router);
+			}
+		}
+
+		$host = trim((string) ($httpServer['host'] ?? '127.0.0.1'));
+		if ($host === '') {
+			$host = '127.0.0.1';
+		}
+
+		$port = $this->reserveTcpPort($host);
+		$command = [PHP_BINARY, '-S', $host . ':' . $port, '-t', $documentRoot];
+		if ($router !== null) {
+			$command[] = $router;
+		}
+
+		$descriptors = [
+			0 => ['pipe', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$proc = proc_open($command, $descriptors, $pipes, $runTestsProject['project_root']);
+		if (!is_resource($proc)) {
+			throw new RuntimeException('Failed to start local PHP HTTP server for test.');
+		}
+
+		fclose($pipes[0]);
+		stream_set_blocking($pipes[1], false);
+		stream_set_blocking($pipes[2], false);
+
+		try {
+			$this->waitForTcpServer($host, $port, 5);
+		} catch (Throwable $throwable) {
+			$this->stopBackgroundProcess($proc, $pipes);
+			throw $throwable;
+		}
+
+		return [
+			'proc' => $proc,
+			'pipes' => $pipes,
+			'base_url' => 'http://' . $host . ':' . $port,
+		];
+	}
+
+	private function resolveRunTestHttpPath(string $workspaceSourceDir, string $sourceDir, string $path): string
+	{
+		if ($path === '') {
+			return $workspaceSourceDir;
+		}
+		if (str_starts_with($path, 'source:')) {
+			return $this->normalizePath($sourceDir . '/' . str_replace('\\', '/', substr($path, strlen('source:'))));
+		}
+		if (str_starts_with($path, '/')) {
+			return $this->normalizePath($path);
+		}
+		return $this->normalizePath($workspaceSourceDir . '/' . str_replace('\\', '/', $path));
+	}
+
+	private function reserveTcpPort(string $host): int
+	{
+		$errorCode = 0;
+		$errorMessage = '';
+		$server = @stream_socket_server('tcp://' . $host . ':0', $errorCode, $errorMessage);
+		if (!is_resource($server)) {
+			throw new RuntimeException('Failed to reserve local TCP port: ' . $errorMessage);
+		}
+
+		$name = stream_socket_get_name($server, false);
+		fclose($server);
+		if (!is_string($name) || $name === '') {
+			throw new RuntimeException('Failed to determine reserved local TCP port.');
+		}
+
+		$port = (int) substr(strrchr($name, ':'), 1);
+		if ($port <= 0) {
+			throw new RuntimeException('Reserved local TCP port was invalid: ' . $name);
+		}
+		return $port;
+	}
+
+	private function waitForTcpServer(string $host, int $port, int $timeoutSeconds): void
+	{
+		$deadline = microtime(true) + $timeoutSeconds;
+		while (microtime(true) < $deadline) {
+			$socket = @stream_socket_client('tcp://' . $host . ':' . $port, $errorCode, $errorMessage, 0.2);
+			if (is_resource($socket)) {
+				fclose($socket);
+				return;
+			}
+			usleep(100000);
+		}
+
+		throw new RuntimeException('Timed out waiting for local HTTP test server on ' . $host . ':' . $port);
+	}
+
+	private function stopBackgroundProcess($proc, array $pipes): void
+	{
+		foreach ([1, 2] as $index) {
+			if (isset($pipes[$index]) && is_resource($pipes[$index])) {
+				stream_get_contents($pipes[$index]);
+				fclose($pipes[$index]);
+			}
+		}
+
+		if (!is_resource($proc)) {
+			return;
+		}
+
+		$status = proc_get_status($proc);
+		if (($status['running'] ?? false) === true) {
+			proc_terminate($proc);
+			usleep(100000);
+			$status = proc_get_status($proc);
+			if (($status['running'] ?? false) === true) {
+				proc_terminate($proc, 9);
+			}
+		}
+		proc_close($proc);
+	}
+
+	/** @param list<mixed> $args
+	 *  @return list<string>
+	 */
+	private function resolveRunArgs(array $args, array $placeholders = []): array
+	{
+		$resolved = [];
+		foreach ($args as $arg) {
+			if (!is_string($arg)) {
+				$resolved[] = (string) $arg;
+				continue;
+			}
+			$resolved[] = strtr($arg, $placeholders);
+		}
+		return $resolved;
 	}
 
 	private function runSingleRuntimeTest(string $infoPath, string $sourcePath, string $sanitizers = ''): void
@@ -897,6 +1087,9 @@ TXT;
 	{
 		$testId = preg_replace('/[^A-Za-z0-9_.-]+/', '_', (string) ($meta['id'] ?? basename($phpPath, '.php')));
 		$projectRoot = $this->runTestsRoot . '/' . $phpProfile . '/' . $testId . '/tests/.runtime/' . $testId;
+		if (is_dir($projectRoot)) {
+			$this->removeDirectoryTree($projectRoot);
+		}
 		$this->ensureDirectory($projectRoot);
 		$this->ensureDirectory($projectRoot . '/native_cpp');
 		$this->ensureDirectory($projectRoot . '/.prism/build');
@@ -913,6 +1106,8 @@ TXT;
 		write_text_file($workspaceSource, $source);
 		$this->mirrorSiblingFixtures($phpPath, $projectRoot, dirname($relativeSourcePath));
 		$runCwd = $projectRoot;
+		$build = is_array($meta['build'] ?? null) ? $meta['build'] : [];
+		$runtimeModules = $this->resolvePhpRunTestRuntimeModules($build);
 
 		$config = [
 			'config_version' => 1,
@@ -931,7 +1126,7 @@ TXT;
 			],
 			'runtime' => [
 				'languages' => ['php'],
-				'modules' => ['json', 'filesystem', 'datetime'],
+				'modules' => $runtimeModules,
 				'language_profiles' => [
 					'php' => ['profile' => $phpProfile],
 				],
@@ -950,6 +1145,29 @@ TXT;
 			'workspace_source' => $workspaceSource,
 			'run_cwd' => $runCwd,
 		];
+	}
+
+	/** @return list<string> */
+	private function resolvePhpRunTestRuntimeModules(array $build): array
+	{
+		$modules = ['json', 'filesystem', 'datetime'];
+		$extraModules = $build['runtime_modules'] ?? null;
+		if (!is_array($extraModules)) {
+			return $modules;
+		}
+
+		foreach ($extraModules as $module) {
+			if (!is_string($module)) {
+				continue;
+			}
+			$trimmed = trim($module);
+			if ($trimmed === '' || in_array($trimmed, $modules, true)) {
+				continue;
+			}
+			$modules[] = $trimmed;
+		}
+
+		return $modules;
 	}
 
 	private function mirrorSiblingFixtures(string $sourcePath, string $projectRoot, string $relativeSourceDir): void
@@ -1811,6 +2029,34 @@ private function buildSanitizerRunEnvironment(string $sanValue): array
 	{
 		if (!is_dir($path) && !mkdir($path, 0777, true) && !is_dir($path)) {
 			throw new RuntimeException('Failed to create directory: ' . $path);
+		}
+	}
+
+	private function removeDirectoryTree(string $path): void
+	{
+		if (!is_dir($path)) {
+			return;
+		}
+
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
+		foreach ($iterator as $item) {
+			$itemPath = $item->getPathname();
+			if ($item->isDir()) {
+				if (!rmdir($itemPath) && is_dir($itemPath)) {
+					throw new RuntimeException('Failed to remove directory: ' . $itemPath);
+				}
+				continue;
+			}
+			if (!unlink($itemPath) && is_file($itemPath)) {
+				throw new RuntimeException('Failed to remove file: ' . $itemPath);
+			}
+		}
+
+		if (!rmdir($path) && is_dir($path)) {
+			throw new RuntimeException('Failed to remove directory: ' . $path);
 		}
 	}
 

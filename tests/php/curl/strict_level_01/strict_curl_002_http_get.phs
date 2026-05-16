@@ -1,0 +1,29 @@
+$url = $argv[1];
+$err /** error */;
+$ok /** bool */ = false;
+$ch /** curl_handle */;
+$resp /** curl_response */;
+$info /** mixed */;
+
+if (!take($ch, $err, curl_init($url . "/payload.txt"))) {
+	echo "INIT_FAIL\n";
+} else {
+	$headers vector<string> = [];
+	$headers[] = "X-Test: curl-http";
+
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_TIMEOUT, 5)) ? "T\n" : "F\n";
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_HTTPHEADER, $headers)) ? "T\n" : "F\n";
+
+	if (!take($resp, $err, curl_exec($ch))) {
+		echo "EXEC_FAIL\n";
+	} else if (!take($info, $err, curl_getinfo($ch, CURLINFO_RESPONSE_CODE))) {
+		echo "INFO_FAIL\n";
+	} else {
+		echo $resp->status_code, "\n";
+		echo $info, "\n";
+		echo str_bin2hex($resp->body), "\n";
+		echo str_strlen($resp->body), "\n";
+	}
+
+	echo take($ok, $err, curl_close($ch)) ? "T\n" : "F\n";
+}

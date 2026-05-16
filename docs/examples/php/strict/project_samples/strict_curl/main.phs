@@ -1,0 +1,54 @@
+$root = "strict_curl_root";
+$path = $root . "/payload.bin";
+$payload /** string */ = "";
+$written /** int */ = 0;
+$real /** string */ = "";
+$err /** error */;
+$ok /** bool */ = false;
+$ch /** curl_handle */;
+$resp /** curl_response */;
+
+if (!fs_mkdir($root)) {
+	echo "MKDIR_FAIL\n";
+} else {
+	if (!take($payload, $err, str_hex2bin("4100420A"))) {
+		echo "HEX_FAIL\n";
+	} else if (!take($written, $err, fs_put($path, $payload))) {
+		echo "WRITE_FAIL\n";
+	} else if (!take($real, $err, fs_realpath($path))) {
+		echo "REAL_FAIL\n";
+	} else {
+		echo $written, "\n";
+
+		$url = "file://" . $real;
+		if (!take($ch, $err, curl_init($url))) {
+			echo "INIT_FAIL\n";
+		} else {
+			$headers vector<string> = [];
+			$headers[] = "X-Test: strict-curl";
+
+			echo take($ok, $err, curl_setopt($ch, CURLOPT_TIMEOUT, 5)) ? "T\n" : "F\n";
+			echo take($ok, $err, curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true)) ? "T\n" : "F\n";
+			echo take($ok, $err, curl_setopt($ch, CURLOPT_USERAGENT, "simplecpp-strict-curl/1.0")) ? "T\n" : "F\n";
+			echo take($ok, $err, curl_setopt($ch, CURLOPT_HTTPHEADER, $headers)) ? "T\n" : "F\n";
+
+			if (!take($resp, $err, curl_exec($ch))) {
+				echo "EXEC_FAIL\n";
+				echo curl_errno($ch), "\n";
+				echo curl_error($ch), "\n";
+			} else {
+				echo $resp->status_code, "\n";
+				echo fs_basename($resp->effective_url), "\n";
+				echo str_bin2hex($resp->body), "\n";
+				echo str_strlen($resp->body), "\n";
+				echo curl_errno($ch), "\n";
+				echo curl_error($ch), "\n";
+			}
+
+			echo take($ok, $err, curl_close($ch)) ? "T\n" : "F\n";
+		}
+	}
+
+	echo fs_remove($path) ? "U\n" : "u\n";
+	echo fs_rmdir($root) ? "D\n" : "d\n";
+}

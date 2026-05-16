@@ -1,0 +1,25 @@
+$url = $argv[1];
+$ch = curl_init($url . "/payload.txt");
+
+if ($ch === false) {
+	echo "INIT_FAIL\n";
+} else {
+	$headers = [];
+	$headers[] = "X-Test: curl-legacy-http";
+
+	echo curl_setopt($ch, CURLOPT_RETURNTRANSFER, true) ? "T\n" : "F\n";
+	echo curl_setopt($ch, CURLOPT_TIMEOUT, 5) ? "T\n" : "F\n";
+	echo curl_setopt($ch, CURLOPT_HTTPHEADER, $headers) ? "T\n" : "F\n";
+
+	$out = curl_exec($ch);
+	$body = "";
+	if (!take($body, $out)) {
+		echo "EXEC_FAIL\n";
+	} else {
+		echo $body;
+		echo strlen($body), "\n";
+		echo curl_getinfo($ch, CURLINFO_RESPONSE_CODE), "\n";
+	}
+
+	echo curl_close($ch) ? "T\n" : "F\n";
+}
