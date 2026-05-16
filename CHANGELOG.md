@@ -9,6 +9,27 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.41 - 2026-05-16
+
+### Additions
+
+- Added regression coverage for typed `hash<>` `foreach` flows over non-`this` method-call sources and locals initialized from those method calls.
+
+### Fixes
+
+- Fixed typed `hash<>` `foreach` lowering so known typed method-call sources no longer lose their declared return type merely because the source is not `this`.
+- Fixed typed `hash<>` `foreach` loop-local binding so unknown non-dynamic sources no longer silently degrade into `mixed_t`, which previously pushed downstream lowering toward dynamic `.get(...)`, keyed field-write fallbacks, and synthetic repair casts.
+- Fixed typed `hash<>` `foreach` flows so nullable-string helper boundaries, typed object field access, and typed reindexing continue to lower through the concrete runtime iterator key/value contract.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Re-run typed `hash<>` `foreach` cases that previously needed defensive key/value stabilization or produced dynamic-object fallback lowerings; direct key-helper usage and typed property access should now stay on the typed path for the covered generator flows.
+- Agent Skill review completed: no `.agents/skills/*` updates are required for this hotfix because the existing strict authoring guidance already matches the user-facing typed-hash `foreach` behavior after this generator fix.
+
 ## 0.1.40 - 2026-05-12
 
 ### Additions
