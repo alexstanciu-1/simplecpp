@@ -21,7 +21,8 @@ private:
 			std::string("scpp::nullable runtime error: ") + context + " requires a present wrapped value. "
 				+ "Requirement: unwrap only non-empty nullable<T> values before using the delegated operator/property path.",
 			"invalid_nullable_unwrap_empty",
-			"scpp::nullable_unwrap"
+			"scpp::nullable_unwrap",
+			context
 		);
 	}
 
@@ -128,6 +129,32 @@ public:
 	// Empty nullable dereference fails before forwarding so wrapper semantics stay centralized in nullable<T>.
 	auto operator->() const requires detail::has_arrow_operator_v<T> {
 		return require_value("operator->() const").operator->();
+	}
+
+	template <typename Index, typename U = T>
+	requires requires(U &wrapped, const Index &index) { wrapped[index]; }
+	decltype(auto) operator[](const Index &index) {
+		return require_value("operator[]")[index];
+	}
+
+	template <typename Index, typename U = T>
+	requires requires(const U &wrapped, const Index &index) { wrapped[index]; }
+	decltype(auto) operator[](const Index &index) const {
+		return require_value("operator[] const")[index];
+	}
+
+	template <typename Index, typename U = T>
+	requires (!requires(U &wrapped, const Index &index) { wrapped[index]; })
+		&& requires(U &wrapped, const Index &index) { wrapped.at(index); }
+	decltype(auto) operator[](const Index &index) {
+		return require_value("operator[]").at(index);
+	}
+
+	template <typename Index, typename U = T>
+	requires (!requires(const U &wrapped, const Index &index) { wrapped[index]; })
+		&& requires(const U &wrapped, const Index &index) { wrapped.at(index); }
+	decltype(auto) operator[](const Index &index) const {
+		return require_value("operator[] const").at(index);
 	}
 
 	template <typename U>
