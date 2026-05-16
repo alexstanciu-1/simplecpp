@@ -54,7 +54,7 @@ Write PHP++ source, not generated C++.
 - Resolve wrappers near meaningful boundaries with `take(...)`.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.
-- Use strict profile APIs such as `fs_get`, `fs_put`, `str_strlen`, `io_open`, `json_encode`, and `dt_format`; do not substitute legacy PHP names unless a local strict doc explicitly says the helper remains shared.
+- Use strict profile APIs such as `fs_get`, `fs_put`, `str_strlen`, `io_open`, `json_encode`, `dt_format`, and strict `curl_*` helpers when the `curl` runtime module is enabled; do not substitute legacy PHP names unless a local strict doc explicitly says the helper remains shared.
 - For datetime work in strict projects, prefer `dt_now`, `dt_format`, `dt_format_now`, `dt_parse`, `dt_format_iso_utc`, and `dt_parse_iso_utc`. Treat PHP-shaped `date()` and `strtotime()` as legacy wrapper names, not the strict authoring style.
 
 ## Project Workflow

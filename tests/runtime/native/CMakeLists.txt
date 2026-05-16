@@ -91,6 +91,12 @@ if(TARGET scpp_regex)
 	add_test(NAME scpp_test_regex COMMAND test_regex)
 endif()
 
+if(TARGET scpp_curl)
+	add_executable(test_curl test_curl.cpp)
+	target_link_libraries(test_curl PRIVATE scpp_curl scpp_runtime scpp_runtime_test_support)
+	add_test(NAME scpp_test_curl COMMAND test_curl)
+endif()
+
 # PHP process/CLI builtin coverage.
 add_executable(test_php_process test_php_process.cpp)
 target_link_libraries(test_php_process PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)

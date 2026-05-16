@@ -90,6 +90,7 @@ final class Generator
 	private array $foreachReferenceSlotStack = [];
 	/** @var list<array<string, bool>> */
 	private array $foreachReferenceSuppressedNamesStack = [];
+	private string $phpProfile;
 
 	/**
 
@@ -107,7 +108,10 @@ final class Generator
 
 	public function __construct(
 		private readonly TypeMapper $typeMapper = new TypeMapper(),
+		string $phpProfile = 'legacy',
 	) {
+		$normalizedPhpProfile = strtolower(trim($phpProfile));
+		$this->phpProfile = in_array($normalizedPhpProfile, ['legacy', 'strict'], true) ? $normalizedPhpProfile : 'legacy';
 		$this->predefinedConstants = $this->loadPredefinedConstants();
 		$this->phpRuntimeRelativeSymbols = $this->loadPhpRuntimeRelativeSymbols();
 		$this->nameRegistry = new NameRegistry();
@@ -6625,43 +6629,38 @@ final class Generator
 	private function loadPhpRuntimeRelativeSymbols(): array
 	{
 		$specsRoot = dirname(__DIR__, 2) . '/specs';
-		$paths = [
-			$specsRoot . '/php_runtime_symbols_legacy.json',
-			$specsRoot . '/php_runtime_symbols_strict.json',
-		];
+		$path = $specsRoot . '/php_runtime_symbols_' . $this->phpProfile . '.json';
 
 		$out = [];
-		foreach ($paths as $path) {
-			if (!is_file($path)) {
-				throw new \RuntimeException('Missing mandatory PHP runtime symbols registry: ' . $path);
-			}
+		if (!is_file($path)) {
+			throw new \RuntimeException('Missing mandatory PHP runtime symbols registry: ' . $path);
+		}
 
-			$content = file_get_contents($path);
-			if ($content === false) {
-				throw new \RuntimeException('Failed to read mandatory PHP runtime symbols registry: ' . $path);
-			}
+		$content = file_get_contents($path);
+		if ($content === false) {
+			throw new \RuntimeException('Failed to read mandatory PHP runtime symbols registry: ' . $path);
+		}
 
-			try {
-				$data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-			} catch (\Throwable $e) {
-				throw new \RuntimeException('Invalid JSON in mandatory PHP runtime symbols registry: ' . $path . ' (' . $e->getMessage() . ')', 0, $e);
-			}
+		try {
+			$data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+		} catch (\Throwable $e) {
+			throw new \RuntimeException('Invalid JSON in mandatory PHP runtime symbols registry: ' . $path . ' (' . $e->getMessage() . ')', 0, $e);
+		}
 
-			if (!is_array($data)) {
-				throw new \RuntimeException('Mandatory PHP runtime symbols registry must decode to an object: ' . $path);
-			}
+		if (!is_array($data)) {
+			throw new \RuntimeException('Mandatory PHP runtime symbols registry must decode to an object: ' . $path);
+		}
 
-			$targets = $data['php_runtime_symbol_targets'] ?? null;
-			if (!is_array($targets)) {
-				throw new \RuntimeException('Mandatory PHP runtime symbols registry must contain object key php_runtime_symbol_targets: ' . $path);
-			}
+		$targets = $data['php_runtime_symbol_targets'] ?? null;
+		if (!is_array($targets)) {
+			throw new \RuntimeException('Mandatory PHP runtime symbols registry must contain object key php_runtime_symbol_targets: ' . $path);
+		}
 
-			foreach ($targets as $symbol => $target) {
-				if (!is_string($symbol) || $symbol === '' || !is_string($target) || $target === '') {
-					throw new \RuntimeException('Invalid symbol target entry in mandatory PHP runtime symbols registry: ' . $path);
-				}
-				$out[strtolower($symbol)] = $target;
+		foreach ($targets as $symbol => $target) {
+			if (!is_string($symbol) || $symbol === '' || !is_string($target) || $target === '') {
+				throw new \RuntimeException('Invalid symbol target entry in mandatory PHP runtime symbols registry: ' . $path);
 			}
+			$out[strtolower($symbol)] = $target;
 		}
 
 		return $out;
