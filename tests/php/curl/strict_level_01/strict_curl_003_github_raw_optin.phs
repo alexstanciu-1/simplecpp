@@ -1,0 +1,27 @@
+$url = $argv[1];
+$err /** error */;
+$ok /** bool */ = false;
+$ch /** curl_handle */;
+$resp /** curl_response */;
+
+if (!take($ch, $err, curl_init($url))) {
+	echo "INIT_FAIL\n";
+} else {
+	$headers vector<string> = [];
+	$headers[] = "X-Test: curl-github-optin";
+
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_TIMEOUT, 15)) ? "T\n" : "F\n";
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true)) ? "T\n" : "F\n";
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_HTTPHEADER, $headers)) ? "T\n" : "F\n";
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_USERAGENT, "simplecpp-curl-network-test/1.0")) ? "T\n" : "F\n";
+
+	if (!take($resp, $err, curl_exec($ch))) {
+		echo "EXEC_FAIL\n";
+	} else {
+		echo $resp->status_code, "\n";
+		echo str_bin2hex($resp->body), "\n";
+		echo str_strlen($resp->body), "\n";
+	}
+
+	echo take($ok, $err, curl_close($ch)) ? "T\n" : "F\n";
+}

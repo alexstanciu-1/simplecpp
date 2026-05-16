@@ -1,0 +1,36 @@
+$url = $argv[1];
+$body /** string */ = "{\"name\":\"alex\",\"count\":2}";
+$err /** error */;
+$ok /** bool */ = false;
+$ch /** curl_handle */;
+$resp /** curl_response */;
+$decoded /** mixed */;
+
+if (!take($ch, $err, curl_init($url . "/echo-json"))) {
+	echo "INIT_FAIL\n";
+} else {
+	$headers vector<string> = [];
+	$headers[] = "Content-Type: application/json";
+	$headers[] = "Accept: application/json";
+	$headers[] = "X-Test: curl-json";
+
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_TIMEOUT, 5)) ? "T\n" : "F\n";
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_POST, true)) ? "T\n" : "F\n";
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_POSTFIELDS, $body)) ? "T\n" : "F\n";
+	echo take($ok, $err, curl_setopt($ch, CURLOPT_HTTPHEADER, $headers)) ? "T\n" : "F\n";
+
+	if (!take($resp, $err, curl_exec($ch))) {
+		echo "EXEC_FAIL\n";
+	} else {
+		$decoded = json_decode($resp->body);
+		echo $resp->status_code, "\n";
+		echo $resp->content_type, "\n";
+		echo $decoded["ok"], "\n";
+		echo $decoded["kind"], "\n";
+		echo $decoded["payload"]["name"], "\n";
+		echo $decoded["payload"]["count"], "\n";
+		echo json_encode($decoded), "\n";
+	}
+
+	echo take($ok, $err, curl_close($ch)) ? "T\n" : "F\n";
+}

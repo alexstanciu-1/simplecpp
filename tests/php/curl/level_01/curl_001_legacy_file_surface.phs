@@ -1,0 +1,33 @@
+$root = "curl_legacy_root";
+$path = $root . "/payload.bin";
+
+mkdir($root);
+file_put_contents($path, hex2bin("4100420A"));
+$real = realpath($path);
+$ch = curl_init("file://" . $real);
+
+if ($ch === false) {
+	echo "INIT_FAIL\n";
+} else {
+	$headers = [];
+	$headers[] = "X-Test: curl-legacy-file";
+
+	echo curl_setopt($ch, CURLOPT_RETURNTRANSFER, true) ? "T\n" : "F\n";
+	echo curl_setopt($ch, CURLOPT_TIMEOUT, 5) ? "T\n" : "F\n";
+	echo curl_setopt($ch, CURLOPT_HTTPHEADER, $headers) ? "T\n" : "F\n";
+
+	$out = curl_exec($ch);
+	$body = "";
+	if (!take($body, $out)) {
+		echo "EXEC_FAIL\n";
+	} else {
+		echo bin2hex($body), "\n";
+		echo strlen($body), "\n";
+		echo curl_getinfo($ch, CURLINFO_RESPONSE_CODE), "\n";
+	}
+
+	echo curl_close($ch) ? "T\n" : "F\n";
+}
+
+unlink($path);
+rmdir($root);

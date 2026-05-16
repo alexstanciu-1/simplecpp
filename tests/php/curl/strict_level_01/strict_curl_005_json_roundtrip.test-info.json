@@ -1,0 +1,62 @@
+{
+    "id": "strict_curl_005_json_roundtrip",
+    "feature": "curl",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "T\nT\nT\nT\n200\napplication/json\n1\njson\nalex\n2\n{\"ok\":true,\"kind\":\"json\",\"payload\":{\"name\":\"alex\",\"count\":2}}\nT\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "curl",
+        "http",
+        "json"
+    ],
+    "notes": "Strict curl surface should POST JSON to the local PHP test server and consume the JSON response through the strict JSON builtins.",
+    "build": {
+        "sanitizers": null,
+        "runtime_modules": [
+            "curl"
+        ],
+        "run_args": [
+            "{{http_base_url}}"
+        ],
+        "http_server": {
+            "document_root": "source:http_server/public",
+            "router": "source:http_server/router.php"
+        }
+    }
+}

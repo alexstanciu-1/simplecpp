@@ -5,6 +5,7 @@ project(scpp_runtime LANGUAGES CXX)
 option(SCPP_LANGUAGE_TARGET_PHP "Build runtime with PHP-target array semantics" ON)
 option(SCPP_WITH_MYSQLI "Build runtime with the optional mysqli module enabled" ON)
 option(SCPP_WITH_REGEX "Build runtime with the optional PCRE2 regex module enabled" OFF)
+option(SCPP_WITH_CURL "Build runtime with the optional libcurl module enabled" OFF)
 
 include(CheckIncludeFileCXX)
 include(FindPkgConfig)
@@ -57,6 +58,20 @@ if(SCPP_WITH_REGEX)
 	target_compile_features(scpp_regex PUBLIC cxx_std_23)
 endif()
 
+if(SCPP_WITH_CURL)
+	add_library(scpp_curl SHARED
+		include/modules/curl/curl.cpp
+	)
+
+	target_include_directories(scpp_curl
+	PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/include
+	)
+
+	target_compile_features(scpp_curl PUBLIC cxx_std_23)
+	target_compile_definitions(scpp_curl PUBLIC SCPP_HAS_CURL=1)
+endif()
+
 add_library(scpp_runtime
 	include/core/runtime.cpp
 )
@@ -71,6 +86,9 @@ target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 target_link_libraries(scpp_runtime PUBLIC scpp_json scpp_filesystem scpp_datetime)
 if(SCPP_WITH_REGEX)
 	target_link_libraries(scpp_runtime PUBLIC scpp_regex)
+endif()
+if(SCPP_WITH_CURL)
+	target_link_libraries(scpp_runtime PUBLIC scpp_curl)
 endif()
 
 add_library(scpp_php_legacy
@@ -129,6 +147,45 @@ else()
 	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_REGEX=0)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_REGEX=0)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_REGEX=0)
+endif()
+
+if(SCPP_WITH_CURL)
+	set(SCPP_CURL_LINKED FALSE)
+
+	if(PKG_CONFIG_FOUND)
+		pkg_check_modules(LIBCURL QUIET IMPORTED_TARGET libcurl)
+		if(TARGET PkgConfig::LIBCURL)
+			target_link_libraries(scpp_curl PUBLIC PkgConfig::LIBCURL)
+			set(SCPP_CURL_LINKED TRUE)
+			message(STATUS "SCPP curl module: using pkg-config package libcurl")
+		endif()
+	endif()
+
+	if(NOT SCPP_CURL_LINKED)
+		find_package(CURL QUIET)
+		if(TARGET CURL::libcurl)
+			target_link_libraries(scpp_curl PUBLIC CURL::libcurl)
+			set(SCPP_CURL_LINKED TRUE)
+			message(STATUS "SCPP curl module: using CMake CURL::libcurl target")
+		elseif(CURL_FOUND)
+			target_include_directories(scpp_curl PUBLIC ${CURL_INCLUDE_DIRS})
+			target_link_libraries(scpp_curl PUBLIC ${CURL_LIBRARIES})
+			set(SCPP_CURL_LINKED TRUE)
+			message(STATUS "SCPP curl module: using CMake CURL include/library variables")
+		endif()
+	endif()
+
+	if(SCPP_CURL_LINKED)
+		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_CURL=1)
+		target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_CURL=1)
+		target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_CURL=1)
+	else()
+		message(FATAL_ERROR "SCPP_WITH_CURL=ON but no supported libcurl development package was found. Install libcurl dev files or disable the curl module.")
+	endif()
+else()
+	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_CURL=0)
+	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_CURL=0)
+	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_CURL=0)
 endif()
 
 if(SCPP_WITH_MYSQLI)
