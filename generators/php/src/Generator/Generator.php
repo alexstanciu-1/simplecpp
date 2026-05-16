@@ -629,6 +629,32 @@ final class Generator
 		return $this->methodDecls[$qualifiedClass . '::' . $methodName] ?? $this->methodDecls[$this->currentClassName . '::' . $methodName] ?? null;
 	}
 
+	private function lookupMethodDeclByMappedBaseType(string $baseType, string $methodName): ?MethodDecl
+	{
+		$classType = $this->extractMappedClassCarrierType($baseType);
+		if ($classType === null) {
+			return null;
+		}
+
+		$normalized = ltrim($classType, ':');
+		if (str_starts_with($normalized, 'scpp::')) {
+			$normalized = substr($normalized, strlen('scpp::'));
+		}
+
+		$phpQualified = str_replace('::', '\\', $normalized);
+		$phpShort = basename(str_replace('\\', '/', $phpQualified));
+		$candidates = array_values(array_unique(array_filter([$phpQualified, $phpShort], static fn ($v) => $v !== '')));
+
+		foreach ($candidates as $candidate) {
+			$methodDecl = $this->methodDecls[$candidate . '::' . $methodName] ?? null;
+			if ($methodDecl instanceof MethodDecl) {
+				return $methodDecl;
+			}
+		}
+
+		return null;
+	}
+
 	private function renderCallArgsForParams(array $params, array $args, ?string $namespacePhp): string
 	{
 		$lastParam = $params === [] ? null : $params[array_key_last($params)];
@@ -4047,13 +4073,15 @@ final class Generator
 		$entryName = '__scpp_foreach_entry_' . $statement->line;
 		$sourceType = $this->inferExprTypeWithNamespace($payload['expr'] ?? null, $namespacePhp);
 		$isVectorLikeForeach = $this->isForeachVectorLikeType($sourceType);
+		$hashTypeParts = $this->parseHashTypeParts($sourceType);
+		$isExplicitDynamicForeach = $sourceType === 'mixed_t';
 		$sourceTempName = $this->allocateGeneratedLocalName('__scpp_foreach_source_' . $statement->line);
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
-		} elseif (($hashTypeParts = $this->parseHashTypeParts($sourceType)) !== null) {
+		} elseif ($hashTypeParts !== null) {
 			$valueStoredType = $hashTypeParts['value'];
-		} elseif (!$isVectorLikeForeach) {
+		} elseif ($isExplicitDynamicForeach) {
 			$valueStoredType = 'mixed_t';
 		}
 		$sourceBinding = $this->isLvalueCapableExpr($payload['expr'] ?? null, $namespacePhp)
@@ -4072,9 +4100,12 @@ final class Generator
 		if ($keyName !== null) {
 			$keyCppName = $this->localCppName($keyName);
 			$lines[] = $this->code($this->indent(1) . 'auto&& ' . $keyCppName . ' = ' . $entryName . '.key();', $statement->line);
-			$this->declaredLocalTypes[$keyName] = $isVectorLikeForeach
+			$keyStoredType = $isVectorLikeForeach
 				? 'int_t'
-				: (($hashTypeParts = $this->parseHashTypeParts($sourceType)) !== null ? $hashTypeParts['key'] : 'mixed_t');
+				: ($hashTypeParts !== null ? $hashTypeParts['key'] : ($isExplicitDynamicForeach ? 'mixed_t' : null));
+			if ($keyStoredType !== null) {
+				$this->declaredLocalTypes[$keyName] = $keyStoredType;
+			}
 			$this->declaredLocals[$keyName] = true;
 		}
 
@@ -7008,9 +7039,10 @@ final class Generator
 		if ($kind === AstKind::METHOD_CALL) {
 			$baseExpr = $expr->children['expr'] ?? null;
 			$methodName = (string) ($expr->children['method'] ?? '');
+			$baseType = $this->inferExprType($baseExpr);
 			$methodDecl = is_object($baseExpr) && ($baseExpr->kind ?? null) === AstKind::VAR && ($baseExpr->children['name'] ?? null) === 'this'
 				? $this->lookupMethodDeclByCurrentClass($methodName, $namespacePhp)
-				: null;
+				: $this->lookupMethodDeclByMappedBaseType($baseType, $methodName);
 			if ($methodDecl !== null && $methodDecl->returnType !== null) {
 				return $this->typeMapper->mapReturnType($methodDecl->returnType, $methodDecl->returnsByReference);
 			}
