@@ -76,15 +76,3 @@ See `docs/ai_onboarding/workflows.md` for the fuller task-routing and validation
 
 - Temporary planning notes for active tasks should default to `specs/planning/` unless a more specific owning folder is clearly better.
 - Planning notes must carry `Doc Status: planning` and must not be treated as semantic authority.
-
-## Dev Deploy
-
-If the user asks for dev-deploy setup or sync behavior:
-
-- use the shared `_dev_deploy` source-to-folder model
-- do not use channel-based or worktree-based deploy instructions
-- prefer `.dev_deploy.config.json` plus `.dev_deploy/` runtime
-- read:
-  - `/home/alexv/__AI/_dev_deploy/README.md`
-  - `/home/alexv/__AI/_dev_deploy/dev_deploy_setup_guide.md`
-  - `/home/alexv/__AI/_dev_deploy/dev_deploy_rules.md`
