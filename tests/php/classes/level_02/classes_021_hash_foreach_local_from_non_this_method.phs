@@ -1,0 +1,54 @@
+class storage_property {
+	public string $name = "";
+}
+
+class model_property {
+	public string $name = "";
+	public bool $disabled = false;
+	public $attached_storage /** storage_property */ = null;
+}
+
+class model_wrapper {
+	public $properties /** hash<model_property> */ = [];
+}
+
+class property_loader {
+	public function load(model_wrapper $wrapper): hash<model_property> {
+		return $wrapper->properties;
+	}
+}
+
+function accepts_nullable(?string $name): string {
+	if ($name === null) {
+		return "missing";
+	}
+
+	return $name;
+}
+
+$wrapper = new model_wrapper();
+
+$id = new model_property();
+$id->name = "Id";
+$wrapper->properties["id"] = $id;
+
+$title = new model_property();
+$title->name = "Title";
+$wrapper->properties["title"] = $title;
+
+$storage = new storage_property();
+$storage->name = "Storage";
+
+$loader = new property_loader();
+$loaded = $loader->load($wrapper);
+$copied /** hash<model_property> */ = [];
+
+foreach ($loaded as $property_name => $typed_property) {
+	echo accepts_nullable($property_name), "\n";
+	echo $typed_property->name, "\n";
+	$typed_property->attached_storage = $storage;
+	$copied[$property_name] = $typed_property;
+}
+
+echo $copied["id"]->attached_storage->name, "\n";
+echo $copied["title"]->attached_storage->name, "\n";
