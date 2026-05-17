@@ -96,6 +96,38 @@ final class ScppExplainBuildTest
 			$this->assertContains('Explain build: build', $explain['stdout'], 'explain-build should identify the saved command');
 			$this->assertContains('Runtime: reuse (reusing existing runtime artifact by default)', $explain['stdout'], 'explain-build should explain runtime reuse');
 			$this->assertContains('main.phs -> reused (source metadata and generated artifacts unchanged)', $explain['stdout'], 'explain-build should explain source reuse');
+			$this->assertContains('Direct Ninja target: main', $explain['stdout'], 'explain-build should report the direct Ninja target name');
+			$this->assertContains('ninja -C .prism/build -d explain main', $explain['stdout'], 'explain-build should report the direct Ninja debug command');
+			$this->assertContains('Warning: `.prism/build/main` is the built executable path, not a Ninja target name.', $explain['stdout'], 'explain-build should warn about path-shaped Ninja targets');
+
+			$transpiledView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'files-transpiled'], [], 20.0);
+			$this->assertSame(0, $transpiledView['exit_code'], 'scpp explain-build files-transpiled should succeed');
+			$this->assertContains('Files transpiled: none', $transpiledView['stdout'], 'files-transpiled should report no warm-build transpiles');
+
+			$reusedView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'files-reused'], [], 20.0);
+			$this->assertSame(0, $reusedView['exit_code'], 'scpp explain-build files-reused should succeed');
+			$this->assertContains('Files reused:', $reusedView['stdout'], 'files-reused should include a header');
+			$this->assertContains('main.phs (source metadata and generated artifacts unchanged)', $reusedView['stdout'], 'files-reused should list the reused source');
+
+			$entrypointView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'entrypoint'], [], 20.0);
+			$this->assertSame(0, $entrypointView['exit_code'], 'scpp explain-build entrypoint should succeed');
+			$this->assertContains('Entrypoint: main.phs', $entrypointView['stdout'], 'entrypoint should list the entry source');
+			$this->assertContains('Generated C++: .prism/generated/main.cpp', $entrypointView['stdout'], 'entrypoint should list the generated C++ path');
+			$this->assertContains('Object: .prism/build/main.o', $entrypointView['stdout'], 'entrypoint should list the object path');
+
+			$finalOutputView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'final-output'], [], 20.0);
+			$this->assertSame(0, $finalOutputView['exit_code'], 'scpp explain-build final-output should succeed');
+			$this->assertContains('Final output: .prism/build/main', $finalOutputView['stdout'], 'final-output should list the executable path');
+
+			$generatedFilesView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'generated-files'], [], 20.0);
+			$this->assertSame(0, $generatedFilesView['exit_code'], 'scpp explain-build generated-files should succeed');
+			$this->assertContains('Generated files:', $generatedFilesView['stdout'], 'generated-files should include a header');
+			$this->assertContains('main.phs -> .prism/generated/main.cpp -> .prism/build/main.o', $generatedFilesView['stdout'], 'generated-files should map source to generated and object outputs');
+
+			$ninjaTargetView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'ninja-target'], [], 20.0);
+			$this->assertSame(0, $ninjaTargetView['exit_code'], 'scpp explain-build ninja-target should succeed');
+			$this->assertContains('Direct Ninja target: main', $ninjaTargetView['stdout'], 'ninja-target should list the direct Ninja target');
+			$this->assertContains('Use `main` as the Ninja target, not `.prism/build/main`.', $ninjaTargetView['stdout'], 'ninja-target should explicitly contrast the target and executable path');
 
 			echo "PASS: scpp explain-build\n";
 			return 0;

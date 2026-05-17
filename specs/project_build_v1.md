@@ -221,6 +221,15 @@ The command:
 7. fast-forwards the checkout to `origin/main`
 8. rebuilds the default reusable runtime cache when the checkout actually changes
 9. when `--force` is present, rebuilds that default reusable runtime cache even if the checkout was already current
+
+If an existing project shows unexpected build, reuse, or generation behavior immediately after `scpp update`, and the same problem does not reproduce in a fresh project, users should treat a one-time project-state reset as a normal troubleshooting step:
+
+```bash
+scpp clean
+scpp build
+```
+
+This note is specifically about stale per-project `.prism/` state after an update, not about the normal steady-state workflow.
 10. fails clearly instead of creating merge commits or overwriting local changes
 
 ## `scpp runtime-build` behavior
@@ -271,6 +280,18 @@ The initial registry includes:
 - which source files were transpiled versus reused
 - why a transpile happened when a source file rebuilt
 - which outputs changed in the most recent saved build
+
+`scpp explain-build` also accepts focused view arguments so users do not need to scan the full summary when they only want one answer:
+
+- `scpp explain-build files-transpiled`
+- `scpp explain-build files-reused`
+- `scpp explain-build outputs-rebuilt`
+- `scpp explain-build entrypoint`
+- `scpp explain-build final-output`
+- `scpp explain-build generated-files`
+- `scpp explain-build ninja-target`
+
+The default `scpp explain-build` summary should also print the direct Ninja target name for the current executable and warn that the built executable path, such as `.prism/build/main`, is not itself a valid Ninja target name.
 
 The saved `.prism/last_run.json` payload should include build explanation details gathered during `execute_build()` so the explanation command does not need to reverse-engineer the build after the fact.
 - `examples`
