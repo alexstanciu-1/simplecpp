@@ -27,6 +27,15 @@ scpp update --force
 
 `scpp update` fetches GitHub `origin/main` and fast-forwards the checkout. It requires the checkout to be on `main` with no local changes. When a real update is applied, it also rebuilds the default reusable runtime cache. `scpp update --force` rebuilds that default runtime cache even when the checkout is already current.
 
+If an existing project shows odd build or generation behavior right after `scpp update`, and the same problem does not reproduce in a fresh project, clear that project's `.prism/` state once and rebuild:
+
+```bash
+scpp clean
+scpp build
+```
+
+This is a troubleshooting step for stale project state after an update, not the normal day-to-day workflow.
+
 ## 2. Start a project
 
 From the project root:
@@ -144,6 +153,10 @@ Inspect the most recent saved build/run report:
 scpp last-run
 scpp full-last-run
 scpp explain-build
+scpp explain-build files-transpiled
+scpp explain-build entrypoint
+scpp explain-build final-output
+scpp explain-build ninja-target
 ```
 
 Run the deterministic usability harness:
