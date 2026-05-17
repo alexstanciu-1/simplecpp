@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.45 - 2026-05-17
+
+### Additions
+
+- Expanded `scpp explain-build` with focused views for `files-transpiled`, `files-reused`, `outputs-rebuilt`, `entrypoint`, `final-output`, `generated-files`, and `ninja-target`.
+- Added direct Ninja target guidance to `scpp explain-build`, including a ready-to-run `ninja -C ... -d explain ...` hint for the current executable target.
+
+### Fixes
+
+- Fixed build-report visibility so `scpp explain-build` now surfaces concrete source-to-generated/object/output mappings instead of only a high-level rebuild summary.
+- Fixed explain-build usability so it now warns that path-shaped executable outputs such as `.prism/build/main` are not valid Ninja target names.
+- Fixed documentation gaps after `scpp update` by documenting a one-time `scpp clean` plus rebuild troubleshooting step for stale per-project `.prism/` state.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Use the focused `scpp explain-build` views when you need one exact answer instead of the full summary, especially for transpile decisions, final output paths, generated files, or direct Ninja debugging.
+- After `scpp update`, if an existing project behaves oddly and the same problem does not reproduce in a fresh project, try `scpp clean` followed by `scpp build` once to refresh stale `.prism/` state.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this hotfix; the release updates `specs/simple_cpp_php_strict_quick_learn.md` and related build/docs guidance only.
+
 ## 0.1.44 - 2026-05-17
 
 ### Additions
