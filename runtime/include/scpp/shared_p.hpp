@@ -4,6 +4,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/nullptr_t.hpp"
+#include "scpp/runtime_error.hpp"
 
 namespace scpp {
 
@@ -75,14 +76,29 @@ public:
 
 	T &deref() const {
 		if (!value_) {
-			throw std::runtime_error("scpp::shared_p dereference on null");
+			throw runtime_error(
+				"scpp::shared_p runtime error: dereference requires a present shared pointer value.",
+				"invalid_shared_dereference_null",
+				"scpp::shared_p",
+				"operator*"
+			);
 		}
 		return *value_;
 	}
 
 	T *arrow() const noexcept { return value_.get(); }
 	T &operator*() const { return deref(); }
-	T *operator->() const noexcept { return value_.get(); }
+	T *operator->() const {
+		if (!value_) {
+			throw runtime_error(
+				"scpp::shared_p runtime error: operator->() requires a present shared pointer value.",
+				"invalid_shared_arrow_null",
+				"scpp::shared_p",
+				"operator->"
+			);
+		}
+		return value_.get();
+	}
 
 	[[nodiscard]] const std::shared_ptr<T> &native_value() const noexcept { return value_; }
 	[[nodiscard]] std::shared_ptr<T> &native_value() noexcept { return value_; }
