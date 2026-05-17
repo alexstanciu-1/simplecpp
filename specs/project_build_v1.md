@@ -221,6 +221,15 @@ The command:
 7. fast-forwards the checkout to `origin/main`
 8. rebuilds the default reusable runtime cache when the checkout actually changes
 9. when `--force` is present, rebuilds that default reusable runtime cache even if the checkout was already current
+
+If an existing project shows unexpected build, reuse, or generation behavior immediately after `scpp update`, and the same problem does not reproduce in a fresh project, users should treat a one-time project-state reset as a normal troubleshooting step:
+
+```bash
+scpp clean
+scpp build
+```
+
+This note is specifically about stale per-project `.prism/` state after an update, not about the normal steady-state workflow.
 10. fails clearly instead of creating merge commits or overwriting local changes
 
 ## `scpp runtime-build` behavior

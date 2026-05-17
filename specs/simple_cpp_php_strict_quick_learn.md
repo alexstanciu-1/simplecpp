@@ -148,6 +148,15 @@ scpp run --force
 - `scpp runtime-build [--debug|--release] [--force]`: rebuild the reusable runtime cache explicitly
 - `scpp clean`: remove generated `.prism/` state for a cold rebuild
 
+If an existing project behaves oddly right after `scpp update`, and the same problem does not reproduce in a fresh project, clear that project's `.prism/` state once and rebuild:
+
+```bash
+scpp clean
+scpp build
+```
+
+Treat this as a troubleshooting step for stale generated/build state after an update, not as the normal workflow.
+
 ### Single-file transpile
 
 ```bash
