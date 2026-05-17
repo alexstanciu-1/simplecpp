@@ -147,6 +147,7 @@ scpp explain-build
 scpp explain-build files-transpiled
 scpp explain-build entrypoint
 scpp explain-build final-output
+scpp explain-build ninja-target
 ```
 
 Run the deterministic usability harness:

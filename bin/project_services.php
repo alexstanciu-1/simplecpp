@@ -621,7 +621,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|entrypoint|final-output|generated-files]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -1964,7 +1964,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					$entrypointAbs,
 					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
-					null
+					null,
+					$command
 				),
 			]
 		);
@@ -2067,7 +2068,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$entrypointAbs,
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
-				$outputPath
+				$outputPath,
+				$command
 			),
 		]
 	);
@@ -2099,7 +2101,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$entrypointAbs,
 			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
-			$outputPath
+			$outputPath,
+			$command
 		),
 	];
 }
@@ -3411,6 +3414,7 @@ function build_explanation_details(
 	?string $entryGeneratedCppPath = null,
 	?string $entryObjectPath = null,
 	?string $outputPath = null,
+	array $ninjaCommand = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -3434,6 +3438,7 @@ function build_explanation_details(
 		'transpiled_count' => $transpiledCount,
 		'skipped_count' => $skippedCount,
 		'output_path' => $outputPath !== null ? normalize_config_path(relative_path($projectRoot, $outputPath)) : null,
+		'ninja_command' => array_values(array_map(static fn ($value): string => (string) $value, $ninjaCommand)),
 		'entrypoint' => [
 			'source_path' => $entrySourcePath !== null ? normalize_config_path(relative_path($projectRoot, $entrySourcePath)) : null,
 			'generated_cpp' => $entryGeneratedCppPath !== null ? normalize_config_path(relative_path($projectRoot, $entryGeneratedCppPath)) : null,
@@ -3522,7 +3527,11 @@ function render_build_explanation_lines(array $details): array
 function render_explain_build_view_lines(array $details, string $view): array
 {
 	if ($view === '' || $view === 'summary') {
-		return render_build_explanation_lines($details);
+		$lines = render_build_explanation_lines($details);
+		foreach (render_explain_build_ninja_hint_lines($details) as $line) {
+			$lines[] = $line;
+		}
+		return $lines;
 	}
 
 	$sources = is_array($details['sources'] ?? null) ? $details['sources'] : [];
@@ -3610,10 +3619,57 @@ function render_explain_build_view_lines(array $details, string $view): array
 		return $lines === [] ? ['Generated files: none'] : array_merge(['Generated files:'], array_map(static fn (string $line): string => '  - ' . $line, $lines));
 	}
 
+	if ($view === 'ninja-target') {
+		return render_explain_build_ninja_hint_lines($details);
+	}
+
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, entrypoint, final-output, generated-files.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
+}
+
+/**
+ * @param array<string,mixed> $details
+ * @return list<string>
+ */
+function render_explain_build_ninja_hint_lines(array $details): array
+{
+	$entrypoint = is_array($details['entrypoint'] ?? null) ? $details['entrypoint'] : [];
+	$outputPath = trim((string) ($details['output_path'] ?? ''));
+	$ninjaCommand = is_array($details['ninja_command'] ?? null) ? $details['ninja_command'] : [];
+
+	$target = '';
+	$buildDir = '';
+	foreach ($ninjaCommand as $index => $value) {
+		if (!is_string($value)) {
+			continue;
+		}
+		if ($value === '-C' && isset($ninjaCommand[$index + 1]) && is_string($ninjaCommand[$index + 1])) {
+			$buildDir = (string) $ninjaCommand[$index + 1];
+		}
+	}
+
+	$entrySource = trim((string) ($entrypoint['source_path'] ?? ''));
+	if ($entrySource !== '') {
+		$target = pathinfo($entrySource, PATHINFO_FILENAME);
+	}
+	if ($target === '' && $outputPath !== '') {
+		$target = pathinfo($outputPath, PATHINFO_FILENAME);
+	}
+
+	$lines = [];
+	if ($target !== '' && $buildDir !== '') {
+		$lines[] = 'Direct Ninja target: ' . $target;
+		$lines[] = 'Direct Ninja debug command: ninja -C ' . $buildDir . ' -d explain ' . $target;
+	}
+	if ($outputPath !== '') {
+		$lines[] = 'Warning: `' . $outputPath . '` is the built executable path, not a Ninja target name.';
+	}
+	if ($target !== '' && $outputPath !== '') {
+		$lines[] = 'Use `' . $target . '` as the Ninja target, not `' . $outputPath . '`.';
+	}
+	return $lines === [] ? ['Ninja target hint: unavailable'] : $lines;
 }
 
 /** @param list<mixed> $reasons */

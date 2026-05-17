@@ -280,6 +280,9 @@ The initial registry includes:
 - `scpp explain-build entrypoint`
 - `scpp explain-build final-output`
 - `scpp explain-build generated-files`
+- `scpp explain-build ninja-target`
+
+The default `scpp explain-build` summary should also print the direct Ninja target name for the current executable and warn that the built executable path, such as `.prism/build/main`, is not itself a valid Ninja target name.
 
 The saved `.prism/last_run.json` payload should include build explanation details gathered during `execute_build()` so the explanation command does not need to reverse-engineer the build after the fact.
 - `examples`
