@@ -6174,12 +6174,22 @@ final class Generator
 			// AST_ISSET itself carries exactly one operand in `children['var']`.
 			// Keyed reads must stay on the runtime helper path so missing and existing-null do not collapse into pure key-existence semantics.
 			$varNode = $expr->children['var'] ?? null;
-			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM) && (($varNode->children['dim'] ?? null) !== null)) {
+			if (
+				is_object($varNode)
+				&& (($varNode->kind ?? null) === AstKind::DIM)
+				&& (($varNode->children['dim'] ?? null) !== null)
+				&& is_object($varNode->children['expr'] ?? null)
+				&& (($varNode->children['expr']->kind ?? null) === AstKind::VAR)
+			) {
 				return $this->qualifyKnownPhpRuntimeSymbol('isset') . '('
 					. $this->renderExpr($varNode->children['expr'] ?? null, $namespacePhp) . ', '
 					. $this->renderExpr($varNode->children['dim'] ?? null, $namespacePhp) . ')';
 			}
-			return $this->qualifyKnownPhpRuntimeSymbol('isset') . '(' . $this->renderExpr($varNode, $namespacePhp) . ')';
+			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::VAR)) {
+				return $this->qualifyKnownPhpRuntimeSymbol('isset') . '(' . $this->renderExpr($varNode, $namespacePhp) . ')';
+			}
+			$issetEvalFn = $this->qualifyKnownPhpRuntimeSymbol('isset_eval');
+			return $issetEvalFn . '([&]() -> decltype(auto) { return ' . $this->renderExpr($varNode, $namespacePhp) . '; })';
 		}
 		if ($kind === AstKind::AST_EMPTY) {
 			// empty() must evaluate the operand expression through the runtime helper so missing keyed reads,

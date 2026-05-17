@@ -637,6 +637,18 @@ Rule of thumb:
 - default when absence should collapse into a normal fallback value
 - keep the nullable or absent state distinct when later logic cares about that difference
 
+For nullable path guards, prefer the helper form:
+
+```php
+if (!isset($node->child->name)) { ... }
+```
+
+instead of a long manual chain like:
+
+```php
+$node === null || $node->child === null || $node->child->name === null
+```
+
 ### 3. Stabilizing into typed containers
 
 Typed container writes are ordinary typed boundaries under the stable-left-side rule.

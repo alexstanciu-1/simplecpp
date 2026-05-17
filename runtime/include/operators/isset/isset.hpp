@@ -152,6 +152,34 @@ inline bool_t isset(const mixed_t &value, const int key) {
 	return isset(value, int_t{static_cast<std::int64_t>(key)});
 }
 
+template <typename T, typename Key>
+requires (!detail::is_countable_lookup_target<std::remove_cvref_t<T>>::value)
+	&& requires(const T &wrapped, const Key &key) { ::scpp::isset(wrapped, key); }
+inline bool_t isset(const nullable<T> &value, const Key &key) {
+	if (!value.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return ::scpp::isset(value.value(), key);
+}
+
+template <typename T, typename Key>
+requires requires(const T &wrapped, const Key &key) { ::scpp::isset(wrapped, key); }
+inline bool_t isset(const shared_p<T> &value, const Key &key) {
+	if (!value.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return ::scpp::isset(*value.get(), key);
+}
+
+template <typename T, typename Key>
+requires requires(const T &wrapped, const Key &key) { ::scpp::isset(wrapped, key); }
+inline bool_t isset(const unique_p<T> &value, const Key &key) {
+	if (!value.has_value().native_value()) {
+		return bool_t(false);
+	}
+	return ::scpp::isset(*value.get(), key);
+}
+
 // Implements the lowered isset contract across the currently supported runtime value categories.
 // How: behavior is defined here once so language adapters can lower into stable helpers instead of ad-hoc code.
 inline bool_t isset() {
