@@ -9,6 +9,26 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.44 - 2026-05-17
+
+### Additions
+
+- Added a runtime-chain-safety planning note under `specs/planning/` plus a v2 planning note for future guarded nullable-path evaluation ideas.
+
+### Fixes
+
+- Fixed plain nullable/object-handle chain access so the covered `shared_p`, `unique_p`, and `nullable` operator paths raise a controlled runtime exception instead of crashing natively on null access.
+- Fixed general chained `isset(...)` probing so forms like `isset($root->child->name)` lower through a safe runtime probe path instead of forcing ordinary eager chain evaluation.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Prefer `isset($node->child->name)` or `!isset($node->child->name)` for nullable path guards instead of long manual `=== null || ...` chains.
+- A direct nullable/object-handle chain like `$root->child->name` now fails with a project-shaped runtime exception where the covered wrappers previously could crash the process.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` and `specs/simple_cpp_php_strict_quick_learn.md` were updated for this hotfix.
 ## 0.1.43 - 2026-05-16
 
 ### Additions
