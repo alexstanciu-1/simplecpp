@@ -272,6 +272,15 @@ The initial registry includes:
 - why a transpile happened when a source file rebuilt
 - which outputs changed in the most recent saved build
 
+`scpp explain-build` also accepts focused view arguments so users do not need to scan the full summary when they only want one answer:
+
+- `scpp explain-build files-transpiled`
+- `scpp explain-build files-reused`
+- `scpp explain-build outputs-rebuilt`
+- `scpp explain-build entrypoint`
+- `scpp explain-build final-output`
+- `scpp explain-build generated-files`
+
 The saved `.prism/last_run.json` payload should include build explanation details gathered during `execute_build()` so the explanation command does not need to reverse-engineer the build after the fact.
 - `examples`
 - `authoring`

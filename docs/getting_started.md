@@ -144,6 +144,9 @@ Inspect the most recent saved build/run report:
 scpp last-run
 scpp full-last-run
 scpp explain-build
+scpp explain-build files-transpiled
+scpp explain-build entrypoint
+scpp explain-build final-output
 ```
 
 Run the deterministic usability harness:

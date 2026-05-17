@@ -353,6 +353,13 @@ Use each tool for the question it answers:
 - `scpp last-run`: compact build/run context and recent command outcome
 - `scpp full-last-run`: full saved run metadata and command details
 - `scpp explain-build`: why the tool rebuilt what it rebuilt
+  Common focused views:
+  `scpp explain-build files-transpiled`,
+  `scpp explain-build files-reused`,
+  `scpp explain-build outputs-rebuilt`,
+  `scpp explain-build entrypoint`,
+  `scpp explain-build final-output`,
+  `scpp explain-build generated-files`
 - `dbg(...)`: inspect runtime shape and typed-boundary inputs
 - `.line.tsv`: remap generated locations back to source when the saved report still points into generated artifacts
 - generated C++: inspect lowering only after the source-level diagnostic suggests a generator/runtime-boundary problem

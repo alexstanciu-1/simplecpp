@@ -580,7 +580,7 @@ function main(array $argv): void
 	}
 
 	if ($args[0] === 'explain-build') {
-		handle_explain_build_report(getcwd() === false ? '.' : getcwd());
+		handle_explain_build_report(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
 		return;
 	}
 
@@ -621,7 +621,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|entrypoint|final-output|generated-files]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -1602,7 +1602,8 @@ function handle_last_run_report(string $cwd, bool $full): void
 	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
 }
 
-function handle_explain_build_report(string $cwd): void
+/** @param list<string> $args */
+function handle_explain_build_report(string $cwd, array $args = []): void
 {
 	[$project, $path, $data] = load_project_report($cwd, '.prism/last_run.json', 'last run');
 	$output = [];
@@ -1617,7 +1618,8 @@ function handle_explain_build_report(string $cwd): void
 
 	$details = is_array($data['details'] ?? null) ? $data['details'] : [];
 	$buildExplanation = is_array($details['build_explanation'] ?? null) ? $details['build_explanation'] : [];
-	foreach (render_build_explanation_lines($buildExplanation) as $line) {
+	$view = strtolower(trim((string) ($args[0] ?? '')));
+	foreach (render_explain_build_view_lines($buildExplanation, $view) as $line) {
 		$output[] = $line;
 	}
 	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
@@ -1747,6 +1749,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$sourceRebuildReasons[] = [
 					'project_root' => normalize_path($contextProjectRoot),
 					'path' => normalize_config_path(relative_path($contextProjectRoot, $phpPathAbs)),
+					'generated_cpp' => normalize_config_path(relative_path($projectRoot, $generatedCpp)),
+					'object_path' => normalize_config_path(relative_path($projectRoot, build_object_path($projectContext['build_dir'], build_project_scoped_relative_path($projectRoot, $contextProjectRoot, $relativePhp), $compiler['kind']))),
+					'is_entrypoint' => $emitProgramEntry,
 					'action' => 'transpiled',
 					'reasons' => $transpileReasons,
 				];
@@ -1755,6 +1760,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$sourceRebuildReasons[] = [
 					'project_root' => normalize_path($contextProjectRoot),
 					'path' => normalize_config_path(relative_path($contextProjectRoot, $phpPathAbs)),
+					'generated_cpp' => normalize_config_path(relative_path($projectRoot, $generatedCpp)),
+					'object_path' => normalize_config_path(relative_path($projectRoot, build_object_path($projectContext['build_dir'], build_project_scoped_relative_path($projectRoot, $contextProjectRoot, $relativePhp), $compiler['kind']))),
+					'is_entrypoint' => $emitProgramEntry,
 					'action' => 'reused',
 					'reasons' => ['source metadata and generated artifacts unchanged'],
 				];
@@ -1851,6 +1859,13 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 
 	$outputName = build_output_name($entrypointAbs);
+	$entryGeneratedUnit = null;
+	foreach ($generatedUnits as $unit) {
+		if (($unit['is_entrypoint'] ?? false) === true) {
+			$entryGeneratedUnit = $unit;
+			break;
+		}
+	}
 	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppUnits, $outputName, $compiler, $buildMode, $runtimeConfig, $projectLibraryFlags, $fastcgiBuild, $options);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
@@ -1945,7 +1960,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					$skippedCount,
 					$sourceRebuildReasons,
 					[],
-					$status
+					$status,
+					$entrypointAbs,
+					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
+					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
+					null
 				),
 			]
 		);
@@ -2044,7 +2063,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$skippedCount,
 				$sourceRebuildReasons,
 				$rebuiltOutputs,
-				0
+				0,
+				$entrypointAbs,
+				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
+				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
+				$outputPath
 			),
 		]
 	);
@@ -2072,7 +2095,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$skippedCount,
 			$sourceRebuildReasons,
 			$rebuiltOutputs,
-			0
+			0,
+			$entrypointAbs,
+			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
+			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
+			$outputPath
 		),
 	];
 }
@@ -3380,7 +3407,16 @@ function build_explanation_details(
 	array $sourceRebuildReasons,
 	array $rebuiltOutputs,
 	int $exitCode,
+	?string $entrySourcePath = null,
+	?string $entryGeneratedCppPath = null,
+	?string $entryObjectPath = null,
+	?string $outputPath = null,
 ): array {
+	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
+	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
+	$entryObjectPath = is_string($entryObjectPath) && trim($entryObjectPath) !== '' ? $entryObjectPath : null;
+	$outputPath = is_string($outputPath) && trim($outputPath) !== '' ? $outputPath : null;
+
 	$runtimeReasons = $options['compile_runtime']
 		? [($options['force_runtime_rebuild'] ?? false) ? 'runtime rebuild forced for this build' : 'runtime compilation requested for this build']
 		: ['reusing existing runtime artifact by default'];
@@ -3397,6 +3433,12 @@ function build_explanation_details(
 		'status' => $exitCode === 0 ? 'success' : 'failure',
 		'transpiled_count' => $transpiledCount,
 		'skipped_count' => $skippedCount,
+		'output_path' => $outputPath !== null ? normalize_config_path(relative_path($projectRoot, $outputPath)) : null,
+		'entrypoint' => [
+			'source_path' => $entrySourcePath !== null ? normalize_config_path(relative_path($projectRoot, $entrySourcePath)) : null,
+			'generated_cpp' => $entryGeneratedCppPath !== null ? normalize_config_path(relative_path($projectRoot, $entryGeneratedCppPath)) : null,
+			'object_path' => $entryObjectPath !== null ? normalize_config_path(relative_path($projectRoot, $entryObjectPath)) : null,
+		],
 		'runtime' => [
 			'action' => $options['compile_runtime'] ? 'rebuild' : 'reuse',
 			'reasons' => $runtimeReasons,
@@ -3471,6 +3513,107 @@ function render_build_explanation_lines(array $details): array
 	}
 
 	return $lines;
+}
+
+/**
+ * @param array<string,mixed> $details
+ * @return list<string>
+ */
+function render_explain_build_view_lines(array $details, string $view): array
+{
+	if ($view === '' || $view === 'summary') {
+		return render_build_explanation_lines($details);
+	}
+
+	$sources = is_array($details['sources'] ?? null) ? $details['sources'] : [];
+	$entrypoint = is_array($details['entrypoint'] ?? null) ? $details['entrypoint'] : [];
+
+	if ($view === 'files-transpiled') {
+		$lines = [];
+		foreach ($sources as $source) {
+			if (!is_array($source) || (string) ($source['action'] ?? '') !== 'transpiled') {
+				continue;
+			}
+			$path = (string) ($source['path'] ?? '(unknown)');
+			$lines[] = $path . format_reason_suffix(is_array($source['reasons'] ?? null) ? $source['reasons'] : []);
+		}
+		return $lines === [] ? ['Files transpiled: none'] : array_merge(['Files transpiled:'], array_map(static fn (string $line): string => '  - ' . $line, $lines));
+	}
+
+	if ($view === 'files-reused') {
+		$lines = [];
+		foreach ($sources as $source) {
+			if (!is_array($source) || (string) ($source['action'] ?? '') !== 'reused') {
+				continue;
+			}
+			$path = (string) ($source['path'] ?? '(unknown)');
+			$lines[] = $path . format_reason_suffix(is_array($source['reasons'] ?? null) ? $source['reasons'] : []);
+		}
+		return $lines === [] ? ['Files reused: none'] : array_merge(['Files reused:'], array_map(static fn (string $line): string => '  - ' . $line, $lines));
+	}
+
+	if ($view === 'outputs-rebuilt') {
+		$rebuiltOutputs = is_array($details['rebuilt_outputs'] ?? null) ? $details['rebuilt_outputs'] : [];
+		if ($rebuiltOutputs === []) {
+			return ['Outputs rebuilt: none (up-to-date)'];
+		}
+		$lines = ['Outputs rebuilt:'];
+		foreach ($rebuiltOutputs as $value) {
+			if (!is_string($value) || trim($value) === '') {
+				continue;
+			}
+			$lines[] = '  - ' . $value;
+		}
+		return $lines;
+	}
+
+	if ($view === 'entrypoint') {
+		$entrySource = (string) ($entrypoint['source_path'] ?? '');
+		if ($entrySource === '') {
+			return ['Entrypoint: unavailable'];
+		}
+		$lines = ['Entrypoint: ' . $entrySource];
+		$generated = trim((string) ($entrypoint['generated_cpp'] ?? ''));
+		$object = trim((string) ($entrypoint['object_path'] ?? ''));
+		if ($generated !== '') {
+			$lines[] = 'Generated C++: ' . $generated;
+		}
+		if ($object !== '') {
+			$lines[] = 'Object: ' . $object;
+		}
+		return $lines;
+	}
+
+	if ($view === 'final-output') {
+		$outputPath = trim((string) ($details['output_path'] ?? ''));
+		return ['Final output: ' . ($outputPath !== '' ? $outputPath : 'unavailable')];
+	}
+
+	if ($view === 'generated-files') {
+		$lines = [];
+		foreach ($sources as $source) {
+			if (!is_array($source)) {
+				continue;
+			}
+			$path = (string) ($source['path'] ?? '(unknown)');
+			$generated = trim((string) ($source['generated_cpp'] ?? ''));
+			$object = trim((string) ($source['object_path'] ?? ''));
+			$line = $path;
+			if ($generated !== '') {
+				$line .= ' -> ' . $generated;
+			}
+			if ($object !== '') {
+				$line .= ' -> ' . $object;
+			}
+			$lines[] = $line;
+		}
+		return $lines === [] ? ['Generated files: none'] : array_merge(['Generated files:'], array_map(static fn (string $line): string => '  - ' . $line, $lines));
+	}
+
+	scpp_fail(
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, entrypoint, final-output, generated-files.' . PHP_EOL,
+		1
+	);
 }
 
 /** @param list<mixed> $reasons */
