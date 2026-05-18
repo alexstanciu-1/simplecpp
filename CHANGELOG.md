@@ -9,6 +9,9 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+- Fixed `.phs` source diagnostics so files that begin with `<?php` now fail early with a friendly unsupported-source message instead of surfacing an internal parser error.
+- Added a focused `scpp build` regression test covering the unsupported `<?php` header path for strict-project `.phs` entrypoints.
+
 ## 0.1.45 - 2026-05-17
 
 ### Additions
