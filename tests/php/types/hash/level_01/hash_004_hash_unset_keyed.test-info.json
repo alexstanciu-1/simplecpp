@@ -1,0 +1,51 @@
+{
+    "id": "hash_004_hash_unset_keyed",
+    "feature": "hash",
+    "level": "level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": true,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": true,
+            "exit_code": 0,
+            "stdout": "N\nY\n2\n",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "N\nY\n2\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "types",
+        "hash",
+        "unset"
+    ],
+    "notes": "Typed hash<int> keyed unset() should remove present keys and stay a no-op on missing keys.",
+    "build": {
+        "sanitizers": null
+    }
+}

@@ -1,0 +1,16 @@
+function pick(bool $flag): string|null {
+	if ($flag) {
+		return "x";
+	}
+
+	return null;
+}
+
+$a = pick(true);
+$b = pick(false);
+
+$x = $a ? $b : "fallback";
+$y = $b ? $a : "fallback";
+
+echo ($x ?? "null"), "\n";
+echo ($y ?? "null"), "\n";
