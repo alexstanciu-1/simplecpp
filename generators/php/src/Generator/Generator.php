@@ -6179,8 +6179,6 @@ final class Generator
 				is_object($varNode)
 				&& (($varNode->kind ?? null) === AstKind::DIM)
 				&& (($varNode->children['dim'] ?? null) !== null)
-				&& is_object($varNode->children['expr'] ?? null)
-				&& (($varNode->children['expr']->kind ?? null) === AstKind::VAR)
 			) {
 				return $this->qualifyKnownPhpRuntimeSymbol('isset') . '('
 					. $this->renderExpr($varNode->children['expr'] ?? null, $namespacePhp) . ', '

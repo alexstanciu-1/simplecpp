@@ -1,0 +1,12 @@
+class box
+{
+	public $items hash<mixed> = [];
+}
+
+$b = new box();
+$b->items["present"] = "yes";
+$missing = "missing";
+$present = "present";
+
+echo "present=", isset($b->items[$present]) ? "yes" : "no", "\n";
+echo "missing=", isset($b->items[$missing]) ? "yes" : "no", "\n";
