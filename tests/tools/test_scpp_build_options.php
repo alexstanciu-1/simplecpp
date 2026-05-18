@@ -68,6 +68,7 @@ final class ScppBuildOptionsTest
 			$this->assertRuntimeLaunchEnvironment();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
+			$this->assertClangNinjaRenderingUsesNativePch();
 			$this->assertEntryOverrideCanSelectAnotherFile();
 
 			echo "PASS: scpp build options\n";
@@ -190,9 +191,66 @@ final class ScppBuildOptionsTest
 		$this->assertContains('compile_pch_runtime', $fullNinja, 'full build mode should include runtime pch rules');
 		$this->assertContains('build main.o: compile ../generated/main.cpp', $fullNinja, 'root project compile edges should be relative to build_dir');
 		$this->assertContains('build ../../../dep/.prism/build/dep.o: compile', $fullNinja, 'full build mode should include dependency compile edges');
+		$this->assertContains('app_pchflags = -Winvalid-pch -include $app_pch_header', $fullNinja, 'GCC-like builds should continue using header-based .gch consumption');
 		if (PHP_OS_FAMILY === 'Linux') {
 			$this->assertContains('-Wl,-soname,libruntime.so', $fullNinja, 'Linux shared runtime should declare a SONAME so executables do not need a slash-containing DT_NEEDED path');
 		}
+	}
+
+	private function assertClangNinjaRenderingUsesNativePch(): void
+	{
+		$projectRoot = $this->root . '/clang_app';
+		$repoRoot = $this->root . '/clang_repo';
+		$buildDir = $projectRoot . '/.prism/build';
+		$generatedDir = $projectRoot . '/.prism/generated';
+		$this->mkdir($buildDir);
+		$this->mkdir($generatedDir);
+		$this->mkdir($repoRoot . '/runtime/include');
+
+		$generatedUnits = [
+			[
+				'project_root' => $projectRoot,
+				'relative_php' => 'main.phs',
+				'generated_cpp' => $generatedDir . '/main.cpp',
+				'object_path' => $buildDir . '/main.o',
+				'is_entrypoint' => true,
+				'force_include_header' => $generatedDir . '/__project_units.hpp',
+			],
+		];
+		$compiler = [
+			'command' => 'clang++',
+			'kind' => 'gnu_like',
+			'launcher' => null,
+			'linker_flags' => [],
+		];
+		$runtimeConfig = [
+			'languages' => ['php'],
+			'modules' => ['json', 'filesystem'],
+			'language_profiles' => [
+				'php' => ['profile' => 'legacy'],
+			],
+		];
+
+		$ninja = render_build_ninja(
+			$projectRoot,
+			$repoRoot,
+			$buildDir,
+			$generatedDir,
+			$generatedUnits,
+			[],
+			'app',
+			$compiler,
+			'debug',
+			$runtimeConfig,
+			[],
+			null,
+			['compile_runtime' => true, 'compile_dependencies' => true]
+		);
+		$this->assertContains('app_pch_artifact = app_pch.pch', $ninja, 'Clang builds should emit a native .pch app artifact');
+		$this->assertContains('app_pchflags = -include-pch $app_pch_artifact', $ninja, 'Clang builds should consume the app PCH with -include-pch');
+		$this->assertContains('runtime_pch_artifact = runtime_pch.pch', $ninja, 'Clang builds should emit a native .pch runtime artifact');
+		$this->assertContains('runtime_pchflags = -include-pch $runtime_pch_artifact', $ninja, 'Clang builds should consume the runtime PCH with -include-pch');
+		$this->assertContains('$cxx $cxxflags $app_pchflags $more_cxxflags -MMD -MF $out.d -c $in -o $out', $ninja, 'Clang compile rules should load the app PCH before unit-specific forced includes');
 	}
 
 	private function assertEntryOverrideCanSelectAnotherFile(): void

@@ -1877,7 +1877,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			delete_file_if_exists(normalize_path($projectRoot . '/' . normalize_config_path($runtimeObjectPath)));
 		}
 	}
-	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppUnits, $runtimeBuild, $buildDir, $compiler['kind'], $outputName, $fastcgiBuild, $projectRoot, $options);
+	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppUnits, $runtimeBuild, $buildDir, $compiler, $outputName, $fastcgiBuild, $projectRoot, $options);
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
@@ -2330,7 +2330,8 @@ function parse_runtime_build_command_arguments(array $args): array
 /**
  * @param array{compile_runtime:bool,compile_dependencies:bool} $options
  */
-function collect_build_output_paths(array $generatedUnits, array $nativeCppUnits, array $runtimeBuild, string $buildDir, string $compilerKind, string $outputName, ?array $fastcgiBuild = null, ?string $rootProjectRoot = null, array $options = ['compile_runtime' => true, 'compile_dependencies' => true]): array
+/** @param array{command:string,kind:string,launcher?:?string,linker_flags?:list<string>,archiver?:?string} $compiler */
+function collect_build_output_paths(array $generatedUnits, array $nativeCppUnits, array $runtimeBuild, string $buildDir, array $compiler, string $outputName, ?array $fastcgiBuild = null, ?string $rootProjectRoot = null, array $options = ['compile_runtime' => true, 'compile_dependencies' => true]): array
 {
 	$paths = [];
 	foreach ($generatedUnits as $unit) {
@@ -2352,10 +2353,10 @@ function collect_build_output_paths(array $generatedUnits, array $nativeCppUnits
 	if ($options['compile_runtime']) {
 		$paths[] = normalize_path($runtimeBuild['artifact_path']);
 	}
-	if (supports_compiler_pch(['kind' => $compilerKind])) {
-		$paths[] = normalize_path(build_app_pch_artifact_path($buildDir, $compilerKind));
+	if (supports_compiler_pch($compiler)) {
+		$paths[] = normalize_path(build_app_pch_artifact_path($buildDir, $compiler));
 		if ($options['compile_runtime']) {
-			$paths[] = normalize_path(build_runtime_pch_artifact_path($buildDir, $compilerKind));
+			$paths[] = normalize_path(build_runtime_pch_artifact_path($buildDir, $compiler));
 		}
 	}
 	$paths[] = normalize_path($buildDir . '/' . $outputName);
@@ -4316,10 +4317,14 @@ function build_app_pch_header_path(string $buildDir): string
 	return $buildDir . '/app_pch.hpp';
 }
 
-function build_app_pch_artifact_path(string $buildDir, string $compilerKind): string
+/** @param array{command?:string,kind:string} $compiler */
+function build_app_pch_artifact_path(string $buildDir, array $compiler): string
 {
 	$headerPath = build_app_pch_header_path($buildDir);
-	if ($compilerKind === 'msvc') {
+	if ($compiler['kind'] === 'msvc') {
+		return $buildDir . '/app_pch.pch';
+	}
+	if (compiler_uses_clang_native_pch($compiler)) {
 		return $buildDir . '/app_pch.pch';
 	}
 
@@ -4336,10 +4341,14 @@ function build_runtime_pch_header_path(string $buildDir): string
 	return $buildDir . '/runtime_pch.hpp';
 }
 
-function build_runtime_pch_artifact_path(string $buildDir, string $compilerKind): string
+/** @param array{command?:string,kind:string} $compiler */
+function build_runtime_pch_artifact_path(string $buildDir, array $compiler): string
 {
 	$headerPath = build_runtime_pch_header_path($buildDir);
-	if ($compilerKind === 'msvc') {
+	if ($compiler['kind'] === 'msvc') {
+		return $buildDir . '/runtime_pch.pch';
+	}
+	if (compiler_uses_clang_native_pch($compiler)) {
 		return $buildDir . '/runtime_pch.pch';
 	}
 
@@ -4355,6 +4364,17 @@ function render_runtime_pch_header(): string
 function supports_compiler_pch(array $compiler): bool
 {
 	return $compiler['kind'] === 'gnu_like';
+}
+
+/** @param array{command?:string,kind:string} $compiler */
+function compiler_uses_clang_native_pch(array $compiler): bool
+{
+	if (($compiler['kind'] ?? '') !== 'gnu_like') {
+		return false;
+	}
+
+	$command = strtolower(basename(str_replace('\\', '/', (string) ($compiler['command'] ?? ''))));
+	return str_contains($command, 'clang');
 }
 
 /** @return array{size:int,mtime:int,content_hash:string} */
@@ -4825,9 +4845,9 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$runtimeIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $repoRoot . '/runtime/include');
 	$output = build_ninja_relative_path($projectRoot, $buildDir, $buildDir . '/' . $outputName);
 	$appPchHeader = build_ninja_relative_path($projectRoot, $buildDir, build_app_pch_header_path($buildDir));
-	$appPchArtifact = build_ninja_relative_path($projectRoot, $buildDir, build_app_pch_artifact_path($buildDir, $compiler['kind']));
+	$appPchArtifact = build_ninja_relative_path($projectRoot, $buildDir, build_app_pch_artifact_path($buildDir, $compiler));
 	$runtimePchHeader = build_ninja_relative_path($projectRoot, $buildDir, build_runtime_pch_header_path($buildDir));
-	$runtimePchArtifact = build_ninja_relative_path($projectRoot, $buildDir, build_runtime_pch_artifact_path($buildDir, $compiler['kind']));
+	$runtimePchArtifact = build_ninja_relative_path($projectRoot, $buildDir, build_runtime_pch_artifact_path($buildDir, $compiler));
 	$compilerCommand = $compiler['command'];
 	$compilerLauncher = $compiler['launcher'] ?? null;
 	$linkerFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
@@ -4861,11 +4881,21 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		$lines[] = 'runtime_ldflags = ' . implode(' ', $runtimeLinkFlags);
 	}
 	if (supports_compiler_pch($compiler)) {
+		$lines[] = 'app_pch_artifact = ' . $appPchArtifact;
 		$lines[] = 'app_pch_header = ' . $appPchHeader;
-		$lines[] = 'app_pchflags = -Winvalid-pch -include $app_pch_header';
+		if (compiler_uses_clang_native_pch($compiler)) {
+			$lines[] = 'app_pchflags = -include-pch $app_pch_artifact';
+		} else {
+			$lines[] = 'app_pchflags = -Winvalid-pch -include $app_pch_header';
+		}
 		if ($options['compile_runtime']) {
+			$lines[] = 'runtime_pch_artifact = ' . $runtimePchArtifact;
 			$lines[] = 'runtime_pch_header = ' . $runtimePchHeader;
-			$lines[] = 'runtime_pchflags = -Winvalid-pch -include $runtime_pch_header';
+			if (compiler_uses_clang_native_pch($compiler)) {
+				$lines[] = 'runtime_pchflags = -include-pch $runtime_pch_artifact';
+			} else {
+				$lines[] = 'runtime_pchflags = -Winvalid-pch -include $runtime_pch_header';
+			}
 		}
 	}
 	$lines[] = '';
@@ -4913,7 +4943,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	if ($compiler['kind'] === 'msvc') {
 		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags $more_cxxflags /c $in /Fo$out';
 	} else {
-		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags $more_cxxflags' . (supports_compiler_pch($compiler) ? ' $app_pchflags' : '') . ' -MMD -MF $out.d -c $in -o $out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags' . (supports_compiler_pch($compiler) ? ' $app_pchflags' : '') . ' $more_cxxflags -MMD -MF $out.d -c $in -o $out';
 		$lines[] = '  depfile = $out.d';
 		$lines[] = '  deps = gcc';
 	}
@@ -4929,7 +4959,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$lines[] = '';
 	if ($fastcgiBuild !== null) {
 		$lines[] = 'rule compile_fcgi';
-		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags $fcgi_cxxflags' . (supports_compiler_pch($compiler) ? ' $app_pchflags' : '') . ' -MMD -MF $out.d -c $in -o $out';
+		$lines[] = '  command = ' . compiler_invocation_prefix($compiler) . ' $cxx $cxxflags' . (supports_compiler_pch($compiler) ? ' $app_pchflags' : '') . ' $fcgi_cxxflags -MMD -MF $out.d -c $in -o $out';
 		$lines[] = '  depfile = $out.d';
 		$lines[] = '  deps = gcc';
 		$lines[] = '  description = CXX $out';

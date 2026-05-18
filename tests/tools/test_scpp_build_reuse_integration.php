@@ -176,7 +176,9 @@ $m->name = "ok";
 echo $m->name, "\n";
 PHS);
 
-		$build = scpp_run_build_service($project, $project . '/prism.json');
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+		]);
 		$this->assertSame(true, $build['ok'], 'strict same-project units should build without source-level generated-header includes');
 
 		$unitHeader = $project . '/.prism/generated/__project_units.hpp';
@@ -226,7 +228,9 @@ $i->name = "ok";
 echo $i->name, "\n";
 PHS);
 
-		$build = scpp_run_build_service($project, $project . '/prism.json');
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+		]);
 		$this->assertSame(true, $build['ok'], 'strict namespaced same-project units should build without generated-header source includes');
 
 		$forwardHeader = $project . '/.prism/generated/__project_fwd.hpp';
