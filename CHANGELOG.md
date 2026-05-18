@@ -9,6 +9,26 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.48 - 2026-05-18
+
+### Additions
+
+- Added exact regression coverage for `isset($object->typedHash[$missingKey])` on typed-hash object properties and for literal strict ternary branches that mix `"text"` with `null`.
+
+### Fixes
+
+- Fixed keyed `isset(...)` lowering for typed-hash property paths so forms like `isset($b->items[$missing])` now stay on the keyed runtime helper path and return `false` for missing keys instead of lowering through `hash_t::at(...)` and throwing.
+- Fixed strict ternary branch normalization so value-like branch pairs such as `"ok" : null`, `null : "ok"`, and matching `nullable<T>` with `null` normalize through `nullable<T>` in the runtime helper instead of failing with an incomplete `condition_ternary_result<..., null_t>` instantiation.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this hotfix because the fixes only adjust runtime/helper and generator lowering behavior without changing the authored strict surface.
+
 ## 0.1.47 - 2026-05-18
 
 ### Additions
