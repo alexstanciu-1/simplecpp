@@ -43,6 +43,22 @@ public:
 		value_.clear();
 	}
 
+	// Removes one indexed element and compacts later indexes like a sequence.
+	[[nodiscard]] bool remove(const int_t &index) {
+		const auto native = index.native_value();
+		if (native < 0) {
+			return false;
+		}
+
+		const auto offset = static_cast<std::size_t>(native);
+		if (offset >= value_.size()) {
+			return false;
+		}
+
+		value_.erase(value_.begin() + static_cast<std::ptrdiff_t>(offset));
+		return true;
+	}
+
 	// Implements the runtime unset hook for wrapped vectors.
 	// How: the wrapper owns its sequence storage, so unsetting it clears the held elements immediately.
 	void _unset_() noexcept {

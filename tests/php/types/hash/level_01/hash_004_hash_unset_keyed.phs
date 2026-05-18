@@ -1,0 +1,7 @@
+$items /** hash<int> */ = ["a" => 1, "b" => 2];
+unset($items["a"]);
+unset($items["missing"]);
+
+echo isset($items["a"]) ? "Y\n" : "N\n";
+echo isset($items["b"]) ? "Y\n" : "N\n";
+echo $items["b"], "\n";
