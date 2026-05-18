@@ -14,7 +14,7 @@ Current sample shape:
 - `project_samples/`
   - small checked-in strict-profile projects
   - explicit `runtime.languages.php.profile = "strict"`
-  - flat family-prefixed library names such as `fs_get`, `fs_scan`, `str_strlen`, `io_open`
+- plain PHP-like names for general helpers and family-prefixed names for subsystem helpers, such as `fs_get`, `fs_scan`, `strlen`, `io_open`
   - checked expected-output runner at `project_samples/tests/run_examples.sh`
 
 Strict examples are authoritative for agents when:

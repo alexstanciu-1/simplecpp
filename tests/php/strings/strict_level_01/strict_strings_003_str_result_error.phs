@@ -1,9 +1,9 @@
 $out /** string */ = "seed";
 $err /** error */;
 
-echo take($out, $err, str_hex2bin("4")) ? "T\n" : "F\n";
+echo take($out, $err, hex2bin("4")) ? "T\n" : "F\n";
 echo $out, "\n";
-echo take($out, $err, str_hex2bin("ZZ")) ? "T\n" : "F\n";
+echo take($out, $err, hex2bin("ZZ")) ? "T\n" : "F\n";
 echo $out, "\n";
-echo take($out, $err, str_hex2bin("4142")) ? "T\n" : "F\n";
+echo take($out, $err, hex2bin("4142")) ? "T\n" : "F\n";
 echo $out, "\n";

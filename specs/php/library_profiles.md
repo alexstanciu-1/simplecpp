@@ -70,7 +70,7 @@ The `strict` profile exposes the native non-legacy Simple C++ library surface fo
 
 Contract:
 
-- visible source names use the strict flat family-prefixed surface such as `fs_get`, `fs_scan`, `str_strlen`, `io_open`, `json_encode`
+- visible source names use plain PHP-like names for general language-adjacent helpers and family-prefixed names for subsystem/domain helpers, such as `fs_get`, `fs_scan`, `strlen`, `io_open`, `json_encode`
 - visible strict names are registered through `generators/php/specs/php_runtime_symbols_strict.json`
 - strict reusable capability lowers directly to shared runtime families such as:
   - `scpp::fs::*`

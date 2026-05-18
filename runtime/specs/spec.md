@@ -125,7 +125,7 @@ Strict-profile clarification:
 
 - a language profile may expose flat visible source names that lower directly to shared `scpp::*` runtime families
 - this does not create a second semantic authority; the shared family remains the authority
-- for current PHP strict profile work, names such as `fs_is_file(...)`, `str_strlen(...)`, `io_open(...)`, and `json_decode(...)` are visible/source-facing names that lower directly to shared runtime families selected by the active profile registry
+- for current PHP strict profile work, names such as `fs_is_file(...)`, `strlen(...)`, `io_open(...)`, and `json_decode(...)` are visible/source-facing names that lower directly to shared runtime families selected by the active profile registry
 
 ## 3. Runtime design goals
 

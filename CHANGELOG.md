@@ -9,6 +9,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.47 - 2026-05-18
+
+### Additions
+
+- Added a planning note under `specs/planning/` that records the v1 helper-naming simplification direction for strict projects.
+
+### Fixes
+
+- Fixed strict PHP helper resolution so common language-adjacent helpers such as `trim`, `ltrim`, `rtrim`, `substr`, `substr_compare`, `substr_replace`, `explode`, `implode`, `hex2bin`, `bin2hex`, `number_format`, `strlen`, `strpos`, `strrpos`, `strtolower`, `strtoupper`, `lcfirst`, and `ucfirst` resolve by their plain PHP-like names again in strict projects.
+- Fixed strict onboarding, profile docs, examples, and checked-in PHP tests so they teach and exercise the restored plain helper surface consistently instead of the old `str_*` variants for those general helpers.
+- Fixed repo-local strict Agent Skill guidance so the skill and its references now match the current strict helper naming surface.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- In strict projects, prefer the restored plain helper names for general language-adjacent helpers such as `trim`, `substr`, `explode`, `implode`, `hex2bin`, `strlen`, and `strtolower`.
+- Subsystem/domain helper families remain prefixed in strict mode, including `fs_*`, `io_*`, `json_*`, `dt_*`, and `regex_*`.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated for this hotfix to reflect the restored strict helper naming surface.
+
 ## 0.1.45 - 2026-05-17
 
 ### Additions

@@ -10,7 +10,7 @@ if (!take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
 	if (!take($data, $err, fs_get($file))) {
 		echo "read_error\n";
 	} else {
-		echo str_strlen($data), "\n";
+		echo strlen($data), "\n";
 
 		$decoded = json_decode($data);
 		echo $decoded["name"], "\n";

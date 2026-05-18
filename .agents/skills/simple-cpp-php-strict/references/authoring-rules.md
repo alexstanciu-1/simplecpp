@@ -197,10 +197,10 @@ Avoid direct conditions over arbitrary strings or unresolved `mixed` values.
 
 ## Strict Library Surface
 
-Use strict family-prefixed names:
+Use plain PHP-like names for general language-adjacent helpers and family-prefixed names for subsystem/domain helpers:
 
 - Filesystem: `fs_get`, `fs_put`, `fs_scan`, `fs_exists`, `fs_remove`
-- Strings: `str_strlen`, `str_replace`, `str_explode`, `str_implode`, `str_strpos`
+- Strings: `strlen`, `str_replace`, `explode`, `implode`, `strpos`
 - IO: `io_open`, `io_read`, `io_write`, `io_close`
 - JSON: `json_decode`, `json_encode`
 - Curl: `curl_init`, `curl_setopt`, `curl_exec`, `curl_getinfo`, `curl_errno`, `curl_error`
