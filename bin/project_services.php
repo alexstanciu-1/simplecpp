@@ -1866,18 +1866,17 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			break;
 		}
 	}
-	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppUnits, $outputName, $compiler, $buildMode, $runtimeConfig, $projectLibraryFlags, $fastcgiBuild, $options);
+	$effectiveBuildOptions = $options;
+	if ($options['compile_runtime']) {
+		scpp_build_runtime_from_config($repoRoot, $config, $buildMode, $options['force_runtime_rebuild']);
+		$effectiveBuildOptions['compile_runtime'] = false;
+		$effectiveBuildOptions['force_runtime_rebuild'] = false;
+	}
+	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppUnits, $outputName, $compiler, $buildMode, $runtimeConfig, $projectLibraryFlags, $fastcgiBuild, $effectiveBuildOptions);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig);
-	if ($options['force_runtime_rebuild']) {
-		delete_file_if_exists(normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path'])));
-		$runtimeObjectPath = $runtimeBuild['object_path'] ?? null;
-		if (is_string($runtimeObjectPath) && $runtimeObjectPath !== '') {
-			delete_file_if_exists(normalize_path($projectRoot . '/' . normalize_config_path($runtimeObjectPath)));
-		}
-	}
-	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppUnits, $runtimeBuild, $buildDir, $compiler, $outputName, $fastcgiBuild, $projectRoot, $options);
+	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppUnits, $runtimeBuild, $buildDir, $compiler, $outputName, $fastcgiBuild, $projectRoot, $effectiveBuildOptions);
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
@@ -4520,6 +4519,18 @@ function delete_file_if_exists(string $path): void
 	}
 }
 
+function replace_file_atomically(string $tmpPath, string $finalPath, string $failureMessage): void
+{
+	if (is_file($finalPath) && !@unlink($finalPath)) {
+		@unlink($tmpPath);
+		scpp_fail($failureMessage . ': ' . $finalPath . PHP_EOL, 2);
+	}
+	if (!@rename($tmpPath, $finalPath)) {
+		@unlink($tmpPath);
+		scpp_fail($failureMessage . ': ' . $finalPath . PHP_EOL, 2);
+	}
+}
+
 function build_object_path(string $buildDir, string $relativePhp, string $compilerKind): string
 {
 	$trimmed = strip_supported_source_extension($relativePhp);
@@ -5420,48 +5431,69 @@ function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string
 	$objectPath = is_string($runtimeBuild['object_path'] ?? null) && $runtimeBuild['object_path'] !== ''
 		? normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['object_path']))
 		: null;
-
-	if (!$force && is_file($artifactPath)) {
-		echo 'Runtime artifact already up to date: ' . normalize_config_path(relative_path($repoRoot, $artifactPath)) . PHP_EOL;
-		return [
-			'artifact_path' => normalize_config_path(relative_path($repoRoot, $artifactPath)),
-			'build_mode' => $buildMode,
-		];
+	$lockPath = $artifactPath . '.lock';
+	$lockHandle = fopen($lockPath, 'c+');
+	if ($lockHandle === false) {
+		scpp_fail('Failed to create runtime build lock: ' . $lockPath . PHP_EOL, 2);
 	}
 
-	if ($force) {
-		delete_file_if_exists($artifactPath);
-		if (is_string($objectPath)) {
-			delete_file_if_exists($objectPath);
+	try {
+		if (!flock($lockHandle, LOCK_EX)) {
+			scpp_fail('Failed to lock runtime build: ' . $lockPath . PHP_EOL, 2);
 		}
-	}
 
-	$compileFlags = split_shell_tokens(build_runtime_compiler_flags($compiler['kind'], $buildMode, normalize_path($repoRoot . '/runtime/include')));
-	$extraCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
-	$sourcePath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['source_path']));
-	$compileCommand = array_merge(
-		scpp_compiler_command_prefix($compiler),
-		[$compiler['command']],
-		$compileFlags,
-		$extraCxxFlags
-	);
+		if (!$force && is_file($artifactPath)) {
+			echo 'Runtime artifact already up to date: ' . normalize_config_path(relative_path($repoRoot, $artifactPath)) . PHP_EOL;
+			return [
+				'artifact_path' => normalize_config_path(relative_path($repoRoot, $artifactPath)),
+				'build_mode' => $buildMode,
+			];
+		}
 
-	if ($compiler['kind'] === 'gnu_like' && is_string($objectPath)) {
-		$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $objectPath]);
-		scpp_run_or_fail_process($compileCommand, $repoRoot, 'Failed to compile runtime object.');
-		$linkFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
-		$runtimeLinkFlags = is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
-		$linkCommand = array_merge(
+		if ($force) {
+			delete_file_if_exists($artifactPath);
+			if (is_string($objectPath)) {
+				delete_file_if_exists($objectPath);
+			}
+		}
+
+		$compileFlags = split_shell_tokens(build_runtime_compiler_flags($compiler['kind'], $buildMode, normalize_path($repoRoot . '/runtime/include')));
+		$extraCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
+		$sourcePath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['source_path']));
+		$compileCommand = array_merge(
 			scpp_compiler_command_prefix($compiler),
 			[$compiler['command']],
-			$linkFlags,
-			$runtimeLinkFlags,
-			[$objectPath, '-o', $artifactPath]
+			$compileFlags,
+			$extraCxxFlags
 		);
-		scpp_run_or_fail_process($linkCommand, $repoRoot, 'Failed to link runtime artifact.');
-	} else {
-		$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $artifactPath]);
-		scpp_run_or_fail_process($compileCommand, $repoRoot, 'Failed to compile runtime artifact.');
+
+		if ($compiler['kind'] === 'gnu_like' && is_string($objectPath)) {
+			$tmpObjectPath = $objectPath . '.tmp.' . bin2hex(random_bytes(4));
+			$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $tmpObjectPath]);
+			scpp_run_or_fail_process($compileCommand, $repoRoot, 'Failed to compile runtime object.');
+			replace_file_atomically($tmpObjectPath, $objectPath, 'Failed to publish runtime object');
+
+			$linkFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
+			$runtimeLinkFlags = is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
+			$tmpArtifactPath = $artifactPath . '.tmp.' . bin2hex(random_bytes(4));
+			$linkCommand = array_merge(
+				scpp_compiler_command_prefix($compiler),
+				[$compiler['command']],
+				$linkFlags,
+				$runtimeLinkFlags,
+				[$objectPath, '-o', $tmpArtifactPath]
+			);
+			scpp_run_or_fail_process($linkCommand, $repoRoot, 'Failed to link runtime artifact.');
+			replace_file_atomically($tmpArtifactPath, $artifactPath, 'Failed to publish runtime artifact');
+		} else {
+			$tmpArtifactPath = $artifactPath . '.tmp.' . bin2hex(random_bytes(4));
+			$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $tmpArtifactPath]);
+			scpp_run_or_fail_process($compileCommand, $repoRoot, 'Failed to compile runtime artifact.');
+			replace_file_atomically($tmpArtifactPath, $artifactPath, 'Failed to publish runtime artifact');
+		}
+	} finally {
+		flock($lockHandle, LOCK_UN);
+		fclose($lockHandle);
 	}
 
 	return [

@@ -37,6 +37,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertSame(true, $full['ok'], 'initial full build should succeed');
 			$this->assertContains('Runtime compilation: enabled', $full['output'], 'full build should report runtime compilation');
 			$this->assertContains('Dependency compilation: enabled', $full['output'], 'full build should report dependency compilation');
+			$this->assertRuntimeBuildIsPrebuiltAndReused($app);
 			$this->assertDirectNinjaNoWork($app);
 			$this->assertSameProjectStrictUnitsComposeWithoutSourceIncludes();
 			$this->assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder();
@@ -141,6 +142,17 @@ final class ScppBuildReuseIntegrationTest
 		if (str_contains($output, 'missing and no known rule to make it')) {
 			throw new RuntimeException("Direct ninja check still reports a missing dependency edge:\n" . $output);
 		}
+	}
+
+	private function assertRuntimeBuildIsPrebuiltAndReused(string $projectRoot): void
+	{
+		$buildFile = $projectRoot . '/.prism/build/build.ninja';
+		$this->assertFileExists($buildFile, 'project build should emit build.ninja');
+		$ninja = $this->read($buildFile);
+		$this->assertNotContains('rule compile_runtime', $ninja, 'project --build-runtime should prebuild the shared runtime instead of compiling it inside project-local ninja');
+		$this->assertNotContains('rule compile_runtime_fallback', $ninja, 'project --build-runtime should reuse the prebuilt runtime artifact in ninja');
+		$runtimeArtifact = $this->resolveRuntimeArtifactPath($projectRoot);
+		$this->assertFileExists($runtimeArtifact, 'prebuilt runtime artifact should exist before project-local ninja runs');
 	}
 
 	private function findDependencyObject(string $projectRoot): string
@@ -418,6 +430,13 @@ PHS);
 	{
 		if (!str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' missing `' . $needle . '`');
+		}
+	}
+
+	private function assertNotContains(string $needle, string $haystack, string $message): void
+	{
+		if (str_contains($haystack, $needle)) {
+			throw new RuntimeException($message . ' unexpectedly contained `' . $needle . '`');
 		}
 	}
 
