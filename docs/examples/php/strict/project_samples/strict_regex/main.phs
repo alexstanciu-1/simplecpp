@@ -13,7 +13,7 @@ $parts vector<string> = [];
 if (!take($parts, regex_split("/,/", "a,b,c"))) {
 	echo "SPLIT_ERROR\n";
 } else {
-	echo str_implode("|", $parts), "\n";
+	echo implode("|", $parts), "\n";
 }
 
 $replaced /** string */ = "";

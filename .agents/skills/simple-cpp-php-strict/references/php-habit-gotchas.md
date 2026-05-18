@@ -30,7 +30,7 @@ Strict examples:
 ```php
 $text string = "";
 take($text, $err, fs_get($path));
-echo str_strlen($text), "\n";
+echo strlen($text), "\n";
 ```
 
 Legacy-style names are not strict defaults:

@@ -10,7 +10,7 @@ $resp /** curl_response */;
 
 fs_mkdir($root);
 
-if (!take($payload, $err, str_hex2bin("4100420A"))) {
+if (!take($payload, $err, hex2bin("4100420A"))) {
 	echo "HEX_FAIL\n";
 } else if (!take($bytes, $err, fs_put($path, $payload))) {
 	echo "WRITE_FAIL\n";
@@ -29,8 +29,8 @@ if (!take($payload, $err, str_hex2bin("4100420A"))) {
 		echo "EXEC_FAIL\n";
 	} else {
 		echo $resp->status_code, "\n";
-		echo str_bin2hex($resp->body), "\n";
-		echo str_strlen($resp->body), "\n";
+		echo bin2hex($resp->body), "\n";
+		echo strlen($resp->body), "\n";
 	}
 
 	echo take($ok, $err, curl_close($ch)) ? "T\n" : "F\n";

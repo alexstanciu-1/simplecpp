@@ -9,6 +9,18 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.47 - 2026-05-18
+
+### Additions
+
+- Added a planning note under `specs/planning/` that records the v1 helper-naming simplification direction for strict projects.
+
+### Fixes
+
+- Fixed strict PHP helper resolution so common language-adjacent helpers such as `trim`, `ltrim`, `rtrim`, `substr`, `substr_compare`, `substr_replace`, `explode`, `implode`, `hex2bin`, `bin2hex`, `number_format`, `strlen`, `strpos`, `strrpos`, `strtolower`, `strtoupper`, `lcfirst`, and `ucfirst` resolve by their plain PHP-like names again in strict projects.
+- Fixed strict onboarding, profile docs, examples, and checked-in PHP tests so they teach and exercise the restored plain helper surface consistently instead of the old `str_*` variants for those general helpers.
+- Fixed repo-local strict Agent Skill guidance so the skill and its references now match the current strict helper naming surface.
+
 ## 0.1.46 - 2026-05-18
 
 ### Additions
@@ -28,6 +40,9 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Migration Notes
 
+- In strict projects, prefer the restored plain helper names for general language-adjacent helpers such as `trim`, `substr`, `explode`, `implode`, `hex2bin`, `strlen`, and `strtolower`.
+- Subsystem/domain helper families remain prefixed in strict mode, including `fs_*`, `io_*`, `json_*`, `dt_*`, and `regex_*`.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated for this hotfix to reflect the restored strict helper naming surface.
 - No source migration is required.
 - Agent Skill review completed: no `.agents/skills/*` updates were required for this hotfix because the existing strict-skill guidance already forbids leading `<?php` in `.phs` files and the other fixes do not change authoring workflow guidance.
 
@@ -201,11 +216,6 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - If dependency sources changed and reusable dependency artifacts are stale, default reuse mode should now be expected to stop early and direct the user to rerun with `--build-dependencies`.
 - Agent Skill review completed: no `.agents/skills/*` updates are required for this hotfix because the existing guidance already matches the current reuse-mode behavior.
-=======
-- Projects that want curl support must enable the opt-in `curl` runtime module in `prism.json` and have libcurl development headers available at build time.
-- Network-backed curl regression coverage is intentionally opt-in; pass `--include-network` to `tests/tools/run_tests.php` when you want the GitHub HTTPS integration test to run.
-- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated to reflect curl-capable strict module guidance for this release.
->>>>>>> dbae954 (Add curl module for release 0.1.38)
 
 ## 0.1.37 - 2026-05-11
 

@@ -26,20 +26,15 @@ final class ScppUpdateTest
 			$seed = $this->root . '/seed';
 			$checkout = $this->root . '/checkout';
 
-			$this->git($this->root, ['init', '--bare', $remote]);
-			$this->git($this->root, ['clone', $remote, $seed]);
+			$sourceRepo = resolve_repo_root();
+			$this->git($this->root, ['clone', '--bare', $sourceRepo, $remote]);
+			$this->git($this->root, ['clone', '-b', 'main', $remote, $seed]);
 			$this->configureUser($seed);
-			$this->write($seed . '/README.md', "one\n");
-			$this->git($seed, ['add', 'README.md']);
-			$this->git($seed, ['commit', '-m', 'initial']);
-			$this->git($seed, ['branch', '-M', 'main']);
-			$this->git($seed, ['push', '-u', 'origin', 'main']);
-
 			$this->git($this->root, ['clone', '-b', 'main', $remote, $checkout]);
 			$this->configureUser($checkout);
 
-			$this->write($seed . '/README.md', "two\n");
-			$this->git($seed, ['add', 'README.md']);
+			$this->write($seed . '/CHANGELOG.md', $this->withMarker($seed . '/CHANGELOG.md', 'test-update-change'));
+			$this->git($seed, ['add', 'CHANGELOG.md']);
 			$this->git($seed, ['commit', '-m', 'second']);
 			$this->git($seed, ['push', 'origin', 'main']);
 
@@ -57,6 +52,9 @@ final class ScppUpdateTest
 			$remoteHead = $this->gitLine($checkout, ['rev-parse', '--short', 'origin/main']);
 			$this->assertNotSame($before, $after, 'update should advance HEAD');
 			$this->assertSame($remoteHead, $after, 'update should fast-forward to origin/main');
+			$alreadyCurrent = scpp_run_update_service($checkout);
+			$this->assertSame(true, $alreadyCurrent['ok'], 'already-current update should still succeed');
+			$this->assertContains('Already up to date.', $alreadyCurrent['output'], 'already-current update should report current revision');
 
 			echo "PASS: scpp update\n";
 			return 0;
@@ -121,6 +119,15 @@ final class ScppUpdateTest
 		if (file_put_contents($path, $contents) === false) {
 			throw new RuntimeException('Failed to write ' . $path);
 		}
+	}
+
+	private function withMarker(string $path, string $marker): string
+	{
+		$current = file_get_contents($path);
+		if (!is_string($current)) {
+			throw new RuntimeException('Failed to read ' . $path);
+		}
+		return $current . "\n<!-- " . $marker . " -->\n";
 	}
 
 	private function mkdir(string $path): void

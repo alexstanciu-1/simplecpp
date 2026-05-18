@@ -22,7 +22,7 @@ if (!take($ch, $err, curl_init($url . "/echo-post"))) {
 	} else {
 		echo $resp->status_code, "\n";
 		echo $resp->body, "\n";
-		echo str_strlen($resp->body), "\n";
+		echo strlen($resp->body), "\n";
 	}
 
 	echo take($ok, $err, curl_close($ch)) ? "T\n" : "F\n";
