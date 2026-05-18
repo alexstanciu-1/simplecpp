@@ -9,6 +9,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.46 - 2026-05-18
+
+### Additions
+
+- Added focused regression coverage for `string|null` ternary lowering, indexed `unset()` on `vector<>`, keyed `unset()` on typed `hash<>`, and friendly `.phs` `<?php` source-header diagnostics.
+
+### Fixes
+
+- Fixed `string|null` union lowering so strict typed paths normalize nullable string unions consistently instead of degrading to non-null `string_t` handling.
+- Fixed indexed `unset($vector[$i])` so typed `vector<>` values now lower through keyed unset support and compact remaining elements safely.
+- Fixed keyed `unset()` coverage for typed `hash<>` containers so the supported keyed-unset path is pinned by regression tests alongside the vector change.
+- Fixed `.phs` source diagnostics so files that begin with `<?php` now fail early with a friendly unsupported-source message instead of surfacing an internal parser error.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this hotfix because the existing strict-skill guidance already forbids leading `<?php` in `.phs` files and the other fixes do not change authoring workflow guidance.
+
 ## 0.1.45 - 2026-05-17
 
 ### Additions

@@ -3576,7 +3576,7 @@ final class Generator
 				$dim = $this->renderExpr($targetNode->children['dim'] ?? null, $namespacePhp);
 				$baseType = $this->inferExprType($baseExpr);
 				if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
-					$this->fail('unset() on vector_t indexed elements is not supported yet at line ' . $statement->line . '.');
+					return $this->statementCodeLines($statement, ['unset_keyed(' . $base . ', ' . $dim . ');']);
 				}
 				if ($baseType === 'mixed_t') {
 					$shape = $this->inferForeachByRefSourceShape($baseExpr);
@@ -5934,7 +5934,8 @@ final class Generator
 			return null;
 		}
 
-		$normalized = trim($phpType);
+		$normalized = $this->typeMapper->normalizeNullableUnionType($phpType);
+		$normalized = trim($normalized);
 		if ($normalized === '') {
 			return $normalized;
 		}

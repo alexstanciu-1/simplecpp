@@ -1,0 +1,8 @@
+$v /** vector<int> */ = [10, 20, 30];
+unset($v[1]);
+unset($v[9]);
+unset($v[-1]);
+
+echo $v[0], "\n";
+echo $v[1], "\n";
+echo count($v), "\n";
