@@ -45,8 +45,35 @@ final class TypeMapper
 		return $parts[0] ?? trim($phpType);
 	}
 
+	public function normalizeNullableUnionType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		$parts = $this->splitUnionTypes($normalized);
+		if (count($parts) <= 1) {
+			return $normalized;
+		}
+
+		$nonNullParts = [];
+		$hasNull = false;
+		foreach ($parts as $part) {
+			$trimmed = trim($part);
+			if (strtolower($trimmed) === 'null') {
+				$hasNull = true;
+				continue;
+			}
+			$nonNullParts[] = $trimmed;
+		}
+
+		if ($hasNull && count($nonNullParts) === 1) {
+			return '?' . ltrim($nonNullParts[0], '?');
+		}
+
+		return $normalized;
+	}
+
 	public function mapDeclaredType(string $phpType): string
 	{
+		$phpType = $this->normalizeNullableUnionType($phpType);
 		$phpType = $this->getPrimaryDeclaredType($phpType);
 		$normalized = trim($phpType);
 		if ($this->isFunctionType($normalized)) {

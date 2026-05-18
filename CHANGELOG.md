@@ -21,6 +21,19 @@ This file is the authoritative checked-in source for release notes referenced by
 - Fixed strict onboarding, profile docs, examples, and checked-in PHP tests so they teach and exercise the restored plain helper surface consistently instead of the old `str_*` variants for those general helpers.
 - Fixed repo-local strict Agent Skill guidance so the skill and its references now match the current strict helper naming surface.
 
+## 0.1.46 - 2026-05-18
+
+### Additions
+
+- Added focused regression coverage for `string|null` ternary lowering, indexed `unset()` on `vector<>`, keyed `unset()` on typed `hash<>`, and friendly `.phs` `<?php` source-header diagnostics.
+
+### Fixes
+
+- Fixed `string|null` union lowering so strict typed paths normalize nullable string unions consistently instead of degrading to non-null `string_t` handling.
+- Fixed indexed `unset($vector[$i])` so typed `vector<>` values now lower through keyed unset support and compact remaining elements safely.
+- Fixed keyed `unset()` coverage for typed `hash<>` containers so the supported keyed-unset path is pinned by regression tests alongside the vector change.
+- Fixed `.phs` source diagnostics so files that begin with `<?php` now fail early with a friendly unsupported-source message instead of surfacing an internal parser error.
+
 ### Breaking Changes
 
 - None
@@ -30,6 +43,8 @@ This file is the authoritative checked-in source for release notes referenced by
 - In strict projects, prefer the restored plain helper names for general language-adjacent helpers such as `trim`, `substr`, `explode`, `implode`, `hex2bin`, `strlen`, and `strtolower`.
 - Subsystem/domain helper families remain prefixed in strict mode, including `fs_*`, `io_*`, `json_*`, `dt_*`, and `regex_*`.
 - Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated for this hotfix to reflect the restored strict helper naming surface.
+- No source migration is required.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this hotfix because the existing strict-skill guidance already forbids leading `<?php` in `.phs` files and the other fixes do not change authoring workflow guidance.
 
 ## 0.1.45 - 2026-05-17
 
@@ -201,11 +216,6 @@ This file is the authoritative checked-in source for release notes referenced by
 
 - If dependency sources changed and reusable dependency artifacts are stale, default reuse mode should now be expected to stop early and direct the user to rerun with `--build-dependencies`.
 - Agent Skill review completed: no `.agents/skills/*` updates are required for this hotfix because the existing guidance already matches the current reuse-mode behavior.
-=======
-- Projects that want curl support must enable the opt-in `curl` runtime module in `prism.json` and have libcurl development headers available at build time.
-- Network-backed curl regression coverage is intentionally opt-in; pass `--include-network` to `tests/tools/run_tests.php` when you want the GitHub HTTPS integration test to run.
-- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was updated to reflect curl-capable strict module guidance for this release.
->>>>>>> dbae954 (Add curl module for release 0.1.38)
 
 ## 0.1.37 - 2026-05-11
 

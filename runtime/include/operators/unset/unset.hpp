@@ -97,6 +97,11 @@ inline void unset_keyed(hash_t<TValue> &target, const TKey &key) {
 	target.remove(key);
 }
 
+template <typename TValue>
+inline void unset_keyed(vector_t<TValue> &target, const int_t &key) {
+	target.remove(key);
+}
+
 template <typename TBase, typename TKey>
 inline void unset_keyed(TBase &target, const TKey &key) {
 	detail::apply_unset_keyed(target, key);

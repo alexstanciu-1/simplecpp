@@ -41,6 +41,7 @@ final class InputLoader
 		if ($code === false) {
 			throw new InputException('Failed to read PHP input: ' . $path);
 		}
+		$this->rejectUnsupportedPhsOpenTag($path, $code);
 		$this->rejectUnsupportedPhpStrictTypesDirective($path, $code);
 
 		$preTokenized = $this->preTokenizer->rewrite($code);
@@ -130,6 +131,25 @@ final class InputLoader
 			'Unsupported directive in ' . $path . ':' . $line . '. '
 			. "`declare(strict_types=1);` is not supported in Prism++ source files. "
 			. 'Remove it; Prism++ typing rules do not use PHP strict_types.'
+		);
+	}
+
+	private function rejectUnsupportedPhsOpenTag(string $path, string $code): void
+	{
+		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+		if ($extension !== 'phs') {
+			return;
+		}
+		if (preg_match('/^(?:\xEF\xBB\xBF)?\s*<\?php\b/i', $code, $matches, PREG_OFFSET_CAPTURE) !== 1) {
+			return;
+		}
+
+		$offset = (int) ($matches[0][1] ?? 0);
+		$line = substr_count(substr($code, 0, $offset), "\n") + 1;
+		throw new InputException(
+			'Unsupported source header in ' . $path . ':' . $line . '. '
+			. "Prism++ .phs source files must not begin with `<?php`. "
+			. 'Start the file directly with Prism++ declarations or executable code.'
 		);
 	}
 }
