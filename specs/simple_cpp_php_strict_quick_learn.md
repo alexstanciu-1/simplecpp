@@ -400,13 +400,13 @@ Use this order:
 - Resolve wrappers near meaningful boundaries: `nullable<T>`, `result<T>`, `result_or_false<T>`, `result_or_bool<T>`.
 - Keep `null`, `false`, and error as separate states.
 - Prefer `===` over loose comparison.
-- Treat the strict library surface as its own API, not as renamed PHP builtins.
+- Treat the strict library surface as its own API, even when many general helpers keep familiar PHP-like names.
 - When in doubt, prefer documented PHP++ / PHS behavior over familiar PHP intuition.
 
 ## What Strict Means Today
 
 - `Guaranteed`: the strict profile selects the strict builtin/library surface
-- `Guaranteed`: strict visible names are family-prefixed, such as `fs_*`, `str_*`, `io_*`
+- `Guaranteed`: strict visible names use plain PHP-like names for general language-adjacent helpers and family prefixes for subsystem/domain helpers such as `fs_*`, `io_*`, `dt_*`, and `json_*`
 - `Guaranteed`: wrapper-oriented result handling is part of the supported model
 - `Guaranteed`: the current supported subset includes `throw`, `try/catch`, `try/finally`, and `try/catch/finally`
 - `Preferred`: typed boundaries, early wrapper resolution, and explicit comparisons
@@ -419,7 +419,7 @@ Use this order:
 - PHP++ / PHS strict projects use a different visible builtin surface:
   - `fs_get`, not `file_get_contents`
   - `fs_put`, not `file_put_contents`
-  - `str_strlen`, not `strlen`
+  - `strlen`, not `str_strlen`
   - `io_open`, not `fopen`
 - Dynamic values should be stabilized early.
 - Wrapper-returning operations are common and intentional.
@@ -466,7 +466,7 @@ Use this order:
 | `try/finally` | `try { work(); } finally { cleanup(); }` |
 | `try/catch/finally` | `try { work(); } catch (MyEx $e) { ... } finally { cleanup(); }` |
 | `throw` | `throw new MyEx("x");` |
-| strict family builtin | `$n = str_strlen("hello");` |
+| strict general builtin | `$n = strlen("hello");` |
 | strict filesystem builtin | `take($data, $err, fs_get($file));` |
 | strict IO builtin | `take($written, io_write($fh, "abc"));` |
 | strict JSON builtin | `$data = json_decode($json);` |
@@ -771,7 +771,7 @@ if (!take($text, $err, fs_get($path))) {
 ```
 
 ```php
-$pos = str_strpos("banana", "zz") ?? -1;
+$pos = strpos("banana", "zz") ?? -1;
 ```
 
 ```php
@@ -803,7 +803,7 @@ You generally do not write manual memory-management code, reason about raw point
 
 ## Strict Library Surface
 
-Visible PHP++ / PHS strict names are flat and family-prefixed.
+Visible PHP++ / PHS strict names use plain PHP-like names for general language-adjacent helpers and family prefixes for subsystem/domain helpers.
 
 ### Helpers
 
@@ -825,28 +825,28 @@ Visible PHP++ / PHS strict names are flat and family-prefixed.
 
 | Name | Compact signature | Return shape / note |
 | --- | --- | --- |
-| `str_substr` | `str_substr(string $s, int $offset, ?int $len = null)` | `string` |
-| `str_substr_compare` | `str_substr_compare(string $main, string $part, int $offset, ?int $len = null, ?bool $ci = null)` | `int` |
-| `str_substr_replace` | `str_substr_replace(string $subject, string $replacement, int $offset, ?int $len = null)` | `string` |
+| `substr` | `substr(string $s, int $offset, ?int $len = null)` | `string` |
+| `substr_compare` | `substr_compare(string $main, string $part, int $offset, ?int $len = null, ?bool $ci = null)` | `int` |
+| `substr_replace` | `substr_replace(string $subject, string $replacement, int $offset, ?int $len = null)` | `string` |
 | `str_pad` | `str_pad(string $input, int $pad_len, ?string $pad = " ", ?int $type = STR_PAD_RIGHT)` | `string` |
 | `str_replace` | `str_replace(string $search, string $replace, string $subject)` | `string` |
-| `str_explode` | `str_explode(string $sep, string $s, ?int $limit = null)` | current result is dynamic packed data |
-| `str_implode` | `str_implode(string $sep, vector<string>|hash_t<string> $parts)` | `string` |
-| `str_hex2bin` | `str_hex2bin(string $hex)` | wrapper result; usually `take($out, $err, ...)` |
-| `str_bin2hex` | `str_bin2hex(string $bytes)` | `string` |
-| `str_number_format` | `str_number_format(int|float $n, ?int $dec = null, ?string $dot = null, ?string $group = null)` | `string` |
-| `str_strlen` | `str_strlen(string $s)` | `int` byte length |
-| `str_strpos` | `str_strpos(string $haystack, string $needle, ?int $offset = null)` | current contract is position-or-false style result |
-| `str_strrpos` | `str_strrpos(string $haystack, string $needle, ?int $offset = null)` | current contract is position-or-false style result |
-| `str_strtolower` | `str_strtolower(string $s)` | `string`, byte/ASCII-oriented |
-| `str_strtoupper` | `str_strtoupper(string $s)` | `string`, byte/ASCII-oriented |
-| `str_lcfirst` | `str_lcfirst(string $s)` | `string` |
-| `str_ucfirst` | `str_ucfirst(string $s)` | `string` |
+| `explode` | `explode(string $sep, string $s, ?int $limit = null)` | current result is dynamic packed data |
+| `implode` | `implode(string $sep, vector<string>|hash_t<string> $parts)` | `string` |
+| `hex2bin` | `hex2bin(string $hex)` | wrapper result; usually `take($out, $err, ...)` |
+| `bin2hex` | `bin2hex(string $bytes)` | `string` |
+| `number_format` | `number_format(int|float $n, ?int $dec = null, ?string $dot = null, ?string $group = null)` | `string` |
+| `strlen` | `strlen(string $s)` | `int` byte length |
+| `strpos` | `strpos(string $haystack, string $needle, ?int $offset = null)` | current contract is position-or-false style result |
+| `strrpos` | `strrpos(string $haystack, string $needle, ?int $offset = null)` | current contract is position-or-false style result |
+| `strtolower` | `strtolower(string $s)` | `string`, byte/ASCII-oriented |
+| `strtoupper` | `strtoupper(string $s)` | `string`, byte/ASCII-oriented |
+| `lcfirst` | `lcfirst(string $s)` | `string` |
+| `ucfirst` | `ucfirst(string $s)` | `string` |
 | `str_starts_with` | `str_starts_with(string $haystack, string $needle)` | `bool` |
 | `str_ends_with` | `str_ends_with(string $haystack, string $needle)` | `bool` |
-| `str_trim` | `str_trim(string $s, ?string $mask = null)` | `string` |
-| `str_ltrim` | `str_ltrim(string $s, ?string $mask = null)` | `string` |
-| `str_rtrim` | `str_rtrim(string $s, ?string $mask = null)` | `string` |
+| `trim` | `trim(string $s, ?string $mask = null)` | `string` |
+| `ltrim` | `ltrim(string $s, ?string $mask = null)` | `string` |
+| `rtrim` | `rtrim(string $s, ?string $mask = null)` | `string` |
 
 ### IO
 
@@ -942,7 +942,7 @@ if (take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
 		$row = json_decode($data);
 		$name string = $row["name"];
 		$count int = $row["count"];
-		echo str_strlen($name), "\n";
+		echo strlen($name), "\n";
 		echo $count, "\n";
 	}
 }
@@ -951,7 +951,7 @@ if (take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
 This example shows:
 
 - PHP-like syntax
-- strict family-prefixed library names
+- plain helper names for general language-adjacent builtins
 - typed locals at meaningful boundaries
 - wrapper extraction with `take(...)`
 - dynamic JSON decoded first, then stabilized into typed locals

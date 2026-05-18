@@ -15,11 +15,11 @@ Each sample uses:
 
 Regex-specific samples opt into `"regex"` explicitly.
 
-The visible strict API uses flat family-prefixed names such as:
+The visible strict API uses plain PHP-like names for general helpers and family-prefixed names for subsystem helpers, such as:
 
 - `fs_get(...)`
 - `fs_put(...)`
-- `str_strlen(...)`
+- `strlen(...)`
 - `io_open(...)`
 - `json_decode(...)`
 

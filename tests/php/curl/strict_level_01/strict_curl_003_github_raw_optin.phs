@@ -19,8 +19,8 @@ if (!take($ch, $err, curl_init($url))) {
 		echo "EXEC_FAIL\n";
 	} else {
 		echo $resp->status_code, "\n";
-		echo str_bin2hex($resp->body), "\n";
-		echo str_strlen($resp->body), "\n";
+		echo bin2hex($resp->body), "\n";
+		echo strlen($resp->body), "\n";
 	}
 
 	echo take($ok, $err, curl_close($ch)) ? "T\n" : "F\n";
