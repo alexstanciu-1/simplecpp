@@ -30,6 +30,18 @@ struct condition_guarded_result_info<result<T>> {
 template <typename T>
 inline constexpr bool condition_guarded_result_info_v = condition_guarded_result_info<std::remove_cvref_t<T>>::value;
 
+template <typename T>
+struct condition_null_bridge_enabled : std::bool_constant<
+	!::scpp::detail::is_handle_like_v<T>
+	&& !condition_nullable_info_v<T>
+	&& !condition_guarded_result_info_v<T>
+	&& !std::is_same_v<std::remove_cvref_t<T>, mixed_t>
+	&& !std::is_same_v<std::remove_cvref_t<T>, null_t>
+> {};
+
+template <typename T>
+inline constexpr bool condition_null_bridge_enabled_v = condition_null_bridge_enabled<std::remove_cvref_t<T>>::value;
+
 template <typename Then, typename Else>
 struct condition_ternary_result;
 
@@ -50,6 +62,28 @@ struct condition_ternary_result<nullable<T>, T> {
 
 template <typename T>
 struct condition_ternary_result<T, nullable<T>> {
+	using type = nullable<T>;
+};
+
+template <typename T>
+requires (condition_null_bridge_enabled_v<T>)
+struct condition_ternary_result<T, null_t> {
+	using type = nullable<T>;
+};
+
+template <typename T>
+requires (condition_null_bridge_enabled_v<T>)
+struct condition_ternary_result<null_t, T> {
+	using type = nullable<T>;
+};
+
+template <typename T>
+struct condition_ternary_result<nullable<T>, null_t> {
+	using type = nullable<T>;
+};
+
+template <typename T>
+struct condition_ternary_result<null_t, nullable<T>> {
 	using type = nullable<T>;
 };
 
@@ -111,6 +145,8 @@ inline Result normalize_ternary_branch(Value &&value) {
 		using inner_t = typename condition_nullable_info<result_t>::inner_type;
 		if constexpr (std::is_same_v<inner_t, value_t>) {
 			return result_t(std::forward<Value>(value));
+		} else if constexpr (std::is_same_v<value_t, null_t>) {
+			return result_t(null_t{});
 		} else {
 			static_assert(::scpp::detail::always_false_v<result_t, value_t>, "unsupported ternary_eval branch combination");
 		}
