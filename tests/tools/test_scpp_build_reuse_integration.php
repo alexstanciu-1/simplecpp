@@ -37,6 +37,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertSame(true, $full['ok'], 'initial full build should succeed');
 			$this->assertContains('Runtime compilation: enabled', $full['output'], 'full build should report runtime compilation');
 			$this->assertContains('Dependency compilation: enabled', $full['output'], 'full build should report dependency compilation');
+			$this->assertBuildNinjaReusesPrebuiltRuntime($app);
 			$this->assertDirectNinjaNoWork($app);
 			$this->assertSameProjectStrictUnitsComposeWithoutSourceIncludes();
 			$this->assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder();
@@ -143,6 +144,15 @@ final class ScppBuildReuseIntegrationTest
 		}
 	}
 
+	private function assertBuildNinjaReusesPrebuiltRuntime(string $projectRoot): void
+	{
+		$buildFile = $projectRoot . '/.prism/build/build.ninja';
+		$this->assertFileExists($buildFile, 'build.ninja should exist after build');
+		$contents = $this->read($buildFile);
+		$this->assertTrue(!str_contains($contents, 'rule compile_runtime'), 'project-local build.ninja should reuse the prebuilt shared runtime instead of compiling it directly');
+		$this->assertTrue(!str_contains($contents, 'rule link_runtime_shared'), 'project-local build.ninja should not link the shared runtime directly after prebuild');
+	}
+
 	private function findDependencyObject(string $projectRoot): string
 	{
 		$buildDir = $projectRoot . '/.prism/build';
@@ -176,7 +186,10 @@ $m->name = "ok";
 echo $m->name, "\n";
 PHS);
 
-		$build = scpp_run_build_service($project, $project . '/prism.json');
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
 		$this->assertSame(true, $build['ok'], 'strict same-project units should build without source-level generated-header includes');
 
 		$unitHeader = $project . '/.prism/generated/__project_units.hpp';
@@ -226,7 +239,10 @@ $i->name = "ok";
 echo $i->name, "\n";
 PHS);
 
-		$build = scpp_run_build_service($project, $project . '/prism.json');
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
 		$this->assertSame(true, $build['ok'], 'strict namespaced same-project units should build without generated-header source includes');
 
 		$forwardHeader = $project . '/.prism/generated/__project_fwd.hpp';

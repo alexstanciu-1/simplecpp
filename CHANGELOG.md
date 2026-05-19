@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.52 - 2026-05-19
+
+### Additions
+
+- Added focused tool-level regression coverage that checks `scpp build --build-runtime` emits a project-local `build.ninja` in runtime-reuse mode instead of embedding shared-runtime compile/link rules directly.
+
+### Fixes
+
+- Fixed a regression in the reusable runtime build path so `scpp build --build-runtime` once again prebuilds the shared runtime artifact before rendering the project-local Ninja graph.
+- Fixed reusable runtime publication so guarded `flock(...)` plus temp-file and atomic-rename publication are restored for shared runtime object/library outputs.
+- Fixed the remaining `#126` race shape where concurrent `--build-runtime` calls could still expose transient invalid shared runtime artifacts such as `runtime.o` during parallel builds.
+- Fixed the build-reuse integration tests so strict standalone subcases explicitly seed runtime when that is part of the scenario instead of depending on ambient runtime-cache state.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required.
+- `scpp build --build-runtime` should again behave as a guarded reusable-runtime refresh rather than embedding direct shared-runtime rebuild steps into each project-local Ninja graph.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this hotfix because the change affects build/runtime orchestration and tool validation rather than strict authoring guidance.
+
 ## 0.1.51 - 2026-05-19
 
 ### Additions
