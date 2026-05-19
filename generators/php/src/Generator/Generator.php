@@ -88,6 +88,8 @@ final class Generator
 	private array $currentUsedCppVarNames = [];
 	/** @var array<string, string> */
 	private array $currentLocalArrayShapes = [];
+	/** @var array<string, array{line:int}> */
+	private array $activeConditionVisibilityHints = [];
 	/** @var list<array<string, string>> */
 	private array $foreachReferenceSlotStack = [];
 	/** @var list<array<string, bool>> */
@@ -137,6 +139,7 @@ final class Generator
 	public function generate(PhpFile $file, bool $emitProgramEntry = true): CppFile
 	{
 		$this->declaredLocals = [];
+		$this->activeConditionVisibilityHints = [];
 		$this->errors = $file->buildErrors;
 		$this->warnings = [];
 		$this->localTypeComments = $file->localTypeCommentsByKey;
@@ -3869,8 +3872,10 @@ final class Generator
 		}
 
 		if ($statement->kind === 'while') {
-			$lines = [$this->code('while (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ') {', $statement->line)];
-			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
+			$conditionNode = $statement->payload['cond'] ?? null;
+			$conditionHints = $this->conditionVisibilityHintsForExpr($conditionNode);
+			$lines = [$this->code('while (' . $this->renderConditionExpr($conditionNode, $namespacePhp) . ') {', $statement->line)];
+			foreach ($this->renderNestedStatementsWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $conditionHints) as $line) {
 				$lines[] = $line;
 			}
 			$lines[] = $this->code('}', $statement->line);
@@ -3879,7 +3884,8 @@ final class Generator
 
 		if ($statement->kind === 'do_while') {
 			$lines = [$this->code('do {', $statement->line)];
-			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
+			$conditionHints = $this->conditionVisibilityHintsForExpr($statement->payload['cond'] ?? null);
+			foreach ($this->renderNestedStatementsWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $conditionHints) as $line) {
 				$lines[] = $line;
 			}
 			$lines[] = $this->code('} while (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ');', $statement->line);
@@ -3891,10 +3897,11 @@ final class Generator
 			$scopedLocalTypes = $this->declaredLocalTypes;
 			$scopedReferenceLocals = $this->predefinedReferenceLocals;
 			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
+			$conditionHints = $this->conditionVisibilityHintsForExpr($statement->payload['cond'] ?? []);
 			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
 			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
 			$lines = [$this->code('for (' . $init . '; ' . $cond . '; ' . $loop . ') {', $statement->line)];
-			foreach ($this->renderNestedStatements($statement->payload['stmts'] ?? [], $namespacePhp) as $line) {
+			foreach ($this->renderNestedStatementsWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $conditionHints) as $line) {
 				$lines[] = $line;
 			}
 			$lines[] = $this->code('}', $statement->line);
@@ -4214,6 +4221,18 @@ final class Generator
 		}
 	}
 
+	/** @param list<Statement> $statements @param array<string, array{line:int}> $hints */
+	private function renderFinallyAwareStatementSequenceWithConditionHints(array $statements, ?string $namespacePhp, array $returnContext, array $hints): array
+	{
+		$previousHints = $this->activeConditionVisibilityHints;
+		$this->activeConditionVisibilityHints = $hints + $previousHints;
+		try {
+			return $this->renderFinallyAwareStatementSequence($statements, $namespacePhp, $returnContext);
+		} finally {
+			$this->activeConditionVisibilityHints = $previousHints;
+		}
+	}
+
 	private function renderFinallyAwareStatement(Statement $statement, ?string $namespacePhp, array $returnContext): array
 	{
 		if ($statement->kind === 'if') {
@@ -4227,7 +4246,8 @@ final class Generator
 				} else {
 					$lines[] = $this->code('else {', $branchLine);
 				}
-				foreach ($this->renderFinallyAwareStatementSequence($branch['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+				$conditionHints = $this->conditionVisibilityHintsForExpr($branch['cond'] ?? null);
+				foreach ($this->renderFinallyAwareStatementSequenceWithConditionHints($branch['stmts'] ?? [], $namespacePhp, $returnContext, $conditionHints) as $line) {
 					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 				}
 				$lines[] = $this->code('}', $branchLine);
@@ -4237,8 +4257,10 @@ final class Generator
 		}
 
 		if ($statement->kind === 'while') {
-			$lines = [$this->code('while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . ')) {', $statement->line)];
-			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+			$conditionNode = $statement->payload['cond'] ?? null;
+			$conditionHints = $this->conditionVisibilityHintsForExpr($conditionNode);
+			$lines = [$this->code('while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($conditionNode, $namespacePhp) . ')) {', $statement->line)];
+			foreach ($this->renderFinallyAwareStatementSequenceWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext, $conditionHints) as $line) {
 				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 			}
 			$lines[] = $this->code('}', $statement->line);
@@ -4247,7 +4269,8 @@ final class Generator
 
 		if ($statement->kind === 'do_while') {
 			$lines = [$this->code('do {', $statement->line)];
-			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+			$conditionHints = $this->conditionVisibilityHintsForExpr($statement->payload['cond'] ?? null);
+			foreach ($this->renderFinallyAwareStatementSequenceWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext, $conditionHints) as $line) {
 				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
 			}
 			$lines[] = $this->code('} while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . '));', $statement->line);
@@ -4259,6 +4282,7 @@ final class Generator
 			$scopedLocalTypes = $this->declaredLocalTypes;
 			$scopedReferenceLocals = $this->predefinedReferenceLocals;
 			$init = $this->renderForInit($statement->payload['init'] ?? [], $namespacePhp);
+			$conditionHints = $this->conditionVisibilityHintsForExpr($statement->payload['cond'] ?? []);
 			$cond = $this->renderForConditionClause($statement->payload['cond'] ?? [], $namespacePhp);
 			$loop = $this->renderForClause($statement->payload['loop'] ?? [], $namespacePhp, '');
 			$lines = [$this->code('{', $statement->line)];
@@ -4266,7 +4290,7 @@ final class Generator
 				$lines[] = $this->code($this->indent(1) . $init . ';', $statement->line);
 			}
 			$lines[] = $this->code($this->indent(1) . 'while (!' . $returnContext['flag'] . ' && (' . $cond . ')) {', $statement->line);
-			foreach ($this->renderFinallyAwareStatementSequence($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
+			foreach ($this->renderFinallyAwareStatementSequenceWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext, $conditionHints) as $line) {
 				$lines[] = $this->code($this->indent(2) . $line->text, $line->srcLine, $line->srcColumn);
 			}
 			if ($loop !== '') {
@@ -4453,7 +4477,8 @@ final class Generator
 			} else {
 				$lines[] = $this->code($prefix . ' (' . $this->renderConditionExpr($branch['cond'] ?? null, $namespacePhp) . ') {', $branchLine);
 			}
-			foreach ($this->renderNestedStatements($branch['stmts'] ?? [], $namespacePhp) as $line) {
+			$conditionHints = $this->conditionVisibilityHintsForExpr($branch['cond'] ?? null);
+			foreach ($this->renderNestedStatementsWithConditionHints($branch['stmts'] ?? [], $namespacePhp, $conditionHints) as $line) {
 				$lines[] = $line;
 			}
 			$lines[] = $this->code('}', $branchLine);
@@ -4478,6 +4503,18 @@ final class Generator
 		$this->declaredLocalTypes = $scopedLocalTypes;
 		$this->predefinedReferenceLocals = $scopedReferenceLocals;
 		return $lines;
+	}
+
+	/** @param list<Statement> $statements @param array<string, array{line:int}> $hints @return list<CodeBlock> */
+	private function renderNestedStatementsWithConditionHints(array $statements, ?string $namespacePhp, array $hints): array
+	{
+		$previousHints = $this->activeConditionVisibilityHints;
+		$this->activeConditionVisibilityHints = $hints + $previousHints;
+		try {
+			return $this->renderNestedStatements($statements, $namespacePhp);
+		} finally {
+			$this->activeConditionVisibilityHints = $previousHints;
+		}
 	}
 
 	/** @param list<Statement> $statements */
@@ -4560,6 +4597,62 @@ final class Generator
 			return 'static_cast<bool>(' . $rendered . ')';
 		}
 		return 'static_cast<bool>(' . $this->qualifyKnownPhpRuntimeSymbol('condition_truthy') . '(' . $rendered . '))';
+	}
+
+	/** @return array<string, array{line:int}> */
+	private function conditionVisibilityHintsForExpr(mixed $expr): array
+	{
+		$names = [];
+		if (is_array($expr)) {
+			foreach ($expr as $item) {
+				$this->collectConditionAssignedUndeclaredLocals($item, $names);
+			}
+			return $names;
+		}
+		$this->collectConditionAssignedUndeclaredLocals($expr, $names);
+		return $names;
+	}
+
+	/** @param array<string, array{line:int}> $names */
+	private function collectConditionAssignedUndeclaredLocals(mixed $expr, array &$names): void
+	{
+		if (!is_object($expr)) {
+			return;
+		}
+
+		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::ASSIGN) {
+			$leftName = $this->extractSimpleVarName($expr->children['var'] ?? null);
+			if ($leftName !== null && !isset($this->declaredLocals[$leftName]) && !$this->hasForeachReferenceSlotAlias($leftName)) {
+				$names[$leftName] = ['line' => (int) ($expr->lineno ?? 0)];
+			}
+			$this->collectConditionAssignedUndeclaredLocals($expr->children['expr'] ?? null, $names);
+			return;
+		}
+
+		$children = $expr->children ?? null;
+		if (!is_array($children)) {
+			return;
+		}
+		foreach ($children as $child) {
+			if (is_array($child)) {
+				foreach ($child as $nested) {
+					$this->collectConditionAssignedUndeclaredLocals($nested, $names);
+				}
+				continue;
+			}
+			$this->collectConditionAssignedUndeclaredLocals($child, $names);
+		}
+	}
+
+	private function buildUndeclaredVariableVisibilityError(string $name, int $line): string
+	{
+		$message = 'Variable $' . $name . ' is not visible in this block at line ' . $line . '. Safe v1 uses block-local variable visibility; declare $' . $name . ' in the current block or an enclosing block before use.';
+		if (!isset($this->activeConditionVisibilityHints[$name])) {
+			return $message;
+		}
+
+		return $message . ' When a condition first assigns $' . $name . ', use the canonical strict rewrite: predeclare $' . $name . ' before the loop or if, assign it inside the body, then branch on the null/false check explicitly.';
 	}
 
 	/**
@@ -6331,7 +6424,7 @@ final class Generator
 			}
 			$hasForeachByRefAlias = $this->hasForeachReferenceSlotAlias($name);
 			if ($name !== '' && !isset($this->declaredLocals[$name]) && !$hasForeachByRefAlias) {
-				$this->errors[] = 'Variable $' . $name . ' is not visible in this block at line ' . (int) ($expr->lineno ?? 0) . '. Safe v1 uses block-local variable visibility; declare $' . $name . ' in the current block or an enclosing block before use.';
+				$this->errors[] = $this->buildUndeclaredVariableVisibilityError($name, (int) ($expr->lineno ?? 0));
 				return '/* undeclared-var-' . $name . ' */';
 			}
 			return $this->renderVar($expr);
