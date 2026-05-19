@@ -1,0 +1,17 @@
+class A {
+	public static function run(): string {
+		return static::hello();
+	}
+
+	public static function hello(): string {
+		return "A";
+	}
+}
+
+class B extends A {
+	public static function hello(): string {
+		return "B";
+	}
+}
+
+echo B::run(), "\n";
