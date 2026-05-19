@@ -13,6 +13,7 @@
 #include "lang/php/operators/identity/strict_identity.hpp"
 #include "lang/php/operators/isset/isset.hpp"
 #include "lang/php/operators/memory_usage/memory_usage.hpp"
+#include "lang/php/operators/type_predicates/type_predicates.hpp"
 #include "lang/php/operators/unset/unset.hpp"
 #include "lang/php/operators/value_copy/value_copy.hpp"
 #include "lang/php/operators/weakref/weakref.hpp"

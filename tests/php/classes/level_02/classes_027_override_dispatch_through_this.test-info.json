@@ -1,11 +1,11 @@
 {
-    "id": "strict_strings_001_str_surface",
-    "feature": "strings",
-    "level": "strict_level_01",
+    "id": "classes_027_override_dispatch_through_this",
+    "feature": "classes",
+    "level": "level_02",
     "outcome": "positive",
     "enabled": true,
     "status": "active",
-    "php_as_oracle": false,
+    "php_as_oracle": true,
     "compare": {
         "stdout": "exact",
         "stderr": "exact",
@@ -19,9 +19,9 @@
     },
     "expect": {
         "php": {
-            "run": false,
+            "run": true,
             "exit_code": 0,
-            "stdout": "",
+            "stdout": "direct=child\nindirect=child\n",
             "stderr": ""
         },
         "generate": {
@@ -35,15 +35,16 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "cdef\nbcd\n1\nabZZef\nx..\naXXdXX\na-b-c\nAB\n4142\n12,345\n5\n2\n4\n-1\nabc\nABC\nhello\nHello\nY\nY\nY\nY\nN\n[hi]\n[hi  ]\n[  hi]\n",
+            "stdout": "direct=child\nindirect=child\n",
             "stderr": ""
         }
     },
     "tags": [
-        "strict",
-        "strings"
+        "classes",
+        "inheritance",
+        "method"
     ],
-    "notes": "Strict shared helper names should preserve legacy-visible branch contracts while remaining compatible with strict runtime helpers.",
+    "notes": "Regression for instance method override dispatch through a base-class method calling another instance method on $this.",
     "build": {
         "sanitizers": null
     }

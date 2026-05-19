@@ -1,5 +1,5 @@
 {
-    "id": "strict_strings_001_str_surface",
+    "id": "strict_strings_005_php_microtime_static_call",
     "feature": "strings",
     "level": "strict_level_01",
     "outcome": "positive",
@@ -35,15 +35,16 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "cdef\nbcd\n1\nabZZef\nx..\naXXdXX\na-b-c\nAB\n4142\n12,345\n5\n2\n4\n-1\nabc\nABC\nhello\nHello\nY\nY\nY\nY\nN\n[hi]\n[hi  ]\n[  hi]\n",
+            "stdout": "ok\n",
             "stderr": ""
         }
     },
     "tags": [
         "strict",
-        "strings"
+        "strings",
+        "static-call"
     ],
-    "notes": "Strict shared helper names should preserve legacy-visible branch contracts while remaining compatible with strict runtime helpers.",
+    "notes": "Regression for strict php::microtime(true) static-call lowering so PHP helper namespaces do not get wrapped as late-static class scopes.",
     "build": {
         "sanitizers": null
     }

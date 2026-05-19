@@ -3279,7 +3279,7 @@ function ensure_directory(string $dir): void
 	if (is_dir($dir)) {
 		return;
 	}
-	if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
+	if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
 		scpp_fail('Failed to create directory: ' . $dir . PHP_EOL, 2);
 	}
 }
@@ -5084,7 +5084,7 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('curl', $modules, true)) {
 		$lines[] = '#include "modules/curl/curl.cpp"';
 	}
-	if (in_array('php', $languages, true) && $phpProfile === 'legacy') {
+	if (in_array('php', $languages, true) && ($phpProfile === 'legacy' || $phpProfile === 'strict')) {
 		if (in_array('filesystem', $modules, true)) {
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
 		}

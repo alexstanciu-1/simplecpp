@@ -38,6 +38,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertContains('Runtime compilation: enabled', $full['output'], 'full build should report runtime compilation');
 			$this->assertContains('Dependency compilation: enabled', $full['output'], 'full build should report dependency compilation');
 			$this->assertBuildNinjaReusesPrebuiltRuntime($app);
+			$this->assertConcurrentRuntimeBuildsAreSerialized();
 			$this->assertDirectNinjaNoWork($app);
 			$this->assertSameProjectStrictUnitsComposeWithoutSourceIncludes();
 			$this->assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder();
@@ -151,6 +152,74 @@ final class ScppBuildReuseIntegrationTest
 		$contents = $this->read($buildFile);
 		$this->assertTrue(!str_contains($contents, 'rule compile_runtime'), 'project-local build.ninja should reuse the prebuilt shared runtime instead of compiling it directly');
 		$this->assertTrue(!str_contains($contents, 'rule link_runtime_shared'), 'project-local build.ninja should not link the shared runtime directly after prebuild');
+	}
+
+	private function assertConcurrentRuntimeBuildsAreSerialized(): void
+	{
+		$root = $this->root . '/parallel_runtime_builds';
+		$projectA = $root . '/vector_unset_repro';
+		$projectB = $root . '/hash_unset_repro';
+		$this->writeProject($projectA, [], <<<'PHS'
+$items vector<string> = ["a", "b", "c"];
+unset($items[1]);
+echo "count=", count($items), "\n";
+PHS, 'strict');
+		$this->writeProject($projectB, [], <<<'PHS'
+$items hash<int> = [];
+$items["a"] = 10;
+$items["b"] = 20;
+unset($items["a"]);
+echo "has_a=", isset($items["a"]) ? "yes" : "no", "\n";
+echo "has_b=", isset($items["b"]) ? "yes" : "no", "\n";
+PHS, 'strict');
+
+		$buildScript = resolve_repo_root() . '/bin/scpp.php';
+		$command = [PHP_BINARY, $buildScript, 'build', '--build-runtime', '--build-dependencies'];
+
+		$runA = $this->startParallelBuild($command, $projectA);
+		$runB = $this->startParallelBuild($command, $projectB);
+		$resultA = $this->finishParallelBuild($runA);
+		$resultB = $this->finishParallelBuild($runB);
+
+		$this->assertSame(0, $resultA['exit_code'], "parallel runtime build A should succeed:\n" . $resultA['combined']);
+		$this->assertSame(0, $resultB['exit_code'], "parallel runtime build B should succeed:\n" . $resultB['combined']);
+		$this->assertTrue(!str_contains($resultA['combined'], 'PHP Warning'), 'parallel runtime build A should not leak PHP warnings while coordinating shared runtime creation');
+		$this->assertTrue(!str_contains($resultB['combined'], 'PHP Warning'), 'parallel runtime build B should not leak PHP warnings while coordinating shared runtime creation');
+		$this->assertBuildNinjaReusesPrebuiltRuntime($projectA);
+		$this->assertBuildNinjaReusesPrebuiltRuntime($projectB);
+	}
+
+	/** @param list<string> $command @return array{process:resource,pipes:array<int,resource>} */
+	private function startParallelBuild(array $command, string $cwd): array
+	{
+		$descriptor = [
+			0 => ['file', 'php://stdin', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment());
+		if (!is_resource($process)) {
+			throw new RuntimeException('Failed to start parallel runtime build in ' . $cwd);
+		}
+		return ['process' => $process, 'pipes' => $pipes];
+	}
+
+	/** @param array{process:resource,pipes:array<int,resource>} $run @return array{exit_code:int,stdout:string,stderr:string,combined:string} */
+	private function finishParallelBuild(array $run): array
+	{
+		$stdout = stream_get_contents($run['pipes'][1]);
+		$stderr = stream_get_contents($run['pipes'][2]);
+		fclose($run['pipes'][1]);
+		fclose($run['pipes'][2]);
+		$exitCode = proc_close($run['process']);
+		$stdout = is_string($stdout) ? $stdout : '';
+		$stderr = is_string($stderr) ? $stderr : '';
+		return [
+			'exit_code' => is_int($exitCode) ? $exitCode : 1,
+			'stdout' => $stdout,
+			'stderr' => $stderr,
+			'combined' => $stdout . $stderr,
+		];
 	}
 
 	private function findDependencyObject(string $projectRoot): string
