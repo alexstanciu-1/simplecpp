@@ -1,6 +1,6 @@
 {
-    "id": "strict_strings_001_str_surface",
-    "feature": "strings",
+    "id": "strict_control_flow_002_mixed_type_predicates",
+    "feature": "control_flow",
     "level": "strict_level_01",
     "outcome": "positive",
     "enabled": true,
@@ -35,15 +35,16 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "cdef\nbcd\n1\nabZZef\nx..\naXXdXX\na-b-c\nAB\n4142\n12,345\n5\n2\n4\n-1\nabc\nABC\nhello\nHello\nY\nY\nY\nY\nN\n[hi]\n[hi  ]\n[  hi]\n",
+            "stdout": "not-bool\nnot-int\nnot-float\nbool\nint\nfloat\n",
             "stderr": ""
         }
     },
     "tags": [
         "strict",
-        "strings"
+        "control_flow",
+        "mixed"
     ],
-    "notes": "Strict shared helper names should preserve legacy-visible branch contracts while remaining compatible with strict runtime helpers.",
+    "notes": "Strict profile should expose mixed type predicates through the PHP helper registry instead of leaking raw C++ concept names into generated output.",
     "build": {
         "sanitizers": null
     }
