@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.53 - 2026-05-19
+
+### Additions
+
+- Added first-pass support for `static::method(...)` in the PHP S2S generator through a small template-guard late-static scope helper plus generated per-class dispatch helpers.
+- Added focused regression coverage for inherited late-static method dispatch so forms like `B::run()` reaching `static::hello()` inside inherited static code now stay pinned by tests.
+- Added planning notes for the current template-guard implementation direction and for a possible v2 CRTP-like specialization follow-up.
+
+### Fixes
+
+- Fixed the generator so `static::method(...)` is no longer rejected outright in the covered class-local static-method flow.
+- Fixed inherited static dispatch so C++ lowering now preserves the PHP-shaped called-class behavior for the first-pass supported `static::method(...)` cases instead of collapsing to ordinary lexical static lookup.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- `static::method(...)` is now supported as a first-pass class feature for the covered static-method flow; `static::$prop`, `new static`, and related late-static forms remain unsupported.
+- No source migration is required for existing code that already avoided `static::...`; isolated repros and simple inherited static dispatch patterns can now use `static::method(...)` directly.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the existing repo-local skill guidance does not document or contradict the new first-pass late-static method support.
+
 ## 0.1.52 - 2026-05-19
 
 ### Additions
