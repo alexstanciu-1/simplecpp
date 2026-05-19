@@ -40,6 +40,7 @@ Doc Status: normative
 ## Compile plan summary
 - Implemented by shared string runtime support under `runtime/include/modules/strings/strings.hpp` with PHP wrapper exposure in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
+- Shared plain-name exposure in strict should preserve the same visible `int|false` contract through the PHP adapter layer rather than exposing the internal strict nullable reverse-search helper directly.
 
 ## Test matrix
 - found without offset

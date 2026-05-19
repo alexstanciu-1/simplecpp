@@ -43,7 +43,7 @@
         "strict",
         "strings"
     ],
-    "notes": "Strict result<T> string helpers should fail cleanly without mutating pre-seeded outputs.",
+    "notes": "Strict shared hex helpers should preserve legacy-visible false-sentinel failure behavior.",
     "build": {
         "sanitizers": null
     }
