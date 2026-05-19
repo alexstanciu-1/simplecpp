@@ -1121,11 +1121,14 @@ A later decision must either:
 - static object-typed properties use the same handle model
 - static property fetch/read/write/increment lower to `Class::prop` storage access in generated C++
 - supported static-property class forms are `ClassName::$prop`, `self::$prop`, and `parent::$prop`
-- `static::$prop` is not supported in the current pass
+- `static::$prop` is supported in the current pass as file-local late-static lowering only; the generator may use current-file structural class-family context but must not resolve symbols across source files
 
 ### 16.7 Methods and Special Members
 - non-static methods are supported
 - static methods are supported
+- `static::method(...)` is supported in the current pass as file-local late-static lowering only; the generator may use current-file structural class-family context but must not resolve symbols across source files
+- `static::CONST` is supported in the current pass as file-local late-static lowering only
+- `new static(...)` is supported in the current pass as file-local late-static lowering only
 - constructors are supported
 - destructors are supported
 - abstract classes are supported when explicitly declared abstract

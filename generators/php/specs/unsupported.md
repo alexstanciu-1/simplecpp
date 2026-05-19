@@ -16,7 +16,6 @@ This section defines behaviors that are intentionally unsupported or differ from
 - Untyped parameters in named functions/methods
 - Untyped/mixed variadics
 - Function/method overloading
-- static::$prop
 - Nested wrappers
 
 ## Variadics
@@ -46,7 +45,7 @@ See incompatibilities.md for more.
 - Not supported yet: `use (&$x)` and broader PHP callable normalization. Arrow functions are supported in Safe v1 with implicit by-value capture, native PHP return types, and the existing callable-signature rules; variadics/default params remain unsupported.
 
 Enums
-- Late static binding for properties remains unsupported inside or outside enums (`static::$prop`).
+- Late static binding remains limited to the current file-local lowering context. Cross-source-file late-static rebinding and enum late-static binding are unsupported in the current pass.
 
 ## Enum scope in the current stage
 

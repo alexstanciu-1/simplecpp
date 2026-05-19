@@ -1,0 +1,24 @@
+class A {
+	public static int $count = 0;
+	const LABEL = "A";
+
+	public function __construct() {
+		static::$count = static::$count + 1;
+	}
+
+	public static function make(): void {
+		$x = new static();
+	}
+
+	public static function label(): string {
+		return static::LABEL;
+	}
+}
+
+class B extends A {
+	public static int $count = 10;
+	const LABEL = "B";
+}
+
+B::make();
+echo A::$count, "|", B::$count, "|", B::label(), "\n";
