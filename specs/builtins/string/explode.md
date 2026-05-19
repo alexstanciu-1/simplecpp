@@ -10,10 +10,10 @@ Doc Status: normative
 
 ## Signature
 - Supported forms:
-  - `explode(string $separator, string $string): mixed_t<table>`
-  - `explode(string $separator, string $string, int $limit): mixed_t<table>`
+  - `explode(string $separator, string $string): vector_t<string_t>`
+  - `explode(string $separator, string $string, int $limit): vector_t<string_t>`
 - Accepted argument types: `string_t`, `string_t`, optional `int_t`
-- Return shape: `mixed_t` holding `hash_t<mixed_t>` with packed integer keys
+- Return shape: `vector_t<string_t>`
 
 ## Behavior
 - Splits `string` by the full `separator` string.
@@ -24,7 +24,7 @@ Doc Status: normative
 - Behavior is byte-oriented and binary-safe.
 
 ## Compatibility table
-- PHP returns a packed array of strings â†’ Prism++ returns `mixed_t` containing `hash_t<mixed_t>` â†’ modified
+- PHP returns a packed array of strings â†’ Prism++ returns `vector_t<string_t>` â†’ modified
 - PHP rejects empty separator â†’ Prism++ keeps the same behavior â†’ kept
 - PHP supports positive and negative limits â†’ Prism++ keeps the same practical behavior â†’ kept
 
@@ -33,7 +33,7 @@ Doc Status: normative
 - No runtime error for valid typed inputs.
 
 ## Runtime and wrapper split
-- Runtime: perform deterministic split and pack parts into `hash_t<mixed_t>`.
+- Runtime: perform deterministic split and pack parts into `vector_t<string_t>`.
 - Wrapper: expose PHP-visible name only.
 
 ## Configuration visibility
@@ -42,7 +42,8 @@ Doc Status: normative
 ## Compile plan summary
 - Implemented in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
-- Shared plain-name exposure in strict should preserve the same visible dynamic PHP-like array result rather than exposing only the internal typed split helper result.
+- Shared plain-name exposure in strict should preserve the same visible typed split contract.
+- The visible PHP-facing carrier for this shared helper contract is `vector_t<string_t>`, not `mixed_t`.
 
 ## Test matrix
 - default split

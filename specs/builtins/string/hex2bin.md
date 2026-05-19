@@ -9,7 +9,7 @@ Doc Status: normative
 - Compatibility level: practical
 
 ## Signature
-- Supported form: `hex2bin(string $string): mixed_t<string|false>`
+- Supported form: `hex2bin(string $string): result_or_false<string_t>`
 - Accepted argument types: `string_t`
 
 ## Behavior
@@ -29,7 +29,7 @@ Doc Status: normative
 - Returns `false` on invalid hex input or odd input length.
 
 ## Runtime and wrapper split
-- Runtime: validate pairs of hex digits, decode each pair into one byte, and return string-or-false as `mixed_t`.
+- Runtime: validate pairs of hex digits, decode each pair into one byte, and return string-or-false as `result_or_false<string_t>`.
 - Wrapper: expose PHP-visible name only.
 
 ## Configuration visibility
@@ -39,6 +39,7 @@ Doc Status: normative
 - Implemented through shared strict decoding support with PHP-visible adapter shaping in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 - Shared plain-name exposure in strict should preserve the same visible `string|false` contract rather than exposing the internal strict `result<string_t>` helper directly.
+- The visible PHP-facing carrier for this shared helper contract is `result_or_false<string_t>`, not `mixed_t`.
 
 ## Test matrix
 - empty string

@@ -9,6 +9,32 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.51 - 2026-05-19
+
+### Additions
+
+- Added a planning note under `specs/planning/` that records the PHP library contract-alignment policy for shared helper names across `legacy` and `strict`.
+- Added focused strict regression coverage for `strpos(...) === false` / `!== false` control flow so issue `#132` stays pinned.
+
+### Fixes
+
+- Fixed shared helper contracts so `legacy` and `strict` now preserve the same visible branch model for common helper names instead of silently diverging through profile-specific carriers.
+- Fixed `strpos(...)` and `strrpos(...)` so the shared plain-name calls now expose `result_or_false<int_t>` semantics instead of leaking nullable search behavior into author-facing control flow.
+- Fixed `hex2bin(...)` and `shell_exec(...)` so shared falseable helpers now use explicit `result_or_false<string_t>` contracts instead of broad `mixed_t` return shaping.
+- Fixed `explode(...)` / `implode(...)` shared-name alignment so `explode(...)` returns `vector_t<string_t>` and `implode(...)` returns `string_t` while still accepting array-like `mixed_t` inputs with a guarded runtime-kind check.
+- Fixed strict routing, runtime adapters, docs, examples, and regression coverage so the shared PHP-like helper surface stays contract-first across both profiles.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Shared helper names such as `strpos`, `strrpos`, `hex2bin`, `shell_exec`, `explode`, and `implode` should now be read with the same visible contract in both `legacy` and `strict`.
+- For shared falseable helpers, use explicit branch checks rather than nullable expectations; `strpos(...) === false` and `!== false` are now the intended control-flow shape again.
+- `explode(...)` should be treated as typed `vector_t<string_t>` output, while `implode(...)` accepts typed vectors, typed hashes, or array-like `mixed_t` values and throws for non-array-like runtime kinds.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this hotfix because the existing strict-skill guidance already matches the restored shared-helper authoring posture.
+
 ## 0.1.50 - 2026-05-19
 
 ### Additions
