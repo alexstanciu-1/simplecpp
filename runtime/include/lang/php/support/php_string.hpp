@@ -13,36 +13,36 @@ inline int_t strlen(const nullable<string_t> &value) {
 	return scpp::str::length(value);
 }
 
-inline mixed_t strpos(const string_t &haystack, const string_t &needle) {
+inline result_or_false<int_t> strpos(const string_t &haystack, const string_t &needle) {
 	const auto position = scpp::str::find(haystack, needle);
 	if (!position.has_value().native_value()) {
-		return mixed_t(bool_t(false));
+		return false_sentinel;
 	}
-	return mixed_t(position.value());
+	return position.value();
 }
 
-inline mixed_t strpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
+inline result_or_false<int_t> strpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
 	const auto position = scpp::str::find(haystack, needle, offset);
 	if (!position.has_value().native_value()) {
-		return mixed_t(bool_t(false));
+		return false_sentinel;
 	}
-	return mixed_t(position.value());
+	return position.value();
 }
 
-inline mixed_t strrpos(const string_t &haystack, const string_t &needle) {
+inline result_or_false<int_t> strrpos(const string_t &haystack, const string_t &needle) {
 	const auto position = scpp::str::rfind(haystack, needle);
 	if (!position.has_value().native_value()) {
-		return mixed_t(bool_t(false));
+		return false_sentinel;
 	}
-	return mixed_t(position.value());
+	return position.value();
 }
 
-inline mixed_t strrpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
+inline result_or_false<int_t> strrpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
 	const auto position = scpp::str::rfind(haystack, needle, offset);
 	if (!position.has_value().native_value()) {
-		return mixed_t(bool_t(false));
+		return false_sentinel;
 	}
-	return mixed_t(position.value());
+	return position.value();
 }
 
 inline string_t strtolower(const string_t &value) {
@@ -138,16 +138,11 @@ inline string_t str_pad(const string_t &input, const int_t &pad_length) {
 }
 
 
-inline mixed_t explode(const string_t &separator, const string_t &string, const int_t &limit) {
-	auto pieces = scpp::str::split(separator, string, limit);
-	hash_t<mixed_t> parts;
-	for (std::size_t index = 0; index < pieces.size(); ++index) {
-		static_cast<void>(parts.append(mixed_t(pieces.native_value()[index])));
-	}
-	return mixed_t(unique<hash_t<mixed_t>>(std::move(parts)));
+inline vector_t<string_t> explode(const string_t &separator, const string_t &string, const int_t &limit) {
+	return scpp::str::split(separator, string, limit);
 }
 
-inline mixed_t explode(const string_t &separator, const string_t &string) {
+inline vector_t<string_t> explode(const string_t &separator, const string_t &string) {
 	return explode(separator, string, PHP_INT_MAX);
 }
 
@@ -187,12 +182,12 @@ inline string_t implode(const string_t &separator, const mixed_t &pieces) {
 	throw std::runtime_error("implode(): Argument #2 ($pieces) must be array-like");
 }
 
-inline mixed_t hex2bin(const string_t &value) {
+inline result_or_false<string_t> hex2bin(const string_t &value) {
 	const auto decoded = scpp::str::hex_decode(value);
 	if (!decoded.has_value().native_value()) {
-		return mixed_t(bool_t(false));
+		return false_sentinel;
 	}
-	return mixed_t(decoded.value());
+	return decoded.value();
 }
 
 inline string_t bin2hex(const string_t &value) {

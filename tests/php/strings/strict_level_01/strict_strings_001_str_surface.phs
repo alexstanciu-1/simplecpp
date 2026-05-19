@@ -9,8 +9,7 @@ $parts = explode(",", "a,b,c");
 echo implode("-", $parts), "\n";
 
 $decoded /** string */ = "";
-$decode_error /** error */;
-take($decoded, $decode_error, hex2bin("4142"));
+take($decoded, hex2bin("4142"));
 echo $decoded, "\n";
 echo bin2hex("AB"), "\n";
 echo number_format(12345), "\n";

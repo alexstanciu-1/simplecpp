@@ -819,7 +819,7 @@ Visible PHP++ / PHS strict names use plain PHP-like names for general language-a
 | `cli_argc` | `cli_argc() -> int` | CLI helper |
 | `cli_argv` | `cli_argv() -> mixed` | dynamic argv payload |
 | `cli_args` | `cli_args() -> mixed` | alias of `cli_argv()` |
-| `shell_exec` | `shell_exec(string $command) -> mixed` | current narrowed result is string or false |
+| `shell_exec` | `shell_exec(string $command)` | `result_or_false<string>` |
 
 ### Strings
 
@@ -830,14 +830,14 @@ Visible PHP++ / PHS strict names use plain PHP-like names for general language-a
 | `substr_replace` | `substr_replace(string $subject, string $replacement, int $offset, ?int $len = null)` | `string` |
 | `str_pad` | `str_pad(string $input, int $pad_len, ?string $pad = " ", ?int $type = STR_PAD_RIGHT)` | `string` |
 | `str_replace` | `str_replace(string $search, string $replace, string $subject)` | `string` |
-| `explode` | `explode(string $sep, string $s, ?int $limit = null)` | current result is dynamic packed data |
-| `implode` | `implode(string $sep, vector<string>|hash_t<string> $parts)` | `string` |
-| `hex2bin` | `hex2bin(string $hex)` | wrapper result; usually `take($out, $err, ...)` |
+| `explode` | `explode(string $sep, string $s, ?int $limit = null)` | `vector<string>` |
+| `implode` | `implode(string $sep, vector<string>|hash_t<string>|mixed $parts)` | `string`; `mixed` must be array-like |
+| `hex2bin` | `hex2bin(string $hex)` | `result_or_false<string>`; usually `take($out, ...)` |
 | `bin2hex` | `bin2hex(string $bytes)` | `string` |
 | `number_format` | `number_format(int|float $n, ?int $dec = null, ?string $dot = null, ?string $group = null)` | `string` |
 | `strlen` | `strlen(string $s)` | `int` byte length |
-| `strpos` | `strpos(string $haystack, string $needle, ?int $offset = null)` | current contract is position-or-false style result |
-| `strrpos` | `strrpos(string $haystack, string $needle, ?int $offset = null)` | current contract is position-or-false style result |
+| `strpos` | `strpos(string $haystack, string $needle, ?int $offset = null)` | `result_or_false<int>` |
+| `strrpos` | `strrpos(string $haystack, string $needle, ?int $offset = null)` | `result_or_false<int>` |
 | `strtolower` | `strtolower(string $s)` | `string`, byte/ASCII-oriented |
 | `strtoupper` | `strtoupper(string $s)` | `string`, byte/ASCII-oriented |
 | `lcfirst` | `lcfirst(string $s)` | `string` |

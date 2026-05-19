@@ -236,14 +236,14 @@ Returns code-point length of present value.
 Contract:
 - null input MUST raise runtime error
 
-### `strpos(haystack, needle[, offset]) -> mixed_t` â€” Stable
+### `strpos(haystack, needle[, offset]) -> result_or_false<int_t>` â€” Stable
 Returns code-point position or `false`.
 
 Contract:
 - success => `int_t`
-- not found => `bool_t(false)` inside `mixed_t`
+- not found => `false_sentinel`
 
-### `strrpos(haystack, needle[, offset]) -> mixed_t` â€” Stable
+### `strrpos(haystack, needle[, offset]) -> result_or_false<int_t>` â€” Stable
 Returns last code-point position or `false`.
 
 ### `strtolower(value) -> string_t` â€” Stable
@@ -288,19 +288,20 @@ String replacement.
 ### `str_pad(input, pad_length[, pad_string[, pad_type]]) -> string_t` â€” Stable
 String padding.
 
-### `explode(separator, string[, limit]) -> mixed_t` â€” Stable
-Returns dynamic array-like result.
+### `explode(separator, string[, limit]) -> vector_t<string_t>` â€” Stable
+Returns typed split result.
 
 Contract:
 - separator MUST not be empty where PHP semantics require failure
-- result shape is runtime dynamic container
+- result shape is `vector_t<string_t>`
 
 ### `implode(separator, pieces) -> string_t` â€” Stable
 Supported overloads:
 - `hash_t<string_t>`
 - `vector_t<string_t>`
+- `mixed_t` when runtime kind is array-like
 
-### `hex2bin(value) -> mixed_t` â€” Stable
+### `hex2bin(value) -> result_or_false<string_t>` â€” Stable
 Returns decoded string or `false`.
 
 ### `bin2hex(value) -> string_t` â€” Stable
@@ -537,7 +538,7 @@ Builds the PHP-style CLI argument array from the seeded runtime CLI context.
 ### `cli_args() -> mixed_t` â€” Stable
 Alias of `cli_argv()`.
 
-### `shell_exec(command) -> mixed_t` â€” Stable
+### `shell_exec(command) -> result_or_false<string_t>` â€” Stable
 Returns command stdout as `string_t` or `false`.
 
 ---

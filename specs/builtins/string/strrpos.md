@@ -13,7 +13,7 @@ Doc Status: normative
   - `strrpos(string $haystack, string $needle): int|false`
   - `strrpos(string $haystack, string $needle, int $offset): int|false`
 - Accepted argument types: `string_t`, `string_t`, optional `int_t`
-- Return contract: `mixed_t` carrying `int_t` or `bool_t(false)`
+- Return contract: `result_or_false<int_t>`
 
 ## Behavior
 - Searches for the last occurrence of `needle` in `haystack`.
@@ -23,7 +23,7 @@ Doc Status: normative
 - Negative offset limits the search to the prefix ending at `size + offset`.
 
 ## Compatibility table
-- PHP returns `int|false` and preserves `0` vs `false` â†’ Prism++ preserves it through `mixed_t` â†’ kept
+- PHP returns `int|false` and preserves `0` vs `false` â†’ Prism++ preserves it through `result_or_false<int_t>` â†’ kept
 - PHP offset out of haystack range raises `ValueError` â†’ Prism++ raises `ValueError` â†’ kept
 - PHP is byte-oriented here â†’ Prism++ is byte-oriented â†’ kept
 
@@ -41,6 +41,7 @@ Doc Status: normative
 - Implemented by shared string runtime support under `runtime/include/modules/strings/strings.hpp` with PHP wrapper exposure in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 - Shared plain-name exposure in strict should preserve the same visible `int|false` contract through the PHP adapter layer rather than exposing the internal strict nullable reverse-search helper directly.
+- The visible PHP-facing carrier for this shared helper contract is `result_or_false<int_t>`, not `mixed_t` and not `nullable<int_t>`.
 
 ## Test matrix
 - found without offset
