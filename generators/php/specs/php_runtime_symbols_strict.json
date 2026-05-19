@@ -67,6 +67,7 @@
         "ucfirst": "str::ucfirst",
         "str_starts_with": "str::starts_with",
         "str_ends_with": "str::ends_with",
+        "str_contains": "php::str_contains",
         "trim": "str::trim",
         "ltrim": "str::ltrim",
         "rtrim": "str::rtrim",

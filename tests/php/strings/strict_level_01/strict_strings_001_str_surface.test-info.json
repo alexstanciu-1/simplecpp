@@ -35,7 +35,7 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "cdef\nbcd\n1\nabZZef\nx..\naXXdXX\na-b-c\nAB\n4142\n12,345\n5\n2\n4\n-1\nabc\nABC\nhello\nHello\nY\nY\n[hi]\n[hi  ]\n[  hi]\n",
+            "stdout": "cdef\nbcd\n1\nabZZef\nx..\naXXdXX\na-b-c\nAB\n4142\n12,345\n5\n2\n4\n-1\nabc\nABC\nhello\nHello\nY\nY\nY\nY\nN\n[hi]\n[hi  ]\n[  hi]\n",
             "stderr": ""
         }
     },
