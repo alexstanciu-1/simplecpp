@@ -40,8 +40,9 @@ Doc Status: normative
 - Implicitly available by project policy.
 
 ## Compile plan summary
-- Implemented in `runtime/include/scpp/support/php.hpp`.
+- Implemented in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
+- Shared plain-name exposure in strict should preserve the same visible dynamic PHP-like array result rather than exposing only the internal typed split helper result.
 
 ## Test matrix
 - default split

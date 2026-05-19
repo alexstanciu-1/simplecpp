@@ -160,6 +160,33 @@ inline string_t implode(const string_t &separator, const vector_t<string_t> &pie
 	return scpp::str::join(separator, pieces);
 }
 
+inline string_t implode(const string_t &separator, const mixed_t &pieces) {
+	vector_t<string_t> items;
+	if (const auto *table = pieces.table_if(); table != nullptr) {
+		for (auto it = table->begin_entries(); it != table->end_entries(); ++it) {
+			items.push_back(cast<string_t>((*it).value_ref()));
+		}
+		return scpp::str::join(separator, items);
+	}
+	if (const auto *shared_table = pieces.shared_table_if(); shared_table != nullptr && *shared_table != null) {
+		for (auto it = (*shared_table)->begin_entries(); it != (*shared_table)->end_entries(); ++it) {
+			items.push_back(cast<string_t>((*it).value_ref()));
+		}
+		return scpp::str::join(separator, items);
+	}
+	if (const auto *weak_table = pieces.weak_table_if(); weak_table != nullptr) {
+		const auto locked = weak_table->lock();
+		if (locked != null) {
+			for (auto it = locked->begin_entries(); it != locked->end_entries(); ++it) {
+				items.push_back(cast<string_t>((*it).value_ref()));
+			}
+			return scpp::str::join(separator, items);
+		}
+	}
+
+	throw std::runtime_error("implode(): Argument #2 ($pieces) must be array-like");
+}
+
 inline mixed_t hex2bin(const string_t &value) {
 	const auto decoded = scpp::str::hex_decode(value);
 	if (!decoded.has_value().native_value()) {
