@@ -7,6 +7,7 @@
 #include "scpp/string_t.hpp"
 
 #include <cstdio>
+#include <cstdlib>
 #include <memory>
 #include <string>
 
@@ -65,6 +66,14 @@ inline void set_cli_args(int argc, char** argv) {
 
 [[nodiscard]] inline mixed_t cli_args() {
 	return cli_argv();
+}
+
+[[nodiscard]] inline result_or_false<string_t> getenv(const string_t &name) {
+	const char* raw = std::getenv(name.native_value().c_str());
+	if (raw == nullptr) {
+		return false_sentinel;
+	}
+	return string_t(raw);
 }
 
 [[nodiscard]] inline result_or_false<string_t> shell_exec(const string_t &command) {
