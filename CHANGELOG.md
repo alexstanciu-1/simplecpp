@@ -9,7 +9,7 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
-## 0.1.49 - 2026-05-19
+## 0.1.50 - 2026-05-19
 
 ### Additions
 
