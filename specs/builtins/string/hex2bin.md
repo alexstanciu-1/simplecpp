@@ -36,8 +36,9 @@ Doc Status: normative
 - Implicitly available by project policy.
 
 ## Compile plan summary
-- Implemented in `runtime/include/scpp/support/php.hpp`.
+- Implemented through shared strict decoding support with PHP-visible adapter shaping in `runtime/include/lang/php/support/php_string.hpp`.
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
+- Shared plain-name exposure in strict should preserve the same visible `string|false` contract rather than exposing the internal strict `result<string_t>` helper directly.
 
 ## Test matrix
 - empty string

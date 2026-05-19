@@ -1,0 +1,8 @@
+// Strict shared helper names should preserve the legacy-visible shell_exec branch contract.
+$out = shell_exec("printf strict_shell_exec_ok");
+
+if ($out === false) {
+	echo "false\n";
+} else {
+	echo $out, "\n";
+}

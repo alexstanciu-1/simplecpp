@@ -22,7 +22,7 @@ When examples differ, read them in this order:
 
 - `strict/`
   - authoritative examples for the strict PHP library profile
-  - native Simple C++ library naming such as `fs_*`, `str_*`, `io_*`
+  - contract-first shared helper names plus explicit subsystem families such as `fs_*`, `io_*`, `regex_*`, and `dt_*`
 - `legacy/`
   - compatibility examples for the legacy PHP library profile
   - PHP-legacy naming such as `scandir`, `file_get_contents`, `strlen`

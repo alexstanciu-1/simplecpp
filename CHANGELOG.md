@@ -9,6 +9,31 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.49 - 2026-05-19
+
+### Additions
+
+- Added a planning note under `specs/planning/` that defines the contract-first helper unification policy for shared strict and legacy helper names.
+- Added focused strict regression coverage for `shell_exec(...)` so the shared helper contract stays pinned in strict mode.
+
+### Fixes
+
+- Fixed strict shared helper resolution so plain names that also exist in legacy now preserve the same visible branching model instead of silently exposing stricter wrapper-only contracts.
+- Fixed strict `strpos(...)` and `strrpos(...)` exposure so shared plain-name calls preserve the expected `int|false` contract instead of leaking internal nullable search semantics into author-facing control flow.
+- Fixed strict `hex2bin(...)` exposure so the shared plain-name call preserves the expected `string|false` contract instead of exposing internal structured-error helper behavior.
+- Fixed strict `explode(...)` and `implode(...)` shared-name composition so the plain PHP-like helper pair continues to work naturally under the restored contract-first surface.
+- Fixed strict onboarding, profile docs, builtin contracts, examples, and checked-in tests so they now teach and enforce the contract-first rule consistently across shared helper names.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Shared helper names such as `strpos`, `strrpos`, `hex2bin`, `explode`, `implode`, and `shell_exec` should now be read with the same visible branch contract in both `legacy` and `strict`.
+- In strict projects, if a helper keeps a plain shared name, prefer the same control-flow habit you would use for the legacy PHP-shaped contract.
+- Subsystem/domain helper families remain explicitly prefixed in strict mode, including `fs_*`, `io_*`, `regex_*`, `curl_*`, and `dt_*`.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this hotfix because the release changes policy/docs/tests/runtime helper routing without changing repo-local skill instructions.
 ## 0.1.48 - 2026-05-18
 
 ### Additions

@@ -66,6 +66,15 @@ Edit the layer that owns the change:
 
 Do not casually patch generated output as if it were the primary source.
 
+## Shared Helper Gate
+
+When changing `generators/php/specs/php_runtime_symbols_strict.json`, treat plain helper-name additions as a semantic change, not just a rename.
+
+Rule:
+
+- if strict reuses a plain helper name that also exists in legacy, the strict entry should preserve the same visible success/failure contract
+- if the strict implementation needs a different visible contract, keep a distinct strict-facing surface instead of reusing the shared plain name
+
 ## Main Project Model
 
 Prism++ currently works as:

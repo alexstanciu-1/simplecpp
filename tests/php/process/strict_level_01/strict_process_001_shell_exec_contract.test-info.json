@@ -1,6 +1,6 @@
 {
-    "id": "strict_strings_001_str_surface",
-    "feature": "strings",
+    "id": "strict_process_001_shell_exec_contract",
+    "feature": "process",
     "level": "strict_level_01",
     "outcome": "positive",
     "enabled": true,
@@ -35,15 +35,16 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "cdef\nbcd\n1\nabZZef\nx..\naXXdXX\na-b-c\nAB\n4142\n12,345\n5\n2\n4\n-1\nabc\nABC\nhello\nHello\nY\nY\n[hi]\n[hi  ]\n[  hi]\n",
+            "stdout": "strict_shell_exec_ok\n",
             "stderr": ""
         }
     },
     "tags": [
         "strict",
-        "strings"
+        "process",
+        "shell_exec"
     ],
-    "notes": "Strict shared helper names should preserve legacy-visible branch contracts while remaining compatible with strict runtime helpers.",
+    "notes": "Strict shell_exec should preserve the same visible string-or-false branch contract as legacy.",
     "build": {
         "sanitizers": null
     }
