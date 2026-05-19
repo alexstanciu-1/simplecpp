@@ -9,6 +9,7 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+<<<<<<< HEAD
 ## 0.1.56 - 2026-05-19
 
 ### Additions
@@ -35,6 +36,34 @@ This file is the authoritative checked-in source for release notes referenced by
 - Strict `getenv(...)` now follows the expected string-or-false wrapper contract.
 - Result-consuming mysqli loops that wait for `fetch_assoc() === null` now terminate as expected on finite result sets.
 - Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the shipped changes affect generator/runtime behavior, diagnostics, and regression coverage without changing the current repo-local skill instructions.
+
+## 0.1.55 - 2026-05-19
+
+### Additions
+
+- Added exact strict regression coverage for mixed runtime type predicates so `is_bool(...)`, `is_int(...)`, and `is_float(...)` on `mixed` stay pinned in the strict surface.
+- Added strict regression coverage for `php::microtime(true)` so PHP helper namespace static calls stay lowered without the invalid `_static<php>` template-argument shape.
+- Added a focused shared-runtime concurrency regression check that launches two real `scpp build --build-runtime --build-dependencies` CLI builds in parallel and verifies runtime-reuse behavior without warning leakage.
+- Added a strict `mysqli` runtime-link regression test so strict projects with `"modules": ["mysqli"]` keep end-to-end build coverage for the `scpp::mysqli` wrapper family.
+
+### Fixes
+
+- Fixed strict mixed type predicate exposure so `is_bool(...)`, `is_int(...)`, and `is_float(...)` on `mixed` now compile and route through the intended strict helper surface.
+- Fixed strict string helper exposure so `str_contains(...)` is available again in strict projects with the expected boolean contract.
+- Fixed instance-method override dispatch through base-class methods by restoring virtual dispatch for ordinary generated instance methods, so `$this->method()` inside a base method correctly reaches child overrides.
+- Fixed concurrent shared runtime rebuild hardening so parallel `--build-runtime --build-dependencies` activity now stays quiet at the shared runtime directory-creation boundary instead of leaking a benign `mkdir(): File exists` PHP warning.
+- Fixed strict `mysqli` runtime linking so strict projects now include the `php_mysqli` wrapper implementation in the composed runtime artifact instead of compiling headers successfully and then failing at final link with unresolved `scpp::mysqli*` symbols.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required.
+- Strict projects may use `is_bool`, `is_int`, `is_float`, and `str_contains` directly again under the restored helper surface.
+- Strict projects using the `mysqli` runtime module should now be able to build against the `scpp::mysqli` wrapper family without local runtime-composition patching.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the shipped changes affect generator/runtime behavior, build orchestration, and regression coverage without changing the current repo-local skill guidance.
 
 ## 0.1.54 - 2026-05-19
 

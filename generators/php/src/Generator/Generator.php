@@ -2363,7 +2363,12 @@ final class Generator
 				return '~' . $className . '()';
 			}
 			$prefix = $method->isStatic ? 'static ' : '';
-			if (!$method->isStatic && $classDecl instanceof ClassDecl && ($classDecl->isInterface || $classDecl->parentClass !== null || $classDecl->interfaces !== [])) {
+			if (
+				!$method->isStatic
+				&& $classDecl instanceof ClassDecl
+				&& $method->name !== '__construct'
+				&& $method->name !== '__destruct'
+			) {
 				$prefix .= 'virtual ';
 			}
 			$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));

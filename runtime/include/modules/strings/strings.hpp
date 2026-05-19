@@ -119,6 +119,10 @@ inline bool_t ends_with(const string_t &haystack, const string_t &needle) {
 	return bool_t(left.compare(left.size() - right.size(), right.size(), right) == 0);
 }
 
+inline bool_t contains(const string_t &haystack, const string_t &needle) {
+	return bool_t(haystack.native_value().find(needle.native_value()) != std::string::npos);
+}
+
 inline string_t ltrim(const string_t &value) {
 	const auto start = scpp::find_trim_left_index(value, nullptr);
 	return scpp::trim_slice(value, start, value.size());

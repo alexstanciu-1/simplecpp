@@ -1,0 +1,19 @@
+class base_demo {
+	public function value(): string {
+		return "base";
+	}
+
+	public function call_self(): string {
+		return $this->value();
+	}
+}
+
+class child_demo extends base_demo {
+	public function value(): string {
+		return "child";
+	}
+}
+
+$item = new child_demo();
+echo "direct=", $item->value(), "\n";
+echo "indirect=", $item->call_self(), "\n";

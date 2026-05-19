@@ -69,6 +69,10 @@ inline bool_t str_ends_with(const string_t &haystack, const string_t &needle) {
 	return scpp::str::ends_with(haystack, needle);
 }
 
+inline bool_t str_contains(const string_t &haystack, const string_t &needle) {
+	return scpp::str::contains(haystack, needle);
+}
+
 inline string_t ltrim(const string_t &value) {
 	return scpp::str::ltrim(value);
 }
