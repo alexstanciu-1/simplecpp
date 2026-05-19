@@ -5084,7 +5084,7 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('curl', $modules, true)) {
 		$lines[] = '#include "modules/curl/curl.cpp"';
 	}
-	if (in_array('php', $languages, true) && $phpProfile === 'legacy') {
+	if (in_array('php', $languages, true) && ($phpProfile === 'legacy' || $phpProfile === 'strict')) {
 		if (in_array('filesystem', $modules, true)) {
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
 		}
