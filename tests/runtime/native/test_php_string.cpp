@@ -2,19 +2,20 @@
 
 namespace {
 
-static void assert_mixed_int(const scpp::mixed_t &value, std::int64_t expected) {
-	assert(value.kind() == scpp::mixed_t::kind_t::int_v);
-	assert(value.int_value().native_value() == expected);
+static void assert_or_false_int(const scpp::result_or_false<scpp::int_t> &value, std::int64_t expected) {
+	assert(value.has_value().native_value() == true);
+	assert(value.value().native_value() == expected);
 }
 
-static void assert_mixed_false(const scpp::mixed_t &value) {
-	assert(value.kind() == scpp::mixed_t::kind_t::bool_v);
-	assert(value.bool_value().native_value() == false);
+template <typename TValue>
+static void assert_or_false_false(const scpp::result_or_false<TValue> &value) {
+	assert(value.has_value().native_value() == false);
+	assert(value.is_false().native_value() == true);
 }
 
-static void assert_mixed_string(const scpp::mixed_t &value, const std::string &expected) {
-	assert(value.kind() == scpp::mixed_t::kind_t::string_v);
-	assert(value.get_string().native_value() == expected);
+static void assert_or_false_string(const scpp::result_or_false<scpp::string_t> &value, const std::string &expected) {
+	assert(value.has_value().native_value() == true);
+	assert(value.value().native_value() == expected);
 }
 
 static void test_substr_without_length() {
@@ -62,10 +63,10 @@ static void test_utf8_lengths_and_substrings() {
 
 static void test_utf8_search_positions() {
 	const auto value = scpp::string_t("A🌍é🌍");
-	assert_mixed_int(scpp::php::strpos(value, scpp::string_t("🌍")), 1);
-	assert_mixed_int(scpp::php::strpos(value, scpp::string_t("🌍"), scpp::int_t(2)), 3);
-	assert_mixed_int(scpp::php::strrpos(value, scpp::string_t("🌍")), 3);
-	assert_mixed_int(scpp::php::strrpos(value, scpp::string_t("🌍"), scpp::int_t(-2)), 1);
+	assert_or_false_int(scpp::php::strpos(value, scpp::string_t("🌍")), 1);
+	assert_or_false_int(scpp::php::strpos(value, scpp::string_t("🌍"), scpp::int_t(2)), 3);
+	assert_or_false_int(scpp::php::strrpos(value, scpp::string_t("🌍")), 3);
+	assert_or_false_int(scpp::php::strrpos(value, scpp::string_t("🌍"), scpp::int_t(-2)), 1);
 }
 
 static void test_invalid_utf8_falls_back_to_bytes() {
@@ -86,22 +87,22 @@ static void test_strlen() {
 }
 
 static void test_strpos() {
-	assert_mixed_int(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("a")), 0);
-	assert_mixed_int(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(1)), 3);
-	assert_mixed_int(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(-3)), 3);
-	assert_mixed_int(scpp::php::strpos(scpp::string_t("abc"), scpp::string_t("")), 0);
-	assert_mixed_false(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("z")));
+	assert_or_false_int(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("a")), 0);
+	assert_or_false_int(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(1)), 3);
+	assert_or_false_int(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(-3)), 3);
+	assert_or_false_int(scpp::php::strpos(scpp::string_t("abc"), scpp::string_t("")), 0);
+	assert_or_false_false(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("z")));
 	scpp_test::expect_throw<scpp::php::ValueError>([]() {
 		static_cast<void>(scpp::php::strpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(99)));
 	});
 }
 
 static void test_strrpos() {
-	assert_mixed_int(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("a")), 3);
-	assert_mixed_int(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(1)), 3);
-	assert_mixed_int(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("b"), scpp::int_t(-3)), 1);
-	assert_mixed_int(scpp::php::strrpos(scpp::string_t("abc"), scpp::string_t("")), 3);
-	assert_mixed_false(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(4)));
+	assert_or_false_int(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("a")), 3);
+	assert_or_false_int(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(1)), 3);
+	assert_or_false_int(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("b"), scpp::int_t(-3)), 1);
+	assert_or_false_int(scpp::php::strrpos(scpp::string_t("abc"), scpp::string_t("")), 3);
+	assert_or_false_false(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(4)));
 	scpp_test::expect_throw<scpp::php::ValueError>([]() {
 		static_cast<void>(scpp::php::strrpos(scpp::string_t("abcabc"), scpp::string_t("a"), scpp::int_t(-99)));
 	});
@@ -128,28 +129,27 @@ static void test_prefix_suffix_helpers() {
 
 static void test_explode() {
 	const auto split_default = scpp::php::explode(scpp::string_t(","), scpp::string_t("a,b,c"));
-	const auto &split_default_table = split_default.get_hash();
-	assert(split_default_table.size() == 3);
-	assert(split_default_table.at(scpp::int_t(0)).get_string().native_value() == "a");
-	assert(split_default_table.at(scpp::int_t(1)).get_string().native_value() == "b");
-	assert(split_default_table.at(scpp::int_t(2)).get_string().native_value() == "c");
+	assert(split_default.size() == 3);
+	assert(split_default.native_value()[0].native_value() == "a");
+	assert(split_default.native_value()[1].native_value() == "b");
+	assert(split_default.native_value()[2].native_value() == "c");
 
 	const auto split_zero = scpp::php::explode(scpp::string_t(","), scpp::string_t("a,b,c"), scpp::int_t(0));
-	assert(split_zero.get_hash().size() == 1);
-	assert(split_zero.get_hash().at(scpp::int_t(0)).get_string().native_value() == "a,b,c");
+	assert(split_zero.size() == 1);
+	assert(split_zero.native_value()[0].native_value() == "a,b,c");
 
 	const auto split_two = scpp::php::explode(scpp::string_t(","), scpp::string_t("a,b,c"), scpp::int_t(2));
-	assert(split_two.get_hash().size() == 2);
-	assert(split_two.get_hash().at(scpp::int_t(0)).get_string().native_value() == "a");
-	assert(split_two.get_hash().at(scpp::int_t(1)).get_string().native_value() == "b,c");
+	assert(split_two.size() == 2);
+	assert(split_two.native_value()[0].native_value() == "a");
+	assert(split_two.native_value()[1].native_value() == "b,c");
 
 	const auto split_negative = scpp::php::explode(scpp::string_t(","), scpp::string_t("a,b,c"), scpp::int_t(-1));
-	assert(split_negative.get_hash().size() == 2);
-	assert(split_negative.get_hash().at(scpp::int_t(0)).get_string().native_value() == "a");
-	assert(split_negative.get_hash().at(scpp::int_t(1)).get_string().native_value() == "b");
+	assert(split_negative.size() == 2);
+	assert(split_negative.native_value()[0].native_value() == "a");
+	assert(split_negative.native_value()[1].native_value() == "b");
 
 	const auto split_negative_empty = scpp::php::explode(scpp::string_t(","), scpp::string_t("abc"), scpp::int_t(-1));
-	assert(split_negative_empty.get_hash().size() == 0);
+	assert(split_negative_empty.size() == 0);
 
 	bool separator_error = false;
 	try {
@@ -161,12 +161,12 @@ static void test_explode() {
 }
 
 static void test_hex_bin_helpers() {
-	assert_mixed_string(scpp::php::hex2bin(scpp::string_t("")), "");
-	assert_mixed_string(scpp::php::hex2bin(scpp::string_t("48656c6c6f")), "Hello");
-	assert_mixed_string(scpp::php::hex2bin(scpp::string_t("48656C6C6F")), "Hello");
-	assert_mixed_false(scpp::php::hex2bin(scpp::string_t("0")));
-	assert_mixed_false(scpp::php::hex2bin(scpp::string_t("zz")));
-	assert_mixed_false(scpp::php::hex2bin(scpp::string_t("0g")));
+	assert_or_false_string(scpp::php::hex2bin(scpp::string_t("")), "");
+	assert_or_false_string(scpp::php::hex2bin(scpp::string_t("48656c6c6f")), "Hello");
+	assert_or_false_string(scpp::php::hex2bin(scpp::string_t("48656C6C6F")), "Hello");
+	assert_or_false_false(scpp::php::hex2bin(scpp::string_t("0")));
+	assert_or_false_false(scpp::php::hex2bin(scpp::string_t("zz")));
+	assert_or_false_false(scpp::php::hex2bin(scpp::string_t("0g")));
 
 	assert(scpp::php::bin2hex(scpp::string_t("")).native_value() == "");
 	assert(scpp::php::bin2hex(scpp::string_t("Hello")).native_value() == "48656c6c6f");
@@ -176,7 +176,7 @@ static void test_hex_bin_helpers() {
 	raw_bytes.push_back('A');
 	const auto raw = scpp::string_t(raw_bytes);
 	assert(scpp::php::bin2hex(raw).native_value() == "00ff41");
-	assert_mixed_string(scpp::php::hex2bin(scpp::string_t("00ff41")), raw_bytes);
+	assert_or_false_string(scpp::php::hex2bin(scpp::string_t("00ff41")), raw_bytes);
 }
 
 static void test_implode() {
@@ -198,8 +198,17 @@ static void test_implode() {
 	pieces.append(scpp::string_t("z"));
 	assert(scpp::php::implode(scpp::string_t("-"), pieces).native_value() == "x-y-z");
 
+	scpp::hash_t<scpp::mixed_t> mixed_parts;
+	(void)mixed_parts.append(scpp::mixed_t(scpp::string_t("m")));
+	(void)mixed_parts.append(scpp::mixed_t(scpp::string_t("n")));
+	assert(scpp::php::implode(scpp::string_t("/"), scpp::mixed_t(scpp::unique<scpp::hash_t<scpp::mixed_t>>(std::move(mixed_parts)))).native_value() == "m/n");
+
 	scpp::hash_t<scpp::string_t> empty_table;
 	assert(scpp::php::implode(scpp::string_t(","), empty_table).native_value() == "");
+
+	scpp_test::expect_throw<std::runtime_error>([]() {
+		(void) scpp::php::implode(scpp::string_t(","), scpp::mixed_t(scpp::string_t("not-array")));
+	});
 }
 
 static void test_str_replace() {

@@ -1,8 +1,13 @@
 $root = "curl_legacy_root";
 $path = $root . "/payload.bin";
+$payload /** string */ = "";
 
 mkdir($root);
-file_put_contents($path, hex2bin("4100420A"));
+if (!take($payload, hex2bin("4100420A"))) {
+	echo "HEX_FAIL\n";
+} else {
+	file_put_contents($path, $payload);
+}
 $real = realpath($path);
 $ch = curl_init("file://" . $real);
 

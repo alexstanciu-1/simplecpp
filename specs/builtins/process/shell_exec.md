@@ -10,7 +10,7 @@ Doc Status: normative
 ## Supported form
 
 ```php
-shell_exec(string $command): mixed
+shell_exec(string $command): result_or_false<string_t>
 ```
 
 Current narrowed result states:
@@ -20,7 +20,7 @@ Current narrowed result states:
 
 ## Current notes
 
-- the current PHP surface exposes `shell_exec()` as a PHP-like falseable string producer through `mixed`
+- the current PHP surface exposes `shell_exec()` as a PHP-like falseable string producer through `result_or_false<string_t>`
 - explicit `=== false` checks are preferred when failure handling matters
 - command interpretation is delegated to the host shell
 - this first pass does not freeze cross-platform command syntax compatibility beyond the host shell behavior

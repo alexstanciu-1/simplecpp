@@ -1,0 +1,17 @@
+echo "start\n";
+
+$type_key = strtolower(trim("string"));
+$paren_pos = strpos($type_key, "(");
+if ($paren_pos === false)
+	echo "base=", $type_key, "\n";
+else
+	echo "base=", substr($type_key, 0, $paren_pos), "\n";
+
+$type_key = strtolower(trim("varchar(32)"));
+$paren_pos = strpos($type_key, "(");
+if ($paren_pos === false)
+	echo "base=", $type_key, "\n";
+else
+	echo "base=", substr($type_key, 0, $paren_pos), "\n";
+
+echo "done\n";
