@@ -71,6 +71,34 @@ using ::scpp::DBG_SOURCE;
 using ::scpp::DBG_TYPE;
 using ::scpp::DBG_VALUE;
 
+inline thread_local const void *g_current_static_token = nullptr;
+
+inline const void *current_static_token() {
+	return g_current_static_token;
+}
+
+template <typename CurrentClass, typename Fn>
+decltype(auto) _static(Fn &&fn) {
+	struct static_scope_guard final {
+		const void *previous;
+		bool restore;
+
+		~static_scope_guard() {
+			if (restore) {
+				g_current_static_token = previous;
+			}
+		}
+	};
+
+	const void *previous = g_current_static_token;
+	const bool should_raise = previous == nullptr;
+	if (should_raise) {
+		g_current_static_token = CurrentClass::__scpp_static_token();
+	}
+	static_scope_guard guard{previous, should_raise};
+	return std::forward<Fn>(fn)();
+}
+
 // Validates a PHP array / ?array argument that has been lowered to mixed_t.
 // How: reject invalid kinds before executing any user code inside the callee.
 inline void expect_array_argument(const mixed_t &value, bool nullable, const char *name) {

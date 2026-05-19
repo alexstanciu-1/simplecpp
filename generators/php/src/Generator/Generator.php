@@ -76,6 +76,8 @@ final class Generator
 	private ?string $currentNamespacePhp = null;
 	private ?string $currentClassName = null;
 	private ?string $currentParentClass = null;
+	/** @var array<string, MethodDecl> */
+	private array $currentLateStaticDispatchMethods = [];
 	private int $tempCounter = 0;
 	private AnnotationExpressionParser $annotationExpressionParser;
 	/** @var array<string, string> */
@@ -631,6 +633,95 @@ final class Generator
 			: $this->currentClassName;
 
 		return $this->methodDecls[$qualifiedClass . '::' . $methodName] ?? $this->methodDecls[$this->currentClassName . '::' . $methodName] ?? null;
+	}
+
+	private function qualifyClassNameForLookup(string $className, ?string $namespacePhp): string
+	{
+		$trimmed = ltrim($className, '\\');
+		if ($trimmed === '') {
+			return $className;
+		}
+		if (str_contains($trimmed, '\\')) {
+			return $trimmed;
+		}
+		return $namespacePhp !== null && $namespacePhp !== ''
+			? $namespacePhp . '\\' . $trimmed
+			: $trimmed;
+	}
+
+	private function resolveClassDeclKey(string $phpClass, ?string $namespacePhp): ?string
+	{
+		$resolved = $this->nameRegistry->resolveClass($phpClass, 0, $namespacePhp);
+		if ($resolved !== null && isset($this->classDecls[$resolved])) {
+			return $resolved;
+		}
+
+		$candidates = [];
+		$trimmed = ltrim($phpClass, '\\');
+		if ($trimmed !== '') {
+			$candidates[] = $trimmed;
+		}
+		if ($namespacePhp !== null && $namespacePhp !== '' && $trimmed !== '' && !str_contains($trimmed, '\\')) {
+			$candidates[] = $namespacePhp . '\\' . $trimmed;
+		}
+
+		foreach ($candidates as $candidate) {
+			if (isset($this->classDecls[$candidate])) {
+				return $candidate;
+			}
+		}
+
+		return null;
+	}
+
+	private function namespaceFromQualifiedClassKey(string $qualifiedClass): ?string
+	{
+		$pos = strrpos($qualifiedClass, '\\');
+		if ($pos === false) {
+			return null;
+		}
+		return substr($qualifiedClass, 0, $pos);
+	}
+
+	private function resolveMethodDeclInClassHierarchy(string $classKey, string $methodName): ?MethodDecl
+	{
+		$seen = [];
+		$currentKey = $classKey;
+		while ($currentKey !== '' && !isset($seen[$currentKey])) {
+			$seen[$currentKey] = true;
+			if (isset($this->methodDecls[$currentKey . '::' . $methodName])) {
+				return $this->methodDecls[$currentKey . '::' . $methodName];
+			}
+			$classDecl = $this->classDecls[$currentKey] ?? null;
+			if (!$classDecl instanceof ClassDecl || $classDecl->parentClass === null) {
+				break;
+			}
+			$currentKey = $this->resolveClassDeclKey($classDecl->parentClass, $this->namespaceFromQualifiedClassKey($currentKey)) ?? '';
+		}
+		return null;
+	}
+
+	private function isClassSameOrDescendantOf(string $candidateKey, string $ancestorKey): bool
+	{
+		if ($candidateKey === $ancestorKey) {
+			return true;
+		}
+
+		$seen = [];
+		$currentKey = $candidateKey;
+		while ($currentKey !== '' && !isset($seen[$currentKey])) {
+			$seen[$currentKey] = true;
+			$classDecl = $this->classDecls[$currentKey] ?? null;
+			if (!$classDecl instanceof ClassDecl || $classDecl->parentClass === null) {
+				return false;
+			}
+			$currentKey = $this->resolveClassDeclKey($classDecl->parentClass, $this->namespaceFromQualifiedClassKey($currentKey)) ?? '';
+			if ($currentKey === $ancestorKey) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private function lookupMethodDeclByMappedBaseType(string $baseType, string $methodName): ?MethodDecl
@@ -1918,6 +2009,14 @@ final class Generator
 		}
 		$this->appendHeaderLines($header, $this->code('class ' . $class->name . ($extends !== [] ? ' : ' . implode(', ', $extends) : '') . ' {', $class->line));
 		$this->appendHeaderLines($header, $this->code('public:', $class->line));
+		$lateStaticDispatchMethods = $this->collectLateStaticDispatchMethods($class, $namespacePhp);
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'static const void* __scpp_static_token() { static int __scpp_token = 0; return &__scpp_token; }', $class->line));
+		foreach ($lateStaticDispatchMethods as $dispatchMethod) {
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . $this->renderLateStaticDispatchDeclaration($dispatchMethod, $namespacePhp) . ';', $dispatchMethod->line));
+		}
+		if ($lateStaticDispatchMethods !== []) {
+			$this->appendHeaderLines($header, $this->code('', 0));
+		}
 		foreach ($class->properties as $property) {
 			$initializer = $property->hasDefault
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
@@ -1989,8 +2088,14 @@ final class Generator
 		if (!$class->isInterface) {
 			$prevClassName = $this->currentClassName;
 			$prevParentClass = $this->currentParentClass;
+			$prevLateStaticDispatchMethods = $this->currentLateStaticDispatchMethods;
 			$this->currentClassName = $class->name;
 			$this->currentParentClass = $class->parentClass;
+			$this->currentLateStaticDispatchMethods = $lateStaticDispatchMethods;
+			foreach ($lateStaticDispatchMethods as $dispatchMethod) {
+				$this->appendSourceLines($source, ...$this->codeLinesFromTextBlock($this->renderLateStaticDispatchDefinition($class, $dispatchMethod, $namespacePhp), $dispatchMethod->line));
+				$this->appendSourceLines($source, $this->code('', 0));
+			}
 			foreach ($class->methods as $method) {
 				if ($this->methodIsAbstract($method, $class)) {
 					continue;
@@ -2011,6 +2116,7 @@ final class Generator
 			}
 			$this->currentClassName = $prevClassName;
 			$this->currentParentClass = $prevParentClass;
+			$this->currentLateStaticDispatchMethods = $prevLateStaticDispatchMethods;
 		}
 	}
 
@@ -2425,6 +2531,118 @@ final class Generator
 		return $signature . " {
 " . $body . "
 }";
+	}
+
+	/** @return array<string, MethodDecl> */
+	private function collectLateStaticDispatchMethods(ClassDecl $class, ?string $namespacePhp): array
+	{
+		$out = [];
+		$ownerKey = $this->qualifyClassNameForLookup($class->name, $namespacePhp);
+		foreach ($class->methods as $method) {
+			$this->walkForLateStaticCalls($method->statements, $out, $ownerKey);
+		}
+		return $out;
+	}
+
+	private function walkForLateStaticCalls(mixed $node, array &$out, string $ownerKey): void
+	{
+		if ($node instanceof Statement) {
+			$this->walkForLateStaticCalls($node->payload, $out, $ownerKey);
+			return;
+		}
+
+		if (is_array($node)) {
+			foreach ($node as $value) {
+				$this->walkForLateStaticCalls($value, $out, $ownerKey);
+			}
+			return;
+		}
+
+		if (!is_object($node)) {
+			return;
+		}
+
+		$kind = $node->kind ?? null;
+		if ($kind === AstKind::STATIC_CALL) {
+			$classNode = $node->children['class'] ?? null;
+			if (
+				is_object($classNode)
+				&& ($classNode->kind ?? null) === AstKind::NAME
+				&& strtolower(ltrim((string) ($classNode->children['name'] ?? ''), '\\')) === 'static'
+			) {
+				$methodName = (string) ($node->children['method'] ?? '');
+				$methodDecl = $this->resolveMethodDeclInClassHierarchy($ownerKey, $methodName);
+				if ($methodDecl !== null) {
+					$out[$methodName] = $methodDecl;
+				}
+			}
+		}
+
+		foreach (get_object_vars($node) as $value) {
+			$this->walkForLateStaticCalls($value, $out, $ownerKey);
+		}
+	}
+
+	private function renderLateStaticDispatchDeclaration(MethodDecl $method, ?string $namespacePhp): string
+	{
+		$paramPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$this->beginFunctionLikeVariableMapping($method->params, $method->statements);
+		try {
+			$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+			return 'static ' . $returnType . ' ' . $this->renderLateStaticDispatchHelperName($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $paramPassModes) . ')';
+		} finally {
+			$this->endFunctionLikeVariableMapping();
+		}
+	}
+
+	private function renderLateStaticDispatchHelperName(string $methodName): string
+	{
+		return '__scpp_static_call_' . $this->cppIdentifier($methodName);
+	}
+
+	/** @return list<string> */
+	private function collectLateStaticDispatchTargets(ClassDecl $owner, MethodDecl $method, ?string $namespacePhp): array
+	{
+		$ownerKey = $this->qualifyClassNameForLookup($owner->name, $namespacePhp);
+		$targets = [];
+		foreach ($this->classDecls as $candidateKey => $candidateDecl) {
+			if (!$candidateDecl instanceof ClassDecl || !$this->isClassSameOrDescendantOf($candidateKey, $ownerKey)) {
+				continue;
+			}
+			if ($this->resolveMethodDeclInClassHierarchy($candidateKey, $method->name) === null) {
+				continue;
+			}
+			$targets[] = $this->typeMapper->mapClassName($candidateKey);
+		}
+		if ($targets === []) {
+			$targets[] = $owner->name;
+		}
+		return array_values(array_unique($targets));
+	}
+
+	private function renderLateStaticDispatchDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
+	{
+		$paramPassModes = $this->analyzeParamPassModes($method->params, $method->statements);
+		$this->beginFunctionLikeVariableMapping($method->params, $method->statements);
+		try {
+			$returnType = $this->resolveDeclaredReturnType($method->returnType, $method->returnsByReference, 'Method ' . $this->cppIdentifier($method->name));
+			$signature = $returnType . ' ' . $class->name . '::' . $this->renderLateStaticDispatchHelperName($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $paramPassModes, true) . ')';
+			$forwardArgs = implode(', ', array_map(fn (ParamDecl $param): string => $this->parameterCppName($param), $method->params));
+			$tokenExpr = '::scpp::php::current_static_token()';
+			$lines = [];
+			foreach ($this->collectLateStaticDispatchTargets($class, $method, $namespacePhp) as $targetClass) {
+				$prefix = $lines === [] ? 'if' : 'else if';
+				$lines[] = $this->indent(1) . $prefix . ' (' . $tokenExpr . ' == ' . $targetClass . '::__scpp_static_token()) {';
+				$call = $targetClass . '::' . $this->cppIdentifier($method->name) . '(' . $forwardArgs . ')';
+				$lines[] = $this->indent(2) . ($returnType === 'void' ? $call . ';' : 'return ' . $call . ';');
+				$lines[] = $this->indent(1) . '}';
+			}
+			$fallbackCall = $class->name . '::' . $this->cppIdentifier($method->name) . '(' . $forwardArgs . ')';
+			$lines[] = $this->indent(1) . ($returnType === 'void' ? $fallbackCall . ';' : 'return ' . $fallbackCall . ';');
+			return $signature . " {\n" . implode("\n", $lines) . "\n}";
+		} finally {
+			$this->endFunctionLikeVariableMapping();
+		}
 	}
 
 	private function renderInlineMethodValueRefOverloadDefinition(ClassDecl $class, MethodDecl $method, ?string $namespacePhp): string
@@ -6163,12 +6381,23 @@ final class Generator
 			$classNode = $expr->children['class'] ?? null;
 			$method = (string) ($expr->children['method'] ?? '');
 			$args = $expr->children['args']->children ?? [];
+			if (
+				is_object($classNode)
+				&& ($classNode->kind ?? null) === AstKind::NAME
+				&& strtolower(ltrim((string) ($classNode->children['name'] ?? ''), '\\')) === 'static'
+			) {
+				return $this->renderLateStaticMethodCall($expr, $namespacePhp);
+			}
 			$class = is_object($classNode) && ($classNode->kind ?? null) === AstKind::VAR
 				? 'class_t<decltype(' . $this->renderExpr($classNode, $namespacePhp) . ')>'
 				: $this->renderClassName($classNode, $namespacePhp);
 			$methodDecl = $this->lookupMethodDeclByStaticCall($classNode, $method, $namespacePhp);
 			$renderedArgs = $methodDecl !== null ? $this->renderCallArgsForParams($methodDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
-			return $class . '::' . $this->cppIdentifier($method) . '(' . $renderedArgs . ')';
+			$callExpr = $class . '::' . $this->cppIdentifier($method) . '(' . $renderedArgs . ')';
+			if (is_object($classNode) && ($classNode->kind ?? null) === AstKind::NAME) {
+				return $this->renderStaticScopeWrapper($class, $callExpr);
+			}
+			return $callExpr;
 		}
 		if ($kind === AstKind::AST_ISSET) {
 			// In this exporter, multi-argument isset() is already normalized into boolean-op trees.
@@ -6837,6 +7066,21 @@ final class Generator
 		}
 
 		return $this->renderClassName($classNode, $namespacePhp) . '::' . $this->cppIdentifier($prop);
+	}
+
+	private function renderStaticScopeWrapper(string $classCpp, string $callExpr): string
+	{
+		return '::scpp::php::_static<' . $classCpp . '>([&]() -> decltype(auto) { return ' . $callExpr . '; })';
+	}
+
+	private function renderLateStaticMethodCall(mixed $expr, ?string $namespacePhp): string
+	{
+		$method = (string) ($expr->children['method'] ?? '');
+		$args = $expr->children['args']->children ?? [];
+		$methodDecl = $this->currentLateStaticDispatchMethods[$method] ?? $this->lookupMethodDeclByCurrentClass($method, $namespacePhp);
+		$renderedArgs = $methodDecl !== null ? $this->renderCallArgsForParams($methodDecl->params, $args, $namespacePhp) : $this->renderArgs($args, $namespacePhp);
+		$callExpr = ($this->currentClassName ?? '/* unsupported-static */') . '::' . $this->renderLateStaticDispatchHelperName($method) . '(' . $renderedArgs . ')';
+		return $this->renderStaticScopeWrapper($this->currentClassName ?? '/* unsupported-static */', $callExpr);
 	}
 
 	/**
