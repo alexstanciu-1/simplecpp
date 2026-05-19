@@ -1,0 +1,27 @@
+class A {
+	public static function run(): string {
+		return X::ping();
+	}
+
+	public static function hello(): string {
+		return "A";
+	}
+}
+
+class B extends A {
+	public static function hello(): string {
+		return "B";
+	}
+}
+
+class X {
+	public static function ping(): string {
+		return static::hello();
+	}
+
+	public static function hello(): string {
+		return "X";
+	}
+}
+
+echo B::run(), "\n";
