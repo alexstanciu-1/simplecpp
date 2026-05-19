@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.54 - 2026-05-19
+
+### Additions
+
+- Added exact regression coverage for the `0.1.53` late-static repro shapes reported on issue `#135`, including the class-local single-call case and the inherited `B::run(); C::run();` dispatch case.
+- Added first-pass file-local authoritative generator catalog rows for late-static property, method, constant, and construction forms, plus aligned class-constant declaration/access rows.
+
+### Fixes
+
+- Fixed PHP-shaped late-static method dispatch so generated `void` helper branches now return after the matched target call instead of falling through to the lexical fallback path.
+- Fixed the inherited `static::method(...)` case reported on issue `#135` so `B::run()` and `C::run()` now preserve called-class semantics in the covered file-local flow instead of producing duplicate or fallback calls.
+- Fixed the authoritative generator docs so the checked-in normative surface now matches the current first-pass late-static implementation rather than documenting stale `static::` rejections.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required.
+- `static::method(...)`, `static::$prop`, `static::CONST`, and `new static(...)` remain first-pass file-local lowering features; cross-source-file late-static rebinding is still out of scope.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the release changes generator/runtime late-static behavior, tests, and authoritative docs without changing the current repo-local skill instructions.
+
 ## 0.1.53 - 2026-05-19
 
 ### Additions
