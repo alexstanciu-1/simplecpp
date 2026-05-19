@@ -3279,7 +3279,7 @@ function ensure_directory(string $dir): void
 	if (is_dir($dir)) {
 		return;
 	}
-	if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
+	if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
 		scpp_fail('Failed to create directory: ' . $dir . PHP_EOL, 2);
 	}
 }
