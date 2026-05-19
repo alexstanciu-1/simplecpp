@@ -1,0 +1,18 @@
+class B {
+	public static function hello(): void {
+		echo "B\n";
+	}
+
+	public static function run(): void {
+		static::hello();
+	}
+}
+
+class C extends B {
+	public static function hello(): void {
+		echo "C\n";
+	}
+}
+
+B::run();
+C::run();

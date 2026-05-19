@@ -71,31 +71,43 @@ using ::scpp::DBG_SOURCE;
 using ::scpp::DBG_TYPE;
 using ::scpp::DBG_VALUE;
 
-inline thread_local const void *g_current_static_token = nullptr;
+struct static_context_entry {
+	const void *owner_token;
+	const void *current_token;
+};
 
-inline const void *current_static_token() {
-	return g_current_static_token;
+inline thread_local vector_t<static_context_entry> g_static_context_stack{};
+
+template <typename OwnerClass>
+inline const void *current_static_token_for() {
+	for (auto it = g_static_context_stack.native_value().rbegin(); it != g_static_context_stack.native_value().rend(); ++it) {
+		if (OwnerClass::__scpp_static_accepts((*it).current_token)) {
+			return (*it).current_token;
+		}
+	}
+	return nullptr;
 }
 
-template <typename CurrentClass, typename Fn>
+template <typename OwnerClass, typename CurrentClass, typename Fn>
 decltype(auto) _static(Fn &&fn) {
 	struct static_scope_guard final {
-		const void *previous;
-		bool restore;
+		bool pop_entry;
 
 		~static_scope_guard() {
-			if (restore) {
-				g_current_static_token = previous;
+			if (pop_entry) {
+				g_static_context_stack.native_value().pop_back();
 			}
 		}
 	};
 
-	const void *previous = g_current_static_token;
-	const bool should_raise = previous == nullptr;
-	if (should_raise) {
-		g_current_static_token = CurrentClass::__scpp_static_token();
+	const bool should_push = current_static_token_for<OwnerClass>() == nullptr;
+	if (should_push) {
+		g_static_context_stack.push_back(static_context_entry{
+			OwnerClass::__scpp_static_token(),
+			CurrentClass::__scpp_static_token(),
+		});
 	}
-	static_scope_guard guard{previous, should_raise};
+	static_scope_guard guard{should_push};
 	return std::forward<Fn>(fn)();
 }
 
