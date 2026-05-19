@@ -10,7 +10,7 @@ $resp /** curl_response */;
 
 fs_mkdir($root);
 
-if (!take($payload, $err, hex2bin("4100420A"))) {
+if (!take($payload, hex2bin("4100420A"))) {
 	echo "HEX_FAIL\n";
 } else if (!take($bytes, $err, fs_put($path, $payload))) {
 	echo "WRITE_FAIL\n";

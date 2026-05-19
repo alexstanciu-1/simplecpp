@@ -92,7 +92,68 @@ Examples include helper-style operations such as:
 - `cli_args`
 - `shell_exec`
 
-## 6. Authority Rule
+## 6. Shared-Name Contract Rule
+
+When `legacy` and `strict` expose the same source-facing PHP helper name, they must expose the same visible success/failure contract.
+
+This rule applies to shared plain helper names such as:
+
+- `strpos`
+- `strrpos`
+- `hex2bin`
+- `explode`
+- `implode`
+- `strlen`
+- `trim`
+
+The same visible helper name must not silently change its user-visible branch model just because the active profile changed.
+
+This means:
+
+- the same shared name should imply the same visible branching habit in both profiles
+- internal lowering may still differ by profile
+- shared runtime implementation reuse is still allowed
+- stricter internal machinery in `strict` does not permit the shared visible helper name to change contract shape
+
+Examples of contract drift that are not allowed for the same shared helper name:
+
+- `false|T` in one profile vs `nullable<T>` in the other
+- `false|T` in one profile vs `result<T>` in the other
+- ordinary value return in one profile vs wrapper-only consumption in the other
+
+If strict intentionally wants a different visible contract, it should expose a different visible helper name or family rather than reusing the same plain PHP-facing helper name.
+
+## 7. Carrier Rule For Shared Helper Unions
+
+`mixed_t` must not be used as the default carrier for routine shared helper unions when the real visible contract is already known.
+
+For shared PHP-facing helper names:
+
+- `false|T` should use `result_or_false<T>`
+- `bool|T` should use `result_or_bool<T>`
+
+`mixed_t` remains appropriate for genuinely dynamic payloads.
+It should not remain the default representation merely because the helper historically resembled PHP.
+
+This rule applies to shared helper union contracts in both profiles.
+
+## 8. Distinct Strict-Native Families
+
+Strict-native subsystem/domain helper families exposed under distinct names do not need to mirror legacy helper contracts solely because they are available from PHP authoring.
+
+Examples include:
+
+- `fs_*`
+- `io_*`
+- `regex_*`
+- `dt_*`
+- `curl_*`
+
+These families may use `result<T>`, plain values, or other strict-native contracts as defined by their own owning specs and public helper contracts.
+
+They are not treated as "shared plain helper names" for the purpose of the shared-name contract rule.
+
+## 9. Authority Rule
 
 The strict profile does not create a second semantic runtime authority.
 
@@ -103,7 +164,7 @@ Authority remains:
 
 The strict visible API is a project profile exposure layer, not a separate semantic implementation stack.
 
-## 7. Relationship Between Legacy and Strict
+## 10. Relationship Between Legacy and Strict
 
 Where a reusable capability exists in both profiles:
 
@@ -111,11 +172,13 @@ Where a reusable capability exists in both profiles:
 - strict may expose a native Simple C++ name and stricter contract
 - both may share one underlying runtime authority when the capability is reusable across surfaces
 
-This does not require the visible contracts to be identical.
+When the visible helper names differ, the visible contracts do not need to be identical.
 
 It does require semantic ownership to remain explicit and non-duplicated.
 
-## 8. Registry Rule
+When the visible helper names are the same, the shared-name contract rule in section 6 applies.
+
+## 11. Registry Rule
 
 Profile registries are normative within their machine-owned domain.
 

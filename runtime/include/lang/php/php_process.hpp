@@ -67,10 +67,10 @@ inline void set_cli_args(int argc, char** argv) {
 	return cli_argv();
 }
 
-[[nodiscard]] inline mixed_t shell_exec(const string_t &command) {
+[[nodiscard]] inline result_or_false<string_t> shell_exec(const string_t &command) {
 	FILE* raw = detail::shell_popen(command.native_value().c_str());
 	if (raw == nullptr) {
-		return mixed_t(bool_t(false));
+		return false_sentinel;
 	}
 
 	std::unique_ptr<FILE, int(*)(FILE*)> handle(raw, detail::shell_pclose);
@@ -81,7 +81,7 @@ inline void set_cli_args(int argc, char** argv) {
 		output += buffer;
 	}
 
-	return mixed_t(string_t(std::move(output)));
+	return string_t(std::move(output));
 }
 
 } // namespace scpp::php

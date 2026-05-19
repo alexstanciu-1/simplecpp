@@ -11,7 +11,7 @@ $resp /** curl_response */;
 if (!fs_mkdir($root)) {
 	echo "MKDIR_FAIL\n";
 } else {
-	if (!take($payload, $err, hex2bin("4100420A"))) {
+	if (!take($payload, hex2bin("4100420A"))) {
 		echo "HEX_FAIL\n";
 	} else if (!take($written, $err, fs_put($path, $payload))) {
 		echo "WRITE_FAIL\n";

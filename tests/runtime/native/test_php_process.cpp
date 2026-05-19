@@ -26,8 +26,8 @@ static void test_cli_helpers() {
 
 static void test_shell_exec_success() {
 	const auto output = scpp::php::shell_exec(scpp::string_t("printf process_runtime_ok"));
-	assert(output.kind() == scpp::mixed_t::kind_t::string_v);
-	assert(output.get_string().native_value() == "process_runtime_ok");
+	assert(output.has_value().native_value() == true);
+	assert(output.value().native_value() == "process_runtime_ok");
 }
 
 static void test_cli_args_alias() {
