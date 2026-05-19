@@ -9,6 +9,33 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.56 - 2026-05-19
+
+### Additions
+
+- Added focused pre-tokenizer regression coverage for prefix generic by-reference parameters in strict code.
+- Added focused tool/runtime regression coverage for strict `getenv(...)`, condition-visibility diagnostics, and `mysqli_result` exhaustion semantics.
+- Added a native runtime mysqli exhaustion regression that verifies result consumption now terminates with `null`.
+
+### Fixes
+
+- Fixed strict pre-tokenizer handling so prefix generic by-reference parameters such as `vector<mixed> &$rows` normalize correctly before parsing.
+- Fixed strict builtin routing so `getenv(...)` resolves through a strict-friendly wrapper instead of falling through toward raw C `getenv(...)`.
+- Fixed strict block-visibility diagnostics for assignment-in-condition patterns so the generator now points authors toward the canonical explicit rewrite.
+- Fixed `mysqli_result::fetch_assoc()` and `fetch_row()` exhaustion behavior so finite result sets now return `null` at end-of-result instead of an empty dynamic row value.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required for existing supported code.
+- Strict code may now use prefix generic by-reference parameter forms that are normalized by the scanner-owned pre-tokenizer path.
+- Strict `getenv(...)` now follows the expected string-or-false wrapper contract.
+- Result-consuming mysqli loops that wait for `fetch_assoc() === null` now terminate as expected on finite result sets.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the shipped changes affect generator/runtime behavior, diagnostics, and regression coverage without changing the current repo-local skill instructions.
+
 ## 0.1.54 - 2026-05-19
 
 ### Additions
