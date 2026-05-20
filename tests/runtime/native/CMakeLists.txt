@@ -59,6 +59,11 @@ add_executable(test_mixed_t_dynamic test_mixed_t_dynamic.cpp)
 target_link_libraries(test_mixed_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_mixed_t_dynamic COMMAND test_mixed_t_dynamic)
 
+# Strict identity coverage for null dynamic carriers widened into mixed_t.
+add_executable(test_strict_identity_null_dynamic test_strict_identity_null_dynamic.cpp)
+target_link_libraries(test_strict_identity_null_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_strict_identity_null_dynamic COMMAND test_strict_identity_null_dynamic)
+
 # Array semantics conformance coverage for the reduced Prism++ subset.
 add_executable(test_array_semantics test_array_semantics.cpp)
 target_link_libraries(test_array_semantics PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)
@@ -105,8 +110,11 @@ add_test(NAME scpp_test_php_process COMMAND test_php_process)
 # mysqli connect/close smoke coverage for the first vertical slice.
 # Disabled by default because many local/sandbox builds do not have a runnable MariaDB/MySQL test target.
 option(SCPP_ENABLE_MYSQLI_TESTS "Build and register mysqli runtime smoke tests" OFF)
+add_executable(test_mysqli_fetch_exhaustion test_mysqli_fetch_exhaustion.cpp)
+target_link_libraries(test_mysqli_fetch_exhaustion PRIVATE scpp_php_legacy scpp_lang_php scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_mysqli_fetch_exhaustion COMMAND test_mysqli_fetch_exhaustion)
 if(SCPP_ENABLE_MYSQLI_TESTS)
 	add_executable(test_mysqli_connect test_mysqli_connect.cpp)
-	target_link_libraries(test_mysqli_connect PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)
+	target_link_libraries(test_mysqli_connect PRIVATE scpp_php_legacy scpp_lang_php scpp_runtime scpp_runtime_test_support)
 	add_test(NAME scpp_test_mysqli_connect COMMAND test_mysqli_connect)
 endif()

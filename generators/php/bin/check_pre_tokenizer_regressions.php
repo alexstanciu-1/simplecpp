@@ -23,6 +23,10 @@ $fixtures = [
 		'input' => $root . '/samples/know_how/pre_tokenizer_nested_generics.phs',
 		'expected' => $root . '/samples/know_how/pre_tokenizer_nested_generics.expected.json',
 	],
+	[
+		'input' => $root . '/samples/know_how/pre_tokenizer_prefix_ref_param.phs',
+		'expected' => $root . '/samples/know_how/pre_tokenizer_prefix_ref_param.expected.json',
+	],
 ];
 
 $script = __DIR__ . '/check_pre_tokenizer_fixture.php';

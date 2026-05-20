@@ -25,6 +25,7 @@
         "cli_argc": "php::cli_argc",
         "cli_argv": "php::cli_argv",
         "cli_args": "php::cli_args",
+        "getenv": "php::getenv",
         "shell_exec": "php::shell_exec",
         "curl_init": "curl::init",
         "curl_setopt": "curl::setopt",

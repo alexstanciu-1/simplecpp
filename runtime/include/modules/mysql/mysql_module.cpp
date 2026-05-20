@@ -51,8 +51,8 @@ bound_value bound_value::make_string(std::string value) {
 
 namespace {
 
-[[nodiscard]] inline dynamic_t<> make_empty_dynamic() {
-	return ::scpp::to_dynamic(hash_t<mixed_t>{});
+[[nodiscard]] inline dynamic_t<> make_null_dynamic() {
+	return dynamic_t<>(null_t{});
 }
 
 [[nodiscard]] inline mixed_t cell_to_mixed_from_text(
@@ -153,13 +153,13 @@ private:
 
 	[[nodiscard]] dynamic_t<> fetch_one(bool associative) {
 		if (result_ == nullptr) {
-			return make_empty_dynamic();
+			return make_null_dynamic();
 		}
 
 		MYSQL_ROW row = mysql_fetch_row(result_);
 		if (row == nullptr) {
 			last_status_ = {};
-			return make_empty_dynamic();
+			return make_null_dynamic();
 		}
 
 		unsigned long *lengths = mysql_fetch_lengths(result_);
@@ -273,18 +273,18 @@ private:
 
 	[[nodiscard]] dynamic_t<> fetch_one(bool associative) {
 		if (stmt_ == nullptr) {
-			return make_empty_dynamic();
+			return make_null_dynamic();
 		}
 
 		const int fetch_code = mysql_stmt_fetch(stmt_);
 		if (fetch_code == MYSQL_NO_DATA) {
 			last_status_ = {};
-			return make_empty_dynamic();
+			return make_null_dynamic();
 		}
 		if (fetch_code == 1) {
 			last_status_.errno_code = mysql_stmt_errno(stmt_);
 			last_status_.error_message = mysql_stmt_error(stmt_);
-			return make_empty_dynamic();
+			return make_null_dynamic();
 		}
 
 		hash_t<mixed_t> out;

@@ -136,6 +136,12 @@ final class TokenSiteScanner
 				continue;
 			}
 
+			$prefixShorthandSite = $this->scanPrefixShorthandParamTypeSite($source, $i, $openParenIndex);
+			if ($prefixShorthandSite !== null) {
+				$sites[] = $prefixShorthandSite;
+				continue;
+			}
+
 			$inlineDocSite = $this->scanLeadingInlineParamTypeComment($source, $i, $openParenIndex);
 			if ($inlineDocSite !== null) {
 				$sites[] = $inlineDocSite;
@@ -168,6 +174,59 @@ final class TokenSiteScanner
 		}
 
 		return $sites;
+	}
+
+	/** @return array{kind:string,name:?string,type:string,line:int,startOffset:int,endOffset:int,rewriteStart:int,rewriteEnd:int,replacement:string,ownerName?:?string}|null */
+	private function scanPrefixShorthandParamTypeSite(LexedSource $source, int $variableIndex, int $openParenIndex): ?array
+	{
+		$tokens = $source->tokens;
+		$variableToken = $tokens[$variableIndex];
+		$beforeVariableIndex = $this->findPreviousMeaningfulIndex($tokens, $variableIndex - 1, $openParenIndex + 1);
+		if ($beforeVariableIndex === null) {
+			return null;
+		}
+
+		$typeEndIndex = $beforeVariableIndex;
+		if (in_array($tokens[$typeEndIndex]['text'], ['&', '...'], true)) {
+			$typeEndIndex = $this->findPreviousMeaningfulIndex($tokens, $typeEndIndex - 1, $openParenIndex + 1) ?? -1;
+		}
+		if ($typeEndIndex < ($openParenIndex + 1)) {
+			return null;
+		}
+
+		$typeStartIndex = $openParenIndex + 1;
+		for ($j = $typeEndIndex; $j >= ($openParenIndex + 1); $j--) {
+			$text = $tokens[$j]['text'];
+			if ($text === ',') {
+				$typeStartIndex = $j + 1;
+				break;
+			}
+		}
+		$typeStartIndex = $this->findNextMeaningfulIndex($tokens, $typeStartIndex, $typeEndIndex + 1) ?? $typeStartIndex;
+		if ($typeStartIndex > $typeEndIndex) {
+			return null;
+		}
+
+		$typeSlot = $this->parseBoundedTypeSlot($source, $typeStartIndex, $typeEndIndex);
+		if ($typeSlot === null || !str_contains($typeSlot['type'], '<')) {
+			return null;
+		}
+
+		$middleStartOffset = $typeSlot['slotEndOffset'];
+		$middleEndOffset = $variableToken['offset'];
+		$middleTrivia = substr($source->source, $middleStartOffset, $middleEndOffset - $middleStartOffset);
+
+		return [
+			'kind' => 'param',
+			'name' => ltrim($variableToken['text'], '$'),
+			'type' => $typeSlot['type'],
+			'line' => $variableToken['line'],
+			'startOffset' => $typeSlot['slotStartOffset'],
+			'endOffset' => $typeSlot['slotEndOffset'],
+			'rewriteStart' => $typeSlot['slotStartOffset'],
+			'rewriteEnd' => $variableToken['offset'] + strlen($variableToken['text']),
+			'replacement' => '/** ' . $typeSlot['type'] . ' */' . $middleTrivia . $variableToken['text'],
+		];
 	}
 
 	/** @return array{kind:string,name:?string,type:string,line:int,startOffset:int,endOffset:int,rewriteStart:int,rewriteEnd:int,replacement:string,ownerName?:?string}|null */
@@ -543,6 +602,74 @@ final class TokenSiteScanner
 			'leadingTrivia' => $leadingTrivia,
 			'trailingTrivia' => $trailingTrivia,
 			'endTokenIndex' => $lastTypeTokenIndex,
+		];
+	}
+
+	/**
+	 * @return array{type:string,slotStartOffset:int,slotEndOffset:int}|null
+	 */
+	private function parseBoundedTypeSlot(LexedSource $source, int $startIndex, int $endIndex): ?array
+	{
+		$tokens = $source->tokens;
+		$count = count($tokens);
+		if ($startIndex < 0 || $endIndex < $startIndex || $endIndex >= $count) {
+			return null;
+		}
+
+		$slotStartIndex = $this->findNextMeaningfulIndex($tokens, $startIndex, $endIndex + 1);
+		if ($slotStartIndex === null) {
+			return null;
+		}
+
+		$depthAngles = 0;
+		$depthParens = 0;
+		$lastTypeTokenIndex = null;
+		for ($i = $slotStartIndex; $i <= $endIndex; $i++) {
+			$text = $tokens[$i]['text'];
+			if ($this->isTrivia($tokens[$i])) {
+				$lastTypeTokenIndex = $i;
+				continue;
+			}
+
+			if (!$this->isAllowedTypeToken($text, $depthAngles, $depthParens)) {
+				return null;
+			}
+
+			if ($text === '<') {
+				$depthAngles++;
+			} elseif ($text === '>') {
+				$depthAngles--;
+			} elseif ($text === '>>') {
+				$depthAngles -= 2;
+			} elseif ($text === '(') {
+				$depthParens++;
+			} elseif ($text === ')') {
+				$depthParens--;
+			}
+
+			if ($depthAngles < 0 || $depthParens < 0) {
+				return null;
+			}
+
+			$lastTypeTokenIndex = $i;
+		}
+
+		if ($lastTypeTokenIndex === null || $depthAngles !== 0 || $depthParens !== 0) {
+			return null;
+		}
+
+		$slotStartOffset = $tokens[$slotStartIndex]['offset'];
+		$slotEndOffset = $tokens[$lastTypeTokenIndex]['offset'] + strlen($tokens[$lastTypeTokenIndex]['text']);
+		$rawSlot = substr($source->source, $slotStartOffset, $slotEndOffset - $slotStartOffset);
+		$type = trim($rawSlot);
+		if ($type === '' || !$this->looksLikePrismType($type)) {
+			return null;
+		}
+
+		return [
+			'type' => preg_replace('/\s+/', ' ', $type) ?? $type,
+			'slotStartOffset' => $slotStartOffset,
+			'slotEndOffset' => $slotEndOffset,
 		];
 	}
 

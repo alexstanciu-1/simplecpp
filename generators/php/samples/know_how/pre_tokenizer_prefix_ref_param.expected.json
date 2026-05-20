@@ -1,0 +1,13 @@
+{
+    "source": "class PrefixRefParamDemo {\n\tpublic function fill_rows(/** vector<mixed> */ &$rows, string $label): bool {\n\t\t$rows[] = $label;\n\t\treturn true;\n\t}\n}\n",
+    "annotations": [
+        {
+            "kind": "param",
+            "name": "rows",
+            "type": "vector<mixed>",
+            "line": 2,
+            "startOffset": 54,
+            "endOffset": 67
+        }
+    ]
+}

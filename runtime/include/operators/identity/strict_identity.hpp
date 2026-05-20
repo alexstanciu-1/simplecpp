@@ -75,7 +75,24 @@ inline bool_t php_is_null_value(nullptr_t) {
 }
 
 inline bool_t php_is_null_value(const mixed_t &value) {
-	return bool_t(value.kind() == mixed_t::kind_t::null_v);
+	switch (value.kind()) {
+		case mixed_t::kind_t::null_v:
+			return bool_t(true);
+		case mixed_t::kind_t::shared_table_v: {
+			const auto *shared_value = value.shared_table_if();
+			return bool_t(shared_value != nullptr && (*shared_value == null_t{}).native_value());
+		}
+		case mixed_t::kind_t::dynamic_v: {
+			const auto *dynamic_value = value.dynamic_if();
+			return bool_t(dynamic_value != nullptr && (*dynamic_value == null_t{}).native_value());
+		}
+		case mixed_t::kind_t::weak_table_v: {
+			const auto *weak_value = value.weak_table_if();
+			return bool_t(weak_value != nullptr && (*weak_value == null_t{}).native_value());
+		}
+		default:
+			return bool_t(false);
+	}
 }
 
 inline bool_t php_is_null_value(const bool_t &) {

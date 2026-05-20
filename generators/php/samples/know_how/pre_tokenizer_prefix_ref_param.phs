@@ -1,0 +1,6 @@
+class PrefixRefParamDemo {
+	public function fill_rows(vector<mixed> &$rows, string $label): bool {
+		$rows[] = $label;
+		return true;
+	}
+}
