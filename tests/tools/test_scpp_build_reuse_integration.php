@@ -77,6 +77,15 @@ final class ScppBuildReuseIntegrationTest
 
 			$this->sleepForTimestamp();
 			unlink($runtimeArtifact);
+			$runtimeReuse = scpp_run_build_service($app, $app . '/prism.json');
+			$this->assertSame(false, $runtimeReuse['ok'], 'reuse-mode build should fail before Ninja when the runtime artifact is missing');
+			$this->assertContains('Required runtime artifact is missing.', $runtimeReuse['error'] ?? '', 'reuse-mode failure should report the runtime cache problem first');
+			$this->assertContains('reusing runtime artifacts by default', $runtimeReuse['error'] ?? '', 'reuse-mode failure should explain that build is reusing runtime artifacts');
+			$this->assertContains('scpp runtime-build', $runtimeReuse['error'] ?? '', 'reuse-mode failure should suggest rebuilding the reusable runtime');
+			$this->assertContains('scpp build --build-runtime', $runtimeReuse['error'] ?? '', 'reuse-mode failure should suggest the inline rebuild flag');
+			$this->assertTrue(!str_contains($runtimeReuse['error'] ?? '', 'missing and no known rule to make it'), 'reuse-mode failure should not surface the raw Ninja missing-edge error first');
+			$this->assertMissingRuntimeSummaryAvailable($app);
+
 			$runtimeFull = scpp_run_build_service($app, $app . '/prism.json', [
 				'compile_runtime' => true,
 				'compile_dependencies' => false,
@@ -103,6 +112,32 @@ final class ScppBuildReuseIntegrationTest
 		$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
 		$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, resolve_build_mode($config), $runtimeConfig);
 		return normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
+	}
+
+	private function assertMissingRuntimeSummaryAvailable(string $projectRoot): void
+	{
+		$command = [PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'];
+		$descriptor = [
+			0 => ['file', '/dev/null', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = proc_open($command, $descriptor, $pipes, $projectRoot, scpp_build_process_environment([
+			'SCPP_CXX_LAUNCHER' => ' ',
+		]));
+		if (!is_resource($process)) {
+			throw new RuntimeException('Failed to start scpp error for missing runtime artifact summary');
+		}
+		$stdout = stream_get_contents($pipes[1]);
+		$stderr = stream_get_contents($pipes[2]);
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		$exitCode = proc_close($process);
+		$stdout = is_string($stdout) ? $stdout : '';
+		$stderr = is_string($stderr) ? $stderr : '';
+		$this->assertSame(0, $exitCode, "scpp error should succeed for saved missing-runtime diagnostics:\n" . $stderr);
+		$this->assertContains('Category: runtime_cache / missing_runtime_artifact', $stdout, 'saved summary should preserve the preflight runtime-cache category');
+		$this->assertContains('Required runtime artifact is missing.', $stdout, 'saved summary should preserve the short missing-runtime message');
 	}
 
 	private function assertDirectNinjaNoWork(string $projectRoot): void
