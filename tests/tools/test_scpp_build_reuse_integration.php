@@ -80,6 +80,21 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertTrue($depAfterFull > $depBeforeReuse, 'dependency object should rebuild when full dependency compilation is requested');
 
 			$this->sleepForTimestamp();
+			$this->write($depObject, "not-an-object\n");
+			$invalidDepReuse = scpp_run_build_service($app, $app . '/prism.json');
+			$this->assertSame(false, $invalidDepReuse['ok'], 'reuse-mode build should fail clearly when a dependency object is invalid');
+			$this->assertContains('reusable dependency artifacts are missing or stale', $invalidDepReuse['error'] ?? '', 'invalid dependency reuse should still be classified as a dependency artifact preflight problem');
+			$this->assertContains('Invalid reusable dependency object', $invalidDepReuse['error'] ?? '', 'reuse-mode failure should identify the invalid dependency object directly');
+			$this->assertContains('Next: Re-run with --build-dependencies', $invalidDepReuse['error'] ?? '', 'invalid dependency reuse should still point to the dependency rebuild flag');
+
+			$this->sleepForTimestamp();
+			$depRecovered = scpp_run_build_service($app, $app . '/prism.json', parse_build_command_arguments(['--build-dependencies']));
+			$this->assertSame(true, $depRecovered['ok'], 'dependency rebuild should recover from an invalid cached dependency object');
+			$this->assertContains('Dependency compilation: enabled', $depRecovered['output'], 'recovery build should report dependency compilation');
+			$this->assertTrue($this->mtime($depObject) > $depAfterFull, 'recovery build should replace the invalid dependency object with a fresh native object');
+			$this->assertTrue($this->read($depObject) !== "not-an-object\n", 'recovery build should not leave the invalid dependency payload in place');
+
+			$this->sleepForTimestamp();
 			unlink($runtimeArtifact);
 			$runtimeReuse = scpp_run_build_service($app, $app . '/prism.json');
 			$this->assertSame(false, $runtimeReuse['ok'], 'reuse-mode build should fail before Ninja when the runtime artifact is missing');

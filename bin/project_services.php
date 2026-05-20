@@ -1910,6 +1910,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if (!$options['compile_dependencies']) {
 		validate_reused_dependency_artifacts($projectRoot, $generatedUnits, $nativeCppUnits);
 	}
+	scrub_invalid_cached_objects_for_rebuild($projectRoot, array_merge($generatedUnits, $nativeCppUnits), $options['compile_dependencies']);
 
 	$command = [
 		$ninjaPath,
@@ -2148,6 +2149,10 @@ function validate_reused_dependency_artifacts(string $projectRoot, array $genera
 			$problems[] = 'Missing reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' (source: ' . $sourceLabel . ')';
 			continue;
 		}
+		if (!cached_object_looks_valid($objectPath)) {
+			$problems[] = 'Invalid reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' is not a valid native object artifact';
+			continue;
+		}
 		if (is_int($generatedMtime) && $objectMtime < $generatedMtime) {
 			$problems[] = 'Stale reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' is older than ' . $sourceLabel;
 		}
@@ -2168,6 +2173,10 @@ function validate_reused_dependency_artifacts(string $projectRoot, array $genera
 			$problems[] = 'Missing reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' (source: ' . $sourceLabel . ')';
 			continue;
 		}
+		if (!cached_object_looks_valid($objectPath)) {
+			$problems[] = 'Invalid reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' is not a valid native object artifact';
+			continue;
+		}
 		if (is_int($sourceMtime) && $objectMtime < $sourceMtime) {
 			$problems[] = 'Stale reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' is older than ' . $sourceLabel;
 		}
@@ -2183,6 +2192,93 @@ function validate_reused_dependency_artifacts(string $projectRoot, array $genera
 	}
 	$message .= 'Next: Re-run with --build-dependencies to rebuild dependency artifacts.' . PHP_EOL;
 	scpp_fail($message, 2);
+}
+
+/**
+ * @param list<array{project_root:string,relative_php?:string,generated_cpp?:string,source_path?:string,object_path:string,is_entrypoint?:bool,force_include_header:?string}> $units
+ */
+function scrub_invalid_cached_objects_for_rebuild(string $projectRoot, array $units, bool $compileDependencies): void
+{
+	$rootProjectRoot = normalize_path($projectRoot);
+	$problems = [];
+
+	foreach ($units as $unit) {
+		$objectPath = normalize_path($unit['object_path']);
+		if (!is_file($objectPath) || cached_object_looks_valid($objectPath)) {
+			continue;
+		}
+
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? $rootProjectRoot));
+		$isDependencyUnit = $unitProjectRoot !== $rootProjectRoot;
+		if ($isDependencyUnit && !$compileDependencies) {
+			$dependencyLabel = normalize_config_path(relative_path($rootProjectRoot, $unitProjectRoot));
+			$problems[] = 'Invalid reusable dependency object for ' . $dependencyLabel . ': ' . normalize_config_path(relative_path($unitProjectRoot, $objectPath)) . ' is not a valid native object artifact';
+			continue;
+		}
+
+		delete_file_if_exists($objectPath);
+	}
+
+	if ($problems === []) {
+		return;
+	}
+
+	$message = 'Dependency compilation is in reuse-only mode, but reusable dependency artifacts are invalid.' . PHP_EOL;
+	foreach ($problems as $problem) {
+		$message .= '- ' . $problem . PHP_EOL;
+	}
+	$message .= 'Next: Re-run with --build-dependencies to rebuild dependency artifacts.' . PHP_EOL;
+	scpp_fail($message, 2);
+}
+
+function cached_object_looks_valid(string $path): bool
+{
+	$size = filesize($path);
+	if (!is_int($size) || $size < 4) {
+		return false;
+	}
+
+	$handle = fopen($path, 'rb');
+	if ($handle === false) {
+		return false;
+	}
+	$header = fread($handle, 8);
+	fclose($handle);
+	if (!is_string($header) || strlen($header) < 4) {
+		return false;
+	}
+
+	if (strncmp($header, "\x7F" . 'ELF', 4) === 0) {
+		return true;
+	}
+
+	$machOMagics = [
+		"\xFE\xED\xFA\xCE",
+		"\xCE\xFA\xED\xFE",
+		"\xFE\xED\xFA\xCF",
+		"\xCF\xFA\xED\xFE",
+		"\xCA\xFE\xBA\xBE",
+		"\xBE\xBA\xFE\xCA",
+	];
+	foreach ($machOMagics as $magic) {
+		if (strncmp($header, $magic, 4) === 0) {
+			return true;
+		}
+	}
+
+	$coffMachinePrefixes = [
+		"\x4C\x01",
+		"\x64\x86",
+		"\x00\x02",
+		"\x66\xAA",
+	];
+	foreach ($coffMachinePrefixes as $prefix) {
+		if (strncmp($header, $prefix, 2) === 0) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
