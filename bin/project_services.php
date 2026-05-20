@@ -5378,10 +5378,8 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 {
 	$signature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode, $runtimeConfig);
 	$runtimeCacheDir = normalize_path($repoRoot . '/.prism/runtime/' . $signature);
-	ensure_directory($runtimeCacheDir);
 
 	$compositionSource = $runtimeCacheDir . '/runtime_build.cpp';
-	write_text_file($compositionSource, render_runtime_composition_source($runtimeConfig));
 	$sourcePath = normalize_config_path(relative_path($projectRoot, $compositionSource));
 	$modules = is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : ['json', 'filesystem', 'datetime'];
 	$extraCxxFlags = [];
@@ -5518,7 +5516,11 @@ function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string
 	$objectPath = is_string($runtimeBuild['object_path'] ?? null) && $runtimeBuild['object_path'] !== ''
 		? normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['object_path']))
 		: null;
+	$sourcePath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['source_path']));
 	$lockPath = $artifactPath . '.lock';
+	$runtimeCacheDir = dirname($artifactPath);
+	ensure_directory($runtimeCacheDir);
+	write_text_file($sourcePath, render_runtime_composition_source($runtimeConfig));
 	$lockHandle = fopen($lockPath, 'c+');
 	if ($lockHandle === false) {
 		scpp_fail('Failed to create runtime build lock: ' . $lockPath . PHP_EOL, 2);
@@ -5546,7 +5548,6 @@ function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string
 
 		$compileFlags = split_shell_tokens(build_runtime_compiler_flags($compiler['kind'], $buildMode, normalize_path($repoRoot . '/runtime/include')));
 		$extraCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
-		$sourcePath = normalize_path($repoRoot . '/' . normalize_config_path($runtimeBuild['source_path']));
 		$compileCommand = array_merge(
 			scpp_compiler_command_prefix($compiler),
 			[$compiler['command']],

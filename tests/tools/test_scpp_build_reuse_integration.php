@@ -46,10 +46,13 @@ final class ScppBuildReuseIntegrationTest
 
 			$depObject = $this->findDependencyObject($lib);
 			$runtimeArtifact = $this->resolveRuntimeArtifactPath($app);
+			$runtimeCompositionSource = $this->resolveRuntimeCompositionSourcePath($app);
 			$this->assertFileExists($depObject, 'dependency object should exist after full build');
 			$this->assertFileExists($runtimeArtifact, 'runtime artifact should exist after full build');
+			$this->assertFileExists($runtimeCompositionSource, 'runtime composition source should exist after full build');
 			$depBeforeReuse = $this->mtime($depObject);
 			$runtimeBeforeReuse = $this->mtime($runtimeArtifact);
+			$runtimeCompositionBeforeReuse = $this->mtime($runtimeCompositionSource);
 
 			$this->sleepForTimestamp();
 			$this->write($app . '/main.phs', "echo \"app reuse\\n\";\n");
@@ -59,6 +62,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertContains('Dependency compilation: reuse existing artifacts only', $reuse['output'], 'service build should reuse dependencies by default');
 			$this->assertSame($depBeforeReuse, $this->mtime($depObject), 'dependency object should not rebuild in default reuse mode');
 			$this->assertSame($runtimeBeforeReuse, $this->mtime($runtimeArtifact), 'runtime artifact should not rebuild in default reuse mode');
+			$this->assertSame($runtimeCompositionBeforeReuse, $this->mtime($runtimeCompositionSource), 'runtime reuse should not rewrite shared runtime composition source');
 
 			$this->sleepForTimestamp();
 			$this->write($lib . '/main.phs', "function helper_value(): int { return 8; }\n");
@@ -112,6 +116,19 @@ final class ScppBuildReuseIntegrationTest
 		$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
 		$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, resolve_build_mode($config), $runtimeConfig);
 		return normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
+	}
+
+	private function resolveRuntimeCompositionSourcePath(string $projectRoot): string
+	{
+		$config = load_project_config($projectRoot . '/prism.json');
+		$repoRoot = resolve_repo_root();
+		$compiler = resolve_compiler($config);
+		if ($compiler === null) {
+			throw new RuntimeException('Compiler not available');
+		}
+		$runtimeConfig = is_array($config['runtime'] ?? null) ? $config['runtime'] : resolve_runtime_build_config($config);
+		$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, resolve_build_mode($config), $runtimeConfig);
+		return normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['source_path']));
 	}
 
 	private function assertMissingRuntimeSummaryAvailable(string $projectRoot): void
