@@ -2,6 +2,11 @@
 
 Use this reference when code looks natural in normal PHP but fails or becomes fragile in strict PHP++.
 
+For the compact "what is the normal strict way to write this?" guide, see the
+`Strict-Mode Idioms Cookbook` section in:
+
+- `specs/simple_cpp_php_strict_quick_learn.md`
+
 ## File Headers
 
 Do not add PHP file headers to Prism++ source.

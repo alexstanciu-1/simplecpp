@@ -9,7 +9,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
-<<<<<<< HEAD
+## 0.1.57 - 2026-05-20
+
+### Additions
+
+- Added a strict-mode idioms cookbook to the quick-learn and aligned strict-skill references so common real-project authoring patterns are easier to discover.
+- Added focused strict regression coverage for recent repro shapes, including unqualified helper resolution, string/null ternary handling, and vector `unset(...)`.
+
+### Fixes
+
+- Fixed strict build diagnostics so runtime-reuse builds now fail before Ninja with a first-class reusable-runtime-artifact message when the expected shared runtime artifact is missing.
+- Fixed the saved diagnostics flow for that preflight path so `scpp error` and `scpp full-error` continue to work even though Ninja never starts.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required.
+- If `scpp build` or `scpp run` reports a missing reusable runtime artifact in reuse mode, run `scpp runtime-build` or retry with `--build-runtime` to refresh the runtime cache explicitly.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this release to reflect the new strict-mode cookbook guidance.
+
 ## 0.1.56 - 2026-05-19
 
 ### Additions
