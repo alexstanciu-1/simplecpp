@@ -59,6 +59,11 @@ add_executable(test_mixed_t_dynamic test_mixed_t_dynamic.cpp)
 target_link_libraries(test_mixed_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_mixed_t_dynamic COMMAND test_mixed_t_dynamic)
 
+# Strict identity coverage for null dynamic carriers widened into mixed_t.
+add_executable(test_strict_identity_null_dynamic test_strict_identity_null_dynamic.cpp)
+target_link_libraries(test_strict_identity_null_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_strict_identity_null_dynamic COMMAND test_strict_identity_null_dynamic)
+
 # Array semantics conformance coverage for the reduced Prism++ subset.
 add_executable(test_array_semantics test_array_semantics.cpp)
 target_link_libraries(test_array_semantics PRIVATE scpp_lang_php scpp_runtime scpp_runtime_test_support)
