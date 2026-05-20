@@ -34,6 +34,12 @@ Then read only the reference files needed for the task:
 - `references/validation-and-diagnostics.md` for build/run/debug workflows, modules, dependencies, and diagnostics.
 - `references/php-habit-gotchas.md` when translating from normal PHP habits or fixing code that "looks like PHP" but fails in Simple C++.
 
+Pay special attention to these quick-learn sections when the task is about everyday authoring style rather than one specific feature:
+
+- `Preferred Strict Patterns`
+- `Strict-Mode Idioms Cookbook`
+- `Dynamic-Data Stabilization Cookbook`
+
 Prefer local repository docs over web docs when both are available.
 
 ## Authoring Posture

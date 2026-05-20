@@ -491,6 +491,177 @@ Use this order:
 | `take($out, $err, fs_get(...))` | carrying wrapper state further than needed |
 | explicit success/failure checks | ambiguous truthiness |
 
+## Strict-Mode Idioms Cookbook
+
+Use this section as a short authoring guide for common Prism++ strict patterns.
+
+The goal is not to catalog every language rule.
+The goal is to answer the practical question:
+
+> "What is the normal strict way to write this?"
+
+### 1. Nullable guard chains
+
+Preferred:
+
+```php
+if (!isset($root->child->name)) {
+	echo "missing\n";
+	return;
+}
+
+$name string = $root->child->name;
+echo $name, "\n";
+```
+
+Less preferred:
+
+```php
+if ($root === null || $root->child === null || $root->child->name === null) {
+	echo "missing\n";
+	return;
+}
+```
+
+Use explicit step-by-step guards when different missing states matter separately.
+Otherwise, prefer `isset(...)` for compact nullable-path checks.
+
+### 2. Required decoded JSON field
+
+Preferred:
+
+```php
+$row = json_decode($text);
+$name string = $row["name"];
+```
+
+This is a normal strict stabilization step.
+The left side is already a visible typed boundary.
+
+### 3. Optional decoded JSON field
+
+Preferred when absence should default:
+
+```php
+$row = json_decode($text);
+$nickname string = isset($row["nickname"]) ? $row["nickname"] : "";
+```
+
+Preferred when absence should remain distinct:
+
+```php
+$row = json_decode($text);
+$nickname = null;
+if (isset($row["nickname"])) {
+	$nickname string = $row["nickname"];
+}
+```
+
+### 4. Typed destination versus explicit cast
+
+Preferred when the destination is already typed:
+
+```php
+$row = json_decode($text);
+$count int = $row["count"];
+```
+
+Also preferred:
+
+```php
+$counts hash<int> = [];
+$counts["id"] = $row["id"];
+```
+
+Current but usually unnecessary:
+
+```php
+$count int = (int) $row["count"];
+$counts["id"] = (int) $row["id"];
+```
+
+Rule of thumb:
+
+- if the receiving side already has a stable explicit type, that destination is usually enough
+- keep an explicit cast only when it genuinely clarifies intent or is still required by a specific uncovered flow
+
+### 5. Unqualified helpers in strict code
+
+Normal strict code may use plain helper names when they are part of the strict surface:
+
+```php
+$value = trim("  Hello  ");
+$lower = strtolower($value);
+$head = substr($lower, 0, 2);
+echo $head, "\n";
+```
+
+Do not assume every normal PHP helper exists.
+Check the strict quick reference or builtin docs when the helper is unfamiliar.
+
+### 6. Collection mutation
+
+Normal typed-vector mutation:
+
+```php
+$items vector<string> = ["a", "b", "c"];
+unset($items[1]);
+echo count($items), "\n";
+```
+
+Normal typed-vector append:
+
+```php
+$items[] = "d";
+```
+
+Normal typed-hash write:
+
+```php
+$scores hash<int> = [];
+$scores["alice"] = 10;
+```
+
+Prefer typed containers when the collection shape is already known.
+
+### 7. Wrapper extraction
+
+Preferred:
+
+```php
+$text string = "";
+$err /** error */;
+
+if (!take($text, $err, fs_get($path))) {
+	echo "read failed\n";
+	return;
+}
+```
+
+Do not carry wrapper-shaped results forward as if they were ordinary dynamic PHP values.
+
+### 8. PHP habit to strict habit
+
+| PHP habit | Strict habit |
+| --- | --- |
+| `$name = $row["name"];` | `$name string = $row["name"];` when the shape is intentionally assumed |
+| `if (!$result) { ... }` | split `=== false`, `=== null`, or error paths explicitly |
+| PHP file inclusion for project composition | let `scpp build` compose `.phs` files and use `dependencies` for cross-project work |
+| broad dynamic arrays everywhere | use `vector<T>` or `hash<T>` when the shape is known |
+| pushing wrapper states deeper into the program | unwrap near the boundary with `take(...)` |
+
+### 9. Historical workaround versus current style
+
+Some older strict code carries explicit casts or extra manual guards because earlier versions needed them.
+
+Current guidance:
+
+- `Preferred`: keep the visible typed destination and remove noise that no longer adds meaning
+- `Current`: keep historical carry-over code when it is still clearer for the local team
+- `Avoid`: treating every older workaround as if it were still the canonical strict style
+
+When cleanup feels risky, validate with `scpp build`, `scpp run`, or focused tests instead of guessing.
+
 ## Container Guidance
 
 - Use `vector<T>` when the data is sequential and typed.

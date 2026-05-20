@@ -1,0 +1,52 @@
+{
+    "id": "strict_strings_006_unqualified_helper_resolution_repro",
+    "feature": "strings",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "he\n2\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "strings",
+        "helpers",
+        "regression"
+    ],
+    "notes": "Regression repro for unqualified strict helper resolution across trim, strtolower, substr, and explode.",
+    "build": {
+        "sanitizers": null
+    }
+}

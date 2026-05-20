@@ -1889,6 +1889,24 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if ($projectLibraryFlags !== []) {
 		echo 'Resolved project libraries: ' . implode(' ', $projectLibraryFlags) . PHP_EOL;
 	}
+	if (!$options['compile_runtime']) {
+		validate_reused_runtime_artifact(
+			$projectRoot,
+			$runtimeBuild,
+			$buildDir,
+			$outputName,
+			$compiler,
+			$buildMode,
+			$options,
+			$transpiledCount,
+			$skippedCount,
+			$sourceRebuildReasons,
+			$entrypointAbs,
+			$entryGeneratedUnit,
+			$startedAt,
+			$phpProfile
+		);
+	}
 	if (!$options['compile_dependencies']) {
 		validate_reused_dependency_artifacts($projectRoot, $generatedUnits, $nativeCppUnits);
 	}
@@ -2164,6 +2182,105 @@ function validate_reused_dependency_artifacts(string $projectRoot, array $genera
 		$message .= '- ' . $problem . PHP_EOL;
 	}
 	$message .= 'Next: Re-run with --build-dependencies to rebuild dependency artifacts.' . PHP_EOL;
+	scpp_fail($message, 2);
+}
+
+/**
+ * @param array{kind:string,source_path:string,artifact_path:string,object_path:?string,archiver:?string} $runtimeBuild
+ * @param array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string} $options
+ * @param list<array<string,mixed>> $sourceRebuildReasons
+ * @param ?array<string,mixed> $entryGeneratedUnit
+ */
+function validate_reused_runtime_artifact(
+	string $projectRoot,
+	array $runtimeBuild,
+	string $buildDir,
+	string $outputName,
+	array $compiler,
+	string $buildMode,
+	array $options,
+	int $transpiledCount,
+	int $skippedCount,
+	array $sourceRebuildReasons,
+	string $entrypointAbs,
+	?array $entryGeneratedUnit,
+	float $startedAt,
+	string $phpProfile,
+): void {
+	$artifactPath = normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
+	if (is_file($artifactPath)) {
+		return;
+	}
+
+	$finishedAt = microtime(true);
+	$guidance = append_standard_report_guidance([
+		'This build is reusing runtime artifacts by default.',
+		"Run 'scpp runtime-build' to rebuild the reusable runtime artifact.",
+		"Retry with 'scpp build --build-runtime' if you want the build command to refresh the runtime now.",
+	], false);
+
+	write_last_run_report(
+		$projectRoot,
+		'build',
+		$GLOBALS['argv'] ?? ['scpp', 'build'],
+		2,
+		$startedAt,
+		$finishedAt,
+		[
+			'build_dir' => $buildDir,
+			'output_name' => $outputName,
+			'compiler' => compiler_display_command($compiler),
+			'compiler_kind' => $compiler['kind'],
+			'build_mode' => $buildMode,
+			'entry_override' => $options['entry_override'],
+			'compile_runtime' => $options['compile_runtime'],
+			'compile_dependencies' => $options['compile_dependencies'],
+			'diagnostic_count' => 0,
+			'preflight_failure' => 'missing_runtime_artifact',
+			'runtime_artifact' => $artifactPath,
+			'build_explanation' => build_explanation_details(
+				$projectRoot,
+				$options,
+				$transpiledCount,
+				$skippedCount,
+				$sourceRebuildReasons,
+				[],
+				2,
+				$entrypointAbs,
+				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
+				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
+				null,
+				[]
+			),
+		]
+	);
+	write_last_error_report(
+		$projectRoot,
+		'build',
+		$GLOBALS['argv'] ?? ['scpp', 'build'],
+		2,
+		$startedAt,
+		$finishedAt,
+		'runtime_cache',
+		'missing_runtime_artifact',
+		'Required runtime artifact is missing.',
+		[],
+		'',
+		'',
+		$guidance,
+		$phpProfile
+	);
+
+	$message = '';
+	$strictHint = strict_project_error_hint($phpProfile);
+	if ($strictHint !== null) {
+		$message .= $strictHint . PHP_EOL;
+	}
+	$message .= 'Required runtime artifact is missing.' . PHP_EOL;
+	$message .= 'Expected runtime artifact: ' . $artifactPath . PHP_EOL;
+	foreach ($guidance as $line) {
+		$message .= 'Next: ' . $line . PHP_EOL;
+	}
 	scpp_fail($message, 2);
 }
 
