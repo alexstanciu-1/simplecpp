@@ -40,10 +40,13 @@ To make a value dynamic, you must state it explicitly:
 $v /** mixed */ = 5;  // dynamic
 ```
 
-Author-facing alias note:
+Phase 1 source contract note:
 
-- `mixed` remains the canonical documented dynamic type name
-- `dynamic` is accepted as an author-facing alias for the same dynamic carrier path
+- `mixed` remains the broad boxed dynamic value surface
+- `dynamic` is a first-class source type for shared dynamic object/table storage
+- `dynamic` is reference-like without requiring source `&`; assignment and by-value passing preserve shared identity rather than deep-copying the payload
+- source `dynamic` lowers to `dynamic_t<>`
+- `$x->k` remains deferred; Phase 1 uses the existing `[]` access path
 
 Dynamic values are useful for:
 - prototyping
@@ -475,3 +478,31 @@ Table-carrier exceptions:
 	- `new stdClass()`
 	- `(object)[ ... ]`
 - current generator does not lower dynamic-property syntax yet; runtime-side property/index access remains available through the existing mixed/hash access surface
+
+### Phase 1 first-class source `dynamic`
+
+Phase 1 promotes `dynamic` from documentation-only spelling into a first-class source type.
+
+Normative Phase 1 rules:
+
+- source `dynamic` lowers to `dynamic_t<>`
+- `dynamic` is the shared / reference-like dynamic-object form; copies preserve shared identity
+- assigning one `dynamic` local/property/parameter/return value to another copies the handle, not the payload
+- mutable writes through `dynamic[...]` are therefore visible through aliasing copies of the same `dynamic`
+- `dynamic` is intended for object/table-like shared dynamic state, not for broad scalar-boxed dynamic values
+- `mixed` remains the general boxed dynamic value surface
+- explicit bridges between `mixed` and `dynamic` are allowed where the runtime/helper contract supports them
+- `mixed -> dynamic` is allowed only when the runtime value is `null`, shared-table, or dynamic-object compatible according to the explicit bridge helper contract; unsupported scalar/runtime kinds fail explicitly
+- `dynamic -> mixed` is allowed by widening the shared dynamic handle into the `mixed_t` `dynamic_v` carrier
+- `count(dynamic)` is supported in Phase 1
+- `isset(dynamic[key])` and `empty(dynamic[key])` are supported in Phase 1 through the existing keyed helper contract
+- typed containers such as `hash<dynamic>` and `vector<dynamic>` are supported in Phase 1
+
+Illustrative Phase 1 aliasing example:
+
+```php
+$a dynamic = (object) ["x" => 1];
+$b dynamic = $a;
+$b["x"] = 2;
+echo (string) $a["x"], "\n"; // 2
+```
