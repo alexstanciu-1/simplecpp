@@ -18,7 +18,7 @@ Replaces: dynamic_types.md (v1)
 
 ### Intro (User View)
 
-### Dynamic Type (`mixed`)
+### Dynamic Type (`mixed` / `dynamic`)
 
 Prism++ allows you to opt into a **dynamic type** when flexibility is needed.
 
@@ -39,6 +39,11 @@ To make a value dynamic, you must state it explicitly:
 ```php
 $v /** mixed */ = 5;  // dynamic
 ```
+
+Author-facing alias note:
+
+- `mixed` remains the canonical documented dynamic type name
+- `dynamic` is accepted as an author-facing alias for the same dynamic carrier path
 
 Dynamic values are useful for:
 - prototyping

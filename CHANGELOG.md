@@ -9,6 +9,27 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.59 - 2026-05-21
+
+### Additions
+
+- Added a focused strict CLI regression test that builds and runs author-facing `dynamic` local declarations together with `hash<dynamic>` usage.
+
+### Fixes
+
+- Fixed generator type lowering so author-facing `dynamic` now follows the supported dynamic carrier path instead of falling through as a user-defined class-like type during lowering and C++ emission.
+- Fixed `hash<dynamic>` lowering so strict code can use the same dynamic carrier behavior already supported by `mixed`, which unblocks the current ORM writer hotfix path.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Existing `mixed`-based dynamic code continues to work unchanged.
+- Strict code may now use `dynamic` as an author-facing alias for the existing dynamic carrier path when that spelling is clearer than `mixed`.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this hotfix because the shipped change expands the author-facing strict dynamic-type guidance.
+
 ## 0.1.58 - 2026-05-21
 
 ### Additions
