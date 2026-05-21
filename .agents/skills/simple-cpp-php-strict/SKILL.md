@@ -60,7 +60,7 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Use `hash<T, T_KEY>` for intentionally typed key families.
 - Stabilize dynamic values early at explicit typed boundaries, but do not make strict mode sound like every line needs defensive handling.
 - Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
-- If the destination is explicitly `mixed`, no cast is needed and the value remains `mixed`.
+- If the destination is explicitly `mixed` or `dynamic`, no cast is needed and the value remains on the dynamic carrier path.
 - Resolve wrappers near meaningful boundaries with `take(...)` so success, failure, absence, and usable values stay explicit.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.

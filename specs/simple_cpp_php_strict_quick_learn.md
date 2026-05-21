@@ -396,7 +396,7 @@ Use this order:
 - Prefer `vector<T>` for typed sequential data when possible.
 - Prefer `hash<T>` for typed keyed data when string keys are the natural shape.
 - Use `hash<T, T_KEY>` when the key family is intentionally typed and not the default string-key shape.
-- Use `mixed_t` only when the value is genuinely dynamic.
+- Use `mixed` or `dynamic` only when the value is genuinely dynamic.
 - Resolve wrappers near meaningful boundaries: `nullable<T>`, `result<T>`, `result_or_false<T>`, `result_or_bool<T>`.
 - Keep `null`, `false`, and error as separate states.
 - Prefer `===` over loose comparison.
