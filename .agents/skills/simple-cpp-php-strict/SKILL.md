@@ -61,6 +61,7 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Stabilize dynamic values early at explicit typed boundaries, but do not make strict mode sound like every line needs defensive handling.
 - Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
 - If the destination is explicitly `mixed` or `dynamic`, no cast is needed and the value remains on the dynamic carrier path.
+- Prefer `dynamic` when the source-level intent is shared mutable object/table state with reference-like aliasing; prefer `mixed` for broad boxed dynamic values that are not specifically object/table handles.
 - Resolve wrappers near meaningful boundaries with `take(...)` so success, failure, absence, and usable values stay explicit.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.

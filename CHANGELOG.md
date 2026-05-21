@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.60 - 2026-05-21
+
+### Additions
+
+- Added a focused Phase 1 strict regression that covers first-class `dynamic` locals, parameters, returns, properties, aliasing behavior, typed `hash<dynamic>` / `vector<dynamic>` containers, `count(dynamic)`, and null/default helper cases.
+
+### Fixes
+
+- Promoted source-level `dynamic` to a first-class Phase 1 type that now lowers to `dynamic_t<>` instead of collapsing back into `mixed_t`.
+- Fixed generator lowering for first-class `dynamic` reads, writes, and typed-boundary propagation so `dynamic` locals, properties, parameters, and returns preserve the intended shared-handle behavior.
+- Fixed runtime bridge and helper coverage so `count(dynamic)`, `isset(dynamic[key])`, and `empty(dynamic[key])` work consistently with the shipped Phase 1 contract, including null/default dynamic cases.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Existing `mixed`-based dynamic code continues to work.
+- Strict code may now use first-class `dynamic` when the intent is shared mutable object/table state with reference-like aliasing semantics.
+- `mixed` remains the broad boxed dynamic value surface; `dynamic` is now the preferred source type for shared dynamic object/table handles.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this release to reflect the first-class `dynamic` authoring guidance.
+
 ## 0.1.59 - 2026-05-21
 
 ### Additions

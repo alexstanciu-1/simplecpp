@@ -152,6 +152,41 @@ inline bool_t isset(const mixed_t &value, const int key) {
 	return isset(value, int_t{static_cast<std::int64_t>(key)});
 }
 
+inline bool_t isset(const dynamic_t<> &value, const mixed_t &key) {
+	if (!static_cast<bool>(value)) {
+		return bool_t(false);
+	}
+	if (key.kind() == mixed_t::kind_t::int_v) {
+		return ::scpp::isset(*value, key.int_value());
+	}
+	if (key.kind() == mixed_t::kind_t::string_v) {
+		return ::scpp::isset(*value, *key.string_if());
+	}
+	return bool_t(false);
+}
+
+inline bool_t isset(const dynamic_t<> &value, const int_t &key) {
+	if (!static_cast<bool>(value)) {
+		return bool_t(false);
+	}
+	return ::scpp::isset(*value, key);
+}
+
+inline bool_t isset(const dynamic_t<> &value, const string_t &key) {
+	if (!static_cast<bool>(value)) {
+		return bool_t(false);
+	}
+	return ::scpp::isset(*value, key);
+}
+
+inline bool_t isset(const dynamic_t<> &value, const char *key) {
+	return isset(value, string_t{key});
+}
+
+inline bool_t isset(const dynamic_t<> &value, const int key) {
+	return isset(value, int_t{static_cast<std::int64_t>(key)});
+}
+
 template <typename T, typename Key>
 requires (!detail::is_countable_lookup_target<std::remove_cvref_t<T>>::value)
 	&& requires(const T &wrapped, const Key &key) { ::scpp::isset(wrapped, key); }
