@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.58 - 2026-05-21
+
+### Additions
+
+- Added focused tool/runtime regression coverage for shared release runtime preparation, release-runtime module layout, invalid cached dependency recovery, and reuse-mode build behavior.
+- Added a planning anchor for the shared release runtime cache phase-1 rollout so the release/runtime reuse model has a resumable implementation record.
+
+### Fixes
+
+- Fixed runtime cache writes during reuse builds so warm project builds no longer destabilize the reusable runtime state while reusing cached artifacts.
+- Fixed reuse-mode dependency validation so stale or invalid cached dependency objects now fail with a first-class recovery message instead of falling through toward less actionable native build failures.
+- Fixed shared runtime placement and module artifact composition so release-owned runtime families are prepared and reused through a clearer shared-runtime layout instead of continuing to fan out through fragile local cache identities.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required.
+- If a warm `scpp build` reports missing or invalid reusable runtime or dependency artifacts, rerun with `--build-runtime`, `--build-dependencies`, or `scpp runtime-build` to refresh the corresponding cached artifacts explicitly.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the shipped changes restructure runtime/build reuse behavior and diagnostics without changing the current repo-local authoring guidance.
+
 ## 0.1.57 - 2026-05-20
 
 ### Additions
