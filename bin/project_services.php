@@ -1,13 +1,16 @@
 <?php
 declare(strict_types=1);
 
+use Scpp\S2S\Stan\StanRunner;
 use Scpp\S2S\Transpiler;
 use Scpp\S2S\Support\S2SException;
 
 const SCPP_VERSION = '0.1.0-dev';
 const SCPP_PROJECT_CONFIG = 'prism.json';
 const SCPP_STATE_FILE = 's2s_state.php';
+const SCPP_STAN_STATE_FILE = 'stan_state.php';
 const SCPP_S2S_SIGNATURE_VERSION = 2;
+const SCPP_STAN_SIGNATURE_VERSION = 1;
 const SCPP_CANONICAL_SOURCE_EXTENSION = 'phs';
 const SCPP_COMPAT_SOURCE_EXTENSIONS = ['phs', 'php'];
 
@@ -559,6 +562,11 @@ function main(array $argv): void
 		return;
 	}
 
+	if ($args[0] === 'stan') {
+		handle_stan(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
 	if ($args[0] === 'error') {
 		handle_error_report(getcwd() === false ? '.' : getcwd(), false);
 		return;
@@ -616,6 +624,7 @@ function print_help(): void
 	echo "  scpp update [--force]\n";
 	echo "  scpp run [--entry=<path>] [--build-runtime] [--build-dependencies] [--force] [-- <args...>]\n";
 	echo "  scpp runtime-build [--debug|--release] [--force]\n";
+	echo "  scpp stan\n";
 	echo "  scpp docs [<name>]\n";
 	echo "  scpp error\n";
 	echo "  scpp full-error\n";
@@ -628,6 +637,7 @@ function print_help(): void
 	echo "  scpp update fast-forwards the scpp repository from origin/main and rebuilds the default runtime when it changes\n";
 	echo "  scpp run builds first, then executes the selected output\n";
 	echo "  scpp runtime-build compiles the reusable runtime cache explicitly\n";
+	echo "  scpp stan runs the advisory static-analysis front-end spike\n";
 	echo "  scpp docs prints curated local documentation by name\n";
 	echo "  scpp usability-harness generates deterministic spec-driven trial projects\n";
 	echo "  scpp --help\n";
@@ -738,6 +748,51 @@ function handle_docs(array $args): void
 	scpp_write('Source: ' . $entry['path'] . PHP_EOL);
 	scpp_write(str_repeat('-', 72) . PHP_EOL);
 	scpp_write(rtrim($content) . PHP_EOL);
+}
+
+/** @param list<string> $args */
+function handle_stan(string $cwd, array $args = []): void
+{
+	if ($args !== []) {
+		scpp_fail('Unknown option for `scpp stan`: ' . $args[0] . PHP_EOL, 1);
+	}
+
+	$project = find_project_config($cwd);
+	if ($project === null) {
+		scpp_fail('No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL, 1);
+	}
+
+	$result = execute_stan($project['project_root'], $project['config_path']);
+	$output = [];
+	$output[] = 'STAN advisory run completed';
+	$output[] = 'Project root: ' . $result['project_root'];
+	$output[] = 'PHP profile: ' . $result['php_profile'];
+	$output[] = 'Source units: ' . $result['source_unit_count'];
+	$output[] = 'Analyzed: ' . $result['analyzed_count'];
+	$output[] = 'Reused cache: ' . $result['reused_count'];
+	$output[] = 'Indexed symbols: ' . $result['symbol_count'];
+	$output[] = 'Duplicate declarations: ' . $result['duplicate_count'];
+	$output[] = 'Resolution warnings: ' . $result['resolution_warning_count'];
+	$output[] = 'Override warnings: ' . $result['override_warning_count'];
+	$output[] = 'Return-chain warnings: ' . $result['return_chain_warning_count'];
+	$output[] = 'Expression-chain warnings: ' . $result['expression_chain_warning_count'];
+	$output[] = 'Local type warnings: ' . $result['local_type_warning_count'];
+	$output[] = 'Property type warnings: ' . $result['property_type_warning_count'];
+	$output[] = 'Property read warnings: ' . $result['property_read_warning_count'];
+	$output[] = 'Initialization warnings: ' . $result['initialization_warning_count'];
+	$output[] = 'Call-site warnings: ' . $result['call_site_warning_count'];
+	$output[] = 'Return-type warnings: ' . $result['return_type_warning_count'];
+	$output[] = 'Warnings: ' . $result['warning_count'];
+	$output[] = 'State: ' . normalize_config_path(relative_path($result['project_root'], $result['state_path']));
+	foreach ($result['runtime_shallow_sources'] as $runtimeSource) {
+		$output[] = 'Runtime shallow [' . $runtimeSource['profile'] . ']: '
+			. normalize_config_path(relative_path($result['project_root'], $runtimeSource['path']))
+			. ' (generated ' . $runtimeSource['generated'] . ', skipped ' . count($runtimeSource['skipped']) . ')';
+	}
+	foreach (($result['warning_samples'] ?? []) as $warningSample) {
+		$output[] = 'Warning: ' . $warningSample;
+	}
+	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
 }
 
 /**
@@ -4579,6 +4634,13 @@ function save_s2s_state(string $statePath, array $state): void
 {
 	$contents = "<?php\nreturn " . var_export($state, true) . ";\n";
 	write_text_file($statePath, $contents);
+}
+
+/** @return array{project_root:string,php_profile:string,source_unit_count:int,analyzed_count:int,reused_count:int,warning_count:int,duplicate_count:int,resolution_warning_count:int,override_warning_count:int,symbol_count:int,state_path:string,runtime_shallow_sources:list<array{profile:string,path:string,generated:int,skipped:list<string>}>} */
+function execute_stan(string $projectRoot, string $configPath): array
+{
+
+	return (new StanRunner())->run($projectRoot, $configPath);
 }
 
 function generated_cpp_contains_program_entry(string $path): bool
