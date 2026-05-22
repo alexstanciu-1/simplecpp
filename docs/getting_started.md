@@ -101,6 +101,8 @@ scpp build --build-runtime --build-dependencies
 scpp build --force
 ```
 
+`--build-runtime` refreshes the runtime for the current build/invocation. Shared reusable runtime maintenance is handled by `scpp update` and `scpp runtime-build`; explicit custom runtime rebuilds stay on the project-local side rather than acting like shared-cache maintenance.
+
 Remove generated state for a full cold rebuild:
 
 ```bash
@@ -138,6 +140,8 @@ scpp runtime-build
 scpp runtime-build --release
 scpp runtime-build --force
 ```
+
+Use `scpp runtime-build` when you want to refresh the shared reusable runtime cache itself. Use `scpp build --build-runtime` when you want the current project build to rebuild its runtime path now.
 
 Print local documentation without web access:
 
@@ -191,9 +195,10 @@ Compiler selection:
 - same-project and project-dependency composition is handled by `scpp build`; do not use source-level `require`, `require_once`, `include`, or `include_once` for current strict-project composition
 - cached S2S state in `.prism/cache/s2s_state.php` using file size + mtime
 - `scpp build` and `scpp run` reuse existing runtime and Prism project dependency artifacts by default
-- `--build-runtime` explicitly recompiles the runtime artifact for the current build
+- `--build-runtime` explicitly recompiles the runtime artifact for the current build/invocation and uses the project-local/custom runtime path
 - `--build-dependencies` explicitly recompiles Prism project dependency units for the current build
 - `--force` forces a runtime rebuild for the current build, even if the reusable artifact already exists
+- `scpp update` and `scpp runtime-build` are the commands that refresh the shared reusable runtime cache
 - `scpp docs <name>` prints curated local Markdown documentation by short name
 
 ## 4. Single-file transpile remains available

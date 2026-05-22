@@ -1059,7 +1059,6 @@ function handle_run(string $cwd, array $args): void
 		$command[] = $arg;
 	}
 
-	echo 'Running: ' . normalize_config_path(relative_path($project['project_root'], $buildResult['output_path'])) . PHP_EOL;
 	$descriptor = [
 		0 => ['file', 'php://stdin', 'r'],
 		1 => ['pipe', 'w'],
@@ -1133,7 +1132,7 @@ function handle_run(string $cwd, array $args): void
 			runtime_failure_guidance($runtimeDiagnostic),
 			$phpProfile
 		);
-		scpp_write($shortMessage, 'stderr');
+		scpp_write(PHP_EOL . $shortMessage, 'stderr');
 	}
 	exit($status);
 }
@@ -1221,6 +1220,12 @@ function collect_runtime_error_diagnostic(string $stderr): ?array
 			continue;
 		}
 		$details = is_array($error['details'] ?? null) ? $error['details'] : [];
+		$trace = [];
+		foreach (($error['trace'] ?? []) as $traceLine) {
+			if (is_string($traceLine) && trim($traceLine) !== '') {
+				$trace[] = trim($traceLine);
+			}
+		}
 			return [
 				'severity' => 'error',
 				'message' => (string) ($error['message'] ?? 'Runtime error.'),
@@ -1237,6 +1242,7 @@ function collect_runtime_error_diagnostic(string $stderr): ?array
 				'expression' => isset($details['expression']) ? (string) $details['expression'] : null,
 				'expected_type' => isset($details['expected_type']) ? (string) $details['expected_type'] : null,
 				'actual_runtime_kind' => isset($details['runtime_kind']) ? (string) $details['runtime_kind'] : null,
+				'trace' => $trace,
 		];
 	}
 	return null;
@@ -1270,6 +1276,84 @@ function remap_runtime_diagnostic(string $projectRoot, string $buildDir, array $
 	return $diagnostic;
 }
 
+/** @return array{function:string,file:string,line:int}|null */
+function parse_runtime_trace_location(string $traceLine): ?array
+{
+	$traceLine = trim($traceLine);
+	if ($traceLine === '') {
+		return null;
+	}
+	if (!preg_match('/^(.*?) at (.+):([0-9]+)(?:\b.*)?$/', $traceLine, $matches)) {
+		return null;
+	}
+	$functionName = trim((string) ($matches[1] ?? ''));
+	$file = trim((string) ($matches[2] ?? ''));
+	$line = (int) ($matches[3] ?? 0);
+	if ($file === '' || $line <= 0) {
+		return null;
+	}
+	return [
+		'function' => $functionName,
+		'file' => normalize_path($file),
+		'line' => $line,
+	];
+}
+
+/** @return list<array{function:string,file:string,line:int}> */
+function build_runtime_source_trace_frames(string $projectRoot, array $diagnostic): array
+{
+	$trace = is_array($diagnostic['trace'] ?? null) ? $diagnostic['trace'] : [];
+	if ($trace === []) {
+		return [];
+	}
+	$generatedArtifactOrigins = [];
+	$generatedFile = is_string($diagnostic['generated_file'] ?? null) ? (string) $diagnostic['generated_file'] : '';
+	$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
+	if ($generatedFile !== '' && $originalFile !== '') {
+		$generatedArtifactOrigins[normalize_path($generatedFile)] = normalize_path($originalFile);
+	}
+
+	$frames = [];
+	$seen = [];
+	foreach ($trace as $traceLine) {
+		if (!is_string($traceLine)) {
+			continue;
+		}
+		$parsed = parse_runtime_trace_location($traceLine);
+		if ($parsed === null) {
+			continue;
+		}
+		if (strpos($parsed['file'], '/.prism/generated/') === false) {
+			continue;
+		}
+		$mapped = remap_runtime_diagnostic(
+			$projectRoot,
+			dirname($parsed['file']),
+			[
+				'generated_file' => $parsed['file'],
+				'generated_line' => $parsed['line'],
+			],
+			$generatedArtifactOrigins
+		);
+		$mappedFile = is_string($mapped['original_file'] ?? null) ? (string) $mapped['original_file'] : '';
+		$mappedLine = isset($mapped['original_line']) ? (int) $mapped['original_line'] : 0;
+		if ($mappedFile === '' || $mappedLine <= 0) {
+			continue;
+		}
+		$key = $mappedFile . ':' . $mappedLine;
+		if (isset($seen[$key])) {
+			continue;
+		}
+		$seen[$key] = true;
+		$frames[] = [
+			'function' => $parsed['function'],
+			'file' => $mappedFile,
+			'line' => $mappedLine,
+		];
+	}
+	return $frames;
+}
+
 function remove_runtime_error_json_lines(string $stderr): string
 {
 	$lines = [];
@@ -1282,7 +1366,7 @@ function remove_runtime_error_json_lines(string $stderr): string
 	return implode(PHP_EOL, $lines);
 }
 
-function scpp_runtime_source_snippet_enabled(): bool
+function scpp_runtime_source_snippet_context_requested(): bool
 {
 	$value = getenv('SCPP_SHOW_SOURCE_SNIPPETS');
 	return is_string($value) && $value === '1';
@@ -1319,12 +1403,21 @@ function trim_runtime_source_snippet_line(string $line, int $limit = 160): strin
 	return substr($line, 0, $limit - 3) . '...';
 }
 
+function read_runtime_source_line(string $path, int $lineNumber): ?string
+{
+	if ($path === '' || $lineNumber <= 0 || !is_file($path) || !is_readable($path)) {
+		return null;
+	}
+	$contents = file($path, FILE_IGNORE_NEW_LINES);
+	if (!is_array($contents) || !isset($contents[$lineNumber - 1])) {
+		return null;
+	}
+	return trim_runtime_source_snippet_line(rtrim((string) $contents[$lineNumber - 1]));
+}
+
 /** @return list<string> */
 function build_runtime_source_snippet_lines(string $projectRoot, array $diagnostic): array
 {
-	if (!scpp_runtime_source_snippet_enabled()) {
-		return [];
-	}
 	$originalFile = is_string($diagnostic['original_file'] ?? null) ? (string) $diagnostic['original_file'] : '';
 	$originalLine = isset($diagnostic['original_line']) ? (int) $diagnostic['original_line'] : 0;
 	if ($originalFile === '' || $originalLine <= 0 || !is_file($originalFile) || !is_readable($originalFile)) {
@@ -1334,22 +1427,63 @@ function build_runtime_source_snippet_lines(string $projectRoot, array $diagnost
 	if (!is_array($contents) || $contents === []) {
 		return [];
 	}
-	$start = max(1, $originalLine - 1);
-	$end = min(count($contents), $originalLine + 1);
-	$lines = ['Around:'];
+	$radius = scpp_runtime_source_snippet_context_requested() ? 1 : 0;
+	$start = max(1, $originalLine - $radius);
+	$end = min(count($contents), $originalLine + $radius);
+	$lines = [$radius > 0 ? 'Around:' : 'Source:'];
 	for ($lineNumber = $start; $lineNumber <= $end; $lineNumber++) {
 		$rawLine = rtrim((string) ($contents[$lineNumber - 1] ?? ''));
 		$trimmedLine = trim_runtime_source_snippet_line($rawLine);
 		$prefix = $lineNumber === $originalLine ? '>' : ' ';
 		$lines[] = sprintf('%s %d | %s', $prefix, $lineNumber, $trimmedLine);
 	}
-	$lines[] = 'Source snippet shown because SCPP_SHOW_SOURCE_SNIPPETS=1.';
+	if ($radius > 0) {
+		$lines[] = 'Expanded source context shown because SCPP_SHOW_SOURCE_SNIPPETS=1.';
+	}
+	return $lines;
+}
+
+/** @return list<string> */
+function build_runtime_trace_lines(array $diagnostic, int $maxFrames = 4): array
+{
+	$projectRoot = is_string($diagnostic['project_root'] ?? null) ? (string) $diagnostic['project_root'] : '';
+	$sourceFrames = $projectRoot !== '' ? build_runtime_source_trace_frames($projectRoot, $diagnostic) : [];
+	if ($sourceFrames === []) {
+		return [];
+	}
+	$maxFrames = max(1, $maxFrames);
+	$lines = ['Trace:'];
+	foreach (array_slice($sourceFrames, 0, $maxFrames) as $frame) {
+		$location = normalize_config_path(relative_path($projectRoot, $frame['file'])) . ':' . $frame['line'];
+		$sourceLine = read_runtime_source_line($frame['file'], $frame['line']);
+		if ($sourceLine !== null && $sourceLine !== '') {
+			$lines[] = '  at ' . $location . ' | ' . $sourceLine;
+			continue;
+		}
+		$lines[] = '  at ' . $location;
+	}
+	$remaining = count($sourceFrames) - min(count($sourceFrames), $maxFrames);
+	if ($remaining > 0) {
+		$lines[] = '  ... ' . $remaining . ' more frame(s)';
+	}
+	$rawTrace = is_array($diagnostic['trace'] ?? null) ? $diagnostic['trace'] : [];
+	if ($rawTrace !== []) {
+		$lines[] = "  More trace detail is available in 'scpp full-error'.";
+	}
 	return $lines;
 }
 
 /** @param array<string,mixed> $diagnostic */
-function render_runtime_failure_lines(array $diagnostic, string $projectRoot, bool $includeStrictHint = true, bool $includeFollowupHints = true, ?string $projectMode = null): array
+function render_runtime_failure_lines(
+	array $diagnostic,
+	string $projectRoot,
+	bool $includeStrictHint = true,
+	bool $includeFollowupHints = true,
+	?string $projectMode = null,
+	bool $includeRuntimeMessage = true
+): array
 {
+	$diagnostic['project_root'] = $projectRoot;
 	$lines = [];
 	$strictHint = $includeStrictHint ? strict_project_error_hint($projectMode) : null;
 	if ($strictHint !== null && $strictHint !== '') {
@@ -1381,8 +1515,11 @@ function render_runtime_failure_lines(array $diagnostic, string $projectRoot, bo
 		$lines[] = 'Operation: ' . $operation;
 	}
 	$message = trim((string) ($diagnostic['message'] ?? ''));
-	if ($message !== '') {
+	if ($includeRuntimeMessage && $message !== '') {
 		$lines[] = 'Runtime message: ' . $message;
+	}
+	foreach (build_runtime_trace_lines($diagnostic) as $traceLine) {
+		$lines[] = $traceLine;
 	}
 	if ($includeFollowupHints) {
 		$lines[] = "Run 'scpp error' for more details.";
@@ -1394,7 +1531,7 @@ function render_runtime_failure_lines(array $diagnostic, string $projectRoot, bo
 /** @param array<string,mixed> $diagnostic */
 function render_short_runtime_failure(array $diagnostic, string $projectRoot, ?string $projectMode = null): string
 {
-	return implode(PHP_EOL, render_runtime_failure_lines($diagnostic, $projectRoot, true, true, $projectMode)) . PHP_EOL;
+	return implode(PHP_EOL, render_runtime_failure_lines($diagnostic, $projectRoot, false, true, $projectMode, false)) . PHP_EOL;
 }
 
 /** @param array<string,mixed> $diagnostic @return list<string> */
@@ -3983,6 +4120,10 @@ function write_last_error_report(
 				'actual_runtime_kind' => isset($diagnostic['actual_runtime_kind']) ? (string) $diagnostic['actual_runtime_kind'] : null,
 				'operation' => isset($diagnostic['operation']) ? (string) $diagnostic['operation'] : null,
 				'code' => isset($diagnostic['code']) ? (string) $diagnostic['code'] : null,
+				'trace' => array_values(array_filter(
+					is_array($diagnostic['trace'] ?? null) ? $diagnostic['trace'] : [],
+					static fn ($line): bool => is_string($line) && trim($line) !== ''
+				)),
 			];
 		}, $diagnostics)),
 		'raw_output' => [

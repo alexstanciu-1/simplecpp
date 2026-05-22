@@ -845,8 +845,8 @@ final class Generator
 		// Keep argument rendering direct. Scalar typed by-reference cases are
 		// handled by the normalized template path instead of proxy wrappers or
 		// sibling mixed_t& bridge overloads.
-		$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
 		if ($param->isReference) {
+			$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
 			if (!$this->isLvalueCapableExpr($arg, $namespacePhp)) {
 				$this->errors[] = 'By-reference argument requires directly stable native-reference-bindable storage in the current safe subset.';
 				return '/* unsupported-by-ref-arg */';
@@ -854,8 +854,13 @@ final class Generator
 			return $this->renderReferenceBindingExpr($arg, $namespacePhp);
 		}
 		if ($param->type === null) {
+			$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
 			return $rendered;
 		}
+
+		$rendered = is_object($arg) && (($arg->kind ?? null) === AstKind::ARRAY)
+			? $this->renderInitializerExpr($arg, $param->type, $namespacePhp)
+			: $this->renderCallArgExpr($arg, $namespacePhp);
 
 		if ($this->paramNeedsTemplateNormalization($param)) {
 			return $rendered;
@@ -3732,13 +3737,30 @@ final class Generator
 				}
 			}
 
+			$storedTyped = ($statement->kind === 'assign' && $name !== null)
+				? ($this->declaredLocalTypes[$name] ?? null)
+				: null;
+			$initializerTyped = $effectiveTyped;
+			if (
+				$statement->kind === 'assign'
+				&& $initializerTyped === null
+				&& is_string($storedTyped)
+				&& $storedTyped !== ''
+				&& is_object($exprNode)
+				&& (($exprNode->kind ?? null) === AstKind::ARRAY)
+			) {
+				$initializerTyped = $storedTyped;
+			}
+
 			$expr = $statement->kind === 'assign_ref'
 				? $this->renderReferenceBindingExpr($exprNode, $namespacePhp)
-				: $this->renderInitializerExpr($exprNode, $effectiveTyped, $namespacePhp);
+				: $this->renderInitializerExpr($exprNode, $initializerTyped, $namespacePhp);
 			if ($statement->kind === 'assign' && $effectiveTyped === null && $name !== null) {
-				$storedTyped = $this->declaredLocalTypes[$name] ?? null;
 				if (is_string($storedTyped) && $storedTyped !== '') {
-					$expr = $this->wrapExprForExpectedType($expr, $this->inferExprType($exprNode), $storedTyped);
+					$mappedStoredType = $this->mapStoredLocalTypeToMappedType($storedTyped);
+					if ($mappedStoredType !== null) {
+						$expr = $this->wrapExprForExpectedType($expr, $this->inferExprType($exprNode), $mappedStoredType);
+					}
 				}
 			}
 			$typedVectorType = $effectiveTyped !== null ? $this->mapTypedVectorLocalType($effectiveTyped) : null;
@@ -5297,6 +5319,16 @@ final class Generator
 		}
 
 		return $this->typeMapper->mapTypedLocalType($typedLocalType);
+	}
+
+	private function mapStoredLocalTypeToMappedType(string $storedLocalType): ?string
+	{
+		$normalized = trim($storedLocalType);
+		if ($normalized === '') {
+			return null;
+		}
+
+		return $this->typeMapper->mapTypedLocalType($normalized);
 	}
 
 	private function renderInitializerExpr(mixed $expr, ?string $typedLocalType, ?string $namespacePhp): string

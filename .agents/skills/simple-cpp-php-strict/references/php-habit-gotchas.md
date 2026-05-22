@@ -86,6 +86,9 @@ Do not use arbitrary string or unresolved `mixed` values directly as conditions 
 
 `json_decode(...)` returns dynamic data. Treat typed reads from it as shape assumptions.
 
+Normal PHP habit often lets decoded arrays/objects flow everywhere.
+Strict PHP++ should treat decoded JSON as a boundary, not as the preferred interior representation.
+
 Preferred:
 
 ```php
@@ -118,6 +121,26 @@ $data = json_decode($text);
 $raw = $data["name"];
 dbg("name", $raw, DBG_SHAPE | DBG_TYPE);
 ```
+
+When the payload shape is known, leave a short local shape comment and normalize early:
+
+```php
+/** decoded user_data shape:
+ *  - name: string
+ *  - active: bool
+ */
+$data = json_decode($text);
+
+if (isset($data["name"])) {
+	$user->name = $data["name"];
+}
+if (isset($data["active"])) {
+	$user->active = $data["active"];
+}
+```
+
+The important rule is not “cast everything.”
+The important rule is “do not let fat-variable state spread farther than it needs to.”
 
 ## Arrays And Tables
 

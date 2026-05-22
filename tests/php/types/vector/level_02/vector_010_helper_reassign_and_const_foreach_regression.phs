@@ -1,0 +1,19 @@
+function demo(vector<string> $columns, string $kind): vector<string>
+{
+	$column_list = $columns;
+
+	if ($kind === "singular_ref") {
+		$column_list = ["Id"];
+		foreach ($columns as $column_name) {
+			$column_list[] = $column_name;
+		}
+	}
+
+	return $column_list;
+}
+
+$items = demo(["Name", "Type"], "singular_ref");
+
+foreach ($items as $item) {
+	echo $item, "\n";
+}
