@@ -9,6 +9,32 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.61 - 2026-05-22
+
+### Additions
+
+- Added focused regression coverage for typed vector literal reassignment and const-parameter `foreach` handling.
+- Added focused runtime-diagnostics regression coverage for source-mapped runtime failures, compact trace display, and saved trace/report behavior.
+- Added stricter authoring guidance for decoded JSON boundaries across the quick-learn, JSON docs, and strict agent skill references.
+
+### Fixes
+
+- Fixed strict typed vector lowering so array-literal reassignment and typed call arguments preserve the intended typed-container path instead of degrading through weaker untyped lowering.
+- Fixed runtime `foreach` support for const typed vectors so strict helper-style iteration over typed vector parameters works cleanly.
+- Fixed runtime failure presentation so `scpp run` and `scpp error` now prefer a source-first view with remapped file/line, tiny source snippets, and source-backed trace entries instead of leaking generated/runtime trace detail by default.
+- Fixed saved runtime diagnostics so compact debug trace data can be preserved and surfaced through `scpp error` while deeper generated/runtime trace detail remains available through `scpp full-error`.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required for existing supported code.
+- Strict projects now get a quieter, source-first runtime failure experience by default; use `scpp error` for the richer saved summary and `scpp full-error` for full JSON plus deeper generated/runtime trace detail.
+- For decoded JSON in strict code, the recommended posture is now documented explicitly: treat `json_decode(...)` as a fat-variable boundary, describe known payload shape locally, and stabilize early into typed locals, properties, objects, or typed containers.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this release to reflect the new runtime-diagnostics guidance and strict JSON-boundary authoring guidance.
+
 ## 0.1.60 - 2026-05-21
 
 ### Additions
