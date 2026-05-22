@@ -62,6 +62,7 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
 - If the destination is explicitly `mixed` or `dynamic`, no cast is needed and the value remains on the dynamic carrier path.
 - Prefer `dynamic` when the source-level intent is shared mutable object/table state with reference-like aliasing; prefer `mixed` for broad boxed dynamic values that are not specifically object/table handles.
+- Treat `json_decode(...)` as a fat-variable boundary. When the expected decoded shape is known, add or preserve a short local shape comment/doc comment and normalize into typed locals, properties, objects, or typed containers quickly instead of letting the dynamic carrier spread through the rest of the code.
 - Resolve wrappers near meaningful boundaries with `take(...)` so success, failure, absence, and usable values stay explicit.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.

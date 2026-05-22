@@ -874,6 +874,62 @@ Why this pattern is useful:
 
 Prefer this when the program already knows the target container shape.
 
+### 3A. Decoded JSON / fat-variable boundary
+
+`json_decode(...)` returns fat-variable data.
+
+In practice, that means a `mixed` / dynamic-shaped boundary value, not a preferred interior representation for strict business logic.
+
+Strict-mode posture:
+
+- use `json_decode(...)` freely at the ingestion boundary
+- describe the expected payload shape locally when it is known
+- stabilize early into typed locals, typed properties, typed objects, or typed containers
+- avoid carrying fat-variable state deep into the rest of the program unless the flexibility is intentionally needed
+
+When the source shape is known from a schema, API contract, or file format, a short local shape comment is encouraged:
+
+```php
+/** decoded property_data shape:
+ *  - name: string
+ *  - type.name: string
+ *  - type.list: bool
+ *  - required: bool
+ */
+$property_data = json_decode($text);
+
+if (isset($property_data["name"])) {
+	$out->name = $property_data["name"];
+}
+if (isset($property_data["type.name"])) {
+	$out->type_name = $property_data["type.name"];
+}
+if (isset($property_data["type.list"])) {
+	$out->type_list = $property_data["type.list"];
+}
+if (isset($property_data["required"])) {
+	$out->required = $property_data["required"];
+}
+```
+
+In that style:
+
+- the decoded payload stays broad only at the edge
+- each typed write becomes an explicit stabilization point
+- extra casts are often unnecessary when the receiving side is already typed
+
+Use explicit casts only when they still add meaning or a specific flow still needs them:
+
+```php
+$out->name = (string) $property_data["name"];
+```
+
+Preferred when the left side is already typed and the shape assumption is intentional:
+
+```php
+$out->name = $property_data["name"];
+```
+
 ### 4. When to delay stabilization
 
 Delay the typed boundary when the incoming shape is still genuinely uncertain.
