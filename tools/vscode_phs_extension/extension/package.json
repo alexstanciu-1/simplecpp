@@ -1,0 +1,72 @@
+{
+  "name": "simple-cpp-vscode",
+  "displayName": "Simple C++",
+  "description": "VS Code support for PHP++ / PHS strict-mode authoring in .phs files.",
+  "version": "0.0.1",
+  "publisher": "simple-cpp",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:phs",
+    "onCommand:simpleCpp.buildProject",
+    "onCommand:simpleCpp.runProject",
+    "onCommand:simpleCpp.doctor",
+    "onCommand:simpleCpp.docsStrict"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "phs",
+        "aliases": [
+          "PHP++ (PHS)",
+          "phs"
+        ],
+        "extensions": [
+          ".phs"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "phs",
+        "scopeName": "source.phs",
+        "path": "./syntaxes/phs.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "phs",
+        "path": "./snippets/phs.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "simpleCpp.buildProject",
+        "title": "Simple C++: Build Project"
+      },
+      {
+        "command": "simpleCpp.runProject",
+        "title": "Simple C++: Run Project"
+      },
+      {
+        "command": "simpleCpp.doctor",
+        "title": "Simple C++: Doctor"
+      },
+      {
+        "command": "simpleCpp.docsStrict",
+        "title": "Simple C++: Show Strict Docs"
+      }
+    ]
+  },
+  "scripts": {
+    "lint:json": "node -e \"for (const file of ['package.json','language-configuration.json','syntaxes/phs.tmLanguage.json','snippets/phs.json']) JSON.parse(require('fs').readFileSync(file,'utf8')); console.log('json ok');\"",
+    "package:check": "npx @vscode/vsce package --no-dependencies"
+  }
+}
