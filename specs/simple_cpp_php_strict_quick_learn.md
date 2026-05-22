@@ -115,6 +115,8 @@ scpp build --build-runtime --build-dependencies
 scpp build --force
 ```
 
+`--build-runtime` refreshes the runtime for the current build/invocation. Shared reusable runtime maintenance is handled by `scpp update` and `scpp runtime-build`; explicit custom runtime rebuilds stay on the project-local side.
+
 ### Run
 
 ```bash
@@ -147,6 +149,8 @@ scpp run --force
 - `scpp update --force`: rebuild that default reusable runtime cache even when already current
 - `scpp runtime-build [--debug|--release] [--force]`: rebuild the reusable runtime cache explicitly
 - `scpp clean`: remove generated `.prism/` state for a cold rebuild
+
+Use `scpp runtime-build` when you want to refresh the shared reusable runtime cache itself. Use `scpp build --build-runtime` or `scpp run --build-runtime` when you want the current project build to rebuild its runtime path now.
 
 If an existing project behaves oddly right after `scpp update`, and the same problem does not reproduce in a fresh project, clear that project's `.prism/` state once and rebuild:
 
@@ -321,6 +325,12 @@ Use this sequence when a strict project builds, runs, and then fails at runtime.
 5. If the noisy part happens deeper in helper calls, use `dbg_set(...)` and `dbg_if(...)` to focus the trace.
 6. Inspect `.prism/last_error.json`, `.line.tsv`, or generated C++ only when the saved diagnostics are not enough.
 
+Current CLI runtime-failure presentation is intentionally source-first:
+
+- `scpp run` shows the remapped source file/line, a tiny source snippet, the failing operation when available, and only source-mapped trace entries
+- `scpp error` keeps that source-first summary and may include the saved raw runtime message too
+- `scpp full-error` is the place to inspect full saved JSON, deeper generated C++ trace detail, and runtime-internal trace detail
+
 End-to-end example:
 
 ```php
@@ -333,7 +343,6 @@ Possible failure:
 ```text
 Runtime error in main.phs:2
 Cannot convert value to required string_t.
-Actual runtime kind: shared_hash_t
 Operation: scpp::cast<string_t>
 ```
 
