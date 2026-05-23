@@ -37,7 +37,7 @@ $v = 5;               // native / compiler-known
 To make a value dynamic, you must state it explicitly:
 
 ```php
-$v /** mixed */ = 5;  // dynamic
+$v mixed = 5;  // dynamic
 ```
 
 Phase 1 source contract note:
@@ -93,7 +93,7 @@ If the stable explicit destination type is `mixed`, then no normalization occurs
 
 | Case | Example | Allowed |
 |---|---|---|
-| Typed variable assignment | `$x /** int */ = $v;` | âœ” |
+| Typed variable assignment | `$x int = $v;` | âœ” |
 | Typed property assignment | `$obj->x = $v; // x is int` | âœ” |
 | Typed container element assignment | `$counts["x"] = $v; // counts is hash<int>` | âœ” |
 | Typed append destination | `$items[] = $v; // items is vector<int>` | âœ” |
@@ -149,7 +149,7 @@ These are accepted in v1 when an Explicit Typed Boundary exists, even when the c
 |---|---|---|
 | Typed by-value function call | `add($hash["value"], $hash["add"]);` where `add(int $value, int $add)` | common usage; S2S cannot reliably resolve the callee yet |
 | Typed by-value method call | `$obj->setValue($v);` where `setValue(int $v)` | same reason |
-| Typed variable assignment | `$x /** int */ = $v;` | intention is directly visible |
+| Typed variable assignment | `$x int = $v;` | intention is directly visible |
 | Typed property assignment | `$obj->x = $v;` where `x` is `int` | intention is directly visible |
 | Typed container element assignment | `$counts["x"] = $v;` where `counts` is `hash<int>` | the receiving slot value type is directly visible from the stable typed destination |
 | Typed append destination | `$items[] = $v;` where `items` is `vector<int>` | the receiving element type is directly visible from the stable typed destination |

@@ -1,2 +1,2 @@
-$value /** int */ = "abc";
+$value int = "abc";
 echo $value, "\n";
