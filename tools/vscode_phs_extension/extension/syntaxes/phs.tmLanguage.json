@@ -12,6 +12,12 @@
       "include": "#attributes"
     },
     {
+      "include": "#declarations"
+    },
+    {
+      "include": "#members"
+    },
+    {
       "include": "#strings"
     },
     {
@@ -30,7 +36,7 @@
       "include": "#functions"
     },
     {
-      "include": "#type-declarations"
+      "include": "#type-references"
     },
     {
       "include": "#debug-constants"
@@ -88,6 +94,114 @@
         }
       ]
     },
+    "declarations": {
+      "patterns": [
+        {
+          "match": "\\b(class|interface|trait)\\s+([A-Za-z_][A-Za-z0-9_\\\\]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.phs"
+            },
+            "2": {
+              "name": "entity.name.type.class.phs"
+            }
+          }
+        },
+        {
+          "match": "\\b(function)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.phs"
+            },
+            "2": {
+              "name": "entity.name.function.definition.phs"
+            }
+          }
+        },
+        {
+          "match": "\\b(public|protected|private)\\s+(static\\s+)?([A-Za-z_][A-Za-z0-9_\\\\<>?, ]*)\\s+(\\$[A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "storage.modifier.visibility.phs"
+            },
+            "2": {
+              "name": "storage.modifier.static.phs"
+            },
+            "3": {
+              "name": "storage.type.declared.phs"
+            },
+            "4": {
+              "name": "variable.other.property.phs"
+            }
+          }
+        },
+        {
+          "match": "(\\$[A-Za-z_][A-Za-z0-9_]*)\\s+([A-Za-z_][A-Za-z0-9_\\\\<>?,]*)\\s*(?==|;)",
+          "captures": {
+            "1": {
+              "name": "variable.other.definition.phs"
+            },
+            "2": {
+              "name": "storage.type.local.phs"
+            }
+          }
+        },
+        {
+          "match": "\\b(catch)\\s*\\(\\s*([A-Za-z_][A-Za-z0-9_\\\\]*)\\s+(\\$[A-Za-z_][A-Za-z0-9_]*)\\s*\\)",
+          "captures": {
+            "1": {
+              "name": "keyword.control.phs"
+            },
+            "2": {
+              "name": "entity.name.type.exception.phs"
+            },
+            "3": {
+              "name": "variable.parameter.exception.phs"
+            }
+          }
+        }
+      ]
+    },
+    "members": {
+      "patterns": [
+        {
+          "match": "(->)([A-Za-z_][A-Za-z0-9_]*)(\\s*(?=\\())",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.member.phs"
+            },
+            "2": {
+              "name": "entity.name.function.member.phs"
+            },
+            "3": {
+              "name": "meta.function-call.member.phs"
+            }
+          }
+        },
+        {
+          "match": "(->)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.member.phs"
+            },
+            "2": {
+              "name": "variable.other.property.member.phs"
+            }
+          }
+        },
+        {
+          "match": "(::)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.scope.phs"
+            },
+            "2": {
+              "name": "entity.name.member.static.phs"
+            }
+          }
+        }
+      ]
+    },
     "strings": {
       "patterns": [
         {
@@ -118,7 +232,7 @@
       "patterns": [
         {
           "name": "keyword.control.phs",
-          "match": "\\b(if|else|elseif|switch|case|default|for|foreach|while|do|break|continue|return|try|catch|finally|throw)\\b"
+          "match": "\\b(if|else|elseif|switch|case|default|for|foreach|while|do|break|continue|return|try|catch|finally|throw|echo|isset|unset)\\b"
         },
         {
           "name": "keyword.declaration.phs",
@@ -134,7 +248,7 @@
       "patterns": [
         {
           "name": "storage.type.phs",
-          "match": "\\b(void|bool|int|float|string|mixed|dynamic|vector|hash|callable|nullable|object)\\b"
+          "match": "\\b(void|bool|int|float|string|mixed|dynamic|vector|hash|callable|nullable|object|error)\\b"
         },
         {
           "name": "punctuation.definition.type-args.begin.phs",
@@ -169,15 +283,15 @@
     "functions": {
       "patterns": [
         {
-          "name": "entity.name.function.phs",
+          "name": "entity.name.function.call.phs",
           "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()"
         }
       ]
     },
-    "type-declarations": {
+    "type-references": {
       "patterns": [
         {
-          "match": "\\b(class|interface|trait)\\s+([A-Za-z_][A-Za-z0-9_\\\\]*)",
+          "match": "\\b(extends|implements|new)\\s+([A-Za-z_][A-Za-z0-9_\\\\]*)",
           "captures": {
             "1": {
               "name": "keyword.declaration.phs"
@@ -188,13 +302,13 @@
           }
         },
         {
-          "match": "\\b(extends|implements|new)\\s+([A-Za-z_][A-Za-z0-9_\\\\]*)",
+          "match": "(:\\s*)([A-Za-z_][A-Za-z0-9_\\\\<>?,]*)",
           "captures": {
             "1": {
-              "name": "keyword.declaration.phs"
+              "name": "keyword.operator.type.phs"
             },
             "2": {
-              "name": "entity.name.type.class.phs"
+              "name": "storage.type.return.phs"
             }
           }
         }
