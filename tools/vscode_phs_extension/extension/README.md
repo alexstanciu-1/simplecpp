@@ -41,9 +41,20 @@ Helpful files:
 
 - `jsconfig.json`: basic JavaScript project settings for the extension host files
 - `.vscodeignore`: lightweight packaging filter for future `.vsix` creation
+- `.vscode/launch.json`: `F5` debug config for launching an Extension Development Host
+- `.vscode/tasks.json`: small helper tasks for local extension checks
 
 Helpful script:
 
 - `npm run package:check`
 
 That packaging helper expects `npx` access to `@vscode/vsce` in the local environment.
+
+## Debugging
+
+The repository includes a ready-to-use VS Code debug configuration.
+
+1. Open this extension folder in VS Code.
+2. Press `F5`.
+3. Choose `Run Simple C++ Extension` if prompted.
+4. VS Code should open an Extension Development Host window.

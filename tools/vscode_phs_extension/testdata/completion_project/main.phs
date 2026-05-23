@@ -9,17 +9,17 @@ class Runner extends SampleService
 {
 	public function run(): void
 	{
-		$userName /** string */ = "maria";
-		$userId /** int */ = 7;
-		$payload /** string */ = "{\"enabled\":true}";
+		$userName string = "maria";
+		$userId int = 7;
+		$payload string = "{\"enabled\":true}";
 		$data = json_decode($payload);
 		$label = make_label($userName, $userId);
 		$service = new SampleService();
 		$runner = new Runner();
-		$output /** string */ = $service->greet($userName);
+		$output string = $service->greet($userName);
 		$file = "fixture-output.txt";
 		$err /** error */;
-		$written /** int */ = 0;
+		$written int = 0;
 
 		dbg("shape", $data, DBG_SHAPE | DBG_DEPTH_3);
 
