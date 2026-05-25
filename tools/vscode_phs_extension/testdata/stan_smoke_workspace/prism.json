@@ -1,0 +1,19 @@
+{
+  "config_version": 1,
+  "project_name": "stan-smoke-workspace",
+  "entrypoint": "main.phs",
+  "build_dir": ".prism/build",
+  "generated_dir": ".prism/generated",
+  "cache_dir": ".prism/cache",
+  "runtime": {
+    "languages": {
+      "php": {
+        "profile": "strict"
+      }
+    },
+    "modules": [
+      "json",
+      "filesystem"
+    ]
+  }
+}

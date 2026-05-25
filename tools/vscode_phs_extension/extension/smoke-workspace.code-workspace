@@ -1,0 +1,10 @@
+{
+  "folders": [
+    {
+      "path": "../testdata/stan_smoke_workspace"
+    }
+  ],
+  "settings": {
+    "files.autoSave": "off"
+  }
+}

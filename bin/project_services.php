@@ -1,13 +1,21 @@
 <?php
 declare(strict_types=1);
 
+use Scpp\S2S\Stan\StanRunner;
 use Scpp\S2S\Transpiler;
 use Scpp\S2S\Support\S2SException;
 
 const SCPP_VERSION = '0.1.0-dev';
 const SCPP_PROJECT_CONFIG = 'prism.json';
 const SCPP_STATE_FILE = 's2s_state.php';
+const SCPP_STAN_STATE_FILE = 'stan_state.php';
+const SCPP_STAN_STATUS_FILE = 'stan_status.json';
+const SCPP_STAN_REPORT_FILE = 'stan_report.json';
+const SCPP_STAN_WORKER_FILE = 'stan_worker.json';
+const SCPP_STAN_REQUEST_FILE = 'stan_request.json';
+const SCPP_STAN_WORKER_LOCK_FILE = 'stan_worker.lock';
 const SCPP_S2S_SIGNATURE_VERSION = 2;
+const SCPP_STAN_SIGNATURE_VERSION = 1;
 const SCPP_CANONICAL_SOURCE_EXTENSION = 'phs';
 const SCPP_COMPAT_SOURCE_EXTENSIONS = ['phs', 'php'];
 
@@ -559,6 +567,16 @@ function main(array $argv): void
 		return;
 	}
 
+	if ($args[0] === 'stan') {
+		handle_stan(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
+	if ($args[0] === 'stan-lsp') {
+		handle_stan_lsp(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
 	if ($args[0] === 'error') {
 		handle_error_report(getcwd() === false ? '.' : getcwd(), false);
 		return;
@@ -611,11 +629,19 @@ function print_help(): void
 	echo "Usage:\n";
 	echo "  scpp <input.phs>\n";
 	echo "  scpp init [--php-profile=legacy|strict]\n";
-	echo "  scpp build [--entry=<path>] [--build-runtime] [--build-dependencies]\n";
+	echo "  scpp build [--entry=<path>] [--build-runtime] [--build-dependencies] [--no-stan]\n";
 	echo "  scpp clean\n";
 	echo "  scpp update [--force]\n";
-	echo "  scpp run [--entry=<path>] [--build-runtime] [--build-dependencies] [--force] [-- <args...>]\n";
+	echo "  scpp run [--entry=<path>] [--build-runtime] [--build-dependencies] [--force] [--no-stan] [-- <args...>]\n";
 	echo "  scpp runtime-build [--debug|--release] [--force]\n";
+	echo "  scpp stan\n";
+	echo "  scpp stan worker [--once] [--idle-seconds=<n>] [--poll-interval-ms=<n>]\n";
+	echo "  scpp stan-lsp document-diagnostics --path <file> [--override-source <file>] [--jsonrpc-id <id>] [--debug]\n";
+	echo "  scpp stan-lsp document-symbols --path <file> [--override-source <file>] [--jsonrpc-id <id>] [--debug]\n";
+	echo "  scpp stan-lsp hover --path <file> --line <n> [--column <n>] [--override-source <file>] [--jsonrpc-id <id>] [--debug]\n";
+	echo "  scpp stan-lsp definition --path <file> --line <n> [--column <n>] [--override-source <file>] [--jsonrpc-id <id>] [--debug]\n";
+	echo "  scpp stan-lsp references --path <file> --line <n> [--column <n>] [--override-source <file>] [--jsonrpc-id <id>] [--debug]\n";
+	echo "  scpp stan-lsp serve\n";
 	echo "  scpp docs [<name>]\n";
 	echo "  scpp error\n";
 	echo "  scpp full-error\n";
@@ -628,6 +654,9 @@ function print_help(): void
 	echo "  scpp update fast-forwards the scpp repository from origin/main and rebuilds the default runtime when it changes\n";
 	echo "  scpp run builds first, then executes the selected output\n";
 	echo "  scpp runtime-build compiles the reusable runtime cache explicitly\n";
+	echo "  scpp stan runs the advisory static-analysis front-end spike\n";
+	echo "  scpp stan worker keeps per-project STAN analysis warm in the background\n";
+	echo "  scpp stan-lsp emits tiny JSON-RPC/LSP-style document payloads and a minimal serve loop\n";
 	echo "  scpp docs prints curated local documentation by name\n";
 	echo "  scpp usability-harness generates deterministic spec-driven trial projects\n";
 	echo "  scpp --help\n";
@@ -738,6 +767,816 @@ function handle_docs(array $args): void
 	scpp_write('Source: ' . $entry['path'] . PHP_EOL);
 	scpp_write(str_repeat('-', 72) . PHP_EOL);
 	scpp_write(rtrim($content) . PHP_EOL);
+}
+
+/** @param list<string> $args */
+function handle_stan(string $cwd, array $args = []): void
+{
+	if (($args[0] ?? null) === 'worker') {
+		handle_stan_worker($cwd, array_slice($args, 1));
+		return;
+	}
+
+	if ($args !== []) {
+		scpp_fail('Unknown option for `scpp stan`: ' . $args[0] . PHP_EOL, 1);
+	}
+
+	$project = find_project_config($cwd);
+	if ($project === null) {
+		scpp_fail('No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL, 1);
+	}
+
+	$result = load_or_execute_stan_cli_result($project['project_root'], $project['config_path']);
+	$output = [];
+	$output[] = 'STAN advisory run completed';
+	$output[] = 'Project root: ' . $result['project_root'];
+	$output[] = 'PHP profile: ' . $result['php_profile'];
+	$output[] = 'Source units: ' . $result['source_unit_count'];
+	$output[] = 'Analyzed: ' . $result['analyzed_count'];
+	$output[] = 'Reused cache: ' . $result['reused_count'];
+	$output[] = 'Indexed symbols: ' . $result['symbol_count'];
+	$output[] = 'Duplicate declarations: ' . $result['duplicate_count'];
+	$output[] = 'Resolution warnings: ' . $result['resolution_warning_count'];
+	$output[] = 'Override warnings: ' . $result['override_warning_count'];
+	$output[] = 'Return-chain warnings: ' . $result['return_chain_warning_count'];
+	$output[] = 'Expression-chain warnings: ' . $result['expression_chain_warning_count'];
+	$output[] = 'Local type warnings: ' . $result['local_type_warning_count'];
+	$output[] = 'Property type warnings: ' . $result['property_type_warning_count'];
+	$output[] = 'Property read warnings: ' . $result['property_read_warning_count'];
+	$output[] = 'Initialization warnings: ' . $result['initialization_warning_count'];
+	$output[] = 'Call-site warnings: ' . $result['call_site_warning_count'];
+	$output[] = 'Return-type warnings: ' . $result['return_type_warning_count'];
+	$output[] = 'Warnings: ' . $result['warning_count'];
+	$output[] = 'State: ' . normalize_config_path(relative_path($result['project_root'], $result['state_path']));
+	foreach ($result['runtime_shallow_sources'] as $runtimeSource) {
+		$output[] = 'Runtime shallow [' . $runtimeSource['profile'] . ']: '
+			. normalize_config_path(relative_path($result['project_root'], $runtimeSource['path']))
+			. ' (generated ' . $runtimeSource['generated'] . ', skipped ' . count($runtimeSource['skipped']) . ')';
+	}
+	foreach (($result['warning_samples'] ?? []) as $warningSample) {
+		$output[] = 'Warning: ' . $warningSample;
+	}
+	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
+}
+
+/** @param list<string> $args */
+function handle_stan_worker(string $cwd, array $args = []): void
+{
+	$options = [
+		'once' => false,
+		'idle_seconds' => scpp_stan_worker_idle_seconds(),
+		'poll_interval_ms' => scpp_stan_worker_poll_interval_ms(),
+	];
+	foreach ($args as $arg) {
+		if ($arg === '--once') {
+			$options['once'] = true;
+			continue;
+		}
+		if (str_starts_with($arg, '--idle-seconds=')) {
+			$value = substr($arg, strlen('--idle-seconds='));
+			if (!ctype_digit($value) || (int) $value <= 0) {
+				scpp_fail('Invalid `--idle-seconds` for `scpp stan worker`: ' . $arg . PHP_EOL, 1);
+			}
+			$options['idle_seconds'] = max(1, (int) $value);
+			continue;
+		}
+		if (str_starts_with($arg, '--poll-interval-ms=')) {
+			$value = substr($arg, strlen('--poll-interval-ms='));
+			if (!ctype_digit($value) || (int) $value <= 0) {
+				scpp_fail('Invalid `--poll-interval-ms` for `scpp stan worker`: ' . $arg . PHP_EOL, 1);
+			}
+			$options['poll_interval_ms'] = max(10, (int) $value);
+			continue;
+		}
+		scpp_fail('Unknown option for `scpp stan worker`: ' . $arg . PHP_EOL, 1);
+	}
+
+	$project = find_project_config($cwd);
+	if ($project === null) {
+		scpp_fail('No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL, 1);
+	}
+
+	$config = load_project_config($project['config_path']);
+	$paths = build_stan_worker_paths($project['project_root'], $config);
+	ensure_directory($paths['cache_dir']);
+
+	$lockHandle = fopen($paths['lock_path'], 'c+');
+	if (!is_resource($lockHandle)) {
+		scpp_fail('Failed to open STAN worker lock: ' . $paths['lock_path'] . PHP_EOL, 2);
+	}
+	if (!flock($lockHandle, LOCK_EX | LOCK_NB)) {
+		fclose($lockHandle);
+		return;
+	}
+
+	$pid = getmypid();
+	if (!is_int($pid) || $pid <= 0) {
+		$pid = null;
+	}
+	$lastActivityAt = microtime(true);
+
+	try {
+		while (true) {
+			$now = microtime(true);
+			$requestForHeartbeat = read_json_file($paths['request_path']);
+			write_stan_worker_heartbeat($paths['heartbeat_path'], [
+				'pid' => $pid,
+				'project_root' => normalize_path($project['project_root']),
+				'last_heartbeat_at' => $now,
+				'last_seen_request_at' => is_array($requestForHeartbeat) ? (float) ($requestForHeartbeat['requested_at'] ?? 0.0) : 0.0,
+			]);
+
+			$currentFingerprint = compute_stan_source_fingerprint($project['project_root'], $project['config_path']);
+			$request = $requestForHeartbeat;
+			$status = read_json_file($paths['status_path']);
+			$publishedFingerprint = is_array($status) ? (string) ($status['source_fingerprint'] ?? '') : '';
+			$requestFingerprint = is_array($request) ? (string) ($request['requested_fingerprint'] ?? '') : '';
+			$requestTime = is_array($request) ? (float) ($request['requested_at'] ?? 0.0) : 0.0;
+			$finishedAt = is_array($status) ? (float) ($status['finished_at'] ?? 0.0) : 0.0;
+			$needsAnalysis = $publishedFingerprint !== $currentFingerprint
+				|| ($requestFingerprint !== '' && $requestFingerprint === $currentFingerprint && $requestTime > $finishedAt);
+
+			if ($needsAnalysis) {
+				$lastActivityAt = $now;
+				$runningStatus = [
+					'project_root' => normalize_path($project['project_root']),
+					'analysis_state' => 'running',
+					'source_fingerprint' => $currentFingerprint,
+					'requested_fingerprint' => $requestFingerprint,
+					'run_id' => build_stan_worker_run_id(),
+					'started_at' => $now,
+					'finished_at' => $finishedAt,
+					'last_activity_at' => $now,
+					'compile_error_count' => 0,
+					'stan_error_count' => 0,
+					'stan_warning_count' => 0,
+					'stan_notice_count' => 0,
+					'report_path' => normalize_path($paths['report_path']),
+				];
+				write_json_file_atomic($paths['status_path'], $runningStatus);
+
+				try {
+					$report = build_stan_worker_report($project['project_root'], $project['config_path'], $currentFingerprint);
+					write_json_file_atomic($paths['report_path'], $report);
+					write_json_file_atomic($paths['status_path'], [
+						'project_root' => normalize_path($project['project_root']),
+						'analysis_state' => 'ready',
+						'source_fingerprint' => $currentFingerprint,
+						'requested_fingerprint' => $requestFingerprint,
+						'run_id' => $report['run_id'],
+						'started_at' => $report['started_at'],
+						'finished_at' => $report['finished_at'],
+						'last_activity_at' => microtime(true),
+						'compile_error_count' => $report['compile_error_count'],
+						'stan_error_count' => $report['stan_error_count'],
+						'stan_warning_count' => $report['stan_warning_count'],
+						'stan_notice_count' => $report['stan_notice_count'],
+						'report_path' => normalize_path($paths['report_path']),
+					]);
+				} catch (Throwable $e) {
+					write_json_file_atomic($paths['status_path'], [
+						'project_root' => normalize_path($project['project_root']),
+						'analysis_state' => 'failed',
+						'source_fingerprint' => $currentFingerprint,
+						'requested_fingerprint' => $requestFingerprint,
+						'run_id' => build_stan_worker_run_id(),
+						'started_at' => $now,
+						'finished_at' => microtime(true),
+						'last_activity_at' => microtime(true),
+						'compile_error_count' => 0,
+						'stan_error_count' => 0,
+						'stan_warning_count' => 0,
+						'stan_notice_count' => 0,
+						'report_path' => normalize_path($paths['report_path']),
+						'error' => $e->getMessage(),
+					]);
+				}
+
+				if ($options['once']) {
+					return;
+				}
+
+				continue;
+			}
+
+			if ($options['once']) {
+				return;
+			}
+
+			if (($now - $lastActivityAt) >= $options['idle_seconds']) {
+				return;
+			}
+
+			usleep($options['poll_interval_ms'] * 1000);
+		}
+	} finally {
+		@unlink($paths['heartbeat_path']);
+		flock($lockHandle, LOCK_UN);
+		fclose($lockHandle);
+	}
+}
+
+/** @param list<string> $args */
+function handle_stan_lsp(string $cwd, array $args = []): void
+{
+	if ($args === []) {
+		scpp_fail('Usage: scpp stan-lsp <document-diagnostics|document-symbols|hover|definition|references|serve> ...' . PHP_EOL, 1);
+	}
+
+	if ($args[0] === 'serve') {
+		handle_stan_lsp_serve($cwd);
+		return;
+	}
+
+	$command = $args[0];
+	$path = null;
+	$overrideSourcePath = null;
+	$jsonrpcId = null;
+	$line = null;
+	$column = null;
+	$debug = false;
+	for ($index = 1; $index < count($args); $index++) {
+		$arg = $args[$index];
+		if ($arg === '--path') {
+			$path = $args[$index + 1] ?? null;
+			$index++;
+			continue;
+		}
+		if ($arg === '--override-source') {
+			$overrideSourcePath = $args[$index + 1] ?? null;
+			$index++;
+			continue;
+		}
+		if ($arg === '--jsonrpc-id') {
+			$jsonrpcId = $args[$index + 1] ?? null;
+			$index++;
+			continue;
+		}
+		if ($arg === '--line') {
+			$line = $args[$index + 1] ?? null;
+			$index++;
+			continue;
+		}
+		if ($arg === '--column') {
+			$column = $args[$index + 1] ?? null;
+			$index++;
+			continue;
+		}
+		if ($arg === '--debug') {
+			$debug = true;
+			continue;
+		}
+		scpp_fail('Unknown option for `scpp stan-lsp`: ' . $arg . PHP_EOL, 1);
+	}
+
+	if (!in_array($command, ['document-diagnostics', 'document-symbols', 'hover', 'definition', 'references'], true)) {
+		scpp_fail('Unknown `scpp stan-lsp` command: ' . $command . PHP_EOL, 1);
+	}
+
+	if (!is_string($path) || trim($path) === '') {
+		scpp_fail('Missing required `--path` for `scpp stan-lsp ' . $command . '`.' . PHP_EOL, 1);
+	}
+
+	$project = find_project_config($cwd);
+	if ($project === null) {
+		scpp_fail('No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL, 1);
+	}
+
+	$documentPath = normalize_path(resolve_cli_input_path($cwd, $path));
+	$sourceOverrides = [];
+	if ($overrideSourcePath !== null) {
+		$overridePath = resolve_cli_input_path($cwd, $overrideSourcePath);
+		$overrideContents = file_get_contents($overridePath);
+		if (!is_string($overrideContents)) {
+			scpp_fail('Failed to read override source file: ' . $overridePath . PHP_EOL, 1);
+		}
+		$sourceOverrides[$documentPath] = $overrideContents;
+	}
+
+	if ($command === 'hover' || $command === 'definition' || $command === 'references') {
+		if (!is_string($line) || !ctype_digit($line) || (int) $line <= 0) {
+			scpp_fail('Missing required positive `--line` for `scpp stan-lsp ' . $command . '`.' . PHP_EOL, 1);
+		}
+		$resolvedColumn = (is_string($column) && ctype_digit($column) && (int) $column > 0) ? (int) $column : null;
+		$payload = match ($command) {
+			'hover' => execute_stan_hover($project['project_root'], $project['config_path'], $documentPath, (int) $line, $resolvedColumn, $sourceOverrides),
+			'definition' => execute_stan_definition($project['project_root'], $project['config_path'], $documentPath, (int) $line, $resolvedColumn, $sourceOverrides),
+			default => execute_stan_references($project['project_root'], $project['config_path'], $documentPath, (int) $line, $resolvedColumn, $sourceOverrides),
+		};
+	} elseif ($command === 'document-symbols') {
+		$payload = execute_stan_document_symbols($project['project_root'], $project['config_path'], $documentPath, $sourceOverrides);
+	} else {
+		$payload = execute_stan_document_diagnostics($project['project_root'], $project['config_path'], $documentPath, $sourceOverrides);
+	}
+	if ($debug) {
+		$payload = attach_stan_debug_metadata($payload, [
+			'mode' => 'one-shot',
+			'snapshot_cache' => 'miss',
+			'analyzed_count' => (int) ($payload['_snapshot_debug']['analyzed_count'] ?? 0),
+			'reused_count' => (int) ($payload['_snapshot_debug']['reused_count'] ?? 0),
+			'source_unit_count' => (int) ($payload['_snapshot_debug']['source_unit_count'] ?? 0),
+			'warning_count' => (int) ($payload['_snapshot_debug']['warning_count'] ?? ($payload['warning_count'] ?? 0)),
+		]);
+	}
+
+	if ($jsonrpcId !== null) {
+		scpp_write(json_encode([
+			'jsonrpc' => '2.0',
+			'id' => $jsonrpcId,
+			'result' => $payload,
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+		return;
+	}
+
+	scpp_write(json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+}
+
+function handle_stan_lsp_serve(string $cwd): void
+{
+	$serverSession = new \Scpp\S2S\Stan\StanLspServerSession();
+
+	while (($request = read_stan_lsp_message()) !== null) {
+		if (!is_array($request)) {
+			write_stan_lsp_message([
+				'jsonrpc' => '2.0',
+				'id' => null,
+				'error' => ['code' => -32700, 'message' => 'Parse error'],
+			]);
+			continue;
+		}
+
+		$id = $request['id'] ?? null;
+		$method = (string) ($request['method'] ?? '');
+		$params = is_array($request['params'] ?? null) ? $request['params'] : [];
+		$debug = (bool) ($params['debug'] ?? false);
+		try {
+			if ($method === 'initialize') {
+				$project = resolve_stan_project_from_initialize($cwd, $params);
+				$serverSession->initializeProject($project['project_root'], $project['config_path']);
+				$result = [
+					'serverInfo' => ['name' => 'scpp-stan-lsp', 'version' => '0.1'],
+					'capabilities' => [
+						'hoverProvider' => true,
+						'definitionProvider' => true,
+						'referencesProvider' => true,
+						'documentSymbolProvider' => true,
+						'diagnosticProvider' => [
+							'interFileDependencies' => false,
+							'workspaceDiagnostics' => false,
+						],
+						'textDocumentSync' => [
+							'openClose' => true,
+							'change' => 1,
+						],
+					],
+				];
+			} elseif ($method === 'shutdown') {
+				$result = null;
+			} elseif ($method === 'initialized') {
+				continue;
+			} elseif ($method === '$/cancelRequest' || $method === '$/setTrace' || $method === 'workspace/didChangeConfiguration') {
+				continue;
+			} elseif ($method === 'exit') {
+				break;
+			} elseif ($method === 'textDocument/didOpen') {
+				$documentPath = resolve_stan_document_path_from_params($cwd, $params);
+				ensure_stan_server_session_project($serverSession, $cwd, $params, $documentPath);
+				$textDocument = is_array($params['textDocument'] ?? null) ? $params['textDocument'] : [];
+				$source = (string) ($textDocument['text'] ?? '');
+				$version = isset($textDocument['version']) ? (int) $textDocument['version'] : null;
+				write_stan_lsp_message($serverSession->didOpen($documentPath, $source, $version, $debug));
+				continue;
+			} elseif ($method === 'textDocument/didChange') {
+				$documentPath = resolve_stan_document_path_from_params($cwd, $params);
+				ensure_stan_server_session_project($serverSession, $cwd, $params, $documentPath);
+				[$source, $version] = resolve_stan_did_change_source($params);
+				write_stan_lsp_message($serverSession->didChange($documentPath, $source, $version, $debug));
+				continue;
+			} elseif ($method === 'textDocument/didClose') {
+				$documentPath = resolve_stan_document_path_from_params($cwd, $params);
+				ensure_stan_server_session_project($serverSession, $cwd, $params, $documentPath);
+				write_stan_lsp_message($serverSession->didClose($documentPath, $debug));
+				continue;
+			} elseif ($method === 'textDocument/didSave') {
+				$documentPath = resolve_stan_document_path_from_params($cwd, $params);
+				ensure_stan_server_session_project($serverSession, $cwd, $params, $documentPath);
+				$textDocument = is_array($params['textDocument'] ?? null) ? $params['textDocument'] : [];
+				$source = isset($params['text']) && is_string($params['text']) ? $params['text'] : null;
+				$version = isset($textDocument['version']) ? (int) $textDocument['version'] : null;
+				write_stan_lsp_message($serverSession->didSave($documentPath, $source, $version, $debug));
+				continue;
+			} elseif ($method === 'workspace/didChangeWatchedFiles') {
+				ensure_stan_server_session_project($serverSession, $cwd, $params, null);
+				$changedPaths = resolve_stan_watched_file_paths($params);
+				foreach ($serverSession->didChangeWatchedFiles($changedPaths, $debug) as $notification) {
+					write_stan_lsp_message($notification);
+				}
+				continue;
+			} else {
+				$documentPath = resolve_stan_document_path_from_params($cwd, $params);
+				ensure_stan_server_session_project($serverSession, $cwd, $params, $documentPath);
+				$sourceOverrides = resolve_stan_source_overrides_from_params($cwd, $params);
+				[$requestLine, $requestColumn] = resolve_stan_position_from_params($params);
+				$result = match ($method) {
+					'stan/documentDiagnostics' => $serverSession->documentDiagnostics($documentPath, $sourceOverrides, $debug),
+					'stan/documentSymbols' => $serverSession->documentSymbols($documentPath, $sourceOverrides, $debug),
+					'stan/hover' => $serverSession->hover($documentPath, $requestLine, $requestColumn, $sourceOverrides, $debug),
+					'stan/definition' => $serverSession->definition($documentPath, $requestLine, $requestColumn, $sourceOverrides, $debug),
+					'stan/references' => $serverSession->references($documentPath, $requestLine, $requestColumn, $sourceOverrides, $debug),
+					'textDocument/diagnostic' => build_stan_lsp_diagnostic_report($serverSession->documentDiagnostics($documentPath, $sourceOverrides, $debug)),
+					'textDocument/documentSymbol' => build_stan_lsp_document_symbols($serverSession->documentSymbols($documentPath, $sourceOverrides, $debug)),
+					'textDocument/hover' => build_stan_lsp_hover($serverSession->hover($documentPath, $requestLine, $requestColumn, $sourceOverrides, $debug)),
+					'textDocument/definition' => build_stan_lsp_definition($serverSession->definition($documentPath, $requestLine, $requestColumn, $sourceOverrides, $debug)),
+					'textDocument/references' => build_stan_lsp_references($serverSession->references($documentPath, $requestLine, $requestColumn, $sourceOverrides, $debug)),
+					default => ['error' => ['code' => -32601, 'message' => 'Method not found']],
+				};
+			}
+
+			if (is_array($result) && isset($result['error']) && is_array($result['error'])) {
+				write_stan_lsp_message([
+					'jsonrpc' => '2.0',
+					'id' => $id,
+					'error' => $result['error'],
+				]);
+				continue;
+			}
+
+			write_stan_lsp_message([
+				'jsonrpc' => '2.0',
+				'id' => $id,
+				'result' => $result,
+			]);
+		} catch (Throwable $throwable) {
+			write_stan_lsp_message([
+				'jsonrpc' => '2.0',
+				'id' => $id,
+				'error' => ['code' => -32000, 'message' => $throwable->getMessage()],
+			]);
+		}
+	}
+}
+
+/** @return array<string,mixed>|null */
+function read_stan_lsp_message(): ?array
+{
+	$contentLength = null;
+	while (($line = fgets(STDIN)) !== false) {
+		$trimmed = rtrim($line, "\r\n");
+		if ($trimmed === '') {
+			break;
+		}
+		if ($contentLength === null && $trimmed !== '' && ($trimmed[0] === '{' || $trimmed[0] === '[')) {
+			$GLOBALS['scpp_stan_lsp_transport'] = 'legacy-json-lines';
+			$decoded = json_decode($trimmed, true);
+			return is_array($decoded) ? $decoded : [];
+		}
+		if (stripos($trimmed, 'Content-Length:') === 0) {
+			$GLOBALS['scpp_stan_lsp_transport'] = 'lsp-stdio';
+			$contentLength = (int) trim(substr($trimmed, strlen('Content-Length:')));
+		}
+	}
+
+	if ($line === false && $contentLength === null) {
+		return null;
+	}
+	if (!is_int($contentLength) || $contentLength <= 0) {
+		return [];
+	}
+
+	$payload = '';
+	$remaining = $contentLength;
+	while ($remaining > 0) {
+		$chunk = fread(STDIN, $remaining);
+		if (!is_string($chunk) || $chunk === '') {
+			return null;
+		}
+		$payload .= $chunk;
+		$remaining -= strlen($chunk);
+	}
+
+	$decoded = json_decode($payload, true);
+	return is_array($decoded) ? $decoded : [];
+}
+
+/** @param array<string,mixed> $message */
+function write_stan_lsp_message(array $message): void
+{
+	$json = json_encode($message, JSON_UNESCAPED_SLASHES);
+	if (!is_string($json)) {
+		return;
+	}
+	if (($GLOBALS['scpp_stan_lsp_transport'] ?? 'legacy-json-lines') === 'lsp-stdio') {
+		scpp_write('Content-Length: ' . strlen($json) . "\r\n\r\n" . $json);
+		return;
+	}
+	scpp_write($json . PHP_EOL);
+}
+
+/** @param array<string,mixed> $params @return array{project_root:string,config_path:string} */
+function resolve_stan_project_from_initialize(string $cwd, array $params): array
+{
+	$workspaceFolders = is_array($params['workspaceFolders'] ?? null) ? $params['workspaceFolders'] : [];
+	foreach ($workspaceFolders as $workspaceFolder) {
+		if (!is_array($workspaceFolder)) {
+			continue;
+		}
+		$uri = (string) ($workspaceFolder['uri'] ?? '');
+		if ($uri === '') {
+			continue;
+		}
+		$project = find_project_config(dirname(resolve_stan_document_path_from_uri($uri)));
+		if ($project !== null) {
+			return $project;
+		}
+	}
+
+	$rootUri = (string) ($params['rootUri'] ?? '');
+	if ($rootUri !== '') {
+		$project = find_project_config(resolve_stan_document_path_from_uri($rootUri));
+		if ($project !== null) {
+			return $project;
+		}
+	}
+
+	$rootPath = (string) ($params['rootPath'] ?? '');
+	if ($rootPath !== '') {
+		$project = find_project_config(resolve_cli_input_path($cwd, $rootPath));
+		if ($project !== null) {
+			return $project;
+		}
+	}
+
+	$project = find_project_config($cwd);
+	if ($project !== null) {
+		return $project;
+	}
+
+	throw new RuntimeException('No prism.json found for the initialized workspace.');
+}
+
+/** @param array<string,mixed> $params */
+function ensure_stan_server_session_project(\Scpp\S2S\Stan\StanLspServerSession $serverSession, string $cwd, array $params, ?string $documentPath): void
+{
+	try {
+		if ($documentPath !== null) {
+			$project = find_project_config(dirname($documentPath));
+			if ($project !== null) {
+				$serverSession->initializeProject($project['project_root'], $project['config_path']);
+				return;
+			}
+		}
+
+		$project = null;
+		if (isset($params['rootUri']) || isset($params['rootPath']) || isset($params['workspaceFolders'])) {
+			$project = resolve_stan_project_from_initialize($cwd, $params);
+		} else {
+			$project = find_project_config($cwd);
+		}
+		if ($project === null) {
+			throw new RuntimeException('No prism.json found in the current workspace.');
+		}
+		$serverSession->initializeProject($project['project_root'], $project['config_path']);
+	} catch (RuntimeException $runtimeException) {
+		throw $runtimeException;
+	}
+}
+
+/** @param array<string,mixed> $params @return list<string> */
+function resolve_stan_watched_file_paths(array $params): array
+{
+	$changes = is_array($params['changes'] ?? null) ? $params['changes'] : [];
+	$paths = [];
+	foreach ($changes as $change) {
+		if (!is_array($change)) {
+			continue;
+		}
+		$uri = (string) ($change['uri'] ?? '');
+		if ($uri === '') {
+			continue;
+		}
+		$paths[] = normalize_path(resolve_stan_document_path_from_uri($uri));
+	}
+	return $paths;
+}
+
+/** @param array<string,mixed> $params @return array{0:string,1:?int} */
+function resolve_stan_did_change_source(array $params): array
+{
+	$textDocument = is_array($params['textDocument'] ?? null) ? $params['textDocument'] : [];
+	$version = isset($textDocument['version']) ? (int) $textDocument['version'] : null;
+	$contentChanges = is_array($params['contentChanges'] ?? null) ? $params['contentChanges'] : [];
+	if ($contentChanges === []) {
+		throw new RuntimeException('Missing contentChanges for textDocument/didChange.');
+	}
+	$lastChange = $contentChanges[count($contentChanges) - 1] ?? null;
+	if (!is_array($lastChange) || !isset($lastChange['text']) || !is_string($lastChange['text'])) {
+		throw new RuntimeException('Only full-text contentChanges are currently supported.');
+	}
+	return [$lastChange['text'], $version];
+}
+
+/** @param array<string,mixed> $params */
+function resolve_stan_document_path_from_params(string $cwd, array $params): string
+{
+	$path = (string) ($params['path'] ?? '');
+	if ($path !== '') {
+		return normalize_path(resolve_cli_input_path($cwd, $path));
+	}
+
+	$textDocument = is_array($params['textDocument'] ?? null) ? $params['textDocument'] : [];
+	$uri = (string) ($textDocument['uri'] ?? ($params['uri'] ?? ''));
+	if ($uri !== '') {
+		return normalize_path(resolve_stan_document_path_from_uri($uri));
+	}
+
+	throw new RuntimeException('Missing document path or uri.');
+}
+
+/** @return array{0:int,1:?int} @param array<string,mixed> $params */
+function resolve_stan_position_from_params(array $params): array
+{
+	if (isset($params['line'])) {
+		$line = max(1, (int) $params['line']);
+		$column = isset($params['column']) ? max(1, (int) $params['column']) : null;
+		return [$line, $column];
+	}
+
+	$position = is_array($params['position'] ?? null) ? $params['position'] : [];
+	$line = isset($position['line']) ? ((int) $position['line']) + 1 : 1;
+	$column = isset($position['character']) ? ((int) $position['character']) + 1 : null;
+	return [max(1, $line), $column !== null ? max(1, $column) : null];
+}
+
+function resolve_stan_document_path_from_uri(string $uri): string
+{
+	if (str_starts_with($uri, 'file://')) {
+		$path = substr($uri, strlen('file://'));
+		$decoded = rawurldecode((string) $path);
+		if ($decoded !== '') {
+			return $decoded;
+		}
+	}
+
+	return $uri;
+}
+
+/** @param array<string,mixed> $payload @return array<string,mixed> */
+function build_stan_lsp_diagnostic_report(array $payload): array
+{
+	$items = [];
+	$diagnostics = is_array($payload['diagnostics'] ?? null) ? $payload['diagnostics'] : [];
+	foreach ($diagnostics as $diagnostic) {
+		if (!is_array($diagnostic)) {
+			continue;
+		}
+		$items[] = [
+			'range' => stan_span_to_lsp_range($diagnostic['span'] ?? null, (int) ($diagnostic['line'] ?? 1)),
+			'severity' => stan_severity_to_lsp((string) ($diagnostic['severity'] ?? 'warning')),
+			'code' => (string) ($diagnostic['code'] ?? $diagnostic['kind'] ?? 'stan.unknown'),
+			'source' => (string) ($diagnostic['source'] ?? 'stan'),
+			'message' => (string) ($diagnostic['message'] ?? ''),
+		];
+	}
+
+	$result = [
+		'kind' => 'full',
+		'items' => $items,
+	];
+	if (isset($payload['_debug']) && is_array($payload['_debug'])) {
+		$result['_debug'] = $payload['_debug'];
+	}
+	return $result;
+}
+
+/** @param array<string,mixed> $payload @return list<array<string,mixed>> */
+function build_stan_lsp_document_symbols(array $payload): array
+{
+	$result = [];
+	$symbols = is_array($payload['symbols'] ?? null) ? $payload['symbols'] : [];
+	foreach ($symbols as $symbol) {
+		if (!is_array($symbol)) {
+			continue;
+		}
+		$span = $symbol['span'] ?? null;
+		$result[] = [
+			'name' => (string) ($symbol['name'] ?? ''),
+			'detail' => (string) ($symbol['kind'] ?? ''),
+			'kind' => (int) ($symbol['lsp_kind'] ?? 13),
+			'range' => stan_span_to_lsp_range($span, (int) ($symbol['line'] ?? 1)),
+			'selectionRange' => stan_span_to_lsp_range($span, (int) ($symbol['line'] ?? 1)),
+		];
+	}
+	return $result;
+}
+
+/** @param array<string,mixed> $payload @return array<string,mixed>|null */
+function build_stan_lsp_hover(array $payload): ?array
+{
+	$hover = is_array($payload['hover'] ?? null) ? $payload['hover'] : null;
+	if ($hover === null) {
+		return null;
+	}
+
+	$lines = [];
+	$symbol = is_array($hover['symbol'] ?? null) ? $hover['symbol'] : null;
+	if ($symbol !== null) {
+		$signature = trim((string) ($symbol['signature'] ?? ''));
+		if ($signature !== '') {
+			$lines[] = '`' . $signature . '`';
+		} else {
+			$name = (string) ($symbol['name'] ?? '');
+			$kind = (string) ($symbol['kind'] ?? 'symbol');
+			$scope = (string) ($symbol['scope'] ?? '');
+			$lines[] = '`' . trim($kind . ' ' . $name . ($scope !== '' ? ' [' . $scope . ']' : '')) . '`';
+		}
+	}
+
+	$diagnostics = is_array($hover['diagnostics'] ?? null) ? $hover['diagnostics'] : [];
+	if ($symbol === null) {
+		$messages = [];
+		foreach ($diagnostics as $diagnostic) {
+			if (!is_array($diagnostic)) {
+				continue;
+			}
+			$message = trim((string) ($diagnostic['message'] ?? ''));
+			if ($message === '' || in_array($message, $messages, true)) {
+				continue;
+			}
+			$messages[] = $message;
+			$lines[] = '- ' . $message;
+		}
+	}
+
+	if ($lines === []) {
+		return null;
+	}
+
+	$firstDiagnostic = $diagnostics[0] ?? null;
+	$line = (int) ($payload['line'] ?? 1);
+	return [
+		'contents' => [
+			'kind' => 'markdown',
+			'value' => implode("\n", $lines),
+		],
+		'range' => stan_span_to_lsp_range(is_array($firstDiagnostic) ? ($firstDiagnostic['span'] ?? null) : null, $line),
+	];
+}
+
+/** @param array<string,mixed> $payload @return array<string,mixed>|list<array<string,mixed>>|null */
+function build_stan_lsp_definition(array $payload): array|null
+{
+	$definition = is_array($payload['definition'] ?? null) ? $payload['definition'] : null;
+	if ($definition === null) {
+		return null;
+	}
+	return stan_location_from_result($definition);
+}
+
+/** @param array<string,mixed> $payload @return list<array<string,mixed>> */
+function build_stan_lsp_references(array $payload): array
+{
+	$result = [];
+	$references = is_array($payload['references'] ?? null) ? $payload['references'] : [];
+	foreach ($references as $reference) {
+		if (!is_array($reference)) {
+			continue;
+		}
+		$result[] = stan_location_from_result($reference);
+	}
+	return $result;
+}
+
+/** @param array<string,mixed>|null $span @return array<string,array<string,int>> */
+function stan_span_to_lsp_range(array|null $span, int $fallbackLine): array
+{
+	$startLine = max(1, (int) ($span['start']['line'] ?? $fallbackLine));
+	$startColumn = max(1, (int) ($span['start']['column'] ?? 1));
+	$endLine = max(1, (int) ($span['end']['line'] ?? $startLine));
+	$endColumn = max(1, (int) ($span['end']['column'] ?? $startColumn));
+	return [
+		'start' => ['line' => $startLine - 1, 'character' => $startColumn - 1],
+		'end' => ['line' => $endLine - 1, 'character' => $endColumn - 1],
+	];
+}
+
+function stan_severity_to_lsp(string $severity): int
+{
+	return match ($severity) {
+		'error' => 1,
+		'information', 'info' => 3,
+		'hint' => 4,
+		default => 2,
+	};
+}
+
+/** @param array<string,mixed> $entry @return array<string,mixed> */
+function stan_location_from_result(array $entry): array
+{
+	$path = normalize_path((string) ($entry['path'] ?? ''));
+	return [
+		'uri' => 'file://' . $path,
+		'range' => stan_span_to_lsp_range($entry['span'] ?? null, (int) ($entry['line'] ?? 1)),
+	];
 }
 
 /**
@@ -1795,6 +2634,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$startedAt = microtime(true);
 	$options = normalize_build_execution_options($options);
 	$config = load_project_config($configPath);
+	if (!$options['disable_stan']) {
+		execute_stan_build_preflight($projectRoot, $configPath, $config);
+	}
 	$projectGraph = resolve_project_dependency_graph($projectRoot, $configPath, $config);
 	$entrypointAbs = resolve_build_entrypoint($projectRoot, $config, $options['entry_override']);
 
@@ -2551,26 +3393,28 @@ function normalize_run_arguments(array $args): array
 	return array_slice($args, $separatorIndex + 1);
 }
 
-/** @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string} */
+/** @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,disable_stan?:bool,entry_override?:?string} $options @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,entry_override:?string} */
 function normalize_build_execution_options(array $options): array
 {
 	return [
 		'compile_runtime' => (bool) ($options['compile_runtime'] ?? false),
 		'compile_dependencies' => (bool) ($options['compile_dependencies'] ?? false),
 		'force_runtime_rebuild' => (bool) ($options['force_runtime_rebuild'] ?? false),
+		'disable_stan' => (bool) ($options['disable_stan'] ?? false),
 		'entry_override' => isset($options['entry_override']) && is_string($options['entry_override']) && trim($options['entry_override']) !== ''
 			? normalize_config_path(trim((string) $options['entry_override']))
 			: null,
 	];
 }
 
-/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string} */
+/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,entry_override:?string} */
 function parse_build_command_arguments(array $args): array
 {
 	$options = [
 		'compile_runtime' => false,
 		'compile_dependencies' => false,
 		'force_runtime_rebuild' => false,
+		'disable_stan' => false,
 		'entry_override' => null,
 	];
 	foreach ($args as $arg) {
@@ -2591,18 +3435,23 @@ function parse_build_command_arguments(array $args): array
 			$options['force_runtime_rebuild'] = true;
 			continue;
 		}
+		if ($arg === '--no-stan') {
+			$options['disable_stan'] = true;
+			continue;
+		}
 		scpp_fail('Unknown option for `scpp build`: ' . $arg . PHP_EOL, 1);
 	}
 	return $options;
 }
 
-/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,entry_override:?string},run_args:list<string>} */
+/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,entry_override:?string},run_args:list<string>} */
 function parse_run_command_arguments(array $args): array
 {
 	$buildOptions = [
 		'compile_runtime' => false,
 		'compile_dependencies' => false,
 		'force_runtime_rebuild' => false,
+		'disable_stan' => false,
 		'entry_override' => null,
 	];
 	$runArgs = [];
@@ -2631,6 +3480,10 @@ function parse_run_command_arguments(array $args): array
 		if ($arg === '--force') {
 			$buildOptions['compile_runtime'] = true;
 			$buildOptions['force_runtime_rebuild'] = true;
+			continue;
+		}
+		if ($arg === '--no-stan') {
+			$buildOptions['disable_stan'] = true;
 			continue;
 		}
 		$runArgs[] = $arg;
@@ -3706,6 +4559,41 @@ function write_text_file(string $path, string $contents): void
 	if (file_put_contents($path, $contents) === false) {
 		scpp_fail('Failed to write file: ' . $path . PHP_EOL, 2);
 	}
+}
+
+/** @param array<string,mixed> $data */
+function write_json_file_atomic(string $path, array $data): void
+{
+	$dir = dirname($path);
+	if (!is_dir($dir)) {
+		ensure_directory($dir);
+	}
+	$json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if (!is_string($json)) {
+		scpp_fail('Failed to encode JSON file: ' . $path . PHP_EOL, 2);
+	}
+	$tmpPath = $path . '.tmp.' . bin2hex(random_bytes(4));
+	if (file_put_contents($tmpPath, $json . PHP_EOL) === false) {
+		scpp_fail('Failed to write temp JSON file: ' . $tmpPath . PHP_EOL, 2);
+	}
+	if (!@rename($tmpPath, $path)) {
+		@unlink($tmpPath);
+		scpp_fail('Failed to publish JSON file: ' . $path . PHP_EOL, 2);
+	}
+}
+
+/** @return array<string,mixed>|null */
+function read_json_file(string $path): ?array
+{
+	if (!is_file($path)) {
+		return null;
+	}
+	$json = file_get_contents($path);
+	if (!is_string($json) || trim($json) === '') {
+		return null;
+	}
+	$data = json_decode($json, true);
+	return is_array($data) ? $data : null;
 }
 
 /** @param list<array{line:int,relation:string}> $lineMap */
@@ -4845,6 +5733,554 @@ function save_s2s_state(string $statePath, array $state): void
 {
 	$contents = "<?php\nreturn " . var_export($state, true) . ";\n";
 	write_text_file($statePath, $contents);
+}
+
+/** @param array<string,mixed> $config @return array{cache_dir:string,status_path:string,report_path:string,heartbeat_path:string,request_path:string,lock_path:string} */
+function build_stan_worker_paths(string $projectRoot, array $config): array
+{
+	$cacheDir = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config['cache_dir'] ?? '.prism/cache')));
+	return [
+		'cache_dir' => $cacheDir,
+		'status_path' => $cacheDir . '/' . SCPP_STAN_STATUS_FILE,
+		'report_path' => $cacheDir . '/' . SCPP_STAN_REPORT_FILE,
+		'heartbeat_path' => $cacheDir . '/' . SCPP_STAN_WORKER_FILE,
+		'request_path' => $cacheDir . '/' . SCPP_STAN_REQUEST_FILE,
+		'lock_path' => $cacheDir . '/' . SCPP_STAN_WORKER_LOCK_FILE,
+	];
+}
+
+function scpp_stan_worker_idle_seconds(): int
+{
+	$value = getenv('SCPP_STAN_WORKER_IDLE_SECONDS');
+	if (is_string($value) && ctype_digit($value) && (int) $value > 0) {
+		return max(1, (int) $value);
+	}
+	return 900;
+}
+
+function scpp_stan_worker_poll_interval_ms(): int
+{
+	$value = getenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS');
+	if (is_string($value) && ctype_digit($value) && (int) $value > 0) {
+		return max(10, (int) $value);
+	}
+	return 250;
+}
+
+function scpp_stan_build_wait_seconds(): float
+{
+	$value = getenv('SCPP_STAN_BUILD_WAIT_SECONDS');
+	if (is_string($value) && is_numeric($value)) {
+		$float = (float) $value;
+		if ($float > 0.0) {
+			return $float;
+		}
+	}
+	return 10.0;
+}
+
+function build_stan_worker_run_id(): string
+{
+	return 'stan-run-' . bin2hex(random_bytes(8));
+}
+
+function compute_stan_source_fingerprint(string $projectRoot, string $configPath): string
+{
+	$parts = [];
+	$configHash = is_file($configPath) ? hash_file('sha256', $configPath) : false;
+	$parts[] = normalize_path($configPath) . ':' . ($configHash === false ? 'missing' : $configHash);
+	foreach (collect_project_php_files($projectRoot) as $path) {
+		$hash = hash_file('sha256', $path);
+		$parts[] = normalize_path($path) . ':' . ($hash === false ? 'hash-failed' : $hash);
+	}
+	return hash('sha256', implode("\n", $parts));
+}
+
+/** @param array<string,mixed> $heartbeat */
+function stan_worker_heartbeat_is_live(?array $heartbeat): bool
+{
+	if (!is_array($heartbeat)) {
+		return false;
+	}
+	$lastHeartbeatAt = (float) ($heartbeat['last_heartbeat_at'] ?? 0.0);
+	return $lastHeartbeatAt > 0.0 && (microtime(true) - $lastHeartbeatAt) <= 5.0;
+}
+
+/** @param array<string,mixed> $payload */
+function write_stan_worker_heartbeat(string $heartbeatPath, array $payload): void
+{
+	write_json_file_atomic($heartbeatPath, $payload);
+}
+
+/** @param array<string,mixed> $diagnostic @return 'compile-errors'|'stan-errors'|'stan-warnings'|'stan-notices' */
+function classify_stan_build_bucket(array $diagnostic): string
+{
+	$kind = (string) ($diagnostic['kind'] ?? '');
+	if (in_array($kind, [
+		'duplicate_declaration',
+		'unresolved_call',
+		'unresolved_static_call',
+		'unresolved_method_call',
+		'unresolved_property_write',
+		'unresolved_property_read',
+	], true)) {
+		return 'compile-errors';
+	}
+	if (in_array($kind, [
+		'unresolved_dependency',
+		'ambiguous_dependency',
+		'override_declaration',
+		'argument_type_mismatch',
+		'argument_count_mismatch',
+		'missing_return',
+		'static_instance_misuse',
+		'invalid_property_read',
+	], true)) {
+		return 'stan-errors';
+	}
+	return 'stan-warnings';
+}
+
+/** @param list<array<string,mixed>> $diagnostics @return array{compile_error_count:int,stan_error_count:int,stan_warning_count:int,stan_notice_count:int,diagnostics:list<array<string,mixed>>} */
+function classify_stan_build_diagnostics(array $diagnostics): array
+{
+	$result = [
+		'compile_error_count' => 0,
+		'stan_error_count' => 0,
+		'stan_warning_count' => 0,
+		'stan_notice_count' => 0,
+		'diagnostics' => [],
+	];
+	foreach ($diagnostics as $diagnostic) {
+		if (!is_array($diagnostic)) {
+			continue;
+		}
+		$bucket = classify_stan_build_bucket($diagnostic);
+		if ($bucket === 'compile-errors') {
+			$result['compile_error_count']++;
+		} elseif ($bucket === 'stan-errors') {
+			$result['stan_error_count']++;
+		} elseif ($bucket === 'stan-warnings') {
+			$result['stan_warning_count']++;
+		} else {
+			$result['stan_notice_count']++;
+		}
+		$diagnostic['build_bucket'] = $bucket;
+		$result['diagnostics'][] = $diagnostic;
+	}
+	return $result;
+}
+
+/** @return array<string,mixed> */
+function build_stan_worker_report(string $projectRoot, string $configPath, string $sourceFingerprint): array
+{
+	$session = new \Scpp\S2S\Stan\StanWorkspaceSession();
+	$startedAt = microtime(true);
+	$snapshot = $session->createBridgeSnapshot($projectRoot, $configPath, []);
+	$diagnosticResult = $session->buildDiagnosticsResultFromSnapshot($snapshot);
+	$classified = classify_stan_build_diagnostics(is_array($diagnosticResult['diagnostics'] ?? null) ? $diagnosticResult['diagnostics'] : []);
+	$finishedAt = microtime(true);
+	return [
+		'project_root' => normalize_path((string) ($diagnosticResult['project_root'] ?? $projectRoot)),
+		'php_profile' => (string) ($diagnosticResult['php_profile'] ?? ''),
+		'source_fingerprint' => $sourceFingerprint,
+		'run_id' => build_stan_worker_run_id(),
+		'started_at' => $startedAt,
+		'finished_at' => $finishedAt,
+		'source_unit_count' => (int) ($diagnosticResult['source_unit_count'] ?? 0),
+		'analyzed_count' => (int) ($diagnosticResult['analyzed_count'] ?? 0),
+		'reused_count' => (int) ($diagnosticResult['reused_count'] ?? 0),
+		'warning_count' => (int) ($diagnosticResult['warning_count'] ?? 0),
+		'warning_samples' => is_array($diagnosticResult['warning_samples'] ?? null) ? $diagnosticResult['warning_samples'] : [],
+		'compile_error_count' => $classified['compile_error_count'],
+		'stan_error_count' => $classified['stan_error_count'],
+		'stan_warning_count' => $classified['stan_warning_count'],
+		'stan_notice_count' => $classified['stan_notice_count'],
+		'diagnostics' => $classified['diagnostics'],
+	];
+}
+
+/** @param array<string,mixed> $status */
+function stan_status_matches_fingerprint(?array $status, string $sourceFingerprint): bool
+{
+	return is_array($status)
+		&& (string) ($status['analysis_state'] ?? '') === 'ready'
+		&& (string) ($status['source_fingerprint'] ?? '') === $sourceFingerprint;
+}
+
+function spawn_stan_worker_process(string $projectRoot): void
+{
+	$phpBinary = PHP_BINARY;
+	$scriptPath = resolve_repo_root() . '/bin/scpp.php';
+	$command = implode(' ', [
+		escapeshellarg($phpBinary),
+		escapeshellarg($scriptPath),
+		'stan',
+		'worker',
+	]);
+	$descriptor = [
+		0 => ['file', '/dev/null', 'r'],
+		1 => ['file', '/dev/null', 'a'],
+		2 => ['file', '/dev/null', 'a'],
+	];
+	$process = proc_open(['/bin/sh', '-c', $command . ' >/dev/null 2>&1 &'], $descriptor, $pipes, $projectRoot, scpp_build_process_environment());
+	if (!is_resource($process)) {
+		scpp_fail('Failed to start STAN worker.' . PHP_EOL, 2);
+	}
+	proc_close($process);
+}
+
+/** @param array<string,mixed> $report */
+function render_stan_compile_error_lines(array $report): array
+{
+	$lines = [];
+	$lines[] = 'STAN pre-build check failed: ' . (int) ($report['compile_error_count'] ?? 0) . ' compile-errors';
+	$lines[] = '';
+	$diagnostics = is_array($report['diagnostics'] ?? null) ? $report['diagnostics'] : [];
+	foreach ($diagnostics as $diagnostic) {
+		if (!is_array($diagnostic) || (string) ($diagnostic['build_bucket'] ?? '') !== 'compile-errors') {
+			continue;
+		}
+		$lines[] = '[compile-error] ' . (string) ($diagnostic['message'] ?? 'Unknown STAN compile error.');
+		$path = (string) ($diagnostic['path'] ?? '');
+		$line = (int) ($diagnostic['line'] ?? 0);
+		if ($path !== '' && $line > 0) {
+			$lines[] = '  at ' . normalize_config_path(relative_path((string) ($report['project_root'] ?? ''), $path)) . ':' . $line;
+		}
+		$lines[] = '';
+	}
+	$lines[] = 'Build stopped before C++ generation/compilation.';
+	$lines[] = 'To build without STAN, run `scpp build --no-stan`.';
+	$lines[] = 'Run `scpp stan` for the full static-analysis report.';
+	return $lines;
+}
+
+/** @param array<string,mixed> $report */
+function maybe_print_stan_advisory_summary(array $report): void
+{
+	$stanErrors = (int) ($report['stan_error_count'] ?? 0);
+	$stanWarnings = (int) ($report['stan_warning_count'] ?? 0);
+	$stanNotices = (int) ($report['stan_notice_count'] ?? 0);
+	if ($stanErrors === 0 && $stanWarnings === 0 && $stanNotices === 0) {
+		return;
+	}
+	echo 'Static Analysis: '
+		. $stanErrors . ' errors, '
+		. $stanWarnings . ' warnings, '
+		. $stanNotices . ' notices.'
+		. ' Run `scpp stan` for more details.'
+		. PHP_EOL;
+}
+
+/** @param array<string,mixed> $config @return array<string,mixed> */
+function execute_stan_build_preflight(string $projectRoot, string $configPath, array $config): array
+{
+	$paths = build_stan_worker_paths($projectRoot, $config);
+	ensure_directory($paths['cache_dir']);
+	$sourceFingerprint = compute_stan_source_fingerprint($projectRoot, $configPath);
+	$status = read_json_file($paths['status_path']);
+
+	if (!stan_status_matches_fingerprint($status, $sourceFingerprint)) {
+		$heartbeat = read_json_file($paths['heartbeat_path']);
+		if (!stan_worker_heartbeat_is_live($heartbeat)) {
+			$report = build_stan_worker_report($projectRoot, $configPath, $sourceFingerprint);
+			write_json_file_atomic($paths['report_path'], $report);
+			write_json_file_atomic($paths['status_path'], [
+				'project_root' => normalize_path($projectRoot),
+				'analysis_state' => 'ready',
+				'source_fingerprint' => $sourceFingerprint,
+				'requested_fingerprint' => $sourceFingerprint,
+				'run_id' => $report['run_id'],
+				'started_at' => $report['started_at'],
+				'finished_at' => $report['finished_at'],
+				'last_activity_at' => microtime(true),
+				'compile_error_count' => $report['compile_error_count'],
+				'stan_error_count' => $report['stan_error_count'],
+				'stan_warning_count' => $report['stan_warning_count'],
+				'stan_notice_count' => $report['stan_notice_count'],
+				'report_path' => normalize_path($paths['report_path']),
+			]);
+			$status = read_json_file($paths['status_path']);
+		} else {
+			write_json_file_atomic($paths['request_path'], [
+				'requested_at' => microtime(true),
+				'requested_fingerprint' => $sourceFingerprint,
+				'reason' => 'build',
+			]);
+
+			$deadline = microtime(true) + scpp_stan_build_wait_seconds();
+			while (microtime(true) < $deadline) {
+				usleep(100000);
+				$status = read_json_file($paths['status_path']);
+				if (stan_status_matches_fingerprint($status, $sourceFingerprint)) {
+					break;
+				}
+				if (is_array($status) && (string) ($status['analysis_state'] ?? '') === 'failed' && (string) ($status['source_fingerprint'] ?? '') === $sourceFingerprint) {
+					$error = trim((string) ($status['error'] ?? 'STAN worker failed.'));
+					scpp_fail('STAN pre-build check failed: ' . $error . PHP_EOL, 2);
+				}
+			}
+		}
+	}
+
+	$status = read_json_file($paths['status_path']);
+	if (!stan_status_matches_fingerprint($status, $sourceFingerprint)) {
+		scpp_fail('STAN pre-build check timed out while waiting for fresh analysis state.' . PHP_EOL, 2);
+	}
+	$report = read_json_file($paths['report_path']);
+	if (!is_array($report) || (string) ($report['source_fingerprint'] ?? '') !== $sourceFingerprint) {
+		scpp_fail('STAN pre-build check did not publish a usable report for the current source state.' . PHP_EOL, 2);
+	}
+	if ((int) ($report['compile_error_count'] ?? 0) > 0) {
+		scpp_fail(implode(PHP_EOL, render_stan_compile_error_lines($report)) . PHP_EOL, 1);
+	}
+	maybe_print_stan_advisory_summary($report);
+	return $report;
+}
+
+/** @return array{project_root:string,php_profile:string,source_unit_count:int,analyzed_count:int,reused_count:int,warning_count:int,duplicate_count:int,resolution_warning_count:int,override_warning_count:int,symbol_count:int,state_path:string,runtime_shallow_sources:list<array{profile:string,path:string,generated:int,skipped:list<string>}>} */
+function execute_stan(string $projectRoot, string $configPath): array
+{
+
+	return (new StanRunner())->run($projectRoot, $configPath);
+}
+
+/** @return array<string,mixed> */
+function load_or_execute_stan_cli_result(string $projectRoot, string $configPath): array
+{
+	$config = load_project_config($configPath);
+	$paths = build_stan_worker_paths($projectRoot, $config);
+	$sourceFingerprint = compute_stan_source_fingerprint($projectRoot, $configPath);
+	$status = read_json_file($paths['status_path']);
+	$report = read_json_file($paths['report_path']);
+	if (stan_status_matches_fingerprint($status, $sourceFingerprint) && is_array($report) && (string) ($report['source_fingerprint'] ?? '') === $sourceFingerprint) {
+		return build_stan_cli_result_from_report($projectRoot, $configPath, $report);
+	}
+	return execute_stan($projectRoot, $configPath);
+}
+
+/** @param array<string,mixed> $report @return array<string,mixed> */
+function build_stan_cli_result_from_report(string $projectRoot, string $configPath, array $report): array
+{
+	$diagnostics = is_array($report['diagnostics'] ?? null) ? $report['diagnostics'] : [];
+	$counts = [
+		'duplicate_count' => 0,
+		'resolution_warning_count' => 0,
+		'override_warning_count' => 0,
+		'return_chain_warning_count' => 0,
+		'expression_chain_warning_count' => 0,
+		'local_type_warning_count' => 0,
+		'property_type_warning_count' => 0,
+		'property_read_warning_count' => 0,
+		'initialization_warning_count' => 0,
+		'call_site_warning_count' => 0,
+		'return_type_warning_count' => 0,
+	];
+	foreach ($diagnostics as $diagnostic) {
+		if (!is_array($diagnostic)) {
+			continue;
+		}
+		$kind = (string) ($diagnostic['kind'] ?? '');
+		if ($kind === 'duplicate_declaration') {
+			$counts['duplicate_count']++;
+		} elseif ($kind === 'unresolved_dependency' || $kind === 'ambiguous_dependency') {
+			$counts['resolution_warning_count']++;
+		} elseif ($kind === 'override_declaration') {
+			$counts['override_warning_count']++;
+		} elseif ($kind === 'return_chain_resolution_warning') {
+			$counts['return_chain_warning_count']++;
+		} elseif ($kind === 'expression_chain_resolution_warning') {
+			$counts['expression_chain_warning_count']++;
+		} elseif ($kind === 'local_type_morph_warning') {
+			$counts['local_type_warning_count']++;
+		} elseif ($kind === 'property_type_morph_warning') {
+			$counts['property_type_warning_count']++;
+		} elseif ($kind === 'unresolved_property_read' || $kind === 'invalid_property_read') {
+			$counts['property_read_warning_count']++;
+		} elseif ($kind === 'initialization_warning') {
+			$counts['initialization_warning_count']++;
+		} elseif (in_array($kind, ['unresolved_call', 'unresolved_static_call', 'unresolved_method_call', 'argument_count_mismatch', 'argument_type_mismatch', 'static_instance_misuse', 'unresolved_property_write'], true)) {
+			$counts['call_site_warning_count']++;
+		} elseif ($kind === 'return_type_mismatch' || $kind === 'missing_return') {
+			$counts['return_type_warning_count']++;
+		}
+	}
+
+	return [
+		'project_root' => normalize_path((string) ($report['project_root'] ?? $projectRoot)),
+		'php_profile' => (string) ($report['php_profile'] ?? resolve_php_runtime_profile(resolve_runtime_build_config(load_project_config($configPath)))),
+		'source_unit_count' => (int) ($report['source_unit_count'] ?? 0),
+		'analyzed_count' => (int) ($report['analyzed_count'] ?? 0),
+		'reused_count' => (int) ($report['reused_count'] ?? 0),
+		'warning_count' => (int) ($report['warning_count'] ?? 0),
+		'duplicate_count' => $counts['duplicate_count'],
+		'resolution_warning_count' => $counts['resolution_warning_count'],
+		'override_warning_count' => $counts['override_warning_count'],
+		'return_chain_warning_count' => $counts['return_chain_warning_count'],
+		'expression_chain_warning_count' => $counts['expression_chain_warning_count'],
+		'local_type_warning_count' => $counts['local_type_warning_count'],
+		'property_type_warning_count' => $counts['property_type_warning_count'],
+		'property_read_warning_count' => $counts['property_read_warning_count'],
+		'initialization_warning_count' => $counts['initialization_warning_count'],
+		'call_site_warning_count' => $counts['call_site_warning_count'],
+		'return_type_warning_count' => $counts['return_type_warning_count'],
+		'symbol_count' => 0,
+		'state_path' => normalize_path($projectRoot . '/' . normalize_config_path((string) (load_project_config($configPath)['cache_dir'] ?? '.prism/cache')) . '/' . SCPP_STAN_STATE_FILE),
+		'runtime_shallow_sources' => [],
+		'warning_samples' => is_array($report['warning_samples'] ?? null) ? $report['warning_samples'] : [],
+	];
+}
+
+/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
+function execute_stan_document_diagnostics(string $projectRoot, string $configPath, string $documentPath, array $sourceOverrides = []): array
+{
+	$session = new \Scpp\S2S\Stan\StanWorkspaceSession();
+	$snapshot = $session->createBridgeSnapshot($projectRoot, $configPath, $sourceOverrides);
+	return build_stan_document_diagnostics_from_snapshot($session, $snapshot, $documentPath);
+}
+
+/** @param array<string,mixed> $snapshot @return array<string,mixed> */
+function build_stan_document_diagnostics_from_snapshot(\Scpp\S2S\Stan\StanWorkspaceSession $session, array $snapshot, string $documentPath): array
+{
+	$result = $session->buildDiagnosticsResultFromSnapshot($snapshot);
+	$normalizedPath = normalize_path($documentPath);
+	$diagnosticsByPath = is_array($result['diagnostics_by_path'] ?? null) ? $result['diagnostics_by_path'] : [];
+	$diagnostics = is_array($diagnosticsByPath[$normalizedPath] ?? null) ? $diagnosticsByPath[$normalizedPath] : [];
+
+	return [
+		'project_root' => normalize_path((string) ($result['project_root'] ?? '')),
+		'php_profile' => (string) ($result['php_profile'] ?? ''),
+		'path' => $normalizedPath,
+		'uri' => 'file://' . $normalizedPath,
+		'warning_count' => count($diagnostics),
+		'diagnostics' => $diagnostics,
+		'_snapshot_debug' => $snapshot['debug'] ?? null,
+	];
+}
+
+/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
+function execute_stan_document_symbols(string $projectRoot, string $configPath, string $documentPath, array $sourceOverrides = []): array
+{
+	$session = new \Scpp\S2S\Stan\StanWorkspaceSession();
+	$snapshot = $session->createBridgeSnapshot($projectRoot, $configPath, $sourceOverrides);
+	$result = $session->buildDocumentSymbolsResultFromSnapshot($snapshot, $documentPath);
+	$result['_snapshot_debug'] = $snapshot['debug'] ?? null;
+	return $result;
+}
+
+/** @param array<string,mixed> $snapshot @return array<string,mixed> */
+function build_stan_document_symbols_from_snapshot(\Scpp\S2S\Stan\StanWorkspaceSession $session, array $snapshot, string $documentPath): array
+{
+	$result = $session->buildDocumentSymbolsResultFromSnapshot($snapshot, $documentPath);
+	$result['_snapshot_debug'] = $snapshot['debug'] ?? null;
+	return $result;
+}
+
+/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
+function execute_stan_hover(string $projectRoot, string $configPath, string $documentPath, int $line, ?int $column = null, array $sourceOverrides = []): array
+{
+	$session = new \Scpp\S2S\Stan\StanWorkspaceSession();
+	$snapshot = $session->createBridgeSnapshot($projectRoot, $configPath, $sourceOverrides);
+	$result = $session->buildHoverResultFromSnapshot($snapshot, $documentPath, $line, $column);
+	$result['_snapshot_debug'] = $snapshot['debug'] ?? null;
+	return $result;
+}
+
+/** @param array<string,mixed> $snapshot @return array<string,mixed> */
+function build_stan_hover_from_snapshot(\Scpp\S2S\Stan\StanWorkspaceSession $session, array $snapshot, string $documentPath, int $line, ?int $column = null): array
+{
+	$result = $session->buildHoverResultFromSnapshot($snapshot, $documentPath, $line, $column);
+	$result['_snapshot_debug'] = $snapshot['debug'] ?? null;
+	return $result;
+}
+
+/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
+function execute_stan_definition(string $projectRoot, string $configPath, string $documentPath, int $line, ?int $column = null, array $sourceOverrides = []): array
+{
+	$session = new \Scpp\S2S\Stan\StanWorkspaceSession();
+	$snapshot = $session->createBridgeSnapshot($projectRoot, $configPath, $sourceOverrides);
+	$result = $session->buildDefinitionResultFromSnapshot($snapshot, $documentPath, $line, $column);
+	$result['_snapshot_debug'] = $snapshot['debug'] ?? null;
+	return $result;
+}
+
+/** @param array<string,mixed> $snapshot @return array<string,mixed> */
+function build_stan_definition_from_snapshot(\Scpp\S2S\Stan\StanWorkspaceSession $session, array $snapshot, string $documentPath, int $line, ?int $column = null): array
+{
+	$result = $session->buildDefinitionResultFromSnapshot($snapshot, $documentPath, $line, $column);
+	$result['_snapshot_debug'] = $snapshot['debug'] ?? null;
+	return $result;
+}
+
+/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
+function execute_stan_references(string $projectRoot, string $configPath, string $documentPath, int $line, ?int $column = null, array $sourceOverrides = []): array
+{
+	$session = new \Scpp\S2S\Stan\StanWorkspaceSession();
+	$snapshot = $session->createBridgeSnapshot($projectRoot, $configPath, $sourceOverrides);
+	$result = $session->buildReferencesResultFromSnapshot($snapshot, $documentPath, $line, $column);
+	$result['_snapshot_debug'] = $snapshot['debug'] ?? null;
+	return $result;
+}
+
+/** @param array<string,mixed> $snapshot @return array<string,mixed> */
+function build_stan_references_from_snapshot(\Scpp\S2S\Stan\StanWorkspaceSession $session, array $snapshot, string $documentPath, int $line, ?int $column = null): array
+{
+	$result = $session->buildReferencesResultFromSnapshot($snapshot, $documentPath, $line, $column);
+	$result['_snapshot_debug'] = $snapshot['debug'] ?? null;
+	return $result;
+}
+
+function resolve_cli_input_path(string $cwd, string $path): string
+{
+	if ($path === '') {
+		return $cwd;
+	}
+	if ($path[0] === '/' || preg_match('/^[A-Za-z]:[\\\\\\/]/', $path) === 1) {
+		return $path;
+	}
+	return normalize_path($cwd . '/' . $path);
+}
+
+/** @param array<string,mixed> $params @return array<string,string> */
+function resolve_stan_source_overrides_from_params(string $cwd, array $params): array
+{
+	$overrides = [];
+	$path = null;
+	if (isset($params['path']) && is_string($params['path']) && $params['path'] !== '') {
+		$path = normalize_path(resolve_cli_input_path($cwd, $params['path']));
+	} else {
+		$textDocument = is_array($params['textDocument'] ?? null) ? $params['textDocument'] : [];
+		$uri = (string) ($textDocument['uri'] ?? ($params['uri'] ?? ''));
+		if ($uri !== '') {
+			$path = normalize_path(resolve_stan_document_path_from_uri($uri));
+		}
+	}
+	if ($path !== null && isset($params['source']) && is_string($params['source'])) {
+		$overrides[$path] = $params['source'];
+	}
+	return $overrides;
+}
+
+/** @param array<string,string> $sourceOverrides */
+function build_stan_lsp_snapshot_cache_key(string $projectRoot, string $configPath, array $sourceOverrides): string
+{
+	$parts = [
+		normalize_path($projectRoot),
+		normalize_path($configPath),
+	];
+	ksort($sourceOverrides, SORT_STRING);
+	foreach ($sourceOverrides as $path => $contents) {
+		$parts[] = normalize_path($path) . ':' . hash('sha256', $contents);
+	}
+	return hash('sha256', implode("\n", $parts));
+}
+
+/** @param array<string,mixed> $payload @param array<string,mixed> $debugMeta @return array<string,mixed> */
+function attach_stan_debug_metadata(array $payload, array $debugMeta): array
+{
+	unset($payload['_snapshot_debug']);
+	$payload['_debug'] = $debugMeta;
+	return $payload;
 }
 
 function generated_cpp_contains_program_entry(string $path): bool

@@ -1,0 +1,281 @@
+<?php
+declare(strict_types=1);
+
+namespace Scpp\S2S\Stan;
+
+final class StanDiagnosticCollector
+{
+	public function __construct(
+		private readonly StanDependencyResolver $dependencyResolver = new StanDependencyResolver(),
+		private readonly StanPathMapper $pathMapper = new StanPathMapper(),
+	)
+	{
+	}
+
+	/** @param array<string,mixed> $summary */
+	public function countWarnings(array $summary): int
+	{
+		$count = 0;
+		foreach (['build_errors'] as $listKey) {
+			$list = $summary[$listKey] ?? [];
+			if (is_array($list)) {
+				$count += count($list);
+			}
+		}
+		return $count;
+	}
+
+	/** @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectDuplicateDiagnostics(array $symbolIndex): array
+	{
+		$buckets = [];
+		foreach ($symbolIndex as $symbol) {
+			$key = (string) ($symbol['key'] ?? '');
+			if ($key !== '') {
+				$buckets[$key][] = $symbol;
+			}
+		}
+		$diagnostics = [];
+		foreach ($buckets as $symbols) {
+			if (count($symbols) < 2) {
+				continue;
+			}
+			$first = $symbols[0];
+			$locations = [];
+			foreach ($symbols as $symbol) {
+				$locations[] = (string) ($symbol['path'] ?? '(unknown)') . ':' . (int) ($symbol['line'] ?? 0);
+			}
+			sort($locations, SORT_STRING);
+			$diagnostics[] = [
+				'kind' => 'duplicate_declaration',
+				'symbol_kind' => (string) ($first['kind'] ?? 'symbol'),
+				'scope' => (string) ($first['scope'] ?? ''),
+				'name' => (string) ($first['name'] ?? ''),
+				'message' => $this->duplicateMessage($first),
+				'locations' => $locations,
+			];
+		}
+		usort($diagnostics, static fn (array $left, array $right): int => strcmp($left['message'], $right['message']));
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectResolutionDiagnostics(array $fileSummaries, array $symbolIndex): array
+	{
+		$lookup = $this->dependencyResolver->buildResolutionLookup($symbolIndex);
+		$diagnostics = [];
+		foreach ($fileSummaries as $summary) {
+			$path = (string) ($summary['path'] ?? '(unknown)');
+			foreach (($summary['dependencies'] ?? []) as $dependency) {
+				if (!is_array($dependency)) {
+					continue;
+				}
+				$kind = (string) ($dependency['kind'] ?? '');
+				$target = (string) ($dependency['target'] ?? '');
+				$owner = isset($dependency['owner']) && is_string($dependency['owner']) ? $dependency['owner'] : null;
+				if ($kind === '' || $target === '') {
+					continue;
+				}
+				$matches = $this->dependencyResolver->resolveDependencyTarget($kind, $target, $lookup);
+				if (count($matches) === 1) {
+					continue;
+				}
+				$diagnostics[] = [
+					'kind' => count($matches) === 0 ? 'unresolved_dependency' : 'ambiguous_dependency',
+					'dependency_kind' => $kind,
+					'target' => $target,
+					'owner' => $owner,
+					'path' => $path,
+					'matches' => array_map(
+						static fn (array $symbol): string => (string) $symbol['path'] . ':' . (int) $symbol['line'] . ' [' . (string) $symbol['kind'] . ']',
+						$matches
+					),
+					'message' => $this->dependencyMessage($kind, $target, $owner, count($matches)),
+				];
+			}
+		}
+		usort($diagnostics, static fn (array $left, array $right): int => strcmp($left['message'], $right['message']));
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectOverrideDiagnostics(array $fileSummaries, array $symbolIndex, string $projectRoot): array
+	{
+		$lookup = $this->dependencyResolver->buildResolutionLookup($symbolIndex);
+		$classCatalog = $this->buildClassCatalog($fileSummaries, $projectRoot);
+		$diagnostics = [];
+		foreach ($classCatalog as $classFqcn => $classInfo) {
+			$parentName = isset($classInfo['parent_class']) && is_string($classInfo['parent_class']) ? $classInfo['parent_class'] : '';
+			if ($parentName === '') {
+				continue;
+			}
+			$parentMatches = $this->dependencyResolver->resolveDependencyTarget('extends', $parentName, $lookup);
+			if (count($parentMatches) !== 1) {
+				continue;
+			}
+			$parentPath = (string) ($parentMatches[0]['path'] ?? '');
+			if ($parentPath === '') {
+				continue;
+			}
+			$parentInfo = $this->findClassInfoBySymbol($classCatalog, $this->pathMapper->sourceKey($projectRoot, $parentPath), (string) ($parentMatches[0]['name'] ?? ''));
+			if ($parentInfo === null) {
+				continue;
+			}
+			$ancestorMembers = $this->collectAncestorMembers($parentInfo, $classCatalog, $lookup, $projectRoot);
+			foreach (['method', 'property'] as $memberKind) {
+				foreach (($classInfo[$memberKind . 's'] ?? []) as $memberName => $memberLine) {
+					if (!isset($ancestorMembers[$memberKind][$memberName])) {
+						continue;
+					}
+					$ancestor = $ancestorMembers[$memberKind][$memberName];
+					$diagnostics[] = [
+						'kind' => 'override_declaration',
+						'member_kind' => $memberKind,
+						'class' => $classFqcn,
+						'name' => $memberName,
+						'path' => $classInfo['path'],
+						'line' => $memberLine,
+						'ancestor_class' => $ancestor['class'],
+						'ancestor_path' => $ancestor['path'],
+						'ancestor_line' => $ancestor['line'],
+						'message' => 'Inherited ' . $memberKind . ' override `' . $classFqcn . '::' . $memberName . '` conflicts with ancestor `' . $ancestor['class'] . '::' . $memberName . '`.',
+					];
+				}
+			}
+		}
+		usort($diagnostics, static fn (array $left, array $right): int => strcmp($left['message'], $right['message']));
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $symbol */
+	private function duplicateMessage(array $symbol): string
+	{
+		$kind = (string) ($symbol['kind'] ?? 'symbol');
+		$scope = (string) ($symbol['scope'] ?? '');
+		$name = (string) ($symbol['name'] ?? '');
+		return $scope === ''
+			? 'Duplicate ' . $kind . ' declaration `' . $name . '` in root scope.'
+			: 'Duplicate ' . $kind . ' declaration `' . $name . '` in scope `' . $scope . '`.';
+	}
+
+	private function dependencyMessage(string $kind, string $target, ?string $owner, int $matchCount): string
+	{
+		$ownerText = $owner !== null && $owner !== '' ? ' for `' . $owner . '`' : '';
+		return $matchCount === 0
+			? 'Unresolved ' . $kind . ' target `' . $target . '`' . $ownerText . '.'
+			: 'Ambiguous ' . $kind . ' target `' . $target . '`' . $ownerText . '.';
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @return array<string,array<string,mixed>> */
+	private function buildClassCatalog(array $fileSummaries, string $projectRoot): array
+	{
+		$catalog = [];
+		foreach ($fileSummaries as $sourceKey => $summary) {
+			$path = (string) ($summary['path'] ?? $sourceKey);
+			foreach (($summary['root_classes'] ?? []) as $class) {
+				if (is_array($class) && (string) ($class['name'] ?? '') !== '') {
+					$catalog[(string) $class['name']] = $this->makeClassCatalogEntry($class, '', $sourceKey, $path, $projectRoot);
+				}
+			}
+			foreach (($summary['namespaces'] ?? []) as $namespace) {
+				if (!is_array($namespace)) {
+					continue;
+				}
+				$namespaceName = (string) ($namespace['name'] ?? '');
+				foreach (($namespace['classes'] ?? []) as $class) {
+					if (!is_array($class)) {
+						continue;
+					}
+					$className = (string) ($class['name'] ?? '');
+					if ($className === '') {
+						continue;
+					}
+					$fqcn = $namespaceName === '' ? $className : $namespaceName . '\\' . $className;
+					$catalog[$fqcn] = $this->makeClassCatalogEntry($class, $namespaceName, $sourceKey, $path, $projectRoot);
+				}
+			}
+		}
+		return $catalog;
+	}
+
+	/** @param array<string,mixed> $class @return array<string,mixed> */
+	private function makeClassCatalogEntry(array $class, string $namespace, string $sourceKey, string $path, string $projectRoot): array
+	{
+		$methods = [];
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method) && (string) ($method['name'] ?? '') !== '') {
+				$methods[(string) $method['name']] = (int) ($method['line'] ?? 0);
+			}
+		}
+		$properties = [];
+		foreach (($class['properties'] ?? []) as $property) {
+			if (is_array($property) && (string) ($property['name'] ?? '') !== '') {
+				$properties[(string) $property['name']] = (int) ($property['line'] ?? 0);
+			}
+		}
+		return [
+			'name' => (string) ($class['name'] ?? ''),
+			'fqcn' => $namespace === '' ? (string) ($class['name'] ?? '') : $namespace . '\\' . (string) ($class['name'] ?? ''),
+			'namespace' => $namespace,
+			'path' => $path,
+			'source_key' => $sourceKey,
+			'path_key' => $this->pathMapper->sourceKey($projectRoot, $path),
+			'line' => (int) ($class['line'] ?? 0),
+			'parent_class' => isset($class['parent_class']) && is_string($class['parent_class']) ? $class['parent_class'] : null,
+			'methods' => $methods,
+			'properties' => $properties,
+		];
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog */
+	private function findClassInfoBySymbol(array $classCatalog, string $sourceKey, string $className): ?array
+	{
+		foreach ($classCatalog as $classInfo) {
+			if (is_array($classInfo) && (string) ($classInfo['path_key'] ?? '') === $sourceKey && (string) ($classInfo['name'] ?? '') === $className) {
+				return $classInfo;
+			}
+		}
+		return null;
+	}
+
+	/** @param array<string,mixed> $classInfo @param array<string,array<string,mixed>> $classCatalog @param array<string,list<array<string,mixed>>> $lookup @return array{method:array<string,array{class:string,path:string,line:int}>,property:array<string,array{class:string,path:string,line:int}>} */
+	private function collectAncestorMembers(array $classInfo, array $classCatalog, array $lookup, string $projectRoot, array $visited = []): array
+	{
+		$members = ['method' => [], 'property' => []];
+		$classFqcn = (string) ($classInfo['fqcn'] ?? '');
+		if ($classFqcn === '' || isset($visited[$classFqcn])) {
+			return $members;
+		}
+		$visited[$classFqcn] = true;
+		foreach (['method', 'property'] as $memberKind) {
+			foreach (($classInfo[$memberKind . 's'] ?? []) as $name => $line) {
+				$members[$memberKind][(string) $name] = ['class' => $classFqcn, 'path' => (string) ($classInfo['path'] ?? ''), 'line' => (int) $line];
+			}
+		}
+		$parentName = isset($classInfo['parent_class']) && is_string($classInfo['parent_class']) ? $classInfo['parent_class'] : '';
+		if ($parentName === '') {
+			return $members;
+		}
+		$parentMatches = $this->dependencyResolver->resolveDependencyTarget('extends', $parentName, $lookup);
+		if (count($parentMatches) !== 1) {
+			return $members;
+		}
+		$parentPath = (string) ($parentMatches[0]['path'] ?? '');
+		if ($parentPath === '') {
+			return $members;
+		}
+		$parentInfo = $this->findClassInfoBySymbol($classCatalog, $this->pathMapper->sourceKey($projectRoot, $parentPath), (string) ($parentMatches[0]['name'] ?? ''));
+		if ($parentInfo === null) {
+			return $members;
+		}
+		$parentMembers = $this->collectAncestorMembers($parentInfo, $classCatalog, $lookup, $projectRoot, $visited);
+		foreach (['method', 'property'] as $memberKind) {
+			foreach ($parentMembers[$memberKind] as $name => $memberInfo) {
+				if (!isset($members[$memberKind][$name])) {
+					$members[$memberKind][$name] = $memberInfo;
+				}
+			}
+		}
+		return $members;
+	}
+}
