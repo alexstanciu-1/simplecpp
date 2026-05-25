@@ -1,59 +1,79 @@
 Doc Status: planning
 
-# STAN LSP Handoff
+# STAN Handoff
 
 Date: 2026-05-25
 Branch: `feature/stan-advisory-semantic-pass`
-Latest commit at handoff: `36d71bf` `Add STAN LSP server scaffold and VS Code smoke flow`
+Latest checked commit during handoff refresh: `14c2191`
 
 ## Purpose
 
-This note is a short handoff for the next chat so work can continue without re-discovery.
+This note is the restart point for the next chat.
+
+It now covers both:
+
+- STAN as VS Code/editor support
+- STAN as `scpp build` pre-build support
+
+This is planning/handoff context only.
+It is not semantic authority.
 
 ## Current Outcome
 
-STAN is no longer only a CLI advisory analyzer. It now has:
+STAN is no longer only a one-shot CLI advisory analyzer.
 
-- a persistent LSP-style server entrypoint
-- workspace-session analysis with source overrides
+It now has:
+
+- a working LSP-style server path
+- VS Code integration merged into the PHS extension
 - editor-facing diagnostics, hover, definition, references, and document symbols
-- unsaved-buffer overlay handling
-- publish-diagnostics notifications
-- a VS Code client scaffold
-- a bundled smoke workspace for manual testing
+- a multi-file smoke workspace for manual editor testing
+- a per-project STAN worker mode
+- project-local STAN status/report/request/heartbeat files
+- `scpp build` pre-build STAN consultation
+- a conservative `compile-errors` bucket that can stop builds early
+- a `--no-stan` bypass for early-release escape-hatch use
 
 ## Main Files
 
-Server / STAN bridge:
+### CLI / build / worker integration
 
-- [bin/stan_lsp_server.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/bin/stan_lsp_server.php)
 - [bin/project_services.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/bin/project_services.php)
-- [generators/php/src/Stan/StanLspServerSession.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanLspServerSession.php)
+- [bin/stan_lsp_server.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/bin/stan_lsp_server.php)
+- [specs/planning/stan_build_worker_integration_plan_2026_05_25.md](/home/alexv/__AI/simple_cpp/simple_cpp_02/specs/planning/stan_build_worker_integration_plan_2026_05_25.md)
+
+### STAN core / session / semantics
+
+- [generators/php/src/Stan/StanRunner.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanRunner.php)
 - [generators/php/src/Stan/StanWorkspaceSession.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanWorkspaceSession.php)
-- [generators/php/src/Stan/StanPositionResolver.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanPositionResolver.php)
-- [generators/php/src/Stan/StanResultAssembler.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanResultAssembler.php)
-
-Session / context / source-unit layer:
-
 - [generators/php/src/Stan/StanWorkspaceContext.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanWorkspaceContext.php)
 - [generators/php/src/Stan/StanWorkspaceContextBuilder.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanWorkspaceContextBuilder.php)
-- [generators/php/src/Stan/StanSourceUnit.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanSourceUnit.php)
-- [generators/php/src/Stan/StanSourceCatalogBuilder.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanSourceCatalogBuilder.php)
-- [generators/php/src/Stan/StanSourceMetaBuilder.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanSourceMetaBuilder.php)
-
-Diagnostics / tests:
-
+- [generators/php/src/Stan/StanResultAssembler.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanResultAssembler.php)
+- [generators/php/src/Stan/StanSemanticPass.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanSemanticPass.php)
+- [generators/php/src/Stan/StanDiagnosticCollector.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanDiagnosticCollector.php)
 - [generators/php/src/Stan/StanDiagnosticEnricher.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanDiagnosticEnricher.php)
+- [generators/php/src/Stan/StanExpressionTypeResolver.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanExpressionTypeResolver.php)
+- [generators/php/src/Stan/StanStateStore.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanStateStore.php)
+- [generators/php/src/Stan/StanLspServerSession.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanLspServerSession.php)
+- [generators/php/src/Stan/StanPositionResolver.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanPositionResolver.php)
+- [generators/php/src/Stan/StanSymbolIndexBuilder.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/generators/php/src/Stan/StanSymbolIndexBuilder.php)
+
+### VS Code extension
+
+- [tools/vscode_phs_extension/extension/package.json](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/extension/package.json)
+- [tools/vscode_phs_extension/extension/src/extension.js](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/extension/src/extension.js)
+- [tools/vscode_phs_extension/extension/README.md](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/extension/README.md)
+- [tools/vscode_phs_extension/extension/smoke-workspace.code-workspace](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/extension/smoke-workspace.code-workspace)
+- [tools/vscode_phs_extension/testdata/stan_smoke_workspace/main.phs](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/testdata/stan_smoke_workspace/main.phs)
+- [tools/vscode_phs_extension/testdata/stan_smoke_workspace/lib/helpers.phs](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/testdata/stan_smoke_workspace/lib/helpers.phs)
+- [tools/vscode_phs_extension/testdata/stan_smoke_workspace/lib/models.phs](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/testdata/stan_smoke_workspace/lib/models.phs)
+
+### Tests
+
 - [tests/tools/test_scpp_stan_diagnostics_session.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/tests/tools/test_scpp_stan_diagnostics_session.php)
-
-VS Code scaffold:
-
-- [tools/vscode-stan-lsp/package.json](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode-stan-lsp/package.json)
-- [tools/vscode-stan-lsp/extension.js](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode-stan-lsp/extension.js)
-- [tools/vscode-stan-lsp/README.md](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode-stan-lsp/README.md)
-- [tools/vscode-stan-lsp/.vscode/launch.json](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode-stan-lsp/.vscode/launch.json)
-- [tools/vscode-stan-lsp/smoke-workspace.code-workspace](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode-stan-lsp/smoke-workspace.code-workspace)
-- [tools/vscode-stan-lsp/smoke-workspace/main.phs](/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode-stan-lsp/smoke-workspace/main.phs)
+- [tests/tools/test_scpp_stan_build_worker_integration.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/tests/tools/test_scpp_stan_build_worker_integration.php)
+- [tests/tools/test_scpp_build_reuse_integration.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/tests/tools/test_scpp_build_reuse_integration.php)
+- [tests/tools/test_scpp_build_options.php](/home/alexv/__AI/simple_cpp/simple_cpp_02/tests/tools/test_scpp_build_options.php)
 
 ## What Works
 
@@ -67,7 +87,7 @@ VS Code scaffold:
 - chain/member/property/call diagnostics
 - local flow and no-morphing checks
 
-### LSP-style server
+### LSP/editor support
 
 - `initialize`, `shutdown`, `exit`
 - `textDocument/diagnostic`
@@ -81,57 +101,127 @@ VS Code scaffold:
 - `textDocument/didSave`
 - `workspace/didChangeWatchedFiles`
 - `textDocument/publishDiagnostics`
+- true stdio LSP framing with `Content-Length`
+- unsaved-buffer overlays
+- request-level snapshot reuse
 
-### Important bridge behaviors
+### VS Code integration
 
-- unsaved-buffer overlays are supported
-- request-level snapshot reuse exists
-- `_debug` metadata exists for one-shot and serve-mode inspection
-- standard `textDocument/*` aliases return LSP-shaped payloads
-- legacy `stan/*` methods still exist for internal/dev use
+- extension now lives in `tools/vscode_phs_extension/extension`
+- STAN client is merged into the PHS extension
+- syntax highlighting and static completion still exist
+- WSL workflow works from Windows VS Code with `Remote - WSL`
+- diagnostics / definition / references / hover were manually exercised
+- hover now includes proper function/method signatures for smoke cases
+- duplicate hover diagnostics were cleaned up
+- `Simple C++: Create Project`
+- `Simple C++: Build Project`
+- `Simple C++: Run Project`
+- `Simple C++: Restart STAN Server`
+- `Simple C++: Open Smoke File`
 
-### VS Code scaffold
+### Build integration
 
-- launches one client per workspace folder
-- has WSL-aware server launch logic for `\\wsl$\...` workspaces
-- uses a smoke workspace for manual testing
-- in development mode it tries to auto-open `smoke-workspace/main.phs`
-- has a manual command: `Simple C++: Open Smoke File`
+- `scpp stan worker`
+- project-local STAN files under `.prism/cache/`:
+  - `stan_status.json`
+  - `stan_report.json`
+  - `stan_worker.json`
+  - `stan_request.json`
+- `scpp build` now consults STAN before continuing
+- if no live worker exists, build does an inline STAN refresh and publishes the same files
+- if a live worker exists, build requests refresh and waits briefly for fresh state
+- conservative `compile-errors` can stop builds before later C++ compiler failure
+- advisory findings only print as summary during build
+- `scpp build --no-stan` bypass exists
+- `scpp run --no-stan` also works through the shared build-option path
 
 ## Important Fixes Already Made
 
-### 1. Startup crash fix
+### 1. LSP transport fix
 
-The earlier server crash was caused by assuming startup `cwd` already contained `prism.json`.
+The server originally read newline JSON only.
+
+This is fixed by:
+
+- proper LSP stdio framing support in the STAN serve loop
+- compatibility with the legacy newline-based internal test path
+
+### 2. Startup initialization fix
+
+The earlier server crash assumed startup `cwd` already contained `prism.json`.
 
 This is fixed by:
 
 - lazy project initialization from `rootUri` / `workspaceFolders` / document URIs
 - removing the hard dependency on startup `getcwd()`
 
-### 2. WSL / Windows launch hardening
+### 3. WSL / Windows launch hardening
 
-The VS Code scaffold now detects `\\wsl$\...` workspace paths and tries to launch the server via:
+The VS Code client handles WSL-aware launch better.
 
-- `wsl.exe -d <distro> --cd <linux-workspace> php <linux-server-script>`
+The recommended workflow is:
 
-instead of relying on Windows PHP + UNC path startup.
+- Windows VS Code
+- `Remote - WSL`
+- open repo from WSL with `code .`
 
-### 3. Usage-site navigation improvement
+### 4. Usage-site navigation / hover improvement
 
-`definition` and `references` are no longer limited to declaration lines only.
+`definition`, `references`, and `hover` no longer work only on declaration lines.
 
 Current behavior:
 
 - exact declaration match when possible
 - fallback to identifier-under-cursor
-- simple textual usage-site references across indexed files
+- signature-aware hover for smoke-workspace functions/methods
 
-This is still conservative, but materially better than declaration-only matching.
+### 5. STAN build preflight shape
+
+The current build preflight avoids unnecessary worker churn:
+
+- if there is no live worker, build runs STAN inline
+- if there is a live worker, build reuses/request-polls that worker
+
+This removed the earlier temp-project cleanup race and unnecessary slowdown from build-triggered worker spawning.
+
+## Current Build-Bucket Policy
+
+The first conservative mapping is:
+
+### `compile-errors`
+
+- `duplicate_declaration`
+- `unresolved_call`
+- `unresolved_static_call`
+- `unresolved_method_call`
+- `unresolved_property_write`
+- `unresolved_property_read`
+
+### `stan-errors`
+
+- `unresolved_dependency`
+- `ambiguous_dependency`
+- `override_declaration`
+- `argument_type_mismatch`
+- `argument_count_mismatch`
+- `static_instance_misuse`
+- `missing_return`
+- `invalid_property_read`
+
+### `stan-warnings`
+
+- current warning-grade findings such as:
+  - `local_type_morph_warning`
+  - `property_type_morph_warning`
+  - `initialization_warning`
+  - chain-resolution warning families
+
+This mapping is intentionally narrow for early release.
 
 ## Validation Done
 
-### Core regression test
+### Core STAN/LSP regression
 
 Run:
 
@@ -139,7 +229,7 @@ Run:
 php tests/tools/test_scpp_stan_diagnostics_session.php
 ```
 
-This currently covers:
+This covers:
 
 - session `run`
 - `runWithOverrides`
@@ -147,108 +237,122 @@ This currently covers:
 - one-shot CLI bridge
 - JSON-RPC bridge
 - serve-mode bridge
-- debug metadata hit/miss
 - hover / definition / references / document symbols
 - lazy server initialization from `rootUri`
 - overlay lifecycle
 - watched-file refresh notifications
 
-### VS Code scaffold check
+### STAN build-worker regression
 
 Run:
 
 ```bash
-cd tools/vscode-stan-lsp
-npm run check --cache /tmp/npm-simplecpp-cache
+php tests/tools/test_scpp_stan_build_worker_integration.php
 ```
 
-### Smoke workspace STAN check
+This covers:
+
+- advisory findings summarized during build
+- build-blocking STAN compile-errors
+- project-local STAN report/state publication
+- `--no-stan` bypass behavior
+
+### Broader build regression
 
 Run:
 
 ```bash
-php /home/alexv/__AI/simple_cpp/simple_cpp_02/bin/scpp.php stan
+php tests/tools/test_scpp_build_reuse_integration.php
+php tests/tools/test_scpp_build_options.php
 ```
 
-from:
-
-```bash
-/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode-stan-lsp/smoke-workspace
-```
-
-Expected:
-
-- `Warnings: 1`
-- one local morph warning on `$value = helper();`
+These currently pass with the new STAN preflight in place.
 
 ## Manual Smoke State
 
-Manual testing reached this point:
+Manual VS Code smoke reached a good point:
 
-- Extension Development Host opens
+- `Remote - WSL` workflow is working
+- extension host launches
 - smoke workspace opens
-- `main.phs` can auto-open in dev mode
-- startup crash path is no longer the primary blocker
+- `.phs` recognition works
+- diagnostics appear in Problems
+- definition works
+- references works
+- hover works and now includes signature data
+- `Simple C++: Run Project` executes in WSL
 
-What still needs manual confirmation in the next chat:
+One subtle point already clarified for the user:
 
-1. hover on `helper()`
-2. go-to-definition on `helper()`
-3. references on `helper()`
-4. Problems pane showing the one expected warning
-5. output channel showing healthy client/server startup
+- `F5` in the extension project window launches the extension host
+- `F5` inside the Extension Development Host tries to debug the open `.phs` file, which is not the intended run path
+
+The intended run path in the dev host is:
+
+- command palette commands like `Simple C++: Run Project`
 
 ## Known Caveats
 
-### 1. `node_modules` is committed in the VS Code scaffold
+### 1. Compile-error mapping is intentionally incomplete
 
-The last commit includes `tools/vscode-stan-lsp/node_modules`.
+The current mapping is conservative on purpose.
 
-This is not ideal long-term.
+It is good for early release but not exhaustive.
 
-Likely follow-up:
+### 2. `scpp stan` warm-report path is summary-oriented
 
-- add proper ignore rules
-- remove vendored client deps from git
-- rely on `npm install`
+`scpp stan` can now reuse the warm report when the source fingerprint matches, but the user-facing output is still the traditional summary lines rather than a richer bucket-focused display.
 
-### 2. Navigation semantics are still narrow
+### 3. Worker watch model is still simple
 
-Current references are better, but still not true semantic reference analysis.
+The worker uses:
 
-Good next upgrade area:
+- project-local files
+- polling
+- lock file coordination
 
-- tie references more directly to semantic usage sites
-- reduce textual false positives
+It is deliberately simple for now and not yet a sophisticated OS-native watcher.
 
-### 3. Manual GUI verification is still partial
+### 4. Build fingerprint currently covers only root-project sources
 
-The server/client boot path looks much better, but full editor UX still needs human confirmation.
+The current STAN build fingerprint includes:
+
+- the root project's `prism.json`
+- the root project's participating `*.phs` / compatible `*.php` files
+
+It does not yet include dependency project source fingerprints.
+
+That is acceptable for the current early release, but QA should treat dependency-only edits as a known warm-cache freshness limitation for STAN-backed `scpp build`.
+
+### 5. VS Code release/publish work is still separate
+
+The extension works in dev/smoke mode.
+
+Release packaging / listing / metadata polish is still a separate task.
 
 ## Highest-Signal Next Steps
 
-### Server / semantics
+### STAN / build
 
-1. strengthen reference semantics from true usage sites
-2. improve token-accurate hover / definition resolution
-3. consider `publishDiagnostics` batching policy for larger workspaces
+1. keep refining compile-error mapping from real diagnostic samples
+2. decide whether `scpp stan` should expose build buckets directly
+3. decide whether worker mode should evolve from polling to stronger file-watch behavior
 
-### VS Code client
+### VS Code
 
-1. visible status signal like “STAN connected”
-2. clearer output-channel logging on startup
-3. possibly a dev-only smoke command palette flow
-4. multi-root polish beyond one-client-per-folder
+1. more manual smoke on richer multi-file cases
+2. package/release polish for the merged PHS + STAN extension
+3. docs cleanup around normal-user install flow
 
 ### Repo hygiene
 
-1. clean up committed `node_modules`
-2. decide whether the scaffold should stay JS-only or move to TS
+1. update docs/spec text to mention `--no-stan`
+2. continue normalizing extension release metadata
 
 ## Suggested Resume Prompt
 
 When starting the new chat, something like this should be enough:
 
 > Continue from `specs/planning/stan_lsp_handoff_2026_05_25.md`.  
-> Focus first on confirming the VS Code smoke pass and then improve navigation/diagnostics behavior.
-
+> STAN LSP/editor support and STAN build-worker integration are both in.  
+> Please continue from the current build-bucket / VS Code release state.

@@ -5,9 +5,9 @@
       "name": "Run Simple C++ Extension",
       "type": "extensionHost",
       "request": "launch",
-      "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}"
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "${workspaceFolder}/smoke-workspace.code-workspace"
       ],
       "outFiles": []
     }

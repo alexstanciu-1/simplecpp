@@ -1,6 +1,6 @@
 # Simple C++ VS Code Extension
 
-This folder contains the Phase 1 scaffold for the `Simple C++` Visual Studio Code extension.
+This folder contains the current `Simple C++` Visual Studio Code extension workspace.
 
 ## Identity
 
@@ -11,16 +11,18 @@ This folder contains the Phase 1 scaffold for the `Simple C++` Visual Studio Cod
 
 ## Phase 1 Scope
 
-Phase 1 provides:
+Current functionality provides:
 
+- project creation through `scpp init`
 - `.phs` language registration
 - editor language configuration
 - starter syntax highlighting
 - strict-mode snippets
 - simple `scpp` workflow commands
 - context-aware static completion for keywords, types, builtins, and visible variables
+- STAN-backed diagnostics, hover, definition, references, and document symbols
 
-Later phases can add analyzer-backed completion, hover, definitions, symbols, and richer diagnostics.
+Later phases can still add richer analyzer-backed completion and deeper semantic editing features.
 
 ## Layout
 
@@ -29,6 +31,7 @@ Later phases can add analyzer-backed completion, hover, definitions, symbols, an
 - `syntaxes/`: TextMate grammar
 - `snippets/`: snippet catalog
 - `src/`: lightweight extension host code
+- `smoke-workspace.code-workspace`: debug workspace for STAN smoke testing
 - `docs/`: local load/test notes
 
 ## Local Development
@@ -36,6 +39,7 @@ Later phases can add analyzer-backed completion, hover, definitions, symbols, an
 - open this folder in VS Code
 - press `F5` to launch an Extension Development Host
 - use `Ctrl+Space` in a `.phs` file to test static completion
+- use the bundled smoke workspace to test STAN diagnostics and navigation
 
 Helpful files:
 
@@ -46,6 +50,7 @@ Helpful files:
 
 Helpful script:
 
+- `npm run check`
 - `npm run package:check`
 
 That packaging helper expects `npx` access to `@vscode/vsce` in the local environment.
@@ -57,4 +62,4 @@ The repository includes a ready-to-use VS Code debug configuration.
 1. Open this extension folder in VS Code.
 2. Press `F5`.
 3. Choose `Run Simple C++ Extension` if prompted.
-4. VS Code should open an Extension Development Host window.
+4. VS Code should open an Extension Development Host window on the bundled smoke workspace.

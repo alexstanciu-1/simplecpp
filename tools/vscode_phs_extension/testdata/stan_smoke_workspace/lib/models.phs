@@ -1,0 +1,13 @@
+class DemoUser
+{
+	public string $name = "";
+	public int $id = 0;
+}
+
+class SampleGreeter
+{
+	public function greet(string $label): string
+	{
+		return "hello " . $label;
+	}
+}

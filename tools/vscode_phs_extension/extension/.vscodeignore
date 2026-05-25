@@ -1,3 +1,4 @@
 docs/**
 testdata/**
 jsconfig.json
+smoke-workspace.code-workspace

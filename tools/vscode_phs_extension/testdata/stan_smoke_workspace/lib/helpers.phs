@@ -1,0 +1,12 @@
+function helper_name(string $name, int $id): string
+{
+	return $name . " #" . $id;
+}
+
+function build_demo_user(): DemoUser
+{
+	$user = new DemoUser();
+	$user->name = "alex";
+	$user->id = 7;
+	return $user;
+}

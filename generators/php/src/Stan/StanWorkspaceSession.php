@@ -298,7 +298,7 @@ final class StanWorkspaceSession
 			$line,
 			$column,
 		);
-		$bestSymbol = $this->positionResolver->findBestSymbolAtPosition($symbolIndex, $documentPath, $line, $column);
+		$bestSymbol = $this->resolveNavigationTarget($symbolIndex, $documentPath, $line, $column);
 
 		if ($bestSymbol === null && $matchingDiagnostics === []) {
 			return null;
@@ -312,6 +312,7 @@ final class StanWorkspaceSession
 				'scope' => (string) ($bestSymbol['scope'] ?? ''),
 				'owner_class' => $bestSymbol['owner_class'] ?? null,
 				'line' => (int) ($bestSymbol['line'] ?? 0),
+				'signature' => (string) ($bestSymbol['signature'] ?? ''),
 			];
 		}
 
