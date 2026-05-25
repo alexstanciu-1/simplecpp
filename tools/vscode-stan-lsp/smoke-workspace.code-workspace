@@ -1,0 +1,10 @@
+{
+  "folders": [
+    {
+      "path": "smoke-workspace"
+    }
+  ],
+  "settings": {
+    "files.autoSave": "off"
+  }
+}
