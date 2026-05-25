@@ -9,6 +9,31 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.62 - 2026-05-25
+
+### Additions
+
+- Added STAN build-worker regression coverage for the live-worker request/heartbeat/status/report handshake used by warm `scpp build` runs.
+- Added editor/navigation metadata so STAN hover payloads can surface function, method, and property signatures in the merged VS Code extension workflow.
+- Added a bundled multi-file STAN smoke workspace, npm check script, and merged extension-host commands for the repo-local `Simple C++` VS Code extension workspace.
+
+### Fixes
+
+- Fixed `scpp build`/`scpp run` release guidance so the normative build spec and STAN handoff now document the active STAN pre-build check, the `--no-stan` bypass, and the current root-project-only fingerprint limitation.
+- Fixed the VS Code extension packaging/layout by consolidating the standalone `tools/vscode-stan-lsp` scaffold into `tools/vscode_phs_extension/extension`, wiring in STAN-backed diagnostics/navigation commands, and removing the obsolete standalone extension tree.
+- Fixed STAN editor hover/navigation output so symbol-indexed functions, methods, and properties preserve enough signature/type detail for richer hover results in smoke cases.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- `scpp build` and `scpp run` now treat STAN as a normal pre-build check unless `--no-stan` is passed explicitly for that invocation.
+- Warm STAN reuse currently fingerprints only the root project's `prism.json` plus root-project `*.phs` / compatible `*.php` sources; dependency-only edits remain a known early-release freshness limitation until a later follow-up expands the fingerprint.
+- VS Code smoke/development work should now use `tools/vscode_phs_extension/extension` and the bundled `smoke-workspace.code-workspace` instead of the old standalone `tools/vscode-stan-lsp` folder.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this release to reflect the shipped STAN-backed build workflow and `--no-stan` escape-hatch guidance.
+
 ## 0.1.61 - 2026-05-22
 
 ### Additions

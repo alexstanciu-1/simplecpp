@@ -86,6 +86,9 @@ For runtime rebuilds, keep this model in mind:
 - plain `scpp build` / `scpp run` reuse runtime artifacts by default
 - `scpp build --build-runtime` and `scpp run --build-runtime` rebuild the runtime for the current build/invocation through the project-local/custom path
 - `scpp update` and `scpp runtime-build` refresh the shared reusable runtime cache
+- plain `scpp build` / `scpp run` also consult the current STAN project state before generation/compilation unless `--no-stan` is passed for that invocation
+- STAN `compile-errors` stop the build before native generation/compilation continues, while advisory STAN findings print a short summary and allow the build to continue
+- if a strict project needs a one-off bypass while STAN is still being refined, `scpp build --no-stan` and `scpp run --no-stan` remain the explicit escape hatch
 
 After failures, prefer saved diagnostics:
 

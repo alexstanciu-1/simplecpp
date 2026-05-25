@@ -1,6 +1,6 @@
 # Load And Test In VS Code
 
-This extension is currently a repo-local Phase 1 scaffold for `Simple C++`.
+This extension is currently the repo-local `Simple C++` extension workspace with both language support and STAN integration.
 
 ## Prerequisites
 
@@ -13,15 +13,16 @@ This extension is currently a repo-local Phase 1 scaffold for `Simple C++`.
 1. Open this repository in Visual Studio Code.
 2. Open the `tools/vscode_phs_extension/extension/` folder in a separate VS Code window, or keep it visible in the current workspace.
 3. Open the extension folder as the active extension project:
-   - `/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/vscode_phs_extension/extension`
+   - `/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/extension`
 4. Press `F5` in VS Code to launch an Extension Development Host window.
-5. In the Extension Development Host window, open the fixture project file:
-   - `/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/vscode_phs_extension/testdata/completion_project/main.phs`
+5. In the Extension Development Host window, the bundled STAN smoke workspace should open automatically.
+6. Open the fixture project file when you want to test static completion:
+   - `/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/testdata/completion_project/main.phs`
 
 Recommended fixture companions:
 
-- `/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/vscode_phs_extension/testdata/completion_project/lib.phs`
-- `/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/vscode_phs_extension/testdata/completion_project/prism.json`
+- `/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/testdata/completion_project/lib.phs`
+- `/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/testdata/completion_project/prism.json`
 
 ## What To Check
 
@@ -51,6 +52,7 @@ Try these snippet prefixes in a `.phs` file:
 
 Open the Command Palette and run:
 
+- `Simple C++: Create Project`
 - `Simple C++: Build Project`
 - `Simple C++: Run Project`
 - `Simple C++: Doctor`
@@ -60,9 +62,23 @@ Each command should open a VS Code terminal named `Simple C++` and run the match
 
 The fixture project at:
 
-- `/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/vscode_phs_extension/testdata/completion_project/`
+- `/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/testdata/completion_project/`
 
 is the canonical Phase 1 editor-check target.
+
+### STAN integration
+
+Open the bundled smoke workspace file:
+
+- `/home/alexv/__AI/simple_cpp/simple_cpp_02/tools/vscode_phs_extension/extension/smoke-workspace.code-workspace`
+
+Then confirm:
+
+- diagnostics show one warning on `$value = helper();`
+- hover on `helper()` returns content
+- go-to-definition on `helper()` jumps to the helper declaration
+- references on `helper()` includes the declaration and usage
+- `Simple C++: Restart STAN Server` works from the Command Palette
 
 ### Static completion
 
@@ -83,12 +99,9 @@ Context expectations:
 
 ## Current Limits
 
-This Phase 1 extension does not yet provide:
+This extension still does not yet provide:
 
-- project-aware symbols
 - member completion after `->`
-- hover details
-- go to definition
-- analyzer-backed diagnostics
+- analyzer-backed completion
 
-Those should come later through repository-owned analyzer tooling rather than editor-only heuristics.
+Analyzer-backed diagnostics and navigation now come from the STAN language server bridge.

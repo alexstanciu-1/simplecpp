@@ -194,6 +194,24 @@ The lower-level build service path used by helpers/tests also defaults to reuse 
 - `scpp run` reuses runtime and dependencies by default, then executes the primary output
 - both commands accept `--entry=<path>` to build or run a specific project-local source file instead of the configured `prism.json` entrypoint for that invocation only
 
+### STAN pre-build check
+
+`scpp build` and `scpp run` also consult the current STAN project state before generation/compilation unless the caller explicitly passes `--no-stan`.
+
+Current v1 behavior:
+
+- if a fresh matching STAN report already exists for the current project source fingerprint, the build reuses it
+- if a live STAN worker exists but its report is stale, the build requests a refresh and waits briefly for a matching ready result
+- if no live STAN worker exists, the build performs an inline STAN refresh and publishes the same project-local status/report files used by worker mode
+- if STAN reports `compile-errors`, the build stops before C++ generation/compilation continues
+- if STAN reports only advisory findings, the build continues and prints a short static-analysis summary
+- `--no-stan` bypasses this STAN pre-build check for that invocation only
+
+Current limitation for early testing:
+
+- the STAN source fingerprint currently covers the root project's `prism.json` plus the root project's participating `*.phs` / compatible `*.php` files
+- dependency project source changes are not yet part of that fingerprint, so warm STAN reuse can be stale across dependency-only edits until the root project is reanalyzed again
+
 ## `scpp clean` behavior
 
 `scpp clean` removes generated project state so the next `scpp build` is a cold rebuild.

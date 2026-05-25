@@ -1,0 +1,13 @@
+
+function main(): void
+{
+	$value = null;
+	$user = build_demo_user();
+	$greeter = new SampleGreeter();
+	$label = helper_name($user->name, $user->id);
+	// $value = $greeter->greet($label);
+}
+
+main();
+
+echo "\nDONE\n\n";

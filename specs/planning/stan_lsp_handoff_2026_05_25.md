@@ -313,7 +313,18 @@ The worker uses:
 
 It is deliberately simple for now and not yet a sophisticated OS-native watcher.
 
-### 4. VS Code release/publish work is still separate
+### 4. Build fingerprint currently covers only root-project sources
+
+The current STAN build fingerprint includes:
+
+- the root project's `prism.json`
+- the root project's participating `*.phs` / compatible `*.php` files
+
+It does not yet include dependency project source fingerprints.
+
+That is acceptable for the current early release, but QA should treat dependency-only edits as a known warm-cache freshness limitation for STAN-backed `scpp build`.
+
+### 5. VS Code release/publish work is still separate
 
 The extension works in dev/smoke mode.
 
