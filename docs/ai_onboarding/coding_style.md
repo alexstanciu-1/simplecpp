@@ -5,6 +5,12 @@ Purpose: give Codex and human contributors a short default style guide for writi
 
 This file is guidance, not a new semantic authority.
 
+Profile scope:
+
+- this guide uses strict `.phs` authoring as the default posture for new code
+- older legacy-compatible syntax may still appear elsewhere in the repo, but it is not the recommended style here
+- typed docblock declarations such as `$count /** int */ = 0;` are legacy compatibility syntax and should not be used as normal strict authoring
+
 Primary references:
 
 - `specs/strict_mode.md`
@@ -45,7 +51,7 @@ function add(int $left, int $right): int {
 	return $left + $right;
 }
 
-$count /** int */ = $data["count"];
+$count int = $data["count"];
 ```
 
 Less preferred:
@@ -71,7 +77,7 @@ Prefer:
 Good:
 
 ```php
-$id /** int */ = $row["id"];
+$id int = $row["id"];
 ```
 
 Less preferred:
@@ -170,7 +176,7 @@ $items = [];
 $items[] = 1;
 $items[] = 2;
 
-$name /** string */ = $row["name"];
+$name string = $row["name"];
 ```
 
 Guidance:

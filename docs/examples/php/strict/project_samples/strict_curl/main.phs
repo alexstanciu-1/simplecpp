@@ -1,12 +1,12 @@
 $root = "strict_curl_root";
 $path = $root . "/payload.bin";
-$payload /** string */ = "";
-$written /** int */ = 0;
-$real /** string */ = "";
-$err /** error */;
-$ok /** bool */ = false;
-$ch /** curl_handle */;
-$resp /** curl_response */;
+$payload string = "";
+$written int = 0;
+$real string = "";
+$err error;
+$ok bool = false;
+$ch curl_handle;
+$resp curl_response;
 
 if (!fs_mkdir($root)) {
 	echo "MKDIR_FAIL\n";

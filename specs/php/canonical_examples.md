@@ -263,7 +263,7 @@ foreach (scandir($dir) as $file) {
 
 **Also preferred when the payload is reused**
 ```php
-$files /** hash<mixed> */ = [];
+$files hash<mixed> = [];
 
 if (!take($files, scandir($dir))) {
 	return;
