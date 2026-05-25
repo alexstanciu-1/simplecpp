@@ -135,6 +135,30 @@ if (isset($row["count"])) {
 }
 ```
 
+Treat decoded JSON as a fat-variable boundary, not as the preferred shape for the rest of strict code.
+
+- `json_decode(...)` is a normal place to accept broad dynamic input
+- when the expected payload shape is known, document it locally near that boundary
+- stabilize early into typed locals, typed properties, typed objects, or typed containers
+- keep long-lived `mixed` / `dynamic` values only when the flexibility is intentionally needed later
+
+Example:
+
+```php
+/** decoded row shape:
+ *  - name: string
+ *  - active: bool
+ */
+$row = json_decode($text);
+
+if (isset($row["name"])) {
+	$out->name = $row["name"];
+}
+if (isset($row["active"])) {
+	$out->active = $row["active"];
+}
+```
+
 ## Wrappers
 
 Strict APIs commonly return wrapper-shaped results. Resolve them near a meaningful boundary with `take(...)`.

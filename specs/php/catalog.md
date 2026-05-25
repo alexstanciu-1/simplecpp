@@ -122,9 +122,9 @@ Contract:
 ### Typed containers â€” Stable
 
 ```php
-$list /** vector<int> */ = [1, 2, 3];
-$by_name /** hash<int> */ = ["a" => 1, "b" => 2];
-$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];
+$list vector<int> = [1, 2, 3];
+$by_name hash<int> = ["a" => 1, "b" => 2];
+$by_id hash<string, int> = [0 => "a", 1 => "b"];
 ```
 
 Contract:

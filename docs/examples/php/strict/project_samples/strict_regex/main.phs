@@ -1,4 +1,4 @@
-$err /** error */;
+$err error;
 
 $caps vector<string> = [];
 if (!take($caps, regex_match("/(ab+)-(cd+)/i", "xxAbb-cDDyy"))) {
@@ -16,7 +16,7 @@ if (!take($parts, regex_split("/,/", "a,b,c"))) {
 	echo implode("|", $parts), "\n";
 }
 
-$replaced /** string */ = "";
+$replaced string = "";
 if (!take($replaced, regex_replace("/ab+/i", "X", "ab xx ABB yy"))) {
 	echo "REPLACE_ERROR\n";
 } else {

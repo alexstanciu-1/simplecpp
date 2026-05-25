@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cctype>
 #include <cstdlib>
 #include <cstdio>
 #include <exception>
@@ -230,10 +231,65 @@ inline std::vector<std::string> collect_runtime_debug_trace_lines() {
 	return trace;
 }
 
+inline std::string runtime_error_compact_module_label(std::string_view modulePath) {
+	if (modulePath.empty()) {
+		return "<unknown>";
+	}
+	const std::size_t slashPos = modulePath.find_last_of('/');
+	return slashPos == std::string_view::npos ? std::string(modulePath) : std::string(modulePath.substr(slashPos + 1));
+}
+
+inline std::string runtime_error_trim_copy(std::string value) {
+	while (!value.empty() && std::isspace(static_cast<unsigned char>(value.front())) != 0) {
+		value.erase(value.begin());
+	}
+	while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())) != 0) {
+		value.pop_back();
+	}
+	return value;
+}
+
+inline std::optional<std::string> symbolize_runtime_trace_frame(const runtime_trace_frame_t &frame) {
+#if defined(__linux__) || defined(__APPLE__)
+	const std::string command = "addr2line -C -f -e " + runtime_error_shell_escape(frame.module_path) + " " + frame.relative_address;
+	FILE *pipe = ::popen(command.c_str(), "r");
+	if (pipe == nullptr) {
+		return std::nullopt;
+	}
+	std::string output;
+	char buffer[512];
+	while (::fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+		output += buffer;
+	}
+	::pclose(pipe);
+
+	const std::size_t firstNewline = output.find('\n');
+	if (firstNewline == std::string::npos) {
+		return std::nullopt;
+	}
+	std::string functionName = runtime_error_trim_copy(output.substr(0, firstNewline));
+	std::string location = runtime_error_trim_copy(output.substr(firstNewline + 1));
+	if (functionName.empty() || functionName == "??") {
+		functionName = runtime_error_compact_module_label(frame.module_path);
+	}
+	if (location.empty() || location == "??:0") {
+		return functionName + " @" + frame.relative_address;
+	}
+	return functionName + " at " + runtime_error_normalize_path(location);
+#else
+	(void) frame;
+	return std::nullopt;
+#endif
+}
+
 inline std::vector<std::string> collect_runtime_debug_trace_lines(const std::vector<runtime_trace_frame_t> &frames) {
 	std::vector<std::string> trace;
 	for (const auto &frame : frames) {
-		trace.push_back(frame.module_path + "@" + frame.relative_address);
+		if (auto symbolized = symbolize_runtime_trace_frame(frame); symbolized.has_value()) {
+			trace.push_back(*symbolized);
+			continue;
+		}
+		trace.push_back(runtime_error_compact_module_label(frame.module_path) + " @" + frame.relative_address);
 	}
 	return trace;
 }

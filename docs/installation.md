@@ -170,6 +170,8 @@ scpp build --build-runtime --build-dependencies
 scpp build --force
 ```
 
+`--build-runtime` refreshes the runtime for the current build/invocation. Shared reusable runtime maintenance is handled by `scpp update` and `scpp runtime-build`; explicit custom runtime rebuilds stay on the project-local side.
+
 Remove generated build state for a cold rebuild:
 
 ```bash
@@ -210,6 +212,8 @@ scpp runtime-build --release
 scpp runtime-build --force
 ```
 
+Use `scpp runtime-build` when you want to refresh the shared reusable runtime cache itself. Use `scpp build --build-runtime` when you want the current project build to rebuild its runtime path now.
+
 Pass program arguments after `--` when needed:
 
 ```bash
@@ -220,9 +224,10 @@ Current default behavior:
 
 - `scpp build` reuses existing runtime artifacts and resolved Prism project dependency artifacts by default
 - `scpp run` does the same build step first, then executes the primary output
-- `--build-runtime` explicitly recompiles the runtime artifact for the current build
+- `--build-runtime` explicitly recompiles the runtime artifact for the current build/invocation and uses the project-local/custom runtime path
 - `--build-dependencies` explicitly recompiles resolved Prism project dependency units for the current build
 - `--force` forces a runtime rebuild for the current build, even if the reusable artifact already exists
+- `scpp update` and `scpp runtime-build` are the commands that refresh the shared reusable runtime cache
 
 Run the deterministic usability harness:
 

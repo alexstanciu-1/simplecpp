@@ -52,6 +52,7 @@ final class ScppUpdateTest
 			$remoteHead = $this->gitLine($checkout, ['rev-parse', '--short', 'origin/main']);
 			$this->assertNotSame($before, $after, 'update should advance HEAD');
 			$this->assertSame($remoteHead, $after, 'update should fast-forward to origin/main');
+			$this->assertSharedRuntimeMatrixPrepared($checkout);
 			$alreadyCurrent = scpp_run_update_service($checkout);
 			$this->assertSame(true, $alreadyCurrent['ok'], 'already-current update should still succeed');
 			$this->assertContains('Already up to date.', $alreadyCurrent['output'], 'already-current update should report current revision');
@@ -134,6 +135,27 @@ final class ScppUpdateTest
 	{
 		if (!is_dir($path) && !mkdir($path, 0777, true)) {
 			throw new RuntimeException('Failed to create ' . $path);
+		}
+	}
+
+	private function assertSharedRuntimeMatrixPrepared(string $checkout): void
+	{
+		$families = ['php-legacy', 'php-strict'];
+		$modes = ['debug', 'release'];
+		$modules = ['mysqli', 'regex', 'curl'];
+		foreach ($families as $family) {
+			foreach ($modes as $mode) {
+				$dir = $checkout . '/.prism/runtime/release/' . $family . '/' . $mode;
+				if (!is_dir($dir)) {
+					throw new RuntimeException('Expected shared runtime directory missing after update: ' . $dir);
+				}
+				foreach ($modules as $moduleName) {
+					$moduleDir = $dir . '/modules/' . $moduleName;
+					if (!is_dir($moduleDir)) {
+						throw new RuntimeException('Expected shared runtime module directory missing after update: ' . $moduleDir);
+					}
+				}
+			}
 		}
 	}
 

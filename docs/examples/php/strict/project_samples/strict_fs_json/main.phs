@@ -1,12 +1,12 @@
 $file = "sample_strict_fs_json.txt";
-$err /** error */;
-$written /** int */ = 0;
+$err error;
+$written int = 0;
 if (!take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
 	echo "write_error\n";
 } else {
 	echo $written, "\n";
 
-	$data /** string */ = "";
+	$data string = "";
 	if (!take($data, $err, fs_get($file))) {
 		echo "read_error\n";
 	} else {

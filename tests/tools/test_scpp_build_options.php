@@ -66,6 +66,7 @@ final class ScppBuildOptionsTest
 
 			$this->assertUpdateArgumentHandling();
 			$this->assertRuntimeLaunchEnvironment();
+			$this->assertRuntimeArtifactPlacementPolicy();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
 			$this->assertEntryOverrideCanSelectAnotherFile();
@@ -106,6 +107,45 @@ final class ScppBuildOptionsTest
 		}
 		$this->assertSame(true, isset($env['LD_LIBRARY_PATH']), 'Unix runtime launch should prepend LD_LIBRARY_PATH');
 		$this->assertContains('/tmp/scpp-runtime', $env['LD_LIBRARY_PATH'], 'Unix LD_LIBRARY_PATH should include the runtime directory');
+	}
+
+	private function assertRuntimeArtifactPlacementPolicy(): void
+	{
+		$repoRoot = $this->root . '/repo';
+		$projectRoot = $this->root . '/project';
+		$this->mkdir($repoRoot . '/runtime/include');
+		$this->mkdir($projectRoot);
+
+		$compiler = detect_default_compiler();
+		if ($compiler === null) {
+			return;
+		}
+		$sharedRuntimeConfig = [
+			'languages' => ['php'],
+			'modules' => ['json', 'filesystem', 'datetime'],
+			'language_profiles' => [
+				'php' => ['profile' => 'strict'],
+			],
+		];
+		$customRuntimeConfig = [
+			'languages' => ['php'],
+			'modules' => ['json', 'filesystem', 'datetime', 'mysqli'],
+			'language_profiles' => [
+				'php' => ['profile' => 'strict'],
+			],
+		];
+
+		$reuseShared = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, 'debug', $sharedRuntimeConfig, 'reuse');
+		$this->assertContains('.prism/runtime/release/php-strict/debug/', normalize_config_path($reuseShared['artifact_path']), 'default strict debug runtime should reuse the shared release path');
+
+		$localBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, 'debug', $sharedRuntimeConfig, 'local');
+		$this->assertContains('.prism/runtime/project/php-strict/', normalize_config_path($localBuild['artifact_path']), 'explicit runtime compilation should target a project-local runtime path');
+
+		$reuseCustom = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, 'debug', $customRuntimeConfig, 'reuse');
+		$this->assertContains('.prism/runtime/release/php-strict/debug/', normalize_config_path($reuseCustom['artifact_path']), 'supported shared optional module composition should still reuse the shared release base runtime path');
+		$sharedModules = resolve_shared_runtime_bundle_specs($repoRoot, $projectRoot, $compiler, 'debug', $customRuntimeConfig)['modules'];
+		$this->assertSame(1, count($sharedModules), 'mysqli config should request exactly one shared optional module artifact');
+		$this->assertContains('/modules/mysqli/', normalize_config_path((string) $sharedModules[0]['artifact_path']), 'mysqli shared module should publish under the shared module runtime path');
 	}
 
 	private function assertNinjaRenderingRespectsReuseFlags(): void

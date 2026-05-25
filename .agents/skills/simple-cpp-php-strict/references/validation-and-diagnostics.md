@@ -103,6 +103,12 @@ Use them for different questions:
 - `scpp full-last-run`: full run metadata and command context
 - `scpp explain-build`: rebuild causality and build orchestration questions, not runtime shape questions
 
+Current runtime-failure presentation is intentionally layered:
+
+- `scpp run`: compact source-first runtime failure view
+- `scpp error`: saved source-first summary plus richer saved fields
+- `scpp full-error`: full saved JSON, including deeper generated/runtime trace detail when present
+
 The toolchain stores diagnostic artifacts under `.prism/`, including:
 
 - `.prism/last_error.json`
@@ -117,6 +123,8 @@ Compiler diagnostics may be remapped from generated C++ back to original `.phs` 
 Prefer the remapped original source location. Inspect generated C++ only when the source looks valid and the failure suggests a lowering or runtime-boundary issue.
 
 Strict runtime type failures preserve structured runtime details such as the failure code and actual runtime kind. When the runtime report includes a generated location that can be remapped through `.line.tsv`, the saved report should also expose `original_file` / `original_line`; inspect generated C++ and line maps only when the saved report still does not identify the authoring location strongly enough.
+
+When `SCPP_DEBUG_TRACE=1` is enabled, the saved runtime report may also preserve debug-only trace frames. The default `scpp run` / `scpp error` presentation should prefer source-mapped trace entries only; use `scpp full-error` when you need the deeper generated C++ or runtime-internal trace.
 
 For a normal strict runtime-debug loop, use this order:
 

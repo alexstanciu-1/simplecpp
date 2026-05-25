@@ -182,6 +182,7 @@ The current public opt-in rebuild flags are:
 - `--force`
 
 When `--build-runtime` is present, `scpp build` or `scpp run` recompiles the runtime artifact for the current build instead of reusing the existing runtime artifact path in the emitted Ninja graph.
+This rebuild is for the current build/invocation. Shared reusable runtime refresh remains owned by `scpp update` and `scpp runtime-build`, while explicit custom/non-default runtime rebuilds stay on the project-local side.
 
 When `--build-dependencies` is present, `scpp build` or `scpp run` still resolves the Prism project dependency graph for source discovery, export composition, and header visibility, and also recompiles dependency project units instead of reusing their existing object/artifact paths in the emitted Ninja graph.
 
@@ -235,6 +236,7 @@ This note is specifically about stale per-project `.prism/` state after an updat
 ## `scpp runtime-build` behavior
 
 `scpp runtime-build` rebuilds the reusable runtime cache explicitly without compiling the current project graph.
+This command is the explicit maintenance path for shared reusable runtime artifacts, alongside the automatic refresh that happens during `scpp update`.
 
 The command:
 

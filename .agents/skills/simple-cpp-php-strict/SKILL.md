@@ -60,7 +60,9 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Use `hash<T, T_KEY>` for intentionally typed key families.
 - Stabilize dynamic values early at explicit typed boundaries, but do not make strict mode sound like every line needs defensive handling.
 - Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
-- If the destination is explicitly `mixed`, no cast is needed and the value remains `mixed`.
+- If the destination is explicitly `mixed` or `dynamic`, no cast is needed and the value remains on the dynamic carrier path.
+- Prefer `dynamic` when the source-level intent is shared mutable object/table state with reference-like aliasing; prefer `mixed` for broad boxed dynamic values that are not specifically object/table handles.
+- Treat `json_decode(...)` as a fat-variable boundary. When the expected decoded shape is known, add or preserve a short local shape comment/doc comment and normalize into typed locals, properties, objects, or typed containers quickly instead of letting the dynamic carrier spread through the rest of the code.
 - Resolve wrappers near meaningful boundaries with `take(...)` so success, failure, absence, and usable values stay explicit.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.
@@ -79,6 +81,12 @@ scpp run
 scpp docs
 ```
 
+For runtime rebuilds, keep this model in mind:
+
+- plain `scpp build` / `scpp run` reuse runtime artifacts by default
+- `scpp build --build-runtime` and `scpp run --build-runtime` rebuild the runtime for the current build/invocation through the project-local/custom path
+- `scpp update` and `scpp runtime-build` refresh the shared reusable runtime cache
+
 After failures, prefer saved diagnostics:
 
 ```bash
@@ -91,6 +99,7 @@ scpp full-last-run
 Use generated C++ and `.prism/generated/*.line.tsv` artifacts as inspection evidence, not as the primary source to patch.
 For strict runtime type failures, inspect `scpp error` / `.prism/last_error.json` first. Recent generated-location remapping can populate `original_file` / `original_line` there; use generated C++ and line maps only when the saved report still lacks the needed attribution.
 For real strict-project runtime failures, follow this default sequence: `scpp run` -> `scpp error` -> inspect `original_file`, `original_line`, `expected_type`, `actual_runtime_kind`, and `operation` -> add `dbg(...)` near the failing typed boundary -> inspect `.line.tsv` or generated C++ only if the saved report is still not enough.
+Treat the default runtime-failure view as source-first: `scpp run` should be the compact app-facing view, `scpp error` the richer saved summary, and `scpp full-error` the place for raw runtime message details plus deeper generated/runtime trace inspection.
 For runtime shape confusion, use strict-safe debug helpers before ad hoc probes:
 
 ```php

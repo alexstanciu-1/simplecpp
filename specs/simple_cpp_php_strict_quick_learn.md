@@ -115,6 +115,8 @@ scpp build --build-runtime --build-dependencies
 scpp build --force
 ```
 
+`--build-runtime` refreshes the runtime for the current build/invocation. Shared reusable runtime maintenance is handled by `scpp update` and `scpp runtime-build`; explicit custom runtime rebuilds stay on the project-local side.
+
 ### Run
 
 ```bash
@@ -147,6 +149,8 @@ scpp run --force
 - `scpp update --force`: rebuild that default reusable runtime cache even when already current
 - `scpp runtime-build [--debug|--release] [--force]`: rebuild the reusable runtime cache explicitly
 - `scpp clean`: remove generated `.prism/` state for a cold rebuild
+
+Use `scpp runtime-build` when you want to refresh the shared reusable runtime cache itself. Use `scpp build --build-runtime` or `scpp run --build-runtime` when you want the current project build to rebuild its runtime path now.
 
 If an existing project behaves oddly right after `scpp update`, and the same problem does not reproduce in a fresh project, clear that project's `.prism/` state once and rebuild:
 
@@ -321,6 +325,12 @@ Use this sequence when a strict project builds, runs, and then fails at runtime.
 5. If the noisy part happens deeper in helper calls, use `dbg_set(...)` and `dbg_if(...)` to focus the trace.
 6. Inspect `.prism/last_error.json`, `.line.tsv`, or generated C++ only when the saved diagnostics are not enough.
 
+Current CLI runtime-failure presentation is intentionally source-first:
+
+- `scpp run` shows the remapped source file/line, a tiny source snippet, the failing operation when available, and only source-mapped trace entries
+- `scpp error` keeps that source-first summary and may include the saved raw runtime message too
+- `scpp full-error` is the place to inspect full saved JSON, deeper generated C++ trace detail, and runtime-internal trace detail
+
 End-to-end example:
 
 ```php
@@ -333,7 +343,6 @@ Possible failure:
 ```text
 Runtime error in main.phs:2
 Cannot convert value to required string_t.
-Actual runtime kind: shared_hash_t
 Operation: scpp::cast<string_t>
 ```
 
@@ -396,7 +405,7 @@ Use this order:
 - Prefer `vector<T>` for typed sequential data when possible.
 - Prefer `hash<T>` for typed keyed data when string keys are the natural shape.
 - Use `hash<T, T_KEY>` when the key family is intentionally typed and not the default string-key shape.
-- Use `mixed_t` only when the value is genuinely dynamic.
+- Use `mixed` or `dynamic` only when the value is genuinely dynamic.
 - Resolve wrappers near meaningful boundaries: `nullable<T>`, `result<T>`, `result_or_false<T>`, `result_or_bool<T>`.
 - Keep `null`, `false`, and error as separate states.
 - Prefer `===` over loose comparison.
@@ -435,23 +444,14 @@ Use this order:
 | `take` with wrapper output | `if (take($fh, io_open($path, "rb"))) { ... }` |
 | `take` with nullable | `if (take($name, $maybe_name)) { ... }` |
 | typed local shorthand | `$count int = 0;` |
-| legacy typed local annotation form | `$count /** int */ = 0;` |
 | typed vector local shorthand | `$items vector<int> = [1, 2, 3];` |
 | typed vector local | `$items vector<int> = [1, 2, 3];` |
 | typed hash local shorthand | `$by_name hash<int> = ["a" => 1, "b" => 2];` |
-| legacy typed hash annotation form | `$by_name /** hash<int> */ = ["a" => 1, "b" => 2];` |
 | typed two-arg hash shorthand | `$by_id hash<string, int> = [0 => "a", 1 => "b"];` |
-| legacy typed int-key hash annotation form | `$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];` |
 | typed class property shorthand | `public $list vector<T> = [];` |
-| legacy typed class property annotation form | `public $list /** vector<T> */ = [];` |
-| legacy typed class property leading annotation form | `public /** vector<T> */ $list = [];` |
 | typed param shorthand | `function build($items vector<string>) { ... }` |
-| legacy typed param annotation form | `function build(/** vector<string> */ $items) { ... }` |
 | typed return shorthand | `function build(): vector<string> { ... }` |
-| legacy typed return annotation form | `function build() /** vector<string> */ { ... }` |
 | typed arrow return shorthand | `$make = fn($x int) function<function<int(int)>(int)> => fn($y int): int => $x + $y;` |
-| legacy typed arrow return annotation form | `$make = fn(/** int */ $x) /** function<function<int(int)>(int)> */ => fn(/** int */ $y): int => $x + $y;` |
-| legacy vector property with class element annotation form | `public $properties /** vector<model_property> */ = [];` |
 | vector literal needs explicit typed context | `$v vector<int> = [1, 2, 3];` |
 | typed read from dynamic value | `$count int = $data["count"];` |
 | typed hash slot from dynamic value | `$counts hash<int> = []; $counts["id"] = $row["id"];` |
@@ -473,7 +473,7 @@ Use this order:
 | Prism++ file start | `echo "hello\n";` |
 | nullable local | `$id ?int = null;` |
 | strict comparison | `if ($value === 0) { ... }` |
-| namespace + typed property example | `namespace demo\schema; class model { public $properties /** vector<model_property> */ = []; }` |
+| namespace + typed property example | `namespace demo\schema; class model { public $properties vector<model_property> = []; }` |
 | helper semantics | `echo isset($map["a"]) ? "Y\n" : "N\n";` |
 
 ## Preferred Strict Patterns
@@ -630,7 +630,7 @@ Preferred:
 
 ```php
 $text string = "";
-$err /** error */;
+$err error;
 
 if (!take($text, $err, fs_get($path))) {
 	echo "read failed\n";
@@ -712,6 +712,14 @@ PHP-compatible inline annotation syntax such as `$count /** int */ = 0;` is lega
 Do not use it in new strict code.
 Plan for it to become a hard error in a future version.
 
+The same strict-mode rule applies to all types, including:
+
+- user-defined types
+- `error`
+- `resource_handle`
+- `curl_handle`
+- `curl_response`
+
 The pre-tokenizer currently normalizes shorthand into a PHP-compatible annotated form before `php-ast` parsing, while separately preserving site ownership metadata for:
 
 - locals
@@ -731,7 +739,7 @@ Common pattern:
 
 ```php
 $text string = "";
-$err /** error */;
+$err error;
 
 if (!take($text, $err, fs_get($path))) {
 	echo "read failed\n";
@@ -864,6 +872,62 @@ Why this pattern is useful:
 - the code avoids ad hoc manual casts scattered around later reads
 
 Prefer this when the program already knows the target container shape.
+
+### 3A. Decoded JSON / fat-variable boundary
+
+`json_decode(...)` returns fat-variable data.
+
+In practice, that means a `mixed` / dynamic-shaped boundary value, not a preferred interior representation for strict business logic.
+
+Strict-mode posture:
+
+- use `json_decode(...)` freely at the ingestion boundary
+- describe the expected payload shape locally when it is known
+- stabilize early into typed locals, typed properties, typed objects, or typed containers
+- avoid carrying fat-variable state deep into the rest of the program unless the flexibility is intentionally needed
+
+When the source shape is known from a schema, API contract, or file format, a short local shape comment is encouraged:
+
+```php
+/** decoded property_data shape:
+ *  - name: string
+ *  - type.name: string
+ *  - type.list: bool
+ *  - required: bool
+ */
+$property_data = json_decode($text);
+
+if (isset($property_data["name"])) {
+	$out->name = $property_data["name"];
+}
+if (isset($property_data["type.name"])) {
+	$out->type_name = $property_data["type.name"];
+}
+if (isset($property_data["type.list"])) {
+	$out->type_list = $property_data["type.list"];
+}
+if (isset($property_data["required"])) {
+	$out->required = $property_data["required"];
+}
+```
+
+In that style:
+
+- the decoded payload stays broad only at the edge
+- each typed write becomes an explicit stabilization point
+- extra casts are often unnecessary when the receiving side is already typed
+
+Use explicit casts only when they still add meaning or a specific flow still needs them:
+
+```php
+$out->name = (string) $property_data["name"];
+```
+
+Preferred when the left side is already typed and the shape assumption is intentional:
+
+```php
+$out->name = $property_data["name"];
+```
 
 ### 4. When to delay stabilization
 
@@ -1093,7 +1157,7 @@ Unsupported in the current strict datetime surface: named timezone conversion, l
 
 ```php
 $stamp int = 0;
-$err /** error */;
+$err error;
 
 if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
 	echo dt_format("Y-m-d H:i:s", $stamp), "\n";
@@ -1104,7 +1168,7 @@ if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
 
 ```php
 $file = "sample.txt";
-$err /** error */;
+$err error;
 $written int = 0;
 
 if (take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {

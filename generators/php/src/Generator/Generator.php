@@ -819,6 +819,10 @@ final class Generator
 			return $this->renderGeneratedCast($expectedType, $renderedExpr);
 		}
 
+		if ($exprType === 'dynamic_t<>') {
+			return $expectedType === 'mixed_t' ? ('mixed_t{dynamic_box(' . $renderedExpr . ')}') : $renderedExpr;
+		}
+
 		if ($exprType === 'nullable<' . $expectedType . '>' || $exprType === 'result_or_false<' . $expectedType . '>' || $exprType === 'result_or_bool<' . $expectedType . '>' || $exprType === 'result<' . $expectedType . '>') {
 			return $this->renderGeneratedCast($expectedType, $renderedExpr);
 		}
@@ -841,8 +845,8 @@ final class Generator
 		// Keep argument rendering direct. Scalar typed by-reference cases are
 		// handled by the normalized template path instead of proxy wrappers or
 		// sibling mixed_t& bridge overloads.
-		$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
 		if ($param->isReference) {
+			$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
 			if (!$this->isLvalueCapableExpr($arg, $namespacePhp)) {
 				$this->errors[] = 'By-reference argument requires directly stable native-reference-bindable storage in the current safe subset.';
 				return '/* unsupported-by-ref-arg */';
@@ -850,8 +854,13 @@ final class Generator
 			return $this->renderReferenceBindingExpr($arg, $namespacePhp);
 		}
 		if ($param->type === null) {
+			$rendered = $this->renderCallArgExpr($arg, $namespacePhp);
 			return $rendered;
 		}
+
+		$rendered = is_object($arg) && (($arg->kind ?? null) === AstKind::ARRAY)
+			? $this->renderInitializerExpr($arg, $param->type, $namespacePhp)
+			: $this->renderCallArgExpr($arg, $namespacePhp);
 
 		if ($this->paramNeedsTemplateNormalization($param)) {
 			return $rendered;
@@ -1585,7 +1594,7 @@ final class Generator
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
 		}
-		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
 			return;
 		}
 		$out[$normalized] = true;
@@ -3728,13 +3737,30 @@ final class Generator
 				}
 			}
 
+			$storedTyped = ($statement->kind === 'assign' && $name !== null)
+				? ($this->declaredLocalTypes[$name] ?? null)
+				: null;
+			$initializerTyped = $effectiveTyped;
+			if (
+				$statement->kind === 'assign'
+				&& $initializerTyped === null
+				&& is_string($storedTyped)
+				&& $storedTyped !== ''
+				&& is_object($exprNode)
+				&& (($exprNode->kind ?? null) === AstKind::ARRAY)
+			) {
+				$initializerTyped = $storedTyped;
+			}
+
 			$expr = $statement->kind === 'assign_ref'
 				? $this->renderReferenceBindingExpr($exprNode, $namespacePhp)
-				: $this->renderInitializerExpr($exprNode, $effectiveTyped, $namespacePhp);
+				: $this->renderInitializerExpr($exprNode, $initializerTyped, $namespacePhp);
 			if ($statement->kind === 'assign' && $effectiveTyped === null && $name !== null) {
-				$storedTyped = $this->declaredLocalTypes[$name] ?? null;
 				if (is_string($storedTyped) && $storedTyped !== '') {
-					$expr = $this->wrapExprForExpectedType($expr, $this->inferExprType($exprNode), $storedTyped);
+					$mappedStoredType = $this->mapStoredLocalTypeToMappedType($storedTyped);
+					if ($mappedStoredType !== null) {
+						$expr = $this->wrapExprForExpectedType($expr, $this->inferExprType($exprNode), $mappedStoredType);
+					}
 				}
 			}
 			$typedVectorType = $effectiveTyped !== null ? $this->mapTypedVectorLocalType($effectiveTyped) : null;
@@ -4796,6 +4822,9 @@ final class Generator
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '.get(' . $dim . ')';
 		}
+		if ($baseType === 'dynamic_t<>') {
+			return '(*' . $base . ').at(' . $dim . ')';
+		}
 		if (is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)) {
 			return $base . '.get(' . $dim . ')';
 		}
@@ -4832,6 +4861,9 @@ final class Generator
 		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '[' . $dim . ']';
+		}
+		if ($baseType === 'dynamic_t<>') {
+			return '(*' . $base . ')[' . $dim . ']';
 		}
 		if ($this->isUntypedTableType($baseType)) {
 			return $this->renderUntypedTableAccessBase($base, $baseType) . '[' . $dim . ']';
@@ -5287,6 +5319,16 @@ final class Generator
 		}
 
 		return $this->typeMapper->mapTypedLocalType($typedLocalType);
+	}
+
+	private function mapStoredLocalTypeToMappedType(string $storedLocalType): ?string
+	{
+		$normalized = trim($storedLocalType);
+		if ($normalized === '') {
+			return null;
+		}
+
+		return $this->typeMapper->mapTypedLocalType($normalized);
 	}
 
 	private function renderInitializerExpr(mixed $expr, ?string $typedLocalType, ?string $namespacePhp): string
@@ -7597,7 +7639,7 @@ final class Generator
 			if ($declared === null) {
 				return 'auto';
 			}
-			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || str_starts_with($declared, 'hash_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
+			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || $declared === 'dynamic_t<>' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || str_starts_with($declared, 'hash_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
 				return $declared;
 			}
 			return $this->typeMapper->mapDeclaredType($declared);
@@ -7628,7 +7670,7 @@ final class Generator
 		}
 		if ($kind === AstKind::NEW) {
 			if ($this->isStdClassNewExpr($expr)) {
-				return 'mixed_t';
+				return 'dynamic_t<>';
 			}
 
 			$constructedClass = $this->extractDirectConstructedClassTypeName($expr);
@@ -7640,7 +7682,7 @@ final class Generator
 			return 'auto';
 		}
 		if ($kind === AstKind::ARRAY) {
-			return 'mixed_t';
+			return 'dynamic_t<>';
 		}
 		if ($kind === AstKind::CAST && ((int) ($expr->flags ?? 0) === AstKind::TYPE_OBJECT)) {
 			return 'mixed_t';
@@ -7653,6 +7695,9 @@ final class Generator
 				if (($hashTypeParts = $this->parseHashTypeParts($baseType)) !== null) {
 					return $hashTypeParts['value'];
 				}
+			if ($baseType === 'dynamic_t<>') {
+				return 'mixed_t';
+			}
 			if ($this->isUntypedTableType($baseType) || $baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 				return 'mixed_t';
 			}
