@@ -38,27 +38,55 @@ final class ScppRuntimeDiagnosticsTest
 					'modules' => ['json', 'filesystem'],
 				],
 			], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
-			$this->write($project . '/main.phs', implode("\n", [
-				'$data = [];',
-				'$data["name"] = [];',
-				'echo "name=" . $data["name"], "\\n";',
-				'',
-			]));
+			$this->write($project . '/main.phs', <<<'PHS'
+class child_state
+{
+	public ?string $name = null;
+}
+
+class root_state
+{
+	public ?child_state $child = null;
+}
+
+function test_guard(?root_state $root): void
+{
+	$match = ($root === null || $root->child === null || $root->child->name === null) ? "no" : "yes";
+	echo "match=", $match, "\n";
+}
+
+$full = new root_state();
+$full->child = new child_state();
+$full->child->name = "ok";
+test_guard($full);
+
+$missing_child = new root_state();
+test_guard($missing_child);
+PHS
+ . "\n");
 
 			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
 			$this->assertNotSame(0, $run['exit_code'], 'runtime type failure should make scpp run fail');
-			$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'run stderr should report the remapped source location');
-			$this->assertContains('Actual runtime kind: shared_hash_t', $run['stderr'], 'run stderr should report actual runtime kind');
+			$this->assertContains('Runtime error in main.phs:13', $run['stderr'], 'run stderr should report the remapped source location');
+			$this->assertContains('Source:', $run['stderr'], 'run stderr should include a tiny source snippet by default');
+			$this->assertContains('> 13 |', $run['stderr'], 'run stderr should highlight the failing source line');
+			$this->assertContains('Operation: operator->', $run['stderr'], 'run stderr should report the failing operation');
+			$this->assertDoesNotContain('Runtime message:', $run['stderr'], 'run stderr should hide the raw runtime message by default');
+			$this->assertContains('Trace:', $run['stderr'], 'run stderr should surface a compact trace when debug trace is enabled');
+			$this->assertContains('at main.phs:13 |', $run['stderr'], 'run stderr should enrich source-mapped app frames with source code');
+			$this->assertContains('at main.phs:23 |', $run['stderr'], 'run stderr should enrich follow-on app frames with source code');
+			$this->assertDoesNotContain('scpp::test_guard', $run['stderr'], 'run stderr should not expose generated C++ function names in the default trace');
+			$this->assertContains("More trace detail is available in 'scpp full-error'.", $run['stderr'], 'run stderr should explain how to get generated/runtime trace details');
 			$this->assertFileDoesNotContain($project . '/.prism/generated/main.cpp', 'with_runtime_context', 'generated code should not use expression-level runtime context wrappers');
 			$this->assertFileDoesNotContain($project . '/.prism/generated/main.cpp', 'cast_with_generated_location', 'generated code should not use generated-location cast helpers');
-			$generatedCppLines = explode("\n", rtrim($this->read($project . '/.prism/generated/main.cpp'), "\n"));
-			$lineMap = $this->readGeneratedLineMap($project . '/.prism/generated/main.cpp.line.tsv');
-			$echoGeneratedLine = $this->findGeneratedLine($generatedCppLines, 'php::echo_one');
-			$this->assertSame(3, $lineMap[$echoGeneratedLine]['line'] ?? null, 'generated echo statement should map back to its source statement line');
 
 			$error = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $project, 30);
 			$this->assertSame(0, $error['exit_code'], 'scpp error should read saved runtime diagnostics');
-			$this->assertContains('Category: runtime / invalid_mixed_kind_for_cast_string', $error['stdout'], 'saved summary should preserve runtime error code');
+			$this->assertContains('Category: runtime / invalid_shared_arrow_null', $error['stdout'], 'saved summary should preserve runtime error code');
+			$this->assertContains('Runtime message:', $error['stdout'], 'scpp error should still expose the raw runtime message');
+			$this->assertContains('Trace:', $error['stdout'], 'scpp error should show the saved compact trace before full-error');
+			$this->assertContains('at main.phs:13 |', $error['stdout'], 'scpp error should show source-backed trace entries');
+			$this->assertDoesNotContain('scpp::test_guard', $error['stdout'], 'scpp error should not expose generated C++ function names in the default trace');
 
 			$report = json_decode($this->read($project . '/.prism/last_error.json'), true);
 			if (!is_array($report)) {
@@ -69,11 +97,15 @@ final class ScppRuntimeDiagnosticsTest
 				throw new RuntimeException('last_error.json should contain at least one runtime diagnostic');
 			}
 			$this->assertSame('strict', $report['project_mode'] ?? null, 'last_error.json should store strict project mode');
-				$this->assertSame(normalize_path($project . '/main.phs'), $diagnostic['original_file'] ?? null, 'runtime diagnostics should remap back to the original source file');
-				$this->assertSame(3, $diagnostic['original_line'] ?? null, 'runtime diagnostics should remap back to the original source line');
-				$this->assertSame('string_t', $diagnostic['expected_type'] ?? null, 'runtime diagnostics should preserve the expected target type');
-				$this->assertSame('scpp::cast<string_t>', $diagnostic['operation'] ?? null, 'runtime diagnostics should preserve the failing operation');
-				$this->assertSame('shared_hash_t', $diagnostic['actual_runtime_kind'] ?? null, 'runtime diagnostic should preserve actual runtime kind');
+			$this->assertSame(normalize_path($project . '/main.phs'), $diagnostic['original_file'] ?? null, 'runtime diagnostics should remap back to the original source file');
+			$this->assertSame(13, $diagnostic['original_line'] ?? null, 'runtime diagnostics should remap back to the original source line');
+			$this->assertSame('operator->', $diagnostic['operation'] ?? null, 'runtime diagnostics should preserve the failing operation');
+			$this->assertTrue(is_array($diagnostic['trace'] ?? null) && $diagnostic['trace'] !== [], 'runtime diagnostics should preserve the compact trace frames');
+			$generatedFile = (string) ($diagnostic['generated_file'] ?? '');
+			$generatedLine = (int) ($diagnostic['generated_line'] ?? 0);
+			$this->assertTrue($generatedFile !== '' && $generatedLine > 0, 'runtime diagnostics should preserve the generated location used for remapping');
+			$lineMap = $this->readGeneratedLineMap($generatedFile . '.line.tsv');
+			$this->assertSame(13, $lineMap[$generatedLine]['line'] ?? null, 'saved generated location should map back to the failing source statement line');
 
 			echo "PASS: scpp runtime diagnostics\n";
 			return 0;
@@ -92,6 +124,7 @@ final class ScppRuntimeDiagnosticsTest
 		];
 			$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment([
 				'SCPP_CXX_LAUNCHER' => ' ',
+				'SCPP_DEBUG_TRACE' => '1',
 			]));
 		if (!is_resource($process)) {
 			throw new RuntimeException('Failed to start command: ' . implode(' ', $command));
@@ -197,23 +230,26 @@ final class ScppRuntimeDiagnosticsTest
 		}
 	}
 
+	private function assertDoesNotContain(string $needle, string $haystack, string $message): void
+	{
+		if (str_contains($haystack, $needle)) {
+			throw new RuntimeException($message . ' unexpectedly found `' . $needle . '` in: ' . $haystack);
+		}
+	}
+
+	private function assertTrue(bool $condition, string $message): void
+	{
+		if (!$condition) {
+			throw new RuntimeException($message);
+		}
+	}
+
 	private function assertFileDoesNotContain(string $path, string $needle, string $message): void
 	{
 		$contents = $this->read($path);
 		if (str_contains($contents, $needle)) {
 			throw new RuntimeException($message . ' found `' . $needle . '` in ' . $path);
 		}
-	}
-
-	/** @param list<string> $lines */
-	private function findGeneratedLine(array $lines, string $needle): int
-	{
-		foreach ($lines as $index => $line) {
-			if (str_contains($line, $needle)) {
-				return $index + 1;
-			}
-		}
-		throw new RuntimeException('Could not find generated line containing `' . $needle . '`');
 	}
 
 	/** @return array<int,array{line:int,relation:string}> */

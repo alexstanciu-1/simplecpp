@@ -9,6 +9,99 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.61 - 2026-05-22
+
+### Additions
+
+- Added focused regression coverage for typed vector literal reassignment and const-parameter `foreach` handling.
+- Added focused runtime-diagnostics regression coverage for source-mapped runtime failures, compact trace display, and saved trace/report behavior.
+- Added stricter authoring guidance for decoded JSON boundaries across the quick-learn, JSON docs, and strict agent skill references.
+
+### Fixes
+
+- Fixed strict typed vector lowering so array-literal reassignment and typed call arguments preserve the intended typed-container path instead of degrading through weaker untyped lowering.
+- Fixed runtime `foreach` support for const typed vectors so strict helper-style iteration over typed vector parameters works cleanly.
+- Fixed runtime failure presentation so `scpp run` and `scpp error` now prefer a source-first view with remapped file/line, tiny source snippets, and source-backed trace entries instead of leaking generated/runtime trace detail by default.
+- Fixed saved runtime diagnostics so compact debug trace data can be preserved and surfaced through `scpp error` while deeper generated/runtime trace detail remains available through `scpp full-error`.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required for existing supported code.
+- Strict projects now get a quieter, source-first runtime failure experience by default; use `scpp error` for the richer saved summary and `scpp full-error` for full JSON plus deeper generated/runtime trace detail.
+- For decoded JSON in strict code, the recommended posture is now documented explicitly: treat `json_decode(...)` as a fat-variable boundary, describe known payload shape locally, and stabilize early into typed locals, properties, objects, or typed containers.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this release to reflect the new runtime-diagnostics guidance and strict JSON-boundary authoring guidance.
+
+## 0.1.60 - 2026-05-21
+
+### Additions
+
+- Added a focused Phase 1 strict regression that covers first-class `dynamic` locals, parameters, returns, properties, aliasing behavior, typed `hash<dynamic>` / `vector<dynamic>` containers, `count(dynamic)`, and null/default helper cases.
+
+### Fixes
+
+- Promoted source-level `dynamic` to a first-class Phase 1 type that now lowers to `dynamic_t<>` instead of collapsing back into `mixed_t`.
+- Fixed generator lowering for first-class `dynamic` reads, writes, and typed-boundary propagation so `dynamic` locals, properties, parameters, and returns preserve the intended shared-handle behavior.
+- Fixed runtime bridge and helper coverage so `count(dynamic)`, `isset(dynamic[key])`, and `empty(dynamic[key])` work consistently with the shipped Phase 1 contract, including null/default dynamic cases.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Existing `mixed`-based dynamic code continues to work.
+- Strict code may now use first-class `dynamic` when the intent is shared mutable object/table state with reference-like aliasing semantics.
+- `mixed` remains the broad boxed dynamic value surface; `dynamic` is now the preferred source type for shared dynamic object/table handles.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this release to reflect the first-class `dynamic` authoring guidance.
+
+## 0.1.59 - 2026-05-21
+
+### Additions
+
+- Added a focused strict CLI regression test that builds and runs author-facing `dynamic` local declarations together with `hash<dynamic>` usage.
+
+### Fixes
+
+- Fixed generator type lowering so author-facing `dynamic` now follows the supported dynamic carrier path instead of falling through as a user-defined class-like type during lowering and C++ emission.
+- Fixed `hash<dynamic>` lowering so strict code can use the same dynamic carrier behavior already supported by `mixed`, which unblocks the current ORM writer hotfix path.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Existing `mixed`-based dynamic code continues to work unchanged.
+- Strict code may now use `dynamic` as an author-facing alias for the existing dynamic carrier path when that spelling is clearer than `mixed`.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this hotfix because the shipped change expands the author-facing strict dynamic-type guidance.
+
+## 0.1.58 - 2026-05-21
+
+### Additions
+
+- Added focused tool/runtime regression coverage for shared release runtime preparation, release-runtime module layout, invalid cached dependency recovery, and reuse-mode build behavior.
+- Added a planning anchor for the shared release runtime cache phase-1 rollout so the release/runtime reuse model has a resumable implementation record.
+
+### Fixes
+
+- Fixed runtime cache writes during reuse builds so warm project builds no longer destabilize the reusable runtime state while reusing cached artifacts.
+- Fixed reuse-mode dependency validation so stale or invalid cached dependency objects now fail with a first-class recovery message instead of falling through toward less actionable native build failures.
+- Fixed shared runtime placement and module artifact composition so release-owned runtime families are prepared and reused through a clearer shared-runtime layout instead of continuing to fan out through fragile local cache identities.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- No source migration is required.
+- If a warm `scpp build` reports missing or invalid reusable runtime or dependency artifacts, rerun with `--build-runtime`, `--build-dependencies`, or `scpp runtime-build` to refresh the corresponding cached artifacts explicitly.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the shipped changes restructure runtime/build reuse behavior and diagnostics without changing the current repo-local authoring guidance.
+
 ## 0.1.57 - 2026-05-20
 
 ### Additions

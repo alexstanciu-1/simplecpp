@@ -23,6 +23,14 @@ Use the dedicated header instead:
 - invalid JSON throws a runtime error with a byte position
 - `json_encode()` rejects weak tables and non-finite floats in this pass
 
+Strict-mode guidance:
+
+- treat `json_decode()` as a fat-variable ingestion boundary
+- decoded JSON is normal broad/dynamic data at that edge, not the preferred interior representation for strict business logic
+- when the expected payload shape is known, document it locally near the decode boundary
+- stabilize early into typed locals, typed properties, typed objects, or typed containers
+- avoid carrying decoded dynamic state deep into the program unless the flexibility is intentionally needed
+
 ## Implemented JSON functions
 
 - `json_decode`

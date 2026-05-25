@@ -115,6 +115,8 @@ scpp build --build-runtime --build-dependencies
 scpp build --force
 ```
 
+`--build-runtime` refreshes the runtime for the current build/invocation. Shared reusable runtime maintenance is handled by `scpp update` and `scpp runtime-build`; explicit custom runtime rebuilds stay on the project-local side.
+
 ### Run
 
 ```bash
@@ -147,6 +149,8 @@ scpp run --force
 - `scpp update --force`: rebuild that default reusable runtime cache even when already current
 - `scpp runtime-build [--debug|--release] [--force]`: rebuild the reusable runtime cache explicitly
 - `scpp clean`: remove generated `.prism/` state for a cold rebuild
+
+Use `scpp runtime-build` when you want to refresh the shared reusable runtime cache itself. Use `scpp build --build-runtime` or `scpp run --build-runtime` when you want the current project build to rebuild its runtime path now.
 
 If an existing project behaves oddly right after `scpp update`, and the same problem does not reproduce in a fresh project, clear that project's `.prism/` state once and rebuild:
 
@@ -321,6 +325,12 @@ Use this sequence when a strict project builds, runs, and then fails at runtime.
 5. If the noisy part happens deeper in helper calls, use `dbg_set(...)` and `dbg_if(...)` to focus the trace.
 6. Inspect `.prism/last_error.json`, `.line.tsv`, or generated C++ only when the saved diagnostics are not enough.
 
+Current CLI runtime-failure presentation is intentionally source-first:
+
+- `scpp run` shows the remapped source file/line, a tiny source snippet, the failing operation when available, and only source-mapped trace entries
+- `scpp error` keeps that source-first summary and may include the saved raw runtime message too
+- `scpp full-error` is the place to inspect full saved JSON, deeper generated C++ trace detail, and runtime-internal trace detail
+
 End-to-end example:
 
 ```php
@@ -333,7 +343,6 @@ Possible failure:
 ```text
 Runtime error in main.phs:2
 Cannot convert value to required string_t.
-Actual runtime kind: shared_hash_t
 Operation: scpp::cast<string_t>
 ```
 
@@ -396,7 +405,7 @@ Use this order:
 - Prefer `vector<T>` for typed sequential data when possible.
 - Prefer `hash<T>` for typed keyed data when string keys are the natural shape.
 - Use `hash<T, T_KEY>` when the key family is intentionally typed and not the default string-key shape.
-- Use `mixed_t` only when the value is genuinely dynamic.
+- Use `mixed` or `dynamic` only when the value is genuinely dynamic.
 - Resolve wrappers near meaningful boundaries: `nullable<T>`, `result<T>`, `result_or_false<T>`, `result_or_bool<T>`.
 - Keep `null`, `false`, and error as separate states.
 - Prefer `===` over loose comparison.
@@ -864,6 +873,62 @@ Why this pattern is useful:
 - the code avoids ad hoc manual casts scattered around later reads
 
 Prefer this when the program already knows the target container shape.
+
+### 3A. Decoded JSON / fat-variable boundary
+
+`json_decode(...)` returns fat-variable data.
+
+In practice, that means a `mixed` / dynamic-shaped boundary value, not a preferred interior representation for strict business logic.
+
+Strict-mode posture:
+
+- use `json_decode(...)` freely at the ingestion boundary
+- describe the expected payload shape locally when it is known
+- stabilize early into typed locals, typed properties, typed objects, or typed containers
+- avoid carrying fat-variable state deep into the rest of the program unless the flexibility is intentionally needed
+
+When the source shape is known from a schema, API contract, or file format, a short local shape comment is encouraged:
+
+```php
+/** decoded property_data shape:
+ *  - name: string
+ *  - type.name: string
+ *  - type.list: bool
+ *  - required: bool
+ */
+$property_data = json_decode($text);
+
+if (isset($property_data["name"])) {
+	$out->name = $property_data["name"];
+}
+if (isset($property_data["type.name"])) {
+	$out->type_name = $property_data["type.name"];
+}
+if (isset($property_data["type.list"])) {
+	$out->type_list = $property_data["type.list"];
+}
+if (isset($property_data["required"])) {
+	$out->required = $property_data["required"];
+}
+```
+
+In that style:
+
+- the decoded payload stays broad only at the edge
+- each typed write becomes an explicit stabilization point
+- extra casts are often unnecessary when the receiving side is already typed
+
+Use explicit casts only when they still add meaning or a specific flow still needs them:
+
+```php
+$out->name = (string) $property_data["name"];
+```
+
+Preferred when the left side is already typed and the shape assumption is intentional:
+
+```php
+$out->name = $property_data["name"];
+```
 
 ### 4. When to delay stabilization
 

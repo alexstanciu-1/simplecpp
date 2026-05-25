@@ -47,4 +47,13 @@ inline int_t count(const mixed_t &value) {
 	return count(detail::countable_hash_or_throw(value, "count"));
 }
 
+// Implements count() for the first-class shared dynamic-object handle surface.
+// How: dynamic_t<> remains a thin shared handle around the existing hash-backed dynamic storage, so count() forwards directly to the pointed payload.
+inline int_t count(const dynamic_t<> &value) {
+	if (!static_cast<bool>(value)) {
+		throw std::runtime_error("php::count(dynamic_t<>) expects a present dynamic handle");
+	}
+	return count(*value);
+}
+
 } // namespace scpp

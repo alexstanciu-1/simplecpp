@@ -593,6 +593,8 @@ inline shared_p<hash_t<mixed_t>> cast<shared_p<hash_t<mixed_t>>, mixed_t>(const 
 			return shared_p<hash_t<mixed_t>>(null_t{});
 		case mixed_t::kind_t::shared_table_v:
 			return *value.shared_table_if();
+		case mixed_t::kind_t::dynamic_v:
+			return *value.dynamic_if();
 		default:
 			throw std::runtime_error("scpp::cast<shared_p<hash_t<mixed_t>>>(mixed_t): runtime kind is not convertible to shared table");
 	}
@@ -607,6 +609,8 @@ inline weak_p<hash_t<mixed_t>> cast<weak_p<hash_t<mixed_t>>, mixed_t>(const mixe
 			return weak_p<hash_t<mixed_t>>(null_t{});
 		case mixed_t::kind_t::shared_table_v:
 			return weak_p<hash_t<mixed_t>>(*value.shared_table_if());
+		case mixed_t::kind_t::dynamic_v:
+			return weak_p<hash_t<mixed_t>>(*value.dynamic_if());
 		case mixed_t::kind_t::weak_table_v:
 			return *value.weak_table_if();
 		default:
