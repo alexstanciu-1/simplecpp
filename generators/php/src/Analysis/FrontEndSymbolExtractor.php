@@ -25,15 +25,15 @@ final class FrontEndSymbolExtractor
 	{
 	}
 
-	public function extract(string $path): PhpFile
+	public function extract(string $path, ?string $sourceCode = null): PhpFile
 	{
-		return $this->builder->build($this->loader->load($path));
+		return $this->builder->build($this->loader->load($path, $sourceCode));
 	}
 
 	/** @return array<string,mixed> */
-	public function summarize(PhpFile $file): array
+	public function summarize(PhpFile $file, ?string $sourceCode = null): array
 	{
-		$sourceLines = $this->loadSourceLines($file->path);
+		$sourceLines = $this->loadSourceLines($file->path, $sourceCode);
 		$namespaces = [];
 		foreach ($file->namespaces as $namespaceBlock) {
 			if (!$namespaceBlock instanceof NamespaceBlock) {
@@ -166,13 +166,14 @@ final class FrontEndSymbolExtractor
 			'expression_chains' => $this->summarizeExpressionChains($function->statements),
 			'property_reads' => $this->summarizePropertyReads($function->statements),
 			'call_sites' => $this->summarizeCallSites($function->statements),
-			'local_alias_assignments' => $this->summarizeLocalAliasAssignments($function->statements),
-			'local_literal_assignments' => $this->summarizeLocalLiteralAssignments($function->statements),
-			'local_type_assignments' => $this->summarizeLocalTypeAssignments($function->statements),
-			'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($function->statements),
-			'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($function->statements),
+			'local_alias_assignments' => $this->summarizeLocalAliasAssignments($function->statements, $sourceLines),
+			'local_literal_assignments' => $this->summarizeLocalLiteralAssignments($function->statements, $sourceLines),
+			'local_type_assignments' => $this->summarizeLocalTypeAssignments($function->statements, $sourceLines),
+			'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($function->statements, $sourceLines),
+			'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($function->statements, $sourceLines),
 			'local_branch_assignments' => $this->summarizeLocalBranchAssignments($function->statements),
 			'non_null_guards' => $this->summarizeNonNullGuards($function->statements),
+			'non_false_guards' => $this->summarizeNonFalseGuards($function->statements),
 			'foreach_locals' => $this->summarizeForeachLocals($function->statements),
 			'for_loop_locals' => $this->summarizeForLoopLocals($function->statements),
 			'property_assignments' => $this->summarizePropertyAssignments($function->statements),
@@ -210,13 +211,14 @@ final class FrontEndSymbolExtractor
 				'expression_chains' => $this->summarizeExpressionChains($method->statements),
 				'property_reads' => $this->summarizePropertyReads($method->statements),
 				'call_sites' => $this->summarizeCallSites($method->statements),
-				'local_alias_assignments' => $this->summarizeLocalAliasAssignments($method->statements),
-				'local_literal_assignments' => $this->summarizeLocalLiteralAssignments($method->statements),
-				'local_type_assignments' => $this->summarizeLocalTypeAssignments($method->statements),
-				'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($method->statements),
-				'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($method->statements),
+				'local_alias_assignments' => $this->summarizeLocalAliasAssignments($method->statements, $sourceLines),
+				'local_literal_assignments' => $this->summarizeLocalLiteralAssignments($method->statements, $sourceLines),
+				'local_type_assignments' => $this->summarizeLocalTypeAssignments($method->statements, $sourceLines),
+				'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($method->statements, $sourceLines),
+				'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($method->statements, $sourceLines),
 				'local_branch_assignments' => $this->summarizeLocalBranchAssignments($method->statements),
 				'non_null_guards' => $this->summarizeNonNullGuards($method->statements),
+				'non_false_guards' => $this->summarizeNonFalseGuards($method->statements),
 				'foreach_locals' => $this->summarizeForeachLocals($method->statements),
 				'for_loop_locals' => $this->summarizeForLoopLocals($method->statements),
 				'property_assignments' => $this->summarizePropertyAssignments($method->statements),
@@ -571,7 +573,7 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
-	private function summarizeLocalLiteralAssignments(array $statements): array
+	private function summarizeLocalLiteralAssignments(array $statements, array $sourceLines): array
 	{
 		$literals = [];
 		foreach ($this->flattenStatements($statements) as $statement) {
@@ -584,6 +586,9 @@ final class FrontEndSymbolExtractor
 			}
 			$target = $this->extractAssignedVariableName($payload['var'] ?? null);
 			if ($target === null) {
+				continue;
+			}
+			if ($this->extractInlineTypedAssignmentType($statement->line, $target, $sourceLines) !== null) {
 				continue;
 			}
 			$type = $this->inferLiteralType($payload['expr'] ?? null);
@@ -601,7 +606,7 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
-	private function summarizeLocalTypeAssignments(array $statements): array
+	private function summarizeLocalTypeAssignments(array $statements, array $sourceLines): array
 	{
 		$assignments = [];
 		foreach ($this->flattenStatements($statements) as $statement) {
@@ -614,6 +619,9 @@ final class FrontEndSymbolExtractor
 			}
 			$target = $this->extractAssignedVariableName($payload['var'] ?? null);
 			if ($target === null) {
+				continue;
+			}
+			if ($this->extractInlineTypedAssignmentType($statement->line, $target, $sourceLines) !== null) {
 				continue;
 			}
 			$type = $this->inferSimpleExpressionType($payload['expr'] ?? null);
@@ -631,7 +639,7 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
-	private function summarizeLocalConstructedAssignments(array $statements): array
+	private function summarizeLocalConstructedAssignments(array $statements, array $sourceLines): array
 	{
 		$constructed = [];
 		foreach ($this->flattenStatements($statements) as $statement) {
@@ -644,6 +652,9 @@ final class FrontEndSymbolExtractor
 			}
 			$target = $this->extractAssignedVariableName($payload['var'] ?? null);
 			if ($target === null) {
+				continue;
+			}
+			if ($this->extractInlineTypedAssignmentType($statement->line, $target, $sourceLines) !== null) {
 				continue;
 			}
 			$type = $this->inferConstructedClassType($payload['expr'] ?? null);
@@ -661,7 +672,7 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
-	private function summarizeLocalDescriptorAssignments(array $statements): array
+	private function summarizeLocalDescriptorAssignments(array $statements, array $sourceLines): array
 	{
 		$assignments = [];
 		foreach ($this->flattenStatements($statements) as $statement) {
@@ -674,6 +685,9 @@ final class FrontEndSymbolExtractor
 			}
 			$target = $this->extractAssignedVariableName($payload['var'] ?? null);
 			if ($target === null) {
+				continue;
+			}
+			if ($this->extractInlineTypedAssignmentType($statement->line, $target, $sourceLines) !== null) {
 				continue;
 			}
 			$descriptor = $this->describeExpression($payload['expr'] ?? null, $statement->line);
@@ -824,13 +838,6 @@ final class FrontEndSymbolExtractor
 			return 'float';
 		}
 		if (is_string($expr)) {
-			$normalized = strtolower($expr);
-			if ($normalized === 'null') {
-				return 'null';
-			}
-			if ($normalized === 'true' || $normalized === 'false') {
-				return 'bool';
-			}
 			return 'string';
 		}
 		return null;
@@ -875,6 +882,20 @@ final class FrontEndSymbolExtractor
 		$constructed = $this->inferConstructedClassType($expr);
 		if ($constructed !== null) {
 			return $constructed;
+		}
+		$cast = $this->describeCastExpression($expr);
+		if (is_array($cast) && (($cast['kind'] ?? '') === 'type')) {
+			$type = (string) ($cast['type'] ?? '');
+			if ($type !== '') {
+				return $type;
+			}
+		}
+		$boolean = $this->describeBooleanExpression($expr);
+		if (is_array($boolean) && (($boolean['kind'] ?? '') === 'type')) {
+			$type = (string) ($boolean['type'] ?? '');
+			if ($type !== '') {
+				return $type;
+			}
 		}
 		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
 			return null;
@@ -1152,6 +1173,35 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeNonFalseGuards(array $statements): array
+	{
+		$guards = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement || $statement->kind !== 'if' || !is_array($statement->payload)) {
+				continue;
+			}
+			$clauses = $statement->payload;
+			if (count($clauses) !== 1 || !is_array($clauses[0] ?? null)) {
+				continue;
+			}
+			$clause = $clauses[0];
+			$guard = $this->extractFalseGuardName($clause['cond'] ?? null);
+			if ($guard === null) {
+				continue;
+			}
+			$branchStatements = is_array($clause['stmts'] ?? null) ? $clause['stmts'] : [];
+			if (!$this->branchAlwaysTerminates($branchStatements)) {
+				continue;
+			}
+			$guards[] = [
+				'line' => $this->findBranchMergeLine($clauses, $statement->line),
+				'name' => $guard,
+			];
+		}
+		return $guards;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
 	private function summarizeForeachLocals(array $statements): array
 	{
 		$locals = [];
@@ -1374,6 +1424,26 @@ final class FrontEndSymbolExtractor
 		if ($conditional !== null) {
 			return $conditional;
 		}
+		$cast = $this->describeCastExpression($expr);
+		if ($cast !== null) {
+			return $cast;
+		}
+		$unaryBoolean = $this->describeUnaryBooleanExpression($expr, $line);
+		if ($unaryBoolean !== null) {
+			return $unaryBoolean;
+		}
+		$stringConcat = $this->describeStringConcatExpression($expr, $line);
+		if ($stringConcat !== null) {
+			return $stringConcat;
+		}
+		$boolean = $this->describeBooleanExpression($expr);
+		if ($boolean !== null) {
+			return $boolean;
+		}
+		$arithmetic = $this->describeArithmeticExpression($expr, $line);
+		if ($arithmetic !== null) {
+			return $arithmetic;
+		}
 		$type = $this->inferLiteralType($expr);
 		if ($type !== null) {
 			return ['kind' => 'type', 'type' => $type];
@@ -1448,6 +1518,118 @@ final class FrontEndSymbolExtractor
 			'if_true' => $left,
 			'if_false' => $right,
 		];
+	}
+
+	/** @return array<string,mixed>|null */
+	private function describeStringConcatExpression(mixed $expr, int $line): ?array
+	{
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::BINARY_OP || (int) ($expr->flags ?? 0) !== AstKind::BINARY_CONCAT) {
+			return null;
+		}
+		$left = $this->describeExpression($expr->children['left'] ?? null, $line);
+		$right = $this->describeExpression($expr->children['right'] ?? null, $line);
+		if (($left['kind'] ?? 'unknown') === 'unknown' || ($right['kind'] ?? 'unknown') === 'unknown') {
+			return null;
+		}
+		return ['kind' => 'type', 'type' => 'string'];
+	}
+
+	/** @return array<string,mixed>|null */
+	private function describeCastExpression(mixed $expr): ?array
+	{
+		if (!is_object($expr) || !isset($expr->kind)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::CAST) {
+			return null;
+		}
+		$flag = (int) ($expr->flags ?? 0);
+		$type = match ($flag) {
+			AstKind::TYPE_LONG => 'int',
+			AstKind::TYPE_STRING => 'string',
+			AstKind::TYPE_BOOL => 'bool',
+			AstKind::TYPE_DOUBLE => 'float',
+			default => null,
+		};
+		if ($type === null) {
+			return null;
+		}
+		return ['kind' => 'type', 'type' => $type];
+	}
+
+	/** @return array<string,mixed>|null */
+	private function describeUnaryBooleanExpression(mixed $expr, int $line): ?array
+	{
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::UNARY_OP) {
+			return null;
+		}
+		$flag = (int) ($expr->flags ?? 0);
+		if ($flag !== AstKind::UNARY_BOOL_NOT) {
+			return null;
+		}
+		$inner = $this->describeExpression($expr->children['expr'] ?? null, $line);
+		if (($inner['kind'] ?? 'unknown') === 'unknown') {
+			return null;
+		}
+		return ['kind' => 'type', 'type' => 'bool'];
+	}
+
+	/** @return array<string,mixed>|null */
+	private function describeArithmeticExpression(mixed $expr, int $line): ?array
+	{
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::BINARY_OP) {
+			return null;
+		}
+		$flag = (int) ($expr->flags ?? 0);
+		if (!in_array($flag, [AstKind::PLUS, AstKind::MINUS], true)) {
+			return null;
+		}
+		$left = $this->describeExpression($expr->children['left'] ?? null, $line);
+		$right = $this->describeExpression($expr->children['right'] ?? null, $line);
+		if (($left['kind'] ?? 'unknown') === 'unknown' || ($right['kind'] ?? 'unknown') === 'unknown') {
+			return null;
+		}
+		return [
+			'kind' => 'arithmetic',
+			'operator' => $flag === AstKind::PLUS ? '+' : '-',
+			'left' => $left,
+			'right' => $right,
+		];
+	}
+
+	/** @return array<string,mixed>|null */
+	private function describeBooleanExpression(mixed $expr): ?array
+	{
+		if (!is_object($expr) || !isset($expr->kind)) {
+			return null;
+		}
+		if ($expr->kind === AstKind::BINARY_OP) {
+			$flag = (int) ($expr->flags ?? 0);
+			if (in_array($flag, [
+				AstKind::BINARY_IS_IDENTICAL,
+				AstKind::BINARY_IS_NOT_IDENTICAL,
+				AstKind::BINARY_IS_EQUAL,
+				AstKind::BINARY_IS_NOT_EQUAL,
+				AstKind::BINARY_IS_SMALLER,
+				AstKind::BINARY_IS_SMALLER_OR_EQUAL,
+				AstKind::BINARY_IS_GREATER,
+				257,
+				AstKind::BINARY_BOOL_AND,
+				AstKind::BINARY_BOOL_OR,
+			], true)) {
+				return ['kind' => 'type', 'type' => 'bool'];
+			}
+		}
+		return null;
 	}
 
 	/** @param mixed $branchStatements @return array<string,array<string,mixed>|null> */
@@ -1571,6 +1753,60 @@ final class FrontEndSymbolExtractor
 		return null;
 	}
 
+	private function extractFalseGuardName(mixed $node): ?string
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children)) {
+			return null;
+		}
+		if ($node->kind !== AstKind::BINARY_OP) {
+			return null;
+		}
+		$flag = (int) ($node->flags ?? 0);
+		if ($flag === AstKind::BINARY_BOOL_OR) {
+			$leftGuard = $this->extractFalseGuardName($node->children['left'] ?? null);
+			if ($leftGuard !== null) {
+				return $leftGuard;
+			}
+			return $this->extractFalseGuardName($node->children['right'] ?? null);
+		}
+		if ($flag !== AstKind::BINARY_IS_IDENTICAL) {
+			return null;
+		}
+		$left = $node->children['left'] ?? null;
+		$right = $node->children['right'] ?? null;
+		$leftVar = $this->extractAssignedVariableName($left);
+		$rightVar = $this->extractAssignedVariableName($right);
+		$leftFalse = $this->isFalseLiteral($left);
+		$rightFalse = $this->isFalseLiteral($right);
+		if ($leftVar !== null && $rightFalse) {
+			return $leftVar;
+		}
+		if ($rightVar !== null && $leftFalse) {
+			return $rightVar;
+		}
+		return null;
+	}
+
+	private function isFalseLiteral(mixed $expr): bool
+	{
+		if ($expr === false) {
+			return true;
+		}
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return false;
+		}
+		if ($expr->kind === AstKind::CONST) {
+			$nameNode = $expr->children['name'] ?? null;
+			if (is_object($nameNode) && isset($nameNode->kind, $nameNode->children) && is_array($nameNode->children) && $nameNode->kind === AstKind::NAME) {
+				return strtolower(trim((string) ($nameNode->children['name'] ?? ''))) === 'false';
+			}
+		}
+		if ($expr->kind === AstKind::NAME) {
+			return strtolower(trim((string) ($expr->children['name'] ?? ''))) === 'false';
+		}
+		return false;
+	}
+
 	/** @param list<\Scpp\S2S\IR\Statement> $branchStatements */
 	private function branchAlwaysTerminates(array $branchStatements): bool
 	{
@@ -1604,12 +1840,15 @@ final class FrontEndSymbolExtractor
 		];
 	}
 
-	private function loadSourceLines(string $path): array
+	private function loadSourceLines(string $path, ?string $sourceCode = null): array
 	{
-		if ($path === '' || !is_file($path)) {
-			return [];
+		$contents = $sourceCode;
+		if (!is_string($contents)) {
+			if ($path === '' || !is_file($path)) {
+				return [];
+			}
+			$contents = file_get_contents($path);
 		}
-		$contents = file_get_contents($path);
 		if (!is_string($contents) || $contents === '') {
 			return [];
 		}

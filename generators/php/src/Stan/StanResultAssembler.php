@@ -5,6 +5,66 @@ namespace Scpp\S2S\Stan;
 
 final class StanResultAssembler
 {
+	/** @param list<array<string,mixed>> ...$diagnosticGroups @return list<array<string,mixed>> */
+	public function flattenDiagnostics(array ...$diagnosticGroups): array
+	{
+		$all = [];
+		foreach ($diagnosticGroups as $group) {
+			foreach ($group as $diagnostic) {
+				if (is_array($diagnostic)) {
+					$all[] = $diagnostic;
+				}
+			}
+		}
+
+		usort($all, static function (array $left, array $right): int {
+			$leftPath = (string) ($left['path'] ?? '');
+			$rightPath = (string) ($right['path'] ?? '');
+			$byPath = strcmp($leftPath, $rightPath);
+			if ($byPath !== 0) {
+				return $byPath;
+			}
+			$leftLine = (int) ($left['line'] ?? 0);
+			$rightLine = (int) ($right['line'] ?? 0);
+			if ($leftLine !== $rightLine) {
+				return $leftLine <=> $rightLine;
+			}
+			return strcmp((string) ($left['code'] ?? $left['kind'] ?? ''), (string) ($right['code'] ?? $right['kind'] ?? ''));
+		});
+
+		return $all;
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @return array<string,list<array<string,mixed>>> */
+	public function groupDiagnosticsByPath(array $diagnostics): array
+	{
+		$grouped = [];
+		foreach ($diagnostics as $diagnostic) {
+			$path = (string) ($diagnostic['path'] ?? '');
+			if ($path === '') {
+				$path = '(unknown)';
+			}
+			$grouped[$path][] = $diagnostic;
+		}
+		ksort($grouped, SORT_STRING);
+		return $grouped;
+	}
+
+	/** @param list<array<string,mixed>> $symbols @return array<string,list<array<string,mixed>>> */
+	public function groupSymbolsByPath(array $symbols): array
+	{
+		$grouped = [];
+		foreach ($symbols as $symbol) {
+			$path = (string) ($symbol['path'] ?? '');
+			if ($path === '') {
+				$path = '(unknown)';
+			}
+			$grouped[$path][] = $symbol;
+		}
+		ksort($grouped, SORT_STRING);
+		return $grouped;
+	}
+
 	/** @return array<string,mixed> */
 	public function buildState(
 		string $projectRoot,
@@ -96,6 +156,65 @@ final class StanResultAssembler
 			'state_path' => $statePath,
 			'runtime_shallow_sources' => $runtimeShallowSources,
 			'warning_samples' => $warningSamples,
+		];
+	}
+
+	/**
+	 * @param list<array<string,mixed>> $allDiagnostics
+	 * @param array<string,list<array<string,mixed>>> $diagnosticsByPath
+	 * @return array<string,mixed>
+	 */
+	public function buildSessionDiagnosticsResult(
+		string $projectRoot,
+		string $phpProfile,
+		int $sourceUnitCount,
+		int $analyzedCount,
+		int $reusedCount,
+		int $warningCount,
+		string $statePath,
+		array $runtimeShallowSources,
+		array $warningSamples,
+		array $allDiagnostics,
+		array $diagnosticsByPath,
+	): array {
+		return [
+			'project_root' => \normalize_path($projectRoot),
+			'php_profile' => $phpProfile,
+			'source_unit_count' => $sourceUnitCount,
+			'analyzed_count' => $analyzedCount,
+			'reused_count' => $reusedCount,
+			'warning_count' => $warningCount,
+			'state_path' => $statePath,
+			'runtime_shallow_sources' => $runtimeShallowSources,
+			'warning_samples' => $warningSamples,
+			'diagnostics' => $allDiagnostics,
+			'diagnostics_by_path' => $diagnosticsByPath,
+		];
+	}
+
+	/** @param list<array<string,mixed>> $documentSymbols @return array<string,mixed> */
+	public function buildDocumentSymbolsResult(string $projectRoot, string $phpProfile, string $documentPath, array $documentSymbols): array
+	{
+		return [
+			'project_root' => \normalize_path($projectRoot),
+			'php_profile' => $phpProfile,
+			'path' => \normalize_path($documentPath),
+			'uri' => 'file://' . \normalize_path($documentPath),
+			'symbol_count' => count($documentSymbols),
+			'symbols' => $documentSymbols,
+		];
+	}
+
+	/** @param array<string,mixed>|null $hover @return array<string,mixed> */
+	public function buildHoverResult(string $projectRoot, string $phpProfile, string $documentPath, int $line, ?array $hover): array
+	{
+		return [
+			'project_root' => \normalize_path($projectRoot),
+			'php_profile' => $phpProfile,
+			'path' => \normalize_path($documentPath),
+			'uri' => 'file://' . \normalize_path($documentPath),
+			'line' => $line,
+			'hover' => $hover,
 		];
 	}
 }

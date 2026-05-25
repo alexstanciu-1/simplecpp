@@ -98,9 +98,9 @@ function strrpos(string $haystack, string $needle) /** result_or_false<int> */ {
 function strtolower(string $text): string {}
 function strtotime(string $text): mixed {}
 function strtoupper(string $text): string {}
-function substr(string $text, int $offset, int $length): string {}
-function substr_compare(string $main, string $str, int $offset, int $length): int {}
-function substr_replace(string $text, string $replace, int $offset, int $length): string {}
+function substr(string $text, int $offset, int $length = 0): string {}
+function substr_compare(string $main, string $str, int $offset, int $length = 0): int {}
+function substr_replace(string $text, string $replace, int $offset, int $length = 0): string {}
 function take(mixed $out, mixed $source): bool {}
 function ternary_eval(): mixed {}
 function time(): int {}

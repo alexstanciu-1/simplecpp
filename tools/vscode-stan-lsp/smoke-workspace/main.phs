@@ -1,0 +1,10 @@
+function helper(): string
+{
+	return "ok";
+}
+
+function main(): void
+{
+	$value = null;
+	$value = helper();
+}

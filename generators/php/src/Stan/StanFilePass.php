@@ -11,37 +11,26 @@ final class StanFilePass
 	public function __construct(
 		private readonly StanStateStore $stateStore = new StanStateStore(),
 		private readonly FrontEndSymbolExtractor $extractor = new FrontEndSymbolExtractor(),
-		private readonly StanPathMapper $pathMapper = new StanPathMapper(),
 		private readonly StanDiagnosticCollector $diagnosticCollector = new StanDiagnosticCollector(),
 	)
 	{
 	}
 
-	/** @param array<string,mixed> $state @param array<string,array<string,mixed>> $projectContexts @param list<string> $sourceFiles @return array{files:list<string>,file_summaries:array<string,array<string,mixed>>,files_state:array<string,array<string,mixed>>,analyzed_count:int,reused_count:int,warning_count:int} */
+	/** @param array<string,mixed> $state @param list<StanSourceUnit> $sourceUnits @return array{files:list<string>,file_summaries:array<string,array<string,mixed>>,files_state:array<string,array<string,mixed>>,analyzed_count:int,reused_count:int,warning_count:int} */
 	public function analyze(
 		string $projectRoot,
 		string $statePath,
 		string $cacheDir,
 		string $stanSignature,
 		array $state,
-		array $projectContexts,
-		array $sourceFiles,
+		array $sourceUnits,
 	): array {
 		$files = [];
-		foreach ($projectContexts as $contextProjectRoot => $_projectContext) {
-			foreach (\collect_project_php_files($contextProjectRoot) as $phpPathAbs) {
-				$files[] = \normalize_path($phpPathAbs);
-			}
-		}
-		foreach ($sourceFiles as $sourceFile) {
-			$files[] = \normalize_path($sourceFile);
-		}
-		$files = array_values(array_unique($files));
-		sort($files, SORT_STRING);
 
 		$currentFileMetas = [];
-		foreach ($files as $sourcePath) {
-			$currentFileMetas[$this->pathMapper->sourceKey($projectRoot, $sourcePath)] = \build_file_meta($sourcePath);
+		foreach ($sourceUnits as $sourceUnit) {
+			$files[] = $sourceUnit->path;
+			$currentFileMetas[$sourceUnit->sourceKey] = $sourceUnit->meta;
 		}
 
 		$analyzedCount = 0;
@@ -50,16 +39,20 @@ final class StanFilePass
 		$newFilesState = [];
 		$fileSummaries = [];
 
-		foreach ($files as $sourcePath) {
-			$relativeKey = $this->pathMapper->sourceKey($projectRoot, $sourcePath);
-			$meta = $currentFileMetas[$relativeKey];
+		foreach ($sourceUnits as $sourceUnit) {
+			$sourcePath = $sourceUnit->path;
+			$relativeKey = $sourceUnit->sourceKey;
+			$meta = $sourceUnit->meta;
 			$previous = is_array($state['files'][$relativeKey] ?? null) ? $state['files'][$relativeKey] : null;
 			$cachePath = $cacheDir . '/' . sha1($relativeKey) . '.php';
 			$needsAnalyze = $this->collectReasons($previous, $meta, $stanSignature, $cachePath, $currentFileMetas, is_array($state['files'] ?? null) ? $state['files'] : []) !== [];
 			$summary = null;
 			if ($needsAnalyze) {
 				try {
-					$summary = $this->extractor->summarize($this->extractor->extract($sourcePath));
+					$summary = $this->extractor->summarize(
+						$this->extractor->extract($sourcePath, $sourceUnit->contents),
+						$sourceUnit->contents
+					);
 				} catch (Throwable $throwable) {
 					$summary = [
 						'path' => $sourcePath,
@@ -106,7 +99,7 @@ final class StanFilePass
 				'content_hash' => $meta['content_hash'],
 				'stan_signature' => $stanSignature,
 				'cache_path' => \normalize_path($cachePath),
-				'is_runtime_shallow' => in_array(\normalize_path($sourcePath), array_map('\normalize_path', $sourceFiles), true),
+				'is_runtime_shallow' => $sourceUnit->isRuntimeShallow,
 			];
 		}
 

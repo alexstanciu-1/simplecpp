@@ -5,7 +5,7 @@ namespace Scpp\S2S\Stan;
 
 final class StanWarningPresenter
 {
-	/** @return array{0:list<array<string,mixed>>,1:list<array<string,mixed>>,2:list<array<string,mixed>>,3:list<array<string,mixed>>,4:list<array<string,mixed>>} */
+	/** @return array{0:list<array<string,mixed>>,1:list<array<string,mixed>>,2:list<array<string,mixed>>,3:list<array<string,mixed>>,4:list<array<string,mixed>>,5:list<array<string,mixed>>} */
 	public function suppressRedundantDiagnostics(
 		array $initializationDiagnostics,
 		array $localTypeDiagnostics,
@@ -17,6 +17,8 @@ final class StanWarningPresenter
 		array $returnTypeDiagnostics,
 	): array {
 		$rootCausesBySite = [];
+		$localTypeSites = [];
+		$propertyTypeSites = [];
 		foreach ([$initializationDiagnostics, $localTypeDiagnostics, $propertyTypeDiagnostics] as $rootGroup) {
 			foreach ($rootGroup as $diagnostic) {
 				if (!is_array($diagnostic)) {
@@ -29,6 +31,29 @@ final class StanWarningPresenter
 				$rootCausesBySite[$site] = true;
 			}
 		}
+		foreach ($localTypeDiagnostics as $diagnostic) {
+			if (!is_array($diagnostic)) {
+				continue;
+			}
+			$site = $this->diagnosticSiteKey($diagnostic);
+			if ($site !== null) {
+				$localTypeSites[$site] = true;
+			}
+		}
+		foreach ($propertyTypeDiagnostics as $diagnostic) {
+			if (!is_array($diagnostic)) {
+				continue;
+			}
+			$site = $this->diagnosticSiteKey($diagnostic);
+			if ($site !== null) {
+				$propertyTypeSites[$site] = true;
+			}
+		}
+
+		$initializationDiagnostics = array_values(array_filter(
+			$initializationDiagnostics,
+			fn (mixed $diagnostic): bool => !$this->shouldSuppressInitializationDiagnostic($diagnostic, $localTypeSites, $propertyTypeSites)
+		));
 
 		$returnChainDiagnostics = $this->filterDiagnosticsBySite($returnChainDiagnostics, $rootCausesBySite);
 		$expressionChainDiagnostics = $this->filterDiagnosticsBySite($expressionChainDiagnostics, $rootCausesBySite);
@@ -56,6 +81,7 @@ final class StanWarningPresenter
 		));
 
 		return [
+			$initializationDiagnostics,
 			$returnChainDiagnostics,
 			$expressionChainDiagnostics,
 			$propertyReadDiagnostics,
@@ -139,5 +165,17 @@ final class StanWarningPresenter
 		}
 		$kind = (string) ($diagnostic['kind'] ?? '');
 		return $kind === 'return_type_mismatch' && isset($rootCausesBySite[$site]);
+	}
+
+	private function shouldSuppressInitializationDiagnostic(mixed $diagnostic, array $localTypeSites, array $propertyTypeSites): bool
+	{
+		if (!is_array($diagnostic)) {
+			return true;
+		}
+		$site = $this->diagnosticSiteKey($diagnostic);
+		if ($site === null) {
+			return false;
+		}
+		return isset($localTypeSites[$site]) || isset($propertyTypeSites[$site]);
 	}
 }

@@ -9,6 +9,7 @@ final class StanSemanticPass
 		private readonly StanSymbolIndexBuilder $symbolIndexBuilder = new StanSymbolIndexBuilder(),
 		private readonly StanDependencyResolver $dependencyResolver = new StanDependencyResolver(),
 		private readonly StanDiagnosticCollector $diagnosticCollector = new StanDiagnosticCollector(),
+		private readonly StanDiagnosticEnricher $diagnosticEnricher = new StanDiagnosticEnricher(),
 		private readonly StanExpressionTypeResolver $expressionTypeResolver = new StanExpressionTypeResolver(),
 		private readonly StanWarningPresenter $warningPresenter = new StanWarningPresenter(),
 	)
@@ -33,6 +34,7 @@ final class StanSemanticPass
 		$callSiteDiagnostics = $this->expressionTypeResolver->collectCallSiteDiagnostics($fileSummaries, $symbolIndex);
 		$returnTypeDiagnostics = $this->expressionTypeResolver->collectReturnTypeDiagnostics($fileSummaries, $symbolIndex);
 		[
+			$initializationDiagnostics,
 			$returnChainDiagnostics,
 			$expressionChainDiagnostics,
 			$propertyReadDiagnostics,
@@ -48,6 +50,17 @@ final class StanSemanticPass
 			$callSiteDiagnostics,
 			$returnTypeDiagnostics,
 		);
+		$duplicateDiagnostics = $this->diagnosticEnricher->enrichList($duplicateDiagnostics);
+		$resolutionDiagnostics = $this->diagnosticEnricher->enrichList($resolutionDiagnostics);
+		$overrideDiagnostics = $this->diagnosticEnricher->enrichList($overrideDiagnostics);
+		$returnChainDiagnostics = $this->diagnosticEnricher->enrichList($returnChainDiagnostics);
+		$expressionChainDiagnostics = $this->diagnosticEnricher->enrichList($expressionChainDiagnostics);
+		$localTypeDiagnostics = $this->diagnosticEnricher->enrichList($localTypeDiagnostics);
+		$propertyTypeDiagnostics = $this->diagnosticEnricher->enrichList($propertyTypeDiagnostics);
+		$propertyReadDiagnostics = $this->diagnosticEnricher->enrichList($propertyReadDiagnostics);
+		$initializationDiagnostics = $this->diagnosticEnricher->enrichList($initializationDiagnostics);
+		$callSiteDiagnostics = $this->diagnosticEnricher->enrichList($callSiteDiagnostics);
+		$returnTypeDiagnostics = $this->diagnosticEnricher->enrichList($returnTypeDiagnostics);
 		$fileDependencyKeys = $this->dependencyResolver->collectFileDependencyKeys($fileSummaries, $symbolIndex, $projectRoot);
 
 		return [

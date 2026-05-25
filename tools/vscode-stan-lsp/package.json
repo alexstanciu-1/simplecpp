@@ -1,0 +1,76 @@
+{
+  "name": "simplecpp-stan-lsp",
+  "displayName": "Simple C++ STAN LSP",
+  "description": "VS Code language client scaffold for the Simple C++ STAN language server.",
+  "version": "0.0.1",
+  "publisher": "simplecpp-local",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "workspaceContains:prism.json",
+    "onLanguage:simplecpp-phs",
+    "onLanguage:php"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "simplecpp-phs",
+        "aliases": [
+          "Simple C++ PHS",
+          "simplecpp-phs"
+        ],
+        "extensions": [
+          ".phs"
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "simplecpp.stan.restartServer",
+        "title": "Simple C++: Restart STAN Server"
+      },
+      {
+        "command": "simplecpp.stan.openSmokeFile",
+        "title": "Simple C++: Open Smoke File"
+      }
+    ],
+    "configuration": {
+      "title": "Simple C++ STAN",
+      "properties": {
+        "simplecpp.stan.phpBinary": {
+          "type": "string",
+          "default": "php",
+          "description": "PHP binary used to launch the STAN language server."
+        },
+        "simplecpp.stan.serverScript": {
+          "type": "string",
+          "default": "",
+          "description": "Optional absolute path override for bin/stan_lsp_server.php."
+        },
+        "simplecpp.stan.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace level for the STAN language client."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "check": "node -c extension.js && node -e \"JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('ok')\"",
+    "smoke": "node -e \"console.log('Simple C++ STAN VS Code scaffold ready')\""
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

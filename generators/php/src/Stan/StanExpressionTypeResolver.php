@@ -466,7 +466,7 @@ final class StanExpressionTypeResolver
 		$baseTypes = $this->buildParamTypeMap($function['params'] ?? []);
 		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
 		$analysis = $this->analyzeChainSequence($function, $baseTypes, null, $classLookup, $functionLookup, $context, $path);
-		return $this->collectPropertyReadDiagnosticsForOwner($function, $analysis['final_local_types'], null, $classLookup, $functionLookup, $context, $path);
+		return $analysis['property_read_diagnostics'];
 	}
 
 	private function collectFunctionInitializationDiagnostics(array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup): array
@@ -481,8 +481,8 @@ final class StanExpressionTypeResolver
 	{
 		$baseTypes = $this->buildParamTypeMap($function['params'] ?? []);
 		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
-		$analysis = $this->analyzeChainSequence($function, $baseTypes, null, $classLookup, $functionLookup, $context, $path);
-		return $this->collectCallSiteDiagnosticsForOwner($function, $analysis['final_local_types'], null, $classLookup, $functionLookup, $functionCatalog, $context, $path);
+		$analysis = $this->analyzeChainSequence($function, $baseTypes, null, $classLookup, $functionLookup, $context, $path, $functionCatalog);
+		return $analysis['call_site_diagnostics'];
 	}
 
 	/** @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
@@ -574,7 +574,7 @@ final class StanExpressionTypeResolver
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
 			$context = $classType . '::' . (string) ($method['name'] ?? '');
 			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
-			$results = array_merge($results, $this->collectPropertyReadDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $context, $path));
+			$results = array_merge($results, $analysis['property_read_diagnostics']);
 		}
 		return $results;
 	}
@@ -607,8 +607,8 @@ final class StanExpressionTypeResolver
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
 			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
-			$results = array_merge($results, $this->collectCallSiteDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $functionCatalog, $context, $path));
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, $functionCatalog);
+			$results = array_merge($results, $analysis['call_site_diagnostics']);
 		}
 		return $results;
 	}
@@ -724,11 +724,12 @@ final class StanExpressionTypeResolver
 
 			$nextTypes = [];
 			foreach ($currentTypes as $currentType) {
-				$classInfo = $this->findClassInfo($currentType, $classLookup);
+				$receiverType = $this->unwrapMemberReceiverType($currentType);
+				$classInfo = $this->findClassInfo($receiverType, $classLookup, $selfType);
 				if ($classInfo === null) {
 					return [
 						'resolved_type' => 'unknown',
-						'failure_kind' => $this->isKnownNonObjectType($currentType) ? 'non_object_receiver_type' : 'unknown_receiver_type',
+						'failure_kind' => $this->isKnownNonObjectType($receiverType) ? 'non_object_receiver_type' : 'unknown_receiver_type',
 						'failure_segment' => $this->formatSegment($segment),
 						'receiver_type' => $currentType,
 					];
@@ -814,10 +815,14 @@ final class StanExpressionTypeResolver
 		return $diagnostics;
 	}
 
-	/** @param array<string,mixed> $ownerNode @param array<string,string> $baseTypes @param array<string,array<string,mixed>> $classLookup @return array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>} */
-	private function analyzeChainSequence(array $ownerNode, array $baseTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): array
+	/** @param array<string,mixed> $ownerNode @param array<string,string> $baseTypes @param array<string,array<string,mixed>> $classLookup @param array<string,array<string,mixed>>|null $functionCatalog @return array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>,call_site_diagnostics:list<array<string,mixed>>,property_read_diagnostics:list<array<string,mixed>>} */
+	private function analyzeChainSequence(array $ownerNode, array $baseTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, ?array $functionCatalog = null): array
 	{
-		$localTypes = $this->buildInitialLocalTypeMap($baseTypes);
+		$localTypes = [];
+		foreach ($baseTypes as $baseName => $baseType) {
+			$localTypes[$baseName] = $this->canonicalizeTypeSet([$baseType], $classLookup, $selfType);
+		}
+		$functionCatalog = $functionCatalog ?? [];
 		$declaredLocals = [];
 		$initializedLocals = [];
 		$initializedLocalLines = [];
@@ -835,6 +840,8 @@ final class StanExpressionTypeResolver
 		$events = $this->buildChainEvents($ownerNode);
 		$observations = [];
 		$diagnostics = [];
+		$callSiteDiagnostics = [];
+		$propertyReadDiagnostics = [];
 		$initializationKeys = [];
 
 		foreach ($events as $event) {
@@ -844,11 +851,10 @@ final class StanExpressionTypeResolver
 					$declaredLocals[$name] = true;
 					$type = (string) ($event['type'] ?? '');
 					if ($type !== '') {
-						$localTypes[$name] = $this->normalizeTypeSet([$type]);
+						$localTypes[$name] = $this->canonicalizeTypeSet([$type], $classLookup, $selfType);
 					}
 					if ((bool) ($event['is_initialized'] ?? false)) {
-						$initializedLocals[$name] = true;
-						$initializedLocalLines[$name] = (int) ($event['line'] ?? 0);
+						$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
 					}
 				}
 				continue;
@@ -863,13 +869,12 @@ final class StanExpressionTypeResolver
 				$source = is_array($event['source'] ?? null) ? $event['source'] : null;
 				$resolvedTypes = $this->resolveForeachValueTypes($source, (string) ($event['role'] ?? 'value'), $localTypes, $selfType, $classLookup, $functionLookup);
 				if ($resolvedTypes !== []) {
-					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, $resolvedTypes, $context, $path, (int) ($event['line'] ?? 0));
+					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, $resolvedTypes, $context, $path, (int) ($event['line'] ?? 0), $classLookup, $selfType);
 				} else {
 					unset($morphedLocals[$name]);
 					unset($localTypes[$name]);
 				}
-				$initializedLocals[$name] = true;
-				$initializedLocalLines[$name] = (int) ($event['line'] ?? 0);
+				$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
 				continue;
 			}
 
@@ -885,13 +890,12 @@ final class StanExpressionTypeResolver
 					: [];
 				$resolvedTypes = $this->normalizeTypeSet($resolvedTypes);
 				if ($resolvedTypes !== []) {
-					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, $resolvedTypes, $context, $path, (int) ($event['line'] ?? 0));
+					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, $resolvedTypes, $context, $path, (int) ($event['line'] ?? 0), $classLookup, $selfType);
 				} else {
 					unset($morphedLocals[$name]);
 					unset($localTypes[$name]);
 				}
-				$initializedLocals[$name] = true;
-				$initializedLocalLines[$name] = (int) ($event['line'] ?? 0);
+				$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
 				continue;
 			}
 
@@ -899,6 +903,17 @@ final class StanExpressionTypeResolver
 				$name = (string) ($event['name'] ?? '');
 				if ($name !== '' && isset($localTypes[$name])) {
 					$narrowedTypes = $this->removeNullTypes($localTypes[$name]);
+					if ($narrowedTypes !== []) {
+						$localTypes[$name] = $narrowedTypes;
+					}
+				}
+				continue;
+			}
+
+			if ($event['event_kind'] === 'non_false_guard') {
+				$name = (string) ($event['name'] ?? '');
+				if ($name !== '' && isset($localTypes[$name])) {
+					$narrowedTypes = $this->removeFalseTypes($localTypes[$name]);
 					if ($narrowedTypes !== []) {
 						$localTypes[$name] = $narrowedTypes;
 					}
@@ -919,14 +934,12 @@ final class StanExpressionTypeResolver
 					unset($initializedLocals[$target]);
 					unset($initializedLocalLines[$target]);
 				} elseif ($target !== '' && $source !== '' && isset($localTypes[$source])) {
-					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $target, $localTypes[$source], $context, $path, (int) ($event['line'] ?? 0));
-					$initializedLocals[$target] = true;
-					$initializedLocalLines[$target] = (int) ($event['line'] ?? 0);
+					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $target, $localTypes[$source], $context, $path, (int) ($event['line'] ?? 0), $classLookup, $selfType);
+					$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $target, (int) ($event['line'] ?? 0));
 				} elseif ($target !== '' && $source !== '' && isset($initializedLocals[$source])) {
 					unset($morphedLocals[$target]);
 					unset($localTypes[$target]);
-					$initializedLocals[$target] = true;
-					$initializedLocalLines[$target] = (int) ($event['line'] ?? 0);
+					$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $target, (int) ($event['line'] ?? 0));
 				} elseif ($target !== '') {
 					unset($morphedLocals[$target]);
 					unset($localTypes[$target]);
@@ -941,9 +954,8 @@ final class StanExpressionTypeResolver
 				$type = (string) ($event['type'] ?? '');
 				if ($name !== '' && $type !== '') {
 					$declaredLocals[$name] = true;
-					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, [$type], $context, $path, (int) ($event['line'] ?? 0));
-					$initializedLocals[$name] = true;
-					$initializedLocalLines[$name] = (int) ($event['line'] ?? 0);
+					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, [$type], $context, $path, (int) ($event['line'] ?? 0), $classLookup, $selfType);
+					$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
 				}
 				continue;
 			}
@@ -953,9 +965,8 @@ final class StanExpressionTypeResolver
 				$type = (string) ($event['type'] ?? '');
 				if ($name !== '' && $type !== '') {
 					$declaredLocals[$name] = true;
-					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, [$type], $context, $path, (int) ($event['line'] ?? 0));
-					$initializedLocals[$name] = true;
-					$initializedLocalLines[$name] = (int) ($event['line'] ?? 0);
+					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, [$type], $context, $path, (int) ($event['line'] ?? 0), $classLookup, $selfType);
+					$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
 				}
 				continue;
 			}
@@ -970,13 +981,12 @@ final class StanExpressionTypeResolver
 				$resolvedTypes = $this->resolveAssignmentDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 				$resolvedTypes = $this->normalizeTypeSet($resolvedTypes);
 				if ($resolvedTypes !== []) {
-					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, $resolvedTypes, $context, $path, (int) ($event['line'] ?? 0));
+					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, $resolvedTypes, $context, $path, (int) ($event['line'] ?? 0), $classLookup, $selfType);
 				} else {
 					unset($morphedLocals[$name]);
 					unset($localTypes[$name]);
 				}
-				$initializedLocals[$name] = true;
-				$initializedLocalLines[$name] = (int) ($event['line'] ?? 0);
+				$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
 				continue;
 			}
 
@@ -1007,7 +1017,7 @@ final class StanExpressionTypeResolver
 					$branchTypes = $this->resolveBranchDescriptorTypes($branch, $localTypes, $selfType, $classLookup, $functionLookup);
 					$mergedTypes = array_merge($mergedTypes, $branchTypes);
 				}
-				$mergedTypes = $this->normalizeTypeSet($mergedTypes);
+				$mergedTypes = $this->canonicalizeTypeSet($mergedTypes, $classLookup, $selfType);
 				if ($mergedTypes === []) {
 					unset($morphedLocals[$name]);
 					unset($localTypes[$name]);
@@ -1021,10 +1031,9 @@ final class StanExpressionTypeResolver
 					unset($initializedLocalLines[$name]);
 				} else {
 					$declaredLocals[$name] = true;
-					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, $mergedTypes, $context, $path, (int) ($event['line'] ?? 0));
+					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $name, $mergedTypes, $context, $path, (int) ($event['line'] ?? 0), $classLookup, $selfType);
 					if ($hadPriorInitialization || $everyBranchAssigns) {
-						$initializedLocals[$name] = true;
-						$initializedLocalLines[$name] = (int) ($event['line'] ?? 0);
+						$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
 					} else {
 						unset($initializedLocals[$name]);
 						unset($initializedLocalLines[$name]);
@@ -1068,19 +1077,25 @@ final class StanExpressionTypeResolver
 					$declaredLocals[$name] = true;
 					unset($morphedLocals[$name]);
 					unset($localTypes[$name]);
-					$initializedLocals[$name] = true;
-					$initializedLocalLines[$name] = (int) ($event['line'] ?? 0);
+					$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
 				}
 				continue;
 			}
 
 			if ($event['event_kind'] === 'property_assignment') {
-				$this->applyPropertyAssignment($diagnostics, $localTypes, $initializedLocals, $morphedLocals, $initializedProperties, $initializedPropertyLines, $initializationKeys, $event, $selfType, $classLookup, $functionLookup, $context, $path);
+				$this->applyPropertyAssignment($diagnostics, $declaredLocals, $localTypes, $initializedLocals, $morphedLocals, $initializedProperties, $initializedPropertyLines, $initializationKeys, $event, $selfType, $classLookup, $functionLookup, $context, $path);
 				continue;
 			}
 
 			if ($event['event_kind'] === 'call_site_check') {
-				$this->checkCallSiteInitialization($diagnostics, $initializationKeys, is_array($event['call_site'] ?? null) ? $event['call_site'] : null, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup, $context, $path);
+				$callSite = is_array($event['call_site'] ?? null) ? $event['call_site'] : null;
+				$this->checkCallSiteInitialization($diagnostics, $initializationKeys, $callSite, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup, $context, $path);
+				if ($callSite !== null) {
+					$callSiteDiagnostics = array_merge(
+						$callSiteDiagnostics,
+						$this->collectCallSiteDiagnosticForCallSite($callSite, $localTypes, $selfType, $classLookup, $functionLookup, $functionCatalog, $context, $path)
+					);
+				}
 				continue;
 			}
 
@@ -1093,6 +1108,10 @@ final class StanExpressionTypeResolver
 				$propertyRead = is_array($event['property_read'] ?? null) ? $event['property_read'] : null;
 				if ($propertyRead !== null && is_array($propertyRead['chain'] ?? null)) {
 					$this->checkChainInitialization($diagnostics, $initializationKeys, $propertyRead['chain'], (int) ($propertyRead['line'] ?? 0), $context, $path, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup);
+					$propertyReadDiagnostics = array_merge(
+						$propertyReadDiagnostics,
+						$this->collectPropertyReadDiagnosticForRead($propertyRead, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path)
+					);
 				}
 				continue;
 			}
@@ -1141,17 +1160,22 @@ final class StanExpressionTypeResolver
 					$resolvedSet = $resolvedTypeValue === 'unknown'
 						? []
 						: (is_array($resolvedTypeValue) ? $resolvedTypeValue : [$resolvedType]);
-					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $assignedVar, $resolvedSet, $context, $path, (int) ($chain['line'] ?? 0));
+					$this->applyLocalTypeAssignment($localTypes, $morphedLocals, $diagnostics, $assignedVar, $resolvedSet, $context, $path, (int) ($chain['line'] ?? 0), $classLookup, $selfType);
 				} else {
 					unset($morphedLocals[$assignedVar]);
 					unset($localTypes[$assignedVar]);
 				}
-				$initializedLocals[$assignedVar] = true;
-				$initializedLocalLines[$assignedVar] = (int) ($chain['line'] ?? 0);
+				$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $assignedVar, (int) ($chain['line'] ?? 0));
 			}
 		}
 
-		return ['observations' => $observations, 'diagnostics' => $diagnostics, 'final_local_types' => $localTypes];
+		return [
+			'observations' => $observations,
+			'diagnostics' => $diagnostics,
+			'final_local_types' => $localTypes,
+			'call_site_diagnostics' => $callSiteDiagnostics,
+			'property_read_diagnostics' => $this->filterPropertyReadDiagnostics($propertyReadDiagnostics),
+		];
 	}
 
 	/** @param array<string,mixed> $ownerNode @return list<array<string,mixed>> */
@@ -1180,7 +1204,7 @@ final class StanExpressionTypeResolver
 					'field' => $field,
 					'chain' => $chain,
 					'line' => (int) ($chain['line'] ?? 0),
-					'priority' => $field === 'expression_chains' ? 0 : 1,
+					'priority' => $field === 'expression_chains' ? 2 : 3,
 				];
 			}
 		}
@@ -1251,7 +1275,7 @@ final class StanExpressionTypeResolver
 			$events[] = [
 				'event_kind' => 'local_branch_merge',
 				'line' => (int) ($branchMerge['line'] ?? 0),
-				'priority' => 2,
+				'priority' => 1,
 				'name' => (string) ($branchMerge['name'] ?? ''),
 				'branches' => $branchMerge['branches'] ?? [],
 				'branch_count' => (int) ($branchMerge['branch_count'] ?? 0),
@@ -1266,7 +1290,18 @@ final class StanExpressionTypeResolver
 			$events[] = [
 				'event_kind' => 'non_null_guard',
 				'line' => (int) ($guard['line'] ?? 0),
-				'priority' => 2,
+				'priority' => 1,
+				'name' => (string) ($guard['name'] ?? ''),
+			];
+		}
+		foreach (($ownerNode['non_false_guards'] ?? []) as $guard) {
+			if (!is_array($guard)) {
+				continue;
+			}
+			$events[] = [
+				'event_kind' => 'non_false_guard',
+				'line' => (int) ($guard['line'] ?? 0),
+				'priority' => 1,
 				'name' => (string) ($guard['name'] ?? ''),
 			];
 		}
@@ -1302,7 +1337,7 @@ final class StanExpressionTypeResolver
 			$events[] = [
 				'event_kind' => 'property_branch_merge',
 				'line' => (int) ($propertyBranchMerge['line'] ?? 0),
-				'priority' => 2,
+				'priority' => 1,
 				'property_name' => (string) ($propertyBranchMerge['property_name'] ?? ''),
 				'branches' => $propertyBranchMerge['branches'] ?? [],
 				'branch_count' => (int) ($propertyBranchMerge['branch_count'] ?? 0),
@@ -1329,7 +1364,7 @@ final class StanExpressionTypeResolver
 			$events[] = [
 				'event_kind' => 'call_site_check',
 				'line' => (int) ($callSite['line'] ?? 0),
-				'priority' => 1,
+				'priority' => 3,
 				'call_site' => $callSite,
 			];
 		}
@@ -1340,7 +1375,7 @@ final class StanExpressionTypeResolver
 			$events[] = [
 				'event_kind' => 'return_value_check',
 				'line' => (int) ($returnValue['line'] ?? 0),
-				'priority' => 1,
+				'priority' => 3,
 				'descriptor' => $returnValue['descriptor'] ?? null,
 			];
 		}
@@ -1351,7 +1386,7 @@ final class StanExpressionTypeResolver
 			$events[] = [
 				'event_kind' => 'property_read_check',
 				'line' => (int) ($propertyRead['line'] ?? 0),
-				'priority' => 1,
+				'priority' => 3,
 				'property_read' => $propertyRead,
 			];
 		}
@@ -1362,7 +1397,7 @@ final class StanExpressionTypeResolver
 			$events[] = [
 				'event_kind' => 'local_invalidation',
 				'line' => (int) ($invalidation['line'] ?? 0),
-				'priority' => 1,
+				'priority' => 3,
 				'name' => (string) ($invalidation['name'] ?? ''),
 			];
 		}
@@ -1641,7 +1676,91 @@ final class StanExpressionTypeResolver
 			}
 			$normalized[strtolower($type)] = $type;
 		}
-		return array_values($normalized);
+		return $this->collapseNullableTypeFamily(array_values($normalized));
+	}
+
+	/** @param list<string> $types @param array<string,array<string,mixed>> $classLookup @return list<string> */
+	private function canonicalizeTypeSet(array $types, array $classLookup, ?string $scopeType): array
+	{
+		$out = [];
+		foreach ($types as $type) {
+			if (!is_string($type)) {
+				continue;
+			}
+			$out[] = $this->canonicalizeResolvedType($type, $classLookup, $scopeType);
+		}
+		return $this->normalizeTypeSet($out);
+	}
+
+	private function canonicalizeResolvedType(string $type, array $classLookup, ?string $scopeType): string
+	{
+		$trimmed = trim($type);
+		if ($trimmed === '') {
+			return $trimmed;
+		}
+
+		$nullableInner = $this->unwrapNullableType($trimmed);
+		if ($nullableInner !== null) {
+			$canonicalInner = $this->canonicalizeResolvedType($nullableInner, $classLookup, $scopeType);
+			return '?' . ltrim($canonicalInner, '\\');
+		}
+
+		if (preg_match('/^([a-zA-Z_\\\\][a-zA-Z0-9_\\\\]*)\\s*<\\s*(.+)\\s*>$/', $trimmed, $matches) === 1) {
+			$outer = trim((string) $matches[1]);
+			$inner = trim((string) $matches[2]);
+			return $outer . '<' . $this->canonicalizeResolvedType($inner, $classLookup, $scopeType) . '>';
+		}
+
+		$classInfo = $this->findClassInfo($trimmed, $classLookup, $scopeType);
+		if ($classInfo !== null) {
+			$fqcn = (string) ($classInfo['fqcn'] ?? '');
+			if ($fqcn !== '') {
+				return $fqcn;
+			}
+		}
+
+		return $trimmed;
+	}
+
+	/** @param list<string> $types @return list<string> */
+	private function collapseNullableTypeFamily(array $types): array
+	{
+		if ($types === []) {
+			return [];
+		}
+
+		$nullSeen = false;
+		$innerTypes = [];
+		foreach ($types as $type) {
+			$trimmed = trim($type);
+			if ($trimmed === '') {
+				continue;
+			}
+			if (strtolower($trimmed) === 'null') {
+				$nullSeen = true;
+				continue;
+			}
+			$nullableInner = $this->unwrapNullableType($trimmed);
+			if ($nullableInner !== null) {
+				$nullSeen = true;
+				$innerTypes[] = $nullableInner;
+				continue;
+			}
+			$innerTypes[] = $trimmed;
+		}
+
+		$innerTypes = array_values(array_unique($innerTypes));
+		if (count($innerTypes) !== 1) {
+			return $types;
+		}
+
+		$inner = $innerTypes[0];
+		$innerLower = strtolower($inner);
+		if (in_array($innerLower, ['mixed', 'dynamic', 'unknown', 'void', 'null'], true)) {
+			return $types;
+		}
+
+		return [$nullSeen ? '?' . ltrim($inner, '\\') : $inner];
 	}
 
 	/** @param array<string,mixed> $descriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
@@ -1650,10 +1769,30 @@ final class StanExpressionTypeResolver
 		$kind = (string) ($descriptor['kind'] ?? '');
 		if ($kind === 'alias') {
 			$source = (string) ($descriptor['source'] ?? '');
-			return $source !== '' ? ($localTypes[$source] ?? []) : [];
+			return $source !== '' ? $this->canonicalizeTypeSet($localTypes[$source] ?? [], $classLookup, $selfType) : [];
 		}
 		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
-			return $this->resolveContainerElementTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup);
+			return $this->canonicalizeTypeSet(
+				$this->resolveContainerElementTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup),
+				$classLookup,
+				$selfType
+			);
+		}
+		if ($kind === 'arithmetic') {
+			$leftTypes = is_array($descriptor['left'] ?? null)
+				? $this->resolveExpressionDescriptorTypes($descriptor['left'], $localTypes, $selfType, $classLookup, $functionLookup)
+				: [];
+			$rightTypes = is_array($descriptor['right'] ?? null)
+				? $this->resolveExpressionDescriptorTypes($descriptor['right'], $localTypes, $selfType, $classLookup, $functionLookup)
+				: [];
+			$leftTypes = $this->normalizeTypeSet($leftTypes);
+			$rightTypes = $this->normalizeTypeSet($rightTypes);
+			if ($leftTypes !== [] && $rightTypes !== []
+				&& $this->typeSetsAreCompatible($leftTypes, ['int'], $classLookup, false)
+				&& $this->typeSetsAreCompatible($rightTypes, ['int'], $classLookup, false)) {
+				return ['int'];
+			}
+			return [];
 		}
 		if ($kind === 'conditional') {
 			$merged = [];
@@ -1693,109 +1832,110 @@ final class StanExpressionTypeResolver
 			if (!is_array($callSite)) {
 				continue;
 			}
-			$callKind = (string) ($callSite['call_kind'] ?? '');
-			if ($callKind === 'function') {
-				$name = strtolower((string) ($callSite['name'] ?? ''));
-				$signature = $functionCatalog[$name] ?? null;
-				if (!is_array($signature)) {
-					$diagnostics[] = $this->makeCallDiagnostic('unresolved_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved function call `' . (string) ($callSite['name'] ?? '') . '()` in `' . $context . '`.');
-					continue;
-				}
-				$diagnostics = array_merge($diagnostics, $this->checkSignatureCompatibility($callSite, $signature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (string) ($callSite['name'] ?? '') . '()'));
-				continue;
-			}
-			if ($callKind === 'static_method') {
-				$className = (string) ($callSite['class_name'] ?? '');
-				$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
-				$methodName = (string) ($callSite['method_name'] ?? '');
-				$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
-				if ($classInfo === null) {
-					$diagnostics[] = $this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static call receiver `' . $className . '` in `' . $context . '`.');
-					continue;
-				}
-				$methodSignature = $this->findMethodSignature($classInfo, $methodName);
-				if ($methodSignature === null) {
-					$diagnostics[] = $this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static method call `' . $resolvedClassName . '::' . $methodName . '()` in `' . $context . '`.');
-					continue;
-				}
-				if (!(bool) ($methodSignature['is_static'] ?? false)) {
-					$diagnostics[] = $this->makeCallDiagnostic('static_instance_misuse', $context, $path, (int) ($callSite['line'] ?? 0), 'Static call `' . $resolvedClassName . '::' . $methodName . '()` targets a non-static method in `' . $context . '`.');
-					continue;
-				}
-				$diagnostics = array_merge($diagnostics, $this->checkSignatureCompatibility($callSite, $methodSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $resolvedClassName . '::' . $methodName . '()'));
-				continue;
-			}
-			if ($callKind === 'method') {
-				$receiverDescriptor = $callSite['receiver'] ?? null;
-				$receiverTypes = is_array($receiverDescriptor)
-					? $this->resolveExpressionDescriptorTypes($receiverDescriptor, $localTypes, $selfType, $classLookup, $functionLookup)
-					: [];
-				$receiverTypes = $this->normalizeTypeSet($receiverTypes);
-				$methodName = (string) ($callSite['method_name'] ?? '');
-				if (count($receiverTypes) !== 1) {
-					$diagnostics[] = $this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved method call `' . $methodName . '()` in `' . $context . '` due to unknown receiver type.');
-					continue;
-				}
-				$classInfo = $this->findClassInfo($receiverTypes[0], $classLookup);
-				if ($classInfo === null) {
-					$diagnostics[] = $this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved method call `' . $receiverTypes[0] . '::' . $methodName . '()` in `' . $context . '`.');
-					continue;
-				}
-				$methodSignature = $this->findMethodSignature($classInfo, $methodName);
-				if ($methodSignature === null) {
-					$diagnostics[] = $this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Missing method `' . $receiverTypes[0] . '::' . $methodName . '()` in `' . $context . '`.');
-					continue;
-				}
-				if ((bool) ($methodSignature['is_static'] ?? false)) {
-					$diagnostics[] = $this->makeCallDiagnostic('static_instance_misuse', $context, $path, (int) ($callSite['line'] ?? 0), 'Instance call `' . $receiverTypes[0] . '->' . $methodName . '()` targets a static method in `' . $context . '`.');
-					continue;
-				}
-				$diagnostics = array_merge($diagnostics, $this->checkSignatureCompatibility($callSite, $methodSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $receiverTypes[0] . '->' . $methodName . '()'));
-			}
+			$diagnostics = array_merge($diagnostics, $this->collectCallSiteDiagnosticForCallSite($callSite, $localTypes, $selfType, $classLookup, $functionLookup, $functionCatalog, $context, $path));
 		}
 		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
+	private function collectCallSiteDiagnosticForCallSite(array $callSite, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path): array
+	{
+		$callKind = (string) ($callSite['call_kind'] ?? '');
+		if ($callKind === 'function') {
+			$name = strtolower((string) ($callSite['name'] ?? ''));
+			$signature = $functionCatalog[$name] ?? null;
+			if (!is_array($signature)) {
+				return [$this->makeCallDiagnostic('unresolved_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved function call `' . (string) ($callSite['name'] ?? '') . '()` in `' . $context . '`.')];
+			}
+			return $this->checkSignatureCompatibility($callSite, $signature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (string) ($callSite['name'] ?? '') . '()');
+		}
+
+		if ($callKind === 'static_method') {
+			$className = (string) ($callSite['class_name'] ?? '');
+			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
+			$methodName = (string) ($callSite['method_name'] ?? '');
+			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
+			if ($classInfo === null) {
+				return [$this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static call receiver `' . $className . '` in `' . $context . '`.')];
+			}
+			$methodSignature = $this->findMethodSignature($classInfo, $methodName);
+			if ($methodSignature === null) {
+				return [$this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static method call `' . $resolvedClassName . '::' . $methodName . '()` in `' . $context . '`.')];
+			}
+			if (!(bool) ($methodSignature['is_static'] ?? false)) {
+				return [$this->makeCallDiagnostic('static_instance_misuse', $context, $path, (int) ($callSite['line'] ?? 0), 'Static call `' . $resolvedClassName . '::' . $methodName . '()` targets a non-static method in `' . $context . '`.')];
+			}
+			return $this->checkSignatureCompatibility($callSite, $methodSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $resolvedClassName . '::' . $methodName . '()');
+		}
+
+		if ($callKind === 'method') {
+			$receiverDescriptor = $callSite['receiver'] ?? null;
+			$receiverTypes = is_array($receiverDescriptor)
+				? $this->resolveExpressionDescriptorTypes($receiverDescriptor, $localTypes, $selfType, $classLookup, $functionLookup)
+				: [];
+			$receiverTypes = $this->normalizeTypeSet($receiverTypes);
+			$methodName = (string) ($callSite['method_name'] ?? '');
+			if (count($receiverTypes) !== 1) {
+				return [$this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved method call `' . $methodName . '()` in `' . $context . '` due to unknown receiver type.')];
+			}
+			$receiverType = $this->unwrapMemberReceiverType($receiverTypes[0]);
+			$classInfo = $this->findClassInfo($receiverType, $classLookup);
+			if ($classInfo === null) {
+				return [$this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved method call `' . $receiverTypes[0] . '::' . $methodName . '()` in `' . $context . '`.')];
+			}
+			$methodSignature = $this->findMethodSignature($classInfo, $methodName);
+			if ($methodSignature === null) {
+				return [$this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Missing method `' . $receiverType . '::' . $methodName . '()` in `' . $context . '`.')];
+			}
+			if ((bool) ($methodSignature['is_static'] ?? false)) {
+				return [$this->makeCallDiagnostic('static_instance_misuse', $context, $path, (int) ($callSite['line'] ?? 0), 'Instance call `' . $receiverType . '->' . $methodName . '()` targets a static method in `' . $context . '`.')];
+			}
+			return $this->checkSignatureCompatibility($callSite, $methodSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $receiverType . '->' . $methodName . '()');
+		}
+
+		return [];
 	}
 
 	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
 	private function collectPropertyReadDiagnosticsForOwner(array $ownerNode, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): array
 	{
 		$diagnostics = [];
-		$seen = [];
 		foreach (($ownerNode['property_reads'] ?? []) as $propertyRead) {
 			if (!is_array($propertyRead)) {
 				continue;
 			}
-			$chain = $propertyRead['chain'] ?? null;
-			if (!is_array($chain)) {
-				continue;
-			}
-			$chainText = (string) ($propertyRead['chain_text'] ?? $this->formatChain($chain));
-			$result = $this->resolveChain($chain, $localTypes, $selfType, $classLookup, $functionLookup);
-			$failureKind = (string) ($result['failure_kind'] ?? '');
-			if ($failureKind === '' || $failureKind === 'morphed_local_type') {
-				continue;
-			}
-			$key = implode('|', [$context, (string) ($propertyRead['line'] ?? 0), $chainText, $failureKind]);
-			if (isset($seen[$key])) {
-				continue;
-			}
-			$seen[$key] = true;
-			$statementKind = (string) ($propertyRead['statement_kind'] ?? 'expr');
-			$diagnostics[] = [
-				'kind' => in_array($failureKind, ['missing_property', 'unknown_root_type', 'unknown_receiver_type'], true) ? 'unresolved_property_read' : 'invalid_property_read',
-				'context' => $context,
-				'path' => $path,
-				'line' => (int) ($propertyRead['line'] ?? 0),
-				'chain' => $chainText,
-				'statement_kind' => $statementKind,
-				'failure_kind' => $failureKind,
-				'failure_segment' => $result['failure_segment'] ?? null,
-				'receiver_type' => $result['receiver_type'] ?? null,
-				'candidate_types' => $result['candidate_types'] ?? null,
-				'message' => $this->formatPropertyReadFailureMessage($context, $chainText, $result, $statementKind),
-			];
+			$diagnostics = array_merge($diagnostics, $this->collectPropertyReadDiagnosticForRead($propertyRead, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path));
 		}
 		return $this->filterPropertyReadDiagnostics($diagnostics);
+	}
+
+	/** @param array<string,mixed> $propertyRead @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
+	private function collectPropertyReadDiagnosticForRead(array $propertyRead, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): array
+	{
+		$chain = $propertyRead['chain'] ?? null;
+		if (!is_array($chain)) {
+			return [];
+		}
+		$chainText = (string) ($propertyRead['chain_text'] ?? $this->formatChain($chain));
+		$result = $this->resolveChain($chain, $localTypes, $selfType, $classLookup, $functionLookup);
+		$failureKind = (string) ($result['failure_kind'] ?? '');
+		if ($failureKind === '' || $failureKind === 'morphed_local_type') {
+			return [];
+		}
+		$statementKind = (string) ($propertyRead['statement_kind'] ?? 'expr');
+		return [[
+			'kind' => in_array($failureKind, ['missing_property', 'unknown_root_type', 'unknown_receiver_type'], true) ? 'unresolved_property_read' : 'invalid_property_read',
+			'context' => $context,
+			'path' => $path,
+			'line' => (int) ($propertyRead['line'] ?? 0),
+			'chain' => $chainText,
+			'statement_kind' => $statementKind,
+			'failure_kind' => $failureKind,
+			'failure_segment' => $result['failure_segment'] ?? null,
+			'receiver_type' => $result['receiver_type'] ?? null,
+			'candidate_types' => $result['candidate_types'] ?? null,
+			'message' => $this->formatPropertyReadFailureMessage($context, $chainText, $result, $statementKind),
+		]];
 	}
 
 	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
@@ -1899,7 +2039,7 @@ final class StanExpressionTypeResolver
 			if (is_array($descriptor['if_false'] ?? null)) {
 				$merged = array_merge($merged, $this->resolveExpressionDescriptorTypes($descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup));
 			}
-			return $this->normalizeTypeSet($merged);
+			return $this->canonicalizeTypeSet($merged, $classLookup, $selfType);
 		}
 		if ($kind === 'chain' && is_array($descriptor['chain'] ?? null)) {
 			$result = $this->resolveChain($descriptor['chain'], $localTypes, $selfType, $classLookup, $functionLookup);
@@ -1907,7 +2047,7 @@ final class StanExpressionTypeResolver
 			if ($resolved === 'unknown') {
 				return [];
 			}
-			return is_array($resolved) ? $resolved : [$resolved];
+			return $this->canonicalizeTypeSet(is_array($resolved) ? $resolved : [$resolved], $classLookup, $selfType);
 		}
 		return [];
 	}
@@ -1928,7 +2068,7 @@ final class StanExpressionTypeResolver
 				$elementTypes[] = count($parts) === 2 ? $parts[1] : $parts[0];
 			}
 		}
-		return $this->normalizeTypeSet($elementTypes);
+		return $this->canonicalizeTypeSet($elementTypes, $classLookup, $selfType);
 	}
 
 	private function makeCallDiagnostic(string $kind, string $context, string $path, int $line, string $message): array
@@ -1943,9 +2083,9 @@ final class StanExpressionTypeResolver
 	}
 
 	/** @param array<string,list<string>> $localTypes @param array<string,bool> $morphedLocals @param list<array<string,mixed>> $diagnostics @param list<string> $assignedTypes */
-	private function applyLocalTypeAssignment(array &$localTypes, array &$morphedLocals, array &$diagnostics, string $name, array $assignedTypes, string $context, string $path, int $line): void
+	private function applyLocalTypeAssignment(array &$localTypes, array &$morphedLocals, array &$diagnostics, string $name, array $assignedTypes, string $context, string $path, int $line, array $classLookup, ?string $selfType): void
 	{
-		$assignedTypes = $this->normalizeTypeSet($assignedTypes);
+		$assignedTypes = $this->canonicalizeTypeSet($assignedTypes, $classLookup, $selfType);
 		if ($assignedTypes === []) {
 			unset($morphedLocals[$name]);
 			unset($localTypes[$name]);
@@ -1958,9 +2098,9 @@ final class StanExpressionTypeResolver
 		}
 
 		$currentTypes = $localTypes[$name] ?? [];
-		$currentTypes = $this->normalizeTypeSet($currentTypes);
+		$currentTypes = $this->canonicalizeTypeSet($currentTypes, $classLookup, $selfType);
 		if ($currentTypes !== [] && !$this->typeSetsAreCompatible($assignedTypes, $currentTypes, [], false)) {
-			$this->recordLocalTypeMorph($diagnostics, $localTypes, $morphedLocals, $name, array_merge($currentTypes, $assignedTypes), $context, $path, $line);
+			$this->recordLocalTypeMorph($diagnostics, $localTypes, $morphedLocals, $name, $this->canonicalizeTypeSet(array_merge($currentTypes, $assignedTypes), $classLookup, $selfType), $context, $path, $line);
 			return;
 		}
 
@@ -1986,7 +2126,7 @@ final class StanExpressionTypeResolver
 		unset($localTypes[$name]);
 	}
 
-	private function applyPropertyAssignment(array &$diagnostics, array $localTypes, array $initializedLocals, array $morphedLocals, array &$initializedProperties, array &$initializedPropertyLines, array &$initializationKeys, array $event, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): void
+	private function applyPropertyAssignment(array &$diagnostics, array $declaredLocals, array $localTypes, array $initializedLocals, array $morphedLocals, array &$initializedProperties, array &$initializedPropertyLines, array &$initializationKeys, array $event, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): void
 	{
 		$targetChain = $event['target_chain'] ?? null;
 		$source = $event['source'] ?? null;
@@ -2034,7 +2174,7 @@ final class StanExpressionTypeResolver
 			return;
 		}
 
-		$receiverInfo = $this->findClassInfo($receiverTypes[0], $classLookup);
+		$receiverInfo = $this->findClassInfo($receiverTypes[0], $classLookup, $selfType);
 		$propertyName = (string) ($propertySegment['name'] ?? '');
 		if ($receiverInfo === null) {
 			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Cannot write property `' . $propertyName . '` on non-object or unresolved receiver type `' . $receiverTypes[0] . '` in `' . $context . '`.');
@@ -2045,9 +2185,10 @@ final class StanExpressionTypeResolver
 			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Missing property write target `' . $receiverTypes[0] . '::$' . $propertyName . '` in `' . $context . '`.');
 			return;
 		}
+		$declaredType = $this->canonicalizeResolvedType($declaredType, $classLookup, $selfType);
 
-		$this->checkDescriptorInitialization($diagnostics, $initializationKeys, $source, (int) ($event['line'] ?? 0), $context, $path, [], $initializedLocals, $initializedProperties, $selfType, $classLookup);
-		$assignedTypes = $this->normalizeTypeSet($this->resolveAssignmentDescriptorTypes($source, $localTypes, $selfType, $classLookup, $functionLookup));
+		$this->checkDescriptorInitialization($diagnostics, $initializationKeys, $source, (int) ($event['line'] ?? 0), $context, $path, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup);
+		$assignedTypes = $this->canonicalizeTypeSet($this->resolveAssignmentDescriptorTypes($source, $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType);
 		if ($assignedTypes === []) {
 			if ($this->isDirectSelfPropertyTarget($targetChain, $propertyName)) {
 				$initializedProperties[$propertyName] = true;
@@ -2142,7 +2283,7 @@ final class StanExpressionTypeResolver
 		if ($rootKind === 'variable' && $rootName === 'this' && is_array($firstSegment) && (($firstSegment['kind'] ?? '') === 'property')) {
 			$propertyName = (string) ($firstSegment['name'] ?? '');
 			if ($propertyName !== '' && !($initializedProperties[$propertyName] ?? false)) {
-				$classInfo = $selfType !== null ? $this->findClassInfo($selfType, $classLookup) : null;
+		$classInfo = $selfType !== null ? $this->findClassInfo($selfType, $classLookup, $selfType) : null;
 				$hasDefault = $classInfo !== null ? (bool) ($classInfo['property_has_default'][$propertyName] ?? false) : false;
 				if (!$hasDefault && !$this->hasPartialBranchInitializationWarning($initializationKeys, $context, $path, 'property', $propertyName)) {
 					$this->recordInitializationWarning($diagnostics, $initializationKeys, 'maybe_uninitialized_property', $context, $path, $line, 'Property `$this->' . $propertyName . '` may be read before initialization in `' . $context . '`.');
@@ -2184,6 +2325,17 @@ final class StanExpressionTypeResolver
 		];
 	}
 
+	/** @param array<string,bool> $initializedLocals @param array<string,int> $initializedLocalLines */
+	private function markLocalInitialized(array &$initializedLocals, array &$initializedLocalLines, string $name, int $line): void
+	{
+		$initializedLocals[$name] = true;
+		if (!isset($initializedLocalLines[$name])) {
+			$initializedLocalLines[$name] = $line;
+			return;
+		}
+		$initializedLocalLines[$name] = min($initializedLocalLines[$name], $line);
+	}
+
 	private function hasPartialBranchInitializationWarning(array $initializationKeys, string $context, string $path, string $subjectKind, string $subjectName): bool
 	{
 		$needle = $subjectKind === 'property'
@@ -2209,7 +2361,7 @@ final class StanExpressionTypeResolver
 		if ($selfType === null || $selfType === '') {
 			return [];
 		}
-		$classInfo = $this->findClassInfo($selfType, $classLookup);
+		$classInfo = $this->findClassInfo($selfType, $classLookup, $selfType);
 		if ($classInfo === null) {
 			return [];
 		}
@@ -2362,15 +2514,26 @@ final class StanExpressionTypeResolver
 	}
 
 	/** @param array<string,array<string,mixed>> $classLookup */
-	private function findClassInfo(string $type, array $classLookup): ?array
+	private function findClassInfo(string $type, array $classLookup, ?string $scopeType = null): ?array
 	{
 		$raw = trim($type, "\\ \t\n\r\0\x0B");
 		$nullableInner = $this->unwrapNullableType($raw);
-		$normalized = strtolower($nullableInner ?? $raw);
+		$resolved = $nullableInner ?? $raw;
+		$normalized = strtolower($resolved);
 		if ($normalized === '') {
 			return null;
 		}
-		return $classLookup[$normalized] ?? null;
+		if (isset($classLookup[$normalized])) {
+			return $classLookup[$normalized];
+		}
+		if (!str_contains($resolved, '\\') && $scopeType !== null && str_contains($scopeType, '\\')) {
+			$scopeNamespace = substr($scopeType, 0, (int) strrpos($scopeType, '\\'));
+			$scoped = strtolower($scopeNamespace . '\\' . $resolved);
+			if (isset($classLookup[$scoped])) {
+				return $classLookup[$scoped];
+			}
+		}
+		return null;
 	}
 
 	private function findMethodSignature(array $classInfo, string $methodName): ?array
@@ -2478,8 +2641,8 @@ final class StanExpressionTypeResolver
 
 	private function isSingleTypeCompatible(string $actualType, string $expectedType, array $classLookup, bool $allowVoidNull): bool
 	{
-		$actual = trim($actualType);
-		$expected = trim($expectedType);
+		$actual = trim($this->canonicalizeResolvedType($actualType, $classLookup, null));
+		$expected = trim($this->canonicalizeResolvedType($expectedType, $classLookup, null));
 		if ($actual === $expected) {
 			return true;
 		}
@@ -2518,6 +2681,28 @@ final class StanExpressionTypeResolver
 		return null;
 	}
 
+	private function unwrapMemberReceiverType(string $type): string
+	{
+		$current = trim($type);
+		while ($current !== '') {
+			$nullableInner = $this->unwrapNullableType($current);
+			if ($nullableInner !== null) {
+				$current = $nullableInner;
+				continue;
+			}
+			if (preg_match('/^result(?:_or_bool|_or_false)?\s*<\s*(.+)\s*>$/i', $current, $matches) === 1) {
+				$current = trim((string) $matches[1]);
+				continue;
+			}
+			if (preg_match('/^shared_p\s*<\s*(.+)\s*>$/i', $current, $matches) === 1) {
+				$current = trim((string) $matches[1]);
+				continue;
+			}
+			break;
+		}
+		return $current;
+	}
+
 	/** @param list<string> $types @return list<string> */
 	private function removeNullTypes(array $types): array
 	{
@@ -2530,6 +2715,28 @@ final class StanExpressionTypeResolver
 			$nullableInner = $this->unwrapNullableType($type);
 			if ($nullableInner !== null) {
 				$out[] = $nullableInner;
+				continue;
+			}
+			$out[] = $type;
+		}
+		return $this->normalizeTypeSet($out);
+	}
+
+	/** @param list<string> $types @return list<string> */
+	private function removeFalseTypes(array $types): array
+	{
+		$out = [];
+		foreach ($this->normalizeTypeSet($types) as $type) {
+			$normalized = strtolower(trim($type));
+			if ($normalized === 'false') {
+				continue;
+			}
+			if (preg_match('/^result_or_false\s*<\s*(.+)\s*>$/i', $type, $matches) === 1) {
+				$out[] = trim((string) $matches[1]);
+				continue;
+			}
+			if (preg_match('/^result_or_bool\s*<\s*(.+)\s*>$/i', $type, $matches) === 1) {
+				$out[] = trim((string) $matches[1]);
 				continue;
 			}
 			$out[] = $type;
@@ -2551,12 +2758,23 @@ final class StanExpressionTypeResolver
 	/** @param array<string,mixed>|null $source @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
 	private function resolveForeachValueTypes(?array $source, string $role, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): array
 	{
-		if ($role === 'key') {
-			return ['mixed'];
-		}
 		$sourceTypes = $source !== null
 			? $this->resolveExpressionDescriptorTypes($source, $localTypes, $selfType, $classLookup, $functionLookup)
 			: [];
+		if ($role === 'key') {
+			$keyTypes = [];
+			foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
+				if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType) === 1) {
+					$keyTypes[] = 'int';
+					continue;
+				}
+				if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
+					$parts = array_map('trim', explode(',', (string) $matches[1], 2));
+					$keyTypes[] = count($parts) === 2 ? $parts[0] : 'string';
+				}
+			}
+			return $this->normalizeTypeSet($keyTypes !== [] ? $keyTypes : ['mixed']);
+		}
 		$valueTypes = [];
 		foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
 			if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
@@ -2567,6 +2785,8 @@ final class StanExpressionTypeResolver
 				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
 				if (count($parts) === 2) {
 					$valueTypes[] = $parts[1];
+				} elseif (count($parts) === 1 && $parts[0] !== '') {
+					$valueTypes[] = $parts[0];
 				}
 			}
 		}

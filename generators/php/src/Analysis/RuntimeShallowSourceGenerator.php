@@ -91,7 +91,7 @@ final class RuntimeShallowSourceGenerator
 		$isStrict = $profile === 'strict';
 		$params = [];
 		foreach ($signature['params'] as $param) {
-			$params[] = $this->renderParam($param['name'], $param['type'], $isStrict);
+			$params[] = $this->renderParamWithMetadata($param, $isStrict);
 		}
 
 		$returnSuffix = $this->renderReturnSuffix($signature['return'], $isStrict);
@@ -154,6 +154,19 @@ final class RuntimeShallowSourceGenerator
 		return '/** ' . $type . ' */ $' . $name;
 	}
 
+	/** @param array{name:string,type:string,has_default?:bool} $param */
+	private function renderParamWithMetadata(array $param, bool $strictShorthand): string
+	{
+		$text = $this->renderParam((string) ($param['name'] ?? 'arg'), (string) ($param['type'] ?? 'mixed'), $strictShorthand);
+		if ((bool) ($param['has_default'] ?? false)) {
+			$defaultLiteral = $this->defaultLiteralForType((string) ($param['type'] ?? 'mixed'));
+			if ($defaultLiteral !== null) {
+				$text .= ' = ' . $defaultLiteral;
+			}
+		}
+		return $text;
+	}
+
 	private function renderReturnSuffix(string $type, bool $strictShorthand): string
 	{
 		$native = $this->nativeTypeForSource($type);
@@ -181,7 +194,19 @@ final class RuntimeShallowSourceGenerator
 		return null;
 	}
 
-	/** @return array{return:string,params:list<array{name:string,type:string}>} */
+	private function defaultLiteralForType(string $type): ?string
+	{
+		return match (strtolower(trim($type))) {
+			'int' => '0',
+			'float' => '0.0',
+			'bool' => 'false',
+			'string' => '""',
+			'mixed' => 'null',
+			default => null,
+		};
+	}
+
+	/** @return array{return:string,params:list<array{name:string,type:string,has_default?:bool}>} */
 	private function resolveSignature(string $name, string $profile): array
 	{
 		$signatures = $this->signatureMap();
@@ -199,7 +224,7 @@ final class RuntimeShallowSourceGenerator
 		];
 	}
 
-	/** @return array<string, array<string, array{return:string,params:list<array{name:string,type:string}>}>> */
+	/** @return array<string, array<string, array{return:string,params:list<array{name:string,type:string,has_default?:bool}>}>> */
 	private function signatureMap(): array
 	{
 		return [
@@ -227,9 +252,9 @@ final class RuntimeShallowSourceGenerator
 				'cli_args' => ['return' => 'mixed', 'params' => []],
 				'getenv' => ['return' => 'mixed', 'params' => [['name' => 'name', 'type' => 'string']]],
 				'shell_exec' => ['return' => 'mixed', 'params' => [['name' => 'command', 'type' => 'string']]],
-				'substr' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
-				'substr_compare' => ['return' => 'int', 'params' => [['name' => 'main', 'type' => 'string'], ['name' => 'str', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
-				'substr_replace' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'replace', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
+				'substr' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int', 'has_default' => true]]],
+				'substr_compare' => ['return' => 'int', 'params' => [['name' => 'main', 'type' => 'string'], ['name' => 'str', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int', 'has_default' => true]]],
+				'substr_replace' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'replace', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int', 'has_default' => true]]],
 				'str_pad' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'length', 'type' => 'int']]],
 				'str_replace' => ['return' => 'string', 'params' => [['name' => 'search', 'type' => 'string'], ['name' => 'replace', 'type' => 'string'], ['name' => 'subject', 'type' => 'string']]],
 				'explode' => ['return' => 'vector<string>', 'params' => [['name' => 'separator', 'type' => 'string'], ['name' => 'text', 'type' => 'string']]],

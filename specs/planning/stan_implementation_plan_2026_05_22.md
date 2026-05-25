@@ -238,6 +238,324 @@ Initial cache contents may include:
 - extraction diagnostics
 - environment key fields relevant for validity
 
+## Editor Roadmap
+
+Goal:
+
+- turn STAN from a good CLI batch analyzer into the semantic engine for editor diagnostics and navigation
+- support a future VS Code extension through a stable service boundary
+- keep the LSP/editor layer thin by putting semantic truth inside STAN itself
+
+The editor roadmap should be implemented in three layers:
+
+- STAN core service
+- LSP bridge
+- VS Code extension
+
+### Roadmap Principles
+
+- STAN remains the semantic source of truth
+- the LSP layer translates protocol concepts, not semantic meaning
+- the VS Code extension handles UX and workspace integration, not analysis
+- unsaved editor buffers must be analyzable without writing files to disk
+- true incremental invalidation is required before editor integration is considered healthy
+
+## STAN Core Service
+
+Purpose:
+
+- expose STAN as a long-lived incremental semantic service instead of only a CLI command
+
+### Core Service Phase 1
+
+Goal:
+
+- refactor current STAN run orchestration into a reusable session/service object
+
+Work:
+
+- define `StanWorkspaceSession`
+- move project graph loading, runtime/profile preparation, file cache loading, and semantic pass orchestration behind that session
+- allow one workspace to stay warm across many requests
+- separate CLI printing from semantic result production
+
+Deliverables:
+
+- `StanWorkspaceSession`
+- service-safe result DTOs instead of CLI-shaped arrays only
+- no behavior change required yet for `scpp stan`
+
+### Core Service Phase 2
+
+Goal:
+
+- support true document lifecycle operations
+
+Work:
+
+- add APIs for:
+  - open document
+  - update document text
+  - close document
+  - analyze document
+  - analyze affected graph
+- maintain in-memory overlays for unsaved buffers
+- distinguish on-disk source state from in-memory editor state
+- make dependency invalidation operate from the changed source unit outward
+
+Deliverables:
+
+- overlay-aware source provider
+- in-memory per-document cache entries
+- affected-files recomputation instead of whole-workspace invalidation
+
+### Core Service Phase 3
+
+Goal:
+
+- expose editor-grade semantic queries
+
+Work:
+
+- add query APIs for:
+  - diagnostics by file
+  - document symbols
+  - workspace symbols
+  - definition lookup
+  - hover info
+  - references
+- ensure returned results include stable symbol identity and exact source spans
+
+Deliverables:
+
+- `StanSemanticQueryService`
+- declaration/reference location model with line and column spans
+- stable diagnostic/category ids
+
+### Core Service Phase 4
+
+Goal:
+
+- make service performance and correctness observable
+
+Work:
+
+- add timing breakdowns for:
+  - project graph load
+  - file extraction
+  - dependency invalidation
+  - semantic passes
+  - individual query categories
+- add cache hit/miss counters
+- add service-mode integration tests using unsaved-buffer overlays
+
+Deliverables:
+
+- timing hooks
+- incremental correctness tests
+- performance baselines for editor scenarios
+
+## LSP Bridge
+
+Purpose:
+
+- translate between VS Code/editor LSP traffic and STAN service operations
+
+### LSP Phase 1
+
+Goal:
+
+- diagnostics-only language server
+
+Work:
+
+- implement LSP server process around `StanWorkspaceSession`
+- support:
+  - `initialize`
+  - `initialized`
+  - `shutdown`
+  - `textDocument/didOpen`
+  - `textDocument/didChange`
+  - `textDocument/didClose`
+  - `textDocument/didSave`
+- publish diagnostics from STAN after document updates
+
+Deliverables:
+
+- `stan-lsp` executable
+- diagnostics publishing for open documents
+- workspace config bootstrap from `prism.json`
+
+### LSP Phase 2
+
+Goal:
+
+- semantic navigation features
+
+Work:
+
+- implement:
+  - `textDocument/documentSymbol`
+  - `workspace/symbol`
+  - `textDocument/definition`
+  - `textDocument/hover`
+- map STAN symbol ids and source spans into LSP ranges and locations
+
+Deliverables:
+
+- first editor navigation support
+- hover/type display from STAN semantic facts
+
+### LSP Phase 3
+
+Goal:
+
+- richer editor assistance
+
+Work:
+
+- implement:
+  - `textDocument/references`
+  - `textDocument/signatureHelp`
+  - completion hooks where STAN facts are already strong enough
+- optionally add `codeAction` for a small set of high-confidence diagnostics later
+
+Deliverables:
+
+- references
+- signature help
+- scoped completion groundwork
+
+### LSP Phase 4
+
+Goal:
+
+- harden the protocol layer for real editor use
+
+Work:
+
+- debounce diagnostics intelligently
+- avoid full re-publish storms on unrelated files
+- add cancellation support for slow requests
+- add logging/tracing switches for debugging the extension
+
+Deliverables:
+
+- stable interactive behavior under frequent edits
+- traceable service logs
+
+## VS Code Extension
+
+Purpose:
+
+- provide a polished editor experience on top of the STAN LSP bridge
+
+### Extension Phase 1
+
+Goal:
+
+- working diagnostics extension for Simple C++ / PHP++ files
+
+Work:
+
+- define language activation for relevant file types
+- launch `stan-lsp`
+- detect workspace root/project root
+- surface diagnostics in Problems and inline editor decorations
+- expose a simple status item showing STAN readiness / busy state
+
+Deliverables:
+
+- first installable extension
+- live diagnostics for open files
+
+### Extension Phase 2
+
+Goal:
+
+- navigation and semantic inspection UX
+
+Work:
+
+- enable go-to-definition
+- enable hover/type info
+- enable outline/document symbols
+- add command palette actions such as:
+  - restart STAN
+  - show STAN trace output
+  - reanalyze workspace
+
+Deliverables:
+
+- usable navigation workflow
+- basic operator controls
+
+### Extension Phase 3
+
+Goal:
+
+- workspace polish and project awareness
+
+Work:
+
+- handle multi-root workspaces
+- surface profile/config errors clearly
+- expose strict vs legacy project context in the UI
+- allow extension settings for:
+  - diagnostics debounce
+  - trace level
+  - STAN executable path
+
+Deliverables:
+
+- workspace-ready extension behavior
+- operator-facing configuration
+
+### Extension Phase 4
+
+Goal:
+
+- quality and release readiness
+
+Work:
+
+- add extension integration tests
+- verify behavior with unsaved buffers, large projects, and project dependency graphs
+- document installation and troubleshooting
+- measure perceived latency for:
+  - first diagnostics
+  - post-edit diagnostics
+  - definition/hover
+
+Deliverables:
+
+- extension test coverage
+- release checklist
+- user documentation
+
+## Recommended Build Order
+
+1. STAN core service phase 1
+2. STAN core service phase 2
+3. LSP phase 1
+4. VS Code extension phase 1
+5. STAN core service phase 3
+6. LSP phase 2
+7. VS Code extension phase 2
+8. performance hardening across all three layers
+
+## Minimum Viable Editor Milestone
+
+The first milestone that is worth dogfooding internally should be:
+
+- persistent STAN workspace session
+- unsaved-buffer overlays
+- selective invalidation for changed files
+- diagnostics publishing in VS Code
+- line/column diagnostic ranges
+
+Without those pieces, STAN may still be useful in the CLI, but it will not yet feel like a healthy editor analyzer.
+
 Potential format shape:
 
 ```php
