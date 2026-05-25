@@ -91,7 +91,7 @@ Result:
 
 Examples:
 ```php
-$x /** int */ = $a["k"];
+$x int = $a["k"];
 takeInt($a["k"]);
 function f(): int { return $a["k"]; }
 ```

@@ -444,23 +444,14 @@ Use this order:
 | `take` with wrapper output | `if (take($fh, io_open($path, "rb"))) { ... }` |
 | `take` with nullable | `if (take($name, $maybe_name)) { ... }` |
 | typed local shorthand | `$count int = 0;` |
-| legacy typed local annotation form | `$count /** int */ = 0;` |
 | typed vector local shorthand | `$items vector<int> = [1, 2, 3];` |
 | typed vector local | `$items vector<int> = [1, 2, 3];` |
 | typed hash local shorthand | `$by_name hash<int> = ["a" => 1, "b" => 2];` |
-| legacy typed hash annotation form | `$by_name /** hash<int> */ = ["a" => 1, "b" => 2];` |
 | typed two-arg hash shorthand | `$by_id hash<string, int> = [0 => "a", 1 => "b"];` |
-| legacy typed int-key hash annotation form | `$by_id /** hash<string, int> */ = [0 => "a", 1 => "b"];` |
 | typed class property shorthand | `public $list vector<T> = [];` |
-| legacy typed class property annotation form | `public $list /** vector<T> */ = [];` |
-| legacy typed class property leading annotation form | `public /** vector<T> */ $list = [];` |
 | typed param shorthand | `function build($items vector<string>) { ... }` |
-| legacy typed param annotation form | `function build(/** vector<string> */ $items) { ... }` |
 | typed return shorthand | `function build(): vector<string> { ... }` |
-| legacy typed return annotation form | `function build() /** vector<string> */ { ... }` |
 | typed arrow return shorthand | `$make = fn($x int) function<function<int(int)>(int)> => fn($y int): int => $x + $y;` |
-| legacy typed arrow return annotation form | `$make = fn(/** int */ $x) /** function<function<int(int)>(int)> */ => fn(/** int */ $y): int => $x + $y;` |
-| legacy vector property with class element annotation form | `public $properties /** vector<model_property> */ = [];` |
 | vector literal needs explicit typed context | `$v vector<int> = [1, 2, 3];` |
 | typed read from dynamic value | `$count int = $data["count"];` |
 | typed hash slot from dynamic value | `$counts hash<int> = []; $counts["id"] = $row["id"];` |
@@ -482,7 +473,7 @@ Use this order:
 | Prism++ file start | `echo "hello\n";` |
 | nullable local | `$id ?int = null;` |
 | strict comparison | `if ($value === 0) { ... }` |
-| namespace + typed property example | `namespace demo\schema; class model { public $properties /** vector<model_property> */ = []; }` |
+| namespace + typed property example | `namespace demo\schema; class model { public $properties vector<model_property> = []; }` |
 | helper semantics | `echo isset($map["a"]) ? "Y\n" : "N\n";` |
 
 ## Preferred Strict Patterns
@@ -639,7 +630,7 @@ Preferred:
 
 ```php
 $text string = "";
-$err /** error */;
+$err error;
 
 if (!take($text, $err, fs_get($path))) {
 	echo "read failed\n";
@@ -721,6 +712,14 @@ PHP-compatible inline annotation syntax such as `$count /** int */ = 0;` is lega
 Do not use it in new strict code.
 Plan for it to become a hard error in a future version.
 
+The same strict-mode rule applies to all types, including:
+
+- user-defined types
+- `error`
+- `resource_handle`
+- `curl_handle`
+- `curl_response`
+
 The pre-tokenizer currently normalizes shorthand into a PHP-compatible annotated form before `php-ast` parsing, while separately preserving site ownership metadata for:
 
 - locals
@@ -740,7 +739,7 @@ Common pattern:
 
 ```php
 $text string = "";
-$err /** error */;
+$err error;
 
 if (!take($text, $err, fs_get($path))) {
 	echo "read failed\n";
@@ -1158,7 +1157,7 @@ Unsupported in the current strict datetime surface: named timezone conversion, l
 
 ```php
 $stamp int = 0;
-$err /** error */;
+$err error;
 
 if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
 	echo dt_format("Y-m-d H:i:s", $stamp), "\n";
@@ -1169,7 +1168,7 @@ if (take($stamp, $err, dt_parse("2024-02-29 12:34:56"))) {
 
 ```php
 $file = "sample.txt";
-$err /** error */;
+$err error;
 $written int = 0;
 
 if (take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {

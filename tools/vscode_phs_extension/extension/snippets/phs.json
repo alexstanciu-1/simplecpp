@@ -1,0 +1,44 @@
+{
+  "Typed function": {
+    "prefix": "fn",
+    "body": [
+      "function ${1:name}(${2:}): ${3:void} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Create a typed PHP++ / PHS function."
+  },
+  "Lib export function": {
+    "prefix": "libfn",
+    "body": [
+      "/** @lib-export */",
+      "function ${1:name}(${2:}): ${3:void} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Create a dependency-visible exported function."
+  },
+  "Take wrapper": {
+    "prefix": "take",
+    "body": [
+      "if (take(${1:value}, ${2:expr})) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Resolve a wrapper-shaped result with take(...)."
+  },
+  "Debug value": {
+    "prefix": "dbg",
+    "body": [
+      "dbg(\"${1:label}\", ${2:value});"
+    ],
+    "description": "Inspect a runtime value with dbg(...)."
+  },
+  "Typed local boundary": {
+    "prefix": "typed",
+    "body": [
+      "${1:name} /** ${2:type} */ = ${3:expr};"
+    ],
+    "description": "Create a typed local stabilization boundary."
+  }
+}

@@ -1,0 +1,16 @@
+/** @lib-export */
+class SampleService
+{
+	public string $prefix = "svc";
+
+	public function greet(string $name): string
+	{
+		return $this->prefix . ":" . $name;
+	}
+}
+
+/** @lib-export */
+function make_label(string $name, int $id): string
+{
+	return $name . "#" . $id;
+}
