@@ -1,0 +1,326 @@
+{
+  "name": "PHP++ (PHS)",
+  "scopeName": "source.phs",
+  "patterns": [
+    {
+      "include": "#invalid"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#attributes"
+    },
+    {
+      "include": "#declarations"
+    },
+    {
+      "include": "#members"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#variables"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#type-references"
+    },
+    {
+      "include": "#debug-constants"
+    }
+  ],
+  "repository": {
+    "invalid": {
+      "patterns": [
+        {
+          "name": "invalid.illegal.source-header.phs",
+          "match": "<\\?php\\b"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.phs",
+          "begin": "/\\*\\*",
+          "end": "\\*/",
+          "patterns": [
+            {
+              "name": "storage.type.class.phpdoc.phs",
+              "match": "@(param|return|var|throws|lib-export)\\b"
+            },
+            {
+              "name": "entity.name.tag.phpdoc.phs",
+              "match": "@[A-Za-z_][A-Za-z0-9_-]*"
+            }
+          ]
+        },
+        {
+          "name": "comment.block.phs",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.phs",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "attributes": {
+      "patterns": [
+        {
+          "name": "meta.attribute.phs",
+          "begin": "#\\[",
+          "end": "\\]",
+          "patterns": [
+            {
+              "name": "entity.name.type.attribute.phs",
+              "match": "\\\\?[A-Za-z_][A-Za-z0-9_\\\\]*"
+            }
+          ]
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "match": "\\b(class|interface|trait)\\s+([A-Za-z_][A-Za-z0-9_\\\\]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.phs"
+            },
+            "2": {
+              "name": "entity.name.type.class.phs"
+            }
+          }
+        },
+        {
+          "match": "\\b(function)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.phs"
+            },
+            "2": {
+              "name": "entity.name.function.definition.phs"
+            }
+          }
+        },
+        {
+          "match": "\\b(public|protected|private)\\s+(static\\s+)?([A-Za-z_][A-Za-z0-9_\\\\<>?, ]*)\\s+(\\$[A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "storage.modifier.visibility.phs"
+            },
+            "2": {
+              "name": "storage.modifier.static.phs"
+            },
+            "3": {
+              "name": "storage.type.declared.phs"
+            },
+            "4": {
+              "name": "variable.other.property.phs"
+            }
+          }
+        },
+        {
+          "match": "(\\$[A-Za-z_][A-Za-z0-9_]*)\\s+([A-Za-z_][A-Za-z0-9_\\\\<>?,]*)\\s*(?==|;)",
+          "captures": {
+            "1": {
+              "name": "variable.other.definition.phs"
+            },
+            "2": {
+              "name": "storage.type.local.phs"
+            }
+          }
+        },
+        {
+          "match": "\\b(catch)\\s*\\(\\s*([A-Za-z_][A-Za-z0-9_\\\\]*)\\s+(\\$[A-Za-z_][A-Za-z0-9_]*)\\s*\\)",
+          "captures": {
+            "1": {
+              "name": "keyword.control.phs"
+            },
+            "2": {
+              "name": "entity.name.type.exception.phs"
+            },
+            "3": {
+              "name": "variable.parameter.exception.phs"
+            }
+          }
+        }
+      ]
+    },
+    "members": {
+      "patterns": [
+        {
+          "match": "(->)([A-Za-z_][A-Za-z0-9_]*)(\\s*(?=\\())",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.member.phs"
+            },
+            "2": {
+              "name": "entity.name.function.member.phs"
+            },
+            "3": {
+              "name": "meta.function-call.member.phs"
+            }
+          }
+        },
+        {
+          "match": "(->)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.member.phs"
+            },
+            "2": {
+              "name": "variable.other.property.member.phs"
+            }
+          }
+        },
+        {
+          "match": "(::)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.scope.phs"
+            },
+            "2": {
+              "name": "entity.name.member.static.phs"
+            }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.phs",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.phs",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.phs",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.phs",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.phs",
+          "match": "\\b(if|else|elseif|switch|case|default|for|foreach|while|do|break|continue|return|try|catch|finally|throw|echo|isset|unset)\\b"
+        },
+        {
+          "name": "keyword.declaration.phs",
+          "match": "\\b(function|class|interface|trait|extends|implements|public|protected|private|static|abstract|final|const|new|use)\\b"
+        },
+        {
+          "name": "keyword.operator.phs",
+          "match": "->|::|=>|===|!==|==|!=|<=|>=|&&|\\|\\||\\+\\+|--|\\?|:|&|\\."
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.phs",
+          "match": "\\b(void|bool|int|float|string|mixed|dynamic|vector|hash|callable|nullable|object|error)\\b"
+        },
+        {
+          "name": "punctuation.definition.type-args.begin.phs",
+          "match": "<(?=[A-Za-z_])"
+        },
+        {
+          "name": "punctuation.definition.type-args.end.phs",
+          "match": ">"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.phs",
+          "match": "\\b(true|false|null)\\b"
+        },
+        {
+          "name": "constant.numeric.phs",
+          "match": "\\b\\d+(?:\\.\\d+)?\\b"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.other.phs",
+          "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.call.phs",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()"
+        }
+      ]
+    },
+    "type-references": {
+      "patterns": [
+        {
+          "match": "\\b(extends|implements|new)\\s+([A-Za-z_][A-Za-z0-9_\\\\]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.phs"
+            },
+            "2": {
+              "name": "entity.name.type.class.phs"
+            }
+          }
+        },
+        {
+          "match": "(:\\s*)([A-Za-z_][A-Za-z0-9_\\\\<>?,]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.type.phs"
+            },
+            "2": {
+              "name": "storage.type.return.phs"
+            }
+          }
+        }
+      ]
+    },
+    "debug-constants": {
+      "patterns": [
+        {
+          "name": "constant.other.debug.phs",
+          "match": "\\bDBG_[A-Z0-9_]+\\b"
+        }
+      ]
+    }
+  }
+}

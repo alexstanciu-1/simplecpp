@@ -1,0 +1,319 @@
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+const vscode = require("vscode");
+const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
+const { registerStaticCompletion } = require("./static_completion");
+
+/** @type {Map<string, LanguageClient>} */
+const clients = new Map();
+let devSmokeOpened = false;
+
+async function activate(context) {
+	registerStaticCompletion(context);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand("simpleCpp.createProject", async () => {
+			await createSimpleCppProject();
+		}),
+		vscode.commands.registerCommand("simpleCpp.buildProject", async () => {
+			await runScppProjectCommand("build", "scpp build");
+		}),
+		vscode.commands.registerCommand("simpleCpp.runProject", async () => {
+			await runScppProjectCommand("run", "scpp run");
+		}),
+		registerScppCommand("simpleCpp.doctor", "scpp --doctor"),
+		registerScppCommand("simpleCpp.docsStrict", "scpp docs strict")
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand("simpleCpp.stan.restartServer", async () => {
+			await restartAllClients(context);
+			vscode.window.showInformationMessage("Simple C++ STAN server restarted.");
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand("simpleCpp.stan.openSmokeFile", async () => {
+			await openSmokeFileIfAvailable(context, true);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.workspace.onDidChangeWorkspaceFolders(async () => {
+			await synchronizeWorkspaceClients(context);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.workspace.onDidChangeConfiguration(async (event) => {
+			if (event.affectsConfiguration("simplecpp.stan")) {
+				await restartAllClients(context);
+			}
+		})
+	);
+
+	await synchronizeWorkspaceClients(context);
+	await openSmokeFileIfAvailable(context, false);
+}
+
+async function synchronizeWorkspaceClients(context) {
+	const workspaceFolders = vscode.workspace.workspaceFolders || [];
+	const expectedKeys = new Set(workspaceFolders.map((folder) => folder.uri.fsPath));
+
+	for (const [key, client] of clients.entries()) {
+		if (expectedKeys.has(key)) {
+			continue;
+		}
+		await client.stop();
+		clients.delete(key);
+	}
+
+	for (const folder of workspaceFolders) {
+		if (clients.has(folder.uri.fsPath)) {
+			continue;
+		}
+		const client = createClient(context, folder);
+		clients.set(folder.uri.fsPath, client);
+		context.subscriptions.push(client.start());
+	}
+}
+
+async function restartAllClients(context) {
+	for (const client of clients.values()) {
+		await client.stop();
+	}
+	clients.clear();
+	await synchronizeWorkspaceClients(context);
+}
+
+async function openSmokeFileIfAvailable(context, force) {
+	if (!force && devSmokeOpened) {
+		return;
+	}
+	if (!isDevelopmentMode(context)) {
+		return;
+	}
+
+	const workspaceFolders = vscode.workspace.workspaceFolders || [];
+	const smokeFolder = workspaceFolders.find((folder) => path.basename(folder.uri.fsPath) === "stan_smoke_workspace");
+	if (!smokeFolder) {
+		return;
+	}
+
+	const target = vscode.Uri.file(path.join(smokeFolder.uri.fsPath, "main.phs"));
+	try {
+		const document = await vscode.workspace.openTextDocument(target);
+		await vscode.window.showTextDocument(document, { preview: false });
+		devSmokeOpened = true;
+	} catch (error) {
+		vscode.window.showWarningMessage(`Simple C++ STAN could not open smoke file: ${String(error && error.message ? error.message : error)}`);
+	}
+}
+
+function isDevelopmentMode(context) {
+	const extensionMode = context.extensionMode;
+	return extensionMode === vscode.ExtensionMode.Development || extensionMode === vscode.ExtensionMode.Test;
+}
+
+function createClient(context, workspaceFolder) {
+	const configuration = vscode.workspace.getConfiguration("simplecpp.stan", workspaceFolder.uri);
+	const phpBinary = configuration.get("phpBinary", "php");
+	const configuredScript = configuration.get("serverScript", "");
+	const serverScript = configuredScript && configuredScript.trim() !== ""
+		? configuredScript
+		: context.asAbsolutePath(path.join("..", "..", "..", "bin", "stan_lsp_server.php"));
+	const serverOptions = createServerOptions(workspaceFolder, phpBinary, serverScript);
+
+	const clientOptions = {
+		workspaceFolder,
+		documentSelector: [
+			{ scheme: "file", language: "phs", pattern: `${workspaceFolder.uri.fsPath.replace(/\\/g, "/")}/**/*` },
+			{ scheme: "file", pattern: `${workspaceFolder.uri.fsPath.replace(/\\/g, "/")}/**/*.phs` }
+		],
+		synchronize: {
+			fileEvents: vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(workspaceFolder, "**/*.{phs,php,json}"))
+		},
+		outputChannel: vscode.window.createOutputChannel(`Simple C++ STAN (${workspaceFolder.name})`),
+		traceOutputChannel: vscode.window.createOutputChannel(`Simple C++ STAN Trace (${workspaceFolder.name})`)
+	};
+
+	const client = new LanguageClient(
+		`simpleCppStan:${workspaceFolder.uri.fsPath}`,
+		`Simple C++ STAN (${workspaceFolder.name})`,
+		serverOptions,
+		clientOptions
+	);
+
+	client.setTrace(configuration.get("trace.server", "off"));
+	return client;
+}
+
+function createServerOptions(workspaceFolder, phpBinary, serverScript) {
+	const wslLaunch = resolveWslLaunch(workspaceFolder.uri.fsPath, serverScript, phpBinary);
+	if (wslLaunch !== null) {
+		return {
+			command: "wsl.exe",
+			args: wslLaunch,
+			transport: TransportKind.stdio
+		};
+	}
+
+	return {
+		command: phpBinary,
+		args: [serverScript],
+		options: {
+			cwd: workspaceFolder.uri.fsPath
+		},
+		transport: TransportKind.stdio
+	};
+}
+
+function resolveWslLaunch(workspacePath, serverScript, phpBinary) {
+	const workspaceMatch = workspacePath.match(/^\\\\wsl\$\\([^\\]+)\\(.*)$/i);
+	const scriptMatch = serverScript.match(/^\\\\wsl\$\\([^\\]+)\\(.*)$/i);
+	if (!workspaceMatch || !scriptMatch) {
+		return null;
+	}
+
+	const workspaceDistro = workspaceMatch[1];
+	const scriptDistro = scriptMatch[1];
+	if (workspaceDistro.toLowerCase() !== scriptDistro.toLowerCase()) {
+		return null;
+	}
+
+	const linuxWorkspacePath = `/${workspaceMatch[2].replace(/\\/g, "/")}`;
+	const linuxScriptPath = `/${scriptMatch[2].replace(/\\/g, "/")}`;
+	return ["-d", workspaceDistro, "--cd", linuxWorkspacePath, phpBinary, linuxScriptPath];
+}
+
+async function deactivate() {
+	const stops = [];
+	for (const client of clients.values()) {
+		stops.push(client.stop());
+	}
+	clients.clear();
+	await Promise.all(stops);
+}
+
+function registerScppCommand(commandId, shellCommand) {
+	return vscode.commands.registerCommand(commandId, async () => {
+		const terminal = createScppTerminal("Simple C++");
+		runTerminalCommand(terminal, shellCommand);
+	});
+}
+
+async function createSimpleCppProject() {
+	const workspaceFolder = await pickTargetWorkspaceFolder();
+	if (!workspaceFolder) {
+		vscode.window.showWarningMessage("Open a folder in VS Code before creating a Simple C++ project.");
+		return;
+	}
+
+	const projectRoot = workspaceFolder.uri.fsPath;
+	const prismPath = path.join(projectRoot, "prism.json");
+	if (fs.existsSync(prismPath)) {
+		vscode.window.showInformationMessage(`A Simple C++ project already exists in ${workspaceFolder.name}.`);
+		return;
+	}
+
+	const profilePick = await vscode.window.showQuickPick(
+		[
+			{ label: "strict", description: "Recommended strict PHP++ / PHS profile" },
+			{ label: "legacy", description: "Compatibility-oriented legacy PHP profile" }
+		],
+		{
+			title: "Select Simple C++ project profile",
+			placeHolder: "Choose the profile for scpp init"
+		}
+	);
+	if (!profilePick) {
+		return;
+	}
+
+	const terminal = createScppTerminal(`Simple C++ (${workspaceFolder.name})`, projectRoot);
+	runTerminalCommand(terminal, `scpp init --php-profile=${profilePick.label}`);
+	if (!fs.existsSync(path.join(projectRoot, "main.phs"))) {
+		runTerminalCommand(terminal, "printf 'echo \"hello\\\\n\";\\n' > main.phs");
+	}
+	vscode.window.showInformationMessage(`Creating Simple C++ project in ${workspaceFolder.name} with profile ${profilePick.label}.`);
+}
+
+async function runScppProjectCommand(mode, shellCommand) {
+	const projectRoot = await resolveProjectRoot();
+	if (!projectRoot || !fs.existsSync(path.join(projectRoot, "prism.json"))) {
+		vscode.window.showWarningMessage(`No Simple C++ project was found. Run "Simple C++: Create Project" or open a folder containing prism.json before trying to ${mode}.`);
+		return;
+	}
+	const terminal = createScppTerminal("Simple C++", projectRoot);
+	runTerminalCommand(terminal, shellCommand);
+}
+
+async function resolveProjectRoot() {
+	const activeDocument = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document : null;
+	if (activeDocument && activeDocument.uri.scheme === "file") {
+		const fromDocument = findProjectRoot(path.dirname(activeDocument.uri.fsPath));
+		if (fromDocument) {
+			return fromDocument;
+		}
+	}
+
+	const workspaceFolder = await pickTargetWorkspaceFolder();
+	if (!workspaceFolder) {
+		return null;
+	}
+	return findProjectRoot(workspaceFolder.uri.fsPath) || workspaceFolder.uri.fsPath;
+}
+
+async function pickTargetWorkspaceFolder() {
+	const workspaceFolders = vscode.workspace.workspaceFolders || [];
+	if (workspaceFolders.length === 0) {
+		return null;
+	}
+	if (workspaceFolders.length === 1) {
+		return workspaceFolders[0];
+	}
+
+	const items = workspaceFolders.map((folder) => ({
+		label: folder.name,
+		description: folder.uri.fsPath,
+		folder
+	}));
+	const picked = await vscode.window.showQuickPick(items, {
+		title: "Select workspace folder",
+		placeHolder: "Choose the folder to use for the Simple C++ command"
+	});
+	return picked ? picked.folder : null;
+}
+
+function findProjectRoot(startPath) {
+	let current = startPath;
+	while (true) {
+		if (fs.existsSync(path.join(current, "prism.json"))) {
+			return current;
+		}
+		const parent = path.dirname(current);
+		if (parent === current) {
+			return null;
+		}
+		current = parent;
+	}
+}
+
+function createScppTerminal(name, cwd) {
+	return vscode.window.createTerminal({
+		name,
+		...(cwd ? { cwd } : {})
+	});
+}
+
+function runTerminalCommand(terminal, shellCommand) {
+	terminal.show(true);
+	terminal.sendText(shellCommand, true);
+}
+
+module.exports = {
+	activate,
+	deactivate
+};

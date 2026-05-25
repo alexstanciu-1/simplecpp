@@ -1,0 +1,117 @@
+{
+  "name": "simple-cpp-vscode",
+  "displayName": "Simple C++",
+  "description": "VS Code support for PHP++ / PHS authoring with STAN-powered language features in .phs files.",
+  "version": "0.0.1",
+  "publisher": "simple-cpp",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "workspaceContains:prism.json",
+    "onLanguage:phs",
+    "onCommand:simpleCpp.createProject",
+    "onCommand:simpleCpp.buildProject",
+    "onCommand:simpleCpp.runProject",
+    "onCommand:simpleCpp.doctor",
+    "onCommand:simpleCpp.docsStrict",
+    "onCommand:simpleCpp.stan.restartServer",
+    "onCommand:simpleCpp.stan.openSmokeFile"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "phs",
+        "aliases": [
+          "PHP++ (PHS)",
+          "phs"
+        ],
+        "extensions": [
+          ".phs"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "phs",
+        "scopeName": "source.phs",
+        "path": "./syntaxes/phs.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "phs",
+        "path": "./snippets/phs.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "simpleCpp.createProject",
+        "title": "Simple C++: Create Project"
+      },
+      {
+        "command": "simpleCpp.buildProject",
+        "title": "Simple C++: Build Project"
+      },
+      {
+        "command": "simpleCpp.runProject",
+        "title": "Simple C++: Run Project"
+      },
+      {
+        "command": "simpleCpp.doctor",
+        "title": "Simple C++: Doctor"
+      },
+      {
+        "command": "simpleCpp.docsStrict",
+        "title": "Simple C++: Show Strict Docs"
+      },
+      {
+        "command": "simpleCpp.stan.restartServer",
+        "title": "Simple C++: Restart STAN Server"
+      },
+      {
+        "command": "simpleCpp.stan.openSmokeFile",
+        "title": "Simple C++: Open Smoke File"
+      }
+    ],
+    "configuration": {
+      "title": "Simple C++ STAN",
+      "properties": {
+        "simplecpp.stan.phpBinary": {
+          "type": "string",
+          "default": "php",
+          "description": "PHP binary used to launch the STAN language server."
+        },
+        "simplecpp.stan.serverScript": {
+          "type": "string",
+          "default": "",
+          "description": "Optional absolute path override for bin/stan_lsp_server.php."
+        },
+        "simplecpp.stan.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace level for the STAN language client."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint:json": "node -e \"for (const file of ['package.json','language-configuration.json','syntaxes/phs.tmLanguage.json','snippets/phs.json']) JSON.parse(require('fs').readFileSync(file,'utf8')); console.log('json ok');\"",
+    "check": "npm run lint:json && node -c src/extension.js && node -c src/static_completion.js",
+    "package:check": "npx @vscode/vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

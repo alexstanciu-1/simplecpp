@@ -1,0 +1,39 @@
+/** @lib-export */
+class FixtureUser
+{
+	public string $name = "alex";
+}
+
+#[\Override]
+class Runner extends SampleService
+{
+	public function run(): void
+	{
+		$userName string = "maria";
+		$userId int = 7;
+		$payload string = "{\"enabled\":true}";
+		$data = json_decode($payload);
+		$label = make_label($userName, $userId);
+		$service = new SampleService();
+		$runner = new Runner();
+		$output string = $service->greet($userName);
+		$file = "fixture-output.txt";
+		$err /** error */;
+		$written int = 0;
+
+		dbg("shape", $data, DBG_SHAPE | DBG_DEPTH_3);
+
+		if (!take($written, $err, fs_put($file, $output . "\n" . $label))) {
+			echo "write_error\n";
+			return;
+		}
+
+		echo dt_now(), "\n";
+		echo strlen($output), "\n";
+		echo $data["enabled"], "\n";
+		echo fs_remove($file) ? "removed\n" : "remove_failed\n";
+	}
+}
+
+$runner = new Runner();
+$runner->run();
