@@ -99,9 +99,12 @@ scpp build --build-runtime
 scpp build --build-dependencies
 scpp build --build-runtime --build-dependencies
 scpp build --force
+scpp build --timings
 ```
 
 `--build-runtime` refreshes the runtime for the current build/invocation. Shared reusable runtime maintenance is handled by `scpp update` and `scpp runtime-build`; explicit custom runtime rebuilds stay on the project-local side rather than acting like shared-cache maintenance.
+
+Use `--timings` when you want `scpp build` to print the internal build-step timing breakdown for that invocation.
 
 Remove generated state for a full cold rebuild:
 

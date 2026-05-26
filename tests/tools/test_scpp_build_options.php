@@ -19,11 +19,13 @@ final class ScppBuildOptionsTest
 			$defaultBuild = normalize_build_execution_options([]);
 			$this->assertSame(false, $defaultBuild['compile_runtime'], 'service builds should reuse runtime by default');
 			$this->assertSame(false, $defaultBuild['compile_dependencies'], 'service builds should reuse dependency artifacts by default');
+			$this->assertSame(false, $defaultBuild['show_timings'], 'service builds should not print timings by default');
 
 			$buildCli = parse_build_command_arguments([]);
 			$this->assertSame(false, $buildCli['compile_runtime'], 'scpp build should reuse runtime by default');
 			$this->assertSame(false, $buildCli['compile_dependencies'], 'scpp build should reuse dependencies by default');
 			$this->assertSame(false, $buildCli['force_runtime_rebuild'], 'scpp build should not force runtime rebuild by default');
+			$this->assertSame(false, $buildCli['show_timings'], 'scpp build should not show timings by default');
 
 			$buildExplicit = parse_build_command_arguments(['--build-runtime', '--build-dependencies']);
 			$this->assertSame(true, $buildExplicit['compile_runtime'], 'build-runtime should enable runtime compilation');
@@ -36,9 +38,13 @@ final class ScppBuildOptionsTest
 			$buildEntry = parse_build_command_arguments(['--entry=tests/sample.phs']);
 			$this->assertSame('tests/sample.phs', $buildEntry['entry_override'], 'build should accept an entry override');
 
+			$buildTimings = parse_build_command_arguments(['--timings']);
+			$this->assertSame(true, $buildTimings['show_timings'], 'build should accept a timings flag');
+
 			$runDefault = parse_run_command_arguments(['--', 'arg1', 'arg2']);
 			$this->assertSame(false, $runDefault['build_options']['compile_runtime'], 'scpp run should reuse runtime by default');
 			$this->assertSame(false, $runDefault['build_options']['compile_dependencies'], 'scpp run should reuse dependencies by default');
+			$this->assertSame(false, $runDefault['build_options']['show_timings'], 'scpp run should not show timings by default');
 			$this->assertSame(['arg1', 'arg2'], $runDefault['run_args'], 'run args after separator should be preserved');
 
 			$runExplicit = parse_run_command_arguments(['--build-runtime', '--build-dependencies', '--', 'arg1']);
@@ -52,6 +58,10 @@ final class ScppBuildOptionsTest
 
 			$runEntry = parse_run_command_arguments(['--entry=tests/sample.phs', '--', 'arg1']);
 			$this->assertSame('tests/sample.phs', $runEntry['build_options']['entry_override'], 'run should accept an entry override');
+
+			$runTimings = parse_run_command_arguments(['--timings', '--', 'arg1']);
+			$this->assertSame(true, $runTimings['build_options']['show_timings'], 'run should accept a timings flag');
+			$this->assertSame(['arg1'], $runTimings['run_args'], 'run timings flag should not consume program args');
 
 			$runImplicitArgs = parse_run_command_arguments(['hello', 'world']);
 			$this->assertSame(['hello', 'world'], $runImplicitArgs['run_args'], 'plain run args without separator should still work');
