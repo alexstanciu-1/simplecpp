@@ -89,6 +89,7 @@ For runtime rebuilds, keep this model in mind:
 - plain `scpp build` / `scpp run` also consult the current STAN project state before generation/compilation unless `--no-stan` is passed for that invocation
 - STAN `compile-errors` stop the build before native generation/compilation continues, while advisory STAN findings print a short summary and allow the build to continue
 - if a strict project needs a one-off bypass while STAN is still being refined, `scpp build --no-stan` and `scpp run --no-stan` remain the explicit escape hatch
+- use `scpp build --timings` or `scpp run --timings` when you need the internal build-step timing breakdown during warm-build or no-op performance investigation
 
 After failures, prefer saved diagnostics:
 
@@ -98,6 +99,11 @@ scpp full-error
 scpp last-run
 scpp full-last-run
 ```
+
+On Windows, prefer `scpp --doctor` early when native builds fail in Git Bash / MSYS environments. The doctor output now warns about:
+
+- `C:\msys64\mingw64\bin` appearing without `C:\msys64\usr\bin` on `PATH`
+- `TMP` / `TEMP` resolving to unwritable or risky locations such as `C:\Windows`
 
 Use generated C++ and `.prism/generated/*.line.tsv` artifacts as inspection evidence, not as the primary source to patch.
 For strict runtime type failures, inspect `scpp error` / `.prism/last_error.json` first. Recent generated-location remapping can populate `original_file` / `original_line` there; use generated C++ and line maps only when the saved report still lacks the needed attribution.
