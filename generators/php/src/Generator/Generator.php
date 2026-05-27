@@ -3506,7 +3506,7 @@ final class Generator
 	{
 		$lines = $this->codeLinesFromStrings(array_merge($this->renderCurrentParamEntryAliases(), $this->renderCurrentScalarRefParamAliases(), $this->renderCurrentArrayParamGuards()));
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
-			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 		}
 		return $lines;
 	}
@@ -4026,7 +4026,7 @@ final class Generator
 			? $this->renderFinallyAwareStatementSequence($tryStatements, $namespacePhp, $returnContext)
 			: $this->renderNestedStatements($tryStatements, $namespacePhp);
 		foreach ($tryBody as $line) {
-			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 		}
 		$lines[] = $this->code($this->indent(1) . '}', $statement->line);
 
@@ -4042,7 +4042,7 @@ final class Generator
 			$lines[] = $this->code('', $statement->line);
 			$lines[] = $this->code($this->indent(1) . '{', $statement->line);
 			foreach ($this->renderNestedStatements($finallyStatements, $namespacePhp) as $line) {
-				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 			}
 			$lines[] = $this->code($this->indent(1) . '}', $statement->line);
 			$lines[] = $this->code('', $statement->line);
@@ -4106,7 +4106,7 @@ final class Generator
 				? $this->renderFinallyAwareStatementSequence($catchSpec['stmts'] ?? [], $namespacePhp, $returnContext)
 				: $this->renderNestedStatements($catchSpec['stmts'] ?? [], $namespacePhp);
 			foreach ($bodyLines as $line) {
-				$lines[] = $this->code($this->indent($baseIndentLevel) . $line->text, $line->srcLine, $line->srcColumn);
+				$lines[] = $this->code($this->indent($baseIndentLevel) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 			}
 			$this->declaredLocals = $scopedLocals;
 			$this->declaredLocalTypes = $scopedLocalTypes;
@@ -4279,7 +4279,7 @@ final class Generator
 				}
 				$conditionHints = $this->conditionVisibilityHintsForExpr($branch['cond'] ?? null);
 				foreach ($this->renderFinallyAwareStatementSequenceWithConditionHints($branch['stmts'] ?? [], $namespacePhp, $returnContext, $conditionHints) as $line) {
-					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 				}
 				$lines[] = $this->code('}', $branchLine);
 				$first = false;
@@ -4292,7 +4292,7 @@ final class Generator
 			$conditionHints = $this->conditionVisibilityHintsForExpr($conditionNode);
 			$lines = [$this->code('while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($conditionNode, $namespacePhp) . ')) {', $statement->line)];
 			foreach ($this->renderFinallyAwareStatementSequenceWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext, $conditionHints) as $line) {
-				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 			}
 			$lines[] = $this->code('}', $statement->line);
 			return $lines;
@@ -4302,7 +4302,7 @@ final class Generator
 			$lines = [$this->code('do {', $statement->line)];
 			$conditionHints = $this->conditionVisibilityHintsForExpr($statement->payload['cond'] ?? null);
 			foreach ($this->renderFinallyAwareStatementSequenceWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext, $conditionHints) as $line) {
-				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+				$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 			}
 			$lines[] = $this->code('} while (!' . $returnContext['flag'] . ' && (' . $this->renderConditionExpr($statement->payload['cond'] ?? null, $namespacePhp) . '));', $statement->line);
 			return $lines;
@@ -4322,7 +4322,7 @@ final class Generator
 			}
 			$lines[] = $this->code($this->indent(1) . 'while (!' . $returnContext['flag'] . ' && (' . $cond . ')) {', $statement->line);
 			foreach ($this->renderFinallyAwareStatementSequenceWithConditionHints($statement->payload['stmts'] ?? [], $namespacePhp, $returnContext, $conditionHints) as $line) {
-				$lines[] = $this->code($this->indent(2) . $line->text, $line->srcLine, $line->srcColumn);
+				$lines[] = $this->code($this->indent(2) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 			}
 			if ($loop !== '') {
 				$lines[] = $this->code($this->indent(2) . 'if (!' . $returnContext['flag'] . ') {', $statement->line);
@@ -4350,7 +4350,7 @@ final class Generator
 					? $this->indent(1) . 'default:'
 					: $this->indent(1) . 'case ' . $this->renderSwitchCaseValue($caseCond) . ':', $caseLine);
 				foreach ($this->renderFinallyAwareStatementSequence($case['stmts'] ?? [], $namespacePhp, $returnContext) as $line) {
-					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 				}
 			}
 			$lines[] = $this->code('}', $statement->line);
@@ -4374,7 +4374,7 @@ final class Generator
 		$originColumn = $lines[0]->srcColumn;
 		$out = [$this->code('if (!' . $returnFlag . ') {', $originLine, $originColumn)];
 		foreach ($lines as $line) {
-			$out[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+			$out[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 		}
 		$out[] = $this->code('}', $originLine, $originColumn);
 		return $out;
@@ -4475,7 +4475,7 @@ final class Generator
 				$lines[] = $this->code($this->indent(2) . 'break;', $statement->line);
 				$lines[] = $this->code($this->indent(1) . '}', $statement->line);
 				foreach ($bodyLines as $line) {
-					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+					$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 				}
 			} else {
 				foreach ($this->renderNestedStatements($payload['stmts'] ?? [], $namespacePhp) as $line) {
@@ -4527,7 +4527,7 @@ final class Generator
 
 		$lines = [];
 		foreach ($this->renderStatementSequence($statements, $namespacePhp) as $line) {
-			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn);
+			$lines[] = $this->code($this->indent(1) . $line->text, $line->srcLine, $line->srcColumn, $line->srcRelation);
 		}
 
 		$this->declaredLocals = $scopedLocals;
@@ -6667,6 +6667,15 @@ final class Generator
 			if ($this->isDbgIfCallName($nameExpr)) {
 				return $this->renderDbgIfCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
 			}
+			if ($this->isScppDebugDumpCallName($nameExpr)) {
+				return $this->renderScppDebugDumpCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
+			if ($this->isScppDebugExitCallName($nameExpr)) {
+				return $this->renderScppDebugExitCallExpr($args, (int) ($expr->lineno ?? 0));
+			}
+			if ($this->isScppDebugBreakCallName($nameExpr)) {
+				return $this->renderScppDebugBreakCallExpr($args, (int) ($expr->lineno ?? 0));
+			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			$name = $functionDecl !== null
 				? $this->renderNameExpr($nameExpr, $namespacePhp)
@@ -6935,6 +6944,30 @@ final class Generator
 		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'dbg_if';
 	}
 
+	private function isScppDebugDumpCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === '__scpp_debug_dump';
+	}
+
+	private function isScppDebugExitCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === '__scpp_debug_exit';
+	}
+
+	private function isScppDebugBreakCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === '__scpp_debug_break';
+	}
+
 	/** @param list<mixed> $args */
 	private function renderDbgCallExpr(array $args, ?string $namespacePhp, int $line): string
 	{
@@ -7001,6 +7034,45 @@ final class Generator
 			. $this->cppStringLiteral($this->currentSourcePath) . ', '
 			. (string) $line
 			. ($renderedArgs === [] ? '' : ', ' . implode(', ', $renderedArgs))
+			. ')';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderScppDebugDumpCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 3) {
+			$this->fail('__scpp_debug_dump() expects phase, label, and one expression at line ' . $line . '.');
+		}
+		return 'php::__scpp_debug_dump_at('
+			. $this->cppStringLiteral($this->currentSourcePath) . ', '
+			. (string) $line . ', '
+			. $this->renderExpr($args[0], $namespacePhp) . ', '
+			. $this->renderExpr($args[1], $namespacePhp) . ', '
+			. $this->renderExpr($args[2], $namespacePhp)
+			. ')';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderScppDebugExitCallExpr(array $args, int $line): string
+	{
+		if ($args !== []) {
+			$this->fail('__scpp_debug_exit() expects no arguments at line ' . $line . '.');
+		}
+		return 'php::__scpp_debug_exit_at('
+			. $this->cppStringLiteral($this->currentSourcePath) . ', '
+			. (string) $line
+			. ')';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderScppDebugBreakCallExpr(array $args, int $line): string
+	{
+		if ($args !== []) {
+			$this->fail('__scpp_debug_break() expects no arguments at line ' . $line . '.');
+		}
+		return 'php::__scpp_debug_break_at('
+			. $this->cppStringLiteral($this->currentSourcePath) . ', '
+			. (string) $line
 			. ')';
 	}
 

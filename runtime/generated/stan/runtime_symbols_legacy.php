@@ -4,6 +4,10 @@
 // This file is for front-end symbol extraction only.
 // Skipped reserved or unsafe names: empty, isset
 
+function __scpp_debug_break(): void {}
+function __scpp_debug_call_entry(): void {}
+function __scpp_debug_dump(string $phase, string $label, mixed $value): void {}
+function __scpp_debug_exit(): void {}
 function basename(string $path): string {}
 function bin2hex(string $bytes): string {}
 function cli_argc(): int {}

@@ -9,6 +9,34 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.63 - 2026-05-27
+
+### Additions
+
+- Added a debug-preview `scpp debug` surface with source-targeted `--break`, `--exit`, `--dump-before`, and `--dump-after` actions that rewrite only the explicitly targeted `file:line` sites for a given debug run.
+- Added structured debug-session artifacts and bounded slot-based debug workspaces under `.prism/debug/slots/`, including saved plans, events, rewritten source previews, and rewritten-source line maps for agent/operator inspection.
+- Added preview callable and expression execution through `scpp debug --call`, `--call-this`, and `--exec`, backed by a new runtime-owned JSON conversion surface at `runtime/include/scpp/json/from_json.hpp`.
+- Added VS Code preview support for inspecting latest/recent debug slots plus a first-pass `simplecpp-debug` DAP scaffold for launch, breakpoints, stop events, restart, and light variable display from saved events.
+- Added an agent-facing debug preview testing guide at `docs/debug_preview_agent_guide.md` to make the current preview scope and known limits explicit.
+
+### Fixes
+
+- Fixed debug architecture drift by unifying the active implementation around one source-rewrite path for simple explicit source-site actions instead of keeping parallel generator-hook and rewrite models alive.
+- Fixed debug failure reporting so build/runtime failures now emit stronger structured debug events with clearer categories, subcategories, and guidance for common preview failure modes.
+- Fixed debug workspace cleanup behavior by replacing the unbounded per-session layout with reusable slot allocation, slot expiry, and stable per-slot metadata/index files.
+- Fixed VS Code-side debug inspection ergonomics by adding internal helpers and commands that resolve the current project, discover the latest slot, and open saved debug artifacts from one place.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- This release should be treated as a debug preview, not a finished interactive debugger.
+- Source-targeted debug events currently report rewritten debug-source line numbers for the active run instead of remapping back to original pre-rewrite line numbers.
+- Instance-method `--call-this` only succeeds when the receiver type has a real `from_json<T>` conversion path; otherwise the failure is expected to surface clearly during build/runtime conversion.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the shipped changes add debug-preview CLI/runtime/VS Code support without changing the current strict authoring guidance.
+
 ## 0.1.62 - 2026-05-25
 
 ### Additions

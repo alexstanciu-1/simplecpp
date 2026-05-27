@@ -41,9 +41,9 @@ final class Transpiler
 	 * - preserves the subset and lowering rules documented for the prototype
 	 * - keeps the implementation explicit so mismatches with exporter shapes are easier to audit
 	 */
-	public function transpile(string $phpPath, bool $save_ast_to_json = false, bool $emitProgramEntry = true): CppFile
+	public function transpile(string $phpPath, bool $save_ast_to_json = false, bool $emitProgramEntry = true, ?string $sourceOverride = null): CppFile
 	{
-		$source = file_get_contents($phpPath);
+		$source = $sourceOverride ?? file_get_contents($phpPath);
 		if ($source === false) {
 			throw new InputException('Failed to read PHP input: ' . $phpPath);
 		}

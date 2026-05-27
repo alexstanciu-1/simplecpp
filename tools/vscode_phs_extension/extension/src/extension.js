@@ -5,6 +5,10 @@ const path = require("path");
 const vscode = require("vscode");
 const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
 const { registerStaticCompletion } = require("./static_completion");
+const debugStore = require("./debug/project_debug_store");
+const debugRunner = require("./debug/scpp_debug_runner");
+const { registerDebugCommands } = require("./debug/debug_commands");
+const { registerDebugAdapter } = require("./debug/debug_dap");
 
 /** @type {Map<string, LanguageClient>} */
 const clients = new Map();
@@ -53,6 +57,21 @@ async function activate(context) {
 			}
 		})
 	);
+
+	context.subscriptions.push(
+		...registerDebugCommands({
+			resolveProjectRoot,
+			createTerminal: createScppTerminal,
+			runTerminalCommand,
+			debugStore,
+			debugRunner
+		})
+	);
+
+	registerDebugAdapter(context, {
+		resolveProjectRoot,
+		debugRunner
+	});
 
 	await synchronizeWorkspaceClients(context);
 	await openSmokeFileIfAvailable(context, false);
@@ -315,5 +334,10 @@ function runTerminalCommand(terminal, shellCommand) {
 
 module.exports = {
 	activate,
-	deactivate
+	deactivate,
+	_debugSupport: {
+		debugStore,
+		debugRunner,
+		registerDebugCommands
+	}
 };
