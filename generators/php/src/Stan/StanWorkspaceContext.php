@@ -23,6 +23,7 @@ final class StanWorkspaceContext
 		public readonly string $activeRuntimeShallowPath,
 		/** @var list<StanSourceUnit> */
 		public readonly array $sourceUnits,
+		public readonly string $sourceFingerprint,
 		public readonly string $stanSignature,
 		public readonly string $statePath,
 		public readonly string $cacheDir,

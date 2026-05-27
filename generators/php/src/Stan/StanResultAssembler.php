@@ -69,6 +69,7 @@ final class StanResultAssembler
 	public function buildState(
 		string $projectRoot,
 		string $phpProfile,
+		string $sourceFingerprint,
 		array $symbolIndex,
 		array $duplicateDiagnostics,
 		array $resolutionDiagnostics,
@@ -90,6 +91,7 @@ final class StanResultAssembler
 			'version' => 1,
 			'project_root' => \normalize_path($projectRoot),
 			'php_profile' => $phpProfile,
+			'source_fingerprint' => $sourceFingerprint,
 			'updated_at' => time(),
 			'symbol_index' => $symbolIndex,
 			'duplicate_diagnostics' => $duplicateDiagnostics,

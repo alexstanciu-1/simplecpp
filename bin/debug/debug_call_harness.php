@@ -248,9 +248,7 @@ function find_debug_function_symbol(array $symbolIndex, string $callableName): ?
 		if ($name === '') {
 			continue;
 		}
-		$qualified = $scope === '' ? $name : $scope . '::' . $name;
-		$phpQualified = str_replace('::', '\\', $qualified);
-		if ($qualified === $normalized || $phpQualified === $normalized || $name === $normalized) {
+		if (in_array($normalized, build_debug_callable_match_candidates($symbol), true)) {
 			$matches[] = $symbol;
 		}
 	}
@@ -275,6 +273,39 @@ function find_debug_function_symbol(array $symbolIndex, string $callableName): ?
 		);
 	}
 	return $matches[0];
+}
+
+/** @param array<string,mixed> $symbol @return list<string> */
+function build_debug_callable_match_candidates(array $symbol): array
+{
+	$scope = trim((string) ($symbol['scope'] ?? ''));
+	$name = trim((string) ($symbol['name'] ?? ''));
+	$kind = (string) ($symbol['kind'] ?? '');
+	if ($name === '') {
+		return [];
+	}
+
+	$candidates = [$name];
+	if ($kind === 'method') {
+		if ($scope !== '') {
+			$candidates[] = $scope . '::' . $name;
+			$phpScope = str_replace('::', '\\', $scope);
+			$candidates[] = $phpScope . '::' . $name;
+			$candidates[] = '\\' . ltrim($phpScope . '::' . $name, '\\');
+			$ownerClass = trim((string) ($symbol['owner_class'] ?? ''));
+			if ($ownerClass !== '') {
+				$candidates[] = $ownerClass . '::' . $name;
+			}
+		}
+		return array_values(array_unique(array_filter($candidates, static fn (string $value): bool => $value !== '')));
+	}
+
+	if ($scope !== '') {
+		$candidates[] = $scope . '\\' . $name;
+		$candidates[] = '\\' . ltrim($scope . '\\' . $name, '\\');
+		$candidates[] = $scope . '::' . $name;
+	}
+	return array_values(array_unique(array_filter($candidates, static fn (string $value): bool => $value !== '')));
 }
 
 function build_debug_cpp_callable(string $kind, string $namespacePhp, string $functionName): string

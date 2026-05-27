@@ -28,6 +28,7 @@ final class StanWorkspaceContextBuilder
 			$normalizedOverrides[\normalize_path($path)] = $contents;
 		}
 		$sourceUnits = $this->sourceCatalogBuilder->build($projectRoot, $projectContexts, [\normalize_path($activeRuntimeShallowPath)], $normalizedOverrides);
+		$sourceFingerprint = $this->computeSourceFingerprint($projectGraph, $sourceUnits);
 		$stanSignature = $this->computeStanSignature($repoRoot, $phpProfile);
 		$statePath = \normalize_path($projectRoot . '/.prism/cache/' . \SCPP_STAN_STATE_FILE);
 		$cacheDir = \normalize_path($projectRoot . '/.prism/cache/stan/files');
@@ -46,10 +47,33 @@ final class StanWorkspaceContextBuilder
 			runtimeShallowSources: $runtimeShallowSources,
 			activeRuntimeShallowPath: $activeRuntimeShallowPath,
 			sourceUnits: $sourceUnits,
+			sourceFingerprint: $sourceFingerprint,
 			stanSignature: $stanSignature,
 			statePath: $statePath,
 			cacheDir: $cacheDir,
 		);
+	}
+
+	/** @param array<string,mixed> $projectGraph @param list<StanSourceUnit> $sourceUnits */
+	private function computeSourceFingerprint(array $projectGraph, array $sourceUnits): string
+	{
+		$parts = [];
+		foreach ($projectGraph as $projectSpec) {
+			if (!is_array($projectSpec)) {
+				continue;
+			}
+			$configPath = \normalize_path((string) ($projectSpec['config_path'] ?? ''));
+			if ($configPath === '') {
+				continue;
+			}
+			$configHash = is_file($configPath) ? hash_file('sha256', $configPath) : false;
+			$parts[] = $configPath . ':' . ($configHash === false ? 'missing' : $configHash);
+		}
+		foreach ($sourceUnits as $sourceUnit) {
+			$parts[] = \normalize_path($sourceUnit->path) . ':' . $sourceUnit->meta['content_hash'];
+		}
+		sort($parts, SORT_STRING);
+		return hash('sha256', implode("\n", $parts));
 	}
 
 	private function computeStanSignature(string $repoRoot, string $phpProfile = 'legacy'): string
