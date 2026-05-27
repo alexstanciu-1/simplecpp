@@ -9,6 +9,28 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.65 - 2026-05-27
+
+### Additions
+
+- Added `scpp stan --help` so the advisory-analysis command now exposes its own minimal CLI guidance instead of failing on the flag.
+
+### Fixes
+
+- Fixed STAN debug-preview follow-up regressions by accepting shorthand dump expressions like `bag` in source-targeted `--dump-before` and `--dump-after` actions, broadening `--call` resolution across practical static-method naming shapes, and smoothing debug startup when a reusable runtime artifact is missing.
+- Fixed STAN freshness across dependency-only edits by widening the advisory source fingerprint to include the resolved project dependency graph, storing that fingerprint in STAN workspace state, and refusing to reuse stale per-file summaries when the dependency-visible source surface changes.
+- Fixed explicit `scpp stan` runs so they now republish fresh `.prism/cache/stan_status.json` and `.prism/cache/stan_report.json` artifacts for the active fingerprint instead of returning only an in-memory result.
+- Fixed the reported dependency-symbol repro path so fresh STAN pre-build checks now stop the build early with `unresolved_call` diagnostics instead of allowing stale ready-state reuse to hide the missing dependency export.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Dependency-only edits may now invalidate STAN advisory reuse more aggressively because the cached workspace state tracks the broader project/dependency source fingerprint instead of only the root project files.
+- Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the shipped changes harden debug/STAN workflow behavior without changing the current strict authoring guidance.
+
 ## 0.1.64 - 2026-05-27
 
 ### Additions
