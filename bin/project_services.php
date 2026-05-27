@@ -2692,6 +2692,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$requestedBuildMode = strtolower(trim((string) $options['build_mode']));
 		$buildMode = in_array($requestedBuildMode, ['debug', 'dev', 'development'], true) ? 'debug' : ($requestedBuildMode === 'release' ? 'release' : $buildMode);
 	}
+	$config = apply_build_runtime_module_overrides($config, $options);
 	$runtimeConfig = resolve_runtime_build_config($config);
 
 	if (is_string($options['debug_session_id'] ?? null) && $options['debug_session_id'] !== '') {
@@ -3496,7 +3497,7 @@ function normalize_run_arguments(array $args): array
 	return array_slice($args, $separatorIndex + 1);
 }
 
-/** @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,disable_stan?:bool,show_timings?:bool,entry_override?:?string,debug_session_id?:?string,debug_session_root?:?string,source_overrides?:?array<string,string>,build_mode?:?string,use_pch?:?bool,extra_native_cpp_files?:?array<int,string>} $options @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,show_timings:bool,entry_override:?string,debug_session_id:?string,debug_session_root:?string,source_overrides:array<string,string>,build_mode:?string,use_pch:?bool,extra_native_cpp_files:list<string>} */
+/** @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,disable_stan?:bool,show_timings?:bool,entry_override?:?string,debug_session_id?:?string,debug_session_root?:?string,source_overrides?:?array<string,string>,build_mode?:?string,use_pch?:?bool,extra_native_cpp_files?:?array<int,string>,append_runtime_modules?:?array<int,string>} $options @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,show_timings:bool,entry_override:?string,debug_session_id:?string,debug_session_root:?string,source_overrides:array<string,string>,build_mode:?string,use_pch:?bool,extra_native_cpp_files:list<string>,append_runtime_modules:list<string>} */
 function normalize_build_execution_options(array $options): array
 {
 	return [
@@ -3525,6 +3526,12 @@ function normalize_build_execution_options(array $options): array
 			? array_values(array_filter(array_map(
 				static fn (mixed $value): string => is_string($value) ? normalize_path($value) : '',
 				$options['extra_native_cpp_files']
+			), static fn (string $value): bool => $value !== ''))
+			: [],
+		'append_runtime_modules' => is_array($options['append_runtime_modules'] ?? null)
+			? array_values(array_filter(array_map(
+				static fn (mixed $value): string => strtolower(trim((string) $value)),
+				$options['append_runtime_modules']
 			), static fn (string $value): bool => $value !== ''))
 			: [],
 	];
@@ -4593,6 +4600,30 @@ function resolve_runtime_build_config(array $config): array
 		'language_profiles' => $languageProfiles,
 		'modules' => $modules,
 	];
+}
+
+/** @param array<string,mixed> $config @param array<string,mixed> $options @return array<string,mixed> */
+function apply_build_runtime_module_overrides(array $config, array $options): array
+{
+	$appendModules = is_array($options['append_runtime_modules'] ?? null) ? $options['append_runtime_modules'] : [];
+	if ($appendModules === []) {
+		return $config;
+	}
+
+	$runtime = is_array($config['runtime'] ?? null) ? $config['runtime'] : [];
+	$modules = is_array($runtime['modules'] ?? null) ? $runtime['modules'] : default_runtime_modules();
+	foreach ($appendModules as $module) {
+		$moduleName = strtolower(trim((string) $module));
+		if ($moduleName === '') {
+			continue;
+		}
+		if (!in_array($moduleName, $modules, true)) {
+			$modules[] = $moduleName;
+		}
+	}
+	$runtime['modules'] = $modules;
+	$config['runtime'] = $runtime;
+	return $config;
 }
 
 function guess_entrypoint(string $projectRoot): ?string
