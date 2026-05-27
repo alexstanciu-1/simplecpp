@@ -21,6 +21,7 @@ Current functionality provides:
 - simple `scpp` workflow commands
 - context-aware static completion for keywords, types, builtins, and visible variables
 - STAN-backed diagnostics, hover, definition, references, and document symbols
+- preview debug inspection commands and a minimal debug-adapter scaffold for Simple C++ debug sessions
 
 Later phases can still add richer analyzer-backed completion and deeper semantic editing features.
 
@@ -63,3 +64,22 @@ The repository includes a ready-to-use VS Code debug configuration.
 2. Press `F5`.
 3. Choose `Run Simple C++ Extension` if prompted.
 4. VS Code should open an Extension Development Host window on the bundled smoke workspace.
+
+## Debug Preview
+
+The extension now includes a lightweight debug-preview layer behind the scenes.
+
+Current preview commands:
+
+- `Simple C++: Inspect Latest Debug Session`
+- `Simple C++: Inspect Debug Slots`
+
+These commands can surface saved debug artifacts from `.prism/debug/index.json`, including:
+
+- saved `events.json`
+- saved `plan.json`
+- rewritten debug source
+- rewritten-source line maps
+
+The extension also includes a minimal `simplecpp-debug` debug type scaffold intended for early launch/breakpoint/stop testing against `scpp debug`.
+Treat that debug adapter as preview infrastructure, not a finished debugger UI.
