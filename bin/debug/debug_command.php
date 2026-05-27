@@ -737,7 +737,7 @@ function run_debug_process_plan(array $plan, array $sourceOverrides = [], array 
 	if ($sourceOverrides !== []) {
 		$buildOptions['source_overrides'] = flatten_debug_source_override_map($sourceOverrides);
 	}
-	$buildService = scpp_run_build_service($projectRoot, $configPath, $buildOptions);
+	$buildService = run_debug_build_with_runtime_retry($projectRoot, $configPath, $buildOptions);
 	if (($buildService['ok'] ?? false) !== true) {
 		return [
 			'exit_code' => (int) ($buildService['exit_code'] ?? 1),
@@ -840,11 +840,12 @@ function run_debug_function_plan(array $plan, array $artifacts, array $sourceOve
 	$buildOptions['entry_override'] = (string) $artifacts['entry_relative'];
 	$buildOptions['extra_native_cpp_files'] = [(string) $artifacts['native_cpp_path']];
 	$buildOptions['disable_stan'] = true;
+	$buildOptions['append_runtime_modules'] = ['json'];
 	if ($sourceOverrides !== []) {
 		$buildOptions['source_overrides'] = flatten_debug_source_override_map($sourceOverrides);
 	}
 
-	$buildService = scpp_run_build_service($projectRoot, $configPath, $buildOptions);
+	$buildService = run_debug_build_with_runtime_retry($projectRoot, $configPath, $buildOptions);
 	if (($buildService['ok'] ?? false) !== true) {
 		return [
 			'exit_code' => (int) ($buildService['exit_code'] ?? 1),
@@ -911,6 +912,31 @@ function run_debug_function_plan(array $plan, array $artifacts, array $sourceOve
 		'build_stderr' => (string) ($buildService['error'] ?? ''),
 		'debug_events' => $parsedEvents,
 	];
+}
+
+/** @param array<string,mixed> $buildOptions @return array{ok:bool,result:?array<string,mixed>,output:string,error:string,exit_code:int|null} */
+function run_debug_build_with_runtime_retry(string $projectRoot, string $configPath, array $buildOptions): array
+{
+	$buildService = scpp_run_build_service($projectRoot, $configPath, $buildOptions);
+	if (($buildService['ok'] ?? false) === true || ($buildOptions['compile_runtime'] ?? false) === true) {
+		return $buildService;
+	}
+
+	$buildFailure = classify_build_failure(
+		(string) ($buildService['output'] ?? ''),
+		(string) ($buildService['error'] ?? '')
+	);
+	if (($buildFailure['category'] ?? '') !== 'runtime_cache' || ($buildFailure['subcategory'] ?? '') !== 'missing_runtime_artifact') {
+		return $buildService;
+	}
+
+	$retryOptions = $buildOptions;
+	$retryOptions['compile_runtime'] = true;
+	$retryBuildService = scpp_run_build_service($projectRoot, $configPath, $retryOptions);
+	$retryBuildService['output'] = (string) ($buildService['output'] ?? '') . (string) ($buildService['error'] ?? '')
+		. 'Retrying debug build with --build-runtime due to missing runtime artifact.' . PHP_EOL
+		. (string) ($retryBuildService['output'] ?? '');
+	return $retryBuildService;
 }
 
 /** @return array{stdout:string,events:list<array<string,mixed>>} */

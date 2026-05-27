@@ -168,9 +168,22 @@ function build_debug_injected_source_line(array $action): string
 	if (trim($text) === '') {
 		scpp_fail('Debug dump action is missing an injected expression.' . PHP_EOL, 1);
 	}
+	$text = normalize_debug_injected_expr_text($text);
 	$label = "'" . str_replace(['\\', "'"], ['\\\\', "\\'"], $text) . "'";
 	$phase = $kind === 'dump_after' ? "'after'" : "'before'";
 	return '__scpp_debug_dump(' . $phase . ', ' . $label . ', ' . $text . ');';
+}
+
+function normalize_debug_injected_expr_text(string $text): string
+{
+	$trimmed = trim($text);
+	if ($trimmed === '') {
+		return $trimmed;
+	}
+	if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*(?=(->|\[|$))/', $trimmed, $matches) === 1) {
+		return '$' . $matches[0] . substr($trimmed, strlen($matches[0]));
+	}
+	return $trimmed;
 }
 
 /** @param list<array{debug_line:int,original_line:int,relation:string}> $lineMap */

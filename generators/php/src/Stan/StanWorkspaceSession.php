@@ -227,6 +227,9 @@ final class StanWorkspaceSession
 	{
 		$context = $this->contextBuilder->build($projectRoot, $configPath, $sourceOverrides);
 		$state = $this->stateStore->load($context->statePath);
+		if ((string) ($state['source_fingerprint'] ?? '') !== $context->sourceFingerprint) {
+			$state = ['version' => 1, 'files' => []];
+		}
 		$filePassResult = $this->filePass->analyze(
 			$context->projectRoot,
 			$context->statePath,
@@ -248,6 +251,7 @@ final class StanWorkspaceSession
 		$state = $this->resultAssembler->buildState(
 			$context->projectRoot,
 			$context->phpProfile,
+			$context->sourceFingerprint,
 			$semanticResult['symbol_index'],
 			$semanticResult['duplicate_diagnostics'],
 			$semanticResult['resolution_diagnostics'],
