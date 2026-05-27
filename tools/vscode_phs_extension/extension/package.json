@@ -2,7 +2,7 @@
   "name": "simple-cpp-vscode",
   "displayName": "Simple C++",
   "description": "VS Code support for PHP++ / PHS authoring with STAN-powered language features in .phs files.",
-  "version": "0.0.1",
+  "version": "0.1.64",
   "publisher": "simple-cpp",
   "license": "UNLICENSED",
   "engines": {
@@ -20,7 +20,13 @@
     "onCommand:simpleCpp.doctor",
     "onCommand:simpleCpp.docsStrict",
     "onCommand:simpleCpp.stan.restartServer",
-    "onCommand:simpleCpp.stan.openSmokeFile"
+    "onCommand:simpleCpp.stan.openSmokeFile",
+    "onCommand:simpleCpp.debug.inspectLatestSession",
+    "onCommand:simpleCpp.debug.inspectAllSlots",
+    "onCommand:simpleCpp.debug.openLatestEvents",
+    "onCommand:simpleCpp.debug.openLatestPlan",
+    "onCommand:simpleCpp.debug.openLatestRewrittenSource",
+    "onDebug:simplecpp-debug"
   ],
   "main": "./src/extension.js",
   "contributes": {
@@ -78,6 +84,72 @@
       {
         "command": "simpleCpp.stan.openSmokeFile",
         "title": "Simple C++: Open Smoke File"
+      },
+      {
+        "command": "simpleCpp.debug.inspectLatestSession",
+        "title": "Simple C++: Inspect Latest Debug Session"
+      },
+      {
+        "command": "simpleCpp.debug.inspectAllSlots",
+        "title": "Simple C++: Inspect Debug Slots"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "simplecpp-debug",
+        "label": "Simple C++ Debug",
+        "languages": [
+          "phs"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "projectRoot": {
+                "type": "string",
+                "description": "Optional explicit project root containing prism.json."
+              },
+              "buildRuntime": {
+                "type": "boolean",
+                "default": false
+              },
+              "buildDependencies": {
+                "type": "boolean",
+                "default": false
+              },
+              "call": {
+                "type": "string",
+                "description": "Optional callable for debug call mode."
+              },
+              "callArgsJson": {
+                "type": "string",
+                "default": "[]"
+              },
+              "callThisJson": {
+                "type": "string"
+              },
+              "exec": {
+                "type": "string",
+                "description": "Optional expression for debug exec mode."
+              },
+              "env": {
+                "type": "object",
+                "default": {}
+              },
+              "args": {
+                "type": "array",
+                "default": []
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "simplecpp-debug",
+            "request": "launch",
+            "name": "Simple C++ Debug"
+          }
+        ]
       }
     ],
     "configuration": {
@@ -108,7 +180,7 @@
   },
   "scripts": {
     "lint:json": "node -e \"for (const file of ['package.json','language-configuration.json','syntaxes/phs.tmLanguage.json','snippets/phs.json']) JSON.parse(require('fs').readFileSync(file,'utf8')); console.log('json ok');\"",
-    "check": "npm run lint:json && node -c src/extension.js && node -c src/static_completion.js",
+    "check": "npm run lint:json && node -c src/extension.js && node -c src/static_completion.js && node -c src/debug/project_debug_store.js && node -c src/debug/scpp_debug_runner.js && node -c src/debug/debug_commands.js && node -c src/debug/debug_dap.js",
     "package:check": "npx @vscode/vsce package --no-dependencies"
   },
   "dependencies": {

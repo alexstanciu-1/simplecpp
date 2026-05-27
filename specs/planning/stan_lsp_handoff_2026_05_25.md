@@ -3,8 +3,8 @@ Doc Status: planning
 # STAN Handoff
 
 Date: 2026-05-25
-Branch: `feature/stan-advisory-semantic-pass`
-Latest checked commit during handoff refresh: `14c2191`
+Branch: `main`
+Latest checked commit during handoff refresh: `1b12c55`
 
 ## Purpose
 
@@ -33,6 +33,24 @@ It now has:
 - `scpp build` pre-build STAN consultation
 - a conservative `compile-errors` bucket that can stop builds early
 - a `--no-stan` bypass for early-release escape-hatch use
+
+## Release State
+
+The STAN/editor/build integration shipped in release `0.1.62`.
+
+Published artifacts/state:
+
+- release PR to `main`: `#173`
+- release-sync PR back to `develop`: `#174`
+- published tag: `v0.1.62`
+- published GitHub release:
+  - [v0.1.62](https://github.com/alexstanciu-1/simplecpp/releases/tag/v0.1.62)
+
+Branch/result summary:
+
+- `main` contains the merged `0.1.62` release result
+- GitHub `develop` was synchronized from `main` through PR `#174`
+- the temporary `release/v0.1.62` branch has been removed on GitHub
 
 ## Main Files
 

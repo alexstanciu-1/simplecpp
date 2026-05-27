@@ -15,6 +15,7 @@
 #include "scpp/result_or_false.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/runtime_error.hpp"
 #include "scpp/unique_p.hpp"
 #include "scpp/vector_t.hpp"
 #include "scpp/weak_p.hpp"
@@ -389,6 +390,7 @@ void dbg_unset(const string_t &key, bool_t enabled = bool_t(true));
 void dbg_unset(const char *key, bool_t enabled = bool_t(true));
 [[nodiscard]] bool_t dbg_enabled(const string_t &key);
 [[nodiscard]] bool_t dbg_enabled(const char *key);
+void __scpp_debug_call_entry();
 
 template <typename T>
 void dbg_at(const char *source_file, int source_line, const T &value) {
@@ -442,6 +444,81 @@ void dbg_if(const string_t &key, Args&&... args) {
 template <typename... Args>
 void dbg_if(const char *key, Args&&... args) {
 	dbg_if_at(key, "", 0, std::forward<Args>(args)...);
+}
+
+template <typename T>
+void __scpp_debug_dump_at(const char *source_file, int source_line, const string_t &phase, const string_t &label, const T &value) {
+	std::cerr
+		<< "__SCPP_DEBUG_EVENT__ "
+		<< "{\"event\":\"dump\",\"body\":{\"subject\":{\"kind\":\"injected_expr\",\"text\":\""
+		<< ::scpp::runtime_error_json_escape(label.native_value())
+		<< "\"},\"phase\":\""
+		<< ::scpp::runtime_error_json_escape(phase.native_value())
+		<< "\",\"value\":{\"type\":\""
+		<< ::scpp::runtime_error_json_escape(dbg_detail::type_name<T>())
+		<< "\",\"preview\":\""
+		<< ::scpp::runtime_error_json_escape(dbg_detail::inline_value(value))
+		<< "\"}},\"source\":{\"file\":\""
+		<< ::scpp::runtime_error_json_escape(source_file != nullptr ? source_file : "")
+		<< "\",\"line\":"
+		<< source_line
+		<< "}}"
+		<< "\n";
+}
+
+template <typename T>
+void __scpp_debug_dump_at(const char *source_file, int source_line, const char *phase, const char *label, const T &value) {
+	__scpp_debug_dump_at(source_file, source_line, string_t(phase), string_t(label), value);
+}
+
+template <typename T>
+void __scpp_debug_dump_at(const char *source_file, int source_line, const char *phase, const string_t &label, const T &value) {
+	__scpp_debug_dump_at(source_file, source_line, string_t(phase), label, value);
+}
+
+template <typename T>
+void __scpp_debug_dump_at(const char *source_file, int source_line, const string_t &phase, const char *label, const T &value) {
+	__scpp_debug_dump_at(source_file, source_line, phase, string_t(label), value);
+}
+
+inline void __scpp_debug_exit_at(const char *source_file, int source_line) {
+	std::cerr
+		<< "__SCPP_DEBUG_EVENT__ "
+		<< "{\"event\":\"hit\",\"body\":{\"action_kind\":\"exit\",\"phase\":\"before\"},\"source\":{\"file\":\""
+		<< ::scpp::runtime_error_json_escape(source_file != nullptr ? source_file : "")
+		<< "\",\"line\":"
+		<< source_line
+		<< "}}"
+		<< "\n";
+	std::cerr
+		<< "__SCPP_DEBUG_EVENT__ "
+		<< "{\"event\":\"exit\",\"body\":{\"reason\":\"action_exit\",\"action_kind\":\"exit\"},\"source\":{\"file\":\""
+		<< ::scpp::runtime_error_json_escape(source_file != nullptr ? source_file : "")
+		<< "\",\"line\":"
+		<< source_line
+		<< "}}"
+		<< "\n";
+	std::exit(0);
+}
+
+inline void __scpp_debug_break_at(const char *source_file, int source_line) {
+	std::cerr
+		<< "__SCPP_DEBUG_EVENT__ "
+		<< "{\"event\":\"hit\",\"body\":{\"action_kind\":\"break\",\"phase\":\"before\"},\"source\":{\"file\":\""
+		<< ::scpp::runtime_error_json_escape(source_file != nullptr ? source_file : "")
+		<< "\",\"line\":"
+		<< source_line
+		<< "}}"
+		<< "\n";
+	std::cerr
+		<< "__SCPP_DEBUG_EVENT__ "
+		<< "{\"event\":\"break\",\"body\":{\"reason\":\"action_break\",\"action_kind\":\"break\"},\"source\":{\"file\":\""
+		<< ::scpp::runtime_error_json_escape(source_file != nullptr ? source_file : "")
+		<< "\",\"line\":"
+		<< source_line
+		<< "}}"
+		<< "\n";
+	std::exit(0);
 }
 
 } // namespace php
