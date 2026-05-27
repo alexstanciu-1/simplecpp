@@ -795,6 +795,14 @@ function handle_stan(string $cwd, array $args = []): void
 		return;
 	}
 
+	if ($args === ['--help'] || $args === ['help']) {
+		scpp_write('Usage: scpp stan [--help]' . PHP_EOL);
+		scpp_write('  Runs the advisory static-analysis pass for the current project.' . PHP_EOL);
+		scpp_write('  Warm reuse currently depends on the project/dependency source fingerprint recorded in STAN status files.' . PHP_EOL);
+		scpp_write('  See also: scpp stan worker' . PHP_EOL);
+		return;
+	}
+
 	if ($args !== []) {
 		scpp_fail('Unknown option for `scpp stan`: ' . $args[0] . PHP_EOL, 1);
 	}
@@ -5974,13 +5982,43 @@ function build_stan_worker_run_id(): string
 function compute_stan_source_fingerprint(string $projectRoot, string $configPath): string
 {
 	$parts = [];
-	$configHash = is_file($configPath) ? hash_file('sha256', $configPath) : false;
-	$parts[] = normalize_path($configPath) . ':' . ($configHash === false ? 'missing' : $configHash);
-	foreach (collect_project_php_files($projectRoot) as $path) {
-		$hash = hash_file('sha256', $path);
-		$parts[] = normalize_path($path) . ':' . ($hash === false ? 'hash-failed' : $hash);
+	foreach (collect_stan_fingerprint_units($projectRoot, $configPath) as $unit) {
+		$configHash = is_file($unit['config_path']) ? hash_file('sha256', $unit['config_path']) : false;
+		$parts[] = normalize_path($unit['config_path']) . ':' . ($configHash === false ? 'missing' : $configHash);
+		foreach ($unit['source_files'] as $path) {
+			$hash = hash_file('sha256', $path);
+			$parts[] = normalize_path($path) . ':' . ($hash === false ? 'hash-failed' : $hash);
+		}
 	}
 	return hash('sha256', implode("\n", $parts));
+}
+
+/** @return list<array{project_root:string,config_path:string,source_files:list<string>}> */
+function collect_stan_fingerprint_units(string $projectRoot, string $configPath): array
+{
+	$units = [];
+	foreach (resolve_project_dependency_graph($projectRoot, $configPath) as $projectSpec) {
+		if (!is_array($projectSpec)) {
+			continue;
+		}
+		$depRoot = normalize_path((string) ($projectSpec['project_root'] ?? ''));
+		$depConfigPath = normalize_path((string) ($projectSpec['config_path'] ?? ''));
+		if ($depRoot === '' || $depConfigPath === '') {
+			continue;
+		}
+		$sourceFiles = collect_project_php_files($depRoot);
+		sort($sourceFiles, SORT_STRING);
+		$units[] = [
+			'project_root' => $depRoot,
+			'config_path' => $depConfigPath,
+			'source_files' => $sourceFiles,
+		];
+	}
+	usort(
+		$units,
+		static fn (array $a, array $b): int => strcmp($a['project_root'], $b['project_root'])
+	);
+	return $units;
 }
 
 /** @param array<string,mixed> $heartbeat */
@@ -6280,7 +6318,24 @@ function load_or_execute_stan_cli_result(string $projectRoot, string $configPath
 	if (stan_status_matches_fingerprint($status, $sourceFingerprint) && is_array($report) && (string) ($report['source_fingerprint'] ?? '') === $sourceFingerprint) {
 		return build_stan_cli_result_from_report($projectRoot, $configPath, $report);
 	}
-	return execute_stan($projectRoot, $configPath);
+	$report = build_stan_worker_report($projectRoot, $configPath, $sourceFingerprint);
+	write_json_file_atomic($paths['report_path'], $report);
+	write_json_file_atomic($paths['status_path'], [
+		'project_root' => normalize_path($projectRoot),
+		'analysis_state' => 'ready',
+		'source_fingerprint' => $sourceFingerprint,
+		'requested_fingerprint' => $sourceFingerprint,
+		'run_id' => $report['run_id'],
+		'started_at' => $report['started_at'],
+		'finished_at' => $report['finished_at'],
+		'last_activity_at' => microtime(true),
+		'compile_error_count' => $report['compile_error_count'],
+		'stan_error_count' => $report['stan_error_count'],
+		'stan_warning_count' => $report['stan_warning_count'],
+		'stan_notice_count' => $report['stan_notice_count'],
+		'report_path' => normalize_path($paths['report_path']),
+	]);
+	return build_stan_cli_result_from_report($projectRoot, $configPath, $report);
 }
 
 /** @param array<string,mixed> $report @return array<string,mixed> */
