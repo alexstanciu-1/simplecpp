@@ -143,6 +143,9 @@ Expected:
 
 - `--version` prints the current CLI version from the latest reachable `v*` release tag when available
 - `--doctor` prints PHP binary, PHP version, ini path, `php-ast` status, repo root, CLI entrypoint, detected project config, optional Git branch/commit and `origin/main` status, Ninja path, and default compiler
+- on Windows, `--doctor` also warns when `C:\msys64\mingw64\bin` is present without `C:\msys64\usr\bin`, because that PATH shape can break MinGW compiler frontends with startup or entry-point errors
+- on Windows, `--doctor` also warns when `TMP` or `TEMP` resolve to an unwritable location such as `C:\Windows`, because MinGW compilers can then fail with errors like `Cannot create temporary file in C:\WINDOWS`
+- when that Windows temp-path problem is detected, `scpp` now redirects child-process `TMP` and `TEMP` to a writable fallback directory for build/runtime subprocesses when possible
 
 ---
 
@@ -168,9 +171,12 @@ scpp build --build-runtime
 scpp build --build-dependencies
 scpp build --build-runtime --build-dependencies
 scpp build --force
+scpp build --timings
 ```
 
 `--build-runtime` refreshes the runtime for the current build/invocation. Shared reusable runtime maintenance is handled by `scpp update` and `scpp runtime-build`; explicit custom runtime rebuilds stay on the project-local side.
+
+Use `--timings` when you want `scpp build` to print the internal build-step timing breakdown for that invocation.
 
 Remove generated build state for a cold rebuild:
 

@@ -180,6 +180,7 @@ The current public opt-in rebuild flags are:
 - `--build-runtime`
 - `--build-dependencies`
 - `--force`
+- `--timings`
 
 When `--build-runtime` is present, `scpp build` or `scpp run` recompiles the runtime artifact for the current build instead of reusing the existing runtime artifact path in the emitted Ninja graph.
 This rebuild is for the current build/invocation. Shared reusable runtime refresh remains owned by `scpp update` and `scpp runtime-build`, while explicit custom/non-default runtime rebuilds stay on the project-local side.
@@ -193,6 +194,7 @@ The lower-level build service path used by helpers/tests also defaults to reuse 
 - `scpp build` reuses runtime and dependencies by default
 - `scpp run` reuses runtime and dependencies by default, then executes the primary output
 - both commands accept `--entry=<path>` to build or run a specific project-local source file instead of the configured `prism.json` entrypoint for that invocation only
+- both commands accept `--timings` to print the internal `execute_build()` timing breakdown for that invocation only
 
 ### STAN pre-build check
 

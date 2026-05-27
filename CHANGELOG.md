@@ -9,7 +9,7 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
-## 0.1.63 - 2026-05-27
+## 0.1.64 - 2026-05-27
 
 ### Additions
 
@@ -36,6 +36,29 @@ This file is the authoritative checked-in source for release notes referenced by
 - Source-targeted debug events currently report rewritten debug-source line numbers for the active run instead of remapping back to original pre-rewrite line numbers.
 - Instance-method `--call-this` only succeeds when the receiver type has a real `from_json<T>` conversion path; otherwise the failure is expected to surface clearly during build/runtime conversion.
 - Agent Skill review completed: no `.agents/skills/*` updates were required for this release because the shipped changes add debug-preview CLI/runtime/VS Code support without changing the current strict authoring guidance.
+
+## 0.1.63 - 2026-05-26
+
+### Additions
+
+- Added an opt-in `--timings` flag for `scpp build` and `scpp run` so warm-build investigation can print the internal `execute_build()` timing breakdown without changing normal build output.
+- Added focused regression coverage for Windows doctor warnings, Windows temp fallback handling, and the new build/run timings option parsing.
+
+### Fixes
+
+- Fixed Windows doctor output so it now warns when `C:\msys64\mingw64\bin` is present without `C:\msys64\usr\bin`, which can break MinGW compiler frontends with startup or entry-point failures.
+- Fixed Windows build/run subprocess handling so bad `TMP` or `TEMP` resolution, especially under `C:\Windows`, is detected and redirected to a writable fallback directory for child compiler/runtime processes when possible.
+- Fixed Windows GNU-like runtime linking and Ninja command execution so native Git Bash / MSYS builds can succeed more reliably with the installed `scpp` launcher and shared runtime reuse flow.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Use `scpp build --timings` or `scpp run --timings` when you want the build-stage timing breakdown during performance investigation; normal invocations stay quiet by default.
+- On Windows, `scpp --doctor` now reports common MSYS2 PATH and temp-directory misconfigurations that previously surfaced only as downstream compiler failures.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/*` was reviewed and updated for this hotfix to reflect the shipped `--timings` workflow and Windows diagnostics guidance.
 
 ## 0.1.62 - 2026-05-25
 
