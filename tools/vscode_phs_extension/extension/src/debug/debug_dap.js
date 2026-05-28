@@ -1,8 +1,11 @@
 "use strict";
 
 const path = require("path");
+const fs = require("fs");
 const { spawn } = require("child_process");
 const vscode = require("vscode");
+const { collectVisibleVariablesBeforeLineText } = require("../static_completion");
+const debugStore = require("./project_debug_store");
 
 const THREAD_ID = 1;
 
@@ -66,7 +69,10 @@ class SimpleCppInlineDebugAdapter {
 		this.variablesHandles = new Map();
 		this.nextVariablesReference = 1;
 		this.lastLaunchConfig = null;
+		this.pendingLaunchRequest = null;
+		this.configurationDone = false;
 		this.currentStop = null;
+		this.latestSourceLineMaps = new Map();
 		this.terminated = false;
 	}
 
@@ -75,16 +81,40 @@ class SimpleCppInlineDebugAdapter {
 		switch (command) {
 			case "initialize":
 				this.respond(message, {
+					supportsTerminateRequest: true,
 					supportsConfigurationDoneRequest: true,
-					supportsRestartRequest: true
+					supportsRestartRequest: true,
+					supportsBreakpointLocationsRequest: true,
+					supportsConditionalBreakpoints: false,
+					supportsHitConditionalBreakpoints: false,
+					supportsLogPoints: false,
+					supportsFunctionBreakpoints: false,
+					supportsInstructionBreakpoints: false,
+					supportsStepBack: false,
+					supportsStepInTargetsRequest: false,
+					supportsCompletionsRequest: false,
+					supportsLoadedSourcesRequest: false,
+					supportsReadMemoryRequest: false,
+					supportsWriteMemoryRequest: false,
+					supportsDisassembleRequest: false,
+					exceptionBreakpointFilters: []
 				});
 				this.sendEvent("initialized", {});
 				return;
 			case "configurationDone":
+				this.configurationDone = true;
 				this.respond(message, {});
+				if (this.pendingLaunchRequest) {
+					const pending = this.pendingLaunchRequest;
+					this.pendingLaunchRequest = null;
+					void this.handleLaunch(pending);
+				}
 				return;
 			case "setBreakpoints":
 				this.handleSetBreakpoints(message);
+				return;
+			case "breakpointLocations":
+				this.handleBreakpointLocations(message);
 				return;
 			case "threads":
 				this.respond(message, {
@@ -92,7 +122,7 @@ class SimpleCppInlineDebugAdapter {
 				});
 				return;
 			case "launch":
-				void this.handleLaunch(message);
+				this.handleLaunchRequest(message);
 				return;
 			case "stackTrace":
 				this.handleStackTrace(message);
@@ -141,6 +171,33 @@ class SimpleCppInlineDebugAdapter {
 		this.respond(message, { breakpoints });
 	}
 
+	handleBreakpointLocations(message) {
+		const args = message.arguments || {};
+		const source = args.source || {};
+		const sourcePath = typeof source.path === "string" ? source.path : "";
+		if (!sourcePath) {
+			this.respond(message, { breakpoints: [] });
+			return;
+		}
+
+		const startLine = typeof args.line === "number" ? args.line : 1;
+		const endLine = typeof args.endLine === "number" ? args.endLine : startLine;
+		const breakpoints = [];
+		for (let line = startLine; line <= endLine; line += 1) {
+			breakpoints.push({ line });
+		}
+		this.respond(message, { breakpoints });
+	}
+
+	handleLaunchRequest(message) {
+		this.lastLaunchConfig = message.arguments || {};
+		if (!this.configurationDone) {
+			this.pendingLaunchRequest = message;
+			return;
+		}
+		void this.handleLaunch(message);
+	}
+
 	async handleLaunch(message) {
 		try {
 			const config = message.arguments || {};
@@ -148,6 +205,7 @@ class SimpleCppInlineDebugAdapter {
 			this.currentStop = null;
 			this.terminated = false;
 			this.variablesHandles.clear();
+			this.latestSourceLineMaps.clear();
 			this.nextVariablesReference = 1;
 
 			const projectRoot = await this.resolveProjectRoot(config);
@@ -155,7 +213,7 @@ class SimpleCppInlineDebugAdapter {
 				throw new Error("No Simple C++ project root was found for this debug launch.");
 			}
 
-			const actions = buildBreakpointActions(this.breakpointsByFile);
+			const actions = buildBreakpointActions(this.breakpointsByFile, projectRoot);
 			const debugOptions = {
 				format: "json",
 				buildRuntime: Boolean(config.buildRuntime),
@@ -168,7 +226,12 @@ class SimpleCppInlineDebugAdapter {
 				actions
 			};
 			const argv = this.options.debugRunner.buildScppDebugArgv(debugOptions);
+			this.sendEvent("output", {
+				category: "console",
+				output: renderBreakpointLaunchLog(projectRoot, this.breakpointsByFile, actions, argv)
+			});
 			const result = await runDebugCommand(projectRoot, argv, config.env || {});
+			this.latestSourceLineMaps = loadLatestSourceLineMaps(projectRoot);
 
 			this.respond(message, {});
 
@@ -176,12 +239,13 @@ class SimpleCppInlineDebugAdapter {
 			const events = Array.isArray(aggregate && aggregate.events) ? aggregate.events : [];
 			const stop = findPrimaryStopEvent(events);
 			if (stop) {
+				const remappedStop = remapDebugEventSource(stop, this.latestSourceLineMaps);
 				this.currentStop = {
-					event: stop,
+					event: remappedStop,
 					events
 				};
 				this.sendEvent("stopped", {
-					reason: stop.event === "break" ? "breakpoint" : "pause",
+					reason: remappedStop.event === "break" ? "breakpoint" : "pause",
 					threadId: THREAD_ID,
 					allThreadsStopped: true
 				});
@@ -217,6 +281,7 @@ class SimpleCppInlineDebugAdapter {
 			return;
 		}
 		this.respond(message, {});
+		this.pendingLaunchRequest = null;
 		await this.handleLaunch({
 			seq: message.seq,
 			type: "request",
@@ -298,21 +363,168 @@ class SimpleCppInlineDebugAdapter {
 			return;
 		}
 		this.terminated = true;
+		this.pendingLaunchRequest = null;
 		this.sendEvent("terminated", {});
 	}
 }
 
-function buildBreakpointActions(breakpointsByFile) {
+function buildBreakpointActions(breakpointsByFile, projectRoot) {
 	const actions = [];
 	for (const [filePath, lines] of breakpointsByFile.entries()) {
+		const normalizedFileSpec = toDebugPathSpec(filePath, projectRoot);
+		const visibleVariablesByLine = collectBreakpointVisibleVariables(filePath, lines);
 		for (const line of lines) {
+			const visibleVariables = visibleVariablesByLine.get(line) || [];
+			for (const variableName of visibleVariables) {
+				actions.push({
+					flag: "dump-before",
+					spec: `${normalizedFileSpec}:${line}:${variableName}`
+				});
+			}
 			actions.push({
 				flag: "break",
-				spec: `${filePath}:${line}`
+				spec: `${normalizedFileSpec}:${line}`
 			});
 		}
 	}
 	return actions;
+}
+
+function collectBreakpointVisibleVariables(filePath, lines) {
+	const byLine = new Map();
+	if (typeof filePath !== "string" || filePath.trim() === "" || !Array.isArray(lines) || lines.length === 0) {
+		return byLine;
+	}
+
+	let text = "";
+	try {
+		text = fs.readFileSync(filePath, "utf8");
+	} catch {
+		return byLine;
+	}
+
+	for (const line of lines) {
+		if (typeof line !== "number" || line <= 0) {
+			continue;
+		}
+		byLine.set(line, collectVisibleVariablesBeforeLineText(text, line));
+	}
+	return byLine;
+}
+
+function toDebugPathSpec(filePath, projectRoot) {
+	if (typeof filePath !== "string" || filePath.trim() === "") {
+		return filePath;
+	}
+	if (typeof projectRoot !== "string" || projectRoot.trim() === "") {
+		return filePath;
+	}
+
+	const relative = path.relative(projectRoot, filePath);
+	if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+		return filePath;
+	}
+	return relative.split(path.sep).join("/");
+}
+
+function renderBreakpointLaunchLog(projectRoot, breakpointsByFile, actions, argv) {
+	const lines = [
+		"[simplecpp-debug] launch configuration",
+		`projectRoot: ${projectRoot}`,
+		`argv: ${JSON.stringify(argv)}`,
+		"[simplecpp-debug] breakpoint path mapping"
+	];
+
+	if (breakpointsByFile.size === 0) {
+		lines.push("(no breakpoints)");
+	} else {
+		for (const [filePath, sourceLines] of breakpointsByFile.entries()) {
+			const normalizedFileSpec = toDebugPathSpec(filePath, projectRoot);
+			lines.push(`raw: ${filePath}`);
+			lines.push(`spec-file: ${normalizedFileSpec}`);
+			lines.push(`lines: ${JSON.stringify(sourceLines)}`);
+		}
+	}
+
+	lines.push("[simplecpp-debug] emitted actions");
+	if (actions.length === 0) {
+		lines.push("(no actions)");
+	} else {
+		for (const action of actions) {
+			lines.push(`--${action.flag}=${action.spec}`);
+		}
+	}
+
+	return lines.join("\n") + "\n";
+}
+
+function loadLatestSourceLineMaps(projectRoot) {
+	const maps = new Map();
+	const slot = debugStore.getLatestDebugSlot(projectRoot);
+	if (!slot) {
+		return maps;
+	}
+	const manifest = debugStore.readDebugSourceManifest(projectRoot, slot);
+	if (!manifest || !Array.isArray(manifest.files)) {
+		return maps;
+	}
+	for (const entry of manifest.files) {
+		if (!entry || typeof entry !== "object" || !entry.logicalSource || !entry.lineMap) {
+			continue;
+		}
+		const lineMap = readLineMapFile(entry.lineMap);
+		if (lineMap.size > 0) {
+			maps.set(entry.logicalSource, lineMap);
+		}
+	}
+	return maps;
+}
+
+function readLineMapFile(lineMapPath) {
+	const map = new Map();
+	if (typeof lineMapPath !== "string" || lineMapPath.trim() === "" || !fs.existsSync(lineMapPath)) {
+		return map;
+	}
+	let text = "";
+	try {
+		text = fs.readFileSync(lineMapPath, "utf8");
+	} catch {
+		return map;
+	}
+	const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+	for (const line of lines.slice(1)) {
+		if (!line.trim()) {
+			continue;
+		}
+		const [debugLineText, originalLineText] = line.split("\t", 3);
+		const debugLine = Number.parseInt(debugLineText, 10);
+		const originalLine = Number.parseInt(originalLineText, 10);
+		if (Number.isInteger(debugLine) && debugLine > 0 && Number.isInteger(originalLine) && originalLine > 0) {
+			map.set(debugLine, originalLine);
+		}
+	}
+	return map;
+}
+
+function remapDebugEventSource(event, sourceLineMaps) {
+	if (!event || typeof event !== "object" || !(sourceLineMaps instanceof Map)) {
+		return event;
+	}
+	const source = event.source && typeof event.source === "object" ? event.source : null;
+	if (!source || typeof source.file !== "string" || typeof source.line !== "number") {
+		return event;
+	}
+	const lineMap = sourceLineMaps.get(source.file);
+	if (!(lineMap instanceof Map) || !lineMap.has(source.line)) {
+		return event;
+	}
+	return {
+		...event,
+		source: {
+			...source,
+			line: lineMap.get(source.line)
+		}
+	};
 }
 
 function runDebugCommand(projectRoot, argv, extraEnv) {
@@ -398,17 +610,88 @@ function buildEventVariables(stopEvent, allEvents) {
 		});
 	}
 
-	const lastDump = Array.isArray(allEvents)
-		? [...allEvents].reverse().find((event) => event && event.event === "dump" && event.body && typeof event.body === "object")
-		: null;
-	if (lastDump && lastDump.body) {
+	const relatedDumps = findRelatedDumpEvents(stopEvent, allEvents);
+	for (const dumpEvent of relatedDumps) {
+		const subject = dumpEvent.body && typeof dumpEvent.body === "object" && dumpEvent.body.subject && typeof dumpEvent.body.subject === "object"
+			? dumpEvent.body.subject
+			: {};
+		const dumpValue = dumpEvent.body && typeof dumpEvent.body === "object" && dumpEvent.body.value && typeof dumpEvent.body.value === "object"
+			? dumpEvent.body.value
+			: {};
 		variables.push({
-			name: "last_dump",
-			value: renderVariableValue(lastDump.body),
+			name: typeof subject.text === "string" ? subject.text : "dump",
+			value: renderDumpValue(dumpValue),
 			variablesReference: 0
 		});
 	}
 	return variables;
+}
+
+function findRelatedDumpEvents(stopEvent, allEvents) {
+	if (!stopEvent || !Array.isArray(allEvents)) {
+		return [];
+	}
+
+	const stopSeq = typeof stopEvent.seq === "number" ? stopEvent.seq : Number.MAX_SAFE_INTEGER;
+	const priorEvents = allEvents
+		.filter((event) => event && typeof event === "object" && typeof event.seq === "number" && event.seq < stopSeq)
+		.sort((left, right) => left.seq - right.seq);
+	const related = [];
+	for (let index = priorEvents.length - 1; index >= 0; index -= 1) {
+		const event = priorEvents[index];
+		if (event.event === "dump" && event.body && typeof event.body === "object") {
+			related.unshift(event);
+			continue;
+		}
+		if (related.length > 0) {
+			break;
+		}
+	}
+	return related;
+}
+
+function renderDumpValue(dumpValue) {
+	if (!dumpValue || typeof dumpValue !== "object") {
+		return renderVariableValue(dumpValue);
+	}
+	const preview = typeof dumpValue.preview === "string" ? dumpValue.preview : "";
+	if (preview !== "" && preview !== "<not inspectable>") {
+		return preview;
+	}
+	const typeLabel = simplifyCppTypeName(typeof dumpValue.type === "string" ? dumpValue.type : "");
+	if (preview === "<not inspectable>" && typeLabel !== "") {
+		return `<${typeLabel}>`;
+	}
+	if (preview !== "") {
+		return preview;
+	}
+	if (typeLabel !== "") {
+		return `<${typeLabel}>`;
+	}
+	return renderVariableValue(dumpValue);
+}
+
+function simplifyCppTypeName(typeName) {
+	if (typeof typeName !== "string" || typeName.trim() === "") {
+		return "";
+	}
+	const directShared = typeName.match(/shared_p(?:<|INS_?)(?:[^A-Za-z0-9_]*)([A-Z][A-Za-z0-9_]*)/);
+	if (directShared && directShared[1]) {
+		return `shared<${directShared[1]}>`;
+	}
+	const scopedShared = typeName.match(/shared_p.*?([A-Z][A-Za-z0-9_]*)(?:EEE|EE|E|>|$)/);
+	if (scopedShared && scopedShared[1]) {
+		return `shared<${scopedShared[1]}>`;
+	}
+	const plainObject = typeName.match(/([A-Z][A-Za-z0-9_]*)(?:EEE|EE|E|>|$)/);
+	if (plainObject && plainObject[1]) {
+		return plainObject[1];
+	}
+	const readable = typeName.match(/[A-Za-z_][A-Za-z0-9_]*/g);
+	if (!readable || readable.length === 0) {
+		return typeName;
+	}
+	return readable[readable.length - 1];
 }
 
 function renderVariableValue(value) {

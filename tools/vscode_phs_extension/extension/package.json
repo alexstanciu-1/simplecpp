@@ -56,6 +56,11 @@
         "path": "./snippets/phs.json"
       }
     ],
+    "breakpoints": [
+      {
+        "language": "phs"
+      }
+    ],
     "commands": [
       {
         "command": "simpleCpp.createProject",
