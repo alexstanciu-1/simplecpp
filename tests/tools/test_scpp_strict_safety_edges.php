@@ -29,6 +29,7 @@ final class ScppStrictSafetyEdgesTest
 			$this->assertDirectSelfRecursionStopsBuild();
 			$this->assertMissingDynamicJsonFieldFailsRequiredTypedLocal();
 			$this->assertDynamicJsonNumericShapesFailRequiredIntLocal();
+			$this->assertDecodedJsonArraysStabilizeIntoTypedVectors();
 			$this->assertExplicitNullStringCastStillSucceeds();
 			$this->assertExplicitIntCastsStillSucceed();
 			$this->assertRecursiveDebugRunFailsWithRuntimeDiagnostic();
@@ -119,6 +120,71 @@ PHS
 			$this->assertContains('Cannot convert value to required int_t.', $run['stderr'], $case . ' diagnostic should explain the required int boundary');
 			$this->assertContains('Runtime error in main.phs:2', $run['stderr'], $case . ' diagnostic should remap to the typed local');
 			$this->assertContains('Operation: scpp::required_cast<int_t>', $run['stderr'], $case . ' diagnostic should use required_cast');
+		}
+	}
+
+	private function assertDecodedJsonArraysStabilizeIntoTypedVectors(): void
+	{
+		$project = $this->root . '/json_arrays_to_vectors';
+		$this->writeProject($project, []);
+		$this->write($project . '/main.phs', <<<'PHS'
+$intsJson = json_decode("[1,2,3]");
+$ints vector<int> = $intsJson;
+echo $ints[0], ":", $ints[2], "\n";
+
+$floatsJson = json_decode("[1.5,2.25]");
+$floats vector<float> = $floatsJson;
+echo $floats[0], ":", $floats[1], "\n";
+
+$boolsJson = json_decode("[true,false]");
+$bools vector<bool> = $boolsJson;
+echo $bools[0], ":", $bools[1], "\n";
+
+$stringsJson = json_decode("[\"a\",\"b\"]");
+$strings vector<string> = $stringsJson;
+echo $strings[0], ":", $strings[1], "\n";
+
+$mixedJson = json_decode("[1,null,\"x\"]");
+$mixed vector<mixed> = $mixedJson;
+echo count($mixed), "\n";
+
+$nestedJson = json_decode("[[1,2],[3,4]]");
+$nested vector<vector<int>> = $nestedJson;
+echo $nested[0][1], ":", $nested[1][0], "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], 'decoded JSON arrays should stabilize into typed vectors');
+		$this->assertContains("1:3\n", $run['stdout'], 'decoded JSON array should stabilize into vector<int>');
+		$this->assertContains("1.5:2.25\n", $run['stdout'], 'decoded JSON array should stabilize into vector<float>');
+		$this->assertContains("1:\n", $run['stdout'], 'decoded JSON array should stabilize into vector<bool>');
+		$this->assertContains("a:b\n", $run['stdout'], 'decoded JSON array should stabilize into vector<string>');
+		$this->assertContains("3\n", $run['stdout'], 'decoded JSON array should stabilize into vector<mixed>');
+		$this->assertContains("2:3\n", $run['stdout'], 'decoded JSON nested arrays should stabilize into nested typed vectors');
+
+		foreach ([
+			'json_object_to_vector' => [
+				'json' => '{"items":[1,2]}',
+				'expected' => 'vector_t',
+			],
+			'json_float_element_to_int_vector' => [
+				'json' => '[1,2.5]',
+				'expected' => 'int_t',
+			],
+		] as $case => $fixture) {
+			$failureProject = $this->root . '/' . $case;
+			$this->writeProject($failureProject, []);
+			$this->write($failureProject . '/main.phs', '$valuesJson = json_decode(' . var_export($fixture['json'], true) . ');' . "\n" . <<<'PHS'
+$values vector<int> = $valuesJson;
+echo $values[0], "\n";
+PHS
+ . "\n");
+
+			$failedRun = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $failureProject, 120);
+			$this->assertNotSame(0, $failedRun['exit_code'], $case . ' should fail a required vector<int> typed local');
+			$this->assertContains('Cannot convert value to required ' . $fixture['expected'] . '.', $failedRun['stderr'], $case . ' diagnostic should explain the failed required boundary');
+			$this->assertContains('Operation: scpp::required_cast<' . $fixture['expected'] . '>', $failedRun['stderr'], $case . ' diagnostic should use required_cast for the failed boundary');
 		}
 	}
 

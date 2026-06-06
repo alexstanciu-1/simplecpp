@@ -11,6 +11,7 @@
 #include "scpp/result_or_bool.hpp"
 #include "scpp/result.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/vector_t.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/runtime_error.hpp"
@@ -172,6 +173,9 @@ namespace detail {
 
 template <typename T>
 [[nodiscard]] inline const char *required_cast_target_name() noexcept {
+	if constexpr (is_specialization_of_v<T, vector_t>) {
+		return "vector_t";
+	}
 	return required_cast_target_name_fallback();
 }
 
@@ -714,7 +718,24 @@ inline To required_cast(const From &value) {
 
 template <typename To>
 inline To required_cast(const mixed_t &value) {
-	if constexpr (detail::is_specialization_of_v<To, nullable>) {
+	if constexpr (detail::is_specialization_of_v<To, vector_t>) {
+		using element_t = detail::vector_value_type_t<To>;
+		const auto *table = value.table_if();
+		if (table == nullptr || !table->is_packed().native_value()) {
+			detail::throw_required_boundary_mixed_kind(detail::required_cast_target_name<To>(), value);
+		}
+
+		To out;
+		for (std::size_t index = 0; index < table->size(); ++index) {
+			const auto &entry = table->at(int_t{static_cast<std::int64_t>(index)});
+			if constexpr (std::is_same_v<element_t, mixed_t>) {
+				out.append(entry);
+			} else {
+				out.append(required_cast<element_t>(entry));
+			}
+		}
+		return out;
+	} else if constexpr (detail::is_specialization_of_v<To, nullable>) {
 		return cast<To>(value);
 	} else {
 		if (value.kind() == mixed_t::kind_t::null_v) {
