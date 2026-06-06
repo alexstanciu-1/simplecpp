@@ -29,6 +29,7 @@ final class ScppStrictSafetyEdgesTest
 			$this->assertDirectSelfRecursionStopsBuild();
 			$this->assertMissingDynamicJsonFieldFailsRequiredTypedLocal();
 			$this->assertDynamicJsonNumericShapesFailRequiredIntLocal();
+			$this->assertNestedTypedVectorLiteralsStabilizeRecursively();
 			$this->assertDecodedJsonArraysStabilizeIntoTypedVectors();
 			$this->assertExplicitNullStringCastStillSucceeds();
 			$this->assertExplicitIntCastsStillSucceed();
@@ -121,6 +122,41 @@ PHS
 			$this->assertContains('Runtime error in main.phs:2', $run['stderr'], $case . ' diagnostic should remap to the typed local');
 			$this->assertContains('Operation: scpp::required_cast<int_t>', $run['stderr'], $case . ' diagnostic should use required_cast');
 		}
+	}
+
+	private function assertNestedTypedVectorLiteralsStabilizeRecursively(): void
+	{
+		$project = $this->root . '/nested_typed_vector_literals';
+		$this->writeProject($project, []);
+		$this->write($project . '/main.phs', <<<'PHS'
+$grid vector<vector<int>> = [[1, 2], [3, 4]];
+$sum int = 0;
+
+foreach ($grid as $row) {
+	foreach ($row as $value) {
+		$sum = $sum + $value;
+	}
+}
+
+echo $sum, "\n";
+
+$words vector<vector<string>> = [["a", "b"], ["c"]];
+echo $words[0][1], ":", $words[1][0], "\n";
+
+$mixedGrid vector<vector<mixed>> = [[1, "x"], [null, true]];
+echo count($mixedGrid[0]), ":", count($mixedGrid[1]), "\n";
+
+$cube vector<vector<vector<int>>> = [[[1], [2]], [[3], [4]]];
+echo $cube[0][1][0], ":", $cube[1][0][0], "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], 'nested typed vector literals should stabilize recursively');
+		$this->assertContains("10\n", $run['stdout'], 'nested vector<int> literal should support foreach summing');
+		$this->assertContains("b:c\n", $run['stdout'], 'nested vector<string> literal should stabilize');
+		$this->assertContains("2:2\n", $run['stdout'], 'nested vector<mixed> literal should stabilize');
+		$this->assertContains("2:3\n", $run['stdout'], 'deep nested vector<int> literal should stabilize recursively');
 	}
 
 	private function assertDecodedJsonArraysStabilizeIntoTypedVectors(): void

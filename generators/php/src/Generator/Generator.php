@@ -5332,6 +5332,16 @@ final class Generator
 		return $this->typeMapper->mapTypedLocalType($typedLocalType);
 	}
 
+	private function parseMappedVectorElementType(string $mappedVectorType): ?string
+	{
+		$normalized = trim($mappedVectorType);
+		if (preg_match('/^vector_t<(.+)>$/', $normalized, $matches) !== 1) {
+			return null;
+		}
+
+		return trim($matches[1]);
+	}
+
 	private function mapTypedHashLocalType(string $typedLocalType): ?string
 	{
 		if (!$this->typeMapper->isHashType($typedLocalType)) {
@@ -5485,33 +5495,7 @@ final class Generator
 
 		$mappedVectorType = $typedLocalType !== null ? $this->mapTypedVectorLocalType($typedLocalType) : null;
 		if ($mappedVectorType !== null) {
-			if ($elements === []) {
-				return $mappedVectorType . '{}';
-			}
-
-			$values = [];
-			foreach ($elements as $element) {
-				if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
-					$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
-					return '/* unsupported-array-literal */';
-				}
-
-				$key = $element->children['key'] ?? null;
-				if ($key !== null) {
-					$this->errors[] = 'Typed vector literals cannot contain explicit keys at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
-					return '/* unsupported-keyed-vector-literal */';
-				}
-
-				$valueNode = $element->children['value'] ?? null;
-				if ($valueNode === null) {
-					$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
-					return '/* unsupported-array-element */';
-				}
-
-				$values[] = $this->renderExpr($valueNode, $namespacePhp);
-			}
-
-			return $mappedVectorType . '{' . implode(', ', $values) . '}';
+			return $this->renderTypedVectorArrayLiteral($expr, $namespacePhp, $mappedVectorType);
 		}
 
 		$mappedHashType = $typedLocalType !== null ? $this->mapTypedHashLocalType($typedLocalType) : null;
@@ -5599,6 +5583,55 @@ final class Generator
 		}
 
 		return 'mixed_t{shared_table_(' . implode(', ', $items) . ')}';
+	}
+
+	private function renderTypedVectorArrayLiteral(mixed $expr, ?string $namespacePhp, string $mappedVectorType): string
+	{
+		$elements = is_object($expr) && isset($expr->children) && is_array($expr->children)
+			? array_values($expr->children)
+			: [];
+		if ($elements === []) {
+			return $mappedVectorType . '{}';
+		}
+
+		$elementType = $this->parseMappedVectorElementType($mappedVectorType);
+		if ($elementType === null) {
+			$this->errors[] = 'Unsupported typed vector mapping for ' . $mappedVectorType . '.';
+			return '/* unsupported-typed-vector */';
+		}
+
+		$values = [];
+		foreach ($elements as $element) {
+			if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+				$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+				return '/* unsupported-array-literal */';
+			}
+
+			$key = $element->children['key'] ?? null;
+			if ($key !== null) {
+				$this->errors[] = 'Typed vector literals cannot contain explicit keys at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-keyed-vector-literal */';
+			}
+
+			$valueNode = $element->children['value'] ?? null;
+			if ($valueNode === null) {
+				$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-array-element */';
+			}
+
+			if (is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::ARRAY) && $this->parseMappedVectorElementType($elementType) !== null) {
+				$values[] = $this->renderTypedVectorArrayLiteral($valueNode, $namespacePhp, $elementType);
+				continue;
+			}
+
+			$values[] = $this->wrapExprForExpectedType(
+				$this->renderExpr($valueNode, $namespacePhp),
+				$this->inferExprType($valueNode),
+				$elementType
+			);
+		}
+
+		return $mappedVectorType . '{' . implode(', ', $values) . '}';
 	}
 
 
