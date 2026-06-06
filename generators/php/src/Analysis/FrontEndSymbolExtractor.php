@@ -392,6 +392,7 @@ final class FrontEndSymbolExtractor
 			$values[] = [
 				'line' => $statement->line,
 				'descriptor' => $this->describeExpression($statement->payload, $statement->line),
+				'direct_call_name' => $this->extractDirectFunctionCallName($statement->payload),
 			];
 		}
 		return $values;
@@ -1516,6 +1517,25 @@ final class FrontEndSymbolExtractor
 			'kind' => 'element',
 			'source' => $source,
 		];
+	}
+
+	private function extractDirectFunctionCallName(mixed $expr): ?string
+	{
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::CALL) {
+			return null;
+		}
+		$callee = $expr->children['expr'] ?? null;
+		if (!is_object($callee) || !isset($callee->kind, $callee->children) || !is_array($callee->children)) {
+			return null;
+		}
+		if ($callee->kind !== AstKind::NAME) {
+			return null;
+		}
+		$name = trim((string) ($callee->children['name'] ?? ''));
+		return $name === '' ? null : $name;
 	}
 
 	/** @return array<string,mixed>|null */

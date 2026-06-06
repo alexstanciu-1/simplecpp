@@ -26,6 +26,7 @@ final class ScppStrictSafetyEdgesTest
 
 		try {
 			$this->assertMissingReturnStopsBuild();
+			$this->assertDirectSelfRecursionStopsBuild();
 			$this->assertRecursiveDebugRunFailsWithRuntimeDiagnostic();
 			$this->assertRecursiveReleaseOptInFailsWithRuntimeDiagnostic();
 			echo "PASS: scpp strict safety edges\n";
@@ -56,6 +57,18 @@ PHS
 		$this->assertContains('may exit without returning a value', $build['stderr'], 'missing-return diagnostic should explain the return path');
 	}
 
+	private function assertDirectSelfRecursionStopsBuild(): void
+	{
+		$project = $this->root . '/recursive_stan';
+		$this->writeProject($project, []);
+		$this->writeRecursiveDiveProgram($project);
+
+		$build = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build'], $project, 120);
+		$this->assertNotSame(0, $build['exit_code'], 'direct self-recursive return should fail STAN preflight');
+		$this->assertContains('STAN pre-build check failed', $build['stderr'], 'direct self-recursive return should stop in STAN');
+		$this->assertContains('Direct self-recursive return', $build['stderr'], 'direct self-recursive return diagnostic should explain recursion');
+	}
+
 	private function assertRecursiveDebugRunFailsWithRuntimeDiagnostic(): void
 	{
 		$project = $this->root . '/recursive_guard';
@@ -64,16 +77,9 @@ PHS
 				'max_call_depth' => 32,
 			],
 		]);
-		$this->write($project . '/main.phs', <<<'PHS'
-function dive(int $n): int {
-	return dive($n + 1);
-}
+		$this->writeRecursiveDiveProgram($project);
 
-echo dive(0), "\n";
-PHS
- . "\n");
-
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime', '--no-stan'], $project, 120);
 		$this->assertNotSame(0, $run['exit_code'], 'recursive debug run should fail');
 		$this->assertContains('Maximum call depth exceeded', $run['stderr'], 'recursive debug run should report call-depth guard failure');
 		$this->assertContains('main.phs:1', $run['stderr'], 'recursive debug run should remap to the source function');
@@ -98,6 +104,15 @@ PHS
 				'max_call_depth' => 24,
 			],
 		], 'release');
+		$this->writeRecursiveDiveProgram($project);
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime', '--no-stan'], $project, 120);
+		$this->assertNotSame(0, $run['exit_code'], 'recursive release opt-in run should fail');
+		$this->assertContains('Maximum call depth exceeded while calling `dive` (limit 24).', $run['stderr'], 'release opt-in should use configured call-depth limit');
+	}
+
+	private function writeRecursiveDiveProgram(string $project): void
+	{
 		$this->write($project . '/main.phs', <<<'PHS'
 function dive(int $n): int {
 	return dive($n + 1);
@@ -106,10 +121,6 @@ function dive(int $n): int {
 echo dive(0), "\n";
 PHS
  . "\n");
-
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
-		$this->assertNotSame(0, $run['exit_code'], 'recursive release opt-in run should fail');
-		$this->assertContains('Maximum call depth exceeded while calling `dive` (limit 24).', $run['stderr'], 'release opt-in should use configured call-depth limit');
 	}
 
 	/** @param array<string,mixed> $runtimeOverrides */

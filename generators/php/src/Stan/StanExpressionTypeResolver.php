@@ -1951,6 +1951,10 @@ final class StanExpressionTypeResolver
 			if (!is_array($returnValue) || $declaredReturnType === '') {
 				continue;
 			}
+			$directCallName = trim((string) ($returnValue['direct_call_name'] ?? ''));
+			if ($directCallName !== '' && $this->isDirectSelfCallName($directCallName, $context)) {
+				$diagnostics[] = $this->makeCallDiagnostic('direct_self_recursion', $context, $path, (int) ($returnValue['line'] ?? 0), 'Direct self-recursive return in `' . $context . '` has no visible terminating branch.');
+			}
 			$resolvedTypes = $this->resolveExpressionDescriptorTypes(is_array($returnValue['descriptor'] ?? null) ? $returnValue['descriptor'] : ['kind' => 'unknown'], $localTypes, $selfType, $classLookup, $functionLookup);
 			$resolvedTypes = $this->normalizeTypeSet($resolvedTypes);
 			if ($resolvedTypes === [] || $this->typeSetsAreCompatible($resolvedTypes, [$declaredReturnType], $classLookup, true)) {
@@ -1959,6 +1963,21 @@ final class StanExpressionTypeResolver
 			$diagnostics[] = $this->makeCallDiagnostic('return_type_mismatch', $context, $path, (int) ($returnValue['line'] ?? 0), 'Return type mismatch in `' . $context . '`: declared `' . $declaredReturnType . '`, got `' . implode('|', $resolvedTypes) . '`.');
 		}
 		return $diagnostics;
+	}
+
+	private function isDirectSelfCallName(string $callName, string $context): bool
+	{
+		$callName = strtolower(ltrim(str_replace('\\\\', '\\', trim($callName)), '\\'));
+		$context = strtolower(ltrim(str_replace('\\\\', '\\', trim($context)), '\\'));
+		if ($callName === '' || $context === '') {
+			return false;
+		}
+		if ($callName === $context) {
+			return true;
+		}
+		$contextParts = preg_split('/\\\\|::/', $context);
+		$shortContext = is_array($contextParts) && $contextParts !== [] ? (string) end($contextParts) : $context;
+		return $callName === $shortContext;
 	}
 
 	/** @param array<string,mixed> $callSite @param array<string,mixed> $signature @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */

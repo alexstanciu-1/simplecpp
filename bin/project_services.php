@@ -6097,6 +6097,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'unresolved_property_write',
 		'unresolved_property_read',
 		'missing_return',
+		'direct_self_recursion',
 	], true)) {
 		return 'compile-errors';
 	}
