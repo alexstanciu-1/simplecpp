@@ -276,6 +276,15 @@ final class Generator
 		return 'cast<' . $type . '>(' . $expr . ')';
 	}
 
+	private function renderRequiredTypedBoundaryCast(string $type, string $expr): string
+	{
+		if ($type === 'mixed_t') {
+			return $expr;
+		}
+
+		return 'required_cast<' . $type . '>(' . $expr . ')';
+	}
+
 	/** @param list<string> $lines @return list<CodeBlock> */
 	private function codeLinesFromStrings(array $lines, int $srcLine = -1, int $srcColumn = -1, string $srcRelation = 'exact'): array
 	{
@@ -3810,7 +3819,8 @@ final class Generator
 					if ($isTypedEmptyArrayLiteral) {
 						return $this->statementCodeLines($statement, [$typedArrayContainerType . ' ' . $this->localCppName($name) . ' = {};']);
 					}
-					return $this->statementCodeLines($statement, [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
+					$mappedLocalType = $this->typeMapper->mapTypedLocalType($effectiveTyped);
+					return $this->statementCodeLines($statement, [$mappedLocalType . ' ' . $this->localCppName($name) . ' = ' . $this->renderRequiredTypedBoundaryCast($mappedLocalType, $expr) . ';']);
 				}
 				if ($closureFunctionType !== null) {
 					return $this->statementCodeLines($statement, [$closureFunctionType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);

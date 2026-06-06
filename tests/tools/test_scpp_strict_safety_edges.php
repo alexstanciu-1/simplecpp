@@ -27,6 +27,8 @@ final class ScppStrictSafetyEdgesTest
 		try {
 			$this->assertMissingReturnStopsBuild();
 			$this->assertDirectSelfRecursionStopsBuild();
+			$this->assertMissingDynamicJsonFieldFailsRequiredTypedLocal();
+			$this->assertExplicitNullStringCastStillSucceeds();
 			$this->assertRecursiveDebugRunFailsWithRuntimeDiagnostic();
 			$this->assertRecursiveReleaseOptInFailsWithRuntimeDiagnostic();
 			echo "PASS: scpp strict safety edges\n";
@@ -67,6 +69,39 @@ PHS
 		$this->assertNotSame(0, $build['exit_code'], 'direct self-recursive return should fail STAN preflight');
 		$this->assertContains('STAN pre-build check failed', $build['stderr'], 'direct self-recursive return should stop in STAN');
 		$this->assertContains('Direct self-recursive return', $build['stderr'], 'direct self-recursive return diagnostic should explain recursion');
+	}
+
+	private function assertMissingDynamicJsonFieldFailsRequiredTypedLocal(): void
+	{
+		$project = $this->root . '/missing_json_field';
+		$this->writeProject($project, []);
+		$this->write($project . '/main.phs', <<<'PHS'
+$text = "{\"count\":2}";
+$row = json_decode($text);
+$name string = $row["name"];
+echo $name, "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertNotSame(0, $run['exit_code'], 'missing dynamic JSON field should fail a required typed local');
+		$this->assertContains('Cannot convert value to required string_t.', $run['stderr'], 'missing dynamic JSON field diagnostic should explain the required typed boundary');
+		$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'missing dynamic JSON field diagnostic should remap to the typed local');
+		$this->assertContains('Actual runtime kind: null_t', $run['stderr'], 'missing dynamic JSON field diagnostic should preserve the null runtime kind');
+	}
+
+	private function assertExplicitNullStringCastStillSucceeds(): void
+	{
+		$project = $this->root . '/explicit_null_string_cast';
+		$this->writeProject($project, []);
+		$this->write($project . '/main.phs', <<<'PHS'
+echo "[", (string) null, "]\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], 'explicit null-to-string cast should still succeed');
+		$this->assertContains("[]\n", $run['stdout'], 'explicit null-to-string cast should still stringify to an empty string');
 	}
 
 	private function assertRecursiveDebugRunFailsWithRuntimeDiagnostic(): void
