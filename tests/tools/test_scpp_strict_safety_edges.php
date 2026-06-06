@@ -31,6 +31,7 @@ final class ScppStrictSafetyEdgesTest
 			$this->assertDynamicJsonNumericShapesFailRequiredIntLocal();
 			$this->assertNestedTypedVectorLiteralsStabilizeRecursively();
 			$this->assertDecodedJsonArraysStabilizeIntoTypedVectors();
+			$this->assertJsonEncodeAcceptsTypedCollections();
 			$this->assertExplicitNullStringCastStillSucceeds();
 			$this->assertExplicitIntCastsStillSucceed();
 			$this->assertRecursiveDebugRunFailsWithRuntimeDiagnostic();
@@ -222,6 +223,31 @@ PHS
 			$this->assertContains('Cannot convert value to required ' . $fixture['expected'] . '.', $failedRun['stderr'], $case . ' diagnostic should explain the failed required boundary');
 			$this->assertContains('Operation: scpp::required_cast<' . $fixture['expected'] . '>', $failedRun['stderr'], $case . ' diagnostic should use required_cast for the failed boundary');
 		}
+	}
+
+	private function assertJsonEncodeAcceptsTypedCollections(): void
+	{
+		$project = $this->root . '/json_encode_typed_collections';
+		$this->writeProject($project, []);
+		$this->write($project . '/main.phs', <<<'PHS'
+$items vector<int> = [1, 2, 3];
+echo json_encode($items), "\n";
+
+$scores hash<int> = [];
+$scores["a"] = 1;
+$scores["b"] = 2;
+echo json_encode($scores), "\n";
+
+$nested vector<vector<string>> = [["a", "b"], ["c"]];
+echo json_encode($nested), "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], 'json_encode should accept typed collections');
+		$this->assertContains("[1,2,3]\n", $run['stdout'], 'json_encode should accept vector<int>');
+		$this->assertContains("{\"a\":1,\"b\":2}\n", $run['stdout'], 'json_encode should accept hash<int>');
+		$this->assertContains("[[\"a\",\"b\"],[\"c\"]]\n", $run['stdout'], 'json_encode should accept nested vectors');
 	}
 
 	private function assertExplicitNullStringCastStillSucceeds(): void
