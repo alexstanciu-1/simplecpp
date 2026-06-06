@@ -73,21 +73,29 @@ PHS
 
 	private function assertMissingDynamicJsonFieldFailsRequiredTypedLocal(): void
 	{
-		$project = $this->root . '/missing_json_field';
-		$this->writeProject($project, []);
-		$this->write($project . '/main.phs', <<<'PHS'
+		foreach ([
+			'string' => 'string_t',
+			'int' => 'int_t',
+			'float' => 'float_t',
+			'bool' => 'bool_t',
+		] as $localType => $runtimeType) {
+			$project = $this->root . '/missing_json_field_' . $localType;
+			$this->writeProject($project, []);
+			$this->write($project . '/main.phs', <<<'PHS'
 $text = "{\"count\":2}";
 $row = json_decode($text);
-$name string = $row["name"];
-echo $name, "\n";
 PHS
- . "\n");
+ . "\n"
+ . '$value ' . $localType . ' = $row["name"];' . "\n"
+ . 'echo $value, "\n";' . "\n");
 
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
-		$this->assertNotSame(0, $run['exit_code'], 'missing dynamic JSON field should fail a required typed local');
-		$this->assertContains('Cannot convert value to required string_t.', $run['stderr'], 'missing dynamic JSON field diagnostic should explain the required typed boundary');
-		$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'missing dynamic JSON field diagnostic should remap to the typed local');
-		$this->assertContains('Actual runtime kind: null_t', $run['stderr'], 'missing dynamic JSON field diagnostic should preserve the null runtime kind');
+			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+			$this->assertNotSame(0, $run['exit_code'], 'missing dynamic JSON field should fail a required ' . $localType . ' typed local');
+			$this->assertContains('Cannot convert value to required ' . $runtimeType . '.', $run['stderr'], 'missing dynamic JSON field diagnostic should explain the required ' . $localType . ' typed boundary');
+			$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'missing dynamic JSON field diagnostic should remap to the ' . $localType . ' typed local');
+			$this->assertContains('Actual runtime kind: null_t', $run['stderr'], 'missing dynamic JSON field diagnostic should preserve the null runtime kind for ' . $localType);
+			$this->assertContains('Operation: scpp::required_cast<' . $runtimeType . '>', $run['stderr'], 'missing dynamic JSON field diagnostic should use required_cast for ' . $localType);
+		}
 	}
 
 	private function assertExplicitNullStringCastStillSucceeds(): void
