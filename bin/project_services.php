@@ -1962,6 +1962,10 @@ function handle_run(string $cwd, array $args): void
 			scpp_write($stderrToShow . PHP_EOL, 'stderr');
 		}
 	}
+	$nativeSignalDiagnostic = $runtimeDiagnostic === null && $status !== 0 ? classify_native_signal_exit($status) : null;
+	if ($nativeSignalDiagnostic !== null) {
+		scpp_write($nativeSignalDiagnostic . PHP_EOL, 'stderr');
+	}
 	write_last_run_report(
 		$project['project_root'],
 		'run',
@@ -1973,6 +1977,7 @@ function handle_run(string $cwd, array $args): void
 			'entrypoint_output' => $buildResult['output_path'],
 			'runtime_library_dir' => $buildResult['runtime_library_dir'],
 			'run_args' => array_values($runArgs),
+			'native_signal_diagnostic' => $nativeSignalDiagnostic,
 			'build_explanation' => $buildResult['build_explanation'] ?? null,
 		]
 	);
@@ -2000,6 +2005,33 @@ function handle_run(string $cwd, array $args): void
 		scpp_write(PHP_EOL . $shortMessage, 'stderr');
 	}
 	exit($status);
+}
+
+function classify_native_signal_exit(int $status): ?string
+{
+	$signal = null;
+	if ($status > 128 && $status < 192) {
+		$signal = $status - 128;
+	} elseif ($status < 0) {
+		$signal = abs($status);
+	}
+	if ($signal === null) {
+		return null;
+	}
+	$name = match ($signal) {
+		11 => 'SIGSEGV',
+		6 => 'SIGABRT',
+		4 => 'SIGILL',
+		default => 'signal ' . $signal,
+	};
+	$lines = [
+		'Program terminated with ' . $name . '.',
+	];
+	if ($signal === 11) {
+		$lines[] = 'This may indicate native stack exhaustion from deep or infinite recursion, or another native memory-safety failure.';
+	}
+	$lines[] = "Run 'scpp full-last-run' for the saved run report.";
+	return implode(PHP_EOL, $lines);
 }
 
 /**
@@ -2111,6 +2143,8 @@ function collect_runtime_error_diagnostic(string $stderr): ?array
 			'json_path' => isset($details['json_path']) ? (string) $details['json_path'] : null,
 			'target_type' => isset($details['target_type']) ? (string) $details['target_type'] : null,
 			'actual_kind' => isset($details['actual_kind']) ? (string) $details['actual_kind'] : null,
+			'function' => isset($details['function']) ? (string) $details['function'] : null,
+			'max_call_depth' => isset($details['max_call_depth']) ? (string) $details['max_call_depth'] : null,
 			'trace' => $trace,
 		];
 	}
@@ -2243,6 +2277,18 @@ function scpp_runtime_source_snippet_context_requested(): bool
 
 function build_runtime_failure_summary(array $diagnostic): string
 {
+	if ((string) ($diagnostic['code'] ?? '') === 'max_call_depth_exceeded') {
+		$function = trim((string) ($diagnostic['function'] ?? ''));
+		$limit = trim((string) ($diagnostic['max_call_depth'] ?? ''));
+		$line = 'Maximum call depth exceeded';
+		if ($function !== '') {
+			$line .= ' while calling `' . $function . '`';
+		}
+		if ($limit !== '') {
+			$line .= ' (limit ' . $limit . ')';
+		}
+		return $line . '.';
+	}
 	$expression = trim((string) ($diagnostic['expression'] ?? ''));
 	$expected = trim((string) ($diagnostic['expected_type'] ?? ''));
 	if ($expression !== '') {
@@ -4588,6 +4634,7 @@ function resolve_runtime_build_config(array $config): array
 	$modules = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $modules)));
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
+	$safety = is_array($runtime['safety'] ?? null) ? $runtime['safety'] : [];
 	$allowedLanguages = ['php'];
 	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl'];
 	foreach ($languages as $language) {
@@ -4607,6 +4654,7 @@ function resolve_runtime_build_config(array $config): array
 		'languages' => $languages,
 		'language_profiles' => $languageProfiles,
 		'modules' => $modules,
+		'safety' => $safety,
 	];
 }
 
@@ -6048,6 +6096,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'unresolved_method_call',
 		'unresolved_property_write',
 		'unresolved_property_read',
+		'missing_return',
 	], true)) {
 		return 'compile-errors';
 	}
@@ -6057,7 +6106,6 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'override_declaration',
 		'argument_type_mismatch',
 		'argument_count_mismatch',
-		'missing_return',
 		'static_instance_misuse',
 		'invalid_property_read',
 	], true)) {
@@ -7585,6 +7633,12 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_CURL=0';
 	}
+	if (call_depth_guard_enabled($runtimeConfig, $buildMode)) {
+		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=1';
+		$extraCxxFlags[] = '-DSCPP_MAX_CALL_DEPTH=' . call_depth_guard_limit($runtimeConfig);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=0';
+	}
 
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = PHP_OS_FAMILY === 'Darwin' ? 'libruntime.dylib' : 'libruntime.so';
@@ -7722,10 +7776,34 @@ function compute_runtime_build_signature(string $repoRoot, array $compiler, stri
 		'runtime_languages:' . implode(',', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : []),
 		'php_profile:' . resolve_php_runtime_profile($runtimeConfig),
 		'runtime_modules:' . implode(',', is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : []),
+		'call_depth_guard:' . (call_depth_guard_enabled($runtimeConfig, $buildMode) ? '1' : '0'),
+		'max_call_depth:' . call_depth_guard_limit($runtimeConfig),
 	];
 
 	sort($parts, SORT_STRING);
 	return substr(hash('sha256', implode("\n", $parts)), 0, 16);
+}
+
+function call_depth_guard_enabled(array $runtimeConfig, string $buildMode): bool
+{
+	$safety = is_array($runtimeConfig['safety'] ?? null) ? $runtimeConfig['safety'] : [];
+	if (array_key_exists('call_depth_guard', $safety)) {
+		return (bool) $safety['call_depth_guard'];
+	}
+	return $buildMode !== 'release';
+}
+
+function call_depth_guard_limit(array $runtimeConfig): int
+{
+	$safety = is_array($runtimeConfig['safety'] ?? null) ? $runtimeConfig['safety'] : [];
+	$value = $safety['max_call_depth'] ?? null;
+	if (is_int($value)) {
+		return max(1, $value);
+	}
+	if (is_string($value) && preg_match('/^\d+$/', $value) === 1) {
+		return max(1, (int) $value);
+	}
+	return 4096;
 }
 
 /**

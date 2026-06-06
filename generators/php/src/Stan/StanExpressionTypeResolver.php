@@ -1944,8 +1944,8 @@ final class StanExpressionTypeResolver
 		$diagnostics = [];
 		$declaredReturnType = (string) ($ownerNode['return_type'] ?? '');
 		$statementCount = (int) ($ownerNode['statement_count'] ?? 0);
-		if ($statementCount > 0 && $declaredReturnType !== '' && strtolower($declaredReturnType) !== 'void' && !empty($ownerNode['return_values']) === false) {
-			$diagnostics[] = $this->makeCallDiagnostic('missing_return', $context, $path, (int) ($ownerNode['line'] ?? 0), 'Missing return in non-void `' . $context . '` declared as `' . $declaredReturnType . '`.');
+		if ($statementCount > 0 && $declaredReturnType !== '' && strtolower($declaredReturnType) !== 'void' && (bool) ($ownerNode['returns_on_all_paths'] ?? false) === false) {
+			$diagnostics[] = $this->makeCallDiagnostic('missing_return', $context, $path, (int) ($ownerNode['line'] ?? 0), 'Function `' . $context . '` declared as `' . $declaredReturnType . '` may exit without returning a value.');
 		}
 		foreach (($ownerNode['return_values'] ?? []) as $returnValue) {
 			if (!is_array($returnValue) || $declaredReturnType === '') {

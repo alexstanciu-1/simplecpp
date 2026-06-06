@@ -266,6 +266,11 @@ final class Generator
 		return '"' . $escaped . '"';
 	}
 
+	private function renderCallDepthGuardLine(string $callableName, int $line): string
+	{
+		return 'SCPP_CALL_DEPTH_GUARD(' . $this->cppStringLiteral($callableName) . ', ' . $this->cppStringLiteral($this->currentSourcePath) . ', ' . $line . ');';
+	}
+
 	private function renderGeneratedCast(string $type, string $expr): string
 	{
 		return 'cast<' . $type . '>(' . $expr . ')';
@@ -2335,6 +2340,7 @@ final class Generator
 		foreach ($this->renderSyntheticMainCliPreamble() as $line) {
 			$this->appendSourceLines($source, $this->codeWithCurrentOrigin($this->indent(1) . $line));
 		}
+		$this->appendSourceLines($source, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($name, 0)));
 		foreach ($statements as $statement) {
 			$this->currentSourceLine = $statement->line;
 			$this->currentSourceColumn = 0;
@@ -2774,6 +2780,7 @@ final class Generator
 			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
 		}
 		$body = $this->renderBody($statements, $namespacePhp);
+		array_unshift($body, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($className . '::' . $this->cppIdentifier($method->name), $method->line)));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
@@ -3071,7 +3078,9 @@ final class Generator
 		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$this->currentReturnType = $returnType;
 		$signature = $returnType . ' ' . $this->renderExecCallableName($function->name) . '(' . $this->renderCanonicalParamsForExec($function->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
-		$body = implode("\n", $this->flattenCodeText($this->renderBody($function->statements, $namespacePhp)));
+		$bodyLines = $this->renderBody($function->statements, $namespacePhp);
+		array_unshift($bodyLines, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($this->renderExecCallableName($function->name), $function->line)));
+		$body = implode("\n", $this->flattenCodeText($bodyLines));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
@@ -3408,6 +3417,7 @@ final class Generator
 		$this->currentReturnType = $returnType;
 		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
 		$body = $this->renderBody($function->statements, $namespacePhp);
+		array_unshift($body, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($function->name, $function->line)));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];

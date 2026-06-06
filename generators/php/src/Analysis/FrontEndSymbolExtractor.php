@@ -163,6 +163,7 @@ final class FrontEndSymbolExtractor
 			'typed_locals' => $this->summarizeTypedLocals($function->statements, $sourceLines),
 			'return_chains' => $this->summarizeReturnChains($function->statements),
 			'return_values' => $this->summarizeReturnValues($function->statements),
+			'returns_on_all_paths' => $this->statementsReturnOnAllPaths($function->statements),
 			'expression_chains' => $this->summarizeExpressionChains($function->statements),
 			'property_reads' => $this->summarizePropertyReads($function->statements),
 			'call_sites' => $this->summarizeCallSites($function->statements),
@@ -208,6 +209,7 @@ final class FrontEndSymbolExtractor
 				'typed_locals' => $this->summarizeTypedLocals($method->statements, $sourceLines),
 				'return_chains' => $this->summarizeReturnChains($method->statements),
 				'return_values' => $this->summarizeReturnValues($method->statements),
+				'returns_on_all_paths' => $this->statementsReturnOnAllPaths($method->statements),
 				'expression_chains' => $this->summarizeExpressionChains($method->statements),
 				'property_reads' => $this->summarizePropertyReads($method->statements),
 				'call_sites' => $this->summarizeCallSites($method->statements),
@@ -1299,6 +1301,44 @@ final class FrontEndSymbolExtractor
 			}
 		}
 		return $flat;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements */
+	private function statementsReturnOnAllPaths(array $statements): bool
+	{
+		foreach ($statements as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
+				continue;
+			}
+			if ($statement->kind === 'return') {
+				return true;
+			}
+			if ($statement->kind === 'if' && is_array($statement->payload) && $this->ifStatementReturnsOnAllPaths($statement->payload)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** @param list<array<string,mixed>> $branches */
+	private function ifStatementReturnsOnAllPaths(array $branches): bool
+	{
+		if ($branches === []) {
+			return false;
+		}
+		$hasElse = false;
+		foreach ($branches as $branch) {
+			if (!is_array($branch) || !array_key_exists('cond', $branch) || !is_array($branch['stmts'] ?? null)) {
+				return false;
+			}
+			if ($branch['cond'] === null) {
+				$hasElse = true;
+			}
+			if (!$this->statementsReturnOnAllPaths($branch['stmts'])) {
+				return false;
+			}
+		}
+		return $hasElse;
 	}
 
 	/** @param list<array<string,mixed>> $calls */

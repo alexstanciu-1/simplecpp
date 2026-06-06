@@ -1,0 +1,256 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../../bin/bootstrap.php';
+require_once __DIR__ . '/../../bin/project_services.php';
+
+final class ScppStrictSafetyEdgesTest
+{
+	private string $root;
+
+	public function __construct()
+	{
+		$this->root = normalize_path(sys_get_temp_dir() . '/scpp_strict_safety_edges_' . getmypid() . '_' . bin2hex(random_bytes(4)));
+	}
+
+	public function run(): int
+	{
+		if (find_command_path(['ninja']) === null) {
+			echo "SKIP: ninja not found\n";
+			return 0;
+		}
+		if (resolve_compiler(['build' => []]) === null) {
+			echo "SKIP: compiler not found\n";
+			return 0;
+		}
+
+		try {
+			$this->assertMissingReturnStopsBuild();
+			$this->assertRecursiveDebugRunFailsWithRuntimeDiagnostic();
+			$this->assertRecursiveReleaseOptInFailsWithRuntimeDiagnostic();
+			echo "PASS: scpp strict safety edges\n";
+			return 0;
+		} finally {
+			$this->removeTree($this->root);
+		}
+	}
+
+	private function assertMissingReturnStopsBuild(): void
+	{
+		$project = $this->root . '/missing_return';
+		$this->writeProject($project, []);
+		$this->write($project . '/main.phs', <<<'PHS'
+function choose(bool $flag): int {
+	if ($flag) {
+		return 1;
+	}
+}
+
+echo choose(false), "\n";
+PHS
+ . "\n");
+
+		$build = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build'], $project, 120);
+		$this->assertNotSame(0, $build['exit_code'], 'missing-return build should fail');
+		$this->assertContains('STAN pre-build check failed', $build['stderr'], 'missing-return build should stop in STAN');
+		$this->assertContains('may exit without returning a value', $build['stderr'], 'missing-return diagnostic should explain the return path');
+	}
+
+	private function assertRecursiveDebugRunFailsWithRuntimeDiagnostic(): void
+	{
+		$project = $this->root . '/recursive_guard';
+		$this->writeProject($project, [
+			'safety' => [
+				'max_call_depth' => 32,
+			],
+		]);
+		$this->write($project . '/main.phs', <<<'PHS'
+function dive(int $n): int {
+	return dive($n + 1);
+}
+
+echo dive(0), "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertNotSame(0, $run['exit_code'], 'recursive debug run should fail');
+		$this->assertContains('Maximum call depth exceeded', $run['stderr'], 'recursive debug run should report call-depth guard failure');
+		$this->assertContains('main.phs:1', $run['stderr'], 'recursive debug run should remap to the source function');
+
+		$report = json_decode($this->read($project . '/.prism/last_error.json'), true);
+		if (!is_array($report)) {
+			throw new RuntimeException('last_error.json should decode as an object');
+		}
+		$diagnostic = $report['diagnostics'][0] ?? null;
+		if (!is_array($diagnostic)) {
+			throw new RuntimeException('last_error.json should contain at least one runtime diagnostic');
+		}
+		$this->assertSame('max_call_depth_exceeded', $diagnostic['code'] ?? null, 'recursive runtime diagnostic should preserve error code');
+	}
+
+	private function assertRecursiveReleaseOptInFailsWithRuntimeDiagnostic(): void
+	{
+		$project = $this->root . '/recursive_release_guard';
+		$this->writeProject($project, [
+			'safety' => [
+				'call_depth_guard' => true,
+				'max_call_depth' => 24,
+			],
+		], 'release');
+		$this->write($project . '/main.phs', <<<'PHS'
+function dive(int $n): int {
+	return dive($n + 1);
+}
+
+echo dive(0), "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertNotSame(0, $run['exit_code'], 'recursive release opt-in run should fail');
+		$this->assertContains('Maximum call depth exceeded while calling `dive` (limit 24).', $run['stderr'], 'release opt-in should use configured call-depth limit');
+	}
+
+	/** @param array<string,mixed> $runtimeOverrides */
+	private function writeProject(string $project, array $runtimeOverrides, string $buildMode = 'debug'): void
+	{
+		$this->mkdir($project);
+		$runtime = array_replace_recursive([
+			'languages' => [
+				'php' => ['profile' => 'strict'],
+			],
+			'modules' => ['json', 'filesystem'],
+		], $runtimeOverrides);
+		$this->write($project . '/prism.json', json_encode([
+			'name' => basename($project),
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'build' => [
+				'mode' => $buildMode,
+			],
+			'runtime' => $runtime,
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+	}
+
+	/** @return array{exit_code:int,stdout:string,stderr:string} */
+	private function runCommand(array $command, string $cwd, int $timeoutSeconds): array
+	{
+		$descriptor = [
+			0 => ['file', '/dev/null', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment([
+			'SCPP_CXX_LAUNCHER' => ' ',
+			'SCPP_CAPTURE_SUBPROCESS_OUTPUT' => '1',
+		]));
+		if (!is_resource($process)) {
+			throw new RuntimeException('Failed to start command: ' . implode(' ', $command));
+		}
+
+		$stdout = '';
+		$stderr = '';
+		$started = microtime(true);
+		$observedExitCode = null;
+		foreach ([1, 2] as $index) {
+			stream_set_blocking($pipes[$index], false);
+		}
+		while (true) {
+			$status = proc_get_status($process);
+			$stdout .= (string) stream_get_contents($pipes[1]);
+			$stderr .= (string) stream_get_contents($pipes[2]);
+			if (($status['running'] ?? false) !== true) {
+				$exitCode = $status['exitcode'] ?? null;
+				$observedExitCode = is_int($exitCode) ? $exitCode : null;
+				break;
+			}
+			if ((microtime(true) - $started) > $timeoutSeconds) {
+				proc_terminate($process);
+				throw new RuntimeException('Timed out after ' . $timeoutSeconds . 's: ' . implode(' ', $command));
+			}
+			usleep(100000);
+		}
+		$stdout .= (string) stream_get_contents($pipes[1]);
+		$stderr .= (string) stream_get_contents($pipes[2]);
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		$exitCode = proc_close($process);
+		return [
+			'exit_code' => $observedExitCode ?? (is_int($exitCode) ? $exitCode : 1),
+			'stdout' => $stdout,
+			'stderr' => $stderr,
+		];
+	}
+
+	private function write(string $path, string $contents): void
+	{
+		if (file_put_contents($path, $contents) === false) {
+			throw new RuntimeException('Failed to write ' . $path);
+		}
+	}
+
+	private function read(string $path): string
+	{
+		$contents = file_get_contents($path);
+		if (!is_string($contents)) {
+			throw new RuntimeException('Failed to read ' . $path);
+		}
+		return $contents;
+	}
+
+	private function mkdir(string $path): void
+	{
+		if (!is_dir($path) && !mkdir($path, 0777, true)) {
+			throw new RuntimeException('Failed to create ' . $path);
+		}
+	}
+
+	private function removeTree(string $path): void
+	{
+		if (!is_dir($path)) {
+			return;
+		}
+		$items = scandir($path);
+		if ($items === false) {
+			return;
+		}
+		foreach ($items as $item) {
+			if ($item === '.' || $item === '..') {
+				continue;
+			}
+			$child = $path . '/' . $item;
+			if (is_dir($child) && !is_link($child)) {
+				$this->removeTree($child);
+				continue;
+			}
+			unlink($child);
+		}
+		rmdir($path);
+	}
+
+	private function assertContains(string $needle, string $haystack, string $message): void
+	{
+		if (!str_contains($haystack, $needle)) {
+			throw new RuntimeException($message . ' missing `' . $needle . '` in: ' . $haystack);
+		}
+	}
+
+	private function assertSame(mixed $expected, mixed $actual, string $message): void
+	{
+		if ($expected !== $actual) {
+			throw new RuntimeException($message . ' expected ' . var_export($expected, true) . ', got ' . var_export($actual, true));
+		}
+	}
+
+	private function assertNotSame(mixed $unexpected, mixed $actual, string $message): void
+	{
+		if ($unexpected === $actual) {
+			throw new RuntimeException($message . ' did not expect ' . var_export($actual, true));
+		}
+	}
+}
+
+exit((new ScppStrictSafetyEdgesTest())->run());
