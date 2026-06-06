@@ -28,7 +28,9 @@ final class ScppStrictSafetyEdgesTest
 			$this->assertMissingReturnStopsBuild();
 			$this->assertDirectSelfRecursionStopsBuild();
 			$this->assertMissingDynamicJsonFieldFailsRequiredTypedLocal();
+			$this->assertDynamicJsonNumericShapesFailRequiredIntLocal();
 			$this->assertExplicitNullStringCastStillSucceeds();
+			$this->assertExplicitIntCastsStillSucceed();
 			$this->assertRecursiveDebugRunFailsWithRuntimeDiagnostic();
 			$this->assertRecursiveReleaseOptInFailsWithRuntimeDiagnostic();
 			echo "PASS: scpp strict safety edges\n";
@@ -98,6 +100,28 @@ PHS
 		}
 	}
 
+	private function assertDynamicJsonNumericShapesFailRequiredIntLocal(): void
+	{
+		foreach ([
+			'json_float_to_int' => '{"count":2.5}',
+			'json_string_number_to_int' => '{"count":"42"}',
+		] as $case => $json) {
+			$project = $this->root . '/' . $case;
+			$this->writeProject($project, []);
+			$this->write($project . '/main.phs', '$row = json_decode(' . var_export($json, true) . ');' . "\n" . <<<'PHS'
+$count int = $row["count"];
+echo $count, "\n";
+PHS
+ . "\n");
+
+			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+			$this->assertNotSame(0, $run['exit_code'], $case . ' should fail a required int typed local');
+			$this->assertContains('Cannot convert value to required int_t.', $run['stderr'], $case . ' diagnostic should explain the required int boundary');
+			$this->assertContains('Runtime error in main.phs:2', $run['stderr'], $case . ' diagnostic should remap to the typed local');
+			$this->assertContains('Operation: scpp::required_cast<int_t>', $run['stderr'], $case . ' diagnostic should use required_cast');
+		}
+	}
+
 	private function assertExplicitNullStringCastStillSucceeds(): void
 	{
 		$project = $this->root . '/explicit_null_string_cast';
@@ -110,6 +134,21 @@ PHS
 		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
 		$this->assertSame(0, $run['exit_code'], 'explicit null-to-string cast should still succeed');
 		$this->assertContains("[]\n", $run['stdout'], 'explicit null-to-string cast should still stringify to an empty string');
+	}
+
+	private function assertExplicitIntCastsStillSucceed(): void
+	{
+		$project = $this->root . '/explicit_int_casts';
+		$this->writeProject($project, []);
+		$this->write($project . '/main.phs', <<<'PHS'
+echo (int) 2.5, "\n";
+echo (int) "42", "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], 'explicit int casts should still succeed');
+		$this->assertContains("2\n42\n", $run['stdout'], 'explicit int casts should preserve configured conversion behavior');
 	}
 
 	private function assertRecursiveDebugRunFailsWithRuntimeDiagnostic(): void

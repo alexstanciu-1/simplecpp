@@ -215,6 +215,21 @@ template <>
 	);
 }
 
+[[noreturn]] inline void throw_required_boundary_mixed_kind(const char *target, const mixed_t &value) {
+	throw runtime_error(
+		std::string("scpp::required_cast<") + target + ">(mixed_t): runtime kind cannot satisfy a required typed boundary",
+		"required_typed_boundary_kind_mismatch",
+		std::string("scpp::required_cast<") + target + ">",
+		"",
+		std::vector<runtime_error_detail_t>{
+			{"expected_type", target},
+			{"operation", std::string("scpp::required_cast<") + target + ">"},
+			{"source_type", "mixed_t"},
+			{"runtime_kind", mixed_kind_name(value.kind())},
+		}
+	);
+}
+
 inline bool parse_bool_string_strict(const std::string &value, bool &out) {
 	if (value.empty() || value == "0" || value == "false") {
 		out = false;
@@ -704,6 +719,11 @@ inline To required_cast(const mixed_t &value) {
 	} else {
 		if (value.kind() == mixed_t::kind_t::null_v) {
 			detail::throw_required_boundary_null(detail::required_cast_target_name<To>());
+		}
+		if constexpr (std::is_same_v<To, int_t>) {
+			if (value.kind() != mixed_t::kind_t::int_v) {
+				detail::throw_required_boundary_mixed_kind(detail::required_cast_target_name<To>(), value);
+			}
 		}
 		return cast<To>(value);
 	}
