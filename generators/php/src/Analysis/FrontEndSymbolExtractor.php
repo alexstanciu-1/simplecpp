@@ -184,7 +184,9 @@ final class FrontEndSymbolExtractor
 			'foreach_locals' => $this->summarizeForeachLocals($function->statements),
 			'for_loop_locals' => $this->summarizeForLoopLocals($function->statements),
 			'property_assignments' => $this->summarizePropertyAssignments($function->statements),
+			'static_property_assignments' => $this->summarizeStaticPropertyAssignments($function->statements),
 			'property_branch_assignments' => $this->summarizePropertyBranchAssignments($function->statements),
+			'static_property_reads' => $this->summarizeStaticPropertyReads($function->statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($function->statements, $sourceLines),
 			'statement_count' => count($function->statements),
 			'line' => $function->line,
@@ -219,7 +221,9 @@ final class FrontEndSymbolExtractor
 			'foreach_locals' => $this->summarizeForeachLocals($statements),
 			'for_loop_locals' => $this->summarizeForLoopLocals($statements),
 			'property_assignments' => $this->summarizePropertyAssignments($statements),
+			'static_property_assignments' => $this->summarizeStaticPropertyAssignments($statements),
 			'property_branch_assignments' => $this->summarizePropertyBranchAssignments($statements),
+			'static_property_reads' => $this->summarizeStaticPropertyReads($statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($statements, $sourceLines),
 			'statement_count' => count($statements),
 			'line' => 1,
@@ -266,7 +270,9 @@ final class FrontEndSymbolExtractor
 				'foreach_locals' => $this->summarizeForeachLocals($method->statements),
 				'for_loop_locals' => $this->summarizeForLoopLocals($method->statements),
 				'property_assignments' => $this->summarizePropertyAssignments($method->statements),
+				'static_property_assignments' => $this->summarizeStaticPropertyAssignments($method->statements),
 				'property_branch_assignments' => $this->summarizePropertyBranchAssignments($method->statements),
+				'static_property_reads' => $this->summarizeStaticPropertyReads($method->statements),
 				'local_invalidations' => $this->summarizeLocalInvalidations($method->statements, $sourceLines),
 				'statement_count' => count($method->statements),
 				'line' => $method->line,
@@ -1166,6 +1172,46 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeStaticPropertyAssignments(array $statements): array
+	{
+		$assignments = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement || $statement->kind !== 'assign') {
+				continue;
+			}
+			$payload = $statement->payload;
+			if (!is_array($payload)) {
+				continue;
+			}
+			$access = $this->describeStaticPropertyAccess($payload['var'] ?? null, $statement->line);
+			if ($access === null) {
+				continue;
+			}
+			$access['statement_kind'] = 'assign';
+			$assignments[] = $access;
+		}
+		return $assignments;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeStaticPropertyReads(array $statements): array
+	{
+		$reads = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
+				continue;
+			}
+			$expr = match ($statement->kind) {
+				'assign', 'assign_ref', 'assign_op' => is_array($statement->payload) ? ($statement->payload['expr'] ?? null) : null,
+				'expr', 'return', 'throw', 'echo' => $statement->payload,
+				default => null,
+			};
+			$this->collectStaticPropertyReadsFromNode($expr, $statement->line, $reads, $statement->kind);
+		}
+		return $reads;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
 	private function summarizeCallSites(array $statements): array
 	{
 		$calls = [];
@@ -1484,6 +1530,52 @@ final class FrontEndSymbolExtractor
 			}
 			$this->collectPropertyReadsFromNode($child, $line, $reads, $statementKind);
 		}
+	}
+
+	/** @param list<array<string,mixed>> $reads */
+	private function collectStaticPropertyReadsFromNode(mixed $node, int $line, array &$reads, string $statementKind): void
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children)) {
+			return;
+		}
+
+		$access = $this->describeStaticPropertyAccess($node, $line);
+		if ($access !== null) {
+			$access['statement_kind'] = $statementKind;
+			$reads[] = $access;
+		}
+
+		foreach ($node->children as $child) {
+			if (is_array($child)) {
+				foreach ($child as $nested) {
+					$this->collectStaticPropertyReadsFromNode($nested, $line, $reads, $statementKind);
+				}
+				continue;
+			}
+			$this->collectStaticPropertyReadsFromNode($child, $line, $reads, $statementKind);
+		}
+	}
+
+	/** @return array{line:int,class_name:string,property_name:string}|null */
+	private function describeStaticPropertyAccess(mixed $node, int $line): ?array
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children) || $node->kind !== AstKind::STATIC_PROP) {
+			return null;
+		}
+		$classNode = $node->children['class'] ?? null;
+		if (!is_object($classNode) || ($classNode->kind ?? null) !== AstKind::NAME) {
+			return null;
+		}
+		$className = trim((string) ($classNode->children['name'] ?? ''));
+		$propertyName = trim((string) ($node->children['prop'] ?? ''));
+		if ($className === '' || $propertyName === '') {
+			return null;
+		}
+		return [
+			'line' => $line,
+			'class_name' => ltrim($className, '\\'),
+			'property_name' => $propertyName,
+		];
 	}
 
 	/** @return list<array<string,mixed>> */

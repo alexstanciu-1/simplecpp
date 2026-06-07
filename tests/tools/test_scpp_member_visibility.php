@@ -26,6 +26,9 @@ final class ScppMemberVisibilityTest
 
 		try {
 			$this->assertPrivatePropertyReadStopsBuild();
+			$this->assertPrivateStaticPropertyAccessStopsBuild();
+			$this->assertPrivateParentPropertyAccessStopsBuild();
+			$this->assertProtectedSubclassAccessPassesStan();
 			$this->assertVisibilityLowersToCppAccessSections();
 			echo "PASS: scpp member visibility\n";
 			return 0;
@@ -52,6 +55,77 @@ final class ScppMemberVisibilityTest
 		$this->assertNotSame(0, $build['exit_code'], 'external private property read should stop build');
 		$this->assertContains('Cannot read private property `SecretBox::$value`', $build['stderr'], 'build stderr should report the private property violation');
 		$this->assertContains('Build stopped before C++ generation/compilation.', $build['stderr'], 'visibility violation should stop before native build');
+	}
+
+	private function assertPrivateStaticPropertyAccessStopsBuild(): void
+	{
+		foreach ([
+			'read' => 'echo SecretBox::$value, "\n";',
+			'write' => 'SecretBox::$value = 9;',
+		] as $operation => $accessLine) {
+			$project = $this->root . '/private_static_property_' . $operation;
+			$this->writeProject($project, implode("\n", [
+				'class SecretBox {',
+				'	private static int $value = 7;',
+				'	static function read(): int { return self::$value; }',
+				'}',
+				$accessLine,
+				'',
+			]));
+
+			$build = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build'], $project, 120);
+			$this->assertNotSame(0, $build['exit_code'], 'external private static property ' . $operation . ' should stop build');
+			$this->assertContains('Cannot ' . $operation . ' private static property `SecretBox::$value`', $build['stderr'], 'build stderr should report the private static property ' . $operation . ' violation');
+			$this->assertContains('Build stopped before C++ generation/compilation.', $build['stderr'], 'private static property ' . $operation . ' should stop before native build');
+		}
+	}
+
+	private function assertPrivateParentPropertyAccessStopsBuild(): void
+	{
+		$project = $this->root . '/private_parent_property';
+		$this->writeProject($project, implode("\n", [
+			'class BaseBox {',
+			'	private int $seed = 2;',
+			'}',
+			'class SecretBox extends BaseBox {',
+			'	function read(): int { return $this->seed; }',
+			'}',
+			'$box = new SecretBox();',
+			'echo $box->read(), "\n";',
+			'',
+		]));
+
+		$build = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build'], $project, 120);
+		$this->assertNotSame(0, $build['exit_code'], 'subclass read of parent private property should stop build');
+		$this->assertContains('Cannot read private property `SecretBox::$seed`', $build['stderr'], 'build stderr should report inherited private property access as invalid');
+		$this->assertContains('Build stopped before C++ generation/compilation.', $build['stderr'], 'parent private property access should stop before native build');
+	}
+
+	private function assertProtectedSubclassAccessPassesStan(): void
+	{
+		$project = $this->root . '/protected_subclass_access';
+		$this->writeProject($project, implode("\n", [
+			'class BaseBox {',
+			'	protected int $seed = 2;',
+			'	protected static int $count = 5;',
+			'	protected function bump(): int { return $this->seed + self::$count; }',
+			'}',
+			'class SecretBox extends BaseBox {',
+			'	function read(): int {',
+			'		self::$count = self::$count + 1;',
+			'		return $this->seed + $this->bump() + self::$count;',
+			'	}',
+			'}',
+			'$box = new SecretBox();',
+			'echo $box->read(), "\n";',
+			'',
+		]));
+
+		$stan = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'stan'], $project, 120);
+		$this->assertSame(0, $stan['exit_code'], 'protected subclass access should pass STAN');
+		$this->assertNotContains('member_visibility_violation', $stan['stderr'] . $stan['stdout'], 'protected subclass access should not report a visibility violation');
+		$this->assertNotContains('Cannot read protected', $stan['stderr'] . $stan['stdout'], 'protected reads should be allowed in subclass scope');
+		$this->assertNotContains('Cannot write protected', $stan['stderr'] . $stan['stdout'], 'protected writes should be allowed in subclass scope');
 	}
 
 	private function assertVisibilityLowersToCppAccessSections(): void
@@ -211,6 +285,13 @@ final class ScppMemberVisibilityTest
 	{
 		if (!str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' missing `' . $needle . '` in: ' . $haystack);
+		}
+	}
+
+	private function assertNotContains(string $needle, string $haystack, string $message): void
+	{
+		if (str_contains($haystack, $needle)) {
+			throw new RuntimeException($message . ' found `' . $needle . '` in: ' . $haystack);
 		}
 	}
 

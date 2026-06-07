@@ -1087,6 +1087,14 @@ final class StanExpressionTypeResolver
 				continue;
 			}
 
+			if ($event['event_kind'] === 'static_property_access') {
+				$diagnostic = $this->collectStaticPropertyVisibilityDiagnostic($event, $selfType, $classLookup, $context, $path);
+				if ($diagnostic !== null) {
+					$propertyReadDiagnostics[] = $diagnostic;
+				}
+				continue;
+			}
+
 			if ($event['event_kind'] === 'call_site_check') {
 				$callSite = is_array($event['call_site'] ?? null) ? $event['call_site'] : null;
 				$this->checkCallSiteInitialization($diagnostics, $initializationKeys, $callSite, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup, $context, $path);
@@ -1357,6 +1365,19 @@ final class StanExpressionTypeResolver
 				'source' => $propertyAssignment['source'] ?? null,
 			];
 		}
+		foreach (($ownerNode['static_property_assignments'] ?? []) as $staticPropertyAssignment) {
+			if (!is_array($staticPropertyAssignment)) {
+				continue;
+			}
+			$events[] = [
+				'event_kind' => 'static_property_access',
+				'operation' => 'write',
+				'line' => (int) ($staticPropertyAssignment['line'] ?? 0),
+				'priority' => 0,
+				'class_name' => (string) ($staticPropertyAssignment['class_name'] ?? ''),
+				'property_name' => (string) ($staticPropertyAssignment['property_name'] ?? ''),
+			];
+		}
 		foreach (($ownerNode['call_sites'] ?? []) as $callSite) {
 			if (!is_array($callSite)) {
 				continue;
@@ -1388,6 +1409,19 @@ final class StanExpressionTypeResolver
 				'line' => (int) ($propertyRead['line'] ?? 0),
 				'priority' => 3,
 				'property_read' => $propertyRead,
+			];
+		}
+		foreach (($ownerNode['static_property_reads'] ?? []) as $staticPropertyRead) {
+			if (!is_array($staticPropertyRead)) {
+				continue;
+			}
+			$events[] = [
+				'event_kind' => 'static_property_access',
+				'operation' => 'read',
+				'line' => (int) ($staticPropertyRead['line'] ?? 0),
+				'priority' => 3,
+				'class_name' => (string) ($staticPropertyRead['class_name'] ?? ''),
+				'property_name' => (string) ($staticPropertyRead['property_name'] ?? ''),
 			];
 		}
 		foreach (($ownerNode['local_invalidations'] ?? []) as $invalidation) {
@@ -1973,7 +2007,8 @@ final class StanExpressionTypeResolver
 			return null;
 		}
 		$visibility = $this->normalizeMemberVisibility((string) ($receiverInfo['property_visibility'][$propertyName] ?? 'public'));
-		if ($this->memberAccessAllowed($visibility, $receiverInfo, $selfType, $classLookup)) {
+		$declaringInfo = $this->findPropertyDeclaringClassInfo($receiverInfo, $propertyName, $classLookup) ?? $receiverInfo;
+		if ($this->memberAccessAllowed($visibility, $declaringInfo, $selfType, $classLookup)) {
 			return null;
 		}
 		return [
@@ -1987,6 +2022,41 @@ final class StanExpressionTypeResolver
 			'receiver_type' => $receiverTypes[0],
 			'visibility' => $visibility,
 			'message' => 'Cannot ' . $operation . ' ' . $visibility . ' property `' . $receiverTypes[0] . '::$' . $propertyName . '` from `' . $context . '`.',
+		];
+	}
+
+	/** @param array<string,mixed> $event @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function collectStaticPropertyVisibilityDiagnostic(array $event, ?string $selfType, array $classLookup, string $context, string $path): ?array
+	{
+		$className = (string) ($event['class_name'] ?? '');
+		$propertyName = (string) ($event['property_name'] ?? '');
+		if ($className === '' || $propertyName === '') {
+			return null;
+		}
+		$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
+		$classInfo = $this->findClassInfo($resolvedClassName, $classLookup, $selfType);
+		if ($classInfo === null || !isset($classInfo['property_types'][$propertyName])) {
+			return null;
+		}
+		$visibility = $this->normalizeMemberVisibility((string) ($classInfo['property_visibility'][$propertyName] ?? 'public'));
+		$declaringInfo = $this->findPropertyDeclaringClassInfo($classInfo, $propertyName, $classLookup) ?? $classInfo;
+		if ($this->memberAccessAllowed($visibility, $declaringInfo, $selfType, $classLookup)) {
+			return null;
+		}
+		$operation = (string) ($event['operation'] ?? 'access');
+		if (!in_array($operation, ['read', 'write'], true)) {
+			$operation = 'access';
+		}
+		return [
+			'kind' => 'member_visibility_violation',
+			'context' => $context,
+			'path' => $path,
+			'line' => (int) ($event['line'] ?? 0),
+			'operation' => $operation,
+			'property_name' => $propertyName,
+			'receiver_type' => $resolvedClassName,
+			'visibility' => $visibility,
+			'message' => 'Cannot ' . $operation . ' ' . $visibility . ' static property `' . $resolvedClassName . '::$' . $propertyName . '` from `' . $context . '`.',
 		];
 	}
 
@@ -2282,7 +2352,8 @@ final class StanExpressionTypeResolver
 			return;
 		}
 		$visibility = $this->normalizeMemberVisibility((string) ($receiverInfo['property_visibility'][$propertyName] ?? 'public'));
-		if (!$this->memberAccessAllowed($visibility, $receiverInfo, $selfType, $classLookup)) {
+		$declaringInfo = $this->findPropertyDeclaringClassInfo($receiverInfo, $propertyName, $classLookup) ?? $receiverInfo;
+		if (!$this->memberAccessAllowed($visibility, $declaringInfo, $selfType, $classLookup)) {
 			$diagnostics[] = [
 				'kind' => 'member_visibility_violation',
 				'context' => $context,
@@ -2600,6 +2671,8 @@ final class StanExpressionTypeResolver
 		$propertyTypes = [];
 		$propertyHasDefault = [];
 		$propertyVisibility = [];
+		$propertyDeclaringClass = [];
+		$fqcn = $namespace === '' ? (string) ($class['name'] ?? '') : $namespace . '\\' . (string) ($class['name'] ?? '');
 		foreach (($class['properties'] ?? []) as $property) {
 			if (!is_array($property)) {
 				continue;
@@ -2612,12 +2685,13 @@ final class StanExpressionTypeResolver
 			if ($name !== '') {
 				$propertyHasDefault[$name] = (bool) ($property['has_default'] ?? false);
 				$propertyVisibility[$name] = $this->normalizeMemberVisibility((string) ($property['visibility'] ?? 'public'));
+				$propertyDeclaringClass[$name] = $fqcn;
 			}
 		}
 
 		return [
 			'name' => (string) ($class['name'] ?? ''),
-			'fqcn' => $namespace === '' ? (string) ($class['name'] ?? '') : $namespace . '\\' . (string) ($class['name'] ?? ''),
+			'fqcn' => $fqcn,
 			'parent_class' => (string) ($class['parent_class'] ?? ''),
 			'ancestor_types' => [],
 			'method_return_types' => $methodReturnTypes,
@@ -2625,6 +2699,7 @@ final class StanExpressionTypeResolver
 			'property_types' => $propertyTypes,
 			'property_has_default' => $propertyHasDefault,
 			'property_visibility' => $propertyVisibility,
+			'property_declaring_class' => $propertyDeclaringClass,
 		];
 	}
 
@@ -2696,6 +2771,16 @@ final class StanExpressionTypeResolver
 		return false;
 	}
 
+	/** @param array<string,mixed> $classInfo @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function findPropertyDeclaringClassInfo(array $classInfo, string $propertyName, array $classLookup): ?array
+	{
+		$declaringClass = (string) ($classInfo['property_declaring_class'][$propertyName] ?? '');
+		if ($declaringClass === '') {
+			return null;
+		}
+		return $this->findClassInfo($declaringClass, $classLookup);
+	}
+
 	private function isKnownNonObjectType(string $type): bool
 	{
 		$normalized = strtolower(trim($type));
@@ -2740,6 +2825,7 @@ final class StanExpressionTypeResolver
 				$info['property_types'] = array_replace((array) ($parentInfo['property_types'] ?? []), (array) ($info['property_types'] ?? []));
 				$info['property_has_default'] = array_replace((array) ($parentInfo['property_has_default'] ?? []), (array) ($info['property_has_default'] ?? []));
 				$info['property_visibility'] = array_replace((array) ($parentInfo['property_visibility'] ?? []), (array) ($info['property_visibility'] ?? []));
+				$info['property_declaring_class'] = array_replace((array) ($parentInfo['property_declaring_class'] ?? []), (array) ($info['property_declaring_class'] ?? []));
 				$info['ancestor_types'] = $this->normalizeTypeSet(array_merge(
 					[(string) ($parentInfo['fqcn'] ?? $parentClass)],
 					(array) ($parentInfo['ancestor_types'] ?? [])
