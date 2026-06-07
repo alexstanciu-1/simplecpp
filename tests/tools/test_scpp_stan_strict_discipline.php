@@ -364,6 +364,44 @@ PHS
 			$this->assertNotSame(0, $partialConstructor['exit_code'], 'partially initialized constructor property should still stop in STAN pre-build');
 			$this->assertContains('Property `$this->value` may be read before initialization', $partialConstructor['stderr'], 'partial constructor initialization should not satisfy later required property reads');
 
+			$this->writeProject($project, <<<'PHS'
+function choose(bool $ok): int
+{
+	if ($ok) {
+		return 1;
+	}
+}
+
+echo choose(false), "\n";
+PHS
+ . "\n");
+
+			$partialReturnPath = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $partialReturnPath['warning_count'] ?? null, 'partial return path should produce one STAN finding');
+			$partialReturnDiagnostic = $partialReturnPath['diagnostics'][0] ?? null;
+			if (!is_array($partialReturnDiagnostic)) {
+				throw new RuntimeException('partial return path diagnostic should be present');
+			}
+			$this->assertSame('stan.missing_return', $partialReturnDiagnostic['code'] ?? null, 'partial return path diagnostic code should be stable');
+			$this->assertContains('may exit without returning a value', (string) ($partialReturnDiagnostic['message'] ?? ''), 'partial return path diagnostic should explain the missing return');
+
+			$this->writeProject($project, <<<'PHS'
+function choose(bool $ok): int
+{
+	if ($ok) {
+		return 1;
+	} else {
+		return 2;
+	}
+}
+
+echo choose(false), "\n";
+PHS
+ . "\n");
+
+			$exhaustiveReturnPath = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $exhaustiveReturnPath['warning_count'] ?? null, 'exhaustive if/else return path should stay clean');
+
 			echo "PASS: scpp stan strict discipline\n";
 			return 0;
 		} finally {
