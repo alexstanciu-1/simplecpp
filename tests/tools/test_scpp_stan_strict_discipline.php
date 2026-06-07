@@ -440,6 +440,11 @@ PHS
 			$this->assertSame('stan.interface_contract_mismatch', $missingInterfaceDiagnostic['code'] ?? null, 'interface contract diagnostic code should be stable');
 			$this->assertContains('Class `Label` implements interface `Renderable` but is missing method `render()`', (string) ($missingInterfaceDiagnostic['message'] ?? ''), 'interface contract diagnostic should describe the missing method');
 
+			$missingInterfaceBuild = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build'], $project, 120);
+			$this->assertNotSame(0, $missingInterfaceBuild['exit_code'], 'missing interface method should stop in STAN pre-build');
+			$this->assertContains('STAN pre-build check failed', $missingInterfaceBuild['stderr'], 'missing interface method should be a compile-error bucket');
+			$this->assertContains('Class `Label` implements interface `Renderable` but is missing method `render()`', $missingInterfaceBuild['stderr'], 'missing interface method build failure should explain the contract mismatch');
+
 			$this->writeProject($project, <<<'PHS'
 interface Renderable
 {
