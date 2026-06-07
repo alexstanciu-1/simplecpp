@@ -6319,6 +6319,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'missing_return',
 		'direct_self_recursion',
 		'member_visibility_violation',
+		'interface_contract_mismatch',
 	], true)) {
 		return 'compile-errors';
 	}

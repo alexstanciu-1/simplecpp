@@ -417,6 +417,51 @@ PHS
 			$exhaustiveReturnPath = $session->runDiagnostics($project, $project . '/prism.json');
 			$this->assertSame(0, $exhaustiveReturnPath['warning_count'] ?? null, 'exhaustive if/else return path should stay clean');
 
+			$this->writeProject($project, <<<'PHS'
+interface Renderable
+{
+	function render(): string;
+}
+
+class Label implements Renderable
+{
+}
+
+$label = new Label();
+PHS
+ . "\n");
+
+			$missingInterfaceMethod = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $missingInterfaceMethod['warning_count'] ?? null, 'missing interface method should produce one STAN finding');
+			$missingInterfaceDiagnostic = $missingInterfaceMethod['diagnostics'][0] ?? null;
+			if (!is_array($missingInterfaceDiagnostic)) {
+				throw new RuntimeException('missing interface method diagnostic should be present');
+			}
+			$this->assertSame('stan.interface_contract_mismatch', $missingInterfaceDiagnostic['code'] ?? null, 'interface contract diagnostic code should be stable');
+			$this->assertContains('Class `Label` implements interface `Renderable` but is missing method `render()`', (string) ($missingInterfaceDiagnostic['message'] ?? ''), 'interface contract diagnostic should describe the missing method');
+
+			$this->writeProject($project, <<<'PHS'
+interface Renderable
+{
+	function render(): string;
+}
+
+class Label implements Renderable
+{
+	function render(): string
+	{
+		return "ok";
+	}
+}
+
+$label = new Label();
+echo $label->render(), "\n";
+PHS
+ . "\n");
+
+			$implementedInterface = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $implementedInterface['warning_count'] ?? null, 'implemented interface method should stay clean');
+
 			echo "PASS: scpp stan strict discipline\n";
 			return 0;
 		} finally {

@@ -147,6 +147,56 @@ final class StanDiagnosticCollector
 		return $diagnostics;
 	}
 
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectInterfaceContractDiagnostics(array $fileSummaries, array $symbolIndex, string $projectRoot): array
+	{
+		$lookup = $this->dependencyResolver->buildResolutionLookup($symbolIndex);
+		$classCatalog = $this->buildClassCatalog($fileSummaries, $projectRoot);
+		$diagnostics = [];
+		foreach ($classCatalog as $classFqcn => $classInfo) {
+			if ((bool) ($classInfo['is_interface'] ?? false) || (bool) ($classInfo['is_abstract'] ?? false)) {
+				continue;
+			}
+			$implementedMethods = $this->collectClassAndAncestorMethods($classInfo, $classCatalog, $lookup, $projectRoot);
+			foreach (($classInfo['interfaces'] ?? []) as $interfaceName) {
+				if (!is_string($interfaceName) || $interfaceName === '') {
+					continue;
+				}
+				$interfaceMatches = $this->dependencyResolver->resolveDependencyTarget('implements', $interfaceName, $lookup);
+				if (count($interfaceMatches) !== 1) {
+					continue;
+				}
+				$interfaceInfo = $this->findClassInfoBySymbol(
+					$classCatalog,
+					$this->pathMapper->sourceKey($projectRoot, (string) ($interfaceMatches[0]['path'] ?? '')),
+					(string) ($interfaceMatches[0]['name'] ?? '')
+				);
+				if ($interfaceInfo === null || (bool) ($interfaceInfo['is_interface'] ?? false) !== true) {
+					continue;
+				}
+				foreach (($interfaceInfo['method_signatures'] ?? []) as $methodName => $interfaceMethod) {
+					if (isset($implementedMethods[(string) $methodName])) {
+						continue;
+					}
+					$diagnostics[] = [
+						'kind' => 'interface_contract_mismatch',
+						'mismatch_kind' => 'missing_method',
+						'class' => $classFqcn,
+						'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
+						'name' => (string) $methodName,
+						'path' => (string) ($classInfo['path'] ?? ''),
+						'line' => (int) ($classInfo['line'] ?? 0),
+						'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
+						'interface_line' => (int) ($interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
+						'message' => 'Class `' . $classFqcn . '` implements interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '` but is missing method `' . (string) $methodName . '()`.',
+					];
+				}
+			}
+		}
+		usort($diagnostics, static fn (array $left, array $right): int => strcmp($left['message'], $right['message']));
+		return $diagnostics;
+	}
+
 	/** @param array<string,mixed> $symbol */
 	private function duplicateMessage(array $symbol): string
 	{
@@ -202,9 +252,19 @@ final class StanDiagnosticCollector
 	private function makeClassCatalogEntry(array $class, string $namespace, string $sourceKey, string $path, string $projectRoot): array
 	{
 		$methods = [];
+		$methodSignatures = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (is_array($method) && (string) ($method['name'] ?? '') !== '') {
-				$methods[(string) $method['name']] = (int) ($method['line'] ?? 0);
+				$methodName = (string) $method['name'];
+				$methods[$methodName] = (int) ($method['line'] ?? 0);
+				$methodSignatures[$methodName] = [
+					'name' => $methodName,
+					'line' => (int) ($method['line'] ?? 0),
+					'params' => is_array($method['params'] ?? null) ? $method['params'] : [],
+					'return_type' => (string) ($method['return_type'] ?? ''),
+					'visibility' => (string) ($method['visibility'] ?? 'public'),
+					'is_static' => (bool) ($method['is_static'] ?? false),
+				];
 			}
 		}
 		$properties = [];
@@ -222,7 +282,11 @@ final class StanDiagnosticCollector
 			'path_key' => $this->pathMapper->sourceKey($projectRoot, $path),
 			'line' => (int) ($class['line'] ?? 0),
 			'parent_class' => isset($class['parent_class']) && is_string($class['parent_class']) ? $class['parent_class'] : null,
+			'interfaces' => is_array($class['interfaces'] ?? null) ? $class['interfaces'] : [],
+			'is_interface' => (bool) ($class['is_interface'] ?? false),
+			'is_abstract' => (bool) ($class['is_abstract'] ?? false),
 			'methods' => $methods,
+			'method_signatures' => $methodSignatures,
 			'properties' => $properties,
 		];
 	}
@@ -236,6 +300,44 @@ final class StanDiagnosticCollector
 			}
 		}
 		return null;
+	}
+
+	/** @param array<string,mixed> $classInfo @param array<string,array<string,mixed>> $classCatalog @param array<string,list<array<string,mixed>>> $lookup @return array<string,array<string,mixed>> */
+	private function collectClassAndAncestorMethods(array $classInfo, array $classCatalog, array $lookup, string $projectRoot, array $visited = []): array
+	{
+		$methods = [];
+		$classFqcn = (string) ($classInfo['fqcn'] ?? '');
+		if ($classFqcn === '' || isset($visited[$classFqcn])) {
+			return $methods;
+		}
+		$visited[$classFqcn] = true;
+		foreach (($classInfo['method_signatures'] ?? []) as $name => $signature) {
+			if (is_array($signature)) {
+				$methods[(string) $name] = $signature;
+			}
+		}
+		$parentName = isset($classInfo['parent_class']) && is_string($classInfo['parent_class']) ? $classInfo['parent_class'] : '';
+		if ($parentName === '') {
+			return $methods;
+		}
+		$parentMatches = $this->dependencyResolver->resolveDependencyTarget('extends', $parentName, $lookup);
+		if (count($parentMatches) !== 1) {
+			return $methods;
+		}
+		$parentInfo = $this->findClassInfoBySymbol(
+			$classCatalog,
+			$this->pathMapper->sourceKey($projectRoot, (string) ($parentMatches[0]['path'] ?? '')),
+			(string) ($parentMatches[0]['name'] ?? '')
+		);
+		if ($parentInfo === null) {
+			return $methods;
+		}
+		foreach ($this->collectClassAndAncestorMethods($parentInfo, $classCatalog, $lookup, $projectRoot, $visited) as $name => $signature) {
+			if (!isset($methods[$name])) {
+				$methods[$name] = $signature;
+			}
+		}
+		return $methods;
 	}
 
 	/** @param array<string,mixed> $classInfo @param array<string,array<string,mixed>> $classCatalog @param array<string,list<array<string,mixed>>> $lookup @return array{method:array<string,array{class:string,path:string,line:int}>,property:array<string,array{class:string,path:string,line:int}>} */
