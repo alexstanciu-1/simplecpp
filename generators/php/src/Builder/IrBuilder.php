@@ -319,7 +319,7 @@ final class IrBuilder
 				continue;
 			}
 			if (($member->kind ?? null) === AstKind::CLASS_CONST_DECL) {
-				$constants = array_merge($constants, $this->buildConstants($member->children['const'] ?? null));
+				$constants = array_merge($constants, $this->buildConstants($member->children['const'] ?? null, false, (int) ($member->flags ?? 0)));
 				continue;
 			}
 			if (($member->kind ?? null) === AstKind::PROP_DECL) {
@@ -338,6 +338,7 @@ final class IrBuilder
 						default: $default,
 						hasDefault: $default !== null,
 						isStatic: $isStatic,
+						visibility: $this->readMemberVisibility((int) ($member->flags ?? 0)),
 						line: $propertyLine,
 					);
 				}
@@ -431,6 +432,7 @@ final class IrBuilder
 			isStatic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
 			line: (int) ($node->lineno ?? 0),
+			visibility: $this->readMemberVisibility((int) ($node->flags ?? 0)),
 			argNormalizationRules: $this->validateArgNormalizationRules($this->parseArgNormalizationRules($children['docComment'] ?? null, $owner)['rules'], $params, $owner),
 		);
 	}
@@ -543,7 +545,7 @@ final class IrBuilder
 
 
 	/** @return list<ConstantDecl> */
-	private function buildConstants(mixed $node, bool $isLibExport = false): array
+	private function buildConstants(mixed $node, bool $isLibExport = false, int $visibilityFlags = 0): array
 	{
 		$out = [];
 		foreach (($node->children ?? []) as $child) {
@@ -554,10 +556,22 @@ final class IrBuilder
 				name: (string) ($child->children['name'] ?? ''),
 				value: $child->children['value'] ?? null,
 				isLibExport: $isLibExport || $this->hasLibExportTag($child->children['docComment'] ?? null),
+				visibility: $this->readMemberVisibility($visibilityFlags !== 0 ? $visibilityFlags : (int) ($node->flags ?? 0)),
 				line: (int) ($child->lineno ?? $node->lineno ?? 0),
 			);
 		}
 		return $out;
+	}
+
+	private function readMemberVisibility(int $flags): string
+	{
+		if (($flags & 4) !== 0) {
+			return 'private';
+		}
+		if (($flags & 2) !== 0) {
+			return 'protected';
+		}
+		return 'public';
 	}
 
 	/** @param array<int, mixed> $nodes @return list<Statement> */

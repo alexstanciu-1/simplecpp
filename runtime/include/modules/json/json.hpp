@@ -6,6 +6,7 @@
 #include "scpp/mixed_t.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/json/to_json.hpp"
 
 namespace scpp::json {
 
@@ -19,11 +20,23 @@ namespace scpp::json {
 // JSON objects.
 [[nodiscard]] string_t json_encode(const mixed_t &value);
 
+template <typename T>
+	requires(to_json_detail::is_supported_v<T> && !std::is_same_v<detail::remove_cvref_t<T>, mixed_t>)
+[[nodiscard]] inline string_t json_encode(const T &value) {
+	return json_encode(to_json(value));
+}
+
 [[nodiscard]] inline mixed_t decode(const string_t &json) {
 	return json_decode(json);
 }
 
 [[nodiscard]] inline string_t encode(const mixed_t &value) {
+	return json_encode(value);
+}
+
+template <typename T>
+	requires(to_json_detail::is_supported_v<T> && !std::is_same_v<detail::remove_cvref_t<T>, mixed_t>)
+[[nodiscard]] inline string_t encode(const T &value) {
 	return json_encode(value);
 }
 

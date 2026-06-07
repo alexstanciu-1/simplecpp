@@ -75,6 +75,28 @@ static void test_json_encode_shapes() {
 	assert(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t<>(shared_table)))).native_value() == "[7,\"ok\"]");
 }
 
+static void test_json_encode_typed_values() {
+	scpp::vector_t<scpp::int_t> items;
+	items.append(scpp::int_t(1));
+	items.append(scpp::int_t(2));
+	items.append(scpp::int_t(3));
+	assert(scpp::json::json_encode(items).native_value() == "[1,2,3]");
+
+	scpp::hash_t<scpp::int_t> scores;
+	scores.set(scpp::string_t("a"), scpp::int_t(1));
+	scores.set(scpp::string_t("b"), scpp::int_t(2));
+	assert(scpp::json::json_encode(scores).native_value() == "{\"a\":1,\"b\":2}");
+
+	scpp::hash_t<scpp::vector_t<scpp::int_t>> matrix;
+	matrix.set(scpp::string_t("row"), items);
+	assert(scpp::json::json_encode(matrix).native_value() == "{\"row\":[1,2,3]}");
+
+	scpp::nullable<scpp::int_t> empty;
+	assert(scpp::json::json_encode(empty).native_value() == "null");
+	scpp::nullable<scpp::int_t> present(scpp::int_t(7));
+	assert(scpp::json::json_encode(present).native_value() == "7");
+}
+
 static void test_json_encode_key_and_error_contracts() {
 	auto object_like = scpp::shared<scpp::hash_t<scpp::mixed_t>>();
 	object_like->set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t(1)));
@@ -104,6 +126,7 @@ int main() {
 	test_json_decode_nested_shared_model();
 	test_json_decode_unicode_and_escapes();
 	test_json_encode_shapes();
+	test_json_encode_typed_values();
 	test_json_encode_key_and_error_contracts();
 	test_json_alias_surface();
 	return 0;

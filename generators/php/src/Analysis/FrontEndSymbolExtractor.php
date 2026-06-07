@@ -49,6 +49,9 @@ final class FrontEndSymbolExtractor
 			}
 			$rootFunctions[] = $this->summarizeFunction($function, null, $sourceLines);
 		}
+		if ($file->rootStatements !== []) {
+			$rootFunctions[] = $this->summarizeExecutableStatements('__scpp_main', $file->rootStatements, null, $sourceLines);
+		}
 
 		$rootConstants = [];
 		foreach ($file->constants as $constant) {
@@ -105,6 +108,9 @@ final class FrontEndSymbolExtractor
 				continue;
 			}
 			$functions[] = $this->summarizeFunction($function, $namespaceBlock->name, $sourceLines);
+		}
+		if ($namespaceBlock->statements !== []) {
+			$functions[] = $this->summarizeExecutableStatements('__scpp_main', $namespaceBlock->statements, $namespaceBlock->name, $sourceLines);
 		}
 
 		$constants = [];
@@ -163,6 +169,7 @@ final class FrontEndSymbolExtractor
 			'typed_locals' => $this->summarizeTypedLocals($function->statements, $sourceLines),
 			'return_chains' => $this->summarizeReturnChains($function->statements),
 			'return_values' => $this->summarizeReturnValues($function->statements),
+			'returns_on_all_paths' => $this->statementsReturnOnAllPaths($function->statements),
 			'expression_chains' => $this->summarizeExpressionChains($function->statements),
 			'property_reads' => $this->summarizePropertyReads($function->statements),
 			'call_sites' => $this->summarizeCallSites($function->statements),
@@ -177,12 +184,54 @@ final class FrontEndSymbolExtractor
 			'foreach_locals' => $this->summarizeForeachLocals($function->statements),
 			'for_loop_locals' => $this->summarizeForLoopLocals($function->statements),
 			'property_assignments' => $this->summarizePropertyAssignments($function->statements),
+			'static_property_assignments' => $this->summarizeStaticPropertyAssignments($function->statements),
 			'property_branch_assignments' => $this->summarizePropertyBranchAssignments($function->statements),
+			'static_property_reads' => $this->summarizeStaticPropertyReads($function->statements),
+			'class_constant_accesses' => $this->summarizeClassConstantAccesses($function->statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($function->statements, $sourceLines),
 			'statement_count' => count($function->statements),
 			'line' => $function->line,
 			'returns_by_reference' => $function->returnsByReference,
 			'is_lib_export' => $function->isLibExport,
+		];
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return array<string,mixed> */
+	private function summarizeExecutableStatements(string $name, array $statements, ?string $namespace, array $sourceLines): array
+	{
+		return [
+			'name' => $name,
+			'namespace' => $namespace,
+			'params' => [],
+			'return_type' => 'int',
+			'typed_locals' => $this->summarizeTypedLocals($statements, $sourceLines),
+			'return_chains' => $this->summarizeReturnChains($statements),
+			'return_values' => $this->summarizeReturnValues($statements),
+			'returns_on_all_paths' => $this->statementsReturnOnAllPaths($statements),
+			'expression_chains' => $this->summarizeExpressionChains($statements),
+			'property_reads' => $this->summarizePropertyReads($statements),
+			'call_sites' => $this->summarizeCallSites($statements),
+			'local_alias_assignments' => $this->summarizeLocalAliasAssignments($statements, $sourceLines),
+			'local_literal_assignments' => $this->summarizeLocalLiteralAssignments($statements, $sourceLines),
+			'local_type_assignments' => $this->summarizeLocalTypeAssignments($statements, $sourceLines),
+			'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($statements, $sourceLines),
+			'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($statements, $sourceLines),
+			'local_branch_assignments' => $this->summarizeLocalBranchAssignments($statements),
+			'non_null_guards' => $this->summarizeNonNullGuards($statements),
+			'non_false_guards' => $this->summarizeNonFalseGuards($statements),
+			'foreach_locals' => $this->summarizeForeachLocals($statements),
+			'for_loop_locals' => $this->summarizeForLoopLocals($statements),
+			'property_assignments' => $this->summarizePropertyAssignments($statements),
+			'static_property_assignments' => $this->summarizeStaticPropertyAssignments($statements),
+			'property_branch_assignments' => $this->summarizePropertyBranchAssignments($statements),
+			'static_property_reads' => $this->summarizeStaticPropertyReads($statements),
+			'class_constant_accesses' => $this->summarizeClassConstantAccesses($statements),
+			'local_invalidations' => $this->summarizeLocalInvalidations($statements, $sourceLines),
+			'statement_count' => count($statements),
+			'line' => 1,
+			'returns_by_reference' => false,
+			'is_lib_export' => false,
+			'is_synthetic_entrypoint' => true,
 		];
 	}
 
@@ -208,6 +257,7 @@ final class FrontEndSymbolExtractor
 				'typed_locals' => $this->summarizeTypedLocals($method->statements, $sourceLines),
 				'return_chains' => $this->summarizeReturnChains($method->statements),
 				'return_values' => $this->summarizeReturnValues($method->statements),
+				'returns_on_all_paths' => $this->statementsReturnOnAllPaths($method->statements),
 				'expression_chains' => $this->summarizeExpressionChains($method->statements),
 				'property_reads' => $this->summarizePropertyReads($method->statements),
 				'call_sites' => $this->summarizeCallSites($method->statements),
@@ -222,12 +272,16 @@ final class FrontEndSymbolExtractor
 				'foreach_locals' => $this->summarizeForeachLocals($method->statements),
 				'for_loop_locals' => $this->summarizeForLoopLocals($method->statements),
 				'property_assignments' => $this->summarizePropertyAssignments($method->statements),
+				'static_property_assignments' => $this->summarizeStaticPropertyAssignments($method->statements),
 				'property_branch_assignments' => $this->summarizePropertyBranchAssignments($method->statements),
+				'static_property_reads' => $this->summarizeStaticPropertyReads($method->statements),
+				'class_constant_accesses' => $this->summarizeClassConstantAccesses($method->statements),
 				'local_invalidations' => $this->summarizeLocalInvalidations($method->statements, $sourceLines),
 				'statement_count' => count($method->statements),
 				'line' => $method->line,
 				'returns_by_reference' => $method->returnsByReference,
 				'is_static' => $method->isStatic,
+				'visibility' => $method->visibility,
 			];
 		}
 
@@ -242,7 +296,15 @@ final class FrontEndSymbolExtractor
 				'line' => $property->line,
 				'is_static' => $property->isStatic,
 				'has_default' => $property->hasDefault,
+				'visibility' => $property->visibility,
 			];
+		}
+		$constants = [];
+		foreach ($class->constants as $constant) {
+			if (!$constant instanceof ConstantDecl) {
+				continue;
+			}
+			$constants[] = $this->summarizeConstant($constant, $namespace);
 		}
 
 		return [
@@ -257,6 +319,7 @@ final class FrontEndSymbolExtractor
 			'is_lib_export' => $class->isLibExport,
 			'methods' => $methods,
 			'properties' => $properties,
+			'constants' => $constants,
 		];
 	}
 
@@ -268,6 +331,7 @@ final class FrontEndSymbolExtractor
 			'namespace' => $namespace,
 			'line' => $constant->line,
 			'is_lib_export' => $constant->isLibExport,
+			'visibility' => $constant->visibility,
 		];
 	}
 
@@ -390,6 +454,7 @@ final class FrontEndSymbolExtractor
 			$values[] = [
 				'line' => $statement->line,
 				'descriptor' => $this->describeExpression($statement->payload, $statement->line),
+				'direct_call_name' => $this->extractDirectFunctionCallName($statement->payload),
 			];
 		}
 		return $values;
@@ -1110,6 +1175,64 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeStaticPropertyAssignments(array $statements): array
+	{
+		$assignments = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement || $statement->kind !== 'assign') {
+				continue;
+			}
+			$payload = $statement->payload;
+			if (!is_array($payload)) {
+				continue;
+			}
+			$access = $this->describeStaticPropertyAccess($payload['var'] ?? null, $statement->line);
+			if ($access === null) {
+				continue;
+			}
+			$access['statement_kind'] = 'assign';
+			$assignments[] = $access;
+		}
+		return $assignments;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeStaticPropertyReads(array $statements): array
+	{
+		$reads = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
+				continue;
+			}
+			$expr = match ($statement->kind) {
+				'assign', 'assign_ref', 'assign_op' => is_array($statement->payload) ? ($statement->payload['expr'] ?? null) : null,
+				'expr', 'return', 'throw', 'echo' => $statement->payload,
+				default => null,
+			};
+			$this->collectStaticPropertyReadsFromNode($expr, $statement->line, $reads, $statement->kind);
+		}
+		return $reads;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeClassConstantAccesses(array $statements): array
+	{
+		$accesses = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
+				continue;
+			}
+			$expr = match ($statement->kind) {
+				'assign', 'assign_ref', 'assign_op' => is_array($statement->payload) ? ($statement->payload['expr'] ?? null) : null,
+				'expr', 'return', 'throw', 'echo' => $statement->payload,
+				default => null,
+			};
+			$this->collectClassConstantAccessesFromNode($expr, $statement->line, $accesses, $statement->kind);
+		}
+		return $accesses;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
 	private function summarizeCallSites(array $statements): array
 	{
 		$calls = [];
@@ -1301,6 +1424,44 @@ final class FrontEndSymbolExtractor
 		return $flat;
 	}
 
+	/** @param list<\Scpp\S2S\IR\Statement> $statements */
+	private function statementsReturnOnAllPaths(array $statements): bool
+	{
+		foreach ($statements as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
+				continue;
+			}
+			if ($statement->kind === 'return') {
+				return true;
+			}
+			if ($statement->kind === 'if' && is_array($statement->payload) && $this->ifStatementReturnsOnAllPaths($statement->payload)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** @param list<array<string,mixed>> $branches */
+	private function ifStatementReturnsOnAllPaths(array $branches): bool
+	{
+		if ($branches === []) {
+			return false;
+		}
+		$hasElse = false;
+		foreach ($branches as $branch) {
+			if (!is_array($branch) || !array_key_exists('cond', $branch) || !is_array($branch['stmts'] ?? null)) {
+				return false;
+			}
+			if ($branch['cond'] === null) {
+				$hasElse = true;
+			}
+			if (!$this->statementsReturnOnAllPaths($branch['stmts'])) {
+				return false;
+			}
+		}
+		return $hasElse;
+	}
+
 	/** @param list<array<string,mixed>> $calls */
 	private function collectCallSitesFromNode(mixed $node, int $line, array &$calls, string $statementKind): void
 	{
@@ -1392,6 +1553,98 @@ final class FrontEndSymbolExtractor
 		}
 	}
 
+	/** @param list<array<string,mixed>> $reads */
+	private function collectStaticPropertyReadsFromNode(mixed $node, int $line, array &$reads, string $statementKind): void
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children)) {
+			return;
+		}
+
+		$access = $this->describeStaticPropertyAccess($node, $line);
+		if ($access !== null) {
+			$access['statement_kind'] = $statementKind;
+			$reads[] = $access;
+		}
+
+		foreach ($node->children as $child) {
+			if (is_array($child)) {
+				foreach ($child as $nested) {
+					$this->collectStaticPropertyReadsFromNode($nested, $line, $reads, $statementKind);
+				}
+				continue;
+			}
+			$this->collectStaticPropertyReadsFromNode($child, $line, $reads, $statementKind);
+		}
+	}
+
+	/** @param list<array<string,mixed>> $accesses */
+	private function collectClassConstantAccessesFromNode(mixed $node, int $line, array &$accesses, string $statementKind): void
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children)) {
+			return;
+		}
+
+		$access = $this->describeClassConstantAccess($node, $line);
+		if ($access !== null) {
+			$access['statement_kind'] = $statementKind;
+			$accesses[] = $access;
+		}
+
+		foreach ($node->children as $child) {
+			if (is_array($child)) {
+				foreach ($child as $nested) {
+					$this->collectClassConstantAccessesFromNode($nested, $line, $accesses, $statementKind);
+				}
+				continue;
+			}
+			$this->collectClassConstantAccessesFromNode($child, $line, $accesses, $statementKind);
+		}
+	}
+
+	/** @return array{line:int,class_name:string,property_name:string}|null */
+	private function describeStaticPropertyAccess(mixed $node, int $line): ?array
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children) || $node->kind !== AstKind::STATIC_PROP) {
+			return null;
+		}
+		$classNode = $node->children['class'] ?? null;
+		if (!is_object($classNode) || ($classNode->kind ?? null) !== AstKind::NAME) {
+			return null;
+		}
+		$className = trim((string) ($classNode->children['name'] ?? ''));
+		$propertyName = trim((string) ($node->children['prop'] ?? ''));
+		if ($className === '' || $propertyName === '') {
+			return null;
+		}
+		return [
+			'line' => $line,
+			'class_name' => ltrim($className, '\\'),
+			'property_name' => $propertyName,
+		];
+	}
+
+	/** @return array{line:int,class_name:string,constant_name:string}|null */
+	private function describeClassConstantAccess(mixed $node, int $line): ?array
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children) || $node->kind !== AstKind::CLASS_CONST) {
+			return null;
+		}
+		$classNode = $node->children['class'] ?? null;
+		if (!is_object($classNode) || ($classNode->kind ?? null) !== AstKind::NAME) {
+			return null;
+		}
+		$className = trim((string) ($classNode->children['name'] ?? ''));
+		$constantName = trim((string) ($node->children['const'] ?? ''));
+		if ($className === '' || $constantName === '') {
+			return null;
+		}
+		return [
+			'line' => $line,
+			'class_name' => ltrim($className, '\\'),
+			'constant_name' => $constantName,
+		];
+	}
+
 	/** @return list<array<string,mixed>> */
 	private function describeArgs(mixed $argsNode, int $line): array
 	{
@@ -1476,6 +1729,25 @@ final class FrontEndSymbolExtractor
 			'kind' => 'element',
 			'source' => $source,
 		];
+	}
+
+	private function extractDirectFunctionCallName(mixed $expr): ?string
+	{
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::CALL) {
+			return null;
+		}
+		$callee = $expr->children['expr'] ?? null;
+		if (!is_object($callee) || !isset($callee->kind, $callee->children) || !is_array($callee->children)) {
+			return null;
+		}
+		if ($callee->kind !== AstKind::NAME) {
+			return null;
+		}
+		$name = trim((string) ($callee->children['name'] ?? ''));
+		return $name === '' ? null : $name;
 	}
 
 	/** @return array<string,mixed>|null */

@@ -1962,6 +1962,10 @@ function handle_run(string $cwd, array $args): void
 			scpp_write($stderrToShow . PHP_EOL, 'stderr');
 		}
 	}
+	$nativeSignalDiagnostic = $runtimeDiagnostic === null && $status !== 0 ? classify_native_signal_exit($status) : null;
+	if ($nativeSignalDiagnostic !== null) {
+		scpp_write($nativeSignalDiagnostic . PHP_EOL, 'stderr');
+	}
 	write_last_run_report(
 		$project['project_root'],
 		'run',
@@ -1973,6 +1977,7 @@ function handle_run(string $cwd, array $args): void
 			'entrypoint_output' => $buildResult['output_path'],
 			'runtime_library_dir' => $buildResult['runtime_library_dir'],
 			'run_args' => array_values($runArgs),
+			'native_signal_diagnostic' => $nativeSignalDiagnostic,
 			'build_explanation' => $buildResult['build_explanation'] ?? null,
 		]
 	);
@@ -2000,6 +2005,33 @@ function handle_run(string $cwd, array $args): void
 		scpp_write(PHP_EOL . $shortMessage, 'stderr');
 	}
 	exit($status);
+}
+
+function classify_native_signal_exit(int $status): ?string
+{
+	$signal = null;
+	if ($status > 128 && $status < 192) {
+		$signal = $status - 128;
+	} elseif ($status < 0) {
+		$signal = abs($status);
+	}
+	if ($signal === null) {
+		return null;
+	}
+	$name = match ($signal) {
+		11 => 'SIGSEGV',
+		6 => 'SIGABRT',
+		4 => 'SIGILL',
+		default => 'signal ' . $signal,
+	};
+	$lines = [
+		'Program terminated with ' . $name . '.',
+	];
+	if ($signal === 11) {
+		$lines[] = 'This may indicate native stack exhaustion from deep or infinite recursion, or another native memory-safety failure.';
+	}
+	$lines[] = "Run 'scpp full-last-run' for the saved run report.";
+	return implode(PHP_EOL, $lines);
 }
 
 /**
@@ -2111,6 +2143,8 @@ function collect_runtime_error_diagnostic(string $stderr): ?array
 			'json_path' => isset($details['json_path']) ? (string) $details['json_path'] : null,
 			'target_type' => isset($details['target_type']) ? (string) $details['target_type'] : null,
 			'actual_kind' => isset($details['actual_kind']) ? (string) $details['actual_kind'] : null,
+			'function' => isset($details['function']) ? (string) $details['function'] : null,
+			'max_call_depth' => isset($details['max_call_depth']) ? (string) $details['max_call_depth'] : null,
 			'trace' => $trace,
 		];
 	}
@@ -2243,6 +2277,18 @@ function scpp_runtime_source_snippet_context_requested(): bool
 
 function build_runtime_failure_summary(array $diagnostic): string
 {
+	if ((string) ($diagnostic['code'] ?? '') === 'max_call_depth_exceeded') {
+		$function = trim((string) ($diagnostic['function'] ?? ''));
+		$limit = trim((string) ($diagnostic['max_call_depth'] ?? ''));
+		$line = 'Maximum call depth exceeded';
+		if ($function !== '') {
+			$line .= ' while calling `' . $function . '`';
+		}
+		if ($limit !== '') {
+			$line .= ' (limit ' . $limit . ')';
+		}
+		return $line . '.';
+	}
 	$expression = trim((string) ($diagnostic['expression'] ?? ''));
 	$expected = trim((string) ($diagnostic['expected_type'] ?? ''));
 	if ($expression !== '') {
@@ -2910,6 +2956,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	unset($projectContext);
 	$markTiming('source_scan_complete');
+	validate_runtime_module_symbol_usage($projectRoot, $generatedUnits, $runtimeConfig);
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
 	$projectUnitForceIncludes = write_project_unit_force_include_headers($projectContexts);
 	foreach ($generatedUnits as &$unit) {
@@ -4588,6 +4635,7 @@ function resolve_runtime_build_config(array $config): array
 	$modules = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $modules)));
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
+	$safety = is_array($runtime['safety'] ?? null) ? $runtime['safety'] : [];
 	$allowedLanguages = ['php'];
 	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl'];
 	foreach ($languages as $language) {
@@ -4607,6 +4655,7 @@ function resolve_runtime_build_config(array $config): array
 		'languages' => $languages,
 		'language_profiles' => $languageProfiles,
 		'modules' => $modules,
+		'safety' => $safety,
 	];
 }
 
@@ -5482,6 +5531,73 @@ function collect_compiler_diagnostics(string $projectRoot, string $buildDir, str
 	return array_values($results);
 }
 
+/**
+ * @param list<array<string,mixed>> $generatedUnits
+ * @param array<string,mixed> $runtimeConfig
+ */
+function validate_runtime_module_symbol_usage(string $projectRoot, array $generatedUnits, array $runtimeConfig): void
+{
+	$modules = [];
+	foreach ((array) ($runtimeConfig['modules'] ?? []) as $module) {
+		if (is_string($module) && $module !== '') {
+			$modules[strtolower($module)] = true;
+		}
+	}
+
+	if (!isset($modules['regex'])) {
+		$diagnostic = find_first_regex_runtime_symbol_usage($projectRoot, $generatedUnits);
+		if ($diagnostic !== null) {
+			$sourceLabel = normalize_config_path(relative_path($projectRoot, $diagnostic['source_file']));
+			$message = 'Regex helper `' . $diagnostic['source_helper'] . '` requires runtime module `regex`, but `regex` is not enabled in ' . SCPP_PROJECT_CONFIG . '.' . PHP_EOL;
+			$message .= 'Source: ' . $sourceLabel . ':' . $diagnostic['source_line'] . PHP_EOL;
+			$message .= 'Add "regex" to `runtime.modules` and ensure the PCRE2 development files are installed.' . PHP_EOL;
+			scpp_fail($message, 3);
+		}
+	}
+}
+
+/**
+ * @param list<array<string,mixed>> $generatedUnits
+ * @return array{source_file:string,source_line:int,source_helper:string}|null
+ */
+function find_first_regex_runtime_symbol_usage(string $projectRoot, array $generatedUnits): ?array
+{
+	foreach ($generatedUnits as $unit) {
+		$generatedCpp = $unit['generated_cpp'] ?? null;
+		if (!is_string($generatedCpp) || $generatedCpp === '' || !is_file($generatedCpp)) {
+			continue;
+		}
+		$contents = file_get_contents($generatedCpp);
+		if (!is_string($contents) || !str_contains($contents, 'regex::')) {
+			continue;
+		}
+		if (preg_match('/\bregex::([A-Za-z_][A-Za-z0-9_]*)\s*\(/', $contents, $matches, PREG_OFFSET_CAPTURE) !== 1) {
+			continue;
+		}
+		$offset = (int) ($matches[0][1] ?? 0);
+		$generatedLine = substr_count(substr($contents, 0, $offset), "\n") + 1;
+		$mapEntry = lookup_generated_map_entry($generatedCpp, $generatedLine);
+		$sourceLine = is_array($mapEntry) ? (int) $mapEntry['line'] : 1;
+		$sourceFile = is_string($unit['relative_php'] ?? null) && is_string($unit['project_root'] ?? null)
+			? normalize_path((string) $unit['project_root'] . '/' . normalize_config_path((string) $unit['relative_php']))
+			: normalize_path($projectRoot . '/main.phs');
+		return [
+			'source_file' => $sourceFile,
+			'source_line' => max(1, $sourceLine),
+			'source_helper' => regex_runtime_symbol_to_source_helper((string) ($matches[1][0] ?? '')),
+		];
+	}
+	return null;
+}
+
+function regex_runtime_symbol_to_source_helper(string $symbol): string
+{
+	return match ($symbol) {
+		'jit_available' => 'regex_jit_available',
+		default => 'regex_' . $symbol,
+	};
+}
+
 function render_short_compiler_failure(array $diagnostics, string $projectRoot, ?string $projectMode = null): string
 {
 	$lines = [];
@@ -6048,6 +6164,9 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'unresolved_method_call',
 		'unresolved_property_write',
 		'unresolved_property_read',
+		'missing_return',
+		'direct_self_recursion',
+		'member_visibility_violation',
 	], true)) {
 		return 'compile-errors';
 	}
@@ -6057,7 +6176,6 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'override_declaration',
 		'argument_type_mismatch',
 		'argument_count_mismatch',
-		'missing_return',
 		'static_instance_misuse',
 		'invalid_property_read',
 	], true)) {
@@ -6378,7 +6496,7 @@ function build_stan_cli_result_from_report(string $projectRoot, string $configPa
 			$counts['property_read_warning_count']++;
 		} elseif ($kind === 'initialization_warning') {
 			$counts['initialization_warning_count']++;
-		} elseif (in_array($kind, ['unresolved_call', 'unresolved_static_call', 'unresolved_method_call', 'argument_count_mismatch', 'argument_type_mismatch', 'static_instance_misuse', 'unresolved_property_write'], true)) {
+		} elseif (in_array($kind, ['unresolved_call', 'unresolved_static_call', 'unresolved_method_call', 'argument_count_mismatch', 'argument_type_mismatch', 'static_instance_misuse', 'member_visibility_violation', 'unresolved_property_write'], true)) {
 			$counts['call_site_warning_count']++;
 		} elseif ($kind === 'return_type_mismatch' || $kind === 'missing_return') {
 			$counts['return_type_warning_count']++;
@@ -7585,6 +7703,12 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_CURL=0';
 	}
+	if (call_depth_guard_enabled($runtimeConfig, $buildMode)) {
+		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=1';
+		$extraCxxFlags[] = '-DSCPP_MAX_CALL_DEPTH=' . call_depth_guard_limit($runtimeConfig);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=0';
+	}
 
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = PHP_OS_FAMILY === 'Darwin' ? 'libruntime.dylib' : 'libruntime.so';
@@ -7722,10 +7846,34 @@ function compute_runtime_build_signature(string $repoRoot, array $compiler, stri
 		'runtime_languages:' . implode(',', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : []),
 		'php_profile:' . resolve_php_runtime_profile($runtimeConfig),
 		'runtime_modules:' . implode(',', is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : []),
+		'call_depth_guard:' . (call_depth_guard_enabled($runtimeConfig, $buildMode) ? '1' : '0'),
+		'max_call_depth:' . call_depth_guard_limit($runtimeConfig),
 	];
 
 	sort($parts, SORT_STRING);
 	return substr(hash('sha256', implode("\n", $parts)), 0, 16);
+}
+
+function call_depth_guard_enabled(array $runtimeConfig, string $buildMode): bool
+{
+	$safety = is_array($runtimeConfig['safety'] ?? null) ? $runtimeConfig['safety'] : [];
+	if (array_key_exists('call_depth_guard', $safety)) {
+		return (bool) $safety['call_depth_guard'];
+	}
+	return $buildMode !== 'release';
+}
+
+function call_depth_guard_limit(array $runtimeConfig): int
+{
+	$safety = is_array($runtimeConfig['safety'] ?? null) ? $runtimeConfig['safety'] : [];
+	$value = $safety['max_call_depth'] ?? null;
+	if (is_int($value)) {
+		return max(1, $value);
+	}
+	if (is_string($value) && preg_match('/^\d+$/', $value) === 1) {
+		return max(1, (int) $value);
+	}
+	return 4096;
 }
 
 /**

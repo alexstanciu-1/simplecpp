@@ -20,6 +20,7 @@ Use the dedicated headers instead:
 - strict reusable namespace root: `scpp::regex`
 - current build policy: opt-in only
 - current dependency policy: manual host install of PCRE2 development files is required
+- missing-module diagnostic policy: strict source/build should report regex helper use without the `regex` runtime module before native link
 - current JIT policy: opportunistic runtime use when PCRE2 reports usable JIT support
 - shared runtime policy: typed-only, no `mixed_t`
 - strict PHP policy: typed-only, no `mixed_t`

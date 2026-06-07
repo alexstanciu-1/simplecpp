@@ -352,6 +352,7 @@ Current v1 typed-boundary bridge rule:
 - if the stable explicit destination is `mixed`, no cast is inserted and the value remains `mixed`
 - operator resolution must not use implicit extraction to create extra candidates
 - failed typed extraction remains a runtime error
+- required typed boundaries may be stricter than explicit source casts; for example a dynamic value assigned into a required `int` destination must carry an `int` runtime payload, while an explicit `(int)` cast may still apply the configured float/string-to-int conversion rules
 
 ### Indexing / write context
 
