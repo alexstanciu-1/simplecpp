@@ -6308,6 +6308,7 @@ function write_stan_worker_heartbeat(string $heartbeatPath, array $payload): voi
 function classify_stan_build_bucket(array $diagnostic): string
 {
 	$kind = (string) ($diagnostic['kind'] ?? '');
+	$initializationKind = (string) ($diagnostic['initialization_kind'] ?? '');
 	if (in_array($kind, [
 		'duplicate_declaration',
 		'unresolved_call',
@@ -6319,6 +6320,9 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'direct_self_recursion',
 		'member_visibility_violation',
 	], true)) {
+		return 'compile-errors';
+	}
+	if ($kind === 'initialization_warning' && $initializationKind === 'maybe_uninitialized_property') {
 		return 'compile-errors';
 	}
 	if (in_array($kind, [

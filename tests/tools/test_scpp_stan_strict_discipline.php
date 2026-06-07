@@ -100,6 +100,78 @@ PHS
 			$guardedDynamic = $session->runDiagnostics($project, $project . '/prism.json');
 			$this->assertSame(0, $guardedDynamic['warning_count'] ?? null, 'guarded dynamic JSON extraction with an explicit cast should stay clean');
 
+			$this->writeProject($project, <<<'PHS'
+class Box
+{
+	public int $value;
+
+	function read(): int
+	{
+		return $this->value;
+	}
+}
+
+$box = new Box();
+echo $box->read(), "\n";
+PHS
+ . "\n");
+
+			$uninitializedBuild = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build'], $project, 120);
+			$this->assertNotSame(0, $uninitializedBuild['exit_code'], 'uninitialized required property read should stop in STAN pre-build');
+			$this->assertContains('STAN pre-build check failed', $uninitializedBuild['stderr'], 'uninitialized property read should be a compile-error bucket');
+			$this->assertContains('Property `$this->value` may be read before initialization', $uninitializedBuild['stderr'], 'uninitialized property read should explain the strict property initialization issue');
+
+			$this->writeProject($project, <<<'PHS'
+class Box
+{
+	public int $value;
+
+	function __construct(int $value)
+	{
+		$this->value = $value;
+	}
+
+	function read(): int
+	{
+		return $this->value;
+	}
+}
+
+$box = new Box(7);
+echo $box->read(), "\n";
+PHS
+ . "\n");
+
+			$initialized = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $initialized['warning_count'] ?? null, 'constructor-initialized required property read should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
+class Box
+{
+	public int $value;
+
+	function __construct(bool $ok)
+	{
+		if ($ok) {
+			$this->value = 7;
+		}
+	}
+
+	function read(): int
+	{
+		return $this->value;
+	}
+}
+
+$box = new Box(false);
+echo $box->read(), "\n";
+PHS
+ . "\n");
+
+			$partialConstructor = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build'], $project, 120);
+			$this->assertNotSame(0, $partialConstructor['exit_code'], 'partially initialized constructor property should still stop in STAN pre-build');
+			$this->assertContains('Property `$this->value` may be read before initialization', $partialConstructor['stderr'], 'partial constructor initialization should not satisfy later required property reads');
+
 			echo "PASS: scpp stan strict discipline\n";
 			return 0;
 		} finally {
@@ -180,6 +252,54 @@ PHS
 		}
 	}
 
+	/** @return array{exit_code:int,stdout:string,stderr:string} */
+	private function runCommand(array $command, string $cwd, int $timeoutSeconds): array
+	{
+		$descriptor = [
+			0 => ['file', '/dev/null', 'r'],
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$process = proc_open($command, $descriptor, $pipes, $cwd, scpp_build_process_environment([
+			'SCPP_CXX_LAUNCHER' => ' ',
+		]));
+		if (!is_resource($process)) {
+			throw new RuntimeException('Failed to start command: ' . implode(' ', $command));
+		}
+		$stdout = '';
+		$stderr = '';
+		$started = microtime(true);
+		$observedExitCode = null;
+		foreach ([1, 2] as $index) {
+			stream_set_blocking($pipes[$index], false);
+		}
+		while (true) {
+			$status = proc_get_status($process);
+			$stdout .= (string) stream_get_contents($pipes[1]);
+			$stderr .= (string) stream_get_contents($pipes[2]);
+			if (($status['running'] ?? false) !== true) {
+				$exitCode = $status['exitcode'] ?? null;
+				$observedExitCode = is_int($exitCode) ? $exitCode : null;
+				break;
+			}
+			if ((microtime(true) - $started) > $timeoutSeconds) {
+				proc_terminate($process);
+				throw new RuntimeException('Timed out after ' . $timeoutSeconds . 's: ' . implode(' ', $command));
+			}
+			usleep(100000);
+		}
+		$stdout .= (string) stream_get_contents($pipes[1]);
+		$stderr .= (string) stream_get_contents($pipes[2]);
+		fclose($pipes[1]);
+		fclose($pipes[2]);
+		$exitCode = proc_close($process);
+		return [
+			'exit_code' => $observedExitCode ?? (is_int($exitCode) ? $exitCode : 1),
+			'stdout' => $stdout,
+			'stderr' => $stderr,
+		];
+	}
+
 	private function removeTree(string $path): void
 	{
 		if (!is_dir($path)) {
@@ -214,6 +334,13 @@ PHS
 	{
 		if ($expected !== $actual) {
 			throw new RuntimeException($message . ' expected ' . var_export($expected, true) . ', got ' . var_export($actual, true));
+		}
+	}
+
+	private function assertNotSame(mixed $unexpected, mixed $actual, string $message): void
+	{
+		if ($unexpected === $actual) {
+			throw new RuntimeException($message . ' did not expect ' . var_export($actual, true));
 		}
 	}
 }

@@ -538,14 +538,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterObservationResults($analysis['observations'], $fieldName, $kind));
 		}
 		return $results;
@@ -556,14 +558,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterDiagnosticResults($analysis['diagnostics'], $fieldName, $diagnosticKind));
 		}
 		return $results;
@@ -574,14 +578,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterLocalTypeDiagnostics($analysis['diagnostics']));
 		}
 		return $results;
@@ -591,14 +597,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterPropertyTypeDiagnostics($analysis['diagnostics']));
 		}
 		return $results;
@@ -608,14 +616,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $analysis['property_read_diagnostics']);
 		}
 		return $results;
@@ -625,14 +635,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterInitializationDiagnostics($analysis['diagnostics']));
 		}
 		return $results;
@@ -642,14 +654,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, $functionCatalog);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, $functionCatalog, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $analysis['call_site_diagnostics']);
 		}
 		return $results;
@@ -667,14 +681,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->collectWrapperBoundaryDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $context, $path));
 		}
 		return $results;
@@ -692,14 +708,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->collectReturnDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $context, $path));
 		}
 		return $results;
@@ -882,8 +900,8 @@ final class StanExpressionTypeResolver
 		return $diagnostics;
 	}
 
-	/** @param array<string,mixed> $ownerNode @param array<string,string> $baseTypes @param array<string,array<string,mixed>> $classLookup @param array<string,array<string,mixed>>|null $functionCatalog @return array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>,call_site_diagnostics:list<array<string,mixed>>,property_read_diagnostics:list<array<string,mixed>>} */
-	private function analyzeChainSequence(array $ownerNode, array $baseTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, ?array $functionCatalog = null): array
+	/** @param array<string,mixed> $ownerNode @param array<string,string> $baseTypes @param array<string,array<string,mixed>> $classLookup @param array<string,array<string,mixed>>|null $functionCatalog @param array<string,bool> $constructorInitializedProperties @return array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>,call_site_diagnostics:list<array<string,mixed>>,property_read_diagnostics:list<array<string,mixed>>} */
+	private function analyzeChainSequence(array $ownerNode, array $baseTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, ?array $functionCatalog = null, array $constructorInitializedProperties = []): array
 	{
 		$localTypes = [];
 		foreach ($baseTypes as $baseName => $baseType) {
@@ -898,7 +916,7 @@ final class StanExpressionTypeResolver
 			$initializedLocals[$baseName] = true;
 			$initializedLocalLines[$baseName] = 0;
 		}
-		$initializedProperties = $this->buildInitialPropertyInitializationMap($selfType, $classLookup);
+		$initializedProperties = array_replace($this->buildInitialPropertyInitializationMap($selfType, $classLookup), $constructorInitializedProperties);
 		$initializedPropertyLines = [];
 		foreach (array_keys($initializedProperties) as $initializedPropertyName) {
 			$initializedPropertyLines[$initializedPropertyName] = 0;
@@ -2808,6 +2826,77 @@ final class StanExpressionTypeResolver
 			}
 		}
 		return $map;
+	}
+
+	/** @param array<string,mixed> $class @return array<string,bool> */
+	private function collectPropertiesInitializedByEveryConstructor(array $class): array
+	{
+		$constructors = [];
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method) && strtolower((string) ($method['name'] ?? '')) === '__construct') {
+				$constructors[] = $method;
+			}
+		}
+		if ($constructors === []) {
+			return [];
+		}
+		$common = null;
+		foreach ($constructors as $constructor) {
+			$assigned = $this->collectDirectSelfPropertyAssignments($constructor);
+			$common = $common === null
+				? $assigned
+				: array_intersect_key($common, $assigned);
+		}
+		return is_array($common) ? $common : [];
+	}
+
+	/** @param array<string,mixed> $method @return array<string,bool> */
+	private function collectDirectSelfPropertyAssignments(array $method): array
+	{
+		$assigned = [];
+		foreach (($method['property_assignments'] ?? []) as $assignment) {
+			if (!is_array($assignment) || !is_array($assignment['target_chain'] ?? null)) {
+				continue;
+			}
+			$targetChain = $assignment['target_chain'];
+			$segments = $targetChain['segments'] ?? [];
+			if (($targetChain['root_kind'] ?? '') !== 'variable' || ($targetChain['root_name'] ?? '') !== 'this' || !is_array($segments) || count($segments) !== 1) {
+				continue;
+			}
+			$segment = $segments[0] ?? null;
+			if (!is_array($segment) || ($segment['kind'] ?? '') !== 'property') {
+				continue;
+			}
+			$name = (string) ($segment['name'] ?? '');
+			if ($name !== '') {
+				$assigned[$name] = true;
+			}
+		}
+		foreach (($method['property_branch_assignments'] ?? []) as $branchAssignment) {
+			if (!is_array($branchAssignment)) {
+				continue;
+			}
+			$name = (string) ($branchAssignment['property_name'] ?? '');
+			if ($name === '' || !isset($assigned[$name])) {
+				continue;
+			}
+			$branchCount = max(0, (int) ($branchAssignment['branch_count'] ?? count($branchAssignment['branches'] ?? [])));
+			$coveredBranchCount = max(
+				is_array($branchAssignment['branches'] ?? null) ? count($branchAssignment['branches']) : 0,
+				(int) ($branchAssignment['covered_branch_count'] ?? 0)
+			);
+			$everyBranchAssigns = ($branchAssignment['has_fallthrough'] ?? false) === false && $branchCount > 0 && $coveredBranchCount === $branchCount;
+			if (!$everyBranchAssigns) {
+				unset($assigned[$name]);
+			}
+		}
+		return $assigned;
+	}
+
+	/** @param array<string,bool> $constructorInitializedProperties @return array<string,bool> */
+	private function constructorBaselineForMethod(string $methodName, array $constructorInitializedProperties): array
+	{
+		return strtolower($methodName) === '__construct' ? [] : $constructorInitializedProperties;
 	}
 
 	/** @param array<string,mixed> $targetChain */
