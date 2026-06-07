@@ -108,6 +108,102 @@ PHS
 			$this->assertSame(0, $checkedWrapperArg['warning_count'] ?? null, 'take(...) wrapper argument handling should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
+function load_text(): string
+{
+	return fs_get("missing-language-case-file.txt");
+}
+
+function main(): void
+{
+	echo load_text(), "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$wrapperReturn = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $wrapperReturn['warning_count'] ?? null, 'unchecked wrapper return should produce one STAN finding');
+			$wrapperReturnDiagnostic = $wrapperReturn['diagnostics'][0] ?? null;
+			if (!is_array($wrapperReturnDiagnostic)) {
+				throw new RuntimeException('unchecked wrapper return diagnostic should be present');
+			}
+			$this->assertSame('stan.unchecked_wrapper_return', $wrapperReturnDiagnostic['code'] ?? null, 'wrapper return diagnostic code should be stable');
+			$this->assertSame(3, $wrapperReturnDiagnostic['line'] ?? null, 'wrapper return diagnostic should point at the return line');
+			$this->assertContains('Unchecked wrapper result returned from required `string` function `load_text`', (string) ($wrapperReturnDiagnostic['message'] ?? ''), 'wrapper return diagnostic should describe the required return boundary');
+			$this->assertContains('Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check', (string) ($wrapperReturnDiagnostic['message'] ?? ''), 'wrapper return diagnostic should recommend strict wrapper handling');
+
+			$this->writeProject($project, <<<'PHS'
+function load_text(): string
+{
+	$text string = "";
+	if (take($text, fs_get("missing-language-case-file.txt"))) {
+		return $text;
+	}
+	return "";
+}
+
+function main(): void
+{
+	echo load_text(), "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$checkedWrapperReturn = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $checkedWrapperReturn['warning_count'] ?? null, 'take(...) wrapper return handling should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
+class Holder
+{
+	public string $text = "";
+
+	function load(): void
+	{
+		$this->text = fs_get("missing-language-case-file.txt");
+	}
+}
+
+$holder = new Holder();
+$holder->load();
+PHS
+ . "\n");
+
+			$wrapperProperty = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $wrapperProperty['warning_count'] ?? null, 'unchecked wrapper property write should produce one STAN finding');
+			$wrapperPropertyDiagnostic = $wrapperProperty['diagnostics'][0] ?? null;
+			if (!is_array($wrapperPropertyDiagnostic)) {
+				throw new RuntimeException('unchecked wrapper property diagnostic should be present');
+			}
+			$this->assertSame('stan.unchecked_wrapper_property_boundary', $wrapperPropertyDiagnostic['code'] ?? null, 'wrapper property diagnostic code should be stable');
+			$this->assertSame(7, $wrapperPropertyDiagnostic['line'] ?? null, 'wrapper property diagnostic should point at the property write line');
+			$this->assertContains('Unchecked wrapper result assigned to required `string` property `Holder::$text`', (string) ($wrapperPropertyDiagnostic['message'] ?? ''), 'wrapper property diagnostic should describe the required property boundary');
+
+			$this->writeProject($project, <<<'PHS'
+class Holder
+{
+	public string $text = "";
+
+	function load(): void
+	{
+		$text string = "";
+		if (take($text, fs_get("missing-language-case-file.txt"))) {
+			$this->text = $text;
+		}
+	}
+}
+
+$holder = new Holder();
+$holder->load();
+PHS
+ . "\n");
+
+			$checkedWrapperProperty = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $checkedWrapperProperty['warning_count'] ?? null, 'take(...) wrapper property handling should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
 function main(): void
 {
 	$row = json_decode("{\"name\":\"Ada\"}");

@@ -1150,7 +1150,7 @@ final class StanExpressionTypeResolver
 				}
 				if ($hadPriorInitialization || $everyBranchAssigns) {
 					$initializedProperties[$propertyName] = true;
-					$initializedPropertyLines[$propertyName] = (int) ($event['line'] ?? 0);
+					$this->markPropertyInitialized($initializedProperties, $initializedPropertyLines, $propertyName, (int) ($event['line'] ?? 0));
 				} else {
 					unset($initializedProperties[$propertyName]);
 					unset($initializedPropertyLines[$propertyName]);
@@ -2043,7 +2043,96 @@ final class StanExpressionTypeResolver
 			}
 			$diagnostics = array_merge($diagnostics, $this->collectWrapperArgumentDiagnosticsForCallSite($callSite, $localTypes, $selfType, $classLookup, $functionLookup, $functionCatalog, $context, $path));
 		}
+		$declaredReturnType = (string) ($ownerNode['return_type'] ?? '');
+		if ($this->isRequiredPlainBoundaryType($declaredReturnType)) {
+			foreach (($ownerNode['return_values'] ?? []) as $returnValue) {
+				if (!is_array($returnValue)) {
+					continue;
+				}
+				$descriptor = is_array($returnValue['descriptor'] ?? null) ? $returnValue['descriptor'] : null;
+				if ($descriptor === null) {
+					continue;
+				}
+				$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+				$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
+				if ($wrapperTypes === []) {
+					continue;
+				}
+				$diagnostics[] = $this->makeCallDiagnostic(
+					'unchecked_wrapper_return',
+					$context,
+					$path,
+					(int) ($returnValue['line'] ?? 0),
+					'Unchecked wrapper result returned from required `' . $declaredReturnType . '` function `' . $context . '`: return expression `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before returning.'
+				);
+			}
+		}
+		foreach (($ownerNode['property_assignments'] ?? []) as $assignment) {
+			if (!is_array($assignment)) {
+				continue;
+			}
+			$targetInfo = $this->resolvePropertyAssignmentBoundary($assignment, $localTypes, $selfType, $classLookup, $functionLookup);
+			if ($targetInfo === null || !$this->isRequiredPlainBoundaryType((string) ($targetInfo['type'] ?? ''))) {
+				continue;
+			}
+			$descriptor = is_array($assignment['source'] ?? null) ? $assignment['source'] : null;
+			if ($descriptor === null) {
+				continue;
+			}
+			$sourceTypes = $this->normalizeTypeSet($this->resolveAssignmentDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
+			if ($wrapperTypes === []) {
+				continue;
+			}
+			$diagnostics[] = $this->makeCallDiagnostic(
+				'unchecked_wrapper_property_boundary',
+				$context,
+				$path,
+				(int) ($assignment['line'] ?? 0),
+				'Unchecked wrapper result assigned to required `' . (string) $targetInfo['type'] . '` property `' . (string) $targetInfo['label'] . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the property write.'
+			);
+		}
 		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $assignment @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return array{type:string,label:string}|null */
+	private function resolvePropertyAssignmentBoundary(array $assignment, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): ?array
+	{
+		$targetChain = is_array($assignment['target_chain'] ?? null) ? $assignment['target_chain'] : null;
+		if ($targetChain === null) {
+			return null;
+		}
+		$segments = $targetChain['segments'] ?? [];
+		if (!is_array($segments) || $segments === []) {
+			return null;
+		}
+		$propertySegment = $segments[count($segments) - 1] ?? null;
+		if (!is_array($propertySegment) || ($propertySegment['kind'] ?? '') !== 'property') {
+			return null;
+		}
+		$propertyName = (string) ($propertySegment['name'] ?? '');
+		if ($propertyName === '') {
+			return null;
+		}
+		$receiverChain = $targetChain;
+		array_pop($receiverChain['segments']);
+		$receiverTypes = $this->resolveReceiverTypesForPropertyChain($receiverChain, $localTypes, $selfType, $classLookup, $functionLookup);
+		if (count($receiverTypes) !== 1) {
+			return null;
+		}
+		$receiverType = $receiverTypes[0];
+		$receiverInfo = $this->findClassInfo($receiverType, $classLookup, $selfType);
+		if ($receiverInfo === null) {
+			return null;
+		}
+		$declaredType = (string) ($receiverInfo['property_types'][$propertyName] ?? '');
+		if ($declaredType === '') {
+			return null;
+		}
+		return [
+			'type' => $declaredType,
+			'label' => $receiverType . '::$' . $propertyName,
+		];
 	}
 
 	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
@@ -2415,6 +2504,9 @@ final class StanExpressionTypeResolver
 			if ($resolvedTypes === [] || $this->typeSetsAreCompatible($resolvedTypes, [$declaredReturnType], $classLookup, true)) {
 				continue;
 			}
+			if ($this->isRequiredPlainBoundaryType($declaredReturnType) && array_values(array_filter($resolvedTypes, $this->isWrapperCarrierType(...))) !== []) {
+				continue;
+			}
 			$diagnostics[] = $this->makeCallDiagnostic('return_type_mismatch', $context, $path, (int) ($returnValue['line'] ?? 0), 'Return type mismatch in `' . $context . '`: declared `' . $declaredReturnType . '`, got `' . implode('|', $resolvedTypes) . '`.');
 		}
 		return $diagnostics;
@@ -2757,12 +2849,17 @@ final class StanExpressionTypeResolver
 		$assignedTypes = $this->canonicalizeTypeSet($this->resolveAssignmentDescriptorTypes($source, $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType);
 		if ($assignedTypes === []) {
 			if ($this->isDirectSelfPropertyTarget($targetChain, $propertyName)) {
-				$initializedProperties[$propertyName] = true;
-				$initializedPropertyLines[$propertyName] = (int) ($event['line'] ?? 0);
+				$this->markPropertyInitialized($initializedProperties, $initializedPropertyLines, $propertyName, (int) ($event['line'] ?? 0));
 			}
 			return;
 		}
 		if (!$this->typeSetsAreCompatible($assignedTypes, [$declaredType], $classLookup, false)) {
+			if ($this->isRequiredPlainBoundaryType($declaredType) && array_values(array_filter($assignedTypes, $this->isWrapperCarrierType(...))) !== []) {
+				if ($this->isDirectSelfPropertyTarget($targetChain, $propertyName)) {
+					$this->markPropertyInitialized($initializedProperties, $initializedPropertyLines, $propertyName, (int) ($event['line'] ?? 0));
+				}
+				return;
+			}
 			$diagnostics[] = [
 				'kind' => 'property_type_morph_warning',
 				'context' => $context,
@@ -2778,8 +2875,7 @@ final class StanExpressionTypeResolver
 			];
 		}
 		if ($this->isDirectSelfPropertyTarget($targetChain, $propertyName)) {
-			$initializedProperties[$propertyName] = true;
-			$initializedPropertyLines[$propertyName] = (int) ($event['line'] ?? 0);
+			$this->markPropertyInitialized($initializedProperties, $initializedPropertyLines, $propertyName, (int) ($event['line'] ?? 0));
 		}
 	}
 
@@ -2900,6 +2996,17 @@ final class StanExpressionTypeResolver
 			return;
 		}
 		$initializedLocalLines[$name] = min($initializedLocalLines[$name], $line);
+	}
+
+	/** @param array<string,bool> $initializedProperties @param array<string,int> $initializedPropertyLines */
+	private function markPropertyInitialized(array &$initializedProperties, array &$initializedPropertyLines, string $name, int $line): void
+	{
+		$initializedProperties[$name] = true;
+		if (!isset($initializedPropertyLines[$name])) {
+			$initializedPropertyLines[$name] = $line;
+			return;
+		}
+		$initializedPropertyLines[$name] = min($initializedPropertyLines[$name], $line);
 	}
 
 	private function hasPartialBranchInitializationWarning(array $initializationKeys, string $context, string $path, string $subjectKind, string $subjectName): bool
