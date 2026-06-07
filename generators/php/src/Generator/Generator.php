@@ -2044,7 +2044,9 @@ final class Generator
 		if ($lateStaticDispatchMethods !== []) {
 			$this->appendHeaderLines($header, $this->code('', 0));
 		}
+		$currentAccessSection = 'public';
 		foreach ($class->properties as $property) {
+			$this->emitClassAccessSection($header, $currentAccessSection, $property->visibility, $property->line);
 			$initializer = $property->hasDefault
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
 				: null;
@@ -2067,9 +2069,11 @@ final class Generator
 			$this->appendHeaderLines($header, $this->code($this->indent(1) . rtrim($line, ';') . ';', $property->line));
 		}
 		foreach ($class->constants as $constant) {
+			$this->emitClassAccessSection($header, $currentAccessSection, $constant->visibility, $constant->line);
 			$this->appendHeaderLines($header, $this->code($this->indent(1) . 'static inline const auto ' . $this->cppIdentifier($constant->name) . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';', $constant->line));
 		}
 		foreach ($class->methods as $method) {
+			$this->emitClassAccessSection($header, $currentAccessSection, $method->visibility, $method->line);
 			if ($this->methodNeedsNormalizedTemplate($method)) {
 				$artifacts = $this->functionLikeUsesExecBodySplit($method->params, $method->statements)
 					? $this->renderInlineTemplateMethodArtifactsWithExecSplit($class, $method, $namespacePhp)
@@ -2147,6 +2151,18 @@ final class Generator
 			$this->currentParentClass = $prevParentClass;
 			$this->currentLateStaticDispatchMethods = $prevLateStaticDispatchMethods;
 		}
+	}
+
+	private function emitClassAccessSection(array &$header, string &$currentAccessSection, string $visibility, int $line): void
+	{
+		if (!in_array($visibility, ['public', 'protected', 'private'], true)) {
+			$visibility = 'public';
+		}
+		if ($visibility === $currentAccessSection) {
+			return;
+		}
+		$currentAccessSection = $visibility;
+		$this->appendHeaderLines($header, $this->code($visibility . ':', $line));
 	}
 
 	/**

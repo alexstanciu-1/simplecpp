@@ -6166,6 +6166,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'unresolved_property_read',
 		'missing_return',
 		'direct_self_recursion',
+		'member_visibility_violation',
 	], true)) {
 		return 'compile-errors';
 	}
@@ -6495,7 +6496,7 @@ function build_stan_cli_result_from_report(string $projectRoot, string $configPa
 			$counts['property_read_warning_count']++;
 		} elseif ($kind === 'initialization_warning') {
 			$counts['initialization_warning_count']++;
-		} elseif (in_array($kind, ['unresolved_call', 'unresolved_static_call', 'unresolved_method_call', 'argument_count_mismatch', 'argument_type_mismatch', 'static_instance_misuse', 'unresolved_property_write'], true)) {
+		} elseif (in_array($kind, ['unresolved_call', 'unresolved_static_call', 'unresolved_method_call', 'argument_count_mismatch', 'argument_type_mismatch', 'static_instance_misuse', 'member_visibility_violation', 'unresolved_property_write'], true)) {
 			$counts['call_site_warning_count']++;
 		} elseif ($kind === 'return_type_mismatch' || $kind === 'missing_return') {
 			$counts['return_type_warning_count']++;

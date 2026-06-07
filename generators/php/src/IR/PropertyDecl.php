@@ -28,6 +28,7 @@ final class PropertyDecl
 		public readonly mixed $default = null,
 		public readonly bool $hasDefault = false,
 		public readonly bool $isStatic = false,
+		public readonly string $visibility = 'public',
 		public readonly int $line = 0,
 	) {
 		$this->type = $nativeType ?? $docType;

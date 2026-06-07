@@ -49,6 +49,9 @@ final class FrontEndSymbolExtractor
 			}
 			$rootFunctions[] = $this->summarizeFunction($function, null, $sourceLines);
 		}
+		if ($file->rootStatements !== []) {
+			$rootFunctions[] = $this->summarizeExecutableStatements('__scpp_main', $file->rootStatements, null, $sourceLines);
+		}
 
 		$rootConstants = [];
 		foreach ($file->constants as $constant) {
@@ -105,6 +108,9 @@ final class FrontEndSymbolExtractor
 				continue;
 			}
 			$functions[] = $this->summarizeFunction($function, $namespaceBlock->name, $sourceLines);
+		}
+		if ($namespaceBlock->statements !== []) {
+			$functions[] = $this->summarizeExecutableStatements('__scpp_main', $namespaceBlock->statements, $namespaceBlock->name, $sourceLines);
 		}
 
 		$constants = [];
@@ -187,6 +193,42 @@ final class FrontEndSymbolExtractor
 		];
 	}
 
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return array<string,mixed> */
+	private function summarizeExecutableStatements(string $name, array $statements, ?string $namespace, array $sourceLines): array
+	{
+		return [
+			'name' => $name,
+			'namespace' => $namespace,
+			'params' => [],
+			'return_type' => 'int',
+			'typed_locals' => $this->summarizeTypedLocals($statements, $sourceLines),
+			'return_chains' => $this->summarizeReturnChains($statements),
+			'return_values' => $this->summarizeReturnValues($statements),
+			'returns_on_all_paths' => $this->statementsReturnOnAllPaths($statements),
+			'expression_chains' => $this->summarizeExpressionChains($statements),
+			'property_reads' => $this->summarizePropertyReads($statements),
+			'call_sites' => $this->summarizeCallSites($statements),
+			'local_alias_assignments' => $this->summarizeLocalAliasAssignments($statements, $sourceLines),
+			'local_literal_assignments' => $this->summarizeLocalLiteralAssignments($statements, $sourceLines),
+			'local_type_assignments' => $this->summarizeLocalTypeAssignments($statements, $sourceLines),
+			'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($statements, $sourceLines),
+			'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($statements, $sourceLines),
+			'local_branch_assignments' => $this->summarizeLocalBranchAssignments($statements),
+			'non_null_guards' => $this->summarizeNonNullGuards($statements),
+			'non_false_guards' => $this->summarizeNonFalseGuards($statements),
+			'foreach_locals' => $this->summarizeForeachLocals($statements),
+			'for_loop_locals' => $this->summarizeForLoopLocals($statements),
+			'property_assignments' => $this->summarizePropertyAssignments($statements),
+			'property_branch_assignments' => $this->summarizePropertyBranchAssignments($statements),
+			'local_invalidations' => $this->summarizeLocalInvalidations($statements, $sourceLines),
+			'statement_count' => count($statements),
+			'line' => 1,
+			'returns_by_reference' => false,
+			'is_lib_export' => false,
+			'is_synthetic_entrypoint' => true,
+		];
+	}
+
 	/** @return array<string,mixed> */
 	private function summarizeClass(ClassDecl $class, ?string $namespace, array $sourceLines): array
 	{
@@ -230,6 +272,7 @@ final class FrontEndSymbolExtractor
 				'line' => $method->line,
 				'returns_by_reference' => $method->returnsByReference,
 				'is_static' => $method->isStatic,
+				'visibility' => $method->visibility,
 			];
 		}
 
@@ -244,7 +287,15 @@ final class FrontEndSymbolExtractor
 				'line' => $property->line,
 				'is_static' => $property->isStatic,
 				'has_default' => $property->hasDefault,
+				'visibility' => $property->visibility,
 			];
+		}
+		$constants = [];
+		foreach ($class->constants as $constant) {
+			if (!$constant instanceof ConstantDecl) {
+				continue;
+			}
+			$constants[] = $this->summarizeConstant($constant, $namespace);
 		}
 
 		return [
@@ -259,6 +310,7 @@ final class FrontEndSymbolExtractor
 			'is_lib_export' => $class->isLibExport,
 			'methods' => $methods,
 			'properties' => $properties,
+			'constants' => $constants,
 		];
 	}
 
@@ -270,6 +322,7 @@ final class FrontEndSymbolExtractor
 			'namespace' => $namespace,
 			'line' => $constant->line,
 			'is_lib_export' => $constant->isLibExport,
+			'visibility' => $constant->visibility,
 		];
 	}
 

@@ -338,6 +338,7 @@ final class IrBuilder
 						default: $default,
 						hasDefault: $default !== null,
 						isStatic: $isStatic,
+						visibility: $this->readMemberVisibility((int) ($member->flags ?? 0)),
 						line: $propertyLine,
 					);
 				}
@@ -431,6 +432,7 @@ final class IrBuilder
 			isStatic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 			statements: $this->buildStatements($children['stmts']->children ?? []),
 			line: (int) ($node->lineno ?? 0),
+			visibility: $this->readMemberVisibility((int) ($node->flags ?? 0)),
 			argNormalizationRules: $this->validateArgNormalizationRules($this->parseArgNormalizationRules($children['docComment'] ?? null, $owner)['rules'], $params, $owner),
 		);
 	}
@@ -554,10 +556,22 @@ final class IrBuilder
 				name: (string) ($child->children['name'] ?? ''),
 				value: $child->children['value'] ?? null,
 				isLibExport: $isLibExport || $this->hasLibExportTag($child->children['docComment'] ?? null),
+				visibility: $this->readMemberVisibility((int) ($node->flags ?? 0)),
 				line: (int) ($child->lineno ?? $node->lineno ?? 0),
 			);
 		}
 		return $out;
+	}
+
+	private function readMemberVisibility(int $flags): string
+	{
+		if (($flags & 4) !== 0) {
+			return 'private';
+		}
+		if (($flags & 2) !== 0) {
+			return 'protected';
+		}
+		return 'public';
 	}
 
 	/** @param array<int, mixed> $nodes @return list<Statement> */
