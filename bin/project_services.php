@@ -2956,6 +2956,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	unset($projectContext);
 	$markTiming('source_scan_complete');
+	validate_runtime_module_symbol_usage($projectRoot, $generatedUnits, $runtimeConfig);
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
 	$projectUnitForceIncludes = write_project_unit_force_include_headers($projectContexts);
 	foreach ($generatedUnits as &$unit) {
@@ -5528,6 +5529,73 @@ function collect_compiler_diagnostics(string $projectRoot, string $buildDir, str
 	}
 
 	return array_values($results);
+}
+
+/**
+ * @param list<array<string,mixed>> $generatedUnits
+ * @param array<string,mixed> $runtimeConfig
+ */
+function validate_runtime_module_symbol_usage(string $projectRoot, array $generatedUnits, array $runtimeConfig): void
+{
+	$modules = [];
+	foreach ((array) ($runtimeConfig['modules'] ?? []) as $module) {
+		if (is_string($module) && $module !== '') {
+			$modules[strtolower($module)] = true;
+		}
+	}
+
+	if (!isset($modules['regex'])) {
+		$diagnostic = find_first_regex_runtime_symbol_usage($projectRoot, $generatedUnits);
+		if ($diagnostic !== null) {
+			$sourceLabel = normalize_config_path(relative_path($projectRoot, $diagnostic['source_file']));
+			$message = 'Regex helper `' . $diagnostic['source_helper'] . '` requires runtime module `regex`, but `regex` is not enabled in ' . SCPP_PROJECT_CONFIG . '.' . PHP_EOL;
+			$message .= 'Source: ' . $sourceLabel . ':' . $diagnostic['source_line'] . PHP_EOL;
+			$message .= 'Add "regex" to `runtime.modules` and ensure the PCRE2 development files are installed.' . PHP_EOL;
+			scpp_fail($message, 3);
+		}
+	}
+}
+
+/**
+ * @param list<array<string,mixed>> $generatedUnits
+ * @return array{source_file:string,source_line:int,source_helper:string}|null
+ */
+function find_first_regex_runtime_symbol_usage(string $projectRoot, array $generatedUnits): ?array
+{
+	foreach ($generatedUnits as $unit) {
+		$generatedCpp = $unit['generated_cpp'] ?? null;
+		if (!is_string($generatedCpp) || $generatedCpp === '' || !is_file($generatedCpp)) {
+			continue;
+		}
+		$contents = file_get_contents($generatedCpp);
+		if (!is_string($contents) || !str_contains($contents, 'regex::')) {
+			continue;
+		}
+		if (preg_match('/\bregex::([A-Za-z_][A-Za-z0-9_]*)\s*\(/', $contents, $matches, PREG_OFFSET_CAPTURE) !== 1) {
+			continue;
+		}
+		$offset = (int) ($matches[0][1] ?? 0);
+		$generatedLine = substr_count(substr($contents, 0, $offset), "\n") + 1;
+		$mapEntry = lookup_generated_map_entry($generatedCpp, $generatedLine);
+		$sourceLine = is_array($mapEntry) ? (int) $mapEntry['line'] : 1;
+		$sourceFile = is_string($unit['relative_php'] ?? null) && is_string($unit['project_root'] ?? null)
+			? normalize_path((string) $unit['project_root'] . '/' . normalize_config_path((string) $unit['relative_php']))
+			: normalize_path($projectRoot . '/main.phs');
+		return [
+			'source_file' => $sourceFile,
+			'source_line' => max(1, $sourceLine),
+			'source_helper' => regex_runtime_symbol_to_source_helper((string) ($matches[1][0] ?? '')),
+		];
+	}
+	return null;
+}
+
+function regex_runtime_symbol_to_source_helper(string $symbol): string
+{
+	return match ($symbol) {
+		'jit_available' => 'regex_jit_available',
+		default => 'regex_' . $symbol,
+	};
 }
 
 function render_short_compiler_failure(array $diagnostics, string $projectRoot, ?string $projectMode = null): string
