@@ -178,6 +178,7 @@ final class FrontEndSymbolExtractor
 			'local_type_assignments' => $this->summarizeLocalTypeAssignments($function->statements, $sourceLines),
 			'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($function->statements, $sourceLines),
 			'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($function->statements, $sourceLines),
+			'typed_boundary_assignments' => $this->summarizeTypedBoundaryAssignments($function->statements, $sourceLines),
 			'local_branch_assignments' => $this->summarizeLocalBranchAssignments($function->statements),
 			'non_null_guards' => $this->summarizeNonNullGuards($function->statements),
 			'non_false_guards' => $this->summarizeNonFalseGuards($function->statements),
@@ -216,6 +217,7 @@ final class FrontEndSymbolExtractor
 			'local_type_assignments' => $this->summarizeLocalTypeAssignments($statements, $sourceLines),
 			'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($statements, $sourceLines),
 			'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($statements, $sourceLines),
+			'typed_boundary_assignments' => $this->summarizeTypedBoundaryAssignments($statements, $sourceLines),
 			'local_branch_assignments' => $this->summarizeLocalBranchAssignments($statements),
 			'non_null_guards' => $this->summarizeNonNullGuards($statements),
 			'non_false_guards' => $this->summarizeNonFalseGuards($statements),
@@ -266,6 +268,7 @@ final class FrontEndSymbolExtractor
 				'local_type_assignments' => $this->summarizeLocalTypeAssignments($method->statements, $sourceLines),
 				'local_constructed_assignments' => $this->summarizeLocalConstructedAssignments($method->statements, $sourceLines),
 				'local_descriptor_assignments' => $this->summarizeLocalDescriptorAssignments($method->statements, $sourceLines),
+				'typed_boundary_assignments' => $this->summarizeTypedBoundaryAssignments($method->statements, $sourceLines),
 				'local_branch_assignments' => $this->summarizeLocalBranchAssignments($method->statements),
 				'non_null_guards' => $this->summarizeNonNullGuards($method->statements),
 				'non_false_guards' => $this->summarizeNonFalseGuards($method->statements),
@@ -763,6 +766,41 @@ final class FrontEndSymbolExtractor
 			$assignments[] = [
 				'line' => $statement->line,
 				'name' => $target,
+				'descriptor' => $descriptor,
+				'statement_kind' => 'assign',
+			];
+		}
+		return $assignments;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeTypedBoundaryAssignments(array $statements, array $sourceLines): array
+	{
+		$assignments = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement || $statement->kind !== 'assign') {
+				continue;
+			}
+			$payload = $statement->payload;
+			if (!is_array($payload)) {
+				continue;
+			}
+			$target = $this->extractAssignedVariableName($payload['var'] ?? null);
+			if ($target === null) {
+				continue;
+			}
+			$targetType = $this->extractInlineTypedAssignmentType($statement->line, $target, $sourceLines);
+			if ($targetType === null) {
+				continue;
+			}
+			$descriptor = $this->describeExpression($payload['expr'] ?? null, $statement->line);
+			if (($descriptor['kind'] ?? 'unknown') === 'unknown') {
+				continue;
+			}
+			$assignments[] = [
+				'line' => $statement->line,
+				'name' => $target,
+				'target_type' => $targetType,
 				'descriptor' => $descriptor,
 				'statement_kind' => 'assign',
 			];

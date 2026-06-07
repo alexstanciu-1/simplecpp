@@ -32,6 +32,7 @@ final class StanSemanticPass
 		$propertyReadDiagnostics = $this->expressionTypeResolver->collectPropertyReadDiagnostics($fileSummaries, $symbolIndex);
 		$initializationDiagnostics = $this->expressionTypeResolver->collectInitializationDiagnostics($fileSummaries, $symbolIndex);
 		$callSiteDiagnostics = $this->expressionTypeResolver->collectCallSiteDiagnostics($fileSummaries, $symbolIndex);
+		$callSiteDiagnostics = array_merge($callSiteDiagnostics, $this->expressionTypeResolver->collectWrapperBoundaryDiagnostics($fileSummaries, $symbolIndex));
 		$returnTypeDiagnostics = $this->expressionTypeResolver->collectReturnTypeDiagnostics($fileSummaries, $symbolIndex);
 		[
 			$initializationDiagnostics,
