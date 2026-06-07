@@ -191,6 +191,52 @@ final class StanDiagnosticCollector
 						];
 						continue;
 					}
+					$interfaceParams = is_array($interfaceMethod['params'] ?? null) ? $interfaceMethod['params'] : [];
+					$implementedParams = is_array($implementedMethod['params'] ?? null) ? $implementedMethod['params'] : [];
+					if (count($interfaceParams) !== count($implementedParams)) {
+						$diagnostics[] = [
+							'kind' => 'interface_contract_mismatch',
+							'mismatch_kind' => 'parameter_count',
+							'class' => $classFqcn,
+							'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
+							'name' => (string) $methodName,
+							'path' => (string) ($classInfo['path'] ?? ''),
+							'line' => (int) ($implementedMethod['line'] ?? $classInfo['line'] ?? 0),
+							'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
+							'interface_line' => (int) ($interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
+							'expected_count' => count($interfaceParams),
+							'actual_count' => count($implementedParams),
+							'message' => 'Class `' . $classFqcn . '` method `' . (string) $methodName . '()` does not match interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '`: expected ' . count($interfaceParams) . ' parameter(s), got ' . count($implementedParams) . '.',
+						];
+						continue;
+					}
+					foreach ($interfaceParams as $index => $interfaceParam) {
+						$implementedParam = $implementedParams[$index] ?? null;
+						if (!is_array($interfaceParam) || !is_array($implementedParam)) {
+							continue;
+						}
+						$interfaceParamType = (string) ($interfaceParam['type'] ?? '');
+						$implementedParamType = (string) ($implementedParam['type'] ?? '');
+						if ($interfaceParamType === '' || $implementedParamType === '' || $interfaceParamType === $implementedParamType) {
+							continue;
+						}
+						$diagnostics[] = [
+							'kind' => 'interface_contract_mismatch',
+							'mismatch_kind' => 'parameter_type',
+							'class' => $classFqcn,
+							'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
+							'name' => (string) $methodName,
+							'path' => (string) ($classInfo['path'] ?? ''),
+							'line' => (int) ($implementedParam['line'] ?? $implementedMethod['line'] ?? $classInfo['line'] ?? 0),
+							'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
+							'interface_line' => (int) ($interfaceParam['line'] ?? $interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
+							'parameter_index' => $index,
+							'parameter_name' => (string) ($interfaceParam['name'] ?? $implementedParam['name'] ?? ('arg' . $index)),
+							'expected_type' => $interfaceParamType,
+							'actual_type' => $implementedParamType,
+							'message' => 'Class `' . $classFqcn . '` method `' . (string) $methodName . '()` parameter $' . (string) ($interfaceParam['name'] ?? $implementedParam['name'] ?? ('arg' . $index)) . ' does not match interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '`: expected `' . $interfaceParamType . '`, got `' . $implementedParamType . '`.',
+						];
+					}
 					$interfaceReturnType = (string) ($interfaceMethod['return_type'] ?? '');
 					$implementedReturnType = (string) ($implementedMethod['return_type'] ?? '');
 					if ($interfaceReturnType !== '' && $implementedReturnType !== '' && $interfaceReturnType !== $implementedReturnType) {

@@ -490,6 +490,62 @@ PHS
 			$this->assertSame('stan.interface_contract_mismatch', $interfaceReturnDiagnostic['code'] ?? null, 'interface return mismatch diagnostic code should be stable');
 			$this->assertContains('expected return `string`, got `int`', (string) ($interfaceReturnDiagnostic['message'] ?? ''), 'interface return mismatch diagnostic should describe expected and actual return types');
 
+			$this->writeProject($project, <<<'PHS'
+interface Formatter
+{
+	function format(string $value): string;
+}
+
+class Label implements Formatter
+{
+	function format(): string
+	{
+		return "";
+	}
+}
+
+$label = new Label();
+echo $label->format(), "\n";
+PHS
+ . "\n");
+
+			$interfaceParamCountMismatch = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $interfaceParamCountMismatch['warning_count'] ?? null, 'interface parameter count mismatch should produce one STAN finding');
+			$interfaceParamCountDiagnostic = $interfaceParamCountMismatch['diagnostics'][0] ?? null;
+			if (!is_array($interfaceParamCountDiagnostic)) {
+				throw new RuntimeException('interface parameter count mismatch diagnostic should be present');
+			}
+			$this->assertSame('stan.interface_contract_mismatch', $interfaceParamCountDiagnostic['code'] ?? null, 'interface parameter count diagnostic code should be stable');
+			$this->assertContains('expected 1 parameter(s), got 0', (string) ($interfaceParamCountDiagnostic['message'] ?? ''), 'interface parameter count diagnostic should describe expected and actual parameter counts');
+
+			$this->writeProject($project, <<<'PHS'
+interface Formatter
+{
+	function format(string $value): string;
+}
+
+class Label implements Formatter
+{
+	function format(int $value): string
+	{
+		return "ok";
+	}
+}
+
+$label = new Label();
+echo $label->format(7), "\n";
+PHS
+ . "\n");
+
+			$interfaceParamTypeMismatch = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $interfaceParamTypeMismatch['warning_count'] ?? null, 'interface parameter type mismatch should produce one STAN finding');
+			$interfaceParamTypeDiagnostic = $interfaceParamTypeMismatch['diagnostics'][0] ?? null;
+			if (!is_array($interfaceParamTypeDiagnostic)) {
+				throw new RuntimeException('interface parameter type mismatch diagnostic should be present');
+			}
+			$this->assertSame('stan.interface_contract_mismatch', $interfaceParamTypeDiagnostic['code'] ?? null, 'interface parameter type diagnostic code should be stable');
+			$this->assertContains('parameter $value does not match interface `Formatter`: expected `string`, got `int`', (string) ($interfaceParamTypeDiagnostic['message'] ?? ''), 'interface parameter type diagnostic should describe expected and actual parameter types');
+
 			echo "PASS: scpp stan strict discipline\n";
 			return 0;
 		} finally {
