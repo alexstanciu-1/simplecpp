@@ -6335,6 +6335,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'unchecked_wrapper_argument',
 		'unchecked_wrapper_return',
 		'unchecked_wrapper_property_boundary',
+		'dynamic_shape_boundary',
 		'static_instance_misuse',
 		'invalid_property_read',
 	], true)) {
@@ -6655,9 +6656,11 @@ function build_stan_cli_result_from_report(string $projectRoot, string $configPa
 			$counts['property_read_warning_count']++;
 		} elseif ($kind === 'initialization_warning') {
 			$counts['initialization_warning_count']++;
-		} elseif (in_array($kind, ['unresolved_call', 'unresolved_static_call', 'unresolved_method_call', 'argument_count_mismatch', 'argument_type_mismatch', 'unchecked_wrapper_boundary', 'dynamic_shape_boundary', 'static_instance_misuse', 'member_visibility_violation', 'unresolved_property_write'], true)) {
+		} elseif (in_array($kind, ['unresolved_call', 'unresolved_static_call', 'unresolved_method_call', 'argument_count_mismatch', 'argument_type_mismatch', 'unchecked_wrapper_boundary', 'unchecked_wrapper_argument', 'dynamic_shape_boundary', 'static_instance_misuse', 'member_visibility_violation', 'unresolved_property_write'], true)) {
 			$counts['call_site_warning_count']++;
-		} elseif ($kind === 'return_type_mismatch' || $kind === 'missing_return') {
+		} elseif ($kind === 'unchecked_wrapper_property_boundary') {
+			$counts['property_type_warning_count']++;
+		} elseif (in_array($kind, ['return_type_mismatch', 'missing_return', 'unchecked_wrapper_return'], true)) {
 			$counts['return_type_warning_count']++;
 		}
 	}
