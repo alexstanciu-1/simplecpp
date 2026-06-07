@@ -1996,20 +1996,27 @@ final class StanExpressionTypeResolver
 				continue;
 			}
 			$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
-			if ($sourceTypes === []) {
-				continue;
-			}
 			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
-			if ($wrapperTypes === []) {
+			if ($wrapperTypes !== []) {
+				$diagnostics[] = $this->makeCallDiagnostic(
+					'unchecked_wrapper_boundary',
+					$context,
+					$path,
+					(int) ($assignment['line'] ?? 0),
+					'Unchecked wrapper result assigned to required `' . $targetType . '` local `$' . (string) ($assignment['name'] ?? '') . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the typed boundary.'
+				);
 				continue;
 			}
-			$diagnostics[] = $this->makeCallDiagnostic(
-				'unchecked_wrapper_boundary',
-				$context,
-				$path,
-				(int) ($assignment['line'] ?? 0),
-				'Unchecked wrapper result assigned to required `' . $targetType . '` local `$' . (string) ($assignment['name'] ?? '') . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the typed boundary.'
-			);
+			$dynamicShapeTypes = $this->resolveDynamicShapeSourceTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
+			if ($dynamicShapeTypes !== []) {
+				$diagnostics[] = $this->makeCallDiagnostic(
+					'dynamic_shape_boundary',
+					$context,
+					$path,
+					(int) ($assignment['line'] ?? 0),
+					'Dynamic value assigned to required `' . $targetType . '` local `$' . (string) ($assignment['name'] ?? '') . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $dynamicShapeTypes) . '`. Guard the field with `isset(...)`, normalize through a typed extraction helper, or assign through an explicitly validated local before the required typed boundary.'
+				);
+			}
 		}
 		return $diagnostics;
 	}
@@ -2415,6 +2422,38 @@ final class StanExpressionTypeResolver
 			return true;
 		}
 		return preg_match('/^(result|result_or_false|result_or_bool|nullable)\s*</i', $trimmed) === 1;
+	}
+
+	/** @param array<string,mixed> $descriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
+	private function resolveDynamicShapeSourceTypes(array $descriptor, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): array
+	{
+		$kind = (string) ($descriptor['kind'] ?? 'unknown');
+		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
+			return $this->filterDynamicShapeTypes($this->resolveExpressionDescriptorTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup));
+		}
+		if ($kind === 'chain' || $kind === 'alias') {
+			return $this->filterDynamicShapeTypes($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+		}
+		if ($kind === 'conditional') {
+			$types = [];
+			if (is_array($descriptor['if_true'] ?? null)) {
+				$types = array_merge($types, $this->resolveDynamicShapeSourceTypes($descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup));
+			}
+			if (is_array($descriptor['if_false'] ?? null)) {
+				$types = array_merge($types, $this->resolveDynamicShapeSourceTypes($descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup));
+			}
+			return $this->normalizeTypeSet($types);
+		}
+		return [];
+	}
+
+	/** @param list<string> $types @return list<string> */
+	private function filterDynamicShapeTypes(array $types): array
+	{
+		return array_values(array_filter(
+			$this->normalizeTypeSet($types),
+			static fn (string $type): bool => in_array(strtolower(trim($type)), ['mixed', 'dynamic'], true)
+		));
 	}
 
 	/** @param array<string,mixed> $descriptor */

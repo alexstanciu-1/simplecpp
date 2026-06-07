@@ -60,6 +60,46 @@ PHS
 			$checked = $session->runDiagnostics($project, $project . '/prism.json');
 			$this->assertSame(0, $checked['warning_count'] ?? null, 'take(...) wrapper handling should stay clean');
 
+			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$row = json_decode("{\"name\":\"Ada\"}");
+	$name string = $row["name"];
+	echo $name, "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$dynamic = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $dynamic['warning_count'] ?? null, 'dynamic JSON typed boundary should produce one STAN finding');
+			$dynamicDiagnostic = $dynamic['diagnostics'][0] ?? null;
+			if (!is_array($dynamicDiagnostic)) {
+				throw new RuntimeException('dynamic shape boundary diagnostic should be present');
+			}
+			$this->assertSame('stan.dynamic_shape_boundary', $dynamicDiagnostic['code'] ?? null, 'dynamic diagnostic code should be stable');
+			$this->assertSame(4, $dynamicDiagnostic['line'] ?? null, 'dynamic diagnostic should point at the required typed local');
+			$this->assertContains('Dynamic value assigned to required `string` local `$name`', (string) ($dynamicDiagnostic['message'] ?? ''), 'dynamic diagnostic should describe the required boundary');
+			$this->assertContains('Guard the field with `isset(...)`', (string) ($dynamicDiagnostic['message'] ?? ''), 'dynamic diagnostic should recommend a shape guard');
+
+			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$row = json_decode("{\"name\":\"Ada\"}");
+	if (isset($row["name"])) {
+		$name string = (string) $row["name"];
+		echo $name, "\n";
+	}
+}
+
+main();
+PHS
+ . "\n");
+
+			$guardedDynamic = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $guardedDynamic['warning_count'] ?? null, 'guarded dynamic JSON extraction with an explicit cast should stay clean');
+
 			echo "PASS: scpp stan strict discipline\n";
 			return 0;
 		} finally {
