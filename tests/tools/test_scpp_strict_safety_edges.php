@@ -25,22 +25,32 @@ final class ScppStrictSafetyEdgesTest
 		}
 
 		try {
-			$this->assertMissingReturnStopsBuild();
-			$this->assertDirectSelfRecursionStopsBuild();
-			$this->assertMissingDynamicJsonFieldFailsRequiredTypedLocal();
-			$this->assertDynamicJsonNumericShapesFailRequiredIntLocal();
-			$this->assertNestedTypedVectorLiteralsStabilizeRecursively();
-			$this->assertDecodedJsonArraysStabilizeIntoTypedVectors();
-			$this->assertJsonEncodeAcceptsTypedCollections();
-			$this->assertExplicitNullStringCastStillSucceeds();
-			$this->assertExplicitIntCastsStillSucceed();
-			$this->assertRecursiveDebugRunFailsWithRuntimeDiagnostic();
-			$this->assertRecursiveReleaseOptInFailsWithRuntimeDiagnostic();
+			$this->runStep('missing return stops build', $this->assertMissingReturnStopsBuild(...));
+			$this->runStep('direct self-recursion stops build', $this->assertDirectSelfRecursionStopsBuild(...));
+			$this->runStep('missing dynamic JSON fields fail required typed locals', $this->assertMissingDynamicJsonFieldFailsRequiredTypedLocal(...));
+			$this->runStep('dynamic JSON numeric shapes fail required int locals', $this->assertDynamicJsonNumericShapesFailRequiredIntLocal(...));
+			$this->runStep('nested typed vector literals stabilize recursively', $this->assertNestedTypedVectorLiteralsStabilizeRecursively(...));
+			$this->runStep('decoded JSON arrays stabilize into typed vectors', $this->assertDecodedJsonArraysStabilizeIntoTypedVectors(...));
+			$this->runStep('json_encode accepts typed collections', $this->assertJsonEncodeAcceptsTypedCollections(...));
+			$this->runStep('explicit null string cast still succeeds', $this->assertExplicitNullStringCastStillSucceeds(...));
+			$this->runStep('explicit int casts still succeed', $this->assertExplicitIntCastsStillSucceed(...));
+			$this->runStep('recursive debug run fails with runtime diagnostic', $this->assertRecursiveDebugRunFailsWithRuntimeDiagnostic(...));
+			$this->runStep('recursive release opt-in fails with runtime diagnostic', $this->assertRecursiveReleaseOptInFailsWithRuntimeDiagnostic(...));
 			echo "PASS: scpp strict safety edges\n";
 			return 0;
 		} finally {
 			$this->removeTree($this->root);
 		}
+	}
+
+	private function runStep(string $name, callable $callback): void
+	{
+		$started = microtime(true);
+		echo 'RUN: ' . $name . "\n";
+		flush();
+		$callback();
+		echo 'OK: ' . $name . ' (' . number_format(microtime(true) - $started, 2) . "s)\n";
+		flush();
 	}
 
 	private function assertMissingReturnStopsBuild(): void
@@ -78,14 +88,15 @@ PHS
 
 	private function assertMissingDynamicJsonFieldFailsRequiredTypedLocal(): void
 	{
+		$project = $this->root . '/missing_json_field';
+		$this->writeProject($project, []);
+		$builtRuntime = false;
 		foreach ([
 			'string' => 'string_t',
 			'int' => 'int_t',
 			'float' => 'float_t',
 			'bool' => 'bool_t',
 		] as $localType => $runtimeType) {
-			$project = $this->root . '/missing_json_field_' . $localType;
-			$this->writeProject($project, []);
 			$this->write($project . '/main.phs', <<<'PHS'
 $text = "{\"count\":2}";
 $row = json_decode($text);
@@ -94,7 +105,8 @@ PHS
  . '$value ' . $localType . ' = $row["name"];' . "\n"
  . 'echo $value, "\n";' . "\n");
 
-			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+			$run = $this->runScpp($project, ['run'], !$builtRuntime, 120);
+			$builtRuntime = true;
 			$this->assertNotSame(0, $run['exit_code'], 'missing dynamic JSON field should fail a required ' . $localType . ' typed local');
 			$this->assertContains('Cannot convert value to required ' . $runtimeType . '.', $run['stderr'], 'missing dynamic JSON field diagnostic should explain the required ' . $localType . ' typed boundary');
 			$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'missing dynamic JSON field diagnostic should remap to the ' . $localType . ' typed local');
@@ -105,19 +117,21 @@ PHS
 
 	private function assertDynamicJsonNumericShapesFailRequiredIntLocal(): void
 	{
+		$project = $this->root . '/json_numeric_shapes';
+		$this->writeProject($project, []);
+		$builtRuntime = false;
 		foreach ([
 			'json_float_to_int' => '{"count":2.5}',
 			'json_string_number_to_int' => '{"count":"42"}',
 		] as $case => $json) {
-			$project = $this->root . '/' . $case;
-			$this->writeProject($project, []);
 			$this->write($project . '/main.phs', '$row = json_decode(' . var_export($json, true) . ');' . "\n" . <<<'PHS'
 $count int = $row["count"];
 echo $count, "\n";
 PHS
  . "\n");
 
-			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+			$run = $this->runScpp($project, ['run'], !$builtRuntime, 120);
+			$builtRuntime = true;
 			$this->assertNotSame(0, $run['exit_code'], $case . ' should fail a required int typed local');
 			$this->assertContains('Cannot convert value to required int_t.', $run['stderr'], $case . ' diagnostic should explain the required int boundary');
 			$this->assertContains('Runtime error in main.phs:2', $run['stderr'], $case . ' diagnostic should remap to the typed local');
@@ -152,7 +166,7 @@ echo $cube[0][1][0], ":", $cube[1][0][0], "\n";
 PHS
  . "\n");
 
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$run = $this->runScpp($project, ['run'], true, 120);
 		$this->assertSame(0, $run['exit_code'], 'nested typed vector literals should stabilize recursively');
 		$this->assertContains("10\n", $run['stdout'], 'nested vector<int> literal should support foreach summing');
 		$this->assertContains("b:c\n", $run['stdout'], 'nested vector<string> literal should stabilize');
@@ -191,7 +205,7 @@ echo $nested[0][1], ":", $nested[1][0], "\n";
 PHS
  . "\n");
 
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$run = $this->runScpp($project, ['run'], true, 120);
 		$this->assertSame(0, $run['exit_code'], 'decoded JSON arrays should stabilize into typed vectors');
 		$this->assertContains("1:3\n", $run['stdout'], 'decoded JSON array should stabilize into vector<int>');
 		$this->assertContains("1.5:2.25\n", $run['stdout'], 'decoded JSON array should stabilize into vector<float>');
@@ -210,15 +224,13 @@ PHS
 				'expected' => 'int_t',
 			],
 		] as $case => $fixture) {
-			$failureProject = $this->root . '/' . $case;
-			$this->writeProject($failureProject, []);
-			$this->write($failureProject . '/main.phs', '$valuesJson = json_decode(' . var_export($fixture['json'], true) . ');' . "\n" . <<<'PHS'
+			$this->write($project . '/main.phs', '$valuesJson = json_decode(' . var_export($fixture['json'], true) . ');' . "\n" . <<<'PHS'
 $values vector<int> = $valuesJson;
 echo $values[0], "\n";
 PHS
  . "\n");
 
-			$failedRun = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $failureProject, 120);
+			$failedRun = $this->runScpp($project, ['run'], false, 120);
 			$this->assertNotSame(0, $failedRun['exit_code'], $case . ' should fail a required vector<int> typed local');
 			$this->assertContains('Cannot convert value to required ' . $fixture['expected'] . '.', $failedRun['stderr'], $case . ' diagnostic should explain the failed required boundary');
 			$this->assertContains('Operation: scpp::required_cast<' . $fixture['expected'] . '>', $failedRun['stderr'], $case . ' diagnostic should use required_cast for the failed boundary');
@@ -243,7 +255,7 @@ echo json_encode($nested), "\n";
 PHS
  . "\n");
 
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$run = $this->runScpp($project, ['run'], true, 120);
 		$this->assertSame(0, $run['exit_code'], 'json_encode should accept typed collections');
 		$this->assertContains("[1,2,3]\n", $run['stdout'], 'json_encode should accept vector<int>');
 		$this->assertContains("{\"a\":1,\"b\":2}\n", $run['stdout'], 'json_encode should accept hash<int>');
@@ -259,7 +271,7 @@ echo "[", (string) null, "]\n";
 PHS
  . "\n");
 
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$run = $this->runScpp($project, ['run'], true, 120);
 		$this->assertSame(0, $run['exit_code'], 'explicit null-to-string cast should still succeed');
 		$this->assertContains("[]\n", $run['stdout'], 'explicit null-to-string cast should still stringify to an empty string');
 	}
@@ -274,7 +286,7 @@ echo (int) "42", "\n";
 PHS
  . "\n");
 
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$run = $this->runScpp($project, ['run'], true, 120);
 		$this->assertSame(0, $run['exit_code'], 'explicit int casts should still succeed');
 		$this->assertContains("2\n42\n", $run['stdout'], 'explicit int casts should preserve configured conversion behavior');
 	}
@@ -289,7 +301,7 @@ PHS
 		]);
 		$this->writeRecursiveDiveProgram($project);
 
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime', '--no-stan'], $project, 120);
+		$run = $this->runScpp($project, ['run', '--no-stan'], true, 120);
 		$this->assertNotSame(0, $run['exit_code'], 'recursive debug run should fail');
 		$this->assertContains('Maximum call depth exceeded', $run['stderr'], 'recursive debug run should report call-depth guard failure');
 		$this->assertContains('main.phs:1', $run['stderr'], 'recursive debug run should remap to the source function');
@@ -316,7 +328,7 @@ PHS
 		], 'release');
 		$this->writeRecursiveDiveProgram($project);
 
-		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime', '--no-stan'], $project, 120);
+		$run = $this->runScpp($project, ['run', '--no-stan'], true, 120);
 		$this->assertNotSame(0, $run['exit_code'], 'recursive release opt-in run should fail');
 		$this->assertContains('Maximum call depth exceeded while calling `dive` (limit 24).', $run['stderr'], 'release opt-in should use configured call-depth limit');
 	}
@@ -354,6 +366,19 @@ PHS
 			],
 			'runtime' => $runtime,
 		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+	}
+
+	/** @return array{exit_code:int,stdout:string,stderr:string} */
+	private function runScpp(string $project, array $args, bool $buildRuntime, int $timeoutSeconds): array
+	{
+		$command = [PHP_BINARY, resolve_repo_root() . '/bin/scpp.php'];
+		foreach ($args as $arg) {
+			$command[] = $arg;
+			if ($arg === 'run' && $buildRuntime) {
+				$command[] = '--build-runtime';
+			}
+		}
+		return $this->runCommand($command, $project, $timeoutSeconds);
 	}
 
 	/** @return array{exit_code:int,stdout:string,stderr:string} */

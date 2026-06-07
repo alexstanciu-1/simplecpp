@@ -97,6 +97,10 @@ final class ScppStanDiagnosticsSessionTest
 			$this->assertSame([], $overrideDiagnostics['diagnostics'] ?? null, 'override diagnostics list should be empty');
 			$this->assertSame([], $overrideDiagnostics['diagnostics_by_path'] ?? null, 'override diagnostics_by_path should be empty');
 
+			$normalAfterOverride = $session->run($project, $project . '/prism.json');
+			$this->assertSame(1, $normalAfterOverride['warning_count'] ?? null, 'normal run after override should keep the canonical source warning');
+			$this->assertSame(0, $normalAfterOverride['analyzed_count'] ?? null, 'normal run after override should reuse canonical cached summaries');
+
 			$plainCli = $this->runCommand([
 				PHP_BINARY,
 				resolve_repo_root() . '/bin/scpp.php',
