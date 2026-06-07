@@ -191,6 +191,23 @@ final class StanDiagnosticCollector
 						];
 						continue;
 					}
+					$implementedVisibility = strtolower((string) ($implementedMethod['visibility'] ?? 'public'));
+					if ($implementedVisibility !== 'public') {
+						$diagnostics[] = [
+							'kind' => 'interface_contract_mismatch',
+							'mismatch_kind' => 'method_visibility',
+							'class' => $classFqcn,
+							'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
+							'name' => (string) $methodName,
+							'path' => (string) ($classInfo['path'] ?? ''),
+							'line' => (int) ($implementedMethod['line'] ?? $classInfo['line'] ?? 0),
+							'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
+							'interface_line' => (int) ($interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
+							'visibility' => $implementedVisibility,
+							'message' => 'Class `' . $classFqcn . '` method `' . (string) $methodName . '()` implements interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '` but is `' . $implementedVisibility . '`. Interface methods must be implemented as public.',
+						];
+						continue;
+					}
 					$interfaceParams = is_array($interfaceMethod['params'] ?? null) ? $interfaceMethod['params'] : [];
 					$implementedParams = is_array($implementedMethod['params'] ?? null) ? $implementedMethod['params'] : [];
 					if (count($interfaceParams) !== count($implementedParams)) {

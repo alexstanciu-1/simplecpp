@@ -546,6 +546,33 @@ PHS
 			$this->assertSame('stan.interface_contract_mismatch', $interfaceParamTypeDiagnostic['code'] ?? null, 'interface parameter type diagnostic code should be stable');
 			$this->assertContains('parameter $value does not match interface `Formatter`: expected `string`, got `int`', (string) ($interfaceParamTypeDiagnostic['message'] ?? ''), 'interface parameter type diagnostic should describe expected and actual parameter types');
 
+			$this->writeProject($project, <<<'PHS'
+interface Renderable
+{
+	function render(): string;
+}
+
+class Label implements Renderable
+{
+	protected function render(): string
+	{
+		return "ok";
+	}
+}
+
+$label = new Label();
+PHS
+ . "\n");
+
+			$interfaceVisibilityMismatch = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $interfaceVisibilityMismatch['warning_count'] ?? null, 'interface method visibility mismatch should produce one STAN finding');
+			$interfaceVisibilityDiagnostic = $interfaceVisibilityMismatch['diagnostics'][0] ?? null;
+			if (!is_array($interfaceVisibilityDiagnostic)) {
+				throw new RuntimeException('interface method visibility mismatch diagnostic should be present');
+			}
+			$this->assertSame('stan.interface_contract_mismatch', $interfaceVisibilityDiagnostic['code'] ?? null, 'interface method visibility diagnostic code should be stable');
+			$this->assertContains('Interface methods must be implemented as public', (string) ($interfaceVisibilityDiagnostic['message'] ?? ''), 'interface method visibility diagnostic should require public implementation');
+
 			echo "PASS: scpp stan strict discipline\n";
 			return 0;
 		} finally {
