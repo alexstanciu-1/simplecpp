@@ -289,6 +289,55 @@ PHS
 			$this->assertSame(0, $initialized['warning_count'] ?? null, 'constructor-initialized required property read should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
+class BaseBox
+{
+	public int $value = 7;
+}
+
+class Box extends BaseBox
+{
+	function read(): int
+	{
+		return $this->value;
+	}
+}
+
+$box = new Box();
+echo $box->read(), "\n";
+PHS
+ . "\n");
+
+			$inheritedDefault = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $inheritedDefault['warning_count'] ?? null, 'inherited default-initialized required property read should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
+class BaseBox
+{
+	public int $value;
+
+	function __construct(int $value)
+	{
+		$this->value = $value;
+	}
+}
+
+class Box extends BaseBox
+{
+	function read(): int
+	{
+		return $this->value;
+	}
+}
+
+$box = new Box(7);
+echo $box->read(), "\n";
+PHS
+ . "\n");
+
+			$inheritedConstructor = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $inheritedConstructor['warning_count'] ?? null, 'inherited constructor-initialized required property read should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
 class Box
 {
 	public int $value;

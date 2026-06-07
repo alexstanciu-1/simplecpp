@@ -539,7 +539,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -559,7 +559,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -579,7 +579,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -598,7 +598,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -617,7 +617,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -636,7 +636,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -655,7 +655,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -682,7 +682,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -709,7 +709,7 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
-		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
@@ -3069,6 +3069,25 @@ final class StanExpressionTypeResolver
 		return is_array($common) ? $common : [];
 	}
 
+	/** @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @return array<string,bool> */
+	private function collectConstructorInitializedPropertiesForClass(array $class, string $classType, array $classLookup): array
+	{
+		$ownConstructors = [];
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method) && strtolower((string) ($method['name'] ?? '')) === '__construct') {
+				$ownConstructors[] = $method;
+			}
+		}
+		if ($ownConstructors !== []) {
+			return $this->collectPropertiesInitializedByEveryConstructor($class);
+		}
+		$classInfo = $this->findClassInfo($classType, $classLookup, $classType);
+		if (!is_array($classInfo)) {
+			return [];
+		}
+		return (array) ($classInfo['constructor_initialized_properties'] ?? []);
+	}
+
 	/** @param array<string,mixed> $method @return array<string,bool> */
 	private function collectDirectSelfPropertyAssignments(array $method): array
 	{
@@ -3250,6 +3269,14 @@ final class StanExpressionTypeResolver
 				$propertyDeclaringClass[$name] = $fqcn;
 			}
 		}
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$hasOwnConstructor = false;
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method) && strtolower((string) ($method['name'] ?? '')) === '__construct') {
+				$hasOwnConstructor = true;
+				break;
+			}
+		}
 		$constantVisibility = [];
 		$constantDeclaringClass = [];
 		foreach (($class['constants'] ?? []) as $constant) {
@@ -3275,6 +3302,8 @@ final class StanExpressionTypeResolver
 			'property_has_default' => $propertyHasDefault,
 			'property_visibility' => $propertyVisibility,
 			'property_declaring_class' => $propertyDeclaringClass,
+			'constructor_initialized_properties' => $constructorInitializedProperties,
+			'has_own_constructor' => $hasOwnConstructor,
 			'constant_visibility' => $constantVisibility,
 			'constant_declaring_class' => $constantDeclaringClass,
 		];
@@ -3413,6 +3442,9 @@ final class StanExpressionTypeResolver
 				$info['property_has_default'] = array_replace((array) ($parentInfo['property_has_default'] ?? []), (array) ($info['property_has_default'] ?? []));
 				$info['property_visibility'] = array_replace((array) ($parentInfo['property_visibility'] ?? []), (array) ($info['property_visibility'] ?? []));
 				$info['property_declaring_class'] = array_replace((array) ($parentInfo['property_declaring_class'] ?? []), (array) ($info['property_declaring_class'] ?? []));
+				if (($info['has_own_constructor'] ?? false) !== true) {
+					$info['constructor_initialized_properties'] = (array) ($parentInfo['constructor_initialized_properties'] ?? []);
+				}
 				$info['constant_visibility'] = array_replace((array) ($parentInfo['constant_visibility'] ?? []), (array) ($info['constant_visibility'] ?? []));
 				$info['constant_declaring_class'] = array_replace((array) ($parentInfo['constant_declaring_class'] ?? []), (array) ($info['constant_declaring_class'] ?? []));
 				$info['ancestor_types'] = $this->normalizeTypeSet(array_merge(
