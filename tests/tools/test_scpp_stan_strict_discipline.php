@@ -462,6 +462,34 @@ PHS
 			$implementedInterface = $session->runDiagnostics($project, $project . '/prism.json');
 			$this->assertSame(0, $implementedInterface['warning_count'] ?? null, 'implemented interface method should stay clean');
 
+			$this->writeProject($project, <<<'PHS'
+interface Renderable
+{
+	function render(): string;
+}
+
+class Label implements Renderable
+{
+	function render(): int
+	{
+		return 7;
+	}
+}
+
+$label = new Label();
+echo $label->render(), "\n";
+PHS
+ . "\n");
+
+			$interfaceReturnMismatch = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $interfaceReturnMismatch['warning_count'] ?? null, 'interface return mismatch should produce one STAN finding');
+			$interfaceReturnDiagnostic = $interfaceReturnMismatch['diagnostics'][0] ?? null;
+			if (!is_array($interfaceReturnDiagnostic)) {
+				throw new RuntimeException('interface return mismatch diagnostic should be present');
+			}
+			$this->assertSame('stan.interface_contract_mismatch', $interfaceReturnDiagnostic['code'] ?? null, 'interface return mismatch diagnostic code should be stable');
+			$this->assertContains('expected return `string`, got `int`', (string) ($interfaceReturnDiagnostic['message'] ?? ''), 'interface return mismatch diagnostic should describe expected and actual return types');
+
 			echo "PASS: scpp stan strict discipline\n";
 			return 0;
 		} finally {

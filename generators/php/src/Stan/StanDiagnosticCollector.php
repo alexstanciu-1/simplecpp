@@ -175,21 +175,40 @@ final class StanDiagnosticCollector
 					continue;
 				}
 				foreach (($interfaceInfo['method_signatures'] ?? []) as $methodName => $interfaceMethod) {
-					if (isset($implementedMethods[(string) $methodName])) {
+					$implementedMethod = $implementedMethods[(string) $methodName] ?? null;
+					if (!is_array($implementedMethod)) {
+						$diagnostics[] = [
+							'kind' => 'interface_contract_mismatch',
+							'mismatch_kind' => 'missing_method',
+							'class' => $classFqcn,
+							'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
+							'name' => (string) $methodName,
+							'path' => (string) ($classInfo['path'] ?? ''),
+							'line' => (int) ($classInfo['line'] ?? 0),
+							'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
+							'interface_line' => (int) ($interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
+							'message' => 'Class `' . $classFqcn . '` implements interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '` but is missing method `' . (string) $methodName . '()`.',
+						];
 						continue;
 					}
-					$diagnostics[] = [
-						'kind' => 'interface_contract_mismatch',
-						'mismatch_kind' => 'missing_method',
-						'class' => $classFqcn,
-						'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
-						'name' => (string) $methodName,
-						'path' => (string) ($classInfo['path'] ?? ''),
-						'line' => (int) ($classInfo['line'] ?? 0),
-						'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
-						'interface_line' => (int) ($interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
-						'message' => 'Class `' . $classFqcn . '` implements interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '` but is missing method `' . (string) $methodName . '()`.',
-					];
+					$interfaceReturnType = (string) ($interfaceMethod['return_type'] ?? '');
+					$implementedReturnType = (string) ($implementedMethod['return_type'] ?? '');
+					if ($interfaceReturnType !== '' && $implementedReturnType !== '' && $interfaceReturnType !== $implementedReturnType) {
+						$diagnostics[] = [
+							'kind' => 'interface_contract_mismatch',
+							'mismatch_kind' => 'return_type',
+							'class' => $classFqcn,
+							'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
+							'name' => (string) $methodName,
+							'path' => (string) ($classInfo['path'] ?? ''),
+							'line' => (int) ($implementedMethod['line'] ?? $classInfo['line'] ?? 0),
+							'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
+							'interface_line' => (int) ($interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
+							'expected_type' => $interfaceReturnType,
+							'actual_type' => $implementedReturnType,
+							'message' => 'Class `' . $classFqcn . '` method `' . (string) $methodName . '()` does not match interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '`: expected return `' . $interfaceReturnType . '`, got `' . $implementedReturnType . '`.',
+						];
+					}
 				}
 			}
 		}
