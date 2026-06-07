@@ -331,6 +331,48 @@ final class StanExpressionTypeResolver
 	}
 
 	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectWrapperBoundaryDiagnostics(array $fileSummaries, array $symbolIndex): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries);
+		$classLookup = $this->buildClassLookup($classCatalog);
+		$functionLookup = $this->buildFunctionLookup($fileSummaries);
+		$diagnostics = [];
+
+		foreach ($fileSummaries as $summary) {
+			$path = (string) ($summary['path'] ?? '(unknown)');
+			foreach (($summary['root_functions'] ?? []) as $function) {
+				if (is_array($function)) {
+					$diagnostics = array_merge($diagnostics, $this->collectFunctionWrapperBoundaryDiagnostics($function, null, $path, $classLookup, $functionLookup));
+				}
+			}
+			foreach (($summary['root_classes'] ?? []) as $class) {
+				if (is_array($class)) {
+					$diagnostics = array_merge($diagnostics, $this->collectClassMethodWrapperBoundaryDiagnostics($class, '', $path, $classLookup, $functionLookup));
+				}
+			}
+			foreach (($summary['namespaces'] ?? []) as $namespace) {
+				if (!is_array($namespace)) {
+					continue;
+				}
+				$namespaceName = (string) ($namespace['name'] ?? '');
+				foreach (($namespace['functions'] ?? []) as $function) {
+					if (is_array($function)) {
+						$diagnostics = array_merge($diagnostics, $this->collectFunctionWrapperBoundaryDiagnostics($function, $namespaceName, $path, $classLookup, $functionLookup));
+					}
+				}
+				foreach (($namespace['classes'] ?? []) as $class) {
+					if (is_array($class)) {
+						$diagnostics = array_merge($diagnostics, $this->collectClassMethodWrapperBoundaryDiagnostics($class, $namespaceName, $path, $classLookup, $functionLookup));
+					}
+				}
+			}
+		}
+
+		usort($diagnostics, static fn (array $a, array $b): int => strcmp($a['message'], $b['message']));
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
 	private function collectChainDiagnosticsByField(array $fileSummaries, string $fieldName, array $symbolIndex, string $diagnosticKind): array
 	{
 		$classCatalog = $this->buildClassCatalog($fileSummaries);
@@ -613,6 +655,31 @@ final class StanExpressionTypeResolver
 		return $results;
 	}
 
+	private function collectFunctionWrapperBoundaryDiagnostics(array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup): array
+	{
+		$baseTypes = $this->buildParamTypeMap($function['params'] ?? []);
+		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
+		$analysis = $this->analyzeChainSequence($function, $baseTypes, null, $classLookup, $functionLookup, $context, $path);
+		return $this->collectWrapperBoundaryDiagnosticsForOwner($function, $analysis['final_local_types'], null, $classLookup, $functionLookup, $context, $path);
+	}
+
+	private function collectClassMethodWrapperBoundaryDiagnostics(array $class, string $namespace, string $path, array $classLookup, array $functionLookup): array
+	{
+		$className = (string) ($class['name'] ?? '');
+		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$results = [];
+		foreach (($class['methods'] ?? []) as $method) {
+			if (!is_array($method)) {
+				continue;
+			}
+			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
+			$context = $classType . '::' . (string) ($method['name'] ?? '');
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$results = array_merge($results, $this->collectWrapperBoundaryDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $context, $path));
+		}
+		return $results;
+	}
+
 	private function collectFunctionReturnTypeDiagnostics(array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup): array
 	{
 		$baseTypes = $this->buildParamTypeMap($function['params'] ?? []);
@@ -838,6 +905,7 @@ final class StanExpressionTypeResolver
 		}
 		$morphedLocals = [];
 		$events = $this->buildChainEvents($ownerNode);
+		$typedBoundaryAssignmentKeys = $this->buildTypedBoundaryAssignmentKeys($ownerNode);
 		$observations = [];
 		$diagnostics = [];
 		$callSiteDiagnostics = [];
@@ -1172,7 +1240,10 @@ final class StanExpressionTypeResolver
 			$assignedVar = isset($chain['assigned_var']) && is_string($chain['assigned_var']) ? $chain['assigned_var'] : null;
 			if ($assignedVar !== null && $assignedVar !== '') {
 				$declaredLocals[$assignedVar] = true;
-				if ($resolvedType !== 'unknown') {
+				$typedBoundaryKey = (int) ($chain['line'] ?? 0) . '|' . $assignedVar;
+				if (isset($typedBoundaryAssignmentKeys[$typedBoundaryKey])) {
+					unset($morphedLocals[$assignedVar]);
+				} elseif ($resolvedType !== 'unknown') {
 					$resolvedSet = $resolvedTypeValue === 'unknown'
 						? []
 						: (is_array($resolvedTypeValue) ? $resolvedTypeValue : [$resolvedType]);
@@ -1192,6 +1263,23 @@ final class StanExpressionTypeResolver
 			'call_site_diagnostics' => $callSiteDiagnostics,
 			'property_read_diagnostics' => $this->filterPropertyReadDiagnostics($propertyReadDiagnostics),
 		];
+	}
+
+	/** @param array<string,mixed> $ownerNode @return array<string,bool> */
+	private function buildTypedBoundaryAssignmentKeys(array $ownerNode): array
+	{
+		$keys = [];
+		foreach (($ownerNode['typed_boundary_assignments'] ?? []) as $assignment) {
+			if (!is_array($assignment)) {
+				continue;
+			}
+			$name = (string) ($assignment['name'] ?? '');
+			$line = (int) ($assignment['line'] ?? 0);
+			if ($name !== '' && $line > 0) {
+				$keys[$line . '|' . $name] = true;
+			}
+		}
+		return $keys;
 	}
 
 	/** @param array<string,mixed> $ownerNode @return list<array<string,mixed>> */
@@ -1891,6 +1979,41 @@ final class StanExpressionTypeResolver
 		return $diagnostics;
 	}
 
+	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
+	private function collectWrapperBoundaryDiagnosticsForOwner(array $ownerNode, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): array
+	{
+		$diagnostics = [];
+		foreach (($ownerNode['typed_boundary_assignments'] ?? []) as $assignment) {
+			if (!is_array($assignment)) {
+				continue;
+			}
+			$targetType = (string) ($assignment['target_type'] ?? '');
+			if (!$this->isRequiredPlainBoundaryType($targetType)) {
+				continue;
+			}
+			$descriptor = is_array($assignment['descriptor'] ?? null) ? $assignment['descriptor'] : null;
+			if ($descriptor === null) {
+				continue;
+			}
+			$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			if ($sourceTypes === []) {
+				continue;
+			}
+			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
+			if ($wrapperTypes === []) {
+				continue;
+			}
+			$diagnostics[] = $this->makeCallDiagnostic(
+				'unchecked_wrapper_boundary',
+				$context,
+				$path,
+				(int) ($assignment['line'] ?? 0),
+				'Unchecked wrapper result assigned to required `' . $targetType . '` local `$' . (string) ($assignment['name'] ?? '') . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the typed boundary.'
+			);
+		}
+		return $diagnostics;
+	}
+
 	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
 	private function collectCallSiteDiagnosticForCallSite(array $callSite, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path): array
 	{
@@ -2267,6 +2390,47 @@ final class StanExpressionTypeResolver
 			return $this->canonicalizeTypeSet(is_array($resolved) ? $resolved : [$resolved], $classLookup, $selfType);
 		}
 		return [];
+	}
+
+	private function isRequiredPlainBoundaryType(string $type): bool
+	{
+		$trimmed = trim($type);
+		if ($trimmed === '') {
+			return false;
+		}
+		$lower = strtolower($trimmed);
+		if (in_array($lower, ['mixed', 'dynamic', 'void', 'null'], true)) {
+			return false;
+		}
+		return !$this->isWrapperCarrierType($trimmed);
+	}
+
+	private function isWrapperCarrierType(string $type): bool
+	{
+		$trimmed = trim($type);
+		if ($trimmed === '') {
+			return false;
+		}
+		if ($this->unwrapNullableType($trimmed) !== null) {
+			return true;
+		}
+		return preg_match('/^(result|result_or_false|result_or_bool|nullable)\s*</i', $trimmed) === 1;
+	}
+
+	/** @param array<string,mixed> $descriptor */
+	private function formatDescriptor(array $descriptor): string
+	{
+		$kind = (string) ($descriptor['kind'] ?? 'unknown');
+		if ($kind === 'chain' && is_array($descriptor['chain'] ?? null)) {
+			return $this->formatChain($descriptor['chain']);
+		}
+		if ($kind === 'alias') {
+			return '$' . (string) ($descriptor['source'] ?? '');
+		}
+		if ($kind === 'element') {
+			return 'indexed value';
+		}
+		return $kind;
 	}
 
 	/** @param array<string,mixed> $sourceDescriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
