@@ -578,6 +578,119 @@ PHS
 			$this->assertSame('stan.interface_contract_mismatch', $interfaceVisibilityDiagnostic['code'] ?? null, 'interface method visibility diagnostic code should be stable');
 			$this->assertContains('Interface methods must be implemented as public', (string) ($interfaceVisibilityDiagnostic['message'] ?? ''), 'interface method visibility diagnostic should require public implementation');
 
+			$this->writeProject($project, <<<'PHS'
+interface Node
+{
+	function id(): int;
+}
+
+interface Renderable extends Node
+{
+	function render(): string;
+}
+
+class Label implements Renderable
+{
+	function render(): string
+	{
+		return "ok";
+	}
+}
+
+$label = new Label();
+PHS
+ . "\n");
+
+			$inheritedInterfaceMethod = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $inheritedInterfaceMethod['warning_count'] ?? null, 'inherited interface method should be required');
+			$inheritedInterfaceDiagnostic = $inheritedInterfaceMethod['diagnostics'][0] ?? null;
+			if (!is_array($inheritedInterfaceDiagnostic)) {
+				throw new RuntimeException('inherited interface method diagnostic should be present');
+			}
+			$this->assertSame('stan.interface_contract_mismatch', $inheritedInterfaceDiagnostic['code'] ?? null, 'inherited interface diagnostic code should be stable');
+			$this->assertContains('missing method `id()`', (string) ($inheritedInterfaceDiagnostic['message'] ?? ''), 'inherited interface diagnostic should require parent interface methods');
+
+			$this->writeProject($project, <<<'PHS'
+interface LeftId
+{
+	function id(): int;
+}
+
+interface RightId
+{
+	function id(): string;
+}
+
+interface Conflicted extends LeftId, RightId
+{
+}
+
+class Label implements Conflicted
+{
+	function id(): int
+	{
+		return 7;
+	}
+}
+
+$label = new Label();
+PHS
+ . "\n");
+
+			$conflictedInterface = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $conflictedInterface['warning_count'] ?? null, 'conflicting inherited interface method should produce one STAN finding');
+			$conflictedInterfaceDiagnostic = $conflictedInterface['diagnostics'][0] ?? null;
+			if (!is_array($conflictedInterfaceDiagnostic)) {
+				throw new RuntimeException('conflicting inherited interface diagnostic should be present');
+			}
+			$this->assertSame('stan.interface_contract_mismatch', $conflictedInterfaceDiagnostic['code'] ?? null, 'conflicting inherited interface diagnostic code should be stable');
+			$this->assertContains('inherits conflicting method contract `id()`', (string) ($conflictedInterfaceDiagnostic['message'] ?? ''), 'conflicting inherited interface diagnostic should explain the duplicate contract');
+
+			$this->writeProject($project, <<<'PHS'
+abstract class AbstractRunner
+{
+	abstract function run(): int;
+}
+
+class Runner extends AbstractRunner
+{
+}
+
+$runner = new Runner();
+PHS
+ . "\n");
+
+			$missingAbstractMethod = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $missingAbstractMethod['warning_count'] ?? null, 'missing abstract method implementation should produce one STAN finding');
+			$missingAbstractDiagnostic = $missingAbstractMethod['diagnostics'][0] ?? null;
+			if (!is_array($missingAbstractDiagnostic)) {
+				throw new RuntimeException('missing abstract method diagnostic should be present');
+			}
+			$this->assertSame('stan.abstract_contract_mismatch', $missingAbstractDiagnostic['code'] ?? null, 'abstract contract diagnostic code should be stable');
+			$this->assertContains('extends abstract class `AbstractRunner` but is missing method `run()`', (string) ($missingAbstractDiagnostic['message'] ?? ''), 'abstract contract diagnostic should explain the missing method');
+
+			$this->writeProject($project, <<<'PHS'
+abstract class AbstractRunner
+{
+	abstract function run(): int;
+}
+
+class Runner extends AbstractRunner
+{
+	function run(): int
+	{
+		return 7;
+	}
+}
+
+$runner = new Runner();
+echo $runner->run(), "\n";
+PHS
+ . "\n");
+
+			$implementedAbstractMethod = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $implementedAbstractMethod['warning_count'] ?? null, 'implemented abstract method should stay clean');
+
 			echo "PASS: scpp stan strict discipline\n";
 			return 0;
 		} finally {
