@@ -9,6 +9,30 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.67 - 2026-06-07
+
+### Additions
+
+- Added STAN strict-discipline diagnostics for unchecked wrapper/result values assigned directly into required typed locals.
+- Added STAN dynamic-shape boundary warnings for JSON/dynamic values assigned directly into required typed locals without an explicit guard.
+- Added source-level compile diagnostic polish for typed argument mismatches so common call-site failures are reported in source terms while preserving the raw compiler excerpt.
+- Added structured vector bounds runtime diagnostics with source remapping, source snippets, operation details, failing index, and container size.
+
+### Fixes
+
+- Fixed STAN diagnostics-session override accounting so transient override runs no longer overwrite canonical cache state or report dependency-driven reanalysis as extra changed sources.
+- Fixed the strict safety edges suite so long runs emit visible progress and avoid repeated runtime rebuild work that could look like a no-output timeout.
+- Fixed source-mapped runtime reporting for vector bounds failures so they no longer fall back to generic typed-boundary messages.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Check STAN warnings for direct wrapper/dynamic-to-required typed-boundary assignments and stabilize values with `take(...)`, `isset(...)`, or another explicit guard where appropriate.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/SKILL.md` was updated to reflect the stricter STAN discipline and source-first diagnostics guidance.
+
 ## 0.1.66 - 2026-06-07
 
 ### Additions

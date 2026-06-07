@@ -3,7 +3,9 @@
 #include "scpp/detail.hpp"
 #include "scpp/bool_t.hpp"
 #include "scpp/int_t.hpp"
+#include "scpp/runtime_error.hpp"
 
+#include <cstdint>
 #include <initializer_list>
 
 namespace scpp {
@@ -20,6 +22,27 @@ template <typename T>
 class vector_t final {
 private:
 	std::vector<T> value_;
+
+	[[noreturn]] void throw_bounds_error(std::int64_t index) const {
+		throw runtime_error(
+			std::string("vector index ") + std::to_string(index) + " is out of bounds for size " + std::to_string(value_.size()) + ".",
+			"bounds_error",
+			"runtime",
+			"operator[]",
+			{
+				{"container", "vector"},
+				{"index", std::to_string(index)},
+				{"size", std::to_string(value_.size())},
+				{"operation", "operator[]"},
+			}
+		);
+	}
+
+	void check_bounds(std::size_t index) const {
+		if (index >= value_.size()) {
+			throw_bounds_error(static_cast<std::int64_t>(index));
+		}
+	}
 
 public:
 	vector_t() = default;
@@ -67,27 +90,29 @@ public:
 
 	// Checked element access.
 	T &at(std::size_t index) {
-		return value_.at(index);
+		check_bounds(index);
+		return value_[index];
 	}
 
 	const T &at(std::size_t index) const {
-		return value_.at(index);
+		check_bounds(index);
+		return value_[index];
 	}
 
 	T &at(const int_t &index) {
 		const auto native = index.native_value();
 		if (native < 0) {
-			throw std::out_of_range("vector_t negative index");
+			throw_bounds_error(native);
 		}
-		return value_.at(static_cast<std::size_t>(native));
+		return at(static_cast<std::size_t>(native));
 	}
 
 	const T &at(const int_t &index) const {
 		const auto native = index.native_value();
 		if (native < 0) {
-			throw std::out_of_range("vector_t negative index");
+			throw_bounds_error(native);
 		}
-		return value_.at(static_cast<std::size_t>(native));
+		return at(static_cast<std::size_t>(native));
 	}
 
 	T &operator[](std::size_t index) {
@@ -108,11 +133,11 @@ public:
 
 	// Alias used by generated code where source semantics map to indexing.
 	T &index(std::size_t index_value) {
-		return value_.at(index_value);
+		return at(index_value);
 	}
 
 	const T &index(std::size_t index_value) const {
-		return value_.at(index_value);
+		return at(index_value);
 	}
 
 	T &index(const int_t &index_value) {
@@ -129,7 +154,7 @@ public:
 	[[nodiscard]] U try_ref(std::size_t index) const
 		requires(detail::is_shared_p_v<U>)
 	{
-		return value_.at(index);
+		return at(index);
 	}
 
 	template <typename U = T>
@@ -138,9 +163,9 @@ public:
 	{
 		const auto native = index.native_value();
 		if (native < 0) {
-			throw std::out_of_range("vector_t negative index");
+			throw_bounds_error(native);
 		}
-		return value_.at(static_cast<std::size_t>(native));
+		return at(static_cast<std::size_t>(native));
 	}
 
 	template <typename U = T>
