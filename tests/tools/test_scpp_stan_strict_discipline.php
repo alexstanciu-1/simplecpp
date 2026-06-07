@@ -61,6 +61,53 @@ PHS
 			$this->assertSame(0, $checked['warning_count'] ?? null, 'take(...) wrapper handling should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
+function consume(string $text): void
+{
+	echo strlen($text), "\n";
+}
+
+function main(): void
+{
+	consume(fs_get("missing-language-case-file.txt"));
+}
+
+main();
+PHS
+ . "\n");
+
+			$wrapperArg = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $wrapperArg['warning_count'] ?? null, 'unchecked wrapper argument should produce one STAN finding');
+			$wrapperArgDiagnostic = $wrapperArg['diagnostics'][0] ?? null;
+			if (!is_array($wrapperArgDiagnostic)) {
+				throw new RuntimeException('unchecked wrapper argument diagnostic should be present');
+			}
+			$this->assertSame('stan.unchecked_wrapper_argument', $wrapperArgDiagnostic['code'] ?? null, 'wrapper argument diagnostic code should be stable');
+			$this->assertSame(8, $wrapperArgDiagnostic['line'] ?? null, 'wrapper argument diagnostic should point at the call line');
+			$this->assertContains('Unchecked wrapper result passed to required `string` parameter $text of `consume()`', (string) ($wrapperArgDiagnostic['message'] ?? ''), 'wrapper argument diagnostic should describe the required call boundary');
+			$this->assertContains('Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check', (string) ($wrapperArgDiagnostic['message'] ?? ''), 'wrapper argument diagnostic should recommend strict wrapper handling');
+
+			$this->writeProject($project, <<<'PHS'
+function consume(string $text): void
+{
+	echo strlen($text), "\n";
+}
+
+function main(): void
+{
+	$text string = "";
+	if (take($text, fs_get("missing-language-case-file.txt"))) {
+		consume($text);
+	}
+}
+
+main();
+PHS
+ . "\n");
+
+			$checkedWrapperArg = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $checkedWrapperArg['warning_count'] ?? null, 'take(...) wrapper argument handling should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
 function main(): void
 {
 	$row = json_decode("{\"name\":\"Ada\"}");

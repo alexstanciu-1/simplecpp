@@ -335,6 +335,7 @@ final class StanExpressionTypeResolver
 	{
 		$classCatalog = $this->buildClassCatalog($fileSummaries);
 		$classLookup = $this->buildClassLookup($classCatalog);
+		$functionCatalog = $this->buildFunctionCatalog($fileSummaries);
 		$functionLookup = $this->buildFunctionLookup($fileSummaries);
 		$diagnostics = [];
 
@@ -342,12 +343,12 @@ final class StanExpressionTypeResolver
 			$path = (string) ($summary['path'] ?? '(unknown)');
 			foreach (($summary['root_functions'] ?? []) as $function) {
 				if (is_array($function)) {
-					$diagnostics = array_merge($diagnostics, $this->collectFunctionWrapperBoundaryDiagnostics($function, null, $path, $classLookup, $functionLookup));
+					$diagnostics = array_merge($diagnostics, $this->collectFunctionWrapperBoundaryDiagnostics($function, null, $path, $classLookup, $functionLookup, $functionCatalog));
 				}
 			}
 			foreach (($summary['root_classes'] ?? []) as $class) {
 				if (is_array($class)) {
-					$diagnostics = array_merge($diagnostics, $this->collectClassMethodWrapperBoundaryDiagnostics($class, '', $path, $classLookup, $functionLookup));
+					$diagnostics = array_merge($diagnostics, $this->collectClassMethodWrapperBoundaryDiagnostics($class, '', $path, $classLookup, $functionLookup, $functionCatalog));
 				}
 			}
 			foreach (($summary['namespaces'] ?? []) as $namespace) {
@@ -357,12 +358,12 @@ final class StanExpressionTypeResolver
 				$namespaceName = (string) ($namespace['name'] ?? '');
 				foreach (($namespace['functions'] ?? []) as $function) {
 					if (is_array($function)) {
-						$diagnostics = array_merge($diagnostics, $this->collectFunctionWrapperBoundaryDiagnostics($function, $namespaceName, $path, $classLookup, $functionLookup));
+						$diagnostics = array_merge($diagnostics, $this->collectFunctionWrapperBoundaryDiagnostics($function, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog));
 					}
 				}
 				foreach (($namespace['classes'] ?? []) as $class) {
 					if (is_array($class)) {
-						$diagnostics = array_merge($diagnostics, $this->collectClassMethodWrapperBoundaryDiagnostics($class, $namespaceName, $path, $classLookup, $functionLookup));
+						$diagnostics = array_merge($diagnostics, $this->collectClassMethodWrapperBoundaryDiagnostics($class, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog));
 					}
 				}
 			}
@@ -669,15 +670,15 @@ final class StanExpressionTypeResolver
 		return $results;
 	}
 
-	private function collectFunctionWrapperBoundaryDiagnostics(array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup): array
+	private function collectFunctionWrapperBoundaryDiagnostics(array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog): array
 	{
 		$baseTypes = $this->buildParamTypeMap($function['params'] ?? []);
 		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
 		$analysis = $this->analyzeChainSequence($function, $baseTypes, null, $classLookup, $functionLookup, $context, $path);
-		return $this->collectWrapperBoundaryDiagnosticsForOwner($function, $analysis['final_local_types'], null, $classLookup, $functionLookup, $context, $path);
+		return $this->collectWrapperBoundaryDiagnosticsForOwner($function, $analysis['final_local_types'], null, $classLookup, $functionLookup, $functionCatalog, $context, $path);
 	}
 
-	private function collectClassMethodWrapperBoundaryDiagnostics(array $class, string $namespace, string $path, array $classLookup, array $functionLookup): array
+	private function collectClassMethodWrapperBoundaryDiagnostics(array $class, string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog): array
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
@@ -691,7 +692,7 @@ final class StanExpressionTypeResolver
 			$methodName = (string) ($method['name'] ?? '');
 			$context = $classType . '::' . $methodName;
 			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
-			$results = array_merge($results, $this->collectWrapperBoundaryDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $context, $path));
+			$results = array_merge($results, $this->collectWrapperBoundaryDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $functionCatalog, $context, $path));
 		}
 		return $results;
 	}
@@ -1997,8 +1998,8 @@ final class StanExpressionTypeResolver
 		return $diagnostics;
 	}
 
-	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
-	private function collectWrapperBoundaryDiagnosticsForOwner(array $ownerNode, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): array
+	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
+	private function collectWrapperBoundaryDiagnosticsForOwner(array $ownerNode, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path): array
 	{
 		$diagnostics = [];
 		foreach (($ownerNode['typed_boundary_assignments'] ?? []) as $assignment) {
@@ -2036,7 +2037,115 @@ final class StanExpressionTypeResolver
 				);
 			}
 		}
+		foreach (($ownerNode['call_sites'] ?? []) as $callSite) {
+			if (!is_array($callSite)) {
+				continue;
+			}
+			$diagnostics = array_merge($diagnostics, $this->collectWrapperArgumentDiagnosticsForCallSite($callSite, $localTypes, $selfType, $classLookup, $functionLookup, $functionCatalog, $context, $path));
+		}
 		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
+	private function collectWrapperArgumentDiagnosticsForCallSite(array $callSite, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path): array
+	{
+		$signature = $this->resolveCallSiteSignature($callSite, $localTypes, $selfType, $classLookup, $functionLookup, $functionCatalog);
+		if ($signature === null) {
+			return [];
+		}
+		$args = is_array($callSite['args'] ?? null) ? $callSite['args'] : [];
+		$params = is_array($signature['params'] ?? null) ? $signature['params'] : [];
+		$targetText = (string) ($signature['target_text'] ?? 'call');
+		$diagnostics = [];
+		$limit = min(count($args), count($params));
+		for ($index = 0; $index < $limit; $index++) {
+			$param = $params[$index];
+			if (!is_array($param)) {
+				continue;
+			}
+			$expectedType = (string) ($param['primary_type'] ?? $param['type'] ?? '');
+			if (!$this->isRequiredPlainBoundaryType($expectedType)) {
+				continue;
+			}
+			$descriptor = is_array($args[$index] ?? null) ? $args[$index] : null;
+			if ($descriptor === null) {
+				continue;
+			}
+			$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
+			if ($wrapperTypes === []) {
+				continue;
+			}
+			$diagnostics[] = $this->makeCallDiagnostic(
+				'unchecked_wrapper_argument',
+				$context,
+				$path,
+				(int) ($callSite['line'] ?? 0),
+				'Unchecked wrapper result passed to required `' . $expectedType . '` parameter $' . (string) ($param['name'] ?? ('arg' . $index)) . ' of `' . $targetText . '` in `' . $context . '`: argument `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the call.'
+			);
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return array<string,mixed>|null */
+	private function resolveCallSiteSignature(array $callSite, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog): ?array
+	{
+		$callKind = (string) ($callSite['call_kind'] ?? '');
+		if ($callKind === 'function') {
+			$name = strtolower((string) ($callSite['name'] ?? ''));
+			$signature = $functionCatalog[$name] ?? null;
+			if (!is_array($signature)) {
+				return null;
+			}
+			$signature['target_text'] = (string) ($callSite['name'] ?? '') . '()';
+			return $signature;
+		}
+		if ($callKind === 'static_method') {
+			$className = (string) ($callSite['class_name'] ?? '');
+			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
+			$methodName = (string) ($callSite['method_name'] ?? '');
+			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
+			if ($classInfo === null) {
+				return null;
+			}
+			$signature = $this->findMethodSignature($classInfo, $methodName);
+			if ($signature === null || !(bool) ($signature['is_static'] ?? false)) {
+				return null;
+			}
+			$visibility = $this->normalizeMemberVisibility((string) ($signature['visibility'] ?? 'public'));
+			if (!$this->memberAccessAllowed($visibility, $classInfo, $selfType, $classLookup)) {
+				return null;
+			}
+			$signature['target_text'] = $resolvedClassName . '::' . $methodName . '()';
+			return $signature;
+		}
+		if ($callKind === 'method') {
+			$receiverDescriptor = $callSite['receiver'] ?? null;
+			$receiverTypes = is_array($receiverDescriptor)
+				? $this->resolveExpressionDescriptorTypes($receiverDescriptor, $localTypes, $selfType, $classLookup, $functionLookup)
+				: [];
+			$receiverTypes = $this->normalizeTypeSet($receiverTypes);
+			$methodName = (string) ($callSite['method_name'] ?? '');
+			if (count($receiverTypes) !== 1) {
+				return null;
+			}
+			$receiverType = $this->unwrapMemberReceiverType($receiverTypes[0]);
+			$classInfo = $this->findClassInfo($receiverType, $classLookup);
+			if ($classInfo === null) {
+				return null;
+			}
+			$signature = $this->findMethodSignature($classInfo, $methodName);
+			if ($signature === null || (bool) ($signature['is_static'] ?? false)) {
+				return null;
+			}
+			$visibility = $this->normalizeMemberVisibility((string) ($signature['visibility'] ?? 'public'));
+			if (!$this->memberAccessAllowed($visibility, $classInfo, $selfType, $classLookup)) {
+				return null;
+			}
+			$signature['target_text'] = $receiverType . '->' . $methodName . '()';
+			return $signature;
+		}
+		return null;
 	}
 
 	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
@@ -2374,6 +2483,9 @@ final class StanExpressionTypeResolver
 			$actualTypes = $this->resolveExpressionDescriptorTypes(is_array($args[$index] ?? null) ? $args[$index] : ['kind' => 'unknown'], $localTypes, $selfType, $classLookup, $functionLookup);
 			$actualTypes = $this->normalizeTypeSet($actualTypes);
 			if ($actualTypes === [] || $this->typeSetsAreCompatible($actualTypes, [$expectedType], $classLookup, false)) {
+				continue;
+			}
+			if ($this->isRequiredPlainBoundaryType($expectedType) && array_values(array_filter($actualTypes, $this->isWrapperCarrierType(...))) !== []) {
 				continue;
 			}
 			$diagnostics[] = $this->makeCallDiagnostic('argument_type_mismatch', $context, $path, (int) ($callSite['line'] ?? 0), 'Argument type mismatch for `' . $targetText . '` parameter $' . (string) ($param['name'] ?? ('arg' . $index)) . ' in `' . $context . '`: expected `' . $expectedType . '`, got `' . implode('|', $actualTypes) . '`.');

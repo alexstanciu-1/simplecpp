@@ -6332,6 +6332,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'argument_type_mismatch',
 		'argument_count_mismatch',
 		'unchecked_wrapper_boundary',
+		'unchecked_wrapper_argument',
 		'static_instance_misuse',
 		'invalid_property_read',
 	], true)) {
