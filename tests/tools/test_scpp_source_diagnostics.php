@@ -101,6 +101,46 @@ final class ScppSourceDiagnosticsTest
 			$this->assertContains('Source: main.phs:2', $regexBuild['stderr'], 'build stderr should map the regex helper use back to source');
 			$this->assertNotContains('undefined reference', $regexBuild['stderr'], 'build stderr should not fall through to a native link failure');
 
+			$typedArgProject = $this->root . '/typed_argument_mismatch';
+			$this->mkdir($typedArgProject . '/native_cpp');
+			$this->write($typedArgProject . '/prism.json', json_encode([
+				'config_version' => 1,
+				'project_name' => 'typed-argument-mismatch-repro',
+				'entrypoint' => 'main.phs',
+				'build_dir' => '.prism/build',
+				'generated_dir' => '.prism/generated',
+				'cache_dir' => '.prism/cache',
+				'native_cpp_dir' => 'native_cpp',
+				'dependencies' => [],
+				'libraries' => [],
+				'build' => [
+					'backend' => 'ninja',
+					'mode' => 'debug',
+					'cxx' => null,
+				],
+				'runtime' => [
+					'languages' => [
+						'php' => ['profile' => 'strict'],
+					],
+					'modules' => ['json', 'filesystem'],
+				],
+			], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+			$this->write($typedArgProject . '/main.phs', implode("\n", [
+				'function double_it(int $value): int {',
+				'	return $value + $value;',
+				'}',
+				'',
+				'echo double_it("21"), "\n";',
+				'',
+			]));
+
+			$typedArgBuild = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build', '--build-runtime'], $typedArgProject, 120);
+			$this->assertNotSame(0, $typedArgBuild['exit_code'], 'scpp build should fail for a typed argument mismatch');
+			$this->assertContains('Compile error in main.phs:5: argument 1 passed to double_it expects int, got string', $typedArgBuild['stderr'], 'build stderr should render typed argument mismatches in source terms');
+			$this->assertContains('Generated location:', $typedArgBuild['stderr'], 'build stderr should retain the generated location for deeper debugging');
+			$this->assertContains('Raw compiler excerpt:', $typedArgBuild['stderr'], 'build stderr should retain the raw compiler excerpt');
+			$this->assertContains('could not convert', $typedArgBuild['stderr'], 'raw compiler excerpt should preserve native compiler detail');
+
 			echo "PASS: scpp source diagnostics\n";
 			return 0;
 		} finally {

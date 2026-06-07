@@ -2145,6 +2145,9 @@ function collect_runtime_error_diagnostic(string $stderr): ?array
 			'actual_kind' => isset($details['actual_kind']) ? (string) $details['actual_kind'] : null,
 			'function' => isset($details['function']) ? (string) $details['function'] : null,
 			'max_call_depth' => isset($details['max_call_depth']) ? (string) $details['max_call_depth'] : null,
+			'container' => isset($details['container']) ? (string) $details['container'] : null,
+			'index' => isset($details['index']) ? (string) $details['index'] : null,
+			'size' => isset($details['size']) ? (string) $details['size'] : null,
 			'trace' => $trace,
 		];
 	}
@@ -2286,6 +2289,20 @@ function build_runtime_failure_summary(array $diagnostic): string
 		}
 		if ($limit !== '') {
 			$line .= ' (limit ' . $limit . ')';
+		}
+		return $line . '.';
+	}
+	if ((string) ($diagnostic['code'] ?? '') === 'bounds_error') {
+		$container = trim((string) ($diagnostic['container'] ?? 'container'));
+		$index = trim((string) ($diagnostic['index'] ?? ''));
+		$size = trim((string) ($diagnostic['size'] ?? ''));
+		$line = ucfirst($container) . ' index is out of bounds';
+		if ($index !== '') {
+			$line .= ' (index ' . $index;
+			if ($size !== '') {
+				$line .= ', size ' . $size;
+			}
+			$line .= ')';
 		}
 		return $line . '.';
 	}
@@ -5218,6 +5235,7 @@ function write_last_error_report(
 			return [
 				'severity' => (string) ($diagnostic['severity'] ?? ''),
 				'message' => (string) ($diagnostic['message'] ?? ''),
+				'source_message' => isset($diagnostic['source_message']) ? (string) $diagnostic['source_message'] : null,
 				'generated_file' => isset($diagnostic['generated_file']) ? normalize_path((string) $diagnostic['generated_file']) : null,
 				'generated_line' => isset($diagnostic['generated_line']) ? (int) $diagnostic['generated_line'] : null,
 				'generated_column' => isset($diagnostic['generated_column']) ? (is_int($diagnostic['generated_column']) ? $diagnostic['generated_column'] : null) : null,
@@ -5230,6 +5248,9 @@ function write_last_error_report(
 				'actual_runtime_kind' => isset($diagnostic['actual_runtime_kind']) ? (string) $diagnostic['actual_runtime_kind'] : null,
 				'operation' => isset($diagnostic['operation']) ? (string) $diagnostic['operation'] : null,
 				'code' => isset($diagnostic['code']) ? (string) $diagnostic['code'] : null,
+				'container' => isset($diagnostic['container']) ? (string) $diagnostic['container'] : null,
+				'index' => isset($diagnostic['index']) ? (string) $diagnostic['index'] : null,
+				'size' => isset($diagnostic['size']) ? (string) $diagnostic['size'] : null,
 				'trace' => array_values(array_filter(
 					is_array($diagnostic['trace'] ?? null) ? $diagnostic['trace'] : [],
 					static fn ($line): bool => is_string($line) && trim($line) !== ''
@@ -5518,6 +5539,7 @@ function collect_compiler_diagnostics(string $projectRoot, string $buildDir, str
 			$results[$key] = [
 				'severity' => $diagnostic['severity'],
 				'message' => $diagnostic['message'],
+				'source_message' => infer_source_compile_diagnostic_message($originSource, $originalLine, $diagnostic['message']),
 				'generated_file' => $generatedAbs,
 				'generated_line' => $diagnostic['line'],
 				'generated_column' => $diagnostic['column'],
@@ -5529,6 +5551,132 @@ function collect_compiler_diagnostics(string $projectRoot, string $buildDir, str
 	}
 
 	return array_values($results);
+}
+
+function infer_source_compile_diagnostic_message(string $sourceFile, int $sourceLine, string $compilerMessage): ?string
+{
+	if ($sourceLine <= 0 || !is_file($sourceFile) || !is_readable($sourceFile)) {
+		return null;
+	}
+	if (preg_match('/from [\x{2018}\'"]([^\x{2019}\'"]+)[\x{2019}\'"] to [\x{2018}\'"]([^\x{2019}\'"]+)[\x{2019}\'"]/u', $compilerMessage, $matches) !== 1) {
+		return null;
+	}
+	$actual = source_type_name_from_cpp_type(trim((string) $matches[1]));
+	$expected = source_type_name_from_cpp_type(trim((string) $matches[2]));
+	if ($actual === '' || $expected === '') {
+		return null;
+	}
+	$lines = file($sourceFile, FILE_IGNORE_NEW_LINES);
+	if (!is_array($lines) || !isset($lines[$sourceLine - 1])) {
+		return null;
+	}
+	$call = find_source_call_on_line(trim((string) $lines[$sourceLine - 1]));
+	if ($call === null) {
+		return null;
+	}
+	return 'argument ' . $call['argument_index'] . ' passed to ' . $call['name'] . ' expects ' . $expected . ', got ' . $actual;
+}
+
+/** @return array{name:string,argument_index:int}|null */
+function find_source_call_on_line(string $source): ?array
+{
+	if (preg_match_all('/\b([A-Za-z_][A-Za-z0-9_]*)\s*\(([^()]*)\)/', $source, $matches, PREG_SET_ORDER) === false) {
+		return null;
+	}
+	foreach ($matches as $match) {
+		$name = (string) ($match[1] ?? '');
+		if ($name === '' || in_array(strtolower($name), ['if', 'while', 'for', 'foreach', 'switch', 'match', 'isset', 'empty'], true)) {
+			continue;
+		}
+		return ['name' => $name, 'argument_index' => infer_source_argument_index((string) ($match[2] ?? ''))];
+	}
+	return null;
+}
+
+function infer_source_argument_index(string $args): int
+{
+	$parts = split_source_argument_list($args);
+	foreach ($parts as $index => $part) {
+		$part = trim($part);
+		if ($part === '') {
+			continue;
+		}
+		if (preg_match('/^["\']/', $part) === 1) {
+			return $index + 1;
+		}
+	}
+	return 1;
+}
+
+/** @return list<string> */
+function split_source_argument_list(string $args): array
+{
+	$args = trim($args);
+	if ($args === '') {
+		return [];
+	}
+	$parts = [];
+	$current = '';
+	$depth = 0;
+	$quote = null;
+	for ($i = 0, $length = strlen($args); $i < $length; $i++) {
+		$ch = $args[$i];
+		if ($quote !== null) {
+			$current .= $ch;
+			if ($ch === '\\' && $i + 1 < $length) {
+				$current .= $args[++$i];
+				continue;
+			}
+			if ($ch === $quote) {
+				$quote = null;
+			}
+			continue;
+		}
+		if ($ch === '"' || $ch === "'") {
+			$quote = $ch;
+			$current .= $ch;
+			continue;
+		}
+		if ($ch === '(' || $ch === '[' || $ch === '{') {
+			$depth++;
+		} elseif ($ch === ')' || $ch === ']' || $ch === '}') {
+			$depth = max(0, $depth - 1);
+		} elseif ($ch === ',' && $depth === 0) {
+			$parts[] = trim($current);
+			$current = '';
+			continue;
+		}
+		$current .= $ch;
+	}
+	$parts[] = trim($current);
+	return array_values(array_filter($parts, static fn (string $part): bool => $part !== ''));
+}
+
+function source_type_name_from_cpp_type(string $type): string
+{
+	$type = trim($type);
+	$type = preg_replace('/\s+/', ' ', $type) ?? $type;
+	$type = preg_replace('/^const\s+/', '', $type) ?? $type;
+	$type = preg_replace('/[&*]+$/', '', $type) ?? $type;
+	$type = trim(str_replace('scpp::', '', $type));
+	$map = [
+		'int_t' => 'int',
+		'float_t' => 'float',
+		'bool_t' => 'bool',
+		'string_t' => 'string',
+		'mixed_t' => 'mixed',
+		'null_t' => 'null',
+	];
+	if (isset($map[$type])) {
+		return $map[$type];
+	}
+	if (preg_match('/^vector_t<(.+)>$/', $type, $matches) === 1) {
+		return 'vector<' . source_type_name_from_cpp_type((string) $matches[1]) . '>';
+	}
+	if (preg_match('/^hash_t<(.+)>$/', $type, $matches) === 1) {
+		return 'hash<' . source_type_name_from_cpp_type((string) $matches[1]) . '>';
+	}
+	return $type;
 }
 
 /**
@@ -5612,8 +5760,11 @@ function render_short_compiler_failure(array $diagnostics, string $projectRoot, 
 		$relation = is_string($diagnostic['original_relation'] ?? null) ? (string) $diagnostic['original_relation'] : 'exact';
 		$originPrefix = $relation === 'exact' ? '' : ($relation === 'around' ? 'around ' : 'near ');
 		$line = 'Compile ' . $diagnostic['severity'] . ' in ' . $originPrefix . $originLabel . ':' . $diagnostic['original_line'];
-		if ($diagnostic['message'] !== '') {
-			$line .= ': ' . $diagnostic['message'];
+		$message = is_string($diagnostic['source_message'] ?? null) && (string) $diagnostic['source_message'] !== ''
+			? (string) $diagnostic['source_message']
+			: (string) ($diagnostic['message'] ?? '');
+		if ($message !== '') {
+			$line .= ': ' . $message;
 		}
 		$lines[] = $line;
 		$generatedLocation = 'Generated location: ' . $generatedLabel . ':' . $diagnostic['generated_line'];

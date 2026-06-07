@@ -107,6 +107,47 @@ PHS
 			$lineMap = $this->readGeneratedLineMap($generatedFile . '.line.tsv');
 			$this->assertSame(13, $lineMap[$generatedLine]['line'] ?? null, 'saved generated location should map back to the failing source statement line');
 
+			$boundsProject = $this->root . '/bounds';
+			$this->mkdir($boundsProject);
+			$this->write($boundsProject . '/prism.json', json_encode([
+				'name' => 'runtime-bounds-diagnostics-regression',
+				'entrypoint' => 'main.phs',
+				'build_dir' => '.prism/build',
+				'runtime' => [
+					'languages' => [
+						'php' => ['profile' => 'strict'],
+					],
+					'modules' => ['json', 'filesystem'],
+				],
+			], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+			$this->write($boundsProject . '/main.phs', <<<'PHS'
+$items vector<int> = [1, 2, 3];
+echo $items[99], "\n";
+PHS
+ . "\n");
+
+			$boundsRun = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $boundsProject, 120);
+			$this->assertNotSame(0, $boundsRun['exit_code'], 'vector bounds failure should make scpp run fail');
+			$this->assertContains('Runtime error in main.phs:2', $boundsRun['stderr'], 'bounds stderr should report the remapped source location');
+			$this->assertContains('Vector index is out of bounds (index 99, size 3).', $boundsRun['stderr'], 'bounds stderr should describe the source-level bounds failure');
+			$this->assertContains('> 2 | echo $items[99], "\n";', $boundsRun['stderr'], 'bounds stderr should highlight the failing source line');
+			$this->assertContains('Operation: operator[]', $boundsRun['stderr'], 'bounds stderr should report the failing operation');
+
+			$boundsReport = json_decode($this->read($boundsProject . '/.prism/last_error.json'), true);
+			if (!is_array($boundsReport)) {
+				throw new RuntimeException('bounds last_error.json should decode as an object');
+			}
+			$boundsDiagnostic = $boundsReport['diagnostics'][0] ?? null;
+			if (!is_array($boundsDiagnostic)) {
+				throw new RuntimeException('bounds last_error.json should contain at least one runtime diagnostic');
+			}
+			$this->assertSame('bounds_error', $boundsDiagnostic['code'] ?? null, 'bounds report should preserve the structured bounds error code');
+			$this->assertSame(normalize_path($boundsProject . '/main.phs'), $boundsDiagnostic['original_file'] ?? null, 'bounds diagnostics should remap back to source');
+			$this->assertSame(2, $boundsDiagnostic['original_line'] ?? null, 'bounds diagnostics should remap back to the failing source line');
+			$this->assertSame('operator[]', $boundsDiagnostic['operation'] ?? null, 'bounds diagnostics should preserve the failing operation');
+			$this->assertSame('99', $boundsDiagnostic['index'] ?? null, 'bounds diagnostics should preserve the failing index');
+			$this->assertSame('3', $boundsDiagnostic['size'] ?? null, 'bounds diagnostics should preserve the vector size');
+
 			echo "PASS: scpp runtime diagnostics\n";
 			return 0;
 		} finally {
