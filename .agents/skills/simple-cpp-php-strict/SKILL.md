@@ -63,6 +63,7 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - If the destination is explicitly `mixed` or `dynamic`, no cast is needed and the value remains on the dynamic carrier path.
 - Prefer `dynamic` when the source-level intent is shared mutable object/table state with reference-like aliasing; prefer `mixed` for broad boxed dynamic values that are not specifically object/table handles.
 - Treat `json_decode(...)` as a fat-variable boundary. When the expected decoded shape is known, add or preserve a short local shape comment/doc comment and normalize into typed locals, properties, objects, or typed containers quickly instead of letting the dynamic carrier spread through the rest of the code. Decoded arrays may be stabilized directly into compatible `vector<T>` / nested `vector<vector<T>>` shapes, while absent, null, or incompatible dynamic values at required typed boundaries are expected to fail instead of silently coercing.
+- Treat STAN warnings about unchecked wrapper results or dynamic-shape assignments as real strict-design feedback. Resolve wrappers with `take(...)` and guard dynamic/JSON fields with `isset(...)` or an explicit normalization step before assigning into required typed locals.
 - Treat declared member visibility as enforced source semantics: private/protected properties, static properties, methods, and class constants are checked by STAN before build, including cross-file project code.
 - Resolve wrappers near meaningful boundaries with `take(...)` so success, failure, absence, and usable values stay explicit.
 - Keep `null`, `false`, and error states distinct.
@@ -109,7 +110,7 @@ On Windows, prefer `scpp --doctor` early when native builds fail in Git Bash / M
 Use generated C++ and `.prism/generated/*.line.tsv` artifacts as inspection evidence, not as the primary source to patch.
 For strict runtime type failures, inspect `scpp error` / `.prism/last_error.json` first. Recent generated-location remapping can populate `original_file` / `original_line` there; use generated C++ and line maps only when the saved report still lacks the needed attribution.
 For real strict-project runtime failures, follow this default sequence: `scpp run` -> `scpp error` -> inspect `original_file`, `original_line`, `expected_type`, `actual_runtime_kind`, and `operation` -> add `dbg(...)` near the failing typed boundary -> inspect `.line.tsv` or generated C++ only if the saved report is still not enough.
-Treat the default runtime-failure view as source-first: `scpp run` should be the compact app-facing view, `scpp error` the richer saved summary, and `scpp full-error` the place for raw runtime message details plus deeper generated/runtime trace inspection.
+Treat the default runtime-failure view as source-first: `scpp run` should be the compact app-facing view, `scpp error` the richer saved summary, and `scpp full-error` the place for raw runtime message details plus deeper generated/runtime trace inspection. Bounds and typed-boundary failures should normally show source location, a short source snippet, and operation details before requiring generated-code inspection.
 For runtime shape confusion, use strict-safe debug helpers before ad hoc probes:
 
 ```php
