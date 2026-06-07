@@ -9,9 +9,32 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.66 - 2026-06-07
+
+### Additions
+
+- Added recursive typed vector literal stabilization, including nested `vector<vector<T>>` and deeper vector shapes.
+- Added direct decoded JSON array stabilization into typed vectors, including nested typed vectors and explicit typed-boundary failures for incompatible array shapes.
+- Added typed `json_encode` support for typed vectors, hashes, and nested vector values through the runtime JSON encode adapter.
+- Added STAN detection for obvious direct self-recursive return paths, plus configurable runtime call-depth guard diagnostics when STAN is bypassed.
+
 ### Fixes
 
+- Fixed strict required typed-boundary conversions so missing or null dynamic JSON fields no longer silently become default-looking required scalar values.
+- Fixed strict required `int` boundaries so dynamic JSON floats and numeric strings no longer silently coerce into integers.
+- Fixed missing-return handling so typed functions that may exit without returning stop during STAN pre-build instead of reaching native undefined behavior.
+- Fixed strict regex helper use without the regex runtime module so it reports an early source/build diagnostic instead of falling through to an undefined-symbol link failure.
 - Fixed Prism++ member visibility alignment so STAN now rejects invalid access to private/protected properties, static properties, methods, and class constants before C++ generation, while preserving valid protected subclass access and avoiding false positives for enum case references.
+
+### Breaking Changes
+
+- Dynamic values assigned into required typed scalar or typed vector boundaries are stricter: absent, null, or incompatible dynamic shapes now fail instead of silently coercing into usable required values.
+
+### Migration Notes
+
+- Use explicit casts when intentionally applying PHP-like scalar coercion; required typed locals/properties now behave as checked stabilization boundaries.
+- Add the `regex` runtime module before using strict regex helpers.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/SKILL.md` was updated to reflect the stricter JSON typed-boundary and visibility guidance.
 
 ## 0.1.65 - 2026-05-27
 
