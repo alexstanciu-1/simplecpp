@@ -2026,7 +2026,7 @@ final class StanExpressionTypeResolver
 				);
 				continue;
 			}
-			$dynamicShapeTypes = $this->resolveDynamicShapeSourceTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
+			$dynamicShapeTypes = $this->resolveDynamicShapeSourceTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup, $targetType);
 			if ($dynamicShapeTypes !== []) {
 				$diagnostics[] = $this->makeCallDiagnostic(
 					'dynamic_shape_boundary',
@@ -2647,7 +2647,7 @@ final class StanExpressionTypeResolver
 	}
 
 	/** @param array<string,mixed> $descriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
-	private function resolveDynamicShapeSourceTypes(array $descriptor, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): array
+	private function resolveDynamicShapeSourceTypes(array $descriptor, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, ?string $targetType = null): array
 	{
 		$kind = (string) ($descriptor['kind'] ?? 'unknown');
 		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
@@ -2657,12 +2657,26 @@ final class StanExpressionTypeResolver
 			return $this->filterDynamicShapeTypes($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
 		}
 		if ($kind === 'conditional') {
+			if ($targetType !== null && $targetType !== '') {
+				$trueDescriptor = is_array($descriptor['if_true'] ?? null) ? $descriptor['if_true'] : null;
+				$falseDescriptor = is_array($descriptor['if_false'] ?? null) ? $descriptor['if_false'] : null;
+				$trueDynamic = $trueDescriptor !== null ? $this->resolveDynamicShapeSourceTypes($trueDescriptor, $localTypes, $selfType, $classLookup, $functionLookup) : [];
+				$falseDynamic = $falseDescriptor !== null ? $this->resolveDynamicShapeSourceTypes($falseDescriptor, $localTypes, $selfType, $classLookup, $functionLookup) : [];
+				$trueTypes = $trueDescriptor !== null ? $this->resolveExpressionDescriptorTypes($trueDescriptor, $localTypes, $selfType, $classLookup, $functionLookup) : [];
+				$falseTypes = $falseDescriptor !== null ? $this->resolveExpressionDescriptorTypes($falseDescriptor, $localTypes, $selfType, $classLookup, $functionLookup) : [];
+				if ($trueDynamic !== [] && $falseDynamic === [] && $this->typeSetsAreCompatible($falseTypes, [$targetType], $classLookup, false)) {
+					return [];
+				}
+				if ($falseDynamic !== [] && $trueDynamic === [] && $this->typeSetsAreCompatible($trueTypes, [$targetType], $classLookup, false)) {
+					return [];
+				}
+			}
 			$types = [];
 			if (is_array($descriptor['if_true'] ?? null)) {
-				$types = array_merge($types, $this->resolveDynamicShapeSourceTypes($descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup));
+				$types = array_merge($types, $this->resolveDynamicShapeSourceTypes($descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup, $targetType));
 			}
 			if (is_array($descriptor['if_false'] ?? null)) {
-				$types = array_merge($types, $this->resolveDynamicShapeSourceTypes($descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup));
+				$types = array_merge($types, $this->resolveDynamicShapeSourceTypes($descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup, $targetType));
 			}
 			return $this->normalizeTypeSet($types);
 		}

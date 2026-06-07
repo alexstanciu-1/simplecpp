@@ -244,6 +244,21 @@ PHS
 			$this->assertSame(0, $guardedDynamic['warning_count'] ?? null, 'guarded dynamic JSON extraction with an explicit cast should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$row = json_decode("{\"name\":\"Ada\"}");
+	$name string = $row["name"] ?? "";
+	echo $name, "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$coalescedDynamic = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $coalescedDynamic['warning_count'] ?? null, 'dynamic JSON extraction with a typed coalesce fallback should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
 class Box
 {
 	public int $value;
