@@ -187,6 +187,7 @@ final class FrontEndSymbolExtractor
 			'static_property_assignments' => $this->summarizeStaticPropertyAssignments($function->statements),
 			'property_branch_assignments' => $this->summarizePropertyBranchAssignments($function->statements),
 			'static_property_reads' => $this->summarizeStaticPropertyReads($function->statements),
+			'class_constant_accesses' => $this->summarizeClassConstantAccesses($function->statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($function->statements, $sourceLines),
 			'statement_count' => count($function->statements),
 			'line' => $function->line,
@@ -224,6 +225,7 @@ final class FrontEndSymbolExtractor
 			'static_property_assignments' => $this->summarizeStaticPropertyAssignments($statements),
 			'property_branch_assignments' => $this->summarizePropertyBranchAssignments($statements),
 			'static_property_reads' => $this->summarizeStaticPropertyReads($statements),
+			'class_constant_accesses' => $this->summarizeClassConstantAccesses($statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($statements, $sourceLines),
 			'statement_count' => count($statements),
 			'line' => 1,
@@ -273,6 +275,7 @@ final class FrontEndSymbolExtractor
 				'static_property_assignments' => $this->summarizeStaticPropertyAssignments($method->statements),
 				'property_branch_assignments' => $this->summarizePropertyBranchAssignments($method->statements),
 				'static_property_reads' => $this->summarizeStaticPropertyReads($method->statements),
+				'class_constant_accesses' => $this->summarizeClassConstantAccesses($method->statements),
 				'local_invalidations' => $this->summarizeLocalInvalidations($method->statements, $sourceLines),
 				'statement_count' => count($method->statements),
 				'line' => $method->line,
@@ -1212,6 +1215,24 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeClassConstantAccesses(array $statements): array
+	{
+		$accesses = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
+				continue;
+			}
+			$expr = match ($statement->kind) {
+				'assign', 'assign_ref', 'assign_op' => is_array($statement->payload) ? ($statement->payload['expr'] ?? null) : null,
+				'expr', 'return', 'throw', 'echo' => $statement->payload,
+				default => null,
+			};
+			$this->collectClassConstantAccessesFromNode($expr, $statement->line, $accesses, $statement->kind);
+		}
+		return $accesses;
+	}
+
+	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
 	private function summarizeCallSites(array $statements): array
 	{
 		$calls = [];
@@ -1556,6 +1577,30 @@ final class FrontEndSymbolExtractor
 		}
 	}
 
+	/** @param list<array<string,mixed>> $accesses */
+	private function collectClassConstantAccessesFromNode(mixed $node, int $line, array &$accesses, string $statementKind): void
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children)) {
+			return;
+		}
+
+		$access = $this->describeClassConstantAccess($node, $line);
+		if ($access !== null) {
+			$access['statement_kind'] = $statementKind;
+			$accesses[] = $access;
+		}
+
+		foreach ($node->children as $child) {
+			if (is_array($child)) {
+				foreach ($child as $nested) {
+					$this->collectClassConstantAccessesFromNode($nested, $line, $accesses, $statementKind);
+				}
+				continue;
+			}
+			$this->collectClassConstantAccessesFromNode($child, $line, $accesses, $statementKind);
+		}
+	}
+
 	/** @return array{line:int,class_name:string,property_name:string}|null */
 	private function describeStaticPropertyAccess(mixed $node, int $line): ?array
 	{
@@ -1575,6 +1620,28 @@ final class FrontEndSymbolExtractor
 			'line' => $line,
 			'class_name' => ltrim($className, '\\'),
 			'property_name' => $propertyName,
+		];
+	}
+
+	/** @return array{line:int,class_name:string,constant_name:string}|null */
+	private function describeClassConstantAccess(mixed $node, int $line): ?array
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children) || $node->kind !== AstKind::CLASS_CONST) {
+			return null;
+		}
+		$classNode = $node->children['class'] ?? null;
+		if (!is_object($classNode) || ($classNode->kind ?? null) !== AstKind::NAME) {
+			return null;
+		}
+		$className = trim((string) ($classNode->children['name'] ?? ''));
+		$constantName = trim((string) ($node->children['const'] ?? ''));
+		if ($className === '' || $constantName === '') {
+			return null;
+		}
+		return [
+			'line' => $line,
+			'class_name' => ltrim($className, '\\'),
+			'constant_name' => $constantName,
 		];
 	}
 

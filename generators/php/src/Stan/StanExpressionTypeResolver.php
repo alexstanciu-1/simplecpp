@@ -1095,6 +1095,14 @@ final class StanExpressionTypeResolver
 				continue;
 			}
 
+			if ($event['event_kind'] === 'class_constant_access') {
+				$diagnostic = $this->collectClassConstantVisibilityDiagnostic($event, $selfType, $classLookup, $context, $path);
+				if ($diagnostic !== null) {
+					$propertyReadDiagnostics[] = $diagnostic;
+				}
+				continue;
+			}
+
 			if ($event['event_kind'] === 'call_site_check') {
 				$callSite = is_array($event['call_site'] ?? null) ? $event['call_site'] : null;
 				$this->checkCallSiteInitialization($diagnostics, $initializationKeys, $callSite, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup, $context, $path);
@@ -1422,6 +1430,18 @@ final class StanExpressionTypeResolver
 				'priority' => 3,
 				'class_name' => (string) ($staticPropertyRead['class_name'] ?? ''),
 				'property_name' => (string) ($staticPropertyRead['property_name'] ?? ''),
+			];
+		}
+		foreach (($ownerNode['class_constant_accesses'] ?? []) as $classConstantAccess) {
+			if (!is_array($classConstantAccess)) {
+				continue;
+			}
+			$events[] = [
+				'event_kind' => 'class_constant_access',
+				'line' => (int) ($classConstantAccess['line'] ?? 0),
+				'priority' => 3,
+				'class_name' => (string) ($classConstantAccess['class_name'] ?? ''),
+				'constant_name' => (string) ($classConstantAccess['constant_name'] ?? ''),
 			];
 		}
 		foreach (($ownerNode['local_invalidations'] ?? []) as $invalidation) {
@@ -2060,6 +2080,37 @@ final class StanExpressionTypeResolver
 		];
 	}
 
+	/** @param array<string,mixed> $event @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function collectClassConstantVisibilityDiagnostic(array $event, ?string $selfType, array $classLookup, string $context, string $path): ?array
+	{
+		$className = (string) ($event['class_name'] ?? '');
+		$constantName = (string) ($event['constant_name'] ?? '');
+		if ($className === '' || $constantName === '') {
+			return null;
+		}
+		$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
+		$classInfo = $this->findClassInfo($resolvedClassName, $classLookup, $selfType);
+		if ($classInfo === null || (bool) ($classInfo['is_enum'] ?? false) || !isset($classInfo['constant_visibility'][$constantName])) {
+			return null;
+		}
+		$visibility = $this->normalizeMemberVisibility((string) ($classInfo['constant_visibility'][$constantName] ?? 'public'));
+		$declaringInfo = $this->findConstantDeclaringClassInfo($classInfo, $constantName, $classLookup) ?? $classInfo;
+		if ($this->memberAccessAllowed($visibility, $declaringInfo, $selfType, $classLookup)) {
+			return null;
+		}
+		return [
+			'kind' => 'member_visibility_violation',
+			'context' => $context,
+			'path' => $path,
+			'line' => (int) ($event['line'] ?? 0),
+			'operation' => 'read',
+			'constant_name' => $constantName,
+			'receiver_type' => $resolvedClassName,
+			'visibility' => $visibility,
+			'message' => 'Cannot read ' . $visibility . ' class constant `' . $resolvedClassName . '::' . $constantName . '` from `' . $context . '`.',
+		];
+	}
+
 	/** @param array<string,mixed> $receiverChain @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
 	private function resolveReceiverTypesForPropertyChain(array $receiverChain, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): array
 	{
@@ -2688,11 +2739,24 @@ final class StanExpressionTypeResolver
 				$propertyDeclaringClass[$name] = $fqcn;
 			}
 		}
+		$constantVisibility = [];
+		$constantDeclaringClass = [];
+		foreach (($class['constants'] ?? []) as $constant) {
+			if (!is_array($constant)) {
+				continue;
+			}
+			$name = (string) ($constant['name'] ?? '');
+			if ($name !== '') {
+				$constantVisibility[$name] = $this->normalizeMemberVisibility((string) ($constant['visibility'] ?? 'public'));
+				$constantDeclaringClass[$name] = $fqcn;
+			}
+		}
 
 		return [
 			'name' => (string) ($class['name'] ?? ''),
 			'fqcn' => $fqcn,
 			'parent_class' => (string) ($class['parent_class'] ?? ''),
+			'is_enum' => (bool) ($class['is_enum'] ?? false),
 			'ancestor_types' => [],
 			'method_return_types' => $methodReturnTypes,
 			'method_signatures' => $methodSignatures,
@@ -2700,6 +2764,8 @@ final class StanExpressionTypeResolver
 			'property_has_default' => $propertyHasDefault,
 			'property_visibility' => $propertyVisibility,
 			'property_declaring_class' => $propertyDeclaringClass,
+			'constant_visibility' => $constantVisibility,
+			'constant_declaring_class' => $constantDeclaringClass,
 		];
 	}
 
@@ -2781,6 +2847,16 @@ final class StanExpressionTypeResolver
 		return $this->findClassInfo($declaringClass, $classLookup);
 	}
 
+	/** @param array<string,mixed> $classInfo @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function findConstantDeclaringClassInfo(array $classInfo, string $constantName, array $classLookup): ?array
+	{
+		$declaringClass = (string) ($classInfo['constant_declaring_class'][$constantName] ?? '');
+		if ($declaringClass === '') {
+			return null;
+		}
+		return $this->findClassInfo($declaringClass, $classLookup);
+	}
+
 	private function isKnownNonObjectType(string $type): bool
 	{
 		$normalized = strtolower(trim($type));
@@ -2826,6 +2902,8 @@ final class StanExpressionTypeResolver
 				$info['property_has_default'] = array_replace((array) ($parentInfo['property_has_default'] ?? []), (array) ($info['property_has_default'] ?? []));
 				$info['property_visibility'] = array_replace((array) ($parentInfo['property_visibility'] ?? []), (array) ($info['property_visibility'] ?? []));
 				$info['property_declaring_class'] = array_replace((array) ($parentInfo['property_declaring_class'] ?? []), (array) ($info['property_declaring_class'] ?? []));
+				$info['constant_visibility'] = array_replace((array) ($parentInfo['constant_visibility'] ?? []), (array) ($info['constant_visibility'] ?? []));
+				$info['constant_declaring_class'] = array_replace((array) ($parentInfo['constant_declaring_class'] ?? []), (array) ($info['constant_declaring_class'] ?? []));
 				$info['ancestor_types'] = $this->normalizeTypeSet(array_merge(
 					[(string) ($parentInfo['fqcn'] ?? $parentClass)],
 					(array) ($parentInfo['ancestor_types'] ?? [])

@@ -319,7 +319,7 @@ final class IrBuilder
 				continue;
 			}
 			if (($member->kind ?? null) === AstKind::CLASS_CONST_DECL) {
-				$constants = array_merge($constants, $this->buildConstants($member->children['const'] ?? null));
+				$constants = array_merge($constants, $this->buildConstants($member->children['const'] ?? null, false, (int) ($member->flags ?? 0)));
 				continue;
 			}
 			if (($member->kind ?? null) === AstKind::PROP_DECL) {
@@ -545,7 +545,7 @@ final class IrBuilder
 
 
 	/** @return list<ConstantDecl> */
-	private function buildConstants(mixed $node, bool $isLibExport = false): array
+	private function buildConstants(mixed $node, bool $isLibExport = false, int $visibilityFlags = 0): array
 	{
 		$out = [];
 		foreach (($node->children ?? []) as $child) {
@@ -556,7 +556,7 @@ final class IrBuilder
 				name: (string) ($child->children['name'] ?? ''),
 				value: $child->children['value'] ?? null,
 				isLibExport: $isLibExport || $this->hasLibExportTag($child->children['docComment'] ?? null),
-				visibility: $this->readMemberVisibility((int) ($node->flags ?? 0)),
+				visibility: $this->readMemberVisibility($visibilityFlags !== 0 ? $visibilityFlags : (int) ($node->flags ?? 0)),
 				line: (int) ($child->lineno ?? $node->lineno ?? 0),
 			);
 		}
