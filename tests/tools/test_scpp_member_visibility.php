@@ -30,8 +30,10 @@ final class ScppMemberVisibilityTest
 			$this->assertPrivateClassConstantAccessStopsBuild();
 			$this->assertPrivateParentClassConstantAccessStopsBuild();
 			$this->assertPrivateParentPropertyAccessStopsBuild();
+			$this->assertCrossFileMemberVisibilityStopsBuild();
 			$this->assertProtectedSubclassAccessPassesStan();
 			$this->assertEnumCaseAccessPassesStan();
+			$this->assertUnresolvedClassConstantAccessDoesNotReportVisibility();
 			$this->assertVisibilityLowersToCppAccessSections();
 			echo "PASS: scpp member visibility\n";
 			return 0;
@@ -143,6 +145,45 @@ final class ScppMemberVisibilityTest
 		$this->assertContains('Build stopped before C++ generation/compilation.', $build['stderr'], 'parent private property access should stop before native build');
 	}
 
+	private function assertCrossFileMemberVisibilityStopsBuild(): void
+	{
+		foreach ([
+			'property_read' => [
+				'access' => '$box = new SecretBox();' . "\n" . 'echo $box->value, "\n";',
+				'message' => 'Cannot read private property `SecretBox::$value`',
+			],
+			'static_property_read' => [
+				'access' => 'echo SecretBox::$count, "\n";',
+				'message' => 'Cannot read private static property `SecretBox::$count`',
+			],
+			'method_call' => [
+				'access' => '$box = new SecretBox();' . "\n" . 'echo $box->hidden(), "\n";',
+				'message' => 'Cannot access private method `SecretBox->hidden()`',
+			],
+			'class_constant_read' => [
+				'access' => 'echo SecretBox::VALUE, "\n";',
+				'message' => 'Cannot read private class constant `SecretBox::VALUE`',
+			],
+		] as $case => $fixture) {
+			$project = $this->root . '/cross_file_' . $case;
+			$this->writeProject($project, $fixture['access'] . "\n");
+			$this->write($project . '/model.phs', implode("\n", [
+				'class SecretBox {',
+				'	private int $value = 7;',
+				'	private static int $count = 3;',
+				'	private const VALUE = 11;',
+				'	private function hidden(): int { return self::VALUE; }',
+				'}',
+				'',
+			]));
+
+			$build = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build'], $project, 120);
+			$this->assertNotSame(0, $build['exit_code'], 'cross-file private ' . $case . ' should stop build');
+			$this->assertContains($fixture['message'], $build['stderr'], 'build stderr should report cross-file private ' . $case . ' visibility violation');
+			$this->assertContains('Build stopped before C++ generation/compilation.', $build['stderr'], 'cross-file private ' . $case . ' should stop before native build');
+		}
+	}
+
 	private function assertProtectedSubclassAccessPassesStan(): void
 	{
 		$project = $this->root . '/protected_subclass_access';
@@ -186,6 +227,20 @@ final class ScppMemberVisibilityTest
 		$this->assertSame(0, $stan['exit_code'], 'enum case access should pass STAN');
 		$this->assertNotContains('member_visibility_violation', $stan['stderr'] . $stan['stdout'], 'enum case access should not report a visibility violation');
 		$this->assertNotContains('Cannot read private class constant', $stan['stderr'] . $stan['stdout'], 'enum cases should not be treated as private class constants');
+	}
+
+	private function assertUnresolvedClassConstantAccessDoesNotReportVisibility(): void
+	{
+		$project = $this->root . '/unresolved_class_constant_access';
+		$this->writeProject($project, implode("\n", [
+			'echo MissingBox::VALUE, "\n";',
+			'',
+		]));
+
+		$stan = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'stan'], $project, 120);
+		$this->assertSame(0, $stan['exit_code'], 'unresolved class constant access should not fail STAN');
+		$this->assertNotContains('member_visibility_violation', $stan['stderr'] . $stan['stdout'], 'unresolved class constant access should not report visibility violation');
+		$this->assertNotContains('Cannot read private class constant', $stan['stderr'] . $stan['stdout'], 'unresolved class constant access should not invent private visibility');
 	}
 
 	private function assertVisibilityLowersToCppAccessSections(): void
