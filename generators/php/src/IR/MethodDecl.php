@@ -25,6 +25,7 @@ final class MethodDecl
 		public readonly bool $isStatic,
 		public readonly array $statements,
 		public readonly int $line = 0,
+		public readonly string $visibility = 'public',
 		public readonly array $argNormalizationRules = [],
 	) {
 	}

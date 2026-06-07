@@ -122,6 +122,20 @@ struct nullable_value_type<nullable<T>> {
 template <typename T>
 using nullable_value_type_t = typename nullable_value_type<remove_cvref_t<T>>::type;
 
+// Extracts the element type from vector_t<T> so typed-boundary helpers can
+// stabilize dynamic packed tables into typed vectors without generator-specific
+// element handling.
+template <typename T>
+struct vector_value_type;
+
+template <typename T>
+struct vector_value_type<vector_t<T>> {
+	using type = T;
+};
+
+template <typename T>
+using vector_value_type_t = typename vector_value_type<remove_cvref_t<T>>::type;
+
 // Detects whether a runtime type exposes operator-> so wrapper types can forward dereference safely.
 template <typename T, typename = void>
 struct has_arrow_operator : std::false_type {};

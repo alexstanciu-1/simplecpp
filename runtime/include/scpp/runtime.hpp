@@ -44,3 +44,9 @@
 #include "scpp/str.hpp"
 #include "hosts/fastcgi/fastcgi.hpp"
 #include "scpp/generated/operators.hpp"
+
+#if defined(SCPP_ENABLE_CALL_DEPTH_GUARD) && SCPP_ENABLE_CALL_DEPTH_GUARD
+#define SCPP_CALL_DEPTH_GUARD(name, file, line) ::scpp::call_depth_guard __scpp_call_depth_guard((name), (file), (line))
+#else
+#define SCPP_CALL_DEPTH_GUARD(name, file, line) ((void)0)
+#endif

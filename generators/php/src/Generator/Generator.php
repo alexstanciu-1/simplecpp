@@ -266,9 +266,23 @@ final class Generator
 		return '"' . $escaped . '"';
 	}
 
+	private function renderCallDepthGuardLine(string $callableName, int $line): string
+	{
+		return 'SCPP_CALL_DEPTH_GUARD(' . $this->cppStringLiteral($callableName) . ', ' . $this->cppStringLiteral($this->currentSourcePath) . ', ' . $line . ');';
+	}
+
 	private function renderGeneratedCast(string $type, string $expr): string
 	{
 		return 'cast<' . $type . '>(' . $expr . ')';
+	}
+
+	private function renderRequiredTypedBoundaryCast(string $type, string $expr): string
+	{
+		if ($type === 'mixed_t') {
+			return $expr;
+		}
+
+		return 'required_cast<' . $type . '>(' . $expr . ')';
 	}
 
 	/** @param list<string> $lines @return list<CodeBlock> */
@@ -2030,7 +2044,9 @@ final class Generator
 		if ($lateStaticDispatchMethods !== []) {
 			$this->appendHeaderLines($header, $this->code('', 0));
 		}
+		$currentAccessSection = 'public';
 		foreach ($class->properties as $property) {
+			$this->emitClassAccessSection($header, $currentAccessSection, $property->visibility, $property->line);
 			$initializer = $property->hasDefault
 				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
 				: null;
@@ -2053,9 +2069,11 @@ final class Generator
 			$this->appendHeaderLines($header, $this->code($this->indent(1) . rtrim($line, ';') . ';', $property->line));
 		}
 		foreach ($class->constants as $constant) {
+			$this->emitClassAccessSection($header, $currentAccessSection, $constant->visibility, $constant->line);
 			$this->appendHeaderLines($header, $this->code($this->indent(1) . 'static inline const auto ' . $this->cppIdentifier($constant->name) . ' = ' . $this->renderExpr($constant->value, $namespacePhp) . ';', $constant->line));
 		}
 		foreach ($class->methods as $method) {
+			$this->emitClassAccessSection($header, $currentAccessSection, $method->visibility, $method->line);
 			if ($this->methodNeedsNormalizedTemplate($method)) {
 				$artifacts = $this->functionLikeUsesExecBodySplit($method->params, $method->statements)
 					? $this->renderInlineTemplateMethodArtifactsWithExecSplit($class, $method, $namespacePhp)
@@ -2133,6 +2151,18 @@ final class Generator
 			$this->currentParentClass = $prevParentClass;
 			$this->currentLateStaticDispatchMethods = $prevLateStaticDispatchMethods;
 		}
+	}
+
+	private function emitClassAccessSection(array &$header, string &$currentAccessSection, string $visibility, int $line): void
+	{
+		if (!in_array($visibility, ['public', 'protected', 'private'], true)) {
+			$visibility = 'public';
+		}
+		if ($visibility === $currentAccessSection) {
+			return;
+		}
+		$currentAccessSection = $visibility;
+		$this->appendHeaderLines($header, $this->code($visibility . ':', $line));
 	}
 
 	/**
@@ -2335,6 +2365,7 @@ final class Generator
 		foreach ($this->renderSyntheticMainCliPreamble() as $line) {
 			$this->appendSourceLines($source, $this->codeWithCurrentOrigin($this->indent(1) . $line));
 		}
+		$this->appendSourceLines($source, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($name, 0)));
 		foreach ($statements as $statement) {
 			$this->currentSourceLine = $statement->line;
 			$this->currentSourceColumn = 0;
@@ -2774,6 +2805,7 @@ final class Generator
 			$signature = $returnType . ' ' . $className . '::' . $this->cppIdentifier($method->name) . '(' . $this->renderParams($method->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
 		}
 		$body = $this->renderBody($statements, $namespacePhp);
+		array_unshift($body, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($className . '::' . $this->cppIdentifier($method->name), $method->line)));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
@@ -3071,7 +3103,9 @@ final class Generator
 		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
 		$this->currentReturnType = $returnType;
 		$signature = $returnType . ' ' . $this->renderExecCallableName($function->name) . '(' . $this->renderCanonicalParamsForExec($function->params, false, $namespacePhp, $this->currentParamPassModes) . ')';
-		$body = implode("\n", $this->flattenCodeText($this->renderBody($function->statements, $namespacePhp)));
+		$bodyLines = $this->renderBody($function->statements, $namespacePhp);
+		array_unshift($bodyLines, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($this->renderExecCallableName($function->name), $function->line)));
+		$body = implode("\n", $this->flattenCodeText($bodyLines));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
@@ -3408,6 +3442,7 @@ final class Generator
 		$this->currentReturnType = $returnType;
 		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
 		$body = $this->renderBody($function->statements, $namespacePhp);
+		array_unshift($body, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($function->name, $function->line)));
 		$this->currentReturnType = null;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
@@ -3800,7 +3835,8 @@ final class Generator
 					if ($isTypedEmptyArrayLiteral) {
 						return $this->statementCodeLines($statement, [$typedArrayContainerType . ' ' . $this->localCppName($name) . ' = {};']);
 					}
-					return $this->statementCodeLines($statement, [$this->typeMapper->mapTypedLocalType($effectiveTyped) . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
+					$mappedLocalType = $this->typeMapper->mapTypedLocalType($effectiveTyped);
+					return $this->statementCodeLines($statement, [$mappedLocalType . ' ' . $this->localCppName($name) . ' = ' . $this->renderRequiredTypedBoundaryCast($mappedLocalType, $expr) . ';']);
 				}
 				if ($closureFunctionType !== null) {
 					return $this->statementCodeLines($statement, [$closureFunctionType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
@@ -5312,6 +5348,16 @@ final class Generator
 		return $this->typeMapper->mapTypedLocalType($typedLocalType);
 	}
 
+	private function parseMappedVectorElementType(string $mappedVectorType): ?string
+	{
+		$normalized = trim($mappedVectorType);
+		if (preg_match('/^vector_t<(.+)>$/', $normalized, $matches) !== 1) {
+			return null;
+		}
+
+		return trim($matches[1]);
+	}
+
 	private function mapTypedHashLocalType(string $typedLocalType): ?string
 	{
 		if (!$this->typeMapper->isHashType($typedLocalType)) {
@@ -5465,33 +5511,7 @@ final class Generator
 
 		$mappedVectorType = $typedLocalType !== null ? $this->mapTypedVectorLocalType($typedLocalType) : null;
 		if ($mappedVectorType !== null) {
-			if ($elements === []) {
-				return $mappedVectorType . '{}';
-			}
-
-			$values = [];
-			foreach ($elements as $element) {
-				if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
-					$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
-					return '/* unsupported-array-literal */';
-				}
-
-				$key = $element->children['key'] ?? null;
-				if ($key !== null) {
-					$this->errors[] = 'Typed vector literals cannot contain explicit keys at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
-					return '/* unsupported-keyed-vector-literal */';
-				}
-
-				$valueNode = $element->children['value'] ?? null;
-				if ($valueNode === null) {
-					$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
-					return '/* unsupported-array-element */';
-				}
-
-				$values[] = $this->renderExpr($valueNode, $namespacePhp);
-			}
-
-			return $mappedVectorType . '{' . implode(', ', $values) . '}';
+			return $this->renderTypedVectorArrayLiteral($expr, $namespacePhp, $mappedVectorType);
 		}
 
 		$mappedHashType = $typedLocalType !== null ? $this->mapTypedHashLocalType($typedLocalType) : null;
@@ -5579,6 +5599,55 @@ final class Generator
 		}
 
 		return 'mixed_t{shared_table_(' . implode(', ', $items) . ')}';
+	}
+
+	private function renderTypedVectorArrayLiteral(mixed $expr, ?string $namespacePhp, string $mappedVectorType): string
+	{
+		$elements = is_object($expr) && isset($expr->children) && is_array($expr->children)
+			? array_values($expr->children)
+			: [];
+		if ($elements === []) {
+			return $mappedVectorType . '{}';
+		}
+
+		$elementType = $this->parseMappedVectorElementType($mappedVectorType);
+		if ($elementType === null) {
+			$this->errors[] = 'Unsupported typed vector mapping for ' . $mappedVectorType . '.';
+			return '/* unsupported-typed-vector */';
+		}
+
+		$values = [];
+		foreach ($elements as $element) {
+			if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+				$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+				return '/* unsupported-array-literal */';
+			}
+
+			$key = $element->children['key'] ?? null;
+			if ($key !== null) {
+				$this->errors[] = 'Typed vector literals cannot contain explicit keys at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-keyed-vector-literal */';
+			}
+
+			$valueNode = $element->children['value'] ?? null;
+			if ($valueNode === null) {
+				$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-array-element */';
+			}
+
+			if (is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::ARRAY) && $this->parseMappedVectorElementType($elementType) !== null) {
+				$values[] = $this->renderTypedVectorArrayLiteral($valueNode, $namespacePhp, $elementType);
+				continue;
+			}
+
+			$values[] = $this->wrapExprForExpectedType(
+				$this->renderExpr($valueNode, $namespacePhp),
+				$this->inferExprType($valueNode),
+				$elementType
+			);
+		}
+
+		return $mappedVectorType . '{' . implode(', ', $values) . '}';
 	}
 
 

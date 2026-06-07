@@ -9,6 +9,10 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+### Fixes
+
+- Fixed Prism++ member visibility alignment so STAN now rejects invalid access to private/protected properties, static properties, methods, and class constants before C++ generation, while preserving valid protected subclass access and avoiding false positives for enum case references.
+
 ## 0.1.65 - 2026-05-27
 
 ### Additions

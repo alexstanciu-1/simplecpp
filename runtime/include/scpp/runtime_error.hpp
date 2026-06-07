@@ -92,6 +92,54 @@ private:
 	std::vector<runtime_trace_frame_t> trace_;
 };
 
+inline constexpr int default_call_depth_limit = 4096;
+inline thread_local int g_call_depth = 0;
+
+class call_depth_guard final {
+public:
+	call_depth_guard(const char *function_name, const char *generated_file, int generated_line)
+		: active_(true) {
+		++g_call_depth;
+		if (g_call_depth <= configured_limit()) {
+			return;
+		}
+		--g_call_depth;
+		active_ = false;
+		throw runtime_error(
+			std::string("Maximum call depth exceeded while calling `") + (function_name == nullptr ? "<unknown>" : function_name) + "`.",
+			"max_call_depth_exceeded",
+			"runtime",
+			"call",
+			{
+				{"function", function_name == nullptr ? "<unknown>" : function_name},
+				{"max_call_depth", std::to_string(configured_limit())},
+				{"source_file", generated_file == nullptr ? "" : generated_file},
+				{"source_line", std::to_string(generated_line)},
+			}
+		);
+	}
+
+	call_depth_guard(const call_depth_guard &) = delete;
+	call_depth_guard &operator=(const call_depth_guard &) = delete;
+
+	~call_depth_guard() noexcept {
+		if (active_) {
+			--g_call_depth;
+		}
+	}
+
+private:
+	static int configured_limit() {
+#ifdef SCPP_MAX_CALL_DEPTH
+		return SCPP_MAX_CALL_DEPTH;
+#else
+		return default_call_depth_limit;
+#endif
+	}
+
+	bool active_;
+};
+
 inline bool runtime_error_json_enabled() {
 	const char *value = std::getenv("SCPP_ERROR_FORMAT");
 	return value != nullptr && std::string_view(value) == "json";
