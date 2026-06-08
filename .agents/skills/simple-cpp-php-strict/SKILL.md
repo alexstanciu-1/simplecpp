@@ -65,6 +65,7 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Treat `json_decode(...)` as a fat-variable boundary. When the expected decoded shape is known, add or preserve a short local shape comment/doc comment and normalize into typed locals, properties, objects, or typed containers quickly instead of letting the dynamic carrier spread through the rest of the code. Decoded arrays may be stabilized directly into compatible `vector<T>` / nested `vector<vector<T>>` shapes, while absent, null, or incompatible dynamic values at required typed boundaries are expected to fail instead of silently coercing.
 - Treat STAN warnings about unchecked wrapper results or dynamic-shape assignments as real strict-design feedback. Resolve wrappers with `take(...)` and guard dynamic/JSON fields with `isset(...)` or an explicit normalization step before assigning into required typed locals.
 - Treat declared member visibility as enforced source semantics: private/protected properties, static properties, methods, and class constants are checked by STAN before build, including cross-file project code.
+- Treat interface and abstract method contracts as build-blocking STAN checks in strict projects; implementation signatures should match declared return types, parameters, defaults, and visibility exactly.
 - Resolve wrappers near meaningful boundaries with `take(...)` so success, failure, absence, and usable values stay explicit.
 - Keep `null`, `false`, and error states distinct.
 - Prefer `===` and explicit state checks over ambiguous truthiness.
