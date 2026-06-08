@@ -71,17 +71,20 @@ final class TokenSiteScanner
 			return [];
 		}
 
-		$ownerKind = $this->detectFunctionOwnerKind($tokens, $functionIndex);
 		$ownerName = $this->readFunctionLikeName($tokens, $functionIndex, $openParenIndex);
+		$ownerKind = $ownerName === null ? 'closure_return' : $this->detectFunctionOwnerKind($tokens, $functionIndex);
 		$sites = $this->scanParameterSites($source, $openParenIndex, $closeParenIndex);
+		$returnScanStart = $ownerKind === 'closure_return'
+			? $this->skipClosureUseClause($tokens, $closeParenIndex + 1)
+			: $closeParenIndex + 1;
 
-		$inlineReturnSite = $this->scanInlineReturnCommentSite($source, $closeParenIndex + 1, $ownerKind, $ownerName, ['{']);
+		$inlineReturnSite = $this->scanInlineReturnCommentSite($source, $returnScanStart, $ownerKind, $ownerName, ['{']);
 		if ($inlineReturnSite !== null) {
 			$sites[] = $inlineReturnSite;
 			return $sites;
 		}
 
-		$returnSite = $this->scanColonReturnSite($source, $closeParenIndex + 1, $ownerKind, $ownerName);
+		$returnSite = $this->scanColonReturnSite($source, $returnScanStart, $ownerKind, $ownerName);
 		if ($returnSite !== null) {
 			$sites[] = $returnSite;
 		}
@@ -527,6 +530,9 @@ final class TokenSiteScanner
 		if ($i >= $count) {
 			return null;
 		}
+		if ($tokens[$i]['text'] === '(') {
+			return null;
+		}
 
 		$slotStartTokenIndex = $i;
 		$slotStartOffset = $tokens[$startIndex]['offset'];
@@ -754,6 +760,23 @@ final class TokenSiteScanner
 			return $depthParens > 0;
 		}
 		return false;
+	}
+
+	/** @param list<array{index:int,text:string,line:int,offset:int,is_array:bool,id:int|null}> $tokens */
+	private function skipClosureUseClause(array $tokens, int $startIndex): int
+	{
+		$useIndex = $this->findNextMeaningfulIndex($tokens, $startIndex, null);
+		if ($useIndex === null || strtolower($tokens[$useIndex]['text']) !== 'use') {
+			return $startIndex;
+		}
+
+		$openParenIndex = $this->findNextMeaningfulIndex($tokens, $useIndex + 1, null);
+		if ($openParenIndex === null || $tokens[$openParenIndex]['text'] !== '(') {
+			return $startIndex;
+		}
+
+		$closeParenIndex = $this->findMatchingCloser($tokens, $openParenIndex, '(', ')');
+		return $closeParenIndex !== null ? $closeParenIndex + 1 : $startIndex;
 	}
 
 	/** @param list<array{index:int,text:string,line:int,offset:int,is_array:bool,id:int|null}> $tokens */

@@ -1,0 +1,6 @@
+$a = 1;
+$f function<int()> = function () use ($a) {
+	return $a;
+};
+
+echo $f(), "\n";

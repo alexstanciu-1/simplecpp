@@ -1,0 +1,53 @@
+{
+    "id": "closures_008_missing_return_type_negative",
+    "feature": "closures",
+    "level": "strict_level_02",
+    "outcome": "negative",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": false,
+            "error_contains": [
+                "Closure return types must be declared explicitly in std::function lowering"
+            ]
+        },
+        "compile": {
+            "success": false,
+            "error_contains": []
+        },
+        "run": {
+            "success": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "closures",
+        "negative_generate",
+        "missing_return_type"
+    ],
+    "notes": "Untyped closure assignment with a value return requires either an explicit closure return type or an expected callable local signature.",
+    "build": {
+        "sanitizers": null
+    }
+}
