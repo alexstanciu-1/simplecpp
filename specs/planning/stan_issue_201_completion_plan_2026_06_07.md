@@ -136,4 +136,3 @@ Validation target:
 
 - `php tests/tools/test_scpp_stan_strict_discipline.php`
 - `php tests/tools/test_scpp_stan_diagnostics_session.php`
-
