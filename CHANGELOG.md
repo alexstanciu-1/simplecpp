@@ -9,6 +9,32 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.68 - 2026-06-08
+
+### Additions
+
+- Added STAN interface implementation diagnostics for missing methods, return-type mismatches, parameter-count/type/name/default mismatches, and visibility mismatches.
+- Added STAN abstract-contract diagnostics so concrete subclasses must implement inherited abstract methods before build.
+- Added build-blocking classification for interface and abstract contract violations in strict projects.
+- Added planning documentation for the issue #201 STAN strict-discipline close criteria.
+
+### Fixes
+
+- Fixed STAN return-path coverage for additional control-flow shapes.
+- Fixed STAN property-initialization analysis across inherited constructor/property patterns.
+- Fixed STAN wrapper-boundary and dynamic coalesce guard recognition so explicit guards avoid false positives while unchecked boundary use remains visible.
+- Normalized strict STAN diagnostic buckets so strict-discipline and contract failures stop before C++ generation where appropriate.
+
+### Breaking Changes
+
+- Strict projects now reject more invalid interface/abstract implementations during STAN pre-build instead of allowing the generated C++ compiler or runtime behavior to surface the issue later.
+
+### Migration Notes
+
+- Make interface implementations exactly match the declared method contract, including visibility, parameter count, parameter types/names/defaults, and return type.
+- Concrete subclasses of abstract classes must implement inherited abstract methods or remain abstract.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/SKILL.md` was updated to reflect STAN interface/abstract contract checks.
+
 ## 0.1.67 - 2026-06-07
 
 ### Additions
