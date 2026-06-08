@@ -3836,7 +3836,10 @@ final class Generator
 						return $this->statementCodeLines($statement, [$typedArrayContainerType . ' ' . $this->localCppName($name) . ' = {};']);
 					}
 					$mappedLocalType = $this->typeMapper->mapTypedLocalType($effectiveTyped);
-					return $this->statementCodeLines($statement, [$mappedLocalType . ' ' . $this->localCppName($name) . ' = ' . $this->renderRequiredTypedBoundaryCast($mappedLocalType, $expr) . ';']);
+					$initializer = is_object($exprNode) && in_array(($exprNode->kind ?? null), [AstKind::CLOSURE, AstKind::ARROW_FUNC], true)
+						? $expr
+						: $this->renderRequiredTypedBoundaryCast($mappedLocalType, $expr);
+					return $this->statementCodeLines($statement, [$mappedLocalType . ' ' . $this->localCppName($name) . ' = ' . $initializer . ';']);
 				}
 				if ($closureFunctionType !== null) {
 					return $this->statementCodeLines($statement, [$closureFunctionType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
@@ -3845,6 +3848,10 @@ final class Generator
 				return $this->statementCodeLines($statement, [$declarationType . ' ' . $this->localCppName($name) . ' = ' . $expr . ';']);
 			}
 			if (is_object($varNode) && (($varNode->kind ?? null) === AstKind::DIM)) {
+				if (is_object($exprNode) && in_array(($exprNode->kind ?? null), [AstKind::CLOSURE, AstKind::ARROW_FUNC], true)) {
+					$this->errors[] = 'Closures cannot be stored in array or dynamic container slots at line ' . $statement->line . '. Assign the closure to a concrete local callable instead.';
+					return $this->statementCodeLines($statement, ['/* unsupported-closure-container-assignment */']);
+				}
 				if (($varNode->children['dim'] ?? null) === null) {
 					$baseExpr = $varNode->children['expr'] ?? null;
 					$base = is_object($baseExpr) && (($baseExpr->kind ?? null) === AstKind::DIM)
@@ -5508,6 +5515,15 @@ final class Generator
 		$elements = is_object($expr) && isset($expr->children) && is_array($expr->children)
 			? array_values($expr->children)
 			: [];
+		foreach ($elements as $element) {
+			$valueNode = is_object($element) && (($element->kind ?? null) === AstKind::ARRAY_ELEM)
+				? ($element->children['value'] ?? null)
+				: null;
+			if (is_object($valueNode) && in_array(($valueNode->kind ?? null), [AstKind::CLOSURE, AstKind::ARROW_FUNC], true)) {
+				$this->errors[] = 'Closures cannot be stored in array or dynamic container literals at line ' . (int) ($valueNode->lineno ?? $expr->lineno ?? 0) . '. Assign the closure to a concrete local callable instead.';
+				return '/* unsupported-closure-container-literal */';
+			}
+		}
 
 		$mappedVectorType = $typedLocalType !== null ? $this->mapTypedVectorLocalType($typedLocalType) : null;
 		if ($mappedVectorType !== null) {
@@ -6004,7 +6020,7 @@ final class Generator
 		}
 		$this->currentReturnType = $returnType !== 'void' ? $returnType : null;
 
-		$bodyLines = $this->renderStatementSequence($statements, $namespacePhp);
+		$bodyLines = $this->flattenCodeText($this->renderStatementSequence($statements, $namespacePhp));
 
 		array_pop($this->foreachReferenceSuppressedNamesStack);
 		array_pop($this->foreachReferenceSuppressedNamesStack);
@@ -6148,7 +6164,7 @@ final class Generator
 		}
 		$this->currentReturnType = $returnType !== 'void' ? $returnType : null;
 
-		$bodyLines = $this->renderStatementSequence($statements, $namespacePhp);
+		$bodyLines = $this->flattenCodeText($this->renderStatementSequence($statements, $namespacePhp));
 
 		array_pop($this->foreachReferenceSuppressedNamesStack);
 		$this->declaredLocals = $savedDeclaredLocals;
@@ -6388,6 +6404,11 @@ final class Generator
 			return $this->typeMapper->mapTypedLocalType($docFunctionType);
 		}
 
+		$expectedReturnType = $this->currentExpectedClosureSignature['returnType'] ?? null;
+		if (is_string($expectedReturnType) && $expectedReturnType !== '') {
+			return $expectedReturnType;
+		}
+
 		foreach ($statements as $statement) {
 			if ($statement->kind === 'return' && $statement->payload !== null) {
 				$this->errors[] = 'Closure return types must be declared explicitly in std::function lowering at line ' . (int) ($expr->lineno ?? 0) . '.';
@@ -6408,7 +6429,7 @@ final class Generator
 		if (!is_string($type) || $type === '') {
 			return null;
 		}
-		return preg_match('/^function\s*</', $type) === 1 ? $type : null;
+		return $type;
 	}
 
 	private function qualifyDeclaredPhpType(?string $phpType, ?string $namespacePhp): ?string
@@ -7619,11 +7640,15 @@ final class Generator
 			return $this->renderLvalueExpr($expr, $namespacePhp);
 		}
 
-		$rendered = $this->renderExpr($expr, $namespacePhp);
 		if ($expected === null) {
-			return $rendered;
+			return $this->renderExpr($expr, $namespacePhp);
 		}
 
+		if (is_object($expr) && (($expr->kind ?? null) === AstKind::ARRAY) && preg_match('/^vector_t<.+>$/', $expected) === 1) {
+			return $this->renderTypedVectorArrayLiteral($expr, $namespacePhp, $expected);
+		}
+
+		$rendered = $this->renderExpr($expr, $namespacePhp);
 		$exprType = $this->inferExprType($expr);
 		return $this->wrapExprForExpectedType($rendered, $exprType, $expected);
 	}

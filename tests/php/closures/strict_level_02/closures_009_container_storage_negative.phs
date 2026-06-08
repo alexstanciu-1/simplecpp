@@ -1,0 +1,6 @@
+$items = [];
+$items[] = function (): int {
+	return 1;
+};
+
+echo "unreachable\n";

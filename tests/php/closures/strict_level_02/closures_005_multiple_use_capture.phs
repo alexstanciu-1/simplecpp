@@ -1,0 +1,8 @@
+$a = 1;
+$b = 2;
+$c = 3;
+$aaa function<int()> = function () use ($a, $b, $c): int {
+	return $a + $b + $c;
+};
+
+echo $aaa(), "\n";
