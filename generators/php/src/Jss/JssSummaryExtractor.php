@@ -459,6 +459,12 @@ final class JssSummaryExtractor
 		}
 		if ($expression->kind === 'call') {
 			$callee = $expression->fields['callee'] ?? null;
+			if ($callee instanceof JssNode && $callee->kind === 'identifier' && strtolower((string) ($callee->fields['name'] ?? '')) === 'take') {
+				$takeRequest = $this->takeContractRequestFields($expression, $localTypes);
+				if ($takeRequest !== null) {
+					$requests[] = $this->makeRequest('take_contract', $takeRequest, $expression);
+				}
+			}
 			if ($callee instanceof JssNode && $callee->kind === 'member') {
 				$chain = $this->flattenMemberChain($callee);
 				$request = [
@@ -557,7 +563,55 @@ final class JssSummaryExtractor
 				}
 			}
 		}
+		if ($expression->kind === 'call') {
+			$callee = $expression->fields['callee'] ?? null;
+			if ($callee instanceof JssNode && $callee->kind === 'member') {
+				return $this->callSurface->resolveCallReturnType($this->flattenMemberChain($callee));
+			}
+			if ($callee instanceof JssNode && $callee->kind === 'identifier' && strtolower((string) ($callee->fields['name'] ?? '')) === 'take') {
+				return 'bool';
+			}
+		}
 		return null;
+	}
+
+	/** @param array<string,string> $localTypes @return array<string,mixed>|null */
+	private function takeContractRequestFields(JssNode $call, array $localTypes): ?array
+	{
+		$args = is_array($call->fields['args'] ?? null) ? $call->fields['args'] : [];
+		if (count($args) < 2) {
+			return null;
+		}
+		$source = $args[count($args) - 1] ?? null;
+		$outputs = [];
+		for ($index = 0; $index < count($args) - 1; $index++) {
+			$output = $args[$index] ?? null;
+			if (!$output instanceof JssNode || $output->kind !== 'identifier') {
+				continue;
+			}
+			$name = (string) ($output->fields['name'] ?? '');
+			$outputs[] = [
+				'name' => $name,
+				'type' => $localTypes[$name] ?? '',
+			];
+		}
+		return [
+			'source_type' => $this->expressionTypeHint($source, $localTypes),
+			'source_call_target' => $this->sourceCallTarget($source),
+			'outputs' => $outputs,
+		];
+	}
+
+	private function sourceCallTarget(mixed $source): ?string
+	{
+		if (!$source instanceof JssNode || $source->kind !== 'call') {
+			return null;
+		}
+		$callee = $source->fields['callee'] ?? null;
+		if (!$callee instanceof JssNode || $callee->kind !== 'member') {
+			return null;
+		}
+		return $this->callSurface->resolveNormalizedCallTarget($this->flattenMemberChain($callee));
 	}
 
 	private function isPrintablePlusType(?string $type): bool

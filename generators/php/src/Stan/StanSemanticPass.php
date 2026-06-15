@@ -17,8 +17,8 @@ final class StanSemanticPass
 	{
 	}
 
-	/** @param array<string,array<string,mixed>> $fileSummaries @return array<string,mixed> */
-	public function analyze(array $fileSummaries, string $projectRoot): array
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<string>|null $activeRuntimeModules @return array<string,mixed> */
+	public function analyze(array $fileSummaries, string $projectRoot, ?array $activeRuntimeModules = null): array
 	{
 		$symbolIndex = $this->symbolIndexBuilder->build($fileSummaries);
 		$duplicateDiagnostics = $this->diagnosticCollector->collectDuplicateDiagnostics($symbolIndex);
@@ -34,7 +34,8 @@ final class StanSemanticPass
 		$initializationDiagnostics = $this->expressionTypeResolver->collectInitializationDiagnostics($fileSummaries, $symbolIndex);
 		$callSiteDiagnostics = $this->expressionTypeResolver->collectCallSiteDiagnostics($fileSummaries, $symbolIndex);
 		$returnTypeDiagnostics = $this->expressionTypeResolver->collectReturnTypeDiagnostics($fileSummaries, $symbolIndex);
-		$frontendClassifications = $this->frontendClassifier->classify($fileSummaries, $symbolIndex);
+		$frontendClassifications = $this->frontendClassifier->classify($fileSummaries, $symbolIndex, $activeRuntimeModules);
+		$frontendDiagnostics = $this->collectFrontendDiagnostics($frontendClassifications);
 		[
 			$initializationDiagnostics,
 			$returnChainDiagnostics,
@@ -63,6 +64,7 @@ final class StanSemanticPass
 		$initializationDiagnostics = $this->diagnosticEnricher->enrichList($initializationDiagnostics);
 		$callSiteDiagnostics = $this->diagnosticEnricher->enrichList($callSiteDiagnostics);
 		$returnTypeDiagnostics = $this->diagnosticEnricher->enrichList($returnTypeDiagnostics);
+		$frontendDiagnostics = $this->diagnosticEnricher->enrichList($frontendDiagnostics);
 		$fileDependencyKeys = $this->dependencyResolver->collectFileDependencyKeys($fileSummaries, $symbolIndex, $projectRoot);
 
 		return [
@@ -80,6 +82,7 @@ final class StanSemanticPass
 			'initialization_diagnostics' => $initializationDiagnostics,
 			'call_site_diagnostics' => $callSiteDiagnostics,
 			'return_type_diagnostics' => $returnTypeDiagnostics,
+			'frontend_diagnostics' => $frontendDiagnostics,
 			'frontend_classifications' => $frontendClassifications,
 			'file_dependency_keys' => $fileDependencyKeys,
 			'warning_samples' => $this->warningPresenter->buildWarningSamples(
@@ -94,6 +97,7 @@ final class StanSemanticPass
 				$initializationDiagnostics,
 				$callSiteDiagnostics,
 				$returnTypeDiagnostics,
+				$frontendDiagnostics,
 			),
 			'warning_count' => count($duplicateDiagnostics)
 				+ count($resolutionDiagnostics)
@@ -105,7 +109,38 @@ final class StanSemanticPass
 				+ count($propertyReadDiagnostics)
 				+ count($initializationDiagnostics)
 				+ count($callSiteDiagnostics)
-				+ count($returnTypeDiagnostics),
+				+ count($returnTypeDiagnostics)
+				+ count($frontendDiagnostics),
 		];
+	}
+
+	/** @param array<string,array<string,mixed>> $frontendClassifications @return list<array<string,mixed>> */
+	private function collectFrontendDiagnostics(array $frontendClassifications): array
+	{
+		$diagnostics = [];
+		foreach ($frontendClassifications as $classification) {
+			if (!is_array($classification)) {
+				continue;
+			}
+			$classificationDiagnostics = is_array($classification['diagnostics'] ?? null) ? $classification['diagnostics'] : [];
+			foreach ($classificationDiagnostics as $diagnostic) {
+				if (!is_array($diagnostic)) {
+					continue;
+				}
+				$message = trim((string) ($diagnostic['message'] ?? ''));
+				if ($message === '') {
+					continue;
+				}
+				$diagnostics[] = [
+					'kind' => 'frontend_classification',
+					'code' => 'frontend_' . (string) ($classification['request_kind'] ?? 'classification'),
+					'path' => (string) ($classification['path'] ?? ''),
+					'line' => (int) ($classification['line'] ?? 0),
+					'column' => (int) ($classification['column'] ?? 0),
+					'message' => $message,
+				];
+			}
+		}
+		return $diagnostics;
 	}
 }

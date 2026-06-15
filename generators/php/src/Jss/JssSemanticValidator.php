@@ -23,29 +23,29 @@ final class JssSemanticValidator
 	{
 	}
 
-	/** @param array<string,string> $types */
-	public function validate(JssNode $program, array $types = []): void
+	/** @param array<string,string> $types @param array{defer_take_contracts?:bool} $options */
+	public function validate(JssNode $program, array $types = [], array $options = []): void
 	{
-		$this->validateStatements($program->fields['statements'] ?? [], $types);
+		$this->validateStatements($program->fields['statements'] ?? [], $types, $options);
 	}
 
-	/** @param mixed $statements @param array<string,string> $types */
-	private function validateStatements(mixed $statements, array $types): array
+	/** @param mixed $statements @param array<string,string> $types @param array{defer_take_contracts?:bool} $options */
+	private function validateStatements(mixed $statements, array $types, array $options): array
 	{
 		foreach (is_array($statements) ? $statements : [] as $statement) {
 			if (!$statement instanceof JssNode) {
 				continue;
 			}
-			$types = $this->validateStatement($statement, $types);
+			$types = $this->validateStatement($statement, $types, $options);
 		}
 		return $types;
 	}
 
-	/** @param array<string,string> $types @return array<string,string> */
-	private function validateStatement(JssNode $statement, array $types): array
+	/** @param array<string,string> $types @param array{defer_take_contracts?:bool} $options @return array<string,string> */
+	private function validateStatement(JssNode $statement, array $types, array $options): array
 	{
 		if ($statement->kind === 'function_decl') {
-			$this->validateStatements($statement->fields['body'] ?? [], $this->paramTypes($statement->fields['params'] ?? []));
+			$this->validateStatements($statement->fields['body'] ?? [], $this->paramTypes($statement->fields['params'] ?? []), $options);
 			return $types;
 		}
 		if ($statement->kind === 'class_decl') {
@@ -55,13 +55,13 @@ final class JssSemanticValidator
 					if ($member->kind !== 'method_decl' || ($member->fields['static'] ?? false) !== true) {
 						$methodTypes['this'] = 'object';
 					}
-					$this->validateStatements($member->fields['body'] ?? [], $methodTypes);
+					$this->validateStatements($member->fields['body'] ?? [], $methodTypes, $options);
 				}
 			}
 			return $types;
 		}
 		if ($statement->kind === 'namespace_block') {
-			$this->validateStatements($statement->fields['body'] ?? [], $types);
+			$this->validateStatements($statement->fields['body'] ?? [], $types, $options);
 			return $types;
 		}
 		if ($statement->kind === 'var_decl') {
@@ -69,7 +69,7 @@ final class JssSemanticValidator
 			$declaredType = $this->normalizeType($statement->fields['type'] ?? null);
 			$initializer = $statement->fields['initializer'] ?? null;
 			if ($initializer instanceof JssNode) {
-				$this->validateExpression($initializer, $types);
+				$this->validateExpression($initializer, $types, $options);
 				$this->validateInitializer($initializer, $declaredType, $types);
 			}
 			$inferredType = $initializer instanceof JssNode ? $this->expressionType($initializer, $types) : null;
@@ -82,7 +82,7 @@ final class JssSemanticValidator
 			$name = (string) ($statement->fields['name'] ?? '');
 			$value = $statement->fields['value'] ?? null;
 			if ($value instanceof JssNode) {
-				$this->validateExpression($value, $types);
+				$this->validateExpression($value, $types, $options);
 			}
 			$inferredType = $value instanceof JssNode ? $this->expressionType($value, $types) : null;
 			if ($name !== '' && $inferredType !== null) {
@@ -94,10 +94,10 @@ final class JssSemanticValidator
 			$target = $statement->fields['target'] ?? null;
 			$value = $statement->fields['value'] ?? null;
 			if ($value instanceof JssNode) {
-				$this->validateExpression($value, $types);
+				$this->validateExpression($value, $types, $options);
 			}
 			if ($target instanceof JssNode) {
-				$this->validateExpression($target, $types);
+				$this->validateExpression($target, $types, $options);
 			}
 			if ($target instanceof JssNode && $target->kind === 'identifier' && $value instanceof JssNode) {
 				$name = (string) ($target->fields['name'] ?? '');
@@ -108,14 +108,14 @@ final class JssSemanticValidator
 		if (in_array($statement->kind, ['if', 'while', 'do_while'], true)) {
 			$condition = $statement->fields['condition'] ?? null;
 			if ($condition instanceof JssNode) {
-				$this->validateExpression($condition, $types);
+				$this->validateExpression($condition, $types, $options);
 				$this->validateBoolCondition($condition, $types);
 			}
 			if ($statement->kind === 'if') {
-				$this->validateStatements($statement->fields['then'] ?? [], $types);
-				$this->validateStatements($statement->fields['else'] ?? [], $types);
+				$this->validateStatements($statement->fields['then'] ?? [], $types, $options);
+				$this->validateStatements($statement->fields['else'] ?? [], $types, $options);
 			} else {
-				$this->validateStatements($statement->fields['body'] ?? [], $types);
+				$this->validateStatements($statement->fields['body'] ?? [], $types, $options);
 			}
 			return $types;
 		}
@@ -123,18 +123,18 @@ final class JssSemanticValidator
 			$loopTypes = $types;
 			$init = $statement->fields['init'] ?? null;
 			if ($init instanceof JssNode) {
-				$loopTypes = $this->validateStatement($init, $loopTypes);
+				$loopTypes = $this->validateStatement($init, $loopTypes, $options);
 			}
 			$condition = $statement->fields['condition'] ?? null;
 			if ($condition instanceof JssNode) {
-				$this->validateExpression($condition, $loopTypes);
+				$this->validateExpression($condition, $loopTypes, $options);
 				$this->validateBoolCondition($condition, $loopTypes);
 			}
 			$step = $statement->fields['step'] ?? null;
 			if ($step instanceof JssNode) {
-				$this->validateStatement($step, $loopTypes);
+				$this->validateStatement($step, $loopTypes, $options);
 			}
-			$this->validateStatements($statement->fields['body'] ?? [], $loopTypes);
+			$this->validateStatements($statement->fields['body'] ?? [], $loopTypes, $options);
 			return $types;
 		}
 		if ($statement->kind === 'foreach_value' || $statement->kind === 'foreach_key_value') {
@@ -142,7 +142,7 @@ final class JssSemanticValidator
 			$source = $statement->fields['source'] ?? null;
 			$sourceType = $source instanceof JssNode ? $this->expressionType($source, $types) : null;
 			if ($source instanceof JssNode) {
-				$this->validateExpression($source, $types);
+				$this->validateExpression($source, $types, $options);
 				$this->validateForeachSource($statement, $sourceType);
 			}
 			if ($statement->kind === 'foreach_key_value') {
@@ -155,13 +155,13 @@ final class JssSemanticValidator
 			if ($valueName !== '') {
 				$loopTypes[$valueName] = $this->normalizeType($statement->fields['value_type'] ?? null) ?? $this->iterableValueType($sourceType) ?? '';
 			}
-			$this->validateStatements($statement->fields['body'] ?? [], $loopTypes);
+			$this->validateStatements($statement->fields['body'] ?? [], $loopTypes, $options);
 			return $types;
 		}
 		if ($statement->kind === 'expr_stmt') {
 			$expression = $statement->fields['expression'] ?? null;
 			if ($expression instanceof JssNode) {
-				$this->validateExpression($expression, $types);
+				$this->validateExpression($expression, $types, $options);
 			}
 			return $types;
 		}
@@ -169,7 +169,7 @@ final class JssSemanticValidator
 			foreach (['value', 'target', 'expression'] as $field) {
 				$expression = $statement->fields[$field] ?? null;
 				if ($expression instanceof JssNode) {
-					$this->validateExpression($expression, $types);
+					$this->validateExpression($expression, $types, $options);
 				}
 			}
 		}
@@ -203,17 +203,17 @@ final class JssSemanticValidator
 		}
 	}
 
-	/** @param array<string,string> $types */
-	private function validateExpression(JssNode $expression, array $types): void
+	/** @param array<string,string> $types @param array{defer_take_contracts?:bool} $options */
+	private function validateExpression(JssNode $expression, array $types, array $options): void
 	{
 		if ($expression->kind === 'binary') {
 			$left = $expression->fields['left'] ?? null;
 			$right = $expression->fields['right'] ?? null;
 			if ($left instanceof JssNode) {
-				$this->validateExpression($left, $types);
+				$this->validateExpression($left, $types, $options);
 			}
 			if ($right instanceof JssNode) {
-				$this->validateExpression($right, $types);
+				$this->validateExpression($right, $types, $options);
 			}
 			if ((string) ($expression->fields['operator'] ?? '') === '+') {
 				$this->validateBinaryPlus($expression, $types);
@@ -229,7 +229,7 @@ final class JssSemanticValidator
 		if ($expression->kind === 'unary') {
 			$inner = $expression->fields['expression'] ?? null;
 			if ($inner instanceof JssNode) {
-				$this->validateExpression($inner, $types);
+				$this->validateExpression($inner, $types, $options);
 			}
 			if ((string) ($expression->fields['operator'] ?? '') === '!') {
 				$this->validateLogicalUnary($expression, $types);
@@ -242,14 +242,14 @@ final class JssSemanticValidator
 		if ($expression->kind === 'call') {
 			$callee = $expression->fields['callee'] ?? null;
 			if ($callee instanceof JssNode) {
-				$this->validateExpression($callee, $types);
+				$this->validateExpression($callee, $types, $options);
 			}
 			foreach (is_array($expression->fields['args'] ?? null) ? $expression->fields['args'] : [] as $arg) {
 				if ($arg instanceof JssNode) {
-					$this->validateExpression($arg, $types);
+					$this->validateExpression($arg, $types, $options);
 				}
 			}
-			$this->validateCall($expression, $types);
+			$this->validateCall($expression, $types, $options);
 			return;
 		}
 		if ($expression->kind === 'ternary') {
@@ -257,14 +257,14 @@ final class JssSemanticValidator
 			$whenTrue = $expression->fields['when_true'] ?? null;
 			$whenFalse = $expression->fields['when_false'] ?? null;
 			if ($condition instanceof JssNode) {
-				$this->validateExpression($condition, $types);
+				$this->validateExpression($condition, $types, $options);
 				$this->validateBoolCondition($condition, $types);
 			}
 			if ($whenTrue instanceof JssNode) {
-				$this->validateExpression($whenTrue, $types);
+				$this->validateExpression($whenTrue, $types, $options);
 			}
 			if ($whenFalse instanceof JssNode) {
-				$this->validateExpression($whenFalse, $types);
+				$this->validateExpression($whenFalse, $types, $options);
 			}
 			$this->validateTernaryBranches($expression, $types);
 			return;
@@ -272,15 +272,15 @@ final class JssSemanticValidator
 		foreach (['object', 'index'] as $field) {
 			$child = $expression->fields[$field] ?? null;
 			if ($child instanceof JssNode) {
-				$this->validateExpression($child, $types);
+				$this->validateExpression($child, $types, $options);
 			}
 		}
 		foreach (['items', 'pairs'] as $field) {
 			foreach (is_array($expression->fields[$field] ?? null) ? $expression->fields[$field] : [] as $item) {
 				if ($item instanceof JssNode) {
-					$this->validateExpression($item, $types);
+					$this->validateExpression($item, $types, $options);
 				} elseif (is_array($item) && ($item['value'] ?? null) instanceof JssNode) {
-					$this->validateExpression($item['value'], $types);
+					$this->validateExpression($item['value'], $types, $options);
 				}
 			}
 		}
@@ -482,8 +482,8 @@ final class JssSemanticValidator
 		return null;
 	}
 
-	/** @param array<string,string> $types */
-	private function validateCall(JssNode $call, array $types): void
+	/** @param array<string,string> $types @param array{defer_take_contracts?:bool} $options */
+	private function validateCall(JssNode $call, array $types, array $options): void
 	{
 		$callee = $call->fields['callee'] ?? null;
 		if (!$callee instanceof JssNode || $callee->kind !== 'identifier') {
@@ -502,6 +502,9 @@ final class JssSemanticValidator
 			if (!$output instanceof JssNode || $output->kind !== 'identifier') {
 				throw new InputException($this->message('JSS `take(...)` output arguments must be simple local variables', $output instanceof JssNode ? $output : $call));
 			}
+		}
+		if (($options['defer_take_contracts'] ?? false) === true) {
+			return;
 		}
 		$source = $args[$arity - 1] ?? null;
 		$sourceType = $this->expressionType($source, $types);

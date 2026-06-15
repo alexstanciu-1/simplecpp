@@ -7,6 +7,7 @@ final class StanFrontendClassifier
 {
 	public function __construct(
 		private readonly StanPhpRuntimeFunctionCatalog $phpRuntimeFunctionCatalog = new StanPhpRuntimeFunctionCatalog(),
+		private readonly StanTakeContractResolver $takeContractResolver = new StanTakeContractResolver(),
 	)
 	{
 	}
@@ -14,9 +15,10 @@ final class StanFrontendClassifier
 	/**
 	 * @param array<string,array<string,mixed>> $fileSummaries
 	 * @param list<array<string,mixed>> $symbolIndex
+	 * @param list<string>|null $activeRuntimeModules
 	 * @return array<string,array<string,mixed>>
 	 */
-	public function classify(array $fileSummaries, array $symbolIndex): array
+	public function classify(array $fileSummaries, array $symbolIndex, ?array $activeRuntimeModules = null): array
 	{
 		$results = [];
 		foreach ($fileSummaries as $summary) {
@@ -28,7 +30,7 @@ final class StanFrontendClassifier
 				if ($id === '') {
 					continue;
 				}
-				$classification = $this->classifyRequest($request, $symbolIndex);
+				$classification = $this->classifyRequest($request, $symbolIndex, $activeRuntimeModules);
 				$classification['request_id'] = $id;
 				$classification['request_kind'] = (string) ($request['kind'] ?? '');
 				if (isset($request['name'])) {
@@ -60,23 +62,87 @@ final class StanFrontendClassifier
 		return $results;
 	}
 
-	/** @param array<string,mixed> $request @param list<array<string,mixed>> $symbolIndex @return array<string,mixed> */
-	private function classifyRequest(array $request, array $symbolIndex): array
+	/** @param array<string,mixed> $request @param list<array<string,mixed>> $symbolIndex @param list<string>|null $activeRuntimeModules @return array<string,mixed> */
+	private function classifyRequest(array $request, array $symbolIndex, ?array $activeRuntimeModules): array
 	{
 		$kind = (string) ($request['kind'] ?? '');
 		if ($kind === 'identifier_role') {
-			return $this->classifyIdentifier($request, $symbolIndex);
+			return $this->classifyIdentifier($request, $symbolIndex, $activeRuntimeModules);
 		}
 		if ($kind === 'member_access') {
-			return $this->classifyMemberAccess($request, $symbolIndex);
+			return $this->classifyMemberAccess($request, $symbolIndex, $activeRuntimeModules);
 		}
 		if ($kind === 'binary_plus') {
 			return $this->classifyBinaryPlus($request);
+		}
+		if ($kind === 'take_contract') {
+			return $this->classifyTakeContract($request);
 		}
 		return [
 			'kind' => 'unknown_request',
 			'diagnostics' => [$this->diagnostic('Unknown frontend classification request `' . $kind . '`.')],
 		];
+	}
+
+	/** @param array<string,mixed> $request @return array<string,mixed> */
+	private function classifyTakeContract(array $request): array
+	{
+		$sourceCallTarget = strtolower(trim((string) ($request['source_call_target'] ?? '')));
+		$catalogSourceType = $sourceCallTarget !== '' ? $this->phpRuntimeFunctionCatalog->returnType($sourceCallTarget) : null;
+		$sourceType = strtolower(trim((string) ($catalogSourceType ?? ($request['source_type'] ?? ''))));
+		$outputs = is_array($request['outputs'] ?? null) ? $request['outputs'] : [];
+		if ($sourceType === '') {
+			return [
+				'kind' => 'take_contract_unresolved',
+				'source_call_target' => $sourceCallTarget,
+				'diagnostics' => [],
+			];
+		}
+		$contract = $this->takeContractResolver->resolve($sourceType);
+		if ($contract === null) {
+			return [
+				'kind' => 'invalid_take_contract',
+				'source_type' => $sourceType,
+				'source_call_target' => $sourceCallTarget,
+				'diagnostics' => [$this->diagnostic('`take(...)` requires a nullable<T>, result<T>, result_or_false<T>, or result_or_bool<T> source expression.')],
+			];
+		}
+
+		$expectedTypes = array_values(array_map(static fn (string $type): string => strtolower($type), $contract['output_types']));
+		$diagnostics = [];
+		if (count($outputs) !== count($expectedTypes)) {
+			$diagnostics[] = $this->diagnostic($this->takeArityMessage((string) $contract['family']));
+		}
+		foreach ($expectedTypes as $index => $expectedType) {
+			$output = is_array($outputs[$index] ?? null) ? $outputs[$index] : [];
+			$name = (string) ($output['name'] ?? '');
+			$actualType = strtolower(trim((string) ($output['type'] ?? '')));
+			if ($actualType === '') {
+				continue;
+			}
+			if ($actualType !== $expectedType) {
+				$diagnostics[] = $this->diagnostic('`take(...)` expects output `' . $name . '` to have type `' . $expectedType . '` but found `' . $actualType . '`.');
+			}
+		}
+
+		return [
+			'kind' => $diagnostics === [] ? 'take_contract' : 'invalid_take_contract',
+			'family' => (string) $contract['family'],
+			'source_type' => $sourceType,
+			'source_call_target' => $sourceCallTarget,
+			'output_types' => $expectedTypes,
+			'diagnostics' => $diagnostics,
+		];
+	}
+
+	private function takeArityMessage(string $family): string
+	{
+		return match ($family) {
+			'nullable', 'result_or_false' => '`take(...)` for nullable/result_or_false sources requires one output variable plus the source expression.',
+			'result' => '`take(...)` for result<T> sources requires two output variables plus the source expression.',
+			'result_or_bool' => '`take(...)` for result_or_bool<T> sources requires two output variables plus the source expression.',
+			default => '`take(...)` requires a supported wrapper source expression.',
+		};
 	}
 
 	/** @param array<string,mixed> $request @return array<string,mixed> */
@@ -125,8 +191,8 @@ final class StanFrontendClassifier
 		return in_array($type, ['string', 'int', 'float', 'bool'], true);
 	}
 
-	/** @param array<string,mixed> $request @param list<array<string,mixed>> $symbolIndex @return array<string,mixed> */
-	private function classifyIdentifier(array $request, array $symbolIndex): array
+	/** @param array<string,mixed> $request @param list<array<string,mixed>> $symbolIndex @param list<string>|null $activeRuntimeModules @return array<string,mixed> */
+	private function classifyIdentifier(array $request, array $symbolIndex, ?array $activeRuntimeModules = null): array
 	{
 		$name = (string) ($request['name'] ?? '');
 		if (in_array($name, ['count', 'shell_exec', 'cli_argc', 'cli_argv', 'cli_args', 'take'], true)) {
@@ -134,6 +200,7 @@ final class StanFrontendClassifier
 				'kind' => 'builtin_function',
 				'name' => $name,
 				'target' => $name,
+				'return_type' => $this->phpRuntimeFunctionCatalog->returnType($name),
 				'diagnostics' => [],
 			];
 		}
@@ -183,10 +250,21 @@ final class StanFrontendClassifier
 			}
 		}
 		if ($this->phpRuntimeFunctionCatalog->hasFunction($name)) {
+			$requiredModule = $this->phpRuntimeFunctionCatalog->requiredModule($name);
+			if ($requiredModule !== null && !$this->hasRuntimeModule($activeRuntimeModules, $requiredModule)) {
+				return [
+					'kind' => 'unavailable_runtime_module',
+					'name' => $name,
+					'target' => $name,
+					'required_module' => $requiredModule,
+					'diagnostics' => [$this->diagnostic('Runtime helper `' . $name . '()` requires module `' . $requiredModule . '` in the active project runtime config.')],
+				];
+			}
 			return [
 				'kind' => 'function',
 				'name' => $name,
 				'target' => $name,
+				'return_type' => $this->phpRuntimeFunctionCatalog->returnType($name),
 				'diagnostics' => [],
 			];
 		}
@@ -197,8 +275,8 @@ final class StanFrontendClassifier
 		];
 	}
 
-	/** @param array<string,mixed> $request @param list<array<string,mixed>> $symbolIndex @return array<string,mixed> */
-	private function classifyMemberAccess(array $request, array $symbolIndex): array
+	/** @param array<string,mixed> $request @param list<array<string,mixed>> $symbolIndex @param list<string>|null $activeRuntimeModules @return array<string,mixed> */
+	private function classifyMemberAccess(array $request, array $symbolIndex, ?array $activeRuntimeModules = null): array
 	{
 		$chain = is_array($request['chain'] ?? null) ? array_values(array_map('strval', $request['chain'])) : [];
 		if (count($chain) < 2) {
@@ -217,7 +295,7 @@ final class StanFrontendClassifier
 			return $this->classifyIdentifier([
 				'name' => $normalizedCallTarget,
 				'namespace' => $requestNamespace,
-			], $symbolIndex);
+			], $symbolIndex, $activeRuntimeModules);
 		}
 
 		$namespacedResolution = $this->resolveNamespacedSymbolAccess($chain, $symbolIndex, $requestNamespace);
@@ -317,6 +395,25 @@ final class StanFrontendClassifier
 			'member' => $member,
 			'diagnostics' => [$this->diagnostic('Class member `' . implode('.', $chain) . '` could not be resolved as a static property or class constant.')],
 		];
+	}
+
+	/** @param list<string>|null $activeRuntimeModules */
+	private function hasRuntimeModule(?array $activeRuntimeModules, string $requiredModule): bool
+	{
+		if ($activeRuntimeModules === null) {
+			return true;
+		}
+		$modules = [];
+		foreach ($activeRuntimeModules as $module) {
+			if (!is_string($module)) {
+				continue;
+			}
+			$module = strtolower(trim($module));
+			if ($module !== '') {
+				$modules[] = $module;
+			}
+		}
+		return in_array(strtolower(trim($requiredModule)), $modules, true);
 	}
 
 	/** @param list<string> $chain @param list<array<string,mixed>> $symbolIndex @return array{kind:string,namespace:string,target:string}|null */

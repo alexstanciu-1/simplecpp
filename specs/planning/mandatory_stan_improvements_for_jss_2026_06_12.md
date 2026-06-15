@@ -91,7 +91,7 @@ The current bridge set should be read with explicit ownership, so JSS work does 
 | `take(...)` wrapper family arity/output contract | `JssSemanticValidator` | STAN | first pass retired | moved into STAN-owned [StanTakeContractResolver](/home/alexv/__AI/simple_cpp/simple_cpp_01/generators/php/src/Stan/StanTakeContractResolver.php); JSS now consumes shared wrapper-family output truth instead of local regex families |
 | normalized semantic call target handoff (`normalized_call_target`) | `JssSummaryExtractor` -> `StanFrontendClassifier` | shared frontend/STAN interface | first pass isolated | STAN no longer knows JSS helper families; it consumes normalized PHS-facing call targets from the frontend request |
 | local `take(...)` output-variable shape check | `JssSemanticValidator` | JSS frontend shape | keep | simple-local-variable AST shape is still a frontend subset rule before deeper semantic handling |
-| local `take(...)` output type mismatch messaging | `JssSemanticValidator` | STAN | partial bridge remains | JSS still compares typed local declarations against the shared STAN contract; future work should let STAN produce the canonical diagnostic path |
+| local `take(...)` output type mismatch messaging | classified `JssTranspiler` path | STAN | retired for classified path | classified JSS emission now defers wrapper/source/output contract mismatches to STAN `take_contract` classifications; JSS keeps only simple output-variable shape checks |
 | helper-family/module availability truth | mixed JSS + STAN gap | project validation / STAN | open | still not module-aware; JSS can parse helper syntax, but STAN should decide whether it is valid in the active project/profile |
 | helper-family lowering rewrite in emitter | `JssEmitter` | JSS lowering using STAN-approved helper identity | temporary but acceptable | still a narrow frontend lowering map; ownership is acceptable while meaning stays STAN-owned |
 | parser reserved-root blocking (`fs`, `io`, `json`, `dt`) | `JssParser` | JSS frontend shape | keep | syntax/subset guardrail; STAN still needs deeper semantic misuse diagnostics |
@@ -117,6 +117,34 @@ Implemented in this pass:
    - [StanFrontendClassifier](/home/alexv/__AI/simple_cpp/simple_cpp_01/generators/php/src/Stan/StanFrontendClassifier.php) no longer knows JSS helper families and instead consumes normalized PHS-facing call targets
 
 This is intentionally a first slice, not the end state. The most important remaining semantic bridge is that JSS still emits some direct validation messages for `take(...)` output typing rather than consuming a canonical STAN diagnostic result.
+
+## STAN Implementation Slice Started
+
+Started on 2026-06-15 in `codex/stan-jss-improvements`.
+
+Implemented so far:
+
+1. JSS summaries now emit explicit `take_contract` frontend classification requests for `take(...)` calls when the source type can be described from the current frontend summary facts.
+2. `StanFrontendClassifier` now classifies `take_contract` requests through the STAN-owned `StanTakeContractResolver`.
+3. STAN classification results now expose:
+   - wrapper family
+   - canonical output types
+   - source type
+   - canonical diagnostics for arity/output type mismatches
+4. Focused JSS frontend tests now prove valid `take(text, err, fs.get(path))` classification and invalid output type diagnostics.
+
+Completed follow-up in this branch:
+
+1. Classified JSS emission now defers `take(...)` wrapper/source/output contract checks to STAN classification results.
+2. STAN frontend diagnostics from invalid `take_contract` classifications are exposed through normal semantic results.
+3. JSS still keeps the frontend-only shape guard that `take(...)` output slots must be simple local identifiers.
+4. STAN runtime-helper return-type truth now reads the generated runtime shallow symbol surfaces. The strict IO shallow contracts were aligned with the real runtime (`io.open`, `io.read*`, `io.write`, `io.tell`, `io.seek`, `io.rewind`, `io.flush`, `io.close`), and strict fs mutator contracts were aligned as plain `bool` (`fs.mkdir`, `fs.touch`, `fs.rmdir`, `fs.remove`, `fs.copy`, `fs.rename`).
+5. STAN frontend helper classifications now receive the active project runtime module list in normal workspace runs and can reject known helper calls whose required module is inactive.
+
+Remaining bridge:
+
+- Success-path narrowing after `if (take(...))` is not needed for the current JSS-to-PHS conversion prototype. It remains a later safety/ergonomics item, not a prerequisite for useful lowering.
+- Module-gated helper availability has a first pass for current reserved helper families; broader profile/module edge cases should remain STAN/project-validation owned.
 
 ## Mandatory STAN Improvements
 
@@ -170,20 +198,20 @@ Concrete observed pressure:
 
 So this item is not only about JSS convenience. It is also about making the STAN/runtime-symbol truth itself authoritative and internally consistent.
 
-### 3. Wrapper-aware narrowing after successful extraction
+### 3. JSS-to-PHS member/operator classification
 
-STAN should understand what becomes true after:
+For the current prototype, the most important STAN contribution is answering semantic classification requests that let JSS lower to ready-PHS without building a second semantic engine.
 
-- `if (take(value, source)) { ... }`
-- `if (take(value, err, source)) { ... }`
+STAN should keep answering:
 
-Desired outcomes include:
+- whether a dotted/member access should lower as instance access, static access, namespace/class access, constant access, or helper/function access
+- whether a root identifier is local, imported, global, builtin, function, constant, class, or unresolved
+- whether a JSS `+` expression is numeric addition, string concatenation, or an explicit dynamic boundary
+- whether a normalized helper target exists and is callable in the current PHS/runtime/project context
 
-- success-path output variable type is known and trusted
-- failure-path expectations remain explicit
-- later checks around wrapper state do not need frontend-local heuristics
+This is conversion-critical because it decides the emitted PHS spelling (`->`, `::`, namespace-qualified names, helper function calls, and operator lowering).
 
-This should eventually cover both direct conditions and pre-assigned boolean locals.
+Wrapper-aware success/failure path narrowing after `take(...)` is intentionally not part of this prototype-critical slice. The output variables are already declared and typed; later STAN work may add path-sensitive diagnostics such as warning about reading a success payload only on the failure path, but JSS-to-PHS conversion should not depend on that analysis.
 
 ### 4. Module-gated helper availability diagnostics
 
@@ -263,8 +291,8 @@ See also:
 | Helper contract truth | `json.decode(...)`, `fs.get(...)`, `io.open(...)`, `dt.parse(...)` | derive return/wrapper contracts from the active PHS/runtime symbol truth and expose them to frontend classification | runtime parse failure of malformed JSON contents | P0 |
 | Module-gated helper availability | using `json.decode(...)` without the active `json` module, if/when modules are gated | diagnose unavailable helper/module/profile combinations before build/run | filesystem state or malformed runtime data | P0 |
 | `take(...)` contract diagnostics | `take(text, err, fs.get(path))` with wrong output type or arity | canonical diagnostics for arity, wrapper family, output slot type, and error slot compatibility | runtime result value being success/failure for a particular file path | P0 |
-| `take(...)` success-path narrowing | `if (take(value, err, source)) { ... }` | know the output variable has the extracted type inside the success path | whether the runtime branch actually succeeds for a particular input | P1 |
-| Frontend classification requests | JSS identifier/member access/`+` requests | answer from symbol/type indexes and return source-ranged diagnostics for unresolved or ambiguous sites | executing lowered code or recovering runtime stack/source locations | P0 |
+| `take(...)` success-path narrowing | `if (take(value, err, source)) { ... }` | later safety diagnostics for path-sensitive payload use | whether the runtime branch actually succeeds for a particular input | Later |
+| Frontend classification requests | JSS identifier/member access/`+` requests | answer from symbol/type indexes and return source-ranged diagnostics for unresolved or ambiguous sites; especially dot/member lowering decisions | executing lowered code or recovering runtime stack/source locations | P0 |
 | Binary/operator type matrix | JSS/PHS `+`, `==`, `!=`, comparison, numeric/string operations | use the PHS/PHP++ operator matrix and type resolver rather than frontend-local guesses | runtime `mixed` value contents unless statically known | P0 |
 | Dynamic boundary discipline | assigning `dynamic`/`mixed`, using decoded JSON fields | diagnose obvious invalid static boundary use and require explicit stabilization when the contract demands it | actual runtime JSON shape, missing runtime key, malformed JSON text | P1 |
 | Typed container/index mutation legality | `hash<T>`, `vector<T>`, nested writes, keyed mutation | validate known type/key/write legality from source and symbol information | runtime out-of-range/dynamic-shape failures that cannot be known statically | P1 |
@@ -334,9 +362,10 @@ JSS work should pause for STAN follow-up when it would otherwise require:
 
 ## Immediate Follow-Ups
 
-1. Align runtime shallow-source / STAN-visible helper signatures with the real strict runtime contract.
-2. Add wrapper-aware STAN diagnostics/narrowing for helper-family workflows used by JSS samples.
-3. Replace the remaining JSS-local `take(...)` output type mismatch path with canonical STAN diagnostics where practical.
-4. Add module-gated helper-family diagnostics so helper availability truth stops living in frontend assumptions.
+1. Keep improving JSS-to-PHS classification requests and results for identifiers, dotted/member access, helper calls, and operators.
+2. Broaden module-gated helper-family diagnostics beyond the current reserved-helper first pass only where project/profile truth is already explicit.
+3. Continue auditing runtime shallow-source / STAN-visible helper signatures outside the current reserved JSS helper families.
+4. Extend canonical STAN `take(...)` diagnostics into broader PHS/editor-facing flows where practical.
 5. Add source-ranged STAN diagnostics for frontend classification failures that are currently surfaced as JSS-local fallback errors.
-6. Keep new JSS feature work constrained to frontend-only progress until those items land.
+6. Treat wrapper-aware `take(...)` success-path narrowing as later STAN safety work, not a JSS prototype blocker.
+7. Keep new JSS feature work constrained to frontend-only progress until those items land.
