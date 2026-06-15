@@ -1,0 +1,5 @@
+$value int = 2;
+$first =& $value;
+$second =& $first;
+$second = 6;
+echo $value, "\n";

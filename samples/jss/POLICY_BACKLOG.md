@@ -7,24 +7,30 @@ This note is local to the manual sample queue. It is not semantic authority; it 
 
 ## References
 
-Status: open
+Status: first narrow slice implemented
 
-JSS should not copy PHP reference assignment syntax by accident. Before converting reference samples, decide whether JSS exposes any reference aliasing syntax at all.
+JSS should expose references only through an explicit narrow form that mirrors the current PHS reference model. There should be no hidden aliasing through ordinary assignment and no invented `ref` keyword; `ref` is not JavaScript syntax and would create an extra JSS-only concept.
 
 Preferred constraint:
 
-- no `=&`-style spelling in JSS
+- use `&` / ampersand in the same spirit as current PHS references
 - no hidden aliasing through ordinary assignment
 - any supported reference form must map directly to the documented reduced Prism++ native-reference subset
+- no broad JavaScript object-reference mental model should be inferred from this feature
 
 Blocked samples:
 
-- `tests/php/references/level_01/references_001_local_reference_basic.phs`
-- `tests/php/references/level_01/references_002_reference_assignment_basic.phs`
+- none in the current level-01 reference queue
+
+Implemented first slice:
+
+- `let alias = &value;`
+- `alias = &value;`
+- reference targets must be simple identifiers
 
 ## Result Wrappers
 
-Status: open
+Status: first useful lanes resolved; broader policy still constrained
 
 Strict filesystem, IO, curl, and error-path examples rely on wrapper/result flow. JSS needs an explicit spelling for success checks, error capture, and value extraction before those examples are converted.
 
@@ -37,14 +43,12 @@ Preferred constraint:
 
 Blocked samples:
 
-- `docs/examples/php/strict/project_samples/strict_curl/main.phs`
-- `docs/examples/php/strict/project_samples/strict_str_io/main.phs`
-- `docs/examples/php/strict/project_samples/strict_error_paths/main.phs`
+- legacy curl samples remain blocked because they use legacy PHP curl behavior, not the strict typed curl surface
 
 Current note:
 
-- the first real JSS `fs/json/take(...)` lane is now covered by `samples/jss/json/strict_level_01/strict_json_005_fs_take_roundtrip_basic.jss` plus dedicated project build/run validation
-- broader wrapper/result policy remains open beyond that narrow proven lane
+- real JSS `fs/json/take(...)`, `fs/io/string`, strict wrapper error-path, regex, and strict curl lanes now have sample coverage plus dedicated project build/run validation
+- `take(...)` remains the explicit result-wrapper spelling; do not add JavaScript truthiness for result objects
 
 ## Ternary
 
@@ -113,7 +117,7 @@ Blocked samples:
 
 ## Runtime Modules
 
-Status: open
+Status: direction partly implemented
 
 JSS project samples need a policy for runtime module requirements before converting curl, filesystem, IO, regex, or similar module-dependent examples.
 
@@ -134,7 +138,7 @@ Blocked samples:
 
 - `tests/php/curl/level_01/curl_001_legacy_file_surface.phs`
 - `tests/php/curl/level_01/curl_002_legacy_http_get.phs`
-- strict curl/filesystem/IO project samples
+- strict runtime-heavy samples have first useful-project coverage; legacy module samples remain blocked unless explicitly mapped to strict typed helper contracts
 
 ## Append And Mutation
 
@@ -156,12 +160,80 @@ Candidate spellings to evaluate:
 
 Remaining open edges:
 
-- unset/delete syntax
+- `delete expr` in JSS lowers to PHS `unset(expr)` for explicit keyed/member targets; this is not full JavaScript `delete` semantics
 - nested append/update policy beyond direct index/keyed assignment
 - mutation of dynamic/mixed carriers
 
 ## Arrow Functions
 
-Status: blocked
+Status: first narrow slice implemented
 
-JSS should not add ES6 arrow functions until PHS callable/closure lowering has a stable supported target. Lowering arrows into ad hoc generated functions would create a second callable path and should be avoided for now.
+JSS is typed, so arrow functions may be supported only where the callable shape is explicit and maps to the current PHS callable/lambda model.
+
+Allowed direction:
+
+- local explicit lambda shape such as `let f = (x: int): int => x + 1;`
+- parameter types required
+- return type required
+- expression-body first slice
+- no broad JavaScript inference/capture promise beyond what PHS already supports
+
+Constraint:
+
+- lowering arrows into ad hoc generated functions would create a second callable path and should be avoided
+
+Implemented first slice:
+
+- local explicit expression-body arrow values such as `let f = (x: int): int => x + 1;`
+- parameter and return types are required
+- invocation of local arrow variables lowers as ordinary local callable invocation
+
+Still pending:
+
+- block-body lambdas
+- explicit capture policy beyond the existing PHS closure/arrow behavior
+- callable container/storage surfaces beyond local concrete values
+
+## Late Static
+
+Status: narrow method/constant access implemented; broader forms pending
+
+JSS may expose the PHS late-static spelling directly where needed:
+
+```js
+static::make()
+static::VALUE
+```
+
+This is not JS-looking, but it avoids inventing an unclear JavaScript-shaped replacement for an advanced class feature. Users who dislike the spelling can avoid the feature.
+
+Still pending:
+
+- `static::$prop`
+- `new static(...)`
+- inherited static method classification, such as calling `B.run()` when `run()` is inherited from `A`
+- broader validation around using `static::` outside class methods
+
+## Optional Chaining
+
+Status: first narrow slice implemented
+
+JSS optional chaining should return `null` on a failed chain, not `undefined`.
+
+Preferred constraint:
+
+- reuse or adapt the existing guarded-path / `isset(...)` machinery where possible
+- do not make optional chaining depend on future `undefined` semantics
+- keep broad type/narrowing truth in STAN/PHS rather than in JSS-local heuristics
+
+Implemented first slice:
+
+- `object?.member` lowers to PHS nullsafe `?->`
+- failed chains return `null`
+
+Still pending:
+
+- project build/run validation for non-nullable scalar member results; current downstream PHS nullsafe lowering can still hit a `T` versus `null_t` ternary mismatch
+- optional method-call project coverage
+- chained optional paths
+- optional indexing policy

@@ -1,0 +1,5 @@
+class Box {
+	public string $name = "ready";
+}
+$maybe ?Box = new Box();
+echo $maybe?->name, "\n";

@@ -18,6 +18,8 @@ Current direction:
 
 - most of this is intentionally not covered yet
 - strict typed behavior is preferred over JS-style ambient coercion
+- truthiness/coercion should stay aligned with PHS/PHP++ for now
+- `undefined` should be runtime/PHS-owned first; the current intended first slice is a reserved PHS keyword usable only in explicit comparison forms such as `expr === undefined` / `expr !== undefined`, lowered by S2S to a compiler/runtime intrinsic rather than treated as a general ordinary value in JSS
 - temporary implementation note:
   - JSS currently allows `==` and `!=` to pass through because PHS/PHP++ already has them
   - the exact JSS policy for loose equality/coercion is still under review and should be revisited explicitly
@@ -34,6 +36,7 @@ Current direction:
 
 - typed `hash<T>`, `vector<T>`, and typed classes are preferred
 - dynamic open-ended object semantics are not the default model
+- dynamic object-bag semantics remain deliberately unresolved and should be discussed separately with concrete examples
 
 ## 3. Functional JS Ergonomics
 
@@ -44,8 +47,11 @@ Current direction:
 
 Current direction:
 
-- mostly absent right now
-- callable/closure support is not yet a stable target surface for JSS lowering
+- JSS is typed, so arrow functions may be supported only where the callable shape is explicit and maps to current PHS callable/lambda support
+- first-pass shape: `let f = (x: int): int => x + 1;`
+- parameter and return types should be required in the first slice
+- no broad JavaScript inference/capture promise beyond what PHS already supports
+- implemented first slice: local explicit expression-body arrows lower to PHS `fn(...)`
 
 ## 4. Modern ES6+ Expression Sugar
 
@@ -60,6 +66,21 @@ Current direction:
 
 - most of this is still missing
 - some items may fit later, but only where semantics remain explicit and do not require a second semantic engine in JSS
+- optional chaining should return `null` on a failed chain, not `undefined`, and should reuse/adapt guarded-path or `isset(...)` machinery where possible
+- implemented first slice: `object?.member` lowers to PHS nullsafe `?->`
+- JSS `delete expr` is desired as source syntax, but should lower to PHS `unset(expr)` and should not imply full JavaScript `delete` object semantics
+
+## 4b. PHS-Shaped Advanced Syntax
+
+- references / aliasing
+- late static `static::`
+
+Current direction:
+
+- references should use `&` / ampersand and mimic the current PHS reference model directly; do not introduce a JSS-only `ref` keyword
+- implemented first slice: `let alias = &value;` and `alias = &value;` lower to PHS `=&` for simple identifier targets
+- late static should use the PHS spelling directly, such as `static::make()` or `static::VALUE`
+- these are advanced typed-language features, not places where JSS needs to invent a JS-looking spelling
 
 ## 5. JS Module / Async World
 

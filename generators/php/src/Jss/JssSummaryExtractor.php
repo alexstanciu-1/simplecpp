@@ -363,6 +363,10 @@ final class JssSummaryExtractor
 			$this->collectExpressionRequests($statement->fields['value'] ?? null, $requests, $localTypes);
 			return;
 		}
+		if ($statement->kind === 'delete') {
+			$this->collectExpressionRequests($statement->fields['target'] ?? null, $requests, $localTypes);
+			return;
+		}
 		if ($statement->kind === 'update') {
 			$this->collectExpressionRequests($statement->fields['target'] ?? null, $requests, $localTypes);
 			return;
@@ -445,12 +449,18 @@ final class JssSummaryExtractor
 			$this->collectExpressionRequests($expression->fields['object'] ?? null, $requests, $localTypes);
 			return;
 		}
+		if ($expression->kind === 'optional_member') {
+			$this->collectExpressionRequests($expression->fields['object'] ?? null, $requests, $localTypes);
+			return;
+		}
 		if ($expression->kind === 'binary') {
 			if ((string) ($expression->fields['operator'] ?? '') === '+') {
 				$requests[] = $this->makeRequest('binary_plus', [
 					'expression_key' => $this->expressionKey($expression),
 					'left_type' => $this->expressionTypeHint($expression->fields['left'] ?? null, $localTypes),
 					'right_type' => $this->expressionTypeHint($expression->fields['right'] ?? null, $localTypes),
+					'left_expression' => $this->expressionDescriptor($expression->fields['left'] ?? null, $localTypes),
+					'right_expression' => $this->expressionDescriptor($expression->fields['right'] ?? null, $localTypes),
 				], $expression);
 			}
 			$this->collectExpressionRequests($expression->fields['left'] ?? null, $requests, $localTypes);
@@ -484,6 +494,21 @@ final class JssSummaryExtractor
 			foreach (($expression->fields['args'] ?? []) as $arg) {
 				$this->collectExpressionRequests($arg, $requests, $localTypes);
 			}
+			return;
+		}
+		if ($expression->kind === 'arrow_function') {
+			$arrowTypes = $localTypes;
+			foreach (is_array($expression->fields['params'] ?? null) ? $expression->fields['params'] : [] as $param) {
+				if (!is_array($param)) {
+					continue;
+				}
+				$name = (string) ($param['name'] ?? '');
+				$type = (string) ($param['type'] ?? '');
+				if ($name !== '' && $type !== '') {
+					$arrowTypes[$name] = $type;
+				}
+			}
+			$this->collectExpressionRequests($expression->fields['body'] ?? null, $requests, $arrowTypes);
 			return;
 		}
 		if ($expression->kind === 'ternary') {
@@ -632,8 +657,61 @@ final class JssSummaryExtractor
 				. (string) ($expression->fields['operator'] ?? '')
 				. '(' . $this->expressionKey($expression->fields['left'] ?? new JssNode('empty')) . ','
 				. $this->expressionKey($expression->fields['right'] ?? new JssNode('empty')) . ')',
+			'member' => 'member:' . implode('.', $this->flattenMemberChain($expression)),
+			'call' => 'call:' . $this->expressionKey($expression->fields['callee'] ?? new JssNode('empty')),
 			default => $expression->kind,
 		};
+	}
+
+	/** @param array<string,string> $localTypes @return array<string,mixed>|null */
+	private function expressionDescriptor(mixed $expression, array $localTypes): ?array
+	{
+		if (!$expression instanceof JssNode) {
+			return null;
+		}
+		if ($expression->kind === 'identifier') {
+			$name = (string) ($expression->fields['name'] ?? '');
+			return [
+				'kind' => 'identifier',
+				'name' => $name,
+				'type' => $localTypes[$name] ?? null,
+			];
+		}
+		if ($expression->kind === 'member') {
+			$chain = $this->flattenMemberChain($expression);
+			$base = $chain[0] ?? '';
+			return [
+				'kind' => 'member',
+				'chain' => $chain,
+				'base_type' => $base !== '' ? ($localTypes[$base] ?? null) : null,
+			];
+		}
+		if ($expression->kind === 'call') {
+			$callee = $expression->fields['callee'] ?? null;
+			if ($callee instanceof JssNode && $callee->kind === 'member') {
+				return [
+					'kind' => 'call',
+					'callee_chain' => $this->flattenMemberChain($callee),
+				];
+			}
+			if ($callee instanceof JssNode && $callee->kind === 'identifier') {
+				return [
+					'kind' => 'call',
+					'callee_name' => (string) ($callee->fields['name'] ?? ''),
+				];
+			}
+		}
+		if ($expression->kind === 'binary') {
+			return [
+				'kind' => 'binary',
+				'operator' => (string) ($expression->fields['operator'] ?? ''),
+				'left' => $this->expressionDescriptor($expression->fields['left'] ?? null, $localTypes),
+				'right' => $this->expressionDescriptor($expression->fields['right'] ?? null, $localTypes),
+			];
+		}
+		return [
+			'kind' => $expression->kind,
+		];
 	}
 
 	/** @param array<string,mixed> $fields @return array<string,mixed> */

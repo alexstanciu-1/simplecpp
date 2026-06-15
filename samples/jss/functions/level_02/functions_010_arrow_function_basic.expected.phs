@@ -1,0 +1,2 @@
+$add_one = fn($x int): int => $x + 1;
+echo $add_one(4), "\n";

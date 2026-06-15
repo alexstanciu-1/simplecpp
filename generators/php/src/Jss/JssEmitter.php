@@ -122,7 +122,7 @@ final class JssEmitter
 		}
 		if ($statement->kind === 'function_decl') {
 			$params = $this->emitParameters($statement->fields['params'] ?? []);
-			$returnType = is_string($statement->fields['return_type'] ?? null) ? ': ' . (string) $statement->fields['return_type'] : '';
+			$returnType = is_string($statement->fields['return_type'] ?? null) ? ': ' . $this->emitType((string) $statement->fields['return_type']) : '';
 			$lines = ['function ' . (string) $statement->fields['name'] . '(' . implode(', ', $params) . ')' . $returnType . ' {'];
 			$lines = array_merge($lines, $this->emitScopedBody($statement->fields['params'] ?? [], $statement->fields['body'] ?? [], false));
 			$lines[] = '}';
@@ -215,7 +215,7 @@ final class JssEmitter
 		if ($statement->kind === 'foreach_value') {
 			$valueName = (string) $statement->fields['value_name'];
 			$valueType = is_string($statement->fields['value_type'] ?? null) ? (string) $statement->fields['value_type'] : '';
-			$value = '$' . $valueName . ($valueType !== '' ? ' ' . $valueType : '');
+			$value = '$' . $valueName;
 			$lines = ['foreach (' . $this->emitExpression($statement->fields['source'] ?? null) . ' as ' . $value . ') {'];
 			$lines = array_merge($lines, $this->emitForeachBody($statement, null, $valueName, $valueType));
 			$lines[] = '}';
@@ -225,7 +225,7 @@ final class JssEmitter
 			$key = '$' . (string) $statement->fields['key_name'];
 			$valueName = (string) $statement->fields['value_name'];
 			$valueType = is_string($statement->fields['value_type'] ?? null) ? (string) $statement->fields['value_type'] : '';
-			$value = '$' . $valueName . ($valueType !== '' ? ' ' . $valueType : '');
+			$value = '$' . $valueName;
 			$lines = ['foreach (' . $this->emitExpression($statement->fields['source'] ?? null) . ' as ' . $key . ' => ' . $value . ') {'];
 			$lines = array_merge($lines, $this->emitForeachBody($statement, (string) $statement->fields['key_name'], $valueName, $valueType));
 			$lines[] = '}';
@@ -238,9 +238,12 @@ final class JssEmitter
 			if ($type !== null && $type !== '') {
 				$this->localTypes[$name] = $type;
 			}
-			$left = '$' . $name . ($type !== null && $type !== '' ? ' ' . $type : '');
+			$left = '$' . $name . ($type !== null && $type !== '' ? ' ' . $this->emitType($type) : '');
 			$initializer = $statement->fields['initializer'] ?? null;
 			if ($initializer instanceof JssNode) {
+				if ($initializer->kind === 'reference') {
+					return $left . ' =& ' . $this->emitReferenceTarget($initializer) . ';';
+				}
 				return $left . ' = ' . $this->emitExpression($initializer) . ';';
 			}
 			return $left . ';';
@@ -248,6 +251,10 @@ final class JssEmitter
 		if ($statement->kind === 'assign') {
 			$target = $statement->fields['target'] ?? null;
 			if ($target instanceof JssNode) {
+				$value = $statement->fields['value'] ?? null;
+				if ($value instanceof JssNode && $value->kind === 'reference') {
+					return $this->emitExpression($target) . ' =& ' . $this->emitReferenceTarget($value) . ';';
+				}
 				return $this->emitExpression($target) . ' = ' . $this->emitExpression($statement->fields['value'] ?? null) . ';';
 			}
 			return '$' . (string) ($statement->fields['name'] ?? '') . ' = ' . $this->emitExpression($statement->fields['value'] ?? null) . ';';
@@ -257,6 +264,9 @@ final class JssEmitter
 		}
 		if ($statement->kind === 'append') {
 			return $this->emitExpression($statement->fields['target'] ?? null) . '[] = ' . $this->emitExpression($statement->fields['value'] ?? null) . ';';
+		}
+		if ($statement->kind === 'delete') {
+			return 'unset(' . $this->emitExpression($statement->fields['target'] ?? null) . ');';
 		}
 		if ($statement->kind === 'update') {
 			$operator = (string) ($statement->fields['operator'] ?? '');
@@ -279,7 +289,7 @@ final class JssEmitter
 	private function emitClassMember(JssNode $member): string
 	{
 		if ($member->kind === 'property_decl') {
-			$line = 'public ' . (($member->fields['static'] ?? false) === true ? 'static ' : '') . (string) $member->fields['type'] . ' $' . (string) $member->fields['name'];
+			$line = 'public ' . (($member->fields['static'] ?? false) === true ? 'static ' : '') . $this->emitType((string) $member->fields['type']) . ' $' . (string) $member->fields['name'];
 			if (($member->fields['default'] ?? null) instanceof JssNode) {
 				$line .= ' = ' . $this->emitExpression($member->fields['default']);
 			}
@@ -302,7 +312,7 @@ final class JssEmitter
 	{
 		$signature = 'public ' . ($isStatic ? 'static ' : '') . 'function ' . $name . '(' . implode(', ', $this->emitParameters($params)) . ')';
 		if ($returnType !== null && $returnType !== '') {
-			$signature .= ': ' . $returnType;
+			$signature .= ': ' . $this->emitType($returnType);
 		}
 		$lines = [$signature . ' {'];
 		$lines = array_merge($lines, $this->emitScopedBody($params, $body, true));
@@ -402,7 +412,7 @@ final class JssEmitter
 			if (!is_array($param)) {
 				continue;
 			}
-			$paramText = (string) ($param['type'] ?? '') . ' $' . (string) ($param['name'] ?? '');
+			$paramText = $this->emitType((string) ($param['type'] ?? '')) . ' $' . (string) ($param['name'] ?? '');
 			if (($param['default'] ?? null) instanceof JssNode) {
 				$paramText .= ' = ' . $this->emitExpression($param['default']);
 			}
@@ -431,10 +441,15 @@ final class JssEmitter
 			'boolean' => (string) $expression->fields['value'],
 			'null' => 'null',
 			'identifier' => $this->emitIdentifier($expression),
+			'reference' => '&' . $this->emitReferenceTarget($expression),
+			'arrow_function' => $this->emitArrowFunction($expression),
 			'array_literal' => '[' . implode(', ', $this->emitArrayItems($expression)) . ']',
 			'object_literal' => '[' . implode(', ', $this->emitObjectPairs($expression)) . ']',
 			'new' => 'new ' . (string) $expression->fields['class_name'] . '(' . implode(', ', $this->emitNewArguments($expression)) . ')',
+			'late_static_scope' => 'static',
+			'late_static_member' => 'static::' . (string) $expression->fields['member'],
 			'member' => $this->emitMember($expression),
+			'optional_member' => $this->emitExpression($expression->fields['object'] ?? null) . '?->' . (string) $expression->fields['member'],
 			'index' => $this->emitExpression($expression->fields['object'] ?? null) . '[' . $this->emitExpression($expression->fields['index'] ?? null) . ']',
 			'call' => $this->emitCall($expression),
 			'unary' => $this->emitUnary($expression),
@@ -453,6 +468,53 @@ final class JssEmitter
 			. ' : '
 			. $this->emitExpression($ternary->fields['when_false'] ?? null)
 			. ')';
+	}
+
+	private function emitReferenceTarget(JssNode $reference): string
+	{
+		return '$' . (string) ($reference->fields['target'] ?? '');
+	}
+
+	private function emitArrowFunction(JssNode $arrow): string
+	{
+		$previousLocalTypes = $this->localTypes;
+		$previousLocalNames = $this->localNames;
+		$this->registerParameterLocals($arrow->fields['params'] ?? []);
+		$body = $this->emitExpression($arrow->fields['body'] ?? null);
+		$this->localTypes = $previousLocalTypes;
+		$this->localNames = $previousLocalNames;
+
+		return 'fn('
+			. implode(', ', $this->emitArrowParameters($arrow->fields['params'] ?? []))
+			. '): '
+			. $this->emitType((string) ($arrow->fields['return_type'] ?? 'mixed'))
+			. ' => '
+			. $body;
+	}
+
+	/** @return list<string> */
+	private function emitArrowParameters(mixed $params): array
+	{
+		$emitted = [];
+		foreach (is_array($params) ? $params : [] as $param) {
+			if (!is_array($param)) {
+				continue;
+			}
+			$emitted[] = '$' . (string) ($param['name'] ?? '') . ' ' . $this->emitType((string) ($param['type'] ?? ''));
+		}
+		return $emitted;
+	}
+
+	private function emitType(string $type): string
+	{
+		$type = trim($type);
+		if ($type === '') {
+			return $type;
+		}
+		if (isset($this->useAliases[$type])) {
+			return '\\' . str_replace('.', '\\', (string) $this->useAliases[$type]);
+		}
+		return str_replace('.', '\\', $type);
 	}
 
 	private function emitIdentifier(JssNode $identifier): string
@@ -476,7 +538,35 @@ final class JssEmitter
 		if (isset($this->constantNames[$name])) {
 			return $name;
 		}
+		if ($this->isKnownRuntimeConstant($name)) {
+			return $name;
+		}
 		return '$' . $name;
+	}
+
+	private function isKnownRuntimeConstant(string $name): bool
+	{
+		return in_array(strtoupper($name), [
+			'CURLOPT_URL',
+			'CURLOPT_RETURNTRANSFER',
+			'CURLOPT_HTTPHEADER',
+			'CURLOPT_POST',
+			'CURLOPT_POSTFIELDS',
+			'CURLOPT_CUSTOMREQUEST',
+			'CURLOPT_TIMEOUT',
+			'CURLOPT_CONNECTTIMEOUT',
+			'CURLOPT_FOLLOWLOCATION',
+			'CURLOPT_USERAGENT',
+			'CURLOPT_SSL_VERIFYPEER',
+			'CURLOPT_SSL_VERIFYHOST',
+			'CURLINFO_RESPONSE_CODE',
+			'CURLINFO_EFFECTIVE_URL',
+			'CURLINFO_CONTENT_TYPE',
+			'CURLINFO_TOTAL_TIME_MS',
+			'CURLINFO_HEADER_SIZE',
+			'CURLINFO_REQUEST_SIZE',
+			'CURLINFO_REDIRECT_COUNT',
+		], true);
 	}
 
 	private function emitMember(JssNode $member): string
@@ -595,6 +685,8 @@ final class JssEmitter
 			$calleeText = $this->emitIdentifierCallee($callee);
 		} elseif ($callee instanceof JssNode && $callee->kind === 'member') {
 			$calleeText = $this->emitClassifiedMember($callee, true) ?? $this->emitReservedHelperCallTarget($callee) ?? $this->emitExpression($callee);
+		} elseif ($callee instanceof JssNode && $callee->kind === 'optional_member') {
+			$calleeText = $this->emitExpression($callee);
 		} else {
 			$calleeText = $this->emitExpression($callee);
 		}
@@ -604,12 +696,18 @@ final class JssEmitter
 	private function emitIdentifierCallee(JssNode $callee): string
 	{
 		$name = (string) $callee->fields['name'];
+		if (isset($this->localNames[$name])) {
+			return '$' . $name;
+		}
 		if (!$this->requireFrontendClassifications) {
 			return $name;
 		}
 		$classification = $this->identifierClassifications[$name] ?? null;
 		if (!is_array($classification)) {
 			$this->throwMissingIdentifierClassification($name, $callee);
+		}
+		if ($this->hasDiagnostics($classification)) {
+			$this->throwIdentifierClassificationDiagnostic($name, $classification);
 		}
 		if (in_array((string) ($classification['kind'] ?? ''), ['function', 'builtin_function'], true)) {
 			return $name;
@@ -618,6 +716,16 @@ final class JssEmitter
 			$this->throwUnresolvedIdentifierClassification($name, $classification);
 		}
 		throw new \RuntimeException($this->withClassificationLocation('JSS call target `' . $name . '` was classified as `' . (string) ($classification['kind'] ?? 'unknown') . '`, not a function.', $classification));
+	}
+
+	/** @param array<string,mixed> $classification */
+	private function throwIdentifierClassificationDiagnostic(string $name, array $classification): void
+	{
+		$diagnostics = $classification['diagnostics'] ?? [];
+		if (is_array($diagnostics) && isset($diagnostics[0]) && is_array($diagnostics[0]) && is_string($diagnostics[0]['message'] ?? null)) {
+			throw new \RuntimeException($this->withClassificationLocation($diagnostics[0]['message'], $classification));
+		}
+		throw new \RuntimeException($this->withClassificationLocation('JSS identifier `' . $name . '` could not be classified by STAN.', $classification));
 	}
 
 	private function emitClassifiedMember(JssNode $member, bool $isCall): ?string
@@ -786,6 +894,8 @@ final class JssEmitter
 				. (string) ($expression->fields['operator'] ?? '')
 				. '(' . $this->expressionKey($expression->fields['left'] ?? new JssNode('empty')) . ','
 				. $this->expressionKey($expression->fields['right'] ?? new JssNode('empty')) . ')',
+			'member' => 'member:' . implode('.', $this->flattenMemberChain($expression)),
+			'call' => 'call:' . $this->expressionKey($expression->fields['callee'] ?? new JssNode('empty')),
 			default => $expression->kind,
 		};
 	}

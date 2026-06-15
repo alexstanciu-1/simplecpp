@@ -165,7 +165,7 @@ final class JssSemanticValidator
 			}
 			return $types;
 		}
-		if (in_array($statement->kind, ['return', 'compound_assign', 'append', 'update', 'post_increment'], true)) {
+		if (in_array($statement->kind, ['return', 'compound_assign', 'append', 'delete', 'update', 'post_increment'], true)) {
 			foreach (['value', 'target', 'expression'] as $field) {
 				$expression = $statement->fields[$field] ?? null;
 				if ($expression instanceof JssNode) {

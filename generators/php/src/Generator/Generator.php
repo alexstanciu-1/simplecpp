@@ -5955,7 +5955,7 @@ final class Generator
 		$signature .= ' {';
 		$out[] = $signature;
 		foreach ($bodyLines as $line) {
-			$out[] = $this->indent(1) . $line;
+			$out[] = $this->indent(1) . ($line instanceof CodeBlock ? $line->text : (string) $line);
 		}
 		$out[] = '}';
 
@@ -6100,7 +6100,7 @@ final class Generator
 		$signature .= ' {';
 		$out[] = $signature;
 		foreach ($bodyLines as $line) {
-			$out[] = $this->indent(1) . $line;
+			$out[] = $this->indent(1) . ($line instanceof CodeBlock ? $line->text : (string) $line);
 		}
 		$out[] = '}';
 

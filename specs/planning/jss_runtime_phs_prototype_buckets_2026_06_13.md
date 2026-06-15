@@ -126,6 +126,7 @@ Useful downstream work:
 
 - richer filesystem/IO/JSON/datetime project samples
 - validation that helper-family and wrapper contracts remain stable across real project flows
+- current proof now includes combined `.jss` project build/run lanes for filesystem + JSON + datetime, filesystem + IO + strict string helpers, wrapper error paths, opt-in strict regex helpers, and opt-in strict curl helpers
 
 Why:
 
@@ -137,6 +138,7 @@ Useful downstream work:
 
 - wider source-range coverage
 - more consistent downstream diagnostics on JSS-originated constructs once lowered to PHS
+- current proof includes negative `.jss` project validation for missing symbols and strict assignment conversion failures; missing symbols fail through the classified frontend path, while assignment conversion failures are currently source-mapped compiler diagnostics
 
 Why:
 
@@ -165,36 +167,98 @@ Why:
 
 - these expand usefulness without dragging in new dynamic semantics
 
-## Bucket 3: Defer Until Post-`undefined` Or Post-STAN Work
+## Bucket 3: Decided Follow-Up Surfaces
+
+These are not part of the first useful prototype, but the current direction is clear enough to guide future implementation.
+
+### 1. Explicit references through `&`
+
+Direction:
+
+- use `&` / ampersand and mimic the current PHS reference model
+- do not add a JSS-only `ref` keyword
+- do not add hidden aliasing through ordinary assignment
+- keep the first slice narrow and tied to the documented reduced Prism++ native-reference subset
+
+Why:
+
+- references are not a JavaScript-authored keyword feature
+- direct PHS alignment is clearer than inventing a JS-looking spelling
+
+### 2. `delete` lowering to `unset(...)`
+
+Direction:
+
+- accept JSS `delete expr`
+- lower mechanically to PHS `unset(expr)`
+- do not claim full JavaScript `delete` object semantics
+
+Why:
+
+- the syntax is familiar to JS users
+- the behavior remains honest to the PHS container/member removal operation
+
+### 3. Late static through `static::`
+
+Direction:
+
+- expose the PHS spelling directly where needed:
+  - `static::make()`
+  - `static::VALUE`
+- do not invent a JS-looking replacement unless a better, honest proposal appears later
+
+Why:
+
+- late-static semantics are already an advanced typed-language feature
+- direct PHS spelling avoids ambiguity
+
+### 4. Optional chaining returns `null`
+
+Direction:
+
+- optional chaining should return `null` on failed access
+- reuse/adapt guarded-path or `isset(...)` machinery where possible
+- do not make optional chaining depend on future `undefined` behavior
+
+Why:
+
+- this keeps optional chaining aligned with the existing nullable model
+- it avoids JS-style “test both null and undefined” ergonomics
+
+### 5. Typed arrow functions over PHS callable support
+
+Direction:
+
+- allow only explicit typed shapes at first, for example `let f = (x: int): int => x + 1;`
+- require parameter types and return type in the first slice
+- do not promise broad JavaScript inference or capture behavior beyond what PHS supports
+
+Why:
+
+- JSS is typed
+- the lambda shape is explicit when it is written inline
+- lowering must reuse the PHS callable/lambda path rather than generate a second callable model
+
+## Bucket 4: Defer Until Runtime/PHS Or Detailed Design Work
 
 These should stay explicitly deferred so the first prototype remains honest and tractable.
 
-### 1. `undefined` as a real value/state
+### 1. `undefined` as a reserved comparison keyword
 
 Deferred work:
 
-- distinct runtime/language absence state
-- presence-aware typing such as future `T | undefined`
-- missing-key / missing-member distinction from present `null`
+- runtime/PHS-owned first implementation
+- accept `undefined` as a reserved PHS keyword
+- lower only explicit comparison forms such as `expr == undefined`, `expr != undefined`, `expr === undefined`, and `expr !== undefined` through S2S to a compiler/runtime intrinsic
+- do not treat `undefined` as a general JSS value in the first slice
+- do not make optional chaining return `undefined`
 
 Why deferred:
 
 - this needs a runtime-first and core-language-first design
 - it should not be faked locally in JSS
 
-### 2. Optional chaining and richer absence-aware access
-
-Deferred work:
-
-- `?.`
-- richer lookup semantics
-- broader `??` interaction once `undefined` exists
-
-Why deferred:
-
-- these depend on real absence-flow truth, not just parser support
-
-### 3. Broad JavaScript-like dynamic behavior
+### 2. Broad JavaScript-like dynamic behavior
 
 Deferred work:
 
@@ -208,19 +272,7 @@ Why deferred:
 - these would push JSS toward a second runtime model
 - they do not match the current strict typed language direction
 
-### 4. Callable/closure/arrow-function surface
-
-Deferred work:
-
-- arrow functions
-- closures
-- broader callable expression lowering
-
-Why deferred:
-
-- only worth doing once PHS callable lowering is a stable real target
-
-### 5. Destructuring, spread/rest, async world
+### 3. Destructuring, spread/rest, async world
 
 Deferred work:
 
@@ -236,18 +288,18 @@ Why deferred:
 - these are not needed for the first strict typed prototype
 - most of them depend on language/runtime semantics that do not exist cleanly downstream yet
 
-### 6. Deeper mutation and alias/reference semantics
+### 4. Dynamic object-bag semantics
 
 Deferred work:
 
-- unset/delete policy
 - nested dynamic mutation
-- references / aliasing
-- late-static semantics beyond the current safe subset
+- dynamic object creation and missing-property behavior
+- whether dynamic object/member access can be more than honest JSON/dynamic reads
 
 Why deferred:
 
-- these need stronger STAN and/or explicit PHS/runtime design
+- this needs separate discussion with concrete examples
+- it should not be settled accidentally while adding typed-surface syntax
 
 ## Practical Takeaway
 

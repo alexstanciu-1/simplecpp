@@ -91,23 +91,23 @@ Status markers:
 | Project-wide `.jss` build/run through normal path | 🟩 works now | `scpp run` on a `.jss` project | high | n/a | yes | yes | P0 | Project STAN sessions include `.jss` summaries and classified emission in the normal pipeline. |
 | Real source ranges in many JSS diagnostics | 🟨 partial | `error at line:col for expr` | medium | yes | yes | partial | P1 | Better than before, but not yet uniformly broad for every diagnostic family. |
 | Local/block/loop `const` | 🟥 blocked | `for (const x: int of items) {}` | high | no | no | likely later | P1 | Rejected until immutability has a clean PHS/STAN contract. |
-| Truthiness in conditions (`if (value)`) | 🟥 blocked | `if (name) {}` | high | no | no | yes for any future expansion | P1 | Current direction is explicit bool-only control flow. |
-| JS-style loose runtime coercion | 🟥 blocked | `"x" + maybeNull` | high | no | no | yes | P1 | We are not emulating broad JavaScript coercion semantics. |
-| `undefined` as a distinct value | 🟦 future | `if (value === undefined) {}` | high | no | no | yes | P1 | Deferred to a runtime-first design branch; should remain distinct from `null`. |
+| Truthiness in conditions (`if (value)`) | 🟥 blocked | `if (name) {}` | high | no | no | yes for any future expansion | P1 | Stay aligned with PHS/PHP++; current direction is explicit bool-only control flow. |
+| JS-style loose runtime coercion | 🟥 blocked | `"x" + maybeNull` | high | no | no | yes | P1 | We are not emulating broad JavaScript coercion semantics; use the PHS operator matrix. |
+| `undefined` comparison keyword | 🟦 future | `if (value === undefined) {}` | high | no | no | yes | P1 | Runtime/PHS-owned first; initial direction is reserved PHS keyword only in explicit comparison forms lowered by S2S to an intrinsic. |
 | `null` + `undefined` interplay | 🟦 future | `value ?? undefined` | high | no | no | yes | P1 | Depends on the separate undefined design. |
 | Soft missing-property access yielding `undefined` | 🟦 future | `row["missing"] === undefined` | high | no | no | yes | P1 | Not part of the current strict typed object/hash surface. |
 | Dynamic JS object bags / ad hoc property creation | 🟥 blocked | `obj.newField = 1;` | high | no | no | yes | P1 | Current direction prefers typed classes, `hash<T>`, and `vector<T>`. |
 | Prototype model / dynamic `this` binding | 🟥 blocked | `Thing.prototype.run = ...` | high | no | no | no | Reject | Out of scope for JSS. |
-| Optional chaining `?.` | 🟥 blocked | `user?.name` | high | no | no | yes | P1 | Needs nullable flow truth that belongs in STAN. |
+| Optional chaining `?.` | 🟨 partial | `user?.name` | high | yes | partial | yes | P1 | First slice lowers `object?.member` to PHS nullsafe `?->`; downstream PHS nullsafe scalar result unification still needs work before broad project build/run coverage. |
 | Chained `??` | 🟥 blocked | `a ?? b ?? c` | high | no | no | yes | P1 | Single-site only for now. |
 | Nested ternary | 🟥 blocked | `a ? b : c ? d : e` | high | no | no | yes | P1 | Deliberately kept out of the first slice. |
 | Destructuring | 🟥 blocked | `let [a, b] = items;` | high | no | no | yes | P2 | Not implemented. |
 | Spread/rest | 🟥 blocked | `fn(...args)` | high | no | no | yes | P2 | Not implemented. |
-| Arrow functions / closures | 🟥 blocked | `(x: int) => x + 1` | high | no | no | yes | P2 | Avoided until callable/closure lowering is a real supported target. |
+| Arrow functions / closures | 🟩 works | `let f = (x: int): int => x + 1;` | high | yes | mostly | no | P2 | First slice supports local explicit expression-body arrows with typed params and return; lowers to existing PHS `fn(...)`. |
 | Async / await / promises / generators | 🟥 blocked | `await fetch()` | high | no | no | yes | P3 | Not in current scope. |
-| References / aliasing | 🟥 blocked | `ref x = y;` | high | no | no | yes | P1 | Explicitly deferred; do not import PHP reference behavior by accident. |
-| Unset/delete mutation | 🟥 blocked | `delete names["a"];` | high | no | no | yes | P1 | Vector/hash erase policy still needs design. |
-| Late static `static::` semantics | 🟥 blocked | `static.make()` | medium | no | no | yes | P1 | Basic inheritance works, but late-static access does not yet have a JSS policy. |
+| References / aliasing | 🟩 works | `let b = &a;` | high | yes | mostly | no | P1 | First slice supports explicit simple-identifier reference aliases only; lowers to PHS `=&` and does not infer hidden aliasing. |
+| Unset/delete mutation | 🟩 works | `delete names["a"];` | high | yes | mostly | no | P1 | JSS `delete expr` lowers to PHS `unset(expr)` and does not imply full JS delete semantics; vector index-removal policy remains separate. |
+| Late static `static::` semantics | 🟨 partial | `static::make()` | medium | yes | partial | yes | P1 | Narrow `static::method()` / `static::CONST` spelling lowers directly to PHS; inherited static dispatch, `static::$prop`, `new static(...)`, and richer validation remain pending. |
 | ES6 `#private` fields | 🟦 future | `class Box { #count: int = 0; }` | high | no | no | yes | P1 | Narrow design note exists; not implemented. |
 | `private` / `protected` keywords | 🟥 blocked | `private name: string = "";` | high | no | no | yes | P1 | Rejected in current JSS class surface. |
 | JS module syntax `import` / `export` | 🟥 blocked | `import { Box } from "./box";` | high | no | no | no | P2 | JSS uses namespaces/use plus project module config, not JS module semantics. |

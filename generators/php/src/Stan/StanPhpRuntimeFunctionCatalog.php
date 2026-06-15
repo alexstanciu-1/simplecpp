@@ -9,6 +9,8 @@ final class StanPhpRuntimeFunctionCatalog
 	private static ?array $knownFunctions = null;
 	/** @var array<string,string>|null */
 	private static ?array $returnTypes = null;
+	/** @var array<string,string>|null */
+	private static ?array $knownConstants = null;
 
 	public function hasFunction(string $name): bool
 	{
@@ -38,6 +40,34 @@ final class StanPhpRuntimeFunctionCatalog
 		return $returnTypes[$normalized] ?? null;
 	}
 
+	public function hasConstant(string $name): bool
+	{
+		$normalized = strtoupper(trim($name));
+		if ($normalized === '') {
+			return false;
+		}
+		$known = self::$knownConstants;
+		if ($known === null) {
+			$known = $this->loadKnownConstants();
+			self::$knownConstants = $known;
+		}
+		return isset($known[$normalized]);
+	}
+
+	public function constantRequiredModule(string $name): ?string
+	{
+		$normalized = strtoupper(trim($name));
+		if ($normalized === '') {
+			return null;
+		}
+		$known = self::$knownConstants;
+		if ($known === null) {
+			$known = $this->loadKnownConstants();
+			self::$knownConstants = $known;
+		}
+		return $known[$normalized] ?? null;
+	}
+
 	public function requiredModule(string $name): ?string
 	{
 		$normalized = strtolower(trim($name));
@@ -52,6 +82,12 @@ final class StanPhpRuntimeFunctionCatalog
 		}
 		if (str_starts_with($normalized, 'dt_')) {
 			return 'datetime';
+		}
+		if (str_starts_with($normalized, 'regex_')) {
+			return 'regex';
+		}
+		if (str_starts_with($normalized, 'curl_')) {
+			return 'curl';
 		}
 		return null;
 	}
@@ -105,5 +141,36 @@ final class StanPhpRuntimeFunctionCatalog
 			}
 		}
 		return $returnTypes;
+	}
+
+	/** @return array<string,string> */
+	private function loadKnownConstants(): array
+	{
+		$curlConstants = [
+			'CURLOPT_URL',
+			'CURLOPT_RETURNTRANSFER',
+			'CURLOPT_HTTPHEADER',
+			'CURLOPT_POST',
+			'CURLOPT_POSTFIELDS',
+			'CURLOPT_CUSTOMREQUEST',
+			'CURLOPT_TIMEOUT',
+			'CURLOPT_CONNECTTIMEOUT',
+			'CURLOPT_FOLLOWLOCATION',
+			'CURLOPT_USERAGENT',
+			'CURLOPT_SSL_VERIFYPEER',
+			'CURLOPT_SSL_VERIFYHOST',
+			'CURLINFO_RESPONSE_CODE',
+			'CURLINFO_EFFECTIVE_URL',
+			'CURLINFO_CONTENT_TYPE',
+			'CURLINFO_TOTAL_TIME_MS',
+			'CURLINFO_HEADER_SIZE',
+			'CURLINFO_REQUEST_SIZE',
+			'CURLINFO_REDIRECT_COUNT',
+		];
+		$known = [];
+		foreach ($curlConstants as $constant) {
+			$known[$constant] = 'curl';
+		}
+		return $known;
 	}
 }

@@ -8,8 +8,8 @@ class storage {
 namespace demo\app;
 use demo\schema\model;
 use demo\schema\storage;
-$m model = new model();
-$s storage = new storage();
+$m \demo\schema\model = new model();
+$s \demo\schema\storage = new storage();
 $m->attached_storage = $s;
 $s->owner_model = $m;
 echo "ok\n";

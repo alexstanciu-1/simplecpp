@@ -56,7 +56,8 @@ final class StanFrontendClassifier
 					$classification['line'] = (int) ($request['range']['line'] ?? 0);
 					$classification['column'] = (int) ($request['range']['column'] ?? 0);
 				}
-				$results[$id] = $classification;
+				$resultKey = (string) ($request['path'] ?? '') . '#' . $id;
+				$results[$resultKey !== '#' ? $resultKey : $id] = $classification;
 			}
 		}
 		return $results;
@@ -73,7 +74,7 @@ final class StanFrontendClassifier
 			return $this->classifyMemberAccess($request, $symbolIndex, $activeRuntimeModules);
 		}
 		if ($kind === 'binary_plus') {
-			return $this->classifyBinaryPlus($request);
+			return $this->classifyBinaryPlus($request, $symbolIndex);
 		}
 		if ($kind === 'take_contract') {
 			return $this->classifyTakeContract($request);
@@ -145,11 +146,18 @@ final class StanFrontendClassifier
 		};
 	}
 
-	/** @param array<string,mixed> $request @return array<string,mixed> */
-	private function classifyBinaryPlus(array $request): array
+	/** @param array<string,mixed> $request @param list<array<string,mixed>> $symbolIndex @return array<string,mixed> */
+	private function classifyBinaryPlus(array $request, array $symbolIndex): array
 	{
 		$leftType = strtolower((string) ($request['left_type'] ?? ''));
 		$rightType = strtolower((string) ($request['right_type'] ?? ''));
+		$requestNamespace = (string) ($request['namespace'] ?? '');
+		if ($leftType === '') {
+			$leftType = $this->resolveExpressionDescriptorType($request['left_expression'] ?? null, $symbolIndex, $requestNamespace) ?? '';
+		}
+		if ($rightType === '') {
+			$rightType = $this->resolveExpressionDescriptorType($request['right_expression'] ?? null, $symbolIndex, $requestNamespace) ?? '';
+		}
 		if (in_array($leftType, ['mixed', 'dynamic'], true) || in_array($rightType, ['mixed', 'dynamic'], true)) {
 			return [
 				'kind' => 'dynamic_plus',
@@ -191,6 +199,136 @@ final class StanFrontendClassifier
 		return in_array($type, ['string', 'int', 'float', 'bool'], true);
 	}
 
+	/** @param list<array<string,mixed>> $symbolIndex */
+	private function resolveExpressionDescriptorType(mixed $descriptor, array $symbolIndex, string $requestNamespace): ?string
+	{
+		if (!is_array($descriptor)) {
+			return null;
+		}
+		$kind = (string) ($descriptor['kind'] ?? '');
+		if ($kind === 'identifier') {
+			$type = $descriptor['type'] ?? null;
+			return is_string($type) && $type !== '' ? strtolower($type) : null;
+		}
+		if ($kind === 'member') {
+			$chain = is_array($descriptor['chain'] ?? null) ? array_values(array_map('strval', $descriptor['chain'])) : [];
+			$baseType = is_string($descriptor['base_type'] ?? null) ? (string) $descriptor['base_type'] : '';
+			return $this->resolveMemberDescriptorType($chain, $baseType, $symbolIndex, $requestNamespace);
+		}
+		if ($kind === 'call') {
+			$chain = is_array($descriptor['callee_chain'] ?? null) ? array_values(array_map('strval', $descriptor['callee_chain'])) : [];
+			if ($chain !== []) {
+				return $this->resolveCallDescriptorReturnType($chain, $symbolIndex, $requestNamespace);
+			}
+			$name = is_string($descriptor['callee_name'] ?? null) ? (string) $descriptor['callee_name'] : '';
+			if ($name !== '') {
+				$matches = $this->findSymbols($symbolIndex, 'function', $requestNamespace, $name);
+				if (count($matches) !== 1) {
+					$matches = $this->findSymbols($symbolIndex, 'function', '', $name);
+				}
+				if (count($matches) === 1) {
+					$returnType = (string) ($matches[0]['return_type'] ?? '');
+					return $returnType !== '' ? strtolower($returnType) : null;
+				}
+			}
+			return null;
+		}
+		if ($kind === 'binary' && (string) ($descriptor['operator'] ?? '') === '+') {
+			$leftType = $this->resolveExpressionDescriptorType($descriptor['left'] ?? null, $symbolIndex, $requestNamespace);
+			$rightType = $this->resolveExpressionDescriptorType($descriptor['right'] ?? null, $symbolIndex, $requestNamespace);
+			if (($leftType === 'string' && $this->isJssPrintablePlusType((string) $rightType)) || ($rightType === 'string' && $this->isJssPrintablePlusType((string) $leftType))) {
+				return 'string';
+			}
+			if (in_array($leftType, ['int', 'float'], true) && in_array($rightType, ['int', 'float'], true)) {
+				return $leftType === 'float' || $rightType === 'float' ? 'float' : 'int';
+			}
+			if (in_array($leftType, ['mixed', 'dynamic'], true) || in_array($rightType, ['mixed', 'dynamic'], true)) {
+				return 'mixed';
+			}
+		}
+		return null;
+	}
+
+	/** @param list<string> $chain @param list<array<string,mixed>> $symbolIndex */
+	private function resolveCallDescriptorReturnType(array $chain, array $symbolIndex, string $requestNamespace): ?string
+	{
+		$classResolution = $this->resolveClassAccess($chain, $symbolIndex, $requestNamespace);
+		if ($classResolution === null) {
+			return null;
+		}
+		$member = $chain[count($chain) - 1] ?? '';
+		$methodMatches = $this->findSymbols($symbolIndex, 'method', $classResolution['class_scope'], $member);
+		foreach ($methodMatches as $method) {
+			if (($method['is_static'] ?? false) === true) {
+				$returnType = (string) ($method['return_type'] ?? '');
+				return $returnType !== '' ? strtolower($returnType) : null;
+			}
+		}
+		return null;
+	}
+
+	/** @param list<string> $chain @param list<array<string,mixed>> $symbolIndex */
+	private function resolveMemberDescriptorType(array $chain, string $baseType, array $symbolIndex, string $requestNamespace): ?string
+	{
+		$member = $chain[count($chain) - 1] ?? '';
+		if ($member === '') {
+			return null;
+		}
+		$classResolution = $this->resolveClassAccess($chain, $symbolIndex, $requestNamespace);
+		if ($classResolution !== null) {
+			$propertyMatches = $this->findSymbols($symbolIndex, 'property', $classResolution['class_scope'], $member);
+			if (count($propertyMatches) === 1 && ($propertyMatches[0]['is_static'] ?? false) === true) {
+				$type = (string) ($propertyMatches[0]['property_type'] ?? '');
+				return $type !== '' ? strtolower($type) : null;
+			}
+			return null;
+		}
+		if ($baseType === '') {
+			return null;
+		}
+		$typeResolution = $this->resolveClassType($baseType, $symbolIndex, $requestNamespace);
+		if ($typeResolution === null) {
+			return null;
+		}
+		$propertyMatches = $this->findSymbols($symbolIndex, 'property', $typeResolution['class_scope'], $member);
+		if (count($propertyMatches) === 1 && ($propertyMatches[0]['is_static'] ?? false) !== true) {
+			$type = (string) ($propertyMatches[0]['property_type'] ?? '');
+			return $type !== '' ? strtolower($type) : null;
+		}
+		return null;
+	}
+
+	/** @param list<array<string,mixed>> $symbolIndex @return array{class_scope:string}|null */
+	private function resolveClassType(string $type, array $symbolIndex, string $requestNamespace): ?array
+	{
+		$type = trim($type, " \t\n\r\0\x0B\\");
+		if ($type === '') {
+			return null;
+		}
+		$parts = array_values(array_filter(explode('\\', str_replace('.', '\\', $type)), static fn (string $part): bool => $part !== ''));
+		$className = $parts[count($parts) - 1] ?? '';
+		$namespace = implode('\\', array_slice($parts, 0, -1));
+		if ($namespace !== '' && count($this->findSymbols($symbolIndex, 'class', $namespace, $className)) === 1) {
+			return ['class_scope' => $namespace . '::' . $className];
+		}
+		$aliasMatches = $this->findSymbols($symbolIndex, 'use_alias', $requestNamespace, $className);
+		if (count($aliasMatches) === 1) {
+			$targetParts = array_values(array_filter(explode('\\', (string) ($aliasMatches[0]['target'] ?? '')), static fn (string $part): bool => $part !== ''));
+			$targetClass = $targetParts[count($targetParts) - 1] ?? '';
+			$targetNamespace = implode('\\', array_slice($targetParts, 0, -1));
+			if ($targetClass !== '' && count($this->findSymbols($symbolIndex, 'class', $targetNamespace, $targetClass)) === 1) {
+				return ['class_scope' => $targetNamespace . '::' . $targetClass];
+			}
+		}
+		if ($requestNamespace !== '' && count($this->findSymbols($symbolIndex, 'class', $requestNamespace, $className)) === 1) {
+			return ['class_scope' => $requestNamespace . '::' . $className];
+		}
+		if (count($this->findSymbols($symbolIndex, 'class', '', $className)) === 1) {
+			return ['class_scope' => $className];
+		}
+		return null;
+	}
+
 	/** @param array<string,mixed> $request @param list<array<string,mixed>> $symbolIndex @param list<string>|null $activeRuntimeModules @return array<string,mixed> */
 	private function classifyIdentifier(array $request, array $symbolIndex, ?array $activeRuntimeModules = null): array
 	{
@@ -209,6 +347,24 @@ final class StanFrontendClassifier
 				'kind' => 'builtin_global',
 				'name' => $name,
 				'target' => '$' . $name,
+				'diagnostics' => [],
+			];
+		}
+		if ($this->phpRuntimeFunctionCatalog->hasConstant($name)) {
+			$requiredModule = $this->phpRuntimeFunctionCatalog->constantRequiredModule($name);
+			if ($requiredModule !== null && !$this->hasRuntimeModule($activeRuntimeModules, $requiredModule)) {
+				return [
+					'kind' => 'unavailable_runtime_module',
+					'name' => $name,
+					'target' => $name,
+					'required_module' => $requiredModule,
+					'diagnostics' => [$this->diagnostic('Runtime constant `' . $name . '` requires module `' . $requiredModule . '` in the active project runtime config.')],
+				];
+			}
+			return [
+				'kind' => 'constant',
+				'name' => $name,
+				'target' => $name,
 				'diagnostics' => [],
 			];
 		}
@@ -232,6 +388,14 @@ final class StanFrontendClassifier
 					'diagnostics' => [],
 				];
 			}
+			if ($useKind === 'class') {
+				return [
+					'kind' => 'class',
+					'name' => $name,
+					'target' => (string) ($alias['target'] ?? ''),
+					'diagnostics' => [],
+				];
+			}
 		}
 		foreach (['class', 'function', 'constant'] as $kind) {
 			$matches = $this->findSymbols($symbolIndex, $kind, '', $name);
@@ -241,6 +405,12 @@ final class StanFrontendClassifier
 					'constant' => $name,
 					default => (string) ($matches[0]['key'] ?? ''),
 				};
+				if ($kind === 'function') {
+					$moduleDiagnostic = $this->classifyUnavailableRuntimeModule($name, $target, $activeRuntimeModules);
+					if ($moduleDiagnostic !== null) {
+						return $moduleDiagnostic;
+					}
+				}
 				return [
 					'kind' => $kind,
 					'name' => $name,
@@ -250,15 +420,9 @@ final class StanFrontendClassifier
 			}
 		}
 		if ($this->phpRuntimeFunctionCatalog->hasFunction($name)) {
-			$requiredModule = $this->phpRuntimeFunctionCatalog->requiredModule($name);
-			if ($requiredModule !== null && !$this->hasRuntimeModule($activeRuntimeModules, $requiredModule)) {
-				return [
-					'kind' => 'unavailable_runtime_module',
-					'name' => $name,
-					'target' => $name,
-					'required_module' => $requiredModule,
-					'diagnostics' => [$this->diagnostic('Runtime helper `' . $name . '()` requires module `' . $requiredModule . '` in the active project runtime config.')],
-				];
+			$moduleDiagnostic = $this->classifyUnavailableRuntimeModule($name, $name, $activeRuntimeModules);
+			if ($moduleDiagnostic !== null) {
+				return $moduleDiagnostic;
 			}
 			return [
 				'kind' => 'function',
@@ -272,6 +436,22 @@ final class StanFrontendClassifier
 			'kind' => 'unresolved_identifier',
 			'name' => $name,
 			'diagnostics' => [$this->diagnostic('JSS identifier `' . $name . '` could not be resolved by STAN.')],
+		];
+	}
+
+	/** @param list<string>|null $activeRuntimeModules @return array<string,mixed>|null */
+	private function classifyUnavailableRuntimeModule(string $name, string $target, ?array $activeRuntimeModules): ?array
+	{
+		$requiredModule = $this->phpRuntimeFunctionCatalog->requiredModule($target);
+		if ($requiredModule === null || $this->hasRuntimeModule($activeRuntimeModules, $requiredModule)) {
+			return null;
+		}
+		return [
+			'kind' => 'unavailable_runtime_module',
+			'name' => $name,
+			'target' => $target,
+			'required_module' => $requiredModule,
+			'diagnostics' => [$this->diagnostic('Runtime helper `' . $target . '()` requires module `' . $requiredModule . '` in the active project runtime config.')],
 		];
 	}
 

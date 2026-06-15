@@ -151,6 +151,7 @@ Print local documentation without web access:
 ```bash
 scpp docs
 scpp docs strict
+scpp docs jss
 scpp docs diagnostics
 ```
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Simple C++ JSS"
+  short_description: "Write typed JSS .jss apps"
+  default_prompt: "Use $simple-cpp-jss to write or debug a typed Simple C++ JSS app."

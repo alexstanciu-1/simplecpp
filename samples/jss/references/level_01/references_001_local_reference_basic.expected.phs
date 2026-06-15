@@ -1,0 +1,4 @@
+$value int = 5;
+$alias =& $value;
+$alias = 9;
+echo $value, "\n";

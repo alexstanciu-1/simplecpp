@@ -9,15 +9,17 @@ This is a planning artifact, not semantic authority.
 
 ## Direction
 
-`undefined` should be treated as a separate concept from `null`.
+`undefined` should be treated as a separate concept from `null`, but the first implementation should be narrower than a full storable language value.
 
 Working intent:
 
 - `null` means present empty value
 - `undefined` means absent / not provided / missing slot
-- JSS may eventually expose `undefined` syntax
-- PHP++ / PHS may eventually expose `undefined` syntax or equivalent typed absence helpers
-- JSS should not implement `undefined` source behavior until the runtime and type system support it directly
+- PHP++ / PHS should own the first source-level `undefined` support
+- PHS may accept `undefined` as a reserved keyword only in explicit comparison forms at first
+- S2S should lower `expr == undefined`, `expr != undefined`, `expr === undefined`, and `expr !== undefined` to a compiler/runtime intrinsic rather than treating `undefined` as an ordinary value
+- JSS should not implement `undefined` source behavior until the runtime/PHS/S2S contract exists
+- optional chaining should not wait on or return `undefined` in the current direction; JSS optional chaining should return `null` on failed access
 
 ## Why This Must Start In The Runtime
 
@@ -40,29 +42,38 @@ That is exactly the kind of duplicate path we have been trying to avoid.
 
 Before JSS source support, we likely need:
 
-1. A real runtime representation
-   - analogous in status to `null_t`, but distinct
-   - must survive container storage, comparison, and transport through `mixed` / dynamic boundaries
+1. A comparison intrinsic
+   - S2S-visible helper or compiler intrinsic for “is undefined”
+   - should work safely for statically known non-undefined-capable values
+   - should preserve `===` / `!==` style intent without importing JS loose absence behavior
 
-2. Type-system spelling and unions
+2. Reserved keyword handling in PHS
+   - accept `undefined` only in the comparison forms for the first slice
+   - reject or defer general value use such as assignment, passing as an argument, or storing in containers until a real runtime value model exists
+
+3. Later runtime representation, if needed
+   - analogous in status to `null_t`, but distinct
+   - may eventually survive container storage, comparison, and transport through `mixed` / dynamic boundaries
+
+4. Later type-system spelling and unions
    - `undefined`
    - `T | undefined`
    - interaction with `?T` / `T | null`
    - clear distinction between nullable and absent-capable values
 
-3. Container lookup semantics
+5. Container lookup semantics
    - missing hash key
    - missing object-like field on dynamic carriers
    - present key with `null`
    - present key with `undefined`
 
-4. Comparison and narrowing rules
+6. Comparison and narrowing rules
    - `value === undefined`
    - `value !== undefined`
    - STAN narrowing after explicit checks
    - no loose equality shortcuts
 
-5. Runtime/helper surface decisions
+7. Runtime/helper surface decisions
    - whether presence checks are separate helpers
    - whether some APIs return `result<T>` versus `T | undefined`
    - how `undefined` behaves at JSON/dynamic boundaries
@@ -71,10 +82,10 @@ Before JSS source support, we likely need:
 
 Once the runtime/type work exists, JSS can add:
 
-- `undefined` literal support
 - explicit `=== undefined` / `!== undefined` checks
-- lookup/narrowing rules for `row["k"]`
-- maybe later `??` interaction once null-vs-undefined semantics are fully documented
+- maybe explicit `== undefined` / `!= undefined` checks if they remain accepted by the PHS comparison contract
+- lookup/narrowing rules for `row["k"]`, only after the runtime/PHS contract defines what can be undefined
+- maybe later general `undefined` literal/value support once null-vs-undefined semantics are fully documented
 
 But that JSS work should happen on top of the runtime contract, not before it.
 
@@ -92,6 +103,7 @@ But that JSS work should happen on top of the runtime contract, not before it.
 - do not add frontend-only fake absence semantics
 - do not broaden `??` based on guessed future `undefined` behavior
 - do not make missing-key behavior language-specific between JSS and PHS
+- do not make optional chaining return `undefined`; the current JSS optional-chain direction is failed chain -> `null`
 
 ## Follow-Up Questions
 
@@ -99,3 +111,4 @@ But that JSS work should happen on top of the runtime contract, not before it.
 2. Should hash lookup return `T | undefined`, a wrapper/result shape, or remain operation-specific?
 3. Do we want a dedicated runtime `undefined_t` name, or another canonical spelling?
 4. What should JSON decode do with absent versus explicit `null` fields at the dynamic boundary?
+5. Should `== undefined` and `!= undefined` remain accepted as comparison-intrinsic forms, or should only `===` / `!==` be accepted after the proof of concept?

@@ -1667,6 +1667,30 @@ function scpp_docs_registry(): array
 			'title' => 'PHP++ Strict Quick Learn',
 			'path' => 'specs/simple_cpp_php_strict_quick_learn.md',
 		],
+		'jss' => [
+			'title' => 'JSS Quick Learn',
+			'path' => 'specs/simple_cpp_jss_quick_learn.md',
+		],
+		'jss-guide' => [
+			'title' => 'JSS Alpha Guide',
+			'path' => 'docs/jss/README.md',
+		],
+		'jss-quick-learn' => [
+			'title' => 'JSS Quick Learn',
+			'path' => 'specs/simple_cpp_jss_quick_learn.md',
+		],
+		'jss-authoring' => [
+			'title' => 'JSS Authoring Rules',
+			'path' => '.agents/skills/simple-cpp-jss/references/authoring-rules.md',
+		],
+		'jss-diagnostics' => [
+			'title' => 'JSS Validation And Diagnostics',
+			'path' => '.agents/skills/simple-cpp-jss/references/validation-and-diagnostics.md',
+		],
+		'jss-skill' => [
+			'title' => 'Simple C++ JSS Agent Skill',
+			'path' => '.agents/skills/simple-cpp-jss/SKILL.md',
+		],
 		'build' => [
 			'title' => 'Project Build v1',
 			'path' => 'specs/project_build_v1.md',
@@ -6127,6 +6151,7 @@ function build_stan_worker_run_id(): string
 function compute_stan_source_fingerprint(string $projectRoot, string $configPath): string
 {
 	$parts = [];
+	$parts[] = 'implementation:' . compute_stan_implementation_fingerprint(resolve_repo_root());
 	foreach (collect_stan_fingerprint_units($projectRoot, $configPath) as $unit) {
 		$configHash = is_file($unit['config_path']) ? hash_file('sha256', $unit['config_path']) : false;
 		$parts[] = normalize_path($unit['config_path']) . ':' . ($configHash === false ? 'missing' : $configHash);
@@ -6134,6 +6159,32 @@ function compute_stan_source_fingerprint(string $projectRoot, string $configPath
 			$hash = hash_file('sha256', $path);
 			$parts[] = normalize_path($path) . ':' . ($hash === false ? 'hash-failed' : $hash);
 		}
+	}
+	return hash('sha256', implode("\n", $parts));
+}
+
+function compute_stan_implementation_fingerprint(string $repoRoot): string
+{
+	$files = [
+		$repoRoot . '/bin/project_services.php',
+		$repoRoot . '/generators/php/src/Jss/JssCallSurface.php',
+		$repoRoot . '/generators/php/src/Jss/JssFileSummaryBuilder.php',
+		$repoRoot . '/generators/php/src/Jss/JssFrontendRequestFactory.php',
+		$repoRoot . '/generators/php/src/Jss/JssNode.php',
+		$repoRoot . '/generators/php/src/Jss/JssParser.php',
+		$repoRoot . '/generators/php/src/Jss/JssSummaryExtractor.php',
+		$repoRoot . '/generators/php/src/Jss/JssTokenizer.php',
+		$repoRoot . '/generators/php/src/Stan/StanFrontendClassifier.php',
+		$repoRoot . '/generators/php/src/Stan/StanSemanticPass.php',
+		$repoRoot . '/generators/php/src/Stan/StanSourceCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/Stan/StanSymbolIndexBuilder.php',
+		$repoRoot . '/generators/php/src/Stan/StanWorkspaceContextBuilder.php',
+		$repoRoot . '/generators/php/src/Stan/StanWorkspaceSession.php',
+	];
+	$parts = ['version:' . SCPP_STAN_SIGNATURE_VERSION];
+	foreach ($files as $file) {
+		$hash = is_file($file) ? hash_file('sha256', $file) : false;
+		$parts[] = normalize_config_path($file) . ':' . ($hash === false ? 'missing' : $hash);
 	}
 	return hash('sha256', implode("\n", $parts));
 }
@@ -6186,6 +6237,13 @@ function write_stan_worker_heartbeat(string $heartbeatPath, array $payload): voi
 function classify_stan_build_bucket(array $diagnostic): string
 {
 	$kind = (string) ($diagnostic['kind'] ?? '');
+	if ($kind === 'frontend_classification') {
+		$code = (string) ($diagnostic['code'] ?? '');
+		if (in_array($code, ['frontend_member_access', 'frontend_binary_plus', 'frontend_take_contract'], true)) {
+			return 'compile-errors';
+		}
+		return 'stan-warnings';
+	}
 	if (in_array($kind, [
 		'duplicate_declaration',
 		'unresolved_call',

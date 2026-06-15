@@ -1,0 +1,9 @@
+class A {
+	public static function run(): string {
+		return static::hello();
+	}
+	public static function hello(): string {
+		return "A";
+	}
+}
+echo A::run(), "\n";

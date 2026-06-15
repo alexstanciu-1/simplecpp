@@ -75,7 +75,7 @@ alex
 | PHS/runtime `json_decode(...)` return to `dynamic` | PHS/runtime | done | existing strict JSON sample plus JSS/PHS project validation | none for this lane |
 | Decoded JSON field access from `dynamic` | PHS/runtime | done for this lane | strict JSON runtime sample and project run behavior | deeper typed normalization from dynamic remains separate |
 | Normal `.jss -> PHS -> build` path | build/project path | done | JSS project build/run tests | none for this lane |
-| Real runtime module activation for `json` and `filesystem` | project/build/runtime | done for this lane | project `prism.json` with modules and successful build/run | module-aware diagnostics can still improve |
+| Real runtime module activation for `json` and `filesystem` | project/build/runtime + STAN preflight | done for this lane | project `prism.json` with modules, successful build/run, and inactive helper-module preflight failure coverage | broader module/profile matrix remains outside this lane |
 | Real project-level validation, not only transpilation | tests/project path | done in this lane | dedicated JSS fs/json project build/run test | broader project matrix still open |
 
 ## Explicit Non-Goals For This Lane
@@ -107,12 +107,13 @@ The same usable prototype lane should also prove:
 1. missing-file `fs.get(...)` failure is handled explicitly through `take(...)`
 2. malformed JSON surfaces a real runtime parse diagnostic
 3. both behaviors are validated through the normal `.jss -> PHS -> build/run` path
+4. wrapper success/failure preserves the previous output value on failed extraction for the current strict helper contracts
 
 ## Follow-Up Boundary
 
 Once this lane is stable, the next useful step should be:
 
-- better module-aware diagnostics for helper families
+- broader runtime-heavy sample coverage that stays inside the already-proven helper/module/take/dynamic contracts; current proof also covers the strict string/IO sample shape with `fs.mkdir`, `io.open`, nested `implode(explode(...))`, `io.write`, `io.read`, `strtoupper`, and cleanup helpers
 
 Not:
 

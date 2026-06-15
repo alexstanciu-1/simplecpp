@@ -177,6 +177,13 @@ final class JssParser
 			return $this->node('continue', [], $start);
 		}
 
+		if ($this->match('delete')) {
+			$start = $this->previous();
+			$target = $this->parseExpression();
+			$this->consume(';', 'Expected `;` after JSS delete.');
+			return $this->node('delete', ['target' => $target], $start);
+		}
+
 		if ($this->match('if')) {
 			$start = $this->previous();
 			$this->consume('(', 'Expected `(` after `if`.');
@@ -397,10 +404,14 @@ final class JssParser
 		if ($this->match('const')) {
 			$start = $this->previous();
 			$name = $this->consume('identifier', 'Expected class constant name.')->text;
+			$type = null;
+			if ($this->match(':')) {
+				$type = $this->parseTypeSpelling();
+			}
 			$this->consume('=', 'Expected `=` after class constant name.');
 			$value = $this->parseExpression();
 			$this->consume(';', 'Expected `;` after class constant declaration.');
-			return $this->node('class_const_decl', ['name' => $name, 'value' => $value], $start);
+			return $this->node('class_const_decl', ['name' => $name, 'type' => $type, 'value' => $value], $start);
 		}
 
 		if ($this->match('constructor')) {
@@ -761,6 +772,11 @@ final class JssParser
 				'expression' => $this->parseUnary(),
 			], $this->previous());
 		}
+		if ($this->match('&')) {
+			$start = $this->previous();
+			$target = $this->consume('identifier', 'Expected simple identifier after JSS reference `&`.');
+			return $this->node('reference', ['target' => $target->text], $start);
+		}
 		return $this->parseCallMember();
 	}
 
@@ -768,6 +784,17 @@ final class JssParser
 	{
 		$expr = $this->parsePrimary();
 		while (true) {
+			if ($this->match('::')) {
+				if ($expr->kind !== 'late_static_scope') {
+					$range = $expr->fields['range'] ?? null;
+					$line = is_array($range) ? (int) ($range['line'] ?? 0) : $this->previous()->line;
+					$column = is_array($range) ? (int) ($range['column'] ?? 0) : $this->previous()->column;
+					throw new InputException('JSS `::` is currently reserved for direct `static::name` late-static access at ' . $line . ':' . $column . '. Use dotted class/member access for named classes.');
+				}
+				$memberToken = $this->consume('identifier', 'Expected member name after `static::`.');
+				$expr = $this->nodeFrom('late_static_member', ['member' => $memberToken->text], $expr);
+				continue;
+			}
 			if ($this->match('.')) {
 				$memberToken = $this->consume('identifier', 'Expected member name after `.`.');
 				$member = $memberToken->text;
@@ -775,6 +802,11 @@ final class JssParser
 					throw new InputException('JSS prototype access is not supported at ' . $memberToken->line . ':' . $memberToken->column . '. Use class declarations and instance members instead.');
 				}
 				$expr = $this->nodeFrom('member', ['object' => $expr, 'member' => $member], $expr);
+				continue;
+			}
+			if ($this->match('?.')) {
+				$memberToken = $this->consume('identifier', 'Expected member name after `?.`.');
+				$expr = $this->nodeFrom('optional_member', ['object' => $expr, 'member' => $memberToken->text], $expr);
 				continue;
 			}
 			if ($this->match('(')) {
@@ -832,6 +864,9 @@ final class JssParser
 			}
 			return $this->node('identifier', ['name' => 'this'], $token);
 		}
+		if ($this->match('static')) {
+			return $this->node('late_static_scope', [], $this->previous());
+		}
 		if ($this->match('new')) {
 			$start = $this->previous();
 			$className = $this->consume('identifier', 'Expected class name after `new`.')->text;
@@ -877,6 +912,9 @@ final class JssParser
 			return $this->node('object_literal', ['pairs' => $pairs], $start);
 		}
 		if ($this->match('(')) {
+			if ($this->looksLikeArrowFunctionAfterOpenParen()) {
+				return $this->parseArrowFunctionAfterOpenParen($this->previous());
+			}
 			$expr = $this->parseExpression();
 			$this->consume(')', 'Expected `)` after grouped expression.');
 			return $expr;
@@ -892,6 +930,59 @@ final class JssParser
 		}
 		$token = $this->peek();
 		throw new InputException('Expected object literal key at ' . $token->line . ':' . $token->column . '.');
+	}
+
+	private function looksLikeArrowFunctionAfterOpenParen(): bool
+	{
+		$depth = 1;
+		for ($i = $this->index; isset($this->tokens[$i]); $i++) {
+			$kind = $this->tokens[$i]->kind;
+			if ($kind === '(') {
+				$depth++;
+			} elseif ($kind === ')') {
+				$depth--;
+				if ($depth === 0) {
+					if (($this->tokens[$i + 1] ?? null)?->kind !== ':') {
+						return false;
+					}
+					for ($j = $i + 2; isset($this->tokens[$j]); $j++) {
+						if ($this->tokens[$j]->kind === '=>') {
+							return true;
+						}
+						if (in_array($this->tokens[$j]->kind, [';', ')', '{', '}'], true)) {
+							return false;
+						}
+					}
+					return false;
+				}
+			}
+		}
+		return false;
+	}
+
+	private function parseArrowFunctionAfterOpenParen(JssToken $start): JssNode
+	{
+		$params = [];
+		if (!$this->check(')')) {
+			do {
+				$paramName = $this->consume('identifier', 'Expected JSS arrow parameter name.')->text;
+				$this->consume(':', 'Expected `:` after JSS arrow parameter name.');
+				$params[] = [
+					'name' => $paramName,
+					'type' => $this->parseTypeSpelling(),
+					'default' => null,
+				];
+			} while ($this->match(','));
+		}
+		$this->consume(')', 'Expected `)` after JSS arrow parameters.');
+		$this->consume(':', 'Expected explicit return type after JSS arrow parameters.');
+		$returnType = $this->parseTypeSpelling();
+		$this->consume('=>', 'Expected `=>` after JSS arrow return type.');
+		return $this->node('arrow_function', [
+			'params' => $params,
+			'return_type' => $returnType,
+			'body' => $this->parseExpression(),
+		], $start);
 	}
 
 	private function isPushCall(JssNode $expression): bool
