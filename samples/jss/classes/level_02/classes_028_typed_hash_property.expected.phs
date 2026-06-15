@@ -1,0 +1,5 @@
+class Store {
+	public hash<int> $items = ["a" => 1];
+}
+$store Store = new Store();
+echo $store->items["a"], "\n";

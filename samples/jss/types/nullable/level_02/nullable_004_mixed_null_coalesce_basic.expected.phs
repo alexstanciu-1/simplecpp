@@ -1,0 +1,10 @@
+function ok(): mixed {
+	return 7;
+}
+function fail(): mixed {
+	return null;
+}
+$a mixed = ok();
+$b mixed = fail();
+echo $a ?? 0, "\n";
+echo $b ?? 0, "\n";

@@ -1,0 +1,4 @@
+namespace Demo;
+const X = 9;
+namespace App;
+echo \Demo\X, "\n";

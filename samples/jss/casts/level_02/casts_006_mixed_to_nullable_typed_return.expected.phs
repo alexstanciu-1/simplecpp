@@ -1,0 +1,12 @@
+function maybe_label(hash<mixed> $row): ?string {
+	if ($row["label"] === null) {
+		return null;
+	}
+	return $row["label"];
+}
+$row hash<mixed> = [];
+$row["label"] = null;
+$label ?string = maybe_label($row);
+if ($label === null) {
+	echo "missing\n";
+}

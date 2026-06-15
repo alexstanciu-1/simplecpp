@@ -1,0 +1,5 @@
+$values vector<int> = [];
+$values[] = 10;
+$values[] = 20;
+echo $values[0], "\n";
+echo $values[1], "\n";

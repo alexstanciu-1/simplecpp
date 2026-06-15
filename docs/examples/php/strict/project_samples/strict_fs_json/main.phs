@@ -12,7 +12,7 @@ if (!take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
 	} else {
 		echo strlen($data), "\n";
 
-		$decoded = json_decode($data);
+		$decoded dynamic = json_decode($data);
 		echo $decoded["name"], "\n";
 		echo $decoded["count"], "\n";
 	}

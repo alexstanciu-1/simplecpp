@@ -1,0 +1,4 @@
+function show(string $label, int $count): void {
+	echo $label, ":", $count, "\n";
+}
+show("n", 3);

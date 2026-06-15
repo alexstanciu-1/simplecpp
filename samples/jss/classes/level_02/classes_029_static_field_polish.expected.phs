@@ -1,0 +1,4 @@
+class Box {
+	public static int $count = 3;
+}
+echo Box::$count, "\n";

@@ -1,0 +1,15 @@
+namespace demo\schema;
+class model {
+	public ?storage $attached_storage = null;
+}
+class storage {
+	public ?model $owner_model = null;
+}
+namespace demo\app;
+use demo\schema\model;
+use demo\schema\storage;
+$m model = new model();
+$s storage = new storage();
+$m->attached_storage = $s;
+$s->owner_model = $m;
+echo "ok\n";

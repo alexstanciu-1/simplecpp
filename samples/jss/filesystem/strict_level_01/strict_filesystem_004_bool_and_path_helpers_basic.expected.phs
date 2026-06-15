@@ -1,0 +1,5 @@
+function show(string $path): void {
+	echo (fs_exists($path) ? "Y" : "N"), "\n";
+	echo fs_basename($path), "\n";
+	echo fs_dirname($path), "\n";
+}

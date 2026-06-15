@@ -1,0 +1,7 @@
+namespace Demo;
+class Box {
+	public static function value(): int {
+		return 31;
+	}
+}
+echo Box::value(), "\n";

@@ -1,0 +1,8 @@
+function load(string $path): void {
+	$text string = "";
+	$err error;
+	if (!take($text, $err, fs_get($path))) {
+		return;
+	}
+	echo $text, "\n";
+}

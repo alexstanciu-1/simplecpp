@@ -84,6 +84,7 @@ final class StanResultAssembler
 		array $initializationDiagnostics,
 		array $callSiteDiagnostics,
 		array $returnTypeDiagnostics,
+		array $frontendClassifications,
 		array $filesState,
 		string $activeRuntimeShallowPath,
 	): array {
@@ -107,6 +108,7 @@ final class StanResultAssembler
 			'initialization_diagnostics' => $initializationDiagnostics,
 			'call_site_diagnostics' => $callSiteDiagnostics,
 			'return_type_diagnostics' => $returnTypeDiagnostics,
+			'frontend_classifications' => $frontendClassifications,
 			'files' => $filesState,
 			'runtime_shallow_path' => \normalize_path($activeRuntimeShallowPath),
 		];

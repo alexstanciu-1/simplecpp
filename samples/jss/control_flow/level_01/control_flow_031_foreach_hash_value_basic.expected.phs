@@ -1,0 +1,4 @@
+$items hash<int> = ["a" => 4, "b" => 5];
+foreach ($items as $value) {
+	echo $value, "\n";
+}

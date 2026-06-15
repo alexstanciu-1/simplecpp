@@ -1,0 +1,8 @@
+function show(string $text): void {
+	$stamp int = 0;
+	$err error;
+	if (!take($stamp, $err, dt_parse($text))) {
+		return;
+	}
+	echo dt_format("Y-m-d H:i:s", $stamp), "\n";
+}

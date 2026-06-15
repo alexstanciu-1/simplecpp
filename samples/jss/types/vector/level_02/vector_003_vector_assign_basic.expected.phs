@@ -1,0 +1,5 @@
+$a vector<int> = [1, 2];
+$b vector<int> = [];
+$b = $a;
+echo $b[0], "\n";
+echo $b[1], "\n";

@@ -359,6 +359,18 @@ inline string_t to_string(const mixed_t &value) {
 }
 
 template <typename T>
+inline constexpr bool js_plus_static_string_operand_v = std::is_same_v<scpp::detail::remove_cvref_t<T>, string_t>;
+
+template <typename L, typename R>
+inline auto js_plus(const L &left, const R &right) {
+	if constexpr (js_plus_static_string_operand_v<L> || js_plus_static_string_operand_v<R>) {
+		return to_string(left) + to_string(right);
+	} else {
+		return mixed_t(left) + mixed_t(right);
+	}
+}
+
+template <typename T>
 // Converts one runtime value into its PHP echo/string representation.
 // How: behavior is defined here once so the generator and runtime can share one coercion layer.
 inline string_t to_string(const nullable<T> &value) {

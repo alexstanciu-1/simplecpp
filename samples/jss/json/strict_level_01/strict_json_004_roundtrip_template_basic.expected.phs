@@ -1,0 +1,5 @@
+function normalize(string $text): void {
+	$decoded dynamic = json_decode($text);
+	$encoded string = json_encode($decoded);
+	echo "json " . $encoded, "\n";
+}

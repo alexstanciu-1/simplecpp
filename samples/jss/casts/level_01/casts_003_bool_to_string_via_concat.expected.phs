@@ -1,0 +1,2 @@
+$value bool = true;
+echo "value=" . $value, "\n";

@@ -1,0 +1,6 @@
+$value int = 2;
+if ($value === 1) {
+	echo "one\n";
+} else {
+	echo "other\n";
+}

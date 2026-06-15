@@ -1,0 +1,2 @@
+$flag bool = true;
+echo "flag=" . $flag, "\n";

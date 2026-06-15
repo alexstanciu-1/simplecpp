@@ -1,0 +1,4 @@
+$items vector<int> = [4, 5];
+foreach ($items as $item) {
+	echo $item, "\n";
+}

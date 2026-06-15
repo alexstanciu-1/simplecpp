@@ -1,0 +1,6 @@
+$flag bool = true;
+if ($flag === true) {
+	echo "true\n";
+} else {
+	echo "false\n";
+}

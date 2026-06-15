@@ -77,7 +77,8 @@ function is_bool(): mixed {}
 function is_float(): mixed {}
 function is_int(): mixed {}
 function isset_eval(): bool {}
-function json_decode(string $json): mixed {}
+function js_plus(): mixed {}
+function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}

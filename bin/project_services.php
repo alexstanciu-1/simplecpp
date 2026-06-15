@@ -25,7 +25,7 @@ const SCPP_STAN_WORKER_LOCK_FILE = 'stan_worker.lock';
 const SCPP_S2S_SIGNATURE_VERSION = 2;
 const SCPP_STAN_SIGNATURE_VERSION = 1;
 const SCPP_CANONICAL_SOURCE_EXTENSION = 'phs';
-const SCPP_COMPAT_SOURCE_EXTENSIONS = ['phs', 'php'];
+const SCPP_COMPAT_SOURCE_EXTENSIONS = ['phs', 'php', 'jss'];
 
 final class ScppCliException extends RuntimeException
 {
@@ -168,8 +168,11 @@ function scpp_run_clean_service(string $projectRoot, string $configPath): array
 	}
 }
 
-/** @return array{command:list<string>,exit_code:int,stdout:string,stderr:string} */
-function scpp_run_binary_service(string $workingDirectory, string $binaryPath, array $args = []): array
+/**
+ * @param ?array{build_dir?:string,runtime_library_dir?:?string,generated_artifact_origins?:array<string,string>} $buildResult
+ * @return array{command:list<string>,exit_code:int,stdout:string,stderr:string}
+ */
+function scpp_run_binary_service(string $workingDirectory, string $binaryPath, array $args = [], ?array $buildResult = null): array
 {
 	$command = array_merge([$binaryPath], array_values($args));
 	$descriptor = [
@@ -177,7 +180,13 @@ function scpp_run_binary_service(string $workingDirectory, string $binaryPath, a
 		1 => ['pipe', 'w'],
 		2 => ['pipe', 'w'],
 	];
-	$process = proc_open($command, $descriptor, $pipes, $workingDirectory, scpp_build_process_environment());
+	$processEnv = [];
+	if (is_array($buildResult)) {
+		$runtimeLibraryDir = is_string($buildResult['runtime_library_dir'] ?? null) ? $buildResult['runtime_library_dir'] : null;
+		$processEnv = scpp_runtime_library_process_environment($runtimeLibraryDir);
+		$processEnv['SCPP_ERROR_FORMAT'] = 'json';
+	}
+	$process = proc_open($command, $descriptor, $pipes, $workingDirectory, scpp_build_process_environment($processEnv));
 	if (!is_resource($process)) {
 		throw new RuntimeException('Failed to start built program.');
 	}
@@ -190,11 +199,46 @@ function scpp_run_binary_service(string $workingDirectory, string $binaryPath, a
 	if (!is_int($status)) {
 		throw new RuntimeException('Failed to read program exit status.');
 	}
+	$stderrText = is_string($stderr) ? $stderr : '';
+	if (is_array($buildResult) && $status !== 0) {
+		$runtimeDiagnostic = collect_runtime_error_diagnostic($stderrText);
+		if ($runtimeDiagnostic !== null) {
+			$runtimeDiagnostic = remap_runtime_diagnostic(
+				$workingDirectory,
+				(string) ($buildResult['build_dir'] ?? dirname($binaryPath)),
+				$runtimeDiagnostic,
+				is_array($buildResult['generated_artifact_origins'] ?? null) ? $buildResult['generated_artifact_origins'] : []
+			);
+			$configPath = normalize_path($workingDirectory . '/prism.json');
+			$projectMode = null;
+			if (is_file($configPath)) {
+				$config = load_project_config($configPath);
+				$projectMode = resolve_php_runtime_profile(resolve_runtime_build_config($config));
+			}
+			$remapped = trim(implode(PHP_EOL, render_runtime_failure_lines(
+				$runtimeDiagnostic,
+				$workingDirectory,
+				false,
+				true,
+				$projectMode,
+				true
+			)));
+			$rawStderr = trim(remove_runtime_error_json_lines($stderrText));
+			$stderrLines = [];
+			if ($rawStderr !== '') {
+				$stderrLines[] = $rawStderr;
+			}
+			if ($remapped !== '') {
+				$stderrLines[] = $remapped;
+			}
+			$stderrText = $stderrLines === [] ? '' : implode(PHP_EOL . PHP_EOL, $stderrLines) . PHP_EOL;
+		}
+	}
 	return [
 		'command' => $command,
 		'exit_code' => $status,
 		'stdout' => is_string($stdout) ? $stdout : '',
-		'stderr' => is_string($stderr) ? $stderr : '',
+		'stderr' => $stderrText,
 	];
 }
 
@@ -2737,6 +2781,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
 	$sourceOverrides = is_array($options['source_overrides'] ?? null) ? normalize_source_override_map($options['source_overrides']) : [];
 	$transpiler = new Transpiler(phpProfile: $phpProfile);
+	$stanFrontendClassifications = $options['disable_stan'] ? [] : load_stan_frontend_classifications_for_build($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE);
 	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides);
 	$projectLibraryFlags = resolve_project_library_link_flags($projectRoot, $projectGraph, $compiler);
 	$generatedUnits = [];
@@ -2800,7 +2845,26 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$cppFile = null;
 			if ($needsTranspile) {
 				try {
-					$cppFile = $transpiler->transpile($phpPathAbs, false, $emitProgramEntry, $sourceOverride);
+					$transpilePath = $phpPathAbs;
+					$transpileSourceOverride = $sourceOverride;
+					if (is_jss_source_path($phpPathAbs)) {
+						$jssSource = $sourceOverride ?? file_get_contents($phpPathAbs);
+						if (!is_string($jssSource)) {
+							scpp_fail('Failed to read JSS input: ' . $phpPathAbs . PHP_EOL, 3);
+						}
+						$jssClassifications = filter_stan_frontend_classifications_for_source($stanFrontendClassifications, $phpPathAbs);
+						$jssPhs = $jssClassifications !== []
+							? $transpiler->transpileJssToPhsWithClassifications($jssSource, $phpPathAbs, $jssClassifications)
+							: $transpiler->transpileJssToPhs($jssSource);
+						$jssArtifact = build_jss_intermediate_phs_path($contextProjectRoot, $relativePhp);
+						write_text_file($jssArtifact, $jssPhs);
+						$generatedArtifactOrigins[normalize_path($jssArtifact)] = normalize_path($phpPathAbs);
+						if ($jssClassifications !== []) {
+							$transpilePath = $jssArtifact;
+							$transpileSourceOverride = $jssPhs;
+						}
+					}
+					$cppFile = $transpiler->transpile($transpilePath, false, $emitProgramEntry, $transpileSourceOverride);
 				} catch (S2SException $e) {
 					scpp_fail($e->getMessage() . PHP_EOL, 3);
 				} catch (Throwable $e) {
@@ -4647,6 +4711,11 @@ function guess_entrypoint(string $projectRoot): ?string
 		'app/main.php',
 		'index.php',
 		'src/index.php',
+		'main.jss',
+		'src/main.jss',
+		'app/main.jss',
+		'index.jss',
+		'src/index.jss',
 	];
 	foreach ($candidates as $candidate) {
 		if (is_file($projectRoot . '/' . $candidate)) {
@@ -4662,9 +4731,20 @@ function scpp_source_extensions(): array
 	return SCPP_COMPAT_SOURCE_EXTENSIONS;
 }
 
+/** @return list<string> */
+function scpp_stan_source_extensions(): array
+{
+	return ['phs', 'php', 'jss'];
+}
+
 function is_supported_source_extension(string $extension): bool
 {
 	return in_array(strtolower($extension), scpp_source_extensions(), true);
+}
+
+function is_stan_source_extension(string $extension): bool
+{
+	return in_array(strtolower($extension), scpp_stan_source_extensions(), true);
 }
 
 function strip_supported_source_extension(string $path): string
@@ -5749,6 +5829,46 @@ function build_generated_base(string $generatedDir, string $relativePhp): string
 	return $generatedDir . '/' . $trimmed;
 }
 
+function build_jss_intermediate_phs_path(string $projectRoot, string $relativeSource): string
+{
+	$trimmed = strip_supported_source_extension($relativeSource);
+	if (!is_string($trimmed) || $trimmed === '') {
+		$trimmed = 'entry';
+	}
+	return normalize_path($projectRoot . '/.prism/jss/' . $trimmed . '.phs');
+}
+
+function is_jss_source_path(string $path): bool
+{
+	return strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'jss';
+}
+
+/** @return array<string,array<string,mixed>> */
+function load_stan_frontend_classifications_for_build(string $statePath): array
+{
+	$state = load_s2s_state($statePath);
+	$classifications = $state['frontend_classifications'] ?? [];
+	return is_array($classifications) ? $classifications : [];
+}
+
+/** @param array<string,array<string,mixed>> $classifications @return array<string,array<string,mixed>> */
+function filter_stan_frontend_classifications_for_source(array $classifications, string $sourcePath): array
+{
+	$normalizedSource = normalize_path($sourcePath);
+	$filtered = [];
+	foreach ($classifications as $id => $classification) {
+		if (!is_array($classification)) {
+			continue;
+		}
+		$classificationPath = (string) ($classification['path'] ?? '');
+		if ($classificationPath === '' || normalize_path($classificationPath) !== $normalizedSource) {
+			continue;
+		}
+		$filtered[(string) $id] = $classification;
+	}
+	return $filtered;
+}
+
 function build_output_name(string $entrypointAbs): string
 {
 	$base = pathinfo($entrypointAbs, PATHINFO_FILENAME);
@@ -5853,7 +5973,7 @@ function collect_project_php_files(string $projectRoot): array
 				. $relative
 				. '` share the same basename. Keep only one of the .'
 				. SCPP_CANONICAL_SOURCE_EXTENSION
-				. ' or .php variants.'
+				. ' or supported source variants.'
 				. PHP_EOL,
 				1
 			);
@@ -5862,6 +5982,18 @@ function collect_project_php_files(string $projectRoot): array
 		$files[] = $path;
 	}
 	sort($files, SORT_STRING);
+	return $files;
+}
+
+/** @return list<string> */
+function collect_project_stan_source_files(string $projectRoot): array
+{
+	$files = [];
+	foreach (collect_project_php_files($projectRoot) as $path) {
+		if (is_stan_source_extension(pathinfo($path, PATHINFO_EXTENSION))) {
+			$files[] = $path;
+		}
+	}
 	return $files;
 }
 
@@ -5877,6 +6009,19 @@ function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 
 	$files = [
 		$repoRoot . '/bin/scpp.php',
 		$repoRoot . '/generators/php/src/Transpiler.php',
+		$repoRoot . '/generators/php/src/Jss/JssToken.php',
+		$repoRoot . '/generators/php/src/Jss/JssNode.php',
+		$repoRoot . '/generators/php/src/Jss/JssTokenizer.php',
+		$repoRoot . '/generators/php/src/Jss/JssParser.php',
+		$repoRoot . '/generators/php/src/Frontend/FrontendCallSurfaceInterface.php',
+		$repoRoot . '/generators/php/src/Jss/JssEmitter.php',
+		$repoRoot . '/generators/php/src/Jss/JssCallSurface.php',
+		$repoRoot . '/generators/php/src/Jss/JssSummaryExtractor.php',
+		$repoRoot . '/generators/php/src/Jss/JssSemanticValidator.php',
+		$repoRoot . '/generators/php/src/Jss/JssTranspiler.php',
+		$repoRoot . '/generators/php/src/Stan/StanPhpRuntimeFunctionCatalog.php',
+		$repoRoot . '/generators/php/src/Stan/StanTakeContractResolver.php',
+		$repoRoot . '/generators/php/src/Stan/StanFrontendClassifier.php',
 		$repoRoot . '/generators/php/src/Generator/Generator.php',
 		$repoRoot . '/generators/php/specs/php_runtime_symbols_legacy.json',
 		$repoRoot . '/generators/php/specs/php_runtime_symbols_strict.json',
@@ -6006,7 +6151,7 @@ function collect_stan_fingerprint_units(string $projectRoot, string $configPath)
 		if ($depRoot === '' || $depConfigPath === '') {
 			continue;
 		}
-		$sourceFiles = collect_project_php_files($depRoot);
+		$sourceFiles = collect_project_stan_source_files($depRoot);
 		sort($sourceFiles, SORT_STRING);
 		$units[] = [
 			'project_root' => $depRoot,

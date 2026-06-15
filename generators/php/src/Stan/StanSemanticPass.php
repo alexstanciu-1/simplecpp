@@ -11,6 +11,7 @@ final class StanSemanticPass
 		private readonly StanDiagnosticCollector $diagnosticCollector = new StanDiagnosticCollector(),
 		private readonly StanDiagnosticEnricher $diagnosticEnricher = new StanDiagnosticEnricher(),
 		private readonly StanExpressionTypeResolver $expressionTypeResolver = new StanExpressionTypeResolver(),
+		private readonly StanFrontendClassifier $frontendClassifier = new StanFrontendClassifier(),
 		private readonly StanWarningPresenter $warningPresenter = new StanWarningPresenter(),
 	)
 	{
@@ -33,6 +34,7 @@ final class StanSemanticPass
 		$initializationDiagnostics = $this->expressionTypeResolver->collectInitializationDiagnostics($fileSummaries, $symbolIndex);
 		$callSiteDiagnostics = $this->expressionTypeResolver->collectCallSiteDiagnostics($fileSummaries, $symbolIndex);
 		$returnTypeDiagnostics = $this->expressionTypeResolver->collectReturnTypeDiagnostics($fileSummaries, $symbolIndex);
+		$frontendClassifications = $this->frontendClassifier->classify($fileSummaries, $symbolIndex);
 		[
 			$initializationDiagnostics,
 			$returnChainDiagnostics,
@@ -78,6 +80,7 @@ final class StanSemanticPass
 			'initialization_diagnostics' => $initializationDiagnostics,
 			'call_site_diagnostics' => $callSiteDiagnostics,
 			'return_type_diagnostics' => $returnTypeDiagnostics,
+			'frontend_classifications' => $frontendClassifications,
 			'file_dependency_keys' => $fileDependencyKeys,
 			'warning_samples' => $this->warningPresenter->buildWarningSamples(
 				$duplicateDiagnostics,

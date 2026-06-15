@@ -279,7 +279,7 @@ final class RuntimeShallowSourceGenerator
 				'trim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'ltrim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'rtrim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
-				'json_decode' => ['return' => 'mixed', 'params' => [['name' => 'json', 'type' => 'string']]],
+				'json_decode' => ['return' => 'dynamic', 'params' => [['name' => 'json', 'type' => 'string']]],
 				'json_encode' => ['return' => 'string', 'params' => [['name' => 'value', 'type' => 'mixed']]],
 				'dt_now' => ['return' => 'int', 'params' => []],
 				'dt_now_ms' => ['return' => 'int', 'params' => []],

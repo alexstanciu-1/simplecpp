@@ -1,0 +1,10 @@
+function inspect(string $root, string $path): void {
+	$written int = 0;
+	$err error;
+	take($written, $err, fs_put($path, "alpha"));
+	$files vector<string> = [];
+	take($files, $err, fs_scan($root));
+	$resolved string = "";
+	take($resolved, $err, fs_realpath($path));
+	echo $written, ":", count($files), ":", fs_basename($resolved), "\n";
+}

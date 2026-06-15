@@ -1,0 +1,3 @@
+echo $argc, "\n";
+echo $argv[1], "\n";
+echo $argv[2], "\n";

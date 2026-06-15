@@ -461,11 +461,11 @@ Contract:
 - public input surface is `mixed_t`
 - exact escaping/shape follows current runtime JSON implementation
 
-### `json_decode(string_t) -> mixed_t` â€” Stable
+### `json_decode(string_t) -> dynamic` â€” Stable
 Decodes JSON string to runtime dynamic value.
 
 Contract:
-- result MUST be expressed as runtime dynamic value
+- source-facing result MUST be expressed as dynamic value
 - arrays/objects decode into runtime dynamic/container forms
 
 ---

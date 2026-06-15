@@ -99,6 +99,7 @@
         "preg_split": "php::preg_split",
         "json_decode": "php::json_decode",
         "json_encode": "php::json_encode",
+        "js_plus": "php::js_plus",
         "time": "php::time",
         "dt_now": "php::dt_now",
         "dt_now_ms": "php::dt_now_ms",

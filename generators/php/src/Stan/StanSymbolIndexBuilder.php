@@ -11,6 +11,7 @@ final class StanSymbolIndexBuilder
 		$symbols = [];
 		foreach ($fileSummaries as $sourceKey => $summary) {
 			$path = (string) ($summary['path'] ?? $sourceKey);
+			$symbols = array_merge($symbols, $this->collectUseAliasSymbols($summary['root_uses'] ?? [], '', $path));
 			foreach (($summary['root_constants'] ?? []) as $constant) {
 				if (is_array($constant)) {
 					$symbols[] = $this->makeSymbolRecord('constant', '', (string) ($constant['name'] ?? ''), $path, (int) ($constant['line'] ?? 0), null);
@@ -45,6 +46,7 @@ final class StanSymbolIndexBuilder
 					continue;
 				}
 				$namespaceName = (string) ($namespace['name'] ?? '');
+				$symbols = array_merge($symbols, $this->collectUseAliasSymbols($namespace['uses'] ?? [], $namespaceName, $path));
 				foreach (($namespace['constants'] ?? []) as $constant) {
 					if (is_array($constant)) {
 						$symbols[] = $this->makeSymbolRecord('constant', $namespaceName, (string) ($constant['name'] ?? ''), $path, (int) ($constant['line'] ?? 0), null);
@@ -79,6 +81,29 @@ final class StanSymbolIndexBuilder
 		return array_values(array_filter($symbols, static fn (array $symbol): bool => $symbol['name'] !== ''));
 	}
 
+	/** @param mixed $uses @return list<array<string,mixed>> */
+	private function collectUseAliasSymbols(mixed $uses, string $namespace, string $path): array
+	{
+		$symbols = [];
+		foreach (is_array($uses) ? $uses : [] as $use) {
+			if (!is_array($use)) {
+				continue;
+			}
+			$name = (string) ($use['name'] ?? '');
+			if ($name === '') {
+				continue;
+			}
+			$alias = is_string($use['alias'] ?? null) && (string) $use['alias'] !== ''
+				? (string) $use['alias']
+				: basename(str_replace('\\', '/', $name));
+			$symbols[] = $this->makeSymbolRecord('use_alias', $namespace, $alias, $path, (int) ($use['line'] ?? 0), null, [
+				'target' => $name,
+				'use_kind' => (string) ($use['kind'] ?? 'class'),
+			]);
+		}
+		return $symbols;
+	}
+
 	/** @param array<string,mixed> $class @return list<array<string,mixed>> */
 	private function collectClassMemberSymbols(array $class, string $namespace, string $path): array
 	{
@@ -98,7 +123,24 @@ final class StanSymbolIndexBuilder
 					$className,
 					[
 						'property_type' => $propertyType,
+						'is_static' => (bool) ($property['is_static'] ?? false),
 						'signature' => trim('property ' . $className . '::$' . $propertyName . ($propertyType !== '' ? ': ' . $propertyType : '')),
+					]
+				);
+			}
+		}
+		foreach (($class['constants'] ?? []) as $constant) {
+			if (is_array($constant)) {
+				$constantName = (string) ($constant['name'] ?? '');
+				$symbols[] = $this->makeSymbolRecord(
+					'class_constant',
+					$scope,
+					$constantName,
+					$path,
+					(int) ($constant['line'] ?? 0),
+					$className,
+					[
+						'signature' => 'class constant ' . $className . '::' . $constantName,
 					]
 				);
 			}

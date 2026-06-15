@@ -266,6 +266,7 @@ final class StanWorkspaceSession
 			$semanticResult['initialization_diagnostics'],
 			$semanticResult['call_site_diagnostics'],
 			$semanticResult['return_type_diagnostics'],
+			$semanticResult['frontend_classifications'] ?? [],
 			$newFilesState,
 			$context->activeRuntimeShallowPath,
 		);

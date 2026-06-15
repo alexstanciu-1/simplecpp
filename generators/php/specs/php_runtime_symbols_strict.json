@@ -106,6 +106,7 @@
         "fs_basename": "fs::basename",
         "json_decode": "json::decode",
         "json_encode": "json::encode",
+        "js_plus": "php::js_plus",
         "dt_now": "dt::now_unix_seconds",
         "dt_now_ms": "dt::now_unix_millis",
         "dt_monotonic_ms": "dt::monotonic_millis",

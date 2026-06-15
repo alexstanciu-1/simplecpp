@@ -1,0 +1,13 @@
+class Greeting {
+	public string $prefix = "Hello";
+	public string $name = "Ada";
+	public function __construct(string $name = "Ada") {
+		$this->name = $name;
+	}
+	public function render(): string {
+		return $this->prefix . " " . $this->name;
+	}
+}
+$greeting Greeting = new Greeting("Lin");
+echo $greeting->render(), "\n";
+echo $greeting->prefix, "\n";

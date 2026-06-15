@@ -1,0 +1,23 @@
+function run(): void {
+	$file string = "sample_strict_fs_json.txt";
+	$err error;
+	$written int = 0;
+	if (!take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
+		echo "write_error\n";
+		return;
+	}
+	$data string = "";
+	if (!take($data, $err, fs_get($file))) {
+		echo "read_error\n";
+		return;
+	}
+	$decoded dynamic = json_decode($data);
+	echo $written, "\n";
+	echo strlen($data), "\n";
+	echo $decoded["name"], "\n";
+	echo $decoded["count"], "\n";
+	if (!fs_remove($file)) {
+		echo "remove_error\n";
+	}
+}
+run();

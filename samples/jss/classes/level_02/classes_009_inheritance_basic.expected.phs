@@ -1,0 +1,9 @@
+class BaseValue {
+	public function value(): int {
+		return 10;
+	}
+}
+class ChildValue extends BaseValue {
+}
+$item ChildValue = new ChildValue();
+echo $item->value(), "\n";

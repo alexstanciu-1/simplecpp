@@ -68,7 +68,8 @@ function is_dir(string $path): bool {}
 function is_file(string $path): bool {}
 function is_link(string $path): bool {}
 function isset_eval(): bool {}
-function json_decode(string $json): mixed {}
+function js_plus(): mixed {}
+function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}

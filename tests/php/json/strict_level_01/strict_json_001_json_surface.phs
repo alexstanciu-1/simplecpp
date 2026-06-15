@@ -1,4 +1,4 @@
-$value = json_decode("{\"a\":1,\"b\":[2,3],\"c\":\"x\"}");
+$value dynamic = json_decode("{\"a\":1,\"b\":[2,3],\"c\":\"x\"}");
 echo $value["a"], "\n";
 echo $value["b"][1], "\n";
 echo json_encode($value), "\n";
