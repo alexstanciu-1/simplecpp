@@ -24,6 +24,7 @@ final class StanSemanticPass
 		$duplicateDiagnostics = $this->diagnosticCollector->collectDuplicateDiagnostics($symbolIndex);
 		$resolutionDiagnostics = $this->diagnosticCollector->collectResolutionDiagnostics($fileSummaries, $symbolIndex);
 		$overrideDiagnostics = $this->diagnosticCollector->collectOverrideDiagnostics($fileSummaries, $symbolIndex, $projectRoot);
+		$overrideDiagnostics = array_merge($overrideDiagnostics, $this->diagnosticCollector->collectInterfaceContractDiagnostics($fileSummaries, $symbolIndex, $projectRoot));
 		$returnChainTypes = $this->expressionTypeResolver->resolveReturnChains($fileSummaries, $symbolIndex);
 		$returnChainDiagnostics = $this->expressionTypeResolver->collectReturnChainDiagnostics($fileSummaries, $symbolIndex);
 		$expressionChainTypes = $this->expressionTypeResolver->resolveExpressionChains($fileSummaries, $symbolIndex);
@@ -33,6 +34,7 @@ final class StanSemanticPass
 		$propertyReadDiagnostics = $this->expressionTypeResolver->collectPropertyReadDiagnostics($fileSummaries, $symbolIndex);
 		$initializationDiagnostics = $this->expressionTypeResolver->collectInitializationDiagnostics($fileSummaries, $symbolIndex);
 		$callSiteDiagnostics = $this->expressionTypeResolver->collectCallSiteDiagnostics($fileSummaries, $symbolIndex);
+		$callSiteDiagnostics = array_merge($callSiteDiagnostics, $this->expressionTypeResolver->collectWrapperBoundaryDiagnostics($fileSummaries, $symbolIndex));
 		$returnTypeDiagnostics = $this->expressionTypeResolver->collectReturnTypeDiagnostics($fileSummaries, $symbolIndex);
 		$frontendClassifications = $this->frontendClassifier->classify($fileSummaries, $symbolIndex, $activeRuntimeModules);
 		$frontendDiagnostics = $this->collectFrontendDiagnostics($frontendClassifications);

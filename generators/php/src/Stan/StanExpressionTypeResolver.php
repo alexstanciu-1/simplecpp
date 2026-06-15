@@ -331,6 +331,49 @@ final class StanExpressionTypeResolver
 	}
 
 	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectWrapperBoundaryDiagnostics(array $fileSummaries, array $symbolIndex): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries);
+		$classLookup = $this->buildClassLookup($classCatalog);
+		$functionCatalog = $this->buildFunctionCatalog($fileSummaries);
+		$functionLookup = $this->buildFunctionLookup($fileSummaries);
+		$diagnostics = [];
+
+		foreach ($fileSummaries as $summary) {
+			$path = (string) ($summary['path'] ?? '(unknown)');
+			foreach (($summary['root_functions'] ?? []) as $function) {
+				if (is_array($function)) {
+					$diagnostics = array_merge($diagnostics, $this->collectFunctionWrapperBoundaryDiagnostics($function, null, $path, $classLookup, $functionLookup, $functionCatalog));
+				}
+			}
+			foreach (($summary['root_classes'] ?? []) as $class) {
+				if (is_array($class)) {
+					$diagnostics = array_merge($diagnostics, $this->collectClassMethodWrapperBoundaryDiagnostics($class, '', $path, $classLookup, $functionLookup, $functionCatalog));
+				}
+			}
+			foreach (($summary['namespaces'] ?? []) as $namespace) {
+				if (!is_array($namespace)) {
+					continue;
+				}
+				$namespaceName = (string) ($namespace['name'] ?? '');
+				foreach (($namespace['functions'] ?? []) as $function) {
+					if (is_array($function)) {
+						$diagnostics = array_merge($diagnostics, $this->collectFunctionWrapperBoundaryDiagnostics($function, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog));
+					}
+				}
+				foreach (($namespace['classes'] ?? []) as $class) {
+					if (is_array($class)) {
+						$diagnostics = array_merge($diagnostics, $this->collectClassMethodWrapperBoundaryDiagnostics($class, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog));
+					}
+				}
+			}
+		}
+
+		usort($diagnostics, static fn (array $a, array $b): int => strcmp($a['message'], $b['message']));
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
 	private function collectChainDiagnosticsByField(array $fileSummaries, string $fieldName, array $symbolIndex, string $diagnosticKind): array
 	{
 		$classCatalog = $this->buildClassCatalog($fileSummaries);
@@ -496,14 +539,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterObservationResults($analysis['observations'], $fieldName, $kind));
 		}
 		return $results;
@@ -514,14 +559,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterDiagnosticResults($analysis['diagnostics'], $fieldName, $diagnosticKind));
 		}
 		return $results;
@@ -532,14 +579,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterLocalTypeDiagnostics($analysis['diagnostics']));
 		}
 		return $results;
@@ -549,14 +598,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterPropertyTypeDiagnostics($analysis['diagnostics']));
 		}
 		return $results;
@@ -566,14 +617,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $analysis['property_read_diagnostics']);
 		}
 		return $results;
@@ -583,14 +636,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->filterInitializationDiagnostics($analysis['diagnostics']));
 		}
 		return $results;
@@ -600,15 +655,44 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, $functionCatalog);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, $functionCatalog, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $analysis['call_site_diagnostics']);
+		}
+		return $results;
+	}
+
+	private function collectFunctionWrapperBoundaryDiagnostics(array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog): array
+	{
+		$baseTypes = $this->buildParamTypeMap($function['params'] ?? []);
+		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
+		$analysis = $this->analyzeChainSequence($function, $baseTypes, null, $classLookup, $functionLookup, $context, $path);
+		return $this->collectWrapperBoundaryDiagnosticsForOwner($function, $analysis['final_local_types'], null, $classLookup, $functionLookup, $functionCatalog, $context, $path);
+	}
+
+	private function collectClassMethodWrapperBoundaryDiagnostics(array $class, string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog): array
+	{
+		$className = (string) ($class['name'] ?? '');
+		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
+		$results = [];
+		foreach (($class['methods'] ?? []) as $method) {
+			if (!is_array($method)) {
+				continue;
+			}
+			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
+			$results = array_merge($results, $this->collectWrapperBoundaryDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $functionCatalog, $context, $path));
 		}
 		return $results;
 	}
@@ -625,14 +709,16 @@ final class StanExpressionTypeResolver
 	{
 		$className = (string) ($class['name'] ?? '');
 		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
 		$results = [];
 		foreach (($class['methods'] ?? []) as $method) {
 			if (!is_array($method)) {
 				continue;
 			}
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
-			$context = $classType . '::' . (string) ($method['name'] ?? '');
-			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence($method, $baseTypes, $classType, $classLookup, $functionLookup, $context, $path, null, $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties));
 			$results = array_merge($results, $this->collectReturnDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $context, $path));
 		}
 		return $results;
@@ -815,8 +901,8 @@ final class StanExpressionTypeResolver
 		return $diagnostics;
 	}
 
-	/** @param array<string,mixed> $ownerNode @param array<string,string> $baseTypes @param array<string,array<string,mixed>> $classLookup @param array<string,array<string,mixed>>|null $functionCatalog @return array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>,call_site_diagnostics:list<array<string,mixed>>,property_read_diagnostics:list<array<string,mixed>>} */
-	private function analyzeChainSequence(array $ownerNode, array $baseTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, ?array $functionCatalog = null): array
+	/** @param array<string,mixed> $ownerNode @param array<string,string> $baseTypes @param array<string,array<string,mixed>> $classLookup @param array<string,array<string,mixed>>|null $functionCatalog @param array<string,bool> $constructorInitializedProperties @return array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>,call_site_diagnostics:list<array<string,mixed>>,property_read_diagnostics:list<array<string,mixed>>} */
+	private function analyzeChainSequence(array $ownerNode, array $baseTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, ?array $functionCatalog = null, array $constructorInitializedProperties = []): array
 	{
 		$localTypes = [];
 		foreach ($baseTypes as $baseName => $baseType) {
@@ -831,13 +917,14 @@ final class StanExpressionTypeResolver
 			$initializedLocals[$baseName] = true;
 			$initializedLocalLines[$baseName] = 0;
 		}
-		$initializedProperties = $this->buildInitialPropertyInitializationMap($selfType, $classLookup);
+		$initializedProperties = array_replace($this->buildInitialPropertyInitializationMap($selfType, $classLookup), $constructorInitializedProperties);
 		$initializedPropertyLines = [];
 		foreach (array_keys($initializedProperties) as $initializedPropertyName) {
 			$initializedPropertyLines[$initializedPropertyName] = 0;
 		}
 		$morphedLocals = [];
 		$events = $this->buildChainEvents($ownerNode);
+		$typedBoundaryAssignmentKeys = $this->buildTypedBoundaryAssignmentKeys($ownerNode);
 		$observations = [];
 		$diagnostics = [];
 		$callSiteDiagnostics = [];
@@ -1063,7 +1150,7 @@ final class StanExpressionTypeResolver
 				}
 				if ($hadPriorInitialization || $everyBranchAssigns) {
 					$initializedProperties[$propertyName] = true;
-					$initializedPropertyLines[$propertyName] = (int) ($event['line'] ?? 0);
+					$this->markPropertyInitialized($initializedProperties, $initializedPropertyLines, $propertyName, (int) ($event['line'] ?? 0));
 				} else {
 					unset($initializedProperties[$propertyName]);
 					unset($initializedPropertyLines[$propertyName]);
@@ -1084,6 +1171,22 @@ final class StanExpressionTypeResolver
 
 			if ($event['event_kind'] === 'property_assignment') {
 				$this->applyPropertyAssignment($diagnostics, $declaredLocals, $localTypes, $initializedLocals, $morphedLocals, $initializedProperties, $initializedPropertyLines, $initializationKeys, $event, $selfType, $classLookup, $functionLookup, $context, $path);
+				continue;
+			}
+
+			if ($event['event_kind'] === 'static_property_access') {
+				$diagnostic = $this->collectStaticPropertyVisibilityDiagnostic($event, $selfType, $classLookup, $context, $path);
+				if ($diagnostic !== null) {
+					$propertyReadDiagnostics[] = $diagnostic;
+				}
+				continue;
+			}
+
+			if ($event['event_kind'] === 'class_constant_access') {
+				$diagnostic = $this->collectClassConstantVisibilityDiagnostic($event, $selfType, $classLookup, $context, $path);
+				if ($diagnostic !== null) {
+					$propertyReadDiagnostics[] = $diagnostic;
+				}
 				continue;
 			}
 
@@ -1156,7 +1259,10 @@ final class StanExpressionTypeResolver
 			$assignedVar = isset($chain['assigned_var']) && is_string($chain['assigned_var']) ? $chain['assigned_var'] : null;
 			if ($assignedVar !== null && $assignedVar !== '') {
 				$declaredLocals[$assignedVar] = true;
-				if ($resolvedType !== 'unknown') {
+				$typedBoundaryKey = (int) ($chain['line'] ?? 0) . '|' . $assignedVar;
+				if (isset($typedBoundaryAssignmentKeys[$typedBoundaryKey])) {
+					unset($morphedLocals[$assignedVar]);
+				} elseif ($resolvedType !== 'unknown') {
 					$resolvedSet = $resolvedTypeValue === 'unknown'
 						? []
 						: (is_array($resolvedTypeValue) ? $resolvedTypeValue : [$resolvedType]);
@@ -1176,6 +1282,23 @@ final class StanExpressionTypeResolver
 			'call_site_diagnostics' => $callSiteDiagnostics,
 			'property_read_diagnostics' => $this->filterPropertyReadDiagnostics($propertyReadDiagnostics),
 		];
+	}
+
+	/** @param array<string,mixed> $ownerNode @return array<string,bool> */
+	private function buildTypedBoundaryAssignmentKeys(array $ownerNode): array
+	{
+		$keys = [];
+		foreach (($ownerNode['typed_boundary_assignments'] ?? []) as $assignment) {
+			if (!is_array($assignment)) {
+				continue;
+			}
+			$name = (string) ($assignment['name'] ?? '');
+			$line = (int) ($assignment['line'] ?? 0);
+			if ($name !== '' && $line > 0) {
+				$keys[$line . '|' . $name] = true;
+			}
+		}
+		return $keys;
 	}
 
 	/** @param array<string,mixed> $ownerNode @return list<array<string,mixed>> */
@@ -1357,6 +1480,19 @@ final class StanExpressionTypeResolver
 				'source' => $propertyAssignment['source'] ?? null,
 			];
 		}
+		foreach (($ownerNode['static_property_assignments'] ?? []) as $staticPropertyAssignment) {
+			if (!is_array($staticPropertyAssignment)) {
+				continue;
+			}
+			$events[] = [
+				'event_kind' => 'static_property_access',
+				'operation' => 'write',
+				'line' => (int) ($staticPropertyAssignment['line'] ?? 0),
+				'priority' => 0,
+				'class_name' => (string) ($staticPropertyAssignment['class_name'] ?? ''),
+				'property_name' => (string) ($staticPropertyAssignment['property_name'] ?? ''),
+			];
+		}
 		foreach (($ownerNode['call_sites'] ?? []) as $callSite) {
 			if (!is_array($callSite)) {
 				continue;
@@ -1388,6 +1524,31 @@ final class StanExpressionTypeResolver
 				'line' => (int) ($propertyRead['line'] ?? 0),
 				'priority' => 3,
 				'property_read' => $propertyRead,
+			];
+		}
+		foreach (($ownerNode['static_property_reads'] ?? []) as $staticPropertyRead) {
+			if (!is_array($staticPropertyRead)) {
+				continue;
+			}
+			$events[] = [
+				'event_kind' => 'static_property_access',
+				'operation' => 'read',
+				'line' => (int) ($staticPropertyRead['line'] ?? 0),
+				'priority' => 3,
+				'class_name' => (string) ($staticPropertyRead['class_name'] ?? ''),
+				'property_name' => (string) ($staticPropertyRead['property_name'] ?? ''),
+			];
+		}
+		foreach (($ownerNode['class_constant_accesses'] ?? []) as $classConstantAccess) {
+			if (!is_array($classConstantAccess)) {
+				continue;
+			}
+			$events[] = [
+				'event_kind' => 'class_constant_access',
+				'line' => (int) ($classConstantAccess['line'] ?? 0),
+				'priority' => 3,
+				'class_name' => (string) ($classConstantAccess['class_name'] ?? ''),
+				'constant_name' => (string) ($classConstantAccess['constant_name'] ?? ''),
 			];
 		}
 		foreach (($ownerNode['local_invalidations'] ?? []) as $invalidation) {
@@ -1465,7 +1626,7 @@ final class StanExpressionTypeResolver
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
 			$kind = (string) ($diagnostic['kind'] ?? '');
-			if (!in_array($kind, ['property_type_morph_warning', 'unresolved_property_write'], true)) {
+			if (!in_array($kind, ['property_type_morph_warning', 'unresolved_property_write', 'member_visibility_violation'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -1479,7 +1640,7 @@ final class StanExpressionTypeResolver
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
 			$kind = (string) ($diagnostic['kind'] ?? '');
-			if (!in_array($kind, ['unresolved_property_read', 'invalid_property_read'], true)) {
+			if (!in_array($kind, ['unresolved_property_read', 'invalid_property_read', 'member_visibility_violation'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -1837,6 +1998,245 @@ final class StanExpressionTypeResolver
 		return $diagnostics;
 	}
 
+	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
+	private function collectWrapperBoundaryDiagnosticsForOwner(array $ownerNode, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path): array
+	{
+		$diagnostics = [];
+		foreach (($ownerNode['typed_boundary_assignments'] ?? []) as $assignment) {
+			if (!is_array($assignment)) {
+				continue;
+			}
+			$targetType = (string) ($assignment['target_type'] ?? '');
+			if (!$this->isRequiredPlainBoundaryType($targetType)) {
+				continue;
+			}
+			$descriptor = is_array($assignment['descriptor'] ?? null) ? $assignment['descriptor'] : null;
+			if ($descriptor === null) {
+				continue;
+			}
+			$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
+			if ($wrapperTypes !== []) {
+				$diagnostics[] = $this->makeCallDiagnostic(
+					'unchecked_wrapper_boundary',
+					$context,
+					$path,
+					(int) ($assignment['line'] ?? 0),
+					'Unchecked wrapper result assigned to required `' . $targetType . '` local `$' . (string) ($assignment['name'] ?? '') . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the typed boundary.'
+				);
+				continue;
+			}
+			$dynamicShapeTypes = $this->resolveDynamicShapeSourceTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup, $targetType);
+			if ($dynamicShapeTypes !== []) {
+				$diagnostics[] = $this->makeCallDiagnostic(
+					'dynamic_shape_boundary',
+					$context,
+					$path,
+					(int) ($assignment['line'] ?? 0),
+					'Dynamic value assigned to required `' . $targetType . '` local `$' . (string) ($assignment['name'] ?? '') . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $dynamicShapeTypes) . '`. Guard the field with `isset(...)`, normalize through a typed extraction helper, or assign through an explicitly validated local before the required typed boundary.'
+				);
+			}
+		}
+		foreach (($ownerNode['call_sites'] ?? []) as $callSite) {
+			if (!is_array($callSite)) {
+				continue;
+			}
+			$diagnostics = array_merge($diagnostics, $this->collectWrapperArgumentDiagnosticsForCallSite($callSite, $localTypes, $selfType, $classLookup, $functionLookup, $functionCatalog, $context, $path));
+		}
+		$declaredReturnType = (string) ($ownerNode['return_type'] ?? '');
+		if ($this->isRequiredPlainBoundaryType($declaredReturnType)) {
+			foreach (($ownerNode['return_values'] ?? []) as $returnValue) {
+				if (!is_array($returnValue)) {
+					continue;
+				}
+				$descriptor = is_array($returnValue['descriptor'] ?? null) ? $returnValue['descriptor'] : null;
+				if ($descriptor === null) {
+					continue;
+				}
+				$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+				$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
+				if ($wrapperTypes === []) {
+					continue;
+				}
+				$diagnostics[] = $this->makeCallDiagnostic(
+					'unchecked_wrapper_return',
+					$context,
+					$path,
+					(int) ($returnValue['line'] ?? 0),
+					'Unchecked wrapper result returned from required `' . $declaredReturnType . '` function `' . $context . '`: return expression `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before returning.'
+				);
+			}
+		}
+		foreach (($ownerNode['property_assignments'] ?? []) as $assignment) {
+			if (!is_array($assignment)) {
+				continue;
+			}
+			$targetInfo = $this->resolvePropertyAssignmentBoundary($assignment, $localTypes, $selfType, $classLookup, $functionLookup);
+			if ($targetInfo === null || !$this->isRequiredPlainBoundaryType((string) ($targetInfo['type'] ?? ''))) {
+				continue;
+			}
+			$descriptor = is_array($assignment['source'] ?? null) ? $assignment['source'] : null;
+			if ($descriptor === null) {
+				continue;
+			}
+			$sourceTypes = $this->normalizeTypeSet($this->resolveAssignmentDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
+			if ($wrapperTypes === []) {
+				continue;
+			}
+			$diagnostics[] = $this->makeCallDiagnostic(
+				'unchecked_wrapper_property_boundary',
+				$context,
+				$path,
+				(int) ($assignment['line'] ?? 0),
+				'Unchecked wrapper result assigned to required `' . (string) $targetInfo['type'] . '` property `' . (string) $targetInfo['label'] . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the property write.'
+			);
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $assignment @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return array{type:string,label:string}|null */
+	private function resolvePropertyAssignmentBoundary(array $assignment, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): ?array
+	{
+		$targetChain = is_array($assignment['target_chain'] ?? null) ? $assignment['target_chain'] : null;
+		if ($targetChain === null) {
+			return null;
+		}
+		$segments = $targetChain['segments'] ?? [];
+		if (!is_array($segments) || $segments === []) {
+			return null;
+		}
+		$propertySegment = $segments[count($segments) - 1] ?? null;
+		if (!is_array($propertySegment) || ($propertySegment['kind'] ?? '') !== 'property') {
+			return null;
+		}
+		$propertyName = (string) ($propertySegment['name'] ?? '');
+		if ($propertyName === '') {
+			return null;
+		}
+		$receiverChain = $targetChain;
+		array_pop($receiverChain['segments']);
+		$receiverTypes = $this->resolveReceiverTypesForPropertyChain($receiverChain, $localTypes, $selfType, $classLookup, $functionLookup);
+		if (count($receiverTypes) !== 1) {
+			return null;
+		}
+		$receiverType = $receiverTypes[0];
+		$receiverInfo = $this->findClassInfo($receiverType, $classLookup, $selfType);
+		if ($receiverInfo === null) {
+			return null;
+		}
+		$declaredType = (string) ($receiverInfo['property_types'][$propertyName] ?? '');
+		if ($declaredType === '') {
+			return null;
+		}
+		return [
+			'type' => $declaredType,
+			'label' => $receiverType . '::$' . $propertyName,
+		];
+	}
+
+	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
+	private function collectWrapperArgumentDiagnosticsForCallSite(array $callSite, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path): array
+	{
+		$signature = $this->resolveCallSiteSignature($callSite, $localTypes, $selfType, $classLookup, $functionLookup, $functionCatalog);
+		if ($signature === null) {
+			return [];
+		}
+		$args = is_array($callSite['args'] ?? null) ? $callSite['args'] : [];
+		$params = is_array($signature['params'] ?? null) ? $signature['params'] : [];
+		$targetText = (string) ($signature['target_text'] ?? 'call');
+		$diagnostics = [];
+		$limit = min(count($args), count($params));
+		for ($index = 0; $index < $limit; $index++) {
+			$param = $params[$index];
+			if (!is_array($param)) {
+				continue;
+			}
+			$expectedType = (string) ($param['primary_type'] ?? $param['type'] ?? '');
+			if (!$this->isRequiredPlainBoundaryType($expectedType)) {
+				continue;
+			}
+			$descriptor = is_array($args[$index] ?? null) ? $args[$index] : null;
+			if ($descriptor === null) {
+				continue;
+			}
+			$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
+			if ($wrapperTypes === []) {
+				continue;
+			}
+			$diagnostics[] = $this->makeCallDiagnostic(
+				'unchecked_wrapper_argument',
+				$context,
+				$path,
+				(int) ($callSite['line'] ?? 0),
+				'Unchecked wrapper result passed to required `' . $expectedType . '` parameter $' . (string) ($param['name'] ?? ('arg' . $index)) . ' of `' . $targetText . '` in `' . $context . '`: argument `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the call.'
+			);
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return array<string,mixed>|null */
+	private function resolveCallSiteSignature(array $callSite, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog): ?array
+	{
+		$callKind = (string) ($callSite['call_kind'] ?? '');
+		if ($callKind === 'function') {
+			$name = strtolower((string) ($callSite['name'] ?? ''));
+			$signature = $functionCatalog[$name] ?? null;
+			if (!is_array($signature)) {
+				return null;
+			}
+			$signature['target_text'] = (string) ($callSite['name'] ?? '') . '()';
+			return $signature;
+		}
+		if ($callKind === 'static_method') {
+			$className = (string) ($callSite['class_name'] ?? '');
+			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
+			$methodName = (string) ($callSite['method_name'] ?? '');
+			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
+			if ($classInfo === null) {
+				return null;
+			}
+			$signature = $this->findMethodSignature($classInfo, $methodName);
+			if ($signature === null || !(bool) ($signature['is_static'] ?? false)) {
+				return null;
+			}
+			$visibility = $this->normalizeMemberVisibility((string) ($signature['visibility'] ?? 'public'));
+			if (!$this->memberAccessAllowed($visibility, $classInfo, $selfType, $classLookup)) {
+				return null;
+			}
+			$signature['target_text'] = $resolvedClassName . '::' . $methodName . '()';
+			return $signature;
+		}
+		if ($callKind === 'method') {
+			$receiverDescriptor = $callSite['receiver'] ?? null;
+			$receiverTypes = is_array($receiverDescriptor)
+				? $this->resolveExpressionDescriptorTypes($receiverDescriptor, $localTypes, $selfType, $classLookup, $functionLookup)
+				: [];
+			$receiverTypes = $this->normalizeTypeSet($receiverTypes);
+			$methodName = (string) ($callSite['method_name'] ?? '');
+			if (count($receiverTypes) !== 1) {
+				return null;
+			}
+			$receiverType = $this->unwrapMemberReceiverType($receiverTypes[0]);
+			$classInfo = $this->findClassInfo($receiverType, $classLookup);
+			if ($classInfo === null) {
+				return null;
+			}
+			$signature = $this->findMethodSignature($classInfo, $methodName);
+			if ($signature === null || (bool) ($signature['is_static'] ?? false)) {
+				return null;
+			}
+			$visibility = $this->normalizeMemberVisibility((string) ($signature['visibility'] ?? 'public'));
+			if (!$this->memberAccessAllowed($visibility, $classInfo, $selfType, $classLookup)) {
+				return null;
+			}
+			$signature['target_text'] = $receiverType . '->' . $methodName . '()';
+			return $signature;
+		}
+		return null;
+	}
+
 	/** @param array<string,mixed> $callSite @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @return list<array<string,mixed>> */
 	private function collectCallSiteDiagnosticForCallSite(array $callSite, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path): array
 	{
@@ -1865,6 +2265,10 @@ final class StanExpressionTypeResolver
 			if (!(bool) ($methodSignature['is_static'] ?? false)) {
 				return [$this->makeCallDiagnostic('static_instance_misuse', $context, $path, (int) ($callSite['line'] ?? 0), 'Static call `' . $resolvedClassName . '::' . $methodName . '()` targets a non-static method in `' . $context . '`.')];
 			}
+			$visibility = $this->normalizeMemberVisibility((string) ($methodSignature['visibility'] ?? 'public'));
+			if (!$this->memberAccessAllowed($visibility, $classInfo, $selfType, $classLookup)) {
+				return [$this->makeCallDiagnostic('member_visibility_violation', $context, $path, (int) ($callSite['line'] ?? 0), 'Cannot access ' . $visibility . ' method `' . $resolvedClassName . '::' . $methodName . '()` from `' . $context . '`.')];
+			}
 			return $this->checkSignatureCompatibility($callSite, $methodSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $resolvedClassName . '::' . $methodName . '()');
 		}
 
@@ -1889,6 +2293,10 @@ final class StanExpressionTypeResolver
 			}
 			if ((bool) ($methodSignature['is_static'] ?? false)) {
 				return [$this->makeCallDiagnostic('static_instance_misuse', $context, $path, (int) ($callSite['line'] ?? 0), 'Instance call `' . $receiverType . '->' . $methodName . '()` targets a static method in `' . $context . '`.')];
+			}
+			$visibility = $this->normalizeMemberVisibility((string) ($methodSignature['visibility'] ?? 'public'));
+			if (!$this->memberAccessAllowed($visibility, $classInfo, $selfType, $classLookup)) {
+				return [$this->makeCallDiagnostic('member_visibility_violation', $context, $path, (int) ($callSite['line'] ?? 0), 'Cannot access ' . $visibility . ' method `' . $receiverType . '->' . $methodName . '()` from `' . $context . '`.')];
 			}
 			return $this->checkSignatureCompatibility($callSite, $methodSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $receiverType . '->' . $methodName . '()');
 		}
@@ -1917,6 +2325,10 @@ final class StanExpressionTypeResolver
 			return [];
 		}
 		$chainText = (string) ($propertyRead['chain_text'] ?? $this->formatChain($chain));
+		$visibilityDiagnostic = $this->collectPropertyVisibilityDiagnostic($chain, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (int) ($propertyRead['line'] ?? 0), $chainText, 'read');
+		if ($visibilityDiagnostic !== null) {
+			return [$visibilityDiagnostic];
+		}
 		$result = $this->resolveChain($chain, $localTypes, $selfType, $classLookup, $functionLookup);
 		$failureKind = (string) ($result['failure_kind'] ?? '');
 		if ($failureKind === '' || $failureKind === 'morphed_local_type') {
@@ -1938,27 +2350,181 @@ final class StanExpressionTypeResolver
 		]];
 	}
 
+	/** @param array<string,mixed> $chain @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return array<string,mixed>|null */
+	private function collectPropertyVisibilityDiagnostic(array $chain, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, int $line, string $chainText, string $operation): ?array
+	{
+		$segments = $chain['segments'] ?? [];
+		if (!is_array($segments) || $segments === []) {
+			return null;
+		}
+		$propertySegment = $segments[count($segments) - 1] ?? null;
+		if (!is_array($propertySegment) || (($propertySegment['kind'] ?? '') !== 'property')) {
+			return null;
+		}
+		$receiverChain = $chain;
+		array_pop($receiverChain['segments']);
+		$receiverTypes = $this->resolveReceiverTypesForPropertyChain($receiverChain, $localTypes, $selfType, $classLookup, $functionLookup);
+		if (count($receiverTypes) !== 1) {
+			return null;
+		}
+		$propertyName = (string) ($propertySegment['name'] ?? '');
+		$receiverInfo = $this->findClassInfo($receiverTypes[0], $classLookup, $selfType);
+		if ($receiverInfo === null || !isset($receiverInfo['property_types'][$propertyName])) {
+			return null;
+		}
+		$visibility = $this->normalizeMemberVisibility((string) ($receiverInfo['property_visibility'][$propertyName] ?? 'public'));
+		$declaringInfo = $this->findPropertyDeclaringClassInfo($receiverInfo, $propertyName, $classLookup) ?? $receiverInfo;
+		if ($this->memberAccessAllowed($visibility, $declaringInfo, $selfType, $classLookup)) {
+			return null;
+		}
+		return [
+			'kind' => 'member_visibility_violation',
+			'context' => $context,
+			'path' => $path,
+			'line' => $line,
+			'chain' => $chainText,
+			'operation' => $operation,
+			'property_name' => $propertyName,
+			'receiver_type' => $receiverTypes[0],
+			'visibility' => $visibility,
+			'message' => 'Cannot ' . $operation . ' ' . $visibility . ' property `' . $receiverTypes[0] . '::$' . $propertyName . '` from `' . $context . '`.',
+		];
+	}
+
+	/** @param array<string,mixed> $event @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function collectStaticPropertyVisibilityDiagnostic(array $event, ?string $selfType, array $classLookup, string $context, string $path): ?array
+	{
+		$className = (string) ($event['class_name'] ?? '');
+		$propertyName = (string) ($event['property_name'] ?? '');
+		if ($className === '' || $propertyName === '') {
+			return null;
+		}
+		$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
+		$classInfo = $this->findClassInfo($resolvedClassName, $classLookup, $selfType);
+		if ($classInfo === null || !isset($classInfo['property_types'][$propertyName])) {
+			return null;
+		}
+		$visibility = $this->normalizeMemberVisibility((string) ($classInfo['property_visibility'][$propertyName] ?? 'public'));
+		$declaringInfo = $this->findPropertyDeclaringClassInfo($classInfo, $propertyName, $classLookup) ?? $classInfo;
+		if ($this->memberAccessAllowed($visibility, $declaringInfo, $selfType, $classLookup)) {
+			return null;
+		}
+		$operation = (string) ($event['operation'] ?? 'access');
+		if (!in_array($operation, ['read', 'write'], true)) {
+			$operation = 'access';
+		}
+		return [
+			'kind' => 'member_visibility_violation',
+			'context' => $context,
+			'path' => $path,
+			'line' => (int) ($event['line'] ?? 0),
+			'operation' => $operation,
+			'property_name' => $propertyName,
+			'receiver_type' => $resolvedClassName,
+			'visibility' => $visibility,
+			'message' => 'Cannot ' . $operation . ' ' . $visibility . ' static property `' . $resolvedClassName . '::$' . $propertyName . '` from `' . $context . '`.',
+		];
+	}
+
+	/** @param array<string,mixed> $event @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function collectClassConstantVisibilityDiagnostic(array $event, ?string $selfType, array $classLookup, string $context, string $path): ?array
+	{
+		$className = (string) ($event['class_name'] ?? '');
+		$constantName = (string) ($event['constant_name'] ?? '');
+		if ($className === '' || $constantName === '') {
+			return null;
+		}
+		$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
+		$classInfo = $this->findClassInfo($resolvedClassName, $classLookup, $selfType);
+		if ($classInfo === null || (bool) ($classInfo['is_enum'] ?? false) || !isset($classInfo['constant_visibility'][$constantName])) {
+			return null;
+		}
+		$visibility = $this->normalizeMemberVisibility((string) ($classInfo['constant_visibility'][$constantName] ?? 'public'));
+		$declaringInfo = $this->findConstantDeclaringClassInfo($classInfo, $constantName, $classLookup) ?? $classInfo;
+		if ($this->memberAccessAllowed($visibility, $declaringInfo, $selfType, $classLookup)) {
+			return null;
+		}
+		return [
+			'kind' => 'member_visibility_violation',
+			'context' => $context,
+			'path' => $path,
+			'line' => (int) ($event['line'] ?? 0),
+			'operation' => 'read',
+			'constant_name' => $constantName,
+			'receiver_type' => $resolvedClassName,
+			'visibility' => $visibility,
+			'message' => 'Cannot read ' . $visibility . ' class constant `' . $resolvedClassName . '::' . $constantName . '` from `' . $context . '`.',
+		];
+	}
+
+	/** @param array<string,mixed> $receiverChain @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
+	private function resolveReceiverTypesForPropertyChain(array $receiverChain, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup): array
+	{
+		if (($receiverChain['segments'] ?? []) === []) {
+			$rootName = (string) ($receiverChain['root_name'] ?? '');
+			$rootKind = (string) ($receiverChain['root_kind'] ?? 'variable');
+			if ($rootKind === 'variable' && $rootName === 'this' && $selfType !== null && $selfType !== '') {
+				return [$selfType];
+			}
+			if ($rootKind === 'variable' && isset($localTypes[$rootName])) {
+				return $this->normalizeTypeSet($localTypes[$rootName]);
+			}
+			return [];
+		}
+		$resolvedReceiver = $this->resolveChain($receiverChain, $localTypes, $selfType, $classLookup, $functionLookup);
+		$resolvedValue = $resolvedReceiver['resolved_type'] ?? 'unknown';
+		if ($resolvedValue === 'unknown') {
+			return [];
+		}
+		return $this->normalizeTypeSet(is_array($resolvedValue) ? $resolvedValue : [$resolvedValue]);
+	}
+
 	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
 	private function collectReturnDiagnosticsForOwner(array $ownerNode, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): array
 	{
 		$diagnostics = [];
 		$declaredReturnType = (string) ($ownerNode['return_type'] ?? '');
 		$statementCount = (int) ($ownerNode['statement_count'] ?? 0);
-		if ($statementCount > 0 && $declaredReturnType !== '' && strtolower($declaredReturnType) !== 'void' && !empty($ownerNode['return_values']) === false) {
-			$diagnostics[] = $this->makeCallDiagnostic('missing_return', $context, $path, (int) ($ownerNode['line'] ?? 0), 'Missing return in non-void `' . $context . '` declared as `' . $declaredReturnType . '`.');
+		if ((bool) ($ownerNode['is_synthetic_entrypoint'] ?? false) === true) {
+			return $diagnostics;
+		}
+		if ($statementCount > 0 && $declaredReturnType !== '' && strtolower($declaredReturnType) !== 'void' && (bool) ($ownerNode['returns_on_all_paths'] ?? false) === false) {
+			$diagnostics[] = $this->makeCallDiagnostic('missing_return', $context, $path, (int) ($ownerNode['line'] ?? 0), 'Function `' . $context . '` declared as `' . $declaredReturnType . '` may exit without returning a value.');
 		}
 		foreach (($ownerNode['return_values'] ?? []) as $returnValue) {
 			if (!is_array($returnValue) || $declaredReturnType === '') {
 				continue;
+			}
+			$directCallName = trim((string) ($returnValue['direct_call_name'] ?? ''));
+			if ($directCallName !== '' && $this->isDirectSelfCallName($directCallName, $context)) {
+				$diagnostics[] = $this->makeCallDiagnostic('direct_self_recursion', $context, $path, (int) ($returnValue['line'] ?? 0), 'Direct self-recursive return in `' . $context . '` has no visible terminating branch.');
 			}
 			$resolvedTypes = $this->resolveExpressionDescriptorTypes(is_array($returnValue['descriptor'] ?? null) ? $returnValue['descriptor'] : ['kind' => 'unknown'], $localTypes, $selfType, $classLookup, $functionLookup);
 			$resolvedTypes = $this->normalizeTypeSet($resolvedTypes);
 			if ($resolvedTypes === [] || $this->typeSetsAreCompatible($resolvedTypes, [$declaredReturnType], $classLookup, true)) {
 				continue;
 			}
+			if ($this->isRequiredPlainBoundaryType($declaredReturnType) && array_values(array_filter($resolvedTypes, $this->isWrapperCarrierType(...))) !== []) {
+				continue;
+			}
 			$diagnostics[] = $this->makeCallDiagnostic('return_type_mismatch', $context, $path, (int) ($returnValue['line'] ?? 0), 'Return type mismatch in `' . $context . '`: declared `' . $declaredReturnType . '`, got `' . implode('|', $resolvedTypes) . '`.');
 		}
 		return $diagnostics;
+	}
+
+	private function isDirectSelfCallName(string $callName, string $context): bool
+	{
+		$callName = strtolower(ltrim(str_replace('\\\\', '\\', trim($callName)), '\\'));
+		$context = strtolower(ltrim(str_replace('\\\\', '\\', trim($context)), '\\'));
+		if ($callName === '' || $context === '') {
+			return false;
+		}
+		if ($callName === $context) {
+			return true;
+		}
+		$contextParts = preg_split('/\\\\|::/', $context);
+		$shortContext = is_array($contextParts) && $contextParts !== [] ? (string) end($contextParts) : $context;
+		return $callName === $shortContext;
 	}
 
 	/** @param array<string,mixed> $callSite @param array<string,mixed> $signature @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
@@ -2011,6 +2577,9 @@ final class StanExpressionTypeResolver
 			if ($actualTypes === [] || $this->typeSetsAreCompatible($actualTypes, [$expectedType], $classLookup, false)) {
 				continue;
 			}
+			if ($this->isRequiredPlainBoundaryType($expectedType) && array_values(array_filter($actualTypes, $this->isWrapperCarrierType(...))) !== []) {
+				continue;
+			}
 			$diagnostics[] = $this->makeCallDiagnostic('argument_type_mismatch', $context, $path, (int) ($callSite['line'] ?? 0), 'Argument type mismatch for `' . $targetText . '` parameter $' . (string) ($param['name'] ?? ('arg' . $index)) . ' in `' . $context . '`: expected `' . $expectedType . '`, got `' . implode('|', $actualTypes) . '`.');
 		}
 		return $diagnostics;
@@ -2050,6 +2619,93 @@ final class StanExpressionTypeResolver
 			return $this->canonicalizeTypeSet(is_array($resolved) ? $resolved : [$resolved], $classLookup, $selfType);
 		}
 		return [];
+	}
+
+	private function isRequiredPlainBoundaryType(string $type): bool
+	{
+		$trimmed = trim($type);
+		if ($trimmed === '') {
+			return false;
+		}
+		$lower = strtolower($trimmed);
+		if (in_array($lower, ['mixed', 'dynamic', 'void', 'null'], true)) {
+			return false;
+		}
+		return !$this->isWrapperCarrierType($trimmed);
+	}
+
+	private function isWrapperCarrierType(string $type): bool
+	{
+		$trimmed = trim($type);
+		if ($trimmed === '') {
+			return false;
+		}
+		if ($this->unwrapNullableType($trimmed) !== null) {
+			return true;
+		}
+		return preg_match('/^(result|result_or_false|result_or_bool|nullable)\s*</i', $trimmed) === 1;
+	}
+
+	/** @param array<string,mixed> $descriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
+	private function resolveDynamicShapeSourceTypes(array $descriptor, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, ?string $targetType = null): array
+	{
+		$kind = (string) ($descriptor['kind'] ?? 'unknown');
+		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
+			return $this->filterDynamicShapeTypes($this->resolveExpressionDescriptorTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup));
+		}
+		if ($kind === 'chain' || $kind === 'alias') {
+			return $this->filterDynamicShapeTypes($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+		}
+		if ($kind === 'conditional') {
+			if ($targetType !== null && $targetType !== '') {
+				$trueDescriptor = is_array($descriptor['if_true'] ?? null) ? $descriptor['if_true'] : null;
+				$falseDescriptor = is_array($descriptor['if_false'] ?? null) ? $descriptor['if_false'] : null;
+				$trueDynamic = $trueDescriptor !== null ? $this->resolveDynamicShapeSourceTypes($trueDescriptor, $localTypes, $selfType, $classLookup, $functionLookup) : [];
+				$falseDynamic = $falseDescriptor !== null ? $this->resolveDynamicShapeSourceTypes($falseDescriptor, $localTypes, $selfType, $classLookup, $functionLookup) : [];
+				$trueTypes = $trueDescriptor !== null ? $this->resolveExpressionDescriptorTypes($trueDescriptor, $localTypes, $selfType, $classLookup, $functionLookup) : [];
+				$falseTypes = $falseDescriptor !== null ? $this->resolveExpressionDescriptorTypes($falseDescriptor, $localTypes, $selfType, $classLookup, $functionLookup) : [];
+				if ($trueDynamic !== [] && $falseDynamic === [] && $this->typeSetsAreCompatible($falseTypes, [$targetType], $classLookup, false)) {
+					return [];
+				}
+				if ($falseDynamic !== [] && $trueDynamic === [] && $this->typeSetsAreCompatible($trueTypes, [$targetType], $classLookup, false)) {
+					return [];
+				}
+			}
+			$types = [];
+			if (is_array($descriptor['if_true'] ?? null)) {
+				$types = array_merge($types, $this->resolveDynamicShapeSourceTypes($descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup, $targetType));
+			}
+			if (is_array($descriptor['if_false'] ?? null)) {
+				$types = array_merge($types, $this->resolveDynamicShapeSourceTypes($descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup, $targetType));
+			}
+			return $this->normalizeTypeSet($types);
+		}
+		return [];
+	}
+
+	/** @param list<string> $types @return list<string> */
+	private function filterDynamicShapeTypes(array $types): array
+	{
+		return array_values(array_filter(
+			$this->normalizeTypeSet($types),
+			static fn (string $type): bool => in_array(strtolower(trim($type)), ['mixed', 'dynamic'], true)
+		));
+	}
+
+	/** @param array<string,mixed> $descriptor */
+	private function formatDescriptor(array $descriptor): string
+	{
+		$kind = (string) ($descriptor['kind'] ?? 'unknown');
+		if ($kind === 'chain' && is_array($descriptor['chain'] ?? null)) {
+			return $this->formatChain($descriptor['chain']);
+		}
+		if ($kind === 'alias') {
+			return '$' . (string) ($descriptor['source'] ?? '');
+		}
+		if ($kind === 'element') {
+			return 'indexed value';
+		}
+		return $kind;
 	}
 
 	/** @param array<string,mixed> $sourceDescriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<string> */
@@ -2185,18 +2841,39 @@ final class StanExpressionTypeResolver
 			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Missing property write target `' . $receiverTypes[0] . '::$' . $propertyName . '` in `' . $context . '`.');
 			return;
 		}
+		$visibility = $this->normalizeMemberVisibility((string) ($receiverInfo['property_visibility'][$propertyName] ?? 'public'));
+		$declaringInfo = $this->findPropertyDeclaringClassInfo($receiverInfo, $propertyName, $classLookup) ?? $receiverInfo;
+		if (!$this->memberAccessAllowed($visibility, $declaringInfo, $selfType, $classLookup)) {
+			$diagnostics[] = [
+				'kind' => 'member_visibility_violation',
+				'context' => $context,
+				'path' => $path,
+				'line' => (int) ($event['line'] ?? 0),
+				'property_name' => $propertyName,
+				'receiver_type' => $receiverTypes[0],
+				'visibility' => $visibility,
+				'operation' => 'write',
+				'message' => 'Cannot write ' . $visibility . ' property `' . $receiverTypes[0] . '::$' . $propertyName . '` from `' . $context . '`.',
+			];
+			return;
+		}
 		$declaredType = $this->canonicalizeResolvedType($declaredType, $classLookup, $selfType);
 
 		$this->checkDescriptorInitialization($diagnostics, $initializationKeys, $source, (int) ($event['line'] ?? 0), $context, $path, $declaredLocals, $initializedLocals, $initializedProperties, $selfType, $classLookup);
 		$assignedTypes = $this->canonicalizeTypeSet($this->resolveAssignmentDescriptorTypes($source, $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType);
 		if ($assignedTypes === []) {
 			if ($this->isDirectSelfPropertyTarget($targetChain, $propertyName)) {
-				$initializedProperties[$propertyName] = true;
-				$initializedPropertyLines[$propertyName] = (int) ($event['line'] ?? 0);
+				$this->markPropertyInitialized($initializedProperties, $initializedPropertyLines, $propertyName, (int) ($event['line'] ?? 0));
 			}
 			return;
 		}
 		if (!$this->typeSetsAreCompatible($assignedTypes, [$declaredType], $classLookup, false)) {
+			if ($this->isRequiredPlainBoundaryType($declaredType) && array_values(array_filter($assignedTypes, $this->isWrapperCarrierType(...))) !== []) {
+				if ($this->isDirectSelfPropertyTarget($targetChain, $propertyName)) {
+					$this->markPropertyInitialized($initializedProperties, $initializedPropertyLines, $propertyName, (int) ($event['line'] ?? 0));
+				}
+				return;
+			}
 			$diagnostics[] = [
 				'kind' => 'property_type_morph_warning',
 				'context' => $context,
@@ -2212,8 +2889,7 @@ final class StanExpressionTypeResolver
 			];
 		}
 		if ($this->isDirectSelfPropertyTarget($targetChain, $propertyName)) {
-			$initializedProperties[$propertyName] = true;
-			$initializedPropertyLines[$propertyName] = (int) ($event['line'] ?? 0);
+			$this->markPropertyInitialized($initializedProperties, $initializedPropertyLines, $propertyName, (int) ($event['line'] ?? 0));
 		}
 	}
 
@@ -2336,6 +3012,17 @@ final class StanExpressionTypeResolver
 		$initializedLocalLines[$name] = min($initializedLocalLines[$name], $line);
 	}
 
+	/** @param array<string,bool> $initializedProperties @param array<string,int> $initializedPropertyLines */
+	private function markPropertyInitialized(array &$initializedProperties, array &$initializedPropertyLines, string $name, int $line): void
+	{
+		$initializedProperties[$name] = true;
+		if (!isset($initializedPropertyLines[$name])) {
+			$initializedPropertyLines[$name] = $line;
+			return;
+		}
+		$initializedPropertyLines[$name] = min($initializedPropertyLines[$name], $line);
+	}
+
 	private function hasPartialBranchInitializationWarning(array $initializationKeys, string $context, string $path, string $subjectKind, string $subjectName): bool
 	{
 		$needle = $subjectKind === 'property'
@@ -2372,6 +3059,96 @@ final class StanExpressionTypeResolver
 			}
 		}
 		return $map;
+	}
+
+	/** @param array<string,mixed> $class @return array<string,bool> */
+	private function collectPropertiesInitializedByEveryConstructor(array $class): array
+	{
+		$constructors = [];
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method) && strtolower((string) ($method['name'] ?? '')) === '__construct') {
+				$constructors[] = $method;
+			}
+		}
+		if ($constructors === []) {
+			return [];
+		}
+		$common = null;
+		foreach ($constructors as $constructor) {
+			$assigned = $this->collectDirectSelfPropertyAssignments($constructor);
+			$common = $common === null
+				? $assigned
+				: array_intersect_key($common, $assigned);
+		}
+		return is_array($common) ? $common : [];
+	}
+
+	/** @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @return array<string,bool> */
+	private function collectConstructorInitializedPropertiesForClass(array $class, string $classType, array $classLookup): array
+	{
+		$ownConstructors = [];
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method) && strtolower((string) ($method['name'] ?? '')) === '__construct') {
+				$ownConstructors[] = $method;
+			}
+		}
+		if ($ownConstructors !== []) {
+			return $this->collectPropertiesInitializedByEveryConstructor($class);
+		}
+		$classInfo = $this->findClassInfo($classType, $classLookup, $classType);
+		if (!is_array($classInfo)) {
+			return [];
+		}
+		return (array) ($classInfo['constructor_initialized_properties'] ?? []);
+	}
+
+	/** @param array<string,mixed> $method @return array<string,bool> */
+	private function collectDirectSelfPropertyAssignments(array $method): array
+	{
+		$assigned = [];
+		foreach (($method['property_assignments'] ?? []) as $assignment) {
+			if (!is_array($assignment) || !is_array($assignment['target_chain'] ?? null)) {
+				continue;
+			}
+			$targetChain = $assignment['target_chain'];
+			$segments = $targetChain['segments'] ?? [];
+			if (($targetChain['root_kind'] ?? '') !== 'variable' || ($targetChain['root_name'] ?? '') !== 'this' || !is_array($segments) || count($segments) !== 1) {
+				continue;
+			}
+			$segment = $segments[0] ?? null;
+			if (!is_array($segment) || ($segment['kind'] ?? '') !== 'property') {
+				continue;
+			}
+			$name = (string) ($segment['name'] ?? '');
+			if ($name !== '') {
+				$assigned[$name] = true;
+			}
+		}
+		foreach (($method['property_branch_assignments'] ?? []) as $branchAssignment) {
+			if (!is_array($branchAssignment)) {
+				continue;
+			}
+			$name = (string) ($branchAssignment['property_name'] ?? '');
+			if ($name === '' || !isset($assigned[$name])) {
+				continue;
+			}
+			$branchCount = max(0, (int) ($branchAssignment['branch_count'] ?? count($branchAssignment['branches'] ?? [])));
+			$coveredBranchCount = max(
+				is_array($branchAssignment['branches'] ?? null) ? count($branchAssignment['branches']) : 0,
+				(int) ($branchAssignment['covered_branch_count'] ?? 0)
+			);
+			$everyBranchAssigns = ($branchAssignment['has_fallthrough'] ?? false) === false && $branchCount > 0 && $coveredBranchCount === $branchCount;
+			if (!$everyBranchAssigns) {
+				unset($assigned[$name]);
+			}
+		}
+		return $assigned;
+	}
+
+	/** @param array<string,bool> $constructorInitializedProperties @return array<string,bool> */
+	private function constructorBaselineForMethod(string $methodName, array $constructorInitializedProperties): array
+	{
+		return strtolower($methodName) === '__construct' ? [] : $constructorInitializedProperties;
 	}
 
 	/** @param array<string,mixed> $targetChain */
@@ -2480,6 +3257,7 @@ final class StanExpressionTypeResolver
 					'params' => is_array($method['params'] ?? null) ? $method['params'] : [],
 					'return_type' => $returnType,
 					'is_static' => (bool) ($method['is_static'] ?? false),
+					'visibility' => $this->normalizeMemberVisibility((string) ($method['visibility'] ?? 'public')),
 					'line' => (int) ($method['line'] ?? 0),
 				];
 			}
@@ -2487,6 +3265,9 @@ final class StanExpressionTypeResolver
 
 		$propertyTypes = [];
 		$propertyHasDefault = [];
+		$propertyVisibility = [];
+		$propertyDeclaringClass = [];
+		$fqcn = $namespace === '' ? (string) ($class['name'] ?? '') : $namespace . '\\' . (string) ($class['name'] ?? '');
 		foreach (($class['properties'] ?? []) as $property) {
 			if (!is_array($property)) {
 				continue;
@@ -2498,18 +3279,47 @@ final class StanExpressionTypeResolver
 			}
 			if ($name !== '') {
 				$propertyHasDefault[$name] = (bool) ($property['has_default'] ?? false);
+				$propertyVisibility[$name] = $this->normalizeMemberVisibility((string) ($property['visibility'] ?? 'public'));
+				$propertyDeclaringClass[$name] = $fqcn;
+			}
+		}
+		$constructorInitializedProperties = $this->collectPropertiesInitializedByEveryConstructor($class);
+		$hasOwnConstructor = false;
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method) && strtolower((string) ($method['name'] ?? '')) === '__construct') {
+				$hasOwnConstructor = true;
+				break;
+			}
+		}
+		$constantVisibility = [];
+		$constantDeclaringClass = [];
+		foreach (($class['constants'] ?? []) as $constant) {
+			if (!is_array($constant)) {
+				continue;
+			}
+			$name = (string) ($constant['name'] ?? '');
+			if ($name !== '') {
+				$constantVisibility[$name] = $this->normalizeMemberVisibility((string) ($constant['visibility'] ?? 'public'));
+				$constantDeclaringClass[$name] = $fqcn;
 			}
 		}
 
 		return [
 			'name' => (string) ($class['name'] ?? ''),
-			'fqcn' => $namespace === '' ? (string) ($class['name'] ?? '') : $namespace . '\\' . (string) ($class['name'] ?? ''),
+			'fqcn' => $fqcn,
 			'parent_class' => (string) ($class['parent_class'] ?? ''),
+			'is_enum' => (bool) ($class['is_enum'] ?? false),
 			'ancestor_types' => [],
 			'method_return_types' => $methodReturnTypes,
 			'method_signatures' => $methodSignatures,
 			'property_types' => $propertyTypes,
 			'property_has_default' => $propertyHasDefault,
+			'property_visibility' => $propertyVisibility,
+			'property_declaring_class' => $propertyDeclaringClass,
+			'constructor_initialized_properties' => $constructorInitializedProperties,
+			'has_own_constructor' => $hasOwnConstructor,
+			'constant_visibility' => $constantVisibility,
+			'constant_declaring_class' => $constantDeclaringClass,
 		];
 	}
 
@@ -2544,6 +3354,61 @@ final class StanExpressionTypeResolver
 		}
 		$signature = $signatures[$methodName] ?? null;
 		return is_array($signature) ? $signature : null;
+	}
+
+	private function normalizeMemberVisibility(string $visibility): string
+	{
+		$normalized = strtolower(trim($visibility));
+		return in_array($normalized, ['public', 'protected', 'private'], true) ? $normalized : 'public';
+	}
+
+	private function memberAccessAllowed(string $visibility, array $declaringClassInfo, ?string $selfType, array $classLookup): bool
+	{
+		$visibility = $this->normalizeMemberVisibility($visibility);
+		if ($visibility === 'public') {
+			return true;
+		}
+		if ($selfType === null || $selfType === '') {
+			return false;
+		}
+		$selfInfo = $this->findClassInfo($selfType, $classLookup);
+		if ($selfInfo === null) {
+			return false;
+		}
+		$declaringFqcn = (string) ($declaringClassInfo['fqcn'] ?? $declaringClassInfo['name'] ?? '');
+		$selfFqcn = (string) ($selfInfo['fqcn'] ?? $selfInfo['name'] ?? $selfType);
+		if (strcasecmp($declaringFqcn, $selfFqcn) === 0) {
+			return true;
+		}
+		if ($visibility === 'private') {
+			return false;
+		}
+		foreach ((array) ($selfInfo['ancestor_types'] ?? []) as $ancestorType) {
+			if (strcasecmp((string) $ancestorType, $declaringFqcn) === 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** @param array<string,mixed> $classInfo @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function findPropertyDeclaringClassInfo(array $classInfo, string $propertyName, array $classLookup): ?array
+	{
+		$declaringClass = (string) ($classInfo['property_declaring_class'][$propertyName] ?? '');
+		if ($declaringClass === '') {
+			return null;
+		}
+		return $this->findClassInfo($declaringClass, $classLookup);
+	}
+
+	/** @param array<string,mixed> $classInfo @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function findConstantDeclaringClassInfo(array $classInfo, string $constantName, array $classLookup): ?array
+	{
+		$declaringClass = (string) ($classInfo['constant_declaring_class'][$constantName] ?? '');
+		if ($declaringClass === '') {
+			return null;
+		}
+		return $this->findClassInfo($declaringClass, $classLookup);
 	}
 
 	private function isKnownNonObjectType(string $type): bool
@@ -2589,6 +3454,13 @@ final class StanExpressionTypeResolver
 				$info['method_signatures'] = array_replace((array) ($parentInfo['method_signatures'] ?? []), (array) ($info['method_signatures'] ?? []));
 				$info['property_types'] = array_replace((array) ($parentInfo['property_types'] ?? []), (array) ($info['property_types'] ?? []));
 				$info['property_has_default'] = array_replace((array) ($parentInfo['property_has_default'] ?? []), (array) ($info['property_has_default'] ?? []));
+				$info['property_visibility'] = array_replace((array) ($parentInfo['property_visibility'] ?? []), (array) ($info['property_visibility'] ?? []));
+				$info['property_declaring_class'] = array_replace((array) ($parentInfo['property_declaring_class'] ?? []), (array) ($info['property_declaring_class'] ?? []));
+				if (($info['has_own_constructor'] ?? false) !== true) {
+					$info['constructor_initialized_properties'] = (array) ($parentInfo['constructor_initialized_properties'] ?? []);
+				}
+				$info['constant_visibility'] = array_replace((array) ($parentInfo['constant_visibility'] ?? []), (array) ($info['constant_visibility'] ?? []));
+				$info['constant_declaring_class'] = array_replace((array) ($parentInfo['constant_declaring_class'] ?? []), (array) ($info['constant_declaring_class'] ?? []));
 				$info['ancestor_types'] = $this->normalizeTypeSet(array_merge(
 					[(string) ($parentInfo['fqcn'] ?? $parentClass)],
 					(array) ($parentInfo['ancestor_types'] ?? [])

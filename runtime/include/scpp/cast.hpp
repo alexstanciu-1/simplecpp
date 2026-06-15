@@ -11,6 +11,7 @@
 #include "scpp/result_or_bool.hpp"
 #include "scpp/result.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/vector_t.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/runtime_error.hpp"
@@ -160,6 +161,73 @@ namespace detail {
 		std::vector<runtime_error_detail_t>{
 			{"expected_type", target},
 			{"operation", std::string("scpp::cast<") + target + ">"},
+			{"source_type", "mixed_t"},
+			{"runtime_kind", mixed_kind_name(value.kind())},
+		}
+	);
+}
+
+[[nodiscard]] inline const char *required_cast_target_name_fallback() noexcept {
+	return "value";
+}
+
+template <typename T>
+[[nodiscard]] inline const char *required_cast_target_name() noexcept {
+	if constexpr (is_specialization_of_v<T, vector_t>) {
+		return "vector_t";
+	}
+	return required_cast_target_name_fallback();
+}
+
+template <>
+[[nodiscard]] inline const char *required_cast_target_name<bool_t>() noexcept {
+	return "bool_t";
+}
+
+template <>
+[[nodiscard]] inline const char *required_cast_target_name<int_t>() noexcept {
+	return "int_t";
+}
+
+template <>
+[[nodiscard]] inline const char *required_cast_target_name<float_t>() noexcept {
+	return "float_t";
+}
+
+template <>
+[[nodiscard]] inline const char *required_cast_target_name<string_t>() noexcept {
+	return "string_t";
+}
+
+template <>
+[[nodiscard]] inline const char *required_cast_target_name<mixed_t>() noexcept {
+	return "mixed_t";
+}
+
+[[noreturn]] inline void throw_required_boundary_null(const char *target) {
+	throw runtime_error(
+		std::string("scpp::required_cast<") + target + ">(mixed_t): null cannot satisfy a required typed boundary",
+		"required_typed_boundary_null",
+		std::string("scpp::required_cast<") + target + ">",
+		"",
+		std::vector<runtime_error_detail_t>{
+			{"expected_type", target},
+			{"operation", std::string("scpp::required_cast<") + target + ">"},
+			{"source_type", "mixed_t"},
+			{"runtime_kind", "null_t"},
+		}
+	);
+}
+
+[[noreturn]] inline void throw_required_boundary_mixed_kind(const char *target, const mixed_t &value) {
+	throw runtime_error(
+		std::string("scpp::required_cast<") + target + ">(mixed_t): runtime kind cannot satisfy a required typed boundary",
+		"required_typed_boundary_kind_mismatch",
+		std::string("scpp::required_cast<") + target + ">",
+		"",
+		std::vector<runtime_error_detail_t>{
+			{"expected_type", target},
+			{"operation", std::string("scpp::required_cast<") + target + ">"},
 			{"source_type", "mixed_t"},
 			{"runtime_kind", mixed_kind_name(value.kind())},
 		}
@@ -636,6 +704,49 @@ inline To cast(mixed_t &&value) {
 		}
 	} else {
 		return cast<To>(static_cast<const mixed_t &>(value));
+	}
+}
+
+// Required typed-boundary cast.
+// Unlike explicit casts, a required destination must reject dynamic null unless
+// the destination itself is nullable. This keeps (string)null PHP-style behavior
+// separate from strict local/parameter/return value requirements.
+template <typename To, typename From>
+inline To required_cast(const From &value) {
+	return cast<To>(value);
+}
+
+template <typename To>
+inline To required_cast(const mixed_t &value) {
+	if constexpr (detail::is_specialization_of_v<To, vector_t>) {
+		using element_t = detail::vector_value_type_t<To>;
+		const auto *table = value.table_if();
+		if (table == nullptr || !table->is_packed().native_value()) {
+			detail::throw_required_boundary_mixed_kind(detail::required_cast_target_name<To>(), value);
+		}
+
+		To out;
+		for (std::size_t index = 0; index < table->size(); ++index) {
+			const auto &entry = table->at(int_t{static_cast<std::int64_t>(index)});
+			if constexpr (std::is_same_v<element_t, mixed_t>) {
+				out.append(entry);
+			} else {
+				out.append(required_cast<element_t>(entry));
+			}
+		}
+		return out;
+	} else if constexpr (detail::is_specialization_of_v<To, nullable>) {
+		return cast<To>(value);
+	} else {
+		if (value.kind() == mixed_t::kind_t::null_v) {
+			detail::throw_required_boundary_null(detail::required_cast_target_name<To>());
+		}
+		if constexpr (std::is_same_v<To, int_t>) {
+			if (value.kind() != mixed_t::kind_t::int_v) {
+				detail::throw_required_boundary_mixed_kind(detail::required_cast_target_name<To>(), value);
+			}
+		}
+		return cast<To>(value);
 	}
 }
 

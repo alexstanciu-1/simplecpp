@@ -30,6 +30,7 @@ final class StanFilePass
 		string $stanSignature,
 		array $state,
 		array $sourceUnits,
+		bool $respectDependencyInvalidation = true,
 	): array {
 		$files = [];
 
@@ -50,8 +51,8 @@ final class StanFilePass
 			$relativeKey = $sourceUnit->sourceKey;
 			$meta = $sourceUnit->meta;
 			$previous = is_array($state['files'][$relativeKey] ?? null) ? $state['files'][$relativeKey] : null;
-			$cachePath = $cacheDir . '/' . sha1($relativeKey) . '.php';
-			$needsAnalyze = $this->collectReasons($previous, $meta, $stanSignature, $cachePath, $currentFileMetas, is_array($state['files'] ?? null) ? $state['files'] : []) !== [];
+			$cachePath = $cacheDir . '/' . $this->cacheFileName($relativeKey, $sourceUnit) . '.php';
+			$needsAnalyze = $this->collectReasons($previous, $meta, $stanSignature, $cachePath, $currentFileMetas, is_array($state['files'] ?? null) ? $state['files'] : [], $respectDependencyInvalidation) !== [];
 			$summary = null;
 			if ($needsAnalyze) {
 				try {
@@ -130,8 +131,16 @@ final class StanFilePass
 		];
 	}
 
+	private function cacheFileName(string $relativeKey, StanSourceUnit $sourceUnit): string
+	{
+		if ($sourceUnit->contents !== null) {
+			return sha1($relativeKey . "\0override\0" . $sourceUnit->meta['content_hash']);
+		}
+		return sha1($relativeKey);
+	}
+
 	/** @param array<string,mixed>|null $previous @param array{size:int,mtime:int,content_hash:string} $meta @param array<string,array{size:int,mtime:int,content_hash:string}> $currentFileMetas @param array<string,array<string,mixed>> $previousFilesState @return list<string> */
-	private function collectReasons(?array $previous, array $meta, string $stanSignature, string $cachePath, array $currentFileMetas = [], array $previousFilesState = []): array
+	private function collectReasons(?array $previous, array $meta, string $stanSignature, string $cachePath, array $currentFileMetas = [], array $previousFilesState = [], bool $respectDependencyInvalidation = true): array
 	{
 		$reasons = [];
 		if (!is_array($previous)) {
@@ -152,6 +161,9 @@ final class StanFilePass
 		}
 		if (!is_file($cachePath)) {
 			$reasons[] = 'per-file STAN cache missing';
+		}
+		if (!$respectDependencyInvalidation) {
+			return $reasons;
 		}
 		return array_merge($reasons, $this->collectDependencyReasons($previous, $currentFileMetas, $previousFilesState));
 	}

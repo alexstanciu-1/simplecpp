@@ -228,9 +228,10 @@ final class StanWorkspaceSession
 	/** @param array<string,string> $sourceOverrides @return array{0:StanWorkspaceContext,1:array<string,mixed>,2:array<string,mixed>,3:int} */
 	private function analyzeWorkspace(string $projectRoot, string $configPath, array $sourceOverrides): array
 	{
+		$hasSourceOverrides = $sourceOverrides !== [];
 		$context = $this->contextBuilder->build($projectRoot, $configPath, $sourceOverrides);
 		$state = $this->stateStore->load($context->statePath);
-		if ((string) ($state['source_fingerprint'] ?? '') !== $context->sourceFingerprint) {
+		if (!$hasSourceOverrides && (string) ($state['source_fingerprint'] ?? '') !== $context->sourceFingerprint) {
 			$state = ['version' => 1, 'files' => []];
 		}
 		$filePassResult = $this->filePass->analyze(
@@ -240,6 +241,7 @@ final class StanWorkspaceSession
 			$context->stanSignature,
 			$state,
 			$context->sourceUnits,
+			!$hasSourceOverrides,
 		);
 		$warningCount = (int) ($filePassResult['warning_count'] ?? 0);
 		$runtimeConfig = \resolve_runtime_build_config($context->config);
@@ -276,7 +278,9 @@ final class StanWorkspaceSession
 			$newFilesState,
 			$context->activeRuntimeShallowPath,
 		);
-		$this->stateStore->save($context->statePath, $state);
+		if (!$hasSourceOverrides) {
+			$this->stateStore->save($context->statePath, $state);
+		}
 		$filePassResult['files_state'] = $newFilesState;
 
 		return [$context, $filePassResult, $semanticResult, $warningCount];

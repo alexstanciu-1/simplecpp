@@ -9,6 +9,83 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.68 - 2026-06-08
+
+### Additions
+
+- Added STAN interface implementation diagnostics for missing methods, return-type mismatches, parameter-count/type/name/default mismatches, and visibility mismatches.
+- Added STAN abstract-contract diagnostics so concrete subclasses must implement inherited abstract methods before build.
+- Added build-blocking classification for interface and abstract contract violations in strict projects.
+- Added planning documentation for the issue #201 STAN strict-discipline close criteria.
+
+### Fixes
+
+- Fixed STAN return-path coverage for additional control-flow shapes.
+- Fixed STAN property-initialization analysis across inherited constructor/property patterns.
+- Fixed STAN wrapper-boundary and dynamic coalesce guard recognition so explicit guards avoid false positives while unchecked boundary use remains visible.
+- Normalized strict STAN diagnostic buckets so strict-discipline and contract failures stop before C++ generation where appropriate.
+
+### Breaking Changes
+
+- Strict projects now reject more invalid interface/abstract implementations during STAN pre-build instead of allowing the generated C++ compiler or runtime behavior to surface the issue later.
+
+### Migration Notes
+
+- Make interface implementations exactly match the declared method contract, including visibility, parameter count, parameter types/names/defaults, and return type.
+- Concrete subclasses of abstract classes must implement inherited abstract methods or remain abstract.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/SKILL.md` was updated to reflect STAN interface/abstract contract checks.
+
+## 0.1.67 - 2026-06-07
+
+### Additions
+
+- Added STAN strict-discipline diagnostics for unchecked wrapper/result values assigned directly into required typed locals.
+- Added STAN dynamic-shape boundary warnings for JSON/dynamic values assigned directly into required typed locals without an explicit guard.
+- Added source-level compile diagnostic polish for typed argument mismatches so common call-site failures are reported in source terms while preserving the raw compiler excerpt.
+- Added structured vector bounds runtime diagnostics with source remapping, source snippets, operation details, failing index, and container size.
+
+### Fixes
+
+- Fixed STAN diagnostics-session override accounting so transient override runs no longer overwrite canonical cache state or report dependency-driven reanalysis as extra changed sources.
+- Fixed the strict safety edges suite so long runs emit visible progress and avoid repeated runtime rebuild work that could look like a no-output timeout.
+- Fixed source-mapped runtime reporting for vector bounds failures so they no longer fall back to generic typed-boundary messages.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Check STAN warnings for direct wrapper/dynamic-to-required typed-boundary assignments and stabilize values with `take(...)`, `isset(...)`, or another explicit guard where appropriate.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/SKILL.md` was updated to reflect the stricter STAN discipline and source-first diagnostics guidance.
+
+## 0.1.66 - 2026-06-07
+
+### Additions
+
+- Added recursive typed vector literal stabilization, including nested `vector<vector<T>>` and deeper vector shapes.
+- Added direct decoded JSON array stabilization into typed vectors, including nested typed vectors and explicit typed-boundary failures for incompatible array shapes.
+- Added typed `json_encode` support for typed vectors, hashes, and nested vector values through the runtime JSON encode adapter.
+- Added STAN detection for obvious direct self-recursive return paths, plus configurable runtime call-depth guard diagnostics when STAN is bypassed.
+
+### Fixes
+
+- Fixed strict required typed-boundary conversions so missing or null dynamic JSON fields no longer silently become default-looking required scalar values.
+- Fixed strict required `int` boundaries so dynamic JSON floats and numeric strings no longer silently coerce into integers.
+- Fixed missing-return handling so typed functions that may exit without returning stop during STAN pre-build instead of reaching native undefined behavior.
+- Fixed strict regex helper use without the regex runtime module so it reports an early source/build diagnostic instead of falling through to an undefined-symbol link failure.
+- Fixed Prism++ member visibility alignment so STAN now rejects invalid access to private/protected properties, static properties, methods, and class constants before C++ generation, while preserving valid protected subclass access and avoiding false positives for enum case references.
+
+### Breaking Changes
+
+- Dynamic values assigned into required typed scalar or typed vector boundaries are stricter: absent, null, or incompatible dynamic shapes now fail instead of silently coercing into usable required values.
+
+### Migration Notes
+
+- Use explicit casts when intentionally applying PHP-like scalar coercion; required typed locals/properties now behave as checked stabilization boundaries.
+- Add the `regex` runtime module before using strict regex helpers.
+- Agent Skill review completed: `.agents/skills/simple-cpp-php-strict/SKILL.md` was updated to reflect the stricter JSON typed-boundary and visibility guidance.
+
 ## 0.1.65 - 2026-05-27
 
 ### Additions
