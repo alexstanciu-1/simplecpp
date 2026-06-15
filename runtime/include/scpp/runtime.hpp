@@ -41,6 +41,7 @@
 #include "scpp/json.hpp"
 #include "scpp/curl.hpp"
 #include "scpp/datetime.hpp"
+#include "scpp/tasks.hpp"
 #include "scpp/str.hpp"
 #include "hosts/fastcgi/fastcgi.hpp"
 #include "scpp/generated/operators.hpp"

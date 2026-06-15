@@ -4589,7 +4589,7 @@ function resolve_runtime_build_config(array $config): array
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -7224,6 +7224,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('curl', $modules, true)) {
 		$lines[] = '#include "modules/curl/curl.cpp"';
 	}
+	if (in_array('tasks', $modules, true)) {
+		$lines[] = '#include "modules/tasks/tasks.cpp"';
+	}
 	if (in_array('php', $languages, true) && ($phpProfile === 'legacy' || $phpProfile === 'strict')) {
 		if (in_array('filesystem', $modules, true)) {
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
@@ -7288,6 +7291,8 @@ function render_shared_release_module_composition_source(array $runtimeConfig, s
 		}
 	} elseif ($moduleName === 'curl') {
 		$lines[] = '#include "modules/curl/curl.cpp"';
+	} elseif ($moduleName === 'tasks') {
+		$lines[] = '#include "modules/tasks/tasks.cpp"';
 	}
 	return implode(PHP_EOL, $lines) . PHP_EOL;
 }
@@ -7314,7 +7319,7 @@ function default_runtime_modules(): array
 /** @return list<string> */
 function shared_optional_runtime_modules(): array
 {
-	return ['mysqli', 'regex', 'curl'];
+	return ['mysqli', 'regex', 'curl', 'tasks'];
 }
 
 function runtime_build_mode_is_shared_release_supported(string $buildMode): bool
@@ -7585,6 +7590,11 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_CURL=0';
 	}
+	if (in_array('tasks', $modules, true)) {
+		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=1';
+	} else {
+		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=0';
+	}
 
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = PHP_OS_FAMILY === 'Darwin' ? 'libruntime.dylib' : 'libruntime.so';
@@ -7669,6 +7679,8 @@ function build_runtime_module_artifact_spec(string $repoRoot, string $projectRoo
 		}
 		$extraCxxFlags = array_merge($extraCxxFlags, $curlBuild['compile_defines'], $curlBuild['cflags']);
 		$extraLinkFlags = array_merge($extraLinkFlags, $curlBuild['ldflags']);
+	} elseif ($moduleName === 'tasks') {
+		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=1';
 	}
 
 	if ($compiler['kind'] === 'gnu_like') {
