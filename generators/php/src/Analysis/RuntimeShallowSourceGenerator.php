@@ -343,6 +343,30 @@ final class RuntimeShallowSourceGenerator
 				'curl_error' => ['return' => 'string', 'params' => [['name' => 'handle', 'type' => 'curl_handle']]],
 				'curl_reset' => ['return' => 'void', 'params' => [['name' => 'handle', 'type' => 'curl_handle']]],
 				'curl_close' => ['return' => 'result<bool>', 'params' => [['name' => 'handle', 'type' => 'curl_handle']]],
+				'task_run' => ['return' => 'mixed', 'params' => [
+					['name' => 'items', 'type' => 'mixed'],
+					['name' => 'workers', 'type' => 'int'],
+					['name' => 'exec', 'type' => 'mixed'],
+					['name' => 'index', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'result', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'error', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'timeout_ms', 'type' => 'int', 'has_default' => true],
+				]],
+				'task_start' => ['return' => 'task_batch', 'params' => [
+					['name' => 'items', 'type' => 'mixed'],
+					['name' => 'workers', 'type' => 'int'],
+					['name' => 'exec', 'type' => 'mixed'],
+					['name' => 'index', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'result', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'error', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'timeout_ms', 'type' => 'int', 'has_default' => true],
+				]],
+				'task_join' => ['return' => 'mixed', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_cancel' => ['return' => 'void', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_done' => ['return' => 'bool', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_status' => ['return' => 'string', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_progress' => ['return' => 'task_progress_info', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_set_status' => ['return' => 'void', 'params' => [['name' => 'ctx', 'type' => 'task_context'], ['name' => 'status', 'type' => 'string']]],
 			],
 			'legacy' => [
 				'fopen' => ['return' => 'mixed', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'mode', 'type' => 'string']]],
@@ -412,7 +436,33 @@ final class RuntimeShallowSourceGenerator
 	{
 		$isStrict = $profile === 'strict';
 		$blocks = [];
+		$scppClasses = [];
+		if ($isStrict) {
+			$scppClasses = [
+				$this->renderClassStub('task_batch', [], $isStrict),
+				$this->renderClassStub('task_context', [], $isStrict),
+				$this->renderClassStub('task_progress_info', [
+					['kind' => 'method', 'name' => 'total', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'completed', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'queued', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'active', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'errors', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'stop_requested', 'return' => 'bool', 'params' => []],
+					['kind' => 'method', 'name' => 'status', 'return' => 'string', 'params' => []],
+				], $isStrict),
+				$this->renderClassStub('task_error', [
+					['kind' => 'property', 'name' => 'message', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'kind', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'key', 'type' => 'mixed'],
+					['kind' => 'property', 'name' => 'worker_id', 'type' => 'int'],
+					['kind' => 'property', 'name' => 'timeout', 'type' => 'bool'],
+					['kind' => 'property', 'name' => 'source_file', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'source_line', 'type' => 'int'],
+				], $isStrict),
+			];
+		}
 		$blocks[] = $this->renderNamespaceBlock('scpp', [
+			...$scppClasses,
 			$this->renderClassStub('mysqli_result', [
 				['kind' => 'method', 'name' => 'fetch_assoc', 'return' => 'dynamic', 'params' => []],
 			], $isStrict),

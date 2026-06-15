@@ -115,6 +115,14 @@
         "dt_parse_iso_utc": "dt::parse_iso_utc",
         "dt_format": "dt::format_local",
         "dt_format_now": "dt::format_local_now",
-        "dt_parse": "dt::parse_common_local"
+        "dt_parse": "dt::parse_common_local",
+        "task_run": "tasks::run",
+        "task_start": "tasks::start",
+        "task_join": "tasks::join",
+        "task_cancel": "tasks::cancel",
+        "task_done": "tasks::done",
+        "task_status": "tasks::status",
+        "task_progress": "tasks::progress",
+        "task_set_status": "tasks::set_status"
     }
 }
