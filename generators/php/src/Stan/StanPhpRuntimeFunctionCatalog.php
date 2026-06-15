@@ -7,6 +7,8 @@ final class StanPhpRuntimeFunctionCatalog
 {
 	/** @var array<string,bool>|null */
 	private static ?array $knownFunctions = null;
+	/** @var array<string,string>|null */
+	private static ?array $returnTypes = null;
 
 	public function hasFunction(string $name): bool
 	{
@@ -20,6 +22,38 @@ final class StanPhpRuntimeFunctionCatalog
 			self::$knownFunctions = $known;
 		}
 		return isset($known[$normalized]);
+	}
+
+	public function returnType(string $name): ?string
+	{
+		$normalized = strtolower(trim($name));
+		if ($normalized === '') {
+			return null;
+		}
+		$returnTypes = self::$returnTypes;
+		if ($returnTypes === null) {
+			$returnTypes = $this->loadReturnTypes();
+			self::$returnTypes = $returnTypes;
+		}
+		return $returnTypes[$normalized] ?? null;
+	}
+
+	public function requiredModule(string $name): ?string
+	{
+		$normalized = strtolower(trim($name));
+		if ($normalized === '') {
+			return null;
+		}
+		if (str_starts_with($normalized, 'fs_') || str_starts_with($normalized, 'io_')) {
+			return 'filesystem';
+		}
+		if (str_starts_with($normalized, 'json_')) {
+			return 'json';
+		}
+		if (str_starts_with($normalized, 'dt_')) {
+			return 'datetime';
+		}
+		return null;
 	}
 
 	/** @return array<string,bool> */
@@ -42,5 +76,34 @@ final class StanPhpRuntimeFunctionCatalog
 			}
 		}
 		return $known;
+	}
+
+	/** @return array<string,string> */
+	private function loadReturnTypes(): array
+	{
+		$returnTypes = [];
+		foreach ([
+			__DIR__ . '/../../../../runtime/generated/stan/runtime_symbols_legacy.php',
+			__DIR__ . '/../../../../runtime/generated/stan/runtime_symbols_strict.phs',
+		] as $path) {
+			if (!is_file($path)) {
+				continue;
+			}
+			$contents = file_get_contents($path);
+			if (!is_string($contents)) {
+				continue;
+			}
+			if (preg_match_all('/function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\([^)]*\)\s*:\s*([^\\s{]+)\s*\\{/m', $contents, $matches, PREG_SET_ORDER) > 0) {
+				foreach ($matches as $match) {
+					$returnTypes[strtolower((string) $match[1])] = (string) $match[2];
+				}
+			}
+			if (preg_match_all('/function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\([^)]*\)\s*\\/\\*\\*\\s*([^*]+?)\\s*\\*\\//m', $contents, $matches, PREG_SET_ORDER) > 0) {
+				foreach ($matches as $match) {
+					$returnTypes[strtolower((string) $match[1])] = trim((string) $match[2]);
+				}
+			}
+		}
+		return $returnTypes;
 	}
 }

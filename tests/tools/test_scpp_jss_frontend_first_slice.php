@@ -29,6 +29,9 @@ final class ScppJssFrontendFirstSliceTest
 			$this->testStanClassifiesJssClassConstants();
 			$this->testJssClassifiedEmissionSupportsReservedHelperFamilies();
 			$this->testJssTakeSupportsResultWrapperHelperFlow();
+			$this->testStanClassifiesJssTakeContracts();
+			$this->testJssClassifiedEmissionUsesStanTakeDiagnostics();
+			$this->testStanClassifiesJssHelperModuleAvailability();
 			$this->testJssEmitterConsumesStanIdentifierClassifications();
 			$this->testJssEmitterConsumesStanBinaryPlusClassifications();
 			$this->testJssSummaryCarriesParameterTypesForBinaryPlus();
@@ -270,13 +273,20 @@ final class ScppJssFrontendFirstSliceTest
 	private function testJssClassifiedEmissionSupportsReservedHelperFamilies(): void
 	{
 		$source = implode("\n", [
-			'print(fs.get("a.txt"), json.decode("{}"), "\\n");',
+			'print(fs.get("a.txt"), fs.mkdir("tmp"), json.decode("{}"), "\\n");',
 			'',
 		]);
+		$program = (new JssParser())->parse((new JssTokenizer())->tokenize($source));
+		$summary = (new JssSummaryExtractor())->summarize($program, 'main.jss');
+		$classifications = (new StanFrontendClassifier())->classify(['main.jss' => $summary], (new StanSymbolIndexBuilder())->build(['main.jss' => $summary]));
+		$this->assertSame('result<string>', $this->findClassificationByTarget($classifications, 'fs_get')['return_type'] ?? null, 'STAN helper classification should expose fs_get return contract truth');
+		$this->assertSame('bool', $this->findClassificationByTarget($classifications, 'fs_mkdir')['return_type'] ?? null, 'STAN helper classification should expose plain bool fs mutator return contract truth');
+		$this->assertSame('dynamic', $this->findClassificationByTarget($classifications, 'json_decode')['return_type'] ?? null, 'STAN helper classification should expose json_decode dynamic return contract truth');
+
 		$phs = (new JssTranspiler())->transpileToPhsWithStanClassifications($source, 'main.jss');
 		$this->assertSame(
 			implode("\n", [
-				'echo fs_get("a.txt"), json_decode("{}"), "\\n";',
+				'echo fs_get("a.txt"), fs_mkdir("tmp"), json_decode("{}"), "\\n";',
 				'',
 			]),
 			$phs,
@@ -313,6 +323,113 @@ final class ScppJssFrontendFirstSliceTest
 			$phs,
 			'JSS should support the existing take(result<T>) flow with reserved helper-family lowering'
 		);
+	}
+
+	private function testStanClassifiesJssTakeContracts(): void
+	{
+		$source = implode("\n", [
+			'function show(path: string): void {',
+			'    let text: string = "";',
+			'    let err: error;',
+			'    if (!take(text, err, fs.get(path))) {',
+			'        return;',
+			'    }',
+			'}',
+			'',
+		]);
+		$program = (new JssParser())->parse((new JssTokenizer())->tokenize($source));
+		$summary = (new JssSummaryExtractor())->summarize($program, 'main.jss');
+		$takeRequests = array_values(array_filter(
+			$summary['frontend_classification_requests'] ?? [],
+			static fn (array $request): bool => ($request['kind'] ?? '') === 'take_contract'
+		));
+		$this->assertSame(1, count($takeRequests), 'JSS summary should ask STAN to classify take(...) contracts');
+		$this->assertSame('fs_get', $takeRequests[0]['source_call_target'] ?? null, 'JSS take request should carry the normalized helper source target');
+		$this->assertSame('result<string>', $takeRequests[0]['source_type'] ?? null, 'JSS take request should carry the helper source wrapper type');
+		$this->assertSame('text', $takeRequests[0]['outputs'][0]['name'] ?? null, 'JSS take request should carry the first output name');
+		$this->assertSame('string', $takeRequests[0]['outputs'][0]['type'] ?? null, 'JSS take request should carry the first output type');
+		$this->assertSame('err', $takeRequests[0]['outputs'][1]['name'] ?? null, 'JSS take request should carry the error output name');
+		$this->assertSame('error', $takeRequests[0]['outputs'][1]['type'] ?? null, 'JSS take request should carry the error output type');
+
+		$classifications = (new StanFrontendClassifier())->classify(['main.jss' => $summary], (new StanSymbolIndexBuilder())->build(['main.jss' => $summary]));
+		$take = $this->findClassificationByKind($classifications, 'take_contract');
+		$this->assertSame('result', $take['family'] ?? null, 'STAN should classify result<T> take contracts');
+		$this->assertSame('fs_get', $take['source_call_target'] ?? null, 'STAN should preserve the normalized helper source target');
+		$this->assertSame('result<string>', $take['source_type'] ?? null, 'STAN should derive take source type from runtime helper catalog truth');
+		$this->assertSame(['string', 'error'], $take['output_types'] ?? null, 'STAN should return canonical take output types');
+		$this->assertSame([], $take['diagnostics'] ?? null, 'valid take contracts should not produce diagnostics');
+
+		$badSource = implode("\n", [
+			'function show(path: string): void {',
+			'    let text: int = 0;',
+			'    let err: error;',
+			'    if (!take(text, err, fs.get(path))) {',
+			'        return;',
+			'    }',
+			'}',
+			'',
+		]);
+		$badProgram = (new JssParser())->parse((new JssTokenizer())->tokenize($badSource));
+		$badSummary = (new JssSummaryExtractor())->summarize($badProgram, 'bad.jss');
+		$badClassifications = (new StanFrontendClassifier())->classify(['bad.jss' => $badSummary], (new StanSymbolIndexBuilder())->build(['bad.jss' => $badSummary]));
+		$badTake = $this->findClassificationByKind($badClassifications, 'invalid_take_contract');
+		$this->assertSame('`take(...)` expects output `text` to have type `string` but found `int`.', $badTake['diagnostics'][0]['message'] ?? null, 'STAN should own the canonical take output type mismatch diagnostic');
+
+		$semanticResult = (new StanSemanticPass())->analyze(['bad.jss' => $badSummary], $this->root);
+		$this->assertSame('frontend_take_contract', $semanticResult['frontend_diagnostics'][0]['code'] ?? null, 'STAN semantic result should expose take contract failures as frontend diagnostics');
+		$this->assertSame('`take(...)` expects output `text` to have type `string` but found `int`.', $semanticResult['frontend_diagnostics'][0]['message'] ?? null, 'STAN frontend diagnostics should preserve canonical take messages');
+	}
+
+	private function testJssClassifiedEmissionUsesStanTakeDiagnostics(): void
+	{
+		$source = implode("\n", [
+			'function show(path: string): void {',
+			'    let text: int = 0;',
+			'    let err: error;',
+			'    if (!take(text, err, fs.get(path))) {',
+			'        return;',
+			'    }',
+			'}',
+			'',
+		]);
+		$this->assertClassifiedTranspileFails(
+			$source,
+			'`take(...)` expects output `text` to have type `string` but found `int`.',
+			'classified JSS emission should surface the STAN-owned take output type diagnostic',
+			'main.jss:4:10'
+		);
+	}
+
+	private function testStanClassifiesJssHelperModuleAvailability(): void
+	{
+		$source = implode("\n", [
+			'function show(path: string): void {',
+			'    print(fs.get(path), "\\n");',
+			'}',
+			'',
+		]);
+		$program = (new JssParser())->parse((new JssTokenizer())->tokenize($source));
+		$summary = (new JssSummaryExtractor())->summarize($program, 'main.jss');
+		$symbolIndex = (new StanSymbolIndexBuilder())->build(['main.jss' => $summary]);
+
+		$classifications = (new StanFrontendClassifier())->classify(['main.jss' => $summary], $symbolIndex, ['json', 'datetime']);
+		$helper = $this->findClassificationByTarget($classifications, 'fs_get');
+		$this->assertSame('unavailable_runtime_module', $helper['kind'] ?? null, 'STAN should reject helper calls whose required runtime module is inactive');
+		$this->assertSame('filesystem', $helper['required_module'] ?? null, 'STAN should report the required runtime module for helper calls');
+		$this->assertSame('Runtime helper `fs_get()` requires module `filesystem` in the active project runtime config.', $helper['diagnostics'][0]['message'] ?? null, 'STAN should own helper module availability diagnostics');
+
+		$semanticResult = (new StanSemanticPass())->analyze(['main.jss' => $summary], $this->root, ['json', 'datetime']);
+		$moduleDiagnostics = array_values(array_filter(
+			$semanticResult['frontend_diagnostics'] ?? [],
+			static fn (array $diagnostic): bool => ($diagnostic['message'] ?? null) === 'Runtime helper `fs_get()` requires module `filesystem` in the active project runtime config.'
+		));
+		$this->assertSame(1, count($moduleDiagnostics), 'STAN semantic result should expose helper module diagnostics as frontend diagnostics');
+		$this->assertSame('frontend_member_access', $moduleDiagnostics[0]['code'] ?? null, 'STAN should attach helper module diagnostics to the helper member-access request');
+
+		$enabledClassifications = (new StanFrontendClassifier())->classify(['main.jss' => $summary], $symbolIndex, ['json', 'datetime', 'filesystem']);
+		$enabledHelper = $this->findClassificationByTarget($enabledClassifications, 'fs_get');
+		$this->assertSame('function', $enabledHelper['kind'] ?? null, 'STAN should accept helper calls when their required runtime module is active');
+		$this->assertSame('result<string>', $enabledHelper['return_type'] ?? null, 'accepted helper calls should still expose runtime return type truth');
 	}
 
 	private function testJssEmitterConsumesStanIdentifierClassifications(): void
@@ -1309,6 +1426,20 @@ final class ScppJssFrontendFirstSliceTest
 		throw new RuntimeException($message . ' did not fail.');
 	}
 
+	private function assertClassifiedTranspileFails(string $source, string $expectedMessage, string $message, ?string $expectedLocation = null): void
+	{
+		try {
+			(new JssTranspiler())->transpileToPhsWithStanClassifications($source, 'main.jss');
+		} catch (\Throwable $exception) {
+			$this->assertContains($expectedMessage, $exception->getMessage(), $message);
+			if ($expectedLocation !== null) {
+				$this->assertContains($expectedLocation, $exception->getMessage(), $message . ' should include source location');
+			}
+			return;
+		}
+		throw new RuntimeException($message . ' did not fail.');
+	}
+
 	/** @param array<string,array<string,mixed>> $classifications @return array<string,mixed> */
 	private function findClassificationByName(array $classifications, string $name): array
 	{
@@ -1318,6 +1449,28 @@ final class ScppJssFrontendFirstSliceTest
 			}
 		}
 		throw new RuntimeException('Missing classification for `' . $name . '`.');
+	}
+
+	/** @param array<string,array<string,mixed>> $classifications @return array<string,mixed> */
+	private function findClassificationByKind(array $classifications, string $kind): array
+	{
+		foreach ($classifications as $classification) {
+			if (($classification['kind'] ?? null) === $kind) {
+				return $classification;
+			}
+		}
+		throw new RuntimeException('Missing classification kind `' . $kind . '`.');
+	}
+
+	/** @param array<string,array<string,mixed>> $classifications @return array<string,mixed> */
+	private function findClassificationByTarget(array $classifications, string $target): array
+	{
+		foreach ($classifications as $classification) {
+			if (($classification['target'] ?? null) === $target) {
+				return $classification;
+			}
+		}
+		throw new RuntimeException('Missing classification target `' . $target . '`.');
 	}
 
 	private function mkdir(string $path): void
