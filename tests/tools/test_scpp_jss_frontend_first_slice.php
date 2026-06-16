@@ -22,6 +22,7 @@ final class ScppJssFrontendFirstSliceTest
 		$this->mkdir($this->root);
 		try {
 			$this->testTinyJssTranspilesToPhs();
+			$this->testJssAsyncAwaitTranspilesToPhsAsyncSurface();
 			$this->testJssCommentsAreIgnoredByFrontend();
 			$this->testJssSummaryProvidesStanInterfaceFacts();
 			$this->testStanClassifiesJssFrontendRequests();
@@ -119,6 +120,35 @@ final class ScppJssFrontendFirstSliceTest
 			]),
 			$phs,
 			'JSS frontend should ignore line and block comments while preserving the emitted program'
+		);
+	}
+
+	private function testJssAsyncAwaitTranspilesToPhsAsyncSurface(): void
+	{
+		$source = implode("\n", [
+			'async function computeValue(): int {',
+			'    await async_sleep_ms(1);',
+			'    return 42;',
+			'}',
+			'',
+			'let value: int = await computeValue();',
+			'print(value);',
+			'',
+		]);
+		$phs = (new JssTranspiler())->transpileToPhs($source);
+		$this->assertSame(
+			implode("\n", [
+				'/** @async */',
+				'function computeValue(): int {',
+				"\t" . 'async_sleep_ms(1);',
+				"\t" . 'return 42;',
+				'}',
+				'$value int = async_wait(computeValue());',
+				'echo $value;',
+				'',
+			]),
+			$phs,
+			'JSS async/await should emit the PHS async core surface'
 		);
 	}
 

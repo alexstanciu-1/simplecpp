@@ -139,6 +139,24 @@ final class JssParser
 			return $this->node('class_decl', ['name' => $name, 'extends' => $extends, 'members' => $members], $start);
 		}
 
+		if ($this->match('async')) {
+			$start = $this->previous();
+			$this->consume('function', 'Expected `function` after `async`.');
+			$name = $this->consume('identifier', 'Expected function name.')->text;
+			$this->consume('(', 'Expected `(` after function name.');
+			$params = $this->parseParameterList();
+			$this->consume(')', 'Expected `)` after parameters.');
+			$this->consume(':', 'Expected explicit return type after JSS function parameters.');
+			$returnType = $this->parseTypeSpelling();
+			return $this->node('function_decl', [
+				'name' => $name,
+				'params' => $params,
+				'return_type' => $returnType,
+				'body' => $this->parseBlock(),
+				'is_async' => true,
+			], $start);
+		}
+
 		if ($this->match('function')) {
 			$start = $this->previous();
 			$name = $this->consume('identifier', 'Expected function name.')->text;
@@ -766,6 +784,11 @@ final class JssParser
 
 	private function parseUnary(): JssNode
 	{
+		if ($this->match('await')) {
+			return $this->node('await', [
+				'expression' => $this->parseUnary(),
+			], $this->previous());
+		}
 		if ($this->match('!') || $this->match('-')) {
 			return $this->node('unary', [
 				'operator' => $this->previous()->text,
