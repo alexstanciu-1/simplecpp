@@ -39,7 +39,7 @@ Initial non-goals include:
 - JavaScript `this` binding rules
 - JavaScript-compatible `undefined` behavior in the current subset
 - loose equality/coercion
-- async / await / Promise semantics
+- JavaScript Promise semantics; the later Simple C++ stackless async/await alpha surface is now tracked in `specs/async_await.md`
 - dynamic imports or JavaScript module semantics
 - object spread/destructuring unless a narrow PHS-equivalent rule is later specified
 

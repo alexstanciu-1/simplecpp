@@ -137,6 +137,7 @@ Feature branches do not go directly to `main`.
    - update `CHANGELOG.md`
    - review `.agents/skills/*` and update affected Agent Skills before release, or record that no skill update is needed
    - run the required validation/test suites
+   - for releases containing async/await changes, include `php tests/tools/test_scpp_async_surface_projects.php` and the focused async runtime/language checks listed in `tests/tools/README.md`
 4. Open a GitHub pull request from `release/<version>` into `main`.
 5. After approval and merge into `main`:
    - fast-forward local `main`

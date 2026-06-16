@@ -400,6 +400,7 @@ final class IrBuilder
 			line: (int) ($node->lineno ?? 0),
 			argNormalizationRules: $this->validateArgNormalizationRules($argRuleParse['rules'], $params, 'function ' . (string) ($children['name'] ?? '')),
 			isLibExport: $this->hasLibExportTag($children['docComment'] ?? null),
+			isAsync: $this->hasAsyncTag($children['docComment'] ?? null),
 		);
 	}
 
@@ -434,6 +435,7 @@ final class IrBuilder
 			line: (int) ($node->lineno ?? 0),
 			visibility: $this->readMemberVisibility((int) ($node->flags ?? 0)),
 			argNormalizationRules: $this->validateArgNormalizationRules($this->parseArgNormalizationRules($children['docComment'] ?? null, $owner)['rules'], $params, $owner),
+			isAsync: $this->hasAsyncTag($children['docComment'] ?? null),
 		);
 	}
 
@@ -455,6 +457,14 @@ final class IrBuilder
 			return false;
 		}
 		return preg_match('/@lib-export\b/', $docComment) === 1;
+	}
+
+	private function hasAsyncTag(mixed $docComment): bool
+	{
+		if (!is_string($docComment) || trim($docComment) === '') {
+			return false;
+		}
+		return preg_match('/@async\b/', $docComment) === 1;
 	}
 
 	/**

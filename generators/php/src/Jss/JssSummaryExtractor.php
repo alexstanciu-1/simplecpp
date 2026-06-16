@@ -8,6 +8,8 @@ final class JssSummaryExtractor
 	private JssFrontendRequestFactory $requestFactory;
 	private JssFileSummaryBuilder $summaryBuilder;
 	private JssCallSurface $callSurface;
+	/** @var array<string,string> */
+	private array $functionReturnTypes = [];
 
 	public function __construct(?JssFrontendRequestFactory $requestFactory = null, ?JssFileSummaryBuilder $summaryBuilder = null, ?JssCallSurface $callSurface = null)
 	{
@@ -21,6 +23,7 @@ final class JssSummaryExtractor
 	{
 		$this->requestFactory->reset();
 		$this->requestFactory->setPath($path);
+		$this->functionReturnTypes = $this->collectFunctionReturnTypes($program->fields['statements'] ?? []);
 		$rootConstants = [];
 		$rootFunctions = [];
 		$rootClasses = [];
@@ -176,7 +179,7 @@ final class JssSummaryExtractor
 	private function summarizeFunctionLike(JssNode $node, ?string $namespace): array
 	{
 		$body = is_array($node->fields['body'] ?? null) ? $node->fields['body'] : [];
-		return $this->summaryBuilder->functionDeclaration(
+		$summary = $this->summaryBuilder->functionDeclaration(
 			(string) $node->fields['name'],
 			$namespace,
 			$this->summarizeParams($node->fields['params'] ?? []),
@@ -185,6 +188,10 @@ final class JssSummaryExtractor
 			count($body),
 			$this->nodeLine($node),
 		);
+		$summary['return_values'] = $this->summarizeReturnValues($body);
+		$summary['returns_on_all_paths'] = $this->statementsReturnOnAllPaths($body);
+		$summary['local_type_assignments'] = $this->summarizeLocalTypeAssignments($body);
+		return $summary;
 	}
 
 	/** @return array<string,mixed> */
@@ -244,7 +251,7 @@ final class JssSummaryExtractor
 	private function summarizeMethod(JssNode $method): array
 	{
 		$body = is_array($method->fields['body'] ?? null) ? $method->fields['body'] : [];
-		return $this->summaryBuilder->functionDeclaration(
+		$summary = $this->summaryBuilder->functionDeclaration(
 			(string) $method->fields['name'],
 			null,
 			$this->summarizeParams($method->fields['params'] ?? []),
@@ -254,6 +261,10 @@ final class JssSummaryExtractor
 			$this->nodeLine($method),
 			($method->fields['static'] ?? false) === true,
 		);
+		$summary['return_values'] = $this->summarizeReturnValues($body);
+		$summary['returns_on_all_paths'] = $this->statementsReturnOnAllPaths($body);
+		$summary['local_type_assignments'] = $this->summarizeLocalTypeAssignments($body);
+		return $summary;
 	}
 
 	/** @return list<array{name:string,type:string,default:mixed}> */
@@ -295,6 +306,102 @@ final class JssSummaryExtractor
 			}
 		}
 		return $locals;
+	}
+
+	/** @param list<JssNode> $statements @return list<array<string,mixed>> */
+	private function summarizeReturnValues(array $statements): array
+	{
+		$values = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof JssNode || $statement->kind !== 'return') {
+				continue;
+			}
+			$value = $statement->fields['value'] ?? null;
+			$values[] = [
+				'line' => $this->nodeLine($statement),
+				'descriptor' => $this->expressionDescriptor($value, []),
+				'direct_call_name' => $this->directCallName($value),
+			];
+		}
+		return $values;
+	}
+
+	/** @param list<JssNode> $statements @return list<JssNode> */
+	private function flattenStatements(array $statements): array
+	{
+		$flat = [];
+		foreach ($statements as $statement) {
+			if (!$statement instanceof JssNode) {
+				continue;
+			}
+			$flat[] = $statement;
+			foreach (['body', 'then', 'else'] as $field) {
+				if (is_array($statement->fields[$field] ?? null)) {
+					$flat = array_merge($flat, $this->flattenStatements($statement->fields[$field]));
+				}
+			}
+			foreach (is_array($statement->fields['cases'] ?? null) ? $statement->fields['cases'] : [] as $case) {
+				if (is_array($case) && is_array($case['body'] ?? null)) {
+					$flat = array_merge($flat, $this->flattenStatements($case['body']));
+				}
+			}
+		}
+		return $flat;
+	}
+
+	/** @param list<JssNode> $statements */
+	private function statementsReturnOnAllPaths(array $statements): bool
+	{
+		foreach ($statements as $statement) {
+			if (!$statement instanceof JssNode) {
+				continue;
+			}
+			if ($statement->kind === 'return') {
+				return true;
+			}
+			if ($statement->kind === 'if' && $this->ifStatementReturnsOnAllPaths($statement)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private function ifStatementReturnsOnAllPaths(JssNode $statement): bool
+	{
+		$thenStatements = $statement->fields['then'] ?? null;
+		$elseStatements = $statement->fields['else'] ?? null;
+		return is_array($thenStatements)
+			&& is_array($elseStatements)
+			&& $elseStatements !== []
+			&& $this->statementsReturnOnAllPaths($thenStatements)
+			&& $this->statementsReturnOnAllPaths($elseStatements);
+	}
+
+	/** @param list<JssNode> $statements @return list<array<string,mixed>> */
+	private function summarizeLocalTypeAssignments(array $statements): array
+	{
+		$assignments = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof JssNode || $statement->kind !== 'var_decl') {
+				continue;
+			}
+			$name = (string) ($statement->fields['name'] ?? '');
+			$initializer = $statement->fields['initializer'] ?? null;
+			if ($name === '' || !$initializer instanceof JssNode) {
+				continue;
+			}
+			$type = $this->expressionTypeHint($initializer, []);
+			if ($type === null || $type === '') {
+				continue;
+			}
+			$assignments[] = [
+				'line' => $this->nodeLine($statement),
+				'name' => $name,
+				'type' => $type,
+				'statement_kind' => 'var_decl',
+			];
+		}
+		return $assignments;
 	}
 
 	/** @param list<array<string,mixed>> $requests */
@@ -416,8 +523,12 @@ final class JssSummaryExtractor
 			return;
 		}
 		if ($expression->kind === 'identifier') {
+			$name = (string) $expression->fields['name'];
+			if (array_key_exists($name, $localTypes) && preg_match('/^[A-Z_][A-Z0-9_]*$/', $name) !== 1) {
+				return;
+			}
 			$requests[] = $this->makeRequest('identifier_role', [
-				'name' => (string) $expression->fields['name'],
+				'name' => $name,
 			], $expression);
 			return;
 		}
@@ -557,6 +668,9 @@ final class JssSummaryExtractor
 			$name = (string) $expression->fields['name'];
 			return $localTypes[$name] ?? null;
 		}
+		if ($expression->kind === 'await') {
+			return $this->expressionTypeHint($expression->fields['expression'] ?? null, $localTypes);
+		}
 		if ($expression->kind === 'unary') {
 			$operator = (string) ($expression->fields['operator'] ?? '');
 			$innerType = $this->expressionTypeHint($expression->fields['expression'] ?? null, $localTypes);
@@ -595,6 +709,10 @@ final class JssSummaryExtractor
 			}
 			if ($callee instanceof JssNode && $callee->kind === 'identifier' && strtolower((string) ($callee->fields['name'] ?? '')) === 'take') {
 				return 'bool';
+			}
+			if ($callee instanceof JssNode && $callee->kind === 'identifier') {
+				$name = strtolower((string) ($callee->fields['name'] ?? ''));
+				return $this->functionReturnTypes[$name] ?? null;
 			}
 		}
 		return null;
@@ -669,21 +787,29 @@ final class JssSummaryExtractor
 		if (!$expression instanceof JssNode) {
 			return null;
 		}
+		$typeHint = $this->expressionTypeHint($expression, $localTypes);
+		if ($typeHint !== null) {
+			return [
+				'kind' => 'type',
+				'type' => $typeHint,
+			];
+		}
 		if ($expression->kind === 'identifier') {
 			$name = (string) ($expression->fields['name'] ?? '');
 			return [
-				'kind' => 'identifier',
-				'name' => $name,
-				'type' => $localTypes[$name] ?? null,
+				'kind' => 'alias',
+				'source' => $name,
 			];
 		}
 		if ($expression->kind === 'member') {
-			$chain = $this->flattenMemberChain($expression);
-			$base = $chain[0] ?? '';
 			return [
-				'kind' => 'member',
-				'chain' => $chain,
-				'base_type' => $base !== '' ? ($localTypes[$base] ?? null) : null,
+				'kind' => 'chain',
+				'chain' => [
+					'root_kind' => 'variable',
+					'root_name' => $this->flattenMemberChain($expression)[0] ?? '',
+					'segments' => array_slice($this->flattenMemberChain($expression), 1),
+					'line' => $this->nodeLine($expression),
+				],
 			];
 		}
 		if ($expression->kind === 'call') {
@@ -712,6 +838,42 @@ final class JssSummaryExtractor
 		return [
 			'kind' => $expression->kind,
 		];
+	}
+
+	/** @return array<string,string> */
+	private function collectFunctionReturnTypes(mixed $statements): array
+	{
+		$types = [];
+		foreach (is_array($statements) ? $statements : [] as $statement) {
+			if (!$statement instanceof JssNode) {
+				continue;
+			}
+			if ($statement->kind === 'function_decl') {
+				$name = strtolower((string) ($statement->fields['name'] ?? ''));
+				$type = $statement->fields['return_type'] ?? null;
+				if ($name !== '' && is_string($type) && $type !== '') {
+					$types[$name] = strtolower($type);
+				}
+				continue;
+			}
+			if ($statement->kind === 'namespace_block') {
+				$types = array_merge($types, $this->collectFunctionReturnTypes($statement->fields['body'] ?? []));
+			}
+		}
+		return $types;
+	}
+
+	private function directCallName(mixed $expression): ?string
+	{
+		if (!$expression instanceof JssNode || $expression->kind !== 'call') {
+			return null;
+		}
+		$callee = $expression->fields['callee'] ?? null;
+		if (!$callee instanceof JssNode || $callee->kind !== 'identifier') {
+			return null;
+		}
+		$name = trim((string) ($callee->fields['name'] ?? ''));
+		return $name !== '' ? $name : null;
 	}
 
 	/** @param array<string,mixed> $fields @return array<string,mixed> */

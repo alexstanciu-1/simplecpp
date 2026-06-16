@@ -72,6 +72,7 @@ The authority stack for the current project is:
    - `specs/dynamic_types.md`
    - `specs/array_semantics.md`
    - `specs/count_empty_isset_contract.md`
+   - `specs/async_await.md`
    - relevant builtin contracts under `specs/builtins/`
 
 4. `specs/dynamic_types.md` remains especially authoritative for:

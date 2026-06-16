@@ -26,6 +26,7 @@ final class FunctionDecl
 		public readonly int $line = 0,
 		public readonly array $argNormalizationRules = [],
 		public readonly bool $isLibExport = false,
+		public readonly bool $isAsync = false,
 	) {
 	}
 }

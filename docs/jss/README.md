@@ -48,13 +48,15 @@ JSS intentionally does not emulate:
 - prototype objects
 - browser or Node.js APIs
 - JavaScript `import` / `export`
-- promises / async / await
+- JavaScript promises or event-loop compatibility
 - broad object bags by default
 - automatic `undefined` behavior
 - implicit missing-property success
 - loose coercion as the default programming model
 
 Dynamic behavior exists only at explicit boundaries such as `dynamic`, `mixed`, JSON decoding, or documented helper/runtime surfaces.
+
+JSS does support the Simple C++ stackless async/await alpha surface. That feature lowers through PHS and `scpp::async_core`; it is not JavaScript `Promise` compatibility.
 
 ## Project Shape
 
@@ -241,7 +243,7 @@ Current partials and boundaries:
 - broader arrow/callable ergonomics remain outside the first slice
 - private/protected and ES `#private` fields are not implemented in the current JSS class surface
 - destructuring and spread/rest are not implemented
-- JavaScript module/async semantics are not in scope
+- JavaScript module semantics and JavaScript promise/event-loop semantics are not in scope
 
 ## Helper Families
 
@@ -380,4 +382,3 @@ scpp full-error
 - `.agents/skills/simple-cpp-jss/references/not-javascript.md`
 - `samples/jss/TODO.md`
 - `samples/jss/POLICY_BACKLOG.md`
-

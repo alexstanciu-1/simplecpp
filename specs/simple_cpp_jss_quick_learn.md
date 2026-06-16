@@ -542,13 +542,36 @@ print(count + 1, "\n");
 
 Use `dynamic` / `mixed` intentionally. They are explicit boundaries, not the default model for all values.
 
+## Async / Await
+
+JSS supports the current Simple C++ stackless async/await alpha surface:
+
+```js
+async function computeValue(): int {
+    await async_sleep_ms(1);
+    return 42;
+}
+
+let value: int = await computeValue();
+print(value, "\n");
+```
+
+Current rules:
+
+- `async function` requires an explicit return type
+- `await async_sleep_ms(ms)` is valid only inside an async function
+- expression-level `await someAsyncFunction()` lowers through the shared PHS async surface
+- this is not JavaScript `Promise` compatibility and does not provide a JavaScript event loop
+
+See `specs/async_await.md` for the current alpha contract.
+
 ## Unsupported Or Deferred
 
 Current v1-alpha boundaries:
 
 - no JavaScript prototype model
 - no JavaScript `import` / `export`
-- no async / await / promises / generators
+- no JavaScript promises / generators
 - no broad JS truthiness
 - no loose object-bag-by-default model
 - no `undefined` until runtime/PHS own it

@@ -22,6 +22,7 @@ final class ScppJssFrontendFirstSliceTest
 		$this->mkdir($this->root);
 		try {
 			$this->testTinyJssTranspilesToPhs();
+			$this->testJssAsyncAwaitTranspilesToPhsAsyncSurface();
 			$this->testJssCommentsAreIgnoredByFrontend();
 			$this->testJssSummaryProvidesStanInterfaceFacts();
 			$this->testStanClassifiesJssFrontendRequests();
@@ -42,7 +43,7 @@ final class ScppJssFrontendFirstSliceTest
 			$this->testJssClassifiedEmissionConsumesFunctionCalleeClassifications();
 			$this->testJssClassifiedEmissionRejectsUnresolvedFunctionCall();
 			$this->testJssEmitterRejectsNonFunctionIdentifierCallWhenRequired();
-			$this->testJssClassifiedEmissionRejectsUnresolvedBinaryPlus();
+			$this->testJssClassifiedEmissionClassifiesSameFileFunctionBinaryPlus();
 			$this->testJssClassifiedEmissionRejectsKnownInvalidBinaryPlus();
 			$this->testJssClassifiedEmissionRejectsInvalidStaticMethod();
 			$this->testJssClassifiedEmissionRejectsInvalidClassMemberRead();
@@ -119,6 +120,35 @@ final class ScppJssFrontendFirstSliceTest
 			]),
 			$phs,
 			'JSS frontend should ignore line and block comments while preserving the emitted program'
+		);
+	}
+
+	private function testJssAsyncAwaitTranspilesToPhsAsyncSurface(): void
+	{
+		$source = implode("\n", [
+			'async function computeValue(): int {',
+			'    await async_sleep_ms(1);',
+			'    return 42;',
+			'}',
+			'',
+			'let value: int = await computeValue();',
+			'print(value);',
+			'',
+		]);
+		$phs = (new JssTranspiler())->transpileToPhs($source);
+		$this->assertSame(
+			implode("\n", [
+				'/** @async */',
+				'function computeValue(): int {',
+				"\t" . 'async_sleep_ms(1);',
+				"\t" . 'return 42;',
+				'}',
+				'$value int = async_wait(computeValue());',
+				'echo $value;',
+				'',
+			]),
+			$phs,
+			'JSS async/await should emit the PHS async core surface'
 		);
 	}
 
@@ -655,7 +685,7 @@ final class ScppJssFrontendFirstSliceTest
 		throw new RuntimeException('required classified emission should reject non-function identifier callees');
 	}
 
-	private function testJssClassifiedEmissionRejectsUnresolvedBinaryPlus(): void
+	private function testJssClassifiedEmissionClassifiesSameFileFunctionBinaryPlus(): void
 	{
 		$source = implode("\n", [
 			'function suffix(): string {',
@@ -666,13 +696,8 @@ final class ScppJssFrontendFirstSliceTest
 			'print(value + 1, "\\n");',
 			'',
 		]);
-		try {
-			(new JssTranspiler())->transpileToPhsWithStanClassifications($source, 'main.jss');
-		} catch (RuntimeException $exception) {
-			$this->assertContains('JSS `+` could not be classified by STAN', $exception->getMessage(), 'classified JSS emission should fail unresolved `+` sites');
-			return;
-		}
-		throw new RuntimeException('classified JSS emission should reject unresolved `+` sites');
+		$output = (new JssTranspiler())->transpileToPhsWithStanClassifications($source, 'main.jss');
+		$this->assertContains('echo $value . 1, "\\n";', $output, 'classified JSS emission should use same-file function return types for `+` sites');
 	}
 
 	private function testJssClassifiedEmissionRejectsKnownInvalidBinaryPlus(): void
