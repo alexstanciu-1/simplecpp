@@ -334,6 +334,27 @@ These are planning expectations, not benchmark claims.
 
 ## 9. Suggested Implementation Phases
 
+### Current Branch Status: `codex/async-await-core`
+
+As of the initial implementation branch, the shared runtime prototype exists under `runtime/include/scpp/async_core.hpp` and is included by the default runtime aggregate. The prototype currently provides:
+
+- `scpp::async_core::scheduler` with a ready queue, timer queue, `run()`, `run_until(...)`, and thread-safe external wakeups
+- `scpp::async_core::task<T>` / `task<void>` as C++20 coroutine task values
+- `scpp::async_core::sleep_ms(...)` / `sleep_for(...)` for timer-backed suspension
+- `scpp::async_core::yield_now()` for cooperative rescheduling
+- `scpp::async_core::ready_task(...)` / `ready_task()` for already-completed async values
+- `scpp::async_core::spawn(task<T>&)` for starting child async work on the active scheduler
+- `scpp::async_core::sync_wait(...)` for blocking a synchronous caller until a root async task completes
+
+Native runtime coverage currently validates immediate completion, nested await, timer ordering, cooperative yield ordering, ready tasks, exception propagation, cross-thread wakeups, and missing-scheduler diagnostics.
+
+The remaining major work is language surface integration:
+
+- PHS/PHP++ needs a syntax or library surface that PHP parsing can accept before C++ emission can lower to `co_await` / `co_return`.
+- JSS can parse familiar `async` / `await` spelling, but it currently lowers through PHS, so JSS syntax should not be enabled until the PHS/generator path has an accepted representation.
+- The thread-backed `tasks` module remains separate; no task-batch await bridge has been implemented yet.
+- Fibers remain deferred.
+
 ### Phase 0: Specification and Ownership
 
 - create top-level planning and then normative spec draft for lightweight async/await semantics
