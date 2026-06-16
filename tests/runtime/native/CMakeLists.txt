@@ -49,6 +49,11 @@ add_executable(test_closure test_closure.cpp)
 target_link_libraries(test_closure PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_closure COMMAND test_closure)
 
+# Async core scheduler/coroutine smoke coverage.
+add_executable(test_async_core test_async_core.cpp)
+target_link_libraries(test_async_core PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_async_core COMMAND test_async_core)
+
 # hash_t smoke coverage.
 add_executable(test_hash_t test_hash_t.cpp)
 target_link_libraries(test_hash_t PRIVATE scpp_runtime scpp_runtime_test_support)
