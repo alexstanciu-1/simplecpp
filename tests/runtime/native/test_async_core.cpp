@@ -62,10 +62,8 @@ scpp::async_core::task<void> record_two_yields(std::vector<int> &events)
 {
 	auto first = yield_and_record(events, 1, 3);
 	auto second = yield_and_record(events, 2, 4);
-	auto *active_scheduler = scpp::async_core::scheduler::current();
-	assert(active_scheduler != nullptr);
-	first.start(*active_scheduler);
-	second.start(*active_scheduler);
+	scpp::async_core::spawn(first);
+	scpp::async_core::spawn(second);
 	co_await first;
 	co_await second;
 }
@@ -187,6 +185,15 @@ void test_missing_scheduler_diagnostic()
 	caught = false;
 	try {
 		yield.await_suspend(std::noop_coroutine());
+	} catch (const scpp::runtime_error &error) {
+		caught = std::string(error.code()) == "missing_async_scheduler";
+	}
+	assert(caught);
+
+	auto task = immediate_value();
+	caught = false;
+	try {
+		scpp::async_core::spawn(task);
 	} catch (const scpp::runtime_error &error) {
 		caught = std::string(error.code()) == "missing_async_scheduler";
 	}

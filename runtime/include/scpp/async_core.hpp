@@ -344,6 +344,16 @@ inline task<void> ready_task()
 }
 
 template <typename T>
+void spawn(task<T> &work)
+{
+	auto *active_scheduler = scheduler::current();
+	if (active_scheduler == nullptr) {
+		throw runtime_error("async task spawned without an active async scheduler", "missing_async_scheduler", "scpp::async_core", "spawn");
+	}
+	work.start(*active_scheduler);
+}
+
+template <typename T>
 T sync_wait(task<T> root)
 {
 	scheduler event_loop;
