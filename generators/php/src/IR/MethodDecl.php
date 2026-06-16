@@ -27,6 +27,7 @@ final class MethodDecl
 		public readonly int $line = 0,
 		public readonly string $visibility = 'public',
 		public readonly array $argNormalizationRules = [],
+		public readonly bool $isAsync = false,
 	) {
 	}
 }

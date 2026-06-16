@@ -1703,6 +1703,10 @@ final class FrontEndSymbolExtractor
 		if ($element !== null) {
 			return $element;
 		}
+		$asyncWait = $this->describeAsyncWaitExpression($expr, $line);
+		if ($asyncWait !== null) {
+			return $asyncWait;
+		}
 		$chain = $this->extractChainDescriptor($expr, $line);
 		if ($chain !== null) {
 			return ['kind' => 'chain', 'chain' => $chain];
@@ -1767,6 +1771,25 @@ final class FrontEndSymbolExtractor
 			'kind' => 'element',
 			'source' => $source,
 		];
+	}
+
+	/** @return array<string,mixed>|null */
+	private function describeAsyncWaitExpression(mixed $expr, int $line): ?array
+	{
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::CALL || strtolower((string) ($this->extractDirectFunctionCallName($expr) ?? '')) !== 'async_wait') {
+			return null;
+		}
+		$args = isset($expr->children['args']->children) && is_array($expr->children['args']->children)
+			? array_values($expr->children['args']->children)
+			: [];
+		if (count($args) !== 1) {
+			return null;
+		}
+		$inner = $this->describeExpression($args[0], $line);
+		return (($inner['kind'] ?? 'unknown') === 'unknown') ? null : $inner;
 	}
 
 	private function extractDirectFunctionCallName(mixed $expr): ?string

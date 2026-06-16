@@ -9,6 +9,33 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.70 - 2026-06-16
+
+### Additions
+
+- Added the stackless async/await alpha core runtime with coroutine tasks, scheduler wakeups, timers, yield support, ready tasks, spawn helpers, and synchronous wait support.
+- Added PHS `async function` and `await` source-surface support through pre-tokenizer normalization and async runtime lowering.
+- Added JSS `async function` and `await` alpha support through the JSS-to-PHS path, preserving the typed compiled frontend model rather than JavaScript Promise compatibility.
+- Added focused async runtime, PHS language, JSS lowering, and cross-surface project validation coverage, including 10 PHS and 10 JSS async test projects.
+- Added async/await normative documentation plus release-validation guidance, onboarding updates, planning notes, and VS Code PHS grammar/snippet awareness.
+
+### Fixes
+
+- Added source-level diagnostics for `async_sleep_ms(...)` calls outside async functions.
+- Improved STAN handling for direct `async_wait(...)` result unwrapping and JSS async summary extraction.
+- Updated JSS and PHS guidance so agents and authors treat async/await as the current stackless alpha surface while fibers remain deferred.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Fibers are not part of this release and remain deferred for later design and implementation.
+- The existing `tasks` module remains the thread-backed parallel task surface; async/await is a lighter stackless runtime core and does not replace tasks.
+- JSS async/await is not JavaScript Promise or event-loop compatibility mode. It lowers through PHS and `scpp::async_core`.
+- `async_sleep_ms(...)` is only valid inside async functions; use `await` with async-producing expressions at the language surface.
+
 ## 0.1.69 - 2026-06-15
 
 ### Additions

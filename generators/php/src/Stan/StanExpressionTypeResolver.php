@@ -1783,6 +1783,8 @@ final class StanExpressionTypeResolver
 				}
 			}
 		}
+		$lookup['async_sleep_ms'] = 'void';
+		$lookup['async_wait'] = 'mixed';
 		return $lookup;
 	}
 
@@ -1810,6 +1812,22 @@ final class StanExpressionTypeResolver
 				}
 			}
 		}
+		$catalog['async_sleep_ms'] = [
+			'name' => 'async_sleep_ms',
+			'namespace' => null,
+			'params' => [['name' => 'duration_ms', 'type' => 'int']],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['async_wait'] = [
+			'name' => 'async_wait',
+			'namespace' => null,
+			'params' => [['name' => 'task', 'type' => 'mixed']],
+			'return_type' => 'mixed',
+			'line' => 0,
+			'is_static' => false,
+		];
 		return $catalog;
 	}
 

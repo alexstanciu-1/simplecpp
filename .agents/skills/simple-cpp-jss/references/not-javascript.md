@@ -20,7 +20,7 @@ Do not assume:
 - automatic missing-property success
 - browser or Node.js APIs
 - JS `import` / `export`
-- promises / async / await
+- JavaScript promises or event-loop semantics
 - destructuring
 - spread/rest
 - all arrays/objects/strings behaving like JavaScript

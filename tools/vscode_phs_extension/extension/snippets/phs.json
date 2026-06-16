@@ -8,6 +8,16 @@
     ],
     "description": "Create a typed PHP++ / PHS function."
   },
+  "Async function": {
+    "prefix": "asyncfn",
+    "body": [
+      "async function ${1:name}(${2:}): ${3:int} {",
+      "\tawait async_sleep_ms(${4:1});",
+      "\treturn ${5:value};",
+      "}"
+    ],
+    "description": "Create an async PHP++ / PHS function."
+  },
   "Lib export function": {
     "prefix": "libfn",
     "body": [

@@ -13,8 +13,12 @@ final class JssSemanticValidator
 		'take' => 'bool',
 		'count' => 'int',
 		'cli_argc' => 'int',
+		'print' => 'void',
 		'shell_exec' => 'string',
 	];
+
+	/** @var array<string,string> */
+	private array $functionReturnTypes = [];
 
 	public function __construct(
 		private readonly JssCallSurface $callSurface = new JssCallSurface(),
@@ -26,6 +30,7 @@ final class JssSemanticValidator
 	/** @param array<string,string> $types @param array{defer_take_contracts?:bool} $options */
 	public function validate(JssNode $program, array $types = [], array $options = []): void
 	{
+		$this->functionReturnTypes = $this->collectFunctionReturnTypes($program->fields['statements'] ?? []);
 		$this->validateStatements($program->fields['statements'] ?? [], $types, $options);
 	}
 
@@ -443,6 +448,9 @@ final class JssSemanticValidator
 			$type = $types[$name] ?? null;
 			return $type !== '' ? $type : null;
 		}
+		if ($expression->kind === 'await') {
+			return $this->expressionType($expression->fields['expression'] ?? null, $types);
+		}
 		if ($expression->kind === 'ternary') {
 			$trueType = $this->expressionType($expression->fields['when_true'] ?? null, $types);
 			$falseType = $this->expressionType($expression->fields['when_false'] ?? null, $types);
@@ -499,7 +507,7 @@ final class JssSemanticValidator
 			$callee = $expression->fields['callee'] ?? null;
 			if ($callee instanceof JssNode && $callee->kind === 'identifier') {
 				$name = strtolower((string) ($callee->fields['name'] ?? ''));
-				return self::BUILTIN_CALL_RETURN_TYPES[$name] ?? null;
+				return $this->functionReturnTypes[$name] ?? self::BUILTIN_CALL_RETURN_TYPES[$name] ?? null;
 			}
 			if ($callee instanceof JssNode && $callee->kind === 'member') {
 				return $this->callSurface->resolveCallReturnType($this->flattenMemberChain($callee));
@@ -587,6 +595,29 @@ final class JssSemanticValidator
 			$name = (string) ($param['name'] ?? '');
 			if ($name !== '') {
 				$types[$name] = $this->normalizeType($param['type'] ?? null) ?? '';
+			}
+		}
+		return $types;
+	}
+
+	/** @return array<string,string> */
+	private function collectFunctionReturnTypes(mixed $statements): array
+	{
+		$types = [];
+		foreach (is_array($statements) ? $statements : [] as $statement) {
+			if (!$statement instanceof JssNode) {
+				continue;
+			}
+			if ($statement->kind === 'function_decl') {
+				$name = strtolower((string) ($statement->fields['name'] ?? ''));
+				$type = $this->normalizeType($statement->fields['return_type'] ?? null);
+				if ($name !== '' && $type !== null) {
+					$types[$name] = $type;
+				}
+				continue;
+			}
+			if ($statement->kind === 'namespace_block') {
+				$types = array_merge($types, $this->collectFunctionReturnTypes($statement->fields['body'] ?? []));
 			}
 		}
 		return $types;

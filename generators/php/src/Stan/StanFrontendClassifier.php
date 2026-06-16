@@ -333,7 +333,7 @@ final class StanFrontendClassifier
 	private function classifyIdentifier(array $request, array $symbolIndex, ?array $activeRuntimeModules = null): array
 	{
 		$name = (string) ($request['name'] ?? '');
-		if (in_array($name, ['count', 'shell_exec', 'cli_argc', 'cli_argv', 'cli_args', 'take'], true)) {
+		if (in_array($name, ['count', 'shell_exec', 'cli_argc', 'cli_argv', 'cli_args', 'take', 'print'], true)) {
 			return [
 				'kind' => 'builtin_function',
 				'name' => $name,

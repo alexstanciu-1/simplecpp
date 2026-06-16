@@ -1,0 +1,7 @@
+$a = 1;
+$f = function () use ($a): vector<int> {
+	return [$a, 2];
+};
+
+$v vector<int> = $f();
+echo $v[0], ":", $v[1], "\n";

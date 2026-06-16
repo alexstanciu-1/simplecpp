@@ -124,6 +124,9 @@ final class JssEmitter
 			$params = $this->emitParameters($statement->fields['params'] ?? []);
 			$returnType = is_string($statement->fields['return_type'] ?? null) ? ': ' . $this->emitType((string) $statement->fields['return_type']) : '';
 			$lines = ['function ' . (string) $statement->fields['name'] . '(' . implode(', ', $params) . ')' . $returnType . ' {'];
+			if ((bool) ($statement->fields['is_async'] ?? false)) {
+				array_unshift($lines, '/** @async */');
+			}
 			$lines = array_merge($lines, $this->emitScopedBody($statement->fields['params'] ?? [], $statement->fields['body'] ?? [], false));
 			$lines[] = '}';
 			return implode("\n", $lines);
@@ -454,6 +457,7 @@ final class JssEmitter
 			'optional_member' => $this->emitExpression($expression->fields['object'] ?? null) . '?->' . (string) $expression->fields['member'],
 			'index' => $this->emitExpression($expression->fields['object'] ?? null) . '[' . $this->emitExpression($expression->fields['index'] ?? null) . ']',
 			'call' => $this->emitCall($expression),
+			'await' => $this->emitAwait($expression),
 			'unary' => $this->emitUnary($expression),
 			'binary' => $this->emitBinary($expression),
 			'ternary' => $this->emitTernary($expression),
@@ -907,6 +911,15 @@ final class JssEmitter
 		return (string) ($unary->fields['operator'] ?? '') . $this->emitExpression($unary->fields['expression'] ?? null);
 	}
 
+	private function emitAwait(JssNode $await): string
+	{
+		$expression = $await->fields['expression'] ?? null;
+		if ($expression instanceof JssNode && $this->isAsyncSleepCall($expression)) {
+			return $this->emitExpression($expression);
+		}
+		return 'async_wait(' . $this->emitExpression($expression) . ')';
+	}
+
 	private function emitTemplate(JssNode $template): string
 	{
 		$value = (string) ($template->fields['value'] ?? '');
@@ -999,5 +1012,16 @@ final class JssEmitter
 		return $callee instanceof JssNode
 			&& $callee->kind === 'identifier'
 			&& in_array((string) $callee->fields['name'], ['print', 'console_log'], true);
+	}
+
+	private function isAsyncSleepCall(JssNode $expression): bool
+	{
+		if ($expression->kind !== 'call') {
+			return false;
+		}
+		$callee = $expression->fields['callee'] ?? null;
+		return $callee instanceof JssNode
+			&& $callee->kind === 'identifier'
+			&& (string) $callee->fields['name'] === 'async_sleep_ms';
 	}
 }

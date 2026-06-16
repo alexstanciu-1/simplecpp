@@ -234,6 +234,30 @@ Do not use legacy `preg_*` names in strict projects. Those names belong to the P
 
 Current regex support is PCRE2-backed and requires the host PCRE2 development files to be installed manually. For the full supported surface and deferred PHP-compatibility flags, see `specs/builtins/regex/first_pass.md` and `docs/regex_builtins.md`.
 
+### Async / await alpha surface
+
+Strict PHS supports a first-slice stackless async/await surface:
+
+```php
+async function compute_value(): int {
+	await async_sleep_ms(1);
+	return 42;
+}
+
+$value int = await compute_value();
+echo $value, "\n";
+```
+
+Current rules:
+
+- `async function` requires an explicit return type
+- `return` inside an async function returns the async task result
+- `await async_sleep_ms(ms)` is valid only inside an async function
+- expression-level `await some_async_function()` is allowed from synchronous code and lowers through `async_wait(...)`
+- async/await is cooperative and does not create an OS thread per awaited operation
+
+This is the lightweight async core, not the thread-backed `tasks` module and not fibers. For the current semantic contract and alpha limits, see `specs/async_await.md`.
+
 ### Where build output goes
 
 - generated C++: `.prism/generated/`

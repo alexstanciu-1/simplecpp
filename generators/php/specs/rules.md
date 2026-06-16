@@ -78,6 +78,17 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - non-void functions must return a value on all paths
 - void functions cannot return a value
 
+### Closures and callable locals
+- Closure expressions are concrete callable values and lower to native C++ lambdas.
+- Explicit strict callable locals such as `$f function<int()> = function () use ($a) { return $a; };` lower to `std::function<int_t()>` storage and provide the expected closure signature when the initializer omits a return type.
+- A direct local assignment from a closure with a complete syntactic signature may synthesize the callable storage type, for example `$f = function (int $x): int { return $x; };` lowers to `std::function<int_t(int_t)>`.
+- Closure `use ($a)` captures the current value at closure creation time; `use (&$a)` captures by reference.
+- Closure return annotations owned by the scanner, including forms such as `: vector<int>`, are valid closure return types and must not depend on php-ast doc-comment ownership.
+- When a closure return type maps to `vector_t<T>`, a returned positional array literal lowers as a typed `vector_t<T>{...}` literal.
+- Untyped closure assignment with a value return is rejected unless the closure has an explicit return type or the target provides an expected callable signature.
+- Closures cannot be stored in dynamic/untyped containers or array slots; assign them to concrete callable locals instead.
+- A mismatch between an explicit callable local signature and an explicit closure signature is a STAN-owned diagnostic before build; the S2S generator should not perform broad semantic callable compatibility inference.
+
 
 ### Variable Typing
 - explicit scanner-owned inline slot type annotations are authoritative when present
