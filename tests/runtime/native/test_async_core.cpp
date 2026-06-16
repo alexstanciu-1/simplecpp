@@ -22,6 +22,13 @@ scpp::async_core::task<void> sleep_and_record(std::vector<int> &events, int valu
 	events.push_back(value);
 }
 
+scpp::async_core::task<void> yield_and_record(std::vector<int> &events, int before, int after)
+{
+	events.push_back(before);
+	co_await scpp::async_core::yield_now();
+	events.push_back(after);
+}
+
 scpp::async_core::task<scpp::int_t> nested_value()
 {
 	auto child = immediate_value();
@@ -41,6 +48,18 @@ scpp::async_core::task<void> record_two_timers(std::vector<int> &events)
 	auto faster = sleep_and_record(events, 1, 1);
 	co_await faster;
 	co_await slower;
+}
+
+scpp::async_core::task<void> record_two_yields(std::vector<int> &events)
+{
+	auto first = yield_and_record(events, 1, 3);
+	auto second = yield_and_record(events, 2, 4);
+	auto *active_scheduler = scpp::async_core::scheduler::current();
+	assert(active_scheduler != nullptr);
+	first.start(*active_scheduler);
+	second.start(*active_scheduler);
+	co_await first;
+	co_await second;
 }
 
 class background_signal_awaitable final {
@@ -108,6 +127,17 @@ void test_sleep_elapsed()
 	assert(events.size() == 1);
 }
 
+void test_yield_order()
+{
+	std::vector<int> events;
+	scpp::async_core::sync_wait(record_two_yields(events));
+	assert(events.size() == 4);
+	assert(events[0] == 1);
+	assert(events[1] == 2);
+	assert(events[2] == 3);
+	assert(events[3] == 4);
+}
+
 void test_error_propagation()
 {
 	bool caught = false;
@@ -135,6 +165,15 @@ void test_missing_scheduler_diagnostic()
 		caught = std::string(error.code()) == "missing_async_scheduler";
 	}
 	assert(caught);
+
+	auto yield = scpp::async_core::yield_now();
+	caught = false;
+	try {
+		yield.await_suspend(std::noop_coroutine());
+	} catch (const scpp::runtime_error &error) {
+		caught = std::string(error.code()) == "missing_async_scheduler";
+	}
+	assert(caught);
 }
 
 } // namespace
@@ -145,6 +184,7 @@ int main()
 	test_nested_await();
 	test_sleep_order();
 	test_sleep_elapsed();
+	test_yield_order();
 	test_error_propagation();
 	test_cross_thread_wakeup();
 	test_missing_scheduler_diagnostic();

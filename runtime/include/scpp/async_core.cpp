@@ -114,4 +114,18 @@ sleep_awaitable sleep_ms(const int_t &duration_ms) noexcept
 	return sleep_awaitable(std::chrono::milliseconds(native_duration));
 }
 
+void yield_awaitable::await_suspend(std::coroutine_handle<> continuation) const
+{
+	auto *active_scheduler = scheduler::current();
+	if (active_scheduler == nullptr) {
+		throw runtime_error("async yield used without an active async scheduler", "missing_async_scheduler", "scpp::async_core", "yield_now");
+	}
+	active_scheduler->enqueue(continuation);
+}
+
+yield_awaitable yield_now() noexcept
+{
+	return yield_awaitable();
+}
+
 } // namespace scpp::async_core

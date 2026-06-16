@@ -320,8 +320,17 @@ private:
 	std::chrono::milliseconds duration_;
 };
 
+class yield_awaitable final {
+public:
+	[[nodiscard]] bool await_ready() const noexcept { return false; }
+
+	void await_suspend(std::coroutine_handle<> continuation) const;
+	void await_resume() const noexcept {}
+};
+
 [[nodiscard]] sleep_awaitable sleep_for(std::chrono::milliseconds duration) noexcept;
 [[nodiscard]] sleep_awaitable sleep_ms(const int_t &duration_ms) noexcept;
+[[nodiscard]] yield_awaitable yield_now() noexcept;
 
 template <typename T>
 T sync_wait(task<T> root)
