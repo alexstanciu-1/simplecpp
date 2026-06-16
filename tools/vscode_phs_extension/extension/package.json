@@ -2,7 +2,7 @@
   "name": "simple-cpp-vscode",
   "displayName": "Simple C++",
   "description": "VS Code support for PHP++ / PHS authoring with STAN-powered language features in .phs files.",
-  "version": "0.1.68",
+  "version": "0.1.69",
   "publisher": "simple-cpp",
   "license": "UNLICENSED",
   "engines": {

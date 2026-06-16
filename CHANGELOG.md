@@ -9,6 +9,31 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.69 - 2026-06-15
+
+### Additions
+
+- Added the JSS v1-alpha frontend preview with typed script-style `.jss` project support through the normal `.jss -> PHS -> build/run` path.
+- Added JSS authoring documentation, AI-agent skill guidance, samples, and project-level validation coverage for helper-family flows such as `fs`, `io`, `json`, `dt`, `regex`, and `curl`.
+- Added the tasks/threading batch API planning and runtime surface work from `codex/threading-batch-api-plan`.
+
+### Fixes
+
+- Stabilized project-wide JSS frontend classification across multi-file and multi-namespace projects, including member access, static access, helper-family lowering, and `take(...)` flows.
+- Improved JSS diagnostics and source-first reporting for unsupported syntax, helper module requirements, runtime error paths, and classified frontend expressions.
+- Fixed strict JSON dynamic-boundary behavior so `json.decode`/`json_decode` defaults to dynamic for JSS and PHS flows.
+- Integrated the latest STAN strict-discipline, visibility, wrapper-boundary, runtime diagnostics, and VS Code extension metadata updates.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- JSS is an alpha preview for a typed scripting-looking compiled language, not JavaScript compatibility mode. Dynamic JavaScript semantics such as broad truthiness, `undefined`, optional chaining, and open object-bag behavior remain outside the current supported subset.
+- The tasks/threading surface is early and should be treated as release-candidate feedback material until it has broader project validation.
+- Agent Skill review completed: `.agents/skills/simple-cpp-jss/SKILL.md` documents the current JSS v1-alpha project authoring and validation flow.
+
 ## 0.1.68 - 2026-06-08
 
 ### Additions

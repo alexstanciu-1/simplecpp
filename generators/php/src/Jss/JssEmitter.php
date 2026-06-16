@@ -216,7 +216,8 @@ final class JssEmitter
 			$valueName = (string) $statement->fields['value_name'];
 			$valueType = is_string($statement->fields['value_type'] ?? null) ? (string) $statement->fields['value_type'] : '';
 			$value = '$' . $valueName;
-			$lines = ['foreach (' . $this->emitExpression($statement->fields['source'] ?? null) . ' as ' . $value . ') {'];
+			$valueHeader = $valueType !== '' ? $value . ' ' . $valueType : $value;
+			$lines = ['foreach (' . $this->emitExpression($statement->fields['source'] ?? null) . ' as ' . $valueHeader . ') {'];
 			$lines = array_merge($lines, $this->emitForeachBody($statement, null, $valueName, $valueType));
 			$lines[] = '}';
 			return implode("\n", $lines);
@@ -226,7 +227,8 @@ final class JssEmitter
 			$valueName = (string) $statement->fields['value_name'];
 			$valueType = is_string($statement->fields['value_type'] ?? null) ? (string) $statement->fields['value_type'] : '';
 			$value = '$' . $valueName;
-			$lines = ['foreach (' . $this->emitExpression($statement->fields['source'] ?? null) . ' as ' . $key . ' => ' . $value . ') {'];
+			$valueHeader = $valueType !== '' ? $value . ' ' . $valueType : $value;
+			$lines = ['foreach (' . $this->emitExpression($statement->fields['source'] ?? null) . ' as ' . $key . ' => ' . $valueHeader . ') {'];
 			$lines = array_merge($lines, $this->emitForeachBody($statement, (string) $statement->fields['key_name'], $valueName, $valueType));
 			$lines[] = '}';
 			return implode("\n", $lines);

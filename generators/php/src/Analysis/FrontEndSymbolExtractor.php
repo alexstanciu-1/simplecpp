@@ -1862,6 +1862,7 @@ final class FrontEndSymbolExtractor
 			AstKind::TYPE_STRING => 'string',
 			AstKind::TYPE_BOOL => 'bool',
 			AstKind::TYPE_DOUBLE => 'float',
+			AstKind::TYPE_OBJECT => 'mixed',
 			default => null,
 		};
 		if ($type === null) {
@@ -2179,6 +2180,9 @@ final class FrontEndSymbolExtractor
 			return null;
 		}
 		$type = trim((string) ($matches[1] ?? ''));
+		if (preg_match('/^\/\*\*\s*(.+?)\s*\*\/$/', $type, $commentMatches) === 1) {
+			$type = trim((string) ($commentMatches[1] ?? ''));
+		}
 		return $type !== '' ? $type : null;
 	}
 }

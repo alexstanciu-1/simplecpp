@@ -31,7 +31,7 @@
         "compile": {
             "success": false,
             "error_contains": [
-                "does not name a type"
+                "Unresolved static call receiver `M\\Box`"
             ]
         },
         "run": {
@@ -45,7 +45,7 @@
         "use",
         "namespace_alias"
     ],
-    "notes": "Namespace alias import currently reaches compile stage and fails on the emitted C++ alias form.",
+    "notes": "Namespace alias import is a known gap; STAN currently stops the unresolved alias receiver before C++ generation.",
     "build": {
         "sanitizers": null
     }

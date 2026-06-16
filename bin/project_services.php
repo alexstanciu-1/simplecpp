@@ -2953,7 +2953,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					}
 					$cppFile = $transpiler->transpile($transpilePath, false, $emitProgramEntry, $transpileSourceOverride);
 				} catch (S2SException $e) {
-					scpp_fail($e->getMessage() . PHP_EOL, 3);
+					$message = $e->getMessage();
+					if (is_jss_source_path($phpPathAbs)) {
+						$message = normalize_config_path($relativePhp) . ': ' . $message;
+					}
+					scpp_fail($message . PHP_EOL, 3);
 				} catch (Throwable $e) {
 					scpp_fail('internal error: ' . $e->getMessage() . PHP_EOL, 4);
 				}

@@ -122,6 +122,7 @@ function task_set_status(task_context $ctx, string $status): void {}
 function task_start(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): task_batch {}
 function task_status(task_batch $batch): string {}
 function ternary_eval(): mixed {}
+function to_dynamic(): mixed {}
 function to_hash(mixed $value): hash<mixed> {}
 function trim(string $text): string {}
 function ucfirst(string $text): string {}

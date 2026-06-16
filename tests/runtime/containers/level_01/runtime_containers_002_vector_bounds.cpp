@@ -4,11 +4,11 @@ int main() {
 	scpp::vector_t<scpp::int_t> values;
 	values.append(scpp::int_t(1));
 
-	runtime_test::expect_throw<std::out_of_range>([&values]() {
+	runtime_test::expect_throw<scpp::runtime_error>([&values]() {
 		(void) values.at(scpp::int_t(-1));
 	});
 
-	runtime_test::expect_throw<std::out_of_range>([&values]() {
+	runtime_test::expect_throw<scpp::runtime_error>([&values]() {
 		(void) values.at(2);
 	});
 

@@ -1,5 +1,5 @@
-$path = "../../../tests/php/take/level_02/fixtures/take_builtin_alpha.txt";
-$missing = "../../../tests/php/take/level_02/fixtures/missing_take_builtin.txt";
+$path = "tests/php/take/level_02/fixtures/take_builtin_alpha.txt";
+$missing = "tests/php/take/level_02/fixtures/missing_take_builtin.txt";
 
 $contents /** string */ = "seed";
 echo take($contents, file_get_contents($path)) ? "T\n" : "F\n";

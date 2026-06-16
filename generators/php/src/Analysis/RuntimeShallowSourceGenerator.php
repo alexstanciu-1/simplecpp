@@ -102,9 +102,6 @@ final class RuntimeShallowSourceGenerator
 	private function renderSourceFile(string $profile, array $functions, array $classes, array $skipped): string
 	{
 		$lines = [];
-		if ($profile === 'legacy') {
-			$lines[] = '<?php';
-		}
 		$lines[] = '// Generated shallow runtime symbol surface for STAN.';
 		$lines[] = '// Profile: ' . $profile;
 		$lines[] = '// This file is for front-end symbol extraction only.';

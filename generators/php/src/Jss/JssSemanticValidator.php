@@ -186,12 +186,38 @@ final class JssSemanticValidator
 		if ($targetType === 'int' && $valueType === 'float') {
 			throw new InputException($this->message('JSS cannot assign `float` to `int` without an explicit conversion', $value));
 		}
+		if (!$this->initializerTypeIsCompatible($targetType, $valueType)) {
+			throw new InputException($this->message('JSS conversion from `' . $valueType . '` to `' . (string) $targetType . '` requires an explicit conversion', $value));
+		}
 		if ($value->kind === 'array_literal' && !$this->isVectorType($targetType)) {
 			throw new InputException($this->message('JSS array literals require an explicit `vector<T>` target type', $value));
 		}
 		if ($value->kind === 'object_literal' && !$this->isHashType($targetType)) {
 			throw new InputException($this->message('JSS object/hash literals require an explicit `hash<T>` target type', $value));
 		}
+	}
+
+	private function initializerTypeIsCompatible(?string $targetType, ?string $valueType): bool
+	{
+		if ($targetType === null || $targetType === '' || $valueType === null || $valueType === '' || $valueType === 'unknown') {
+			return true;
+		}
+		if ($targetType === $valueType || in_array($targetType, ['mixed', 'dynamic'], true)) {
+			return true;
+		}
+		if ($targetType === 'float' && $valueType === 'int') {
+			return true;
+		}
+		if ($this->isNullableType($targetType) && $valueType === 'null') {
+			return true;
+		}
+		if ($this->isNullableType($targetType) && $this->stripNullableType($targetType) === $valueType) {
+			return true;
+		}
+		if ($this->isNullableType($targetType) && $this->isNullableType($valueType)) {
+			return $this->stripNullableType($targetType) === $this->stripNullableType($valueType);
+		}
+		return false;
 	}
 
 	/** @param array<string,string> $types */
@@ -591,7 +617,7 @@ final class JssSemanticValidator
 
 	private function isNullableType(?string $type): bool
 	{
-		return is_string($type) && ($type[0] === '?' || str_contains($type, '|null') || str_contains($type, 'null|'));
+		return is_string($type) && ($type[0] === '?' || str_starts_with($type, 'nullable<') || str_contains($type, '|null') || str_contains($type, 'null|'));
 	}
 
 	private function stripNullableType(?string $type): ?string
@@ -601,6 +627,9 @@ final class JssSemanticValidator
 		}
 		if ($type[0] === '?') {
 			return substr($type, 1);
+		}
+		if (str_starts_with($type, 'nullable<') && str_ends_with($type, '>')) {
+			return substr($type, strlen('nullable<'), -1);
 		}
 		if (str_ends_with($type, '|null')) {
 			return substr($type, 0, -strlen('|null'));

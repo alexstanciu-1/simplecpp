@@ -41,6 +41,9 @@ final class StanDiagnosticCollector
 				continue;
 			}
 			$first = $symbols[0];
+			if ($this->isSyntheticRootEntrypointSymbol($first)) {
+				continue;
+			}
 			$locations = [];
 			foreach ($symbols as $symbol) {
 				$locations[] = (string) ($symbol['path'] ?? '(unknown)') . ':' . (int) ($symbol['line'] ?? 0);
@@ -57,6 +60,14 @@ final class StanDiagnosticCollector
 		}
 		usort($diagnostics, static fn (array $left, array $right): int => strcmp($left['message'], $right['message']));
 		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $symbol */
+	private function isSyntheticRootEntrypointSymbol(array $symbol): bool
+	{
+		return (string) ($symbol['kind'] ?? '') === 'function'
+			&& (string) ($symbol['scope'] ?? '') === ''
+			&& (string) ($symbol['name'] ?? '') === '__scpp_main';
 	}
 
 	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */

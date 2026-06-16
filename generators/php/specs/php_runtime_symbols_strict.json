@@ -11,6 +11,7 @@
         "is_bool": "php::is_bool",
         "is_int": "php::is_int",
         "is_float": "php::is_float",
+        "to_dynamic": "to_dynamic",
         "take": "php::take",
         "dbg": "php::dbg",
         "dbg_if": "php::dbg_if",
