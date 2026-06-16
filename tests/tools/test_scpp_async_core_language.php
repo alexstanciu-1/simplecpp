@@ -4,6 +4,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../bin/bootstrap.php';
 require_once __DIR__ . '/../../bin/project_services.php';
 
+use Scpp\S2S\PreTokenizer\PreTokenizer;
+
 final class ScppAsyncCoreLanguageTest
 {
 	private string $root;
@@ -28,6 +30,7 @@ final class ScppAsyncCoreLanguageTest
 		}
 
 		$project = $this->root . '/app';
+		$this->assertPreTokenizerRewritesAsyncSurface();
 		$this->writeProject($project);
 
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
@@ -52,6 +55,23 @@ final class ScppAsyncCoreLanguageTest
 		return 0;
 	}
 
+	private function assertPreTokenizerRewritesAsyncSurface(): void
+	{
+		$source = implode("\n", [
+			'async function compute_value(): int {',
+			'	await async_sleep_ms(1);',
+			'	return 42;',
+			'}',
+			'$value int = await compute_value();',
+			'',
+		]);
+		$rewritten = (new PreTokenizer())->rewrite($source)->source;
+		$this->assertContains('/** @async */', $rewritten, 'async function should become parser-compatible @async function');
+		$this->assertContains('function compute_value(): int', $rewritten, 'async keyword should be removed before PHP parsing');
+		$this->assertContains('async_sleep_ms(1);', $rewritten, 'await async_sleep_ms statement should become timer statement');
+		$this->assertContains('$value /** int */ = async_wait(compute_value());', $rewritten, 'await expression should become async_wait while preserving typed local rewrite');
+	}
+
 	private function writeProject(string $project): void
 	{
 		$this->mkdir($project);
@@ -69,14 +89,13 @@ final class ScppAsyncCoreLanguageTest
 			],
 		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 		$this->write($project . '/main.phs', <<<'PHS'
-/** @async */
-function compute_value(): int {
-	async_sleep_ms(1);
+async function compute_value(): int {
+	await async_sleep_ms(1);
 	return 42;
 }
 
-echo async_wait(compute_value());
-$value int = async_wait(compute_value());
+echo await compute_value();
+$value int = await compute_value();
 echo $value;
 PHS);
 	}

@@ -10,10 +10,12 @@ namespace Scpp\S2S\PreTokenizer;
 final class PreTokenizer
 {
 	private readonly TokenSiteScanner $scanner;
+	private readonly AsyncSyntaxRewriter $asyncSyntaxRewriter;
 
-	public function __construct(?TokenSiteScanner $scanner = null)
+	public function __construct(?TokenSiteScanner $scanner = null, ?AsyncSyntaxRewriter $asyncSyntaxRewriter = null)
 	{
 		$this->scanner = $scanner ?? new TokenSiteScanner();
+		$this->asyncSyntaxRewriter = $asyncSyntaxRewriter ?? new AsyncSyntaxRewriter();
 	}
 
 	public function rewrite(string $source): PreTokenizedInput
@@ -41,6 +43,7 @@ final class PreTokenizer
 		}
 
 		$rewritten .= substr($source, $cursor);
+		$rewritten = $this->asyncSyntaxRewriter->rewrite($rewritten);
 
 		return new PreTokenizedInput($rewritten, $annotations);
 	}
