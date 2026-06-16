@@ -36,6 +36,14 @@ scpp::async_core::task<scpp::int_t> nested_value()
 	co_return scpp::int_t(value.native_value() + 5);
 }
 
+scpp::async_core::task<scpp::int_t> nested_ready_value()
+{
+	auto child = scpp::async_core::ready_task(scpp::int_t(20));
+	const auto value = co_await child;
+	co_await scpp::async_core::ready_task();
+	co_return scpp::int_t(value.native_value() + 2);
+}
+
 scpp::async_core::task<void> failing_task()
 {
 	co_await scpp::async_core::sleep_ms(scpp::int_t(1));
@@ -106,6 +114,15 @@ void test_nested_await()
 {
 	const auto value = scpp::async_core::sync_wait(nested_value());
 	assert(value.native_value() == 12);
+}
+
+void test_ready_task()
+{
+	const auto value = scpp::async_core::sync_wait(scpp::async_core::ready_task(scpp::int_t(11)));
+	assert(value.native_value() == 11);
+	scpp::async_core::sync_wait(scpp::async_core::ready_task());
+	const auto nested = scpp::async_core::sync_wait(nested_ready_value());
+	assert(nested.native_value() == 22);
 }
 
 void test_sleep_order()
@@ -182,6 +199,7 @@ int main()
 {
 	test_immediate_value();
 	test_nested_await();
+	test_ready_task();
 	test_sleep_order();
 	test_sleep_elapsed();
 	test_yield_order();

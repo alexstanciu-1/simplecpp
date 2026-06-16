@@ -333,6 +333,17 @@ public:
 [[nodiscard]] yield_awaitable yield_now() noexcept;
 
 template <typename T>
+task<T> ready_task(T value)
+{
+	co_return std::move(value);
+}
+
+inline task<void> ready_task()
+{
+	co_return;
+}
+
+template <typename T>
 T sync_wait(task<T> root)
 {
 	scheduler event_loop;
