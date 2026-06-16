@@ -111,6 +111,8 @@ final class StanPhpRuntimeFunctionCatalog
 				}
 			}
 		}
+		$known['async_sleep_ms'] = true;
+		$known['async_wait'] = true;
 		return $known;
 	}
 
@@ -140,6 +142,8 @@ final class StanPhpRuntimeFunctionCatalog
 				}
 			}
 		}
+		$returnTypes['async_sleep_ms'] = 'void';
+		$returnTypes['async_wait'] = 'mixed';
 		return $returnTypes;
 	}
 

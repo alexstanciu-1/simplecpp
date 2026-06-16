@@ -69,6 +69,7 @@ final class Generator
 	private array $currentArgNormalizationRulesByKey = [];
 	private ?string $currentNormalizationCallableName = null;
 	private ?string $currentReturnType = null;
+	private bool $currentFunctionIsAsync = false;
 	/** @var null|array{flag:string,value:?string,type:?string} */
 	private ?array $currentFinallyReturnContext = null;
 	/** @var null|array{returnType:?string,paramTypes:list<string>} */
@@ -3411,7 +3412,7 @@ final class Generator
 
 	private function renderFunctionDeclaration(FunctionDecl $function, ?string $namespacePhp = null): string
 	{
-		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
+		$returnType = $this->renderFunctionReturnType($function);
 		$paramPassModes = $this->analyzeParamPassModes($function->params, $function->statements);
 		$this->beginFunctionLikeVariableMapping($function->params, $function->statements);
 		try {
@@ -3456,12 +3457,16 @@ final class Generator
 		$this->currentNormalizationCallableName = $this->functionLikeNeedsNormalizedTemplate($function->params) ? $function->name : null;
 		$this->currentParamEntryAliasLines = $this->buildParamEntryAliasLines($function->params);
 		$this->currentScalarRefParamAliasLines = $this->buildScalarRefParamAliasLines($function->params);
-		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
-		$this->currentReturnType = $returnType;
+		$returnType = $this->renderFunctionReturnType($function);
+		$this->currentReturnType = $function->isAsync
+			? $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name)
+			: $returnType;
+		$this->currentFunctionIsAsync = $function->isAsync;
 		$signature = $returnType . ' ' . $function->name . '(' . $this->renderParams($function->params, false, $namespacePhp, $this->currentParamPassModes, true) . ')';
 		$body = $this->renderBody($function->statements, $namespacePhp);
 		array_unshift($body, $this->codeWithCurrentOrigin($this->indent(1) . $this->renderCallDepthGuardLine($function->name, $function->line)));
 		$this->currentReturnType = null;
+		$this->currentFunctionIsAsync = false;
 		$this->currentFinallyReturnContext = null;
 		$this->currentParamPassModes = [];
 		$this->currentScalarRefParamAliasLines = [];
@@ -3474,6 +3479,20 @@ final class Generator
 			$body,
 			[$this->code('}', $function->line)],
 		);
+	}
+
+	private function renderFunctionReturnType(FunctionDecl $function): string
+	{
+		if ($function->isAsync && $function->returnsByReference) {
+			$this->fail('Async function ' . $function->name . ' cannot return by reference.');
+		}
+		$returnType = $this->resolveDeclaredReturnType($function->returnType, $function->returnsByReference, 'Function ' . $function->name);
+		if (!$function->isAsync) {
+			return $returnType;
+		}
+		return $returnType === 'void'
+			? 'scpp::async_core::task<void>'
+			: 'scpp::async_core::task<' . $returnType . '>';
 	}
 
 	/**
@@ -3920,9 +3939,10 @@ final class Generator
 				return $this->renderFinallyAwareReturnStatement($statement, $namespacePhp);
 			}
 			if ($statement->payload === null) {
-				return $this->statementCodeLines($statement, ['return;']);
+				return $this->statementCodeLines($statement, [$this->currentFunctionIsAsync ? 'co_return;' : 'return;']);
 			}
-			return $this->statementCodeLines($statement, ['return ' . $this->renderReturnExpr($statement->payload, $namespacePhp) . ';']);
+			$returnKeyword = $this->currentFunctionIsAsync ? 'co_return ' : 'return ';
+			return $this->statementCodeLines($statement, [$returnKeyword . $this->renderReturnExpr($statement->payload, $namespacePhp) . ';']);
 		}
 
 		if ($statement->kind === 'throw') {
@@ -4041,6 +4061,9 @@ final class Generator
 		}
 
 		if ($statement->kind === 'expr') {
+			if ($this->currentFunctionIsAsync && $this->isAsyncSleepCall($statement->payload)) {
+				return $this->statementCodeLines($statement, ['co_await ' . $this->renderAsyncSleepCall($statement->payload, $namespacePhp) . ';']);
+			}
 			return $this->statementCodeLines($statement, [$this->renderExpr($statement->payload, $namespacePhp) . ';']);
 		}
 
@@ -6779,6 +6802,9 @@ final class Generator
 		if ($kind === AstKind::CALL) {
 			$nameExpr = $expr->children['expr'] ?? null;
 			$args = $expr->children['args']->children ?? [];
+			if ($this->isAsyncWaitCallName($nameExpr)) {
+				return $this->renderAsyncWaitCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
 			if ($this->isTakeCallName($nameExpr)) {
 				return $this->renderTakeCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
 			}
@@ -7047,6 +7073,29 @@ final class Generator
 		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'take';
 	}
 
+	private function isAsyncWaitCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'async_wait';
+	}
+
+	private function isAsyncSleepCall(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::CALL)) {
+			return false;
+		}
+
+		$nameExpr = $expr->children['expr'] ?? null;
+		if (!is_object($nameExpr) || (($nameExpr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($nameExpr->children['name'] ?? ''), '\\')) === 'async_sleep_ms';
+	}
+
 	private function isDbgCallName(mixed $expr): bool
 	{
 		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
@@ -7156,6 +7205,27 @@ final class Generator
 			. (string) $line
 			. ($renderedArgs === [] ? '' : ', ' . implode(', ', $renderedArgs))
 			. ')';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderAsyncWaitCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 1) {
+			$this->fail('async_wait() expects exactly one async task value at line ' . $line . '.');
+		}
+
+		return 'scpp::async_core::sync_wait(' . $this->renderExpr($args[0] ?? null, $namespacePhp) . ')';
+	}
+
+	private function renderAsyncSleepCall(mixed $expr, ?string $namespacePhp): string
+	{
+		$args = is_object($expr) ? ($expr->children['args']->children ?? []) : [];
+		$line = is_object($expr) ? (int) ($expr->lineno ?? 0) : 0;
+		if (count($args) !== 1) {
+			$this->fail('async_sleep_ms() expects exactly one duration argument at line ' . $line . '.');
+		}
+
+		return 'scpp::async_core::sleep_ms(' . $this->renderExpr($args[0] ?? null, $namespacePhp) . ')';
 	}
 
 	/** @param list<mixed> $args */
