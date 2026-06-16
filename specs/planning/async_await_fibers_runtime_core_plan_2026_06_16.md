@@ -9,7 +9,7 @@ This document is non-normative planning material. It records the current discuss
 
 ## 1. Current Context
 
-Simple C++ already has a `tasks` module for thread-backed parallel work. If task documentation is incomplete, that should be handled as a documentation follow-up rather than by redefining `tasks` as the async/await base.
+Simple C++ already has a `tasks` module for thread-backed parallel work. The current tasks surface is documented under `specs/builtins/tasks/` and implemented under `runtime/include/modules/tasks/`.
 
 That existing module should remain conceptually separate from async/await:
 
@@ -17,6 +17,8 @@ That existing module should remain conceptually separate from async/await:
 - `async/await`: user-facing asynchronous control flow, stackless and task-like
 - shared runtime core: scheduler, resumable handles, completions, timers, wakeups, and bridges between async continuations and task completions
 - `fibers`: deferred stackful cooperative suspension/resume feature
+
+The existing `tasks` module is an opt-in, v1-alpha bounded batch API. It exposes `task_run(...)`, `task_start(...)`, `task_join(...)`, `task_cancel(...)`, `task_done(...)`, `task_status(...)`, `task_progress(...)`, and `task_set_status(...)`. It is designed for independent batch work over typed vectors, typed hashes, and table-shaped `mixed` / `dynamic` inputs. It is not a raw-thread API and it is not currently a general promise/future abstraction.
 
 The PHP++ generator is currently a deterministic structural lowerer, not a semantic compiler. Any async design should avoid requiring full type inference in the generator for the first implementation slice.
 
@@ -56,13 +58,15 @@ runtime async core
 
 tasks module
   thread-backed parallel work
-  future/result completion
-  optional awaitable adapter into async core
+  bounded worker batches
+  task_batch handles from task_start(...)
+  blocking task_join(...) result retrieval
+  optional future awaitable adapter into async core
 
 async/await language/runtime surface
   stackless coroutine/task values
   await continuation scheduling
-  optional bridges to task futures and fiber-aware operations
+  optional bridges to task_batch completion and later fiber-aware operations
 
 fibers module
   deferred stackful cooperative execution
@@ -214,23 +218,29 @@ The future fiber implementation should integrate with the same scheduler by wrap
 
 The existing `tasks` module should not become the async core.
 
-Instead, tasks can later provide an awaitable adapter:
+Instead, tasks can later provide an awaitable adapter around `task_batch` completion:
 
 ```text
-thread task completes
-  -> stores result/error
-  -> enqueues continuation into async core scheduler
-  -> await resumes with value or rethrows failure
+task_start(...) creates a background task_batch
+  -> async adapter observes task_done(...) or waits off-scheduler
+  -> task_join(...) collects the cached result/error without blocking the async scheduler thread
+  -> adapter enqueues continuation into async core scheduler
+  -> await resumes with result or rethrows failure
 ```
 
 This would allow a future PHP++ shape such as:
 
 ```php
-$job = task_spawn(expensive_compute);
-$value int = await $job;
+$batch = task_start($items, 4, function (int $item): int {
+	return $item * 2;
+});
+
+$result mixed = await $batch;
 ```
 
 without making all async work thread-backed.
+
+Planning constraint: direct `await task_join($batch)` would be a blocking call wrapped in async syntax, not a true non-blocking await. A real task bridge needs either a scheduler-aware completion signal from the tasks coordinator or a small adapter that waits away from the scheduler thread and posts completion back into `async_core`.
 
 ---
 
@@ -263,6 +273,7 @@ The JSS-facing surface can use familiar script-style spelling, while PHS should 
 Open naming questions:
 
 - should public async values be named `AsyncTask<T>`, `Future<T>`, `Awaitable<T>`, or another local convention?
+- should `task_batch` itself become awaitable, or should await require an explicit adapter such as `task_await($batch)` / `async_from_task($batch)`?
 - should `await` be a keyword, a builtin-like form, or initially a function?
 - should top-level entrypoints support `await`, or should `await` require an async function?
 - should `async_sleep_ms` live in a future async surface, or should `dt_sleep_ms` gain an async sibling?
@@ -367,9 +378,11 @@ These are planning expectations, not benchmark claims.
 
 ### Phase 6: Task Await Bridge
 
-- adapt existing thread-backed task futures into the async core awaitable model
+- adapt existing `task_batch` handles into the async core awaitable model
+- avoid blocking the async scheduler thread while waiting for `task_join(...)`
+- decide whether the bridge requires new task coordinator completion hooks or an external waiting adapter
 - ensure task completion can safely enqueue scheduler continuations
-- document whether `await $task` or the JSS equivalent is supported and what failure/cancellation behavior means
+- document whether `await $batch`, `task_await($batch)`, or the JSS equivalent is supported and what result/error/cancellation behavior means
 
 ### Deferred Phase: Fibers
 
@@ -385,12 +398,13 @@ These are planning expectations, not benchmark claims.
 - Is C++20 coroutine support acceptable across the supported compiler/toolchain matrix?
 - Should the async scheduler be single-threaded by default, with explicit cross-thread enqueue support?
 - What is the public distinction between `Task<T>`, existing task module types, `Future<T>`, and async task values?
+- Should the existing `task_batch` type be awaitable directly, or should awaitability be opt-in through a separate adapter?
 - Should top-level PHP++ code be allowed to use `await` through an implicit async main?
 - Should JSS top-level `await` be supported immediately, or only inside async functions for the first slice?
 - What cancellation model, if any, belongs in v1?
 - How should runtime errors inside async tasks be represented before await?
 - Which IO families should become async-aware first, if any?
-- What task documentation is missing for the existing thread-backed `tasks` module?
+- Does `tasks` need a scheduler-aware completion hook, or is an adapter thread/waiter acceptable for the first bridge?
 
 ---
 
@@ -398,6 +412,6 @@ These are planning expectations, not benchmark claims.
 
 Start with the shared runtime async core, async timers, and coroutine-backed async task prototype.
 
-Do not make thread-backed `tasks` the base abstraction. Instead, let `tasks` later bridge into the async core as one awaitable completion source.
+Do not make thread-backed `tasks` the base abstraction. Instead, let `task_batch` later bridge into the async core as one awaitable completion source, with care to avoid blocking the async scheduler thread.
 
 Treat fibers as a later lower-level stackful feature. They can share scheduling infrastructure eventually, but they should not be part of the first implementation or the default mechanism for PHS/JSS async functions.
