@@ -140,6 +140,17 @@ See:
 
 - `tests/tools/README.md`
 
+### Async/await proof
+
+Use when changing async/await, async timers, PHS pre-tokenization, JSS async lowering, or `scpp::async_core`:
+
+- `php tests/tools/test_scpp_async_core_language.php`
+- `php tests/tools/test_scpp_async_surface_projects.php`
+- `php tests/tools/test_scpp_jss_frontend_first_slice.php`
+- `ctest --test-dir /tmp/scpp_async_core_build -R scpp_test_async_core --output-on-failure`
+
+The async surface project test is intentionally end-to-end and covers 10 PHS plus 10 JSS projects.
+
 ## 4. Practical Editing Heuristics
 
 ### For `mixed` or typed-boundary issues

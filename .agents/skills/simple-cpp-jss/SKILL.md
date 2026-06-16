@@ -79,6 +79,7 @@ Generally usable in v1 alpha:
 - `delete expr` -> PHS `unset(expr)`
 - `let alias = &value;` / `alias = &value;` for simple identifier references
 - explicit local typed arrows like `let f = (x: int): int => x + 1;`
+- stackless async/await alpha surface, lowering through PHS and `scpp::async_core`
 - reserved helper families `fs`, `io`, `json`, `dt`
 
 Partial or blocked:
@@ -87,7 +88,7 @@ Partial or blocked:
 - `undefined` is runtime/PHS-first future work
 - vector index removal policy is not settled
 - inherited static classification needs STAN improvement
-- no prototype model, async/promises, destructuring, spread/rest, or JS module semantics
+- no prototype model, JavaScript promises/event-loop compatibility, destructuring, spread/rest, or JS module semantics
 
 ## Project Workflow
 

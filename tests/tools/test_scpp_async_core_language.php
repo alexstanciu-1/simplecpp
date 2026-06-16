@@ -51,6 +51,9 @@ final class ScppAsyncCoreLanguageTest
 		$this->assertContains('42', $generated, 'async return value should be preserved in generated C++');
 		$this->assertContains('scpp::async_core::sync_wait(compute_value())', $generated, 'async_wait should lower to sync_wait');
 
+		$this->assertAsyncSleepRequiresAsyncFunction('phs');
+		$this->assertAsyncSleepRequiresAsyncFunction('jss');
+
 		echo "PASS: scpp async core language\n";
 		return 0;
 	}
@@ -98,6 +101,37 @@ echo await compute_value();
 $value int = await compute_value();
 echo $value;
 PHS);
+	}
+
+	private function assertAsyncSleepRequiresAsyncFunction(string $language): void
+	{
+		$project = $this->root . '/invalid_' . $language;
+		$entrypoint = $language === 'jss' ? 'main.jss' : 'main.phs';
+		$this->mkdir($project);
+		$this->write($project . '/prism.json', json_encode([
+			'name' => 'async-invalid-' . $language,
+			'entrypoint' => $entrypoint,
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime'],
+			],
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		$source = $language === 'jss'
+			? "await async_sleep_ms(1);\n"
+			: "await async_sleep_ms(1);\n";
+		$this->write($project . '/' . $entrypoint, $source);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => false,
+			'compile_dependencies' => false,
+		]);
+		$this->assertSame(false, $build['ok'], strtoupper($language) . ' async sleep outside async function should fail');
+		$this->assertContains('async_sleep_ms() may only be used inside an async function', (string) ($build['output'] ?? '') . (string) ($build['error'] ?? ''), strtoupper($language) . ' async sleep placement diagnostic should be source-level');
 	}
 
 	private function mkdir(string $path): void

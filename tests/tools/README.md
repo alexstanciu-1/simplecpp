@@ -48,3 +48,17 @@ php tests/tools/run_tests.php gate --suite=runtime --jobs=12
 ```
 
 This is the locked runtime gate: baseline runtime suite, then the full `address,undefined,leak` runtime suite.
+
+
+## Async/await feature gate
+
+When changing async/await, PHS pre-tokenization, JSS async lowering, or the shared async core, include:
+
+```bash
+php tests/tools/test_scpp_async_core_language.php
+php tests/tools/test_scpp_async_surface_projects.php
+php tests/tools/test_scpp_jss_frontend_first_slice.php
+ctest --test-dir /tmp/scpp_async_core_build -R scpp_test_async_core --output-on-failure
+```
+
+`test_scpp_async_surface_projects.php` builds and runs 10 PHS projects plus 10 JSS projects and is the end-to-end async language-surface gate.

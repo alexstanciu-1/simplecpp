@@ -4061,7 +4061,10 @@ final class Generator
 		}
 
 		if ($statement->kind === 'expr') {
-			if ($this->currentFunctionIsAsync && $this->isAsyncSleepCall($statement->payload)) {
+			if ($this->isAsyncSleepCall($statement->payload)) {
+				if (!$this->currentFunctionIsAsync) {
+					$this->fail('async_sleep_ms() may only be used inside an async function at line ' . $statement->line . '. Use await on an async task from synchronous code instead.');
+				}
 				return $this->statementCodeLines($statement, ['co_await ' . $this->renderAsyncSleepCall($statement->payload, $namespacePhp) . ';']);
 			}
 			return $this->statementCodeLines($statement, [$this->renderExpr($statement->payload, $namespacePhp) . ';']);
