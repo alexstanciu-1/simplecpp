@@ -351,7 +351,7 @@ Native runtime coverage currently validates immediate completion, nested await, 
 The remaining major work is language surface integration:
 
 - PHS/PHP++ now has an initial PHP-parser-compatible surface: `/** @async */ function f(): T { ... }` lowers to `scpp::async_core::task<T>`, statement-form `async_sleep_ms(...)` lowers to `co_await scpp::async_core::sleep_ms(...)`, ordinary `return` inside the async function lowers to `co_return`, and `async_wait(...)` lowers to `scpp::async_core::sync_wait(...)`.
-- This PHS surface is intentionally first-slice and narrow. `async_wait(...)` is currently treated conservatively as `mixed` by STAN, so typed-boundary unwrapping such as assigning `async_wait(async_int())` directly into an `int` local remains future static-analysis work.
+- This PHS surface is intentionally first-slice and narrow. STAN recognizes the simple direct unwrapping case `async_wait(async_function())` for typed-boundary checks, but broader async task type modeling remains future static-analysis work.
 - JSS can parse familiar `async` / `await` spelling, but it currently lowers through PHS, so JSS syntax should not be enabled until the PHS/generator path has an accepted representation.
 - The thread-backed `tasks` module remains separate; no task-batch await bridge has been implemented yet.
 - Fibers remain deferred.

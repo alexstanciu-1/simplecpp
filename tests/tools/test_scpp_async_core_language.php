@@ -76,6 +76,8 @@ function compute_value(): int {
 }
 
 echo async_wait(compute_value());
+$value int = async_wait(compute_value());
+echo $value;
 PHS);
 	}
 
