@@ -6,6 +6,7 @@
 #include <chrono>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace {
@@ -40,6 +41,40 @@ scpp::async_core::task<void> record_two_timers(std::vector<int> &events)
 	auto faster = sleep_and_record(events, 1, 1);
 	co_await faster;
 	co_await slower;
+}
+
+class background_signal_awaitable final {
+public:
+	[[nodiscard]] bool await_ready() const noexcept
+	{
+		return false;
+	}
+
+	void await_suspend(std::coroutine_handle<> continuation)
+	{
+		auto *active_scheduler = scpp::async_core::scheduler::current();
+		assert(active_scheduler != nullptr);
+		worker_ = std::thread([active_scheduler, continuation]() {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			active_scheduler->enqueue(continuation);
+		});
+	}
+
+	void await_resume()
+	{
+		if (worker_.joinable()) {
+			worker_.join();
+		}
+	}
+
+private:
+	std::thread worker_;
+};
+
+scpp::async_core::task<scpp::int_t> cross_thread_signal()
+{
+	co_await background_signal_awaitable();
+	co_return scpp::int_t(99);
 }
 
 void test_immediate_value()
@@ -84,6 +119,12 @@ void test_error_propagation()
 	assert(caught);
 }
 
+void test_cross_thread_wakeup()
+{
+	const auto value = scpp::async_core::sync_wait(cross_thread_signal());
+	assert(value.native_value() == 99);
+}
+
 void test_missing_scheduler_diagnostic()
 {
 	auto awaitable = scpp::async_core::sleep_ms(scpp::int_t(1));
@@ -105,6 +146,7 @@ int main()
 	test_sleep_order();
 	test_sleep_elapsed();
 	test_error_propagation();
+	test_cross_thread_wakeup();
 	test_missing_scheduler_diagnostic();
 	return 0;
 }

@@ -4,15 +4,17 @@
 #include "scpp/runtime_error.hpp"
 
 #include <chrono>
+#include <condition_variable>
 #include <coroutine>
 #include <cstddef>
 #include <deque>
 #include <exception>
+#include <mutex>
 #include <optional>
 #include <queue>
-#include <thread>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace scpp::async_core {
 
@@ -45,7 +47,7 @@ public:
 	{
 		scheduler_scope scope(*this);
 		while (!predicate()) {
-			if (!run_one()) {
+			if (!run_one(true)) {
 				break;
 			}
 		}
@@ -83,11 +85,13 @@ private:
 		scheduler *previous_ = nullptr;
 	};
 
-	[[nodiscard]] bool run_one();
+	[[nodiscard]] bool run_one(bool wait_when_empty);
 	void enqueue_due_timers(clock::time_point now);
 
 	std::deque<std::coroutine_handle<>> ready_;
 	std::priority_queue<timer_entry, std::vector<timer_entry>, timer_compare> timers_;
+	mutable std::mutex mutex_;
+	std::condition_variable wake_;
 	std::size_t next_timer_order_ = 0;
 
 	static thread_local scheduler *current_;
