@@ -1,0 +1,15 @@
+$a int = 7;
+$b int = 7;
+$c int = 9;
+if ($a === $b) {
+	echo "T";
+} else {
+	echo "F";
+}
+echo "\n";
+if ($a < $c) {
+	echo "T";
+} else {
+	echo "F";
+}
+echo "\n";

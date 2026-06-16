@@ -68,10 +68,12 @@ PHS);
 		$build = scpp_run_build_service($project, $project . '/prism.json', ['compile_runtime' => true]);
 		$this->assertSame(true, $build['ok'], 'compact chain repro should build');
 
-		$run = scpp_run_binary_service($project, $project . '/.prism/build/main');
+		$run = scpp_run_binary_service($project, $project . '/.prism/build/main', [], $build);
 		$this->assertSame(1, $run['exit_code'], 'compact chain repro should fail with a runtime exception exit code');
 		$this->assertContains("match=yes\n", $run['stdout'], 'compact chain repro should still print the first successful case');
-		$this->assertContains('scpp::shared_p runtime error: operator->() requires a present shared pointer value.', $run['stderr'], 'compact chain repro should fail cleanly through shared_p runtime error');
+		$this->assertContains('Runtime error while running the built program.', $run['stderr'], 'compact chain repro should still frame the failure as a project runtime diagnostic');
+		$this->assertContains('Operation: operator->', $run['stderr'], 'compact chain repro should preserve the failing operation detail');
+		$this->assertContains('Runtime message: scpp::shared_p runtime error: operator->() requires a present shared pointer value.', $run['stderr'], 'compact chain repro should preserve the precise runtime failure message when no source location is recoverable');
 	}
 
 	private function assertIssetChainProbesSafely(): void
@@ -107,7 +109,7 @@ PHS);
 		$build = scpp_run_build_service($project, $project . '/prism.json', ['compile_runtime' => true]);
 		$this->assertSame(true, $build['ok'], 'isset chain repro should build');
 
-		$run = scpp_run_binary_service($project, $project . '/.prism/build/main');
+		$run = scpp_run_binary_service($project, $project . '/.prism/build/main', [], $build);
 		$this->assertSame(0, $run['exit_code'], 'isset chain repro should exit successfully');
 		$this->assertSame("yes\nno\nno\n", $run['stdout'], 'isset chain repro should probe nullable paths safely');
 		$this->assertSame('', $run['stderr'], 'isset chain repro should not print a runtime error');
@@ -198,7 +200,7 @@ PHS);
 	private function assertContains(string $needle, string $haystack, string $message): void
 	{
 		if (!str_contains($haystack, $needle)) {
-			throw new RuntimeException($message . ' missing `' . $needle . '`');
+			throw new RuntimeException($message . ' missing `' . $needle . '` in: ' . $haystack);
 		}
 	}
 }

@@ -1,0 +1,2 @@
+$s string = "hello";
+echo $s, "\n";

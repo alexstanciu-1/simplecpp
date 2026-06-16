@@ -1,0 +1,8 @@
+function maybeName(bool $flag): ?string {
+	$value ?string = ($flag ? "ok" : null);
+	return $value;
+}
+$yesValue ?string = maybeName(true);
+$noValue ?string = maybeName(false);
+echo "yes=", $yesValue ?? "", "\n";
+echo "no=", $noValue ?? "", "\n";

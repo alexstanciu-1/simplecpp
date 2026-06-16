@@ -1,0 +1,14 @@
+function mirror(string $path): void {
+	$fh resource_handle;
+	if (!take($fh, io_open($path, "wb+"))) {
+		return;
+	}
+	$wrote int = 0;
+	take($wrote, io_write($fh, "alpha"));
+	io_flush($fh);
+	io_rewind($fh);
+	$text string = "";
+	take($text, io_read($fh, 5));
+	io_close($fh);
+	echo $wrote, ":", $text, "\n";
+}

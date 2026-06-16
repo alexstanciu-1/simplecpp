@@ -19,7 +19,7 @@ async function activate(context) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("simpleCpp.createProject", async () => {
-			await createSimpleCppProject();
+			await createSimpleCppProject(context);
 		}),
 		vscode.commands.registerCommand("simpleCpp.buildProject", async () => {
 			await runScppProjectCommand("build", "scpp build");
@@ -79,7 +79,8 @@ async function activate(context) {
 
 async function synchronizeWorkspaceClients(context) {
 	const workspaceFolders = vscode.workspace.workspaceFolders || [];
-	const expectedKeys = new Set(workspaceFolders.map((folder) => folder.uri.fsPath));
+	const projectFolders = workspaceFolders.filter((folder) => isSimpleCppProjectFolder(folder.uri.fsPath));
+	const expectedKeys = new Set(projectFolders.map((folder) => folder.uri.fsPath));
 
 	for (const [key, client] of clients.entries()) {
 		if (expectedKeys.has(key)) {
@@ -89,7 +90,7 @@ async function synchronizeWorkspaceClients(context) {
 		clients.delete(key);
 	}
 
-	for (const folder of workspaceFolders) {
+	for (const folder of projectFolders) {
 		if (clients.has(folder.uri.fsPath)) {
 			continue;
 		}
@@ -223,7 +224,7 @@ function registerScppCommand(commandId, shellCommand) {
 	});
 }
 
-async function createSimpleCppProject() {
+async function createSimpleCppProject(context) {
 	const workspaceFolder = await pickTargetWorkspaceFolder();
 	if (!workspaceFolder) {
 		vscode.window.showWarningMessage("Open a folder in VS Code before creating a Simple C++ project.");
@@ -257,6 +258,8 @@ async function createSimpleCppProject() {
 		runTerminalCommand(terminal, "printf 'echo \"hello\\\\n\";\\n' > main.phs");
 	}
 	vscode.window.showInformationMessage(`Creating Simple C++ project in ${workspaceFolder.name} with profile ${profilePick.label}.`);
+
+	void synchronizeProjectClientWhenReady(context, projectRoot);
 }
 
 async function runScppProjectCommand(mode, shellCommand) {
@@ -318,6 +321,26 @@ function findProjectRoot(startPath) {
 		}
 		current = parent;
 	}
+}
+
+function isSimpleCppProjectFolder(folderPath) {
+	return fs.existsSync(path.join(folderPath, "prism.json"));
+}
+
+async function synchronizeProjectClientWhenReady(context, projectRoot) {
+	const prismPath = path.join(projectRoot, "prism.json");
+	const timeoutAt = Date.now() + 15000;
+	while (Date.now() < timeoutAt) {
+		if (fs.existsSync(prismPath)) {
+			await synchronizeWorkspaceClients(context);
+			return;
+		}
+		await delay(250);
+	}
+}
+
+function delay(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function createScppTerminal(name, cwd) {

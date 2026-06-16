@@ -84,6 +84,8 @@ final class StanResultAssembler
 		array $initializationDiagnostics,
 		array $callSiteDiagnostics,
 		array $returnTypeDiagnostics,
+		array $frontendDiagnostics,
+		array $frontendClassifications,
 		array $filesState,
 		string $activeRuntimeShallowPath,
 	): array {
@@ -107,6 +109,8 @@ final class StanResultAssembler
 			'initialization_diagnostics' => $initializationDiagnostics,
 			'call_site_diagnostics' => $callSiteDiagnostics,
 			'return_type_diagnostics' => $returnTypeDiagnostics,
+			'frontend_diagnostics' => $frontendDiagnostics,
+			'frontend_classifications' => $frontendClassifications,
 			'files' => $filesState,
 			'runtime_shallow_path' => \normalize_path($activeRuntimeShallowPath),
 		];
@@ -132,6 +136,7 @@ final class StanResultAssembler
 		array $initializationDiagnostics,
 		array $callSiteDiagnostics,
 		array $returnTypeDiagnostics,
+		array $frontendDiagnostics,
 		string $statePath,
 		array $runtimeShallowSources,
 		array $warningSamples,
@@ -154,6 +159,7 @@ final class StanResultAssembler
 			'initialization_warning_count' => count($initializationDiagnostics),
 			'call_site_warning_count' => count($callSiteDiagnostics),
 			'return_type_warning_count' => count($returnTypeDiagnostics),
+			'frontend_warning_count' => count($frontendDiagnostics),
 			'symbol_count' => count($symbolIndex),
 			'state_path' => $statePath,
 			'runtime_shallow_sources' => $runtimeShallowSources,

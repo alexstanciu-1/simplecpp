@@ -69,6 +69,7 @@ final class StanWorkspaceSession
 			$semanticResult['initialization_diagnostics'],
 			$semanticResult['call_site_diagnostics'],
 			$semanticResult['return_type_diagnostics'],
+			$semanticResult['frontend_diagnostics'] ?? [],
 		);
 		$diagnosticsByPath = $this->resultAssembler->groupDiagnosticsByPath($allDiagnostics);
 
@@ -196,6 +197,7 @@ final class StanWorkspaceSession
 		$initializationDiagnostics = $semanticResult['initialization_diagnostics'];
 		$callSiteDiagnostics = $semanticResult['call_site_diagnostics'];
 		$returnTypeDiagnostics = $semanticResult['return_type_diagnostics'];
+		$frontendDiagnostics = $semanticResult['frontend_diagnostics'] ?? [];
 
 		return $this->resultAssembler->buildRunResult(
 			$context->projectRoot,
@@ -216,6 +218,7 @@ final class StanWorkspaceSession
 			$initializationDiagnostics,
 			$callSiteDiagnostics,
 			$returnTypeDiagnostics,
+			$frontendDiagnostics,
 			$context->statePath,
 			$context->runtimeShallowSources,
 			$semanticResult['warning_samples'],
@@ -241,7 +244,9 @@ final class StanWorkspaceSession
 			!$hasSourceOverrides,
 		);
 		$warningCount = (int) ($filePassResult['warning_count'] ?? 0);
-		$semanticResult = $this->semanticPass->analyze($filePassResult['file_summaries'], $context->projectRoot);
+		$runtimeConfig = \resolve_runtime_build_config($context->config);
+		$activeRuntimeModules = is_array($runtimeConfig['modules'] ?? null) ? array_values(array_map('strval', $runtimeConfig['modules'])) : null;
+		$semanticResult = $this->semanticPass->analyze($filePassResult['file_summaries'], $context->projectRoot, $activeRuntimeModules);
 		$warningCount += (int) ($semanticResult['warning_count'] ?? 0);
 
 		$newFilesState = $filePassResult['files_state'];
@@ -268,6 +273,8 @@ final class StanWorkspaceSession
 			$semanticResult['initialization_diagnostics'],
 			$semanticResult['call_site_diagnostics'],
 			$semanticResult['return_type_diagnostics'],
+			$semanticResult['frontend_diagnostics'] ?? [],
+			$semanticResult['frontend_classifications'] ?? [],
 			$newFilesState,
 			$context->activeRuntimeShallowPath,
 		);
@@ -301,6 +308,7 @@ final class StanWorkspaceSession
 				$semanticResult['initialization_diagnostics'] ?? [],
 				$semanticResult['call_site_diagnostics'] ?? [],
 				$semanticResult['return_type_diagnostics'] ?? [],
+				$semanticResult['frontend_diagnostics'] ?? [],
 			),
 			$documentPath,
 			$line,

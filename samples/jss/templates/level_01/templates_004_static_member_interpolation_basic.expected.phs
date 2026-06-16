@@ -1,0 +1,5 @@
+class BuildInfo {
+	public static int $version = 3;
+	public const LABEL = "JSS";
+}
+echo "v" . BuildInfo::$version . ":" . BuildInfo::LABEL, "\n";

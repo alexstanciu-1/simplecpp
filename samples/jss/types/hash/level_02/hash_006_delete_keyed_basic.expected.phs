@@ -1,0 +1,4 @@
+$items hash<int> = ["a" => 1, "b" => 2];
+unset($items["a"]);
+unset($items["missing"]);
+echo $items["b"], "\n";

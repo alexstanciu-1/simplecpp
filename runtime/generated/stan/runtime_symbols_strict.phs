@@ -42,42 +42,43 @@ function echo_one(mixed $value): void {}
 function expect_array_argument(): mixed {}
 function explode(string $separator, string $text): vector<string> {}
 function fs_basename(string $path): string {}
-function fs_copy(string $from, string $to): result<bool> {}
+function fs_copy(string $from, string $to): bool {}
 function fs_dirname(string $path): string {}
 function fs_exists(string $path): bool {}
 function fs_get(string $path): result<string> {}
 function fs_is_dir(string $path): bool {}
 function fs_is_file(string $path): bool {}
 function fs_is_link(string $path): bool {}
-function fs_mkdir(string $path): result<bool> {}
+function fs_mkdir(string $path): bool {}
 function fs_mtime(string $path): result<int> {}
 function fs_put(string $path, string $data): result<int> {}
 function fs_realpath(string $path): result<string> {}
-function fs_remove(string $path): result<bool> {}
-function fs_rename(string $from, string $to): result<bool> {}
-function fs_rmdir(string $path): result<bool> {}
+function fs_remove(string $path): bool {}
+function fs_rename(string $from, string $to): bool {}
+function fs_rmdir(string $path): bool {}
 function fs_scan(string $path): result<vector<string>> {}
 function fs_size(string $path): result<int> {}
-function fs_touch(string $path): result<bool> {}
+function fs_touch(string $path): bool {}
 function getenv(string $name): mixed {}
 function hex2bin(string $hex): result_or_false<string> {}
 function identical(mixed $left, mixed $right): bool {}
 function implode(string $separator, mixed $parts): string {}
-function io_close(resource_handle $fh): result<bool> {}
+function io_close(resource_handle $fh): bool {}
 function io_eof(resource_handle $fh): bool {}
-function io_flush(resource_handle $fh): result<bool> {}
-function io_open(string $path, string $mode): result<resource_handle> {}
-function io_read(resource_handle $fh, int $length): result<string> {}
-function io_read_line(resource_handle $fh): result<string> {}
-function io_rewind(resource_handle $fh): result<bool> {}
-function io_seek(resource_handle $fh, int $offset): result<bool> {}
-function io_tell(resource_handle $fh): result<int> {}
-function io_write(resource_handle $fh, string $data): result<int> {}
+function io_flush(resource_handle $fh): bool {}
+function io_open(string $path, string $mode): result_or_false<resource_handle> {}
+function io_read(resource_handle $fh, int $length): result_or_false<string> {}
+function io_read_line(resource_handle $fh): result_or_false<string> {}
+function io_rewind(resource_handle $fh): bool {}
+function io_seek(resource_handle $fh, int $offset): nullable<int> {}
+function io_tell(resource_handle $fh): result_or_false<int> {}
+function io_write(resource_handle $fh, string $data): result_or_false<int> {}
 function is_bool(): mixed {}
 function is_float(): mixed {}
 function is_int(): mixed {}
 function isset_eval(): bool {}
-function json_decode(string $json): mixed {}
+function js_plus(): mixed {}
+function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
@@ -112,13 +113,52 @@ function substr(string $text, int $offset, int $length = 0): string {}
 function substr_compare(string $main, string $str, int $offset, int $length = 0): int {}
 function substr_replace(string $text, string $replace, int $offset, int $length = 0): string {}
 function take(mixed $out, mixed $source): bool {}
+function task_cancel(task_batch $batch): void {}
+function task_done(task_batch $batch): bool {}
+function task_join(task_batch $batch): mixed {}
+function task_progress(task_batch $batch): task_progress_info {}
+function task_run(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): mixed {}
+function task_set_status(task_context $ctx, string $status): void {}
+function task_start(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): task_batch {}
+function task_status(task_batch $batch): string {}
 function ternary_eval(): mixed {}
+function to_dynamic(): mixed {}
 function to_hash(mixed $value): hash<mixed> {}
 function trim(string $text): string {}
 function ucfirst(string $text): string {}
 function var_dump(mixed $value): void {}
 
 namespace scpp;
+
+class task_batch
+{
+}
+
+class task_context
+{
+}
+
+class task_progress_info
+{
+	public function total(): int {}
+	public function completed(): int {}
+	public function queued(): int {}
+	public function active(): int {}
+	public function errors(): int {}
+	public function stop_requested(): bool {}
+	public function status(): string {}
+}
+
+class task_error
+{
+	public string $message;
+	public string $kind;
+	public mixed $key;
+	public int $worker_id;
+	public bool $timeout;
+	public string $source_file;
+	public int $source_line;
+}
 
 class mysqli_result
 {

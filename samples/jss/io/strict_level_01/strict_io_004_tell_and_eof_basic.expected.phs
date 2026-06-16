@@ -1,0 +1,11 @@
+function inspect(string $path): void {
+	$fh resource_handle;
+	if (!take($fh, io_open($path, "rb"))) {
+		return;
+	}
+	$pos int = 0;
+	take($pos, io_tell($fh));
+	echo $pos, "\n";
+	echo (io_eof($fh) ? "E" : "N"), "\n";
+	io_close($fh);
+}

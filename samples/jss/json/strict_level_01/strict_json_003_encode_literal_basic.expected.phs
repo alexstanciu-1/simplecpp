@@ -1,0 +1,4 @@
+function show(): void {
+	$row hash<mixed> = ["name" => "Ada", "id" => 3];
+	echo json_encode($row), "\n";
+}

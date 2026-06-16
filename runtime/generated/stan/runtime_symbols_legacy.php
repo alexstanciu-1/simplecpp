@@ -1,4 +1,3 @@
-<?php
 // Generated shallow runtime symbol surface for STAN.
 // Profile: legacy
 // This file is for front-end symbol extraction only.
@@ -68,7 +67,8 @@ function is_dir(string $path): bool {}
 function is_file(string $path): bool {}
 function is_link(string $path): bool {}
 function isset_eval(): bool {}
-function json_decode(string $json): mixed {}
+function js_plus(): mixed {}
+function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
@@ -108,6 +108,7 @@ function substr_replace(string $text, string $replace, int $offset, int $length 
 function take(mixed $out, mixed $source): bool {}
 function ternary_eval(): mixed {}
 function time(): int {}
+function to_dynamic(): mixed {}
 function to_hash(mixed $value) /** hash<mixed> */ {}
 function touch(string $path): bool {}
 function trim(string $text): string {}

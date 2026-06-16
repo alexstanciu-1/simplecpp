@@ -144,6 +144,21 @@ function collectVisibleVariables(document, position) {
 	return Array.from(names).sort();
 }
 
+function collectVisibleVariablesBeforeLineText(text, lineNumber1Based) {
+	const normalized = String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+	const lines = normalized.split("\n");
+	const maxIndexExclusive = Math.max(0, Math.min(lines.length, lineNumber1Based - 1));
+	const names = new Set();
+
+	for (let lineIndex = 0; lineIndex < maxIndexExclusive; lineIndex += 1) {
+		for (const match of lines[lineIndex].matchAll(/\$([A-Za-z_][A-Za-z0-9_]*)/g)) {
+			names.add(`$${match[1]}`);
+		}
+	}
+
+	return Array.from(names).sort();
+}
+
 function collectDeclaredTypeNames(document) {
 	const names = new Set();
 	const fullText = document.getText();
@@ -234,5 +249,6 @@ module.exports = {
 	buildCompletionItems,
 	analyzeContext,
 	collectVisibleVariables,
+	collectVisibleVariablesBeforeLineText,
 	collectDeclaredTypeNames
 };

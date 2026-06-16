@@ -1,0 +1,5 @@
+function roundTrip(string $text): void {
+	$value dynamic = json_decode($text);
+	$encoded string = json_encode($value);
+	echo $encoded, "\n";
+}

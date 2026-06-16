@@ -1,0 +1,2 @@
+$value mixed = 4;
+echo js_plus($value, 2), "\n";

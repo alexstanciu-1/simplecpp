@@ -1,0 +1,8 @@
+namespace Demo;
+class Box {
+	public static function value(): int {
+		return 7;
+	}
+}
+namespace App;
+echo \Demo\Box::value(), "\n";

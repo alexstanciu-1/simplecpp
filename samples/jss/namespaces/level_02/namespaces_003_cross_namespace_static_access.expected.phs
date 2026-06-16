@@ -1,0 +1,8 @@
+namespace A;
+class Box {
+	public static function value(): int {
+		return 5;
+	}
+}
+namespace B;
+echo \A\Box::value(), "\n";

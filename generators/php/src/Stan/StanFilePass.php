@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace Scpp\S2S\Stan;
 
 use Scpp\S2S\Analysis\FrontEndSymbolExtractor;
+use Scpp\S2S\Jss\JssParser;
+use Scpp\S2S\Jss\JssSummaryExtractor;
+use Scpp\S2S\Jss\JssTokenizer;
 use Throwable;
 
 final class StanFilePass
@@ -11,6 +14,9 @@ final class StanFilePass
 	public function __construct(
 		private readonly StanStateStore $stateStore = new StanStateStore(),
 		private readonly FrontEndSymbolExtractor $extractor = new FrontEndSymbolExtractor(),
+		private readonly JssTokenizer $jssTokenizer = new JssTokenizer(),
+		private readonly JssParser $jssParser = new JssParser(),
+		private readonly JssSummaryExtractor $jssSummaryExtractor = new JssSummaryExtractor(),
 		private readonly StanDiagnosticCollector $diagnosticCollector = new StanDiagnosticCollector(),
 	)
 	{
@@ -50,10 +56,21 @@ final class StanFilePass
 			$summary = null;
 			if ($needsAnalyze) {
 				try {
-					$summary = $this->extractor->summarize(
-						$this->extractor->extract($sourcePath, $sourceUnit->contents),
-						$sourceUnit->contents
-					);
+					if ($this->isJssSource($sourcePath)) {
+						$contents = $sourceUnit->contents ?? file_get_contents($sourcePath);
+						if (!is_string($contents)) {
+							throw new \RuntimeException('Failed to read JSS input.');
+						}
+						$summary = $this->jssSummaryExtractor->summarize(
+							$this->jssParser->parse($this->jssTokenizer->tokenize($contents)),
+							$sourcePath
+						);
+					} else {
+						$summary = $this->extractor->summarize(
+							$this->extractor->extract($sourcePath, $sourceUnit->contents),
+							$sourceUnit->contents
+						);
+					}
 				} catch (Throwable $throwable) {
 					$summary = [
 						'path' => $sourcePath,
@@ -182,5 +199,10 @@ final class StanFilePass
 			}
 		}
 		return $reasons;
+	}
+
+	private function isJssSource(string $path): bool
+	{
+		return strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'jss';
 	}
 }

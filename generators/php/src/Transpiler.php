@@ -6,6 +6,7 @@ namespace Scpp\S2S;
 use Scpp\S2S\Builder\IrBuilder;
 use Scpp\S2S\Emit\CppFile;
 use Scpp\S2S\Generator\Generator;
+use Scpp\S2S\Jss\JssTranspiler;
 use Scpp\S2S\Loader\InputLoader;
 use Scpp\S2S\Lowering\TypeMapper;
 use Scpp\S2S\Support\InputException;
@@ -28,6 +29,7 @@ final class Transpiler
 	public function __construct(
 		private readonly InputLoader $loader = new InputLoader(),
 		private readonly IrBuilder $builder = new IrBuilder(),
+		private readonly JssTranspiler $jssTranspiler = new JssTranspiler(),
 		?Generator $generator = null,
 		string $phpProfile = 'legacy',
 	) {
@@ -47,12 +49,31 @@ final class Transpiler
 		if ($source === false) {
 			throw new InputException('Failed to read PHP input: ' . $phpPath);
 		}
+		if ($this->isJssSource($phpPath)) {
+			$source = $this->jssTranspiler->transpileToPhs($source);
+		}
 
 		$this->assertNoSimpleReferenceRebinding($source);
 
 		$input = $this->loader->load($phpPath, $source, $save_ast_to_json);
 		$ir = $this->builder->build($input);
 		return $this->generator->generate($ir, $emitProgramEntry);
+	}
+
+	public function transpileJssToPhs(string $source): string
+	{
+		return $this->jssTranspiler->transpileToPhs($source);
+	}
+
+	/** @param array<string,array<string,mixed>> $frontendClassifications */
+	public function transpileJssToPhsWithClassifications(string $source, string $path, array $frontendClassifications): string
+	{
+		return $this->jssTranspiler->transpileToPhsWithProvidedClassifications($source, $path, $frontendClassifications);
+	}
+
+	private function isJssSource(string $path): bool
+	{
+		return strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'jss';
 	}
 
 	private function assertNoSimpleReferenceRebinding(string $sourcePhp): void

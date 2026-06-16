@@ -1,0 +1,12 @@
+class CounterBox {
+	public static int $count = 1;
+	public int $value;
+	public function __construct(int $value) {
+		$this->value = $value;
+	}
+	public static function next(): int {
+		return CounterBox::$count;
+	}
+}
+$item CounterBox = new CounterBox(CounterBox::next());
+echo $item->value, "\n";

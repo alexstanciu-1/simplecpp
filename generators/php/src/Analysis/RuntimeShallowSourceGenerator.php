@@ -102,9 +102,6 @@ final class RuntimeShallowSourceGenerator
 	private function renderSourceFile(string $profile, array $functions, array $classes, array $skipped): string
 	{
 		$lines = [];
-		if ($profile === 'legacy') {
-			$lines[] = '<?php';
-		}
 		$lines[] = '// Generated shallow runtime symbol surface for STAN.';
 		$lines[] = '// Profile: ' . $profile;
 		$lines[] = '// This file is for front-end symbol extraction only.';
@@ -279,7 +276,7 @@ final class RuntimeShallowSourceGenerator
 				'trim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'ltrim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'rtrim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
-				'json_decode' => ['return' => 'mixed', 'params' => [['name' => 'json', 'type' => 'string']]],
+				'json_decode' => ['return' => 'dynamic', 'params' => [['name' => 'json', 'type' => 'string']]],
 				'json_encode' => ['return' => 'string', 'params' => [['name' => 'value', 'type' => 'mixed']]],
 				'dt_now' => ['return' => 'int', 'params' => []],
 				'dt_now_ms' => ['return' => 'int', 'params' => []],
@@ -300,28 +297,28 @@ final class RuntimeShallowSourceGenerator
 				'fs_exists' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_get' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_put' => ['return' => 'result<int>', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'data', 'type' => 'string']]],
-				'fs_mkdir' => ['return' => 'result<bool>', 'params' => [['name' => 'path', 'type' => 'string']]],
+				'fs_mkdir' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_scan' => ['return' => 'result<vector<string>>', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_size' => ['return' => 'result<int>', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_mtime' => ['return' => 'result<int>', 'params' => [['name' => 'path', 'type' => 'string']]],
-				'fs_touch' => ['return' => 'result<bool>', 'params' => [['name' => 'path', 'type' => 'string']]],
-				'fs_rmdir' => ['return' => 'result<bool>', 'params' => [['name' => 'path', 'type' => 'string']]],
-				'fs_remove' => ['return' => 'result<bool>', 'params' => [['name' => 'path', 'type' => 'string']]],
-				'fs_copy' => ['return' => 'result<bool>', 'params' => [['name' => 'from', 'type' => 'string'], ['name' => 'to', 'type' => 'string']]],
-				'fs_rename' => ['return' => 'result<bool>', 'params' => [['name' => 'from', 'type' => 'string'], ['name' => 'to', 'type' => 'string']]],
+				'fs_touch' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
+				'fs_rmdir' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
+				'fs_remove' => ['return' => 'bool', 'params' => [['name' => 'path', 'type' => 'string']]],
+				'fs_copy' => ['return' => 'bool', 'params' => [['name' => 'from', 'type' => 'string'], ['name' => 'to', 'type' => 'string']]],
+				'fs_rename' => ['return' => 'bool', 'params' => [['name' => 'from', 'type' => 'string'], ['name' => 'to', 'type' => 'string']]],
 				'fs_realpath' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_dirname' => ['return' => 'string', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'fs_basename' => ['return' => 'string', 'params' => [['name' => 'path', 'type' => 'string']]],
-				'io_open' => ['return' => 'result<resource_handle>', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'mode', 'type' => 'string']]],
-				'io_seek' => ['return' => 'result<bool>', 'params' => [['name' => 'fh', 'type' => 'resource_handle'], ['name' => 'offset', 'type' => 'int']]],
-				'io_tell' => ['return' => 'result<int>', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
-				'io_read_line' => ['return' => 'result<string>', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
-				'io_read' => ['return' => 'result<string>', 'params' => [['name' => 'fh', 'type' => 'resource_handle'], ['name' => 'length', 'type' => 'int']]],
-				'io_write' => ['return' => 'result<int>', 'params' => [['name' => 'fh', 'type' => 'resource_handle'], ['name' => 'data', 'type' => 'string']]],
-				'io_rewind' => ['return' => 'result<bool>', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
-				'io_flush' => ['return' => 'result<bool>', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
+				'io_open' => ['return' => 'result_or_false<resource_handle>', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'mode', 'type' => 'string']]],
+				'io_seek' => ['return' => 'nullable<int>', 'params' => [['name' => 'fh', 'type' => 'resource_handle'], ['name' => 'offset', 'type' => 'int']]],
+				'io_tell' => ['return' => 'result_or_false<int>', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
+				'io_read_line' => ['return' => 'result_or_false<string>', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
+				'io_read' => ['return' => 'result_or_false<string>', 'params' => [['name' => 'fh', 'type' => 'resource_handle'], ['name' => 'length', 'type' => 'int']]],
+				'io_write' => ['return' => 'result_or_false<int>', 'params' => [['name' => 'fh', 'type' => 'resource_handle'], ['name' => 'data', 'type' => 'string']]],
+				'io_rewind' => ['return' => 'bool', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
+				'io_flush' => ['return' => 'bool', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
 				'io_eof' => ['return' => 'bool', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
-				'io_close' => ['return' => 'result<bool>', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
+				'io_close' => ['return' => 'bool', 'params' => [['name' => 'fh', 'type' => 'resource_handle']]],
 				'regex_jit_available' => ['return' => 'bool', 'params' => []],
 				'regex_filter' => ['return' => 'vector<string>', 'params' => [['name' => 'pattern', 'type' => 'string'], ['name' => 'input', 'type' => 'vector<string>']]],
 				'regex_grep' => ['return' => 'vector<string>', 'params' => [['name' => 'pattern', 'type' => 'string'], ['name' => 'input', 'type' => 'vector<string>']]],
@@ -343,6 +340,30 @@ final class RuntimeShallowSourceGenerator
 				'curl_error' => ['return' => 'string', 'params' => [['name' => 'handle', 'type' => 'curl_handle']]],
 				'curl_reset' => ['return' => 'void', 'params' => [['name' => 'handle', 'type' => 'curl_handle']]],
 				'curl_close' => ['return' => 'result<bool>', 'params' => [['name' => 'handle', 'type' => 'curl_handle']]],
+				'task_run' => ['return' => 'mixed', 'params' => [
+					['name' => 'items', 'type' => 'mixed'],
+					['name' => 'workers', 'type' => 'int'],
+					['name' => 'exec', 'type' => 'mixed'],
+					['name' => 'index', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'result', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'error', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'timeout_ms', 'type' => 'int', 'has_default' => true],
+				]],
+				'task_start' => ['return' => 'task_batch', 'params' => [
+					['name' => 'items', 'type' => 'mixed'],
+					['name' => 'workers', 'type' => 'int'],
+					['name' => 'exec', 'type' => 'mixed'],
+					['name' => 'index', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'result', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'error', 'type' => 'mixed', 'has_default' => true],
+					['name' => 'timeout_ms', 'type' => 'int', 'has_default' => true],
+				]],
+				'task_join' => ['return' => 'mixed', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_cancel' => ['return' => 'void', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_done' => ['return' => 'bool', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_status' => ['return' => 'string', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_progress' => ['return' => 'task_progress_info', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
+				'task_set_status' => ['return' => 'void', 'params' => [['name' => 'ctx', 'type' => 'task_context'], ['name' => 'status', 'type' => 'string']]],
 			],
 			'legacy' => [
 				'fopen' => ['return' => 'mixed', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'mode', 'type' => 'string']]],
@@ -412,7 +433,33 @@ final class RuntimeShallowSourceGenerator
 	{
 		$isStrict = $profile === 'strict';
 		$blocks = [];
+		$scppClasses = [];
+		if ($isStrict) {
+			$scppClasses = [
+				$this->renderClassStub('task_batch', [], $isStrict),
+				$this->renderClassStub('task_context', [], $isStrict),
+				$this->renderClassStub('task_progress_info', [
+					['kind' => 'method', 'name' => 'total', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'completed', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'queued', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'active', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'errors', 'return' => 'int', 'params' => []],
+					['kind' => 'method', 'name' => 'stop_requested', 'return' => 'bool', 'params' => []],
+					['kind' => 'method', 'name' => 'status', 'return' => 'string', 'params' => []],
+				], $isStrict),
+				$this->renderClassStub('task_error', [
+					['kind' => 'property', 'name' => 'message', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'kind', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'key', 'type' => 'mixed'],
+					['kind' => 'property', 'name' => 'worker_id', 'type' => 'int'],
+					['kind' => 'property', 'name' => 'timeout', 'type' => 'bool'],
+					['kind' => 'property', 'name' => 'source_file', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'source_line', 'type' => 'int'],
+				], $isStrict),
+			];
+		}
 		$blocks[] = $this->renderNamespaceBlock('scpp', [
+			...$scppClasses,
 			$this->renderClassStub('mysqli_result', [
 				['kind' => 'method', 'name' => 'fetch_assoc', 'return' => 'dynamic', 'params' => []],
 			], $isStrict),

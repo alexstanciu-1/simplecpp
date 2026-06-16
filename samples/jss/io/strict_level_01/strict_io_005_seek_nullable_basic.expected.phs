@@ -1,0 +1,9 @@
+function inspect(string $path): void {
+	$fh resource_handle;
+	if (!take($fh, io_open($path, "rb"))) {
+		return;
+	}
+	$moved ?int = io_seek($fh, 2);
+	echo $moved ?? 0, "\n";
+	io_close($fh);
+}

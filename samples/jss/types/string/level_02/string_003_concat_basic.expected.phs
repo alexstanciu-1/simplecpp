@@ -1,0 +1,3 @@
+$a string = "Hello";
+$b string = "World";
+echo $a . " " . $b, "\n";

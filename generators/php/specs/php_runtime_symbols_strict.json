@@ -11,6 +11,7 @@
         "is_bool": "php::is_bool",
         "is_int": "php::is_int",
         "is_float": "php::is_float",
+        "to_dynamic": "to_dynamic",
         "take": "php::take",
         "dbg": "php::dbg",
         "dbg_if": "php::dbg_if",
@@ -106,6 +107,7 @@
         "fs_basename": "fs::basename",
         "json_decode": "json::decode",
         "json_encode": "json::encode",
+        "js_plus": "php::js_plus",
         "dt_now": "dt::now_unix_seconds",
         "dt_now_ms": "dt::now_unix_millis",
         "dt_monotonic_ms": "dt::monotonic_millis",
@@ -114,6 +116,14 @@
         "dt_parse_iso_utc": "dt::parse_iso_utc",
         "dt_format": "dt::format_local",
         "dt_format_now": "dt::format_local_now",
-        "dt_parse": "dt::parse_common_local"
+        "dt_parse": "dt::parse_common_local",
+        "task_run": "tasks::run",
+        "task_start": "tasks::start",
+        "task_join": "tasks::join",
+        "task_cancel": "tasks::cancel",
+        "task_done": "tasks::done",
+        "task_status": "tasks::status",
+        "task_progress": "tasks::progress",
+        "task_set_status": "tasks::set_status"
     }
 }

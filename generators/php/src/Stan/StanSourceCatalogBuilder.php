@@ -22,7 +22,7 @@ final class StanSourceCatalogBuilder
 	{
 		$paths = [];
 		foreach ($projectContexts as $contextProjectRoot => $_projectContext) {
-			foreach (\collect_project_php_files($contextProjectRoot) as $phpPathAbs) {
+			foreach (\collect_project_stan_source_files($contextProjectRoot) as $phpPathAbs) {
 				$paths[\normalize_path($phpPathAbs)] = false;
 			}
 		}

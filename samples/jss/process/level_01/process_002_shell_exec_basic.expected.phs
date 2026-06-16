@@ -1,0 +1,6 @@
+$out = shell_exec("printf shell_exec_ok");
+if ($out === false) {
+	echo "false\n";
+} else {
+	echo $out, "\n";
+}

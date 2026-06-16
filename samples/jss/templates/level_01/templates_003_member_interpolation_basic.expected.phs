@@ -1,0 +1,5 @@
+class User {
+	public string $name = "Ada";
+}
+$user User = new User();
+echo "Hello " . $user->name, "\n";

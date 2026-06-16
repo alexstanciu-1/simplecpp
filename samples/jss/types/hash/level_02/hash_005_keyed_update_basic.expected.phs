@@ -1,0 +1,4 @@
+$values hash<int> = ["a" => 1];
+$values["b"] = 2;
+echo $values["a"], "\n";
+echo $values["b"], "\n";

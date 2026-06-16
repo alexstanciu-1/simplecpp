@@ -1,0 +1,2 @@
+$value float = 1.25;
+echo "value=" . $value, "\n";

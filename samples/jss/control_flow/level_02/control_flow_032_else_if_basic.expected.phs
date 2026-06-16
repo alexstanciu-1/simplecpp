@@ -1,0 +1,10 @@
+$x int = 2;
+if ($x === 1) {
+	echo "one\n";
+} else {
+	if ($x === 2) {
+		echo "two\n";
+	} else {
+		echo "other\n";
+	}
+}

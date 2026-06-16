@@ -1,0 +1,2 @@
+$items vector<int> = [];
+echo count($items), "\n";

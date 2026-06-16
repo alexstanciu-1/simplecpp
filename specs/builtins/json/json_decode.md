@@ -2,11 +2,19 @@
 Doc Status: normative
 ## Current contract
 
+Source-facing PHP++ / PHS contract:
+
+`json_decode(string $json) -> dynamic`
+
+Runtime carrier:
+
 `scpp::php::json_decode(const string_t &json) -> mixed_t`
 
 ## Behavior
 
-Parses one complete JSON document and returns a `mixed_t` in the normal Prism++ runtime shape.
+Parses one complete JSON document and returns dynamic JSON data at the source-language boundary.
+
+The runtime implementation currently carries that value through `mixed_t`, with arrays/objects represented by dynamic/shared table forms.
 
 ### Value mapping
 

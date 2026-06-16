@@ -1,0 +1,4 @@
+function showNow(): void {
+	$text string = dt_format_now("Y-m-d");
+	echo $text, "\n";
+}

@@ -1,0 +1,8 @@
+$a bool = true;
+$b bool = false;
+if ($a && !$b) {
+	echo "T";
+} else {
+	echo "F";
+}
+echo "\n";

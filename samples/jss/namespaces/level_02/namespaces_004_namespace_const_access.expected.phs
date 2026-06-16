@@ -1,0 +1,4 @@
+namespace A;
+const VALUE = 11;
+namespace B;
+echo \A\VALUE, "\n";

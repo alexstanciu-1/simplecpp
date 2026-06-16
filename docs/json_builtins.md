@@ -14,7 +14,7 @@ Use the dedicated header instead:
 
 ## First-pass contract shape
 
-- `json_decode()` parses one full JSON document into `mixed_t`
+- `json_decode()` parses one full JSON document into `dynamic`
 - decoded scalars stay inline in `mixed_t`
 - decoded arrays and objects both become `dynamic_t`
 - packed `hash_t` encodes as a JSON array

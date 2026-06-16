@@ -1,0 +1,1 @@
+echo fs_get("a.txt"), json_decode("{}"), "\n";

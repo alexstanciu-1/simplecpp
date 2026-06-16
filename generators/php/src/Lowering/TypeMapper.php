@@ -239,7 +239,7 @@ final class TypeMapper
 		}
 
 		$inner = trim($matches[1]);
-		return 'vector_t<' . $this->mapDeclaredType($inner) . '>';
+		return 'vector_t<' . $this->mapContainerElementType($inner) . '>';
 	}
 
 	public function isHashType(string $phpType): bool
@@ -260,13 +260,20 @@ final class TypeMapper
 			return $this->mapDeclaredType($phpType);
 		}
 
-		$valueType = $this->mapDeclaredType($args[0]);
+		$valueType = $this->mapContainerElementType($args[0]);
 		if (count($args) === 1) {
 			return 'hash_t<' . $valueType . '>';
 		}
 
 		$keyType = $this->mapDeclaredType($args[1]);
 		return 'hash_t<' . $valueType . ', ' . $keyType . '>';
+	}
+
+	private function mapContainerElementType(string $phpType): string
+	{
+		return strtolower(trim($phpType)) === 'dynamic'
+			? 'mixed_t'
+			: $this->mapDeclaredType($phpType);
 	}
 
 	/** @return list<string> */

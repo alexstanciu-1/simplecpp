@@ -1,0 +1,2 @@
+$v vector<int> = [3, 4, 5];
+echo $v[1], "\n";

@@ -11,6 +11,9 @@ final class ScppBuildOptionsTest
 	public function __construct()
 	{
 		$this->root = normalize_path(sys_get_temp_dir() . '/scpp_build_options_test_' . getmypid() . '_' . bin2hex(random_bytes(4)));
+		register_shutdown_function(function (): void {
+			$this->removeTree($this->root);
+		});
 	}
 
 	public function run(): int
@@ -356,9 +359,9 @@ final class ScppBuildOptionsTest
 				$this->removeTree($child);
 				continue;
 			}
-			unlink($child);
+			@unlink($child);
 		}
-		rmdir($path);
+		@rmdir($path);
 	}
 }
 

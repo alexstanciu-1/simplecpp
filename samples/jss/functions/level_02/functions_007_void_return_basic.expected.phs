@@ -1,0 +1,5 @@
+function show(int $value): void {
+	echo $value, "\n";
+	return;
+}
+show(9);

@@ -28,6 +28,7 @@ final class ScppUpdateTest
 
 			$sourceRepo = resolve_repo_root();
 			$this->git($this->root, ['clone', '--bare', $sourceRepo, $remote]);
+			$this->pointBareRemoteMainAtCurrentHead($sourceRepo, $remote);
 			$this->git($this->root, ['clone', '-b', 'main', $remote, $seed]);
 			$this->configureUser($seed);
 			$this->git($this->root, ['clone', '-b', 'main', $remote, $checkout]);
@@ -68,6 +69,12 @@ final class ScppUpdateTest
 	{
 		$this->git($cwd, ['config', 'user.email', 'scpp-update-test@example.invalid']);
 		$this->git($cwd, ['config', 'user.name', 'scpp update test']);
+	}
+
+	private function pointBareRemoteMainAtCurrentHead(string $sourceRepo, string $remote): void
+	{
+		$currentHead = $this->gitLine($sourceRepo, ['rev-parse', 'HEAD']);
+		$this->git($remote, ['update-ref', 'refs/heads/main', $currentHead]);
 	}
 
 	/** @param list<string> $args */
@@ -142,7 +149,7 @@ final class ScppUpdateTest
 	{
 		$families = ['php-legacy', 'php-strict'];
 		$modes = ['debug', 'release'];
-		$modules = ['mysqli', 'regex', 'curl'];
+		$modules = ['mysqli', 'regex', 'curl', 'tasks'];
 		foreach ($families as $family) {
 			foreach ($modes as $mode) {
 				$dir = $checkout . '/.prism/runtime/release/' . $family . '/' . $mode;

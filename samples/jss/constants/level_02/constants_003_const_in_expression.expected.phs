@@ -1,0 +1,2 @@
+const BASE = 20;
+echo BASE + 2, "\n";

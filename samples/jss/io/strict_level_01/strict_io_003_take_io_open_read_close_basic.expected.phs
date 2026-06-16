@@ -1,0 +1,10 @@
+function readFirstLine(string $path): void {
+	$fh resource_handle;
+	if (!take($fh, io_open($path, "rb"))) {
+		return;
+	}
+	$line string = "";
+	take($line, io_read_line($fh));
+	$closed bool = io_close($fh);
+	echo $line, "\n";
+}

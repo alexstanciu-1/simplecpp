@@ -281,8 +281,19 @@ final class Generator
 		if ($type === 'mixed_t') {
 			return $expr;
 		}
+		if ($this->isDirectInitializerBoundaryType($type)) {
+			return $expr;
+		}
+		if (($type === 'dynamic_t<>' || str_starts_with($type, 'shared_p<')) && $expr === 'null') {
+			return $expr;
+		}
 
 		return 'required_cast<' . $type . '>(' . $expr . ')';
+	}
+
+	private function isDirectInitializerBoundaryType(string $type): bool
+	{
+		return preg_match('/^(?:nullable|result|result_or_false|result_or_bool|shared_p|unique_p|weak_p|value_p)<.+>$/', $type) === 1;
 	}
 
 	/** @param list<string> $lines @return list<CodeBlock> */
@@ -835,6 +846,13 @@ final class Generator
 
 		if ($exprType === 'dynamic_t<>') {
 			return $expectedType === 'mixed_t' ? ('mixed_t{dynamic_box(' . $renderedExpr . ')}') : $renderedExpr;
+		}
+
+		if ($exprType === 'null_t' && $expectedType === 'dynamic_t<>') {
+			return $renderedExpr;
+		}
+		if ($renderedExpr === 'null' && $expectedType === 'dynamic_t<>') {
+			return $renderedExpr;
 		}
 
 		if ($exprType === 'nullable<' . $expectedType . '>' || $exprType === 'result_or_false<' . $expectedType . '>' || $exprType === 'result_or_bool<' . $expectedType . '>' || $exprType === 'result<' . $expectedType . '>') {
@@ -5415,10 +5433,23 @@ final class Generator
 
 		$rendered = $this->renderExpr($expr, $namespacePhp);
 		if ($typedLocalType !== null) {
+			if ($this->typeMapper->mapTypedLocalType($typedLocalType) === 'dynamic_t<>' && $this->isNullConstantExpr($expr)) {
+				return $rendered;
+			}
 			return $this->wrapExprForExpectedType($rendered, $this->inferExprType($expr), $this->typeMapper->mapTypedLocalType($typedLocalType));
 		}
 
 		return $rendered;
+	}
+
+	private function isNullConstantExpr(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::CONST)) {
+			return false;
+		}
+		$nameNode = $expr->children['name'] ?? null;
+		$name = is_object($nameNode) ? (string) ($nameNode->children['name'] ?? '') : (string) $nameNode;
+		return strtolower(ltrim($name, '\\')) === 'null';
 	}
 
 
@@ -6040,7 +6071,7 @@ final class Generator
 		$signature .= ' {';
 		$out[] = $signature;
 		foreach ($bodyLines as $line) {
-			$out[] = $this->indent(1) . $line;
+			$out[] = $this->indent(1) . ($line instanceof CodeBlock ? $line->text : (string) $line);
 		}
 		$out[] = '}';
 
@@ -6185,7 +6216,7 @@ final class Generator
 		$signature .= ' {';
 		$out[] = $signature;
 		foreach ($bodyLines as $line) {
-			$out[] = $this->indent(1) . $line;
+			$out[] = $this->indent(1) . ($line instanceof CodeBlock ? $line->text : (string) $line);
 		}
 		$out[] = '}';
 
@@ -7799,6 +7830,15 @@ final class Generator
 		}
 
 		$kind = $expr->kind ?? null;
+		if ($kind === AstKind::CONST) {
+			$nameNode = $expr->children['name'] ?? null;
+			$name = strtolower(ltrim(is_object($nameNode) ? (string) ($nameNode->children['name'] ?? '') : (string) $nameNode, '\\'));
+			return match ($name) {
+				'true', 'false' => 'bool_t',
+				'null' => 'null_t',
+				default => 'auto',
+			};
+		}
 		if ($kind === AstKind::VAR) {
 			$name = (string) ($expr->children['name'] ?? '');
 			$declared = $this->declaredLocalTypes[$name] ?? null;
@@ -7848,7 +7888,7 @@ final class Generator
 			return 'auto';
 		}
 		if ($kind === AstKind::ARRAY) {
-			return 'dynamic_t<>';
+			return 'mixed_t';
 		}
 		if ($kind === AstKind::CAST && ((int) ($expr->flags ?? 0) === AstKind::TYPE_OBJECT)) {
 			return 'mixed_t';
@@ -8043,7 +8083,8 @@ private function renderObjectCastExpr(mixed $expr, ?string $namespacePhp): strin
 
 		$kind = $expr->kind ?? null;
 		if ($kind === AstKind::CONST) {
-			$name = strtolower(ltrim((string) ($expr->children['name']->children['name'] ?? ''), '\\'));
+			$nameNode = $expr->children['name'] ?? null;
+			$name = strtolower(ltrim(is_object($nameNode) ? (string) ($nameNode->children['name'] ?? '') : (string) $nameNode, '\\'));
 			return match ($name) {
 				'true', 'false' => 'bool_t',
 				'null' => 'null_t',

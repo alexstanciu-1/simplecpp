@@ -1,0 +1,4 @@
+let a: int = 2;
+let b: int = a + 5;
+
+print(b, "\n");

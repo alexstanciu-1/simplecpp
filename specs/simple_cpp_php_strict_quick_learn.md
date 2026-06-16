@@ -675,7 +675,7 @@ In practice:
 - `vector<string>` is a better fit than a dynamic packed container when all elements are strings.
 - `hash<int>` is a better fit than a dynamic object-like table when keys are known strings and values are all ints.
 - `hash<string, int>` is the supported two-argument generic form when the key family itself is intentionally typed.
-- `mixed_t` remains appropriate for decoded JSON, loose interop surfaces, and truly dynamic payloads.
+- `dynamic` remains appropriate for decoded JSON and truly dynamic payloads.
 
 Stable-left-side rule in strict code:
 
@@ -1125,7 +1125,7 @@ Visible PHP++ / PHS strict names use plain PHP-like names for general language-a
 
 | Name | Compact signature | Return shape / note |
 | --- | --- | --- |
-| `json_decode` | `json_decode(string $json)` | `mixed_t`; arrays/objects become dynamic/hash-backed |
+| `json_decode` | `json_decode(string $json)` | `dynamic`; arrays/objects become dynamic/hash-backed |
 | `json_encode` | `json_encode(mixed $value)` | `string` |
 
 ### Datetime
