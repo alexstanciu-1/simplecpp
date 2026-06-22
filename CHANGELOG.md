@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.71 - 2026-06-22
+
+### Additions
+
+- Added first-pass JSS support to the Simple C++ VS Code extension, including `.jss` language registration, syntax highlighting, snippets, project creation, JSS docs command, and STAN document routing.
+- Added JSS-aware static completions for keywords, scalar/container types, visible `let` declarations, typed parameters, declared classes in type positions, and reserved helper families `fs`, `io`, `json`, and `dt`.
+- Added JSS extension fixtures, a JSS smoke workspace, and completion tests for helper-family and visible-name completion behavior.
+
+### Fixes
+
+- Made the extension smoke opener prefer the project `entrypoint` from `prism.json`, so JSS smoke projects open the right source file.
+- Added a shallow JSS document-symbol fallback for namespace, class, function, and `let` declarations while deeper semantic navigation remains STAN-owned.
+- Updated VS Code extension documentation and manual validation notes for JSS build/run/debug expectations and current alpha limits.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- JSS extension support is editor and project-workflow support for the typed script-style compiled frontend, not JavaScript compatibility.
+- Full debug stepping/source-map parity for original `.jss` lines remains an alpha validation item.
+
 ## 0.1.70 - 2026-06-16
 
 ### Additions

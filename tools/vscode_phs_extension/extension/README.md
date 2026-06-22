@@ -6,20 +6,21 @@ This folder contains the current `Simple C++` Visual Studio Code extension works
 
 - package name: `simple-cpp-vscode`
 - extension display name: `Simple C++`
-- language id: `phs`
-- language display name: `PHP++ (PHS)`
+- language ids: `phs`, `jss`
+- language display names: `PHP++ (PHS)`, `Simple C++ JSS`
 
 ## Phase 1 Scope
 
 Current functionality provides:
 
 - project creation through `scpp init`
-- `.phs` language registration
+- JSS alpha project creation with `main.jss`
+- `.phs` and `.jss` language registration
 - editor language configuration
-- starter syntax highlighting
-- strict-mode snippets
+- starter syntax highlighting for PHS and typed JSS
+- strict-mode PHS snippets and JSS v1-alpha snippets
 - simple `scpp` workflow commands
-- context-aware static completion for keywords, types, builtins, and visible variables
+- context-aware static completion for keywords, types, builtins, visible variables, and JSS reserved helper families
 - STAN-backed diagnostics, hover, definition, references, and document symbols
 - preview debug inspection commands and a minimal debug-adapter scaffold for Simple C++ debug sessions
 
@@ -39,8 +40,10 @@ Later phases can still add richer analyzer-backed completion and deeper semantic
 
 - open this folder in VS Code
 - press `F5` to launch an Extension Development Host
-- use `Ctrl+Space` in a `.phs` file to test static completion
+- use `Ctrl+Space` in a `.phs` or `.jss` file to test static completion
 - use the bundled smoke workspace to test STAN diagnostics and navigation
+
+JSS support is for the Simple C++ typed script-style compiled frontend, not JavaScript compatibility. A JSS project uses `.jss` sources and still lowers through the normal PHS/STAN/build path.
 
 Helpful files:
 

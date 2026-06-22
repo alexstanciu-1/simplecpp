@@ -1,6 +1,6 @@
-# VS Code PHS Extension
+# VS Code Simple C++ Extension
 
-Purpose: dedicated home for the Visual Studio Code extension work for PHP++ / PHS strict-mode authoring.
+Purpose: dedicated home for the Visual Studio Code extension work for PHP++ / PHS strict-mode authoring and the JSS v1-alpha typed script-style frontend.
 
 This folder exists to keep editor integration work separate from:
 
@@ -11,12 +11,13 @@ This folder exists to keep editor integration work separate from:
 
 ## Initial Focus
 
-Phase 1 aims to provide the editing basics for `.phs` files:
+Phase 1 aims to provide the editing basics for `.phs` and `.jss` files:
 
 - language registration
 - syntax highlighting
 - snippets
 - simple workflow commands
+- JSS reserved helper-family completion for `fs`, `io`, `json`, and `dt`
 
 Semantic editor features should be layered in later through repository-owned analyzer tooling rather than ad hoc editor-only logic.
 
