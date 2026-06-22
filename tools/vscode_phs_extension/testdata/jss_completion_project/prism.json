@@ -1,0 +1,19 @@
+{
+  "config_version": 1,
+  "project_name": "jss-completion-project",
+  "entrypoint": "main.jss",
+  "build_dir": ".prism/build",
+  "generated_dir": ".prism/generated",
+  "cache_dir": ".prism/cache",
+  "runtime": {
+    "languages": {
+      "php": {
+        "profile": "strict"
+      }
+    },
+    "modules": [
+      "json",
+      "filesystem"
+    ]
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "name": "Simple C++ JSS",
+  "scopeName": "source.jss",
+  "patterns": [
+    {
+      "include": "#invalid"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#declarations"
+    },
+    {
+      "include": "#helpers"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#functions"
+    }
+  ],
+  "repository": {
+    "invalid": {
+      "patterns": [
+        {
+          "name": "invalid.illegal.source-header.jss",
+          "match": "<\\?php\\b"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.jss",
+          "begin": "/\\*\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.block.jss",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.jss",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "match": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.jss"
+            },
+            "2": {
+              "name": "entity.name.type.class.jss"
+            }
+          }
+        },
+        {
+          "match": "\\b(function)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.jss"
+            },
+            "2": {
+              "name": "entity.name.function.definition.jss"
+            }
+          }
+        },
+        {
+          "match": "\\b(let)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.variable.jss"
+            },
+            "2": {
+              "name": "variable.other.definition.jss"
+            }
+          }
+        },
+        {
+          "match": "\\b(namespace|use)\\s+([A-Za-z_][A-Za-z0-9_.\\\\]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.namespace.jss"
+            },
+            "2": {
+              "name": "entity.name.namespace.jss"
+            }
+          }
+        }
+      ]
+    },
+    "helpers": {
+      "patterns": [
+        {
+          "match": "\\b(fs|io|json|dt)\\.([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "support.namespace.helper.jss"
+            },
+            "2": {
+              "name": "support.function.helper.jss"
+            }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.jss",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.jss",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.jss",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.jss",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.template.jss",
+          "begin": "`",
+          "end": "`",
+          "patterns": [
+            {
+              "name": "constant.character.escape.jss",
+              "match": "\\\\."
+            },
+            {
+              "name": "meta.template.expression.jss",
+              "begin": "\\$\\{",
+              "end": "\\}",
+              "patterns": [
+                {
+                  "include": "#keywords"
+                },
+                {
+                  "include": "#types"
+                },
+                {
+                  "include": "#numbers"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.jss",
+          "match": "\\b(if|else|switch|case|default|for|of|while|do|break|continue|return|await|delete)\\b"
+        },
+        {
+          "name": "keyword.declaration.jss",
+          "match": "\\b(async|function|class|extends|public|static|const|new|use|namespace)\\b"
+        },
+        {
+          "name": "keyword.operator.jss",
+          "match": "=>|===|!==|==|!=|<=|>=|&&|\\|\\||\\+\\+|--|\\?\\.|\\?\\?|\\?|:|&|\\."
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.jss",
+          "match": "\\b(void|bool|int|float|string|mixed|dynamic|vector|hash|callable|nullable|object)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.jss",
+          "match": "\\b(true|false|null)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.jss",
+          "match": "\\b-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?\\b"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.call.jss"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

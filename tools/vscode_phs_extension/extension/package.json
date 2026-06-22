@@ -1,8 +1,8 @@
 {
   "name": "simple-cpp-vscode",
   "displayName": "Simple C++",
-  "description": "VS Code support for PHP++ / PHS authoring with STAN-powered language features in .phs files.",
-  "version": "0.1.69",
+  "description": "VS Code support for PHP++ / PHS and JSS authoring with STAN-powered language features.",
+  "version": "0.1.71",
   "publisher": "simple-cpp",
   "license": "UNLICENSED",
   "engines": {
@@ -14,11 +14,14 @@
   "activationEvents": [
     "workspaceContains:prism.json",
     "onLanguage:phs",
+    "onLanguage:jss",
     "onCommand:simpleCpp.createProject",
+    "onCommand:simpleCpp.createJssProject",
     "onCommand:simpleCpp.buildProject",
     "onCommand:simpleCpp.runProject",
     "onCommand:simpleCpp.doctor",
     "onCommand:simpleCpp.docsStrict",
+    "onCommand:simpleCpp.docsJss",
     "onCommand:simpleCpp.stan.restartServer",
     "onCommand:simpleCpp.stan.openSmokeFile",
     "onCommand:simpleCpp.debug.inspectLatestSession",
@@ -41,6 +44,18 @@
           ".phs"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "jss",
+        "aliases": [
+          "Simple C++ JSS",
+          "JSS",
+          "jss"
+        ],
+        "extensions": [
+          ".jss"
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -48,23 +63,39 @@
         "language": "phs",
         "scopeName": "source.phs",
         "path": "./syntaxes/phs.tmLanguage.json"
+      },
+      {
+        "language": "jss",
+        "scopeName": "source.jss",
+        "path": "./syntaxes/jss.tmLanguage.json"
       }
     ],
     "snippets": [
       {
         "language": "phs",
         "path": "./snippets/phs.json"
+      },
+      {
+        "language": "jss",
+        "path": "./snippets/jss.json"
       }
     ],
     "breakpoints": [
       {
         "language": "phs"
+      },
+      {
+        "language": "jss"
       }
     ],
     "commands": [
       {
         "command": "simpleCpp.createProject",
         "title": "Simple C++: Create Project"
+      },
+      {
+        "command": "simpleCpp.createJssProject",
+        "title": "Simple C++: Create JSS Project"
       },
       {
         "command": "simpleCpp.buildProject",
@@ -81,6 +112,10 @@
       {
         "command": "simpleCpp.docsStrict",
         "title": "Simple C++: Show Strict Docs"
+      },
+      {
+        "command": "simpleCpp.docsJss",
+        "title": "Simple C++: Show JSS Docs"
       },
       {
         "command": "simpleCpp.stan.restartServer",
@@ -104,7 +139,8 @@
         "type": "simplecpp-debug",
         "label": "Simple C++ Debug",
         "languages": [
-          "phs"
+          "phs",
+          "jss"
         ],
         "configurationAttributes": {
           "launch": {
@@ -184,8 +220,9 @@
     }
   },
   "scripts": {
-    "lint:json": "node -e \"for (const file of ['package.json','language-configuration.json','syntaxes/phs.tmLanguage.json','snippets/phs.json']) JSON.parse(require('fs').readFileSync(file,'utf8')); console.log('json ok');\"",
-    "check": "npm run lint:json && node -c src/extension.js && node -c src/static_completion.js && node -c src/debug/project_debug_store.js && node -c src/debug/scpp_debug_runner.js && node -c src/debug/debug_commands.js && node -c src/debug/debug_dap.js",
+    "lint:json": "node -e \"for (const file of ['package.json','language-configuration.json','syntaxes/phs.tmLanguage.json','syntaxes/jss.tmLanguage.json','snippets/phs.json','snippets/jss.json']) JSON.parse(require('fs').readFileSync(file,'utf8')); console.log('json ok');\"",
+    "test:completion": "node test/static_completion.test.js",
+    "check": "npm run lint:json && node -c src/extension.js && node -c src/static_completion.js && node -c src/debug/project_debug_store.js && node -c src/debug/scpp_debug_runner.js && node -c src/debug/debug_commands.js && node -c src/debug/debug_dap.js && npm run test:completion",
     "package:check": "npx @vscode/vsce package --no-dependencies"
   },
   "dependencies": {

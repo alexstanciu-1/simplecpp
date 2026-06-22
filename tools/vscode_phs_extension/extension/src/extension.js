@@ -16,10 +16,14 @@ let devSmokeOpened = false;
 
 async function activate(context) {
 	registerStaticCompletion(context);
+	registerJssDocumentSymbols(context);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand("simpleCpp.createProject", async () => {
 			await createSimpleCppProject(context);
+		}),
+		vscode.commands.registerCommand("simpleCpp.createJssProject", async () => {
+			await createJssProject(context);
 		}),
 		vscode.commands.registerCommand("simpleCpp.buildProject", async () => {
 			await runScppProjectCommand("build", "scpp build");
@@ -28,7 +32,8 @@ async function activate(context) {
 			await runScppProjectCommand("run", "scpp run");
 		}),
 		registerScppCommand("simpleCpp.doctor", "scpp --doctor"),
-		registerScppCommand("simpleCpp.docsStrict", "scpp docs strict")
+		registerScppCommand("simpleCpp.docsStrict", "scpp docs strict"),
+		registerScppCommand("simpleCpp.docsJss", "scpp docs jss")
 	);
 
 	context.subscriptions.push(
@@ -122,7 +127,13 @@ async function openSmokeFileIfAvailable(context, force) {
 		return;
 	}
 
-	const target = vscode.Uri.file(path.join(smokeFolder.uri.fsPath, "main.phs"));
+	const configuredEntrypoint = readProjectEntrypoint(smokeFolder.uri.fsPath);
+	const targetPath = configuredEntrypoint !== null
+		? path.join(smokeFolder.uri.fsPath, configuredEntrypoint)
+		: fs.existsSync(path.join(smokeFolder.uri.fsPath, "main.jss"))
+			? path.join(smokeFolder.uri.fsPath, "main.jss")
+			: path.join(smokeFolder.uri.fsPath, "main.phs");
+	const target = vscode.Uri.file(targetPath);
 	try {
 		const document = await vscode.workspace.openTextDocument(target);
 		await vscode.window.showTextDocument(document, { preview: false });
@@ -135,6 +146,65 @@ async function openSmokeFileIfAvailable(context, force) {
 function isDevelopmentMode(context) {
 	const extensionMode = context.extensionMode;
 	return extensionMode === vscode.ExtensionMode.Development || extensionMode === vscode.ExtensionMode.Test;
+}
+
+function readProjectEntrypoint(projectRoot) {
+	const prismPath = path.join(projectRoot, "prism.json");
+	try {
+		const parsed = JSON.parse(fs.readFileSync(prismPath, "utf8"));
+		if (typeof parsed.entrypoint === "string" && parsed.entrypoint.trim() !== "") {
+			return parsed.entrypoint;
+		}
+	} catch (_error) {
+		return null;
+	}
+	return null;
+}
+
+function registerJssDocumentSymbols(context) {
+	context.subscriptions.push(
+		vscode.languages.registerDocumentSymbolProvider(
+			{ language: "jss" },
+			{
+				provideDocumentSymbols(document) {
+					return collectJssDocumentSymbols(document);
+				}
+			}
+		)
+	);
+}
+
+function collectJssDocumentSymbols(document) {
+	const symbols = [];
+	for (let line = 0; line < document.lineCount; line += 1) {
+		const text = document.lineAt(line).text;
+		const trimmed = text.trim();
+		let match = trimmed.match(/^namespace\s+([A-Za-z_][A-Za-z0-9_.\\]*)/);
+		if (match) {
+			symbols.push(createDocumentSymbol(document, line, match[1], "JSS namespace", vscode.SymbolKind.Namespace));
+			continue;
+		}
+		match = trimmed.match(/^class\s+([A-Za-z_][A-Za-z0-9_]*)/);
+		if (match) {
+			symbols.push(createDocumentSymbol(document, line, match[1], "JSS class", vscode.SymbolKind.Class));
+			continue;
+		}
+		match = trimmed.match(/^(?:async\s+)?function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/);
+		if (match) {
+			symbols.push(createDocumentSymbol(document, line, match[1], "JSS function", vscode.SymbolKind.Function));
+			continue;
+		}
+		match = trimmed.match(/^let\s+([A-Za-z_][A-Za-z0-9_]*)/);
+		if (match) {
+			symbols.push(createDocumentSymbol(document, line, match[1], "JSS local", vscode.SymbolKind.Variable));
+		}
+	}
+	return symbols;
+}
+
+function createDocumentSymbol(document, line, name, detail, kind) {
+	const range = document.lineAt(line).range;
+	return new vscode.DocumentSymbol(name, detail, kind, range, range);
 }
 
 function createClient(context, workspaceFolder) {
@@ -150,10 +220,12 @@ function createClient(context, workspaceFolder) {
 		workspaceFolder,
 		documentSelector: [
 			{ scheme: "file", language: "phs", pattern: `${workspaceFolder.uri.fsPath.replace(/\\/g, "/")}/**/*` },
-			{ scheme: "file", pattern: `${workspaceFolder.uri.fsPath.replace(/\\/g, "/")}/**/*.phs` }
+			{ scheme: "file", language: "jss", pattern: `${workspaceFolder.uri.fsPath.replace(/\\/g, "/")}/**/*` },
+			{ scheme: "file", pattern: `${workspaceFolder.uri.fsPath.replace(/\\/g, "/")}/**/*.phs` },
+			{ scheme: "file", pattern: `${workspaceFolder.uri.fsPath.replace(/\\/g, "/")}/**/*.jss` }
 		],
 		synchronize: {
-			fileEvents: vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(workspaceFolder, "**/*.{phs,php,json}"))
+			fileEvents: vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(workspaceFolder, "**/*.{phs,php,jss,json}"))
 		},
 		outputChannel: vscode.window.createOutputChannel(`Simple C++ STAN (${workspaceFolder.name})`),
 		traceOutputChannel: vscode.window.createOutputChannel(`Simple C++ STAN Trace (${workspaceFolder.name})`)
@@ -262,6 +334,52 @@ async function createSimpleCppProject(context) {
 	void synchronizeProjectClientWhenReady(context, projectRoot);
 }
 
+async function createJssProject(context) {
+	const workspaceFolder = await pickTargetWorkspaceFolder();
+	if (!workspaceFolder) {
+		vscode.window.showWarningMessage("Open a folder in VS Code before creating a Simple C++ JSS project.");
+		return;
+	}
+
+	const projectRoot = workspaceFolder.uri.fsPath;
+	const prismPath = path.join(projectRoot, "prism.json");
+	if (fs.existsSync(prismPath)) {
+		vscode.window.showInformationMessage(`A Simple C++ project already exists in ${workspaceFolder.name}.`);
+		return;
+	}
+
+	const prism = {
+		runtime: {
+			languages: {
+				php: {
+					profile: "strict"
+				}
+			}
+		},
+		entrypoint: "main.jss"
+	};
+	const main = [
+		"class Box {",
+		"\tname: string = \"ready\";",
+		"}",
+		"",
+		"let box: Box = new Box();",
+		"print(box.name, \"\\n\");",
+		""
+	].join("\n");
+
+	try {
+		fs.writeFileSync(prismPath, `${JSON.stringify(prism, null, 2)}\n`, "utf8");
+		fs.writeFileSync(path.join(projectRoot, "main.jss"), main, "utf8");
+		vscode.window.showInformationMessage(`Created Simple C++ JSS project in ${workspaceFolder.name}.`);
+		await synchronizeWorkspaceClients(context);
+		const document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(projectRoot, "main.jss")));
+		await vscode.window.showTextDocument(document, { preview: false });
+	} catch (error) {
+		vscode.window.showErrorMessage(`Could not create Simple C++ JSS project: ${String(error && error.message ? error.message : error)}`);
+	}
+}
+
 async function runScppProjectCommand(mode, shellCommand) {
 	const projectRoot = await resolveProjectRoot();
 	if (!projectRoot || !fs.existsSync(path.join(projectRoot, "prism.json"))) {
@@ -361,6 +479,8 @@ module.exports = {
 	_debugSupport: {
 		debugStore,
 		debugRunner,
-		registerDebugCommands
+		registerDebugCommands,
+		collectJssDocumentSymbols,
+		readProjectEntrypoint
 	}
 };
