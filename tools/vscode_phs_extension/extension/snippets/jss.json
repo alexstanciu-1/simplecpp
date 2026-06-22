@@ -1,0 +1,75 @@
+{
+  "Typed function": {
+    "prefix": "fn",
+    "body": [
+      "function ${1:name}(${2:}): ${3:void} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Create a typed JSS function."
+  },
+  "Typed local": {
+    "prefix": "let",
+    "body": [
+      "let ${1:name}: ${2:type} = ${3:value};"
+    ],
+    "description": "Create a typed JSS local."
+  },
+  "Class": {
+    "prefix": "class",
+    "body": [
+      "class ${1:Name} {",
+      "\t${2:field}: ${3:string} = ${4:\"value\"};",
+      "",
+      "\tfunction ${5:method}(): ${6:void} {",
+      "\t\t$0",
+      "\t}",
+      "}"
+    ],
+    "description": "Create a JSS class with a public field and method."
+  },
+  "For of": {
+    "prefix": "forof",
+    "body": [
+      "for (let ${1:item}: ${2:type} of ${3:items}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Iterate over a typed JSS collection."
+  },
+  "Arrow function": {
+    "prefix": "arrow",
+    "body": [
+      "let ${1:name} = (${2:value}: ${3:int}): ${4:int} => ${5:value + 1};"
+    ],
+    "description": "Create an explicit typed JSS arrow function."
+  },
+  "Take wrapper": {
+    "prefix": "take",
+    "body": [
+      "if (take(${1:value}, ${2:err}, ${3:expr})) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Resolve a wrapper-shaped result with take(...)."
+  },
+  "Read JSON file": {
+    "prefix": "fsjson",
+    "body": [
+      "let ${1:text}: string = \"\";",
+      "let ${2:err}: error;",
+      "if (take(${1:text}, ${2:err}, fs.get(${3:\"data.json\"}))) {",
+      "\tlet ${4:data}: dynamic = json.decode(${1:text});",
+      "\t$0",
+      "}"
+    ],
+    "description": "Read JSON text through fs.get(...) and json.decode(...)."
+  },
+  "Print": {
+    "prefix": "print",
+    "body": [
+      "print(${1:value}, \"\\n\");"
+    ],
+    "description": "Print a value from JSS."
+  }
+}

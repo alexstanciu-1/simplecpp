@@ -2,6 +2,9 @@
   "folders": [
     {
       "path": "../testdata/stan_smoke_workspace"
+    },
+    {
+      "path": "../testdata/jss_smoke_workspace"
     }
   ],
   "settings": {
