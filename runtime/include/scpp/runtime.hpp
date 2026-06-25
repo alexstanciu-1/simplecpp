@@ -45,6 +45,7 @@
 #include "scpp/tasks.hpp"
 #include "scpp/ui.hpp"
 #include "scpp/webview.hpp"
+#include "scpp/tokenizer.hpp"
 #include "scpp/async_core.hpp"
 #include "scpp/str.hpp"
 #include "hosts/fastcgi/fastcgi.hpp"
