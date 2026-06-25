@@ -264,6 +264,8 @@ final class RuntimeShallowSourceGenerator
 				'bin2hex' => ['return' => 'string', 'params' => [['name' => 'bytes', 'type' => 'string']]],
 				'number_format' => ['return' => 'string', 'params' => [['name' => 'value', 'type' => 'float']]],
 				'hash_string' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
+				'jss_tokenize' => ['return' => 'mixed', 'params' => [['name' => 'source', 'type' => 'string']]],
+				'phs_tokenize' => ['return' => 'mixed', 'params' => [['name' => 'source', 'type' => 'string']]],
 				'strlen' => ['return' => 'int', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'string_byte_at' => ['return' => 'int', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'offset', 'type' => 'int']]],
 				'string_byte_slice_equals' => ['return' => 'bool', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int'], ['name' => 'literal', 'type' => 'string']]],

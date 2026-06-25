@@ -71,11 +71,13 @@ function isset_eval(): bool {}
 function js_plus(): mixed {}
 function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
+function jss_tokenize(string $source): mixed {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
 function mkdir(string $path): bool {}
 function not_identical(mixed $left, mixed $right): bool {}
 function number_format(float $value): string {}
+function phs_tokenize(string $source): mixed {}
 function preg_filter(string $pattern, string $replacement, string $subject): mixed {}
 function preg_grep(string $pattern, mixed $input): mixed {}
 function preg_jit_available(): bool {}
