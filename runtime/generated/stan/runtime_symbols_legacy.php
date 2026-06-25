@@ -60,6 +60,7 @@ function fread(mixed $fh, int $length): mixed {}
 function fseek(mixed $fh, int $offset): mixed {}
 function ftell(mixed $fh): mixed {}
 function fwrite(mixed $fh, string $data): mixed {}
+function hash_string(string $text): string {}
 function hex2bin(string $hex) /** result_or_false<string> */ {}
 function identical(mixed $left, mixed $right): bool {}
 function implode(string $separator, mixed $parts): string {}
@@ -96,6 +97,8 @@ function str_ends_with(string $text, string $suffix): bool {}
 function str_pad(string $text, int $length): string {}
 function str_replace(string $search, string $replace, string $subject): string {}
 function str_starts_with(string $text, string $prefix): bool {}
+function string_byte_at(string $text, int $offset): int {}
+function string_byte_slice_equals(string $text, int $offset, int $length, string $literal): bool {}
 function strlen(string $text): int {}
 function strpos(string $haystack, string $needle) /** result_or_false<int> */ {}
 function strrpos(string $haystack, string $needle) /** result_or_false<int> */ {}

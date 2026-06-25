@@ -13,6 +13,25 @@ inline int_t<> strlen(const nullable<string_t> &value) {
 	return scpp::str::length(value);
 }
 
+inline int_t<> string_byte_at(const string_t &value, const int_t<> &offset) {
+	return scpp::str::byte_at(value, offset);
+}
+
+inline bool_t string_byte_slice_equals(const string_t &value, const int_t<> &offset, const int_t<> &length, const string_t &literal) {
+	return scpp::str::byte_slice_equals(value, offset, length, literal);
+}
+
+inline string_t hash_string(const string_t &value) {
+	const std::uint64_t hash = scpp::hash_detail::key_ops<string_t>::hash(value);
+	const char *digits = "0123456789abcdef";
+	char buffer[16];
+	for (int index = 15; index >= 0; --index) {
+		const auto shift = static_cast<unsigned>((15 - index) * 4);
+		buffer[index] = digits[(hash >> shift) & 0x0fU];
+	}
+	return string_t(std::string(buffer, 16));
+}
+
 inline result_or_false<int_t<>> strpos(const string_t &haystack, const string_t &needle) {
 	const auto position = scpp::str::find(haystack, needle);
 	if (!position.has_value().native_value()) {

@@ -26,6 +26,31 @@ inline int_t<> length(const nullable<string_t> &value) {
 	return length(value.value());
 }
 
+inline int_t<> byte_at(const string_t &value, const int_t<> &offset) {
+	const auto native_offset = offset.native_value();
+	const auto &native = value.native_value();
+	if (native_offset < 0 || static_cast<std::size_t>(native_offset) >= native.size()) {
+		return int_t<>(-1);
+	}
+	return int_t<>(static_cast<std::int64_t>(static_cast<unsigned char>(native[static_cast<std::size_t>(native_offset)])));
+}
+
+inline bool_t byte_slice_equals(const string_t &value, const int_t<> &offset, const int_t<> &length_value, const string_t &literal) {
+	const auto native_offset = offset.native_value();
+	const auto native_length = length_value.native_value();
+	if (native_offset < 0 || native_length < 0) {
+		return bool_t(false);
+	}
+	const auto start = static_cast<std::size_t>(native_offset);
+	const auto length = static_cast<std::size_t>(native_length);
+	const auto &native = value.native_value();
+	const auto &expected = literal.native_value();
+	if (length != expected.size() || start > native.size() || length > native.size() - start) {
+		return bool_t(false);
+	}
+	return bool_t(std::string_view(native).substr(start, length) == std::string_view(expected));
+}
+
 inline nullable<int_t<>> find(const string_t &haystack, const string_t &needle) {
 	const auto position = haystack.native_value().find(needle.native_value());
 	if (position == std::string::npos) {
