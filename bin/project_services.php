@@ -725,6 +725,8 @@ function print_help(): void
 	echo "Compiler selection:\n";
 	echo "  prism.json: build.cxx = \"clang++\" or \"g++\"\n";
 	echo "  env: SCPP_CXX=clang++ scpp build\n";
+	echo "Diagnostics:\n";
+	echo "  env: SCPP_NINJA_EXPLAIN=1 scpp build --timings\n";
 }
 
 function print_version(): void
@@ -3155,6 +3157,10 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		'-f',
 		basename($buildNinjaPath),
 	];
+	if (build_ninja_explain_requested()) {
+		$command[] = '-d';
+		$command[] = 'explain';
+	}
 	if (build_ninja_verbose_requested()) {
 		$command[] = '-v';
 	}
@@ -4389,6 +4395,17 @@ function build_project_scoped_relative_path(string $rootProjectRoot, string $con
 function build_ninja_verbose_requested(): bool
 {
 	$value = getenv('SCPP_NINJA_VERBOSE');
+	return scpp_env_truthy($value);
+}
+
+function build_ninja_explain_requested(): bool
+{
+	$value = getenv('SCPP_NINJA_EXPLAIN');
+	return scpp_env_truthy($value);
+}
+
+function scpp_env_truthy(mixed $value): bool
+{
 	if (!is_string($value)) {
 		return false;
 	}
