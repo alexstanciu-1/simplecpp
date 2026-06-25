@@ -2659,10 +2659,12 @@ function handle_runtime_build(string $cwd, array $args = []): void
 		[
 			'build_mode' => $result['build_mode'],
 			'runtime_artifact' => $result['artifact_path'],
+			'runtime_metadata' => $result['metadata_path'],
 		]
 	);
 	echo 'Runtime build completed: ' . $result['artifact_path'] . PHP_EOL;
 	echo 'Runtime build mode: ' . $result['build_mode'] . PHP_EOL;
+	echo 'Runtime metadata export: ' . $result['metadata_path'] . PHP_EOL;
 }
 
 function handle_error_report(string $cwd, bool $full): void
@@ -8807,6 +8809,131 @@ function scpp_compile_runtime_artifact_spec(string $repoRoot, string $projectRoo
 	return normalize_config_path(relative_path($projectRoot, $artifactPath));
 }
 
+function runtime_metadata_export_path_for_artifact(string $projectRoot, string $runtimeArtifactPath): string
+{
+	$artifactPath = normalize_path($projectRoot . '/' . normalize_config_path($runtimeArtifactPath));
+	return dirname($artifactPath) . '/metadata/runtime_metadata.json';
+}
+
+function render_runtime_metadata_export_json(string $buildMode, string $runtimeFamily): string
+{
+	$profile = $runtimeFamily;
+	$metadata = [
+		'artifact_kind' => 'simple_cpp_runtime_metadata',
+		'metadata_kind' => 'simple_cpp_runtime_metadata',
+		'metadata_key' => 'simple_cpp_runtime_metadata:' . $profile . ':' . $buildMode . ':m3',
+		'schema_version' => 1,
+		'runtime_profile' => $profile,
+		'build_mode' => $buildMode,
+		'metadata_version' => 1,
+		'source_kind' => 'simple_cpp_export',
+		'primitive_type_count' => 1,
+		'primitive_types' => [
+			[
+				'source_type' => 'int',
+				'runtime_type' => 'scpp::int_t',
+				'llvm_type' => 'i64',
+				'abi_storage' => 'i64',
+			],
+		],
+		'operator_count' => 1,
+		'operators' => [
+			[
+				'source_key' => 'operator:+:int:int',
+				'operator' => '+',
+				'left_type' => 'int',
+				'right_type' => 'int',
+				'return_type' => 'int',
+				'abi_symbol' => 'scpp_abi_add_i64',
+			],
+		],
+		'type_family_count' => 1,
+		'type_families' => [
+			[
+				'family_key' => 'type_family:vector',
+				'source_name' => 'vector',
+				'template_param_count' => 1,
+				'constraint' => 'value_storable',
+				'storage_abi' => 'ptr',
+			],
+		],
+		'function_count' => 5,
+		'functions' => [
+			[
+				'source_key' => 'operator:+:int:int',
+				'abi_symbol' => 'scpp_abi_add_i64',
+				'source_return_type' => 'int',
+				'llvm_return_type' => 'i64',
+				'llvm_param_signature' => 'i64, i64',
+			],
+			[
+				'source_key' => 'call:vector_create:vector<int>',
+				'abi_symbol' => 'scpp_vector_i64_create',
+				'source_return_type' => 'vector<int>',
+				'llvm_return_type' => 'ptr',
+				'llvm_param_signature' => '',
+			],
+			[
+				'source_key' => 'call:vector_append:vector<int>',
+				'abi_symbol' => 'scpp_vector_i64_push',
+				'source_return_type' => 'void',
+				'llvm_return_type' => 'void',
+				'llvm_param_signature' => 'ptr, i64',
+			],
+			[
+				'source_key' => 'call:vector_get:vector<int>',
+				'abi_symbol' => 'scpp_vector_i64_get',
+				'source_return_type' => 'int',
+				'llvm_return_type' => 'i64',
+				'llvm_param_signature' => 'ptr, i64',
+			],
+			[
+				'source_key' => 'call:vector_destroy:vector<int>',
+				'abi_symbol' => 'scpp_vector_i64_destroy',
+				'source_return_type' => 'void',
+				'llvm_return_type' => 'void',
+				'llvm_param_signature' => 'ptr',
+			],
+		],
+		'bridge_declaration_count' => 5,
+		'bridge_declarations' => [
+			[
+				'source_key' => 'operator:+:int:int',
+				'extern_c_signature' => 'extern "C" int64_t scpp_abi_add_i64(int64_t a, int64_t b)',
+			],
+			[
+				'source_key' => 'call:vector_create:vector<int>',
+				'extern_c_signature' => 'extern "C" void* scpp_vector_i64_create()',
+			],
+			[
+				'source_key' => 'call:vector_append:vector<int>',
+				'extern_c_signature' => 'extern "C" void scpp_vector_i64_push(void* v, int64_t value)',
+			],
+			[
+				'source_key' => 'call:vector_get:vector<int>',
+				'extern_c_signature' => 'extern "C" int64_t scpp_vector_i64_get(void* v, int64_t index)',
+			],
+			[
+				'source_key' => 'call:vector_destroy:vector<int>',
+				'extern_c_signature' => 'extern "C" void scpp_vector_i64_destroy(void* v)',
+			],
+		],
+	];
+
+	$json = json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if (!is_string($json)) {
+		scpp_fail('Failed to render runtime metadata export.' . PHP_EOL, 2);
+	}
+	return $json . "\n";
+}
+
+function write_runtime_metadata_export(string $projectRoot, string $runtimeArtifactPath, string $buildMode, string $runtimeFamily): string
+{
+	$metadataPath = runtime_metadata_export_path_for_artifact($projectRoot, $runtimeArtifactPath);
+	write_text_file($metadataPath, render_runtime_metadata_export_json($buildMode, $runtimeFamily));
+	return normalize_config_path(relative_path($projectRoot, $metadataPath));
+}
+
 /** @return list<array{artifact_path:string,build_mode:string,runtime_family:string}> */
 function scpp_build_default_runtime_matrix(string $repoRoot, bool $force = false): array
 {
@@ -8829,7 +8956,7 @@ function scpp_build_default_runtime_matrix(string $repoRoot, bool $force = false
 /**
  * @param ?array<string,mixed> $config
  * @param 'reuse'|'shared'|'local' $runtimePlacement
- * @return array{artifact_path:string,build_mode:string,runtime_family:string}
+ * @return array{artifact_path:string,metadata_path:string,build_mode:string,runtime_family:string}
  */
 function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string $projectRoot, string $buildMode = 'debug', bool $force = false, string $runtimePlacement = 'local'): array
 {
@@ -8851,11 +8978,14 @@ function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string
 		$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig, $runtimePlacement);
 		$artifactPath = scpp_compile_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeBuild, render_runtime_composition_source($runtimeConfig), $force);
 	}
+	$runtimeFamily = resolve_runtime_family($runtimeConfig);
+	$metadataPath = write_runtime_metadata_export($projectRoot, $artifactPath, $buildMode, $runtimeFamily);
 
 	return [
 		'artifact_path' => $artifactPath,
+		'metadata_path' => $metadataPath,
 		'build_mode' => $buildMode,
-		'runtime_family' => resolve_runtime_family($runtimeConfig),
+		'runtime_family' => $runtimeFamily,
 	];
 }
 
