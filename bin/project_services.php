@@ -7738,7 +7738,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	if ($compiler['kind'] === 'msvc') {
 		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $cxxflags $more_cxxflags /c $in /Fo$out');
 	} else {
-		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $cxxflags $more_cxxflags' . ($usePch ? ' $app_pchflags' : '') . ' -MMD -MF $out.d -c $in -o $out');
+		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $cxxflags' . ($usePch ? ' $app_pchflags' : '') . ' $more_cxxflags -MMD -MF $out.d -c $in -o $out');
 		$lines[] = '  depfile = $out.d';
 		$lines[] = '  deps = gcc';
 	}
@@ -7754,7 +7754,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$lines[] = '';
 	if ($fastcgiBuild !== null) {
 		$lines[] = 'rule compile_fcgi';
-		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $cxxflags $fcgi_cxxflags' . ($usePch ? ' $app_pchflags' : '') . ' -MMD -MF $out.d -c $in -o $out');
+		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $cxxflags' . ($usePch ? ' $app_pchflags' : '') . ' $fcgi_cxxflags -MMD -MF $out.d -c $in -o $out');
 		$lines[] = '  depfile = $out.d';
 		$lines[] = '  deps = gcc';
 		$lines[] = '  description = CXX $out';
