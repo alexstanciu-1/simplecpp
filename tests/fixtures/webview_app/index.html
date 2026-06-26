@@ -8,12 +8,57 @@
 <title>Simple C++ WebView App</title>
 </head>
 <body>
-<main class="shell">
-	<h1>Simple C++ WebView App</h1>
-	<section class="panel">
-		<div class="label">Folder asset smoke</div>
-		<div id="status" class="status">Waiting for bridge reply...</div>
-		<div id="payload" class="payload">invoke: bridge.ping</div>
+<header class="topbar">
+	<a class="brand" href="#overview" aria-label="Simple C++ preview home">
+		<img src="assets/preview-mark.svg" alt="">
+		<span>Simple C++ Preview</span>
+	</a>
+	<button class="menu-toggle" type="button" aria-controls="main-menu" aria-expanded="false">
+		<span></span>
+		<span></span>
+		<span></span>
+	</button>
+	<nav id="main-menu" class="menu" aria-label="Preview sections">
+		<a href="#overview">Overview</a>
+		<a href="#runtime">Runtime</a>
+		<a href="#bridge">Bridge</a>
+	</nav>
+</header>
+
+<main>
+	<section id="overview" class="hero">
+		<div>
+			<p class="eyebrow">Read-only responsive app preview</p>
+			<h1>Local UI assets running inside WebView</h1>
+			<p class="lede">This fixture loads from a folder with HTML, CSS, JavaScript, a manifest, and an image asset.</p>
+		</div>
+		<img class="hero-mark" src="assets/preview-mark.svg" alt="">
+	</section>
+
+	<section id="runtime" class="cards" aria-label="Runtime highlights">
+		<article>
+			<span class="metric">01</span>
+			<h2>App Folder</h2>
+			<p>Loaded from <code>index.html</code> with relative CSS, JavaScript, manifest, and image paths.</p>
+		</article>
+		<article>
+			<span class="metric">02</span>
+			<h2>Responsive Menu</h2>
+			<p>The navigation condenses into a compact toggle on narrow screens without changing content.</p>
+		</article>
+		<article>
+			<span class="metric">03</span>
+			<h2>Bridge Event</h2>
+			<p>The preview sends a ping and renders the native reply below when it arrives.</p>
+		</article>
+	</section>
+
+	<section id="bridge" class="bridge-panel">
+		<div>
+			<p class="eyebrow">WebView bridge</p>
+			<h2 id="status">Waiting for bridge reply...</h2>
+			<p id="payload" class="payload">invoke: bridge.ping</p>
+		</div>
 	</section>
 </main>
 <script type="module" src="scripts/app.js"></script>
