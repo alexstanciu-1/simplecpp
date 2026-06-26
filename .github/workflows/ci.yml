@@ -109,7 +109,7 @@ jobs:
             throw "Visual Studio C++ tools were not found."
           }
           $vsDevCmd = Join-Path $installPath "Common7\Tools\VsDevCmd.bat"
-          cmd /c "`"$vsDevCmd`" -arch=x64 && cl /nologo /EHsc /std:c++latest /I runtime/include /DSCPP_HAS_UI=1 /DSCPP_UI_BACKEND_WIN32=1 tests\native\ui_smoke_windows.cpp runtime\include\modules\ui\ui.cpp /link user32.lib gdi32.lib shell32.lib /out:ui_smoke_windows.exe"
+          cmd /c "`"$vsDevCmd`" -arch=x64 && cl /nologo /EHsc /std:c++latest /I runtime/include /DSCPP_HAS_UI=1 /DSCPP_UI_BACKEND_WIN32=1 tests\native\ui_smoke_windows.cpp runtime\include\modules\ui\ui.cpp /link user32.lib gdi32.lib shell32.lib ole32.lib /out:ui_smoke_windows.exe"
           if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
           }
