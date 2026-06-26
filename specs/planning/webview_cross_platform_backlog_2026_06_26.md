@@ -45,7 +45,7 @@ Latest heartbeat slice:
 - Windows WebView2 CI now launches the smoke app, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; CI run `28242929755` validated the path.
 - WebView build reporting now carries structured dependency diagnostics and renders missing Linux `pkg-config`/WebKitGTK package guidance in `scpp explain-build`; CI run `28244035315` validated the slice.
 - WebKitGTK and WKWebView now expose a `SimpleCpp` JavaScript message handler; Linux, macOS, iOS, Windows, and Android WebView smokes assert `webview_message` payload delivery. CI run `28245240915` validated the cross-platform message slice.
-- Added an opt-in strict PHP++ `strict_webview_events` project sample that demonstrates `ui_app_poll`, `ui_event_type`, `ui_event_message`, and `ui_event_url` for browser-like WebView events.
+- Added an opt-in strict PHP++ `strict_webview_events` project sample that demonstrates `ui_app_poll`, `ui_event_type`, `ui_event_message`, and `ui_event_url` for browser-like WebView events. CI run `28246508869` validated the sample metadata/test slice.
 
 ## Done Definition
 
@@ -199,7 +199,7 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28245240915` validated:
+Run `28246508869` validated:
 
 - Linux WebKitGTK WebView screenshot retry and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
@@ -217,3 +217,4 @@ Run `28245240915` validated:
 - Shared explain-build backend reporting
 - Linux WebView missing dependency diagnostics in the WebView build spec and explain-build rendering
 - Linux WebKitGTK, macOS WKWebView, and iOS WKWebView JavaScript-to-native `webview_message` payload delivery
+- Strict PHP++ opt-in WebView event sample metadata and source-facing event accessor coverage
