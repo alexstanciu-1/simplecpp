@@ -43,7 +43,7 @@ Latest heartbeat slice:
 - Android WebView now emits `webview_ready` from native creation and the smoke Activity wires `WebViewClient` plus `JavascriptInterface` callbacks into native queue events.
 - Linux WebKitGTK screenshot capture now retries until the rendered frame passes the screenshot shape check, avoiding single-frame black captures from hosted Xvfb/WebKit timing.
 - Windows WebView2 CI now launches the smoke app, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; CI run `28242929755` validated the path.
-- WebView build reporting now carries structured dependency diagnostics and renders missing Linux `pkg-config`/WebKitGTK package guidance in `scpp explain-build`.
+- WebView build reporting now carries structured dependency diagnostics and renders missing Linux `pkg-config`/WebKitGTK package guidance in `scpp explain-build`; CI run `28244035315` validated the slice.
 
 ## Done Definition
 
@@ -196,7 +196,7 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28242929755` validated:
+Run `28244035315` validated:
 
 - Linux WebKitGTK WebView screenshot retry and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
@@ -212,3 +212,4 @@ Run `28242929755` validated:
 - Android WebView emulator launch, app-active validation, event bridge assertion, and screenshot artifact rendering "Simple C++ WebView"
 - Shared WebView backend metadata
 - Shared explain-build backend reporting
+- Linux WebView missing dependency diagnostics in the WebView build spec and explain-build rendering
