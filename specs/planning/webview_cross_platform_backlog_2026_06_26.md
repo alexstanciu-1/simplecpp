@@ -188,9 +188,9 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28235130333` validated:
+Run `28236910077` validated:
 
-- Linux WebKitGTK WebView screenshot
+- Linux WebKitGTK WebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot
 - Windows WebView2 compile/link
 - iOS UIKit UI simulator screenshot
