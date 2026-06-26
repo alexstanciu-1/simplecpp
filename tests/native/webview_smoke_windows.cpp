@@ -27,15 +27,6 @@ int main() {
 	}
 
 	auto view = view_result.value();
-	auto html_result = scpp::webview_runtime::load_html(
-		view,
-		scpp::string_t("<!doctype html><html><body><h1>Simple C++ WebView</h1><p>Native WebView2 smoke.</p><script>if (window.chrome && window.chrome.webview) { window.chrome.webview.postMessage('webview2-ready'); }</script></body></html>")
-	);
-	if (!html_result.has_value().native_value()) {
-		std::cerr << html_result.error()->get_message().native_value() << "\n";
-		return 1;
-	}
-
 	auto show_result = scpp::ui::window_show(window);
 	if (!show_result.has_value().native_value()) {
 		std::cerr << show_result.error()->get_message().native_value() << "\n";
@@ -43,9 +34,37 @@ int main() {
 	}
 
 	bool saw_webview_ready = false;
+	for (int i = 0; i < 240 && !saw_webview_ready; ++i) {
+		(void) scpp::ui::app_poll(app);
+		for (;;) {
+			auto event = scpp::ui::app_next_event(app);
+			if (!event.has_value().native_value()) {
+				break;
+			}
+			if (scpp::ui::event_type(event).native_value() == "webview_ready") {
+				saw_webview_ready = true;
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+	if (!saw_webview_ready) {
+		std::cerr << "Did not receive webview_ready\n";
+		return 1;
+	}
+
+	auto html_result = scpp::webview_runtime::load_html(
+		view,
+		scpp::string_t("<!doctype html><html><body><h1>Simple C++ WebView</h1><p>Native WebView2 smoke.</p></body></html>")
+	);
+	if (!html_result.has_value().native_value()) {
+		std::cerr << html_result.error()->get_message().native_value() << "\n";
+		return 1;
+	}
+
 	bool saw_navigation_finished = false;
 	bool saw_message = false;
-	for (int i = 0; i < 160; ++i) {
+	bool sent_message_probe = false;
+	for (int i = 0; i < 240 && (!saw_navigation_finished || !saw_message); ++i) {
 		(void) scpp::ui::app_poll(app);
 		for (;;) {
 			auto event = scpp::ui::app_next_event(app);
@@ -63,11 +82,18 @@ int main() {
 				saw_message = true;
 			}
 		}
+		if (saw_navigation_finished && !sent_message_probe) {
+			auto eval_result = scpp::webview_runtime::eval(
+				view,
+				scpp::string_t("if (window.chrome && window.chrome.webview) { window.chrome.webview.postMessage('webview2-ready'); }")
+			);
+			if (!eval_result.has_value().native_value()) {
+				std::cerr << eval_result.error()->get_message().native_value() << "\n";
+				return 1;
+			}
+			sent_message_probe = true;
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-	}
-	if (!saw_webview_ready) {
-		std::cerr << "Did not receive webview_ready\n";
-		return 1;
 	}
 	if (!saw_navigation_finished) {
 		std::cerr << "Did not receive webview_navigation_finished\n";
