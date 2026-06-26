@@ -6,6 +6,7 @@
 	<uses-permission android:name="android.permission.INTERNET" />
 
 	<application
+		android:extractNativeLibs="true"
 		android:theme="@style/ScppSmokeTheme"
 		android:label="Simple C++ WebView">
 		<activity
