@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - "codex/**"
+  pull_request:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            native_check: true
+            build_options: true
+          - os: macos-latest
+            native_check: true
+            build_options: true
+          - os: windows-latest
+            native_check: false
+            build_options: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Install build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y ninja-build g++ pkg-config
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            command -v ninja >/dev/null 2>&1 || brew install ninja
+            command -v pkg-config >/dev/null 2>&1 || brew install pkg-config
+          else
+            echo "No extra build tools needed for this Windows smoke slice."
+          fi
+
+      - name: PHP syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -v
+          php -l bin/project_services.php
+          php -l generators/php/src/Analysis/RuntimeShallowSourceGenerator.php
+          php -l generators/php/src/Stan/StanPhpRuntimeFunctionCatalog.php
+          php -l tests/tools/test_scpp_ui_module.php
+
+      - name: UI module smoke
+        shell: bash
+        run: php tests/tools/test_scpp_ui_module.php
+
+      - name: Build options smoke
+        if: matrix.build_options
+        shell: bash
+        run: php tests/tools/test_scpp_build_options.php
+
+      - name: UI runtime C++ compile smoke
+        if: matrix.native_check
+        shell: bash
+        run: |
+          set -euo pipefail
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -c runtime/include/modules/ui/ui.cpp -o ui_disabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -c runtime/include/modules/ui/ui.cpp -o ui_enabled.o
