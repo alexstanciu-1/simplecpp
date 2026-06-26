@@ -209,10 +209,22 @@ jobs:
             set -euo pipefail
             GDK_BACKEND=x11 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 ./webview_smoke_gtk &
             pid=$!
-            sleep 5
-            import -window root "'"$screenshot_path"'"
-            convert "'"$screenshot_path"'" PNG24:"'"$screenshot_path"'"
+            captured=0
+            for attempt in 1 2 3 4 5 6; do
+              sleep 2
+              import -window root "'"$screenshot_path"'"
+              convert "'"$screenshot_path"'" PNG24:"'"$screenshot_path"'"
+              if python3 tests/tools/check_ui_screenshot.py "'"$screenshot_path"'" --min-width 640 --min-height 420; then
+                captured=1
+                break
+              fi
+              if ! kill -0 "$pid" >/dev/null 2>&1; then
+                wait "$pid"
+                exit 1
+              fi
+            done
             wait "$pid"
+            test "$captured" = "1"
           '
           python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
 
