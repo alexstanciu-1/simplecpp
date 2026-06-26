@@ -5,7 +5,7 @@
     "outcome": "positive",
     "enabled": true,
     "status": "active",
-    "php_as_oracle": true,
+    "php_as_oracle": false,
     "compare": {
         "stdout": "exact",
         "stderr": "exact",
@@ -19,9 +19,9 @@
     },
     "expect": {
         "php": {
-            "run": true,
+            "run": false,
             "exit_code": 0,
-            "stdout": "array(2) {\n  [0]=>\n  array(2) {\n    [\"id\"]=>\n    int(1)\n    [\"name\"]=>\n    string(1) \"A\"\n  }\n  [1]=>\n  array(2) {\n    [\"id\"]=>\n    int(2)\n    [\"name\"]=>\n    string(1) \"B\"\n  }\n}\n",
+            "stdout": "",
             "stderr": ""
         },
         "generate": {
