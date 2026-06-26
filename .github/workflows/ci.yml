@@ -286,7 +286,7 @@ jobs:
             -d android_webview_smoke_classes \
             tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
           "$build_tools/d8" \
-            --min-api 23 \
+            --min-api 24 \
             --output android_webview_smoke_dex \
             android_webview_smoke_classes/dev/simplecpp/smoke/ScppWebViewSmokeActivity.class
           "$build_tools/aapt2" compile \
@@ -530,7 +530,7 @@ jobs:
             -d android_webview_smoke_classes \
             tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
           "$build_tools/d8" \
-            --min-api 23 \
+            --min-api 24 \
             --output android_webview_smoke_dex \
             android_webview_smoke_classes/dev/simplecpp/smoke/ScppWebViewSmokeActivity.class
           "$build_tools/aapt2" compile \

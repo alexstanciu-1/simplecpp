@@ -32,6 +32,7 @@ Latest heartbeat slice:
 - Added an Android emulator render-smoke job that builds an x86_64 signed APK, launches the Activity, captures `android-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it when the hosted runner can boot the emulator.
 - Android emulator render smoke is bounded with CI timeouts and uploads `android-emulator-${GITHUB_RUN_ID}.log` when hosted emulator boot needs diagnosis.
 - Android emulator render CI pins `ANDROID_AVD_HOME` so `avdmanager` and `emulator` resolve the same AVD directory on hosted runners.
+- Android smoke manifest declares SDK 24/35 so direct `aapt2` packages install on current Android emulator images.
 
 ## Done Definition
 
