@@ -9,6 +9,10 @@
 #import <AppKit/AppKit.h>
 #import <WebKit/WebKit.h>
 #endif
+#if defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
+#import <UIKit/UIKit.h>
+#import <WebKit/WebKit.h>
+#endif
 #if defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -149,6 +153,26 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		target->native_handle = native;
 		return target;
 	}
+#elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
+	@autoreleasepool {
+		UIWindow *parent = static_cast<UIWindow *>(window->native_handle);
+		UIView *content = parent.rootViewController.view;
+		if (content == nil) {
+			return error_t(string_t("webview_create(): UIKit window has no root content view"));
+		}
+
+		WKWebView *native = [[WKWebView alloc] initWithFrame:content.bounds];
+		if (native == nil) {
+			return error_t(string_t("webview_create(): WKWebView failed to create a native webview"));
+		}
+		native.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+		[content addSubview:native];
+
+		auto target = shared<view>();
+		target->window_handle = window;
+		target->native_handle = native;
+		return target;
+	}
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 	HWND parent = static_cast<HWND>(window->native_handle);
 	auto state = std::make_shared<win32_webview_state>();
@@ -222,6 +246,18 @@ result<bool_t> load_url(const shared_p<view> &target, const string_t &url) {
 		[native loadRequest:request];
 		return bool_t(true);
 	}
+#elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
+	@autoreleasepool {
+		NSString *text = [NSString stringWithUTF8String:url.native_value().c_str()];
+		NSURL *native_url = [NSURL URLWithString:text];
+		if (native_url == nil) {
+			return error_t(string_t("webview_load_url(): invalid url"));
+		}
+		NSURLRequest *request = [NSURLRequest requestWithURL:native_url];
+		WKWebView *native = static_cast<WKWebView *>(target->native_handle);
+		[native loadRequest:request];
+		return bool_t(true);
+	}
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 	auto *state = get_win32_state(target);
 	if (state == nullptr || state->closed) {
@@ -245,6 +281,13 @@ result<bool_t> load_html(const shared_p<view> &target, const string_t &html) {
 	webkit_web_view_load_html(WEBKIT_WEB_VIEW(target->native_handle), html.native_value().c_str(), nullptr);
 	return bool_t(true);
 #elif defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW
+	@autoreleasepool {
+		NSString *text = [NSString stringWithUTF8String:html.native_value().c_str()];
+		WKWebView *native = static_cast<WKWebView *>(target->native_handle);
+		[native loadHTMLString:text baseURL:nil];
+		return bool_t(true);
+	}
+#elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
 	@autoreleasepool {
 		NSString *text = [NSString stringWithUTF8String:html.native_value().c_str()];
 		WKWebView *native = static_cast<WKWebView *>(target->native_handle);
@@ -299,6 +342,13 @@ result<bool_t> eval(const shared_p<view> &target, const string_t &script) {
 		[native evaluateJavaScript:text completionHandler:nil];
 		return bool_t(true);
 	}
+#elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
+	@autoreleasepool {
+		NSString *text = [NSString stringWithUTF8String:script.native_value().c_str()];
+		WKWebView *native = static_cast<WKWebView *>(target->native_handle);
+		[native evaluateJavaScript:text completionHandler:nil];
+		return bool_t(true);
+	}
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 	auto *state = get_win32_state(target);
 	if (state == nullptr || state->closed) {
@@ -320,6 +370,13 @@ void close(const shared_p<view> &target) {
 			gtk_widget_destroy(GTK_WIDGET(target->native_handle));
 		}
 #elif defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW
+		if (target->native_handle != nullptr) {
+			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
+			[native stopLoading];
+			[native removeFromSuperview];
+			[native release];
+		}
+#elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
 			[native stopLoading];

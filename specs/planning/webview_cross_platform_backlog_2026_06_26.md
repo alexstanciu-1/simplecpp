@@ -21,8 +21,8 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | --- | --- | --- | --- |
 | Linux | WebKitGTK | Implemented first rendering slice | Build, launch under Xvfb, screenshot artifact |
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
-| Windows 11 | WebView2 | Initial backend boundary in progress | WebView2 compile/link smoke pending CI |
-| iOS | WKWebView | Not implemented | UIKit UI simulator compile/run only |
+| Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
+| iOS | WKWebView | Initial backend boundary in progress | WKWebView simulator screenshot pending CI |
 | Android | Android WebView | Not implemented | Android NDK UI-disabled compile smoke only |
 
 ## Done Definition
@@ -77,19 +77,19 @@ Goal:
 
 Implementation tasks:
 
-- Expose or obtain the UIKit parent view from the existing `ui_window` runtime handle.
-- Add Objective-C++ WKWebView creation for iOS.
-- Match the same public helper behavior as macOS.
+- Expose or obtain the UIKit parent view from the existing `ui_window` runtime handle. Initial path uses `UIWindow.rootViewController.view`.
+- Add Objective-C++ WKWebView creation for iOS. Initial branch added behind `SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW`.
+- Match the same public helper behavior as macOS. Initial helpers cover HTML load, URL load, fire-and-forget eval, and close.
 - Avoid desktop-only assumptions such as multiple independent top-level windows.
 
 Testing tasks:
 
-- Add an iOS WebView simulator smoke app.
-- Build, install, launch, screenshot, and validate image dimensions in macOS CI.
+- Add an iOS WebView simulator smoke app. Initial smoke source and bundle plist added.
+- Build, install, launch, screenshot, and validate image dimensions in macOS CI. Initial CI steps added.
 
 Open decision:
 
-- Whether iOS and macOS WKWebView code should share a small private helper or stay separate until the bridge grows.
+- Whether iOS and macOS WKWebView code should share a small private helper or stay separate until the bridge grows. Initial answer: keep separate until event/message bridging adds meaningful shared behavior.
 
 ### 3. Android WebView Backend
 

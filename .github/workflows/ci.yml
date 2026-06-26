@@ -350,3 +350,51 @@ jobs:
           name: ios-ui-screenshot-${{ github.run_id }}
           path: /tmp/scpp_ci_artifacts/ios-ui-${{ github.run_id }}.png
           if-no-files-found: warn
+
+      - name: Build iOS Simulator WKWebView smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p SimpleCppWebViewIOS.app
+          cp tests/native/ios_webview_smoke/Info.plist SimpleCppWebViewIOS.app/Info.plist
+          IOS_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          IOS_TARGET="arm64-apple-ios15.0-simulator"
+          clang++ -std=c++23 -x objective-c++ -target "$IOS_TARGET" -isysroot "$IOS_SDK" \
+            -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_UIKIT=1 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW=1 \
+            tests/native/webview_smoke_ios.mm runtime/include/modules/ui/ui.cpp runtime/include/modules/webview/webview.cpp \
+            -framework UIKit -framework Foundation -framework WebKit \
+            -o SimpleCppWebViewIOS.app/SimpleCppWebViewIOS
+          codesign --force --sign - SimpleCppWebViewIOS.app
+
+      - name: Launch iOS Simulator WKWebView smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/ios-webview-ui-${GITHUB_RUN_ID}.png"
+          DEVICE_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ && /Shutdown|Booted/ { print $2; exit }')"
+          if [ -z "$DEVICE_ID" ]; then
+            echo "No available iPhone simulator found."
+            xcrun simctl list devices available
+            exit 1
+          fi
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" SimpleCppWebViewIOS.app
+          xcrun simctl launch --terminate-running-process "$DEVICE_ID" dev.simplecpp.webview-smoke
+          sleep 3
+          xcrun simctl io "$DEVICE_ID" screenshot "$screenshot_path"
+          xcrun simctl terminate "$DEVICE_ID" dev.simplecpp.webview-smoke || true
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 300 --min-height 600
+
+      - name: Upload iOS WebView screenshot
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-webview-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/ios-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
