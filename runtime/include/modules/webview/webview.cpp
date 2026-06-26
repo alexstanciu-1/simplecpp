@@ -220,12 +220,14 @@ struct win32_webview_state final {
 	EventRegistrationToken navigation_starting_token{};
 	EventRegistrationToken navigation_completed_token{};
 	EventRegistrationToken web_message_received_token{};
+	EventRegistrationToken document_title_changed_token{};
 	std::wstring pending_url;
 	std::wstring pending_html;
 	std::wstring pending_script;
 	bool has_navigation_starting_token = false;
 	bool has_navigation_completed_token = false;
 	bool has_web_message_received_token = false;
+	bool has_document_title_changed_token = false;
 	bool closed = false;
 };
 
@@ -331,6 +333,10 @@ void remove_win32_event_handlers(win32_webview_state *state) {
 		state->core->remove_WebMessageReceived(state->web_message_received_token);
 		state->has_web_message_received_token = false;
 	}
+	if (state->has_document_title_changed_token) {
+		state->core->remove_DocumentTitleChanged(state->document_title_changed_token);
+		state->has_document_title_changed_token = false;
+	}
 }
 
 void register_win32_event_handlers(const win32_webview_state_ptr &state, const shared_p<view> &target) {
@@ -397,6 +403,22 @@ void register_win32_event_handlers(const win32_webview_state_ptr &state, const s
 		&state->web_message_received_token
 	);
 	state->has_web_message_received_token = SUCCEEDED(hr);
+
+	hr = state->core->add_DocumentTitleChanged(
+		Microsoft::WRL::Callback<ICoreWebView2DocumentTitleChangedEventHandler>(
+			[target](ICoreWebView2 *sender, IUnknown *) -> HRESULT {
+				PWSTR title = nullptr;
+				string_t payload = string_t("");
+				if (sender != nullptr && SUCCEEDED(sender->get_DocumentTitle(&title))) {
+					payload = take_win32_string(title);
+				}
+				enqueue_win32_event(target, "webview_title_changed", payload, win32_current_source(sender));
+				return S_OK;
+			}
+		).Get(),
+		&state->document_title_changed_token
+	);
+	state->has_document_title_changed_token = SUCCEEDED(hr);
 }
 
 [[nodiscard]] win32_webview_state *get_win32_state(const shared_p<view> &target) {

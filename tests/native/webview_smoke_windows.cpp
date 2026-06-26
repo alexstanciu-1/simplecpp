@@ -54,7 +54,7 @@ int main() {
 
 	auto html_result = scpp::webview_runtime::load_html(
 		view,
-		scpp::string_t("<!doctype html><html><body><h1>Simple C++ WebView</h1><p>Native WebView2 smoke.</p></body></html>")
+		scpp::string_t("<!doctype html><html><head><title>Simple C++ WebView</title></head><body><h1>Simple C++ WebView</h1><p>Native WebView2 smoke.</p></body></html>")
 	);
 	if (!html_result.has_value().native_value()) {
 		std::cerr << html_result.error()->get_message().native_value() << "\n";
@@ -63,8 +63,9 @@ int main() {
 
 	bool saw_navigation_finished = false;
 	bool saw_message = false;
+	bool saw_title_changed = false;
 	bool sent_message_probe = false;
-	for (int i = 0; i < 240 && (!saw_navigation_finished || !saw_message); ++i) {
+	for (int i = 0; i < 240 && (!saw_navigation_finished || !saw_message || !saw_title_changed); ++i) {
 		(void) scpp::ui::app_poll(app);
 		for (;;) {
 			auto event = scpp::ui::app_next_event(app);
@@ -80,6 +81,9 @@ int main() {
 			}
 			if (type == "webview_message" && scpp::ui::event_message(event).native_value() == "webview2-ready") {
 				saw_message = true;
+			}
+			if (type == "webview_title_changed" && scpp::ui::event_message(event).native_value() == "Simple C++ WebView") {
+				saw_title_changed = true;
 			}
 		}
 		if (saw_navigation_finished && !sent_message_probe) {
@@ -101,6 +105,10 @@ int main() {
 	}
 	if (!saw_message) {
 		std::cerr << "Did not receive webview_message\n";
+		return 1;
+	}
+	if (!saw_title_changed) {
+		std::cerr << "Did not receive webview_title_changed\n";
 		return 1;
 	}
 
