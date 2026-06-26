@@ -18,6 +18,8 @@ jobs:
   smoke:
     name: Smoke (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      SCPP_CI_ARTIFACT_DIR: /tmp/scpp_ci_artifacts
     strategy:
       fail-fast: false
       matrix:
@@ -127,23 +129,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/screenshots
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/linux-gtk-ui-${GITHUB_RUN_ID}.png"
           xvfb-run -a --server-args="-screen 0 1024x768x24" bash -c '
             set -euo pipefail
             ./ui_smoke_gtk &
             pid=$!
             sleep 3
-            import -window root artifacts/screenshots/linux-gtk-ui.png
+            import -window root "'"$screenshot_path"'"
             wait "$pid"
           '
-          python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/linux-gtk-ui.png --min-width 640 --min-height 420
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
 
       - name: Upload Linux GTK UI screenshot
         if: always() && runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: linux-gtk-ui-screenshot
-          path: artifacts/screenshots/linux-gtk-ui.png
+          name: linux-gtk-ui-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/linux-gtk-ui-${{ github.run_id }}.png
           if-no-files-found: warn
 
       - name: Build Linux WebKitGTK WebView smoke app
@@ -164,24 +167,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/screenshots
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/linux-webview-ui-${GITHUB_RUN_ID}.png"
           xvfb-run -a --server-args="-screen 0 1024x768x24" dbus-run-session -- bash -c '
             set -euo pipefail
             GDK_BACKEND=x11 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 ./webview_smoke_gtk &
             pid=$!
             sleep 5
-            import -window root artifacts/screenshots/linux-webview-ui.png
-            convert artifacts/screenshots/linux-webview-ui.png PNG24:artifacts/screenshots/linux-webview-ui.png
+            import -window root "'"$screenshot_path"'"
+            convert "'"$screenshot_path"'" PNG24:"'"$screenshot_path"'"
             wait "$pid"
           '
-          python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/linux-webview-ui.png --min-width 640 --min-height 420
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
 
       - name: Upload Linux WebView screenshot
         if: always() && runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: linux-webview-screenshot
-          path: artifacts/screenshots/linux-webview-ui.png
+          name: linux-webview-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/linux-webview-ui-${{ github.run_id }}.png
           if-no-files-found: warn
 
       - name: Android NDK UI compile smoke
@@ -212,20 +216,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/screenshots
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/macos-ui-${GITHUB_RUN_ID}.png"
+          pid_path="$SCPP_CI_ARTIFACT_DIR/ui_smoke_macos-${GITHUB_RUN_ID}.pid"
           ./ui_smoke_macos &
-          echo $! > artifacts/screenshots/ui_smoke_macos.pid
+          echo $! > "$pid_path"
           sleep 3
-          screencapture -x artifacts/screenshots/macos-ui.png
-          wait "$(cat artifacts/screenshots/ui_smoke_macos.pid)"
-          python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/macos-ui.png --min-width 640 --min-height 420
+          screencapture -x "$screenshot_path"
+          wait "$(cat "$pid_path")"
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
 
       - name: Upload macOS UI screenshot
         if: always() && runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: macos-ui-screenshot
-          path: artifacts/screenshots/macos-ui.png
+          name: macos-ui-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/macos-ui-${{ github.run_id }}.png
           if-no-files-found: warn
 
       - name: Build iOS Simulator UI smoke app
@@ -250,7 +256,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p artifacts/screenshots
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/ios-ui-${GITHUB_RUN_ID}.png"
           DEVICE_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ && /Shutdown/ { print $2; exit }')"
           if [ -z "$DEVICE_ID" ]; then
             echo "No available iPhone simulator found."
@@ -262,14 +269,14 @@ jobs:
           xcrun simctl install "$DEVICE_ID" SimpleCppUiIOS.app
           xcrun simctl launch --terminate-running-process "$DEVICE_ID" dev.simplecpp.ui-smoke
           sleep 2
-          xcrun simctl io "$DEVICE_ID" screenshot artifacts/screenshots/ios-ui.png
+          xcrun simctl io "$DEVICE_ID" screenshot "$screenshot_path"
           xcrun simctl terminate "$DEVICE_ID" dev.simplecpp.ui-smoke || true
-          python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/ios-ui.png --min-width 300 --min-height 600
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 300 --min-height 600
 
       - name: Upload iOS UI screenshot
         if: always() && runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
-          name: ios-ui-screenshot
-          path: artifacts/screenshots/ios-ui.png
+          name: ios-ui-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/ios-ui-${{ github.run_id }}.png
           if-no-files-found: warn
