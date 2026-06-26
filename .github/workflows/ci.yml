@@ -572,6 +572,8 @@ jobs:
           test -x "$avdmanager_bin"
           "$sdkmanager_bin" "platform-tools" "emulator" "system-images;android-35;google_apis;x86_64"
           echo "no" | "$avdmanager_bin" create avd --force --name scpp_webview_smoke --package "system-images;android-35;google_apis;x86_64" --device pixel_2
+          adb_bin="$ANDROID_HOME/platform-tools/adb"
+          test -x "$adb_bin"
           if [ -e /dev/kvm ]; then
             sudo chmod 666 /dev/kvm
           fi
@@ -586,10 +588,10 @@ jobs:
           emulator_pid="$!"
           trap 'kill "$emulator_pid" >/dev/null 2>&1 || true' EXIT
 
-          adb wait-for-device
+          "$adb_bin" wait-for-device
           boot_completed=""
           for _ in $(seq 1 90); do
-            boot_completed="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            boot_completed="$("$adb_bin" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
             if [ "$boot_completed" = "1" ]; then
               break
             fi
@@ -597,12 +599,12 @@ jobs:
           done
           test "$boot_completed" = "1"
 
-          adb install -r android_webview_smoke-signed.apk
-          adb shell am start -W -n dev.simplecpp.smoke/.ScppWebViewSmokeActivity
+          "$adb_bin" install -r android_webview_smoke-signed.apk
+          "$adb_bin" shell am start -W -n dev.simplecpp.smoke/.ScppWebViewSmokeActivity
           sleep 8
           mkdir -p "$SCPP_CI_ARTIFACT_DIR"
           screenshot_path="$SCPP_CI_ARTIFACT_DIR/android-webview-ui-${GITHUB_RUN_ID}.png"
-          adb exec-out screencap -p > "$screenshot_path"
+          "$adb_bin" exec-out screencap -p > "$screenshot_path"
           test -s "$screenshot_path"
           python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 300 --min-height 600
 
