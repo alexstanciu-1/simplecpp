@@ -266,7 +266,14 @@ final class RuntimeShallowSourceGenerator
 				'number_format' => ['return' => 'string', 'params' => [['name' => 'value', 'type' => 'float']]],
 				'hash_string' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'jss_tokenize' => ['return' => 'mixed', 'params' => [['name' => 'source', 'type' => 'string']]],
+				'jss_tokenize_buffer' => ['return' => 'token_buffer', 'params' => [['name' => 'source', 'type' => 'string']]],
 				'phs_tokenize' => ['return' => 'mixed', 'params' => [['name' => 'source', 'type' => 'string']]],
+				'phs_tokenize_buffer' => ['return' => 'token_buffer', 'params' => [['name' => 'source', 'type' => 'string']]],
+				'token_buffer_count' => ['return' => 'int', 'params' => [['name' => 'buffer', 'type' => 'token_buffer']]],
+				'token_buffer_kind_id' => ['return' => 'int', 'params' => [['name' => 'buffer', 'type' => 'token_buffer'], ['name' => 'index', 'type' => 'int']]],
+				'token_buffer_length' => ['return' => 'int', 'params' => [['name' => 'buffer', 'type' => 'token_buffer'], ['name' => 'index', 'type' => 'int']]],
+				'token_buffer_start_offset' => ['return' => 'int', 'params' => [['name' => 'buffer', 'type' => 'token_buffer'], ['name' => 'index', 'type' => 'int']]],
+				'token_buffer_to_mixed' => ['return' => 'mixed', 'params' => [['name' => 'buffer', 'type' => 'token_buffer']]],
 				'strlen' => ['return' => 'int', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'string_byte_len' => ['return' => 'int', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'string_byte_at' => ['return' => 'int', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'offset', 'type' => 'int']]],
@@ -450,6 +457,7 @@ final class RuntimeShallowSourceGenerator
 		$scppClasses = [];
 		if ($isStrict) {
 			$scppClasses = [
+				$this->renderClassStub('token_buffer', [], $isStrict),
 				$this->renderClassStub('task_batch', [], $isStrict),
 				$this->renderClassStub('task_context', [], $isStrict),
 				$this->renderClassStub('task_progress_info', [

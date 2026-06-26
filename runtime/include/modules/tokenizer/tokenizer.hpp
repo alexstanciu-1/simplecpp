@@ -24,14 +24,14 @@ enum token_kind_id : std::int64_t {
 	token_error = 7,
 };
 
-namespace detail {
-
 struct token_diagnostic final {
 	const char *kind = "";
 	std::size_t offset = 0;
 	std::int64_t line = 0;
 	std::int64_t column = 0;
 };
+
+namespace detail {
 
 template <typename Integer>
 unique_p<hash_t<mixed_t>> make_int_column(const std::vector<Integer> &values) {
@@ -42,7 +42,9 @@ unique_p<hash_t<mixed_t>> make_int_column(const std::vector<Integer> &values) {
 	return column;
 }
 
-struct token_buffer_builder final {
+} // namespace detail
+
+struct token_buffer final {
 	std::vector<std::int64_t> kind_ids;
 	std::vector<std::size_t> start_offsets;
 	std::vector<std::size_t> lengths;
@@ -54,7 +56,7 @@ struct token_buffer_builder final {
 	const char *language = "";
 	std::size_t source_length = 0;
 
-	explicit token_buffer_builder(const char *language_value, const std::size_t source_length_value)
+	explicit token_buffer(const char *language_value, const std::size_t source_length_value)
 		: language(language_value), source_length(source_length_value) {
 		const auto estimated_tokens = (source_length / 2U) + 8U;
 		kind_ids.reserve(estimated_tokens);
@@ -100,7 +102,7 @@ struct token_buffer_builder final {
 		return static_cast<std::int64_t>(kind_ids.size());
 	}
 
-	mixed_t finish() {
+	mixed_t to_mixed() const {
 		auto diagnostic_items = table_();
 		for (const auto &diagnostic : diagnostics) {
 			auto item = table_();
@@ -117,17 +119,21 @@ struct token_buffer_builder final {
 		out->set(string_t("source_length"), mixed_t(int_t(static_cast<std::int64_t>(source_length))));
 		out->set(string_t("token_count"), mixed_t(int_t(token_count())));
 		out->set(string_t("diagnostic_count"), mixed_t(int_t(static_cast<std::int64_t>(diagnostics.size()))));
-		out->set(string_t("kind_ids"), mixed_t(make_int_column(kind_ids)));
-		out->set(string_t("start_offsets"), mixed_t(make_int_column(start_offsets)));
-		out->set(string_t("lengths"), mixed_t(make_int_column(lengths)));
-		out->set(string_t("line_numbers"), mixed_t(make_int_column(line_numbers)));
-		out->set(string_t("columns"), mixed_t(make_int_column(columns)));
-		out->set(string_t("flags"), mixed_t(make_int_column(flags)));
-		out->set(string_t("line_start_offsets"), mixed_t(make_int_column(line_start_offsets)));
+		out->set(string_t("kind_ids"), mixed_t(detail::make_int_column(kind_ids)));
+		out->set(string_t("start_offsets"), mixed_t(detail::make_int_column(start_offsets)));
+		out->set(string_t("lengths"), mixed_t(detail::make_int_column(lengths)));
+		out->set(string_t("line_numbers"), mixed_t(detail::make_int_column(line_numbers)));
+		out->set(string_t("columns"), mixed_t(detail::make_int_column(columns)));
+		out->set(string_t("flags"), mixed_t(detail::make_int_column(flags)));
+		out->set(string_t("line_start_offsets"), mixed_t(detail::make_int_column(line_start_offsets)));
 		out->set(string_t("diagnostics"), mixed_t(std::move(diagnostic_items)));
 		return mixed_t(std::move(out));
 	}
 };
+
+using token_buffer_t = shared_p<token_buffer>;
+
+namespace detail {
 
 [[nodiscard]] inline bool is_alpha(const unsigned char ch) noexcept {
 	return (ch >= static_cast<unsigned char>('a') && ch <= static_cast<unsigned char>('z'))
@@ -184,9 +190,9 @@ struct token_buffer_builder final {
 }
 
 template <typename KeywordFn>
-token_buffer_builder scan_ascii_language(const string_t &source_value, const char *language, KeywordFn keyword_fn, const bool phs_variables) {
+token_buffer scan_ascii_language(const string_t &source_value, const char *language, KeywordFn keyword_fn, const bool phs_variables) {
 	const std::string_view source(source_value.native_value());
-	token_buffer_builder out(language, source.size());
+	token_buffer out(language, source.size());
 	out.add_line_start(0);
 
 	std::size_t offset = 0;
@@ -348,25 +354,53 @@ token_buffer_builder scan_ascii_language(const string_t &source_value, const cha
 
 template <typename KeywordFn>
 mixed_t tokenize_ascii_language(const string_t &source_value, const char *language, KeywordFn keyword_fn, const bool phs_variables) {
-	return scan_ascii_language(source_value, language, keyword_fn, phs_variables).finish();
+	return scan_ascii_language(source_value, language, keyword_fn, phs_variables).to_mixed();
 }
 
 } // namespace detail
 
+[[nodiscard]] inline token_buffer_t phs_tokenize_buffer(const string_t &source) {
+	return shared<token_buffer>(detail::scan_ascii_language(source, "phs", detail::phs_keyword, true));
+}
+
+[[nodiscard]] inline token_buffer_t jss_tokenize_buffer(const string_t &source) {
+	return shared<token_buffer>(detail::scan_ascii_language(source, "jss", detail::jss_keyword, false));
+}
+
+[[nodiscard]] inline int_t<> token_buffer_count(const token_buffer_t &buffer) {
+	return int_t(buffer->token_count());
+}
+
+[[nodiscard]] inline int_t<> token_buffer_kind_id(const token_buffer_t &buffer, const int_t<> &index) {
+	return int_t(buffer->kind_ids.at(static_cast<std::size_t>(index.native_value())));
+}
+
+[[nodiscard]] inline int_t<> token_buffer_start_offset(const token_buffer_t &buffer, const int_t<> &index) {
+	return int_t(static_cast<std::int64_t>(buffer->start_offsets.at(static_cast<std::size_t>(index.native_value()))));
+}
+
+[[nodiscard]] inline int_t<> token_buffer_length(const token_buffer_t &buffer, const int_t<> &index) {
+	return int_t(static_cast<std::int64_t>(buffer->lengths.at(static_cast<std::size_t>(index.native_value()))));
+}
+
+[[nodiscard]] inline mixed_t token_buffer_to_mixed(const token_buffer_t &buffer) {
+	return buffer->to_mixed();
+}
+
 [[nodiscard]] inline mixed_t phs_tokenize(const string_t &source) {
-	return detail::tokenize_ascii_language(source, "phs", detail::phs_keyword, true);
+	return token_buffer_to_mixed(phs_tokenize_buffer(source));
 }
 
 [[nodiscard]] inline mixed_t jss_tokenize(const string_t &source) {
-	return detail::tokenize_ascii_language(source, "jss", detail::jss_keyword, false);
+	return token_buffer_to_mixed(jss_tokenize_buffer(source));
 }
 
 [[nodiscard]] inline int_t<> phs_tokenize_count(const string_t &source) {
-	return int_t(detail::scan_ascii_language(source, "phs", detail::phs_keyword, true).token_count());
+	return token_buffer_count(phs_tokenize_buffer(source));
 }
 
 [[nodiscard]] inline int_t<> jss_tokenize_count(const string_t &source) {
-	return int_t(detail::scan_ascii_language(source, "jss", detail::jss_keyword, false).token_count());
+	return token_buffer_count(jss_tokenize_buffer(source));
 }
 
 } // namespace scpp::tokenizer
