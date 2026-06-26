@@ -8204,11 +8204,12 @@ function resolve_runtime_webview_build_spec(): array
 	}
 
 	if (PHP_OS_FAMILY === 'Windows') {
+		$webview2 = resolve_windows_webview2_sdk();
 		return [
-			'enabled' => true,
+			'enabled' => $webview2 !== null,
 			'backend' => 'webview2',
-			'cflags' => [],
-			'ldflags' => ['WebView2LoaderStatic.lib', 'advapi32.lib'],
+			'cflags' => $webview2 === null ? [] : ['-I' . $webview2['include_dir']],
+			'ldflags' => $webview2 === null ? [] : [$webview2['loader_lib'], 'advapi32.lib'],
 			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
 		];
 	}
@@ -8220,6 +8221,39 @@ function resolve_runtime_webview_build_spec(): array
 		'ldflags' => [],
 		'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1'],
 	];
+}
+
+/** @return array{include_dir:string,loader_lib:string}|null */
+function resolve_windows_webview2_sdk(): ?array
+{
+	$candidates = [];
+	$envRoot = getenv('SCPP_WEBVIEW2_SDK_DIR');
+	if (is_string($envRoot) && trim($envRoot) !== '') {
+		$candidates[] = normalize_path(trim($envRoot));
+	}
+	$candidates[] = normalize_path(resolve_repo_root() . '/.nuget-packages/Microsoft.Web.WebView2');
+	$candidates[] = normalize_path(getcwd() . '/.nuget-packages/Microsoft.Web.WebView2');
+
+	foreach (array_values(array_unique($candidates)) as $root) {
+		$includeDir = normalize_path($root . '/build/native/include');
+		if (!is_dir($includeDir)) {
+			continue;
+		}
+		foreach ([
+			$root . '/build/native/x64/WebView2Loader.dll.lib',
+			$root . '/build/native/x64/WebView2LoaderStatic.lib',
+		] as $loaderLib) {
+			$loaderLib = normalize_path($loaderLib);
+			if (is_file($loaderLib)) {
+				return [
+					'include_dir' => $includeDir,
+					'loader_lib' => $loaderLib,
+				];
+			}
+		}
+	}
+
+	return null;
 }
 
 function build_runtime_compiler_flags(string $compilerKind, string $buildMode, string $runtimeIncludeDir): string
@@ -8330,7 +8364,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	if (in_array('webview', $modules, true)) {
 		$webviewBuild = resolve_runtime_webview_build_spec();
 		if (!$webviewBuild['enabled']) {
-			scpp_fail('Runtime module `webview` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported WebKitGTK development environment was found. On Linux, install WebKitGTK development files that provide pkg-config package `webkit2gtk-4.1` or `webkit2gtk-4.0`, or disable the module.' . PHP_EOL, 1);
+			scpp_fail('Runtime module `webview` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported WebView development environment was found. On Linux, install WebKitGTK development files that provide pkg-config package `webkit2gtk-4.1` or `webkit2gtk-4.0`. On Windows, restore the Microsoft.Web.WebView2 NuGet package under the repo or project .nuget-packages directory, or set SCPP_WEBVIEW2_SDK_DIR.' . PHP_EOL, 1);
 		}
 		$extraCxxFlags = array_merge($extraCxxFlags, $webviewBuild['compile_defines'], $webviewBuild['cflags']);
 		$extraLinkFlags = array_merge($extraLinkFlags, $webviewBuild['ldflags']);
@@ -8607,7 +8641,9 @@ function scpp_compile_runtime_artifact_spec(string $repoRoot, string $projectRoo
 			}
 		} else {
 			$tmpArtifactPath = $artifactPath . '.tmp.' . bin2hex(random_bytes(4));
-			$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $tmpArtifactPath]);
+			$compileCommand = $compiler['kind'] === 'msvc'
+				? array_merge($compileCommand, ['/c', $sourcePath, '/Fo' . $tmpArtifactPath])
+				: array_merge($compileCommand, ['-c', $sourcePath, '-o', $tmpArtifactPath]);
 			scpp_run_or_fail_process($compileCommand, $projectRoot, 'Failed to compile runtime artifact.');
 			replace_file_atomically($tmpArtifactPath, $artifactPath, 'Failed to publish runtime artifact');
 		}
@@ -8814,7 +8850,11 @@ function scpp_build_process_environment(array $extra = []): array
 		}
 		$env[$key] = (string) $value;
 	}
-	$env['PATH'] = scpp_effective_path_env($env['PATH'] ?? null);
+	$pathEnv = $env['PATH'] ?? ($env['Path'] ?? null);
+	$env['PATH'] = scpp_effective_path_env(is_string($pathEnv) ? $pathEnv : null);
+	if (PHP_OS_FAMILY === 'Windows') {
+		$env['Path'] = $env['PATH'];
+	}
 	$env = scpp_normalize_windows_temp_environment($env);
 	return $env;
 }
