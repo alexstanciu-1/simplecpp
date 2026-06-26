@@ -171,6 +171,16 @@ jobs:
           Wait-Process -Id $process.Id
           python tests/tools/check_ui_screenshot.py "$screenshotPath" --min-width 640 --min-height 420
 
+      - name: Upload Windows WebView2 executable
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-webview-exe-${{ github.run_id }}
+          path: |
+            webview_smoke_windows.exe
+            .nuget-packages\Microsoft.Web.WebView2\build\native\x64\WebView2Loader.dll
+          if-no-files-found: error
+
       - name: Upload Windows WebView2 screenshot
         if: always() && runner.os == 'Windows'
         uses: actions/upload-artifact@v4
