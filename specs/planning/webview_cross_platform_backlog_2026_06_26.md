@@ -41,6 +41,7 @@ Latest heartbeat slice:
 - Apple WKWebView backends now wire `WKNavigationDelegate` navigation callbacks into that shared event queue, and the macOS WKWebView smoke app requires `webview_navigation_finished`.
 - Windows WebView2 now wires `NavigationStarting`, `NavigationCompleted`, and `WebMessageReceived` callbacks into that shared event queue; Windows CI still validates this as compile/link until launch/screenshot is added.
 - Android WebView now emits `webview_ready` from native creation and the smoke Activity wires `WebViewClient` plus `JavascriptInterface` callbacks into native queue events.
+- Linux WebKitGTK screenshot capture now retries until the rendered frame passes the screenshot shape check, avoiding single-frame black captures from hosted Xvfb/WebKit timing.
 
 ## Done Definition
 
@@ -193,9 +194,9 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28239880331` validated:
+Run `28240758500` validated:
 
-- Linux WebKitGTK WebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
+- Linux WebKitGTK WebView screenshot retry and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
 - Windows WebView2 compile/link, including navigation/message event callback registration
 - iOS UIKit UI simulator screenshot
