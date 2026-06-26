@@ -46,6 +46,7 @@ int main() {
 	bool replied = false;
 	bool saw_webview_ready = false;
 	bool saw_navigation_finished = false;
+	bool sent_bridge_probe = false;
 	for (int i = 0; i < 240 && (!replied || !saw_webview_ready || !saw_navigation_finished); ++i) {
 		(void) scpp::ui::app_poll(app);
 		for (;;) {
@@ -81,6 +82,17 @@ int main() {
 					replied = true;
 				}
 			}
+		}
+		if (saw_navigation_finished && !sent_bridge_probe) {
+			auto eval_result = scpp::webview_runtime::eval(
+				view,
+				scpp::string_t("if(window.scpp&&window.scpp.invoke){window.scpp.invoke('bridge.ping',{source:'webkitgtk-smoke'}).catch(function(){});}")
+			);
+			if (!eval_result.has_value().native_value()) {
+				std::cerr << eval_result.error()->get_message().native_value() << "\n";
+				return 1;
+			}
+			sent_bridge_probe = true;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
