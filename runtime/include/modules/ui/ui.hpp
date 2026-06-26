@@ -22,6 +22,7 @@ public:
 	bool_t exit_requested = bool_t(false);
 	string_t backend = string_t("");
 	std::deque<shared_p<event>> pending_events;
+	void *native_handle = nullptr;
 };
 
 class window final {
@@ -32,6 +33,8 @@ public:
 	bool_t visible = bool_t(false);
 	bool_t closed = bool_t(false);
 	void *native_handle = nullptr;
+	void *native_delegate = nullptr;
+	void *native_state = nullptr;
 };
 
 class event final {

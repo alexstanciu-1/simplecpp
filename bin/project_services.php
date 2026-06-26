@@ -8025,6 +8025,15 @@ function resolve_runtime_ui_build_spec(): array
 		];
 	}
 
+	if (PHP_OS_FAMILY === 'Darwin') {
+		return [
+			'enabled' => true,
+			'cflags' => ['-x', 'objective-c++'],
+			'ldflags' => ['-framework', 'Cocoa'],
+			'compile_defines' => ['-DSCPP_HAS_UI=1', '-DSCPP_UI_BACKEND_APPKIT=1'],
+		];
+	}
+
 	return [
 		'enabled' => true,
 		'cflags' => [],

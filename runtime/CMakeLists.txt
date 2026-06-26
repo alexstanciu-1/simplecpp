@@ -77,6 +77,10 @@ if(SCPP_WITH_UI)
 	add_library(scpp_ui SHARED
 		include/modules/ui/ui.cpp
 	)
+	if(APPLE)
+		enable_language(OBJCXX)
+		set_source_files_properties(include/modules/ui/ui.cpp PROPERTIES LANGUAGE OBJCXX)
+	endif()
 
 	target_include_directories(scpp_ui
 	PUBLIC
@@ -218,6 +222,11 @@ if(SCPP_WITH_UI)
 		else()
 			message(FATAL_ERROR "SCPP_WITH_UI=ON but GTK 3 development files were not found. Install a package that provides pkg-config package gtk+-3.0 or disable the ui module.")
 		endif()
+	endif()
+	if(APPLE)
+		target_link_libraries(scpp_ui PUBLIC "-framework Cocoa")
+		target_compile_definitions(scpp_ui PUBLIC SCPP_UI_BACKEND_APPKIT=1)
+		message(STATUS "SCPP ui module: using AppKit/Cocoa")
 	endif()
 	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_UI=1)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_UI=1)

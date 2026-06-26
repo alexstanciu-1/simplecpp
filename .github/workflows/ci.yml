@@ -82,3 +82,34 @@ jobs:
           set -euo pipefail
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -c runtime/include/modules/ui/ui.cpp -o ui_disabled.o
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -c runtime/include/modules/ui/ui.cpp -o ui_enabled.o
+
+      - name: Build macOS UI smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang++ -std=c++23 -x objective-c++ -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_APPKIT=1 \
+            tests/native/ui_smoke_macos.mm runtime/include/modules/ui/ui.cpp \
+            -framework Cocoa \
+            -o ui_smoke_macos
+
+      - name: Launch macOS UI smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/screenshots
+          ./ui_smoke_macos &
+          echo $! > artifacts/screenshots/ui_smoke_macos.pid
+          sleep 3
+          screencapture -x artifacts/screenshots/macos-ui.png
+          wait "$(cat artifacts/screenshots/ui_smoke_macos.pid)"
+
+      - name: Upload macOS UI screenshot
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-ui-screenshot
+          path: artifacts/screenshots/macos-ui.png
+          if-no-files-found: warn

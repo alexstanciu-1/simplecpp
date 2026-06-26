@@ -53,6 +53,9 @@ final class ScppUiModuleTest
 				$this->assertContains('-DSCPP_HAS_UI=1', implode(' ', $uiBuild['compile_defines']), 'available native ui backend should enable the ui build spec');
 				if (PHP_OS_FAMILY === 'Linux') {
 					$this->assertContains('-DSCPP_UI_BACKEND_GTK=1', implode(' ', $uiBuild['compile_defines']), 'Linux ui build spec should select the GTK backend');
+				} elseif (PHP_OS_FAMILY === 'Darwin') {
+					$this->assertContains('-DSCPP_UI_BACKEND_APPKIT=1', implode(' ', $uiBuild['compile_defines']), 'macOS ui build spec should select the AppKit backend');
+					$this->assertContains('-framework', implode(' ', $uiBuild['ldflags']), 'macOS ui build spec should link Cocoa frameworks');
 				}
 			}
 
