@@ -8144,7 +8144,7 @@ function resolve_runtime_ui_build_spec(): array
 		return [
 			'enabled' => true,
 			'cflags' => [],
-			'ldflags' => ['user32.lib', 'gdi32.lib', 'shell32.lib'],
+			'ldflags' => ['user32.lib', 'gdi32.lib', 'shell32.lib', 'ole32.lib'],
 			'compile_defines' => ['-DSCPP_HAS_UI=1', '-DSCPP_UI_BACKEND_WIN32=1'],
 		];
 	}

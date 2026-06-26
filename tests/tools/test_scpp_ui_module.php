@@ -63,6 +63,7 @@ final class ScppUiModuleTest
 					$this->assertContains('-DSCPP_UI_BACKEND_WIN32=1', implode(' ', $uiBuild['compile_defines']), 'Windows ui build spec should select the Win32 backend');
 					$this->assertContains('user32.lib', implode(' ', $uiBuild['ldflags']), 'Windows ui build spec should link user32');
 					$this->assertContains('gdi32.lib', implode(' ', $uiBuild['ldflags']), 'Windows ui build spec should link gdi32');
+					$this->assertContains('ole32.lib', implode(' ', $uiBuild['ldflags']), 'Windows ui build spec should link OLE for STA initialization');
 				}
 			}
 

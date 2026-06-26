@@ -13,6 +13,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <ole2.h>
 #endif
 #if defined(SCPP_UI_BACKEND_APPKIT) && SCPP_UI_BACKEND_APPKIT
 #import <AppKit/AppKit.h>
@@ -230,6 +231,10 @@ struct win32_callback_state final {
 	shared_p<window> target;
 };
 
+struct win32_app_state final {
+	bool ole_initialized = false;
+};
+
 LRESULT CALLBACK window_proc(HWND native, UINT message, WPARAM wparam, LPARAM lparam) {
 	if (message == WM_NCCREATE) {
 		auto *create = reinterpret_cast<CREATESTRUCTA *>(lparam);
@@ -307,6 +312,10 @@ result<shared_p<app>> app_create() {
 	auto owner = shared<app>();
 	owner->backend = string_t("win32");
 	owner->native_handle = instance;
+	auto *state = new win32_app_state();
+	const HRESULT ole_result = OleInitialize(nullptr);
+	state->ole_initialized = SUCCEEDED(ole_result);
+	owner->native_state = state;
 	return owner;
 }
 
@@ -406,6 +415,14 @@ shared_p<event> app_next_event(const shared_p<app> &owner) {
 
 void app_exit(const shared_p<app> &owner) {
 	if (owner.has_value().native_value() && owner.get() != nullptr) {
+		auto *state = static_cast<win32_app_state *>(owner->native_state);
+		if (state != nullptr) {
+			if (state->ole_initialized) {
+				OleUninitialize();
+			}
+			delete state;
+			owner->native_state = nullptr;
+		}
 		owner->exit_requested = bool_t(true);
 	}
 }

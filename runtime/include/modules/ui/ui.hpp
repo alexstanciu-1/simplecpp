@@ -23,6 +23,7 @@ public:
 	string_t backend = string_t("");
 	std::deque<shared_p<event>> pending_events;
 	void *native_handle = nullptr;
+	void *native_state = nullptr;
 };
 
 class window final {
