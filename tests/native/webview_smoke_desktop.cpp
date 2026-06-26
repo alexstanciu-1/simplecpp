@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <string>
 #include <thread>
 
 int main() {
@@ -29,7 +30,44 @@ int main() {
 	auto view = view_result.value();
 	auto html_result = scpp::webview_runtime::load_html(
 		view,
-		scpp::string_t("<!doctype html><html><body style=\"font-family:sans-serif;margin:48px\"><h1>Simple C++ WebView</h1><p>Native WebKitGTK smoke.</p></body></html>")
+		scpp::string_t(R"HTML(<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+	body { font-family: sans-serif; margin: 48px; background: #f8fafc; color: #172033; }
+	h1 { font-size: 32px; margin: 0 0 18px; }
+	.panel { border: 2px solid #2563eb; border-radius: 6px; background: white; padding: 22px; width: 540px; }
+	.label { color: #475569; font-size: 14px; text-transform: uppercase; }
+	.status { font-size: 24px; font-weight: 700; margin-top: 10px; color: #15803d; }
+	.payload { font-family: monospace; margin-top: 14px; color: #334155; }
+</style>
+</head>
+<body>
+<h1>Simple C++ WebView</h1>
+<div class="panel">
+	<div class="label">WebKitGTK bridge smoke</div>
+	<div id="status" class="status">Waiting for bridge reply...</div>
+	<div id="payload" class="payload">invoke: bridge.ping</div>
+</div>
+<script>
+(async function () {
+	const status = document.getElementById("status");
+	const payload = document.getElementById("payload");
+	try {
+		const reply = await window.scpp.invoke("bridge.ping", { source: "webkitgtk-smoke" });
+		status.textContent = "Bridge reply received";
+		payload.textContent = JSON.stringify(reply);
+		document.body.dataset.bridge = "ok";
+	} catch (error) {
+		status.textContent = "Bridge reply failed";
+		payload.textContent = error && error.message ? error.message : String(error);
+		document.body.dataset.bridge = "error";
+	}
+})();
+</script>
+</body>
+</html>)HTML")
 	);
 	if (!html_result.has_value().native_value()) {
 		std::cerr << html_result.error()->get_message().native_value() << "\n";
@@ -42,8 +80,26 @@ int main() {
 		return 1;
 	}
 
+	bool replied = false;
 	for (int i = 0; i < 160; ++i) {
-		(void) scpp::ui::app_poll(app);
+		if (scpp::ui::app_poll(app).native_value()) {
+			auto event = scpp::ui::app_next_event(app);
+			if (scpp::ui::event_type(event).native_value() == "webview_message") {
+				const std::string message = scpp::ui::event_text(event).native_value();
+				if (!replied && message.find("\"command\":\"bridge.ping\"") != std::string::npos) {
+					auto reply_result = scpp::webview_runtime::reply_ok(
+						view,
+						scpp::int_t(1),
+						scpp::string_t("{\"status\":\"pong\",\"transport\":\"WebKitGTK script-message\"}")
+					);
+					if (!reply_result.has_value().native_value()) {
+						std::cerr << reply_result.error()->get_message().native_value() << "\n";
+						return 1;
+					}
+					replied = true;
+				}
+			}
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
 
