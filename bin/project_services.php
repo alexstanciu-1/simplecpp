@@ -8060,6 +8060,39 @@ function resolve_runtime_ui_build_spec(): array
 /** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
 function resolve_runtime_webview_build_spec(): array
 {
+	if (PHP_OS_FAMILY === 'Linux') {
+		$pkgConfig = find_command_path(['pkg-config']);
+		if ($pkgConfig === null) {
+			return [
+				'enabled' => false,
+				'cflags' => [],
+				'ldflags' => [],
+				'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
+			];
+		}
+
+		foreach (['webkit2gtk-4.1', 'webkit2gtk-4.0'] as $packageName) {
+			$cflagsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --cflags ' . escapeshellarg($packageName) . ' 2>/dev/null');
+			$libsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --libs ' . escapeshellarg($packageName) . ' 2>/dev/null');
+			if (!is_string($libsOutput) || trim($libsOutput) === '') {
+				continue;
+			}
+			return [
+				'enabled' => true,
+				'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
+				'ldflags' => split_shell_tokens($libsOutput),
+				'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBKITGTK=1'],
+			];
+		}
+
+		return [
+			'enabled' => false,
+			'cflags' => [],
+			'ldflags' => [],
+			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
+		];
+	}
+
 	return [
 		'enabled' => true,
 		'cflags' => [],
@@ -8176,7 +8209,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	if (in_array('webview', $modules, true)) {
 		$webviewBuild = resolve_runtime_webview_build_spec();
 		if (!$webviewBuild['enabled']) {
-			scpp_fail('Runtime module `webview` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported native WebView backend was found.' . PHP_EOL, 1);
+			scpp_fail('Runtime module `webview` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported WebKitGTK development environment was found. On Linux, install WebKitGTK development files that provide pkg-config package `webkit2gtk-4.1` or `webkit2gtk-4.0`, or disable the module.' . PHP_EOL, 1);
 		}
 		$extraCxxFlags = array_merge($extraCxxFlags, $webviewBuild['compile_defines'], $webviewBuild['cflags']);
 		$extraLinkFlags = array_merge($extraLinkFlags, $webviewBuild['ldflags']);

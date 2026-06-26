@@ -38,8 +38,15 @@ final class ScppWebviewModuleTest
 		$this->assertContains('class webview', $strictRuntimeSymbols, 'strict shallow runtime should expose the webview handle shape');
 
 		$webviewBuild = resolve_runtime_webview_build_spec();
-		$this->assertSame(true, $webviewBuild['enabled'], 'first webview build spec should be enabled as a facade compile slice');
-		$this->assertContains('-DSCPP_HAS_WEBVIEW=1', implode(' ', $webviewBuild['compile_defines']), 'webview build spec should enable the webview facade');
+		if (PHP_OS_FAMILY === 'Linux' && !$webviewBuild['enabled']) {
+			$this->assertContains('-DSCPP_HAS_WEBVIEW=0', implode(' ', $webviewBuild['compile_defines']), 'missing WebKitGTK should disable the webview build spec cleanly');
+		} else {
+			$this->assertSame(true, $webviewBuild['enabled'], 'webview build spec should be enabled when a backend is available or not required for the platform facade');
+			$this->assertContains('-DSCPP_HAS_WEBVIEW=1', implode(' ', $webviewBuild['compile_defines']), 'webview build spec should enable the webview facade');
+			if (PHP_OS_FAMILY === 'Linux') {
+				$this->assertContains('-DSCPP_WEBVIEW_BACKEND_WEBKITGTK=1', implode(' ', $webviewBuild['compile_defines']), 'Linux webview build spec should select the WebKitGTK backend');
+			}
+		}
 
 		echo "PASS: scpp webview module\n";
 		return 0;

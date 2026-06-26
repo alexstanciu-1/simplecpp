@@ -339,6 +339,11 @@ CI target order:
 6. Add native smoke app that renders local HTML.
 7. Add platform CI compile/link and screenshot smokes incrementally.
 
+Current implementation note:
+
+- The first native backend path is Linux WebKitGTK behind `SCPP_WEBVIEW_BACKEND_WEBKITGTK`.
+- Other platforms may compile the facade before their native rendering backends are selected.
+
 ## Resolved First-Slice Questions
 
 - `webview` auto-enables `ui`; later build reporting should make this explicit.
