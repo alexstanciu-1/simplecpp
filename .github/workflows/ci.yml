@@ -48,7 +48,7 @@ jobs:
           set -euo pipefail
           if [ "$RUNNER_OS" = "Linux" ]; then
             sudo apt-get update
-            sudo apt-get install -y ninja-build g++ pkg-config libgtk-3-dev xvfb imagemagick
+            sudo apt-get install -y ninja-build g++ pkg-config libgtk-3-dev xvfb imagemagick dbus-x11
             if apt-cache show libwebkit2gtk-4.1-dev >/dev/null 2>&1; then
               sudo apt-get install -y libwebkit2gtk-4.1-dev
             else
@@ -165,12 +165,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/screenshots
-          xvfb-run -a --server-args="-screen 0 1024x768x24" bash -c '
+          xvfb-run -a --server-args="-screen 0 1024x768x24" dbus-run-session -- bash -c '
             set -euo pipefail
-            WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_FORCE_SANDBOX=0 ./webview_smoke_gtk &
+            GDK_BACKEND=x11 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 ./webview_smoke_gtk &
             pid=$!
             sleep 5
             import -window root artifacts/screenshots/linux-webview-ui.png
+            convert artifacts/screenshots/linux-webview-ui.png PNG24:artifacts/screenshots/linux-webview-ui.png
             wait "$pid"
           '
           python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/linux-webview-ui.png --min-width 640 --min-height 420
