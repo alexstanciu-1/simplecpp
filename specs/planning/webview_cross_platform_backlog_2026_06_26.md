@@ -23,7 +23,7 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
 | Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
-| Android | Android WebView | Native boundary in progress | Android WebView JNI compile smoke pending CI |
+| Android | Android WebView | Native boundary in progress | Android WebView JNI compile smoke |
 
 ## Done Definition
 
@@ -107,7 +107,7 @@ Implementation tasks:
 
 Testing tasks:
 
-- Start with Android NDK compile smoke for the native boundary. Initial runtime and helper compile smoke added.
+- Start with Android NDK compile smoke for the native boundary. Initial runtime and helper compile smoke added and green.
 - Add emulator render smoke only after the Android app packaging path exists.
 
 Open decision:
@@ -162,7 +162,7 @@ Constraint:
 
 ## Latest Known Good CI Run
 
-Run `28225636940` validated:
+Run `28226254568` validated:
 
 - Linux WebKitGTK WebView screenshot
 - macOS WKWebView screenshot
@@ -170,3 +170,4 @@ Run `28225636940` validated:
 - iOS UIKit UI simulator screenshot
 - iOS WKWebView simulator screenshot
 - Android NDK UI compile smoke
+- Android WebView JNI boundary compile smoke
