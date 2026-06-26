@@ -44,7 +44,7 @@ Latest heartbeat slice:
 - Linux WebKitGTK screenshot capture now retries until the rendered frame passes the screenshot shape check, avoiding single-frame black captures from hosted Xvfb/WebKit timing.
 - Windows WebView2 CI now launches the smoke app, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; CI run `28242929755` validated the path.
 - WebView build reporting now carries structured dependency diagnostics and renders missing Linux `pkg-config`/WebKitGTK package guidance in `scpp explain-build`; CI run `28244035315` validated the slice.
-- WebKitGTK and WKWebView now expose a `SimpleCpp` JavaScript message handler; Linux, macOS, iOS, Windows, and Android WebView smokes assert `webview_message` payload delivery.
+- WebKitGTK and WKWebView now expose a `SimpleCpp` JavaScript message handler; Linux, macOS, iOS, Windows, and Android WebView smokes assert `webview_message` payload delivery. CI run `28245240915` validated the cross-platform message slice.
 
 ## Done Definition
 
@@ -197,11 +197,11 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28244035315` validated:
+Run `28245240915` validated:
 
 - Linux WebKitGTK WebView screenshot retry and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
-- Windows WebView2 build, launch, screenshot artifact, and navigation/message event callback registration
+- Windows WebView2 build, launch, screenshot artifact, and `webview_message` payload delivery through the `ui_app` queue
 - iOS UIKit UI simulator screenshot
 - iOS WKWebView simulator screenshot
 - Android NDK UI compile smoke
@@ -214,3 +214,4 @@ Run `28244035315` validated:
 - Shared WebView backend metadata
 - Shared explain-build backend reporting
 - Linux WebView missing dependency diagnostics in the WebView build spec and explain-build rendering
+- Linux WebKitGTK, macOS WKWebView, and iOS WKWebView JavaScript-to-native `webview_message` payload delivery
