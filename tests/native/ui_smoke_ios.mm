@@ -39,6 +39,14 @@
 	}
 	_window = windowResult.value();
 	self.systemWindow = static_cast<UIWindow *>(_window->native_handle);
+	UIWindow *nativeWindow = static_cast<UIWindow *>(_window->native_handle);
+	UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0.0, 120.0, bounds.size.width, 80.0)];
+	label.text = @"Simple C++ UI";
+	label.textAlignment = NSTextAlignmentCenter;
+	label.textColor = [UIColor blackColor];
+	label.font = [UIFont boldSystemFontOfSize:28.0];
+	[nativeWindow.rootViewController.view addSubview:label];
+	[label release];
 
 	auto showResult = scpp::ui::window_show(_window);
 	if (!showResult.has_value().native_value()) {
@@ -46,7 +54,7 @@
 		std::exit(1);
 	}
 
-	[NSTimer scheduledTimerWithTimeInterval:3.0 target:self selector:@selector(finishSmoke:) userInfo:nil repeats:NO];
+	[NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(finishSmoke:) userInfo:nil repeats:NO];
 
 	return YES;
 }
