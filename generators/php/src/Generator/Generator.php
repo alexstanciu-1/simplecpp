@@ -1889,7 +1889,7 @@ final class Generator
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
 		}
-		if (in_array($normalized, ['int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'fixed_array', 'fixed_array_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'int_t<>', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+		if (in_array($normalized, ['int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'fixed_array', 'fixed_array_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'token_buffer', 'int_t', 'int_t<>', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t', 'token_buffer_t', 'tokenizer::token_buffer_t'], true)) {
 			return;
 		}
 		if (in_array($this->typeMapper->declaredTypeKind($normalized), ['enum', 'struct', 'union'], true)) {
