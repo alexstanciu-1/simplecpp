@@ -141,6 +141,9 @@
         "webview_eval": "webview_runtime::eval",
         "webview_reply_ok": "webview_runtime::reply_ok",
         "webview_reply_error": "webview_runtime::reply_error",
+        "webview_message_id": "webview_runtime::message_id",
+        "webview_message_command": "webview_runtime::message_command",
+        "webview_message_payload_json": "webview_runtime::message_payload_json",
         "webview_close": "webview_runtime::close"
     }
 }

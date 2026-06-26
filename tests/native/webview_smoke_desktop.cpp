@@ -85,12 +85,16 @@ setTimeout(async function () {
 		if (scpp::ui::app_poll(app).native_value()) {
 			auto event = scpp::ui::app_next_event(app);
 			if (scpp::ui::event_type(event).native_value() == "webview_message") {
-				const std::string message = scpp::ui::event_text(event).native_value();
-				std::cout << "webview_message: " << message << "\n";
-				if (!replied && message.find("\"command\":\"bridge.ping\"") != std::string::npos) {
+				const auto id = scpp::webview_runtime::message_id(event);
+				const auto command = scpp::webview_runtime::message_command(event);
+				const auto payload = scpp::webview_runtime::message_payload_json(event);
+				std::cout << "webview_message: id=" << id.native_value()
+					<< " command=" << command.native_value()
+					<< " payload=" << payload.native_value() << "\n";
+				if (!replied && command.native_value() == "bridge.ping") {
 					auto reply_result = scpp::webview_runtime::reply_ok(
 						view,
-						scpp::int_t(1),
+						id,
 						scpp::string_t("{\"status\":\"pong\",\"transport\":\"WebKitGTK script-message\"}")
 					);
 					if (!reply_result.has_value().native_value()) {

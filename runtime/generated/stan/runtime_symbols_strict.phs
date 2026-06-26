@@ -142,6 +142,9 @@ function webview_create(ui_window $window): result<webview> {}
 function webview_eval(webview $view, string $script): result<bool> {}
 function webview_load_html(webview $view, string $html): result<bool> {}
 function webview_load_url(webview $view, string $url): result<bool> {}
+function webview_message_command(ui_event $event): string {}
+function webview_message_id(ui_event $event): int {}
+function webview_message_payload_json(ui_event $event): string {}
 function webview_reply_error(webview $view, int $id, string $code, string $message): result<bool> {}
 function webview_reply_ok(webview $view, int $id, string $value_json): result<bool> {}
 

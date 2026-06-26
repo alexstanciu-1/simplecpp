@@ -9,8 +9,10 @@
 #endif
 #endif
 
+#include <charconv>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 namespace scpp::webview_runtime {
 
@@ -169,6 +171,157 @@ void handle_bridge_message(WebKitUserContentManager *, WebKitJavascriptResult *m
 	return out.str();
 }
 
+[[nodiscard]] std::size_t skip_ws(std::string_view text, std::size_t offset) {
+	while (offset < text.size()) {
+		const char ch = text[offset];
+		if (ch != ' ' && ch != '\n' && ch != '\r' && ch != '\t') {
+			break;
+		}
+		++offset;
+	}
+	return offset;
+}
+
+[[nodiscard]] std::size_t skip_json_string(std::string_view text, std::size_t offset) {
+	if (offset >= text.size() || text[offset] != '"') {
+		return std::string_view::npos;
+	}
+	++offset;
+	while (offset < text.size()) {
+		const char ch = text[offset++];
+		if (ch == '\\') {
+			if (offset >= text.size()) {
+				return std::string_view::npos;
+			}
+			++offset;
+			continue;
+		}
+		if (ch == '"') {
+			return offset;
+		}
+	}
+	return std::string_view::npos;
+}
+
+[[nodiscard]] std::size_t skip_json_value(std::string_view text, std::size_t offset) {
+	offset = skip_ws(text, offset);
+	if (offset >= text.size()) {
+		return std::string_view::npos;
+	}
+	if (text[offset] == '"') {
+		return skip_json_string(text, offset);
+	}
+	if (text[offset] == '{' || text[offset] == '[') {
+		const char open = text[offset];
+		const char close = open == '{' ? '}' : ']';
+		std::size_t depth = 1;
+		++offset;
+		while (offset < text.size()) {
+			if (text[offset] == '"') {
+				offset = skip_json_string(text, offset);
+				if (offset == std::string_view::npos) {
+					return std::string_view::npos;
+				}
+				continue;
+			}
+			if (text[offset] == open) {
+				++depth;
+			} else if (text[offset] == close) {
+				--depth;
+				if (depth == 0) {
+					return offset + 1;
+				}
+			}
+			++offset;
+		}
+		return std::string_view::npos;
+	}
+	while (offset < text.size()) {
+		const char ch = text[offset];
+		if (ch == ',' || ch == '}' || ch == ']' || ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t') {
+			return offset;
+		}
+		++offset;
+	}
+	return offset;
+}
+
+[[nodiscard]] std::string decode_json_string(std::string_view value) {
+	if (value.size() < 2 || value.front() != '"' || value.back() != '"') {
+		return "";
+	}
+	std::string out;
+	for (std::size_t offset = 1; offset + 1 < value.size(); ++offset) {
+		const char ch = value[offset];
+		if (ch != '\\') {
+			out.push_back(ch);
+			continue;
+		}
+		if (++offset + 1 >= value.size()) {
+			break;
+		}
+		switch (value[offset]) {
+			case '"': out.push_back('"'); break;
+			case '\\': out.push_back('\\'); break;
+			case '/': out.push_back('/'); break;
+			case 'b': out.push_back('\b'); break;
+			case 'f': out.push_back('\f'); break;
+			case 'n': out.push_back('\n'); break;
+			case 'r': out.push_back('\r'); break;
+			case 't': out.push_back('\t'); break;
+			default: out.push_back('?'); break;
+		}
+	}
+	return out;
+}
+
+[[nodiscard]] bool top_level_json_field(std::string_view text, std::string_view key, std::size_t &value_start, std::size_t &value_end) {
+	std::size_t offset = skip_ws(text, 0);
+	if (offset >= text.size() || text[offset] != '{') {
+		return false;
+	}
+	++offset;
+	for (;;) {
+		offset = skip_ws(text, offset);
+		if (offset >= text.size() || text[offset] == '}') {
+			return false;
+		}
+		if (text[offset] != '"') {
+			return false;
+		}
+		const std::size_t key_start = offset;
+		const std::size_t key_end = skip_json_string(text, offset);
+		if (key_end == std::string_view::npos) {
+			return false;
+		}
+		offset = skip_ws(text, key_end);
+		if (offset >= text.size() || text[offset] != ':') {
+			return false;
+		}
+		++offset;
+		value_start = skip_ws(text, offset);
+		value_end = skip_json_value(text, value_start);
+		if (value_end == std::string_view::npos) {
+			return false;
+		}
+		if (decode_json_string(text.substr(key_start, key_end - key_start)) == std::string(key)) {
+			return true;
+		}
+		offset = skip_ws(text, value_end);
+		if (offset >= text.size() || text[offset] != ',') {
+			return false;
+		}
+		++offset;
+	}
+}
+
+[[nodiscard]] std::string event_text_or_empty(const shared_p<ui::event> &message) {
+	if (!message.has_value().native_value() || message.get() == nullptr) {
+		return "";
+	}
+	return message->text.native_value();
+}
+
 [[nodiscard]] result<shared_p<view>> require_view(const shared_p<view> &target, const char *function_name) {
 	if (!target.has_value().native_value() || target.get() == nullptr || target->closed.native_value()) {
 		return error_t(string_t(std::string(function_name) + " requires an open webview"));
@@ -313,6 +466,41 @@ result<bool_t> reply_error(const shared_p<view> &target, const int_t &id, const 
 		+ json_string_literal(message.native_value())
 		+ "}});";
 	return eval(target, string_t(script));
+}
+
+int_t message_id(const shared_p<ui::event> &message) {
+	const std::string text = event_text_or_empty(message);
+	std::size_t start = 0;
+	std::size_t end = 0;
+	if (!top_level_json_field(text, "id", start, end)) {
+		return int_t(0);
+	}
+	std::int64_t value = 0;
+	const auto parsed = std::from_chars(text.data() + start, text.data() + end, value);
+	if (parsed.ec != std::errc{} || parsed.ptr != text.data() + end) {
+		return int_t(0);
+	}
+	return int_t(value);
+}
+
+string_t message_command(const shared_p<ui::event> &message) {
+	const std::string text = event_text_or_empty(message);
+	std::size_t start = 0;
+	std::size_t end = 0;
+	if (!top_level_json_field(text, "command", start, end)) {
+		return string_t("");
+	}
+	return string_t(decode_json_string(std::string_view(text).substr(start, end - start)));
+}
+
+string_t message_payload_json(const shared_p<ui::event> &message) {
+	const std::string text = event_text_or_empty(message);
+	std::size_t start = 0;
+	std::size_t end = 0;
+	if (!top_level_json_field(text, "payload", start, end)) {
+		return string_t("null");
+	}
+	return string_t(text.substr(start, end - start));
 }
 
 void close(const shared_p<view> &target) {

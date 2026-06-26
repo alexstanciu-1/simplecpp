@@ -31,6 +31,9 @@ public:
 [[nodiscard]] result<bool_t> eval(const shared_p<view> &target, const string_t &script);
 [[nodiscard]] result<bool_t> reply_ok(const shared_p<view> &target, const int_t &id, const string_t &value_json);
 [[nodiscard]] result<bool_t> reply_error(const shared_p<view> &target, const int_t &id, const string_t &code, const string_t &message);
+[[nodiscard]] int_t message_id(const shared_p<ui::event> &message);
+[[nodiscard]] string_t message_command(const shared_p<ui::event> &message);
+[[nodiscard]] string_t message_payload_json(const shared_p<ui::event> &message);
 void close(const shared_p<view> &target);
 #else
 inline result<shared_p<view>> create(const shared_p<ui::window> &) {
@@ -55,6 +58,18 @@ inline result<bool_t> reply_ok(const shared_p<view> &, const int_t &, const stri
 
 inline result<bool_t> reply_error(const shared_p<view> &, const int_t &, const string_t &, const string_t &) {
 	return error_t(string_t("webview_reply_error(): webview runtime module is not enabled in this build"));
+}
+
+inline int_t message_id(const shared_p<ui::event> &) {
+	return int_t(0);
+}
+
+inline string_t message_command(const shared_p<ui::event> &) {
+	return string_t("");
+}
+
+inline string_t message_payload_json(const shared_p<ui::event> &) {
+	return string_t("null");
 }
 
 inline void close(const shared_p<view> &) {

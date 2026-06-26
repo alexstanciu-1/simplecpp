@@ -385,6 +385,9 @@ final class RuntimeShallowSourceGenerator
 				'webview_eval' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'script', 'type' => 'string']]],
 				'webview_reply_ok' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'id', 'type' => 'int'], ['name' => 'value_json', 'type' => 'string']]],
 				'webview_reply_error' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'id', 'type' => 'int'], ['name' => 'code', 'type' => 'string'], ['name' => 'message', 'type' => 'string']]],
+				'webview_message_id' => ['return' => 'int', 'params' => [['name' => 'event', 'type' => 'ui_event']]],
+				'webview_message_command' => ['return' => 'string', 'params' => [['name' => 'event', 'type' => 'ui_event']]],
+				'webview_message_payload_json' => ['return' => 'string', 'params' => [['name' => 'event', 'type' => 'ui_event']]],
 				'webview_close' => ['return' => 'void', 'params' => [['name' => 'view', 'type' => 'webview']]],
 			],
 			'legacy' => [

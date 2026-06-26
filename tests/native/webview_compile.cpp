@@ -11,6 +11,10 @@ int main() {
 	(void) scpp::webview_runtime::eval(view, scpp::string_t("document.body.dataset.ready = '1';"));
 	(void) scpp::webview_runtime::reply_ok(view, scpp::int_t(1), scpp::string_t("{\"saved\":true}"));
 	(void) scpp::webview_runtime::reply_error(view, scpp::int_t(2), scpp::string_t("failed"), scpp::string_t("Command failed"));
+	scpp::shared_p<scpp::ui_event> event = scpp::null;
+	(void) scpp::webview_runtime::message_id(event);
+	(void) scpp::webview_runtime::message_command(event);
+	(void) scpp::webview_runtime::message_payload_json(event);
 	scpp::webview_runtime::close(view);
 	return 0;
 }
