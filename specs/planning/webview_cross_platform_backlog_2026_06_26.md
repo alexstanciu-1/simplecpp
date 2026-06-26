@@ -193,7 +193,7 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28238988025` validated:
+Run `28239880331` validated:
 
 - Linux WebKitGTK WebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
@@ -206,6 +206,6 @@ Run `28238988025` validated:
 - Android WebView Activity compile smoke
 - Android WebView APK package smoke with packaged `libc++_shared.so`
 - Android WebView signed APK artifact
-- Android WebView emulator launch, app-active validation, and screenshot artifact rendering "Simple C++ WebView"
+- Android WebView emulator launch, app-active validation, event bridge assertion, and screenshot artifact rendering "Simple C++ WebView"
 - Shared WebView backend metadata
 - Shared explain-build backend reporting
