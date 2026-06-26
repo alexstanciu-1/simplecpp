@@ -301,7 +301,34 @@ jobs:
           cp libsimplecpp_webview_smoke.so android_webview_smoke_package/lib/arm64-v8a/libsimplecpp_webview_smoke.so
           (cd android_webview_smoke_package && zip -qr ../android_webview_smoke-unsigned.apk classes.dex lib)
           "$build_tools/zipalign" -f 4 android_webview_smoke-unsigned.apk android_webview_smoke-aligned.apk
-          test -s android_webview_smoke-aligned.apk
+          keytool \
+            -genkeypair \
+            -keystore android_webview_smoke-debug.keystore \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Simple C++"
+          "$build_tools/apksigner" sign \
+            --ks android_webview_smoke-debug.keystore \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out android_webview_smoke-signed.apk \
+            android_webview_smoke-aligned.apk
+          "$build_tools/apksigner" verify android_webview_smoke-signed.apk
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          cp android_webview_smoke-signed.apk "$SCPP_CI_ARTIFACT_DIR/android-webview-smoke-${GITHUB_RUN_ID}.apk"
+          test -s "$SCPP_CI_ARTIFACT_DIR/android-webview-smoke-${GITHUB_RUN_ID}.apk"
+
+      - name: Upload Android WebView smoke APK
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-webview-smoke-apk-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/android-webview-smoke-${{ github.run_id }}.apk
+          if-no-files-found: warn
 
       - name: Build macOS UI smoke app
         if: runner.os == 'macOS'

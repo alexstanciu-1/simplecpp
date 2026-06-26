@@ -23,12 +23,12 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
 | Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
-| Android | Android WebView | Native JNI bridge and package fixture in progress | Android WebView JNI, native smoke library, Activity compile, and APK package smoke |
+| Android | Android WebView | Native JNI bridge and package fixture in progress | Android WebView JNI, native smoke library, Activity compile, signed APK package, and APK artifact |
 
 Latest heartbeat slice:
 
-- Android WebView now has a direct SDK APK package smoke that builds the Activity fixture into dex, links resources/manifest, embeds `libsimplecpp_webview_smoke.so`, and zipaligns the APK.
-- This moves the remaining Android gap from "can compile pieces" to "needs emulator/device launch and screenshot validation."
+- Android WebView smoke APK packaging now signs and verifies a debug APK.
+- CI uploads the signed smoke APK to `/tmp/scpp_ci_artifacts` with the GitHub run id in the filename, matching the screenshot artifact convention.
 
 ## Done Definition
 
@@ -116,6 +116,7 @@ Testing tasks:
 - Add Android app-side Activity compile smoke. Initial Activity-owned WebView fixture and `javac` CI step added.
 - Add native JNI smoke library build. Initial `libsimplecpp_webview_smoke.so` CI build added.
 - Add package smoke for the Android fixture. Initial direct SDK `aapt2`/`d8`/`zipalign` APK package step added.
+- Sign, verify, and upload the Android smoke APK. Initial debug signing and run-id artifact upload added.
 - Add emulator render smoke only after the Android app packaging path exists.
 
 Open decision:
@@ -170,7 +171,7 @@ Constraint:
 
 ## Latest Known Good CI Run
 
-Run `28227422341` validated:
+Run `28229692906` validated:
 
 - Linux WebKitGTK WebView screenshot
 - macOS WKWebView screenshot
@@ -179,5 +180,8 @@ Run `28227422341` validated:
 - iOS WKWebView simulator screenshot
 - Android NDK UI compile smoke
 - Android WebView JNI boundary compile smoke
+- Android WebView native smoke library build
+- Android WebView Activity compile smoke
+- Android WebView APK package smoke
 - Shared WebView backend metadata
 - Shared explain-build backend reporting
