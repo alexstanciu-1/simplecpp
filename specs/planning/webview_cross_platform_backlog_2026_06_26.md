@@ -44,6 +44,7 @@ Latest heartbeat slice:
 - Linux WebKitGTK screenshot capture now retries until the rendered frame passes the screenshot shape check, avoiding single-frame black captures from hosted Xvfb/WebKit timing.
 - Windows WebView2 CI now launches the smoke app, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; CI run `28242929755` validated the path.
 - WebView build reporting now carries structured dependency diagnostics and renders missing Linux `pkg-config`/WebKitGTK package guidance in `scpp explain-build`; CI run `28244035315` validated the slice.
+- WebKitGTK and WKWebView now expose a `SimpleCpp` JavaScript message handler; Linux, macOS, iOS, Windows, and Android WebView smokes assert `webview_message` payload delivery.
 
 ## Done Definition
 
@@ -179,8 +180,8 @@ Initial implementation slice:
 - `ui_event` carries `webview_handle`, `message`, and `url` payload fields.
 - Strict PHP++ exposes `ui_event_type`, `ui_event_window`, `ui_event_webview`, `ui_event_message`, and `ui_event_url`.
 - `webview_runtime::enqueue_event(...)` provides the backend callback handoff point into `ui_app.pending_events`.
-- Linux WebKitGTK emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_title_changed`.
-- Apple WKWebView emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, and `webview_load_failed`.
+- Linux WebKitGTK emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, `webview_title_changed`, and `webview_message`.
+- Apple WKWebView emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message`.
 - WebView2 emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message`.
 - Android emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message` through the Java-hosted `WebViewClient`/`JavascriptInterface` bridge contract.
 

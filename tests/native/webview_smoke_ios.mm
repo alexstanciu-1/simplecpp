@@ -51,7 +51,7 @@
 
 	auto htmlResult = scpp::webview_runtime::load_html(
 		_view,
-		scpp::string_t("<!doctype html><html><body><h1>Simple C++ WebView</h1><p>Native iOS WKWebView smoke.</p></body></html>")
+		scpp::string_t("<!doctype html><html><body><h1>Simple C++ WebView</h1><p>Native iOS WKWebView smoke.</p><script>window.webkit.messageHandlers.SimpleCpp.postMessage('webkit-ready');</script></body></html>")
 	);
 	if (!htmlResult.has_value().native_value()) {
 		std::cerr << htmlResult.error()->get_message().native_value() << "\n";
@@ -71,6 +71,38 @@
 - (void)finishSmoke:(NSTimer *)timer
 {
 	(void)timer;
+	bool sawReady = false;
+	bool sawNavigationFinished = false;
+	bool sawMessage = false;
+	while (_app.has_value().native_value() && !_app->pending_events.empty()) {
+		auto event = _app->pending_events.front();
+		_app->pending_events.pop_front();
+		if (!event.has_value().native_value()) {
+			continue;
+		}
+		const auto type = event->type.native_value();
+		if (type == "webview_ready") {
+			sawReady = true;
+		}
+		if (type == "webview_navigation_finished") {
+			sawNavigationFinished = true;
+		}
+		if (type == "webview_message" && event->message.native_value() == "webkit-ready") {
+			sawMessage = true;
+		}
+	}
+	if (!sawReady) {
+		std::cerr << "Did not receive webview_ready\n";
+		std::exit(1);
+	}
+	if (!sawNavigationFinished) {
+		std::cerr << "Did not receive webview_navigation_finished\n";
+		std::exit(1);
+	}
+	if (!sawMessage) {
+		std::cerr << "Did not receive webview_message\n";
+		std::exit(1);
+	}
 	scpp::webview_runtime::close(_view);
 	(void)scpp::ui::window_close(_window);
 	scpp::ui::app_exit(_app);

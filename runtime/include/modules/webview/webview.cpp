@@ -33,7 +33,7 @@
 #include <string>
 
 #if (defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW) || (defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW)
-@interface ScppWebViewNavigationDelegate : NSObject<WKNavigationDelegate> {
+@interface ScppWebViewNavigationDelegate : NSObject<WKNavigationDelegate, WKScriptMessageHandler> {
 	scpp::shared_p<scpp::webview_runtime::view> _target;
 }
 - (instancetype)initWithTarget:(scpp::shared_p<scpp::webview_runtime::view>)target;
@@ -57,6 +57,15 @@
 	}
 	NSString *absolute = url.absoluteString;
 	return absolute == nil ? @"" : absolute;
+}
+
+- (NSString *)targetURLString
+{
+	if (!_target.has_value().native_value() || _target.get() == nullptr || _target->native_handle == nullptr) {
+		return @"";
+	}
+	WKWebView *webView = static_cast<WKWebView *>(_target->native_handle);
+	return [self currentURLString:webView];
 }
 
 - (void)enqueueType:(const char *)type message:(NSString *)message url:(NSString *)url
@@ -93,6 +102,18 @@
 {
 	(void)navigation;
 	[self enqueueType:"webview_load_failed" message:error.localizedDescription url:[self currentURLString:webView]];
+}
+
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)scriptMessage
+{
+	(void)userContentController;
+	NSString *name = scriptMessage.name;
+	if (name == nil || ![name isEqualToString:@"SimpleCpp"]) {
+		return;
+	}
+	id body = scriptMessage.body;
+	NSString *payload = body == nil ? @"" : [body description];
+	[self enqueueType:"webview_message" message:payload url:[self targetURLString]];
 }
 @end
 #endif
@@ -164,6 +185,27 @@ void handle_webkitgtk_title_changed(GObject *object, GParamSpec *, gpointer data
 		return;
 	}
 	enqueue_webkitgtk_event(state->target, "webview_title_changed", string_t(title), webkitgtk_current_uri(native));
+}
+
+void handle_webkitgtk_script_message(WebKitUserContentManager *, WebKitJavascriptResult *result, gpointer data) {
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr || result == nullptr) {
+		return;
+	}
+	string_t message = string_t("");
+	JSCValue *value = webkit_javascript_result_get_js_value(result);
+	if (value != nullptr) {
+		gchar *text = jsc_value_to_string(value);
+		if (text != nullptr) {
+			message = string_t(text);
+			g_free(text);
+		}
+	}
+	string_t url = string_t("");
+	if (state->target.has_value().native_value() && state->target.get() != nullptr && state->target->native_handle != nullptr) {
+		url = webkitgtk_current_uri(WEBKIT_WEB_VIEW(state->target->native_handle));
+	}
+	enqueue_webkitgtk_event(state->target, "webview_message", message, url);
 }
 
 #endif
@@ -474,8 +516,14 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 	GtkWidget *parent = static_cast<GtkWidget *>(window->native_handle);
-	GtkWidget *native = webkit_web_view_new();
+	WebKitUserContentManager *content_manager = webkit_user_content_manager_new();
+	if (content_manager == nullptr) {
+		return error_t(string_t("webview_create(): WebKitGTK failed to create a user content manager"));
+	}
+	webkit_user_content_manager_register_script_message_handler(content_manager, "SimpleCpp");
+	GtkWidget *native = webkit_web_view_new_with_user_content_manager(content_manager);
 	if (native == nullptr) {
+		g_object_unref(content_manager);
 		return error_t(string_t("webview_create(): WebKitGTK failed to create a native webview"));
 	}
 
@@ -485,6 +533,16 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	auto target = shared<view>();
 	target->window_handle = window;
 	target->native_handle = native;
+	auto *message_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(content_manager),
+		"script-message-received::SimpleCpp",
+		G_CALLBACK(handle_webkitgtk_script_message),
+		message_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
+	);
+	g_object_unref(content_manager);
 	auto *load_state = new webkitgtk_callback_state{target};
 	g_signal_connect_data(
 		G_OBJECT(native),
@@ -522,17 +580,24 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 			return error_t(string_t("webview_create(): AppKit window has no content view"));
 		}
 
-		WKWebView *native = [[WKWebView alloc] initWithFrame:[content bounds]];
+		auto target = shared<view>();
+		target->window_handle = window;
+		ScppWebViewNavigationDelegate *delegate = [[ScppWebViewNavigationDelegate alloc] initWithTarget:target];
+		WKUserContentController *contentController = [[WKUserContentController alloc] init];
+		[contentController addScriptMessageHandler:delegate name:@"SimpleCpp"];
+		WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+		configuration.userContentController = contentController;
+		WKWebView *native = [[WKWebView alloc] initWithFrame:[content bounds] configuration:configuration];
+		[configuration release];
+		[contentController release];
 		if (native == nil) {
+			[delegate release];
 			return error_t(string_t("webview_create(): WKWebView failed to create a native webview"));
 		}
 		[native setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 		[content addSubview:native];
 
-		auto target = shared<view>();
-		target->window_handle = window;
 		target->native_handle = native;
-		ScppWebViewNavigationDelegate *delegate = [[ScppWebViewNavigationDelegate alloc] initWithTarget:target];
 		native.navigationDelegate = delegate;
 		target->native_controller = delegate;
 		(void) enqueue_event(target, string_t("webview_ready"));
@@ -546,17 +611,24 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 			return error_t(string_t("webview_create(): UIKit window has no root content view"));
 		}
 
-		WKWebView *native = [[WKWebView alloc] initWithFrame:content.bounds];
+		auto target = shared<view>();
+		target->window_handle = window;
+		ScppWebViewNavigationDelegate *delegate = [[ScppWebViewNavigationDelegate alloc] initWithTarget:target];
+		WKUserContentController *contentController = [[WKUserContentController alloc] init];
+		[contentController addScriptMessageHandler:delegate name:@"SimpleCpp"];
+		WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+		configuration.userContentController = contentController;
+		WKWebView *native = [[WKWebView alloc] initWithFrame:content.bounds configuration:configuration];
+		[configuration release];
+		[contentController release];
 		if (native == nil) {
+			[delegate release];
 			return error_t(string_t("webview_create(): WKWebView failed to create a native webview"));
 		}
 		native.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 		[content addSubview:native];
 
-		auto target = shared<view>();
-		target->window_handle = window;
 		target->native_handle = native;
-		ScppWebViewNavigationDelegate *delegate = [[ScppWebViewNavigationDelegate alloc] initWithTarget:target];
 		native.navigationDelegate = delegate;
 		target->native_controller = delegate;
 		(void) enqueue_event(target, string_t("webview_ready"));
@@ -887,6 +959,7 @@ void close(const shared_p<view> &target) {
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
 			[native stopLoading];
+			[native.configuration.userContentController removeScriptMessageHandlerForName:@"SimpleCpp"];
 			native.navigationDelegate = nil;
 			[native removeFromSuperview];
 			[native release];
@@ -898,6 +971,7 @@ void close(const shared_p<view> &target) {
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
 			[native stopLoading];
+			[native.configuration.userContentController removeScriptMessageHandlerForName:@"SimpleCpp"];
 			native.navigationDelegate = nil;
 			[native removeFromSuperview];
 			[native release];
