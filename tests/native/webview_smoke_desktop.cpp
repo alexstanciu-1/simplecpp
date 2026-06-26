@@ -109,6 +109,13 @@ int main() {
 		return 1;
 	}
 
+	for (int i = 0; i < 120; ++i) {
+		(void) scpp::ui::app_poll(app);
+		while (scpp::ui::app_next_event(app).has_value().native_value()) {
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+
 	scpp::webview_runtime::close(view);
 	(void) scpp::ui::window_close(window);
 	scpp::ui::app_exit(app);
