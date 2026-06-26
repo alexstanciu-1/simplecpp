@@ -497,6 +497,7 @@ jobs:
   android-webview-render:
     name: Android WebView render smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       SCPP_CI_ARTIFACT_DIR: /tmp/scpp_ci_artifacts
     steps:
@@ -564,8 +565,10 @@ jobs:
 
       - name: Launch Android WebView smoke app
         shell: bash
+        timeout-minutes: 15
         run: |
           set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
           sdkmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -path "*/bin/sdkmanager" | sort -V | tail -n 1)"
           avdmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -path "*/bin/avdmanager" | sort -V | tail -n 1)"
           test -x "$sdkmanager_bin"
@@ -578,31 +581,43 @@ jobs:
             sudo chmod 666 /dev/kvm
           fi
 
+          emulator_log="$SCPP_CI_ARTIFACT_DIR/android-emulator-${GITHUB_RUN_ID}.log"
           "$ANDROID_HOME/emulator/emulator" \
             -avd scpp_webview_smoke \
             -no-window \
             -no-audio \
+            -no-boot-anim \
+            -no-metrics \
             -no-snapshot \
+            -no-snapshot-save \
+            -wipe-data \
             -gpu swiftshader_indirect \
-            -accel auto &
+            -accel auto \
+            > "$emulator_log" 2>&1 &
           emulator_pid="$!"
           trap 'kill "$emulator_pid" >/dev/null 2>&1 || true' EXIT
 
-          "$adb_bin" wait-for-device
+          timeout 180 "$adb_bin" wait-for-device || {
+            cat "$emulator_log"
+            exit 1
+          }
           boot_completed=""
-          for _ in $(seq 1 90); do
+          for _ in $(seq 1 120); do
             boot_completed="$("$adb_bin" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
             if [ "$boot_completed" = "1" ]; then
               break
             fi
             sleep 2
           done
-          test "$boot_completed" = "1"
+          if [ "$boot_completed" != "1" ]; then
+            "$adb_bin" devices -l || true
+            cat "$emulator_log"
+            exit 1
+          fi
 
           "$adb_bin" install -r android_webview_smoke-signed.apk
           "$adb_bin" shell am start -W -n dev.simplecpp.smoke/.ScppWebViewSmokeActivity
           sleep 8
-          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
           screenshot_path="$SCPP_CI_ARTIFACT_DIR/android-webview-ui-${GITHUB_RUN_ID}.png"
           "$adb_bin" exec-out screencap -p > "$screenshot_path"
           test -s "$screenshot_path"
@@ -614,4 +629,12 @@ jobs:
         with:
           name: android-webview-screenshot-${{ github.run_id }}
           path: /tmp/scpp_ci_artifacts/android-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+      - name: Upload Android emulator log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-log-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/android-emulator-${{ github.run_id }}.log
           if-no-files-found: warn
