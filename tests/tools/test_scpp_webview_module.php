@@ -77,6 +77,10 @@ final class ScppWebviewModuleTest
 		if (PHP_OS_FAMILY === 'Linux' && !$webviewBuild['enabled']) {
 			$this->assertSame('none', $webviewBuild['backend'], 'missing WebKitGTK should report no selected backend');
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=0', implode(' ', $webviewBuild['compile_defines']), 'missing WebKitGTK should disable the webview build spec cleanly');
+		} elseif (PHP_OS_FAMILY === 'Windows' && !$webviewBuild['enabled']) {
+			$this->assertSame('webview2', $webviewBuild['backend'], 'Windows webview build spec should report WebView2 even when the SDK has not been restored');
+			$this->assertContains('-DSCPP_HAS_WEBVIEW=0', implode(' ', $webviewBuild['compile_defines']), 'missing WebView2 SDK should disable the webview build spec cleanly');
+			$this->assertSame([], $webviewBuild['ldflags'], 'missing WebView2 SDK should not emit loader link flags');
 		} else {
 			$this->assertSame(true, $webviewBuild['enabled'], 'webview build spec should be enabled when a backend is available or not required for the platform facade');
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=1', implode(' ', $webviewBuild['compile_defines']), 'webview build spec should enable the webview facade');
@@ -90,7 +94,10 @@ final class ScppWebviewModuleTest
 			} elseif (PHP_OS_FAMILY === 'Windows') {
 				$this->assertSame('webview2', $webviewBuild['backend'], 'Windows webview build spec should report WebView2 as the selected backend');
 				$this->assertContains('-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1', implode(' ', $webviewBuild['compile_defines']), 'Windows webview build spec should select the WebView2 backend');
-				$this->assertContains('WebView2LoaderStatic.lib', implode(' ', $webviewBuild['ldflags']), 'Windows webview build spec should link the WebView2 loader');
+				$ldflagsText = implode(' ', $webviewBuild['ldflags']);
+				if (!str_contains($ldflagsText, 'WebView2Loader.dll.lib') && !str_contains($ldflagsText, 'WebView2LoaderStatic.lib')) {
+					throw new RuntimeException('Windows webview build spec should link the WebView2 loader');
+				}
 				$this->assertContains('advapi32.lib', implode(' ', $webviewBuild['ldflags']), 'Windows webview build spec should link WebView2 loader system dependencies');
 			} else {
 				$this->assertSame('facade', $webviewBuild['backend'], 'unsupported WebView render platforms should report facade-only backend metadata');
