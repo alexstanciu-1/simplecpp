@@ -182,6 +182,17 @@ jobs:
             }
           }
           '@ | Set-Content -Path (Join-Path $project "prism.json")
+          $appDir = Join-Path $project "app"
+          New-Item -ItemType Directory -Force -Path $appDir | Out-Null
+          @'
+          <!doctype html>
+          <html>
+          <body>
+            <h1>Simple C++ WebView App</h1>
+            <p>Built by scpp on Windows.</p>
+          </body>
+          </html>
+          '@ | Set-Content -Path (Join-Path $appDir "index.html")
           @'
           $err error;
 
@@ -200,7 +211,7 @@ jobs:
                 ui_window_close($window);
                 ui_app_exit($app);
               } else {
-                webview_load_html($view, "<!doctype html><html><body><h1>Simple C++ WebView</h1><p>Built by scpp on Windows.</p></body></html>");
+                webview_load_app($view, "app");
                 webview_close($view);
                 ui_window_close($window);
                 ui_app_exit($app);

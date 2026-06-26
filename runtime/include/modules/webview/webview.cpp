@@ -930,6 +930,43 @@ result<bool_t> load_app(const shared_p<view> &target, const string_t &folder) {
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(target->native_handle), target->current_url.native_value().c_str());
 	return bool_t(true);
+#elif defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW
+	@autoreleasepool {
+		NSString *index_path = [NSString stringWithUTF8String:index.string().c_str()];
+		NSString *root_path = [NSString stringWithUTF8String:root.string().c_str()];
+		NSURL *index_url = [NSURL fileURLWithPath:index_path isDirectory:NO];
+		NSURL *root_url = [NSURL fileURLWithPath:root_path isDirectory:YES];
+		if (index_url == nil || root_url == nil) {
+			return error_t(string_t("webview_load_app(): failed to create file URL"));
+		}
+		WKWebView *native = static_cast<WKWebView *>(target->native_handle);
+		[native loadFileURL:index_url allowingReadAccessToURL:root_url];
+		return bool_t(true);
+	}
+#elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
+	@autoreleasepool {
+		NSString *index_path = [NSString stringWithUTF8String:index.string().c_str()];
+		NSString *root_path = [NSString stringWithUTF8String:root.string().c_str()];
+		NSURL *index_url = [NSURL fileURLWithPath:index_path isDirectory:NO];
+		NSURL *root_url = [NSURL fileURLWithPath:root_path isDirectory:YES];
+		if (index_url == nil || root_url == nil) {
+			return error_t(string_t("webview_load_app(): failed to create file URL"));
+		}
+		WKWebView *native = static_cast<WKWebView *>(target->native_handle);
+		[native loadFileURL:index_url allowingReadAccessToURL:root_url];
+		return bool_t(true);
+	}
+#elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
+	auto *state = get_win32_state(target);
+	if (state == nullptr || state->closed) {
+		return error_t(string_t("webview_load_app(): WebView2 state is not available"));
+	}
+	state->pending_url = utf8_to_wide(target->current_url.native_value());
+	state->pending_html.clear();
+	flush_win32_pending(state);
+	return bool_t(true);
+#elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+	return android_call_webview_string_method(get_android_state(target), "webview_load_app()", "loadUrl", "(Ljava/lang/String;)V", target->current_url);
 #else
 	return error_t(string_t("webview_load_app(): no native webview backend is selected in this build"));
 #endif
