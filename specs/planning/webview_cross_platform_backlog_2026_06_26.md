@@ -23,7 +23,7 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
 | Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
-| Android | Android WebView | Not implemented | Android NDK UI-disabled compile smoke only |
+| Android | Android WebView | Native boundary in progress | Android WebView JNI compile smoke pending CI |
 
 ## Done Definition
 
@@ -99,15 +99,15 @@ Goal:
 
 Implementation tasks:
 
-- Define the JNI/activity ownership boundary for `ui_window`.
+- Define the JNI/activity ownership boundary for `ui_window`. Initial native state placeholder added with `JavaVM`, activity, and WebView object slots.
 - Decide which side creates the Android `WebView`: native request into Java/Kotlin activity code, or activity-owned view exposed to native.
-- Add first native facade backend behind `SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW`.
+- Add first native facade backend behind `SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW`. Initial compile boundary added.
 - Implement enough JNI calls for HTML load, URL load, eval, and close.
 - Keep lifecycle assumptions explicit: activity creation, pause/resume, destroy.
 
 Testing tasks:
 
-- Start with Android NDK compile smoke for the native boundary.
+- Start with Android NDK compile smoke for the native boundary. Initial runtime and helper compile smoke added.
 - Add emulator render smoke only after the Android app packaging path exists.
 
 Open decision:

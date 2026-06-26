@@ -13,6 +13,9 @@
 #import <UIKit/UIKit.h>
 #import <WebKit/WebKit.h>
 #endif
+#if defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+#include <jni.h>
+#endif
 #if defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -98,6 +101,16 @@ void flush_win32_pending(win32_webview_state *state) {
 
 #endif
 
+#if defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+
+struct android_webview_state final {
+	JavaVM *vm = nullptr;
+	jobject activity = nullptr;
+	jobject webview = nullptr;
+};
+
+#endif
+
 [[nodiscard]] result<shared_p<view>> require_view(const shared_p<view> &target, const char *function_name) {
 	if (!target.has_value().native_value() || target.get() == nullptr || target->native_handle == nullptr || target->closed.native_value()) {
 		return error_t(string_t(std::string(function_name) + " requires an open webview"));
@@ -173,6 +186,9 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		target->native_handle = native;
 		return target;
 	}
+#elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+	(void) window;
+	return error_t(string_t("webview_create(): Android WebView requires a JNI activity bridge that is not attached in this build yet"));
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 	HWND parent = static_cast<HWND>(window->native_handle);
 	auto state = std::make_shared<win32_webview_state>();

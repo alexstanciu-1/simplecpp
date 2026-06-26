@@ -234,6 +234,14 @@ jobs:
           "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
             -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
             -c tests/native/ui_android_compile.cpp -o ui_android_compile.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -c runtime/include/modules/webview/webview.cpp -o webview_android_runtime.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -c tests/native/webview_android_compile.cpp -o webview_android_compile.o
 
       - name: Build macOS UI smoke app
         if: runner.os == 'macOS'
