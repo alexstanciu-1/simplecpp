@@ -8635,8 +8635,9 @@ function scpp_compile_runtime_artifact_spec(string $repoRoot, string $projectRoo
 				scpp_compiler_command_prefix($compiler),
 				[$compiler['command']],
 				$linkFlags,
+				[$objectPath],
 				$runtimeLinkFlags,
-				[$objectPath, '-o', $linkOutputPath]
+				['-o', $linkOutputPath]
 			);
 			scpp_run_or_fail_process($linkCommand, $projectRoot, 'Failed to link runtime artifact.');
 			if ($publishLinkedArtifactAtomically) {
