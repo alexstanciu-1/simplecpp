@@ -8049,15 +8049,6 @@ function resolve_runtime_ui_build_spec(): array
 		];
 	}
 
-	if (PHP_OS_FAMILY === 'Darwin') {
-		return [
-			'enabled' => true,
-			'cflags' => ['-x', 'objective-c++'],
-			'ldflags' => ['-framework', 'WebKit'],
-			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1'],
-		];
-	}
-
 	return [
 		'enabled' => true,
 		'cflags' => [],
@@ -8099,6 +8090,15 @@ function resolve_runtime_webview_build_spec(): array
 			'cflags' => [],
 			'ldflags' => [],
 			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
+		];
+	}
+
+	if (PHP_OS_FAMILY === 'Darwin') {
+		return [
+			'enabled' => true,
+			'cflags' => ['-x', 'objective-c++'],
+			'ldflags' => ['-framework', 'WebKit'],
+			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1'],
 		];
 	}
 
