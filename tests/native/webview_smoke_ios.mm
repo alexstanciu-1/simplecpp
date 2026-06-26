@@ -14,6 +14,8 @@
 	scpp::shared_p<scpp::ui::app> _app;
 	scpp::shared_p<scpp::ui::window> _window;
 	scpp::shared_p<scpp::webview> _view;
+	bool _sawReady;
+	bool _sawNavigationFinished;
 	bool _replied;
 }
 
@@ -49,6 +51,8 @@
 		std::exit(1);
 	}
 	_view = viewResult.value();
+	_sawReady = false;
+	_sawNavigationFinished = false;
 	_replied = false;
 
 	auto htmlResult = scpp::webview_runtime::load_html(
@@ -77,12 +81,19 @@
 	if (!_app.has_value().native_value() || !_view.has_value().native_value()) {
 		return;
 	}
-	if (scpp::ui::app_poll(_app).native_value()) {
-		auto event = scpp::ui::app_next_event(_app);
-		if (scpp::ui::event_type(event).native_value() == "webview_message") {
-			const auto id = scpp::webview_runtime::message_id(event);
-			const auto command = scpp::webview_runtime::message_command(event);
-			if (!_replied && command.native_value() == "bridge.ping") {
+		if (scpp::ui::app_poll(_app).native_value()) {
+			auto event = scpp::ui::app_next_event(_app);
+			const auto type = scpp::ui::event_type(event).native_value();
+			if (type == "webview_ready") {
+				_sawReady = true;
+			}
+			if (type == "webview_navigation_finished") {
+				_sawNavigationFinished = true;
+			}
+			if (type == "webview_message") {
+				const auto id = scpp::webview_runtime::message_id(event);
+				const auto command = scpp::webview_runtime::message_command(event);
+				if (!_replied && command.native_value() == "bridge.ping") {
 				auto replyResult = scpp::webview_runtime::reply_ok(
 					_view,
 					id,
@@ -97,9 +108,35 @@
 	}
 }
 
-- (void)finishSmoke:(NSTimer *)timer
-{
-	(void)timer;
+	- (void)finishSmoke:(NSTimer *)timer
+	{
+		(void)timer;
+		while (_app.has_value().native_value() && !_app->pending_events.empty()) {
+			auto event = _app->pending_events.front();
+			_app->pending_events.pop_front();
+		if (!event.has_value().native_value()) {
+			continue;
+			}
+			const auto type = event->type.native_value();
+			if (type == "webview_ready") {
+				_sawReady = true;
+			}
+			if (type == "webview_navigation_finished") {
+				_sawNavigationFinished = true;
+			}
+		}
+		if (!_sawReady) {
+			std::cerr << "Did not receive webview_ready\n";
+			std::exit(1);
+		}
+		if (!_sawNavigationFinished) {
+			std::cerr << "Did not receive webview_navigation_finished\n";
+			std::exit(1);
+		}
+		if (!_replied) {
+			std::cerr << "Did not complete webview bridge reply\n";
+			std::exit(1);
+		}
 	scpp::webview_runtime::close(_view);
 	(void)scpp::ui::window_close(_window);
 	scpp::ui::app_exit(_app);

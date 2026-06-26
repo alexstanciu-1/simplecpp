@@ -97,6 +97,7 @@ jobs:
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -c runtime/include/modules/webview/webview.cpp -o webview_disabled.o
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -c tests/native/webview_compile.cpp -o webview_compile_disabled.o
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -DSCPP_HAS_WEBVIEW=1 -c runtime/include/modules/webview/webview.cpp -o webview_enabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -DSCPP_HAS_WEBVIEW=1 -c tests/native/webview_compile.cpp -o webview_compile_enabled.o
 
       - name: Build Windows Win32 UI smoke app
         if: runner.os == 'Windows'
@@ -136,6 +137,10 @@ jobs:
           }
           if (-not (Test-Path $webView2Lib)) {
             throw "WebView2 loader library was not found under $webView2Root."
+          }
+          $webView2Dll = Join-Path $webView2Root "build\native\x64\WebView2Loader.dll"
+          if (Test-Path $webView2Dll) {
+            Copy-Item $webView2Dll . -Force
           }
 
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -237,22 +242,36 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path $env:SCPP_CI_ARTIFACT_DIR | Out-Null
+          $screenshotPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.png"
+          $stdoutPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.out.txt"
+          $stderrPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.err.txt"
+          $process = Start-Process -FilePath ".\webview_smoke_windows.exe" -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
+          Start-Sleep -Seconds 4
+
           Add-Type -AssemblyName System.Drawing
           Add-Type -AssemblyName System.Windows.Forms
-          $artifactDir = Join-Path $env:RUNNER_TEMP "scpp_ci_artifacts"
-          New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
-          $screenshotPath = Join-Path $artifactDir "windows-webview-ui-${env:GITHUB_RUN_ID}.png"
-
-          $process = Start-Process -FilePath ".\webview_smoke_windows.exe" -PassThru
-          Start-Sleep -Seconds 3
           $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
           $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-          $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
-          $bitmap.Save($screenshotPath, [System.Drawing.Imaging.ImageFormat]::Png)
-          $graphics.Dispose()
-          $bitmap.Dispose()
-          Wait-Process -Id $process.Id
+          try {
+            $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+            $bitmap.Save($screenshotPath, [System.Drawing.Imaging.ImageFormat]::Png)
+          } finally {
+            $graphics.Dispose()
+            $bitmap.Dispose()
+          }
+
+          $exited = $process.WaitForExit(20000)
+          if (-not $exited) {
+            Stop-Process -Id $process.Id -Force
+            throw "Windows WebView2 smoke app did not exit in time."
+          }
+          if ($process.ExitCode -ne 0) {
+            if (Test-Path $stdoutPath) { Get-Content $stdoutPath }
+            if (Test-Path $stderrPath) { Get-Content $stderrPath }
+            throw "Windows WebView2 smoke app failed with exit code $($process.ExitCode)."
+          }
           python tests/tools/check_ui_screenshot.py "$screenshotPath" --min-width 640 --min-height 420
 
       - name: Upload Windows WebView2 executable
@@ -270,7 +289,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-webview-screenshot-${{ github.run_id }}
-          path: ${{ runner.temp }}\scpp_ci_artifacts\windows-webview-ui-${{ github.run_id }}.png
+          path: |
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.png
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.out.txt
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.err.txt
           if-no-files-found: warn
 
       - name: Build Linux GTK UI smoke app
@@ -333,10 +355,22 @@ jobs:
             set -euo pipefail
             GDK_BACKEND=x11 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 ./webview_smoke_gtk &
             pid=$!
-            sleep 8
-            import -window root "'"$screenshot_path"'"
-            convert "'"$screenshot_path"'" PNG24:"'"$screenshot_path"'"
+            captured=0
+            for attempt in 1 2 3 4 5 6; do
+              sleep 2
+              import -window root "'"$screenshot_path"'"
+              convert "'"$screenshot_path"'" PNG24:"'"$screenshot_path"'"
+              if python3 tests/tools/check_ui_screenshot.py "'"$screenshot_path"'" --min-width 640 --min-height 420; then
+                captured=1
+                break
+              fi
+              if ! kill -0 "$pid" >/dev/null 2>&1; then
+                wait "$pid"
+                exit 1
+              fi
+            done
             wait "$pid"
+            test "$captured" = "1"
           '
           python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
 
@@ -377,6 +411,97 @@ jobs:
             -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
             -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
             -c tests/native/webview_android_compile.cpp -o webview_android_compile.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -shared -fPIC \
+            tests/native/android_webview_smoke/simplecpp_webview_smoke.cpp runtime/include/modules/webview/webview.cpp \
+            -o libsimplecpp_webview_smoke.so
+
+      - name: Android WebView activity compile smoke
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-35/android.jar"
+          if [ ! -f "$android_jar" ]; then
+            android_jar="$(find "$ANDROID_HOME/platforms" -name android.jar | sort -V | tail -n 1)"
+          fi
+          test -f "$android_jar"
+          mkdir -p android_webview_smoke_classes
+          javac \
+            -source 17 -target 17 \
+            -classpath "$android_jar" \
+            -d android_webview_smoke_classes \
+            tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
+
+      - name: Android WebView APK package smoke
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-35/android.jar"
+          if [ ! -f "$android_jar" ]; then
+            android_jar="$(find "$ANDROID_HOME/platforms" -name android.jar | sort -V | tail -n 1)"
+          fi
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          test -f "$android_jar"
+          test -n "$build_tools"
+
+          cxx_shared="$(find "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android" -name libc++_shared.so | sort -V | tail -n 1)"
+          test -f "$cxx_shared"
+
+          mkdir -p android_webview_smoke_classes android_webview_smoke_dex android_webview_smoke_package/lib/arm64-v8a
+          javac \
+            -source 17 -target 17 \
+            -classpath "$android_jar" \
+            -d android_webview_smoke_classes \
+            tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
+          "$build_tools/d8" \
+            --min-api 24 \
+            --output android_webview_smoke_dex \
+            $(find android_webview_smoke_classes -name '*.class' | sort)
+          "$build_tools/aapt2" compile \
+            --dir tests/native/android_webview_smoke/res \
+            -o android_webview_smoke_res.zip
+          "$build_tools/aapt2" link \
+            -I "$android_jar" \
+            --manifest tests/native/android_webview_smoke/AndroidManifest.xml \
+            -o android_webview_smoke-unsigned.apk \
+            android_webview_smoke_res.zip
+          cp android_webview_smoke_dex/classes.dex android_webview_smoke_package/classes.dex
+          cp libsimplecpp_webview_smoke.so android_webview_smoke_package/lib/arm64-v8a/libsimplecpp_webview_smoke.so
+          cp "$cxx_shared" android_webview_smoke_package/lib/arm64-v8a/libc++_shared.so
+          (cd android_webview_smoke_package && zip -qr ../android_webview_smoke-unsigned.apk classes.dex lib)
+          "$build_tools/zipalign" -f 4 android_webview_smoke-unsigned.apk android_webview_smoke-aligned.apk
+          keytool \
+            -genkeypair \
+            -keystore android_webview_smoke-debug.keystore \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=SimpleCpp"
+          "$build_tools/apksigner" sign \
+            --ks android_webview_smoke-debug.keystore \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out android_webview_smoke-signed.apk \
+            android_webview_smoke-aligned.apk
+          "$build_tools/apksigner" verify android_webview_smoke-signed.apk
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          cp android_webview_smoke-signed.apk "$SCPP_CI_ARTIFACT_DIR/android-webview-smoke-${GITHUB_RUN_ID}.apk"
+          test -s "$SCPP_CI_ARTIFACT_DIR/android-webview-smoke-${GITHUB_RUN_ID}.apk"
+
+      - name: Upload Android WebView smoke APK
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-webview-smoke-apk-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/android-webview-smoke-${{ github.run_id }}.apk
+          if-no-files-found: warn
 
       - name: Build macOS UI smoke app
         if: runner.os == 'macOS'
@@ -540,4 +665,177 @@ jobs:
         with:
           name: ios-webview-screenshot-${{ github.run_id }}
           path: /tmp/scpp_ci_artifacts/ios-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+  android-webview-render:
+    name: Android WebView render smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SCPP_CI_ARTIFACT_DIR: /tmp/scpp_ci_artifacts
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Android WebView emulator APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-35/android.jar"
+          if [ ! -f "$android_jar" ]; then
+            android_jar="$(find "$ANDROID_HOME/platforms" -name android.jar | sort -V | tail -n 1)"
+          fi
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          test -f "$android_jar"
+          test -n "$build_tools"
+
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -shared -fPIC \
+            tests/native/android_webview_smoke/simplecpp_webview_smoke.cpp runtime/include/modules/webview/webview.cpp \
+            -o libsimplecpp_webview_smoke.so
+
+          cxx_shared="$(find "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android" -name libc++_shared.so | sort -V | tail -n 1)"
+          test -f "$cxx_shared"
+
+          mkdir -p android_webview_smoke_classes android_webview_smoke_dex android_webview_smoke_package/lib/x86_64
+          javac \
+            -source 17 -target 17 \
+            -classpath "$android_jar" \
+            -d android_webview_smoke_classes \
+            tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
+          "$build_tools/d8" \
+            --min-api 24 \
+            --output android_webview_smoke_dex \
+            $(find android_webview_smoke_classes -name '*.class' | sort)
+          "$build_tools/aapt2" compile \
+            --dir tests/native/android_webview_smoke/res \
+            -o android_webview_smoke_res.zip
+          "$build_tools/aapt2" link \
+            -I "$android_jar" \
+            --manifest tests/native/android_webview_smoke/AndroidManifest.xml \
+            -o android_webview_smoke-unsigned.apk \
+            android_webview_smoke_res.zip
+          cp android_webview_smoke_dex/classes.dex android_webview_smoke_package/classes.dex
+          cp libsimplecpp_webview_smoke.so android_webview_smoke_package/lib/x86_64/libsimplecpp_webview_smoke.so
+          cp "$cxx_shared" android_webview_smoke_package/lib/x86_64/libc++_shared.so
+          (cd android_webview_smoke_package && zip -qr ../android_webview_smoke-unsigned.apk classes.dex lib)
+          "$build_tools/zipalign" -f 4 android_webview_smoke-unsigned.apk android_webview_smoke-aligned.apk
+          keytool \
+            -genkeypair \
+            -keystore android_webview_smoke-debug.keystore \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=SimpleCpp"
+          "$build_tools/apksigner" sign \
+            --ks android_webview_smoke-debug.keystore \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out android_webview_smoke-signed.apk \
+            android_webview_smoke-aligned.apk
+          "$build_tools/apksigner" verify android_webview_smoke-signed.apk
+
+      - name: Launch Android WebView smoke app
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          sdkmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -path "*/bin/sdkmanager" | sort -V | tail -n 1)"
+          avdmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -path "*/bin/avdmanager" | sort -V | tail -n 1)"
+          test -x "$sdkmanager_bin"
+          test -x "$avdmanager_bin"
+          "$sdkmanager_bin" "platform-tools" "emulator" "system-images;android-35;google_apis;x86_64"
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo "no" | "$avdmanager_bin" create avd --force --name scpp_webview_smoke --package "system-images;android-35;google_apis;x86_64" --device pixel_2
+          adb_bin="$ANDROID_HOME/platform-tools/adb"
+          test -x "$adb_bin"
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+          fi
+
+          emulator_log="$SCPP_CI_ARTIFACT_DIR/android-emulator-${GITHUB_RUN_ID}.log"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          "$ANDROID_HOME/emulator/emulator" \
+            -avd scpp_webview_smoke \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-metrics \
+            -no-snapshot \
+            -no-snapshot-save \
+            -wipe-data \
+            -gpu swiftshader_indirect \
+            -accel auto \
+            > "$emulator_log" 2>&1 &
+          emulator_pid="$!"
+          trap 'kill "$emulator_pid" >/dev/null 2>&1 || true' EXIT
+
+          timeout 180 "$adb_bin" wait-for-device || {
+            cat "$emulator_log"
+            exit 1
+          }
+          boot_completed=""
+          for _ in $(seq 1 120); do
+            boot_completed="$("$adb_bin" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            if [ "$boot_completed" = "1" ]; then
+              break
+            fi
+            sleep 2
+          done
+          if [ "$boot_completed" != "1" ]; then
+            "$adb_bin" devices -l || true
+            cat "$emulator_log"
+            exit 1
+          fi
+
+          "$adb_bin" install -r android_webview_smoke-signed.apk
+          "$adb_bin" logcat -c
+          "$adb_bin" shell am start -W -n dev.simplecpp.smoke/.ScppWebViewSmokeActivity
+          sleep 8
+          "$adb_bin" shell pidof dev.simplecpp.smoke >/dev/null || {
+            "$adb_bin" logcat -d > "$SCPP_CI_ARTIFACT_DIR/android-logcat-${GITHUB_RUN_ID}.log" || true
+            exit 1
+          }
+          "$adb_bin" shell dumpsys window > "$SCPP_CI_ARTIFACT_DIR/android-window-${GITHUB_RUN_ID}.txt" || true
+          grep -q "dev.simplecpp.smoke" "$SCPP_CI_ARTIFACT_DIR/android-window-${GITHUB_RUN_ID}.txt" || {
+            "$adb_bin" logcat -d > "$SCPP_CI_ARTIFACT_DIR/android-logcat-${GITHUB_RUN_ID}.log" || true
+            cat "$SCPP_CI_ARTIFACT_DIR/android-window-${GITHUB_RUN_ID}.txt" || true
+            exit 1
+          }
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/android-webview-ui-${GITHUB_RUN_ID}.png"
+          "$adb_bin" exec-out screencap -p > "$screenshot_path"
+          test -s "$screenshot_path"
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 300 --min-height 600
+
+      - name: Upload Android WebView screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-webview-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/android-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+      - name: Upload Android emulator log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-log-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/android-emulator-${{ github.run_id }}.log
+          if-no-files-found: warn
+
+      - name: Upload Android app diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app-diagnostics-${{ github.run_id }}
+          path: |
+            /tmp/scpp_ci_artifacts/android-logcat-${{ github.run_id }}.log
+            /tmp/scpp_ci_artifacts/android-window-${{ github.run_id }}.txt
           if-no-files-found: warn

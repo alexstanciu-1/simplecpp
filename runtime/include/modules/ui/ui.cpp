@@ -13,7 +13,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
-#include <ole2.h>
+#include <objbase.h>
 #endif
 #if defined(SCPP_UI_BACKEND_APPKIT) && SCPP_UI_BACKEND_APPKIT
 #import <AppKit/AppKit.h>
@@ -61,6 +61,45 @@ void appkit_window_will_close(void *data);
 #endif
 
 namespace scpp::ui {
+
+string_t event_type(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return string_t("");
+	}
+	return target->type;
+}
+
+shared_p<window> event_window(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return null;
+	}
+	return target->window_handle;
+}
+
+shared_p<webview_runtime::view> event_webview(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return null;
+	}
+	return target->webview_handle;
+}
+
+string_t event_message(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return string_t("");
+	}
+	return target->message;
+}
+
+string_t event_text(const shared_p<event> &target) {
+	return event_message(target);
+}
+
+string_t event_url(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return string_t("");
+	}
+	return target->url;
+}
 
 #if defined(SCPP_UI_BACKEND_GTK) && SCPP_UI_BACKEND_GTK
 
@@ -231,10 +270,6 @@ struct win32_callback_state final {
 	shared_p<window> target;
 };
 
-struct win32_app_state final {
-	bool ole_initialized = false;
-};
-
 LRESULT CALLBACK window_proc(HWND native, UINT message, WPARAM wparam, LPARAM lparam) {
 	if (message == WM_NCCREATE) {
 		auto *create = reinterpret_cast<CREATESTRUCTA *>(lparam);
@@ -301,21 +336,25 @@ LRESULT CALLBACK window_proc(HWND native, UINT message, WPARAM wparam, LPARAM lp
 } // namespace
 
 result<shared_p<app>> app_create() {
+	HRESULT com_result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	if (FAILED(com_result)) {
+		return error_t(string_t("ui_app_create(): Win32 failed to initialize an STA COM apartment"));
+	}
+
 	HINSTANCE instance = GetModuleHandleA(nullptr);
 	if (instance == nullptr) {
+		CoUninitialize();
 		return error_t(string_t("ui_app_create(): Win32 failed to resolve the current module handle"));
 	}
 	if (!register_window_class(instance)) {
+		CoUninitialize();
 		return error_t(string_t("ui_app_create(): Win32 failed to register the window class"));
 	}
 
 	auto owner = shared<app>();
 	owner->backend = string_t("win32");
 	owner->native_handle = instance;
-	auto *state = new win32_app_state();
-	const HRESULT ole_result = OleInitialize(nullptr);
-	state->ole_initialized = SUCCEEDED(ole_result);
-	owner->native_state = state;
+	owner->native_state = reinterpret_cast<void *>(1);
 	return owner;
 }
 
@@ -415,15 +454,11 @@ shared_p<event> app_next_event(const shared_p<app> &owner) {
 
 void app_exit(const shared_p<app> &owner) {
 	if (owner.has_value().native_value() && owner.get() != nullptr) {
-		auto *state = static_cast<win32_app_state *>(owner->native_state);
-		if (state != nullptr) {
-			if (state->ole_initialized) {
-				OleUninitialize();
-			}
-			delete state;
+		owner->exit_requested = bool_t(true);
+		if (owner->native_state != nullptr) {
+			CoUninitialize();
 			owner->native_state = nullptr;
 		}
-		owner->exit_requested = bool_t(true);
 	}
 }
 

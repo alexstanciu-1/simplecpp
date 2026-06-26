@@ -58,6 +58,7 @@ final class ScppWebviewModuleTest
 		$this->assertSame(true, $catalog->hasFunction('webview_message_id'), 'STAN catalog should recognize webview_message_id');
 		$this->assertSame(true, $catalog->hasFunction('webview_message_command'), 'STAN catalog should recognize webview_message_command');
 		$this->assertSame(true, $catalog->hasFunction('webview_message_payload_json'), 'STAN catalog should recognize webview_message_payload_json');
+		$this->assertSame('webview', $catalog->requiredModule('ui_event_webview'), 'STAN catalog should require the webview module for the WebView event handle accessor');
 
 		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
@@ -70,19 +71,26 @@ final class ScppWebviewModuleTest
 		$this->assertContains('function webview_message_id(ui_event $event): int', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_message_id');
 		$this->assertContains('function webview_message_command(ui_event $event): string', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_message_command');
 		$this->assertContains('function webview_message_payload_json(ui_event $event): string', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_message_payload_json');
+		$this->assertContains('function ui_event_webview(ui_event $event): webview', $strictRuntimeSymbols, 'strict shallow runtime should expose typed WebView event access');
+		$this->assertContains('function ui_event_message(ui_event $event): string', $strictRuntimeSymbols, 'strict shallow runtime should expose WebView message event payload access');
+		$this->assertContains('public webview $webview_handle;', $strictRuntimeSymbols, 'strict shallow runtime should expose the WebView event handle payload');
+		$this->assertContains('public string $message;', $strictRuntimeSymbols, 'strict shallow runtime should expose the event message payload');
 		$this->assertContains('class webview', $strictRuntimeSymbols, 'strict shallow runtime should expose the webview handle shape');
 
 		$webviewBuild = resolve_runtime_webview_build_spec();
 		$this->assertSame($webviewBuild['backend'], $explanation['runtime_modules']['webview']['backend'] ?? null, 'build explanation should report the selected webview backend');
+		$this->assertSame(is_array($webviewBuild['diagnostics'] ?? null), is_array($explanation['runtime_modules']['webview']['diagnostics'] ?? null), 'build explanation should carry webview diagnostics metadata');
 		if (PHP_OS_FAMILY === 'Linux' && !$webviewBuild['enabled']) {
 			$this->assertSame('none', $webviewBuild['backend'], 'missing WebKitGTK should report no selected backend');
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=0', implode(' ', $webviewBuild['compile_defines']), 'missing WebKitGTK should disable the webview build spec cleanly');
+			$this->assertSame(true, count($webviewBuild['diagnostics']) > 0, 'missing WebKitGTK should include an actionable diagnostic');
 		} elseif (PHP_OS_FAMILY === 'Windows' && !$webviewBuild['enabled']) {
 			$this->assertSame('webview2', $webviewBuild['backend'], 'Windows webview build spec should report WebView2 even when the SDK has not been restored');
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=0', implode(' ', $webviewBuild['compile_defines']), 'missing WebView2 SDK should disable the webview build spec cleanly');
 			$this->assertSame([], $webviewBuild['ldflags'], 'missing WebView2 SDK should not emit loader link flags');
 		} else {
 			$this->assertSame(true, $webviewBuild['enabled'], 'webview build spec should be enabled when a backend is available or not required for the platform facade');
+			$this->assertSame([], $webviewBuild['diagnostics'], 'enabled webview build spec should not report dependency diagnostics');
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=1', implode(' ', $webviewBuild['compile_defines']), 'webview build spec should enable the webview facade');
 			if (PHP_OS_FAMILY === 'Linux') {
 				$this->assertSame('webkitgtk', $webviewBuild['backend'], 'Linux webview build spec should report WebKitGTK as the selected backend');
@@ -105,6 +113,63 @@ final class ScppWebviewModuleTest
 				$this->assertSame('facade', $webviewBuild['backend'], 'unsupported WebView render platforms should report facade-only backend metadata');
 			}
 		}
+
+		$missingPkgConfig = resolve_runtime_webview_build_spec(
+			'Linux',
+			static fn (array $commands): ?string => null,
+			static fn (string $command): string => ''
+		);
+		$this->assertSame(false, $missingPkgConfig['enabled'], 'Linux webview build spec should disable cleanly without pkg-config');
+		$this->assertContains('pkg-config was not found', implode("\n", $missingPkgConfig['diagnostics']), 'missing pkg-config diagnostic should name the missing tool');
+
+		$missingWebKit = resolve_runtime_webview_build_spec(
+			'Linux',
+			static fn (array $commands): ?string => '/usr/bin/pkg-config',
+			static fn (string $command): string => ''
+		);
+		$this->assertSame(false, $missingWebKit['enabled'], 'Linux webview build spec should disable cleanly without WebKitGTK');
+		$this->assertContains('WebKitGTK pkg-config package', implode("\n", $missingWebKit['diagnostics']), 'missing WebKitGTK diagnostic should name the missing pkg-config package');
+
+		$simulatedWebKit = resolve_runtime_webview_build_spec(
+			'Linux',
+			static fn (array $commands): ?string => '/usr/bin/pkg-config',
+			static function (string $command): string {
+				if (str_contains($command, '--libs')) {
+					return '-lwebkit2gtk-4.1';
+				}
+				if (str_contains($command, '--cflags')) {
+					return '-I/usr/include/webkitgtk-4.1';
+				}
+				return '';
+			}
+		);
+		$this->assertSame(true, $simulatedWebKit['enabled'], 'Linux webview build spec should enable when WebKitGTK pkg-config output is available');
+		$this->assertSame([], $simulatedWebKit['diagnostics'], 'available WebKitGTK should not emit dependency diagnostics');
+
+		$diagnosticLines = render_runtime_module_explanation_lines([
+			'modules' => [['name' => 'webview', 'implicit_reason' => null]],
+			'webview' => [
+				'backend' => 'none',
+				'enabled' => false,
+				'diagnostics' => $missingWebKit['diagnostics'],
+			],
+		]);
+		$this->assertContains('WebView diagnostic: WebView disabled on Linux:', implode("\n", $diagnosticLines), 'build explanation should render WebView dependency diagnostics');
+
+		$sampleRoot = resolve_repo_root() . '/docs/examples/php/strict/project_samples/strict_webview_events';
+		$sampleSource = $this->read($sampleRoot . '/main.phs');
+		$sampleConfig = json_decode($this->read($sampleRoot . '/prism.json'), true);
+		if (!is_array($sampleConfig)) {
+			throw new RuntimeException('strict_webview_events prism.json should decode');
+		}
+		$sampleModules = $sampleConfig['runtime']['modules'] ?? [];
+		$this->assertSame(true, is_array($sampleModules) && in_array('webview', $sampleModules, true), 'strict WebView event sample should opt into the webview runtime module');
+		$this->assertContains('take($app, $err, ui_app_create())', $sampleSource, 'strict WebView event sample should use take at the ui_app creation boundary');
+		$this->assertContains('take($view, $err, webview_create($window))', $sampleSource, 'strict WebView event sample should use take at the webview creation boundary');
+		$this->assertContains('ui_event_type($event)', $sampleSource, 'strict WebView event sample should branch on ui_event_type');
+		$this->assertContains('ui_event_message($event)', $sampleSource, 'strict WebView event sample should read webview message payloads');
+		$this->assertContains('ui_event_url($event)', $sampleSource, 'strict WebView event sample should read webview URL payloads');
+		$this->assertContains('webview_message', $sampleSource, 'strict WebView event sample should demonstrate the message event');
 
 		echo "PASS: scpp webview module\n";
 		return 0;

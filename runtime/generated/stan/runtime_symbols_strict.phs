@@ -130,8 +130,11 @@ function ui_app_create(): result<ui_app> {}
 function ui_app_exit(ui_app $app): void {}
 function ui_app_next_event(ui_app $app): ui_event {}
 function ui_app_poll(ui_app $app): bool {}
+function ui_event_message(ui_event $event): string {}
 function ui_event_text(ui_event $event): string {}
 function ui_event_type(ui_event $event): string {}
+function ui_event_url(ui_event $event): string {}
+function ui_event_webview(ui_event $event): webview {}
 function ui_event_window(ui_event $event): ui_window {}
 function ui_window_close(ui_window $window): result<bool> {}
 function ui_window_create(ui_app $app, string $title, int $width, int $height): result<ui_window> {}
@@ -198,6 +201,9 @@ class ui_event
 {
 	public string $type;
 	public ui_window $window_handle;
+	public webview $webview_handle;
+	public string $message;
+	public string $url;
 }
 
 class webview

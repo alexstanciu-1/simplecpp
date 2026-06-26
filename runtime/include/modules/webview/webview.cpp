@@ -4,9 +4,6 @@
 
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 #include <webkit2/webkit2.h>
-#if !WEBKIT_CHECK_VERSION(2, 22, 0)
-#include <JavaScriptCore/JavaScript.h>
-#endif
 #endif
 #if defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW
 #import <AppKit/AppKit.h>
@@ -55,6 +52,10 @@ constexpr const char *bridge_script = R"JS(
 
 	function post(message) {
 		var text = JSON.stringify(message);
+		if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.SimpleCpp) {
+			window.webkit.messageHandlers.SimpleCpp.postMessage(text);
+			return;
+		}
 		if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.scpp) {
 			window.webkit.messageHandlers.scpp.postMessage(text);
 			return;
@@ -127,14 +128,13 @@ constexpr const char *bridge_script = R"JS(
 } // namespace scpp::webview_runtime
 
 #if (defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW) || (defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW)
-@interface ScppWKBridgeHandler : NSObject<WKScriptMessageHandler>
+@interface ScppWebViewNavigationDelegate : NSObject<WKNavigationDelegate, WKScriptMessageHandler> {
+	scpp::shared_p<scpp::webview_runtime::view> _target;
+}
 - (instancetype)initWithTarget:(scpp::shared_p<scpp::webview_runtime::view>)target;
 @end
 
-@implementation ScppWKBridgeHandler {
-	scpp::shared_p<scpp::webview_runtime::view> _target;
-}
-
+@implementation ScppWebViewNavigationDelegate
 - (instancetype)initWithTarget:(scpp::shared_p<scpp::webview_runtime::view>)target
 {
 	self = [super init];
@@ -144,30 +144,71 @@ constexpr const char *bridge_script = R"JS(
 	return self;
 }
 
-- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
+- (NSString *)currentURLString:(WKWebView *)webView
+{
+	NSURL *url = webView.URL;
+	if (url == nil) {
+		return @"";
+	}
+	NSString *absolute = url.absoluteString;
+	return absolute == nil ? @"" : absolute;
+}
+
+- (NSString *)targetURLString
+{
+	if (!_target.has_value().native_value() || _target.get() == nullptr || _target->native_handle == nullptr) {
+		return @"";
+	}
+	WKWebView *webView = static_cast<WKWebView *>(_target->native_handle);
+	return [self currentURLString:webView];
+}
+
+- (void)enqueueType:(const char *)type message:(NSString *)message url:(NSString *)url
+{
+	const char *messageText = message == nil ? "" : message.UTF8String;
+	const char *urlText = url == nil ? "" : url.UTF8String;
+	(void) scpp::webview_runtime::enqueue_event(
+		_target,
+		scpp::string_t(type),
+		scpp::string_t(messageText == nullptr ? "" : messageText),
+		scpp::string_t(urlText == nullptr ? "" : urlText)
+	);
+}
+
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation
+{
+	(void)navigation;
+	[self enqueueType:"webview_navigation_started" message:@"" url:[self currentURLString:webView]];
+}
+
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
+{
+	(void)navigation;
+	[self enqueueType:"webview_navigation_finished" message:@"" url:[self currentURLString:webView]];
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+	(void)navigation;
+	[self enqueueType:"webview_load_failed" message:error.localizedDescription url:[self currentURLString:webView]];
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+	(void)navigation;
+	[self enqueueType:"webview_load_failed" message:error.localizedDescription url:[self currentURLString:webView]];
+}
+
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)scriptMessage
 {
 	(void)userContentController;
-	if (!_target.has_value().native_value() || _target.get() == nullptr) {
+	NSString *name = scriptMessage.name;
+	if (name == nil || ![name isEqualToString:@"SimpleCpp"]) {
 		return;
 	}
-
-	std::string text;
-	if ([message.body isKindOfClass:[NSString class]]) {
-		text = [(NSString *)message.body UTF8String];
-	} else {
-		text = [[message.body description] UTF8String];
-	}
-
-	auto window = _target->window_handle;
-	if (!window.has_value().native_value() || window.get() == nullptr || !window->app_handle.has_value().native_value()) {
-		return;
-	}
-
-	auto event_value = scpp::shared<scpp::ui::event>();
-	event_value->type = scpp::string_t("webview_message");
-	event_value->window_handle = window;
-	event_value->text = scpp::string_t(text);
-	window->app_handle->pending_events.push_back(event_value);
+	id body = scriptMessage.body;
+	NSString *payload = body == nil ? @"" : [body description];
+	[self enqueueType:"webview_message" message:payload url:[self targetURLString]];
 }
 @end
 #endif
@@ -175,125 +216,6 @@ constexpr const char *bridge_script = R"JS(
 namespace scpp::webview_runtime {
 
 namespace {
-
-#if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
-struct bridge_state final {
-	shared_p<view> target;
-};
-
-void handle_bridge_message(WebKitUserContentManager *, WebKitJavascriptResult *message, gpointer data) {
-	auto *state = static_cast<bridge_state *>(data);
-	if (state == nullptr || !state->target.has_value().native_value() || state->target.get() == nullptr) {
-		return;
-	}
-
-	std::string text;
-#if WEBKIT_CHECK_VERSION(2, 22, 0)
-	JSCValue *value = webkit_javascript_result_get_js_value(message);
-	if (value != nullptr) {
-		char *raw = jsc_value_to_string(value);
-		if (raw != nullptr) {
-			text = raw;
-			g_free(raw);
-		}
-	}
-#else
-	JSGlobalContextRef context = webkit_javascript_result_get_global_context(message);
-	JSValueRef value = webkit_javascript_result_get_value(message);
-	JSStringRef js_text = JSValueToStringCopy(context, value, nullptr);
-	if (js_text != nullptr) {
-		const std::size_t max_size = JSStringGetMaximumUTF8CStringSize(js_text);
-		std::string buffer(max_size, '\0');
-		const std::size_t actual_size = JSStringGetUTF8CString(js_text, buffer.data(), max_size);
-		if (actual_size > 0) {
-			buffer.resize(actual_size - 1);
-			text = buffer;
-		}
-		JSStringRelease(js_text);
-	}
-#endif
-
-	auto window = state->target->window_handle;
-	if (!window.has_value().native_value() || window.get() == nullptr || !window->app_handle.has_value().native_value()) {
-		return;
-	}
-
-	auto event_value = shared<ui::event>();
-	event_value->type = string_t("webview_message");
-	event_value->window_handle = window;
-	event_value->text = string_t(text);
-	window->app_handle->pending_events.push_back(event_value);
-}
-
-[[nodiscard]] bool has_prefix_path(const std::filesystem::path &path, const std::filesystem::path &root) {
-	auto path_it = path.begin();
-	auto root_it = root.begin();
-	for (; root_it != root.end(); ++root_it, ++path_it) {
-		if (path_it == path.end() || *path_it != *root_it) {
-			return false;
-		}
-	}
-	return true;
-}
-
-[[nodiscard]] bool navigation_allowed(const shared_p<view> &target, const char *uri) {
-	if (uri == nullptr || !target.has_value().native_value() || target.get() == nullptr) {
-		return false;
-	}
-	if (target->app_root_path.native_value().empty()) {
-		return true;
-	}
-
-	const std::string value(uri);
-	if (value == "about:blank" || value.starts_with("data:") || value.starts_with("blob:")) {
-		return true;
-	}
-	if (!value.starts_with("file:")) {
-		return false;
-	}
-
-	GError *error = nullptr;
-	char *filename = g_filename_from_uri(uri, nullptr, &error);
-	if (error != nullptr) {
-		g_error_free(error);
-	}
-	if (filename == nullptr) {
-		return false;
-	}
-
-	bool allowed = false;
-	try {
-		const auto path = std::filesystem::weakly_canonical(std::filesystem::path(filename));
-		const auto root = std::filesystem::weakly_canonical(std::filesystem::path(target->app_root_path.native_value()));
-		allowed = has_prefix_path(path, root);
-	} catch (const std::filesystem::filesystem_error &) {
-		allowed = false;
-	}
-	g_free(filename);
-	return allowed;
-}
-
-gboolean handle_navigation_policy(WebKitWebView *, WebKitPolicyDecision *decision, WebKitPolicyDecisionType type, gpointer data) {
-	if (type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION) {
-		return FALSE;
-	}
-	auto *state = static_cast<bridge_state *>(data);
-	if (state == nullptr || !state->target.has_value().native_value()) {
-		webkit_policy_decision_ignore(decision);
-		return TRUE;
-	}
-
-	WebKitNavigationPolicyDecision *navigation = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
-	WebKitURIRequest *request = webkit_navigation_policy_decision_get_request(navigation);
-	const char *uri = request == nullptr ? nullptr : webkit_uri_request_get_uri(request);
-	if (navigation_allowed(state->target, uri)) {
-		webkit_policy_decision_use(decision);
-	} else {
-		webkit_policy_decision_ignore(decision);
-	}
-	return TRUE;
-}
-#endif
 
 [[nodiscard]] std::string json_string_literal(const std::string &value) {
 	std::ostringstream out;
@@ -309,9 +231,8 @@ gboolean handle_navigation_policy(WebKitWebView *, WebKitPolicyDecision *decisio
 			case '\t': out << "\\t"; break;
 			default:
 				if (ch < 0x20) {
-					out << "\\u";
 					const char *digits = "0123456789abcdef";
-					out << "00" << digits[(ch >> 4) & 0x0f] << digits[ch & 0x0f];
+					out << "\\u00" << digits[(ch >> 4) & 0x0f] << digits[ch & 0x0f];
 				} else {
 					out << static_cast<char>(ch);
 				}
@@ -466,11 +387,22 @@ gboolean handle_navigation_policy(WebKitWebView *, WebKitPolicyDecision *decisio
 	}
 }
 
-[[nodiscard]] std::string event_text_or_empty(const shared_p<ui::event> &message) {
+[[nodiscard]] std::string event_message_or_empty(const shared_p<ui::event> &message) {
 	if (!message.has_value().native_value() || message.get() == nullptr) {
 		return "";
 	}
-	return message->text.native_value();
+	return message->message.native_value();
+}
+
+[[nodiscard]] bool has_prefix_path(const std::filesystem::path &path, const std::filesystem::path &root) {
+	auto path_it = path.begin();
+	auto root_it = root.begin();
+	for (; root_it != root.end(); ++root_it, ++path_it) {
+		if (path_it == path.end() || *path_it != *root_it) {
+			return false;
+		}
+	}
+	return true;
 }
 
 [[nodiscard]] std::string file_url_from_path(const std::filesystem::path &path) {
@@ -498,6 +430,152 @@ gboolean handle_navigation_policy(WebKitWebView *, WebKitPolicyDecision *decisio
 	}
 	return out.str();
 }
+
+#if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
+
+struct webkitgtk_callback_state final {
+	shared_p<view> target;
+};
+
+void destroy_webkitgtk_callback_state(gpointer data, GClosure *) {
+	delete static_cast<webkitgtk_callback_state *>(data);
+}
+
+void enqueue_webkitgtk_event(
+	const shared_p<view> &target,
+	const char *type,
+	const string_t &message = string_t(""),
+	const string_t &url = string_t("")
+) {
+	(void) enqueue_event(target, string_t(type), message, url);
+}
+
+[[nodiscard]] string_t webkitgtk_current_uri(WebKitWebView *native) {
+	const gchar *uri = webkit_web_view_get_uri(native);
+	if (uri == nullptr) {
+		return string_t("");
+	}
+	return string_t(uri);
+}
+
+[[nodiscard]] bool navigation_allowed(const shared_p<view> &target, const char *uri) {
+	if (uri == nullptr || !target.has_value().native_value() || target.get() == nullptr) {
+		return false;
+	}
+	if (target->app_root_path.native_value().empty()) {
+		return true;
+	}
+
+	const std::string value(uri);
+	if (value == "about:blank" || value.starts_with("data:") || value.starts_with("blob:")) {
+		return true;
+	}
+	if (!value.starts_with("file:")) {
+		return false;
+	}
+
+	GError *error = nullptr;
+	char *filename = g_filename_from_uri(uri, nullptr, &error);
+	if (error != nullptr) {
+		g_error_free(error);
+	}
+	if (filename == nullptr) {
+		return false;
+	}
+
+	bool allowed = false;
+	try {
+		const auto path = std::filesystem::weakly_canonical(std::filesystem::path(filename));
+		const auto root = std::filesystem::weakly_canonical(std::filesystem::path(target->app_root_path.native_value()));
+		allowed = has_prefix_path(path, root);
+	} catch (const std::filesystem::filesystem_error &) {
+		allowed = false;
+	}
+	g_free(filename);
+	return allowed;
+}
+
+gboolean handle_navigation_policy(WebKitWebView *, WebKitPolicyDecision *decision, WebKitPolicyDecisionType type, gpointer data) {
+	if (type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION) {
+		return FALSE;
+	}
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr || !state->target.has_value().native_value()) {
+		webkit_policy_decision_ignore(decision);
+		return TRUE;
+	}
+
+	WebKitNavigationPolicyDecision *navigation = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
+	WebKitURIRequest *request = webkit_navigation_policy_decision_get_request(navigation);
+	const char *uri = request == nullptr ? nullptr : webkit_uri_request_get_uri(request);
+	if (navigation_allowed(state->target, uri)) {
+		webkit_policy_decision_use(decision);
+	} else {
+		webkit_policy_decision_ignore(decision);
+	}
+	return TRUE;
+}
+
+void handle_webkitgtk_load_changed(WebKitWebView *native, WebKitLoadEvent load_event, gpointer data) {
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr) {
+		return;
+	}
+	if (load_event == WEBKIT_LOAD_STARTED) {
+		enqueue_webkitgtk_event(state->target, "webview_navigation_started", string_t(""), webkitgtk_current_uri(native));
+		return;
+	}
+	if (load_event == WEBKIT_LOAD_FINISHED) {
+		enqueue_webkitgtk_event(state->target, "webview_navigation_finished", string_t(""), webkitgtk_current_uri(native));
+	}
+}
+
+gboolean handle_webkitgtk_load_failed(WebKitWebView *native, WebKitLoadEvent, gchar *failing_uri, GError *error, gpointer data) {
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr) {
+		return FALSE;
+	}
+	const char *message = error != nullptr && error->message != nullptr ? error->message : "";
+	string_t uri = failing_uri != nullptr ? string_t(failing_uri) : webkitgtk_current_uri(native);
+	enqueue_webkitgtk_event(state->target, "webview_load_failed", string_t(message), uri);
+	return FALSE;
+}
+
+void handle_webkitgtk_title_changed(GObject *object, GParamSpec *, gpointer data) {
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr) {
+		return;
+	}
+	WebKitWebView *native = WEBKIT_WEB_VIEW(object);
+	const gchar *title = webkit_web_view_get_title(native);
+	if (title == nullptr) {
+		return;
+	}
+	enqueue_webkitgtk_event(state->target, "webview_title_changed", string_t(title), webkitgtk_current_uri(native));
+}
+
+void handle_webkitgtk_script_message(WebKitUserContentManager *, WebKitJavascriptResult *result, gpointer data) {
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr || result == nullptr) {
+		return;
+	}
+	string_t message = string_t("");
+	JSCValue *value = webkit_javascript_result_get_js_value(result);
+	if (value != nullptr) {
+		gchar *text = jsc_value_to_string(value);
+		if (text != nullptr) {
+			message = string_t(text);
+			g_free(text);
+		}
+	}
+	string_t url = string_t("");
+	if (state->target.has_value().native_value() && state->target.get() != nullptr && state->target->native_handle != nullptr) {
+		url = webkitgtk_current_uri(WEBKIT_WEB_VIEW(state->target->native_handle));
+	}
+	enqueue_webkitgtk_event(state->target, "webview_message", message, url);
+}
+
+#endif
 
 #if defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 
@@ -553,14 +631,20 @@ template <typename TInterface, typename TArg1, typename TArg2, typename TLambda>
 
 struct win32_webview_state final {
 	HWND parent = nullptr;
-	shared_p<view> target = null;
 	Microsoft::WRL::ComPtr<ICoreWebView2Environment> environment;
 	Microsoft::WRL::ComPtr<ICoreWebView2Controller> controller;
 	Microsoft::WRL::ComPtr<ICoreWebView2> core;
-	EventRegistrationToken web_message_token{};
+	EventRegistrationToken navigation_starting_token{};
+	EventRegistrationToken navigation_completed_token{};
+	EventRegistrationToken web_message_received_token{};
+	EventRegistrationToken document_title_changed_token{};
 	std::wstring pending_url;
 	std::wstring pending_html;
 	std::wstring pending_script;
+	bool has_navigation_starting_token = false;
+	bool has_navigation_completed_token = false;
+	bool has_web_message_received_token = false;
+	bool has_document_title_changed_token = false;
 	bool bridge_ready = false;
 	bool closed = false;
 };
@@ -578,6 +662,50 @@ using win32_webview_state_ptr = std::shared_ptr<win32_webview_state>;
 	std::wstring result(static_cast<std::size_t>(needed), L'\0');
 	MultiByteToWideChar(CP_UTF8, 0, value.c_str(), static_cast<int>(value.size()), result.data(), needed);
 	return result;
+}
+
+[[nodiscard]] string_t wide_to_utf8(const wchar_t *value) {
+	if (value == nullptr || value[0] == L'\0') {
+		return string_t("");
+	}
+	const int needed = WideCharToMultiByte(CP_UTF8, 0, value, -1, nullptr, 0, nullptr, nullptr);
+	if (needed <= 1) {
+		return string_t("");
+	}
+	std::string result(static_cast<std::size_t>(needed), '\0');
+	WideCharToMultiByte(CP_UTF8, 0, value, -1, result.data(), needed, nullptr, nullptr);
+	if (!result.empty() && result.back() == '\0') {
+		result.pop_back();
+	}
+	return string_t(result);
+}
+
+[[nodiscard]] string_t take_win32_string(PWSTR value) {
+	string_t result = wide_to_utf8(value);
+	if (value != nullptr) {
+		CoTaskMemFree(value);
+	}
+	return result;
+}
+
+void enqueue_win32_event(
+	const shared_p<view> &target,
+	const char *type,
+	const string_t &message = string_t(""),
+	const string_t &url = string_t("")
+) {
+	(void) enqueue_event(target, string_t(type), message, url);
+}
+
+[[nodiscard]] string_t win32_current_source(ICoreWebView2 *core) {
+	if (core == nullptr) {
+		return string_t("");
+	}
+	PWSTR source = nullptr;
+	if (FAILED(core->get_Source(&source))) {
+		return string_t("");
+	}
+	return take_win32_string(source);
 }
 
 void resize_win32_controller(win32_webview_state *state) {
@@ -607,28 +735,116 @@ void flush_win32_pending(win32_webview_state *state) {
 	}
 }
 
+void remove_win32_event_handlers(win32_webview_state *state) {
+	if (state == nullptr || state->core == nullptr) {
+		return;
+	}
+	if (state->has_navigation_starting_token) {
+		state->core->remove_NavigationStarting(state->navigation_starting_token);
+		state->has_navigation_starting_token = false;
+	}
+	if (state->has_navigation_completed_token) {
+		state->core->remove_NavigationCompleted(state->navigation_completed_token);
+		state->has_navigation_completed_token = false;
+	}
+	if (state->has_web_message_received_token) {
+		state->core->remove_WebMessageReceived(state->web_message_received_token);
+		state->has_web_message_received_token = false;
+	}
+	if (state->has_document_title_changed_token) {
+		state->core->remove_DocumentTitleChanged(state->document_title_changed_token);
+		state->has_document_title_changed_token = false;
+	}
+}
+
+void register_win32_event_handlers(const win32_webview_state_ptr &state, const shared_p<view> &target) {
+	if (state == nullptr || state->core == nullptr || state->closed) {
+		return;
+	}
+
+	HRESULT hr = state->core->add_NavigationStarting(
+		make_win32_callback2<ICoreWebView2NavigationStartingEventHandler, ICoreWebView2 *, ICoreWebView2NavigationStartingEventArgs *>(
+			[target](ICoreWebView2 *, ICoreWebView2NavigationStartingEventArgs *args) -> HRESULT {
+				PWSTR uri = nullptr;
+				string_t url = string_t("");
+				if (args != nullptr && SUCCEEDED(args->get_Uri(&uri))) {
+					url = take_win32_string(uri);
+				}
+				enqueue_win32_event(target, "webview_navigation_started", string_t(""), url);
+				return S_OK;
+			}
+		).Get(),
+		&state->navigation_starting_token
+	);
+	state->has_navigation_starting_token = SUCCEEDED(hr);
+
+	hr = state->core->add_NavigationCompleted(
+		make_win32_callback2<ICoreWebView2NavigationCompletedEventHandler, ICoreWebView2 *, ICoreWebView2NavigationCompletedEventArgs *>(
+			[target](ICoreWebView2 *sender, ICoreWebView2NavigationCompletedEventArgs *args) -> HRESULT {
+				BOOL success = FALSE;
+				if (args != nullptr) {
+					(void) args->get_IsSuccess(&success);
+				}
+				if (success) {
+					enqueue_win32_event(target, "webview_navigation_finished", string_t(""), win32_current_source(sender));
+					return S_OK;
+				}
+				COREWEBVIEW2_WEB_ERROR_STATUS status = COREWEBVIEW2_WEB_ERROR_STATUS_UNKNOWN;
+				if (args != nullptr) {
+					(void) args->get_WebErrorStatus(&status);
+				}
+				enqueue_win32_event(
+					target,
+					"webview_load_failed",
+					string_t(std::string("WebView2 navigation failed: ") + std::to_string(static_cast<int>(status))),
+					win32_current_source(sender)
+				);
+				return S_OK;
+			}
+		).Get(),
+		&state->navigation_completed_token
+	);
+	state->has_navigation_completed_token = SUCCEEDED(hr);
+
+	hr = state->core->add_WebMessageReceived(
+		make_win32_callback2<ICoreWebView2WebMessageReceivedEventHandler, ICoreWebView2 *, ICoreWebView2WebMessageReceivedEventArgs *>(
+			[target](ICoreWebView2 *sender, ICoreWebView2WebMessageReceivedEventArgs *args) -> HRESULT {
+				PWSTR message = nullptr;
+				string_t payload = string_t("");
+				if (args != nullptr && SUCCEEDED(args->TryGetWebMessageAsString(&message))) {
+					payload = take_win32_string(message);
+				}
+				enqueue_win32_event(target, "webview_message", payload, win32_current_source(sender));
+				return S_OK;
+			}
+		).Get(),
+		&state->web_message_received_token
+	);
+	state->has_web_message_received_token = SUCCEEDED(hr);
+
+	hr = state->core->add_DocumentTitleChanged(
+		make_win32_callback2<ICoreWebView2DocumentTitleChangedEventHandler, ICoreWebView2 *, IUnknown *>(
+			[target](ICoreWebView2 *sender, IUnknown *) -> HRESULT {
+				PWSTR title = nullptr;
+				string_t payload = string_t("");
+				if (sender != nullptr && SUCCEEDED(sender->get_DocumentTitle(&title))) {
+					payload = take_win32_string(title);
+				}
+				enqueue_win32_event(target, "webview_title_changed", payload, win32_current_source(sender));
+				return S_OK;
+			}
+		).Get(),
+		&state->document_title_changed_token
+	);
+	state->has_document_title_changed_token = SUCCEEDED(hr);
+}
+
 [[nodiscard]] win32_webview_state *get_win32_state(const shared_p<view> &target) {
 	auto *holder = static_cast<win32_webview_state_ptr *>(target->native_state);
 	if (holder == nullptr) {
 		return nullptr;
 	}
 	return holder->get();
-}
-
-void push_win32_bridge_message(const win32_webview_state_ptr &state, const std::string &text) {
-	if (state == nullptr || !state->target.has_value().native_value() || state->target.get() == nullptr) {
-		return;
-	}
-	auto window = state->target->window_handle;
-	if (!window.has_value().native_value() || window.get() == nullptr || !window->app_handle.has_value().native_value()) {
-		return;
-	}
-
-	auto event_value = shared<ui::event>();
-	event_value->type = string_t("webview_message");
-	event_value->window_handle = window;
-	event_value->text = string_t(text);
-	window->app_handle->pending_events.push_back(event_value);
 }
 
 #endif
@@ -680,16 +896,7 @@ void push_android_bridge_message(android_webview_state *state, const std::string
 	if (state == nullptr || !state->target.has_value().native_value() || state->target.get() == nullptr) {
 		return;
 	}
-	auto window = state->target->window_handle;
-	if (!window.has_value().native_value() || window.get() == nullptr || !window->app_handle.has_value().native_value()) {
-		return;
-	}
-
-	auto event_value = shared<ui::event>();
-	event_value->type = string_t("webview_message");
-	event_value->window_handle = window;
-	event_value->text = string_t(text);
-	window->app_handle->pending_events.push_back(event_value);
+	(void) enqueue_event(state->target, string_t("webview_message"), string_t(text), string_t(""));
 }
 
 [[nodiscard]] result<bool_t> android_clear_exception(JNIEnv *env, const char *function_name) {
@@ -757,8 +964,11 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 	GtkWidget *parent = static_cast<GtkWidget *>(window->native_handle);
-	WebKitUserContentManager *manager = webkit_user_content_manager_new();
-	webkit_user_content_manager_register_script_message_handler(manager, "scpp");
+	WebKitUserContentManager *content_manager = webkit_user_content_manager_new();
+	if (content_manager == nullptr) {
+		return error_t(string_t("webview_create(): WebKitGTK failed to create a user content manager"));
+	}
+	webkit_user_content_manager_register_script_message_handler(content_manager, "SimpleCpp");
 	WebKitUserScript *script = webkit_user_script_new(
 		bridge_script,
 		WEBKIT_USER_CONTENT_INJECT_ALL_FRAMES,
@@ -766,12 +976,11 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		nullptr,
 		nullptr
 	);
-	webkit_user_content_manager_add_script(manager, script);
+	webkit_user_content_manager_add_script(content_manager, script);
 	webkit_user_script_unref(script);
-
-	GtkWidget *native = webkit_web_view_new_with_user_content_manager(manager);
-	g_object_unref(manager);
+	GtkWidget *native = webkit_web_view_new_with_user_content_manager(content_manager);
 	if (native == nullptr) {
+		g_object_unref(content_manager);
 		return error_t(string_t("webview_create(): WebKitGTK failed to create a native webview"));
 	}
 
@@ -781,20 +990,53 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	auto target = shared<view>();
 	target->window_handle = window;
 	target->native_handle = native;
-	auto *state = new bridge_state{target};
-	target->native_state = state;
-	g_signal_connect(
-		webkit_web_view_get_user_content_manager(WEBKIT_WEB_VIEW(native)),
-		"script-message-received::scpp",
-		G_CALLBACK(handle_bridge_message),
-		state
+	auto *message_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(content_manager),
+		"script-message-received::SimpleCpp",
+		G_CALLBACK(handle_webkitgtk_script_message),
+		message_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
 	);
-	g_signal_connect(
-		WEBKIT_WEB_VIEW(native),
+	g_object_unref(content_manager);
+	auto *policy_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(native),
 		"decide-policy",
 		G_CALLBACK(handle_navigation_policy),
-		state
+		policy_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
 	);
+	auto *load_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(native),
+		"load-changed",
+		G_CALLBACK(handle_webkitgtk_load_changed),
+		load_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
+	);
+	auto *failed_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(native),
+		"load-failed",
+		G_CALLBACK(handle_webkitgtk_load_failed),
+		failed_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
+	);
+	auto *title_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(native),
+		"notify::title",
+		G_CALLBACK(handle_webkitgtk_title_changed),
+		title_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
+	);
+	(void) enqueue_event(target, string_t("webview_ready"));
 	return target;
 #elif defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW
 	@autoreleasepool {
@@ -806,33 +1048,29 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 
 		auto target = shared<view>();
 		target->window_handle = window;
-
-		WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-		WKUserContentController *user_content = [[WKUserContentController alloc] init];
+		ScppWebViewNavigationDelegate *delegate = [[ScppWebViewNavigationDelegate alloc] initWithTarget:target];
+		WKUserContentController *contentController = [[WKUserContentController alloc] init];
 		NSString *source = [NSString stringWithUTF8String:bridge_script];
 		WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
-		ScppWKBridgeHandler *handler = [[ScppWKBridgeHandler alloc] initWithTarget:target];
-		[user_content addUserScript:script];
-		[user_content addScriptMessageHandler:handler name:@"scpp"];
-		configuration.userContentController = user_content;
-
+		[contentController addUserScript:script];
+		[contentController addScriptMessageHandler:delegate name:@"SimpleCpp"];
+		WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+		configuration.userContentController = contentController;
 		WKWebView *native = [[WKWebView alloc] initWithFrame:[content bounds] configuration:configuration];
+		[script release];
+		[configuration release];
+		[contentController release];
 		if (native == nil) {
-			[user_content removeScriptMessageHandlerForName:@"scpp"];
-			[script release];
-			[user_content release];
-			[configuration release];
-			[handler release];
+			[delegate release];
 			return error_t(string_t("webview_create(): WKWebView failed to create a native webview"));
 		}
-		[script release];
-		[user_content release];
-		[configuration release];
 		[native setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 		[content addSubview:native];
 
 		target->native_handle = native;
-		target->native_state = handler;
+		native.navigationDelegate = delegate;
+		target->native_controller = delegate;
+		(void) enqueue_event(target, string_t("webview_ready"));
 		return target;
 	}
 #elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
@@ -845,33 +1083,29 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 
 		auto target = shared<view>();
 		target->window_handle = window;
-
-		WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-		WKUserContentController *user_content = [[WKUserContentController alloc] init];
+		ScppWebViewNavigationDelegate *delegate = [[ScppWebViewNavigationDelegate alloc] initWithTarget:target];
+		WKUserContentController *contentController = [[WKUserContentController alloc] init];
 		NSString *source = [NSString stringWithUTF8String:bridge_script];
 		WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
-		ScppWKBridgeHandler *handler = [[ScppWKBridgeHandler alloc] initWithTarget:target];
-		[user_content addUserScript:script];
-		[user_content addScriptMessageHandler:handler name:@"scpp"];
-		configuration.userContentController = user_content;
-
+		[contentController addUserScript:script];
+		[contentController addScriptMessageHandler:delegate name:@"SimpleCpp"];
+		WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+		configuration.userContentController = contentController;
 		WKWebView *native = [[WKWebView alloc] initWithFrame:content.bounds configuration:configuration];
+		[script release];
+		[configuration release];
+		[contentController release];
 		if (native == nil) {
-			[user_content removeScriptMessageHandlerForName:@"scpp"];
-			[script release];
-			[user_content release];
-			[configuration release];
-			[handler release];
+			[delegate release];
 			return error_t(string_t("webview_create(): WKWebView failed to create a native webview"));
 		}
-		[script release];
-		[user_content release];
-		[configuration release];
 		native.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 		[content addSubview:native];
 
 		target->native_handle = native;
-		target->native_state = handler;
+		native.navigationDelegate = delegate;
+		target->native_controller = delegate;
+		(void) enqueue_event(target, string_t("webview_ready"));
 		return target;
 	}
 #elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
@@ -903,6 +1137,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	target->native_handle = state->webview;
 	target->native_state = state;
 	state->target = target;
+	(void) enqueue_event(target, string_t("webview_ready"));
 	return target;
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 	HWND parent = static_cast<HWND>(window->native_handle);
@@ -913,14 +1148,13 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	target->window_handle = window;
 	target->native_handle = parent;
 	target->native_state = new win32_webview_state_ptr(state);
-	state->target = target;
 
 	HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
 		nullptr,
 		nullptr,
 		nullptr,
 		make_win32_callback2<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, HRESULT, ICoreWebView2Environment *>(
-			[state](HRESULT result, ICoreWebView2Environment *environment) -> HRESULT {
+			[state, target](HRESULT result, ICoreWebView2Environment *environment) -> HRESULT {
 				if (FAILED(result) || environment == nullptr || state->closed) {
 					return result;
 				}
@@ -928,7 +1162,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 				return environment->CreateCoreWebView2Controller(
 					state->parent,
 					make_win32_callback2<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, HRESULT, ICoreWebView2Controller *>(
-						[state](HRESULT controller_result, ICoreWebView2Controller *controller) -> HRESULT {
+						[state, target](HRESULT controller_result, ICoreWebView2Controller *controller) -> HRESULT {
 							if (FAILED(controller_result) || controller == nullptr || state->closed) {
 								return controller_result;
 							}
@@ -948,32 +1182,10 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 								if (FAILED(script_result)) {
 									state->bridge_ready = true;
 								}
-								state->core->add_WebMessageReceived(
-									make_win32_callback2<ICoreWebView2WebMessageReceivedEventHandler, ICoreWebView2 *, ICoreWebView2WebMessageReceivedEventArgs *>(
-										[state](ICoreWebView2 *, ICoreWebView2WebMessageReceivedEventArgs *args) -> HRESULT {
-											if (args == nullptr || state->closed) {
-												return S_OK;
-											}
-											LPWSTR raw = nullptr;
-											HRESULT message_result = args->TryGetWebMessageAsString(&raw);
-											if (SUCCEEDED(message_result) && raw != nullptr) {
-												std::wstring wide(raw);
-												CoTaskMemFree(raw);
-												std::string text;
-												const int needed = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.size()), nullptr, 0, nullptr, nullptr);
-												if (needed > 0) {
-													text.resize(static_cast<std::size_t>(needed));
-													WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.size()), text.data(), needed, nullptr, nullptr);
-												}
-												push_win32_bridge_message(state, text);
-											}
-											return S_OK;
-										}
-									).Get(),
-									&state->web_message_token
-								);
 							}
+							register_win32_event_handlers(state, target);
 							resize_win32_controller(state.get());
+							enqueue_win32_event(target, "webview_ready");
 							flush_win32_pending(state.get());
 							return S_OK;
 						}
@@ -1274,6 +1486,32 @@ result<bool_t> eval(const shared_p<view> &target, const string_t &script) {
 #endif
 }
 
+result<bool_t> enqueue_event(const shared_p<view> &target, const string_t &type, const string_t &message, const string_t &url) {
+	auto checked = require_view(target, "webview_enqueue_event()");
+	if (!checked.has_value().native_value()) {
+		return *checked.error();
+	}
+	if (type.native_value().empty()) {
+		return error_t(string_t("webview_enqueue_event(): event type must not be empty"));
+	}
+	if (!target->window_handle.has_value().native_value() || target->window_handle.get() == nullptr) {
+		return error_t(string_t("webview_enqueue_event(): webview has no ui_window"));
+	}
+	auto app = target->window_handle->app_handle;
+	if (!app.has_value().native_value() || app.get() == nullptr) {
+		return error_t(string_t("webview_enqueue_event(): ui_window has no ui_app event queue"));
+	}
+
+	auto event_value = shared<ui::event>();
+	event_value->type = type;
+	event_value->window_handle = target->window_handle;
+	event_value->webview_handle = target;
+	event_value->message = message;
+	event_value->url = url;
+	app->pending_events.push_back(event_value);
+	return bool_t(true);
+}
+
 result<bool_t> reply_ok(const shared_p<view> &target, const int_t &id, const string_t &value_json) {
 	const std::string payload = value_json.native_value().empty() ? "null" : value_json.native_value();
 	const std::string script = "window.scpp&&window.scpp.__resolve&&window.scpp.__resolve({\"id\":"
@@ -1296,7 +1534,7 @@ result<bool_t> reply_error(const shared_p<view> &target, const int_t &id, const 
 }
 
 int_t message_id(const shared_p<ui::event> &message) {
-	const std::string text = event_text_or_empty(message);
+	const std::string text = event_message_or_empty(message);
 	std::size_t start = 0;
 	std::size_t end = 0;
 	if (!top_level_json_field(text, "id", start, end)) {
@@ -1311,7 +1549,7 @@ int_t message_id(const shared_p<ui::event> &message) {
 }
 
 string_t message_command(const shared_p<ui::event> &message) {
-	const std::string text = event_text_or_empty(message);
+	const std::string text = event_message_or_empty(message);
 	std::size_t start = 0;
 	std::size_t end = 0;
 	if (!top_level_json_field(text, "command", start, end)) {
@@ -1321,7 +1559,7 @@ string_t message_command(const shared_p<ui::event> &message) {
 }
 
 string_t message_payload_json(const shared_p<ui::event> &message) {
-	const std::string text = event_text_or_empty(message);
+	const std::string text = event_message_or_empty(message);
 	std::size_t start = 0;
 	std::size_t end = 0;
 	if (!top_level_json_field(text, "payload", start, end)) {
@@ -1336,32 +1574,29 @@ void close(const shared_p<view> &target) {
 		if (target->native_handle != nullptr) {
 			gtk_widget_destroy(GTK_WIDGET(target->native_handle));
 		}
-		delete static_cast<bridge_state *>(target->native_state);
 #elif defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
-			[native.configuration.userContentController removeScriptMessageHandlerForName:@"scpp"];
 			[native stopLoading];
+			[native.configuration.userContentController removeScriptMessageHandlerForName:@"SimpleCpp"];
+			native.navigationDelegate = nil;
 			[native removeFromSuperview];
 			[native release];
 		}
-		if (target->native_state != nullptr) {
-			ScppWKBridgeHandler *handler = static_cast<ScppWKBridgeHandler *>(target->native_state);
-			[handler release];
-			target->native_state = nullptr;
+		if (target->native_controller != nullptr) {
+			[static_cast<ScppWebViewNavigationDelegate *>(target->native_controller) release];
 		}
 #elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
-			[native.configuration.userContentController removeScriptMessageHandlerForName:@"scpp"];
 			[native stopLoading];
+			[native.configuration.userContentController removeScriptMessageHandlerForName:@"SimpleCpp"];
+			native.navigationDelegate = nil;
 			[native removeFromSuperview];
 			[native release];
 		}
-		if (target->native_state != nullptr) {
-			ScppWKBridgeHandler *handler = static_cast<ScppWKBridgeHandler *>(target->native_state);
-			[handler release];
-			target->native_state = nullptr;
+		if (target->native_controller != nullptr) {
+			[static_cast<ScppWebViewNavigationDelegate *>(target->native_controller) release];
 		}
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 		auto *holder = static_cast<win32_webview_state_ptr *>(target->native_state);
@@ -1369,9 +1604,7 @@ void close(const shared_p<view> &target) {
 			win32_webview_state_ptr state = *holder;
 			if (state != nullptr) {
 				state->closed = true;
-				if (state->core != nullptr) {
-					state->core->remove_WebMessageReceived(state->web_message_token);
-				}
+				remove_win32_event_handlers(state.get());
 				if (state->controller != nullptr) {
 					state->controller->Close();
 				}

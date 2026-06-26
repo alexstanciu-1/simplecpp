@@ -5084,7 +5084,7 @@ function build_explanation_details(
 
 /**
  * @param array<string,mixed> $runtimeConfig
- * @return array{modules:list<array{name:string,implicit_reason:?string}>,webview:?array{backend:string,enabled:bool}}
+ * @return array{modules:list<array{name:string,implicit_reason:?string}>,webview:?array{backend:string,enabled:bool,diagnostics:list<string>}}
  */
 function build_runtime_module_explanation(array $runtimeConfig): array
 {
@@ -5119,6 +5119,10 @@ function build_runtime_module_explanation(array $runtimeConfig): array
 		$webview = [
 			'backend' => (string) ($webviewSpec['backend'] ?? 'unknown'),
 			'enabled' => (bool) ($webviewSpec['enabled'] ?? false),
+			'diagnostics' => array_values(array_filter(
+				array_map(static fn ($value): string => trim((string) $value), is_array($webviewSpec['diagnostics'] ?? null) ? $webviewSpec['diagnostics'] : []),
+				static fn (string $value): bool => $value !== ''
+			)),
 		];
 	}
 
@@ -5229,6 +5233,13 @@ function render_runtime_module_explanation_lines(array $runtimeModules): array
 		$backend = trim((string) ($webview['backend'] ?? 'unknown'));
 		$enabled = (bool) ($webview['enabled'] ?? false);
 		$lines[] = 'WebView backend: ' . ($backend !== '' ? $backend : 'unknown') . ($enabled ? '' : ' (disabled)');
+		$diagnostics = is_array($webview['diagnostics'] ?? null) ? $webview['diagnostics'] : [];
+		foreach ($diagnostics as $diagnostic) {
+			$message = trim((string) $diagnostic);
+			if ($message !== '') {
+				$lines[] = 'WebView diagnostic: ' . $message;
+			}
+		}
 	}
 	return $lines;
 }
@@ -8157,11 +8168,19 @@ function resolve_runtime_ui_build_spec(): array
 	];
 }
 
-/** @return array{enabled:bool,backend:string,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
-function resolve_runtime_webview_build_spec(): array
+/**
+ * @param ?callable(list<string>):?string $commandFinder
+ * @param ?callable(string):mixed $shellRunner
+ * @return array{enabled:bool,backend:string,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>,diagnostics:list<string>}
+ */
+function resolve_runtime_webview_build_spec(?string $osFamily = null, ?callable $commandFinder = null, ?callable $shellRunner = null): array
 {
-	if (PHP_OS_FAMILY === 'Linux') {
-		$pkgConfig = find_command_path(['pkg-config']);
+	$osFamily = $osFamily ?? PHP_OS_FAMILY;
+	$commandFinder = $commandFinder ?? static fn (array $commands): ?string => find_command_path($commands);
+	$shellRunner = $shellRunner ?? static fn (string $command): mixed => shell_exec($command);
+
+	if ($osFamily === 'Linux') {
+		$pkgConfig = $commandFinder(['pkg-config']);
 		if ($pkgConfig === null) {
 			return [
 				'enabled' => false,
@@ -8169,12 +8188,15 @@ function resolve_runtime_webview_build_spec(): array
 				'cflags' => [],
 				'ldflags' => [],
 				'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
+				'diagnostics' => [
+					'WebView disabled on Linux: pkg-config was not found. Install pkg-config and WebKitGTK development files such as libwebkit2gtk-4.1-dev on Debian/Ubuntu or webkit2gtk4.1-devel on Fedora.',
+				],
 			];
 		}
 
 		foreach (['webkit2gtk-4.1', 'webkit2gtk-4.0'] as $packageName) {
-			$cflagsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --cflags ' . escapeshellarg($packageName) . ' 2>/dev/null');
-			$libsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --libs ' . escapeshellarg($packageName) . ' 2>/dev/null');
+			$cflagsOutput = $shellRunner(escapeshellarg($pkgConfig) . ' --cflags ' . escapeshellarg($packageName) . ' 2>/dev/null');
+			$libsOutput = $shellRunner(escapeshellarg($pkgConfig) . ' --libs ' . escapeshellarg($packageName) . ' 2>/dev/null');
 			if (!is_string($libsOutput) || trim($libsOutput) === '') {
 				continue;
 			}
@@ -8184,6 +8206,7 @@ function resolve_runtime_webview_build_spec(): array
 				'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
 				'ldflags' => split_shell_tokens($libsOutput),
 				'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBKITGTK=1'],
+				'diagnostics' => [],
 			];
 		}
 
@@ -8193,20 +8216,24 @@ function resolve_runtime_webview_build_spec(): array
 			'cflags' => [],
 			'ldflags' => [],
 			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
+			'diagnostics' => [
+				'WebView disabled on Linux: WebKitGTK pkg-config package webkit2gtk-4.1 or webkit2gtk-4.0 was not found. Install libwebkit2gtk-4.1-dev on Debian/Ubuntu or webkit2gtk4.1-devel on Fedora.',
+			],
 		];
 	}
 
-	if (PHP_OS_FAMILY === 'Darwin') {
+	if ($osFamily === 'Darwin') {
 		return [
 			'enabled' => true,
 			'backend' => 'wkwebview',
 			'cflags' => ['-x', 'objective-c++'],
 			'ldflags' => ['-framework', 'WebKit'],
 			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1'],
+			'diagnostics' => [],
 		];
 	}
 
-	if (PHP_OS_FAMILY === 'Windows') {
+	if ($osFamily === 'Windows') {
 		$webview2 = resolve_windows_webview2_sdk();
 		return [
 			'enabled' => $webview2 !== null,
@@ -8214,6 +8241,9 @@ function resolve_runtime_webview_build_spec(): array
 			'cflags' => $webview2 === null ? [] : ['-I' . $webview2['include_dir']],
 			'ldflags' => $webview2 === null ? [] : [$webview2['loader_lib'], 'advapi32.lib', 'ole32.lib', 'uuid.lib'],
 			'compile_defines' => $webview2 === null ? ['-DSCPP_HAS_WEBVIEW=0'] : ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
+			'diagnostics' => $webview2 === null ? [
+				'WebView disabled on Windows: WebView2 SDK headers or loader library were not found.',
+			] : [],
 		];
 	}
 
@@ -8223,6 +8253,7 @@ function resolve_runtime_webview_build_spec(): array
 		'cflags' => [],
 		'ldflags' => [],
 		'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1'],
+		'diagnostics' => [],
 	];
 }
 

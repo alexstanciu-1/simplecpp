@@ -15,7 +15,7 @@ Each sample uses:
 
 Regex-specific samples opt into `"regex"` explicitly.
 
-GUI samples such as `strict_webview_bridge/` are checked-in reference projects but are not listed in `tests/samples_manifest.txt`, because the manifest runner is intentionally headless and stdout-comparison based.
+WebView-specific samples such as `strict_webview_bridge/` and `strict_webview_events/` opt into `"webview"` explicitly. They are reference projects for GUI-capable machines and CI render jobs, not part of the default console sample runner. On Linux, building them requires GTK and WebKitGTK development packages.
 
 The visible strict API uses plain PHP-like names for general helpers and family-prefixed names for subsystem helpers, such as:
 
@@ -29,3 +29,4 @@ Validation:
 
 - run all checked strict samples with `./tests/run_examples.sh`
 - each sample is compared against checked-in stdout under `expected/`
+- build or run WebView samples only on a host with a supported native WebView backend and display session

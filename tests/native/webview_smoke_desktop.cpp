@@ -44,10 +44,23 @@ int main() {
 	}
 
 	bool replied = false;
-	for (int i = 0; i < 240; ++i) {
-		if (scpp::ui::app_poll(app).native_value()) {
+	bool saw_webview_ready = false;
+	bool saw_navigation_finished = false;
+	for (int i = 0; i < 240 && (!replied || !saw_webview_ready || !saw_navigation_finished); ++i) {
+		(void) scpp::ui::app_poll(app);
+		for (;;) {
 			auto event = scpp::ui::app_next_event(app);
-			if (scpp::ui::event_type(event).native_value() == "webview_message") {
+			if (!event.has_value().native_value()) {
+				break;
+			}
+			const auto type = scpp::ui::event_type(event).native_value();
+			if (type == "webview_ready") {
+				saw_webview_ready = true;
+			}
+			if (type == "webview_navigation_finished") {
+				saw_navigation_finished = true;
+			}
+			if (type == "webview_message") {
 				const auto id = scpp::webview_runtime::message_id(event);
 				const auto command = scpp::webview_runtime::message_command(event);
 				const auto payload = scpp::webview_runtime::message_payload_json(event);
@@ -70,6 +83,18 @@ int main() {
 			}
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+	if (!saw_webview_ready) {
+		std::cerr << "Did not receive webview_ready\n";
+		return 1;
+	}
+	if (!saw_navigation_finished) {
+		std::cerr << "Did not receive webview_navigation_finished\n";
+		return 1;
+	}
+	if (!replied) {
+		std::cerr << "Did not complete webview bridge reply\n";
+		return 1;
 	}
 
 	scpp::webview_runtime::close(view);
