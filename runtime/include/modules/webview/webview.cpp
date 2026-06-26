@@ -41,8 +41,6 @@
 
 namespace scpp::webview_runtime {
 
-namespace {
-
 constexpr const char *bridge_script = R"JS(
 (function () {
 	if (window.scpp && typeof window.scpp.invoke === "function") {
@@ -119,6 +117,8 @@ constexpr const char *bridge_script = R"JS(
 })();
 )JS";
 
+} // namespace scpp::webview_runtime
+
 #if (defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW) || (defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW)
 @interface ScppWKBridgeHandler : NSObject<WKScriptMessageHandler>
 - (instancetype)initWithTarget:(scpp::shared_p<scpp::webview_runtime::view>)target;
@@ -164,6 +164,10 @@ constexpr const char *bridge_script = R"JS(
 }
 @end
 #endif
+
+namespace scpp::webview_runtime {
+
+namespace {
 
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 struct bridge_state final {
