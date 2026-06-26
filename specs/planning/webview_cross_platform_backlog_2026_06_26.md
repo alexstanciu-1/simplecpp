@@ -31,6 +31,7 @@ Latest heartbeat slice:
 - CI uploads the signed smoke APK to `/tmp/scpp_ci_artifacts` with the GitHub run id in the filename, matching the screenshot artifact convention.
 - Added an Android emulator render-smoke job that builds an x86_64 signed APK, launches the Activity, captures `android-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it when the hosted runner can boot the emulator.
 - Android emulator render smoke is bounded with CI timeouts and uploads `android-emulator-${GITHUB_RUN_ID}.log` when hosted emulator boot needs diagnosis.
+- Android emulator render CI pins `ANDROID_AVD_HOME` so `avdmanager` and `emulator` resolve the same AVD directory on hosted runners.
 
 ## Done Definition
 

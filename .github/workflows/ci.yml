@@ -574,6 +574,8 @@ jobs:
           test -x "$sdkmanager_bin"
           test -x "$avdmanager_bin"
           "$sdkmanager_bin" "platform-tools" "emulator" "system-images;android-35;google_apis;x86_64"
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
+          mkdir -p "$ANDROID_AVD_HOME"
           echo "no" | "$avdmanager_bin" create avd --force --name scpp_webview_smoke --package "system-images;android-35;google_apis;x86_64" --device pixel_2
           adb_bin="$ANDROID_HOME/platform-tools/adb"
           test -x "$adb_bin"
@@ -582,6 +584,7 @@ jobs:
           fi
 
           emulator_log="$SCPP_CI_ARTIFACT_DIR/android-emulator-${GITHUB_RUN_ID}.log"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
           "$ANDROID_HOME/emulator/emulator" \
             -avd scpp_webview_smoke \
             -no-window \
