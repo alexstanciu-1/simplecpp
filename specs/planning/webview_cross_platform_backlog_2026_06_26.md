@@ -21,7 +21,7 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | --- | --- | --- | --- |
 | Linux | WebKitGTK | Implemented first rendering slice | Build, launch under Xvfb, screenshot artifact |
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
-| Windows 11 | WebView2 | Initial rendering slice implemented | WebView2 compile/link smoke; launch/screenshot pending CI proof |
+| Windows 11 | WebView2 | Implemented first rendering slice | Build, launch, screenshot artifact |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
 | Android | Android WebView | Implemented first rendering slice | Android WebView JNI, native smoke library, Activity compile, signed APK package, APK artifact, emulator launch, screenshot artifact |
 
@@ -39,10 +39,10 @@ Latest heartbeat slice:
 - Browser-like event bridge has its first backend-neutral boundary: `ui_event` can carry a WebView handle, message text, and URL payload, strict PHP++ exposes typed accessors, and WebView runtime code can enqueue events into the existing `ui_app` queue.
 - Linux WebKitGTK now wires native load/title callbacks into that shared event queue, and the Linux WebView smoke app requires `webview_navigation_finished`.
 - Apple WKWebView backends now wire `WKNavigationDelegate` navigation callbacks into that shared event queue, and the macOS WKWebView smoke app requires `webview_navigation_finished`.
-- Windows WebView2 now wires `NavigationStarting`, `NavigationCompleted`, and `WebMessageReceived` callbacks into that shared event queue; Windows CI still validates this as compile/link until launch/screenshot is added.
+- Windows WebView2 now wires `NavigationStarting`, `NavigationCompleted`, and `WebMessageReceived` callbacks into that shared event queue; Windows CI validates build, launch, and screenshot capture.
 - Android WebView now emits `webview_ready` from native creation and the smoke Activity wires `WebViewClient` plus `JavascriptInterface` callbacks into native queue events.
 - Linux WebKitGTK screenshot capture now retries until the rendered frame passes the screenshot shape check, avoiding single-frame black captures from hosted Xvfb/WebKit timing.
-- Windows WebView2 CI now attempts a real launch, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; this needs CI proof before replacing the compile/link-only signal.
+- Windows WebView2 CI now launches the smoke app, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; CI run `28242929755` validated the path.
 
 ## Done Definition
 
@@ -82,7 +82,7 @@ Testing tasks:
 
 - Add `tests/native/webview_smoke_windows.cpp`. Initial smoke source added.
 - Build/link in Windows CI. Initial CI step added.
-- Add launch/screenshot artifact when desktop capture is stable enough on GitHub Actions. Initial launch/screenshot CI step added and awaiting proof.
+- Add launch/screenshot artifact when desktop capture is stable enough on GitHub Actions. Initial launch/screenshot CI step added and green.
 
 Open decision:
 
@@ -195,11 +195,11 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28240758500` validated:
+Run `28242929755` validated:
 
 - Linux WebKitGTK WebView screenshot retry and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
-- Windows WebView2 compile/link, including navigation/message event callback registration
+- Windows WebView2 build, launch, screenshot artifact, and navigation/message event callback registration
 - iOS UIKit UI simulator screenshot
 - iOS WKWebView simulator screenshot
 - Android NDK UI compile smoke
