@@ -7619,7 +7619,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 			$lines[] = '  description = CXX $out';
 			$lines[] = '';
 			$lines[] = 'rule link_runtime_shared';
-			$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $base_ldflags $runtime_ldflags $in -o $out');
+			$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $base_ldflags $in $runtime_ldflags -o $out');
 			$lines[] = '  description = LINK $out';
 			$lines[] = '';
 		}
@@ -7638,7 +7638,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	if ($compiler['kind'] === 'msvc') {
 		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx /nologo $in $ldflags /Fe$out');
 	} else {
-		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $ldflags $in -o $out');
+		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $in $ldflags -o $out');
 	}
 	$lines[] = '  description = LINK $out';
 	$lines[] = '';
