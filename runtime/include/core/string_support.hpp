@@ -16,10 +16,10 @@
 
 namespace scpp {
 
-inline const int_t PHP_INT_MAX{static_cast<std::int64_t>(std::numeric_limits<std::int64_t>::max())};
-inline const int_t STR_PAD_LEFT{0};
-inline const int_t STR_PAD_RIGHT{1};
-inline const int_t STR_PAD_BOTH{2};
+inline const int_t<> PHP_INT_MAX{static_cast<std::int64_t>(std::numeric_limits<std::int64_t>::max())};
+inline const int_t<> STR_PAD_LEFT{0};
+inline const int_t<> STR_PAD_RIGHT{1};
+inline const int_t<> STR_PAD_BOTH{2};
 
 class ValueError : public std::runtime_error {
 public:

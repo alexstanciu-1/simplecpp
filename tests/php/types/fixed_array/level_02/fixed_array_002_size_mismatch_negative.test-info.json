@@ -1,0 +1,54 @@
+{
+    "id": "fixed_array_002_size_mismatch_negative",
+    "feature": "fixed_array",
+    "level": "level_02",
+    "outcome": "negative",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": false,
+            "error_contains": [
+                "fixed_array literal size mismatch: declared 3 element(s), got 2."
+            ]
+        },
+        "compile": {
+            "success": false,
+            "error_contains": []
+        },
+        "run": {
+            "success": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "types",
+        "fixed_array",
+        "negative_generate",
+        "size"
+    ],
+    "notes": "fixed_array literals must exactly match the declared compile-time size.",
+    "build": {
+        "sanitizers": null
+    }
+}

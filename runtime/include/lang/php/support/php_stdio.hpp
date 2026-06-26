@@ -12,27 +12,27 @@ using ::scpp::parse_file_open_mode;
 	return ::scpp::io::open(path, mode);
 }
 
-[[nodiscard]] inline nullable<int_t> fseek(const falseable_resource_handle_t &resource, const int_t &offset, const int_t &whence = int_t(SEEK_SET)) {
+[[nodiscard]] inline nullable<int_t<>> fseek(const falseable_resource_handle_t &resource, const int_t<> &offset, const int_t<> &whence = int_t<>(SEEK_SET)) {
 	return ::scpp::io::seek(resource, offset, whence);
 }
 
-[[nodiscard]] inline result_or_false<int_t> ftell(const falseable_resource_handle_t &resource) {
+[[nodiscard]] inline result_or_false<int_t<>> ftell(const falseable_resource_handle_t &resource) {
 	return ::scpp::io::tell(resource);
 }
 
-[[nodiscard]] inline result_or_false<string_t> fgets(const falseable_resource_handle_t &resource, const nullable<int_t> &length = null) {
+[[nodiscard]] inline result_or_false<string_t> fgets(const falseable_resource_handle_t &resource, const nullable<int_t<>> &length = null) {
 	return ::scpp::io::read_line(resource, length);
 }
 
-[[nodiscard]] inline result_or_false<string_t> fread(const falseable_resource_handle_t &resource, const int_t &length) {
+[[nodiscard]] inline result_or_false<string_t> fread(const falseable_resource_handle_t &resource, const int_t<> &length) {
 	return ::scpp::io::read(resource, length);
 }
 
-[[nodiscard]] inline result_or_false<int_t> fwrite(const falseable_resource_handle_t &resource, const string_t &data) {
+[[nodiscard]] inline result_or_false<int_t<>> fwrite(const falseable_resource_handle_t &resource, const string_t &data) {
 	return ::scpp::io::write(resource, data);
 }
 
-[[nodiscard]] inline result_or_false<int_t> fputs(const falseable_resource_handle_t &resource, const string_t &data) {
+[[nodiscard]] inline result_or_false<int_t<>> fputs(const falseable_resource_handle_t &resource, const string_t &data) {
 	return ::scpp::io::write(resource, data);
 }
 

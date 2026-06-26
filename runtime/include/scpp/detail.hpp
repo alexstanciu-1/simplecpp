@@ -1,11 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -28,6 +30,7 @@ class nullptr_t;
 class bool_t;
 // Semantic integer wrapper implementing the integer arithmetic/comparison contract from the runtime spec.
 // Spec link: this type centralizes behavior so generated code follows runtime/specs/spec.md instead of raw STL semantics.
+template <typename Rep = std::int64_t>
 class int_t;
 // Semantic floating-point wrapper implementing the configured numeric widening rules.
 // Spec link: this type centralizes behavior so generated code follows runtime/specs/spec.md instead of raw STL semantics.
@@ -37,6 +40,7 @@ class float_t;
 class string_t;
 
 template <typename T> class vector_t;
+template <typename T, std::size_t N> class fixed_array_t;
 template <typename T> class shared_p;
 template <typename T> class unique_p;
 template <typename T> class weak_p;
@@ -74,6 +78,26 @@ namespace detail {
 // Common utility alias used by generated code for template normalization.
 template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template <typename T>
+struct is_int_t : std::false_type {};
+
+template <typename Rep>
+struct is_int_t<int_t<Rep>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_int_t_v = is_int_t<remove_cvref_t<T>>::value;
+
+template <typename T>
+struct int_rep;
+
+template <typename Rep>
+struct int_rep<int_t<Rep>> {
+	using type = Rep;
+};
+
+template <typename T>
+using int_rep_t = typename int_rep<remove_cvref_t<T>>::type;
 
 
 template <typename T, template <typename...> class Template>
@@ -135,6 +159,17 @@ struct vector_value_type<vector_t<T>> {
 
 template <typename T>
 using vector_value_type_t = typename vector_value_type<remove_cvref_t<T>>::type;
+
+template <typename T>
+struct fixed_array_value_type;
+
+template <typename T, std::size_t N>
+struct fixed_array_value_type<fixed_array_t<T, N>> {
+	using type = T;
+};
+
+template <typename T>
+using fixed_array_value_type_t = typename fixed_array_value_type<remove_cvref_t<T>>::type;
 
 // Detects whether a runtime type exposes operator-> so wrapper types can forward dereference safely.
 template <typename T, typename = void>

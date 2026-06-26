@@ -45,6 +45,13 @@ To cast(const From &value) {
 	}
 }
 
+namespace detail {
+
+template <typename ToRep, typename Value>
+[[nodiscard]] ToRep checked_integer_cast(Value value);
+
+} // namespace detail
+
 template <typename To, typename From>
 requires(std::is_integral_v<detail::remove_cvref_t<From>> && !std::is_same_v<detail::remove_cvref_t<From>, bool> && std::is_same_v<To, bool_t>)
 inline To cast(const From &value) {
@@ -52,9 +59,9 @@ inline To cast(const From &value) {
 }
 
 template <typename To, typename From>
-requires(std::is_integral_v<detail::remove_cvref_t<From>> && !std::is_same_v<detail::remove_cvref_t<From>, bool> && std::is_same_v<To, int_t>)
+requires(std::is_integral_v<detail::remove_cvref_t<From>> && !std::is_same_v<detail::remove_cvref_t<From>, bool> && detail::is_int_t_v<To>)
 inline To cast(const From &value) {
-	return int_t(static_cast<std::int64_t>(value));
+	return To(detail::checked_integer_cast<detail::int_rep_t<To>>(value));
 }
 
 template <typename To, typename From>
@@ -76,9 +83,9 @@ inline To cast(const From &value) {
 }
 
 template <typename To, typename From>
-requires(std::is_floating_point_v<detail::remove_cvref_t<From>> && std::is_same_v<To, int_t>)
+requires(std::is_floating_point_v<detail::remove_cvref_t<From>> && detail::is_int_t_v<To>)
 inline To cast(const From &value) {
-	return int_t(static_cast<std::int64_t>(value));
+	return To(detail::checked_integer_cast<detail::int_rep_t<To>>(static_cast<std::int64_t>(value)));
 }
 
 template <typename To, typename From>
@@ -91,6 +98,40 @@ template <typename To, typename From>
 requires(std::is_floating_point_v<detail::remove_cvref_t<From>> && std::is_same_v<To, string_t>)
 inline To cast(const From &value) {
 	return cast<string_t>(static_cast<double>(value));
+}
+
+template <typename To, typename From>
+requires(detail::is_int_t_v<To> && detail::is_int_t_v<From>)
+inline To cast(const From &value) {
+	return To(detail::checked_integer_cast<detail::int_rep_t<To>>(value.native_value()));
+}
+
+template <typename To, typename From>
+requires(std::is_same_v<To, bool_t> && detail::is_int_t_v<From>)
+inline To cast(const From &value) {
+	return bool_t(value.native_value() != 0);
+}
+
+template <typename To, typename From>
+requires(std::is_same_v<To, float_t> && detail::is_int_t_v<From>)
+inline To cast(const From &value) {
+	return float_t(static_cast<double>(value.native_value()));
+}
+
+template <typename To, typename From>
+requires(std::is_same_v<To, string_t> && detail::is_int_t_v<From>)
+inline To cast(const From &value) {
+	if constexpr (std::is_signed_v<detail::int_rep_t<From>>) {
+		return string_t(std::to_string(static_cast<std::int64_t>(value.native_value())));
+	} else {
+		return string_t(std::to_string(static_cast<std::uint64_t>(value.native_value())));
+	}
+}
+
+template <typename To, typename From>
+requires(std::is_same_v<To, bool> && detail::is_int_t_v<From>)
+inline To cast(const From &value) {
+	return value.native_value() != 0;
 }
 
 namespace detail {
@@ -136,6 +177,55 @@ namespace detail {
 	);
 }
 
+template <typename ToRep, typename Value>
+[[nodiscard]] inline bool integer_value_fits(Value value) noexcept {
+	static_assert(std::is_integral_v<ToRep>);
+	static_assert(std::is_integral_v<Value>);
+
+	if constexpr (std::is_signed_v<Value> == std::is_signed_v<ToRep>) {
+		if constexpr (sizeof(ToRep) >= sizeof(Value)) {
+			return true;
+		} else {
+			return value >= static_cast<Value>(std::numeric_limits<ToRep>::min())
+				&& value <= static_cast<Value>(std::numeric_limits<ToRep>::max());
+		}
+	} else if constexpr (std::is_signed_v<Value>) {
+		if (value < 0) {
+			return false;
+		}
+		using unsigned_value_t = std::make_unsigned_t<Value>;
+		return static_cast<unsigned_value_t>(value) <= std::numeric_limits<ToRep>::max();
+	} else {
+		using unsigned_target_t = std::make_unsigned_t<ToRep>;
+		return value <= static_cast<unsigned_target_t>(std::numeric_limits<ToRep>::max());
+	}
+}
+
+[[noreturn]] inline void throw_int_range_cast_error(const char *target, const std::string &value) {
+	throw runtime_error(
+		std::string("scpp::cast<") + target + ">: integer value is outside the target range: " + value,
+		"integer_cast_out_of_range",
+		std::string("scpp::cast<") + target + ">",
+		"",
+		std::vector<runtime_error_detail_t>{
+			{"target_type", target},
+			{"value", value},
+		}
+	);
+}
+
+template <typename ToRep, typename Value>
+[[nodiscard]] inline ToRep checked_integer_cast(Value value) {
+	if (!integer_value_fits<ToRep>(value)) {
+		if constexpr (std::is_signed_v<Value>) {
+			throw_int_range_cast_error("int_t", std::to_string(static_cast<std::int64_t>(value)));
+		} else {
+			throw_int_range_cast_error("int_t", std::to_string(static_cast<std::uint64_t>(value)));
+		}
+	}
+	return static_cast<ToRep>(value);
+}
+
 [[nodiscard]] inline const char *invalid_mixed_kind_code(const char *target) {
 	if (std::string_view(target) == "bool_t") {
 		return "invalid_mixed_kind_for_cast_bool";
@@ -176,17 +266,15 @@ template <typename T>
 	if constexpr (is_specialization_of_v<T, vector_t>) {
 		return "vector_t";
 	}
+	if constexpr (is_int_t_v<T>) {
+		return "int_t";
+	}
 	return required_cast_target_name_fallback();
 }
 
 template <>
 [[nodiscard]] inline const char *required_cast_target_name<bool_t>() noexcept {
 	return "bool_t";
-}
-
-template <>
-[[nodiscard]] inline const char *required_cast_target_name<int_t>() noexcept {
-	return "int_t";
 }
 
 template <>
@@ -306,8 +394,8 @@ inline bool_t cast<bool_t, bool>(const bool &value) {
 }
 
 template <>
-inline int_t cast<int_t, bool>(const bool &value) {
-	return int_t(value ? 1 : 0);
+inline int_t<> cast<int_t<>, bool>(const bool &value) {
+	return int_t<>(value ? 1 : 0);
 }
 
 template <>
@@ -327,8 +415,8 @@ inline bool_t cast<bool_t, std::int64_t>(const std::int64_t &value) {
 }
 
 template <>
-inline int_t cast<int_t, std::int64_t>(const std::int64_t &value) {
-	return int_t(value);
+inline int_t<> cast<int_t<>, std::int64_t>(const std::int64_t &value) {
+	return int_t<>(value);
 }
 
 template <>
@@ -348,8 +436,8 @@ inline bool_t cast<bool_t, double>(const double &value) {
 }
 
 template <>
-inline int_t cast<int_t, double>(const double &value) {
-	return int_t(static_cast<std::int64_t>(value));
+inline int_t<> cast<int_t<>, double>(const double &value) {
+	return int_t<>(static_cast<std::int64_t>(value));
 }
 
 template <>
@@ -367,8 +455,8 @@ inline string_t cast<string_t, double>(const double &value) {
 // bool_t -> scalar wrappers
 // Boolean to numeric remains explicit and centralized.
 template <>
-inline int_t cast<int_t, bool_t>(const bool_t &value) {
-	return int_t(value.native_value() ? 1 : 0);
+inline int_t<> cast<int_t<>, bool_t>(const bool_t &value) {
+	return int_t<>(value.native_value() ? 1 : 0);
 }
 
 template <>
@@ -376,17 +464,17 @@ inline float_t cast<float_t, bool_t>(const bool_t &value) {
 	return float_t(value.native_value() ? 1.0 : 0.0);
 }
 
-// int_t -> bool_t
+// int_t<> -> bool_t
 // Zero becomes false; any non-zero value becomes true.
 template <>
-inline bool_t cast<bool_t, int_t>(const int_t &value) {
+inline bool_t cast<bool_t, int_t<>>(const int_t<> &value) {
 	return bool_t(value.native_value() != 0);
 }
 
-// int_t -> float_t
+// int_t<> -> float_t
 // Widening remains explicit through the named-cast surface even though the wrapper also has a constructor path.
 template <>
-inline float_t cast<float_t, int_t>(const int_t &value) {
+inline float_t cast<float_t, int_t<>>(const int_t<> &value) {
 	return float_t(static_cast<double>(value.native_value()));
 }
 
@@ -397,11 +485,11 @@ inline bool_t cast<bool_t, float_t>(const float_t &value) {
 	return bool_t(value.native_value() != 0.0);
 }
 
-// float_t -> int_t
+// float_t -> int_t<>
 // This is an explicit narrowing conversion and truncates toward zero.
 template <>
-inline int_t cast<int_t, float_t>(const float_t &value) {
-	return int_t(static_cast<std::int64_t>(value.native_value()));
+inline int_t<> cast<int_t<>, float_t>(const float_t &value) {
+	return int_t<>(static_cast<std::int64_t>(value.native_value()));
 }
 
 // string_t -> bool_t
@@ -415,15 +503,16 @@ inline bool_t cast<bool_t, string_t>(const string_t &value) {
 	return bool_t(parsed);
 }
 
-// string_t -> int_t
+// string_t -> int_t<Rep>
 // String-to-int is strict: the whole string must be a valid base-10 integer literal.
-template <>
-inline int_t cast<int_t, string_t>(const string_t &value) {
+template <typename To>
+	requires detail::is_int_t_v<To>
+inline To cast(const string_t &value) {
 	std::int64_t parsed = 0;
 	if (!detail::parse_int64_string_strict(value.native_value(), parsed)) {
 		detail::throw_invalid_cast_string("int_t", value.native_value());
 	}
-	return int_t(parsed);
+	return To(detail::checked_integer_cast<detail::int_rep_t<To>>(parsed));
 }
 
 // string_t -> float_t
@@ -437,10 +526,10 @@ inline float_t cast<float_t, string_t>(const string_t &value) {
 	return float_t(parsed);
 }
 
-// int_t -> bool
+// int_t<> -> bool
 // Zero becomes false; any non-zero value becomes true.
 template <>
-inline bool cast<bool, int_t>(const int_t &value) {
+inline bool cast<bool, int_t<>>(const int_t<> &value) {
 	return value.native_value() != 0;
 }
 
@@ -519,10 +608,10 @@ inline string_t cast<string_t, string_t>(const string_t &value) {
 	return value;
 }
 
-// int_t -> string_t
+// int_t<> -> string_t
 // Numeric to string conversion is explicit and centralized here.
 template <>
-inline string_t cast<string_t, int_t>(const int_t &value) {
+inline string_t cast<string_t, int_t<>>(const int_t<> &value) {
 	return string_t(std::to_string(value.native_value()));
 }
 
@@ -583,19 +672,19 @@ inline bool cast<bool, mixed_t>(const mixed_t &value) {
 	return cast<bool>(cast<bool_t>(value));
 }
 
-// mixed_t -> int_t
+// mixed_t -> int_t<>
 // Applies the configured explicit conversion rules after runtime kind dispatch.
 template <>
-inline int_t cast<int_t, mixed_t>(const mixed_t &value) {
+inline int_t<> cast<int_t<>, mixed_t>(const mixed_t &value) {
 	switch (value.kind()) {
 		case mixed_t::kind_t::bool_v:
-			return cast<int_t>(value.bool_value());
+			return cast<int_t<>>(value.bool_value());
 		case mixed_t::kind_t::int_v:
 			return value.int_value();
 		case mixed_t::kind_t::float_v:
-			return cast<int_t>(value.float_value());
+			return cast<int_t<>>(value.float_value());
 		case mixed_t::kind_t::string_v:
-			return cast<int_t>(*value.string_if());
+			return cast<int_t<>>(*value.string_if());
 		default:
 			detail::throw_invalid_mixed_kind_for_cast("int_t", value);
 	}
@@ -727,7 +816,7 @@ inline To required_cast(const mixed_t &value) {
 
 		To out;
 		for (std::size_t index = 0; index < table->size(); ++index) {
-			const auto &entry = table->at(int_t{static_cast<std::int64_t>(index)});
+			const auto &entry = table->at(int_t<>{static_cast<std::int64_t>(index)});
 			if constexpr (std::is_same_v<element_t, mixed_t>) {
 				out.append(entry);
 			} else {
@@ -741,7 +830,7 @@ inline To required_cast(const mixed_t &value) {
 		if (value.kind() == mixed_t::kind_t::null_v) {
 			detail::throw_required_boundary_null(detail::required_cast_target_name<To>());
 		}
-		if constexpr (std::is_same_v<To, int_t>) {
+		if constexpr (std::is_same_v<To, int_t<>>) {
 			if (value.kind() != mixed_t::kind_t::int_v) {
 				detail::throw_required_boundary_mixed_kind(detail::required_cast_target_name<To>(), value);
 			}

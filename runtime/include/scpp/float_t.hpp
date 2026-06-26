@@ -9,7 +9,7 @@ namespace scpp {
 //
 // Enforces:
 // - floating-point values remain inside scpp::float_t at API boundaries
-// - configured widening from int_t stays explicit in one constructor
+// - configured widening from int_t<> stays explicit in one constructor
 class float_t final {
 private:
 	double value_;
@@ -23,7 +23,7 @@ public:
 		: value_(value) {
 	}
 
-	constexpr float_t(const int_t &value) noexcept
+	constexpr float_t(const int_t<> &value) noexcept
 		: value_(static_cast<double>(value.native_value())) {
 	}
 

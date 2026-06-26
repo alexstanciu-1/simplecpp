@@ -76,7 +76,7 @@ result<string_t> get(const string_t &path) {
 	return string_t(std::move(contents));
 }
 
-result<int_t> put(const string_t &path, const string_t &data) {
+result<int_t<>> put(const string_t &path, const string_t &data) {
 	std::ofstream output(scpp::filesystem::filesystem_detail::to_path(path), std::ios::binary | std::ios::trunc);
 	if (!output.is_open()) {
 		return error_t(string_t("fs::put(): open failed"));
@@ -86,7 +86,7 @@ result<int_t> put(const string_t &path, const string_t &data) {
 	if (!output.good()) {
 		return error_t(string_t("fs::put(): write failed"));
 	}
-	return int_t(static_cast<std::int64_t>(native.size()));
+	return int_t<>(static_cast<std::int64_t>(native.size()));
 }
 
 bool_t mkdir(const string_t &path) {
@@ -112,16 +112,16 @@ result<vector_t<string_t>> scan(const string_t &path) {
 	return scpp::filesystem::filesystem_detail::names_to_vector(std::move(names));
 }
 
-result<int_t> size(const string_t &path) {
+result<int_t<>> size(const string_t &path) {
 	std::error_code error;
 	const auto size_value = std::filesystem::file_size(scpp::filesystem::filesystem_detail::to_path(path), error);
 	if (error) {
 		return error_t(string_t("fs::size(): stat failed"));
 	}
-	return int_t(static_cast<std::int64_t>(size_value));
+	return int_t<>(static_cast<std::int64_t>(size_value));
 }
 
-result<int_t> mtime(const string_t &path) {
+result<int_t<>> mtime(const string_t &path) {
 	std::error_code error;
 	const auto native_path = scpp::filesystem::filesystem_detail::to_path(path);
 	if (!std::filesystem::exists(native_path, error) || error) {
@@ -131,7 +131,7 @@ result<int_t> mtime(const string_t &path) {
 	if (error) {
 		return error_t(string_t("fs::mtime(): stat failed"));
 	}
-	return int_t(scpp::filesystem::filesystem_detail::file_time_to_unix_seconds(time));
+	return int_t<>(scpp::filesystem::filesystem_detail::file_time_to_unix_seconds(time));
 }
 
 bool_t touch(const string_t &path) {
@@ -223,7 +223,7 @@ result_or_false<string_t> file_get_contents(const string_t &path) {
 	return value.value();
 }
 
-result_or_false<int_t> file_put_contents(const string_t &path, const string_t &data) {
+result_or_false<int_t<>> file_put_contents(const string_t &path, const string_t &data) {
 	const auto value = scpp::fs::put(path, data);
 	if (!value.has_value().native_value()) {
 		return false_sentinel;
@@ -249,7 +249,7 @@ result_or_false<hash_t<mixed_t>> scandir(const string_t &path) {
 	return filesystem_detail::names_to_php_array(std::move(names));
 }
 
-result_or_false<int_t> filesize(const string_t &path) {
+result_or_false<int_t<>> filesize(const string_t &path) {
 	const auto value = scpp::fs::size(path);
 	if (!value.has_value().native_value()) {
 		return false_sentinel;
@@ -257,7 +257,7 @@ result_or_false<int_t> filesize(const string_t &path) {
 	return value.value();
 }
 
-result_or_false<int_t> filemtime(const string_t &path) {
+result_or_false<int_t<>> filemtime(const string_t &path) {
 	const auto value = scpp::fs::mtime(path);
 	if (!value.has_value().native_value()) {
 		return false_sentinel;

@@ -7,7 +7,7 @@ int main() {
 
 	values.at(0).append(scpp::string_t("ef"));
 	assert(values.index(0).native_value() == "abef");
-	assert(values.index(scpp::int_t(1)).native_value() == "cd");
+	assert(values.index(scpp::int_t<>(1)).native_value() == "cd");
 
 	values.clear();
 	assert(values.empty().native_value() == true);

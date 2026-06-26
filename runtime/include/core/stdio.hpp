@@ -57,26 +57,26 @@ struct file_open_mode_info final {
 	return resource_handle_t(std::move(native));
 }
 
-[[nodiscard]] inline nullable<int_t> seek_file_resource(const falseable_resource_handle_t &resource, const int_t &offset, const int_t &whence = int_t(SEEK_SET)) {
+[[nodiscard]] inline nullable<int_t<>> seek_file_resource(const falseable_resource_handle_t &resource, const int_t<> &offset, const int_t<> &whence = int_t<>(SEEK_SET)) {
 	auto &file = require_file_resource(resource, "fseek");
 	const auto status = std::fseek(file.native_handle(), static_cast<long>(offset.native_value()), static_cast<int>(whence.native_value()));
 	if (status != 0) {
 		return null;
 	}
 	std::clearerr(file.native_handle());
-	return int_t(0);
+	return int_t<>(0);
 }
 
-[[nodiscard]] inline result_or_false<int_t> tell_file_resource(const falseable_resource_handle_t &resource) {
+[[nodiscard]] inline result_or_false<int_t<>> tell_file_resource(const falseable_resource_handle_t &resource) {
 	auto &file = require_file_resource(resource, "ftell");
 	const auto position = std::ftell(file.native_handle());
 	if (position < 0L) {
 		return false_sentinel;
 	}
-	return int_t(static_cast<std::int64_t>(position));
+	return int_t<>(static_cast<std::int64_t>(position));
 }
 
-[[nodiscard]] inline result_or_false<string_t> read_file_line(const falseable_resource_handle_t &resource, const nullable<int_t> &length = null) {
+[[nodiscard]] inline result_or_false<string_t> read_file_line(const falseable_resource_handle_t &resource, const nullable<int_t<>> &length = null) {
 	auto &file = require_file_resource(resource, "fgets");
 	if (!file.readable) {
 		throw std::runtime_error("fgets(): file resource is not readable");
@@ -115,7 +115,7 @@ struct file_open_mode_info final {
 	return string_t(std::move(out));
 }
 
-[[nodiscard]] inline result_or_false<string_t> read_file_bytes(const falseable_resource_handle_t &resource, const int_t &length) {
+[[nodiscard]] inline result_or_false<string_t> read_file_bytes(const falseable_resource_handle_t &resource, const int_t<> &length) {
 	auto &file = require_file_resource(resource, "fread");
 	if (!file.readable) {
 		throw std::runtime_error("fread(): file resource is not readable");
@@ -136,7 +136,7 @@ struct file_open_mode_info final {
 	return string_t(std::move(out));
 }
 
-[[nodiscard]] inline result_or_false<int_t> write_file_bytes(const falseable_resource_handle_t &resource, const string_t &data) {
+[[nodiscard]] inline result_or_false<int_t<>> write_file_bytes(const falseable_resource_handle_t &resource, const string_t &data) {
 	auto &file = require_file_resource(resource, "fwrite");
 	if (!file.writable) {
 		throw std::runtime_error("fwrite(): file resource is not writable");
@@ -146,7 +146,7 @@ struct file_open_mode_info final {
 	if (bytes_written == 0 && !native.empty() && std::ferror(file.native_handle()) != 0) {
 		return false_sentinel;
 	}
-	return int_t(static_cast<std::int64_t>(bytes_written));
+	return int_t<>(static_cast<std::int64_t>(bytes_written));
 }
 
 [[nodiscard]] inline bool_t rewind_file_resource(const falseable_resource_handle_t &resource) {
@@ -184,23 +184,23 @@ using ::scpp::parse_file_open_mode;
 	return ::scpp::open_file_resource(path, mode);
 }
 
-[[nodiscard]] inline nullable<int_t> seek(const falseable_resource_handle_t &resource, const int_t &offset, const int_t &whence = int_t(SEEK_SET)) {
+[[nodiscard]] inline nullable<int_t<>> seek(const falseable_resource_handle_t &resource, const int_t<> &offset, const int_t<> &whence = int_t<>(SEEK_SET)) {
 	return ::scpp::seek_file_resource(resource, offset, whence);
 }
 
-[[nodiscard]] inline result_or_false<int_t> tell(const falseable_resource_handle_t &resource) {
+[[nodiscard]] inline result_or_false<int_t<>> tell(const falseable_resource_handle_t &resource) {
 	return ::scpp::tell_file_resource(resource);
 }
 
-[[nodiscard]] inline result_or_false<string_t> read_line(const falseable_resource_handle_t &resource, const nullable<int_t> &length = null) {
+[[nodiscard]] inline result_or_false<string_t> read_line(const falseable_resource_handle_t &resource, const nullable<int_t<>> &length = null) {
 	return ::scpp::read_file_line(resource, length);
 }
 
-[[nodiscard]] inline result_or_false<string_t> read(const falseable_resource_handle_t &resource, const int_t &length) {
+[[nodiscard]] inline result_or_false<string_t> read(const falseable_resource_handle_t &resource, const int_t<> &length) {
 	return ::scpp::read_file_bytes(resource, length);
 }
 
-[[nodiscard]] inline result_or_false<int_t> write(const falseable_resource_handle_t &resource, const string_t &data) {
+[[nodiscard]] inline result_or_false<int_t<>> write(const falseable_resource_handle_t &resource, const string_t &data) {
 	return ::scpp::write_file_bytes(resource, data);
 }
 

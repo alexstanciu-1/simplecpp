@@ -3,12 +3,12 @@
 int main() {
 	runtime_test::lifetime_probe::reset_counts();
 	for (int i = 0; i < 20000; ++i) {
-		auto first = scpp::value<runtime_test::lifetime_probe>(scpp::int_t(i));
+		auto first = scpp::value<runtime_test::lifetime_probe>(scpp::int_t<>(i));
 		auto copy = first;
 		auto moved = std::move(copy);
 		assert(first->value.native_value() == i);
 		assert(moved->value.native_value() == i);
-		moved->value = scpp::int_t(i + 10);
+		moved->value = scpp::int_t<>(i + 10);
 		assert(first->value.native_value() == i);
 		assert(moved->value.native_value() == i + 10);
 	}

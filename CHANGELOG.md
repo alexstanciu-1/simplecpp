@@ -9,6 +9,29 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.72 - 2026-06-26
+
+### Additions
+
+- Added fixed-width integer source and runtime support for `int8`, `int16`, `int32`, `int64`, `uint8`/`byte`, `uint16`, `uint32`, and `uint64`, backed by compact `int_t<Rep>` runtime storage.
+- Added first-slice `fixed_array<T, N>` support backed by `fixed_array_t<T, N>`, including exact-size positional literals, indexed read/write, `count`, `empty`, `foreach`, function/local/property coverage, zero-size arrays, and nested vector elements.
+- Added focused runtime, PHP, STAN, and fresh strict-project coverage for fixed-width integer locals, same-signed widening, signed/unsigned rejection, out-of-range literal blocking, and fixed-array language/runtime behavior.
+
+### Fixes
+
+- Made STAN reject out-of-range fixed-width integer literals and incompatible fixed-width assignments before C++ build while allowing same-signed widening.
+- Disabled stale normal-PHP oracle checks for Prism-specific array and nullable tests so those suites validate the Prism runtime expectations directly.
+- Updated strict authoring guidance for compact fixed-width integer storage and first-slice fixed-size arrays.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Fixed-width integer signed/unsigned crossings and narrowing require explicit casts; same-signed widening is allowed.
+- `fixed_array<T, N>` is for fixed-size sequential storage; append, unset, resize, keyed literals, and mixed/dynamic conversion are not part of this first slice.
+
 ## 0.1.71 - 2026-06-22
 
 ### Additions

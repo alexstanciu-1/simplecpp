@@ -73,7 +73,7 @@ namespace {
 		case MYSQL_TYPE_LONGLONG:
 		case MYSQL_TYPE_YEAR: {
 			try {
-				return mixed_t(int_t(std::stoll(text)));
+				return mixed_t(int_t<>(std::stoll(text)));
 			} catch (...) {
 				return mixed_t(string_t(text));
 			}
@@ -90,7 +90,7 @@ namespace {
 		}
 		case MYSQL_TYPE_BIT: {
 			if (length == 1U) {
-				return mixed_t(int_t(static_cast<std::uint8_t>(value[0])));
+				return mixed_t(int_t<>(static_cast<std::uint8_t>(value[0])));
 			}
 			return mixed_t(string_t(text));
 		}

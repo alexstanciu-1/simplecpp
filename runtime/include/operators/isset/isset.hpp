@@ -11,7 +11,7 @@ namespace scpp {
 // Implements container-key isset() for vector wrappers.
 // How: index existence is reduced to a bounds check, then mixed_t payloads get the extra null-sensitive check required by Prism++.
 template <typename T>
-inline bool_t isset(const vector_t<T> &value, const int_t &key) {
+inline bool_t isset(const vector_t<T> &value, const int_t<> &key) {
 	if (!detail::vector_has_index(value.size(), key)) {
 		return bool_t(false);
 	}
@@ -23,14 +23,14 @@ inline bool_t isset(const vector_t<T> &value, const int_t &key) {
 
 template <typename T>
 inline bool_t isset(const vector_t<T> &value, const int key) {
-	return isset(value, int_t{static_cast<std::int64_t>(key)});
+	return isset(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 // Implements container-key isset() for hash wrappers.
 // How: mixed_t payloads stay null-sensitive, while typed payloads treat key presence as value presence because they cannot represent PHP null by default construction.
 template <typename T, typename K>
-	requires std::same_as<K, int_t>
-inline bool_t isset(const hash_t<T, K> &value, const int_t &key) {
+	requires std::same_as<K, int_t<>>
+inline bool_t isset(const hash_t<T, K> &value, const int_t<> &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
 	}
@@ -59,13 +59,13 @@ inline bool_t isset(const hash_t<T, K> &value, const char *key) {
 }
 
 template <typename T, typename K>
-	requires std::same_as<K, int_t>
+	requires std::same_as<K, int_t<>>
 inline bool_t isset(const hash_t<T, K> &value, const int key) {
-	return isset(value, int_t{static_cast<std::int64_t>(key)});
+	return isset(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 template <typename T, typename K>
-	requires (!std::same_as<K, int_t> && !std::same_as<K, string_t> && !std::same_as<K, mixed_t>)
+	requires (!std::same_as<K, int_t<>> && !std::same_as<K, string_t> && !std::same_as<K, mixed_t>)
 inline bool_t isset(const hash_t<T, K> &value, const K &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
@@ -76,7 +76,7 @@ inline bool_t isset(const hash_t<T, K> &value, const K &key) {
 	return bool_t(true);
 }
 
-inline bool_t isset(const hash_t<mixed_t, mixed_t> &value, const int_t &key) {
+inline bool_t isset(const hash_t<mixed_t, mixed_t> &value, const int_t<> &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(false);
 	}
@@ -95,7 +95,7 @@ inline bool_t isset(const hash_t<mixed_t, mixed_t> &value, const char *key) {
 }
 
 inline bool_t isset(const hash_t<mixed_t, mixed_t> &value, const int key) {
-	return isset(value, int_t{static_cast<std::int64_t>(key)});
+	return isset(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 // Implements container-key isset() for hash-compatible mixed_t carriers.
@@ -110,7 +110,7 @@ inline bool_t isset(const mixed_t &value, const mixed_t &key) {
 	return bool_t(false);
 }
 
-inline bool_t isset(const mixed_t &value, const int_t &key) {
+inline bool_t isset(const mixed_t &value, const int_t<> &key) {
 	const auto *table = value.table_if();
 	if (table == nullptr) {
 		if (const auto *shared_table = value.shared_table_if()) {
@@ -149,7 +149,7 @@ inline bool_t isset(const mixed_t &value, const char *key) {
 }
 
 inline bool_t isset(const mixed_t &value, const int key) {
-	return isset(value, int_t{static_cast<std::int64_t>(key)});
+	return isset(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 inline bool_t isset(const dynamic_t<> &value, const mixed_t &key) {
@@ -165,7 +165,7 @@ inline bool_t isset(const dynamic_t<> &value, const mixed_t &key) {
 	return bool_t(false);
 }
 
-inline bool_t isset(const dynamic_t<> &value, const int_t &key) {
+inline bool_t isset(const dynamic_t<> &value, const int_t<> &key) {
 	if (!static_cast<bool>(value)) {
 		return bool_t(false);
 	}
@@ -184,7 +184,7 @@ inline bool_t isset(const dynamic_t<> &value, const char *key) {
 }
 
 inline bool_t isset(const dynamic_t<> &value, const int key) {
-	return isset(value, int_t{static_cast<std::int64_t>(key)});
+	return isset(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 template <typename T, typename Key>

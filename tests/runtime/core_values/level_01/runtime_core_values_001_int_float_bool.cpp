@@ -1,8 +1,8 @@
 #include "tests/runtime/runtime_test_common.hpp"
 
 int main() {
-	const scpp::int_t left(20);
-	const scpp::int_t right(3);
+	const scpp::int_t<> left(20);
+	const scpp::int_t<> right(3);
 	assert((left + right).native_value() == 23);
 	assert((left - right).native_value() == 17);
 	assert((left * right).native_value() == 60);
@@ -11,10 +11,10 @@ int main() {
 	assert((left > right).native_value() == true);
 	assert((left < right).native_value() == false);
 
-	scpp::int_t compound(10);
-	compound += scpp::int_t(5);
-	compound *= scpp::int_t(2);
-	compound -= scpp::int_t(4);
+	scpp::int_t<> compound(10);
+	compound += scpp::int_t<>(5);
+	compound *= scpp::int_t<>(2);
+	compound -= scpp::int_t<>(4);
 	assert(compound.native_value() == 26);
 
 	const scpp::float_t pi(3.5);

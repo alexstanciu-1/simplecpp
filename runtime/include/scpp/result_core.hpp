@@ -215,15 +215,15 @@ public:
 	}
 
 	template <typename U = T>
-	requires requires(U &wrapped, const int_t &index) { wrapped.at(index); }
-	decltype(auto) at(const int_t &index) {
-		return require_value("at(int_t)").at(index);
+	requires requires(U &wrapped, const int_t<> &index) { wrapped.at(index); }
+	decltype(auto) at(const int_t<> &index) {
+		return require_value("at(int_t<>)").at(index);
 	}
 
 	template <typename U = T>
-	requires requires(const U &wrapped, const int_t &index) { wrapped.at(index); }
-	decltype(auto) at(const int_t &index) const {
-		return require_value("at(int_t) const").at(index);
+	requires requires(const U &wrapped, const int_t<> &index) { wrapped.at(index); }
+	decltype(auto) at(const int_t<> &index) const {
+		return require_value("at(int_t<>) const").at(index);
 	}
 
 	template <typename Index, typename U = T>

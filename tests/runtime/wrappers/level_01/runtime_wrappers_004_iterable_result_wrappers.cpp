@@ -15,8 +15,8 @@ int main() {
 
 	scpp::result_or_false<scpp::hash_t<scpp::mixed_t>> or_false(files);
 	assert(or_false.size() == 2);
-	assert(or_false.at(scpp::int_t(0)).get_string().native_value() == "alpha.txt");
-	assert(or_false.at(scpp::int_t(1)).get_string().native_value() == "beta.txt");
+	assert(or_false.at(scpp::int_t<>(0)).get_string().native_value() == "alpha.txt");
+	assert(or_false.at(scpp::int_t<>(1)).get_string().native_value() == "beta.txt");
 
 	std::size_t iterated_false = 0;
 	for (auto it = or_false.begin_entries(); it != or_false.end_entries(); ++it) {
@@ -35,16 +35,16 @@ int main() {
 
 	scpp::result<scpp::hash_t<scpp::mixed_t>> ok_value(files);
 	assert(ok_value.size() == 2);
-	assert(ok_value.at(scpp::int_t(0)).get_string().native_value() == "alpha.txt");
+	assert(ok_value.at(scpp::int_t<>(0)).get_string().native_value() == "alpha.txt");
 
-	ok_value = scpp::error_t(scpp::string_t("boom"), scpp::int_t(5), scpp::string_t("iter.php"));
+	ok_value = scpp::error_t(scpp::string_t("boom"), scpp::int_t<>(5), scpp::string_t("iter.php"));
 	runtime_test::expect_throw<std::runtime_error>([&]() {
-		static_cast<void>(ok_value.at(scpp::int_t(0)));
+		static_cast<void>(ok_value.at(scpp::int_t<>(0)));
 	});
 
 	scpp::result_or_bool<scpp::hash_t<scpp::mixed_t>> or_bool(files);
 	assert(or_bool.size() == 2);
-	assert(or_bool.at(scpp::int_t(1)).get_string().native_value() == "beta.txt");
+	assert(or_bool.at(scpp::int_t<>(1)).get_string().native_value() == "beta.txt");
 
 	or_bool = scpp::false_sentinel;
 	runtime_test::expect_throw<std::runtime_error>([&]() {

@@ -1,8 +1,8 @@
 #include "tests/runtime/runtime_test_common.hpp"
 
 int main() {
-	auto owner_a = scpp::shared<runtime_test::sample_object>(scpp::int_t(1));
-	auto owner_b = scpp::shared<runtime_test::sample_object>(scpp::int_t(2));
+	auto owner_a = scpp::shared<runtime_test::sample_object>(scpp::int_t<>(1));
+	auto owner_b = scpp::shared<runtime_test::sample_object>(scpp::int_t<>(2));
 	auto first = scpp::weak(owner_a);
 	auto second = scpp::weak(owner_b);
 	first.swap(second);

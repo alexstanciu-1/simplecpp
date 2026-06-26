@@ -32,7 +32,7 @@ static void dump_table_ptr(const hash_t<mixed_t>* t, const void* identity, int i
         print_indent(indent_lvl + 1);
         std::cout << "[";
         using key_t = std::remove_cvref_t<decltype(key)>;
-        if constexpr (std::is_same_v<key_t, int_t>) {
+        if constexpr (std::is_same_v<key_t, int_t<>>) {
             std::cout << key.native_value();
         } else {
             std::cout << '"' << key.native_value() << '"';

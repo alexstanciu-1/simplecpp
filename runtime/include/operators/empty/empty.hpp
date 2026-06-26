@@ -28,7 +28,8 @@ inline bool_t empty_scalar(const bool_t &value) {
 	return bool_t(!value.native_value());
 }
 
-inline bool_t empty_scalar(const int_t &value) {
+template <typename Rep>
+inline bool_t empty_scalar(const int_t<Rep> &value) {
 	return bool_t(value.native_value() == 0);
 }
 
@@ -91,7 +92,7 @@ requires (
 	&& !std::is_same_v<std::remove_cvref_t<T>, mixed_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, string_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, bool_t>
-	&& !std::is_same_v<std::remove_cvref_t<T>, int_t>
+	&& !::scpp::detail::is_int_t_v<std::remove_cvref_t<T>>
 	&& !std::is_same_v<std::remove_cvref_t<T>, float_t>
 	&& !requires (const std::remove_cvref_t<T> &value) {
 		value.has_value();
@@ -148,6 +149,11 @@ inline bool_t empty(const vector_t<T> &value) {
 	return value.empty();
 }
 
+template <typename T, std::size_t N>
+inline bool_t empty(const fixed_array_t<T, N> &value) {
+	return value.empty();
+}
+
 template <typename T, typename K>
 inline bool_t empty(const hash_t<T, K> &value) {
 	return value.empty();
@@ -169,7 +175,8 @@ inline bool_t empty(const bool_t &value) {
 	return detail::empty_scalar(value);
 }
 
-inline bool_t empty(const int_t &value) {
+template <typename Rep>
+inline bool_t empty(const int_t<Rep> &value) {
 	return detail::empty_scalar(value);
 }
 
@@ -229,7 +236,7 @@ inline bool_t empty(const dynamic_t<> &value) {
 }
 
 template <typename T>
-inline bool_t empty(const vector_t<T> &value, const int_t &key) {
+inline bool_t empty(const vector_t<T> &value, const int_t<> &key) {
 	if (!detail::vector_has_index(value.size(), key)) {
 		return bool_t(true);
 	}
@@ -242,12 +249,12 @@ inline bool_t empty(const vector_t<T> &value, const int_t &key) {
 
 template <typename T>
 inline bool_t empty(const vector_t<T> &value, const int key) {
-	return empty(value, int_t{static_cast<std::int64_t>(key)});
+	return empty(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 template <typename T, typename K>
-	requires std::same_as<K, int_t>
-inline bool_t empty(const hash_t<T, K> &value, const int_t &key) {
+	requires std::same_as<K, int_t<>>
+inline bool_t empty(const hash_t<T, K> &value, const int_t<> &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(true);
 	}
@@ -278,13 +285,13 @@ inline bool_t empty(const hash_t<T, K> &value, const char *key) {
 }
 
 template <typename T, typename K>
-	requires std::same_as<K, int_t>
+	requires std::same_as<K, int_t<>>
 inline bool_t empty(const hash_t<T, K> &value, const int key) {
-	return empty(value, int_t{static_cast<std::int64_t>(key)});
+	return empty(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 template <typename T, typename K>
-	requires (!std::same_as<K, int_t> && !std::same_as<K, string_t> && !std::same_as<K, mixed_t>)
+	requires (!std::same_as<K, int_t<>> && !std::same_as<K, string_t> && !std::same_as<K, mixed_t>)
 inline bool_t empty(const hash_t<T, K> &value, const K &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(true);
@@ -296,7 +303,7 @@ inline bool_t empty(const hash_t<T, K> &value, const K &key) {
 	return empty(value.at(key));
 }
 
-inline bool_t empty(const hash_t<mixed_t, mixed_t> &value, const int_t &key) {
+inline bool_t empty(const hash_t<mixed_t, mixed_t> &value, const int_t<> &key) {
 	if (!value.has(key).native_value()) {
 		return bool_t(true);
 	}
@@ -317,7 +324,7 @@ inline bool_t empty(const hash_t<mixed_t, mixed_t> &value, const char *key) {
 }
 
 inline bool_t empty(const hash_t<mixed_t, mixed_t> &value, const int key) {
-	return empty(value, int_t{static_cast<std::int64_t>(key)});
+	return empty(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 inline bool_t empty(const mixed_t &value, const mixed_t &key) {
@@ -330,7 +337,7 @@ inline bool_t empty(const mixed_t &value, const mixed_t &key) {
 	return bool_t(true);
 }
 
-inline bool_t empty(const mixed_t &value, const int_t &key) {
+inline bool_t empty(const mixed_t &value, const int_t<> &key) {
 	const auto *table = value.table_if();
 	if (table == nullptr) {
 		if (const auto *shared_table = value.shared_table_if()) {
@@ -369,7 +376,7 @@ inline bool_t empty(const mixed_t &value, const char *key) {
 }
 
 inline bool_t empty(const mixed_t &value, const int key) {
-	return empty(value, int_t{static_cast<std::int64_t>(key)});
+	return empty(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 inline bool_t empty(const dynamic_t<> &value, const mixed_t &key) {
@@ -379,7 +386,7 @@ inline bool_t empty(const dynamic_t<> &value, const mixed_t &key) {
 	return ::scpp::empty(mixed_t{dynamic_box(value)}, key);
 }
 
-inline bool_t empty(const dynamic_t<> &value, const int_t &key) {
+inline bool_t empty(const dynamic_t<> &value, const int_t<> &key) {
 	if (!static_cast<bool>(value)) {
 		return bool_t(true);
 	}
@@ -398,7 +405,7 @@ inline bool_t empty(const dynamic_t<> &value, const char *key) {
 }
 
 inline bool_t empty(const dynamic_t<> &value, const int key) {
-	return empty(value, int_t{static_cast<std::int64_t>(key)});
+	return empty(value, int_t<>{static_cast<std::int64_t>(key)});
 }
 
 } // namespace scpp

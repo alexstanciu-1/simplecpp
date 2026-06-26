@@ -198,9 +198,21 @@ final class TokenSiteScanner
 		}
 
 		$typeStartIndex = $openParenIndex + 1;
+		$depthAngles = 0;
+		$depthParens = 0;
 		for ($j = $typeEndIndex; $j >= ($openParenIndex + 1); $j--) {
 			$text = $tokens[$j]['text'];
-			if ($text === ',') {
+			if ($text === '>') {
+				$depthAngles++;
+			} elseif ($text === '>>') {
+				$depthAngles += 2;
+			} elseif ($text === '<') {
+				$depthAngles = max(0, $depthAngles - 1);
+			} elseif ($text === ')') {
+				$depthParens++;
+			} elseif ($text === '(') {
+				$depthParens = max(0, $depthParens - 1);
+			} elseif ($text === ',' && $depthAngles === 0 && $depthParens === 0) {
 				$typeStartIndex = $j + 1;
 				break;
 			}
@@ -733,6 +745,9 @@ final class TokenSiteScanner
 			return false;
 		}
 		if (preg_match('/^[A-Za-z_\\\\][A-Za-z0-9_\\\\]*$/', $text) === 1) {
+			return true;
+		}
+		if ($depthAngles > 0 && preg_match('/^(?:0|[1-9][0-9]*)$/', $text) === 1) {
 			return true;
 		}
 		if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $text) === 1) {

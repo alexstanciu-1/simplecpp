@@ -1,8 +1,8 @@
 #include "tests/runtime/runtime_test_common.hpp"
 
 int main() {
-	auto first = scpp::shared<runtime_test::sample_object>(scpp::int_t(3));
-	auto second = scpp::shared<runtime_test::sample_object>(scpp::int_t(7));
+	auto first = scpp::shared<runtime_test::sample_object>(scpp::int_t<>(3));
+	auto second = scpp::shared<runtime_test::sample_object>(scpp::int_t<>(7));
 
 	assert(first.use_count() == 1U);
 	first.swap(second);

@@ -51,8 +51,8 @@ inline void set_cli_args(int argc, char** argv) {
 	detail::g_cli_argv = argv;
 }
 
-[[nodiscard]] inline int_t cli_argc() {
-	return int_t(static_cast<std::int64_t>(detail::g_cli_argc));
+[[nodiscard]] inline int_t<> cli_argc() {
+	return int_t<>(static_cast<std::int64_t>(detail::g_cli_argc));
 }
 
 [[nodiscard]] inline mixed_t cli_argv() {
