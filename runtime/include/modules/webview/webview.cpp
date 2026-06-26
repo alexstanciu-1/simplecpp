@@ -60,6 +60,10 @@ constexpr const char *bridge_script = R"JS(
 			window.chrome.webview.postMessage(text);
 			return;
 		}
+		if (window.scppAndroid && typeof window.scppAndroid.postMessage === "function") {
+			window.scppAndroid.postMessage(text);
+			return;
+		}
 		if (window.ipc && window.ipc.postMessage) {
 			window.ipc.postMessage(text);
 			return;
@@ -588,6 +592,7 @@ struct android_webview_state final {
 	JavaVM *vm = nullptr;
 	jobject activity = nullptr;
 	jobject webview = nullptr;
+	shared_p<view> target = null;
 };
 
 [[nodiscard]] JNIEnv *android_env(JavaVM *vm) {
@@ -616,6 +621,22 @@ struct android_webview_state final {
 		return nullptr;
 	}
 	return static_cast<android_webview_state *>(target->native_state);
+}
+
+void push_android_bridge_message(android_webview_state *state, const std::string &text) {
+	if (state == nullptr || !state->target.has_value().native_value() || state->target.get() == nullptr) {
+		return;
+	}
+	auto window = state->target->window_handle;
+	if (!window.has_value().native_value() || window.get() == nullptr || !window->app_handle.has_value().native_value()) {
+		return;
+	}
+
+	auto event_value = shared<ui::event>();
+	event_value->type = string_t("webview_message");
+	event_value->window_handle = window;
+	event_value->text = string_t(text);
+	window->app_handle->pending_events.push_back(event_value);
 }
 
 [[nodiscard]] result<bool_t> android_clear_exception(JNIEnv *env, const char *function_name) {
@@ -828,6 +849,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	target->window_handle = window;
 	target->native_handle = state->webview;
 	target->native_state = state;
+	state->target = target;
 	return target;
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 	HWND parent = static_cast<HWND>(window->native_handle);
@@ -1366,6 +1388,23 @@ result<bool_t> android_attach_activity_webview(const shared_p<ui::window> &windo
 
 	window->native_handle = bridge->activity;
 	window->native_state = bridge;
+	return bool_t(true);
+}
+
+result<bool_t> android_dispatch_bridge_message(const shared_p<view> &target, const string_t &message_json) {
+	auto checked = require_view(target, "webview_android_dispatch_bridge_message()");
+	if (!checked.has_value().native_value()) {
+		return *checked.error();
+	}
+	auto *state = get_android_state(target);
+	if (state == nullptr || state->webview == nullptr) {
+		return error_t(string_t("webview_android_dispatch_bridge_message(): Android WebView state is not available"));
+	}
+	if (message_json.native_value().empty()) {
+		return error_t(string_t("webview_android_dispatch_bridge_message(): message must not be empty"));
+	}
+
+	push_android_bridge_message(state, message_json.native_value());
 	return bool_t(true);
 }
 

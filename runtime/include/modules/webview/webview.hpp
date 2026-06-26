@@ -43,6 +43,7 @@ public:
 void close(const shared_p<view> &target);
 #if defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
 [[nodiscard]] result<bool_t> android_attach_activity_webview(const shared_p<ui::window> &window, JavaVM *vm, jobject activity, jobject webview);
+[[nodiscard]] result<bool_t> android_dispatch_bridge_message(const shared_p<view> &target, const string_t &message_json);
 void android_detach_activity_webview(const shared_p<ui::window> &window);
 #endif
 #else

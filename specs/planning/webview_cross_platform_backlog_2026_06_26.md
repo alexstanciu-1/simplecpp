@@ -28,7 +28,8 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 Latest heartbeat slice:
 
 - Android WebView now has a first native JNI bridge API: attach an Activity-owned `WebView` to a `ui_window`, create a `webview` from that bridge, and call `loadUrl`, `loadDataWithBaseURL`, `evaluateJavascript`, and `destroy` through JNI.
-- The Android NDK smoke source now references the attach/detach bridge API so CI compile coverage protects the boundary.
+- Android bridge messaging now has the native dispatch half: shared JavaScript recognizes `window.scppAndroid.postMessage(...)`, and Java/Kotlin activity code can forward that string to `webview_android_dispatch_bridge_message(...)` so it enters the same `webview_message` UI event queue as WebKitGTK, WKWebView, and WebView2.
+- The Android NDK smoke source now references the attach/detach and dispatch bridge APIs so CI compile coverage protects the boundary. The Android activity-owned `@JavascriptInterface` object remains the Java/Kotlin-side packaging slice.
 
 ## Done Definition
 

@@ -15,6 +15,10 @@ int main() {
 	(void) scpp::webview_runtime::load_url(view, scpp::string_t("about:blank"));
 	(void) scpp::webview_runtime::load_html(view, scpp::string_t("<!doctype html><h1>Simple C++ WebView</h1>"));
 	(void) scpp::webview_runtime::eval(view, scpp::string_t("document.body.dataset.ready = '1';"));
+	(void) scpp::webview_runtime::android_dispatch_bridge_message(
+		view,
+		scpp::string_t("{\"id\":1,\"kind\":\"invoke\",\"command\":\"bridge.ping\",\"payload\":{\"source\":\"android-compile\"}}")
+	);
 	scpp::webview_runtime::close(view);
 	return 0;
 }
