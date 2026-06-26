@@ -22,7 +22,7 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | Linux | WebKitGTK | Implemented first rendering slice | Build, launch under Xvfb, screenshot artifact |
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
 | Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
-| iOS | WKWebView | Initial backend boundary in progress | WKWebView simulator screenshot pending CI |
+| iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
 | Android | Android WebView | Not implemented | Android NDK UI-disabled compile smoke only |
 
 ## Done Definition
@@ -85,7 +85,7 @@ Implementation tasks:
 Testing tasks:
 
 - Add an iOS WebView simulator smoke app. Initial smoke source and bundle plist added.
-- Build, install, launch, screenshot, and validate image dimensions in macOS CI. Initial CI steps added.
+- Build, install, launch, screenshot, and validate image dimensions in macOS CI. Initial CI steps added and green.
 
 Open decision:
 
@@ -162,10 +162,11 @@ Constraint:
 
 ## Latest Known Good CI Run
 
-Run `28223199903` validated:
+Run `28225636940` validated:
 
 - Linux WebKitGTK WebView screenshot
 - macOS WKWebView screenshot
-- Windows Win32 UI compile/link
+- Windows WebView2 compile/link
 - iOS UIKit UI simulator screenshot
+- iOS WKWebView simulator screenshot
 - Android NDK UI compile smoke
