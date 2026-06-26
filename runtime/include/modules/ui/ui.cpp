@@ -61,7 +61,7 @@ struct callback_state final {
 	shared_p<window> target;
 };
 
-void destroy_callback_state(gpointer data) {
+void destroy_callback_state(gpointer data, GClosure *) {
 	delete static_cast<callback_state *>(data);
 }
 
