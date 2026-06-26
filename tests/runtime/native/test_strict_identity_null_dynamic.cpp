@@ -14,7 +14,7 @@ static void test_mixed_from_null_dynamic_is_identical_to_null() {
 
 static void test_mixed_from_non_null_dynamic_is_not_identical_to_null() {
 	scpp::hash_t<scpp::mixed_t> row;
-	row.set(scpp::string_t("v"), scpp::mixed_t(scpp::int_t(1)));
+	row.set(scpp::string_t("v"), scpp::mixed_t(scpp::int_t<>(1)));
 	scpp::mixed_t value(scpp::dynamic_t<>(std::make_shared<scpp::hash_t<scpp::mixed_t>>(std::move(row))));
 
 	assert(!scpp::identical(value, scpp::null_t{}).native_value());

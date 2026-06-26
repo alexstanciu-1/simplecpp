@@ -28,28 +28,33 @@ inline const hash_t<mixed_t> &countable_hash_or_throw(const mixed_t &value, cons
 } // namespace detail
 
 // Implements count() for the currently supported vector wrapper subset.
-// How: returns the runtime vector size widened into the standard int_t wrapper used by generated code.
+// How: returns the runtime vector size widened into the standard int_t<> wrapper used by generated code.
 template <typename T>
-inline int_t count(const vector_t<T> &value) {
-	return int_t(static_cast<std::int64_t>(value.size()));
+inline int_t<> count(const vector_t<T> &value) {
+	return int_t<>(static_cast<std::int64_t>(value.size()));
+}
+
+template <typename T, std::size_t N>
+inline int_t<> count(const fixed_array_t<T, N> &value) {
+	return int_t<>(static_cast<std::int64_t>(value.size()));
 }
 
 // Implements count() for any concrete hash_t payload.
 // How: count() is a cardinality query on the wrapper itself, so the element payload type does not affect the logical size.
 template <typename T, typename K>
-inline int_t count(const hash_t<T, K> &value) {
-	return int_t(static_cast<std::int64_t>(value.size()));
+inline int_t<> count(const hash_t<T, K> &value) {
+	return int_t<>(static_cast<std::int64_t>(value.size()));
 }
 
 // Implements count() for dynamic values that currently hold an array/hash payload.
 // How: generated code may still keep arrays inside mixed_t, so count() unwraps exactly one dynamic layer and rejects non-countable payloads explicitly.
-inline int_t count(const mixed_t &value) {
+inline int_t<> count(const mixed_t &value) {
 	return count(detail::countable_hash_or_throw(value, "count"));
 }
 
 // Implements count() for the first-class shared dynamic-object handle surface.
 // How: dynamic_t<> remains a thin shared handle around the existing hash-backed dynamic storage, so count() forwards directly to the pointed payload.
-inline int_t count(const dynamic_t<> &value) {
+inline int_t<> count(const dynamic_t<> &value) {
 	if (!static_cast<bool>(value)) {
 		throw std::runtime_error("php::count(dynamic_t<>) expects a present dynamic handle");
 	}

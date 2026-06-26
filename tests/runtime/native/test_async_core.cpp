@@ -11,14 +11,14 @@
 
 namespace {
 
-scpp::async_core::task<scpp::int_t> immediate_value()
+scpp::async_core::task<scpp::int_t<>> immediate_value()
 {
-	co_return scpp::int_t(7);
+	co_return scpp::int_t<>(7);
 }
 
 scpp::async_core::task<void> sleep_and_record(std::vector<int> &events, int value, int delay_ms)
 {
-	co_await scpp::async_core::sleep_ms(scpp::int_t(delay_ms));
+	co_await scpp::async_core::sleep_ms(scpp::int_t<>(delay_ms));
 	events.push_back(value);
 }
 
@@ -29,24 +29,24 @@ scpp::async_core::task<void> yield_and_record(std::vector<int> &events, int befo
 	events.push_back(after);
 }
 
-scpp::async_core::task<scpp::int_t> nested_value()
+scpp::async_core::task<scpp::int_t<>> nested_value()
 {
 	auto child = immediate_value();
 	const auto value = co_await child;
-	co_return scpp::int_t(value.native_value() + 5);
+	co_return scpp::int_t<>(value.native_value() + 5);
 }
 
-scpp::async_core::task<scpp::int_t> nested_ready_value()
+scpp::async_core::task<scpp::int_t<>> nested_ready_value()
 {
-	auto child = scpp::async_core::ready_task(scpp::int_t(20));
+	auto child = scpp::async_core::ready_task(scpp::int_t<>(20));
 	const auto value = co_await child;
 	co_await scpp::async_core::ready_task();
-	co_return scpp::int_t(value.native_value() + 2);
+	co_return scpp::int_t<>(value.native_value() + 2);
 }
 
 scpp::async_core::task<void> failing_task()
 {
-	co_await scpp::async_core::sleep_ms(scpp::int_t(1));
+	co_await scpp::async_core::sleep_ms(scpp::int_t<>(1));
 	throw std::runtime_error("async failure");
 }
 
@@ -96,10 +96,10 @@ private:
 	std::thread worker_;
 };
 
-scpp::async_core::task<scpp::int_t> cross_thread_signal()
+scpp::async_core::task<scpp::int_t<>> cross_thread_signal()
 {
 	co_await background_signal_awaitable();
-	co_return scpp::int_t(99);
+	co_return scpp::int_t<>(99);
 }
 
 void test_immediate_value()
@@ -116,7 +116,7 @@ void test_nested_await()
 
 void test_ready_task()
 {
-	const auto value = scpp::async_core::sync_wait(scpp::async_core::ready_task(scpp::int_t(11)));
+	const auto value = scpp::async_core::sync_wait(scpp::async_core::ready_task(scpp::int_t<>(11)));
 	assert(value.native_value() == 11);
 	scpp::async_core::sync_wait(scpp::async_core::ready_task());
 	const auto nested = scpp::async_core::sync_wait(nested_ready_value());
@@ -172,7 +172,7 @@ void test_cross_thread_wakeup()
 
 void test_missing_scheduler_diagnostic()
 {
-	auto awaitable = scpp::async_core::sleep_ms(scpp::int_t(1));
+	auto awaitable = scpp::async_core::sleep_ms(scpp::int_t<>(1));
 	bool caught = false;
 	try {
 		awaitable.await_suspend(std::noop_coroutine());

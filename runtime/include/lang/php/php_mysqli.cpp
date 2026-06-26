@@ -12,7 +12,7 @@ mysqli::mysqli(
 	string_t username,
 	string_t password,
 	string_t database,
-	int_t port,
+	int_t<> port,
 	string_t socket) {
 	db::mysql_module::status status_value;
 	handle_ = db::mysql_module::connect(
@@ -35,8 +35,8 @@ result_or_bool<shared_p<mysqli_result>> mysqli::query(const string_t &sql) {
 
 	const auto outcome = handle_->query(sql.native_value());
 	apply_runtime_status({outcome.errno_code, outcome.error_message});
-	affected_rows = int_t(outcome.affected_rows);
-	insert_id = int_t(outcome.insert_id);
+	affected_rows = int_t<>(outcome.affected_rows);
+	insert_id = int_t<>(outcome.insert_id);
 	if (!outcome.has_result) {
 		return bool_t(true);
 	}
@@ -68,7 +68,7 @@ void mysqli::close() {
 		handle_->close();
 		handle_.reset();
 	}
-	errno_code = int_t(0);
+	errno_code = int_t<>(0);
 	error = string_t("");
 }
 
@@ -89,8 +89,8 @@ bool_t mysqli::begin_transaction() {
 	}
 	const bool ok = handle_->begin_transaction();
 	apply_runtime_status(handle_->last_status());
-	affected_rows = int_t(handle_->affected_rows());
-	insert_id = int_t(handle_->insert_id());
+	affected_rows = int_t<>(handle_->affected_rows());
+	insert_id = int_t<>(handle_->insert_id());
 	return bool_t(ok);
 }
 
@@ -101,8 +101,8 @@ bool_t mysqli::commit() {
 	}
 	const bool ok = handle_->commit();
 	apply_runtime_status(handle_->last_status());
-	affected_rows = int_t(handle_->affected_rows());
-	insert_id = int_t(handle_->insert_id());
+	affected_rows = int_t<>(handle_->affected_rows());
+	insert_id = int_t<>(handle_->insert_id());
 	return bool_t(ok);
 }
 
@@ -113,25 +113,25 @@ bool_t mysqli::rollback() {
 	}
 	const bool ok = handle_->rollback();
 	apply_runtime_status(handle_->last_status());
-	affected_rows = int_t(handle_->affected_rows());
-	insert_id = int_t(handle_->insert_id());
+	affected_rows = int_t<>(handle_->affected_rows());
+	insert_id = int_t<>(handle_->insert_id());
 	return bool_t(ok);
 }
 
 void mysqli::apply_connect_status(const db::mysql_module::status &status_value) {
-	connect_errno = int_t(status_value.errno_code);
+	connect_errno = int_t<>(status_value.errno_code);
 	connect_error = string_t(status_value.error_message);
 }
 
 void mysqli::apply_runtime_status(const db::mysql_module::status &status_value) {
-	errno_code = int_t(status_value.errno_code);
+	errno_code = int_t<>(status_value.errno_code);
 	error = string_t(status_value.error_message);
 }
 
 mysqli_result::mysqli_result(std::shared_ptr<db::mysql_module::result_handle> handle)
 	: handle_(std::move(handle)) {
 	if (handle_ != nullptr) {
-		num_rows = int_t(handle_->num_rows());
+		num_rows = int_t<>(handle_->num_rows());
 	}
 }
 
@@ -171,8 +171,8 @@ bool_t mysqli_stmt::execute() {
 
 	handle_->execute(bound_types_, values);
 	apply_status(handle_->last_status());
-	affected_rows = int_t(handle_->affected_rows());
-	insert_id = int_t(handle_->insert_id());
+	affected_rows = int_t<>(handle_->affected_rows());
+	insert_id = int_t<>(handle_->insert_id());
 	if (owner_ != nullptr) {
 		owner_->apply_runtime_status(handle_->last_status());
 		owner_->affected_rows = affected_rows;
@@ -204,17 +204,17 @@ void mysqli_stmt::close() {
 		handle_.reset();
 	}
 	clear_local_error();
-	affected_rows = int_t(0);
-	insert_id = int_t(0);
+	affected_rows = int_t<>(0);
+	insert_id = int_t<>(0);
 }
 
 void mysqli_stmt::clear_local_error() {
-	errno_code = int_t(0);
+	errno_code = int_t<>(0);
 	error = string_t("");
 }
 
 void mysqli_stmt::set_local_error(std::int64_t errno_value, const char *message) {
-	errno_code = int_t(errno_value);
+	errno_code = int_t<>(errno_value);
 	error = string_t(message);
 	if (owner_ != nullptr) {
 		owner_->apply_runtime_status({errno_value, message});
@@ -222,7 +222,7 @@ void mysqli_stmt::set_local_error(std::int64_t errno_value, const char *message)
 }
 
 void mysqli_stmt::apply_status(const db::mysql_module::status &status_value) {
-	errno_code = int_t(status_value.errno_code);
+	errno_code = int_t<>(status_value.errno_code);
 	error = string_t(status_value.error_message);
 }
 

@@ -105,7 +105,7 @@ sleep_awaitable sleep_for(std::chrono::milliseconds duration) noexcept
 	return sleep_awaitable(duration);
 }
 
-sleep_awaitable sleep_ms(const int_t &duration_ms) noexcept
+sleep_awaitable sleep_ms(const int_t<> &duration_ms) noexcept
 {
 	const auto native_duration = duration_ms.native_value();
 	if (native_duration <= 0) {

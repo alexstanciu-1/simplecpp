@@ -227,7 +227,7 @@ private:
 			std::int64_t value = 0;
 			auto result = std::from_chars(token.data(), token.data() + token.size(), value);
 			if (result.ec == std::errc{} && result.ptr == token.data() + token.size()) {
-				return mixed_t(int_t(value));
+				return mixed_t(int_t<>(value));
 			}
 		}
 
@@ -436,7 +436,7 @@ void encode_hash(const hash_t<mixed_t> &value, std::string &out) {
 		} else if (key.kind() == mixed_t::kind_t::int_v) {
 			json_escape_string(std::to_string(key.get_int().native_value()), out);
 		} else {
-			throw std::runtime_error("json_encode: object key must lower to string_t or int_t");
+			throw std::runtime_error("json_encode: object key must lower to string_t or int_t<>");
 		}
 		out.push_back(':');
 		encode_value((*it).value_ref(), out);

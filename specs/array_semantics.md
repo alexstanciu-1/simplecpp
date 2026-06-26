@@ -219,6 +219,20 @@ If the target is `mixed` and currently in the null state:
 - append is allowed
 - the target autovivifies into an array/table carrier
 
+## 10. `fixed_array<T, N>` first-slice semantics
+
+`fixed_array<T, N>` is the source-facing fixed-size sequential container.
+
+Current rules:
+- `N` must be a non-negative integer literal in the type expression
+- array literals assigned or returned into `fixed_array<T, N>` are positional only
+- literal element count must exactly match `N`
+- indexed reads and writes are supported
+- `foreach` iterates in index order with `int` keys
+- `count(...)` returns `N`
+- `empty(...)` is true only when `N` is zero
+- append, unset, resize, keyed literals, and mixed/dynamic fixed-array conversion are not part of the first slice
+
 ### 9.3 Other unsupported append targets
 
 If the target is not array/hash compatible and is not the null-state `mixed` bootstrap case:

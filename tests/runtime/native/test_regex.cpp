@@ -50,7 +50,7 @@ static void test_strict_match_core() {
 	const auto offset_match = scpp::regex::match(
 		scpp::string_t("/ab/i"),
 		scpp::string_t("ab xx AB"),
-		scpp::int_t(3));
+		scpp::int_t<>(3));
 	assert(offset_match.has_value().native_value());
 	assert(offset_match.value().size() == 1u);
 	assert(offset_match.value()[0].native_value() == "AB");
@@ -58,7 +58,7 @@ static void test_strict_match_core() {
 	const auto negative_offset_match = scpp::regex::match(
 		scpp::string_t("/ab/i"),
 		scpp::string_t("ab xx AB"),
-		scpp::int_t(-2));
+		scpp::int_t<>(-2));
 	assert(negative_offset_match.has_value().native_value());
 	assert(negative_offset_match.value().size() == 1u);
 	assert(negative_offset_match.value()[0].native_value() == "AB");
@@ -66,7 +66,7 @@ static void test_strict_match_core() {
 	const auto oversized_offset_match = scpp::regex::match(
 		scpp::string_t("/ab/i"),
 		scpp::string_t("ab xx AB"),
-		scpp::int_t(99));
+		scpp::int_t<>(99));
 	assert(oversized_offset_match.has_value().native_value());
 	assert(oversized_offset_match.value().empty().native_value());
 }
@@ -111,7 +111,7 @@ static void test_legacy_preg_match_wrapper() {
 	assert(matched.has_value().native_value());
 	assert(matched.value().native_value() == 1);
 	assert(matches.get_hash().size() == 5u);
-	assert(matches.get_hash()[scpp::int_t(0)].get_string().native_value() == "Abb-cDD");
+	assert(matches.get_hash()[scpp::int_t<>(0)].get_string().native_value() == "Abb-cDD");
 	assert(matches.get_hash()[scpp::string_t("left")].get_string().native_value() == "Abb");
 	assert(matches.get_hash()[scpp::string_t("right")].get_string().native_value() == "cDD");
 
@@ -120,11 +120,11 @@ static void test_legacy_preg_match_wrapper() {
 		scpp::string_t("/(?<left>ab+)-(?<right>cd+)/i"),
 		scpp::string_t("Abb-cDD xx aBB-cd"),
 		offset_matches,
-		scpp::int_t(0),
-		scpp::int_t(8));
+		scpp::int_t<>(0),
+		scpp::int_t<>(8));
 	assert(offset_matched.has_value().native_value());
 	assert(offset_matched.value().native_value() == 1);
-	assert(offset_matches.get_hash()[scpp::int_t(0)].get_string().native_value() == "aBB-cd");
+	assert(offset_matches.get_hash()[scpp::int_t<>(0)].get_string().native_value() == "aBB-cd");
 	assert(offset_matches.get_hash()[scpp::string_t("left")].get_string().native_value() == "aBB");
 
 	bool unsupported_flag_threw = false;
@@ -134,7 +134,7 @@ static void test_legacy_preg_match_wrapper() {
 			scpp::string_t("/ab/"),
 			scpp::string_t("ab"),
 			ignored,
-			scpp::int_t(256)));
+			scpp::int_t<>(256)));
 	} catch (const scpp::ValueError &error) {
 		unsupported_flag_threw = std::string(error.what()).find("not supported by the regex module yet") != std::string::npos;
 	}
@@ -171,7 +171,7 @@ static void test_strict_match_all_core() {
 	const auto offset_counted = scpp::regex::match_all(
 		scpp::string_t("/(ab)(c?)/i"),
 		scpp::string_t("ab ABC xxab"),
-		scpp::int_t(3));
+		scpp::int_t<>(3));
 	assert(offset_counted.has_value().native_value());
 	assert(offset_counted.value().size() == 2u);
 	assert(offset_counted.value()[0][0].native_value() == "ABC");
@@ -180,7 +180,7 @@ static void test_strict_match_all_core() {
 	const auto offset_pattern_order = scpp::regex::match_all_pattern_order(
 		scpp::string_t("/(ab)(c?)/i"),
 		scpp::string_t("ab ABC xxab"),
-		scpp::int_t(3));
+		scpp::int_t<>(3));
 	assert(offset_pattern_order.has_value().native_value());
 	assert(offset_pattern_order.value().size() == 3u);
 	assert(offset_pattern_order.value()[0].size() == 2u);
@@ -205,34 +205,34 @@ static void test_legacy_preg_match_all_wrapper() {
 	assert(counted.has_value().native_value());
 	assert(counted.value().native_value() == 3);
 	assert(matches.get_hash().size() == 5u);
-	assert(matches.get_hash()[scpp::int_t(0)].get_hash()[scpp::int_t(0)].get_string().native_value() == "ab");
-	assert(matches.get_hash()[scpp::int_t(0)].get_hash()[scpp::int_t(1)].get_string().native_value() == "ABC");
-	assert(matches.get_hash()[scpp::string_t("head")].get_hash()[scpp::int_t(0)].get_string().native_value() == "ab");
-	assert(matches.get_hash()[scpp::string_t("tail")].get_hash()[scpp::int_t(1)].get_string().native_value() == "C");
+	assert(matches.get_hash()[scpp::int_t<>(0)].get_hash()[scpp::int_t<>(0)].get_string().native_value() == "ab");
+	assert(matches.get_hash()[scpp::int_t<>(0)].get_hash()[scpp::int_t<>(1)].get_string().native_value() == "ABC");
+	assert(matches.get_hash()[scpp::string_t("head")].get_hash()[scpp::int_t<>(0)].get_string().native_value() == "ab");
+	assert(matches.get_hash()[scpp::string_t("tail")].get_hash()[scpp::int_t<>(1)].get_string().native_value() == "C");
 
 	scpp::mixed_t set_order_matches;
 	const auto set_order_counted = scpp::php::preg_match_all(
 		scpp::string_t("/(?<head>ab)(?<tail>c?)/i"),
 		scpp::string_t("ab ABC xxab"),
 		set_order_matches,
-		scpp::int_t(2));
+		scpp::int_t<>(2));
 	assert(set_order_counted.has_value().native_value());
 	assert(set_order_counted.value().native_value() == 3);
 	assert(set_order_matches.get_hash().size() == 3u);
-	assert(set_order_matches.get_hash()[scpp::int_t(0)].get_hash()[scpp::string_t("head")].get_string().native_value() == "ab");
-	assert(set_order_matches.get_hash()[scpp::int_t(1)].get_hash()[scpp::string_t("tail")].get_string().native_value() == "C");
+	assert(set_order_matches.get_hash()[scpp::int_t<>(0)].get_hash()[scpp::string_t("head")].get_string().native_value() == "ab");
+	assert(set_order_matches.get_hash()[scpp::int_t<>(1)].get_hash()[scpp::string_t("tail")].get_string().native_value() == "C");
 
 	scpp::mixed_t offset_matches;
 	const auto offset_counted = scpp::php::preg_match_all(
 		scpp::string_t("/(?<head>ab)(?<tail>c?)/i"),
 		scpp::string_t("ab ABC xxab"),
 		offset_matches,
-		scpp::int_t(1),
-		scpp::int_t(3));
+		scpp::int_t<>(1),
+		scpp::int_t<>(3));
 	assert(offset_counted.has_value().native_value());
 	assert(offset_counted.value().native_value() == 2);
-	assert(offset_matches.get_hash()[scpp::int_t(0)].get_hash()[scpp::int_t(0)].get_string().native_value() == "ABC");
-	assert(offset_matches.get_hash()[scpp::string_t("head")].get_hash()[scpp::int_t(1)].get_string().native_value() == "ab");
+	assert(offset_matches.get_hash()[scpp::int_t<>(0)].get_hash()[scpp::int_t<>(0)].get_string().native_value() == "ABC");
+	assert(offset_matches.get_hash()[scpp::string_t("head")].get_hash()[scpp::int_t<>(1)].get_string().native_value() == "ab");
 
 	bool unsupported_flag_threw = false;
 	try {
@@ -241,7 +241,7 @@ static void test_legacy_preg_match_all_wrapper() {
 			scpp::string_t("/ab/"),
 			scpp::string_t("ab"),
 			ignored,
-			scpp::int_t(512)));
+			scpp::int_t<>(512)));
 	} catch (const scpp::ValueError &error) {
 		unsupported_flag_threw = std::string(error.what()).find("not supported by the regex module yet") != std::string::npos;
 	}
@@ -260,7 +260,7 @@ static void test_replace_variants() {
 		scpp::string_t("/,/"),
 		scpp::string_t("|"),
 		scpp::string_t("a,b,c"),
-		scpp::int_t(2));
+		scpp::int_t<>(2));
 	assert(limited.has_value().native_value());
 	assert(limited.value().native_value() == "a|b|c");
 
@@ -278,7 +278,7 @@ static void test_replace_variants() {
 	assert(capture_replaced.has_value().native_value());
 	assert(capture_replaced.value().native_value() == "xx<cDD:Abb:Abb-cDD:cDD>yy");
 
-	scpp::int_t replace_count(0);
+	scpp::int_t<> replace_count(0);
 	const auto counted = scpp::regex::replace(
 		scpp::string_t("/ab+/i"),
 		scpp::string_t("X"),
@@ -303,7 +303,7 @@ static void test_replace_callback_strict_and_legacy() {
 
 	const std::function<scpp::string_t(scpp::mixed_t)> legacy_callback =
 		[](scpp::mixed_t values) -> scpp::string_t {
-			return scpp::string_t("<" + values.get_hash()[scpp::int_t(1)].get_string().native_value() + ">");
+			return scpp::string_t("<" + values.get_hash()[scpp::int_t<>(1)].get_string().native_value() + ">");
 		};
 	const auto legacy = scpp::php::preg_replace_callback(
 		scpp::string_t("/(ab+)/i"),
@@ -312,7 +312,7 @@ static void test_replace_callback_strict_and_legacy() {
 	assert(legacy.has_value().native_value());
 	assert(legacy.value().native_value() == "<ab> xx <ABB>");
 
-	scpp::int_t callback_count(0);
+	scpp::int_t<> callback_count(0);
 	const auto counted_legacy = scpp::php::preg_replace_callback(
 		scpp::string_t("/(ab+)/i"),
 		legacy_callback,
@@ -349,13 +349,13 @@ static void test_replace_callback_array_strict_and_legacy() {
 		scpp::string_t("/(ab+)/i"),
 		std::function<scpp::string_t(scpp::mixed_t)>(
 			[](scpp::mixed_t values) -> scpp::string_t {
-				return scpp::string_t("[" + values.get_hash()[scpp::int_t(1)].get_string().native_value() + "]");
+				return scpp::string_t("[" + values.get_hash()[scpp::int_t<>(1)].get_string().native_value() + "]");
 			}));
 	legacy_callbacks.set(
 		scpp::string_t("/\\[([^\\]]+)\\]/"),
 		std::function<scpp::string_t(scpp::mixed_t)>(
 			[](scpp::mixed_t values) -> scpp::string_t {
-				return scpp::string_t("<" + values.get_hash()[scpp::int_t(1)].get_string().native_value() + ">");
+				return scpp::string_t("<" + values.get_hash()[scpp::int_t<>(1)].get_string().native_value() + ">");
 			}));
 
 	const auto legacy = scpp::php::preg_replace_callback_array(
@@ -364,7 +364,7 @@ static void test_replace_callback_array_strict_and_legacy() {
 	assert(legacy.has_value().native_value());
 	assert(legacy.value().native_value() == "<ab> xx <ABB>");
 
-	scpp::int_t callback_array_count(0);
+	scpp::int_t<> callback_array_count(0);
 	const auto counted_legacy = scpp::php::preg_replace_callback_array(
 		legacy_callbacks,
 		scpp::string_t("ab xx ABB"),
@@ -407,8 +407,8 @@ static void test_grep_and_filter_legacy_wrapper() {
 		scpp::mixed_t(std::move(grep_input)));
 	assert(grepped.has_value().native_value());
 	assert(grepped.value().get_hash().size() == 2u);
-	assert(grepped.value().get_hash()[scpp::int_t(0)].get_string().native_value() == "ab");
-	assert(grepped.value().get_hash()[scpp::int_t(2)].get_string().native_value() == "ABc");
+	assert(grepped.value().get_hash()[scpp::int_t<>(0)].get_string().native_value() == "ab");
+	assert(grepped.value().get_hash()[scpp::int_t<>(2)].get_string().native_value() == "ABc");
 
 	auto filter_input = scpp::unique<scpp::hash_t<scpp::mixed_t>>();
 	filter_input->set(scpp::string_t("first"), scpp::mixed_t(scpp::string_t("ab")));
@@ -427,7 +427,7 @@ static void test_grep_and_filter_legacy_wrapper() {
 	auto counted_filter_input = scpp::unique<scpp::hash_t<scpp::mixed_t>>();
 	static_cast<void>(counted_filter_input->append(scpp::mixed_t(scpp::string_t("ab"))));
 	static_cast<void>(counted_filter_input->append(scpp::mixed_t(scpp::string_t("ABab"))));
-	scpp::int_t filter_count(0);
+	scpp::int_t<> filter_count(0);
 	const auto counted_filtered = scpp::php::preg_filter(
 		scpp::string_t("/ab/i"),
 		scpp::string_t("X"),
@@ -447,8 +447,8 @@ static void test_split_strict_and_legacy() {
 	const auto no_empty = scpp::regex::split(
 		scpp::string_t("/,+/"),
 		scpp::string_t(",a,,b,"),
-		scpp::int_t(-1),
-		scpp::int_t(1));
+		scpp::int_t<>(-1),
+		scpp::int_t<>(1));
 	assert(no_empty.has_value().native_value());
 	assert(no_empty.value().size() == 2u);
 	assert(no_empty.value()[0].native_value() == "a");
@@ -457,8 +457,8 @@ static void test_split_strict_and_legacy() {
 	const auto with_delims = scpp::regex::split(
 		scpp::string_t("/([,:])/"),
 		scpp::string_t("a,b:c"),
-		scpp::int_t(-1),
-		scpp::int_t(2));
+		scpp::int_t<>(-1),
+		scpp::int_t<>(2));
 	assert(with_delims.has_value().native_value());
 	assert(with_delims.value().size() == 5u);
 	assert(with_delims.value()[0].native_value() == "a");
@@ -467,27 +467,27 @@ static void test_split_strict_and_legacy() {
 	assert(with_delims.value()[3].native_value() == ":");
 	assert(with_delims.value()[4].native_value() == "c");
 
-	const auto legacy = scpp::php::preg_split(scpp::string_t("/,/"), scpp::string_t("a,b,c"), scpp::int_t(2));
+	const auto legacy = scpp::php::preg_split(scpp::string_t("/,/"), scpp::string_t("a,b,c"), scpp::int_t<>(2));
 	assert(legacy.has_value().native_value());
 	assert(legacy.value().get_hash().size() == 2u);
-	assert(legacy.value().get_hash()[scpp::int_t(1)].get_string().native_value() == "b,c");
+	assert(legacy.value().get_hash()[scpp::int_t<>(1)].get_string().native_value() == "b,c");
 
 	const auto legacy_flags = scpp::php::preg_split(
 		scpp::string_t("/([,:])/"),
 		scpp::string_t("a,b:c"),
-		scpp::int_t(-1),
-		scpp::int_t(2));
+		scpp::int_t<>(-1),
+		scpp::int_t<>(2));
 	assert(legacy_flags.has_value().native_value());
 	assert(legacy_flags.value().get_hash().size() == 5u);
-	assert(legacy_flags.value().get_hash()[scpp::int_t(1)].get_string().native_value() == ",");
+	assert(legacy_flags.value().get_hash()[scpp::int_t<>(1)].get_string().native_value() == ",");
 
 	bool unsupported_offset_capture_threw = false;
 	try {
 		static_cast<void>(scpp::php::preg_split(
 			scpp::string_t("/,/"),
 			scpp::string_t("a,b"),
-			scpp::int_t(-1),
-			scpp::int_t(4)));
+			scpp::int_t<>(-1),
+			scpp::int_t<>(4)));
 	} catch (const scpp::ValueError &error) {
 		unsupported_offset_capture_threw = std::string(error.what()).find("not supported by the regex module yet") != std::string::npos;
 	}

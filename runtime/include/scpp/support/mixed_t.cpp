@@ -57,7 +57,7 @@ namespace {
 	return std::runtime_error(out.str());
 }
 
-[[nodiscard]] bool is_zero_divisor(const int_t &value) noexcept {
+[[nodiscard]] bool is_zero_divisor(const int_t<> &value) noexcept {
 	return value.native_value() == 0;
 }
 
@@ -316,7 +316,7 @@ mixed_t::mixed_t(nullopt_t) noexcept : type_(kind_t::null_v) {}
 mixed_t::mixed_t(nullptr_t) noexcept : type_(kind_t::null_v) {}
 
 mixed_t::mixed_t(const bool_t  &value) noexcept : type_(kind_t::bool_v),  bool_value_(value)  {}
-mixed_t::mixed_t(const int_t   &value) noexcept : type_(kind_t::int_v),   int_value_(value)   {}
+mixed_t::mixed_t(const int_t<>   &value) noexcept : type_(kind_t::int_v),   int_value_(value)   {}
 mixed_t::mixed_t(const float_t &value) noexcept : type_(kind_t::float_v), float_value_(value) {}
 
 mixed_t::mixed_t(const string_t &value) : type_(kind_t::string_v) {
@@ -325,7 +325,7 @@ mixed_t::mixed_t(const string_t &value) : type_(kind_t::string_v) {
 mixed_t::mixed_t(const char *value) : mixed_t(string_t{value}) {}
 
 mixed_t::mixed_t(bool value)           noexcept : type_(kind_t::bool_v),  bool_value_(bool_t{value})    {}
-mixed_t::mixed_t(std::int64_t value)   noexcept : type_(kind_t::int_v),   int_value_(int_t{value})      {}
+mixed_t::mixed_t(std::int64_t value)   noexcept : type_(kind_t::int_v),   int_value_(int_t<>{value})      {}
 mixed_t::mixed_t(double value)         noexcept : type_(kind_t::float_v), float_value_(float_t{value})  {}
 
 mixed_t::mixed_t(unique_p<hash_t<mixed_t>> value) noexcept : type_(kind_t::table_v) {
@@ -382,10 +382,10 @@ mixed_t &mixed_t::operator=(const bool_t &value) noexcept {
 	assert_kind_change_allowed(kind_t::bool_v);
 	destroy(); type_ = kind_t::bool_v; new (&bool_value_) bool_t(value); return *this;
 }
-mixed_t &mixed_t::operator=(const int_t &value) noexcept {
+mixed_t &mixed_t::operator=(const int_t<> &value) noexcept {
 	if (type_ == kind_t::int_v) { int_value_ = value; return *this; }
 	assert_kind_change_allowed(kind_t::int_v);
-	destroy(); type_ = kind_t::int_v; new (&int_value_) int_t(value); return *this;
+	destroy(); type_ = kind_t::int_v; new (&int_value_) int_t<>(value); return *this;
 }
 mixed_t &mixed_t::operator=(const float_t &value) noexcept {
 	if (type_ == kind_t::float_v) { float_value_ = value; return *this; }
@@ -404,7 +404,7 @@ mixed_t &mixed_t::operator=(const string_t &value) {
 }
 mixed_t &mixed_t::operator=(const char *value) { return (*this = string_t{value}); }
 mixed_t &mixed_t::operator=(bool value)           noexcept { return (*this = bool_t{value});  }
-mixed_t &mixed_t::operator=(std::int64_t value)   noexcept { return (*this = int_t{value});   }
+mixed_t &mixed_t::operator=(std::int64_t value)   noexcept { return (*this = int_t<>{value});   }
 mixed_t &mixed_t::operator=(double value)          noexcept { return (*this = float_t{value}); }
 
 mixed_t &mixed_t::operator=(unique_p<hash_t<mixed_t>> value) noexcept {
@@ -483,8 +483,8 @@ bool_t mixed_t::is_hash() const noexcept { return bool_t{type_ == kind_t::table_
 
 const bool_t *mixed_t::try_get_bool() const noexcept { return type_ == kind_t::bool_v ? &bool_value_ : nullptr; }
 bool_t *mixed_t::try_get_bool() noexcept { return type_ == kind_t::bool_v ? &bool_value_ : nullptr; }
-const int_t *mixed_t::try_get_int() const noexcept { return type_ == kind_t::int_v ? &int_value_ : nullptr; }
-int_t *mixed_t::try_get_int() noexcept { return type_ == kind_t::int_v ? &int_value_ : nullptr; }
+const int_t<> *mixed_t::try_get_int() const noexcept { return type_ == kind_t::int_v ? &int_value_ : nullptr; }
+int_t<> *mixed_t::try_get_int() noexcept { return type_ == kind_t::int_v ? &int_value_ : nullptr; }
 const float_t *mixed_t::try_get_float() const noexcept { return type_ == kind_t::float_v ? &float_value_ : nullptr; }
 float_t *mixed_t::try_get_float() noexcept { return type_ == kind_t::float_v ? &float_value_ : nullptr; }
 const string_t *mixed_t::try_get_string() const noexcept { return string_if(); }
@@ -499,7 +499,7 @@ bool_t mixed_t::get_bool() const {
 	throw exact_accessor_error("get_bool", *this, "bool_t");
 }
 
-int_t mixed_t::get_int() const {
+int_t<> mixed_t::get_int() const {
 	if (const auto *value = try_get_int()) {
 		return *value;
 	}
@@ -542,7 +542,7 @@ hash_t<mixed_t> &mixed_t::get_hash() {
 }
 
 bool_t mixed_t::bool_value() const { return get_bool(); }
-int_t mixed_t::int_value() const { return get_int(); }
+int_t<> mixed_t::int_value() const { return get_int(); }
 float_t mixed_t::float_value() const { return get_float(); }
 
 string_t *mixed_t::string_if() noexcept {
@@ -595,7 +595,7 @@ namespace {
 }
 }
 
-int_t &mixed_t::as_int_ref() {
+int_t<> &mixed_t::as_int_ref() {
 	throw_disabled_native_ref_bridge("as_int_ref");
 }
 
@@ -626,7 +626,7 @@ hash_t<mixed_t> &mixed_t::as_table_ref() {
 // generator can reliably inject explicit cast<T>(...) bridges at all approved typed destinations.
 
 mixed_t::operator bool_t()  const { return cast<bool_t>(*this);  }
-mixed_t::operator int_t()   const { return cast<int_t>(*this);   }
+mixed_t::operator int_t<>()   const { return cast<int_t<>>(*this);   }
 mixed_t::operator float_t() const { return cast<float_t>(*this); }
 mixed_t::operator string_t() const { return cast<string_t>(*this); }
 
@@ -729,7 +729,7 @@ const hash_t<mixed_t> *resolve_table_const(const mixed_t &self) noexcept {
 }
 } // namespace
 
-mixed_t &mixed_t::operator[](const int_t &key) {
+mixed_t &mixed_t::operator[](const int_t<> &key) {
 	auto *t = resolve_table_mut(*this);
 	if (t) return (*t)[key];
 	throw runtime_error_unary("operator[]", *this);
@@ -748,10 +748,10 @@ mixed_t &mixed_t::operator[](const char *key) {
 	return operator[](string_t{key});
 }
 mixed_t &mixed_t::operator[](int native_key) {
-	return operator[](int_t{static_cast<std::int64_t>(native_key)});
+	return operator[](int_t<>{static_cast<std::int64_t>(native_key)});
 }
 
-const mixed_t &mixed_t::operator[](const int_t &key) const {
+const mixed_t &mixed_t::operator[](const int_t<> &key) const {
 	if (const auto *t = resolve_table_const(*this)) return (*t)[key];
 	// weak_table: lock and look up
 	if (type_ == kind_t::weak_table_v) {
@@ -780,14 +780,14 @@ const mixed_t &mixed_t::operator[](const char *key) const {
 	return operator[](string_t{key});
 }
 const mixed_t &mixed_t::operator[](int native_key) const {
-	return operator[](int_t{static_cast<std::int64_t>(native_key)});
+	return operator[](int_t<>{static_cast<std::int64_t>(native_key)});
 }
 
 // ============================================================
 // get (non-autovivifying read-by-value)
 // ============================================================
 
-mixed_t mixed_t::get(const int_t &key) const {
+mixed_t mixed_t::get(const int_t<> &key) const {
 	if (const auto *t = resolve_table_const(*this)) return t->_find_val(key);
 	if (type_ == kind_t::weak_table_v) {
 		auto locked = weak_table_value_.lock();
@@ -812,7 +812,7 @@ mixed_t mixed_t::get(const char *key) const {
 	return get(string_t{key});
 }
 mixed_t mixed_t::get(int native_key) const {
-	return get(int_t{static_cast<std::int64_t>(native_key)});
+	return get(int_t<>{static_cast<std::int64_t>(native_key)});
 }
 
 // ============================================================
@@ -825,7 +825,7 @@ void mixed_t::append(const mixed_t &val) {
 	throw runtime_error_unary("append", *this);
 }
 
-bool mixed_t::remove(const int_t &key) {
+bool mixed_t::remove(const int_t<> &key) {
 	auto *t = resolve_table_mut(*this);
 	if (t != nullptr) {
 		return t->remove(key);
@@ -851,9 +851,9 @@ bool mixed_t::remove(const mixed_t &key) {
 	throw runtime_error_unary("remove", *this);
 }
 
-int_t mixed_t::size() const {
+int_t<> mixed_t::size() const {
 	if (const auto *t = resolve_table_const(*this)) {
-		return int_t{static_cast<std::int64_t>(t->size())};
+		return int_t<>{static_cast<std::int64_t>(t->size())};
 	}
 	throw runtime_error_unary("size", *this);
 }
@@ -862,7 +862,7 @@ bool mixed_t::empty() const {
 	return static_cast<bool>(::scpp::empty(*this));
 }
 
-mixed_t &mixed_t::at(const int_t &key) {
+mixed_t &mixed_t::at(const int_t<> &key) {
 	auto *t = resolve_table_mut(*this);
 	if (t != nullptr) {
 		return t->at(key);
@@ -870,7 +870,7 @@ mixed_t &mixed_t::at(const int_t &key) {
 	throw runtime_error_unary("at", *this);
 }
 
-const mixed_t &mixed_t::at(const int_t &key) const {
+const mixed_t &mixed_t::at(const int_t<> &key) const {
 	if (const auto *t = resolve_table_const(*this)) {
 		return t->at(key);
 	}
@@ -899,7 +899,7 @@ const mixed_t &mixed_t::at(const string_t &key) const {
 bool_t mixed_t::isset(const mixed_t &key) const {
 	return ::scpp::isset(*this, key);
 }
-bool_t mixed_t::isset(const int_t &key) const {
+bool_t mixed_t::isset(const int_t<> &key) const {
 	return ::scpp::isset(*this, key);
 }
 bool_t mixed_t::isset(const string_t &key) const {
@@ -1149,7 +1149,7 @@ void mixed_t::destroy() noexcept {
 	assert_not_borrowed("destroy");
 	switch (type_) {
 		case kind_t::bool_v:         bool_value_.~bool_t();                            break;
-		case kind_t::int_v:          int_value_.~int_t();                              break;
+		case kind_t::int_v:          int_value_.~int_t<>();                              break;
 		case kind_t::float_v:        float_value_.~float_t();                          break;
 		case kind_t::string_v:       string_value_.~unique_p<string_t>();              break;
 		case kind_t::table_v:        table_value_.~unique_p<hash_t<mixed_t>>();       break;
@@ -1185,9 +1185,9 @@ void mixed_t::move_construct(mixed_t &&other) noexcept {
 
 
 template <>
-scalar_ref<int_t>::scalar_ref(mixed_t &value) : ptr_(nullptr), owner_(&value) {
+scalar_ref<int_t<>>::scalar_ref(mixed_t &value) : ptr_(nullptr), owner_(&value) {
 	(void) value;
-	throw std::runtime_error("scalar_ref<int_t>(mixed_t&) is disabled in the current safe subset");
+	throw std::runtime_error("scalar_ref<int_t<>>(mixed_t&) is disabled in the current safe subset");
 }
 
 template <>

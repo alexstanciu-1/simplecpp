@@ -42,23 +42,23 @@ namespace scpp::php {
 	return created.value();
 }
 
-[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t &option, const string_t &value) {
+[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t<> &option, const string_t &value) {
 	return scpp::curl::setopt(resource, option, value).has_value();
 }
 
-[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t &option, const int_t &value) {
+[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t<> &option, const int_t<> &value) {
 	return scpp::curl::setopt(resource, option, value).has_value();
 }
 
-[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t &option, const bool_t &value) {
+[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t<> &option, const bool_t &value) {
 	return scpp::curl::setopt(resource, option, value).has_value();
 }
 
-[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t &option, const vector_t<string_t> &value) {
+[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t<> &option, const vector_t<string_t> &value) {
 	return scpp::curl::setopt(resource, option, value).has_value();
 }
 
-[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t &option, const mixed_t &value) {
+[[nodiscard]] inline bool_t curl_setopt(const shared_p<curl::handle> &resource, const int_t<> &option, const mixed_t &value) {
 	if (const auto *string_value = value.try_get_string(); string_value != nullptr) {
 		return curl_setopt(resource, option, *string_value);
 	}
@@ -94,7 +94,7 @@ namespace scpp::php {
 	return detail::curl_info_array(*resource->last_response);
 }
 
-[[nodiscard]] inline mixed_t curl_getinfo(const shared_p<curl::handle> &resource, const int_t &selector) {
+[[nodiscard]] inline mixed_t curl_getinfo(const shared_p<curl::handle> &resource, const int_t<> &selector) {
 	const auto info = scpp::curl::getinfo(resource, selector);
 	if (!info.has_value().native_value()) {
 		return mixed_t(bool_t(false));
@@ -102,7 +102,7 @@ namespace scpp::php {
 	return info.value();
 }
 
-[[nodiscard]] inline int_t curl_errno(const shared_p<curl::handle> &resource) {
+[[nodiscard]] inline int_t<> curl_errno(const shared_p<curl::handle> &resource) {
 	return scpp::curl::errno_code(resource);
 }
 
@@ -118,7 +118,7 @@ namespace scpp::php {
 	return scpp::curl::close(resource).has_value();
 }
 
-[[nodiscard]] inline string_t curl_strerror(const int_t &code) {
+[[nodiscard]] inline string_t curl_strerror(const int_t<> &code) {
 	return scpp::curl::strerror(code);
 }
 

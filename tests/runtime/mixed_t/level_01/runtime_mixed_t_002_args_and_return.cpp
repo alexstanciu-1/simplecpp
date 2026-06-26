@@ -15,7 +15,7 @@ static scpp::float_t return_float_from_mixed(const scpp::mixed_t &value) {
 }
 
 int main() {
-	scpp::mixed_t int_value = scpp::int_t(2);
+	scpp::mixed_t int_value = scpp::int_t<>(2);
 	scpp::mixed_t float_value = scpp::float_t(2.5);
 	scpp::mixed_t text_value = scpp::string_t("abc");
 

@@ -23,7 +23,8 @@ inline bool_t is_int(const T &) {
 	return bool_t{false};
 }
 
-inline bool_t is_int(const int_t &) {
+template <typename Rep>
+inline bool_t is_int(const int_t<Rep> &) {
 	return bool_t{true};
 }
 

@@ -12,7 +12,7 @@ scpp::mixed_t make_table_value() {
 
 void test_missing_value_read_returns_null_without_insertion() {
 	scpp::mixed_t root = make_table_value();
-	root[scpp::string_t("present")] = scpp::mixed_t(scpp::int_t(1));
+	root[scpp::string_t("present")] = scpp::mixed_t(scpp::int_t<>(1));
 
 	const auto before_size = root.size().native_value();
 	const auto missing = root.get(scpp::string_t("missing"));
@@ -25,7 +25,7 @@ void test_missing_value_read_returns_null_without_insertion() {
 void test_nested_value_reads_do_not_autovivify() {
 	scpp::mixed_t root = make_table_value();
 	root[scpp::string_t("child")] = make_table_value();
-	root[scpp::string_t("child")][scpp::string_t("count")] = scpp::mixed_t(scpp::int_t(3));
+	root[scpp::string_t("child")][scpp::string_t("count")] = scpp::mixed_t(scpp::int_t<>(3));
 
 	const auto before_child_size = root.get("child").size().native_value();
 	const auto nested_missing = root.get("child").get("missing");
@@ -47,7 +47,7 @@ void test_top_level_write_creates_missing_key() {
 void test_nested_write_autovivifies_missing_intermediate() {
 	scpp::mixed_t root = make_table_value();
 
-	root["x"]["y"] = scpp::mixed_t(scpp::int_t(42));
+	root["x"]["y"] = scpp::mixed_t(scpp::int_t<>(42));
 
 	assert(root.isset("x").native_value() == true);
 	assert(root.get("x").get("y").int_value().native_value() == 42);
@@ -55,10 +55,10 @@ void test_nested_write_autovivifies_missing_intermediate() {
 
 void test_nested_write_throws_on_wrong_intermediate_kind() {
 	scpp::mixed_t root = make_table_value();
-	root["x"] = scpp::mixed_t(scpp::int_t(7));
+	root["x"] = scpp::mixed_t(scpp::int_t<>(7));
 
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		root["x"]["y"] = scpp::mixed_t(scpp::int_t(1));
+		root["x"]["y"] = scpp::mixed_t(scpp::int_t<>(1));
 	});
 
 	assert(root.get("x").int_value().native_value() == 7);
@@ -66,27 +66,27 @@ void test_nested_write_throws_on_wrong_intermediate_kind() {
 
 void test_append_on_table_carrier_and_null_bootstrap() {
 	scpp::mixed_t table_value = make_table_value();
-	table_value.append(scpp::mixed_t(scpp::int_t(10)));
-	table_value.append(scpp::mixed_t(scpp::int_t(20)));
+	table_value.append(scpp::mixed_t(scpp::int_t<>(10)));
+	table_value.append(scpp::mixed_t(scpp::int_t<>(20)));
 
-	assert(table_value.get(scpp::int_t(0)).int_value().native_value() == 10);
-	assert(table_value.get(scpp::int_t(1)).int_value().native_value() == 20);
+	assert(table_value.get(scpp::int_t<>(0)).int_value().native_value() == 10);
+	assert(table_value.get(scpp::int_t<>(1)).int_value().native_value() == 20);
 
 	scpp::mixed_t null_bootstrap{scpp::null_t{}};
 	null_bootstrap.append(scpp::mixed_t(scpp::string_t("boot")));
 
-	assert(null_bootstrap.get(scpp::int_t(0)).string_if()->native_value() == "boot");
+	assert(null_bootstrap.get(scpp::int_t<>(0)).string_if()->native_value() == "boot");
 
-	scpp::mixed_t not_a_table{scpp::int_t(5)};
+	scpp::mixed_t not_a_table{scpp::int_t<>(5)};
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		not_a_table.append(scpp::mixed_t(scpp::int_t(1)));
+		not_a_table.append(scpp::mixed_t(scpp::int_t<>(1)));
 	});
 }
 
 void test_unset_missing_is_noop_and_existing_remove_preserves_other_keys() {
 	scpp::mixed_t root = make_table_value();
-	root["a"] = scpp::mixed_t(scpp::int_t(1));
-	root["b"] = scpp::mixed_t(scpp::int_t(2));
+	root["a"] = scpp::mixed_t(scpp::int_t<>(1));
+	root["b"] = scpp::mixed_t(scpp::int_t<>(2));
 
 	const auto before_missing_remove = root.size().native_value();
 	assert(root.table_if()->remove(scpp::string_t("missing")) == false);
@@ -100,7 +100,7 @@ void test_unset_missing_is_noop_and_existing_remove_preserves_other_keys() {
 
 void test_nested_unset_with_missing_parent_is_noop_via_guarded_pattern() {
 	scpp::mixed_t root = make_table_value();
-	root["keep"] = scpp::mixed_t(scpp::int_t(9));
+	root["keep"] = scpp::mixed_t(scpp::int_t<>(9));
 
 	const auto before_size = root.size().native_value();
 	if (root.isset("x").native_value()) {
@@ -132,11 +132,11 @@ void test_php_probe_helpers_preserve_null_sensitive_non_mutating_contract() {
 
 void test_try_ref_shared_pointer_handle_copy_visibility() {
 	scpp::hash_t<scpp::shared_p<scpp_test::sample_object>> shared_table;
-	auto shared_object = scpp::shared<scpp_test::sample_object>(scpp::int_t(11));
+	auto shared_object = scpp::shared<scpp_test::sample_object>(scpp::int_t<>(11));
 	shared_table.set(scpp::string_t("obj"), shared_object);
 
 	auto copied_handle = shared_table.try_ref<scpp::shared_p<scpp_test::sample_object>>(scpp::string_t("obj"));
-	copied_handle->value = scpp::int_t(99);
+	copied_handle->value = scpp::int_t<>(99);
 	assert(shared_table.at(scpp::string_t("obj"))->value.native_value() == 99);
 }
 

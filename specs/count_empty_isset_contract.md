@@ -36,6 +36,7 @@ Normative rule:
 
 Currently countable:
 - `vector_t<T>`
+- `fixed_array_t<T, N>`
 - `hash_t<T>`
 - `mixed_t` that currently carries a live hash/table-compatible value
 

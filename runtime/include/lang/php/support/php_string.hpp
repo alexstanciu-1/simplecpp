@@ -5,15 +5,15 @@
 
 namespace scpp::php {
 
-inline int_t strlen(const string_t &value) {
+inline int_t<> strlen(const string_t &value) {
 	return scpp::str::length(value);
 }
 
-inline int_t strlen(const nullable<string_t> &value) {
+inline int_t<> strlen(const nullable<string_t> &value) {
 	return scpp::str::length(value);
 }
 
-inline result_or_false<int_t> strpos(const string_t &haystack, const string_t &needle) {
+inline result_or_false<int_t<>> strpos(const string_t &haystack, const string_t &needle) {
 	const auto position = scpp::str::find(haystack, needle);
 	if (!position.has_value().native_value()) {
 		return false_sentinel;
@@ -21,7 +21,7 @@ inline result_or_false<int_t> strpos(const string_t &haystack, const string_t &n
 	return position.value();
 }
 
-inline result_or_false<int_t> strpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
+inline result_or_false<int_t<>> strpos(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
 	const auto position = scpp::str::find(haystack, needle, offset);
 	if (!position.has_value().native_value()) {
 		return false_sentinel;
@@ -29,7 +29,7 @@ inline result_or_false<int_t> strpos(const string_t &haystack, const string_t &n
 	return position.value();
 }
 
-inline result_or_false<int_t> strrpos(const string_t &haystack, const string_t &needle) {
+inline result_or_false<int_t<>> strrpos(const string_t &haystack, const string_t &needle) {
 	const auto position = scpp::str::rfind(haystack, needle);
 	if (!position.has_value().native_value()) {
 		return false_sentinel;
@@ -37,7 +37,7 @@ inline result_or_false<int_t> strrpos(const string_t &haystack, const string_t &
 	return position.value();
 }
 
-inline result_or_false<int_t> strrpos(const string_t &haystack, const string_t &needle, const int_t &offset) {
+inline result_or_false<int_t<>> strrpos(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
 	const auto position = scpp::str::rfind(haystack, needle, offset);
 	if (!position.has_value().native_value()) {
 		return false_sentinel;
@@ -97,31 +97,31 @@ inline string_t trim(const string_t &value, const string_t &mask) {
 	return scpp::str::trim(value, mask);
 }
 
-inline string_t substr(const string_t &value, const int_t &offset, const int_t &length) {
+inline string_t substr(const string_t &value, const int_t<> &offset, const int_t<> &length) {
 	return scpp::str::substr(value, offset, length);
 }
 
-inline string_t substr(const string_t &value, const int_t &offset) {
+inline string_t substr(const string_t &value, const int_t<> &offset) {
 	return scpp::str::substr(value, offset);
 }
 
-inline int_t substr_compare(const string_t &main_str, const string_t &str, const int_t &offset) {
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str, const int_t<> &offset) {
 	return scpp::str::substr_compare(main_str, str, offset);
 }
 
-inline int_t substr_compare(const string_t &main_str, const string_t &str, const int_t &offset, const int_t &length) {
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str, const int_t<> &offset, const int_t<> &length) {
 	return scpp::str::substr_compare(main_str, str, offset, length);
 }
 
-inline int_t substr_compare(const string_t &main_str, const string_t &str, const int_t &offset, const int_t &length, const bool_t &case_insensitive) {
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str, const int_t<> &offset, const int_t<> &length, const bool_t &case_insensitive) {
 	return scpp::str::substr_compare(main_str, str, offset, length, case_insensitive);
 }
 
-inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t &offset) {
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset) {
 	return scpp::str::substr_replace(subject, replacement, offset);
 }
 
-inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t &offset, const int_t &length) {
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset, const int_t<> &length) {
 	return scpp::str::substr_replace(subject, replacement, offset, length);
 }
 
@@ -129,20 +129,20 @@ inline string_t str_replace(const string_t &search, const string_t &replace, con
 	return scpp::str::replace(search, replace, subject);
 }
 
-inline string_t str_pad(const string_t &input, const int_t &pad_length, const string_t &pad_string, const int_t &pad_type) {
+inline string_t str_pad(const string_t &input, const int_t<> &pad_length, const string_t &pad_string, const int_t<> &pad_type) {
 	return scpp::str::pad(input, pad_length, pad_string, pad_type);
 }
 
-inline string_t str_pad(const string_t &input, const int_t &pad_length, const string_t &pad_string) {
+inline string_t str_pad(const string_t &input, const int_t<> &pad_length, const string_t &pad_string) {
 	return scpp::str::pad(input, pad_length, pad_string);
 }
 
-inline string_t str_pad(const string_t &input, const int_t &pad_length) {
+inline string_t str_pad(const string_t &input, const int_t<> &pad_length) {
 	return scpp::str::pad(input, pad_length);
 }
 
 
-inline vector_t<string_t> explode(const string_t &separator, const string_t &string, const int_t &limit) {
+inline vector_t<string_t> explode(const string_t &separator, const string_t &string, const int_t<> &limit) {
 	return scpp::str::split(separator, string, limit);
 }
 
@@ -199,23 +199,23 @@ inline string_t bin2hex(const string_t &value) {
 }
 
 
-inline string_t number_format(const int_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const int_t<> &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
 }
 
-inline string_t number_format(const int_t &value, const int_t &decimals) {
+inline string_t number_format(const int_t<> &value, const int_t<> &decimals) {
 	return scpp::str::number_format(value, decimals);
 }
 
-inline string_t number_format(const int_t &value) {
+inline string_t number_format(const int_t<> &value) {
 	return scpp::str::number_format(value);
 }
 
-inline string_t number_format(const float_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const float_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
 }
 
-inline string_t number_format(const float_t &value, const int_t &decimals) {
+inline string_t number_format(const float_t &value, const int_t<> &decimals) {
 	return scpp::str::number_format(value, decimals);
 }
 
@@ -223,11 +223,11 @@ inline string_t number_format(const float_t &value) {
 	return scpp::str::number_format(value);
 }
 
-inline string_t number_format(const string_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const string_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
 }
 
-inline string_t number_format(const string_t &value, const int_t &decimals) {
+inline string_t number_format(const string_t &value, const int_t<> &decimals) {
 	return scpp::str::number_format(value, decimals);
 }
 
@@ -235,11 +235,11 @@ inline string_t number_format(const string_t &value) {
 	return scpp::str::number_format(value);
 }
 
-inline string_t number_format(const bool_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const bool_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
 }
 
-inline string_t number_format(const bool_t &value, const int_t &decimals) {
+inline string_t number_format(const bool_t &value, const int_t<> &decimals) {
 	return scpp::str::number_format(value, decimals);
 }
 
@@ -247,11 +247,11 @@ inline string_t number_format(const bool_t &value) {
 	return scpp::str::number_format(value);
 }
 
-inline string_t number_format(const mixed_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const mixed_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	return scpp::str::number_format(value, decimals, decimal_separator, thousands_separator);
 }
 
-inline string_t number_format(const mixed_t &value, const int_t &decimals) {
+inline string_t number_format(const mixed_t &value, const int_t<> &decimals) {
 	return scpp::str::number_format(value, decimals);
 }
 
@@ -296,8 +296,13 @@ inline string_t to_string(const string_t &value) {
 
 // Converts one runtime value into its PHP echo/string representation.
 // How: behavior is defined here once so the generator and runtime can share one coercion layer.
-inline string_t to_string(const int_t &value) {
-	return string_t(std::to_string(value.native_value()));
+template <typename Rep>
+inline string_t to_string(const int_t<Rep> &value) {
+	if constexpr (std::is_signed_v<Rep>) {
+		return string_t(std::to_string(static_cast<std::int64_t>(value.native_value())));
+	} else {
+		return string_t(std::to_string(static_cast<std::uint64_t>(value.native_value())));
+	}
 }
 
 // Converts one runtime value into its PHP echo/string representation.

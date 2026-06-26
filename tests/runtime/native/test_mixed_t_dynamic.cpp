@@ -4,7 +4,7 @@
 
 namespace {
 
-scpp::int_t take_int(scpp::int_t value) {
+scpp::int_t<> take_int(scpp::int_t<> value) {
 	return value;
 }
 
@@ -38,7 +38,7 @@ static void test_value_t_basic_storage_contract() {
 	assert(nullptr_value.kind() == scpp::mixed_t::kind_t::null_v);
 
 	scpp::mixed_t bool_value(scpp::bool_t(true));
-	scpp::mixed_t int_value(scpp::int_t(42));
+	scpp::mixed_t int_value(scpp::int_t<>(42));
 	scpp::mixed_t float_value(scpp::float_t(3.14));
 	scpp::mixed_t string_value(scpp::string_t("hello"));
 	assert(bool_value.kind() == scpp::mixed_t::kind_t::bool_v);
@@ -64,25 +64,25 @@ static void test_value_t_basic_storage_contract() {
 }
 
 static void test_value_t_cast_bridge_and_exact_accessors() {
-	scpp::mixed_t int_value(scpp::int_t(7));
+	scpp::mixed_t int_value(scpp::int_t<>(7));
 	scpp::mixed_t float_value(scpp::float_t(2.5));
 	scpp::mixed_t bool_value(scpp::bool_t(true));
 	scpp::mixed_t string_value(scpp::string_t("Alex"));
 	scpp::mixed_t null_value(scpp::null_t{});
 
-	assert(scpp::cast<scpp::int_t>(int_value).native_value() == 7);
+	assert(scpp::cast<scpp::int_t<>>(int_value).native_value() == 7);
 	assert(scpp::cast<scpp::float_t>(int_value).native_value() == 7.0);
-	assert(scpp::cast<scpp::int_t>(float_value).native_value() == 2);
+	assert(scpp::cast<scpp::int_t<>>(float_value).native_value() == 2);
 	assert(scpp::cast<scpp::bool_t>(int_value).native_value() == true);
 	assert(scpp::cast<scpp::bool_t>(float_value).native_value() == true);
 	assert(scpp::cast<scpp::string_t>(bool_value).native_value() == "1");
 	assert(scpp::cast<scpp::string_t>(null_value).native_value().empty());
 	assert(scpp::cast<scpp::string_t>(string_value).native_value() == "Alex");
 	assert(scpp::cast<scpp::bool_t>(scpp::mixed_t(scpp::string_t("true"))).native_value() == true);
-	assert(scpp::cast<scpp::int_t>(scpp::mixed_t(scpp::string_t("15"))).native_value() == 15);
+	assert(scpp::cast<scpp::int_t<>>(scpp::mixed_t(scpp::string_t("15"))).native_value() == 15);
 	assert(scpp::cast<scpp::float_t>(scpp::mixed_t(scpp::string_t("2.75"))).native_value() == 2.75);
 
-	assert(take_int(scpp::cast<scpp::int_t>(int_value)).native_value() == 7);
+	assert(take_int(scpp::cast<scpp::int_t<>>(int_value)).native_value() == 7);
 	assert(take_float(scpp::cast<scpp::float_t>(int_value)).native_value() == 7.0);
 	assert(take_float(scpp::cast<scpp::float_t>(float_value)).native_value() == 2.5);
 	assert(take_bool(scpp::cast<scpp::bool_t>(bool_value)).native_value() == true);
@@ -97,10 +97,10 @@ static void test_value_t_cast_bridge_and_exact_accessors() {
 	assert(string_value.get_string().native_value() == "Alex");
 
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		(void)scpp::cast<scpp::int_t>(null_value);
+		(void)scpp::cast<scpp::int_t<>>(null_value);
 	});
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		(void)take_int(scpp::cast<scpp::int_t>(scpp::mixed_t(scpp::string_t("oops"))));
+		(void)take_int(scpp::cast<scpp::int_t<>>(scpp::mixed_t(scpp::string_t("oops"))));
 	});
 	scpp_test::expect_throw<std::runtime_error>([&]() {
 		(void)take_bool(scpp::cast<scpp::bool_t>(scpp::mixed_t(scpp::string_t("yes"))));
@@ -108,8 +108,8 @@ static void test_value_t_cast_bridge_and_exact_accessors() {
 }
 
 static void test_value_t_operator_dispatch_numeric_and_string() {
-	scpp::mixed_t i1(scpp::int_t(10));
-	scpp::mixed_t i2(scpp::int_t(3));
+	scpp::mixed_t i1(scpp::int_t<>(10));
+	scpp::mixed_t i2(scpp::int_t<>(3));
 	scpp::mixed_t f1(scpp::float_t(2.5));
 	scpp::mixed_t s1(scpp::string_t("Al"));
 	scpp::mixed_t s2(scpp::string_t("ex"));
@@ -152,8 +152,8 @@ static void test_value_t_operator_dispatch_numeric_and_string() {
 }
 
 static void test_value_t_comparisons_and_logical() {
-	scpp::mixed_t i1(scpp::int_t(10));
-	scpp::mixed_t i2(scpp::int_t(3));
+	scpp::mixed_t i1(scpp::int_t<>(10));
+	scpp::mixed_t i2(scpp::int_t<>(3));
 	scpp::mixed_t f1(scpp::float_t(10.0));
 	scpp::mixed_t b1(scpp::bool_t(true));
 	scpp::mixed_t b2(scpp::bool_t(false));
@@ -170,8 +170,8 @@ static void test_value_t_comparisons_and_logical() {
 	assert((b1 || b2).native_value() == true);
 	assert((!b2).native_value() == true);
 	assert((i1 && i2).native_value() == true);
-	assert((scpp::mixed_t(scpp::int_t(0)) || scpp::mixed_t(scpp::float_t(1.0))).native_value() == true);
-	assert((!scpp::mixed_t(scpp::int_t(0))).native_value() == true);
+	assert((scpp::mixed_t(scpp::int_t<>(0)) || scpp::mixed_t(scpp::float_t(1.0))).native_value() == true);
+	assert((!scpp::mixed_t(scpp::int_t<>(0))).native_value() == true);
 	assert((n1 == scpp::mixed_t(scpp::null_t{})).native_value() == true);
 	assert((n1 == s1).native_value() == true);
 
@@ -182,8 +182,8 @@ static void test_value_t_comparisons_and_logical() {
 }
 
 static void test_value_t_assignment_and_increment() {
-	scpp::mixed_t i1(scpp::int_t(10));
-	scpp::mixed_t i2(scpp::int_t(3));
+	scpp::mixed_t i1(scpp::int_t<>(10));
+	scpp::mixed_t i2(scpp::int_t<>(3));
 	scpp::mixed_t f1(scpp::float_t(5.5));
 
 	i1 += i2;
@@ -200,36 +200,36 @@ static void test_value_t_assignment_and_increment() {
 	assert(i1.int_value().native_value() == (1LL | 3LL));
 	i1 &= i2;
 	assert(i1.int_value().native_value() == 3);
-	i1 ^= scpp::mixed_t(scpp::int_t(1));
+	i1 ^= scpp::mixed_t(scpp::int_t<>(1));
 	assert(i1.int_value().native_value() == 2);
-	i1 <<= scpp::mixed_t(scpp::int_t(2));
+	i1 <<= scpp::mixed_t(scpp::int_t<>(2));
 	assert(i1.int_value().native_value() == 8);
-	i1 >>= scpp::mixed_t(scpp::int_t(1));
+	i1 >>= scpp::mixed_t(scpp::int_t<>(1));
 	assert(i1.int_value().native_value() == 4);
 
-	f1 += scpp::mixed_t(scpp::int_t(2));
+	f1 += scpp::mixed_t(scpp::int_t<>(2));
 	assert(f1.float_value().native_value() == 7.5);
-	scpp::mixed_t widening(scpp::int_t(4));
+	scpp::mixed_t widening(scpp::int_t<>(4));
 	widening += scpp::mixed_t(scpp::float_t(1.5));
 	assert(widening.kind() == scpp::mixed_t::kind_t::float_v);
 	assert(widening.float_value().native_value() == 5.5);
 	f1 -= scpp::mixed_t(scpp::float_t(0.5));
 	assert(f1.float_value().native_value() == 7.0);
-	f1 *= scpp::mixed_t(scpp::int_t(2));
+	f1 *= scpp::mixed_t(scpp::int_t<>(2));
 	assert(f1.float_value().native_value() == 14.0);
 	f1 /= scpp::mixed_t(scpp::float_t(2.0));
 	assert(f1.float_value().native_value() == 7.0);
 	scpp_test::expect_throw<scpp::runtime_error>([&]() {
-		(void)(i1 / scpp::mixed_t(scpp::int_t(0)));
+		(void)(i1 / scpp::mixed_t(scpp::int_t<>(0)));
 	});
 	scpp_test::expect_throw<scpp::runtime_error>([&]() {
-		(void)(i1 % scpp::mixed_t(scpp::int_t(0)));
+		(void)(i1 % scpp::mixed_t(scpp::int_t<>(0)));
 	});
 	scpp_test::expect_throw<scpp::runtime_error>([&]() {
 		f1 /= scpp::mixed_t(scpp::float_t(0.0));
 	});
 
-	scpp::mixed_t inc_int(scpp::int_t(1));
+	scpp::mixed_t inc_int(scpp::int_t<>(1));
 	scpp::mixed_t inc_float(scpp::float_t(1.5));
 	assert((++inc_int).int_value().native_value() == 2);
 	assert((inc_int++).int_value().native_value() == 2);
@@ -247,7 +247,7 @@ static void test_value_t_array_copy_on_write_param_and_nested_copy() {
 	scpp::mixed_t root(scpp::shared<scpp::hash_t<scpp::mixed_t>>());
 	root[scpp::string_t("name")] = scpp::mixed_t(scpp::string_t("outside"));
 	root[scpp::string_t("child")] = scpp::mixed_t(scpp::shared<scpp::hash_t<scpp::mixed_t>>());
-	root[scpp::string_t("child")][scpp::string_t("count")] = scpp::mixed_t(scpp::int_t(1));
+	root[scpp::string_t("child")][scpp::string_t("count")] = scpp::mixed_t(scpp::int_t<>(1));
 
 	auto fill = [](scpp::mixed_t arr) {
 		arr[scpp::string_t("name")] = scpp::mixed_t(scpp::string_t("inside"));
@@ -257,7 +257,7 @@ static void test_value_t_array_copy_on_write_param_and_nested_copy() {
 	assert(root.get(scpp::string_t("name")).string_if()->native_value() == "outside");
 
 	scpp::mixed_t child_copy = root.get(scpp::string_t("child"));
-	child_copy[scpp::string_t("count")] = scpp::mixed_t(scpp::int_t(99));
+	child_copy[scpp::string_t("count")] = scpp::mixed_t(scpp::int_t<>(99));
 	assert(root.get(scpp::string_t("child")).get(scpp::string_t("count")).int_value().native_value() == 1);
 	assert(child_copy.get(scpp::string_t("count")).int_value().native_value() == 99);
 }
@@ -265,13 +265,13 @@ static void test_value_t_array_copy_on_write_param_and_nested_copy() {
 
 static void test_value_t_boxed_table_helpers() {
 	scpp::mixed_t boxed = scpp::mixed_t{scpp::shared<scpp::hash_t<scpp::mixed_t>>()};
-	boxed.append(scpp::mixed_t(scpp::int_t(10)));
-	boxed.append(scpp::mixed_t(scpp::int_t(20)));
+	boxed.append(scpp::mixed_t(scpp::int_t<>(10)));
+	boxed.append(scpp::mixed_t(scpp::int_t<>(20)));
 
 	assert(boxed.size().native_value() == 2);
 	assert(boxed.empty() == false);
-	assert(boxed.at(scpp::int_t(0)).int_value().native_value() == 10);
-	assert(boxed.at(scpp::int_t(1)).int_value().native_value() == 20);
+	assert(boxed.at(scpp::int_t<>(0)).int_value().native_value() == 10);
+	assert(boxed.at(scpp::int_t<>(1)).int_value().native_value() == 20);
 
 	boxed[scpp::string_t("name")] = scpp::mixed_t(scpp::string_t("Alex"));
 	assert(boxed.at(scpp::string_t("name")).string_if()->native_value() == "Alex");
@@ -281,12 +281,12 @@ static void test_value_t_boxed_table_helpers() {
 	assert(empty_boxed.empty() == true);
 
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		(void) scpp::mixed_t(scpp::int_t(1)).size();
+		(void) scpp::mixed_t(scpp::int_t<>(1)).size();
 	});
 	assert(scpp::mixed_t(scpp::string_t("x")).empty() == false);
 	assert(scpp::mixed_t(scpp::string_t("")).empty() == true);
 	scpp_test::expect_throw<std::out_of_range>([&]() {
-		(void) boxed.at(scpp::int_t(99));
+		(void) boxed.at(scpp::int_t<>(99));
 	});
 }
 
@@ -329,7 +329,7 @@ static void test_value_t_table_access_and_identity() {
 
 
 static void test_dynamic_t_identity_and_explicit_conversion() {
-	scpp::dynamic_t<> payload = scpp::dynamic_(scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1))).value;
+	scpp::dynamic_t<> payload = scpp::dynamic_(scpp::table_kv_(scpp::string_t("id"), scpp::int_t<>(1))).value;
 	scpp::mixed_t left(scpp::dynamic_box(payload));
 	scpp::mixed_t right(scpp::dynamic_box(payload));
 
@@ -338,7 +338,7 @@ static void test_dynamic_t_identity_and_explicit_conversion() {
 	assert((left == right).native_value() == true);
 
 	auto copied_hash = scpp::to_hash(payload);
-	copied_hash[scpp::string_t("id")] = scpp::mixed_t(scpp::int_t(99));
+	copied_hash[scpp::string_t("id")] = scpp::mixed_t(scpp::int_t<>(99));
 	assert(left[scpp::string_t("id")].int_value().native_value() == 1);
 
 	auto rebuilt_dynamic = scpp::to_dynamic(copied_hash);
@@ -353,7 +353,7 @@ static void test_dynamic_t_identity_and_explicit_conversion() {
 
 static void test_dynamic_t_var_dump() {
 	scpp::mixed_t value(scpp::dynamic_(
-		scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1)),
+		scpp::table_kv_(scpp::string_t("id"), scpp::int_t<>(1)),
 		scpp::table_kv_(scpp::string_t("name"), scpp::string_t("Alex"))
 	));
 

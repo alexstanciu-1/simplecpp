@@ -1,7 +1,7 @@
 #include "tests/runtime/runtime_test_common.hpp"
 
 int main() {
-	auto owner = scpp::shared<runtime_test::sample_object>(scpp::int_t(55));
+	auto owner = scpp::shared<runtime_test::sample_object>(scpp::int_t<>(55));
 	scpp::weak_p<runtime_test::sample_object> first(owner);
 	scpp::weak_p<runtime_test::sample_object> second;
 	second = first;

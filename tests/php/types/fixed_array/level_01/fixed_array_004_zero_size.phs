@@ -1,0 +1,3 @@
+$values fixed_array<int, 0> = [];
+
+echo count($values), " ", empty($values) ? "empty" : "not-empty", "\n";

@@ -176,7 +176,7 @@ final class StanFrontendClassifier
 				'diagnostics' => [],
 			];
 		}
-		if (in_array($leftType, ['int', 'float'], true) && in_array($rightType, ['int', 'float'], true)) {
+		if ($this->isNumericScalarType($leftType) && $this->isNumericScalarType($rightType)) {
 			return [
 				'kind' => 'numeric_add',
 				'operator' => '+',
@@ -196,7 +196,12 @@ final class StanFrontendClassifier
 
 	private function isJssPrintablePlusType(string $type): bool
 	{
-		return in_array($type, ['string', 'int', 'float', 'bool'], true);
+		return in_array($type, ['string', 'int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool'], true);
+	}
+
+	private function isNumericScalarType(string $type): bool
+	{
+		return in_array($type, ['int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float'], true);
 	}
 
 	/** @param list<array<string,mixed>> $symbolIndex */
@@ -239,7 +244,7 @@ final class StanFrontendClassifier
 			if (($leftType === 'string' && $this->isJssPrintablePlusType((string) $rightType)) || ($rightType === 'string' && $this->isJssPrintablePlusType((string) $leftType))) {
 				return 'string';
 			}
-			if (in_array($leftType, ['int', 'float'], true) && in_array($rightType, ['int', 'float'], true)) {
+			if ($this->isNumericScalarType((string) $leftType) && $this->isNumericScalarType((string) $rightType)) {
 				return $leftType === 'float' || $rightType === 'float' ? 'float' : 'int';
 			}
 			if (in_array($leftType, ['mixed', 'dynamic'], true) || in_array($rightType, ['mixed', 'dynamic'], true)) {

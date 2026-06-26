@@ -64,8 +64,8 @@ inline void apply_unset(vector_t<T> &value) {
 
 // Implements one-value unset semantics used by the variadic unset helper.
 // How: integer wrappers reset to the runtime zero state.
-inline void apply_unset(int_t &value) {
-	value = int_t();
+inline void apply_unset(int_t<> &value) {
+	value = int_t<>();
 }
 
 // Implements one-value unset semantics used by the variadic unset helper.
@@ -98,7 +98,7 @@ inline void unset_keyed(hash_t<TValue> &target, const TKey &key) {
 }
 
 template <typename TValue>
-inline void unset_keyed(vector_t<TValue> &target, const int_t &key) {
+inline void unset_keyed(vector_t<TValue> &target, const int_t<> &key) {
 	target.remove(key);
 }
 

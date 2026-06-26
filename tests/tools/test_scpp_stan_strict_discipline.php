@@ -61,6 +61,91 @@ PHS
 			$this->assertSame(0, $checked['warning_count'] ?? null, 'take(...) wrapper handling should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$min int8 = -128;
+	$max byte = 255;
+	$wide uint32 = 4294967295;
+	echo (int)$min, " ", (int)$max, " ", (int)$wide, "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$validFixedWidthLiterals = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $validFixedWidthLiterals['warning_count'] ?? null, 'in-range fixed-width integer literals should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$small int8 = 7;
+	$wide int16 = $small;
+	$byteValue byte = 8;
+	$wider uint16 = $byteValue;
+	echo (int)$wide, " ", (int)$wider, "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$validFixedWidthWidening = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $validFixedWidthWidening['warning_count'] ?? null, 'same-signed fixed-width integer widening should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$small int8 = 7;
+	$bad uint16 = $small;
+	echo (int)$bad, "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$fixedWidthSignedness = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $fixedWidthSignedness['warning_count'] ?? null, 'signed/unsigned fixed-width assignment should produce one STAN finding');
+			$signednessDiagnostic = $fixedWidthSignedness['diagnostics'][0] ?? null;
+			if (!is_array($signednessDiagnostic)) {
+				throw new RuntimeException('fixed-width signedness assignment diagnostic should be present');
+			}
+			$this->assertSame('stan.fixed_width_integer_assignment', $signednessDiagnostic['code'] ?? null, 'fixed-width assignment diagnostic code should be stable');
+			$this->assertContains('cannot assign `int8` to `uint16`', (string) ($signednessDiagnostic['message'] ?? ''), 'fixed-width assignment diagnostic should describe signedness rejection');
+			$classifiedFixedWidthSignedness = classify_stan_build_diagnostics([$signednessDiagnostic]);
+			$this->assertSame(1, $classifiedFixedWidthSignedness['compile_error_count'] ?? null, 'fixed-width signed/unsigned assignment diagnostics should block pre-build');
+
+			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$tooSmall int8 = -129;
+	$tooLarge uint8 = 256;
+	$negative byte = -1;
+	echo "bad\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$fixedWidthRange = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(3, $fixedWidthRange['warning_count'] ?? null, 'out-of-range fixed-width integer literals should produce STAN findings');
+			$fixedWidthDiagnostics = $fixedWidthRange['diagnostics'] ?? [];
+			if (!is_array($fixedWidthDiagnostics) || count($fixedWidthDiagnostics) !== 3) {
+				throw new RuntimeException('fixed-width literal range diagnostics should be present');
+			}
+			$firstFixedWidthDiagnostic = $fixedWidthDiagnostics[0] ?? null;
+			if (!is_array($firstFixedWidthDiagnostic)) {
+				throw new RuntimeException('first fixed-width literal range diagnostic should be present');
+			}
+			$this->assertSame('stan.fixed_width_integer_literal_range', $firstFixedWidthDiagnostic['code'] ?? null, 'fixed-width range diagnostic code should be stable');
+			$this->assertSame(3, $firstFixedWidthDiagnostic['line'] ?? null, 'fixed-width range diagnostic should point at the typed boundary line');
+			$this->assertContains('Integer literal `-129` is outside the range of fixed-width type `int8`', (string) ($firstFixedWidthDiagnostic['message'] ?? ''), 'fixed-width range diagnostic should describe the int8 failure');
+			$classifiedFixedWidth = classify_stan_build_diagnostics($fixedWidthDiagnostics);
+			$this->assertSame(3, $classifiedFixedWidth['compile_error_count'] ?? null, 'fixed-width literal range diagnostics should block pre-build');
+
+			$this->writeProject($project, <<<'PHS'
 function consume(string $text): void
 {
 	echo strlen($text), "\n";

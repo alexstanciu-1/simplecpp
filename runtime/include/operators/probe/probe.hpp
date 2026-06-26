@@ -118,8 +118,8 @@ inline bool_t isset_from_probe(probe_state state) {
 }
 
 // Centralizes integer-key normalization for countable helper overloads.
-// How: callers can accept either native ints or int_t without duplicating negative-index handling logic.
-inline bool vector_has_index(const std::size_t size, const int_t &key) {
+// How: callers can accept either native ints or int_t<> without duplicating negative-index handling logic.
+inline bool vector_has_index(const std::size_t size, const int_t<> &key) {
 	const auto native = key.native_value();
 	if (native < 0) {
 		return false;

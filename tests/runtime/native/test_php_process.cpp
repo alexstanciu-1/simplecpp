@@ -20,8 +20,8 @@ static void test_cli_helpers() {
 	const auto mixed_argv = scpp::php::cli_argv();
 	assert(mixed_argv.kind() == scpp::mixed_t::kind_t::table_v);
 	assert(mixed_argv.get_hash().size() == 3);
-	assert(mixed_argv.get_hash().at(scpp::int_t(1)).get_string().native_value() == "alpha");
-	assert(mixed_argv.get_hash().at(scpp::int_t(2)).get_string().native_value() == "beta");
+	assert(mixed_argv.get_hash().at(scpp::int_t<>(1)).get_string().native_value() == "alpha");
+	assert(mixed_argv.get_hash().at(scpp::int_t<>(2)).get_string().native_value() == "beta");
 }
 
 static void test_shell_exec_success() {
@@ -39,7 +39,7 @@ static void test_cli_args_alias() {
 
 	const auto args = scpp::php::cli_args();
 	assert(args.kind() == scpp::mixed_t::kind_t::table_v);
-	assert(args.get_hash().at(scpp::int_t(1)).get_string().native_value() == "alias");
+	assert(args.get_hash().at(scpp::int_t<>(1)).get_string().native_value() == "alias");
 }
 
 } // namespace
