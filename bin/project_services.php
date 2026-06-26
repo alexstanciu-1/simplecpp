@@ -8106,7 +8106,7 @@ function resolve_runtime_webview_build_spec(): array
 		return [
 			'enabled' => true,
 			'cflags' => [],
-			'ldflags' => ['WebView2LoaderStatic.lib'],
+			'ldflags' => ['WebView2LoaderStatic.lib', 'advapi32.lib'],
 			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
 		];
 	}

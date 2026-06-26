@@ -51,6 +51,7 @@ final class ScppWebviewModuleTest
 			} elseif (PHP_OS_FAMILY === 'Windows') {
 				$this->assertContains('-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1', implode(' ', $webviewBuild['compile_defines']), 'Windows webview build spec should select the WebView2 backend');
 				$this->assertContains('WebView2LoaderStatic.lib', implode(' ', $webviewBuild['ldflags']), 'Windows webview build spec should link the WebView2 loader');
+				$this->assertContains('advapi32.lib', implode(' ', $webviewBuild['ldflags']), 'Windows webview build spec should link WebView2 loader system dependencies');
 			}
 		}
 
