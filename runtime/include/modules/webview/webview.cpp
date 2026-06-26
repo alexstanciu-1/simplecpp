@@ -446,12 +446,15 @@ gboolean handle_navigation_policy(WebKitWebView *, WebKitPolicyDecision *decisio
 
 struct win32_webview_state final {
 	HWND parent = nullptr;
+	shared_p<view> target = null;
 	Microsoft::WRL::ComPtr<ICoreWebView2Environment> environment;
 	Microsoft::WRL::ComPtr<ICoreWebView2Controller> controller;
 	Microsoft::WRL::ComPtr<ICoreWebView2> core;
+	EventRegistrationToken web_message_token{};
 	std::wstring pending_url;
 	std::wstring pending_html;
 	std::wstring pending_script;
+	bool bridge_ready = false;
 	bool closed = false;
 };
 
@@ -480,7 +483,7 @@ void resize_win32_controller(win32_webview_state *state) {
 }
 
 void flush_win32_pending(win32_webview_state *state) {
-	if (state == nullptr || state->core == nullptr || state->closed) {
+	if (state == nullptr || state->core == nullptr || !state->bridge_ready || state->closed) {
 		return;
 	}
 	if (!state->pending_html.empty()) {
@@ -503,6 +506,22 @@ void flush_win32_pending(win32_webview_state *state) {
 		return nullptr;
 	}
 	return holder->get();
+}
+
+void push_win32_bridge_message(const win32_webview_state_ptr &state, const std::string &text) {
+	if (state == nullptr || !state->target.has_value().native_value() || state->target.get() == nullptr) {
+		return;
+	}
+	auto window = state->target->window_handle;
+	if (!window.has_value().native_value() || window.get() == nullptr || !window->app_handle.has_value().native_value()) {
+		return;
+	}
+
+	auto event_value = shared<ui::event>();
+	event_value->type = string_t("webview_message");
+	event_value->window_handle = window;
+	event_value->text = string_t(text);
+	window->app_handle->pending_events.push_back(event_value);
 }
 
 #endif
@@ -731,6 +750,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	target->window_handle = window;
 	target->native_handle = parent;
 	target->native_state = new win32_webview_state_ptr(state);
+	state->target = target;
 
 	HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
 		nullptr,
@@ -751,6 +771,45 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 							}
 							state->controller = controller;
 							controller->get_CoreWebView2(&state->core);
+							if (state->core != nullptr) {
+								HRESULT script_result = state->core->AddScriptToExecuteOnDocumentCreated(
+									utf8_to_wide(bridge_script).c_str(),
+									Microsoft::WRL::Callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler>(
+										[state](HRESULT, LPCWSTR) -> HRESULT {
+											state->bridge_ready = true;
+											flush_win32_pending(state.get());
+											return S_OK;
+										}
+									).Get()
+								);
+								if (FAILED(script_result)) {
+									state->bridge_ready = true;
+								}
+								state->core->add_WebMessageReceived(
+									Microsoft::WRL::Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+										[state](ICoreWebView2 *, ICoreWebView2WebMessageReceivedEventArgs *args) -> HRESULT {
+											if (args == nullptr || state->closed) {
+												return S_OK;
+											}
+											LPWSTR raw = nullptr;
+											HRESULT message_result = args->TryGetWebMessageAsString(&raw);
+											if (SUCCEEDED(message_result) && raw != nullptr) {
+												std::wstring wide(raw);
+												CoTaskMemFree(raw);
+												std::string text;
+												const int needed = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.size()), nullptr, 0, nullptr, nullptr);
+												if (needed > 0) {
+													text.resize(static_cast<std::size_t>(needed));
+													WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), static_cast<int>(wide.size()), text.data(), needed, nullptr, nullptr);
+												}
+												push_win32_bridge_message(state, text);
+											}
+											return S_OK;
+										}
+									).Get(),
+									&state->web_message_token
+								);
+							}
 							resize_win32_controller(state.get());
 							flush_win32_pending(state.get());
 							return S_OK;
@@ -1135,6 +1194,9 @@ void close(const shared_p<view> &target) {
 			win32_webview_state_ptr state = *holder;
 			if (state != nullptr) {
 				state->closed = true;
+				if (state->core != nullptr) {
+					state->core->remove_WebMessageReceived(state->web_message_token);
+				}
 				if (state->controller != nullptr) {
 					state->controller->Close();
 				}
