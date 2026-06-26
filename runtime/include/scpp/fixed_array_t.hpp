@@ -83,7 +83,7 @@ public:
 		return value_[index];
 	}
 
-	T &at(const int_t &index) {
+	T &at(const int_t<> &index) {
 		const auto native = index.native_value();
 		if (native < 0) {
 			throw_bounds_error(native);
@@ -91,7 +91,7 @@ public:
 		return at(static_cast<std::size_t>(native));
 	}
 
-	const T &at(const int_t &index) const {
+	const T &at(const int_t<> &index) const {
 		const auto native = index.native_value();
 		if (native < 0) {
 			throw_bounds_error(native);
@@ -107,11 +107,11 @@ public:
 		return at(index);
 	}
 
-	T &operator[](const int_t &index) {
+	T &operator[](const int_t<> &index) {
 		return at(index);
 	}
 
-	const T &operator[](const int_t &index) const {
+	const T &operator[](const int_t<> &index) const {
 		return at(index);
 	}
 
@@ -123,11 +123,11 @@ public:
 		return at(index_value);
 	}
 
-	T &index(const int_t &index_value) {
+	T &index(const int_t<> &index_value) {
 		return at(index_value);
 	}
 
-	const T &index(const int_t &index_value) const {
+	const T &index(const int_t<> &index_value) const {
 		return at(index_value);
 	}
 
@@ -139,7 +139,7 @@ public:
 	}
 
 	template <typename U = T>
-	[[nodiscard]] U try_ref(const int_t &index) const
+	[[nodiscard]] U try_ref(const int_t<> &index) const
 		requires(detail::is_shared_p_v<U>)
 	{
 		return at(index);
@@ -153,7 +153,7 @@ public:
 	}
 
 	template <typename U = T>
-	[[nodiscard]] U try_ref(const int_t &) const
+	[[nodiscard]] U try_ref(const int_t<> &) const
 		requires(!detail::is_shared_p_v<U>)
 	{
 		throw std::runtime_error("fixed_array_t::try_ref is supported only for shared_p<T> elements in the current safe subset");

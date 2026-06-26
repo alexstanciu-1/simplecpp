@@ -35,8 +35,8 @@ inline int_t<> count(const vector_t<T> &value) {
 }
 
 template <typename T, std::size_t N>
-inline int_t count(const fixed_array_t<T, N> &value) {
-	return int_t(static_cast<std::int64_t>(value.size()));
+inline int_t<> count(const fixed_array_t<T, N> &value) {
+	return int_t<>(static_cast<std::int64_t>(value.size()));
 }
 
 // Implements count() for any concrete hash_t payload.

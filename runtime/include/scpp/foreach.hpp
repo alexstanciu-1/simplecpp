@@ -168,8 +168,8 @@ public:
 	foreach_fixed_array_entry_view(fixed_array_t<T, N> *owner, std::size_t index) noexcept
 		: owner_(owner), index_(index) {}
 
-	[[nodiscard]] int_t key() const {
-		return int_t{static_cast<std::int64_t>(index_)};
+	[[nodiscard]] int_t<> key() const {
+		return int_t<>(static_cast<std::int64_t>(index_));
 	}
 
 	[[nodiscard]] T value_copy() const requires std::copyable<T> {
@@ -191,8 +191,8 @@ public:
 	foreach_const_fixed_array_entry_view(const fixed_array_t<T, N> *owner, std::size_t index) noexcept
 		: owner_(owner), index_(index) {}
 
-	[[nodiscard]] int_t key() const {
-		return int_t{static_cast<std::int64_t>(index_)};
+	[[nodiscard]] int_t<> key() const {
+		return int_t<>(static_cast<std::int64_t>(index_));
 	}
 
 	[[nodiscard]] T value_copy() const requires std::copyable<T> {
