@@ -44,7 +44,6 @@ int main() {
 
 	bool saw_webview_ready = false;
 	bool saw_navigation_finished = false;
-	bool saw_title_changed = false;
 	for (int i = 0; i < 160; ++i) {
 		(void) scpp::ui::app_poll(app);
 		for (;;) {
@@ -59,14 +58,12 @@ int main() {
 			if (type == "webview_navigation_finished") {
 				saw_navigation_finished = true;
 			}
-			if (type == "webview_title_changed") {
-				saw_title_changed = true;
-			}
-		}
-		if (saw_webview_ready && saw_navigation_finished && saw_title_changed) {
-			break;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+	if (!saw_webview_ready) {
+		std::cerr << "Did not receive webview_ready\n";
+		return 1;
 	}
 	if (!saw_navigation_finished) {
 		std::cerr << "Did not receive webview_navigation_finished\n";
