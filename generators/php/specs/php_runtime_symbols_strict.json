@@ -124,6 +124,13 @@
         "task_done": "tasks::done",
         "task_status": "tasks::status",
         "task_progress": "tasks::progress",
-        "task_set_status": "tasks::set_status"
+        "task_set_status": "tasks::set_status",
+        "ui_app_create": "ui::app_create",
+        "ui_window_create": "ui::window_create",
+        "ui_window_show": "ui::window_show",
+        "ui_window_close": "ui::window_close",
+        "ui_app_poll": "ui::app_poll",
+        "ui_app_next_event": "ui::app_next_event",
+        "ui_app_exit": "ui::app_exit"
     }
 }

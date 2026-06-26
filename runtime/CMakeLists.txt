@@ -6,6 +6,7 @@ option(SCPP_LANGUAGE_TARGET_PHP "Build runtime with PHP-target array semantics" 
 option(SCPP_WITH_MYSQLI "Build runtime with the optional mysqli module enabled" ON)
 option(SCPP_WITH_REGEX "Build runtime with the optional PCRE2 regex module enabled" OFF)
 option(SCPP_WITH_CURL "Build runtime with the optional libcurl module enabled" OFF)
+option(SCPP_WITH_UI "Build runtime with the optional native ui module enabled" OFF)
 
 include(CheckIncludeFileCXX)
 include(FindPkgConfig)
@@ -72,6 +73,20 @@ if(SCPP_WITH_CURL)
 	target_compile_definitions(scpp_curl PUBLIC SCPP_HAS_CURL=1)
 endif()
 
+if(SCPP_WITH_UI)
+	add_library(scpp_ui SHARED
+		include/modules/ui/ui.cpp
+	)
+
+	target_include_directories(scpp_ui
+	PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/include
+	)
+
+	target_compile_features(scpp_ui PUBLIC cxx_std_23)
+	target_compile_definitions(scpp_ui PUBLIC SCPP_HAS_UI=1)
+endif()
+
 add_library(scpp_runtime
 	include/core/runtime.cpp
 )
@@ -89,6 +104,9 @@ if(SCPP_WITH_REGEX)
 endif()
 if(SCPP_WITH_CURL)
 	target_link_libraries(scpp_runtime PUBLIC scpp_curl)
+endif()
+if(SCPP_WITH_UI)
+	target_link_libraries(scpp_runtime PUBLIC scpp_ui)
 endif()
 
 add_library(scpp_php_legacy
@@ -186,6 +204,27 @@ else()
 	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_CURL=0)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_CURL=0)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_CURL=0)
+endif()
+
+if(SCPP_WITH_UI)
+	if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+		if(PKG_CONFIG_FOUND)
+			pkg_check_modules(GTK3 QUIET IMPORTED_TARGET gtk+-3.0)
+		endif()
+		if(TARGET PkgConfig::GTK3)
+			target_link_libraries(scpp_ui PUBLIC PkgConfig::GTK3)
+			message(STATUS "SCPP ui module: using pkg-config package gtk+-3.0")
+		else()
+			message(FATAL_ERROR "SCPP_WITH_UI=ON but GTK 3 development files were not found. Install a package that provides pkg-config package gtk+-3.0 or disable the ui module.")
+		endif()
+	endif()
+	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_UI=1)
+	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_UI=1)
+	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_UI=1)
+else()
+	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_UI=0)
+	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_UI=0)
+	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_UI=0)
 endif()
 
 if(SCPP_WITH_MYSQLI)

@@ -4746,7 +4746,7 @@ function resolve_runtime_build_config(array $config): array
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
 	$safety = is_array($runtime['safety'] ?? null) ? $runtime['safety'] : [];
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'ui'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -7716,6 +7716,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('tasks', $modules, true)) {
 		$lines[] = '#include "modules/tasks/tasks.cpp"';
 	}
+	if (in_array('ui', $modules, true)) {
+		$lines[] = '#include "modules/ui/ui.cpp"';
+	}
 	if (in_array('php', $languages, true) && ($phpProfile === 'legacy' || $phpProfile === 'strict')) {
 		if (in_array('filesystem', $modules, true)) {
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
@@ -7989,6 +7992,47 @@ function resolve_runtime_curl_build_spec(): array
 	];
 }
 
+/** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
+function resolve_runtime_ui_build_spec(): array
+{
+	if (PHP_OS_FAMILY === 'Linux') {
+		$pkgConfig = find_command_path(['pkg-config']);
+		if ($pkgConfig === null) {
+			return [
+				'enabled' => false,
+				'cflags' => [],
+				'ldflags' => [],
+				'compile_defines' => ['-DSCPP_HAS_UI=0'],
+			];
+		}
+
+		$cflagsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --cflags gtk+-3.0 2>/dev/null');
+		$libsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --libs gtk+-3.0 2>/dev/null');
+		if (!is_string($libsOutput) || trim($libsOutput) === '') {
+			return [
+				'enabled' => false,
+				'cflags' => [],
+				'ldflags' => [],
+				'compile_defines' => ['-DSCPP_HAS_UI=0'],
+			];
+		}
+
+		return [
+			'enabled' => true,
+			'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
+			'ldflags' => split_shell_tokens($libsOutput),
+			'compile_defines' => ['-DSCPP_HAS_UI=1'],
+		];
+	}
+
+	return [
+		'enabled' => true,
+		'cflags' => [],
+		'ldflags' => [],
+		'compile_defines' => ['-DSCPP_HAS_UI=1'],
+	];
+}
+
 function build_runtime_compiler_flags(string $compilerKind, string $buildMode, string $runtimeIncludeDir): string
 {
 	if ($compilerKind === 'msvc') {
@@ -8083,6 +8127,16 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=1';
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=0';
+	}
+	if (in_array('ui', $modules, true)) {
+		$uiBuild = resolve_runtime_ui_build_spec();
+		if (!$uiBuild['enabled']) {
+			scpp_fail('Runtime module `ui` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported GTK development environment was found. On Linux, install GTK 3 development files that provide pkg-config package `gtk+-3.0` or disable the module.' . PHP_EOL, 1);
+		}
+		$extraCxxFlags = array_merge($extraCxxFlags, $uiBuild['compile_defines'], $uiBuild['cflags']);
+		$extraLinkFlags = array_merge($extraLinkFlags, $uiBuild['ldflags']);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_HAS_UI=0';
 	}
 	if (call_depth_guard_enabled($runtimeConfig, $buildMode)) {
 		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=1';
@@ -8219,7 +8273,7 @@ function build_runtime_module_artifact_spec(string $repoRoot, string $projectRoo
 function compute_runtime_build_signature(string $repoRoot, array $compiler, string $buildMode, array $runtimeConfig): string
 {
 	$parts = [
-		'runtime-v4',
+		'runtime-v5',
 		'kind:' . $compiler['kind'],
 		'command:' . $compiler['command'],
 		'mode:' . $buildMode,

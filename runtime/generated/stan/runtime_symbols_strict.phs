@@ -126,6 +126,13 @@ function to_dynamic(): mixed {}
 function to_hash(mixed $value): hash<mixed> {}
 function trim(string $text): string {}
 function ucfirst(string $text): string {}
+function ui_app_create(): result<ui_app> {}
+function ui_app_exit(ui_app $app): void {}
+function ui_app_next_event(ui_app $app): ui_event {}
+function ui_app_poll(ui_app $app): bool {}
+function ui_window_close(ui_window $window): result<bool> {}
+function ui_window_create(ui_app $app, string $title, int $width, int $height): result<ui_window> {}
+function ui_window_show(ui_window $window): result<bool> {}
 function var_dump(mixed $value): void {}
 
 namespace scpp;
@@ -158,6 +165,25 @@ class task_error
 	public bool $timeout;
 	public string $source_file;
 	public int $source_line;
+}
+
+class ui_app
+{
+}
+
+class ui_window
+{
+	public string $title;
+	public int $width;
+	public int $height;
+	public bool $visible;
+	public bool $closed;
+}
+
+class ui_event
+{
+	public string $type;
+	public ui_window $window_handle;
 }
 
 class mysqli_result

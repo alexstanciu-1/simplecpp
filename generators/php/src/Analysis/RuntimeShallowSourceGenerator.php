@@ -364,6 +364,18 @@ final class RuntimeShallowSourceGenerator
 				'task_status' => ['return' => 'string', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
 				'task_progress' => ['return' => 'task_progress_info', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
 				'task_set_status' => ['return' => 'void', 'params' => [['name' => 'ctx', 'type' => 'task_context'], ['name' => 'status', 'type' => 'string']]],
+				'ui_app_create' => ['return' => 'result<ui_app>', 'params' => []],
+				'ui_window_create' => ['return' => 'result<ui_window>', 'params' => [
+					['name' => 'app', 'type' => 'ui_app'],
+					['name' => 'title', 'type' => 'string'],
+					['name' => 'width', 'type' => 'int'],
+					['name' => 'height', 'type' => 'int'],
+				]],
+				'ui_window_show' => ['return' => 'result<bool>', 'params' => [['name' => 'window', 'type' => 'ui_window']]],
+				'ui_window_close' => ['return' => 'result<bool>', 'params' => [['name' => 'window', 'type' => 'ui_window']]],
+				'ui_app_poll' => ['return' => 'bool', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
+				'ui_app_next_event' => ['return' => 'ui_event', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
+				'ui_app_exit' => ['return' => 'void', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
 			],
 			'legacy' => [
 				'fopen' => ['return' => 'mixed', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'mode', 'type' => 'string']]],
@@ -455,6 +467,18 @@ final class RuntimeShallowSourceGenerator
 					['kind' => 'property', 'name' => 'timeout', 'type' => 'bool'],
 					['kind' => 'property', 'name' => 'source_file', 'type' => 'string'],
 					['kind' => 'property', 'name' => 'source_line', 'type' => 'int'],
+				], $isStrict),
+				$this->renderClassStub('ui_app', [], $isStrict),
+				$this->renderClassStub('ui_window', [
+					['kind' => 'property', 'name' => 'title', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'width', 'type' => 'int'],
+					['kind' => 'property', 'name' => 'height', 'type' => 'int'],
+					['kind' => 'property', 'name' => 'visible', 'type' => 'bool'],
+					['kind' => 'property', 'name' => 'closed', 'type' => 'bool'],
+				], $isStrict),
+				$this->renderClassStub('ui_event', [
+					['kind' => 'property', 'name' => 'type', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'window_handle', 'type' => 'ui_window'],
 				], $isStrict),
 			];
 		}
