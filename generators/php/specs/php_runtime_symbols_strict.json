@@ -32,6 +32,7 @@
         "cli_args": "php::cli_args",
         "getenv": "php::getenv",
         "shell_exec": "php::shell_exec",
+        "microtime": "php::microtime",
         "curl_init": "curl::init",
         "curl_setopt": "curl::setopt",
         "curl_exec": "curl::exec",
