@@ -3219,7 +3219,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 					null,
-					$command
+					$command,
+					$runtimeConfig
 				),
 			]
 		);
@@ -3333,7 +3334,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 				$outputPath,
-				$command
+				$command,
+				$runtimeConfig
 			),
 		]
 	);
@@ -3374,7 +3376,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 			$outputPath,
-			$command
+			$command,
+			$runtimeConfig
 		),
 	];
 }
@@ -5035,6 +5038,7 @@ function build_explanation_details(
 	?string $entryObjectPath = null,
 	?string $outputPath = null,
 	array $ninjaCommand = [],
+	array $runtimeConfig = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -5072,8 +5076,55 @@ function build_explanation_details(
 			'action' => $options['compile_dependencies'] ? 'rebuild' : 'reuse',
 			'reasons' => $dependencyReasons,
 		],
+		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
 		'sources' => array_values($sourceRebuildReasons),
 		'rebuilt_outputs' => $rebuilt,
+	];
+}
+
+/**
+ * @param array<string,mixed> $runtimeConfig
+ * @return array{modules:list<array{name:string,implicit_reason:?string}>,webview:?array{backend:string,enabled:bool}}
+ */
+function build_runtime_module_explanation(array $runtimeConfig): array
+{
+	$modules = [];
+	foreach ((array) ($runtimeConfig['modules'] ?? []) as $module) {
+		if (is_string($module) && trim($module) !== '') {
+			$modules[] = strtolower(trim($module));
+		}
+	}
+	$modules = array_values(array_unique($modules));
+
+	$implicitModules = [];
+	if (is_array($runtimeConfig['implicit_modules'] ?? null)) {
+		foreach ($runtimeConfig['implicit_modules'] as $module => $reason) {
+			if (is_string($module) && is_string($reason) && trim($module) !== '' && trim($reason) !== '') {
+				$implicitModules[strtolower(trim($module))] = strtolower(trim($reason));
+			}
+		}
+	}
+
+	$moduleRows = [];
+	foreach ($modules as $module) {
+		$moduleRows[] = [
+			'name' => $module,
+			'implicit_reason' => $implicitModules[$module] ?? null,
+		];
+	}
+
+	$webview = null;
+	if (in_array('webview', $modules, true)) {
+		$webviewSpec = resolve_runtime_webview_build_spec();
+		$webview = [
+			'backend' => (string) ($webviewSpec['backend'] ?? 'unknown'),
+			'enabled' => (bool) ($webviewSpec['enabled'] ?? false),
+		];
+	}
+
+	return [
+		'modules' => $moduleRows,
+		'webview' => $webview,
 	];
 }
 
@@ -5090,6 +5141,9 @@ function render_build_explanation_lines(array $details): array
 	$runtime = is_array($details['runtime'] ?? null) ? $details['runtime'] : [];
 	$runtimeReasons = is_array($runtime['reasons'] ?? null) ? $runtime['reasons'] : [];
 	$lines[] = 'Runtime: ' . (string) ($runtime['action'] ?? 'unknown') . format_reason_suffix($runtimeReasons);
+	foreach (render_runtime_module_explanation_lines(is_array($details['runtime_modules'] ?? null) ? $details['runtime_modules'] : []) as $line) {
+		$lines[] = $line;
+	}
 
 	$dependencies = is_array($details['dependencies'] ?? null) ? $details['dependencies'] : [];
 	$dependencyReasons = is_array($dependencies['reasons'] ?? null) ? $dependencies['reasons'] : [];
@@ -5137,6 +5191,45 @@ function render_build_explanation_lines(array $details): array
 		$lines[] = 'Outputs rebuilt: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $rebuiltOutputs));
 	}
 
+	return $lines;
+}
+
+/**
+ * @param array<string,mixed> $runtimeModules
+ * @return list<string>
+ */
+function render_runtime_module_explanation_lines(array $runtimeModules): array
+{
+	$modules = is_array($runtimeModules['modules'] ?? null) ? $runtimeModules['modules'] : [];
+	if ($modules === []) {
+		return [];
+	}
+
+	$labels = [];
+	foreach ($modules as $module) {
+		if (!is_array($module)) {
+			continue;
+		}
+		$name = trim((string) ($module['name'] ?? ''));
+		if ($name === '') {
+			continue;
+		}
+		$implicitReason = trim((string) ($module['implicit_reason'] ?? ''));
+		$labels[] = $implicitReason !== ''
+			? $name . ' (implicit via ' . $implicitReason . ')'
+			: $name;
+	}
+	if ($labels === []) {
+		return [];
+	}
+
+	$lines = ['Runtime modules: ' . implode(', ', $labels)];
+	$webview = is_array($runtimeModules['webview'] ?? null) ? $runtimeModules['webview'] : null;
+	if ($webview !== null) {
+		$backend = trim((string) ($webview['backend'] ?? 'unknown'));
+		$enabled = (bool) ($webview['enabled'] ?? false);
+		$lines[] = 'WebView backend: ' . ($backend !== '' ? $backend : 'unknown') . ($enabled ? '' : ' (disabled)');
+	}
 	return $lines;
 }
 

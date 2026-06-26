@@ -22,6 +22,28 @@ final class ScppWebviewModuleTest
 		$this->assertSame(true, in_array('webview', $config['modules'], true), 'webview should be an accepted runtime module');
 		$this->assertSame(true, in_array('ui', $config['modules'], true), 'webview should auto-enable the ui module');
 		$this->assertSame('webview', $config['implicit_modules']['ui'] ?? null, 'webview should report that it implicitly enabled ui');
+		$explanation = build_explanation_details(
+			resolve_repo_root(),
+			[
+				'compile_runtime' => false,
+				'compile_dependencies' => false,
+				'force_runtime_rebuild' => false,
+			],
+			0,
+			0,
+			[],
+			[],
+			0,
+			null,
+			null,
+			null,
+			null,
+			[],
+			$config
+		);
+		$explanationText = implode("\n", render_build_explanation_lines($explanation));
+		$this->assertContains('Runtime modules: json, filesystem, datetime, webview, ui (implicit via webview)', $explanationText, 'build explanation should print implicit ui enablement');
+		$this->assertContains('WebView backend:', $explanationText, 'build explanation should print the selected WebView backend');
 
 		$source = render_runtime_composition_source($config);
 		$this->assertContains('#include "modules/ui/ui.cpp"', $source, 'webview composition should include the ui runtime source');
@@ -39,6 +61,7 @@ final class ScppWebviewModuleTest
 		$this->assertContains('class webview', $strictRuntimeSymbols, 'strict shallow runtime should expose the webview handle shape');
 
 		$webviewBuild = resolve_runtime_webview_build_spec();
+		$this->assertSame($webviewBuild['backend'], $explanation['runtime_modules']['webview']['backend'] ?? null, 'build explanation should report the selected webview backend');
 		if (PHP_OS_FAMILY === 'Linux' && !$webviewBuild['enabled']) {
 			$this->assertSame('none', $webviewBuild['backend'], 'missing WebKitGTK should report no selected backend');
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=0', implode(' ', $webviewBuild['compile_defines']), 'missing WebKitGTK should disable the webview build spec cleanly');

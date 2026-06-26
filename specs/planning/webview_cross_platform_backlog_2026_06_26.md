@@ -25,6 +25,12 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
 | Android | Android WebView | Native boundary in progress | Android WebView JNI compile smoke |
 
+Latest heartbeat slice:
+
+- `scpp explain-build` now reports selected runtime modules, including implicit module enablement such as `ui (implicit via webview)`.
+- `scpp explain-build` now reports the selected WebView backend when the `webview` module is active.
+- The saved `build_explanation` data carries this runtime-module report for build tooling and diagnostics.
+
 ## Done Definition
 
 The WebView implementation is considered cross-platform complete for this backlog when all five platforms have:
@@ -122,13 +128,13 @@ Goal:
 
 Implementation tasks:
 
-- Report that requesting `webview` auto-enables `ui`. Initial resolved config metadata records `implicit_modules["ui"] = "webview"`.
-- Print selected backend in build output or build-report data. Initial WebView build spec reports backend names such as `webkitgtk`, `wkwebview`, `webview2`, `facade`, or `none`.
+- Report that requesting `webview` auto-enables `ui`. Initial resolved config metadata records `implicit_modules["ui"] = "webview"`; `scpp explain-build` prints `ui (implicit via webview)`.
+- Print selected backend in build output or build-report data. Initial WebView build spec reports backend names such as `webkitgtk`, `wkwebview`, `webview2`, `facade`, or `none`; `scpp explain-build` prints the active WebView backend.
 - Print missing dependency diagnostics by platform.
 
 Testing tasks:
 
-- Add focused build-config tests for selected backend and missing dependency paths. Initial module test covers implicit `ui` reporting and WebView backend metadata.
+- Add focused build-config tests for selected backend and missing dependency paths. Initial module test covers implicit `ui` reporting, WebView backend metadata, and explain-build output.
 - Keep projects without `webview` unchanged.
 
 ### 5. Browser-Like Event Follow-Up
@@ -157,12 +163,12 @@ Constraint:
 3. iOS WKWebView backend and simulator screenshot.
 4. Android JNI boundary compile smoke.
 5. Android rendering smoke after packaging exists.
-6. Build reporting for implicit `ui` enablement and selected WebView backend.
+6. Build reporting for implicit `ui` enablement and selected WebView backend. Initial explain-build slice added.
 7. Browser-like event bridge.
 
 ## Latest Known Good CI Run
 
-Run `28226254568` validated:
+Run `28226809487` validated:
 
 - Linux WebKitGTK WebView screenshot
 - macOS WKWebView screenshot
@@ -171,3 +177,4 @@ Run `28226254568` validated:
 - iOS WKWebView simulator screenshot
 - Android NDK UI compile smoke
 - Android WebView JNI boundary compile smoke
+- Shared WebView backend metadata
