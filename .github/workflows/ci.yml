@@ -242,6 +242,12 @@ jobs:
             -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
             -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
             -c tests/native/webview_android_compile.cpp -o webview_android_compile.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -shared -fPIC \
+            tests/native/android_webview_smoke/simplecpp_webview_smoke.cpp runtime/include/modules/webview/webview.cpp \
+            -o libsimplecpp_webview_smoke.so
 
       - name: Android WebView activity compile smoke
         if: runner.os == 'Linux'

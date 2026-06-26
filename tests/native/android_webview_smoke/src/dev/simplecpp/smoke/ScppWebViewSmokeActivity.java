@@ -28,10 +28,7 @@ public final class ScppWebViewSmokeActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		nativeDetach();
-		if (webView != null) {
-			webView.destroy();
-			webView = null;
-		}
+		webView = null;
 		super.onDestroy();
 	}
 

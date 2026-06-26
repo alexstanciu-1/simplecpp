@@ -23,12 +23,12 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
 | Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
-| Android | Android WebView | Native JNI bridge and Activity fixture in progress | Android WebView JNI and Activity compile smoke |
+| Android | Android WebView | Native JNI bridge and Activity fixture in progress | Android WebView JNI, native smoke library, and Activity compile smoke |
 
 Latest heartbeat slice:
 
-- Android WebView now has a minimal app-side smoke fixture with an Activity-owned `WebView`, native attach/load/detach hooks, manifest, and theme.
-- CI now compiles that Activity source against `android.jar` on Linux, alongside the native NDK bridge compile smoke.
+- Android WebView now has a native smoke bridge implementing the Activity fixture's `nativeAttach`, `nativeLoadHtml`, and `nativeDetach` JNI methods.
+- CI now builds `libsimplecpp_webview_smoke.so` with the Android WebView backend, linking the smoke JNI bridge against the WebView runtime implementation.
 
 ## Done Definition
 
@@ -114,6 +114,7 @@ Testing tasks:
 
 - Start with Android NDK compile smoke for the native boundary. Initial runtime and helper compile smoke added and green.
 - Add Android app-side Activity compile smoke. Initial Activity-owned WebView fixture and `javac` CI step added.
+- Add native JNI smoke library build. Initial `libsimplecpp_webview_smoke.so` CI build added.
 - Add emulator render smoke only after the Android app packaging path exists.
 
 Open decision:
