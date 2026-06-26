@@ -67,11 +67,14 @@ final class ScppWebviewModuleTest
 
 		$webviewBuild = resolve_runtime_webview_build_spec();
 		$this->assertSame($webviewBuild['backend'], $explanation['runtime_modules']['webview']['backend'] ?? null, 'build explanation should report the selected webview backend');
+		$this->assertSame(is_array($webviewBuild['diagnostics'] ?? null), is_array($explanation['runtime_modules']['webview']['diagnostics'] ?? null), 'build explanation should carry webview diagnostics metadata');
 		if (PHP_OS_FAMILY === 'Linux' && !$webviewBuild['enabled']) {
 			$this->assertSame('none', $webviewBuild['backend'], 'missing WebKitGTK should report no selected backend');
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=0', implode(' ', $webviewBuild['compile_defines']), 'missing WebKitGTK should disable the webview build spec cleanly');
+			$this->assertSame(true, count($webviewBuild['diagnostics']) > 0, 'missing WebKitGTK should include an actionable diagnostic');
 		} else {
 			$this->assertSame(true, $webviewBuild['enabled'], 'webview build spec should be enabled when a backend is available or not required for the platform facade');
+			$this->assertSame([], $webviewBuild['diagnostics'], 'enabled webview build spec should not report dependency diagnostics');
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=1', implode(' ', $webviewBuild['compile_defines']), 'webview build spec should enable the webview facade');
 			if (PHP_OS_FAMILY === 'Linux') {
 				$this->assertSame('webkitgtk', $webviewBuild['backend'], 'Linux webview build spec should report WebKitGTK as the selected backend');
@@ -89,6 +92,48 @@ final class ScppWebviewModuleTest
 				$this->assertSame('facade', $webviewBuild['backend'], 'unsupported WebView render platforms should report facade-only backend metadata');
 			}
 		}
+
+		$missingPkgConfig = resolve_runtime_webview_build_spec(
+			'Linux',
+			static fn (array $commands): ?string => null,
+			static fn (string $command): string => ''
+		);
+		$this->assertSame(false, $missingPkgConfig['enabled'], 'Linux webview build spec should disable cleanly without pkg-config');
+		$this->assertContains('pkg-config was not found', implode("\n", $missingPkgConfig['diagnostics']), 'missing pkg-config diagnostic should name the missing tool');
+
+		$missingWebKit = resolve_runtime_webview_build_spec(
+			'Linux',
+			static fn (array $commands): ?string => '/usr/bin/pkg-config',
+			static fn (string $command): string => ''
+		);
+		$this->assertSame(false, $missingWebKit['enabled'], 'Linux webview build spec should disable cleanly without WebKitGTK');
+		$this->assertContains('WebKitGTK pkg-config package', implode("\n", $missingWebKit['diagnostics']), 'missing WebKitGTK diagnostic should name the missing pkg-config package');
+
+		$simulatedWebKit = resolve_runtime_webview_build_spec(
+			'Linux',
+			static fn (array $commands): ?string => '/usr/bin/pkg-config',
+			static function (string $command): string {
+				if (str_contains($command, '--libs')) {
+					return '-lwebkit2gtk-4.1';
+				}
+				if (str_contains($command, '--cflags')) {
+					return '-I/usr/include/webkitgtk-4.1';
+				}
+				return '';
+			}
+		);
+		$this->assertSame(true, $simulatedWebKit['enabled'], 'Linux webview build spec should enable when WebKitGTK pkg-config output is available');
+		$this->assertSame([], $simulatedWebKit['diagnostics'], 'available WebKitGTK should not emit dependency diagnostics');
+
+		$diagnosticLines = render_runtime_module_explanation_lines([
+			'modules' => [['name' => 'webview', 'implicit_reason' => null]],
+			'webview' => [
+				'backend' => 'none',
+				'enabled' => false,
+				'diagnostics' => $missingWebKit['diagnostics'],
+			],
+		]);
+		$this->assertContains('WebView diagnostic: WebView disabled on Linux:', implode("\n", $diagnosticLines), 'build explanation should render WebView dependency diagnostics');
 
 		echo "PASS: scpp webview module\n";
 		return 0;

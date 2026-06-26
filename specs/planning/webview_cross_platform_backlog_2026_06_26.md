@@ -43,6 +43,7 @@ Latest heartbeat slice:
 - Android WebView now emits `webview_ready` from native creation and the smoke Activity wires `WebViewClient` plus `JavascriptInterface` callbacks into native queue events.
 - Linux WebKitGTK screenshot capture now retries until the rendered frame passes the screenshot shape check, avoiding single-frame black captures from hosted Xvfb/WebKit timing.
 - Windows WebView2 CI now launches the smoke app, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; CI run `28242929755` validated the path.
+- WebView build reporting now carries structured dependency diagnostics and renders missing Linux `pkg-config`/WebKitGTK package guidance in `scpp explain-build`.
 
 ## Done Definition
 
@@ -147,11 +148,11 @@ Implementation tasks:
 
 - Report that requesting `webview` auto-enables `ui`. Initial resolved config metadata records `implicit_modules["ui"] = "webview"`; `scpp explain-build` prints `ui (implicit via webview)`.
 - Print selected backend in build output or build-report data. Initial WebView build spec reports backend names such as `webkitgtk`, `wkwebview`, `webview2`, `facade`, or `none`; `scpp explain-build` prints the active WebView backend.
-- Print missing dependency diagnostics by platform.
+- Print missing dependency diagnostics by platform. Initial Linux WebKitGTK missing-package diagnostics added to the WebView build spec and `scpp explain-build`.
 
 Testing tasks:
 
-- Add focused build-config tests for selected backend and missing dependency paths. Initial module test covers implicit `ui` reporting, WebView backend metadata, and explain-build output.
+- Add focused build-config tests for selected backend and missing dependency paths. Initial module test covers implicit `ui` reporting, WebView backend metadata, Linux missing dependency diagnostics, and explain-build output.
 - Keep projects without `webview` unchanged.
 
 ### 5. Browser-Like Event Follow-Up
