@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -39,6 +40,7 @@ class float_t;
 class string_t;
 
 template <typename T> class vector_t;
+template <typename T, std::size_t N> class fixed_array_t;
 template <typename T> class shared_p;
 template <typename T> class unique_p;
 template <typename T> class weak_p;
@@ -157,6 +159,17 @@ struct vector_value_type<vector_t<T>> {
 
 template <typename T>
 using vector_value_type_t = typename vector_value_type<remove_cvref_t<T>>::type;
+
+template <typename T>
+struct fixed_array_value_type;
+
+template <typename T, std::size_t N>
+struct fixed_array_value_type<fixed_array_t<T, N>> {
+	using type = T;
+};
+
+template <typename T>
+using fixed_array_value_type_t = typename fixed_array_value_type<remove_cvref_t<T>>::type;
 
 // Detects whether a runtime type exposes operator-> so wrapper types can forward dereference safely.
 template <typename T, typename = void>

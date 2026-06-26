@@ -1,0 +1,14 @@
+function make_values(): fixed_array<int, 3>
+{
+	return [1, 2, 3];
+}
+
+function first_value(fixed_array<int, 3> $values): int
+{
+	return $values[0];
+}
+
+$values fixed_array<int, 3> = make_values();
+$values[1] = 5;
+
+echo count($values), " ", $values[1], " ", first_value($values), "\n";

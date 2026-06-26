@@ -7,6 +7,7 @@
 #include "scpp/result_or_bool.hpp"
 #include "scpp/result_or_false.hpp"
 #include "scpp/support/hash_t.hpp"
+#include "scpp/fixed_array_t.hpp"
 #include "scpp/vector_t.hpp"
 
 namespace scpp {
@@ -161,6 +162,140 @@ private:
 	const vector_t<T> *owner_;
 };
 
+template <typename T, std::size_t N>
+class foreach_fixed_array_entry_view final {
+public:
+	foreach_fixed_array_entry_view(fixed_array_t<T, N> *owner, std::size_t index) noexcept
+		: owner_(owner), index_(index) {}
+
+	[[nodiscard]] int_t key() const {
+		return int_t{static_cast<std::int64_t>(index_)};
+	}
+
+	[[nodiscard]] T value_copy() const requires std::copyable<T> {
+		return owner_->at(index_);
+	}
+
+	[[nodiscard]] T &value_ref() const {
+		return owner_->at(index_);
+	}
+
+private:
+	fixed_array_t<T, N> *owner_;
+	std::size_t index_;
+};
+
+template <typename T, std::size_t N>
+class foreach_const_fixed_array_entry_view final {
+public:
+	foreach_const_fixed_array_entry_view(const fixed_array_t<T, N> *owner, std::size_t index) noexcept
+		: owner_(owner), index_(index) {}
+
+	[[nodiscard]] int_t key() const {
+		return int_t{static_cast<std::int64_t>(index_)};
+	}
+
+	[[nodiscard]] T value_copy() const requires std::copyable<T> {
+		return owner_->at(index_);
+	}
+
+private:
+	const fixed_array_t<T, N> *owner_;
+	std::size_t index_;
+};
+
+template <typename T, std::size_t N>
+class foreach_fixed_array_iterator final {
+public:
+	foreach_fixed_array_iterator(fixed_array_t<T, N> *owner, std::size_t index) noexcept
+		: owner_(owner), index_(index) {}
+
+	[[nodiscard]] foreach_fixed_array_entry_view<T, N> operator*() const noexcept {
+		return foreach_fixed_array_entry_view<T, N>(owner_, index_);
+	}
+
+	foreach_fixed_array_iterator &operator++() noexcept {
+		++index_;
+		return *this;
+	}
+
+	[[nodiscard]] bool operator==(const foreach_fixed_array_iterator &other) const noexcept {
+		return owner_ == other.owner_ && index_ == other.index_;
+	}
+
+	[[nodiscard]] bool operator!=(const foreach_fixed_array_iterator &other) const noexcept {
+		return !(*this == other);
+	}
+
+private:
+	fixed_array_t<T, N> *owner_;
+	std::size_t index_;
+};
+
+template <typename T, std::size_t N>
+class foreach_const_fixed_array_iterator final {
+public:
+	foreach_const_fixed_array_iterator(const fixed_array_t<T, N> *owner, std::size_t index) noexcept
+		: owner_(owner), index_(index) {}
+
+	[[nodiscard]] foreach_const_fixed_array_entry_view<T, N> operator*() const noexcept {
+		return foreach_const_fixed_array_entry_view<T, N>(owner_, index_);
+	}
+
+	foreach_const_fixed_array_iterator &operator++() noexcept {
+		++index_;
+		return *this;
+	}
+
+	[[nodiscard]] bool operator==(const foreach_const_fixed_array_iterator &other) const noexcept {
+		return owner_ == other.owner_ && index_ == other.index_;
+	}
+
+	[[nodiscard]] bool operator!=(const foreach_const_fixed_array_iterator &other) const noexcept {
+		return !(*this == other);
+	}
+
+private:
+	const fixed_array_t<T, N> *owner_;
+	std::size_t index_;
+};
+
+template <typename T, std::size_t N>
+class foreach_fixed_array_range final {
+public:
+	foreach_fixed_array_range(fixed_array_t<T, N> &owner) noexcept
+		: owner_(&owner) {}
+
+	[[nodiscard]] foreach_fixed_array_iterator<T, N> begin() const noexcept {
+		return foreach_fixed_array_iterator<T, N>(owner_, 0);
+	}
+
+	[[nodiscard]] foreach_fixed_array_iterator<T, N> end() const noexcept {
+		return foreach_fixed_array_iterator<T, N>(owner_, owner_->size());
+	}
+
+private:
+	fixed_array_t<T, N> *owner_;
+};
+
+template <typename T, std::size_t N>
+class foreach_const_fixed_array_range final {
+public:
+	foreach_const_fixed_array_range(const fixed_array_t<T, N> &owner) noexcept
+		: owner_(&owner) {}
+
+	[[nodiscard]] foreach_const_fixed_array_iterator<T, N> begin() const noexcept {
+		return foreach_const_fixed_array_iterator<T, N>(owner_, 0);
+	}
+
+	[[nodiscard]] foreach_const_fixed_array_iterator<T, N> end() const noexcept {
+		return foreach_const_fixed_array_iterator<T, N>(owner_, owner_->size());
+	}
+
+private:
+	const fixed_array_t<T, N> *owner_;
+};
+
 template <typename T, typename K = typename default_hash_key<T>::type>
 class foreach_hash_range final {
 public:
@@ -195,6 +330,16 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline foreach_const_vector_range<T> foreach_range(const vector_t<T> &value) noexcept {
 	return foreach_const_vector_range<T>(value);
+}
+
+template <typename T, std::size_t N>
+[[nodiscard]] inline foreach_fixed_array_range<T, N> foreach_range(fixed_array_t<T, N> &value) noexcept {
+	return foreach_fixed_array_range<T, N>(value);
+}
+
+template <typename T, std::size_t N>
+[[nodiscard]] inline foreach_const_fixed_array_range<T, N> foreach_range(const fixed_array_t<T, N> &value) noexcept {
+	return foreach_const_fixed_array_range<T, N>(value);
 }
 
 template <typename T, typename K>
