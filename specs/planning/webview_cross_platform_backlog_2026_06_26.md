@@ -21,7 +21,7 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | --- | --- | --- | --- |
 | Linux | WebKitGTK | Implemented first rendering slice | Build, launch under Xvfb, screenshot artifact |
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
-| Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
+| Windows 11 | WebView2 | Initial rendering slice implemented | WebView2 compile/link smoke; launch/screenshot pending CI proof |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
 | Android | Android WebView | Implemented first rendering slice | Android WebView JNI, native smoke library, Activity compile, signed APK package, APK artifact, emulator launch, screenshot artifact |
 
@@ -42,6 +42,7 @@ Latest heartbeat slice:
 - Windows WebView2 now wires `NavigationStarting`, `NavigationCompleted`, and `WebMessageReceived` callbacks into that shared event queue; Windows CI still validates this as compile/link until launch/screenshot is added.
 - Android WebView now emits `webview_ready` from native creation and the smoke Activity wires `WebViewClient` plus `JavascriptInterface` callbacks into native queue events.
 - Linux WebKitGTK screenshot capture now retries until the rendered frame passes the screenshot shape check, avoiding single-frame black captures from hosted Xvfb/WebKit timing.
+- Windows WebView2 CI now attempts a real launch, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; this needs CI proof before replacing the compile/link-only signal.
 
 ## Done Definition
 
@@ -81,7 +82,7 @@ Testing tasks:
 
 - Add `tests/native/webview_smoke_windows.cpp`. Initial smoke source added.
 - Build/link in Windows CI. Initial CI step added.
-- Add launch/screenshot artifact when desktop capture is stable enough on GitHub Actions.
+- Add launch/screenshot artifact when desktop capture is stable enough on GitHub Actions. Initial launch/screenshot CI step added and awaiting proof.
 
 Open decision:
 
