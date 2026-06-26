@@ -570,7 +570,7 @@ jobs:
           avdmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -path "*/bin/avdmanager" | sort -V | tail -n 1)"
           test -x "$sdkmanager_bin"
           test -x "$avdmanager_bin"
-          yes | "$sdkmanager_bin" "platform-tools" "emulator" "system-images;android-35;google_apis;x86_64"
+          "$sdkmanager_bin" "platform-tools" "emulator" "system-images;android-35;google_apis;x86_64"
           echo "no" | "$avdmanager_bin" create avd --force --name scpp_webview_smoke --package "system-images;android-35;google_apis;x86_64" --device pixel_2
           if [ -e /dev/kvm ]; then
             sudo chmod 666 /dev/kvm
