@@ -310,7 +310,7 @@ jobs:
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
-            -dname "CN=Android Debug,O=Simple C++"
+            -dname "CN=Android Debug,O=SimpleCpp"
           "$build_tools/apksigner" sign \
             --ks android_webview_smoke-debug.keystore \
             --ks-pass pass:android \
