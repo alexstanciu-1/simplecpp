@@ -13,12 +13,56 @@ inline int_t<> strlen(const nullable<string_t> &value) {
 	return scpp::str::length(value);
 }
 
+inline int_t<> string_byte_len(const string_t &value) {
+	return scpp::str::byte_length(value);
+}
+
 inline int_t<> string_byte_at(const string_t &value, const int_t<> &offset) {
 	return scpp::str::byte_at(value, offset);
 }
 
+inline result_or_false<int_t<>> string_byte_find(const string_t &haystack, const string_t &needle) {
+	const auto position = scpp::str::byte_find(haystack, needle);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline result_or_false<int_t<>> string_byte_find(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto position = scpp::str::byte_find(haystack, needle, offset);
+	if (!position.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return position.value();
+}
+
+inline string_t string_byte_slice(const string_t &value, const int_t<> &offset, const int_t<> &length) {
+	return scpp::str::byte_slice(value, offset, length);
+}
+
 inline bool_t string_byte_slice_equals(const string_t &value, const int_t<> &offset, const int_t<> &length, const string_t &literal) {
 	return scpp::str::byte_slice_equals(value, offset, length, literal);
+}
+
+inline int_t<> string_utf8_codepoint_count(const string_t &value) {
+	return scpp::str::utf8_codepoint_count(value);
+}
+
+inline int_t<> string_utf8_codepoint_at(const string_t &value, const int_t<> &index) {
+	return scpp::str::utf8_codepoint_at(value, index);
+}
+
+inline string_t string_utf8_slice_codepoints(const string_t &value, const int_t<> &start, const int_t<> &length) {
+	return scpp::str::utf8_slice_codepoints(value, start, length);
+}
+
+inline int_t<> string_grapheme_count(const string_t &value) {
+	return scpp::str::grapheme_count(value);
+}
+
+inline string_t string_grapheme_slice(const string_t &value, const int_t<> &start, const int_t<> &length) {
+	return scpp::str::grapheme_slice(value, start, length);
 }
 
 inline string_t hash_string(const string_t &value) {

@@ -26,6 +26,10 @@ inline int_t<> length(const nullable<string_t> &value) {
 	return length(value.value());
 }
 
+inline int_t<> byte_length(const string_t &value) {
+	return int_t<>(static_cast<std::int64_t>(value.byte_size()));
+}
+
 inline int_t<> byte_at(const string_t &value, const int_t<> &offset) {
 	const auto native_offset = offset.native_value();
 	const auto &native = value.native_value();
@@ -33,6 +37,41 @@ inline int_t<> byte_at(const string_t &value, const int_t<> &offset) {
 		return int_t<>(-1);
 	}
 	return int_t<>(static_cast<std::int64_t>(static_cast<unsigned char>(native[static_cast<std::size_t>(native_offset)])));
+}
+
+inline nullable<int_t<>> byte_find(const string_t &haystack, const string_t &needle) {
+	const auto position = haystack.native_value().find(needle.native_value());
+	if (position == std::string::npos) {
+		return null;
+	}
+	return int_t<>(static_cast<std::int64_t>(position));
+}
+
+inline nullable<int_t<>> byte_find(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto native_offset = offset.native_value();
+	const auto &native = haystack.native_value();
+	if (native_offset < 0 || static_cast<std::size_t>(native_offset) > native.size()) {
+		throw scpp::ValueError("string_byte_find(): Argument #3 ($offset) must be contained in argument #1 ($haystack)");
+	}
+	const auto position = native.find(needle.native_value(), static_cast<std::size_t>(native_offset));
+	if (position == std::string::npos) {
+		return null;
+	}
+	return int_t<>(static_cast<std::int64_t>(position));
+}
+
+inline string_t byte_slice(const string_t &value, const int_t<> &offset, const int_t<> &length_value) {
+	const auto native_offset = offset.native_value();
+	const auto native_length = length_value.native_value();
+	const auto &native = value.native_value();
+	if (native_offset < 0 || native_length < 0 || static_cast<std::size_t>(native_offset) > native.size()) {
+		return string_t("");
+	}
+	const auto start = static_cast<std::size_t>(native_offset);
+	const auto available = native.size() - start;
+	const auto requested = static_cast<std::size_t>(native_length);
+	const auto used = requested < available ? requested : available;
+	return string_t(native.substr(start, used));
 }
 
 inline bool_t byte_slice_equals(const string_t &value, const int_t<> &offset, const int_t<> &length_value, const string_t &literal) {
@@ -49,6 +88,44 @@ inline bool_t byte_slice_equals(const string_t &value, const int_t<> &offset, co
 		return bool_t(false);
 	}
 	return bool_t(std::string_view(native).substr(start, length) == std::string_view(expected));
+}
+
+inline int_t<> utf8_codepoint_count(const string_t &value) {
+	return int_t<>(static_cast<std::int64_t>(value.length_cp()));
+}
+
+inline int_t<> utf8_codepoint_at(const string_t &value, const int_t<> &index) {
+	const auto native_index = index.native_value();
+	if (native_index < 0) {
+		return int_t<>(-1);
+	}
+	if (static_cast<std::size_t>(native_index) >= value.length_cp()) {
+		return int_t<>(-1);
+	}
+	const auto cp = utf8::codepoint_at(value.native_value(), static_cast<std::size_t>(native_index));
+	return int_t<>(static_cast<std::int64_t>(cp));
+}
+
+inline string_t utf8_slice_codepoints(const string_t &value, const int_t<> &start, const int_t<> &length_value) {
+	const auto native_start = start.native_value();
+	const auto native_length = length_value.native_value();
+	if (native_start < 0 || native_length < 0) {
+		return string_t("");
+	}
+	return value.substr_cp(static_cast<std::size_t>(native_start), static_cast<std::size_t>(native_length));
+}
+
+inline int_t<> grapheme_count(const string_t &value) {
+	return int_t<>(static_cast<std::int64_t>(utf8::length_grapheme(value.native_value())));
+}
+
+inline string_t grapheme_slice(const string_t &value, const int_t<> &start, const int_t<> &length_value) {
+	const auto native_start = start.native_value();
+	const auto native_length = length_value.native_value();
+	if (native_start < 0 || native_length < 0) {
+		return string_t("");
+	}
+	return string_t(utf8::substr_grapheme(value.native_value(), static_cast<std::size_t>(native_start), static_cast<std::size_t>(native_length)));
 }
 
 inline nullable<int_t<>> find(const string_t &haystack, const string_t &needle) {
