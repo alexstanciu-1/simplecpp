@@ -72,12 +72,14 @@ function js_plus(): mixed {}
 function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
 function jss_tokenize(string $source): mixed {}
+function jss_tokenize_buffer(string $source): token_buffer {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
 function mkdir(string $path): bool {}
 function not_identical(mixed $left, mixed $right): bool {}
 function number_format(float $value): string {}
 function phs_tokenize(string $source): mixed {}
+function phs_tokenize_buffer(string $source): token_buffer {}
 function preg_filter(string $pattern, string $replacement, string $subject): mixed {}
 function preg_grep(string $pattern, mixed $input): mixed {}
 function preg_jit_available(): bool {}
@@ -123,6 +125,11 @@ function ternary_eval(): mixed {}
 function time(): int {}
 function to_dynamic(): mixed {}
 function to_hash(mixed $value) /** hash<mixed> */ {}
+function token_buffer_count(token_buffer $buffer): int {}
+function token_buffer_kind_id(token_buffer $buffer, int $index): int {}
+function token_buffer_length(token_buffer $buffer, int $index): int {}
+function token_buffer_start_offset(token_buffer $buffer, int $index): int {}
+function token_buffer_to_mixed(token_buffer $buffer): mixed {}
 function touch(string $path): bool {}
 function trim(string $text): string {}
 function ucfirst(string $text): string {}

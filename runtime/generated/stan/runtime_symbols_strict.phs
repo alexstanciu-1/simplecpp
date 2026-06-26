@@ -82,12 +82,14 @@ function js_plus(): mixed {}
 function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
 function jss_tokenize(string $source): mixed {}
+function jss_tokenize_buffer(string $source): token_buffer {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
 function microtime(bool $as_float = false): mixed {}
 function not_identical(mixed $left, mixed $right): bool {}
 function number_format(float $value): string {}
 function phs_tokenize(string $source): mixed {}
+function phs_tokenize_buffer(string $source): token_buffer {}
 function regex_filter(string $pattern, $input vector<string>): vector<string> {}
 function regex_grep(string $pattern, $input vector<string>): vector<string> {}
 function regex_jit_available(): bool {}
@@ -138,6 +140,11 @@ function task_status(task_batch $batch): string {}
 function ternary_eval(): mixed {}
 function to_dynamic(): mixed {}
 function to_hash(mixed $value): hash<mixed> {}
+function token_buffer_count(token_buffer $buffer): int {}
+function token_buffer_kind_id(token_buffer $buffer, int $index): int {}
+function token_buffer_length(token_buffer $buffer, int $index): int {}
+function token_buffer_start_offset(token_buffer $buffer, int $index): int {}
+function token_buffer_to_mixed(token_buffer $buffer): mixed {}
 function trim(string $text): string {}
 function ucfirst(string $text): string {}
 function ui_app_create(): result<ui_app> {}
@@ -167,6 +174,10 @@ function webview_reply_error(webview $view, int $id, string $code, string $messa
 function webview_reply_ok(webview $view, int $id, string $value_json): result<bool> {}
 
 namespace scpp;
+
+class token_buffer
+{
+}
 
 class task_batch
 {
