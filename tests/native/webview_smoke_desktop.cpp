@@ -44,7 +44,7 @@ int main() {
 	}
 
 	bool replied = false;
-	for (int i = 0; i < 160; ++i) {
+	for (int i = 0; i < 240; ++i) {
 		if (scpp::ui::app_poll(app).native_value()) {
 			auto event = scpp::ui::app_next_event(app);
 			if (scpp::ui::event_type(event).native_value() == "webview_message") {

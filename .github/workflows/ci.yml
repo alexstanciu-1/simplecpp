@@ -249,7 +249,7 @@ jobs:
             set -euo pipefail
             GDK_BACKEND=x11 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 ./webview_smoke_gtk &
             pid=$!
-            sleep 5
+            sleep 8
             import -window root "'"$screenshot_path"'"
             convert "'"$screenshot_path"'" PNG24:"'"$screenshot_path"'"
             wait "$pid"
