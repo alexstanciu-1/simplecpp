@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
+#include <vector>
 
 namespace scpp::tokenizer {
 
@@ -25,19 +26,49 @@ enum token_kind_id : std::int64_t {
 
 namespace detail {
 
+struct token_diagnostic final {
+	const char *kind = "";
+	std::size_t offset = 0;
+	std::int64_t line = 0;
+	std::int64_t column = 0;
+};
+
+template <typename Integer>
+unique_p<hash_t<mixed_t>> make_int_column(const std::vector<Integer> &values) {
+	auto column = table_();
+	for (const auto value : values) {
+		static_cast<void>(column->append(mixed_t(int_t(static_cast<std::int64_t>(value)))));
+	}
+	return column;
+}
+
 struct token_buffer_builder final {
-	unique_p<hash_t<mixed_t>> kind_ids = table_();
-	unique_p<hash_t<mixed_t>> start_offsets = table_();
-	unique_p<hash_t<mixed_t>> lengths = table_();
-	unique_p<hash_t<mixed_t>> line_numbers = table_();
-	unique_p<hash_t<mixed_t>> columns = table_();
-	unique_p<hash_t<mixed_t>> flags = table_();
-	unique_p<hash_t<mixed_t>> line_start_offsets = table_();
-	unique_p<hash_t<mixed_t>> diagnostics = table_();
-	std::int64_t token_count = 0;
+	std::vector<std::int64_t> kind_ids;
+	std::vector<std::size_t> start_offsets;
+	std::vector<std::size_t> lengths;
+	std::vector<std::int64_t> line_numbers;
+	std::vector<std::int64_t> columns;
+	std::vector<std::int64_t> flags;
+	std::vector<std::size_t> line_start_offsets;
+	std::vector<token_diagnostic> diagnostics;
+	const char *language = "";
+	std::size_t source_length = 0;
+
+	explicit token_buffer_builder(const char *language_value, const std::size_t source_length_value)
+		: language(language_value), source_length(source_length_value) {
+		const auto estimated_tokens = (source_length / 2U) + 8U;
+		kind_ids.reserve(estimated_tokens);
+		start_offsets.reserve(estimated_tokens);
+		lengths.reserve(estimated_tokens);
+		line_numbers.reserve(estimated_tokens);
+		columns.reserve(estimated_tokens);
+		flags.reserve(estimated_tokens);
+		line_start_offsets.reserve(64U);
+		diagnostics.reserve(4U);
+	}
 
 	void add_line_start(const std::size_t offset) {
-		static_cast<void>(line_start_offsets->append(mixed_t(int_t(static_cast<std::int64_t>(offset)))));
+		line_start_offsets.push_back(offset);
 	}
 
 	void add_token(
@@ -48,39 +79,52 @@ struct token_buffer_builder final {
 		const std::int64_t column,
 		const std::int64_t flag_value = 0
 	) {
-		static_cast<void>(kind_ids->append(mixed_t(int_t(static_cast<std::int64_t>(kind)))));
-		static_cast<void>(start_offsets->append(mixed_t(int_t(static_cast<std::int64_t>(start)))));
-		static_cast<void>(lengths->append(mixed_t(int_t(static_cast<std::int64_t>(length)))));
-		static_cast<void>(line_numbers->append(mixed_t(int_t(line))));
-		static_cast<void>(columns->append(mixed_t(int_t(column))));
-		static_cast<void>(flags->append(mixed_t(int_t(flag_value))));
-		++token_count;
+		kind_ids.push_back(static_cast<std::int64_t>(kind));
+		start_offsets.push_back(start);
+		lengths.push_back(length);
+		line_numbers.push_back(line);
+		columns.push_back(column);
+		flags.push_back(flag_value);
 	}
 
 	void add_diagnostic(const char *kind, const std::size_t offset, const std::int64_t line, const std::int64_t column) {
-		auto item = table_();
-		item->set(string_t("kind"), mixed_t(string_t(kind)));
-		item->set(string_t("offset"), mixed_t(int_t(static_cast<std::int64_t>(offset))));
-		item->set(string_t("line"), mixed_t(int_t(line)));
-		item->set(string_t("column"), mixed_t(int_t(column)));
-		static_cast<void>(diagnostics->append(mixed_t(std::move(item))));
+		diagnostics.push_back(token_diagnostic{
+			.kind = kind,
+			.offset = offset,
+			.line = line,
+			.column = column,
+		});
 	}
 
-	mixed_t finish(const char *language, const std::size_t source_length) {
+	[[nodiscard]] std::int64_t token_count() const noexcept {
+		return static_cast<std::int64_t>(kind_ids.size());
+	}
+
+	mixed_t finish() {
+		auto diagnostic_items = table_();
+		for (const auto &diagnostic : diagnostics) {
+			auto item = table_();
+			item->set(string_t("kind"), mixed_t(string_t(diagnostic.kind)));
+			item->set(string_t("offset"), mixed_t(int_t(static_cast<std::int64_t>(diagnostic.offset))));
+			item->set(string_t("line"), mixed_t(int_t(diagnostic.line)));
+			item->set(string_t("column"), mixed_t(int_t(diagnostic.column)));
+			static_cast<void>(diagnostic_items->append(mixed_t(std::move(item))));
+		}
+
 		auto out = table_();
 		out->set(string_t("schema_version"), mixed_t(int_t(1)));
 		out->set(string_t("language"), mixed_t(string_t(language)));
 		out->set(string_t("source_length"), mixed_t(int_t(static_cast<std::int64_t>(source_length))));
-		out->set(string_t("token_count"), mixed_t(int_t(token_count)));
-		out->set(string_t("diagnostic_count"), mixed_t(int_t(static_cast<std::int64_t>(diagnostics->size()))));
-		out->set(string_t("kind_ids"), mixed_t(std::move(kind_ids)));
-		out->set(string_t("start_offsets"), mixed_t(std::move(start_offsets)));
-		out->set(string_t("lengths"), mixed_t(std::move(lengths)));
-		out->set(string_t("line_numbers"), mixed_t(std::move(line_numbers)));
-		out->set(string_t("columns"), mixed_t(std::move(columns)));
-		out->set(string_t("flags"), mixed_t(std::move(flags)));
-		out->set(string_t("line_start_offsets"), mixed_t(std::move(line_start_offsets)));
-		out->set(string_t("diagnostics"), mixed_t(std::move(diagnostics)));
+		out->set(string_t("token_count"), mixed_t(int_t(token_count())));
+		out->set(string_t("diagnostic_count"), mixed_t(int_t(static_cast<std::int64_t>(diagnostics.size()))));
+		out->set(string_t("kind_ids"), mixed_t(make_int_column(kind_ids)));
+		out->set(string_t("start_offsets"), mixed_t(make_int_column(start_offsets)));
+		out->set(string_t("lengths"), mixed_t(make_int_column(lengths)));
+		out->set(string_t("line_numbers"), mixed_t(make_int_column(line_numbers)));
+		out->set(string_t("columns"), mixed_t(make_int_column(columns)));
+		out->set(string_t("flags"), mixed_t(make_int_column(flags)));
+		out->set(string_t("line_start_offsets"), mixed_t(make_int_column(line_start_offsets)));
+		out->set(string_t("diagnostics"), mixed_t(std::move(diagnostic_items)));
 		return mixed_t(std::move(out));
 	}
 };
@@ -140,9 +184,9 @@ struct token_buffer_builder final {
 }
 
 template <typename KeywordFn>
-mixed_t tokenize_ascii_language(const string_t &source_value, const char *language, KeywordFn keyword_fn, const bool phs_variables) {
+token_buffer_builder scan_ascii_language(const string_t &source_value, const char *language, KeywordFn keyword_fn, const bool phs_variables) {
 	const std::string_view source(source_value.native_value());
-	token_buffer_builder out;
+	token_buffer_builder out(language, source.size());
 	out.add_line_start(0);
 
 	std::size_t offset = 0;
@@ -299,7 +343,12 @@ mixed_t tokenize_ascii_language(const string_t &source_value, const char *langua
 	}
 
 	out.add_token(token_eof, offset, 0, line, column);
-	return out.finish(language, source.size());
+	return out;
+}
+
+template <typename KeywordFn>
+mixed_t tokenize_ascii_language(const string_t &source_value, const char *language, KeywordFn keyword_fn, const bool phs_variables) {
+	return scan_ascii_language(source_value, language, keyword_fn, phs_variables).finish();
 }
 
 } // namespace detail
@@ -312,5 +361,12 @@ mixed_t tokenize_ascii_language(const string_t &source_value, const char *langua
 	return detail::tokenize_ascii_language(source, "jss", detail::jss_keyword, false);
 }
 
-} // namespace scpp::tokenizer
+[[nodiscard]] inline int_t<> phs_tokenize_count(const string_t &source) {
+	return int_t(detail::scan_ascii_language(source, "phs", detail::phs_keyword, true).token_count());
+}
 
+[[nodiscard]] inline int_t<> jss_tokenize_count(const string_t &source) {
+	return int_t(detail::scan_ascii_language(source, "jss", detail::jss_keyword, false).token_count());
+}
+
+} // namespace scpp::tokenizer
