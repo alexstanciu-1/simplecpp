@@ -845,6 +845,10 @@ final class Generator
 			return $this->renderGeneratedCast($expectedType, $renderedExpr);
 		}
 
+		if ($exprType === 'int_t<>' && $this->isFixedWidthIntegerRuntimeType($expectedType)) {
+			return $this->renderGeneratedCast($expectedType, $renderedExpr);
+		}
+
 		if ($exprType === 'dynamic_t<>') {
 			return $expectedType === 'mixed_t' ? ('mixed_t{dynamic_box(' . $renderedExpr . ')}') : $renderedExpr;
 		}
@@ -861,6 +865,11 @@ final class Generator
 		}
 
 		return $renderedExpr;
+	}
+
+	private function isFixedWidthIntegerRuntimeType(string $type): bool
+	{
+		return preg_match('/^int_t<std::(?:u?int(?:8|16|32|64)_t)>$/', $type) === 1;
 	}
 
 	private function renderCallArgExpr(mixed $arg, ?string $namespacePhp): string
