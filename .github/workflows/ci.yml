@@ -213,7 +213,7 @@ jobs:
           xcrun simctl launch --terminate-running-process "$DEVICE_ID" dev.simplecpp.ui-smoke
           sleep 2
           xcrun simctl io "$DEVICE_ID" screenshot artifacts/screenshots/ios-ui.png
-          xcrun simctl terminate "$DEVICE_ID" dev.simplecpp.ui-smoke
+          xcrun simctl terminate "$DEVICE_ID" dev.simplecpp.ui-smoke || true
           python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/ios-ui.png --min-width 300 --min-height 600
 
       - name: Upload iOS UI screenshot

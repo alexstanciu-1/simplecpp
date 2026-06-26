@@ -32,6 +32,22 @@ struct runtime_trace_frame_t {
 	std::string relative_address;
 };
 
+inline FILE *runtime_error_popen(const char *command) {
+#if defined(_WIN32)
+	return _popen(command, "r");
+#else
+	return popen(command, "r");
+#endif
+}
+
+inline int runtime_error_pclose(FILE *pipe) {
+#if defined(_WIN32)
+	return _pclose(pipe);
+#else
+	return pclose(pipe);
+#endif
+}
+
 inline std::vector<runtime_trace_frame_t> capture_runtime_trace_frames() {
 	std::vector<runtime_trace_frame_t> trace;
 #if defined(__linux__) || defined(__APPLE__)
@@ -232,7 +248,7 @@ inline std::string runtime_error_normalize_path(std::string path) {
 inline std::optional<std::vector<runtime_error_detail_t>> recover_generated_location_details_from_trace(const std::vector<runtime_trace_frame_t> &trace) {
 	for (const auto &frame : trace) {
 		const std::string command = "addr2line -C -f -e " + runtime_error_shell_escape(frame.module_path) + " " + frame.relative_address;
-		FILE *pipe = ::popen(command.c_str(), "r");
+		FILE *pipe = runtime_error_popen(command.c_str());
 		if (pipe == nullptr) {
 			continue;
 		}
@@ -241,7 +257,7 @@ inline std::optional<std::vector<runtime_error_detail_t>> recover_generated_loca
 		while (std::fgets(buffer, sizeof(buffer), pipe) != nullptr) {
 			output += buffer;
 		}
-		::pclose(pipe);
+		runtime_error_pclose(pipe);
 
 		const std::size_t newlinePos = output.find('\n');
 		if (newlinePos == std::string::npos || newlinePos + 1 >= output.size()) {
@@ -300,7 +316,7 @@ inline std::string runtime_error_trim_copy(std::string value) {
 inline std::optional<std::string> symbolize_runtime_trace_frame(const runtime_trace_frame_t &frame) {
 #if defined(__linux__) || defined(__APPLE__)
 	const std::string command = "addr2line -C -f -e " + runtime_error_shell_escape(frame.module_path) + " " + frame.relative_address;
-	FILE *pipe = ::popen(command.c_str(), "r");
+	FILE *pipe = runtime_error_popen(command.c_str());
 	if (pipe == nullptr) {
 		return std::nullopt;
 	}
@@ -309,7 +325,7 @@ inline std::optional<std::string> symbolize_runtime_trace_frame(const runtime_tr
 	while (::fgets(buffer, sizeof(buffer), pipe) != nullptr) {
 		output += buffer;
 	}
-	::pclose(pipe);
+	runtime_error_pclose(pipe);
 
 	const std::size_t firstNewline = output.find('\n');
 	if (firstNewline == std::string::npos) {
