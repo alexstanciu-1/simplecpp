@@ -35,10 +35,10 @@ int main() {
 <head>
 <meta charset="utf-8">
 <style>
-	body { font-family: sans-serif; margin: 48px; background: #f8fafc; color: #172033; }
+	body { font-family: sans-serif; margin: 48px; background: white; color: black; }
 	h1 { font-size: 32px; margin: 0 0 18px; }
-	.panel { border: 2px solid #2563eb; border-radius: 6px; background: white; padding: 22px; width: 540px; }
-	.label { color: #475569; font-size: 14px; text-transform: uppercase; }
+	.panel { border: 3px solid #2563eb; padding: 22px; width: 560px; }
+	.label { color: #334155; font-size: 14px; text-transform: uppercase; }
 	.status { font-size: 24px; font-weight: 700; margin-top: 10px; color: #15803d; }
 	.payload { font-family: monospace; margin-top: 14px; color: #334155; }
 </style>
@@ -51,7 +51,7 @@ int main() {
 	<div id="payload" class="payload">invoke: bridge.ping</div>
 </div>
 <script>
-(async function () {
+setTimeout(async function () {
 	const status = document.getElementById("status");
 	const payload = document.getElementById("payload");
 	try {
@@ -64,7 +64,7 @@ int main() {
 		payload.textContent = error && error.message ? error.message : String(error);
 		document.body.dataset.bridge = "error";
 	}
-})();
+}, 500);
 </script>
 </body>
 </html>)HTML")
@@ -86,6 +86,7 @@ int main() {
 			auto event = scpp::ui::app_next_event(app);
 			if (scpp::ui::event_type(event).native_value() == "webview_message") {
 				const std::string message = scpp::ui::event_text(event).native_value();
+				std::cout << "webview_message: " << message << "\n";
 				if (!replied && message.find("\"command\":\"bridge.ping\"") != std::string::npos) {
 					auto reply_result = scpp::webview_runtime::reply_ok(
 						view,
@@ -93,8 +94,9 @@ int main() {
 						scpp::string_t("{\"status\":\"pong\",\"transport\":\"WebKitGTK script-message\"}")
 					);
 					if (!reply_result.has_value().native_value()) {
-						std::cerr << reply_result.error()->get_message().native_value() << "\n";
-						return 1;
+						std::cerr << "webview bridge reply failed: " << reply_result.error()->get_message().native_value() << "\n";
+					} else {
+						std::cout << "webview_reply_ok: sent\n";
 					}
 					replied = true;
 				}
