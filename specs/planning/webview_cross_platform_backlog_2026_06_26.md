@@ -33,8 +33,9 @@ Latest heartbeat slice:
 - Android emulator render smoke is bounded with CI timeouts and uploads `android-emulator-${GITHUB_RUN_ID}.log` when hosted emulator boot needs diagnosis.
 - Android emulator render CI pins `ANDROID_AVD_HOME` so `avdmanager` and `emulator` resolve the same AVD directory on hosted runners.
 - Android smoke manifest declares SDK 24/35 so direct `aapt2` packages install on current Android emulator images.
-- CI run `28234188858` validated Android emulator launch and screenshot upload.
-- Android render CI now verifies the smoke app process/window before screenshot and uploads logcat/window diagnostics if the app exits.
+- CI run `28235130333` validated Android emulator launch, smoke app process/window presence, and a screenshot that renders the WebView content.
+- Android render CI verifies the smoke app process/window before screenshot and uploads logcat/window diagnostics if the app exits.
+- Android smoke APK packaging includes the NDK `libc++_shared.so` next to the smoke native library for both `arm64-v8a` and emulator `x86_64` APKs.
 
 ## Done Definition
 
@@ -121,9 +122,9 @@ Testing tasks:
 - Start with Android NDK compile smoke for the native boundary. Initial runtime and helper compile smoke added and green.
 - Add Android app-side Activity compile smoke. Initial Activity-owned WebView fixture and `javac` CI step added.
 - Add native JNI smoke library build. Initial `libsimplecpp_webview_smoke.so` CI build added.
-- Add package smoke for the Android fixture. Initial direct SDK `aapt2`/`d8`/`zipalign` APK package step added.
+- Add package smoke for the Android fixture. Initial direct SDK `aapt2`/`d8`/`zipalign` APK package step added, including the NDK C++ shared runtime needed by the native smoke library.
 - Sign, verify, and upload the Android smoke APK. Initial debug signing and run-id artifact upload added.
-- Add emulator render smoke only after the Android app packaging path exists. Initial emulator render job is green with screenshot artifact.
+- Add emulator render smoke only after the Android app packaging path exists. Emulator render job is green with app-active validation and screenshot artifact.
 
 Open decision:
 
@@ -177,7 +178,7 @@ Constraint:
 
 ## Latest Known Good CI Run
 
-Run `28234188858` validated:
+Run `28235130333` validated:
 
 - Linux WebKitGTK WebView screenshot
 - macOS WKWebView screenshot
@@ -188,8 +189,8 @@ Run `28234188858` validated:
 - Android WebView JNI boundary compile smoke
 - Android WebView native smoke library build
 - Android WebView Activity compile smoke
-- Android WebView APK package smoke
+- Android WebView APK package smoke with packaged `libc++_shared.so`
 - Android WebView signed APK artifact
-- Android WebView emulator launch and screenshot artifact
+- Android WebView emulator launch, app-active validation, and screenshot artifact rendering "Simple C++ WebView"
 - Shared WebView backend metadata
 - Shared explain-build backend reporting
