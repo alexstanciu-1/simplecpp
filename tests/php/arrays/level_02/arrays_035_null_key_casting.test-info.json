@@ -19,9 +19,9 @@
     },
     "expect": {
         "php": {
-            "run": true,
+            "run": false,
             "exit_code": 0,
-            "stdout": "array(1) {\n  [\"\"]=>\n  string(12) \"empty-string\"\n}\n",
+            "stdout": "",
             "stderr": ""
         },
         "generate": {

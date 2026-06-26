@@ -5,7 +5,7 @@ int main() {
 	scpp::nullable<runtime_test::lifetime_probe> value = scpp::null;
 	for (int i = 0; i < 20000; ++i) {
 		assert((value == scpp::null).native_value() == true);
-		value = runtime_test::lifetime_probe(scpp::int_t(i));
+		value = runtime_test::lifetime_probe(scpp::int_t<>(i));
 		assert(value.has_value().native_value() == true);
 		assert(value.value().value.native_value() == i);
 		auto copy = value;

@@ -364,7 +364,7 @@ void maybe_enable_jit(pcre2_code *compiled) {
 	return match_end + 1u;
 }
 
-[[nodiscard]] PCRE2_SIZE normalize_match_offset(const int_t &offset, const std::size_t subject_size) {
+[[nodiscard]] PCRE2_SIZE normalize_match_offset(const int_t<> &offset, const std::size_t subject_size) {
 	const auto native_offset = offset.native_value();
 	if (native_offset >= 0) {
 		if (static_cast<std::uint64_t>(native_offset) > subject_size) {
@@ -384,7 +384,7 @@ void maybe_enable_jit(pcre2_code *compiled) {
 	const string_t &pattern,
 	const string_t &replacement,
 	const string_t &subject,
-	const int_t &limit
+	const int_t<> &limit
 ) {
 	const auto native_limit = limit.native_value();
 	if (native_limit < 0 && native_limit != -1) {
@@ -475,10 +475,10 @@ string_t quote(const string_t &text, const string_t &delimiter) {
 }
 
 result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_t &subject) {
-	return match(pattern, subject, int_t(0));
+	return match(pattern, subject, int_t<>(0));
 }
 
-result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_t &subject, const int_t &offset) {
+result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_t &subject, const int_t<> &offset) {
 	auto compiled = compile_pattern(pattern);
 	if (!compiled.has_value().native_value()) {
 		return false_sentinel;
@@ -516,10 +516,10 @@ result_or_false<vector_t<string_t>> match(const string_t &pattern, const string_
 }
 
 result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern, const string_t &subject) {
-	return match_named(pattern, subject, int_t(0));
+	return match_named(pattern, subject, int_t<>(0));
 }
 
-result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern, const string_t &subject, const int_t &offset) {
+result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern, const string_t &subject, const int_t<> &offset) {
 	auto compiled = compile_pattern(pattern);
 	if (!compiled.has_value().native_value()) {
 		return false_sentinel;
@@ -557,10 +557,10 @@ result_or_false<hash_t<string_t, string_t>> match_named(const string_t &pattern,
 }
 
 result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern, const string_t &subject) {
-	return match_all(pattern, subject, int_t(0));
+	return match_all(pattern, subject, int_t<>(0));
 }
 
-result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern, const string_t &subject, const int_t &offset) {
+result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern, const string_t &subject, const int_t<> &offset) {
 	auto compiled = compile_pattern(pattern);
 	if (!compiled.has_value().native_value()) {
 		return false_sentinel;
@@ -605,10 +605,10 @@ result_or_false<vector_t<vector_t<string_t>>> match_all(const string_t &pattern,
 }
 
 result_or_false<vector_t<vector_t<string_t>>> match_all_pattern_order(const string_t &pattern, const string_t &subject) {
-	return match_all_pattern_order(pattern, subject, int_t(0));
+	return match_all_pattern_order(pattern, subject, int_t<>(0));
 }
 
-result_or_false<vector_t<vector_t<string_t>>> match_all_pattern_order(const string_t &pattern, const string_t &subject, const int_t &offset) {
+result_or_false<vector_t<vector_t<string_t>>> match_all_pattern_order(const string_t &pattern, const string_t &subject, const int_t<> &offset) {
 	const auto rows = match_all(pattern, subject, offset);
 	if (rows.is_false().native_value()) {
 		return false_sentinel;
@@ -617,10 +617,10 @@ result_or_false<vector_t<vector_t<string_t>>> match_all_pattern_order(const stri
 }
 
 result_or_false<vector_t<hash_t<string_t, string_t>>> match_all_named(const string_t &pattern, const string_t &subject) {
-	return match_all_named(pattern, subject, int_t(0));
+	return match_all_named(pattern, subject, int_t<>(0));
 }
 
-result_or_false<vector_t<hash_t<string_t, string_t>>> match_all_named(const string_t &pattern, const string_t &subject, const int_t &offset) {
+result_or_false<vector_t<hash_t<string_t, string_t>>> match_all_named(const string_t &pattern, const string_t &subject, const int_t<> &offset) {
 	auto compiled = compile_pattern(pattern);
 	if (!compiled.has_value().native_value()) {
 		return false_sentinel;
@@ -701,19 +701,19 @@ result_or_false<vector_t<string_t>> grep(const string_t &pattern, const vector_t
 }
 
 result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input) {
-	return filter(pattern, replacement, input, int_t(-1));
+	return filter(pattern, replacement, input, int_t<>(-1));
 }
 
-result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t &limit) {
-	int_t ignored_count(0);
+result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t<> &limit) {
+	int_t<> ignored_count(0);
 	return filter(pattern, replacement, input, limit, ignored_count);
 }
 
-result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, int_t &count) {
-	return filter(pattern, replacement, input, int_t(-1), count);
+result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, int_t<> &count) {
+	return filter(pattern, replacement, input, int_t<>(-1), count);
 }
 
-result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t &limit, int_t &count) {
+result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t<> &limit, int_t<> &count) {
 	vector_t<string_t> out;
 	std::int64_t replacements = 0;
 	for (std::size_t index = 0; index < input.size(); ++index) {
@@ -727,30 +727,30 @@ result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string
 		}
 		out.append(replaced.value().text);
 	}
-	count = int_t(replacements);
+	count = int_t<>(replacements);
 	return out;
 }
 
 result_or_false<string_t> replace_callback(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject) {
-	return replace_callback(pattern, callback, subject, int_t(-1));
+	return replace_callback(pattern, callback, subject, int_t<>(-1));
 }
 
-result_or_false<string_t> replace_callback(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject, const int_t &limit) {
-	int_t ignored_count(0);
+result_or_false<string_t> replace_callback(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject, const int_t<> &limit) {
+	int_t<> ignored_count(0);
 	return replace_callback(pattern, callback, subject, limit, ignored_count);
 }
 
-result_or_false<string_t> replace_callback(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject, int_t &count) {
-	return replace_callback(pattern, callback, subject, int_t(-1), count);
+result_or_false<string_t> replace_callback(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject, int_t<> &count) {
+	return replace_callback(pattern, callback, subject, int_t<>(-1), count);
 }
 
-result_or_false<string_t> replace_callback(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject, const int_t &limit, int_t &count) {
+result_or_false<string_t> replace_callback(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject, const int_t<> &limit, int_t<> &count) {
 	const auto native_limit = limit.native_value();
 	if (native_limit < 0 && native_limit != -1) {
 		throw scpp::ValueError("preg_replace_callback(): negative limit other than -1 is not supported in the first pass");
 	}
 	if (native_limit == 0) {
-		count = int_t(0);
+		count = int_t<>(0);
 		return subject;
 	}
 
@@ -810,29 +810,29 @@ result_or_false<string_t> replace_callback(const string_t &pattern, const std::f
 	}
 
 	out.append(text.substr(start_offset));
-	count = int_t(static_cast<std::int64_t>(replacements));
+	count = int_t<>(static_cast<std::int64_t>(replacements));
 	return string_t(std::move(out));
 }
 
 result_or_false<string_t> replace_callback_array(const hash_t<std::function<string_t(vector_t<string_t>)>, string_t> &callbacks, const string_t &subject) {
-	return replace_callback_array(callbacks, subject, int_t(-1));
+	return replace_callback_array(callbacks, subject, int_t<>(-1));
 }
 
-result_or_false<string_t> replace_callback_array(const hash_t<std::function<string_t(vector_t<string_t>)>, string_t> &callbacks, const string_t &subject, const int_t &limit) {
-	int_t ignored_count(0);
+result_or_false<string_t> replace_callback_array(const hash_t<std::function<string_t(vector_t<string_t>)>, string_t> &callbacks, const string_t &subject, const int_t<> &limit) {
+	int_t<> ignored_count(0);
 	return replace_callback_array(callbacks, subject, limit, ignored_count);
 }
 
-result_or_false<string_t> replace_callback_array(const hash_t<std::function<string_t(vector_t<string_t>)>, string_t> &callbacks, const string_t &subject, int_t &count) {
-	return replace_callback_array(callbacks, subject, int_t(-1), count);
+result_or_false<string_t> replace_callback_array(const hash_t<std::function<string_t(vector_t<string_t>)>, string_t> &callbacks, const string_t &subject, int_t<> &count) {
+	return replace_callback_array(callbacks, subject, int_t<>(-1), count);
 }
 
-result_or_false<string_t> replace_callback_array(const hash_t<std::function<string_t(vector_t<string_t>)>, string_t> &callbacks, const string_t &subject, const int_t &limit, int_t &count) {
+result_or_false<string_t> replace_callback_array(const hash_t<std::function<string_t(vector_t<string_t>)>, string_t> &callbacks, const string_t &subject, const int_t<> &limit, int_t<> &count) {
 	string_t current = subject;
 	std::int64_t total_replacements = 0;
 	for (auto it = callbacks.begin_entries(); it != callbacks.end_entries(); ++it) {
 		const auto entry = *it;
-		int_t local_count(0);
+		int_t<> local_count(0);
 		const auto replaced = replace_callback(entry.key(), entry.value_ref(), current, limit, local_count);
 		if (replaced.is_false().native_value()) {
 			return false_sentinel;
@@ -840,41 +840,41 @@ result_or_false<string_t> replace_callback_array(const hash_t<std::function<stri
 		total_replacements += local_count.native_value();
 		current = replaced.value();
 	}
-	count = int_t(total_replacements);
+	count = int_t<>(total_replacements);
 	return current;
 }
 
 result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject) {
-	return replace(pattern, replacement, subject, int_t(-1));
+	return replace(pattern, replacement, subject, int_t<>(-1));
 }
 
-result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t &limit) {
-	int_t ignored_count(0);
+result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit) {
+	int_t<> ignored_count(0);
 	return replace(pattern, replacement, subject, limit, ignored_count);
 }
 
-result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, int_t &count) {
-	return replace(pattern, replacement, subject, int_t(-1), count);
+result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, int_t<> &count) {
+	return replace(pattern, replacement, subject, int_t<>(-1), count);
 }
 
-result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t &limit, int_t &count) {
+result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit, int_t<> &count) {
 	const auto replaced = replace_impl(pattern, replacement, subject, limit);
 	if (replaced.is_false().native_value()) {
 		return false_sentinel;
 	}
-	count = int_t(static_cast<std::int64_t>(replaced.value().replacements));
+	count = int_t<>(static_cast<std::int64_t>(replaced.value().replacements));
 	return replaced.value().text;
 }
 
 result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_t &subject) {
-	return split(pattern, subject, int_t(-1));
+	return split(pattern, subject, int_t<>(-1));
 }
 
-result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_t &subject, const int_t &limit) {
-	return split(pattern, subject, limit, int_t(0));
+result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_t &subject, const int_t<> &limit) {
+	return split(pattern, subject, limit, int_t<>(0));
 }
 
-result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_t &subject, const int_t &limit, const int_t &flags) {
+result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_t &subject, const int_t<> &limit, const int_t<> &flags) {
 	const auto native_limit = limit.native_value();
 	if (native_limit < 0 && native_limit != -1) {
 		throw scpp::ValueError("preg_split(): negative limit other than -1 is not supported in the first pass");

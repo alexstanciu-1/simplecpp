@@ -6,7 +6,7 @@
 
 int main() {
 	std::shared_ptr<scpp::hash_t<scpp::mixed_t>> owner = std::make_shared<scpp::hash_t<scpp::mixed_t>>();
-	(*owner)[scpp::string_t("x")] = scpp::mixed_t(scpp::int_t(7));
+	(*owner)[scpp::string_t("x")] = scpp::mixed_t(scpp::int_t<>(7));
 
 	scpp::mixed_t weak_value{std::weak_ptr<scpp::hash_t<scpp::mixed_t>>(owner)};
 	owner.reset();
@@ -19,7 +19,7 @@ int main() {
 		(void) weak_value.at(scpp::string_t("x"));
 	});
 	runtime_test::expect_throw<std::runtime_error>([&]() {
-		weak_value["x"] = scpp::mixed_t(scpp::int_t(8));
+		weak_value["x"] = scpp::mixed_t(scpp::int_t<>(8));
 	});
 
 	std::cout << "weak_table_expired_paths_ok\n";

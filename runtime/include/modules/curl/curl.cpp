@@ -42,7 +42,7 @@ struct slist_guard final {
 		return error_t(string_t(std::string(function_name) + " requires a valid curl_handle"));
 	}
 	if (resource->closed.native_value()) {
-		resource->errno_code = int_t(local_error_bad_argument);
+		resource->errno_code = int_t<>(local_error_bad_argument);
 		resource->error = string_t(std::string(function_name) + " cannot use a closed curl_handle");
 		return error_t(resource->error);
 	}
@@ -50,19 +50,19 @@ struct slist_guard final {
 }
 
 void clear_error(handle &resource) {
-	resource.errno_code = int_t(0);
+	resource.errno_code = int_t<>(0);
 	resource.error = string_t("");
 }
 
 template <typename TResult>
 [[nodiscard]] result<TResult> fail(handle &resource, std::int64_t code, const std::string &message) {
-	resource.errno_code = int_t(code);
+	resource.errno_code = int_t<>(code);
 	resource.error = string_t(message);
 	resource.last_response = null;
 	return error_t(resource.error);
 }
 
-[[nodiscard]] const char *option_name(const int_t &option) {
+[[nodiscard]] const char *option_name(const int_t<> &option) {
 	switch (option.native_value()) {
 		case 1: return "CURLOPT_URL";
 		case 2: return "CURLOPT_RETURNTRANSFER";
@@ -130,13 +130,13 @@ void handle::reset_state() {
 	post = bool_t(false);
 	postfields = string_t("");
 	customrequest = string_t("");
-	timeout = int_t(0);
-	connecttimeout = int_t(0);
+	timeout = int_t<>(0);
+	connecttimeout = int_t<>(0);
 	followlocation = bool_t(false);
 	useragent = string_t("simplecpp-curl/1.0");
 	ssl_verifypeer = bool_t(true);
-	ssl_verifyhost = int_t(2);
-	errno_code = int_t(0);
+	ssl_verifyhost = int_t<>(2);
+	errno_code = int_t<>(0);
 	error = string_t("");
 	last_response = null;
 }
@@ -160,7 +160,7 @@ result<shared_p<handle>> init(const string_t &url) {
 	return resource.value();
 }
 
-result<bool_t> setopt(const shared_p<handle> &resource, const int_t &option, const string_t &value) {
+result<bool_t> setopt(const shared_p<handle> &resource, const int_t<> &option, const string_t &value) {
 	auto checked = require_open_handle(resource, "curl_setopt()");
 	if (!checked.has_value().native_value()) {
 		return *checked.error();
@@ -178,7 +178,7 @@ result<bool_t> setopt(const shared_p<handle> &resource, const int_t &option, con
 	}
 }
 
-result<bool_t> setopt(const shared_p<handle> &resource, const int_t &option, const int_t &value) {
+result<bool_t> setopt(const shared_p<handle> &resource, const int_t<> &option, const int_t<> &value) {
 	auto checked = require_open_handle(resource, "curl_setopt()");
 	if (!checked.has_value().native_value()) {
 		return *checked.error();
@@ -205,11 +205,11 @@ result<bool_t> setopt(const shared_p<handle> &resource, const int_t &option, con
 	}
 }
 
-result<bool_t> setopt(const shared_p<handle> &resource, const int_t &option, const bool_t &value) {
-	return setopt(resource, option, int_t(value.native_value() ? 1 : 0));
+result<bool_t> setopt(const shared_p<handle> &resource, const int_t<> &option, const bool_t &value) {
+	return setopt(resource, option, int_t<>(value.native_value() ? 1 : 0));
 }
 
-result<bool_t> setopt(const shared_p<handle> &resource, const int_t &option, const vector_t<string_t> &value) {
+result<bool_t> setopt(const shared_p<handle> &resource, const int_t<> &option, const vector_t<string_t> &value) {
 	auto checked = require_open_handle(resource, "curl_setopt()");
 	if (!checked.has_value().native_value()) {
 		return *checked.error();
@@ -367,19 +367,19 @@ result<shared_p<response>> exec(const shared_p<handle> &resource) {
 #ifdef CURLINFO_TOTAL_TIME_T
 	curl_off_t total_time_us = 0;
 	if (curl_easy_getinfo(easy, ::CURLINFO_TOTAL_TIME_T, &total_time_us) == CURLE_OK) {
-		reply->total_time_ms = int_t(static_cast<std::int64_t>(total_time_us / 1000));
+		reply->total_time_ms = int_t<>(static_cast<std::int64_t>(total_time_us / 1000));
 	}
 #else
 	double total_time_seconds = 0.0;
 	if (curl_easy_getinfo(easy, ::CURLINFO_TOTAL_TIME, &total_time_seconds) == CURLE_OK) {
-		reply->total_time_ms = int_t(static_cast<std::int64_t>(total_time_seconds * 1000.0));
+		reply->total_time_ms = int_t<>(static_cast<std::int64_t>(total_time_seconds * 1000.0));
 	}
 #endif
 
-	reply->status_code = int_t(static_cast<std::int64_t>(response_code));
-	reply->header_size = int_t(static_cast<std::int64_t>(header_size));
-	reply->request_size = int_t(static_cast<std::int64_t>(request_size));
-	reply->redirect_count = int_t(static_cast<std::int64_t>(redirect_count));
+	reply->status_code = int_t<>(static_cast<std::int64_t>(response_code));
+	reply->header_size = int_t<>(static_cast<std::int64_t>(header_size));
+	reply->request_size = int_t<>(static_cast<std::int64_t>(request_size));
+	reply->redirect_count = int_t<>(static_cast<std::int64_t>(redirect_count));
 	if (effective_url != nullptr) {
 		reply->effective_url = string_t(effective_url);
 	}
@@ -393,7 +393,7 @@ result<shared_p<response>> exec(const shared_p<handle> &resource) {
 	return reply;
 }
 
-result<mixed_t> getinfo(const shared_p<handle> &resource, const int_t &info) {
+result<mixed_t> getinfo(const shared_p<handle> &resource, const int_t<> &info) {
 	auto checked = require_open_handle(resource, "curl_getinfo()");
 	if (!checked.has_value().native_value()) {
 		return *checked.error();
@@ -418,9 +418,9 @@ result<mixed_t> getinfo(const shared_p<handle> &resource, const int_t &info) {
 	}
 }
 
-int_t errno_code(const shared_p<handle> &resource) {
+int_t<> errno_code(const shared_p<handle> &resource) {
 	if (!resource.has_value().native_value() || resource.get() == nullptr) {
-		return int_t(0);
+		return int_t<>(0);
 	}
 	return resource->errno_code;
 }
@@ -453,7 +453,7 @@ result<bool_t> close(const shared_p<handle> &resource) {
 	return bool_t(true);
 }
 
-string_t strerror(const int_t &code) {
+string_t strerror(const int_t<> &code) {
 	return string_t(curl_easy_strerror(static_cast<CURLcode>(code.native_value())));
 }
 

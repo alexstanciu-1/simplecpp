@@ -56,8 +56,10 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Do not add `declare(strict_types=1);`.
 - Use explicit types when the type is known at compile time.
 - Use `vector<T>` for typed sequential data.
+- Use `fixed_array<T, N>` for fixed-size sequential data when the size is part of the contract; do not append, unset, resize, or use keyed literals with this first slice.
 - Use `hash<T>` for typed string-keyed data.
 - Use `hash<T, T_KEY>` for intentionally typed key families.
+- Use fixed-width integer aliases such as `int8`, `int16`, `int32`, `int64`, `uint8`/`byte`, `uint16`, `uint32`, and `uint64` when compact storage or interop boundaries need a narrower representation. Same-signed widening is allowed, while narrowing and signed/unsigned crossings should be explicit casts.
 - Stabilize dynamic values early at explicit typed boundaries, but do not make strict mode sound like every line needs defensive handling.
 - Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
 - If the destination is explicitly `mixed` or `dynamic`, no cast is needed and the value remains on the dynamic carrier path.

@@ -6,11 +6,11 @@ int main() {
 	scpp::mixed_t table;
 	table[10] = scpp::string_t("test");
 	table["name"][10] = scpp::string_t("value");
-	table["name"][11] = scpp::int_t(22);
+	table["name"][11] = scpp::int_t<>(22);
 
 	scpp::string_t first = table[10];
 	scpp::string_t nested_text = table["name"][10];
-	scpp::int_t nested_int = table["name"][11];
+	scpp::int_t<> nested_int = table["name"][11];
 
 	assert(first.native_value() == "test");
 	assert(nested_text.native_value() == "value");

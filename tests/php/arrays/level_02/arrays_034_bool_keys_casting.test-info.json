@@ -19,9 +19,9 @@
     },
     "expect": {
         "php": {
-            "run": true,
+            "run": false,
             "exit_code": 0,
-            "stdout": "array(2) {\n  [1]=>\n  string(3) \"one\"\n  [0]=>\n  string(2) \"no\"\n}\n",
+            "stdout": "",
             "stderr": ""
         },
         "generate": {

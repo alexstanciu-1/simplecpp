@@ -3,7 +3,7 @@
 int main() {
 	runtime_test::lifetime_probe::reset_counts();
 	{
-		auto first = scpp::value<runtime_test::lifetime_probe>(scpp::int_t(4));
+		auto first = scpp::value<runtime_test::lifetime_probe>(scpp::int_t<>(4));
 		assert(runtime_test::lifetime_probe::constructions == 1);
 		{
 			auto second = std::move(first);

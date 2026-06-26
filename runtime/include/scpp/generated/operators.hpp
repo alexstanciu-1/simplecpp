@@ -25,7 +25,7 @@
 
 namespace scpp {
 
-// Generated from runtime/specs/config.json on 2026-04-29T08:49:38+00:00.
+// Generated from runtime/specs/config.json on 2026-06-26T04:01:41+00:00.
 // Enabled config families: bool_logical, float_arithmetic, float_logical, float_mutation, int_arithmetic, int_bitwise_and_mutation, int_logical, mixed_numeric, mixed_numeric_logical, null_comparisons, nullable_lifted_ops, nullable_ops, pointer_null_comparisons, string_ops, table_identity_comparisons.
 // Do not edit manually.
 
@@ -33,7 +33,10 @@ template <typename T>
 concept is_bool = std::same_as<detail::remove_cvref_t<T>, bool_t>;
 
 template <typename T>
-concept is_native_int = std::same_as<detail::remove_cvref_t<T>, int_t>;
+concept is_native_int = detail::is_int_t_v<T>;
+
+template <typename T>
+concept is_default_int = std::same_as<detail::remove_cvref_t<T>, int_t<>>;
 
 template <typename T>
 concept is_native_float = std::same_as<detail::remove_cvref_t<T>, float_t>;
@@ -50,7 +53,7 @@ concept is_mixed = std::same_as<detail::remove_cvref_t<T>, mixed_t>;
 template <typename T>
 concept is_mixed_compatible =
 	is_bool<T> ||
-	is_native_int<T> ||
+	is_default_int<T> ||
 	is_native_float<T> ||
 	is_string_like<T> ||
 	is_mixed<T>;
@@ -219,19 +222,23 @@ template <typename T>
 	}
 }
 
-inline int_t &operator++(int_t &value) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator++(int_t<Rep> &value) noexcept {
 	return detail::generated_operator_detail::prefix_inc(value);
 }
 
-inline int_t operator++(int_t &value, int) noexcept {
+template <typename Rep>
+inline int_t<Rep> operator++(int_t<Rep> &value, int) noexcept {
 	return detail::generated_operator_detail::postfix_inc(value);
 }
 
-inline int_t &operator--(int_t &value) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator--(int_t<Rep> &value) noexcept {
 	return detail::generated_operator_detail::prefix_dec(value);
 }
 
-inline int_t operator--(int_t &value, int) noexcept {
+template <typename Rep>
+inline int_t<Rep> operator--(int_t<Rep> &value, int) noexcept {
 	return detail::generated_operator_detail::postfix_dec(value);
 }
 
@@ -1181,107 +1188,117 @@ inline L &operator>>=(L &lhs, const R &rhs) {
 	return lhs;
 }
 
-inline int_t &operator+=(int_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator+=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::add(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator-=(int_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator-=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::sub(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator*=(int_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator*=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::mul(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator/=(int_t &lhs, const int_t &rhs) {
+template <typename Rep>
+inline int_t<Rep> &operator/=(int_t<Rep> &lhs, const int_t<Rep> &rhs) {
 	lhs = detail::generated_operator_detail::div(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator%=(int_t &lhs, const int_t &rhs) {
+template <typename Rep>
+inline int_t<Rep> &operator%=(int_t<Rep> &lhs, const int_t<Rep> &rhs) {
 	lhs = detail::generated_operator_detail::mod(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator&=(int_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator&=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::bit_and(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator|=(int_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator|=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::bit_or(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator^=(int_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator^=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::bit_xor(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator<<=(int_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator<<=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::shl(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator>>=(int_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+inline int_t<Rep> &operator>>=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::shr(lhs, rhs);
 	return lhs;
 }
 
-inline int_t &operator+=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) + rhs);
+inline int_t<> &operator+=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) + rhs);
 	return lhs;
 }
 
-inline int_t &operator-=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) - rhs);
+inline int_t<> &operator-=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) - rhs);
 	return lhs;
 }
 
-inline int_t &operator*=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) * rhs);
+inline int_t<> &operator*=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) * rhs);
 	return lhs;
 }
 
-inline int_t &operator/=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) / rhs);
+inline int_t<> &operator/=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) / rhs);
 	return lhs;
 }
 
-inline int_t &operator%=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) % rhs);
+inline int_t<> &operator%=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) % rhs);
 	return lhs;
 }
 
-inline int_t &operator&=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) & rhs);
+inline int_t<> &operator&=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) & rhs);
 	return lhs;
 }
 
-inline int_t &operator|=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) | rhs);
+inline int_t<> &operator|=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) | rhs);
 	return lhs;
 }
 
-inline int_t &operator^=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) ^ rhs);
+inline int_t<> &operator^=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) ^ rhs);
 	return lhs;
 }
 
-inline int_t &operator<<=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) << rhs);
+inline int_t<> &operator<<=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) << rhs);
 	return lhs;
 }
 
-inline int_t &operator>>=(int_t &lhs, const mixed_t &rhs) {
-	lhs = cast<int_t>(mixed_t(lhs) >> rhs);
+inline int_t<> &operator>>=(int_t<> &lhs, const mixed_t &rhs) {
+	lhs = cast<int_t<>>(mixed_t(lhs) >> rhs);
 	return lhs;
 }
 
-inline float_t &operator+=(float_t &lhs, const int_t &rhs) noexcept {
+inline float_t &operator+=(float_t &lhs, const int_t<> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::add(lhs, rhs);
 	return lhs;
 }
@@ -1291,7 +1308,7 @@ inline float_t &operator+=(float_t &lhs, const float_t &rhs) noexcept {
 	return lhs;
 }
 
-inline float_t &operator-=(float_t &lhs, const int_t &rhs) noexcept {
+inline float_t &operator-=(float_t &lhs, const int_t<> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::sub(lhs, rhs);
 	return lhs;
 }
@@ -1301,7 +1318,7 @@ inline float_t &operator-=(float_t &lhs, const float_t &rhs) noexcept {
 	return lhs;
 }
 
-inline float_t &operator*=(float_t &lhs, const int_t &rhs) noexcept {
+inline float_t &operator*=(float_t &lhs, const int_t<> &rhs) noexcept {
 	lhs = detail::generated_operator_detail::mul(lhs, rhs);
 	return lhs;
 }
@@ -1311,7 +1328,7 @@ inline float_t &operator*=(float_t &lhs, const float_t &rhs) noexcept {
 	return lhs;
 }
 
-inline float_t &operator/=(float_t &lhs, const int_t &rhs) {
+inline float_t &operator/=(float_t &lhs, const int_t<> &rhs) {
 	lhs = detail::generated_operator_detail::div(lhs, rhs);
 	return lhs;
 }

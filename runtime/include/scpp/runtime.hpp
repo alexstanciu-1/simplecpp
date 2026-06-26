@@ -19,6 +19,7 @@
 #include "scpp/float_t.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/vector_t.hpp"
+#include "scpp/fixed_array_t.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/dynamic_t.hpp"
 #include "scpp/unique_p.hpp"

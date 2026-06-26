@@ -19,29 +19,29 @@ namespace {
 
 } // namespace
 
-[[nodiscard]] int_t progress_info::total() const
+[[nodiscard]] int_t<> progress_info::total() const
 {
-	return !state.has_value().native_value() ? int_t(0) : int_t(state->total.load(std::memory_order_relaxed));
+	return !state.has_value().native_value() ? int_t<>(0) : int_t<>(state->total.load(std::memory_order_relaxed));
 }
 
-[[nodiscard]] int_t progress_info::completed() const
+[[nodiscard]] int_t<> progress_info::completed() const
 {
-	return !state.has_value().native_value() ? int_t(0) : int_t(state->completed.load(std::memory_order_relaxed));
+	return !state.has_value().native_value() ? int_t<>(0) : int_t<>(state->completed.load(std::memory_order_relaxed));
 }
 
-[[nodiscard]] int_t progress_info::queued() const
+[[nodiscard]] int_t<> progress_info::queued() const
 {
-	return !state.has_value().native_value() ? int_t(0) : int_t(state->queued.load(std::memory_order_relaxed));
+	return !state.has_value().native_value() ? int_t<>(0) : int_t<>(state->queued.load(std::memory_order_relaxed));
 }
 
-[[nodiscard]] int_t progress_info::active() const
+[[nodiscard]] int_t<> progress_info::active() const
 {
-	return !state.has_value().native_value() ? int_t(0) : int_t(state->active.load(std::memory_order_relaxed));
+	return !state.has_value().native_value() ? int_t<>(0) : int_t<>(state->active.load(std::memory_order_relaxed));
 }
 
-[[nodiscard]] int_t progress_info::errors() const
+[[nodiscard]] int_t<> progress_info::errors() const
 {
-	return !state.has_value().native_value() ? int_t(0) : int_t(state->errors.load(std::memory_order_relaxed));
+	return !state.has_value().native_value() ? int_t<>(0) : int_t<>(state->errors.load(std::memory_order_relaxed));
 }
 
 [[nodiscard]] bool_t progress_info::stop_requested() const

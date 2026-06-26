@@ -80,7 +80,7 @@ using millis_t = std::chrono::milliseconds;
 	return error_t(string_t(message));
 }
 
-[[nodiscard]] std::tm utc_tm_from_unix_seconds(const int_t &unix_seconds) {
+[[nodiscard]] std::tm utc_tm_from_unix_seconds(const int_t<> &unix_seconds) {
 	const auto time_value = static_cast<std::time_t>(unix_seconds.native_value());
 	std::tm tm_value{};
 #if defined(_WIN32)
@@ -95,7 +95,7 @@ using millis_t = std::chrono::milliseconds;
 	return tm_value;
 }
 
-[[nodiscard]] std::tm local_tm_from_unix_seconds(const int_t &unix_seconds) {
+[[nodiscard]] std::tm local_tm_from_unix_seconds(const int_t<> &unix_seconds) {
 	const auto time_value = static_cast<std::time_t>(unix_seconds.native_value());
 	std::tm tm_value{};
 #if defined(_WIN32)
@@ -116,7 +116,7 @@ void append_padded_number(std::string &out, const int value, const int width) {
 	out += buffer.str();
 }
 
-[[nodiscard]] string_t format_php_common(const string_t &format, const std::tm &tm_value, const int_t &unix_seconds) {
+[[nodiscard]] string_t format_php_common(const string_t &format, const std::tm &tm_value, const int_t<> &unix_seconds) {
 	const std::string pattern = format.native_value();
 	std::string out;
 	out.reserve(pattern.size() + 16);
@@ -154,7 +154,7 @@ void append_padded_number(std::string &out, const int value, const int width) {
 	return string_t(out);
 }
 
-[[nodiscard]] result<int_t> parse_local_components(
+[[nodiscard]] result<int_t<>> parse_local_components(
 	const int year,
 	const int month,
 	const int day,
@@ -185,27 +185,27 @@ void append_padded_number(std::string &out, const int value, const int width) {
 	if (timestamp == static_cast<std::time_t>(-1)) {
 		return parse_error("datetime value cannot be represented as local time");
 	}
-	return int_t(static_cast<std::int64_t>(timestamp));
+	return int_t<>(static_cast<std::int64_t>(timestamp));
 }
 
 } // namespace
 
-int_t now_unix_seconds() {
+int_t<> now_unix_seconds() {
 	const auto now = std::chrono::system_clock::now().time_since_epoch();
-	return int_t(checked_count_to_int64(std::chrono::duration_cast<seconds_t>(now)));
+	return int_t<>(checked_count_to_int64(std::chrono::duration_cast<seconds_t>(now)));
 }
 
-int_t now_unix_millis() {
+int_t<> now_unix_millis() {
 	const auto now = std::chrono::system_clock::now().time_since_epoch();
-	return int_t(checked_count_to_int64(std::chrono::duration_cast<millis_t>(now)));
+	return int_t<>(checked_count_to_int64(std::chrono::duration_cast<millis_t>(now)));
 }
 
-int_t monotonic_millis() {
+int_t<> monotonic_millis() {
 	const auto now = std::chrono::steady_clock::now().time_since_epoch();
-	return int_t(checked_count_to_int64(std::chrono::duration_cast<millis_t>(now)));
+	return int_t<>(checked_count_to_int64(std::chrono::duration_cast<millis_t>(now)));
 }
 
-void sleep_millis(const int_t &millis) {
+void sleep_millis(const int_t<> &millis) {
 	const auto value = millis.native_value();
 	if (value <= 0) {
 		return;
@@ -213,14 +213,14 @@ void sleep_millis(const int_t &millis) {
 	std::this_thread::sleep_for(millis_t(value));
 }
 
-string_t format_iso_utc(const int_t &unix_seconds) {
+string_t format_iso_utc(const int_t<> &unix_seconds) {
 	const auto tm_value = utc_tm_from_unix_seconds(unix_seconds);
 	std::ostringstream out;
 	out << std::put_time(&tm_value, "%Y-%m-%dT%H:%M:%SZ");
 	return string_t(out.str());
 }
 
-result<int_t> parse_iso_utc(const string_t &value) {
+result<int_t<>> parse_iso_utc(const string_t &value) {
 	const std::string text = value.native_value();
 	if (text.size() != 20 ||
 		text[4] != '-' ||
@@ -268,10 +268,10 @@ result<int_t> parse_iso_utc(const string_t &value) {
 	const auto days = std::chrono::sys_days{ymd};
 	const auto timestamp = std::chrono::time_point_cast<seconds_t>(
 		days + std::chrono::hours{hour} + std::chrono::minutes{minute} + seconds_t{second});
-	return int_t(checked_count_to_int64(timestamp.time_since_epoch()));
+	return int_t<>(checked_count_to_int64(timestamp.time_since_epoch()));
 }
 
-string_t format_local(const string_t &format, const int_t &unix_seconds) {
+string_t format_local(const string_t &format, const int_t<> &unix_seconds) {
 	return format_php_common(format, local_tm_from_unix_seconds(unix_seconds), unix_seconds);
 }
 
@@ -279,7 +279,7 @@ string_t format_local_now(const string_t &format) {
 	return format_local(format, now_unix_seconds());
 }
 
-result<int_t> parse_common_local(const string_t &value) {
+result<int_t<>> parse_common_local(const string_t &value) {
 	const std::string text = value.native_value();
 	if (text.empty()) {
 		return parse_error("datetime value is empty");

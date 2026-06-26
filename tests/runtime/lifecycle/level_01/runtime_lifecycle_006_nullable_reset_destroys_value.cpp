@@ -3,7 +3,7 @@
 int main() {
 	runtime_test::lifetime_probe::reset_counts();
 	{
-		scpp::nullable<runtime_test::lifetime_probe> value(runtime_test::lifetime_probe(scpp::int_t(9)));
+		scpp::nullable<runtime_test::lifetime_probe> value(runtime_test::lifetime_probe(scpp::int_t<>(9)));
 		assert(value.has_value().native_value() == true);
 		assert(runtime_test::lifetime_probe::constructions >= 1);
 		value.reset();

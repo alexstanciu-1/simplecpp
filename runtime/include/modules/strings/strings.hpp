@@ -15,27 +15,27 @@
 
 namespace scpp::str {
 
-inline int_t length(const string_t &value) {
-	return int_t(static_cast<std::int64_t>(value.length_cp()));
+inline int_t<> length(const string_t &value) {
+	return int_t<>(static_cast<std::int64_t>(value.length_cp()));
 }
 
-inline int_t length(const nullable<string_t> &value) {
+inline int_t<> length(const nullable<string_t> &value) {
 	if (!value.has_value().native_value()) {
 		throw std::runtime_error("strlen(): nullable string is null");
 	}
 	return length(value.value());
 }
 
-inline int_t byte_at(const string_t &value, const int_t &offset) {
+inline int_t<> byte_at(const string_t &value, const int_t<> &offset) {
 	const auto native_offset = offset.native_value();
 	const auto &native = value.native_value();
 	if (native_offset < 0 || static_cast<std::size_t>(native_offset) >= native.size()) {
-		return int_t(-1);
+		return int_t<>(-1);
 	}
-	return int_t(static_cast<std::int64_t>(static_cast<unsigned char>(native[static_cast<std::size_t>(native_offset)])));
+	return int_t<>(static_cast<std::int64_t>(static_cast<unsigned char>(native[static_cast<std::size_t>(native_offset)])));
 }
 
-inline bool_t byte_slice_equals(const string_t &value, const int_t &offset, const int_t &length_value, const string_t &literal) {
+inline bool_t byte_slice_equals(const string_t &value, const int_t<> &offset, const int_t<> &length_value, const string_t &literal) {
 	const auto native_offset = offset.native_value();
 	const auto native_length = length_value.native_value();
 	if (native_offset < 0 || native_length < 0) {
@@ -51,33 +51,33 @@ inline bool_t byte_slice_equals(const string_t &value, const int_t &offset, cons
 	return bool_t(std::string_view(native).substr(start, length) == std::string_view(expected));
 }
 
-inline nullable<int_t> find(const string_t &haystack, const string_t &needle) {
+inline nullable<int_t<>> find(const string_t &haystack, const string_t &needle) {
 	const auto position = haystack.native_value().find(needle.native_value());
 	if (position == std::string::npos) {
 		return null;
 	}
-	return int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
+	return int_t<>(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
 }
 
-inline nullable<int_t> find(const string_t &haystack, const string_t &needle, const int_t &offset) {
+inline nullable<int_t<>> find(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
 	const auto start = scpp::normalize_forward_search_offset(haystack.length_cp(), offset.native_value(), "strpos");
 	const auto start_byte = utf8::cp_to_byte_index(haystack.native_value(), start);
 	const auto position = haystack.native_value().find(needle.native_value(), static_cast<std::size_t>(start_byte));
 	if (position == std::string::npos) {
 		return null;
 	}
-	return int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
+	return int_t<>(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
 }
 
-inline nullable<int_t> rfind(const string_t &haystack, const string_t &needle) {
+inline nullable<int_t<>> rfind(const string_t &haystack, const string_t &needle) {
 	const auto position = haystack.native_value().rfind(needle.native_value());
 	if (position == std::string::npos) {
 		return null;
 	}
-	return int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
+	return int_t<>(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
 }
 
-inline nullable<int_t> rfind(const string_t &haystack, const string_t &needle, const int_t &offset) {
+inline nullable<int_t<>> rfind(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
 	const auto limit = scpp::normalize_reverse_search_limit(haystack.length_cp(), offset.native_value(), "strrpos");
 	const auto limit_byte = utf8::cp_to_byte_index(haystack.native_value(), limit);
 	const auto &native = haystack.native_value();
@@ -87,13 +87,13 @@ inline nullable<int_t> rfind(const string_t &haystack, const string_t &needle, c
 		if (position == std::string::npos || position < limit_byte) {
 			return null;
 		}
-		return int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
+		return int_t<>(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
 	}
 	const auto position = native.rfind(needle_native, limit_byte);
 	if (position == std::string::npos) {
 		return null;
 	}
-	return int_t(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
+	return int_t<>(static_cast<std::int64_t>(utf8::byte_to_cp_index(haystack.native_value(), position)));
 }
 
 inline string_t lower(const string_t &value) {
@@ -180,29 +180,29 @@ inline string_t trim(const string_t &value, const string_t &mask) {
 	return scpp::trim_slice(value, start, end);
 }
 
-inline string_t substr(const string_t &value, const int_t &offset, const int_t &length_value) {
+inline string_t substr(const string_t &value, const int_t<> &offset, const int_t<> &length_value) {
 	const auto size = value.length_cp();
 	const auto start = scpp::normalize_substr_start(size, offset.native_value());
 	const auto end = scpp::normalize_substr_end(size, start, length_value.native_value());
 	return value.substr_cp(start, end - start);
 }
 
-inline string_t substr(const string_t &value, const int_t &offset) {
+inline string_t substr(const string_t &value, const int_t<> &offset) {
 	const auto size = value.length_cp();
 	const auto start = scpp::normalize_substr_start(size, offset.native_value());
 	return value.substr_cp(start);
 }
 
-inline int_t substr_compare(const string_t &main_str, const string_t &str_value, const int_t &offset) {
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str_value, const int_t<> &offset) {
 	bool has_start = false;
 	std::size_t start = 0;
 	const auto has_valid_start = scpp::normalize_string_window(main_str.size(), offset.native_value(), has_start, start);
 	const std::string_view left = has_valid_start ? std::string_view(main_str.native_value()).substr(start) : std::string_view();
 	const std::string_view right = str_value.native_value();
-	return int_t(static_cast<std::int64_t>(scpp::ascii_compare_sensitive(left, right)));
+	return int_t<>(static_cast<std::int64_t>(scpp::ascii_compare_sensitive(left, right)));
 }
 
-inline int_t substr_compare(const string_t &main_str, const string_t &str_value, const int_t &offset, const int_t &length_value) {
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str_value, const int_t<> &offset, const int_t<> &length_value) {
 	bool has_start = false;
 	std::size_t start = 0;
 	const auto has_valid_start = scpp::normalize_string_window(main_str.size(), offset.native_value(), has_start, start);
@@ -211,10 +211,10 @@ inline int_t substr_compare(const string_t &main_str, const string_t &str_value,
 	const std::string_view left = has_valid_window ? std::string_view(main_str.native_value()).substr(start, end - start) : std::string_view();
 	const auto requested = length_value.native_value() >= 0 ? static_cast<std::size_t>(length_value.native_value()) : left.size();
 	const std::string_view right = std::string_view(str_value.native_value()).substr(0, requested);
-	return int_t(static_cast<std::int64_t>(scpp::ascii_compare_sensitive(left, right)));
+	return int_t<>(static_cast<std::int64_t>(scpp::ascii_compare_sensitive(left, right)));
 }
 
-inline int_t substr_compare(const string_t &main_str, const string_t &str_value, const int_t &offset, const int_t &length_value, const bool_t &case_insensitive) {
+inline int_t<> substr_compare(const string_t &main_str, const string_t &str_value, const int_t<> &offset, const int_t<> &length_value, const bool_t &case_insensitive) {
 	bool has_start = false;
 	std::size_t start = 0;
 	const auto has_valid_start = scpp::normalize_string_window(main_str.size(), offset.native_value(), has_start, start);
@@ -224,10 +224,10 @@ inline int_t substr_compare(const string_t &main_str, const string_t &str_value,
 	const auto requested = length_value.native_value() >= 0 ? static_cast<std::size_t>(length_value.native_value()) : left.size();
 	const std::string_view right = std::string_view(str_value.native_value()).substr(0, requested);
 	const auto compare_result = case_insensitive.native_value() ? scpp::ascii_compare_insensitive(left, right) : scpp::ascii_compare_sensitive(left, right);
-	return int_t(static_cast<std::int64_t>(compare_result));
+	return int_t<>(static_cast<std::int64_t>(compare_result));
 }
 
-inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t &offset) {
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset) {
 	const auto size = subject.size();
 	const auto start = scpp::normalize_substr_start(size, offset.native_value());
 	std::string out;
@@ -237,7 +237,7 @@ inline string_t substr_replace(const string_t &subject, const string_t &replacem
 	return string_t(std::move(out));
 }
 
-inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t &offset, const int_t &length_value) {
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset, const int_t<> &length_value) {
 	const auto size = subject.size();
 	const auto start = scpp::normalize_substr_start(size, offset.native_value());
 	std::size_t end = start;
@@ -301,7 +301,7 @@ inline std::string make_pad_bytes(const std::string &pad_string, std::size_t siz
 	return out;
 }
 
-inline string_t pad(const string_t &input, const int_t &pad_length, const string_t &pad_string, const int_t &pad_type) {
+inline string_t pad(const string_t &input, const int_t<> &pad_length, const string_t &pad_string, const int_t<> &pad_type) {
 	if (pad_string.size() == 0) {
 		throw scpp::ValueError("str_pad(): Argument #3 ($pad_string) must not be empty");
 	}
@@ -337,15 +337,15 @@ inline string_t pad(const string_t &input, const int_t &pad_length, const string
 	return string_t(std::move(out));
 }
 
-inline string_t pad(const string_t &input, const int_t &pad_length, const string_t &pad_string) {
+inline string_t pad(const string_t &input, const int_t<> &pad_length, const string_t &pad_string) {
 	return pad(input, pad_length, pad_string, STR_PAD_RIGHT);
 }
 
-inline string_t pad(const string_t &input, const int_t &pad_length) {
+inline string_t pad(const string_t &input, const int_t<> &pad_length) {
 	return pad(input, pad_length, string_t(" "), STR_PAD_RIGHT);
 }
 
-inline vector_t<string_t> split(const string_t &separator, const string_t &value, const int_t &limit) {
+inline vector_t<string_t> split(const string_t &separator, const string_t &value, const int_t<> &limit) {
 	if (separator.size() == 0) {
 		throw scpp::ValueError("explode(): Argument #1 ($separator) must not be empty");
 	}
@@ -458,55 +458,55 @@ inline string_t hex_encode(const string_t &value) {
 	return string_t(std::move(out));
 }
 
-inline string_t number_format(const int_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const int_t<> &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	return scpp::number_format_from_double(static_cast<double>(value.native_value()), decimals.native_value(), decimal_separator, thousands_separator);
 }
 
-inline string_t number_format(const int_t &value, const int_t &decimals) {
+inline string_t number_format(const int_t<> &value, const int_t<> &decimals) {
 	return number_format(value, decimals, string_t("."), string_t(","));
 }
 
-inline string_t number_format(const int_t &value) {
-	return number_format(value, int_t(0));
+inline string_t number_format(const int_t<> &value) {
+	return number_format(value, int_t<>(0));
 }
 
-inline string_t number_format(const float_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const float_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	return scpp::number_format_from_double(value.native_value(), decimals.native_value(), decimal_separator, thousands_separator);
 }
 
-inline string_t number_format(const float_t &value, const int_t &decimals) {
+inline string_t number_format(const float_t &value, const int_t<> &decimals) {
 	return number_format(value, decimals, string_t("."), string_t(","));
 }
 
 inline string_t number_format(const float_t &value) {
-	return number_format(value, int_t(0));
+	return number_format(value, int_t<>(0));
 }
 
-inline string_t number_format(const string_t &, const int_t &, const string_t &, const string_t &) {
+inline string_t number_format(const string_t &, const int_t<> &, const string_t &, const string_t &) {
 	throw scpp::TypeError("number_format(): Argument #1 ($num) must be of type int|float, string given");
 }
 
-inline string_t number_format(const string_t &value, const int_t &decimals) {
+inline string_t number_format(const string_t &value, const int_t<> &decimals) {
 	return number_format(value, decimals, string_t("."), string_t(","));
 }
 
 inline string_t number_format(const string_t &value) {
-	return number_format(value, int_t(0));
+	return number_format(value, int_t<>(0));
 }
 
-inline string_t number_format(const bool_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const bool_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	return scpp::number_format_from_double(value.native_value() ? 1.0 : 0.0, decimals.native_value(), decimal_separator, thousands_separator);
 }
 
-inline string_t number_format(const bool_t &value, const int_t &decimals) {
+inline string_t number_format(const bool_t &value, const int_t<> &decimals) {
 	return number_format(value, decimals, string_t("."), string_t(","));
 }
 
 inline string_t number_format(const bool_t &value) {
-	return number_format(value, int_t(0));
+	return number_format(value, int_t<>(0));
 }
 
-inline string_t number_format(const mixed_t &value, const int_t &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
+inline string_t number_format(const mixed_t &value, const int_t<> &decimals, const string_t &decimal_separator, const string_t &thousands_separator) {
 	switch (value.kind()) {
 		case mixed_t::kind_t::null_v:
 			return scpp::number_format_from_double(0.0, decimals.native_value(), decimal_separator, thousands_separator);
@@ -523,12 +523,12 @@ inline string_t number_format(const mixed_t &value, const int_t &decimals, const
 	}
 }
 
-inline string_t number_format(const mixed_t &value, const int_t &decimals) {
+inline string_t number_format(const mixed_t &value, const int_t<> &decimals) {
 	return number_format(value, decimals, string_t("."), string_t(","));
 }
 
 inline string_t number_format(const mixed_t &value) {
-	return number_format(value, int_t(0));
+	return number_format(value, int_t<>(0));
 }
 
 } // namespace scpp::str

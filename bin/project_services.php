@@ -6544,6 +6544,8 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'unresolved_property_read',
 		'missing_return',
 		'direct_self_recursion',
+		'fixed_width_integer_literal_range',
+		'fixed_width_integer_assignment',
 		'member_visibility_violation',
 		'interface_contract_mismatch',
 		'abstract_contract_mismatch',
@@ -6876,7 +6878,7 @@ function build_stan_cli_result_from_report(string $projectRoot, string $configPa
 			$counts['return_chain_warning_count']++;
 		} elseif ($kind === 'expression_chain_resolution_warning') {
 			$counts['expression_chain_warning_count']++;
-		} elseif ($kind === 'local_type_morph_warning') {
+		} elseif ($kind === 'local_type_morph_warning' || $kind === 'fixed_width_integer_literal_range' || $kind === 'fixed_width_integer_assignment') {
 			$counts['local_type_warning_count']++;
 		} elseif ($kind === 'property_type_morph_warning') {
 			$counts['property_type_warning_count']++;

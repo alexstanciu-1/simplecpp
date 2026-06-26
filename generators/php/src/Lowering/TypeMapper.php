@@ -93,6 +93,10 @@ final class TypeMapper
 			return 'nullable<' . $this->mapDeclaredType($this->unwrapGenericNullableType($phpType)) . '>';
 		}
 
+		if ($this->isFixedArrayType($phpType)) {
+			return $this->mapFixedArrayType($phpType);
+		}
+
 		if ($this->isOrFalseType($phpType)) {
 			return 'result_or_false<' . $this->mapDeclaredType($this->unwrapOrFalseType($phpType)) . '>';
 		}
@@ -152,7 +156,7 @@ final class TypeMapper
 			return $this->appendLvalueReference($mapped);
 		}
 
-		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<') || str_starts_with($mapped, 'hash_t<')) {
+		if ($mapped === 'string_t' || str_starts_with($mapped, 'vector_t<') || str_starts_with($mapped, 'fixed_array_t<') || str_starts_with($mapped, 'hash_t<')) {
 			return 'const ' . $mapped . '&';
 		}
 
@@ -246,6 +250,32 @@ final class TypeMapper
 	{
 		$normalized = trim($phpType);
 		return preg_match('/^(?:hash|hash_t)<.+>$/', $normalized) === 1;
+	}
+
+	public function isFixedArrayType(string $phpType): bool
+	{
+		$normalized = trim($phpType);
+		return preg_match('/^(?:fixed_array|fixed_array_t)<.+>$/', $normalized) === 1;
+	}
+
+	public function mapFixedArrayType(string $phpType): string
+	{
+		$normalized = trim($phpType);
+		if (preg_match('/^(?:fixed_array|fixed_array_t)<(.+)>$/', $normalized, $matches) !== 1) {
+			return $this->mapDeclaredType($phpType);
+		}
+
+		$args = $this->splitTopLevelGenericArgs($matches[1]);
+		if (count($args) !== 2) {
+			return $this->mapDeclaredType($phpType);
+		}
+
+		$size = trim($args[1]);
+		if (preg_match('/^(?:0|[1-9][0-9]*)$/', $size) !== 1) {
+			throw new GenerationException('fixed_array<T, N> requires a non-negative integer literal size.');
+		}
+
+		return 'fixed_array_t<' . $this->mapContainerElementType($args[0]) . ', ' . $size . '>';
 	}
 
 	public function mapHashType(string $phpType): string
@@ -722,7 +752,7 @@ final class TypeMapper
 		if ($this->hasDisallowedNullableMarkerPosition($normalized)) {
 			throw new GenerationException('Nullable marker (?) is only supported as a leading type marker or in value<?T>: ' . $phpType);
 		}
-		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
+		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
 			throw new GenerationException('Unsupported explicit type syntax: ' . $phpType);
 		}
 		if (preg_match('/^value\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
@@ -783,6 +813,10 @@ final class TypeMapper
 			return $this->mapHashType($phpType);
 		}
 
+		if ($this->isFixedArrayType($phpType)) {
+			return $this->mapFixedArrayType($phpType);
+		}
+
 		if ($this->isDirectHandleType($phpType)) {
 			return $this->normalizeHandleType($phpType);
 		}
@@ -792,7 +826,15 @@ final class TypeMapper
 		}
 
 		return match ($phpType) {
-			'int' => 'int_t',
+			'int' => 'int_t<>',
+			'int8' => 'int_t<std::int8_t>',
+			'int16' => 'int_t<std::int16_t>',
+			'int32' => 'int_t<std::int32_t>',
+			'int64' => 'int_t<std::int64_t>',
+			'uint8', 'byte' => 'int_t<std::uint8_t>',
+			'uint16' => 'int_t<std::uint16_t>',
+			'uint32' => 'int_t<std::uint32_t>',
+			'uint64' => 'int_t<std::uint64_t>',
 			'float' => 'float_t',
 			'bool' => 'bool_t',
 			'string' => 'string_t',
@@ -890,6 +932,10 @@ final class TypeMapper
 			return false;
 		}
 
+		if ($this->isFixedArrayType($phpType)) {
+			return false;
+		}
+
 		if ($this->isDirectHandleType($phpType) || $this->isHandleAliasType($phpType)) {
 			return false;
 		}
@@ -908,7 +954,17 @@ final class TypeMapper
 			'nullable_resource_handle',
 			'falseable_resource_handle',
 			'vector_t',
+			'fixed_array_t',
 			'int_t',
+			'int8',
+			'int16',
+			'int32',
+			'int64',
+			'uint8',
+			'byte',
+			'uint16',
+			'uint32',
+			'uint64',
 			'float_t',
 			'bool_t',
 			'string_t',

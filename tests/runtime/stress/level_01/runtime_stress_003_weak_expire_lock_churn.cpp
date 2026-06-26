@@ -2,7 +2,7 @@
 
 int main() {
 	for (int i = 0; i < 20000; ++i) {
-		auto owner = scpp::shared<runtime_test::sample_object>(scpp::int_t(i));
+		auto owner = scpp::shared<runtime_test::sample_object>(scpp::int_t<>(i));
 		auto observer = scpp::weak(owner);
 		assert(observer.expired().native_value() == false);
 		{

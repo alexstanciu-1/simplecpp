@@ -1,11 +1,11 @@
 #include "tests/runtime/runtime_test_common.hpp"
 
 int main() {
-	scpp::vector_t<scpp::int_t> values;
-	values.append(scpp::int_t(1));
+	scpp::vector_t<scpp::int_t<>> values;
+	values.append(scpp::int_t<>(1));
 
 	runtime_test::expect_throw<scpp::runtime_error>([&values]() {
-		(void) values.at(scpp::int_t(-1));
+		(void) values.at(scpp::int_t<>(-1));
 	});
 
 	runtime_test::expect_throw<scpp::runtime_error>([&values]() {

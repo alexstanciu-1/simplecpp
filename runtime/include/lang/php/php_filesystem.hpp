@@ -30,7 +30,7 @@ namespace scpp::php {
 	return scpp::filesystem::file_get_contents(path);
 }
 
-[[nodiscard]] inline result_or_false<int_t> file_put_contents(const string_t &path, const string_t &data) {
+[[nodiscard]] inline result_or_false<int_t<>> file_put_contents(const string_t &path, const string_t &data) {
 	return scpp::filesystem::file_put_contents(path, data);
 }
 
@@ -42,11 +42,11 @@ namespace scpp::php {
 	return scpp::filesystem::scandir(path);
 }
 
-[[nodiscard]] inline result_or_false<int_t> filesize(const string_t &path) {
+[[nodiscard]] inline result_or_false<int_t<>> filesize(const string_t &path) {
 	return scpp::filesystem::filesize(path);
 }
 
-[[nodiscard]] inline result_or_false<int_t> filemtime(const string_t &path) {
+[[nodiscard]] inline result_or_false<int_t<>> filemtime(const string_t &path) {
 	return scpp::filesystem::filemtime(path);
 }
 

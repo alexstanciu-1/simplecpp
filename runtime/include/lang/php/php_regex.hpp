@@ -38,13 +38,13 @@ constexpr std::int64_t preg_unmatched_as_null = 512;
 inline void set_php_array_key(hash_t<mixed_t> &table, const string_t &key, const mixed_t &value) {
 	std::int64_t numeric_key = 0;
 	if (string_key_to_int(key, numeric_key)) {
-		table.set(int_t(numeric_key), value);
+		table.set(int_t<>(numeric_key), value);
 		return;
 	}
 	table.set(key, value);
 }
 
-inline void validate_preg_match_flags(const int_t &flags) {
+inline void validate_preg_match_flags(const int_t<> &flags) {
 	const auto native_flags = flags.native_value();
 	if ((native_flags & preg_offset_capture) != 0) {
 		throw scpp::ValueError("preg_match(): PREG_OFFSET_CAPTURE is not supported by the regex module yet");
@@ -58,7 +58,7 @@ inline void validate_preg_match_flags(const int_t &flags) {
 	}
 }
 
-inline void validate_preg_match_all_flags(const int_t &flags) {
+inline void validate_preg_match_all_flags(const int_t<> &flags) {
 	const auto native_flags = flags.native_value();
 	if ((native_flags & preg_offset_capture) != 0) {
 		throw scpp::ValueError("preg_match_all(): PREG_OFFSET_CAPTURE is not supported by the regex module yet");
@@ -163,7 +163,7 @@ inline void validate_preg_match_all_flags(const int_t &flags) {
 
 namespace scpp::php {
 
-[[nodiscard]] inline result_or_false<mixed_t> preg_filter(const string_t &pattern, const string_t &replacement, const mixed_t &input, const int_t &limit, int_t &count);
+[[nodiscard]] inline result_or_false<mixed_t> preg_filter(const string_t &pattern, const string_t &replacement, const mixed_t &input, const int_t<> &limit, int_t<> &count);
 
 [[nodiscard]] inline bool_t preg_jit_available() {
 	return scpp::regex::jit_available();
@@ -177,25 +177,25 @@ namespace scpp::php {
 	return scpp::regex::quote(text, delimiter);
 }
 
-[[nodiscard]] inline result_or_false<int_t> preg_match(const string_t &pattern, const string_t &subject) {
+[[nodiscard]] inline result_or_false<int_t<>> preg_match(const string_t &pattern, const string_t &subject) {
 	const auto result = scpp::regex::match(pattern, subject);
 	if (result.is_false().native_value()) {
 		return false_sentinel;
 	}
-	return int_t(result.value().empty().native_value() ? 0 : 1);
+	return int_t<>(result.value().empty().native_value() ? 0 : 1);
 }
 
-[[nodiscard]] inline result_or_false<int_t> preg_match(const string_t &pattern, const string_t &subject, mixed_t &matches) {
+[[nodiscard]] inline result_or_false<int_t<>> preg_match(const string_t &pattern, const string_t &subject, mixed_t &matches) {
 	const auto result = scpp::regex::match_named(pattern, subject);
 	if (result.is_false().native_value()) {
 		matches = detail::named_match_table_to_php_array(hash_t<string_t, string_t>());
 		return false_sentinel;
 	}
 	matches = detail::named_match_table_to_php_array(result.value());
-	return int_t(result.value().empty().native_value() ? 0 : 1);
+	return int_t<>(result.value().empty().native_value() ? 0 : 1);
 }
 
-[[nodiscard]] inline result_or_false<int_t> preg_match(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t &flags) {
+[[nodiscard]] inline result_or_false<int_t<>> preg_match(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t<> &flags) {
 	detail::validate_preg_match_flags(flags);
 	const auto result = scpp::regex::match_named(pattern, subject);
 	if (result.is_false().native_value()) {
@@ -203,10 +203,10 @@ namespace scpp::php {
 		return false_sentinel;
 	}
 	matches = detail::named_match_table_to_php_array(result.value());
-	return int_t(result.value().empty().native_value() ? 0 : 1);
+	return int_t<>(result.value().empty().native_value() ? 0 : 1);
 }
 
-[[nodiscard]] inline result_or_false<int_t> preg_match(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t &flags, const int_t &offset) {
+[[nodiscard]] inline result_or_false<int_t<>> preg_match(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t<> &flags, const int_t<> &offset) {
 	detail::validate_preg_match_flags(flags);
 	const auto result = scpp::regex::match_named(pattern, subject, offset);
 	if (result.is_false().native_value()) {
@@ -214,28 +214,28 @@ namespace scpp::php {
 		return false_sentinel;
 	}
 	matches = detail::named_match_table_to_php_array(result.value());
-	return int_t(result.value().empty().native_value() ? 0 : 1);
+	return int_t<>(result.value().empty().native_value() ? 0 : 1);
 }
 
-[[nodiscard]] inline result_or_false<int_t> preg_match_all(const string_t &pattern, const string_t &subject) {
+[[nodiscard]] inline result_or_false<int_t<>> preg_match_all(const string_t &pattern, const string_t &subject) {
 	const auto result = scpp::regex::match_all(pattern, subject);
 	if (result.is_false().native_value()) {
 		return false_sentinel;
 	}
-	return int_t(static_cast<std::int64_t>(result.value().size()));
+	return int_t<>(static_cast<std::int64_t>(result.value().size()));
 }
 
-[[nodiscard]] inline result_or_false<int_t> preg_match_all(const string_t &pattern, const string_t &subject, mixed_t &matches) {
+[[nodiscard]] inline result_or_false<int_t<>> preg_match_all(const string_t &pattern, const string_t &subject, mixed_t &matches) {
 	const auto result = scpp::regex::match_all_named(pattern, subject);
 	if (result.is_false().native_value()) {
 		matches = detail::nested_named_match_tables_to_php_array(vector_t<hash_t<string_t, string_t>>());
 		return false_sentinel;
 	}
 	matches = detail::named_match_tables_to_php_pattern_order(result.value());
-	return int_t(static_cast<std::int64_t>(result.value().size()));
+	return int_t<>(static_cast<std::int64_t>(result.value().size()));
 }
 
-[[nodiscard]] inline result_or_false<int_t> preg_match_all(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t &flags) {
+[[nodiscard]] inline result_or_false<int_t<>> preg_match_all(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t<> &flags) {
 	detail::validate_preg_match_all_flags(flags);
 	const auto result = scpp::regex::match_all_named(pattern, subject);
 	if (result.is_false().native_value()) {
@@ -247,10 +247,10 @@ namespace scpp::php {
 	} else {
 		matches = detail::named_match_tables_to_php_pattern_order(result.value());
 	}
-	return int_t(static_cast<std::int64_t>(result.value().size()));
+	return int_t<>(static_cast<std::int64_t>(result.value().size()));
 }
 
-[[nodiscard]] inline result_or_false<int_t> preg_match_all(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t &flags, const int_t &offset) {
+[[nodiscard]] inline result_or_false<int_t<>> preg_match_all(const string_t &pattern, const string_t &subject, mixed_t &matches, const int_t<> &flags, const int_t<> &offset) {
 	detail::validate_preg_match_all_flags(flags);
 	const auto result = scpp::regex::match_all_named(pattern, subject, offset);
 	if (result.is_false().native_value()) {
@@ -262,7 +262,7 @@ namespace scpp::php {
 	} else {
 		matches = detail::named_match_tables_to_php_pattern_order(result.value());
 	}
-	return int_t(static_cast<std::int64_t>(result.value().size()));
+	return int_t<>(static_cast<std::int64_t>(result.value().size()));
 }
 
 [[nodiscard]] inline result_or_false<mixed_t> preg_grep(const string_t &pattern, const mixed_t &input) {
@@ -311,7 +311,7 @@ namespace scpp::php {
 	return output;
 }
 
-[[nodiscard]] inline result_or_false<mixed_t> preg_filter(const string_t &pattern, const string_t &replacement, const mixed_t &input, const int_t &limit) {
+[[nodiscard]] inline result_or_false<mixed_t> preg_filter(const string_t &pattern, const string_t &replacement, const mixed_t &input, const int_t<> &limit) {
 	bool invalid_pattern = false;
 	const auto output = detail::php_array_filter_preserving_keys(
 		input,
@@ -334,17 +334,17 @@ namespace scpp::php {
 	return output;
 }
 
-[[nodiscard]] inline result_or_false<mixed_t> preg_filter(const string_t &pattern, const string_t &replacement, const mixed_t &input, int_t &count) {
-	return preg_filter(pattern, replacement, input, int_t(-1), count);
+[[nodiscard]] inline result_or_false<mixed_t> preg_filter(const string_t &pattern, const string_t &replacement, const mixed_t &input, int_t<> &count) {
+	return preg_filter(pattern, replacement, input, int_t<>(-1), count);
 }
 
-[[nodiscard]] inline result_or_false<mixed_t> preg_filter(const string_t &pattern, const string_t &replacement, const mixed_t &input, const int_t &limit, int_t &count) {
+[[nodiscard]] inline result_or_false<mixed_t> preg_filter(const string_t &pattern, const string_t &replacement, const mixed_t &input, const int_t<> &limit, int_t<> &count) {
 	bool invalid_pattern = false;
 	std::int64_t replacements = 0;
 	const auto output = detail::php_array_filter_preserving_keys(
 		input,
 		[&](const mixed_t &, const string_t &value) -> nullable<mixed_t> {
-			int_t local_count(0);
+			int_t<> local_count(0);
 			const auto replaced = scpp::regex::replace(pattern, replacement, value, limit, local_count);
 			if (replaced.is_false().native_value()) {
 				invalid_pattern = true;
@@ -361,7 +361,7 @@ namespace scpp::php {
 	if (invalid_pattern) {
 		return false_sentinel;
 	}
-	count = int_t(replacements);
+	count = int_t<>(replacements);
 	return output;
 }
 
@@ -369,24 +369,24 @@ namespace scpp::php {
 	const auto adapter = [&callback](vector_t<string_t> values) -> string_t {
 		return callback(detail::vector_to_php_array(values));
 	};
-	return scpp::regex::replace_callback(pattern, adapter, subject, int_t(-1));
+	return scpp::regex::replace_callback(pattern, adapter, subject, int_t<>(-1));
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace_callback(const string_t &pattern, const std::function<string_t(mixed_t)> &callback, const string_t &subject, const int_t &limit) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace_callback(const string_t &pattern, const std::function<string_t(mixed_t)> &callback, const string_t &subject, const int_t<> &limit) {
 	const auto adapter = [&callback](vector_t<string_t> values) -> string_t {
 		return callback(detail::vector_to_php_array(values));
 	};
 	return scpp::regex::replace_callback(pattern, adapter, subject, limit);
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace_callback(const string_t &pattern, const std::function<string_t(mixed_t)> &callback, const string_t &subject, int_t &count) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace_callback(const string_t &pattern, const std::function<string_t(mixed_t)> &callback, const string_t &subject, int_t<> &count) {
 	const auto adapter = [&callback](vector_t<string_t> values) -> string_t {
 		return callback(detail::vector_to_php_array(values));
 	};
 	return scpp::regex::replace_callback(pattern, adapter, subject, count);
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace_callback(const string_t &pattern, const std::function<string_t(mixed_t)> &callback, const string_t &subject, const int_t &limit, int_t &count) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace_callback(const string_t &pattern, const std::function<string_t(mixed_t)> &callback, const string_t &subject, const int_t<> &limit, int_t<> &count) {
 	const auto adapter = [&callback](vector_t<string_t> values) -> string_t {
 		return callback(detail::vector_to_php_array(values));
 	};
@@ -402,10 +402,10 @@ namespace scpp::php {
 		};
 		adapter_callbacks.set(entry.key(), std::move(adapter));
 	}
-	return scpp::regex::replace_callback_array(adapter_callbacks, subject, int_t(-1));
+	return scpp::regex::replace_callback_array(adapter_callbacks, subject, int_t<>(-1));
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace_callback_array(const hash_t<std::function<string_t(mixed_t)>, string_t> &callbacks, const string_t &subject, const int_t &limit) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace_callback_array(const hash_t<std::function<string_t(mixed_t)>, string_t> &callbacks, const string_t &subject, const int_t<> &limit) {
 	hash_t<std::function<string_t(vector_t<string_t>)>, string_t> adapter_callbacks;
 	for (auto it = callbacks.begin_entries(); it != callbacks.end_entries(); ++it) {
 		const auto entry = *it;
@@ -417,7 +417,7 @@ namespace scpp::php {
 	return scpp::regex::replace_callback_array(adapter_callbacks, subject, limit);
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace_callback_array(const hash_t<std::function<string_t(mixed_t)>, string_t> &callbacks, const string_t &subject, int_t &count) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace_callback_array(const hash_t<std::function<string_t(mixed_t)>, string_t> &callbacks, const string_t &subject, int_t<> &count) {
 	hash_t<std::function<string_t(vector_t<string_t>)>, string_t> adapter_callbacks;
 	for (auto it = callbacks.begin_entries(); it != callbacks.end_entries(); ++it) {
 		const auto entry = *it;
@@ -429,7 +429,7 @@ namespace scpp::php {
 	return scpp::regex::replace_callback_array(adapter_callbacks, subject, count);
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace_callback_array(const hash_t<std::function<string_t(mixed_t)>, string_t> &callbacks, const string_t &subject, const int_t &limit, int_t &count) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace_callback_array(const hash_t<std::function<string_t(mixed_t)>, string_t> &callbacks, const string_t &subject, const int_t<> &limit, int_t<> &count) {
 	hash_t<std::function<string_t(vector_t<string_t>)>, string_t> adapter_callbacks;
 	for (auto it = callbacks.begin_entries(); it != callbacks.end_entries(); ++it) {
 		const auto entry = *it;
@@ -445,15 +445,15 @@ namespace scpp::php {
 	return scpp::regex::replace(pattern, replacement, subject);
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t &limit) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit) {
 	return scpp::regex::replace(pattern, replacement, subject, limit);
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace(const string_t &pattern, const string_t &replacement, const string_t &subject, int_t &count) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace(const string_t &pattern, const string_t &replacement, const string_t &subject, int_t<> &count) {
 	return scpp::regex::replace(pattern, replacement, subject, count);
 }
 
-[[nodiscard]] inline result_or_false<string_t> preg_replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t &limit, int_t &count) {
+[[nodiscard]] inline result_or_false<string_t> preg_replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit, int_t<> &count) {
 	return scpp::regex::replace(pattern, replacement, subject, limit, count);
 }
 
@@ -465,7 +465,7 @@ namespace scpp::php {
 	return detail::vector_to_php_array(result.value());
 }
 
-[[nodiscard]] inline result_or_false<mixed_t> preg_split(const string_t &pattern, const string_t &subject, const int_t &limit) {
+[[nodiscard]] inline result_or_false<mixed_t> preg_split(const string_t &pattern, const string_t &subject, const int_t<> &limit) {
 	const auto result = scpp::regex::split(pattern, subject, limit);
 	if (result.is_false().native_value()) {
 		return false_sentinel;
@@ -473,7 +473,7 @@ namespace scpp::php {
 	return detail::vector_to_php_array(result.value());
 }
 
-[[nodiscard]] inline result_or_false<mixed_t> preg_split(const string_t &pattern, const string_t &subject, const int_t &limit, const int_t &flags) {
+[[nodiscard]] inline result_or_false<mixed_t> preg_split(const string_t &pattern, const string_t &subject, const int_t<> &limit, const int_t<> &flags) {
 	const auto result = scpp::regex::split(pattern, subject, limit, flags);
 	if (result.is_false().native_value()) {
 		return false_sentinel;

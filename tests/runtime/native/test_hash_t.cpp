@@ -6,8 +6,8 @@ static void test_table_basic_contract() {
 
 	assert(t.empty().native_value() == true);
 	assert(t.is_packed().native_value() == true);
-	assert(t.append(scpp::mixed_t(scpp::int_t(10))).native_value() == 0);
-	assert(t.append(scpp::mixed_t(scpp::int_t(20))).native_value() == 1);
+	assert(t.append(scpp::mixed_t(scpp::int_t<>(10))).native_value() == 0);
+	assert(t.append(scpp::mixed_t(scpp::int_t<>(20))).native_value() == 1);
 	assert(t.size() == 2);
 
 	auto missing = t.find(scpp::string_t("missing"));
@@ -27,26 +27,26 @@ static void test_table_basic_contract() {
 // Verifies packed-mode remove does not renumber later numeric keys.
 static void test_table_remove_preserves_numeric_keys() {
 	scpp::hash_t t;
-	(void)t.append(scpp::mixed_t(scpp::int_t(100))); // key 0
-	(void)t.append(scpp::mixed_t(scpp::int_t(200))); // key 1
+	(void)t.append(scpp::mixed_t(scpp::int_t<>(100))); // key 0
+	(void)t.append(scpp::mixed_t(scpp::int_t<>(200))); // key 1
 	assert(t.is_packed().native_value() == true);
 
-	assert(t.remove(scpp::int_t(0)) == true);
+	assert(t.remove(scpp::int_t<>(0)) == true);
 	assert(t.is_packed().native_value() == false);
-	assert(t.has(scpp::int_t(0)).native_value() == false);
-	assert(t.has(scpp::int_t(1)).native_value() == true);
+	assert(t.has(scpp::int_t<>(0)).native_value() == false);
+	assert(t.has(scpp::int_t<>(1)).native_value() == true);
 	assert(t.size() == 1);
 
-	const auto next = t.append(scpp::mixed_t(scpp::int_t(300)));
+	const auto next = t.append(scpp::mixed_t(scpp::int_t<>(300)));
 	assert(next.native_value() == 2);
-	assert(t.has(scpp::int_t(2)).native_value() == true);
+	assert(t.has(scpp::int_t<>(2)).native_value() == true);
 }
 
 // Verifies _find_val() is non-inserting and returns null on miss.
 static void test_table_find_val_contract() {
 	scpp::hash_t t;
 
-	t.set(scpp::string_t("n"), scpp::mixed_t(scpp::int_t(7)));
+	t.set(scpp::string_t("n"), scpp::mixed_t(scpp::int_t<>(7)));
 	t.set(scpp::string_t("z"), scpp::mixed_t(scpp::null_t{}));
 
 	const auto before_size = t.size();
@@ -69,7 +69,7 @@ static void test_table_find_val_contract() {
 // Verifies mutable operator[] materializes missing slots while const reads remain non-inserting.
 static void test_table_operator_index_contract() {
 	scpp::hash_t t;
-	t.set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t(1)));
+	t.set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t<>(1)));
 
 	const auto before_const_read = t.size();
 	const auto &const_ref = static_cast<const scpp::hash_t<> &>(t)[scpp::string_t("missing")];
@@ -77,7 +77,7 @@ static void test_table_operator_index_contract() {
 	assert(t.size() == before_const_read);
 	assert(t.has(scpp::string_t("missing")).native_value() == false);
 
-	t[scpp::string_t("missing")] = scpp::mixed_t(scpp::int_t(9));
+	t[scpp::string_t("missing")] = scpp::mixed_t(scpp::int_t<>(9));
 	assert(t.has(scpp::string_t("missing")).native_value() == true);
 	assert(t._find_val(scpp::string_t("missing")).int_value().native_value() == 9);
 }
@@ -87,14 +87,14 @@ static void test_value_t_table_read_write_contract() {
 	scpp::mixed_t root{scpp::unique<scpp::hash_t<scpp::mixed_t>>()};
 	root[scpp::string_t("name")] = scpp::mixed_t(scpp::string_t("Alex"));
 	root[scpp::string_t("child")] = scpp::mixed_t(scpp::unique<scpp::hash_t<scpp::mixed_t>>());
-	root[scpp::string_t("child")][scpp::string_t("count")] = scpp::mixed_t(scpp::int_t(3));
-	root[scpp::string_t("child")].append(scpp::mixed_t(scpp::int_t(10)));
-	root[scpp::string_t("child")].append(scpp::mixed_t(scpp::int_t(20)));
+	root[scpp::string_t("child")][scpp::string_t("count")] = scpp::mixed_t(scpp::int_t<>(3));
+	root[scpp::string_t("child")].append(scpp::mixed_t(scpp::int_t<>(10)));
+	root[scpp::string_t("child")].append(scpp::mixed_t(scpp::int_t<>(20)));
 
 	assert(root.get(scpp::string_t("name")).string_if()->native_value() == "Alex");
 	assert(root.get(scpp::string_t("child")).get(scpp::string_t("count")).int_value().native_value() == 3);
-	assert(root.get(scpp::string_t("child")).get(scpp::int_t(0)).int_value().native_value() == 10);
-	assert(root.get(scpp::string_t("child")).get(scpp::int_t(1)).int_value().native_value() == 20);
+	assert(root.get(scpp::string_t("child")).get(scpp::int_t<>(0)).int_value().native_value() == 10);
+	assert(root.get(scpp::string_t("child")).get(scpp::int_t<>(1)).int_value().native_value() == 20);
 	assert(root.get(scpp::string_t("missing")).is_null().native_value() == true);
 
 	const auto before_missing_nested = root.get(scpp::string_t("child")).size().native_value();
@@ -106,9 +106,9 @@ static void test_value_t_table_read_write_contract() {
 // Verifies entry iteration preserves associative keys, skips tombstones, and exposes mutable value refs.
 static void test_table_entry_iteration_contract() {
 	scpp::hash_t t;
-	t.set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t(1)));
-	t.set(scpp::string_t("b"), scpp::mixed_t(scpp::int_t(2)));
-	t.set(scpp::int_t(7), scpp::mixed_t(scpp::int_t(3)));
+	t.set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t<>(1)));
+	t.set(scpp::string_t("b"), scpp::mixed_t(scpp::int_t<>(2)));
+	t.set(scpp::int_t<>(7), scpp::mixed_t(scpp::int_t<>(3)));
 	assert(t.remove(scpp::string_t("b")) == true);
 
 	int seen = 0;
@@ -122,13 +122,13 @@ static void test_table_entry_iteration_contract() {
 		if (key.string_if() != nullptr && key.string_if()->native_value() == "a") {
 			saw_a = true;
 			assert(value.int_value().native_value() == 1);
-			value = scpp::mixed_t(scpp::int_t(11));
+			value = scpp::mixed_t(scpp::int_t<>(11));
 			continue;
 		}
 		if (key.kind() == scpp::mixed_t::kind_t::int_v && key.int_value().native_value() == 7) {
 			saw_7 = true;
 			assert(value.int_value().native_value() == 3);
-			value = scpp::mixed_t(scpp::int_t(13));
+			value = scpp::mixed_t(scpp::int_t<>(13));
 			continue;
 		}
 		assert(false && "unexpected entry key during hash_t entry iteration");
@@ -138,7 +138,7 @@ static void test_table_entry_iteration_contract() {
 	assert(saw_a == true);
 	assert(saw_7 == true);
 	assert(t._find_val(scpp::string_t("a")).int_value().native_value() == 11);
-	assert(t._find_val(scpp::int_t(7)).int_value().native_value() == 13);
+	assert(t._find_val(scpp::int_t<>(7)).int_value().native_value() == 13);
 	assert(t.has(scpp::string_t("b")).native_value() == false);
 }
 
@@ -162,48 +162,48 @@ static void test_table_shared_object_like_contract() {
 
 // Verifies typed hash_t specializations, clear(), and builder helpers remain usable.
 static void test_typed_table_and_builder_contract() {
-	scpp::hash_t<scpp::int_t, scpp::int_t> ints;
-	(void)ints.append(scpp::int_t(10));
-	(void)ints.append(scpp::int_t(20));
-	ints.set(scpp::int_t(7), scpp::int_t(99));
+	scpp::hash_t<scpp::int_t<>, scpp::int_t<>> ints;
+	(void)ints.append(scpp::int_t<>(10));
+	(void)ints.append(scpp::int_t<>(20));
+	ints.set(scpp::int_t<>(7), scpp::int_t<>(99));
 	assert(ints.size() == 3);
-	assert(ints.at(scpp::int_t(0)).native_value() == 10);
-	assert(ints.at(scpp::int_t(1)).native_value() == 20);
-	assert(ints.at(scpp::int_t(7)).native_value() == 99);
-	assert(scpp::was_found(ints.find(scpp::int_t(1))).native_value() == true);
-	assert(scpp::is_nullopt(ints.find(scpp::int_t(99))).native_value() == true);
+	assert(ints.at(scpp::int_t<>(0)).native_value() == 10);
+	assert(ints.at(scpp::int_t<>(1)).native_value() == 20);
+	assert(ints.at(scpp::int_t<>(7)).native_value() == 99);
+	assert(scpp::was_found(ints.find(scpp::int_t<>(1))).native_value() == true);
+	assert(scpp::is_nullopt(ints.find(scpp::int_t<>(99))).native_value() == true);
 
-	scpp::hash_t<scpp::string_t, scpp::int_t> strings;
+	scpp::hash_t<scpp::string_t, scpp::int_t<>> strings;
 	(void)strings.append(scpp::string_t("alpha"));
 	(void)strings.append(scpp::string_t("beta"));
-	strings.set(scpp::int_t(7), scpp::string_t("gamma"));
-	assert(strings.at(scpp::int_t(0)).native_value() == "alpha");
-	assert(strings.at(scpp::int_t(1)).native_value() == "beta");
-	assert(strings.at(scpp::int_t(7)).native_value() == "gamma");
+	strings.set(scpp::int_t<>(7), scpp::string_t("gamma"));
+	assert(strings.at(scpp::int_t<>(0)).native_value() == "alpha");
+	assert(strings.at(scpp::int_t<>(1)).native_value() == "beta");
+	assert(strings.at(scpp::int_t<>(7)).native_value() == "gamma");
 
 	auto built = scpp::table_(
-		scpp::table_item_(scpp::int_t(1)),
+		scpp::table_item_(scpp::int_t<>(1)),
 		scpp::table_item_(scpp::string_t("hello")),
-		scpp::table_kv_(scpp::string_t("key"), scpp::int_t(99)),
+		scpp::table_kv_(scpp::string_t("key"), scpp::int_t<>(99)),
 		scpp::table_kv_(2, scpp::bool_t(true))
 	);
-	assert(built->has(scpp::int_t(0)).native_value() == true);
-	assert(built->has(scpp::int_t(1)).native_value() == true);
+	assert(built->has(scpp::int_t<>(0)).native_value() == true);
+	assert(built->has(scpp::int_t<>(1)).native_value() == true);
 	assert(built->has(scpp::string_t("key")).native_value() == true);
-	assert(built->has(scpp::int_t(2)).native_value() == true);
+	assert(built->has(scpp::int_t<>(2)).native_value() == true);
 	assert(built->at(scpp::string_t("key")).int_value().native_value() == 99);
 
 	scpp::hash_t<> clearable;
-	(void)clearable.append(scpp::mixed_t(scpp::int_t(1)));
-	(void)clearable.append(scpp::mixed_t(scpp::int_t(2)));
+	(void)clearable.append(scpp::mixed_t(scpp::int_t<>(1)));
+	(void)clearable.append(scpp::mixed_t(scpp::int_t<>(2)));
 	clearable.set(scpp::string_t("k"), scpp::mixed_t(scpp::bool_t(true)));
 	assert(clearable.size() == 3);
 	clearable.clear();
 	assert(clearable.empty().native_value() == true);
 	assert(clearable.size() == 0);
 	assert(clearable.is_packed().native_value() == true);
-	(void)clearable.append(scpp::mixed_t(scpp::int_t(42)));
-	assert(clearable.at(scpp::int_t(0)).int_value().native_value() == 42);
+	(void)clearable.append(scpp::mixed_t(scpp::int_t<>(42)));
+	assert(clearable.at(scpp::int_t<>(0)).int_value().native_value() == 42);
 }
 
 // Verifies string-key identity stays stable across table construction, lookup, and JSON encoding.
@@ -223,7 +223,7 @@ static void test_string_key_identity_contract() {
 // Verifies nested table lookups stay non-inserting and null-safe through the current hash_t/mixed_t API.
 static void test_table_find_chain_contract() {
 	auto inner = scpp::unique<scpp::hash_t<scpp::mixed_t>>();
-	inner->set(scpp::string_t("leaf"), scpp::mixed_t(scpp::int_t(123)));
+	inner->set(scpp::string_t("leaf"), scpp::mixed_t(scpp::int_t<>(123)));
 
 	scpp::hash_t<> outer;
 	outer.set(scpp::string_t("child"), scpp::mixed_t(std::move(inner)));
