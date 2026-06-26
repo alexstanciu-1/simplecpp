@@ -92,6 +92,9 @@ final class StanPhpRuntimeFunctionCatalog
 		if (str_starts_with($normalized, 'ui_')) {
 			return 'ui';
 		}
+		if (str_starts_with($normalized, 'webview_')) {
+			return 'webview';
+		}
 		return null;
 	}
 

@@ -65,10 +65,14 @@ jobs:
           php -l generators/php/src/Analysis/RuntimeShallowSourceGenerator.php
           php -l generators/php/src/Stan/StanPhpRuntimeFunctionCatalog.php
           php -l tests/tools/test_scpp_ui_module.php
+          php -l tests/tools/test_scpp_webview_module.php
 
       - name: UI module smoke
         shell: bash
-        run: php tests/tools/test_scpp_ui_module.php
+        run: |
+          set -euo pipefail
+          php tests/tools/test_scpp_ui_module.php
+          php tests/tools/test_scpp_webview_module.php
 
       - name: Build options smoke
         if: matrix.build_options
@@ -82,6 +86,9 @@ jobs:
           set -euo pipefail
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -c runtime/include/modules/ui/ui.cpp -o ui_disabled.o
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -c runtime/include/modules/ui/ui.cpp -o ui_enabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -c runtime/include/modules/webview/webview.cpp -o webview_disabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -c tests/native/webview_compile.cpp -o webview_compile_disabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -DSCPP_HAS_WEBVIEW=1 -c runtime/include/modules/webview/webview.cpp -o webview_enabled.o
 
       - name: Build Windows Win32 UI smoke app
         if: runner.os == 'Windows'

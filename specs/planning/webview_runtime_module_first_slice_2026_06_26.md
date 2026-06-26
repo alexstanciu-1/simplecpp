@@ -41,6 +41,7 @@ The Simple C++ implementation should be a native runtime module with its own C++
 3. Required lower module:
    - `ui`
    - WebView creation requires an existing `ui_window`.
+   - requesting `webview` should auto-enable `ui`; later build reporting should make that implicit enablement visible.
 
 4. First milestone scope:
    - create one WebView inside a `ui_window`
@@ -270,7 +271,7 @@ Android:
 
 ## Build-System Requirements
 
-`webview` must be opt-in and imply or require `ui`:
+`webview` must be opt-in and auto-enable `ui`:
 
 ```json
 {
@@ -283,7 +284,8 @@ Android:
 `scpp build` must eventually:
 
 - include `webview` runtime sources only when the module is enabled
-- require or auto-enable `ui` when `webview` is requested
+- auto-enable `ui` when `webview` is requested
+- later print/report the implicit `ui` enablement in build diagnostics
 - link platform libraries/frameworks
 - fail clearly when required platform dependencies are missing
 - keep projects without `webview` unaffected
@@ -337,10 +339,17 @@ CI target order:
 6. Add native smoke app that renders local HTML.
 7. Add platform CI compile/link and screenshot smokes incrementally.
 
+## Resolved First-Slice Questions
+
+- `webview` auto-enables `ui`; later build reporting should make this explicit.
+- Start with a compile/facade slice before native backend rendering.
+- Windows WebView2 can be an external dependency first; vendoring is deferred unless setup becomes painful.
+- `webview_load_html(...)` does not take a base URL in the first API.
+- JavaScript native messaging is deferred until after the render smoke.
+- The runtime module name is `webview`, with `webview_*` helpers.
+
 ## Open Questions To Resolve During Implementation
 
-- Should requesting `"webview"` automatically enable `"ui"`, or should `scpp build` require both modules explicitly with a clear diagnostic?
-- Should `webview_load_html(...)` take an optional base URL in the first public API, or defer that until local asset loading is designed?
 - Where should WebView2 SDK headers/libraries come from in Windows CI: checked-in minimal loader header, package restore, Visual Studio component, or a documented external dependency?
 - Should Linux target only WebKitGTK 4.1 for the first slice, or support both 4.1 and newer package/API variants behind build detection?
 - Should the first JavaScript native-message bridge use plain string payloads only, or reserve JSON-shaped helpers from the start?

@@ -131,6 +131,11 @@
         "ui_window_close": "ui::window_close",
         "ui_app_poll": "ui::app_poll",
         "ui_app_next_event": "ui::app_next_event",
-        "ui_app_exit": "ui::app_exit"
+        "ui_app_exit": "ui::app_exit",
+        "webview_create": "webview_runtime::create",
+        "webview_load_url": "webview_runtime::load_url",
+        "webview_load_html": "webview_runtime::load_html",
+        "webview_eval": "webview_runtime::eval",
+        "webview_close": "webview_runtime::close"
     }
 }

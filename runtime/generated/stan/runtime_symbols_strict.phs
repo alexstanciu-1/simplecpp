@@ -134,6 +134,11 @@ function ui_window_close(ui_window $window): result<bool> {}
 function ui_window_create(ui_app $app, string $title, int $width, int $height): result<ui_window> {}
 function ui_window_show(ui_window $window): result<bool> {}
 function var_dump(mixed $value): void {}
+function webview_close(webview $view): void {}
+function webview_create(ui_window $window): result<webview> {}
+function webview_eval(webview $view, string $script): result<bool> {}
+function webview_load_html(webview $view, string $html): result<bool> {}
+function webview_load_url(webview $view, string $url): result<bool> {}
 
 namespace scpp;
 
@@ -184,6 +189,10 @@ class ui_event
 {
 	public string $type;
 	public ui_window $window_handle;
+}
+
+class webview
+{
 }
 
 class mysqli_result

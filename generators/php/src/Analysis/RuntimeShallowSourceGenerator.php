@@ -376,6 +376,11 @@ final class RuntimeShallowSourceGenerator
 				'ui_app_poll' => ['return' => 'bool', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
 				'ui_app_next_event' => ['return' => 'ui_event', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
 				'ui_app_exit' => ['return' => 'void', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
+				'webview_create' => ['return' => 'result<webview>', 'params' => [['name' => 'window', 'type' => 'ui_window']]],
+				'webview_load_url' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'url', 'type' => 'string']]],
+				'webview_load_html' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'html', 'type' => 'string']]],
+				'webview_eval' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'script', 'type' => 'string']]],
+				'webview_close' => ['return' => 'void', 'params' => [['name' => 'view', 'type' => 'webview']]],
 			],
 			'legacy' => [
 				'fopen' => ['return' => 'mixed', 'params' => [['name' => 'path', 'type' => 'string'], ['name' => 'mode', 'type' => 'string']]],
@@ -480,6 +485,7 @@ final class RuntimeShallowSourceGenerator
 					['kind' => 'property', 'name' => 'type', 'type' => 'string'],
 					['kind' => 'property', 'name' => 'window_handle', 'type' => 'ui_window'],
 				], $isStrict),
+				$this->renderClassStub('webview', [], $isStrict),
 			];
 		}
 		$blocks[] = $this->renderNamespaceBlock('scpp', [

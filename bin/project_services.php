@@ -4744,9 +4744,12 @@ function resolve_runtime_build_config(array $config): array
 	$modules = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $modules)));
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
+	if (in_array('webview', $modules, true) && !in_array('ui', $modules, true)) {
+		$modules[] = 'ui';
+	}
 	$safety = is_array($runtime['safety'] ?? null) ? $runtime['safety'] : [];
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'ui'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'ui', 'webview'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -7719,6 +7722,9 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	if (in_array('ui', $modules, true)) {
 		$lines[] = '#include "modules/ui/ui.cpp"';
 	}
+	if (in_array('webview', $modules, true)) {
+		$lines[] = '#include "modules/webview/webview.cpp"';
+	}
 	if (in_array('php', $languages, true) && ($phpProfile === 'legacy' || $phpProfile === 'strict')) {
 		if (in_array('filesystem', $modules, true)) {
 			$lines[] = '#include "lang/php/php_filesystem.cpp"';
@@ -8051,6 +8057,17 @@ function resolve_runtime_ui_build_spec(): array
 	];
 }
 
+/** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
+function resolve_runtime_webview_build_spec(): array
+{
+	return [
+		'enabled' => true,
+		'cflags' => [],
+		'ldflags' => [],
+		'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1'],
+	];
+}
+
 function build_runtime_compiler_flags(string $compilerKind, string $buildMode, string $runtimeIncludeDir): string
 {
 	if ($compilerKind === 'msvc') {
@@ -8155,6 +8172,16 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		$extraLinkFlags = array_merge($extraLinkFlags, $uiBuild['ldflags']);
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_UI=0';
+	}
+	if (in_array('webview', $modules, true)) {
+		$webviewBuild = resolve_runtime_webview_build_spec();
+		if (!$webviewBuild['enabled']) {
+			scpp_fail('Runtime module `webview` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported native WebView backend was found.' . PHP_EOL, 1);
+		}
+		$extraCxxFlags = array_merge($extraCxxFlags, $webviewBuild['compile_defines'], $webviewBuild['cflags']);
+		$extraLinkFlags = array_merge($extraLinkFlags, $webviewBuild['ldflags']);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_HAS_WEBVIEW=0';
 	}
 	if (call_depth_guard_enabled($runtimeConfig, $buildMode)) {
 		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=1';
