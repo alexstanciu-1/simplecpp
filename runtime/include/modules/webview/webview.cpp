@@ -29,15 +29,18 @@
 #include <windows.h>
 #include <unknwn.h>
 #include <wrl.h>
+#include <wrl/client.h>
 #include <WebView2.h>
 #endif
 
+#include <atomic>
 #include <charconv>
 #include <filesystem>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace scpp::webview_runtime {
 
@@ -498,6 +501,56 @@ gboolean handle_navigation_policy(WebKitWebView *, WebKitPolicyDecision *decisio
 
 #if defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 
+template <typename TInterface, typename TArg1, typename TArg2, typename TLambda>
+class win32_callback2 final : public TInterface {
+public:
+	explicit win32_callback2(TLambda callback) : callback_(std::move(callback)) {}
+
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **object) override {
+		if (object == nullptr) {
+			return E_POINTER;
+		}
+		*object = nullptr;
+		if (IsEqualIID(riid, __uuidof(IUnknown))
+#if !defined(__MINGW32__)
+			|| IsEqualIID(riid, __uuidof(TInterface))
+#endif
+		) {
+			*object = static_cast<TInterface *>(this);
+			AddRef();
+			return S_OK;
+		}
+		return E_NOINTERFACE;
+	}
+
+	ULONG STDMETHODCALLTYPE AddRef() override {
+		return ++refs_;
+	}
+
+	ULONG STDMETHODCALLTYPE Release() override {
+		const ULONG refs = --refs_;
+		if (refs == 0) {
+			delete this;
+		}
+		return refs;
+	}
+
+	HRESULT STDMETHODCALLTYPE Invoke(TArg1 arg1, TArg2 arg2) override {
+		return callback_(arg1, arg2);
+	}
+
+private:
+	std::atomic<ULONG> refs_{1};
+	TLambda callback_;
+};
+
+template <typename TInterface, typename TArg1, typename TArg2, typename TLambda>
+[[nodiscard]] Microsoft::WRL::ComPtr<TInterface> make_win32_callback2(TLambda callback) {
+	Microsoft::WRL::ComPtr<TInterface> result;
+	result.Attach(new win32_callback2<TInterface, TArg1, TArg2, TLambda>(std::move(callback)));
+	return result;
+}
+
 struct win32_webview_state final {
 	HWND parent = nullptr;
 	shared_p<view> target = null;
@@ -866,7 +919,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		nullptr,
 		nullptr,
 		nullptr,
-		Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
+		make_win32_callback2<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler, HRESULT, ICoreWebView2Environment *>(
 			[state](HRESULT result, ICoreWebView2Environment *environment) -> HRESULT {
 				if (FAILED(result) || environment == nullptr || state->closed) {
 					return result;
@@ -874,7 +927,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 				state->environment = environment;
 				return environment->CreateCoreWebView2Controller(
 					state->parent,
-					Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
+					make_win32_callback2<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler, HRESULT, ICoreWebView2Controller *>(
 						[state](HRESULT controller_result, ICoreWebView2Controller *controller) -> HRESULT {
 							if (FAILED(controller_result) || controller == nullptr || state->closed) {
 								return controller_result;
@@ -884,7 +937,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 							if (state->core != nullptr) {
 								HRESULT script_result = state->core->AddScriptToExecuteOnDocumentCreated(
 									utf8_to_wide(bridge_script).c_str(),
-									Microsoft::WRL::Callback<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler>(
+									make_win32_callback2<ICoreWebView2AddScriptToExecuteOnDocumentCreatedCompletedHandler, HRESULT, LPCWSTR>(
 										[state](HRESULT, LPCWSTR) -> HRESULT {
 											state->bridge_ready = true;
 											flush_win32_pending(state.get());
@@ -896,7 +949,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 									state->bridge_ready = true;
 								}
 								state->core->add_WebMessageReceived(
-									Microsoft::WRL::Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+									make_win32_callback2<ICoreWebView2WebMessageReceivedEventHandler, ICoreWebView2 *, ICoreWebView2WebMessageReceivedEventArgs *>(
 										[state](ICoreWebView2 *, ICoreWebView2WebMessageReceivedEventArgs *args) -> HRESULT {
 											if (args == nullptr || state->closed) {
 												return S_OK;

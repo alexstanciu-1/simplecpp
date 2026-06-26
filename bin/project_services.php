@@ -8212,7 +8212,7 @@ function resolve_runtime_webview_build_spec(): array
 			'enabled' => $webview2 !== null,
 			'backend' => 'webview2',
 			'cflags' => $webview2 === null ? [] : ['-I' . $webview2['include_dir']],
-			'ldflags' => $webview2 === null ? [] : [$webview2['loader_lib'], 'advapi32.lib'],
+			'ldflags' => $webview2 === null ? [] : [$webview2['loader_lib'], 'advapi32.lib', 'ole32.lib', 'uuid.lib'],
 			'compile_defines' => $webview2 === null ? ['-DSCPP_HAS_WEBVIEW=0'] : ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
 		];
 	}
@@ -8380,6 +8380,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	} else {
 		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=0';
 	}
+	$extraLinkFlags = adapt_windows_runtime_link_flags_for_compiler($extraLinkFlags, $compiler);
 
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = PHP_OS_FAMILY === 'Darwin' ? 'libruntime.dylib' : 'libruntime.so';
@@ -8413,6 +8414,24 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		'rpath_dir' => null,
 		'extra_cxxflags' => $extraCxxFlags,
 	];
+}
+
+/** @param list<string> $flags @param array{command:string,kind:string,launcher?:?string,linker_flags?:list<string>,archiver?:?string} $compiler @return list<string> */
+function adapt_windows_runtime_link_flags_for_compiler(array $flags, array $compiler): array
+{
+	if (PHP_OS_FAMILY !== 'Windows' || ($compiler['kind'] ?? '') !== 'gnu_like') {
+		return $flags;
+	}
+
+	$adapted = [];
+	foreach ($flags as $flag) {
+		if (preg_match('/^([A-Za-z0-9_]+)\\.lib$/', $flag, $matches) === 1) {
+			$adapted[] = '-l' . $matches[1];
+		} else {
+			$adapted[] = $flag;
+		}
+	}
+	return $adapted;
 }
 
 /** @return list<string> */
@@ -8467,6 +8486,7 @@ function build_runtime_module_artifact_spec(string $repoRoot, string $projectRoo
 	} elseif ($moduleName === 'tasks') {
 		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=1';
 	}
+	$extraLinkFlags = adapt_windows_runtime_link_flags_for_compiler($extraLinkFlags, $compiler);
 
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = 'libruntime_module_' . $moduleName . (PHP_OS_FAMILY === 'Darwin' ? '.dylib' : '.so');

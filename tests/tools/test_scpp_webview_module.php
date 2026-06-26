@@ -99,6 +99,8 @@ final class ScppWebviewModuleTest
 					throw new RuntimeException('Windows webview build spec should link the WebView2 loader');
 				}
 				$this->assertContains('advapi32.lib', implode(' ', $webviewBuild['ldflags']), 'Windows webview build spec should link WebView2 loader system dependencies');
+				$this->assertContains('ole32.lib', implode(' ', $webviewBuild['ldflags']), 'Windows webview build spec should link COM memory dependencies');
+				$this->assertContains('uuid.lib', implode(' ', $webviewBuild['ldflags']), 'Windows webview build spec should link COM GUID dependencies');
 			} else {
 				$this->assertSame('facade', $webviewBuild['backend'], 'unsupported WebView render platforms should report facade-only backend metadata');
 			}
