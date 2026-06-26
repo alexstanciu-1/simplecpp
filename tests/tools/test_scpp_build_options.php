@@ -246,6 +246,30 @@ final class ScppBuildOptionsTest
 		if (PHP_OS_FAMILY === 'Linux') {
 			$this->assertContains('-Wl,-soname,libruntime.so', $fullNinja, 'Linux shared runtime should declare a SONAME so executables do not need a slash-containing DT_NEEDED path');
 		}
+
+		$msvcCompiler = [
+			'command' => 'cl',
+			'kind' => 'msvc',
+			'launcher' => null,
+			'linker_flags' => ['base.lib'],
+		];
+		$msvcNinja = render_build_ninja(
+			$projectRoot,
+			$repoRoot,
+			$buildDir,
+			$generatedDir,
+			$generatedUnits,
+			[],
+			'app.exe',
+			$msvcCompiler,
+			'debug',
+			$runtimeConfig,
+			['project.lib'],
+			null,
+			['compile_runtime' => true, 'compile_dependencies' => true]
+		);
+		$this->assertContains('ldflags = base.lib project.lib', $msvcNinja, 'MSVC Ninja rendering should preserve configured linker flags');
+		$this->assertContains('$cxx /nologo $in $ldflags /Fe$out', $msvcNinja, 'MSVC link rule should pass ldflags to the compiler driver');
 	}
 
 	private function assertEntryOverrideCanSelectAnotherFile(): void

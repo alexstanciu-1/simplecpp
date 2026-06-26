@@ -148,6 +148,78 @@ jobs:
             exit $LASTEXITCODE
           }
 
+      - name: Build Windows scpp WebView project
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $project = Join-Path $env:RUNNER_TEMP "scpp_webview_project"
+          New-Item -ItemType Directory -Force -Path $project | Out-Null
+          @'
+          {
+            "config_version": 1,
+            "project_name": "scpp-webview-project-smoke",
+            "entrypoint": "main.phs",
+            "build_dir": ".prism/build",
+            "generated_dir": ".prism/generated",
+            "cache_dir": ".prism/cache",
+            "native_cpp_dir": "native_cpp",
+            "dependencies": [],
+            "libraries": [],
+            "build": {
+              "backend": "ninja",
+              "mode": "debug",
+              "cxx": "cl"
+            },
+            "runtime": {
+              "languages": {
+                "php": {
+                  "profile": "strict"
+                }
+              },
+              "modules": ["webview"]
+            }
+          }
+          '@ | Set-Content -Path (Join-Path $project "prism.json")
+          @'
+          $err error;
+
+          $app ui_app = null;
+          if (!take($app, $err, ui_app_create())) {
+            echo "ui_app_create failed\n";
+          } else {
+            $window ui_window = null;
+            if (!take($window, $err, ui_window_create($app, "Simple C++ WebView", 900, 600))) {
+              echo "ui_window_create failed\n";
+              ui_app_exit($app);
+            } else {
+              $view webview = null;
+              if (!take($view, $err, webview_create($window))) {
+                echo "webview_create failed\n";
+                ui_window_close($window);
+                ui_app_exit($app);
+              } else {
+                webview_load_html($view, "<!doctype html><html><body><h1>Simple C++ WebView</h1><p>Built by scpp on Windows.</p></body></html>");
+                webview_close($view);
+                ui_window_close($window);
+                ui_app_exit($app);
+              }
+            }
+          }
+          '@ | Set-Content -Path (Join-Path $project "main.phs")
+
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            throw "Visual Studio C++ tools were not found."
+          }
+          $vsDevCmd = Join-Path $installPath "Common7\Tools\VsDevCmd.bat"
+          $repo = (Get-Location).Path
+          cmd /c "`"$vsDevCmd`" -arch=x64 && cd /d `"$project`" && php `"$repo\bin\scpp.php`" build --no-stan --build-runtime"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
       - name: Launch Windows WebView2 smoke app
         if: runner.os == 'Windows'
         shell: pwsh
