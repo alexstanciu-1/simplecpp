@@ -348,6 +348,16 @@ jobs:
           path: /tmp/scpp_ci_artifacts/linux-webview-ui-${{ github.run_id }}.png
           if-no-files-found: warn
 
+      - name: Build strict WebView bridge sample
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          (
+            cd docs/examples/php/strict/project_samples/strict_webview_bridge
+            php ../../../../../../bin/scpp.php build --build-runtime
+          )
+
       - name: Android NDK UI compile smoke
         if: runner.os == 'Linux'
         shell: bash

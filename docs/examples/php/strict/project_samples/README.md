@@ -15,6 +15,8 @@ Each sample uses:
 
 Regex-specific samples opt into `"regex"` explicitly.
 
+GUI samples such as `strict_webview_bridge/` are checked-in reference projects but are not listed in `tests/samples_manifest.txt`, because the manifest runner is intentionally headless and stdout-comparison based.
+
 The visible strict API uses plain PHP-like names for general helpers and family-prefixed names for subsystem helpers, such as:
 
 - `fs_get(...)`

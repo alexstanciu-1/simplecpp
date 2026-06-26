@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+<title>Strict WebView Bridge</title>
+</head>
+<body>
+<main>
+	<header>
+		<p>Simple C++ strict PHP</p>
+		<h1>WebView bridge sample</h1>
+	</header>
+	<section>
+		<h2 id="status">Waiting for native reply...</h2>
+		<pre id="payload">window.scpp.invoke("bridge.ping", ...)</pre>
+	</section>
+</main>
+<script type="module" src="main.js"></script>
+</body>
+</html>

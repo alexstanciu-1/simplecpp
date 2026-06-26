@@ -1,0 +1,6 @@
+{
+	"name": "Strict WebView Bridge Sample",
+	"short_name": "WebView Bridge",
+	"start_url": "index.html",
+	"display": "standalone"
+}
