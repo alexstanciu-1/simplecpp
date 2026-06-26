@@ -12,6 +12,10 @@
 #define SCPP_HAS_WEBVIEW 0
 #endif
 
+#if SCPP_HAS_WEBVIEW && defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+#include <jni.h>
+#endif
+
 namespace scpp::webview_runtime {
 
 class view final {
@@ -37,6 +41,10 @@ public:
 [[nodiscard]] string_t message_command(const shared_p<ui::event> &message);
 [[nodiscard]] string_t message_payload_json(const shared_p<ui::event> &message);
 void close(const shared_p<view> &target);
+#if defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+[[nodiscard]] result<bool_t> android_attach_activity_webview(const shared_p<ui::window> &window, JavaVM *vm, jobject activity, jobject webview);
+void android_detach_activity_webview(const shared_p<ui::window> &window);
+#endif
 #else
 inline result<shared_p<view>> create(const shared_p<ui::window> &) {
 	return error_t(string_t("webview_create(): webview runtime module is not enabled in this build"));

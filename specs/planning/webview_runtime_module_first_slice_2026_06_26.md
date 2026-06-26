@@ -370,6 +370,7 @@ CI target order:
 Current implementation note:
 
 - The first native backend path is Linux WebKitGTK behind `SCPP_WEBVIEW_BACKEND_WEBKITGTK`.
+- The second native backend path is macOS WKWebView behind `SCPP_WEBVIEW_BACKEND_WKWEBVIEW`.
 - Other platforms may compile the facade before their native rendering backends are selected.
 
 ## Resolved First-Slice Questions
