@@ -160,7 +160,9 @@ jobs:
           $ErrorActionPreference = "Stop"
           New-Item -ItemType Directory -Force -Path $env:SCPP_CI_ARTIFACT_DIR | Out-Null
           $screenshotPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.png"
-          $process = Start-Process -FilePath ".\webview_smoke_windows.exe" -PassThru
+          $stdoutPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.out.txt"
+          $stderrPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.err.txt"
+          $process = Start-Process -FilePath ".\webview_smoke_windows.exe" -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
           Start-Sleep -Seconds 4
 
           Add-Type -AssemblyName System.Drawing
@@ -182,6 +184,8 @@ jobs:
             throw "Windows WebView2 smoke app did not exit in time."
           }
           if ($process.ExitCode -ne 0) {
+            if (Test-Path $stdoutPath) { Get-Content $stdoutPath }
+            if (Test-Path $stderrPath) { Get-Content $stderrPath }
             throw "Windows WebView2 smoke app failed with exit code $($process.ExitCode)."
           }
           python tests/tools/check_ui_screenshot.py "$screenshotPath" --min-width 640 --min-height 420
@@ -191,7 +195,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-webview-screenshot-${{ github.run_id }}
-          path: /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.png
+          path: |
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.png
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.out.txt
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.err.txt
           if-no-files-found: warn
 
       - name: Build Linux GTK UI smoke app

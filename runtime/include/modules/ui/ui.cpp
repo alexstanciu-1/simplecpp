@@ -13,6 +13,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <objbase.h>
 #endif
 #if defined(SCPP_UI_BACKEND_APPKIT) && SCPP_UI_BACKEND_APPKIT
 #import <AppKit/AppKit.h>
@@ -331,17 +332,25 @@ LRESULT CALLBACK window_proc(HWND native, UINT message, WPARAM wparam, LPARAM lp
 } // namespace
 
 result<shared_p<app>> app_create() {
+	HRESULT com_result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+	if (FAILED(com_result)) {
+		return error_t(string_t("ui_app_create(): Win32 failed to initialize an STA COM apartment"));
+	}
+
 	HINSTANCE instance = GetModuleHandleA(nullptr);
 	if (instance == nullptr) {
+		CoUninitialize();
 		return error_t(string_t("ui_app_create(): Win32 failed to resolve the current module handle"));
 	}
 	if (!register_window_class(instance)) {
+		CoUninitialize();
 		return error_t(string_t("ui_app_create(): Win32 failed to register the window class"));
 	}
 
 	auto owner = shared<app>();
 	owner->backend = string_t("win32");
 	owner->native_handle = instance;
+	owner->native_state = reinterpret_cast<void *>(1);
 	return owner;
 }
 
@@ -442,6 +451,10 @@ shared_p<event> app_next_event(const shared_p<app> &owner) {
 void app_exit(const shared_p<app> &owner) {
 	if (owner.has_value().native_value() && owner.get() != nullptr) {
 		owner->exit_requested = bool_t(true);
+		if (owner->native_state != nullptr) {
+			CoUninitialize();
+			owner->native_state = nullptr;
+		}
 	}
 }
 
