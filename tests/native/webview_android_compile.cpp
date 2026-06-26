@@ -1,7 +1,13 @@
 #include "scpp/webview.hpp"
 
 int main() {
-	scpp::shared_p<scpp::ui_window> window = scpp::null;
+	scpp::shared_p<scpp::ui_window> window = scpp::shared<scpp::ui_window>();
+	JavaVM *vm = nullptr;
+	jobject activity = nullptr;
+	jobject webview = nullptr;
+	(void) scpp::webview_runtime::android_attach_activity_webview(window, vm, activity, webview);
+	scpp::webview_runtime::android_detach_activity_webview(window);
+
 	auto create_result = scpp::webview_runtime::create(window);
 	(void) create_result;
 

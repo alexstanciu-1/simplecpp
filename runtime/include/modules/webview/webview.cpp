@@ -103,11 +103,85 @@ void flush_win32_pending(win32_webview_state *state) {
 
 #if defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
 
+struct android_activity_webview_bridge final {
+	JavaVM *vm = nullptr;
+	jobject activity = nullptr;
+	jobject webview = nullptr;
+};
+
 struct android_webview_state final {
 	JavaVM *vm = nullptr;
 	jobject activity = nullptr;
 	jobject webview = nullptr;
 };
+
+[[nodiscard]] JNIEnv *android_env(JavaVM *vm) {
+	if (vm == nullptr) {
+		return nullptr;
+	}
+	JNIEnv *env = nullptr;
+	if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) == JNI_OK) {
+		return env;
+	}
+	if (vm->AttachCurrentThread(&env, nullptr) == JNI_OK) {
+		return env;
+	}
+	return nullptr;
+}
+
+[[nodiscard]] android_activity_webview_bridge *get_android_bridge(const shared_p<ui::window> &window) {
+	if (!window.has_value().native_value() || window.get() == nullptr) {
+		return nullptr;
+	}
+	return static_cast<android_activity_webview_bridge *>(window->native_state);
+}
+
+[[nodiscard]] android_webview_state *get_android_state(const shared_p<view> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return nullptr;
+	}
+	return static_cast<android_webview_state *>(target->native_state);
+}
+
+[[nodiscard]] result<bool_t> android_clear_exception(JNIEnv *env, const char *function_name) {
+	if (env != nullptr && env->ExceptionCheck()) {
+		env->ExceptionClear();
+		return error_t(string_t(std::string(function_name) + " Android WebView JNI call failed"));
+	}
+	return bool_t(true);
+}
+
+[[nodiscard]] result<bool_t> android_call_webview_string_method(
+	android_webview_state *state,
+	const char *function_name,
+	const char *method_name,
+	const char *method_signature,
+	const string_t &value
+) {
+	if (state == nullptr || state->vm == nullptr || state->webview == nullptr) {
+		return error_t(string_t(std::string(function_name) + " Android WebView state is not available"));
+	}
+	JNIEnv *env = android_env(state->vm);
+	if (env == nullptr) {
+		return error_t(string_t(std::string(function_name) + " Android JNI environment is not available"));
+	}
+	jclass webview_class = env->GetObjectClass(state->webview);
+	if (webview_class == nullptr) {
+		return error_t(string_t(std::string(function_name) + " Android WebView class is not available"));
+	}
+	jmethodID method = env->GetMethodID(webview_class, method_name, method_signature);
+	env->DeleteLocalRef(webview_class);
+	if (method == nullptr) {
+		return error_t(string_t(std::string(function_name) + " Android WebView method is not available"));
+	}
+	jstring text = env->NewStringUTF(value.native_value().c_str());
+	if (text == nullptr) {
+		return error_t(string_t(std::string(function_name) + " Android failed to allocate a Java string"));
+	}
+	env->CallVoidMethod(state->webview, method, text);
+	env->DeleteLocalRef(text);
+	return android_clear_exception(env, function_name);
+}
 
 #endif
 
@@ -187,8 +261,34 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		return target;
 	}
 #elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
-	(void) window;
-	return error_t(string_t("webview_create(): Android WebView requires a JNI activity bridge that is not attached in this build yet"));
+	auto *bridge = get_android_bridge(window);
+	if (bridge == nullptr || bridge->vm == nullptr || bridge->activity == nullptr || bridge->webview == nullptr) {
+		return error_t(string_t("webview_create(): Android WebView requires an attached JNI activity bridge"));
+	}
+	JNIEnv *env = android_env(bridge->vm);
+	if (env == nullptr) {
+		return error_t(string_t("webview_create(): Android JNI environment is not available"));
+	}
+	auto *state = new android_webview_state();
+	state->vm = bridge->vm;
+	state->activity = env->NewGlobalRef(bridge->activity);
+	state->webview = env->NewGlobalRef(bridge->webview);
+	if (state->activity == nullptr || state->webview == nullptr) {
+		if (state->activity != nullptr) {
+			env->DeleteGlobalRef(state->activity);
+		}
+		if (state->webview != nullptr) {
+			env->DeleteGlobalRef(state->webview);
+		}
+		delete state;
+		return error_t(string_t("webview_create(): Android failed to retain WebView bridge objects"));
+	}
+
+	auto target = shared<view>();
+	target->window_handle = window;
+	target->native_handle = state->webview;
+	target->native_state = state;
+	return target;
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 	HWND parent = static_cast<HWND>(window->native_handle);
 	auto state = std::make_shared<win32_webview_state>();
@@ -283,6 +383,8 @@ result<bool_t> load_url(const shared_p<view> &target, const string_t &url) {
 	state->pending_html.clear();
 	flush_win32_pending(state);
 	return bool_t(true);
+#elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+	return android_call_webview_string_method(get_android_state(target), "webview_load_url()", "loadUrl", "(Ljava/lang/String;)V", url);
 #else
 	return error_t(string_t("webview_load_url(): no native webview backend is selected in this build"));
 #endif
@@ -318,6 +420,46 @@ result<bool_t> load_html(const shared_p<view> &target, const string_t &html) {
 	state->pending_html = utf8_to_wide(html.native_value());
 	flush_win32_pending(state);
 	return bool_t(true);
+#elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+	auto *state = get_android_state(target);
+	if (state == nullptr || state->vm == nullptr || state->webview == nullptr) {
+		return error_t(string_t("webview_load_html(): Android WebView state is not available"));
+	}
+	JNIEnv *env = android_env(state->vm);
+	if (env == nullptr) {
+		return error_t(string_t("webview_load_html(): Android JNI environment is not available"));
+	}
+	jclass webview_class = env->GetObjectClass(state->webview);
+	if (webview_class == nullptr) {
+		return error_t(string_t("webview_load_html(): Android WebView class is not available"));
+	}
+	jmethodID load_data = env->GetMethodID(webview_class, "loadDataWithBaseURL", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+	env->DeleteLocalRef(webview_class);
+	if (load_data == nullptr) {
+		return error_t(string_t("webview_load_html(): Android WebView loadDataWithBaseURL method is not available"));
+	}
+	jstring base_url = nullptr;
+	jstring data = env->NewStringUTF(html.native_value().c_str());
+	jstring mime_type = env->NewStringUTF("text/html");
+	jstring encoding = env->NewStringUTF("UTF-8");
+	jstring history_url = nullptr;
+	if (data == nullptr || mime_type == nullptr || encoding == nullptr) {
+		if (data != nullptr) {
+			env->DeleteLocalRef(data);
+		}
+		if (mime_type != nullptr) {
+			env->DeleteLocalRef(mime_type);
+		}
+		if (encoding != nullptr) {
+			env->DeleteLocalRef(encoding);
+		}
+		return error_t(string_t("webview_load_html(): Android failed to allocate Java strings"));
+	}
+	env->CallVoidMethod(state->webview, load_data, base_url, data, mime_type, encoding, history_url);
+	env->DeleteLocalRef(data);
+	env->DeleteLocalRef(mime_type);
+	env->DeleteLocalRef(encoding);
+	return android_clear_exception(env, "webview_load_html()");
 #else
 	(void) html;
 	return error_t(string_t("webview_load_html(): no native webview backend is selected in this build"));
@@ -373,6 +515,31 @@ result<bool_t> eval(const shared_p<view> &target, const string_t &script) {
 	state->pending_script = utf8_to_wide(script.native_value());
 	flush_win32_pending(state);
 	return bool_t(true);
+#elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+	auto *state = get_android_state(target);
+	if (state == nullptr || state->vm == nullptr || state->webview == nullptr) {
+		return error_t(string_t("webview_eval(): Android WebView state is not available"));
+	}
+	JNIEnv *env = android_env(state->vm);
+	if (env == nullptr) {
+		return error_t(string_t("webview_eval(): Android JNI environment is not available"));
+	}
+	jclass webview_class = env->GetObjectClass(state->webview);
+	if (webview_class == nullptr) {
+		return error_t(string_t("webview_eval(): Android WebView class is not available"));
+	}
+	jmethodID evaluate = env->GetMethodID(webview_class, "evaluateJavascript", "(Ljava/lang/String;Landroid/webkit/ValueCallback;)V");
+	env->DeleteLocalRef(webview_class);
+	if (evaluate == nullptr) {
+		return error_t(string_t("webview_eval(): Android WebView evaluateJavascript method is not available"));
+	}
+	jstring text = env->NewStringUTF(script.native_value().c_str());
+	if (text == nullptr) {
+		return error_t(string_t("webview_eval(): Android failed to allocate a Java string"));
+	}
+	env->CallVoidMethod(state->webview, evaluate, text, nullptr);
+	env->DeleteLocalRef(text);
+	return android_clear_exception(env, "webview_eval()");
 #else
 	(void) script;
 	return error_t(string_t("webview_eval(): no native webview backend is selected in this build"));
@@ -411,6 +578,29 @@ void close(const shared_p<view> &target) {
 			}
 			delete holder;
 		}
+#elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+		auto *state = get_android_state(target);
+		if (state != nullptr) {
+			JNIEnv *env = android_env(state->vm);
+			if (env != nullptr && state->webview != nullptr) {
+				jclass webview_class = env->GetObjectClass(state->webview);
+				if (webview_class != nullptr) {
+					jmethodID destroy = env->GetMethodID(webview_class, "destroy", "()V");
+					env->DeleteLocalRef(webview_class);
+					if (destroy != nullptr) {
+						env->CallVoidMethod(state->webview, destroy);
+						if (env->ExceptionCheck()) {
+							env->ExceptionClear();
+						}
+					}
+				}
+				env->DeleteGlobalRef(state->webview);
+			}
+			if (env != nullptr && state->activity != nullptr) {
+				env->DeleteGlobalRef(state->activity);
+			}
+			delete state;
+		}
 #endif
 		target->closed = bool_t(true);
 		target->native_handle = nullptr;
@@ -418,6 +608,62 @@ void close(const shared_p<view> &target) {
 		target->native_state = nullptr;
 	}
 }
+
+#if defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
+
+result<bool_t> android_attach_activity_webview(const shared_p<ui::window> &window, JavaVM *vm, jobject activity, jobject webview) {
+	if (!window.has_value().native_value() || window.get() == nullptr) {
+		return error_t(string_t("webview_android_attach_activity_webview(): requires a ui_window"));
+	}
+	if (vm == nullptr || activity == nullptr || webview == nullptr) {
+		return error_t(string_t("webview_android_attach_activity_webview(): requires non-null JavaVM, Activity, and WebView"));
+	}
+	JNIEnv *env = android_env(vm);
+	if (env == nullptr) {
+		return error_t(string_t("webview_android_attach_activity_webview(): Android JNI environment is not available"));
+	}
+
+	android_detach_activity_webview(window);
+	auto *bridge = new android_activity_webview_bridge();
+	bridge->vm = vm;
+	bridge->activity = env->NewGlobalRef(activity);
+	bridge->webview = env->NewGlobalRef(webview);
+	if (bridge->activity == nullptr || bridge->webview == nullptr) {
+		if (bridge->activity != nullptr) {
+			env->DeleteGlobalRef(bridge->activity);
+		}
+		if (bridge->webview != nullptr) {
+			env->DeleteGlobalRef(bridge->webview);
+		}
+		delete bridge;
+		return error_t(string_t("webview_android_attach_activity_webview(): Android failed to retain bridge objects"));
+	}
+
+	window->native_handle = bridge->activity;
+	window->native_state = bridge;
+	return bool_t(true);
+}
+
+void android_detach_activity_webview(const shared_p<ui::window> &window) {
+	auto *bridge = get_android_bridge(window);
+	if (bridge == nullptr) {
+		return;
+	}
+	JNIEnv *env = android_env(bridge->vm);
+	if (env != nullptr) {
+		if (bridge->activity != nullptr) {
+			env->DeleteGlobalRef(bridge->activity);
+		}
+		if (bridge->webview != nullptr) {
+			env->DeleteGlobalRef(bridge->webview);
+		}
+	}
+	delete bridge;
+	window->native_state = nullptr;
+	window->native_handle = nullptr;
+}
+
+#endif
 
 } // namespace scpp::webview_runtime
 

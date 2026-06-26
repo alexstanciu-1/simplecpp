@@ -23,13 +23,12 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
 | Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
-| Android | Android WebView | Native boundary in progress | Android WebView JNI compile smoke |
+| Android | Android WebView | Native JNI bridge in progress | Android WebView JNI compile smoke |
 
 Latest heartbeat slice:
 
-- `scpp explain-build` now reports selected runtime modules, including implicit module enablement such as `ui (implicit via webview)`.
-- `scpp explain-build` now reports the selected WebView backend when the `webview` module is active.
-- The saved `build_explanation` data carries this runtime-module report for build tooling and diagnostics.
+- Android WebView now has a first native JNI bridge API: attach an Activity-owned `WebView` to a `ui_window`, create a `webview` from that bridge, and call `loadUrl`, `loadDataWithBaseURL`, `evaluateJavascript`, and `destroy` through JNI.
+- The Android NDK smoke source now references the attach/detach bridge API so CI compile coverage protects the boundary.
 
 ## Done Definition
 
@@ -105,10 +104,10 @@ Goal:
 
 Implementation tasks:
 
-- Define the JNI/activity ownership boundary for `ui_window`. Initial native state placeholder added with `JavaVM`, activity, and WebView object slots.
-- Decide which side creates the Android `WebView`: native request into Java/Kotlin activity code, or activity-owned view exposed to native.
+- Define the JNI/activity ownership boundary for `ui_window`. Initial attach/detach bridge added with `JavaVM`, Activity, and WebView global references.
+- Decide which side creates the Android `WebView`: native request into Java/Kotlin activity code, or activity-owned view exposed to native. Initial answer: activity-owned `WebView` exposed to native.
 - Add first native facade backend behind `SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW`. Initial compile boundary added.
-- Implement enough JNI calls for HTML load, URL load, eval, and close.
+- Implement enough JNI calls for HTML load, URL load, eval, and close. Initial direct JNI calls added for `loadUrl`, `loadDataWithBaseURL`, `evaluateJavascript`, and `destroy`.
 - Keep lifecycle assumptions explicit: activity creation, pause/resume, destroy.
 
 Testing tasks:
@@ -168,7 +167,7 @@ Constraint:
 
 ## Latest Known Good CI Run
 
-Run `28226809487` validated:
+Run `28227422341` validated:
 
 - Linux WebKitGTK WebView screenshot
 - macOS WKWebView screenshot
@@ -178,3 +177,4 @@ Run `28226809487` validated:
 - Android NDK UI compile smoke
 - Android WebView JNI boundary compile smoke
 - Shared WebView backend metadata
+- Shared explain-build backend reporting
