@@ -2736,6 +2736,13 @@ final class StanExpressionTypeResolver
 				$elementTypes[] = trim((string) $matches[1]);
 				continue;
 			}
+			if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
+				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
+				if (($parts[0] ?? '') !== '') {
+					$elementTypes[] = $parts[0];
+				}
+				continue;
+			}
 			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 				$inner = trim((string) $matches[1]);
 				$parts = array_map('trim', explode(',', $inner, 2));
@@ -3432,6 +3439,9 @@ final class StanExpressionTypeResolver
 	private function isKnownNonObjectType(string $type): bool
 	{
 		$normalized = strtolower(trim($type));
+		if (preg_match('/^fixed_array(?:_t)?<.+>$/', $normalized) === 1) {
+			return true;
+		}
 		return in_array($normalized, ['string', 'int', 'float', 'bool', 'null', 'array', 'mixed', 'dynamic', 'void'], true);
 	}
 
@@ -3658,6 +3668,10 @@ final class StanExpressionTypeResolver
 					$keyTypes[] = 'int';
 					continue;
 				}
+				if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType) === 1) {
+					$keyTypes[] = 'int';
+					continue;
+				}
 				if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 					$parts = array_map('trim', explode(',', (string) $matches[1], 2));
 					$keyTypes[] = count($parts) === 2 ? $parts[0] : 'string';
@@ -3669,6 +3683,13 @@ final class StanExpressionTypeResolver
 		foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
 			if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 				$valueTypes[] = trim((string) $matches[1]);
+				continue;
+			}
+			if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
+				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
+				if (($parts[0] ?? '') !== '') {
+					$valueTypes[] = $parts[0];
+				}
 				continue;
 			}
 			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {

@@ -1,0 +1,8 @@
+class row {
+	public $values /** fixed_array<int, 3> */ = [1, 2, 3];
+}
+
+$item = new row();
+$item->values[2] = 9;
+
+echo count($item->values), " ", $item->values[2], "\n";

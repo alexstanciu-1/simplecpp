@@ -148,6 +148,11 @@ inline bool_t empty(const vector_t<T> &value) {
 	return value.empty();
 }
 
+template <typename T, std::size_t N>
+inline bool_t empty(const fixed_array_t<T, N> &value) {
+	return value.empty();
+}
+
 template <typename T, typename K>
 inline bool_t empty(const hash_t<T, K> &value) {
 	return value.empty();

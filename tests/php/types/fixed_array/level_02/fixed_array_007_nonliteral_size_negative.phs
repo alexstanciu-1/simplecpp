@@ -1,0 +1,3 @@
+$values fixed_array<int, SIZE> = [1, 2, 3];
+
+echo count($values), "\n";

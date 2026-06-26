@@ -294,7 +294,7 @@ final class Generator
 
 	private function isDirectInitializerBoundaryType(string $type): bool
 	{
-		return preg_match('/^(?:nullable|result|result_or_false|result_or_bool|shared_p|unique_p|weak_p|value_p)<.+>$/', $type) === 1;
+		return preg_match('/^(?:nullable|result|result_or_false|result_or_bool|shared_p|unique_p|weak_p|value_p|fixed_array_t)<.+>$/', $type) === 1;
 	}
 
 	/** @param list<string> $lines @return list<CodeBlock> */
@@ -1606,11 +1606,14 @@ final class Generator
 		if ($normalized === '') {
 			return;
 		}
+		if (preg_match('/^\d+$/', $normalized) === 1) {
+			return;
+		}
 		if (str_starts_with($normalized, '?')) {
 			$this->collectForwardClassNamesFromType(substr($normalized, 1), $out, $namespacePhp);
 			return;
 		}
-		if (preg_match('/^(?:vector|vector_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(?:vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			foreach ($this->typeMapper->splitTopLevelGenericArgs($matches[1]) as $arg) {
 				$this->collectForwardClassNamesFromType(trim($arg), $out, $namespacePhp);
 			}
@@ -1627,7 +1630,7 @@ final class Generator
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
 		}
-		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'fixed_array', 'fixed_array_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
 			return;
 		}
 		$out[$normalized] = true;
@@ -2213,7 +2216,7 @@ final class Generator
 			}
 
 			$mapped = $this->typeMapper->mapDeclaredType($param->type);
-			if ($mapped !== 'string_t' && $mapped !== 'mixed_t' && !str_starts_with($mapped, 'vector_t<') && !str_starts_with($mapped, 'hash_t<')) {
+			if ($mapped !== 'string_t' && $mapped !== 'mixed_t' && !str_starts_with($mapped, 'vector_t<') && !str_starts_with($mapped, 'fixed_array_t<') && !str_starts_with($mapped, 'hash_t<')) {
 				continue;
 			}
 
@@ -3566,7 +3569,7 @@ final class Generator
 			return $this->typeMapper->mapParamType($qualifiedType, true);
 		}
 
-		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'mixed_t' || str_starts_with($mapped, 'vector_t<') || str_starts_with($mapped, 'hash_t<'))) {
+		if ($mode === 'owned_local' && ($mapped === 'string_t' || $mapped === 'mixed_t' || str_starts_with($mapped, 'vector_t<') || str_starts_with($mapped, 'fixed_array_t<') || str_starts_with($mapped, 'hash_t<'))) {
 			return $mapped;
 		}
 
@@ -3836,8 +3839,9 @@ final class Generator
 				}
 			}
 			$typedVectorType = $effectiveTyped !== null ? $this->mapTypedVectorLocalType($effectiveTyped) : null;
+			$typedFixedArrayType = $effectiveTyped !== null ? $this->mapTypedFixedArrayLocalType($effectiveTyped) : null;
 			$typedHashType = $effectiveTyped !== null ? $this->mapTypedHashLocalType($effectiveTyped) : null;
-			$typedArrayContainerType = $typedVectorType ?? $typedHashType;
+			$typedArrayContainerType = $typedVectorType ?? $typedFixedArrayType ?? $typedHashType;
 			$isTypedEmptyArrayLiteral = $statement->kind === 'assign' && $typedArrayContainerType !== null && $this->isEmptyPositionalArrayLiteral($exprNode);
 			if ($statement->kind === 'assign_ref') {
 				if ($name === null) {
@@ -3869,7 +3873,7 @@ final class Generator
 					$this->declaredLocalTypes[$name] = $effectiveTyped !== null ? $this->normalizeStoredLocalType($effectiveTyped) : $inferredType;
 				}
 				if ($effectiveTyped !== null) {
-					if ($isTypedEmptyArrayLiteral) {
+					if ($isTypedEmptyArrayLiteral && $typedFixedArrayType === null) {
 						return $this->statementCodeLines($statement, [$typedArrayContainerType . ' ' . $this->localCppName($name) . ' = {};']);
 					}
 					$mappedLocalType = $this->typeMapper->mapTypedLocalType($effectiveTyped);
@@ -4499,6 +4503,8 @@ final class Generator
 		$valueStoredType = null;
 		if (preg_match('/^vector_t<(.+)>$/', $sourceType, $matches) === 1) {
 			$valueStoredType = $matches[1];
+		} elseif (($fixedArrayParts = $this->parseMappedFixedArrayType($sourceType)) !== null) {
+			$valueStoredType = $fixedArrayParts['element'];
 		} elseif ($hashTypeParts !== null) {
 			$valueStoredType = $hashTypeParts['value'];
 		} elseif ($isExplicitDynamicForeach) {
@@ -4903,6 +4909,9 @@ final class Generator
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
+		if (preg_match('/^fixed_array_t<(.+)>$/', $baseType) === 1) {
+			return $base . '.at(' . $dim . ')';
+		}
 		if ($this->parseHashTypeParts($baseType) !== null) {
 			return $base . '.at(' . $dim . ')';
 		}
@@ -4941,6 +4950,9 @@ final class Generator
 		$dim = $this->renderExpr($dimNode, $namespacePhp);
 		$baseType = $this->inferExprType($baseExpr);
 		if (preg_match('/^vector_t<(.+)>$/', $baseType) === 1) {
+			return $base . '.at(' . $dim . ')';
+		}
+		if (preg_match('/^fixed_array_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
 		if ($this->parseHashTypeParts($baseType) !== null) {
@@ -5399,6 +5411,15 @@ final class Generator
 		return $this->typeMapper->mapTypedLocalType($typedLocalType);
 	}
 
+	private function mapTypedFixedArrayLocalType(string $typedLocalType): ?string
+	{
+		if (!$this->typeMapper->isFixedArrayType($typedLocalType)) {
+			return null;
+		}
+
+		return $this->typeMapper->mapTypedLocalType($typedLocalType);
+	}
+
 	private function parseMappedVectorElementType(string $mappedVectorType): ?string
 	{
 		$normalized = trim($mappedVectorType);
@@ -5407,6 +5428,24 @@ final class Generator
 		}
 
 		return trim($matches[1]);
+	}
+
+	/** @return array{element:string,size:int}|null */
+	private function parseMappedFixedArrayType(string $mappedFixedArrayType): ?array
+	{
+		$normalized = trim($mappedFixedArrayType);
+		if (preg_match('/^fixed_array_t<(.+)>$/', $normalized, $matches) !== 1) {
+			return null;
+		}
+		$args = $this->typeMapper->splitTopLevelGenericArgs($matches[1]);
+		if (count($args) !== 2) {
+			return null;
+		}
+		$size = trim($args[1]);
+		if (preg_match('/^(?:0|[1-9][0-9]*)$/', $size) !== 1) {
+			return null;
+		}
+		return ['element' => trim($args[0]), 'size' => (int) $size];
 	}
 
 	private function mapTypedHashLocalType(string $typedLocalType): ?string
@@ -5587,6 +5626,11 @@ final class Generator
 			return $this->renderTypedVectorArrayLiteral($expr, $namespacePhp, $mappedVectorType);
 		}
 
+		$mappedFixedArrayType = $typedLocalType !== null ? $this->mapTypedFixedArrayLocalType($typedLocalType) : null;
+		if ($mappedFixedArrayType !== null) {
+			return $this->renderTypedFixedArrayLiteral($expr, $namespacePhp, $mappedFixedArrayType);
+		}
+
 		$mappedHashType = $typedLocalType !== null ? $this->mapTypedHashLocalType($typedLocalType) : null;
 			if ($mappedHashType !== null) {
 				$hashTypeParts = $this->parseHashTypeParts($mappedHashType);
@@ -5708,9 +5752,12 @@ final class Generator
 				return '/* unsupported-array-element */';
 			}
 
-			if (is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::ARRAY) && $this->parseMappedVectorElementType($elementType) !== null) {
-				$values[] = $this->renderTypedVectorArrayLiteral($valueNode, $namespacePhp, $elementType);
-				continue;
+			if (is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::ARRAY)) {
+				$nestedLiteral = $this->renderArrayLiteralForExpectedMappedType($valueNode, $namespacePhp, $elementType);
+				if ($nestedLiteral !== null) {
+					$values[] = $nestedLiteral;
+					continue;
+				}
 			}
 
 			$values[] = $this->wrapExprForExpectedType(
@@ -5721,6 +5768,65 @@ final class Generator
 		}
 
 		return $mappedVectorType . '{' . implode(', ', $values) . '}';
+	}
+
+	private function renderArrayLiteralForExpectedMappedType(mixed $expr, ?string $namespacePhp, string $expectedType): ?string
+	{
+		$normalized = trim($expectedType);
+		if ($this->parseMappedVectorElementType($normalized) !== null) {
+			return $this->renderTypedVectorArrayLiteral($expr, $namespacePhp, $normalized);
+		}
+		if ($this->parseMappedFixedArrayType($normalized) !== null) {
+			return $this->renderTypedFixedArrayLiteral($expr, $namespacePhp, $normalized);
+		}
+		return null;
+	}
+
+	private function renderTypedFixedArrayLiteral(mixed $expr, ?string $namespacePhp, string $mappedFixedArrayType): string
+	{
+		$elements = is_object($expr) && isset($expr->children) && is_array($expr->children)
+			? array_values($expr->children)
+			: [];
+		$parts = $this->parseMappedFixedArrayType($mappedFixedArrayType);
+		if ($parts === null) {
+			$this->errors[] = 'Unsupported fixed_array mapping for ' . $mappedFixedArrayType . '.';
+			return '/* unsupported-fixed-array */';
+		}
+		if (count($elements) !== $parts['size']) {
+			$this->errors[] = 'fixed_array literal size mismatch: declared ' . $parts['size'] . ' element(s), got ' . count($elements) . '.';
+			return '/* fixed-array-size-mismatch */';
+		}
+
+		$values = [];
+		foreach ($elements as $element) {
+			if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+				$this->errors[] = 'Unsupported fixed_array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+				return '/* unsupported-fixed-array-literal */';
+			}
+			if (($element->children['key'] ?? null) !== null) {
+				$this->errors[] = 'fixed_array literals cannot contain explicit keys at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-keyed-fixed-array-literal */';
+			}
+			$valueNode = $element->children['value'] ?? null;
+			if ($valueNode === null) {
+				$this->errors[] = 'Array unpack and empty fixed_array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-fixed-array-element */';
+			}
+			if (is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::ARRAY)) {
+				$nestedLiteral = $this->renderArrayLiteralForExpectedMappedType($valueNode, $namespacePhp, $parts['element']);
+				if ($nestedLiteral !== null) {
+					$values[] = $nestedLiteral;
+					continue;
+				}
+			}
+			$values[] = $this->wrapExprForExpectedType(
+				$this->renderExpr($valueNode, $namespacePhp),
+				$this->inferExprType($valueNode),
+				$parts['element']
+			);
+		}
+
+		return $mappedFixedArrayType . '{' . implode(', ', $values) . '}';
 	}
 
 
@@ -6500,6 +6606,9 @@ final class Generator
 		if ($normalized === '') {
 			return $normalized;
 		}
+		if (preg_match('/^(?:0|[1-9][0-9]*)$/', $normalized) === 1) {
+			return $normalized;
+		}
 
 		$unionParts = $this->typeMapper->splitUnionTypes($normalized);
 		if (count($unionParts) > 1) {
@@ -6515,7 +6624,7 @@ final class Generator
 			return '?' . ($this->qualifyDeclaredPhpType($inner, $namespacePhp) ?? $inner);
 		}
 
-		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|vector|vector_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
+		if (preg_match('/^(nullable|value|shared|unique|weak|weakref|shared_p|unique_p|weak_p|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
 			$wrapper = $matches[1];
 			$args = $this->typeMapper->splitTopLevelGenericArgs($matches[2]);
 			$qualifiedArgs = [];
@@ -6535,7 +6644,7 @@ final class Generator
 			return $normalized;
 		}
 
-		if (preg_match('/^(?:int|float|bool|string|array|mixed|void|int_t|float_t|bool_t|string_t|mixed_t|hash_t|vector_t)$/', $normalized) === 1) {
+		if (preg_match('/^(?:int|float|bool|string|array|mixed|void|int_t|float_t|bool_t|string_t|mixed_t|hash_t|vector_t|fixed_array_t)$/', $normalized) === 1) {
 			return $normalized;
 		}
 
@@ -7751,6 +7860,9 @@ final class Generator
 		if (is_object($expr) && (($expr->kind ?? null) === AstKind::ARRAY) && preg_match('/^vector_t<.+>$/', $expected) === 1) {
 			return $this->renderTypedVectorArrayLiteral($expr, $namespacePhp, $expected);
 		}
+		if (is_object($expr) && (($expr->kind ?? null) === AstKind::ARRAY) && preg_match('/^fixed_array_t<.+>$/', $expected) === 1) {
+			return $this->renderTypedFixedArrayLiteral($expr, $namespacePhp, $expected);
+		}
 
 		$rendered = $this->renderExpr($expr, $namespacePhp);
 		$exprType = $this->inferExprType($expr);
@@ -7918,7 +8030,7 @@ final class Generator
 			if ($declared === null) {
 				return 'auto';
 			}
-			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || $declared === 'dynamic_t<>' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || str_starts_with($declared, 'hash_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
+			if (str_contains($declared, 'int_t') || str_contains($declared, 'float_t') || str_contains($declared, 'bool_t') || str_contains($declared, 'string_t') || $declared === 'mixed_t' || $declared === 'dynamic_t<>' || str_starts_with($declared, 'nullable<') || str_starts_with($declared, 'result_or_false<') || str_starts_with($declared, 'result_or_bool<') || str_starts_with($declared, 'result<') || str_starts_with($declared, 'shared_p<') || str_starts_with($declared, 'unique_p<') || str_starts_with($declared, 'weak_p<') || str_starts_with($declared, 'value_p<') || str_starts_with($declared, 'vector_t<') || str_starts_with($declared, 'fixed_array_t<') || str_starts_with($declared, 'hash_t<') || $declared === 'hash_t' || $declared === '::scpp::hash_t' || $declared === 'hash_t<mixed_t>' || $declared === '::scpp::hash_t<mixed_t>') {
 				return $declared;
 			}
 			return $this->typeMapper->mapDeclaredType($declared);
@@ -7970,6 +8082,9 @@ final class Generator
 			$baseType = $this->inferExprType($expr->children['expr'] ?? null);
 			if (preg_match('/^vector_t<(.+)>$/', $baseType, $matches) === 1) {
 				return $matches[1];
+			}
+			if (($fixedArrayParts = $this->parseMappedFixedArrayType($baseType)) !== null) {
+				return $fixedArrayParts['element'];
 			}
 				if (($hashTypeParts = $this->parseHashTypeParts($baseType)) !== null) {
 					return $hashTypeParts['value'];
@@ -8049,7 +8164,7 @@ final class Generator
 
 	private function isForeachVectorLikeType(string $sourceType): bool
 	{
-		return str_contains($sourceType, 'vector_t<');
+		return str_contains($sourceType, 'vector_t<') || str_contains($sourceType, 'fixed_array_t<');
 	}
 
 private function isStdClassNameNode(mixed $classNode): bool

@@ -34,6 +34,11 @@ inline int_t count(const vector_t<T> &value) {
 	return int_t(static_cast<std::int64_t>(value.size()));
 }
 
+template <typename T, std::size_t N>
+inline int_t count(const fixed_array_t<T, N> &value) {
+	return int_t(static_cast<std::int64_t>(value.size()));
+}
+
 // Implements count() for any concrete hash_t payload.
 // How: count() is a cardinality query on the wrapper itself, so the element payload type does not affect the logical size.
 template <typename T, typename K>
