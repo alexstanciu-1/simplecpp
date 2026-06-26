@@ -1,4 +1,5 @@
 #include "scpp/ui.hpp"
+#include "ui_smoke_surface.hpp"
 
 #import <UIKit/UIKit.h>
 
@@ -29,7 +30,7 @@
 	CGRect bounds = UIScreen.mainScreen.bounds;
 	auto windowResult = scpp::ui::window_create(
 		_app,
-		scpp::string_t("Simple C++ UI"),
+		scpp::string_t(scpp::ui::smoke::title),
 		scpp::int_t(static_cast<int>(bounds.size.width)),
 		scpp::int_t(static_cast<int>(bounds.size.height))
 	);
@@ -41,7 +42,7 @@
 	self.systemWindow = static_cast<UIWindow *>(_window->native_handle);
 	UIWindow *nativeWindow = static_cast<UIWindow *>(_window->native_handle);
 	UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0.0, 120.0, bounds.size.width, 80.0)];
-	label.text = @"Simple C++ UI";
+	label.text = [NSString stringWithUTF8String:scpp::ui::smoke::label];
 	label.textAlignment = NSTextAlignmentCenter;
 	label.textColor = [UIColor blackColor];
 	label.font = [UIFont boldSystemFontOfSize:28.0];

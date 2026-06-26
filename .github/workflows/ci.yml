@@ -108,6 +108,7 @@ jobs:
             import -window root artifacts/screenshots/linux-gtk-ui.png
             wait "$pid"
           '
+          python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/linux-gtk-ui.png --min-width 640 --min-height 420
 
       - name: Upload Linux GTK UI screenshot
         if: always() && runner.os == 'Linux'
@@ -151,6 +152,7 @@ jobs:
           sleep 3
           screencapture -x artifacts/screenshots/macos-ui.png
           wait "$(cat artifacts/screenshots/ui_smoke_macos.pid)"
+          python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/macos-ui.png --min-width 640 --min-height 420
 
       - name: Upload macOS UI screenshot
         if: always() && runner.os == 'macOS'
@@ -196,6 +198,7 @@ jobs:
           sleep 2
           xcrun simctl io "$DEVICE_ID" screenshot artifacts/screenshots/ios-ui.png
           xcrun simctl terminate "$DEVICE_ID" dev.simplecpp.ui-smoke
+          python3 tests/tools/check_ui_screenshot.py artifacts/screenshots/ios-ui.png --min-width 300 --min-height 600
 
       - name: Upload iOS UI screenshot
         if: always() && runner.os == 'macOS'
