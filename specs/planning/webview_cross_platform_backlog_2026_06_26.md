@@ -23,12 +23,13 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
 | Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
-| Android | Android WebView | Native JNI bridge and package fixture in progress | Android WebView JNI, native smoke library, Activity compile, signed APK package, and APK artifact |
+| Android | Android WebView | Native JNI bridge and package fixture in progress | Android WebView JNI, native smoke library, Activity compile, signed APK package, APK artifact, emulator render smoke in progress |
 
 Latest heartbeat slice:
 
 - Android WebView smoke APK packaging now signs and verifies a debug APK.
 - CI uploads the signed smoke APK to `/tmp/scpp_ci_artifacts` with the GitHub run id in the filename, matching the screenshot artifact convention.
+- Added an Android emulator render-smoke job that builds an x86_64 signed APK, launches the Activity, captures `android-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it when the hosted runner can boot the emulator.
 
 ## Done Definition
 
@@ -117,7 +118,7 @@ Testing tasks:
 - Add native JNI smoke library build. Initial `libsimplecpp_webview_smoke.so` CI build added.
 - Add package smoke for the Android fixture. Initial direct SDK `aapt2`/`d8`/`zipalign` APK package step added.
 - Sign, verify, and upload the Android smoke APK. Initial debug signing and run-id artifact upload added.
-- Add emulator render smoke only after the Android app packaging path exists.
+- Add emulator render smoke only after the Android app packaging path exists. Initial emulator render job added; awaiting CI stability signal.
 
 Open decision:
 
@@ -165,7 +166,7 @@ Constraint:
 2. Windows local HTML smoke app.
 3. iOS WKWebView backend and simulator screenshot.
 4. Android JNI boundary compile smoke.
-5. Android rendering smoke after packaging exists.
+5. Android rendering smoke after packaging exists. Initial CI job added.
 6. Build reporting for implicit `ui` enablement and selected WebView backend. Initial explain-build slice added.
 7. Browser-like event bridge.
 
