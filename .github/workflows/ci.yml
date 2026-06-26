@@ -148,6 +148,37 @@ jobs:
             exit $LASTEXITCODE
           }
 
+      - name: Launch Windows WebView2 smoke app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Add-Type -AssemblyName System.Drawing
+          Add-Type -AssemblyName System.Windows.Forms
+          $artifactDir = Join-Path $env:RUNNER_TEMP "scpp_ci_artifacts"
+          New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+          $screenshotPath = Join-Path $artifactDir "windows-webview-ui-${env:GITHUB_RUN_ID}.png"
+
+          $process = Start-Process -FilePath ".\webview_smoke_windows.exe" -PassThru
+          Start-Sleep -Seconds 3
+          $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+          $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+          $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+          $bitmap.Save($screenshotPath, [System.Drawing.Imaging.ImageFormat]::Png)
+          $graphics.Dispose()
+          $bitmap.Dispose()
+          Wait-Process -Id $process.Id
+          python tests/tools/check_ui_screenshot.py "$screenshotPath" --min-width 640 --min-height 420
+
+      - name: Upload Windows WebView2 screenshot
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-webview-screenshot-${{ github.run_id }}
+          path: ${{ runner.temp }}\scpp_ci_artifacts\windows-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
       - name: Build Linux GTK UI smoke app
         if: runner.os == 'Linux'
         shell: bash
