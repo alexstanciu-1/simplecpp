@@ -590,6 +590,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	target->window_handle = window;
 	target->native_handle = state->webview;
 	target->native_state = state;
+	(void) enqueue_event(target, string_t("webview_ready"));
 	return target;
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 	HWND parent = static_cast<HWND>(window->native_handle);

@@ -40,6 +40,7 @@ Latest heartbeat slice:
 - Linux WebKitGTK now wires native load/title callbacks into that shared event queue, and the Linux WebView smoke app requires `webview_navigation_finished`.
 - Apple WKWebView backends now wire `WKNavigationDelegate` navigation callbacks into that shared event queue, and the macOS WKWebView smoke app requires `webview_navigation_finished`.
 - Windows WebView2 now wires `NavigationStarting`, `NavigationCompleted`, and `WebMessageReceived` callbacks into that shared event queue; Windows CI still validates this as compile/link until launch/screenshot is added.
+- Android WebView now emits `webview_ready` from native creation and the smoke Activity wires `WebViewClient` plus `JavascriptInterface` callbacks into native queue events.
 
 ## Done Definition
 
@@ -178,7 +179,7 @@ Initial implementation slice:
 - Linux WebKitGTK emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_title_changed`.
 - Apple WKWebView emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, and `webview_load_failed`.
 - WebView2 emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message`.
-- Remaining native backend callback wiring: Android WebViewClient/JavascriptInterface.
+- Android emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message` through the Java-hosted `WebViewClient`/`JavascriptInterface` bridge contract.
 
 ## Suggested Implementation Order
 

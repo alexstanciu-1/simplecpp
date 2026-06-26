@@ -292,7 +292,7 @@ jobs:
           "$build_tools/d8" \
             --min-api 24 \
             --output android_webview_smoke_dex \
-            android_webview_smoke_classes/dev/simplecpp/smoke/ScppWebViewSmokeActivity.class
+            $(find android_webview_smoke_classes -name '*.class' | sort)
           "$build_tools/aapt2" compile \
             --dir tests/native/android_webview_smoke/res \
             -o android_webview_smoke_res.zip
@@ -540,7 +540,7 @@ jobs:
           "$build_tools/d8" \
             --min-api 24 \
             --output android_webview_smoke_dex \
-            android_webview_smoke_classes/dev/simplecpp/smoke/ScppWebViewSmokeActivity.class
+            $(find android_webview_smoke_classes -name '*.class' | sort)
           "$build_tools/aapt2" compile \
             --dir tests/native/android_webview_smoke/res \
             -o android_webview_smoke_res.zip
