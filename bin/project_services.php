@@ -7546,6 +7546,9 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$fastcgiLdFlags = is_array($fastcgiBuild['ldflags'] ?? null) ? $fastcgiBuild['ldflags'] : [];
 	$baseLinkFlags = $linkerFlags;
 	$binaryLinkFlags = array_merge($baseLinkFlags, $projectLibraryFlags);
+	if (($runtimeBuild['kind'] ?? null) === 'object' && is_array($runtimeBuild['link_flags'] ?? null)) {
+		$binaryLinkFlags = array_merge($binaryLinkFlags, $runtimeBuild['link_flags']);
+	}
 	if (is_string($runtimeBuild['rpath_dir'] ?? null) && $runtimeBuild['rpath_dir'] !== '') {
 		$binaryLinkFlags[] = '-Wl,-rpath,' . ninja_escape_path($runtimeBuild['rpath_dir']);
 	}
@@ -7633,7 +7636,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$lines[] = '';
 	$lines[] = 'rule link';
 	if ($compiler['kind'] === 'msvc') {
-		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx /nologo $in /Fe$out');
+		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx /nologo $in $ldflags /Fe$out');
 	} else {
 		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $ldflags $in -o $out');
 	}
