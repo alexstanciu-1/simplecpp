@@ -23,12 +23,12 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
 | Windows 11 | WebView2 | Initial backend boundary implemented | WebView2 compile/link smoke |
 | iOS | WKWebView | Implemented first rendering slice | Build, simulator launch, screenshot artifact |
-| Android | Android WebView | Native JNI bridge in progress | Android WebView JNI compile smoke |
+| Android | Android WebView | Native JNI bridge and Activity fixture in progress | Android WebView JNI and Activity compile smoke |
 
 Latest heartbeat slice:
 
-- Android WebView now has a first native JNI bridge API: attach an Activity-owned `WebView` to a `ui_window`, create a `webview` from that bridge, and call `loadUrl`, `loadDataWithBaseURL`, `evaluateJavascript`, and `destroy` through JNI.
-- The Android NDK smoke source now references the attach/detach bridge API so CI compile coverage protects the boundary.
+- Android WebView now has a minimal app-side smoke fixture with an Activity-owned `WebView`, native attach/load/detach hooks, manifest, and theme.
+- CI now compiles that Activity source against `android.jar` on Linux, alongside the native NDK bridge compile smoke.
 
 ## Done Definition
 
@@ -113,11 +113,12 @@ Implementation tasks:
 Testing tasks:
 
 - Start with Android NDK compile smoke for the native boundary. Initial runtime and helper compile smoke added and green.
+- Add Android app-side Activity compile smoke. Initial Activity-owned WebView fixture and `javac` CI step added.
 - Add emulator render smoke only after the Android app packaging path exists.
 
 Open decision:
 
-- Whether the first Android smoke belongs in the existing native test layout or needs a minimal Gradle project under `tests/native/android_webview_smoke`.
+- Whether the first Android packaged smoke should use a minimal Gradle project or direct SDK tools under `tests/native/android_webview_smoke`.
 
 ### 4. Shared Build Reporting
 

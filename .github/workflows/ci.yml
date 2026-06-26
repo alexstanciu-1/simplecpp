@@ -243,6 +243,23 @@ jobs:
             -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
             -c tests/native/webview_android_compile.cpp -o webview_android_compile.o
 
+      - name: Android WebView activity compile smoke
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-35/android.jar"
+          if [ ! -f "$android_jar" ]; then
+            android_jar="$(find "$ANDROID_HOME/platforms" -name android.jar | sort -V | tail -n 1)"
+          fi
+          test -f "$android_jar"
+          mkdir -p android_webview_smoke_classes
+          javac \
+            -source 17 -target 17 \
+            -classpath "$android_jar" \
+            -d android_webview_smoke_classes \
+            tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
+
       - name: Build macOS UI smoke app
         if: runner.os == 'macOS'
         shell: bash
