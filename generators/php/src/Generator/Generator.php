@@ -889,6 +889,11 @@ final class Generator
 		return $renderedExpr;
 	}
 
+	private function isFixedWidthIntegerRuntimeType(string $type): bool
+	{
+		return preg_match('/^int_t<std::(?:u?int(?:8|16|32|64)_t)>$/', $type) === 1;
+	}
+
 	private function renderCallArgExpr(mixed $arg, ?string $namespacePhp): string
 	{
 		if (is_object($arg) && (($arg->kind ?? null) === AstKind::DIM)) {
