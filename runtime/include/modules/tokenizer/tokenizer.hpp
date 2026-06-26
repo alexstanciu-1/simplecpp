@@ -387,12 +387,12 @@ mixed_t tokenize_ascii_language(const string_t &source_value, const char *langua
 	return buffer->to_mixed();
 }
 
-[[nodiscard]] inline mixed_t phs_tokenize(const string_t &source) {
-	return token_buffer_to_mixed(phs_tokenize_buffer(source));
+[[nodiscard]] inline token_buffer_t phs_tokenize(const string_t &source) {
+	return phs_tokenize_buffer(source);
 }
 
-[[nodiscard]] inline mixed_t jss_tokenize(const string_t &source) {
-	return token_buffer_to_mixed(jss_tokenize_buffer(source));
+[[nodiscard]] inline token_buffer_t jss_tokenize(const string_t &source) {
+	return jss_tokenize_buffer(source);
 }
 
 [[nodiscard]] inline int_t<> phs_tokenize_count(const string_t &source) {
