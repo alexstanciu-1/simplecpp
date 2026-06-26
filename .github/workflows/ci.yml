@@ -96,6 +96,7 @@ jobs:
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -c runtime/include/modules/webview/webview.cpp -o webview_disabled.o
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -c tests/native/webview_compile.cpp -o webview_compile_disabled.o
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -DSCPP_HAS_WEBVIEW=1 -c runtime/include/modules/webview/webview.cpp -o webview_enabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -DSCPP_HAS_WEBVIEW=1 -c tests/native/webview_compile.cpp -o webview_compile_enabled.o
 
       - name: Build Windows Win32 UI smoke app
         if: runner.os == 'Windows'

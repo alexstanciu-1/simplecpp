@@ -546,6 +546,32 @@ result<bool_t> eval(const shared_p<view> &target, const string_t &script) {
 #endif
 }
 
+result<bool_t> enqueue_event(const shared_p<view> &target, const string_t &type, const string_t &message, const string_t &url) {
+	auto checked = require_view(target, "webview_enqueue_event()");
+	if (!checked.has_value().native_value()) {
+		return *checked.error();
+	}
+	if (type.native_value().empty()) {
+		return error_t(string_t("webview_enqueue_event(): event type must not be empty"));
+	}
+	if (!target->window_handle.has_value().native_value() || target->window_handle.get() == nullptr) {
+		return error_t(string_t("webview_enqueue_event(): webview has no ui_window"));
+	}
+	auto app = target->window_handle->app_handle;
+	if (!app.has_value().native_value() || app.get() == nullptr) {
+		return error_t(string_t("webview_enqueue_event(): ui_window has no ui_app event queue"));
+	}
+
+	auto event_value = shared<ui::event>();
+	event_value->type = type;
+	event_value->window_handle = target->window_handle;
+	event_value->webview_handle = target;
+	event_value->message = message;
+	event_value->url = url;
+	app->pending_events.push_back(event_value);
+	return bool_t(true);
+}
+
 void close(const shared_p<view> &target) {
 	if (target.has_value().native_value() && target.get() != nullptr) {
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK

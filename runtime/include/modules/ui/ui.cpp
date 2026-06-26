@@ -61,6 +61,41 @@ void appkit_window_will_close(void *data);
 
 namespace scpp::ui {
 
+string_t event_type(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return string_t("");
+	}
+	return target->type;
+}
+
+shared_p<window> event_window(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return null;
+	}
+	return target->window_handle;
+}
+
+shared_p<webview_runtime::view> event_webview(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return null;
+	}
+	return target->webview_handle;
+}
+
+string_t event_message(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return string_t("");
+	}
+	return target->message;
+}
+
+string_t event_url(const shared_p<event> &target) {
+	if (!target.has_value().native_value() || target.get() == nullptr) {
+		return string_t("");
+	}
+	return target->url;
+}
+
 #if defined(SCPP_UI_BACKEND_GTK) && SCPP_UI_BACKEND_GTK
 
 namespace {
@@ -140,6 +175,7 @@ result<shared_p<window>> window_create(const shared_p<app> &owner, const string_
 	}
 
 	auto target = shared<window>();
+	target->app_handle = owner;
 	target->title = title;
 	target->width = width;
 	target->height = height;
@@ -319,6 +355,7 @@ result<shared_p<window>> window_create(const shared_p<app> &owner, const string_
 	}
 
 	auto target = shared<window>();
+	target->app_handle = owner;
 	target->title = title;
 	target->width = width;
 	target->height = height;
@@ -490,6 +527,7 @@ result<shared_p<window>> window_create(const shared_p<app> &owner, const string_
 		[native setReleasedWhenClosed:NO];
 
 		auto target = shared<window>();
+		target->app_handle = owner;
 		target->title = title;
 		target->width = width;
 		target->height = height;
@@ -639,6 +677,7 @@ result<shared_p<window>> window_create(const shared_p<app> &owner, const string_
 		[controller release];
 
 		auto target = shared<window>();
+		target->app_handle = owner;
 		target->title = title;
 		target->width = width;
 		target->height = height;

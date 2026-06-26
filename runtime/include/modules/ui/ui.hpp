@@ -13,6 +13,10 @@
 #define SCPP_HAS_UI 0
 #endif
 
+namespace scpp::webview_runtime {
+class view;
+}
+
 namespace scpp::ui {
 
 class event;
@@ -27,6 +31,7 @@ public:
 
 class window final {
 public:
+	shared_p<app> app_handle = null;
 	string_t title = string_t("");
 	int_t width = int_t(0);
 	int_t height = int_t(0);
@@ -41,6 +46,9 @@ class event final {
 public:
 	string_t type = string_t("");
 	shared_p<window> window_handle = null;
+	shared_p<webview_runtime::view> webview_handle = null;
+	string_t message = string_t("");
+	string_t url = string_t("");
 };
 
 #if SCPP_HAS_UI
@@ -50,6 +58,11 @@ public:
 [[nodiscard]] result<bool_t> window_close(const shared_p<window> &target);
 [[nodiscard]] bool_t app_poll(const shared_p<app> &owner);
 [[nodiscard]] shared_p<event> app_next_event(const shared_p<app> &owner);
+[[nodiscard]] string_t event_type(const shared_p<event> &target);
+[[nodiscard]] shared_p<window> event_window(const shared_p<event> &target);
+[[nodiscard]] shared_p<webview_runtime::view> event_webview(const shared_p<event> &target);
+[[nodiscard]] string_t event_message(const shared_p<event> &target);
+[[nodiscard]] string_t event_url(const shared_p<event> &target);
 void app_exit(const shared_p<app> &owner);
 #else
 inline result<shared_p<app>> app_create() {
@@ -74,6 +87,26 @@ inline bool_t app_poll(const shared_p<app> &) {
 
 inline shared_p<event> app_next_event(const shared_p<app> &) {
 	return null;
+}
+
+inline string_t event_type(const shared_p<event> &) {
+	return string_t("");
+}
+
+inline shared_p<window> event_window(const shared_p<event> &) {
+	return null;
+}
+
+inline shared_p<webview_runtime::view> event_webview(const shared_p<event> &) {
+	return null;
+}
+
+inline string_t event_message(const shared_p<event> &) {
+	return string_t("");
+}
+
+inline string_t event_url(const shared_p<event> &) {
+	return string_t("");
 }
 
 inline void app_exit(const shared_p<app> &) {

@@ -376,6 +376,11 @@ final class RuntimeShallowSourceGenerator
 				'ui_app_poll' => ['return' => 'bool', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
 				'ui_app_next_event' => ['return' => 'ui_event', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
 				'ui_app_exit' => ['return' => 'void', 'params' => [['name' => 'app', 'type' => 'ui_app']]],
+				'ui_event_type' => ['return' => 'string', 'params' => [['name' => 'event', 'type' => 'ui_event']]],
+				'ui_event_window' => ['return' => 'ui_window', 'params' => [['name' => 'event', 'type' => 'ui_event']]],
+				'ui_event_webview' => ['return' => 'webview', 'params' => [['name' => 'event', 'type' => 'ui_event']]],
+				'ui_event_message' => ['return' => 'string', 'params' => [['name' => 'event', 'type' => 'ui_event']]],
+				'ui_event_url' => ['return' => 'string', 'params' => [['name' => 'event', 'type' => 'ui_event']]],
 				'webview_create' => ['return' => 'result<webview>', 'params' => [['name' => 'window', 'type' => 'ui_window']]],
 				'webview_load_url' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'url', 'type' => 'string']]],
 				'webview_load_html' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'html', 'type' => 'string']]],
@@ -484,6 +489,9 @@ final class RuntimeShallowSourceGenerator
 				$this->renderClassStub('ui_event', [
 					['kind' => 'property', 'name' => 'type', 'type' => 'string'],
 					['kind' => 'property', 'name' => 'window_handle', 'type' => 'ui_window'],
+					['kind' => 'property', 'name' => 'webview_handle', 'type' => 'webview'],
+					['kind' => 'property', 'name' => 'message', 'type' => 'string'],
+					['kind' => 'property', 'name' => 'url', 'type' => 'string'],
 				], $isStrict),
 				$this->renderClassStub('webview', [], $isStrict),
 			];

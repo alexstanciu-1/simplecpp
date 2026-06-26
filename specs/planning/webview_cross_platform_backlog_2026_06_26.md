@@ -36,6 +36,7 @@ Latest heartbeat slice:
 - CI run `28235130333` validated Android emulator launch, smoke app process/window presence, and a screenshot that renders the WebView content.
 - Android render CI verifies the smoke app process/window before screenshot and uploads logcat/window diagnostics if the app exits.
 - Android smoke APK packaging includes the NDK `libc++_shared.so` next to the smoke native library for both `arm64-v8a` and emulator `x86_64` APKs.
+- Browser-like event bridge has its first backend-neutral boundary: `ui_event` can carry a WebView handle, message text, and URL payload, strict PHP++ exposes typed accessors, and WebView runtime code can enqueue events into the existing `ui_app` queue.
 
 ## Done Definition
 
@@ -165,6 +166,13 @@ Deferred event kinds:
 Constraint:
 
 - Events should flow through the existing `ui` event pump rather than adding a second application loop.
+
+Initial implementation slice:
+
+- `ui_event` carries `webview_handle`, `message`, and `url` payload fields.
+- Strict PHP++ exposes `ui_event_type`, `ui_event_window`, `ui_event_webview`, `ui_event_message`, and `ui_event_url`.
+- `webview_runtime::enqueue_event(...)` provides the backend callback handoff point into `ui_app.pending_events`.
+- Native backend callback wiring remains next: WebKitGTK load changes, WKNavigationDelegate, WebView2 navigation events/WebMessageReceived, and Android WebViewClient/JavascriptInterface.
 
 ## Suggested Implementation Order
 

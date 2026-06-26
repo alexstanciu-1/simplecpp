@@ -52,12 +52,17 @@ final class ScppWebviewModuleTest
 		$catalog = new StanPhpRuntimeFunctionCatalog();
 		$this->assertSame(true, $catalog->hasFunction('webview_create'), 'STAN catalog should recognize webview_create');
 		$this->assertSame('webview', $catalog->requiredModule('webview_load_html'), 'STAN catalog should require the webview module for webview helpers');
+		$this->assertSame('webview', $catalog->requiredModule('ui_event_webview'), 'STAN catalog should require the webview module for the WebView event handle accessor');
 
 		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
 		$this->assertContains('function webview_create(ui_window $window): result<webview>', $strictRuntimeSymbols, 'strict shallow runtime should expose result-returning webview_create');
 		$this->assertContains('function webview_load_html(webview $view, string $html): result<bool>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_load_html');
+		$this->assertContains('function ui_event_webview(ui_event $event): webview', $strictRuntimeSymbols, 'strict shallow runtime should expose typed WebView event access');
+		$this->assertContains('function ui_event_message(ui_event $event): string', $strictRuntimeSymbols, 'strict shallow runtime should expose WebView message event payload access');
+		$this->assertContains('public webview $webview_handle;', $strictRuntimeSymbols, 'strict shallow runtime should expose the WebView event handle payload');
+		$this->assertContains('public string $message;', $strictRuntimeSymbols, 'strict shallow runtime should expose the event message payload');
 		$this->assertContains('class webview', $strictRuntimeSymbols, 'strict shallow runtime should expose the webview handle shape');
 
 		$webviewBuild = resolve_runtime_webview_build_spec();

@@ -32,6 +32,7 @@ public:
 [[nodiscard]] result<bool_t> load_url(const shared_p<view> &target, const string_t &url);
 [[nodiscard]] result<bool_t> load_html(const shared_p<view> &target, const string_t &html);
 [[nodiscard]] result<bool_t> eval(const shared_p<view> &target, const string_t &script);
+[[nodiscard]] result<bool_t> enqueue_event(const shared_p<view> &target, const string_t &type, const string_t &message = string_t(""), const string_t &url = string_t(""));
 void close(const shared_p<view> &target);
 #if defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
 [[nodiscard]] result<bool_t> android_attach_activity_webview(const shared_p<ui::window> &window, JavaVM *vm, jobject activity, jobject webview);
@@ -52,6 +53,10 @@ inline result<bool_t> load_html(const shared_p<view> &, const string_t &) {
 
 inline result<bool_t> eval(const shared_p<view> &, const string_t &) {
 	return error_t(string_t("webview_eval(): webview runtime module is not enabled in this build"));
+}
+
+inline result<bool_t> enqueue_event(const shared_p<view> &, const string_t &, const string_t & = string_t(""), const string_t & = string_t("")) {
+	return error_t(string_t("webview_enqueue_event(): webview runtime module is not enabled in this build"));
 }
 
 inline void close(const shared_p<view> &) {
