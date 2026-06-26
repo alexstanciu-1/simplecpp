@@ -135,6 +135,21 @@ final class ScppWebviewModuleTest
 		]);
 		$this->assertContains('WebView diagnostic: WebView disabled on Linux:', implode("\n", $diagnosticLines), 'build explanation should render WebView dependency diagnostics');
 
+		$sampleRoot = resolve_repo_root() . '/docs/examples/php/strict/project_samples/strict_webview_events';
+		$sampleSource = $this->read($sampleRoot . '/main.phs');
+		$sampleConfig = json_decode($this->read($sampleRoot . '/prism.json'), true);
+		if (!is_array($sampleConfig)) {
+			throw new RuntimeException('strict_webview_events prism.json should decode');
+		}
+		$sampleModules = $sampleConfig['runtime']['modules'] ?? [];
+		$this->assertSame(true, is_array($sampleModules) && in_array('webview', $sampleModules, true), 'strict WebView event sample should opt into the webview runtime module');
+		$this->assertContains('take($app, $err, ui_app_create())', $sampleSource, 'strict WebView event sample should use take at the ui_app creation boundary');
+		$this->assertContains('take($view, $err, webview_create($window))', $sampleSource, 'strict WebView event sample should use take at the webview creation boundary');
+		$this->assertContains('ui_event_type($event)', $sampleSource, 'strict WebView event sample should branch on ui_event_type');
+		$this->assertContains('ui_event_message($event)', $sampleSource, 'strict WebView event sample should read webview message payloads');
+		$this->assertContains('ui_event_url($event)', $sampleSource, 'strict WebView event sample should read webview URL payloads');
+		$this->assertContains('webview_message', $sampleSource, 'strict WebView event sample should demonstrate the message event');
+
 		echo "PASS: scpp webview module\n";
 		return 0;
 	}

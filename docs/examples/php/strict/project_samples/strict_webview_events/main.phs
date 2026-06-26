@@ -1,0 +1,60 @@
+$err error;
+$app ui_app;
+$window ui_window;
+$view webview;
+$ok bool = false;
+
+if (!take($app, $err, ui_app_create())) {
+	echo "missing-app\n";
+	return;
+}
+if (!take($window, $err, ui_window_create($app, "Simple C++ WebView", 900, 600))) {
+	echo "missing-window\n";
+	return;
+}
+if (!take($view, $err, webview_create($window))) {
+	echo "missing-webview\n";
+	return;
+}
+
+$html string = "<!doctype html><html><body><h1>Simple C++ WebView</h1><script>window.webkit.messageHandlers.SimpleCpp.postMessage('hello-webview');</script></body></html>";
+if (!take($ok, $err, webview_load_html($view, $html))) {
+	echo "missing-html\n";
+	return;
+}
+if (!take($ok, $err, ui_window_show($window))) {
+	echo "missing-show\n";
+	return;
+}
+
+$sawReady bool = false;
+$sawNavigation bool = false;
+$sawMessage bool = false;
+$ticks int = 0;
+
+while ($ticks < 200 && (!$sawReady || !$sawNavigation || !$sawMessage)) {
+	$ticks = $ticks + 1;
+	ui_app_poll($app);
+	$event ui_event = ui_app_next_event($app);
+	$type string = ui_event_type($event);
+
+	if ($type === "webview_ready") {
+		$sawReady = true;
+	} else if ($type === "webview_navigation_finished") {
+		$sawNavigation = true;
+		echo ui_event_url($event), "\n";
+	} else if ($type === "webview_message") {
+		$message string = ui_event_message($event);
+		if ($message === "hello-webview") {
+			$sawMessage = true;
+		}
+	}
+}
+
+webview_close($view);
+take($ok, $err, ui_window_close($window));
+ui_app_exit($app);
+
+echo $sawReady ? "ready\n" : "missing-ready\n";
+echo $sawNavigation ? "navigation\n" : "missing-navigation\n";
+echo $sawMessage ? "message\n" : "missing-message\n";

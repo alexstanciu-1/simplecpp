@@ -45,6 +45,7 @@ Latest heartbeat slice:
 - Windows WebView2 CI now launches the smoke app, captures `windows-webview-ui-${GITHUB_RUN_ID}.png`, and uploads it from `/tmp/scpp_ci_artifacts`; CI run `28242929755` validated the path.
 - WebView build reporting now carries structured dependency diagnostics and renders missing Linux `pkg-config`/WebKitGTK package guidance in `scpp explain-build`; CI run `28244035315` validated the slice.
 - WebKitGTK and WKWebView now expose a `SimpleCpp` JavaScript message handler; Linux, macOS, iOS, Windows, and Android WebView smokes assert `webview_message` payload delivery. CI run `28245240915` validated the cross-platform message slice.
+- Added an opt-in strict PHP++ `strict_webview_events` project sample that demonstrates `ui_app_poll`, `ui_event_type`, `ui_event_message`, and `ui_event_url` for browser-like WebView events.
 
 ## Done Definition
 
@@ -184,6 +185,7 @@ Initial implementation slice:
 - Apple WKWebView emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message`.
 - WebView2 emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message`.
 - Android emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message` through the Java-hosted `WebViewClient`/`JavascriptInterface` bridge contract.
+- Strict PHP++ source-facing example added under `docs/examples/php/strict/project_samples/strict_webview_events`; it remains outside the default console sample runner because it requires a GUI/WebView backend.
 
 ## Suggested Implementation Order
 
