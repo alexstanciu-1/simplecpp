@@ -8021,7 +8021,7 @@ function resolve_runtime_ui_build_spec(): array
 			'enabled' => true,
 			'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
 			'ldflags' => split_shell_tokens($libsOutput),
-			'compile_defines' => ['-DSCPP_HAS_UI=1'],
+			'compile_defines' => ['-DSCPP_HAS_UI=1', '-DSCPP_UI_BACKEND_GTK=1'],
 		];
 	}
 

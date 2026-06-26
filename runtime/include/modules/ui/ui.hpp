@@ -7,15 +7,21 @@
 #include "scpp/result.hpp"
 #include "scpp/string_t.hpp"
 
+#include <deque>
+
 #ifndef SCPP_HAS_UI
 #define SCPP_HAS_UI 0
 #endif
 
 namespace scpp::ui {
 
+class event;
+
 class app final {
 public:
 	bool_t exit_requested = bool_t(false);
+	string_t backend = string_t("");
+	std::deque<shared_p<event>> pending_events;
 };
 
 class window final {
@@ -25,6 +31,7 @@ public:
 	int_t height = int_t(0);
 	bool_t visible = bool_t(false);
 	bool_t closed = bool_t(false);
+	void *native_handle = nullptr;
 };
 
 class event final {
