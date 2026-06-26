@@ -4695,7 +4695,8 @@ function resolve_project_library_config(array $config): array
  * @return array{
  *   languages:list<string>,
  *   language_profiles:array<string, array{profile:string}>,
- *   modules:list<string>
+ *   modules:list<string>,
+ *   implicit_modules:array<string,string>
  * }
  */
 function resolve_runtime_build_config(array $config): array
@@ -4744,8 +4745,10 @@ function resolve_runtime_build_config(array $config): array
 	$modules = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $modules)));
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
+	$implicitModules = [];
 	if (in_array('webview', $modules, true) && !in_array('ui', $modules, true)) {
 		$modules[] = 'ui';
+		$implicitModules['ui'] = 'webview';
 	}
 	$safety = is_array($runtime['safety'] ?? null) ? $runtime['safety'] : [];
 	$allowedLanguages = ['php'];
@@ -4767,6 +4770,7 @@ function resolve_runtime_build_config(array $config): array
 		'languages' => $languages,
 		'language_profiles' => $languageProfiles,
 		'modules' => $modules,
+		'implicit_modules' => $implicitModules,
 		'safety' => $safety,
 	];
 }
@@ -8057,7 +8061,7 @@ function resolve_runtime_ui_build_spec(): array
 	];
 }
 
-/** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
+/** @return array{enabled:bool,backend:string,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
 function resolve_runtime_webview_build_spec(): array
 {
 	if (PHP_OS_FAMILY === 'Linux') {
@@ -8065,6 +8069,7 @@ function resolve_runtime_webview_build_spec(): array
 		if ($pkgConfig === null) {
 			return [
 				'enabled' => false,
+				'backend' => 'none',
 				'cflags' => [],
 				'ldflags' => [],
 				'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
@@ -8079,6 +8084,7 @@ function resolve_runtime_webview_build_spec(): array
 			}
 			return [
 				'enabled' => true,
+				'backend' => 'webkitgtk',
 				'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
 				'ldflags' => split_shell_tokens($libsOutput),
 				'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBKITGTK=1'],
@@ -8087,6 +8093,7 @@ function resolve_runtime_webview_build_spec(): array
 
 		return [
 			'enabled' => false,
+			'backend' => 'none',
 			'cflags' => [],
 			'ldflags' => [],
 			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
@@ -8096,6 +8103,7 @@ function resolve_runtime_webview_build_spec(): array
 	if (PHP_OS_FAMILY === 'Darwin') {
 		return [
 			'enabled' => true,
+			'backend' => 'wkwebview',
 			'cflags' => ['-x', 'objective-c++'],
 			'ldflags' => ['-framework', 'WebKit'],
 			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1'],
@@ -8105,6 +8113,7 @@ function resolve_runtime_webview_build_spec(): array
 	if (PHP_OS_FAMILY === 'Windows') {
 		return [
 			'enabled' => true,
+			'backend' => 'webview2',
 			'cflags' => [],
 			'ldflags' => ['WebView2LoaderStatic.lib', 'advapi32.lib'],
 			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
@@ -8113,6 +8122,7 @@ function resolve_runtime_webview_build_spec(): array
 
 	return [
 		'enabled' => true,
+		'backend' => 'facade',
 		'cflags' => [],
 		'ldflags' => [],
 		'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1'],

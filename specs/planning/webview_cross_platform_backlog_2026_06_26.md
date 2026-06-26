@@ -122,13 +122,13 @@ Goal:
 
 Implementation tasks:
 
-- Report that requesting `webview` auto-enables `ui`.
-- Print selected backend in build output or build-report data.
+- Report that requesting `webview` auto-enables `ui`. Initial resolved config metadata records `implicit_modules["ui"] = "webview"`.
+- Print selected backend in build output or build-report data. Initial WebView build spec reports backend names such as `webkitgtk`, `wkwebview`, `webview2`, `facade`, or `none`.
 - Print missing dependency diagnostics by platform.
 
 Testing tasks:
 
-- Add focused build-config tests for selected backend and missing dependency paths.
+- Add focused build-config tests for selected backend and missing dependency paths. Initial module test covers implicit `ui` reporting and WebView backend metadata.
 - Keep projects without `webview` unchanged.
 
 ### 5. Browser-Like Event Follow-Up
