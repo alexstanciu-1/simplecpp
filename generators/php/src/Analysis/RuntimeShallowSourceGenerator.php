@@ -253,6 +253,7 @@ final class RuntimeShallowSourceGenerator
 				'cli_args' => ['return' => 'mixed', 'params' => []],
 				'getenv' => ['return' => 'mixed', 'params' => [['name' => 'name', 'type' => 'string']]],
 				'shell_exec' => ['return' => 'mixed', 'params' => [['name' => 'command', 'type' => 'string']]],
+				'microtime' => ['return' => 'mixed', 'params' => [['name' => 'as_float', 'type' => 'bool', 'has_default' => true]]],
 				'substr' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int', 'has_default' => true]]],
 				'substr_compare' => ['return' => 'int', 'params' => [['name' => 'main', 'type' => 'string'], ['name' => 'str', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int', 'has_default' => true]]],
 				'substr_replace' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'replace', 'type' => 'string'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int', 'has_default' => true]]],

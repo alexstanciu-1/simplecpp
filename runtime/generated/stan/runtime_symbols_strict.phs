@@ -84,6 +84,7 @@ function json_encode(mixed $value): string {}
 function jss_tokenize(string $source): mixed {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
+function microtime(bool $as_float = false): mixed {}
 function not_identical(mixed $left, mixed $right): bool {}
 function number_format(float $value): string {}
 function phs_tokenize(string $source): mixed {}

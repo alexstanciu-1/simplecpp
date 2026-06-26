@@ -2213,6 +2213,11 @@ final class StanExpressionTypeResolver
 			$className = (string) ($callSite['class_name'] ?? '');
 			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
 			$methodName = (string) ($callSite['method_name'] ?? '');
+			$runtimeSignature = $this->resolveRuntimeStaticCallSignature($resolvedClassName, $methodName, $functionCatalog);
+			if ($runtimeSignature !== null) {
+				$runtimeSignature['target_text'] = $resolvedClassName . '::' . $methodName . '()';
+				return $runtimeSignature;
+			}
 			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
 			if ($classInfo === null) {
 				return null;
@@ -2274,6 +2279,10 @@ final class StanExpressionTypeResolver
 			$className = (string) ($callSite['class_name'] ?? '');
 			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
 			$methodName = (string) ($callSite['method_name'] ?? '');
+			$runtimeSignature = $this->resolveRuntimeStaticCallSignature($resolvedClassName, $methodName, $functionCatalog);
+			if ($runtimeSignature !== null) {
+				return $this->checkSignatureCompatibility($callSite, $runtimeSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $resolvedClassName . '::' . $methodName . '()');
+			}
 			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
 			if ($classInfo === null) {
 				return [$this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static call receiver `' . $className . '` in `' . $context . '`.')];
@@ -2322,6 +2331,45 @@ final class StanExpressionTypeResolver
 		}
 
 		return [];
+	}
+
+	/** @param array<string,array<string,mixed>> $functionCatalog @return array<string,mixed>|null */
+	private function resolveRuntimeStaticCallSignature(string $className, string $methodName, array $functionCatalog): ?array
+	{
+		$symbolName = $this->runtimeStaticTargetSymbols()[strtolower(ltrim($className, '\\') . '::' . $methodName)] ?? null;
+		if (!is_string($symbolName) || $symbolName === '') {
+			return null;
+		}
+		$signature = $functionCatalog[strtolower($symbolName)] ?? null;
+		return is_array($signature) ? $signature : null;
+	}
+
+	/** @return array<string,string> */
+	private function runtimeStaticTargetSymbols(): array
+	{
+		static $symbols = null;
+		if (is_array($symbols)) {
+			return $symbols;
+		}
+
+		$symbols = [];
+		foreach ([
+			__DIR__ . '/../../specs/php_runtime_symbols_legacy.json',
+			__DIR__ . '/../../specs/php_runtime_symbols_strict.json',
+		] as $path) {
+			if (!is_file($path)) {
+				continue;
+			}
+			$decoded = json_decode((string) file_get_contents($path), true);
+			$targets = is_array($decoded['php_runtime_symbol_targets'] ?? null) ? $decoded['php_runtime_symbol_targets'] : [];
+			foreach ($targets as $symbolName => $target) {
+				if (!is_string($symbolName) || !is_string($target) || !str_contains($target, '::')) {
+					continue;
+				}
+				$symbols[strtolower(ltrim($target, '\\'))] = $symbolName;
+			}
+		}
+		return $symbols;
 	}
 
 	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
