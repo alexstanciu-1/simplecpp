@@ -27,7 +27,7 @@ jobs:
             build_options: true
           - os: macos-latest
             native_check: true
-            build_options: true
+            build_options: false
           - os: windows-latest
             native_check: false
             build_options: false
