@@ -8102,6 +8102,15 @@ function resolve_runtime_webview_build_spec(): array
 		];
 	}
 
+	if (PHP_OS_FAMILY === 'Windows') {
+		return [
+			'enabled' => true,
+			'cflags' => [],
+			'ldflags' => ['WebView2LoaderStatic.lib'],
+			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
+		];
+	}
+
 	return [
 		'enabled' => true,
 		'cflags' => [],

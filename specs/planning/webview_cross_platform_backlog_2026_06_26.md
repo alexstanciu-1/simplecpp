@@ -21,7 +21,7 @@ This is a planning backlog, not a semantic authority. The first locked API and b
 | --- | --- | --- | --- |
 | Linux | WebKitGTK | Implemented first rendering slice | Build, launch under Xvfb, screenshot artifact |
 | macOS | WKWebView | Implemented first rendering slice | Build, launch, `screencapture` artifact |
-| Windows 11 | WebView2 | Not implemented | UI Win32 compile/link only |
+| Windows 11 | WebView2 | Initial backend boundary in progress | WebView2 compile/link smoke pending CI |
 | iOS | WKWebView | Not implemented | UIKit UI simulator compile/run only |
 | Android | Android WebView | Not implemented | Android NDK UI-disabled compile smoke only |
 
@@ -53,21 +53,21 @@ Goal:
 
 Implementation tasks:
 
-- Choose the first WebView2 SDK acquisition path for CI.
-- Add WebView2 native handle ownership to the private `webview` runtime implementation.
+- Choose the first WebView2 SDK acquisition path for CI. Initial choice: restore `Microsoft.Web.WebView2` with NuGet in Windows CI.
+- Add WebView2 native handle ownership to the private `webview` runtime implementation. Initial boundary added behind `SCPP_WEBVIEW_BACKEND_WEBVIEW2`.
 - Parent the WebView2 controller inside the existing Win32 `ui_window`.
-- Implement HTML load, URL load, JavaScript fire-and-forget eval, and close.
+- Implement HTML load, URL load, JavaScript fire-and-forget eval, and close. Initial async creation path queues pending operations until WebView2 is ready.
 - Keep Windows target limited to Windows 11 for now.
 
 Testing tasks:
 
-- Add `tests/native/webview_smoke_windows.cpp`.
-- Build/link in Windows CI.
+- Add `tests/native/webview_smoke_windows.cpp`. Initial smoke source added.
+- Build/link in Windows CI. Initial CI step added.
 - Add launch/screenshot artifact when desktop capture is stable enough on GitHub Actions.
 
 Open decision:
 
-- Prefer package restore or checked-in minimal WebView2 loader boundary for CI?
+- Prefer package restore or checked-in minimal WebView2 loader boundary for CI? Initial answer: package restore via NuGet; revisit only if CI proves flaky or too slow.
 
 ### 2. iOS WKWebView Backend
 

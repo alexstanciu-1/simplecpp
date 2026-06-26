@@ -48,6 +48,9 @@ final class ScppWebviewModuleTest
 			} elseif (PHP_OS_FAMILY === 'Darwin') {
 				$this->assertContains('-DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1', implode(' ', $webviewBuild['compile_defines']), 'macOS webview build spec should select the WKWebView backend');
 				$this->assertContains('WebKit', implode(' ', $webviewBuild['ldflags']), 'macOS webview build spec should link WebKit');
+			} elseif (PHP_OS_FAMILY === 'Windows') {
+				$this->assertContains('-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1', implode(' ', $webviewBuild['compile_defines']), 'Windows webview build spec should select the WebView2 backend');
+				$this->assertContains('WebView2LoaderStatic.lib', implode(' ', $webviewBuild['ldflags']), 'Windows webview build spec should link the WebView2 loader');
 			}
 		}
 

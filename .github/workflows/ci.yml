@@ -113,6 +113,41 @@ jobs:
             exit $LASTEXITCODE
           }
 
+      - name: Build Windows WebView2 smoke app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $nuget = Get-Command nuget -ErrorAction SilentlyContinue
+          if ($nuget) {
+            $nugetCommand = $nuget.Source
+          } else {
+            Invoke-WebRequest "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "nuget.exe"
+            $nugetCommand = (Resolve-Path ".\nuget.exe").Path
+          }
+          & $nugetCommand install Microsoft.Web.WebView2 -OutputDirectory .nuget-packages -ExcludeVersion -NonInteractive
+
+          $webView2Root = (Resolve-Path ".nuget-packages\Microsoft.Web.WebView2").Path
+          $webView2Include = Join-Path $webView2Root "build\native\include"
+          $webView2Lib = Join-Path $webView2Root "build\native\x64\WebView2LoaderStatic.lib"
+          if (-not (Test-Path $webView2Lib)) {
+            $webView2Lib = Join-Path $webView2Root "build\native\x64\WebView2Loader.dll.lib"
+          }
+          if (-not (Test-Path $webView2Lib)) {
+            throw "WebView2 loader library was not found under $webView2Root."
+          }
+
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            throw "Visual Studio C++ tools were not found."
+          }
+          $vsDevCmd = Join-Path $installPath "Common7\Tools\VsDevCmd.bat"
+          cmd /c "`"$vsDevCmd`" -arch=x64 && cl /nologo /EHsc /std:c++latest /I runtime/include /I `"$webView2Include`" /DSCPP_HAS_UI=1 /DSCPP_UI_BACKEND_WIN32=1 /DSCPP_HAS_WEBVIEW=1 /DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1 tests\native\webview_smoke_windows.cpp runtime\include\modules\ui\ui.cpp runtime\include\modules\webview\webview.cpp /link user32.lib gdi32.lib shell32.lib ole32.lib `"$webView2Lib`" /out:webview_smoke_windows.exe"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
       - name: Build Linux GTK UI smoke app
         if: runner.os == 'Linux'
         shell: bash
