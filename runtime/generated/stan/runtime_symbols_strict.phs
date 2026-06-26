@@ -81,14 +81,14 @@ function isset_eval(): bool {}
 function js_plus(): mixed {}
 function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
-function jss_tokenize(string $source): mixed {}
+function jss_tokenize(string $source): token_buffer {}
 function jss_tokenize_buffer(string $source): token_buffer {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
 function microtime(bool $as_float = false): mixed {}
 function not_identical(mixed $left, mixed $right): bool {}
 function number_format(float $value): string {}
-function phs_tokenize(string $source): mixed {}
+function phs_tokenize(string $source): token_buffer {}
 function phs_tokenize_buffer(string $source): token_buffer {}
 function regex_filter(string $pattern, $input vector<string>): vector<string> {}
 function regex_grep(string $pattern, $input vector<string>): vector<string> {}
