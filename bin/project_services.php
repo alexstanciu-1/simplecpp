@@ -8210,7 +8210,7 @@ function resolve_runtime_webview_build_spec(): array
 			'backend' => 'webview2',
 			'cflags' => $webview2 === null ? [] : ['-I' . $webview2['include_dir']],
 			'ldflags' => $webview2 === null ? [] : [$webview2['loader_lib'], 'advapi32.lib'],
-			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
+			'compile_defines' => $webview2 === null ? ['-DSCPP_HAS_WEBVIEW=0'] : ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
 		];
 	}
 
