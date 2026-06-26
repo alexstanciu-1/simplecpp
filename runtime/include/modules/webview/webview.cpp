@@ -36,6 +36,73 @@ namespace scpp::webview_runtime {
 
 namespace {
 
+#if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
+
+struct webkitgtk_callback_state final {
+	shared_p<view> target;
+};
+
+void destroy_webkitgtk_callback_state(gpointer data, GClosure *) {
+	delete static_cast<webkitgtk_callback_state *>(data);
+}
+
+void enqueue_webkitgtk_event(
+	const shared_p<view> &target,
+	const char *type,
+	const string_t &message = string_t(""),
+	const string_t &url = string_t("")
+) {
+	(void) enqueue_event(target, string_t(type), message, url);
+}
+
+[[nodiscard]] string_t webkitgtk_current_uri(WebKitWebView *native) {
+	const gchar *uri = webkit_web_view_get_uri(native);
+	if (uri == nullptr) {
+		return string_t("");
+	}
+	return string_t(uri);
+}
+
+void handle_webkitgtk_load_changed(WebKitWebView *native, WebKitLoadEvent load_event, gpointer data) {
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr) {
+		return;
+	}
+	if (load_event == WEBKIT_LOAD_STARTED) {
+		enqueue_webkitgtk_event(state->target, "webview_navigation_started", string_t(""), webkitgtk_current_uri(native));
+		return;
+	}
+	if (load_event == WEBKIT_LOAD_FINISHED) {
+		enqueue_webkitgtk_event(state->target, "webview_navigation_finished", string_t(""), webkitgtk_current_uri(native));
+	}
+}
+
+gboolean handle_webkitgtk_load_failed(WebKitWebView *native, WebKitLoadEvent, gchar *failing_uri, GError *error, gpointer data) {
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr) {
+		return FALSE;
+	}
+	const char *message = error != nullptr && error->message != nullptr ? error->message : "";
+	string_t uri = failing_uri != nullptr ? string_t(failing_uri) : webkitgtk_current_uri(native);
+	enqueue_webkitgtk_event(state->target, "webview_load_failed", string_t(message), uri);
+	return FALSE;
+}
+
+void handle_webkitgtk_title_changed(GObject *object, GParamSpec *, gpointer data) {
+	auto *state = static_cast<webkitgtk_callback_state *>(data);
+	if (state == nullptr) {
+		return;
+	}
+	WebKitWebView *native = WEBKIT_WEB_VIEW(object);
+	const gchar *title = webkit_web_view_get_title(native);
+	if (title == nullptr) {
+		return;
+	}
+	enqueue_webkitgtk_event(state->target, "webview_title_changed", string_t(title), webkitgtk_current_uri(native));
+}
+
+#endif
+
 #if defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 
 struct win32_webview_state final {
@@ -219,6 +286,34 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	auto target = shared<view>();
 	target->window_handle = window;
 	target->native_handle = native;
+	auto *load_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(native),
+		"load-changed",
+		G_CALLBACK(handle_webkitgtk_load_changed),
+		load_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
+	);
+	auto *failed_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(native),
+		"load-failed",
+		G_CALLBACK(handle_webkitgtk_load_failed),
+		failed_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
+	);
+	auto *title_state = new webkitgtk_callback_state{target};
+	g_signal_connect_data(
+		G_OBJECT(native),
+		"notify::title",
+		G_CALLBACK(handle_webkitgtk_title_changed),
+		title_state,
+		destroy_webkitgtk_callback_state,
+		static_cast<GConnectFlags>(0)
+	);
+	(void) enqueue_event(target, string_t("webview_ready"));
 	return target;
 #elif defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW
 	@autoreleasepool {
