@@ -8,6 +8,9 @@
 #if defined(SCPP_UI_BACKEND_APPKIT) && SCPP_UI_BACKEND_APPKIT
 #import <AppKit/AppKit.h>
 #endif
+#if defined(SCPP_UI_BACKEND_UIKIT) && SCPP_UI_BACKEND_UIKIT
+#import <UIKit/UIKit.h>
+#endif
 
 #include <string>
 
@@ -362,6 +365,124 @@ bool_t app_poll(const shared_p<app> &owner) {
 			[NSApp sendEvent:event_value];
 			[NSApp updateWindows];
 		}
+	}
+	return bool_t(!owner->pending_events.empty());
+}
+
+shared_p<event> app_next_event(const shared_p<app> &owner) {
+	if (!owner.has_value().native_value() || owner.get() == nullptr || owner->pending_events.empty()) {
+		return null;
+	}
+	auto value = owner->pending_events.front();
+	owner->pending_events.pop_front();
+	return value;
+}
+
+void app_exit(const shared_p<app> &owner) {
+	if (owner.has_value().native_value() && owner.get() != nullptr) {
+		owner->exit_requested = bool_t(true);
+	}
+}
+
+#elif defined(SCPP_UI_BACKEND_UIKIT) && SCPP_UI_BACKEND_UIKIT
+
+namespace {
+
+[[nodiscard]] result<shared_p<app>> require_app(const shared_p<app> &owner, const char *function_name) {
+	if (!owner.has_value().native_value() || owner.get() == nullptr) {
+		return error_t(string_t(std::string(function_name) + " requires a valid ui_app"));
+	}
+	return owner;
+}
+
+[[nodiscard]] result<shared_p<window>> require_window(const shared_p<window> &target, const char *function_name) {
+	if (!target.has_value().native_value() || target.get() == nullptr || target->native_handle == nullptr || target->closed.native_value()) {
+		return error_t(string_t(std::string(function_name) + " requires an open ui_window"));
+	}
+	return target;
+}
+
+} // namespace
+
+result<shared_p<app>> app_create() {
+	@autoreleasepool {
+		UIApplication *application = [UIApplication sharedApplication];
+		if (application == nil) {
+			return error_t(string_t("ui_app_create(): UIKit requires an active UIApplication"));
+		}
+		auto owner = shared<app>();
+		owner->backend = string_t("uikit");
+		owner->native_handle = application;
+		return owner;
+	}
+}
+
+result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t &width, const int_t &height) {
+	auto checked_owner = require_app(owner, "ui_window_create()");
+	if (!checked_owner.has_value().native_value()) {
+		return *checked_owner.error();
+	}
+	if (width.native_value() <= 0 || height.native_value() <= 0) {
+		return error_t(string_t("ui_window_create(): width and height must be positive"));
+	}
+
+	@autoreleasepool {
+		const CGRect frame = CGRectMake(0.0, 0.0, static_cast<CGFloat>(width.native_value()), static_cast<CGFloat>(height.native_value()));
+		UIWindow *native = [[UIWindow alloc] initWithFrame:frame];
+		if (native == nil) {
+			return error_t(string_t("ui_window_create(): UIKit failed to create a native window"));
+		}
+
+		UIViewController *controller = [[UIViewController alloc] init];
+		controller.title = [NSString stringWithUTF8String:title.native_value().c_str()];
+		controller.view.backgroundColor = [UIColor whiteColor];
+		native.rootViewController = controller;
+		[controller release];
+
+		auto target = shared<window>();
+		target->title = title;
+		target->width = width;
+		target->height = height;
+		target->native_handle = native;
+		return target;
+	}
+}
+
+result<bool_t> window_show(const shared_p<window> &target) {
+	auto checked = require_window(target, "ui_window_show()");
+	if (!checked.has_value().native_value()) {
+		return *checked.error();
+	}
+
+	@autoreleasepool {
+		UIWindow *native = static_cast<UIWindow *>(target->native_handle);
+		[native makeKeyAndVisible];
+		target->visible = bool_t(true);
+		return bool_t(true);
+	}
+}
+
+result<bool_t> window_close(const shared_p<window> &target) {
+	auto checked = require_window(target, "ui_window_close()");
+	if (!checked.has_value().native_value()) {
+		return *checked.error();
+	}
+
+	@autoreleasepool {
+		UIWindow *native = static_cast<UIWindow *>(target->native_handle);
+		native.hidden = YES;
+		native.rootViewController = nil;
+		[native release];
+		target->native_handle = nullptr;
+		target->closed = bool_t(true);
+		target->visible = bool_t(false);
+		return bool_t(true);
+	}
+}
+
+bool_t app_poll(const shared_p<app> &owner) {
+	if (!owner.has_value().native_value() || owner.get() == nullptr || owner->exit_requested.native_value()) {
+		return bool_t(false);
 	}
 	return bool_t(!owner->pending_events.empty());
 }

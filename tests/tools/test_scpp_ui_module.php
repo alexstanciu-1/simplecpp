@@ -56,6 +56,7 @@ final class ScppUiModuleTest
 				} elseif (PHP_OS_FAMILY === 'Darwin') {
 					$this->assertContains('-DSCPP_UI_BACKEND_APPKIT=1', implode(' ', $uiBuild['compile_defines']), 'macOS ui build spec should select the AppKit backend');
 					$this->assertContains('-framework', implode(' ', $uiBuild['ldflags']), 'macOS ui build spec should link Cocoa frameworks');
+					$this->assertContains('Cocoa', implode(' ', $uiBuild['ldflags']), 'macOS ui build spec should link Cocoa');
 				}
 			}
 

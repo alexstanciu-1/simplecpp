@@ -48,7 +48,7 @@ jobs:
           set -euo pipefail
           if [ "$RUNNER_OS" = "Linux" ]; then
             sudo apt-get update
-            sudo apt-get install -y ninja-build g++ pkg-config
+            sudo apt-get install -y ninja-build g++ pkg-config libgtk-3-dev xvfb imagemagick
           elif [ "$RUNNER_OS" = "macOS" ]; then
             command -v ninja >/dev/null 2>&1 || brew install ninja
             command -v pkg-config >/dev/null 2>&1 || brew install pkg-config
@@ -83,6 +83,52 @@ jobs:
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -c runtime/include/modules/ui/ui.cpp -o ui_disabled.o
           c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -c runtime/include/modules/ui/ui.cpp -o ui_enabled.o
 
+      - name: Build Linux GTK UI smoke app
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          g++ -std=c++23 -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_GTK=1 \
+            tests/native/ui_smoke_desktop.cpp runtime/include/modules/ui/ui.cpp \
+            $(pkg-config --cflags --libs gtk+-3.0) \
+            -o ui_smoke_gtk
+
+      - name: Launch Linux GTK UI smoke app
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/screenshots
+          xvfb-run -a --server-args="-screen 0 1024x768x24" bash -c '
+            set -euo pipefail
+            ./ui_smoke_gtk &
+            pid=$!
+            sleep 3
+            import -window root artifacts/screenshots/linux-gtk-ui.png
+            wait "$pid"
+          '
+
+      - name: Upload Linux GTK UI screenshot
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-gtk-ui-screenshot
+          path: artifacts/screenshots/linux-gtk-ui.png
+          if-no-files-found: warn
+
+      - name: Android NDK UI compile smoke
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -c runtime/include/modules/ui/ui.cpp -o ui_android_runtime.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -c tests/native/ui_android_compile.cpp -o ui_android_compile.o
+
       - name: Build macOS UI smoke app
         if: runner.os == 'macOS'
         shell: bash
@@ -112,4 +158,48 @@ jobs:
         with:
           name: macos-ui-screenshot
           path: artifacts/screenshots/macos-ui.png
+          if-no-files-found: warn
+
+      - name: Build iOS Simulator UI smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p SimpleCppUiIOS.app
+          cp tests/native/ios_smoke/Info.plist SimpleCppUiIOS.app/Info.plist
+          IOS_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          IOS_TARGET="arm64-apple-ios15.0-simulator"
+          clang++ -std=c++23 -x objective-c++ -target "$IOS_TARGET" -isysroot "$IOS_SDK" \
+            -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_UIKIT=1 \
+            tests/native/ui_smoke_ios.mm runtime/include/modules/ui/ui.cpp \
+            -framework UIKit -framework Foundation \
+            -o SimpleCppUiIOS.app/SimpleCppUiIOS
+          codesign --force --sign - SimpleCppUiIOS.app
+
+      - name: Launch iOS Simulator UI smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/screenshots
+          DEVICE_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ && /Shutdown/ { print $2; exit }')"
+          if [ -z "$DEVICE_ID" ]; then
+            echo "No available iPhone simulator found."
+            xcrun simctl list devices available
+            exit 1
+          fi
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" SimpleCppUiIOS.app
+          xcrun simctl launch --terminate-running-process "$DEVICE_ID" dev.simplecpp.ui-smoke
+          sleep 2
+          xcrun simctl io "$DEVICE_ID" screenshot artifacts/screenshots/ios-ui.png
+
+      - name: Upload iOS UI screenshot
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ui-screenshot
+          path: artifacts/screenshots/ios-ui.png
           if-no-files-found: warn
