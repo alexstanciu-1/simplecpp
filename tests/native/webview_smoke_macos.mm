@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <string>
 #include <thread>
 
 int main() {
@@ -27,12 +28,12 @@ int main() {
 	}
 
 	auto view = view_result.value();
-	auto html_result = scpp::webview_runtime::load_html(
+	auto load_app_result = scpp::webview_runtime::load_app(
 		view,
-		scpp::string_t("<!doctype html><html><body style=\"font-family:-apple-system,sans-serif;margin:48px\"><h1>Simple C++ WebView</h1><p>Native WKWebView smoke.</p></body></html>")
+		scpp::string_t("tests/fixtures/webview_app")
 	);
-	if (!html_result.has_value().native_value()) {
-		std::cerr << html_result.error()->get_message().native_value() << "\n";
+	if (!load_app_result.has_value().native_value()) {
+		std::cerr << load_app_result.error()->get_message().native_value() << "\n";
 		return 1;
 	}
 
@@ -42,8 +43,26 @@ int main() {
 		return 1;
 	}
 
+	bool replied = false;
 	for (int i = 0; i < 160; ++i) {
-		(void) scpp::ui::app_poll(app);
+		if (scpp::ui::app_poll(app).native_value()) {
+			auto event = scpp::ui::app_next_event(app);
+			if (scpp::ui::event_type(event).native_value() == "webview_message") {
+				const auto id = scpp::webview_runtime::message_id(event);
+				const auto command = scpp::webview_runtime::message_command(event);
+				if (!replied && command.native_value() == "bridge.ping") {
+					auto reply_result = scpp::webview_runtime::reply_ok(
+						view,
+						id,
+						scpp::string_t("{\"status\":\"pong\",\"transport\":\"WKScriptMessageHandler\"}")
+					);
+					if (!reply_result.has_value().native_value()) {
+						std::cerr << "webview bridge reply failed: " << reply_result.error()->get_message().native_value() << "\n";
+					}
+					replied = true;
+				}
+			}
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
 

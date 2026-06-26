@@ -14,6 +14,7 @@
 	scpp::shared_p<scpp::ui::app> _app;
 	scpp::shared_p<scpp::ui::window> _window;
 	scpp::shared_p<scpp::webview> _view;
+	bool _replied;
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -48,10 +49,11 @@
 		std::exit(1);
 	}
 	_view = viewResult.value();
+	_replied = false;
 
 	auto htmlResult = scpp::webview_runtime::load_html(
 		_view,
-		scpp::string_t("<!doctype html><html><body><h1>Simple C++ WebView</h1><p>Native iOS WKWebView smoke.</p></body></html>")
+		scpp::string_t("<!doctype html><html><body><h1>Simple C++ WebView</h1><p id=\"status\">Waiting for bridge reply...</p><script>setTimeout(async function(){var status=document.getElementById('status');try{var reply=await window.scpp.invoke('bridge.ping',{source:'ios-smoke'});status.textContent='Bridge reply received: '+JSON.stringify(reply);document.body.dataset.bridge='ok';}catch(error){status.textContent='Bridge reply failed: '+(error&&error.message?error.message:String(error));document.body.dataset.bridge='error';}},500);</script></body></html>")
 	);
 	if (!htmlResult.has_value().native_value()) {
 		std::cerr << htmlResult.error()->get_message().native_value() << "\n";
@@ -64,8 +66,35 @@
 		std::exit(1);
 	}
 
+	[NSTimer scheduledTimerWithTimeInterval:0.05 target:self selector:@selector(pollSmoke:) userInfo:nil repeats:YES];
 	[NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(finishSmoke:) userInfo:nil repeats:NO];
 	return YES;
+}
+
+- (void)pollSmoke:(NSTimer *)timer
+{
+	(void)timer;
+	if (!_app.has_value().native_value() || !_view.has_value().native_value()) {
+		return;
+	}
+	if (scpp::ui::app_poll(_app).native_value()) {
+		auto event = scpp::ui::app_next_event(_app);
+		if (scpp::ui::event_type(event).native_value() == "webview_message") {
+			const auto id = scpp::webview_runtime::message_id(event);
+			const auto command = scpp::webview_runtime::message_command(event);
+			if (!_replied && command.native_value() == "bridge.ping") {
+				auto replyResult = scpp::webview_runtime::reply_ok(
+					_view,
+					id,
+					scpp::string_t("{\"status\":\"pong\",\"transport\":\"WKScriptMessageHandler\"}")
+				);
+				if (!replyResult.has_value().native_value()) {
+					std::cerr << "webview bridge reply failed: " << replyResult.error()->get_message().native_value() << "\n";
+				}
+				_replied = true;
+			}
+		}
+	}
 }
 
 - (void)finishSmoke:(NSTimer *)timer

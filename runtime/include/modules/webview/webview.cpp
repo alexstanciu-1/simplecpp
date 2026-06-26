@@ -119,6 +119,52 @@ constexpr const char *bridge_script = R"JS(
 })();
 )JS";
 
+#if (defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW) || (defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW)
+@interface ScppWKBridgeHandler : NSObject<WKScriptMessageHandler>
+- (instancetype)initWithTarget:(scpp::shared_p<scpp::webview_runtime::view>)target;
+@end
+
+@implementation ScppWKBridgeHandler {
+	scpp::shared_p<scpp::webview_runtime::view> _target;
+}
+
+- (instancetype)initWithTarget:(scpp::shared_p<scpp::webview_runtime::view>)target
+{
+	self = [super init];
+	if (self != nil) {
+		_target = target;
+	}
+	return self;
+}
+
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
+{
+	(void)userContentController;
+	if (!_target.has_value().native_value() || _target.get() == nullptr) {
+		return;
+	}
+
+	std::string text;
+	if ([message.body isKindOfClass:[NSString class]]) {
+		text = [(NSString *)message.body UTF8String];
+	} else {
+		text = [[message.body description] UTF8String];
+	}
+
+	auto window = _target->window_handle;
+	if (!window.has_value().native_value() || window.get() == nullptr || !window->app_handle.has_value().native_value()) {
+		return;
+	}
+
+	auto event_value = scpp::shared<scpp::ui::event>();
+	event_value->type = scpp::string_t("webview_message");
+	event_value->window_handle = window;
+	event_value->text = scpp::string_t(text);
+	window->app_handle->pending_events.push_back(event_value);
+}
+@end
+#endif
+
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 struct bridge_state final {
 	shared_p<view> target;
@@ -680,16 +726,35 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 			return error_t(string_t("webview_create(): AppKit window has no content view"));
 		}
 
-		WKWebView *native = [[WKWebView alloc] initWithFrame:[content bounds]];
+		auto target = shared<view>();
+		target->window_handle = window;
+
+		WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+		WKUserContentController *user_content = [[WKUserContentController alloc] init];
+		NSString *source = [NSString stringWithUTF8String:bridge_script];
+		WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
+		ScppWKBridgeHandler *handler = [[ScppWKBridgeHandler alloc] initWithTarget:target];
+		[user_content addUserScript:script];
+		[user_content addScriptMessageHandler:handler name:@"scpp"];
+		configuration.userContentController = user_content;
+
+		WKWebView *native = [[WKWebView alloc] initWithFrame:[content bounds] configuration:configuration];
 		if (native == nil) {
+			[user_content removeScriptMessageHandlerForName:@"scpp"];
+			[script release];
+			[user_content release];
+			[configuration release];
+			[handler release];
 			return error_t(string_t("webview_create(): WKWebView failed to create a native webview"));
 		}
+		[script release];
+		[user_content release];
+		[configuration release];
 		[native setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 		[content addSubview:native];
 
-		auto target = shared<view>();
-		target->window_handle = window;
 		target->native_handle = native;
+		target->native_state = handler;
 		return target;
 	}
 #elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
@@ -700,16 +765,35 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 			return error_t(string_t("webview_create(): UIKit window has no root content view"));
 		}
 
-		WKWebView *native = [[WKWebView alloc] initWithFrame:content.bounds];
+		auto target = shared<view>();
+		target->window_handle = window;
+
+		WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+		WKUserContentController *user_content = [[WKUserContentController alloc] init];
+		NSString *source = [NSString stringWithUTF8String:bridge_script];
+		WKUserScript *script = [[WKUserScript alloc] initWithSource:source injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
+		ScppWKBridgeHandler *handler = [[ScppWKBridgeHandler alloc] initWithTarget:target];
+		[user_content addUserScript:script];
+		[user_content addScriptMessageHandler:handler name:@"scpp"];
+		configuration.userContentController = user_content;
+
+		WKWebView *native = [[WKWebView alloc] initWithFrame:content.bounds configuration:configuration];
 		if (native == nil) {
+			[user_content removeScriptMessageHandlerForName:@"scpp"];
+			[script release];
+			[user_content release];
+			[configuration release];
+			[handler release];
 			return error_t(string_t("webview_create(): WKWebView failed to create a native webview"));
 		}
+		[script release];
+		[user_content release];
+		[configuration release];
 		native.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 		[content addSubview:native];
 
-		auto target = shared<view>();
-		target->window_handle = window;
 		target->native_handle = native;
+		target->native_state = handler;
 		return target;
 	}
 #elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
@@ -1177,16 +1261,28 @@ void close(const shared_p<view> &target) {
 #elif defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
+			[native.configuration.userContentController removeScriptMessageHandlerForName:@"scpp"];
 			[native stopLoading];
 			[native removeFromSuperview];
 			[native release];
 		}
+		if (target->native_state != nullptr) {
+			ScppWKBridgeHandler *handler = static_cast<ScppWKBridgeHandler *>(target->native_state);
+			[handler release];
+			target->native_state = nullptr;
+		}
 #elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
+			[native.configuration.userContentController removeScriptMessageHandlerForName:@"scpp"];
 			[native stopLoading];
 			[native removeFromSuperview];
 			[native release];
+		}
+		if (target->native_state != nullptr) {
+			ScppWKBridgeHandler *handler = static_cast<ScppWKBridgeHandler *>(target->native_state);
+			[handler release];
+			target->native_state = nullptr;
 		}
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 		auto *holder = static_cast<win32_webview_state_ptr *>(target->native_state);
