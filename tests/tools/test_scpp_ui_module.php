@@ -38,12 +38,14 @@ final class ScppUiModuleTest
 			$catalog = new StanPhpRuntimeFunctionCatalog();
 			$this->assertSame(true, $catalog->hasFunction('ui_app_create'), 'STAN catalog should recognize ui_app_create');
 			$this->assertSame('ui', $catalog->requiredModule('ui_window_create'), 'STAN catalog should require the ui module for ui helpers');
+			$this->assertSame(true, $catalog->hasFunction('ui_event_text'), 'STAN catalog should recognize ui_event_text');
 
 			$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 			$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 			$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
 			$this->assertContains('function ui_app_create(): result<ui_app>', $strictRuntimeSymbols, 'strict shallow runtime should expose result-returning ui_app_create');
 			$this->assertContains('function ui_window_create(ui_app $app, string $title, int $width, int $height): result<ui_window>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed ui_window_create');
+			$this->assertContains('function ui_event_text(ui_event $event): string', $strictRuntimeSymbols, 'strict shallow runtime should expose ui_event_text payload access');
 			$this->assertContains('class ui_event', $strictRuntimeSymbols, 'strict shallow runtime should expose the ui_event handle shape');
 
 			$uiBuild = resolve_runtime_ui_build_spec();

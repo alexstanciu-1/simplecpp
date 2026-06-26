@@ -29,12 +29,16 @@ final class ScppWebviewModuleTest
 		$catalog = new StanPhpRuntimeFunctionCatalog();
 		$this->assertSame(true, $catalog->hasFunction('webview_create'), 'STAN catalog should recognize webview_create');
 		$this->assertSame('webview', $catalog->requiredModule('webview_load_html'), 'STAN catalog should require the webview module for webview helpers');
+		$this->assertSame(true, $catalog->hasFunction('webview_reply_ok'), 'STAN catalog should recognize webview_reply_ok');
+		$this->assertSame(true, $catalog->hasFunction('webview_reply_error'), 'STAN catalog should recognize webview_reply_error');
 
 		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
 		$this->assertContains('function webview_create(ui_window $window): result<webview>', $strictRuntimeSymbols, 'strict shallow runtime should expose result-returning webview_create');
 		$this->assertContains('function webview_load_html(webview $view, string $html): result<bool>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_load_html');
+		$this->assertContains('function webview_reply_ok(webview $view, int $id, string $value_json): result<bool>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_reply_ok');
+		$this->assertContains('function webview_reply_error(webview $view, int $id, string $code, string $message): result<bool>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_reply_error');
 		$this->assertContains('class webview', $strictRuntimeSymbols, 'strict shallow runtime should expose the webview handle shape');
 
 		$webviewBuild = resolve_runtime_webview_build_spec();

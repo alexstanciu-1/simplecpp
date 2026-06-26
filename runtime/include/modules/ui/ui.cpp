@@ -140,6 +140,7 @@ result<shared_p<window>> window_create(const shared_p<app> &owner, const string_
 	}
 
 	auto target = shared<window>();
+	target->app_handle = owner;
 	target->title = title;
 	target->width = width;
 	target->height = height;
@@ -319,6 +320,7 @@ result<shared_p<window>> window_create(const shared_p<app> &owner, const string_
 	}
 
 	auto target = shared<window>();
+	target->app_handle = owner;
 	target->title = title;
 	target->width = width;
 	target->height = height;
@@ -490,6 +492,7 @@ result<shared_p<window>> window_create(const shared_p<app> &owner, const string_
 		[native setReleasedWhenClosed:NO];
 
 		auto target = shared<window>();
+		target->app_handle = owner;
 		target->title = title;
 		target->width = width;
 		target->height = height;
@@ -639,6 +642,7 @@ result<shared_p<window>> window_create(const shared_p<app> &owner, const string_
 		[controller release];
 
 		auto target = shared<window>();
+		target->app_handle = owner;
 		target->title = title;
 		target->width = width;
 		target->height = height;
@@ -734,6 +738,27 @@ void app_exit(const shared_p<app> &owner) {
 }
 
 #endif
+
+string_t event_type(const shared_p<event> &value) {
+	if (!value.has_value().native_value() || value.get() == nullptr) {
+		return string_t("");
+	}
+	return value->type;
+}
+
+shared_p<window> event_window(const shared_p<event> &value) {
+	if (!value.has_value().native_value() || value.get() == nullptr) {
+		return null;
+	}
+	return value->window_handle;
+}
+
+string_t event_text(const shared_p<event> &value) {
+	if (!value.has_value().native_value() || value.get() == nullptr) {
+		return string_t("");
+	}
+	return value->text;
+}
 
 } // namespace scpp::ui
 

@@ -4,13 +4,170 @@
 
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 #include <webkit2/webkit2.h>
+#if !WEBKIT_CHECK_VERSION(2, 22, 0)
+#include <JavaScriptCore/JavaScript.h>
+#endif
 #endif
 
+#include <sstream>
 #include <string>
 
 namespace scpp::webview_runtime {
 
 namespace {
+
+constexpr const char *bridge_script = R"JS(
+(function () {
+	if (window.scpp && typeof window.scpp.invoke === "function") {
+		return;
+	}
+
+	var nextId = 1;
+	var pending = new Map();
+
+	function post(message) {
+		var text = JSON.stringify(message);
+		if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.scpp) {
+			window.webkit.messageHandlers.scpp.postMessage(text);
+			return;
+		}
+		if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
+			window.chrome.webview.postMessage(text);
+			return;
+		}
+		if (window.ipc && window.ipc.postMessage) {
+			window.ipc.postMessage(text);
+			return;
+		}
+		throw new Error("Simple C++ WebView bridge is not available");
+	}
+
+	Object.defineProperty(window, "scpp", {
+		value: {
+			invoke: function (command, payload) {
+				if (typeof command !== "string" || command.length === 0) {
+					return Promise.reject(new Error("scpp.invoke(command, payload) requires a non-empty command string"));
+				}
+				var id = nextId++;
+				var message = {
+					id: id,
+					kind: "invoke",
+					command: command,
+					payload: payload === undefined ? null : payload
+				};
+				return new Promise(function (resolve, reject) {
+					pending.set(id, { resolve: resolve, reject: reject });
+					try {
+						post(message);
+					} catch (error) {
+						pending.delete(id);
+						reject(error);
+					}
+				});
+			},
+			__resolve: function (response) {
+				if (!response || typeof response.id !== "number") {
+					return;
+				}
+				var entry = pending.get(response.id);
+				if (!entry) {
+					return;
+				}
+				pending.delete(response.id);
+				if (response.ok) {
+					entry.resolve(response.value);
+				} else {
+					var err = response.error || {};
+					var jsError = new Error(err.message || "Simple C++ command failed");
+					jsError.code = err.code || "scpp_error";
+					jsError.detail = err;
+					entry.reject(jsError);
+				}
+			}
+		},
+		configurable: false,
+		enumerable: false,
+		writable: false
+	});
+})();
+)JS";
+
+#if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
+struct bridge_state final {
+	shared_p<view> target;
+};
+
+void handle_bridge_message(WebKitUserContentManager *, WebKitJavascriptResult *message, gpointer data) {
+	auto *state = static_cast<bridge_state *>(data);
+	if (state == nullptr || !state->target.has_value().native_value() || state->target.get() == nullptr) {
+		return;
+	}
+
+	std::string text;
+#if WEBKIT_CHECK_VERSION(2, 22, 0)
+	JSCValue *value = webkit_javascript_result_get_js_value(message);
+	if (value != nullptr) {
+		char *raw = jsc_value_to_string(value);
+		if (raw != nullptr) {
+			text = raw;
+			g_free(raw);
+		}
+	}
+#else
+	JSGlobalContextRef context = webkit_javascript_result_get_global_context(message);
+	JSValueRef value = webkit_javascript_result_get_value(message);
+	JSStringRef js_text = JSValueToStringCopy(context, value, nullptr);
+	if (js_text != nullptr) {
+		const std::size_t max_size = JSStringGetMaximumUTF8CStringSize(js_text);
+		std::string buffer(max_size, '\0');
+		const std::size_t actual_size = JSStringGetUTF8CString(js_text, buffer.data(), max_size);
+		if (actual_size > 0) {
+			buffer.resize(actual_size - 1);
+			text = buffer;
+		}
+		JSStringRelease(js_text);
+	}
+#endif
+
+	auto window = state->target->window_handle;
+	if (!window.has_value().native_value() || window.get() == nullptr || !window->app_handle.has_value().native_value()) {
+		return;
+	}
+
+	auto event_value = shared<ui::event>();
+	event_value->type = string_t("webview_message");
+	event_value->window_handle = window;
+	event_value->text = string_t(text);
+	window->app_handle->pending_events.push_back(event_value);
+}
+#endif
+
+[[nodiscard]] std::string json_string_literal(const std::string &value) {
+	std::ostringstream out;
+	out << '"';
+	for (unsigned char ch : value) {
+		switch (ch) {
+			case '"': out << "\\\""; break;
+			case '\\': out << "\\\\"; break;
+			case '\b': out << "\\b"; break;
+			case '\f': out << "\\f"; break;
+			case '\n': out << "\\n"; break;
+			case '\r': out << "\\r"; break;
+			case '\t': out << "\\t"; break;
+			default:
+				if (ch < 0x20) {
+					out << "\\u";
+					const char *digits = "0123456789abcdef";
+					out << "00" << digits[(ch >> 4) & 0x0f] << digits[ch & 0x0f];
+				} else {
+					out << static_cast<char>(ch);
+				}
+				break;
+		}
+	}
+	out << '"';
+	return out.str();
+}
 
 [[nodiscard]] result<shared_p<view>> require_view(const shared_p<view> &target, const char *function_name) {
 	if (!target.has_value().native_value() || target.get() == nullptr || target->closed.native_value()) {
@@ -35,7 +192,20 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 	GtkWidget *parent = static_cast<GtkWidget *>(window->native_handle);
-	GtkWidget *native = webkit_web_view_new();
+	WebKitUserContentManager *manager = webkit_user_content_manager_new();
+	webkit_user_content_manager_register_script_message_handler(manager, "scpp");
+	WebKitUserScript *script = webkit_user_script_new(
+		bridge_script,
+		WEBKIT_USER_CONTENT_INJECT_ALL_FRAMES,
+		WEBKIT_USER_SCRIPT_INJECT_AT_DOCUMENT_START,
+		nullptr,
+		nullptr
+	);
+	webkit_user_content_manager_add_script(manager, script);
+	webkit_user_script_unref(script);
+
+	GtkWidget *native = webkit_web_view_new_with_user_content_manager(manager);
+	g_object_unref(manager);
 	if (native == nullptr) {
 		return error_t(string_t("webview_create(): WebKitGTK failed to create a native webview"));
 	}
@@ -46,6 +216,14 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 	auto target = shared<view>();
 	target->window_handle = window;
 	target->native_handle = native;
+	auto *state = new bridge_state{target};
+	target->native_state = state;
+	g_signal_connect(
+		webkit_web_view_get_user_content_manager(WEBKIT_WEB_VIEW(native)),
+		"script-message-received::scpp",
+		G_CALLBACK(handle_bridge_message),
+		state
+	);
 	return target;
 #else
 	return error_t(string_t("webview_create(): no native webview backend is selected in this build"));
@@ -116,12 +294,34 @@ result<bool_t> eval(const shared_p<view> &target, const string_t &script) {
 #endif
 }
 
+result<bool_t> reply_ok(const shared_p<view> &target, const int_t &id, const string_t &value_json) {
+	const std::string payload = value_json.native_value().empty() ? "null" : value_json.native_value();
+	const std::string script = "window.scpp&&window.scpp.__resolve&&window.scpp.__resolve({\"id\":"
+		+ std::to_string(id.native_value())
+		+ ",\"ok\":true,\"value\":"
+		+ payload
+		+ "});";
+	return eval(target, string_t(script));
+}
+
+result<bool_t> reply_error(const shared_p<view> &target, const int_t &id, const string_t &code, const string_t &message) {
+	const std::string script = "window.scpp&&window.scpp.__resolve&&window.scpp.__resolve({\"id\":"
+		+ std::to_string(id.native_value())
+		+ ",\"ok\":false,\"error\":{\"code\":"
+		+ json_string_literal(code.native_value())
+		+ ",\"message\":"
+		+ json_string_literal(message.native_value())
+		+ "}});";
+	return eval(target, string_t(script));
+}
+
 void close(const shared_p<view> &target) {
 	if (target.has_value().native_value() && target.get() != nullptr) {
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 		if (target->native_handle != nullptr) {
 			gtk_widget_destroy(GTK_WIDGET(target->native_handle));
 		}
+		delete static_cast<bridge_state *>(target->native_state);
 #endif
 		target->closed = bool_t(true);
 		target->native_handle = nullptr;

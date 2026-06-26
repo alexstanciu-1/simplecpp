@@ -27,6 +27,7 @@ public:
 
 class window final {
 public:
+	shared_p<app> app_handle = null;
 	string_t title = string_t("");
 	int_t width = int_t(0);
 	int_t height = int_t(0);
@@ -41,6 +42,7 @@ class event final {
 public:
 	string_t type = string_t("");
 	shared_p<window> window_handle = null;
+	string_t text = string_t("");
 };
 
 #if SCPP_HAS_UI
@@ -50,6 +52,9 @@ public:
 [[nodiscard]] result<bool_t> window_close(const shared_p<window> &target);
 [[nodiscard]] bool_t app_poll(const shared_p<app> &owner);
 [[nodiscard]] shared_p<event> app_next_event(const shared_p<app> &owner);
+[[nodiscard]] string_t event_type(const shared_p<event> &value);
+[[nodiscard]] shared_p<window> event_window(const shared_p<event> &value);
+[[nodiscard]] string_t event_text(const shared_p<event> &value);
 void app_exit(const shared_p<app> &owner);
 #else
 inline result<shared_p<app>> app_create() {
@@ -74,6 +79,18 @@ inline bool_t app_poll(const shared_p<app> &) {
 
 inline shared_p<event> app_next_event(const shared_p<app> &) {
 	return null;
+}
+
+inline string_t event_type(const shared_p<event> &) {
+	return string_t("");
+}
+
+inline shared_p<window> event_window(const shared_p<event> &) {
+	return null;
+}
+
+inline string_t event_text(const shared_p<event> &) {
+	return string_t("");
 }
 
 inline void app_exit(const shared_p<app> &) {

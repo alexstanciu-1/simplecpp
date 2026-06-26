@@ -3,6 +3,7 @@
 #include "modules/ui/ui.hpp"
 #include "scpp/bool_t.hpp"
 #include "scpp/error_t.hpp"
+#include "scpp/int_t.hpp"
 #include "scpp/memory.hpp"
 #include "scpp/result.hpp"
 #include "scpp/string_t.hpp"
@@ -28,6 +29,8 @@ public:
 [[nodiscard]] result<bool_t> load_url(const shared_p<view> &target, const string_t &url);
 [[nodiscard]] result<bool_t> load_html(const shared_p<view> &target, const string_t &html);
 [[nodiscard]] result<bool_t> eval(const shared_p<view> &target, const string_t &script);
+[[nodiscard]] result<bool_t> reply_ok(const shared_p<view> &target, const int_t &id, const string_t &value_json);
+[[nodiscard]] result<bool_t> reply_error(const shared_p<view> &target, const int_t &id, const string_t &code, const string_t &message);
 void close(const shared_p<view> &target);
 #else
 inline result<shared_p<view>> create(const shared_p<ui::window> &) {
@@ -44,6 +47,14 @@ inline result<bool_t> load_html(const shared_p<view> &, const string_t &) {
 
 inline result<bool_t> eval(const shared_p<view> &, const string_t &) {
 	return error_t(string_t("webview_eval(): webview runtime module is not enabled in this build"));
+}
+
+inline result<bool_t> reply_ok(const shared_p<view> &, const int_t &, const string_t &) {
+	return error_t(string_t("webview_reply_ok(): webview runtime module is not enabled in this build"));
+}
+
+inline result<bool_t> reply_error(const shared_p<view> &, const int_t &, const string_t &, const string_t &) {
+	return error_t(string_t("webview_reply_error(): webview runtime module is not enabled in this build"));
 }
 
 inline void close(const shared_p<view> &) {
