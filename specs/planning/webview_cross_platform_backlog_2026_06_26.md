@@ -39,6 +39,7 @@ Latest heartbeat slice:
 - Browser-like event bridge has its first backend-neutral boundary: `ui_event` can carry a WebView handle, message text, and URL payload, strict PHP++ exposes typed accessors, and WebView runtime code can enqueue events into the existing `ui_app` queue.
 - Linux WebKitGTK now wires native load/title callbacks into that shared event queue, and the Linux WebView smoke app requires `webview_navigation_finished`.
 - Apple WKWebView backends now wire `WKNavigationDelegate` navigation callbacks into that shared event queue, and the macOS WKWebView smoke app requires `webview_navigation_finished`.
+- Windows WebView2 now wires `NavigationStarting`, `NavigationCompleted`, and `WebMessageReceived` callbacks into that shared event queue; Windows CI still validates this as compile/link until launch/screenshot is added.
 
 ## Done Definition
 
@@ -176,7 +177,8 @@ Initial implementation slice:
 - `webview_runtime::enqueue_event(...)` provides the backend callback handoff point into `ui_app.pending_events`.
 - Linux WebKitGTK emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_title_changed`.
 - Apple WKWebView emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, and `webview_load_failed`.
-- Remaining native backend callback wiring: WebView2 navigation events/WebMessageReceived and Android WebViewClient/JavascriptInterface.
+- WebView2 emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message`.
+- Remaining native backend callback wiring: Android WebViewClient/JavascriptInterface.
 
 ## Suggested Implementation Order
 

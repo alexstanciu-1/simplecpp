@@ -175,9 +175,15 @@ struct win32_webview_state final {
 	Microsoft::WRL::ComPtr<ICoreWebView2Environment> environment;
 	Microsoft::WRL::ComPtr<ICoreWebView2Controller> controller;
 	Microsoft::WRL::ComPtr<ICoreWebView2> core;
+	EventRegistrationToken navigation_starting_token{};
+	EventRegistrationToken navigation_completed_token{};
+	EventRegistrationToken web_message_received_token{};
 	std::wstring pending_url;
 	std::wstring pending_html;
 	std::wstring pending_script;
+	bool has_navigation_starting_token = false;
+	bool has_navigation_completed_token = false;
+	bool has_web_message_received_token = false;
 	bool closed = false;
 };
 
@@ -194,6 +200,50 @@ using win32_webview_state_ptr = std::shared_ptr<win32_webview_state>;
 	std::wstring result(static_cast<std::size_t>(needed), L'\0');
 	MultiByteToWideChar(CP_UTF8, 0, value.c_str(), static_cast<int>(value.size()), result.data(), needed);
 	return result;
+}
+
+[[nodiscard]] string_t wide_to_utf8(const wchar_t *value) {
+	if (value == nullptr || value[0] == L'\0') {
+		return string_t("");
+	}
+	const int needed = WideCharToMultiByte(CP_UTF8, 0, value, -1, nullptr, 0, nullptr, nullptr);
+	if (needed <= 1) {
+		return string_t("");
+	}
+	std::string result(static_cast<std::size_t>(needed), '\0');
+	WideCharToMultiByte(CP_UTF8, 0, value, -1, result.data(), needed, nullptr, nullptr);
+	if (!result.empty() && result.back() == '\0') {
+		result.pop_back();
+	}
+	return string_t(result);
+}
+
+[[nodiscard]] string_t take_win32_string(PWSTR value) {
+	string_t result = wide_to_utf8(value);
+	if (value != nullptr) {
+		CoTaskMemFree(value);
+	}
+	return result;
+}
+
+void enqueue_win32_event(
+	const shared_p<view> &target,
+	const char *type,
+	const string_t &message = string_t(""),
+	const string_t &url = string_t("")
+) {
+	(void) enqueue_event(target, string_t(type), message, url);
+}
+
+[[nodiscard]] string_t win32_current_source(ICoreWebView2 *core) {
+	if (core == nullptr) {
+		return string_t("");
+	}
+	PWSTR source = nullptr;
+	if (FAILED(core->get_Source(&source))) {
+		return string_t("");
+	}
+	return take_win32_string(source);
 }
 
 void resize_win32_controller(win32_webview_state *state) {
@@ -221,6 +271,90 @@ void flush_win32_pending(win32_webview_state *state) {
 		state->core->ExecuteScript(state->pending_script.c_str(), nullptr);
 		state->pending_script.clear();
 	}
+}
+
+void remove_win32_event_handlers(win32_webview_state *state) {
+	if (state == nullptr || state->core == nullptr) {
+		return;
+	}
+	if (state->has_navigation_starting_token) {
+		state->core->remove_NavigationStarting(state->navigation_starting_token);
+		state->has_navigation_starting_token = false;
+	}
+	if (state->has_navigation_completed_token) {
+		state->core->remove_NavigationCompleted(state->navigation_completed_token);
+		state->has_navigation_completed_token = false;
+	}
+	if (state->has_web_message_received_token) {
+		state->core->remove_WebMessageReceived(state->web_message_received_token);
+		state->has_web_message_received_token = false;
+	}
+}
+
+void register_win32_event_handlers(const win32_webview_state_ptr &state, const shared_p<view> &target) {
+	if (state == nullptr || state->core == nullptr || state->closed) {
+		return;
+	}
+
+	HRESULT hr = state->core->add_NavigationStarting(
+		Microsoft::WRL::Callback<ICoreWebView2NavigationStartingEventHandler>(
+			[target](ICoreWebView2 *, ICoreWebView2NavigationStartingEventArgs *args) -> HRESULT {
+				PWSTR uri = nullptr;
+				string_t url = string_t("");
+				if (args != nullptr && SUCCEEDED(args->get_Uri(&uri))) {
+					url = take_win32_string(uri);
+				}
+				enqueue_win32_event(target, "webview_navigation_started", string_t(""), url);
+				return S_OK;
+			}
+		).Get(),
+		&state->navigation_starting_token
+	);
+	state->has_navigation_starting_token = SUCCEEDED(hr);
+
+	hr = state->core->add_NavigationCompleted(
+		Microsoft::WRL::Callback<ICoreWebView2NavigationCompletedEventHandler>(
+			[target](ICoreWebView2 *sender, ICoreWebView2NavigationCompletedEventArgs *args) -> HRESULT {
+				BOOL success = FALSE;
+				if (args != nullptr) {
+					(void) args->get_IsSuccess(&success);
+				}
+				if (success) {
+					enqueue_win32_event(target, "webview_navigation_finished", string_t(""), win32_current_source(sender));
+					return S_OK;
+				}
+				COREWEBVIEW2_WEB_ERROR_STATUS status = COREWEBVIEW2_WEB_ERROR_STATUS_UNKNOWN;
+				if (args != nullptr) {
+					(void) args->get_WebErrorStatus(&status);
+				}
+				enqueue_win32_event(
+					target,
+					"webview_load_failed",
+					string_t(std::string("WebView2 navigation failed: ") + std::to_string(static_cast<int>(status))),
+					win32_current_source(sender)
+				);
+				return S_OK;
+			}
+		).Get(),
+		&state->navigation_completed_token
+	);
+	state->has_navigation_completed_token = SUCCEEDED(hr);
+
+	hr = state->core->add_WebMessageReceived(
+		Microsoft::WRL::Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+			[target](ICoreWebView2 *sender, ICoreWebView2WebMessageReceivedEventArgs *args) -> HRESULT {
+				PWSTR message = nullptr;
+				string_t payload = string_t("");
+				if (args != nullptr && SUCCEEDED(args->TryGetWebMessageAsString(&message))) {
+					payload = take_win32_string(message);
+				}
+				enqueue_win32_event(target, "webview_message", payload, win32_current_source(sender));
+				return S_OK;
+			}
+		).Get(),
+		&state->web_message_received_token
+	);
+	state->has_web_message_received_token = SUCCEEDED(hr);
 }
 
 [[nodiscard]] win32_webview_state *get_win32_state(const shared_p<view> &target) {
@@ -472,7 +606,7 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		nullptr,
 		nullptr,
 		Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-			[state](HRESULT result, ICoreWebView2Environment *environment) -> HRESULT {
+			[state, target](HRESULT result, ICoreWebView2Environment *environment) -> HRESULT {
 				if (FAILED(result) || environment == nullptr || state->closed) {
 					return result;
 				}
@@ -480,13 +614,15 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 				return environment->CreateCoreWebView2Controller(
 					state->parent,
 					Microsoft::WRL::Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-						[state](HRESULT controller_result, ICoreWebView2Controller *controller) -> HRESULT {
+						[state, target](HRESULT controller_result, ICoreWebView2Controller *controller) -> HRESULT {
 							if (FAILED(controller_result) || controller == nullptr || state->closed) {
 								return controller_result;
 							}
 							state->controller = controller;
 							controller->get_CoreWebView2(&state->core);
+							register_win32_event_handlers(state, target);
 							resize_win32_controller(state.get());
+							enqueue_win32_event(target, "webview_ready");
 							flush_win32_pending(state.get());
 							return S_OK;
 						}
@@ -774,6 +910,7 @@ void close(const shared_p<view> &target) {
 			win32_webview_state_ptr state = *holder;
 			if (state != nullptr) {
 				state->closed = true;
+				remove_win32_event_handlers(state.get());
 				if (state->controller != nullptr) {
 					state->controller->Close();
 				}
