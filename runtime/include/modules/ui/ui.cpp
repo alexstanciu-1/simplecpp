@@ -791,27 +791,6 @@ void app_exit(const shared_p<app> &owner) {
 
 #endif
 
-string_t event_type(const shared_p<event> &value) {
-	if (!value.has_value().native_value() || value.get() == nullptr) {
-		return string_t("");
-	}
-	return value->type;
-}
-
-shared_p<window> event_window(const shared_p<event> &value) {
-	if (!value.has_value().native_value() || value.get() == nullptr) {
-		return null;
-	}
-	return value->window_handle;
-}
-
-string_t event_text(const shared_p<event> &value) {
-	if (!value.has_value().native_value() || value.get() == nullptr) {
-		return string_t("");
-	}
-	return value->text;
-}
-
 } // namespace scpp::ui
 
 #endif
