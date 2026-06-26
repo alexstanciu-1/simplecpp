@@ -234,6 +234,41 @@ jobs:
           path: /tmp/scpp_ci_artifacts/macos-ui-${{ github.run_id }}.png
           if-no-files-found: warn
 
+      - name: Build macOS WKWebView smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang++ -std=c++23 -x objective-c++ -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_APPKIT=1 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1 \
+            tests/native/webview_smoke_macos.mm runtime/include/modules/ui/ui.cpp runtime/include/modules/webview/webview.cpp \
+            -framework Cocoa -framework WebKit \
+            -o webview_smoke_macos
+
+      - name: Launch macOS WKWebView smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/macos-webview-ui-${GITHUB_RUN_ID}.png"
+          pid_path="$SCPP_CI_ARTIFACT_DIR/webview_smoke_macos-${GITHUB_RUN_ID}.pid"
+          ./webview_smoke_macos &
+          echo $! > "$pid_path"
+          sleep 4
+          screencapture -x "$screenshot_path"
+          wait "$(cat "$pid_path")"
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
+
+      - name: Upload macOS WebView screenshot
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-webview-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/macos-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
       - name: Build iOS Simulator UI smoke app
         if: runner.os == 'macOS'
         shell: bash

@@ -45,6 +45,9 @@ final class ScppWebviewModuleTest
 			$this->assertContains('-DSCPP_HAS_WEBVIEW=1', implode(' ', $webviewBuild['compile_defines']), 'webview build spec should enable the webview facade');
 			if (PHP_OS_FAMILY === 'Linux') {
 				$this->assertContains('-DSCPP_WEBVIEW_BACKEND_WEBKITGTK=1', implode(' ', $webviewBuild['compile_defines']), 'Linux webview build spec should select the WebKitGTK backend');
+			} elseif (PHP_OS_FAMILY === 'Darwin') {
+				$this->assertContains('-DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1', implode(' ', $webviewBuild['compile_defines']), 'macOS webview build spec should select the WKWebView backend');
+				$this->assertContains('WebKit', implode(' ', $webviewBuild['ldflags']), 'macOS webview build spec should link WebKit');
 			}
 		}
 
