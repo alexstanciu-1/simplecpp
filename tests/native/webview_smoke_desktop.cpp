@@ -28,49 +28,12 @@ int main() {
 	}
 
 	auto view = view_result.value();
-	auto html_result = scpp::webview_runtime::load_html(
+	auto load_app_result = scpp::webview_runtime::load_app(
 		view,
-		scpp::string_t(R"HTML(<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-	body { font-family: sans-serif; margin: 48px; background: white; color: black; }
-	h1 { font-size: 32px; margin: 0 0 18px; }
-	.panel { border: 3px solid #2563eb; padding: 22px; width: 560px; }
-	.label { color: #334155; font-size: 14px; text-transform: uppercase; }
-	.status { font-size: 24px; font-weight: 700; margin-top: 10px; color: #15803d; }
-	.payload { font-family: monospace; margin-top: 14px; color: #334155; }
-</style>
-</head>
-<body>
-<h1>Simple C++ WebView</h1>
-<div class="panel">
-	<div class="label">WebKitGTK bridge smoke</div>
-	<div id="status" class="status">Waiting for bridge reply...</div>
-	<div id="payload" class="payload">invoke: bridge.ping</div>
-</div>
-<script>
-setTimeout(async function () {
-	const status = document.getElementById("status");
-	const payload = document.getElementById("payload");
-	try {
-		const reply = await window.scpp.invoke("bridge.ping", { source: "webkitgtk-smoke" });
-		status.textContent = "Bridge reply received";
-		payload.textContent = JSON.stringify(reply);
-		document.body.dataset.bridge = "ok";
-	} catch (error) {
-		status.textContent = "Bridge reply failed";
-		payload.textContent = error && error.message ? error.message : String(error);
-		document.body.dataset.bridge = "error";
-	}
-}, 500);
-</script>
-</body>
-</html>)HTML")
+		scpp::string_t("tests/fixtures/webview_app")
 	);
-	if (!html_result.has_value().native_value()) {
-		std::cerr << html_result.error()->get_message().native_value() << "\n";
+	if (!load_app_result.has_value().native_value()) {
+		std::cerr << load_app_result.error()->get_message().native_value() << "\n";
 		return 1;
 	}
 

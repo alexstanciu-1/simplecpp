@@ -187,9 +187,37 @@ Minimum first implementation:
 webview_create(ui_window $window): result<webview>
 webview_load_url(webview $view, string $url): result<bool>
 webview_load_html(webview $view, string $html): result<bool>
+webview_load_app(webview $view, string $folder): result<bool>
 webview_eval(webview $view, string $script): result<bool>
 webview_close(webview $view): void
 ```
+
+## File-Root App Loading
+
+`webview_load_app(...)` is the first app-folder loading slice.
+
+Contract:
+
+- accepts an absolute folder path or a relative folder path resolved from the process working directory
+- requires `index.html` directly inside that folder
+- loads `index.html` through a generated `file://` URL
+- allows ordinary relative local assets from that folder, including CSS, JavaScript, images, fonts, and `manifest.webmanifest`
+- keeps the JavaScript bridge injected the same way as `webview_load_html(...)` and `webview_load_url(...)`
+- on WebKitGTK, blocks top-level navigation outside the app folder once the app root is active, while allowing narrow built-in exceptions such as `about:blank`, `data:`, and `blob:`
+
+This is intended to be progressive-app layout compatible: responsive HTML/CSS, local JS modules, local media/fonts, and a web manifest can be authored in a portable browser-shaped way.
+
+It is not yet a full browser PWA contract. In particular, service workers, Cache API lifecycle, install prompts, push notifications, and browser-managed offline behavior are not promised by this file-root mode.
+
+The next packaging-grade asset slice should be a custom scheme rooted at the app folder, using a URL shape such as:
+
+```text
+app://index.html
+app://styles/app.css
+app://scripts/app.js
+```
+
+That future scheme should own MIME types, path traversal protection, generated/in-memory assets, and the stronger cross-platform PWA compatibility story.
 
 Later but not first:
 

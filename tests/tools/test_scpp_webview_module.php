@@ -29,6 +29,7 @@ final class ScppWebviewModuleTest
 		$catalog = new StanPhpRuntimeFunctionCatalog();
 		$this->assertSame(true, $catalog->hasFunction('webview_create'), 'STAN catalog should recognize webview_create');
 		$this->assertSame('webview', $catalog->requiredModule('webview_load_html'), 'STAN catalog should require the webview module for webview helpers');
+		$this->assertSame(true, $catalog->hasFunction('webview_load_app'), 'STAN catalog should recognize webview_load_app');
 		$this->assertSame(true, $catalog->hasFunction('webview_reply_ok'), 'STAN catalog should recognize webview_reply_ok');
 		$this->assertSame(true, $catalog->hasFunction('webview_reply_error'), 'STAN catalog should recognize webview_reply_error');
 		$this->assertSame(true, $catalog->hasFunction('webview_message_id'), 'STAN catalog should recognize webview_message_id');
@@ -40,6 +41,7 @@ final class ScppWebviewModuleTest
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
 		$this->assertContains('function webview_create(ui_window $window): result<webview>', $strictRuntimeSymbols, 'strict shallow runtime should expose result-returning webview_create');
 		$this->assertContains('function webview_load_html(webview $view, string $html): result<bool>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_load_html');
+		$this->assertContains('function webview_load_app(webview $view, string $folder): result<bool>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_load_app');
 		$this->assertContains('function webview_reply_ok(webview $view, int $id, string $value_json): result<bool>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_reply_ok');
 		$this->assertContains('function webview_reply_error(webview $view, int $id, string $code, string $message): result<bool>', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_reply_error');
 		$this->assertContains('function webview_message_id(ui_event $event): int', $strictRuntimeSymbols, 'strict shallow runtime should expose typed webview_message_id');

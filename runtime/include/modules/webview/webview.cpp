@@ -10,6 +10,7 @@
 #endif
 
 #include <charconv>
+#include <filesystem>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -141,6 +142,75 @@ void handle_bridge_message(WebKitUserContentManager *, WebKitJavascriptResult *m
 	event_value->window_handle = window;
 	event_value->text = string_t(text);
 	window->app_handle->pending_events.push_back(event_value);
+}
+
+[[nodiscard]] bool has_prefix_path(const std::filesystem::path &path, const std::filesystem::path &root) {
+	auto path_it = path.begin();
+	auto root_it = root.begin();
+	for (; root_it != root.end(); ++root_it, ++path_it) {
+		if (path_it == path.end() || *path_it != *root_it) {
+			return false;
+		}
+	}
+	return true;
+}
+
+[[nodiscard]] bool navigation_allowed(const shared_p<view> &target, const char *uri) {
+	if (uri == nullptr || !target.has_value().native_value() || target.get() == nullptr) {
+		return false;
+	}
+	if (target->app_root_path.native_value().empty()) {
+		return true;
+	}
+
+	const std::string value(uri);
+	if (value == "about:blank" || value.starts_with("data:") || value.starts_with("blob:")) {
+		return true;
+	}
+	if (!value.starts_with("file:")) {
+		return false;
+	}
+
+	GError *error = nullptr;
+	char *filename = g_filename_from_uri(uri, nullptr, &error);
+	if (error != nullptr) {
+		g_error_free(error);
+	}
+	if (filename == nullptr) {
+		return false;
+	}
+
+	bool allowed = false;
+	try {
+		const auto path = std::filesystem::weakly_canonical(std::filesystem::path(filename));
+		const auto root = std::filesystem::weakly_canonical(std::filesystem::path(target->app_root_path.native_value()));
+		allowed = has_prefix_path(path, root);
+	} catch (const std::filesystem::filesystem_error &) {
+		allowed = false;
+	}
+	g_free(filename);
+	return allowed;
+}
+
+gboolean handle_navigation_policy(WebKitWebView *, WebKitPolicyDecision *decision, WebKitPolicyDecisionType type, gpointer data) {
+	if (type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION) {
+		return FALSE;
+	}
+	auto *state = static_cast<bridge_state *>(data);
+	if (state == nullptr || !state->target.has_value().native_value()) {
+		webkit_policy_decision_ignore(decision);
+		return TRUE;
+	}
+
+	WebKitNavigationPolicyDecision *navigation = WEBKIT_NAVIGATION_POLICY_DECISION(decision);
+	WebKitURIRequest *request = webkit_navigation_policy_decision_get_request(navigation);
+	const char *uri = request == nullptr ? nullptr : webkit_uri_request_get_uri(request);
+	if (navigation_allowed(state->target, uri)) {
+		webkit_policy_decision_use(decision);
+	} else {
+		webkit_policy_decision_ignore(decision);
+	}
+	return TRUE;
 }
 #endif
 
@@ -322,6 +392,32 @@ void handle_bridge_message(WebKitUserContentManager *, WebKitJavascriptResult *m
 	return message->text.native_value();
 }
 
+[[nodiscard]] std::string file_url_from_path(const std::filesystem::path &path) {
+	std::string text = path.generic_string();
+	std::ostringstream out;
+	out << "file://";
+	if (!text.empty() && text[0] != '/') {
+		out << '/';
+	}
+	for (const unsigned char ch : text) {
+		const bool safe = (ch >= 'A' && ch <= 'Z')
+			|| (ch >= 'a' && ch <= 'z')
+			|| (ch >= '0' && ch <= '9')
+			|| ch == '/'
+			|| ch == '-'
+			|| ch == '_'
+			|| ch == '.'
+			|| ch == '~';
+		if (safe) {
+			out << static_cast<char>(ch);
+		} else {
+			const char *digits = "0123456789ABCDEF";
+			out << '%' << digits[(ch >> 4) & 0x0f] << digits[ch & 0x0f];
+		}
+	}
+	return out.str();
+}
+
 [[nodiscard]] result<shared_p<view>> require_view(const shared_p<view> &target, const char *function_name) {
 	if (!target.has_value().native_value() || target.get() == nullptr || target->closed.native_value()) {
 		return error_t(string_t(std::string(function_name) + " requires an open webview"));
@@ -377,6 +473,12 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		G_CALLBACK(handle_bridge_message),
 		state
 	);
+	g_signal_connect(
+		WEBKIT_WEB_VIEW(native),
+		"decide-policy",
+		G_CALLBACK(handle_navigation_policy),
+		state
+	);
 	return target;
 #else
 	return error_t(string_t("webview_create(): no native webview backend is selected in this build"));
@@ -392,6 +494,7 @@ result<bool_t> load_url(const shared_p<view> &target, const string_t &url) {
 		return error_t(string_t("webview_load_url(): url must not be empty"));
 	}
 	target->current_url = url;
+	target->app_root_path = string_t("");
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(target->native_handle), url.native_value().c_str());
 	return bool_t(true);
@@ -405,12 +508,47 @@ result<bool_t> load_html(const shared_p<view> &target, const string_t &html) {
 	if (!checked.has_value().native_value()) {
 		return *checked.error();
 	}
+	target->app_root_path = string_t("");
 #if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
 	webkit_web_view_load_html(WEBKIT_WEB_VIEW(target->native_handle), html.native_value().c_str(), nullptr);
 	return bool_t(true);
 #else
 	(void) html;
 	return error_t(string_t("webview_load_html(): no native webview backend is selected in this build"));
+#endif
+}
+
+result<bool_t> load_app(const shared_p<view> &target, const string_t &folder) {
+	auto checked = require_view(target, "webview_load_app()");
+	if (!checked.has_value().native_value()) {
+		return *checked.error();
+	}
+	if (folder.native_value().empty()) {
+		return error_t(string_t("webview_load_app(): app folder must not be empty"));
+	}
+
+	std::filesystem::path root;
+	try {
+		root = std::filesystem::weakly_canonical(std::filesystem::absolute(std::filesystem::path(folder.native_value())));
+	} catch (const std::filesystem::filesystem_error &) {
+		return error_t(string_t("webview_load_app(): app folder does not exist"));
+	}
+	if (!std::filesystem::is_directory(root)) {
+		return error_t(string_t("webview_load_app(): app folder does not exist"));
+	}
+
+	const auto index = root / "index.html";
+	if (!std::filesystem::is_regular_file(index)) {
+		return error_t(string_t("webview_load_app(): index.html was not found in app folder"));
+	}
+
+	target->app_root_path = string_t(root.string());
+	target->current_url = string_t(file_url_from_path(index));
+#if defined(SCPP_WEBVIEW_BACKEND_WEBKITGTK) && SCPP_WEBVIEW_BACKEND_WEBKITGTK
+	webkit_web_view_load_uri(WEBKIT_WEB_VIEW(target->native_handle), target->current_url.native_value().c_str());
+	return bool_t(true);
+#else
+	return error_t(string_t("webview_load_app(): no native webview backend is selected in this build"));
 #endif
 }
 

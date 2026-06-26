@@ -382,6 +382,7 @@ final class RuntimeShallowSourceGenerator
 				'webview_create' => ['return' => 'result<webview>', 'params' => [['name' => 'window', 'type' => 'ui_window']]],
 				'webview_load_url' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'url', 'type' => 'string']]],
 				'webview_load_html' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'html', 'type' => 'string']]],
+				'webview_load_app' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'folder', 'type' => 'string']]],
 				'webview_eval' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'script', 'type' => 'string']]],
 				'webview_reply_ok' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'id', 'type' => 'int'], ['name' => 'value_json', 'type' => 'string']]],
 				'webview_reply_error' => ['return' => 'result<bool>', 'params' => [['name' => 'view', 'type' => 'webview'], ['name' => 'id', 'type' => 'int'], ['name' => 'code', 'type' => 'string'], ['name' => 'message', 'type' => 'string']]],

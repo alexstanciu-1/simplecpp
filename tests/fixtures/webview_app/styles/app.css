@@ -1,0 +1,41 @@
+body {
+	background: white;
+	color: black;
+	font-family: system-ui, sans-serif;
+	margin: 48px;
+}
+
+.shell {
+	max-width: 680px;
+}
+
+h1 {
+	font-size: 32px;
+	margin: 0 0 18px;
+}
+
+.panel {
+	border: 3px solid #2563eb;
+	padding: 22px;
+	width: min(560px, calc(100vw - 120px));
+}
+
+.label {
+	color: #334155;
+	font-size: 14px;
+	text-transform: uppercase;
+}
+
+.status {
+	color: #15803d;
+	font-size: 24px;
+	font-weight: 700;
+	margin-top: 10px;
+}
+
+.payload {
+	color: #334155;
+	font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+	margin-top: 14px;
+	overflow-wrap: anywhere;
+}

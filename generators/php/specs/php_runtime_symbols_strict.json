@@ -138,6 +138,7 @@
         "webview_create": "webview_runtime::create",
         "webview_load_url": "webview_runtime::load_url",
         "webview_load_html": "webview_runtime::load_html",
+        "webview_load_app": "webview_runtime::load_app",
         "webview_eval": "webview_runtime::eval",
         "webview_reply_ok": "webview_runtime::reply_ok",
         "webview_reply_error": "webview_runtime::reply_error",

@@ -140,6 +140,7 @@ function var_dump(mixed $value): void {}
 function webview_close(webview $view): void {}
 function webview_create(ui_window $window): result<webview> {}
 function webview_eval(webview $view, string $script): result<bool> {}
+function webview_load_app(webview $view, string $folder): result<bool> {}
 function webview_load_html(webview $view, string $html): result<bool> {}
 function webview_load_url(webview $view, string $url): result<bool> {}
 function webview_message_command(ui_event $event): string {}
