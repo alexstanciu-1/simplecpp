@@ -17,8 +17,8 @@ public:
 	foreach_vector_entry_view(vector_t<T> *owner, std::size_t index) noexcept
 		: owner_(owner), index_(index) {}
 
-	[[nodiscard]] int_t key() const {
-		return int_t{static_cast<std::int64_t>(index_)};
+	[[nodiscard]] int_t<> key() const {
+		return int_t<>{static_cast<std::int64_t>(index_)};
 	}
 
 	[[nodiscard]] T value_copy() const requires std::copyable<T> {
@@ -40,8 +40,8 @@ public:
 	foreach_const_vector_entry_view(const vector_t<T> *owner, std::size_t index) noexcept
 		: owner_(owner), index_(index) {}
 
-	[[nodiscard]] int_t key() const {
-		return int_t{static_cast<std::int64_t>(index_)};
+	[[nodiscard]] int_t<> key() const {
+		return int_t<>{static_cast<std::int64_t>(index_)};
 	}
 
 	[[nodiscard]] T value_copy() const requires std::copyable<T> {

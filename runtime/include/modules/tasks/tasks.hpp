@@ -129,7 +129,7 @@ decltype(auto) invoke_callback(TCallback &callback, TItem item, const shared_p<c
 	}
 }
 
-[[nodiscard]] inline timeout_policy make_timeout_policy(const int_t &timeout_ms)
+[[nodiscard]] inline timeout_policy make_timeout_policy(const int_t<> &timeout_ms)
 {
 	const auto native_timeout = timeout_ms.native_value();
 	if (native_timeout <= 0) {
@@ -171,18 +171,18 @@ public:
 class context final {
 public:
 	shared_p<detail::batch_state> state = null;
-	int_t worker_id = int_t(0);
+	int_t<> worker_id = int_t<>(0);
 };
 
 class progress_info final {
 public:
 	shared_p<detail::batch_state> state = null;
 
-	[[nodiscard]] int_t total() const;
-	[[nodiscard]] int_t completed() const;
-	[[nodiscard]] int_t queued() const;
-	[[nodiscard]] int_t active() const;
-	[[nodiscard]] int_t errors() const;
+	[[nodiscard]] int_t<> total() const;
+	[[nodiscard]] int_t<> completed() const;
+	[[nodiscard]] int_t<> queued() const;
+	[[nodiscard]] int_t<> active() const;
+	[[nodiscard]] int_t<> errors() const;
 	[[nodiscard]] bool_t stop_requested() const;
 	[[nodiscard]] string_t status() const;
 };
@@ -192,10 +192,10 @@ public:
 	string_t message = string_t("");
 	string_t kind = string_t("");
 	mixed_t key = null;
-	int_t worker_id = int_t(0);
+	int_t<> worker_id = int_t<>(0);
 	bool_t timeout = bool_t(false);
 	string_t source_file = string_t("");
-	int_t source_line = int_t(0);
+	int_t<> source_line = int_t<>(0);
 };
 
 namespace detail {
@@ -224,7 +224,7 @@ inline shared_p<error> make_error_event(
 		event->timeout = timeout;
 	}
 	event->key = key;
-	event->worker_id = int_t(static_cast<std::int64_t>(worker_index));
+	event->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
 	return event;
 }
 
@@ -234,7 +234,7 @@ inline shared_p<error> make_unknown_error_event(const mixed_t &key, std::size_t 
 	event->message = string_t("unknown task error");
 	event->kind = string_t("unknown");
 	event->key = key;
-	event->worker_id = int_t(static_cast<std::int64_t>(worker_index));
+	event->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
 	return event;
 }
 
@@ -291,7 +291,7 @@ void set_result(TResultCollection &result, TKey &&key, TValue &&value)
 }
 
 template <typename TResultValue, typename TValue>
-void set_result(vector_t<TResultValue> &result, const int_t &key, TValue &&value)
+void set_result(vector_t<TResultValue> &result, const int_t<> &key, TValue &&value)
 {
 	const auto native_key = key.native_value();
 	if (native_key < 0) {
@@ -319,9 +319,9 @@ void set_result(vector_t<TResultValue> &result, const int_t &key, TValue &&value
 }
 
 template <typename TResultValue, typename TValue>
-void set_result(vector_t<TResultValue> &result, int_t &&key, TValue &&value)
+void set_result(vector_t<TResultValue> &result, int_t<> &&key, TValue &&value)
 {
-	set_result(result, static_cast<const int_t &>(key), std::forward<TValue>(value));
+	set_result(result, static_cast<const int_t<> &>(key), std::forward<TValue>(value));
 }
 
 template <typename TResultCollection, typename TKey, typename TValue>
@@ -463,102 +463,102 @@ void set_status(const shared_p<context> &resource, const string_t &value);
 #if SCPP_HAS_TASKS
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>;
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t &timeout_ms)
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>;
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>);
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>);
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>;
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t &timeout_ms)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>;
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>);
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>);
 
 template <typename TItem, typename TCallback>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback)
 ;
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, null_t, null_t, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler, const int_t<> &)
 ;
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>);
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>);
 
 template <typename TItem, typename TKey, typename TCallback>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback)
 ;
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, null_t, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler, const int_t<> &)
 ;
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>);
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>);
 
 template <typename TItem, typename TCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t &workers, TCallback callback)
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>
 {
-	return run(items, workers, callback, null, null, null, int_t(0));
+	return run(items, workers, callback, null, null, null, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>
 {
-	return run(items, workers, callback, null, null, error_handler, int_t(0));
+	return run(items, workers, callback, null, null, error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t)
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
-	return run(items, workers, callback, index_callback, null, null, int_t(0));
+	return run(items, workers, callback, index_callback, null, null, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	return run(items, workers, callback, null, std::move(result), error_handler, int_t(0));
+	return run(items, workers, callback, null, std::move(result), error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	return run(items, workers, callback, index_callback, std::move(result), error_handler, int_t(0));
+	return run(items, workers, callback, index_callback, std::move(result), error_handler, int_t<>(0));
 }
 
 namespace detail {
@@ -566,10 +566,10 @@ namespace detail {
 template <typename TItem, typename TCallback, typename TErrorHandler>
 [[nodiscard]] auto run_vector_with_state(
 	const vector_t<TItem> &items,
-	const int_t &workers,
+	const int_t<> &workers,
 	TCallback callback,
 	TErrorHandler error_handler,
-	const int_t &timeout_ms,
+	const int_t<> &timeout_ms,
 	const shared_p<batch_state> &state
 )
 	-> result_vector_t<callback_result_t<TCallback, TItem>>
@@ -606,7 +606,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 		threads.emplace_back([&, worker_index]() {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
-			worker_context->worker_id = int_t(static_cast<std::int64_t>(worker_index));
+			worker_context->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
 			bool active_item = false;
 			try {
 				while (true) {
@@ -647,7 +647,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 							state->stop_requested.store(true);
 							throw;
 						} else {
-							auto event = make_error_event(exception, mixed_t(int_t(static_cast<std::int64_t>(index))), worker_index);
+							auto event = make_error_event(exception, mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
 								invoke_error_handler(error_handler, items.at(index), event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
@@ -663,7 +663,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 							state->stop_requested.store(true);
 							throw;
 						} else {
-							auto event = make_unknown_error_event(mixed_t(int_t(static_cast<std::int64_t>(index))), worker_index);
+							auto event = make_unknown_error_event(mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
 								invoke_error_handler(error_handler, items.at(index), event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
@@ -719,14 +719,14 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 } // namespace detail
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>
 {
 	return detail::run_vector_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t &timeout_ms)
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	using result_t = detail::callback_result_t<TCallback, TItem>;
@@ -743,7 +743,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback>
 }
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	auto values = detail::run_vector_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
@@ -754,7 +754,7 @@ template <typename TItem, typename TCallback, typename TResultCollection, typena
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	auto values = detail::run_vector_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
@@ -766,33 +766,33 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 }
 
 template <typename TItem, typename TCallback>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t &workers, TCallback callback)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback)
 {
-	return start(items, workers, callback, null, null, null, int_t(0));
+	return start(items, workers, callback, null, null, null, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
 {
-	return start(items, workers, callback, null, null, error_handler, int_t(0));
+	return start(items, workers, callback, null, null, error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	return start(items, workers, callback, null, std::move(result), error_handler, int_t(0));
+	return start(items, workers, callback, null, std::move(result), error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	return start(items, workers, callback, index_callback, std::move(result), error_handler, int_t(0));
+	return start(items, workers, callback, index_callback, std::move(result), error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
 	auto resource = shared<batch>();
 	resource->state->total.store(static_cast<std::int64_t>(items.size()), std::memory_order_relaxed);
@@ -814,7 +814,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 }
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	auto resource = shared<batch>();
@@ -840,7 +840,7 @@ template <typename TItem, typename TCallback, typename TResultCollection, typena
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	auto resource = shared<batch>();
@@ -867,47 +867,47 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 }
 
 template <typename TItem, typename TKey, typename TCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>
 {
-	return run(items, workers, callback, null, null, null, int_t(0));
+	return run(items, workers, callback, null, null, null, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>
 {
-	return run(items, workers, callback, null, null, error_handler, int_t(0));
+	return run(items, workers, callback, null, null, error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
-	return run(items, workers, callback, index_callback, null, null, int_t(0));
+	return run(items, workers, callback, index_callback, null, null, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	return run(items, workers, callback, null, std::move(result), error_handler, int_t(0));
+	return run(items, workers, callback, null, std::move(result), error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	return run(items, workers, callback, index_callback, std::move(result), error_handler, int_t(0));
+	return run(items, workers, callback, index_callback, std::move(result), error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
 [[nodiscard]] auto run_hash_with_state(
 	const hash_t<TItem, TKey> &items,
-	const int_t &workers,
+	const int_t<> &workers,
 	TCallback callback,
 	TErrorHandler error_handler,
-	const int_t &timeout_ms,
+	const int_t<> &timeout_ms,
 	const shared_p<detail::batch_state> &state
 )
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>
@@ -951,7 +951,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 		threads.emplace_back([&, worker_index]() {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
-			worker_context->worker_id = int_t(static_cast<std::int64_t>(worker_index));
+			worker_context->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
 			bool active_item = false;
 			try {
 				while (true) {
@@ -1066,14 +1066,14 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>
 {
 	return run_hash_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	auto values = run_hash_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
@@ -1085,33 +1085,33 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 }
 
 template <typename TItem, typename TKey, typename TCallback>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback)
 {
-	return start(items, workers, callback, null, null, null, int_t(0));
+	return start(items, workers, callback, null, null, null, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
 {
-	return start(items, workers, callback, null, null, error_handler, int_t(0));
+	return start(items, workers, callback, null, null, error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	return start(items, workers, callback, null, std::move(result), error_handler, int_t(0));
+	return start(items, workers, callback, null, std::move(result), error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	return start(items, workers, callback, index_callback, std::move(result), error_handler, int_t(0));
+	return start(items, workers, callback, index_callback, std::move(result), error_handler, int_t<>(0));
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
 	auto resource = shared<batch>();
 	resource->state->total.store(static_cast<std::int64_t>(items.size()), std::memory_order_relaxed);
@@ -1133,7 +1133,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	auto resource = shared<batch>();
@@ -1160,7 +1160,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t &timeout_ms)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	using result_t = detail::callback_result_t<TCallback, TItem>;
@@ -1178,7 +1178,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	auto resource = shared<batch>();
@@ -1206,7 +1206,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	auto values = run_hash_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
@@ -1219,7 +1219,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
 	const auto &table = detail::require_task_input_table(items);
 	if (table.is_packed().native_value()) {
@@ -1231,19 +1231,19 @@ template <typename TCallback, typename TErrorHandler>
 }
 
 template <typename TCallback>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t &workers, TCallback callback)
+[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback)
 {
-	return run(items, workers, callback, null, null, null, int_t(0));
+	return run(items, workers, callback, null, null, null, int_t<>(0));
 }
 
 template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
 {
-	return run(items, workers, callback, null, null, error_handler, int_t(0));
+	return run(items, workers, callback, null, null, error_handler, int_t<>(0));
 }
 
 template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t &timeout_ms)
+[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
 	(void) detail::require_task_input_table(items);
 	auto resource = shared<batch>();
@@ -1262,15 +1262,15 @@ template <typename TCallback, typename TErrorHandler>
 }
 
 template <typename TCallback>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t &workers, TCallback callback)
+[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback)
 {
-	return start(items, workers, callback, null, null, null, int_t(0));
+	return start(items, workers, callback, null, null, null, int_t<>(0));
 }
 
 template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
 {
-	return start(items, workers, callback, null, null, error_handler, int_t(0));
+	return start(items, workers, callback, null, null, error_handler, int_t<>(0));
 }
 
 #else
@@ -1336,15 +1336,15 @@ inline void set_status(const shared_p<context> &, const string_t &)
 }
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const vector_t<TItem> &, const int_t &, TCallback, null_t, null_t, TErrorHandler, const int_t &)
+[[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler, const int_t<> &)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>;
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, null_t, TErrorHandler, const int_t &)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler, const int_t<> &)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>;
 
 template <typename TItem, typename TCallback>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback)
 {
 	throw runtime_error(
 		"task_start(): tasks runtime module is not enabled in this build",
@@ -1355,7 +1355,7 @@ template <typename TItem, typename TCallback>
 }
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, null_t, null_t, TErrorHandler)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler)
 {
 	throw runtime_error(
 		"task_start(): tasks runtime module is not enabled in this build",
@@ -1366,7 +1366,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 }
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, null_t, null_t, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler, const int_t<> &)
 {
 	throw runtime_error(
 		"task_start(): tasks runtime module is not enabled in this build",
@@ -1377,7 +1377,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 }
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1389,7 +1389,7 @@ template <typename TItem, typename TCallback, typename TResultCollection, typena
 }
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1401,7 +1401,7 @@ template <typename TItem, typename TCallback, typename TResultCollection, typena
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1413,7 +1413,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1425,7 +1425,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 }
 
 template <typename TItem, typename TKey, typename TCallback>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback)
 {
 	throw runtime_error(
 		"task_start(): tasks runtime module is not enabled in this build",
@@ -1436,7 +1436,7 @@ template <typename TItem, typename TKey, typename TCallback>
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, null_t, TErrorHandler)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler)
 {
 	throw runtime_error(
 		"task_start(): tasks runtime module is not enabled in this build",
@@ -1447,7 +1447,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, null_t, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler, const int_t<> &)
 {
 	throw runtime_error(
 		"task_start(): tasks runtime module is not enabled in this build",
@@ -1458,7 +1458,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1470,7 +1470,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1482,7 +1482,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1494,7 +1494,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1506,7 +1506,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TItem, typename TCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &, const int_t &, TCallback)
+[[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>
 {
 	throw runtime_error(
@@ -1518,7 +1518,7 @@ template <typename TItem, typename TCallback>
 }
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const vector_t<TItem> &, const int_t &, TCallback, null_t, null_t, TErrorHandler)
+[[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>
 {
 	throw runtime_error(
@@ -1530,7 +1530,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 }
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const vector_t<TItem> &, const int_t &, TCallback, null_t, null_t, TErrorHandler, const int_t &)
+[[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler, const int_t<> &)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>
 {
 	throw runtime_error(
@@ -1542,7 +1542,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &, const int_t &, TCallback, TIndexCallback, null_t, null_t, const int_t &)
+[[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t, const int_t<> &)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	throw runtime_error(
@@ -1554,7 +1554,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback>
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &, const int_t &, TCallback, TIndexCallback, null_t, null_t)
+[[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	throw runtime_error(
@@ -1566,7 +1566,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback>
 }
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1578,7 +1578,7 @@ template <typename TItem, typename TCallback, typename TResultCollection, typena
 }
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1590,7 +1590,7 @@ template <typename TItem, typename TCallback, typename TResultCollection, typena
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1602,7 +1602,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const vector_t<TItem> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler)
+[[nodiscard]] TResultCollection run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1614,7 +1614,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 }
 
 template <typename TItem, typename TKey, typename TCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t &, TCallback)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>
 {
 	throw runtime_error(
@@ -1626,7 +1626,7 @@ template <typename TItem, typename TKey, typename TCallback>
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, null_t, TErrorHandler)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>
 {
 	throw runtime_error(
@@ -1638,7 +1638,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, null_t, TErrorHandler, const int_t &)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, null_t, TErrorHandler, const int_t<> &)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>
 {
 	throw runtime_error(
@@ -1650,7 +1650,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t &, TCallback, TIndexCallback, null_t, null_t)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	throw runtime_error(
@@ -1662,7 +1662,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t &, TCallback, TIndexCallback, null_t, null_t, const int_t &)
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t, const int_t<> &)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	throw runtime_error(
@@ -1674,7 +1674,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1686,7 +1686,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &, const int_t &, TCallback, null_t, TResultCollection, TErrorHandler)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, null_t, TResultCollection, TErrorHandler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1698,7 +1698,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t &)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler, const int_t<> &)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(
@@ -1710,7 +1710,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
-[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &, const int_t &, TCallback, TIndexCallback, TResultCollection, TErrorHandler)
+[[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, TResultCollection, TErrorHandler)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
 	throw runtime_error(

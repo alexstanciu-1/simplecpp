@@ -40,7 +40,7 @@ std::unordered_set<std::string> &gate_registry() {
 
 } // namespace
 
-dbg_options_t normalize_options(int_t flags) {
+dbg_options_t normalize_options(int_t<> flags) {
 	dbg_options_t options;
 	options.flags = flags.native_value();
 	if (options.flags == 0) {
@@ -54,7 +54,7 @@ dbg_options_t normalize_options(int_t flags) {
 	return options;
 }
 
-bool has_flag(const dbg_options_t &options, int_t flag) noexcept {
+bool has_flag(const dbg_options_t &options, int_t<> flag) noexcept {
 	return (options.flags & flag.native_value()) != 0;
 }
 

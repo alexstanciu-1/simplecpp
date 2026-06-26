@@ -16,7 +16,7 @@ static void test_mysqli_connect_surface() {
 		username,
 		password,
 		database,
-		scpp::int_t(1),
+		scpp::int_t<>(1),
 		scpp::string_t(""));
 
 	// The exact value depends on whether the mysqli module is linked and whether

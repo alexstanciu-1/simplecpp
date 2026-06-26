@@ -329,7 +329,7 @@ public:
 };
 
 [[nodiscard]] sleep_awaitable sleep_for(std::chrono::milliseconds duration) noexcept;
-[[nodiscard]] sleep_awaitable sleep_ms(const int_t &duration_ms) noexcept;
+[[nodiscard]] sleep_awaitable sleep_ms(const int_t<> &duration_ms) noexcept;
 [[nodiscard]] yield_awaitable yield_now() noexcept;
 
 template <typename T>

@@ -99,7 +99,8 @@ inline bool_t php_is_null_value(const bool_t &) {
 	return bool_t(false);
 }
 
-inline bool_t php_is_null_value(const int_t &) {
+template <typename Rep>
+inline bool_t php_is_null_value(const int_t<Rep> &) {
 	return bool_t(false);
 }
 
@@ -161,7 +162,7 @@ requires (
 	&& !std::is_same_v<std::remove_cvref_t<T>, nullptr_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, mixed_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, bool_t>
-	&& !std::is_same_v<std::remove_cvref_t<T>, int_t>
+	&& !::scpp::detail::is_int_t_v<std::remove_cvref_t<T>>
 	&& !std::is_same_v<std::remove_cvref_t<T>, float_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, string_t>
 	&& !std::is_same_v<std::remove_cvref_t<T>, false_sentinel_t>
@@ -238,7 +239,7 @@ inline bool_t identical(const bool_t &left, const RightMixed &right) {
 
 template <typename LeftMixed>
 requires std::is_same_v<std::remove_cvref_t<LeftMixed>, mixed_t>
-inline bool_t identical(const LeftMixed &left, const int_t &right) {
+inline bool_t identical(const LeftMixed &left, const int_t<> &right) {
 	if (left.kind() != mixed_t::kind_t::int_v) {
 		return bool_t(false);
 	}
@@ -247,7 +248,7 @@ inline bool_t identical(const LeftMixed &left, const int_t &right) {
 
 template <typename RightMixed>
 requires std::is_same_v<std::remove_cvref_t<RightMixed>, mixed_t>
-inline bool_t identical(const int_t &left, const RightMixed &right) {
+inline bool_t identical(const int_t<> &left, const RightMixed &right) {
 	return identical(right, left);
 }
 

@@ -4,11 +4,11 @@
 
 int main() {
 	scpp::mixed_t ints;
-	ints[0] = scpp::int_t(1);
-	ints[1] = scpp::int_t(2);
-	ints[2] = scpp::int_t(3);
+	ints[0] = scpp::int_t<>(1);
+	ints[1] = scpp::int_t<>(2);
+	ints[2] = scpp::int_t<>(3);
 
-	scpp::int_t extracted_int = ints[1];
+	scpp::int_t<> extracted_int = ints[1];
 	scpp::float_t extracted_float_from_int = ints[1];
 
 	scpp::mixed_t floats;

@@ -54,7 +54,7 @@ private:
 
 	union {
 		bool_t bool_value_;
-		int_t int_value_;
+		int_t<> int_value_;
 		float_t float_value_;
 		unique_p<string_t> string_value_;
 		unique_p<hash_t<mixed_t>> table_value_;
@@ -86,7 +86,7 @@ public:
 	mixed_t(nullopt_t) noexcept;
 	mixed_t(nullptr_t) noexcept;
 	mixed_t(const bool_t &value) noexcept;
-	mixed_t(const int_t &value) noexcept;
+	mixed_t(const int_t<> &value) noexcept;
 	mixed_t(const float_t &value) noexcept;
 	mixed_t(const string_t &value);
 	mixed_t(const char *value);
@@ -111,7 +111,7 @@ public:
 	mixed_t &operator=(nullopt_t) noexcept;
 	mixed_t &operator=(nullptr_t) noexcept;
 	mixed_t &operator=(const bool_t &value) noexcept;
-	mixed_t &operator=(const int_t &value) noexcept;
+	mixed_t &operator=(const int_t<> &value) noexcept;
 	mixed_t &operator=(const float_t &value) noexcept;
 	mixed_t &operator=(const string_t &value);
 	mixed_t &operator=(const char *value);
@@ -138,7 +138,7 @@ public:
 	[[nodiscard]] bool_t is_string() const noexcept;
 	[[nodiscard]] bool_t is_hash() const noexcept;
 	[[nodiscard]] bool_t get_bool() const;
-	[[nodiscard]] int_t get_int() const;
+	[[nodiscard]] int_t<> get_int() const;
 	[[nodiscard]] float_t get_float() const;
 	[[nodiscard]] const string_t &get_string() const;
 	[[nodiscard]] string_t &get_string();
@@ -146,8 +146,8 @@ public:
 	[[nodiscard]] hash_t<mixed_t> &get_hash();
 	[[nodiscard]] const bool_t *try_get_bool() const noexcept;
 	[[nodiscard]] bool_t *try_get_bool() noexcept;
-	[[nodiscard]] const int_t *try_get_int() const noexcept;
-	[[nodiscard]] int_t *try_get_int() noexcept;
+	[[nodiscard]] const int_t<> *try_get_int() const noexcept;
+	[[nodiscard]] int_t<> *try_get_int() noexcept;
 	[[nodiscard]] const float_t *try_get_float() const noexcept;
 	[[nodiscard]] float_t *try_get_float() noexcept;
 	[[nodiscard]] const string_t *try_get_string() const noexcept;
@@ -155,7 +155,7 @@ public:
 	[[nodiscard]] const hash_t<mixed_t> *try_get_hash() const noexcept;
 	[[nodiscard]] hash_t<mixed_t> *try_get_hash() noexcept;
 	[[nodiscard]] bool_t bool_value() const;
-	[[nodiscard]] int_t int_value() const;
+	[[nodiscard]] int_t<> int_value() const;
 	[[nodiscard]] float_t float_value() const;
 
 	[[nodiscard]] string_t *string_if() noexcept;
@@ -176,7 +176,7 @@ public:
 	// - as_*_ref are transitional legacy hooks and are disabled in the current safe subset
 	// - conversion operators remain in v1 only to preserve valid Visible Intention sites
 	//   from specs/dynamic_types.md sections 1.2 and 1.3 until generator parity exists
-	[[nodiscard]] int_t &as_int_ref();
+	[[nodiscard]] int_t<> &as_int_ref();
 	[[nodiscard]] float_t &as_float_ref();
 	[[nodiscard]] bool_t &as_bool_ref();
 	[[nodiscard]] string_t &as_string_ref();
@@ -186,7 +186,7 @@ public:
 	// Do not remove until the generator can reliably materialize explicit typed bridges
 	// for all valid Visible Intention sites listed in specs/dynamic_types.md sections 1.2 and 1.3.
 	operator bool_t() const;
-	operator int_t() const;
+	operator int_t<>() const;
 	operator float_t() const;
 	operator string_t() const;
 
@@ -211,38 +211,38 @@ public:
 	mixed_t &operator>>=(const mixed_t &right);
 
 	// Fat Variant Operations
-	mixed_t& operator[](const int_t& key);
+	mixed_t& operator[](const int_t<>& key);
 	mixed_t& operator[](const string_t& key);
 	mixed_t& operator[](const mixed_t& key);
 	mixed_t& operator[](const char* key);
 	mixed_t& operator[](int native_key);
 
-	const mixed_t& operator[](const int_t& key) const;
+	const mixed_t& operator[](const int_t<>& key) const;
 	const mixed_t& operator[](const string_t& key) const;
 	const mixed_t& operator[](const mixed_t& key) const;
 	const mixed_t& operator[](const char* key) const;
 	const mixed_t& operator[](int native_key) const;
 
 	void append(const mixed_t& val);
-	[[nodiscard]] bool remove(const int_t& key);
+	[[nodiscard]] bool remove(const int_t<>& key);
 	[[nodiscard]] bool remove(const string_t& key);
 	[[nodiscard]] bool remove(const mixed_t& key);
 
-	[[nodiscard]] int_t size() const;
+	[[nodiscard]] int_t<> size() const;
 	[[nodiscard]] bool empty() const;
-	mixed_t& at(const int_t& key);
-	const mixed_t& at(const int_t& key) const;
+	mixed_t& at(const int_t<>& key);
+	const mixed_t& at(const int_t<>& key) const;
 	mixed_t& at(const string_t& key);
 	const mixed_t& at(const string_t& key) const;
 
 	[[nodiscard]] mixed_t get(const mixed_t& key) const;
-	[[nodiscard]] mixed_t get(const int_t& key) const;
+	[[nodiscard]] mixed_t get(const int_t<>& key) const;
 	[[nodiscard]] mixed_t get(const string_t& key) const;
 	[[nodiscard]] mixed_t get(const char* key) const;
 	[[nodiscard]] mixed_t get(int native_key) const;
 	
 	bool_t isset(const mixed_t& key) const;
-	bool_t isset(const int_t& key) const;
+	bool_t isset(const int_t<>& key) const;
 	bool_t isset(const string_t& key) const;
 	bool_t isset(const char* key) const;
 	bool_t isset(int native_key) const;
@@ -357,7 +357,7 @@ public:
 	}
 };
 
-using int_ref = scalar_ref<int_t>;
+using int_ref = scalar_ref<int_t<>>;
 using float_ref = scalar_ref<float_t>;
 using bool_ref = scalar_ref<bool_t>;
 using string_ref = scalar_ref<string_t>;

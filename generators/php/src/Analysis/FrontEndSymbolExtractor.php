@@ -578,13 +578,18 @@ final class FrontEndSymbolExtractor
 			if (isset($seen[$key])) {
 				continue;
 			}
+			$literalIntValue = $this->inferIntegerLiteralValue($payload['expr'] ?? null);
 			$seen[$key] = true;
-			$locals[] = [
+			$local = [
 				'line' => $statement->line,
 				'name' => $name,
 				'type' => $type,
 				'is_initialized' => true,
 			];
+			if ($literalIntValue !== null) {
+				$local['literal_int_value'] = $literalIntValue;
+			}
+			$locals[] = $local;
 		}
 		return $locals;
 	}
@@ -942,6 +947,31 @@ final class FrontEndSymbolExtractor
 		}
 		if (is_string($expr)) {
 			return 'string';
+		}
+		return null;
+	}
+
+	private function inferIntegerLiteralValue(mixed $expr): ?int
+	{
+		if (is_int($expr)) {
+			return $expr;
+		}
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::UNARY_OP) {
+			return null;
+		}
+		$inner = $this->inferIntegerLiteralValue($expr->children['expr'] ?? null);
+		if ($inner === null) {
+			return null;
+		}
+		$flag = (int) ($expr->flags ?? 0);
+		if ($flag === AstKind::UNARY_PLUS) {
+			return $inner;
+		}
+		if ($flag === AstKind::UNARY_MINUS) {
+			return -$inner;
 		}
 		return null;
 	}

@@ -10,7 +10,7 @@ static void test_shared_pointer_behavior() {
 		(void)empty.deref();
 	});
 
-	const auto value = scpp::shared<scpp_test::sample_object>(scpp::int_t(21));
+	const auto value = scpp::shared<scpp_test::sample_object>(scpp::int_t<>(21));
 	assert(value.has_value().native_value() == true);
 	assert((value != scpp::null).native_value() == true);
 	assert(value.get() != nullptr);
@@ -30,7 +30,7 @@ static void test_unique_pointer_behavior() {
 		(void)empty.deref();
 	});
 
-	auto value = scpp::unique<scpp_test::sample_object>(scpp::int_t(8));
+	auto value = scpp::unique<scpp_test::sample_object>(scpp::int_t<>(8));
 	assert(value.has_value().native_value() == true);
 	assert(value.deref().value.native_value() == 8);
 	assert(value.arrow()->value.native_value() == 8);
@@ -43,10 +43,10 @@ static void test_unique_pointer_behavior() {
 
 // Verifies create(), weak(), lock(), and the current expired-based null semantics.
 static void test_weak_pointer_behavior() {
-	const auto created = scpp::create<scpp_test::sample_object>(scpp::int_t(33));
+	const auto created = scpp::create<scpp_test::sample_object>(scpp::int_t<>(33));
 	assert(created.deref().value.native_value() == 33);
 
-	auto owner = scpp::shared<scpp_test::sample_object>(scpp::int_t(55));
+	auto owner = scpp::shared<scpp_test::sample_object>(scpp::int_t<>(55));
 	const auto observer = scpp::weak(owner);
 	assert(observer.expired().native_value() == false);
 	assert((observer != scpp::null).native_value() == true);
@@ -62,7 +62,7 @@ static void test_weak_pointer_behavior() {
 
 // Verifies the PHP-style weak_ref wrapper and weakref/weakref_get helpers.
 static void test_php_weakref_behavior() {
-	auto owner = scpp::shared<scpp_test::sample_object>(scpp::int_t(89));
+	auto owner = scpp::shared<scpp_test::sample_object>(scpp::int_t<>(89));
 	const auto observer = scpp::php::weakref(owner);
 	assert(observer.expired().native_value() == false);
 	assert((observer != scpp::null).native_value() == true);

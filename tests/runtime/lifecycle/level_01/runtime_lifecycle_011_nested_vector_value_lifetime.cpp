@@ -5,8 +5,8 @@ int main() {
 	{
 		scpp::vector_t<scpp::vector_t<scpp::value_p<runtime_test::lifetime_probe>>> outer;
 		scpp::vector_t<scpp::value_p<runtime_test::lifetime_probe>> inner;
-		inner.append(scpp::value<runtime_test::lifetime_probe>(scpp::int_t(1)));
-		inner.append(scpp::value<runtime_test::lifetime_probe>(scpp::int_t(2)));
+		inner.append(scpp::value<runtime_test::lifetime_probe>(scpp::int_t<>(1)));
+		inner.append(scpp::value<runtime_test::lifetime_probe>(scpp::int_t<>(2)));
 		outer.append(std::move(inner));
 		assert(runtime_test::lifetime_probe::alive == 2);
 	}
