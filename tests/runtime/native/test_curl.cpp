@@ -88,7 +88,7 @@ static void test_error_paths_are_explicit() {
 	assert(scpp::curl::errno_code(handle).native_value() != 0);
 	assert(scpp::curl::error_string(handle).native_value().find("CURLOPT_URL") != std::string::npos);
 
-	const auto bad_option = scpp::curl::setopt(handle, scpp::int_t(9999), scpp::string_t("x"));
+	const auto bad_option = scpp::curl::setopt(handle, scpp::int_t<>(9999), scpp::string_t("x"));
 	assert(bad_option.has_error().native_value());
 	assert(!bad_option.error()->get_message().native_value().empty());
 
@@ -109,7 +109,7 @@ static void test_reset_restores_defaults() {
 	assert(created.has_value().native_value());
 	auto handle = created.value();
 
-	assert(scpp::curl::setopt(handle, scpp::CURLOPT_TIMEOUT, scpp::int_t(12)).has_value().native_value());
+	assert(scpp::curl::setopt(handle, scpp::CURLOPT_TIMEOUT, scpp::int_t<>(12)).has_value().native_value());
 	assert(scpp::curl::setopt(handle, scpp::CURLOPT_POST, scpp::bool_t(true)).has_value().native_value());
 	assert(scpp::curl::setopt(handle, scpp::CURLOPT_POSTFIELDS, scpp::string_t("abc")).has_value().native_value());
 

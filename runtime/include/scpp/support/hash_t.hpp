@@ -36,7 +36,7 @@ template <typename T> struct is_table_value : std::false_type {};
 
 template <> struct is_table_value<null_t>   : std::true_type {};
 template <> struct is_table_value<bool_t>   : std::true_type {};
-template <> struct is_table_value<int_t>    : std::true_type {};
+template <> struct is_table_value<int_t<>>    : std::true_type {};
 template <> struct is_table_value<float_t>  : std::true_type {};
 template <> struct is_table_value<string_t> : std::true_type {};
 template <> struct is_table_value<mixed_t>  : std::true_type {};
@@ -116,7 +116,7 @@ struct dyn_keys final {
 #endif
 	}
 
-	[[nodiscard]] static std::uint32_t pack(const int_t &key) {
+	[[nodiscard]] static std::uint32_t pack(const int_t<> &key) {
 		return static_cast<std::uint32_t>(key.native_value());
 	}
 
@@ -150,12 +150,12 @@ struct key_ops<string_t> final {
 };
 
 template <>
-struct key_ops<int_t> final {
-	[[nodiscard]] static std::uint64_t hash(const int_t &key) {
+struct key_ops<int_t<>> final {
+	[[nodiscard]] static std::uint64_t hash(const int_t<> &key) {
 		return mix64(static_cast<std::uint64_t>(key.native_value()));
 	}
 
-	[[nodiscard]] static bool equal(const int_t &left, const int_t &right) {
+	[[nodiscard]] static bool equal(const int_t<> &left, const int_t<> &right) {
 		return left.native_value() == right.native_value();
 	}
 };
@@ -425,7 +425,7 @@ private:
 		return values_[index];
 	}
 
-	[[nodiscard]] int_t next_append_key() const requires std::same_as<T_KEY, int_t> {
+	[[nodiscard]] int_t<> next_append_key() const requires std::same_as<T_KEY, int_t<>> {
 		std::int64_t max_key = -1;
 		for (std::uint32_t i = 0; i < keys_.size(); ++i) {
 			if (!live_[i]) continue;
@@ -433,7 +433,7 @@ private:
 				max_key = keys_[i].native_value();
 			}
 		}
-		return int_t{max_key + 1};
+		return int_t<>{max_key + 1};
 	}
 
 public:
@@ -618,22 +618,22 @@ public:
 		return const_entry_iterator(this, static_cast<std::uint32_t>(values_.size()));
 	}
 
-	[[nodiscard]] int_t append(const T_VALUE &value) requires std::copyable<T_VALUE> {
-		if constexpr (std::same_as<T_KEY, int_t>) {
+	[[nodiscard]] int_t<> append(const T_VALUE &value) requires std::copyable<T_VALUE> {
+		if constexpr (std::same_as<T_KEY, int_t<>>) {
 			const auto key = next_append_key();
 			insert_or_assign_key(key, T_VALUE{value});
 			return key;
 		}
-		throw std::runtime_error("hash_t::append requires int_t keys");
+		throw std::runtime_error("hash_t::append requires int_t<> keys");
 	}
 
-	[[nodiscard]] int_t append(T_VALUE &&value) {
-		if constexpr (std::same_as<T_KEY, int_t>) {
+	[[nodiscard]] int_t<> append(T_VALUE &&value) {
+		if constexpr (std::same_as<T_KEY, int_t<>>) {
 			const auto key = next_append_key();
 			insert_or_assign_key(key, std::move(value));
 			return key;
 		}
-		throw std::runtime_error("hash_t::append requires int_t keys");
+		throw std::runtime_error("hash_t::append requires int_t<> keys");
 	}
 
 	hash_t &set(const T_KEY &key, const T_VALUE &value) requires(std::copyable<T_KEY> && std::copyable<T_VALUE>) {
@@ -985,7 +985,7 @@ private:
 
 	[[nodiscard]] mixed_t key_from_physical_index(std::uint32_t index) const {
 		if (std::holds_alternative<std::monostate>(keys_)) {
-			return mixed_t(int_t{static_cast<std::int64_t>(index)});
+			return mixed_t(int_t<>{static_cast<std::int64_t>(index)});
 		}
 		const auto &keys = std::get<native_keys_t>(keys_);
 		if (index >= keys.size() || keys[index] == TOMBSTONE_KEY) {
@@ -1200,19 +1200,19 @@ public:
 		return const_entry_iterator(this, static_cast<std::uint32_t>(values_.size()));
 	}
 
-	[[nodiscard]] int_t append(const mixed_t &value) {
+	[[nodiscard]] int_t<> append(const mixed_t &value) {
 		const auto key = next_append_key();
 		insert_or_assign_int(key, mixed_t{value});
-		return int_t{static_cast<std::int64_t>(key)};
+		return int_t<>{static_cast<std::int64_t>(key)};
 	}
 
-	[[nodiscard]] int_t append(mixed_t &&value) {
+	[[nodiscard]] int_t<> append(mixed_t &&value) {
 		const auto key = next_append_key();
 		insert_or_assign_int(key, std::move(value));
-		return int_t{static_cast<std::int64_t>(key)};
+		return int_t<>{static_cast<std::int64_t>(key)};
 	}
 
-	hash_t &set(const int_t &key, const mixed_t &value) {
+	hash_t &set(const int_t<> &key, const mixed_t &value) {
 		insert_or_assign_int(hash_detail::dyn_keys::pack(key), mixed_t{value});
 		return *this;
 	}
@@ -1227,7 +1227,7 @@ public:
 		return *this;
 	}
 
-	hash_t &set(const int_t &key, mixed_t &&value) {
+	hash_t &set(const int_t<> &key, mixed_t &&value) {
 		insert_or_assign_int(hash_detail::dyn_keys::pack(key), std::move(value));
 		return *this;
 	}
@@ -1242,7 +1242,7 @@ public:
 		return *this;
 	}
 
-	[[nodiscard]] bool_t has(const int_t &key) const {
+	[[nodiscard]] bool_t has(const int_t<> &key) const {
 		return bool_t{find_int(hash_detail::dyn_keys::pack(key)).first};
 	}
 
@@ -1254,7 +1254,7 @@ public:
 		return bool_t{find_int(hash_detail::dyn_keys::pack(key)).first};
 	}
 
-	[[nodiscard]] nullable<mixed_t> find(const int_t &key) const {
+	[[nodiscard]] nullable<mixed_t> find(const int_t<> &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) return nullable<mixed_t>(nullopt);
 		nullable<mixed_t> result;
@@ -1278,12 +1278,12 @@ public:
 		return result;
 	}
 
-	[[nodiscard]] mixed_t _find_val(const int_t &key) const;
+	[[nodiscard]] mixed_t _find_val(const int_t<> &key) const;
 	[[nodiscard]] mixed_t _find_val(const string_t &key) const;
 	[[nodiscard]] mixed_t _find_val(const mixed_t &key) const;
 
 	template <typename U = mixed_t>
-	[[nodiscard]] U try_ref(const int_t &key) const
+	[[nodiscard]] U try_ref(const int_t<> &key) const
 		requires(detail::is_shared_p_v<U> && std::copyable<U>)
 	{
 		return at(key);
@@ -1304,7 +1304,7 @@ public:
 	}
 
 	template <typename U = mixed_t>
-	[[nodiscard]] U try_ref(const int_t &) const
+	[[nodiscard]] U try_ref(const int_t<> &) const
 		requires((!detail::is_shared_p_v<U>) && std::copyable<U>)
 	{
 		throw std::runtime_error("hash_t::try_ref is supported only for shared_p<T> values in the current safe subset");
@@ -1324,9 +1324,9 @@ public:
 		throw std::runtime_error("hash_t::try_ref is supported only for shared_p<T> values in the current safe subset");
 	}
 
-	mixed_t &at(const int_t &key) {
+	mixed_t &at(const int_t<> &key) {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
-		if (!found) throw std::out_of_range("hash_t::at(int_t): not found");
+		if (!found) throw std::out_of_range("hash_t::at(int_t<>): not found");
 		return *ptr;
 	}
 
@@ -1342,9 +1342,9 @@ public:
 		return *ptr;
 	}
 
-	const mixed_t &at(const int_t &key) const {
+	const mixed_t &at(const int_t<> &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
-		if (!found) throw std::out_of_range("hash_t::at(int_t) const: not found");
+		if (!found) throw std::out_of_range("hash_t::at(int_t<>) const: not found");
 		return *ptr;
 	}
 
@@ -1360,7 +1360,7 @@ public:
 		return *ptr;
 	}
 
-	[[nodiscard]] bool remove(const int_t &key) {
+	[[nodiscard]] bool remove(const int_t<> &key) {
 		return erase_int(hash_detail::dyn_keys::pack(key));
 	}
 
@@ -1372,7 +1372,7 @@ public:
 		return erase_int(hash_detail::dyn_keys::pack(key));
 	}
 
-	mixed_t &operator[](const int_t &key) {
+	mixed_t &operator[](const int_t<> &key) {
 		const auto packed = hash_detail::dyn_keys::pack(key);
 		auto [found, ptr] = find_int(packed);
 		if (!found) {
@@ -1402,7 +1402,7 @@ public:
 		return *ptr;
 	}
 
-	const mixed_t &operator[](const int_t &key) const {
+	const mixed_t &operator[](const int_t<> &key) const {
 		auto [found, ptr] = find_int(hash_detail::dyn_keys::pack(key));
 		if (!found) {
 			static const mixed_t null_value{};
@@ -1433,7 +1433,7 @@ public:
 	void debug_visit_entries(Fn &&fn) const {
 		if (std::holds_alternative<std::monostate>(keys_)) {
 			for (std::uint32_t i = 0; i < values_.size(); ++i) {
-				fn(int_t{static_cast<std::int64_t>(i)}, values_[i]);
+				fn(int_t<>{static_cast<std::int64_t>(i)}, values_[i]);
 			}
 			return;
 		}
@@ -1445,7 +1445,7 @@ public:
 				fn(global_string_pool::instance().resolve(key), values_[i]);
 				continue;
 			}
-			fn(int_t{static_cast<std::int64_t>(key)}, values_[i]);
+			fn(int_t<>{static_cast<std::int64_t>(key)}, values_[i]);
 		}
 	}
 };
@@ -1466,11 +1466,11 @@ inline mixed_t hash_detail::dyn_keys::unpack(std::uint32_t key) {
 	if (is_string(key)) {
 		return mixed_t(global_string_pool::instance().resolve(key));
 	}
-	return mixed_t(int_t{static_cast<std::int64_t>(key)});
+	return mixed_t(int_t<>{static_cast<std::int64_t>(key)});
 }
 
 struct table_build_item_t final {
-	std::variant<std::monostate, int_t, string_t> key;
+	std::variant<std::monostate, int_t<>, string_t> key;
 	mixed_t value;
 };
 
@@ -1480,13 +1480,13 @@ template <typename V>
 }
 
 template <typename V>
-[[nodiscard]] inline table_build_item_t table_kv_(const int_t &key, V &&value) {
+[[nodiscard]] inline table_build_item_t table_kv_(const int_t<> &key, V &&value) {
 	return {key, mixed_t(std::forward<V>(value))};
 }
 
 template <typename V>
 [[nodiscard]] inline table_build_item_t table_kv_(int key, V &&value) {
-	return table_kv_(int_t{static_cast<std::int64_t>(key)}, std::forward<V>(value));
+	return table_kv_(int_t<>{static_cast<std::int64_t>(key)}, std::forward<V>(value));
 }
 
 template <typename V>
@@ -1504,8 +1504,8 @@ inline void table_add_item_(hash_t<mixed_t> &table, const table_build_item_t &it
 		(void)table.append(item.value);
 		return;
 	}
-	if (std::holds_alternative<int_t>(item.key)) {
-		table.set(std::get<int_t>(item.key), item.value);
+	if (std::holds_alternative<int_t<>>(item.key)) {
+		table.set(std::get<int_t<>>(item.key), item.value);
 		return;
 	}
 	table.set(std::get<string_t>(item.key), item.value);

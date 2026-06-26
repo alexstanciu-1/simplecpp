@@ -3,7 +3,7 @@
 int main() {
 	const scpp::float_t left(2.5);
 	const scpp::float_t right(0.5);
-	const scpp::int_t count(2);
+	const scpp::int_t<> count(2);
 
 	assert((+left).native_value() == 2.5);
 	assert((-right).native_value() == -0.5);
@@ -18,8 +18,8 @@ int main() {
 
 	scpp::float_t value(1.5);
 	value += scpp::float_t(0.5);
-	value -= scpp::int_t(1);
-	value *= scpp::int_t(4);
+	value -= scpp::int_t<>(1);
+	value *= scpp::int_t<>(4);
 	value /= scpp::float_t(2.0);
 	assert(value.native_value() == 2.0);
 	return 0;

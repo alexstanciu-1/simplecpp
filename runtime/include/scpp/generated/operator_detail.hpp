@@ -19,24 +19,27 @@
 
 namespace scpp::detail::generated_operator_detail {
 
-[[nodiscard]] inline constexpr int_t unary_plus(const int_t &value) noexcept {
-	return int_t(+value.native_value());
+template <typename Rep>
+[[nodiscard]] inline constexpr int_t<Rep> unary_plus(const int_t<Rep> &value) noexcept {
+	return int_t<Rep>(+value.native_value());
 }
 
 [[nodiscard]] inline constexpr float_t unary_plus(const float_t &value) noexcept {
 	return float_t(+value.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t unary_minus(const int_t &value) noexcept {
-	return int_t(-value.native_value());
+template <typename Rep>
+[[nodiscard]] inline constexpr int_t<Rep> unary_minus(const int_t<Rep> &value) noexcept {
+	return int_t<Rep>(-value.native_value());
 }
 
 [[nodiscard]] inline constexpr float_t unary_minus(const float_t &value) noexcept {
 	return float_t(-value.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t bitwise_not(const int_t &value) noexcept {
-	return int_t(~value.native_value());
+template <typename Rep>
+[[nodiscard]] inline constexpr int_t<Rep> bitwise_not(const int_t<Rep> &value) noexcept {
+	return int_t<Rep>(~value.native_value());
 }
 
 template <typename Value>
@@ -44,7 +47,8 @@ template <typename Value>
 	return static_cast<bool>(::scpp::php::condition_truthy(value));
 }
 
-[[nodiscard]] inline constexpr bool is_zero_divisor(const int_t &value) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool is_zero_divisor(const int_t<Rep> &value) noexcept {
 	return value.native_value() == 0;
 }
 
@@ -70,15 +74,24 @@ template <typename Value>
 	);
 }
 
-[[nodiscard]] inline constexpr int_t add(const int_t &lhs, const int_t &rhs) noexcept {
-	return int_t(lhs.native_value() + rhs.native_value());
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+using widened_int_rep_t = std::conditional_t<(sizeof(LeftRep) >= sizeof(RightRep)), LeftRep, RightRep>;
+
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr int_t<widened_int_rep_t<LeftRep, RightRep>> add(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+	using result_t = int_t<widened_int_rep_t<LeftRep, RightRep>>;
+	return result_t(lhs.native_value() + rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr float_t add(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr float_t add(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return float_t(static_cast<double>(lhs.native_value()) + rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr float_t add(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr float_t add(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return float_t(lhs.native_value() + static_cast<double>(rhs.native_value()));
 }
 
@@ -86,15 +99,20 @@ template <typename Value>
 	return float_t(lhs.native_value() + rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t sub(const int_t &lhs, const int_t &rhs) noexcept {
-	return int_t(lhs.native_value() - rhs.native_value());
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr int_t<widened_int_rep_t<LeftRep, RightRep>> sub(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+	using result_t = int_t<widened_int_rep_t<LeftRep, RightRep>>;
+	return result_t(lhs.native_value() - rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr float_t sub(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr float_t sub(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return float_t(static_cast<double>(lhs.native_value()) - rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr float_t sub(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr float_t sub(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return float_t(lhs.native_value() - static_cast<double>(rhs.native_value()));
 }
 
@@ -102,15 +120,20 @@ template <typename Value>
 	return float_t(lhs.native_value() - rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t mul(const int_t &lhs, const int_t &rhs) noexcept {
-	return int_t(lhs.native_value() * rhs.native_value());
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr int_t<widened_int_rep_t<LeftRep, RightRep>> mul(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+	using result_t = int_t<widened_int_rep_t<LeftRep, RightRep>>;
+	return result_t(lhs.native_value() * rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr float_t mul(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr float_t mul(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return float_t(static_cast<double>(lhs.native_value()) * rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr float_t mul(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr float_t mul(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return float_t(lhs.native_value() * static_cast<double>(rhs.native_value()));
 }
 
@@ -118,21 +141,26 @@ template <typename Value>
 	return float_t(lhs.native_value() * rhs.native_value());
 }
 
-[[nodiscard]] inline int_t div(const int_t &lhs, const int_t &rhs) {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline int_t<widened_int_rep_t<LeftRep, RightRep>> div(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) {
 	if (is_zero_divisor(rhs)) {
 		throw zero_divisor_error("/", "division_by_zero", "int_t", "int_t");
 	}
-	return int_t(lhs.native_value() / rhs.native_value());
+	using result_t = int_t<widened_int_rep_t<LeftRep, RightRep>>;
+	return result_t(lhs.native_value() / rhs.native_value());
 }
 
-[[nodiscard]] inline float_t div(const int_t &lhs, const float_t &rhs) {
+template <typename Rep>
+[[nodiscard]] inline float_t div(const int_t<Rep> &lhs, const float_t &rhs) {
 	if (is_zero_divisor(rhs)) {
 		throw zero_divisor_error("/", "division_by_zero", "int_t", "float_t");
 	}
 	return float_t(static_cast<double>(lhs.native_value()) / rhs.native_value());
 }
 
-[[nodiscard]] inline float_t div(const float_t &lhs, const int_t &rhs) {
+template <typename Rep>
+[[nodiscard]] inline float_t div(const float_t &lhs, const int_t<Rep> &rhs) {
 	if (is_zero_divisor(rhs)) {
 		throw zero_divisor_error("/", "division_by_zero", "float_t", "int_t");
 	}
@@ -146,31 +174,47 @@ template <typename Value>
 	return float_t(lhs.native_value() / rhs.native_value());
 }
 
-[[nodiscard]] inline int_t mod(const int_t &lhs, const int_t &rhs) {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline int_t<widened_int_rep_t<LeftRep, RightRep>> mod(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) {
 	if (is_zero_divisor(rhs)) {
 		throw zero_divisor_error("%", "modulo_by_zero", "int_t", "int_t");
 	}
-	return int_t(lhs.native_value() % rhs.native_value());
+	using result_t = int_t<widened_int_rep_t<LeftRep, RightRep>>;
+	return result_t(lhs.native_value() % rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t bit_and(const int_t &lhs, const int_t &rhs) noexcept {
-	return int_t(lhs.native_value() & rhs.native_value());
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr int_t<widened_int_rep_t<LeftRep, RightRep>> bit_and(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+	using result_t = int_t<widened_int_rep_t<LeftRep, RightRep>>;
+	return result_t(lhs.native_value() & rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t bit_or(const int_t &lhs, const int_t &rhs) noexcept {
-	return int_t(lhs.native_value() | rhs.native_value());
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr int_t<widened_int_rep_t<LeftRep, RightRep>> bit_or(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+	using result_t = int_t<widened_int_rep_t<LeftRep, RightRep>>;
+	return result_t(lhs.native_value() | rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t bit_xor(const int_t &lhs, const int_t &rhs) noexcept {
-	return int_t(lhs.native_value() ^ rhs.native_value());
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr int_t<widened_int_rep_t<LeftRep, RightRep>> bit_xor(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+	using result_t = int_t<widened_int_rep_t<LeftRep, RightRep>>;
+	return result_t(lhs.native_value() ^ rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t shl(const int_t &lhs, const int_t &rhs) noexcept {
-	return int_t(lhs.native_value() << rhs.native_value());
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr int_t<LeftRep> shl(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+	return int_t<LeftRep>(lhs.native_value() << rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr int_t shr(const int_t &lhs, const int_t &rhs) noexcept {
-	return int_t(lhs.native_value() >> rhs.native_value());
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr int_t<LeftRep> shr(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+	return int_t<LeftRep>(lhs.native_value() >> rhs.native_value());
 }
 
 
@@ -182,15 +226,19 @@ template <typename Value>
 	return bool_t(lhs.native_value() == rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t eq(const int_t &lhs, const int_t &rhs) noexcept {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr bool_t eq(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
 	return bool_t(lhs.native_value() == rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t eq(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t eq(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return bool_t(static_cast<double>(lhs.native_value()) == rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t eq(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t eq(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return bool_t(lhs.native_value() == static_cast<double>(rhs.native_value()));
 }
 
@@ -202,15 +250,19 @@ template <typename Value>
 	return bool_t(lhs.native_value() == rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t lt(const int_t &lhs, const int_t &rhs) noexcept {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr bool_t lt(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
 	return bool_t(lhs.native_value() < rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t lt(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t lt(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return bool_t(static_cast<double>(lhs.native_value()) < rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t lt(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t lt(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return bool_t(lhs.native_value() < static_cast<double>(rhs.native_value()));
 }
 
@@ -222,15 +274,19 @@ template <typename Value>
 	return bool_t(lhs.native_value() < rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t le(const int_t &lhs, const int_t &rhs) noexcept {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr bool_t le(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
 	return bool_t(lhs.native_value() <= rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t le(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t le(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return bool_t(static_cast<double>(lhs.native_value()) <= rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t le(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t le(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return bool_t(lhs.native_value() <= static_cast<double>(rhs.native_value()));
 }
 
@@ -242,15 +298,19 @@ template <typename Value>
 	return bool_t(lhs.native_value() <= rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t gt(const int_t &lhs, const int_t &rhs) noexcept {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr bool_t gt(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
 	return bool_t(lhs.native_value() > rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t gt(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t gt(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return bool_t(static_cast<double>(lhs.native_value()) > rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t gt(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t gt(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return bool_t(lhs.native_value() > static_cast<double>(rhs.native_value()));
 }
 
@@ -262,15 +322,19 @@ template <typename Value>
 	return bool_t(lhs.native_value() > rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t ge(const int_t &lhs, const int_t &rhs) noexcept {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr bool_t ge(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
 	return bool_t(lhs.native_value() >= rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t ge(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t ge(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return bool_t(static_cast<double>(lhs.native_value()) >= rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t ge(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t ge(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return bool_t(lhs.native_value() >= static_cast<double>(rhs.native_value()));
 }
 
@@ -286,15 +350,19 @@ template <typename Value>
 	return bool_t(lhs.native_value() && rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t logical_and(const int_t &lhs, const int_t &rhs) noexcept {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr bool_t logical_and(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
 	return bool_t(truthy(lhs) && truthy(rhs));
 }
 
-[[nodiscard]] inline constexpr bool_t logical_and(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t logical_and(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return bool_t(truthy(lhs) && truthy(rhs));
 }
 
-[[nodiscard]] inline constexpr bool_t logical_and(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t logical_and(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return bool_t(truthy(lhs) && truthy(rhs));
 }
 
@@ -306,15 +374,19 @@ template <typename Value>
 	return bool_t(lhs.native_value() || rhs.native_value());
 }
 
-[[nodiscard]] inline constexpr bool_t logical_or(const int_t &lhs, const int_t &rhs) noexcept {
+template <typename LeftRep, typename RightRep>
+	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
+[[nodiscard]] inline constexpr bool_t logical_or(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
 	return bool_t(truthy(lhs) || truthy(rhs));
 }
 
-[[nodiscard]] inline constexpr bool_t logical_or(const int_t &lhs, const float_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t logical_or(const int_t<Rep> &lhs, const float_t &rhs) noexcept {
 	return bool_t(truthy(lhs) || truthy(rhs));
 }
 
-[[nodiscard]] inline constexpr bool_t logical_or(const float_t &lhs, const int_t &rhs) noexcept {
+template <typename Rep>
+[[nodiscard]] inline constexpr bool_t logical_or(const float_t &lhs, const int_t<Rep> &rhs) noexcept {
 	return bool_t(truthy(lhs) || truthy(rhs));
 }
 
@@ -322,24 +394,28 @@ template <typename Value>
 	return bool_t(truthy(lhs) || truthy(rhs));
 }
 
-inline int_t &prefix_inc(int_t &value) noexcept {
-	value = add(value, int_t(1));
+template <typename Rep>
+inline int_t<Rep> &prefix_inc(int_t<Rep> &value) noexcept {
+	value = add(value, int_t<Rep>(1));
 	return value;
 }
 
-[[nodiscard]] inline int_t postfix_inc(int_t &value) noexcept {
-	const int_t snapshot(value);
+template <typename Rep>
+[[nodiscard]] inline int_t<Rep> postfix_inc(int_t<Rep> &value) noexcept {
+	const int_t<Rep> snapshot(value);
 	prefix_inc(value);
 	return snapshot;
 }
 
-inline int_t &prefix_dec(int_t &value) noexcept {
-	value = sub(value, int_t(1));
+template <typename Rep>
+inline int_t<Rep> &prefix_dec(int_t<Rep> &value) noexcept {
+	value = sub(value, int_t<Rep>(1));
 	return value;
 }
 
-[[nodiscard]] inline int_t postfix_dec(int_t &value) noexcept {
-	const int_t snapshot(value);
+template <typename Rep>
+[[nodiscard]] inline int_t<Rep> postfix_dec(int_t<Rep> &value) noexcept {
+	const int_t<Rep> snapshot(value);
 	prefix_dec(value);
 	return snapshot;
 }

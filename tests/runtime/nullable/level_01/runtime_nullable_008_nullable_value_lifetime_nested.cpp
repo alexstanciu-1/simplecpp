@@ -3,7 +3,7 @@
 int main() {
 	runtime_test::lifetime_probe::reset_counts();
 	{
-		scpp::nullable<scpp::value_p<runtime_test::lifetime_probe>> value(scpp::value<runtime_test::lifetime_probe>(scpp::int_t(4)));
+		scpp::nullable<scpp::value_p<runtime_test::lifetime_probe>> value(scpp::value<runtime_test::lifetime_probe>(scpp::int_t<>(4)));
 		assert(runtime_test::lifetime_probe::alive == 1);
 		assert(value.value()->value.native_value() == 4);
 		value.reset();

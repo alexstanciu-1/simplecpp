@@ -16,7 +16,7 @@ inline void var_dump(null_t v) { var_dump(mixed_t{v}); }
 inline void var_dump(nullopt_t v) { var_dump(mixed_t{v}); }
 inline void var_dump(nullptr_t v) { var_dump(mixed_t{v}); }
 inline void var_dump(const bool_t& v) { var_dump(mixed_t{v}); }
-inline void var_dump(const int_t& v) { var_dump(mixed_t{v}); }
+inline void var_dump(const int_t<>& v) { var_dump(mixed_t{v}); }
 inline void var_dump(const float_t& v) { var_dump(mixed_t{v}); }
 inline void var_dump(const string_t& v) { var_dump(mixed_t{v}); }
 inline void var_dump(const char* v) { var_dump(mixed_t{v}); }

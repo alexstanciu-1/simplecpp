@@ -34,27 +34,27 @@
 
 namespace scpp {
 
-inline const int_t DBG_TYPE{1};
-inline const int_t DBG_VALUE{1 << 1};
-inline const int_t DBG_SHAPE{1 << 2};
-inline const int_t DBG_FIELDS{1 << 3};
-inline const int_t DBG_KEYS{1 << 4};
-inline const int_t DBG_LEN{1 << 5};
-inline const int_t DBG_SOURCE{1 << 6};
-inline const int_t DBG_CALLER{1 << 7};
-inline const int_t DBG_JSON{1 << 8};
-inline const int_t DBG_RAW{1 << 9};
-inline const int_t DBG_PTR{1 << 10};
-inline const int_t DBG_COMPACT{1 << 11};
+inline const int_t<> DBG_TYPE{1};
+inline const int_t<> DBG_VALUE{1 << 1};
+inline const int_t<> DBG_SHAPE{1 << 2};
+inline const int_t<> DBG_FIELDS{1 << 3};
+inline const int_t<> DBG_KEYS{1 << 4};
+inline const int_t<> DBG_LEN{1 << 5};
+inline const int_t<> DBG_SOURCE{1 << 6};
+inline const int_t<> DBG_CALLER{1 << 7};
+inline const int_t<> DBG_JSON{1 << 8};
+inline const int_t<> DBG_RAW{1 << 9};
+inline const int_t<> DBG_PTR{1 << 10};
+inline const int_t<> DBG_COMPACT{1 << 11};
 
-inline const int_t DBG_DEPTH_0{1 << 16};
-inline const int_t DBG_DEPTH_1{1 << 17};
-inline const int_t DBG_DEPTH_2{1 << 18};
-inline const int_t DBG_DEPTH_3{1 << 19};
-inline const int_t DBG_DEPTH_4{1 << 20};
-inline const int_t DBG_DEPTH_5{1 << 21};
+inline const int_t<> DBG_DEPTH_0{1 << 16};
+inline const int_t<> DBG_DEPTH_1{1 << 17};
+inline const int_t<> DBG_DEPTH_2{1 << 18};
+inline const int_t<> DBG_DEPTH_3{1 << 19};
+inline const int_t<> DBG_DEPTH_4{1 << 20};
+inline const int_t<> DBG_DEPTH_5{1 << 21};
 
-inline const int_t DBG_DEFAULT{
+inline const int_t<> DBG_DEFAULT{
 	DBG_SOURCE.native_value()
 	| DBG_CALLER.native_value()
 	| DBG_TYPE.native_value()
@@ -81,8 +81,8 @@ struct dbg_state_t final {
 	int max_string_preview = 160;
 };
 
-[[nodiscard]] dbg_options_t normalize_options(int_t flags);
-[[nodiscard]] bool has_flag(const dbg_options_t &options, int_t flag) noexcept;
+[[nodiscard]] dbg_options_t normalize_options(int_t<> flags);
+[[nodiscard]] bool has_flag(const dbg_options_t &options, int_t<> flag) noexcept;
 [[nodiscard]] std::string ptr_label(const void *ptr);
 [[nodiscard]] std::string escape_preview(std::string_view value, std::size_t limit);
 [[nodiscard]] std::string mixed_kind_name(mixed_t::kind_t kind);
@@ -98,7 +98,7 @@ template <typename T>
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, nullopt_t>) return "nullopt_t";
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, nullptr_t>) return "nullptr_t";
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, bool_t>) return "bool_t";
-	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, int_t>) return "int_t";
+	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, int_t<>>) return "int_t";
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, float_t>) return "float_t";
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, string_t>) return "string_t";
 	else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, mixed_t>) return "mixed_t";
@@ -130,7 +130,7 @@ template <typename T>
 		return "null";
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, bool_t>) {
 		return value.native_value() ? "true" : "false";
-	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, int_t>) {
+	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, int_t<>>) {
 		return std::to_string(value.native_value());
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, float_t>) {
 		std::ostringstream out;
@@ -148,7 +148,7 @@ template <typename T>
 
 template <typename K>
 [[nodiscard]] std::string key_preview(const K &key) {
-	if constexpr (std::is_same_v<detail::remove_cvref_t<K>, int_t>) {
+	if constexpr (std::is_same_v<detail::remove_cvref_t<K>, int_t<>>) {
 		return std::to_string(key.native_value());
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<K>, string_t>) {
 		return "\"" + escape_preview(key.native_value(), 80) + "\"";
@@ -332,7 +332,7 @@ void describe_value(const T &value, dbg_state_t &state, int indent, int) {
 		describe_scalar<T>("null_t", "null", state, indent);
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, bool_t>) {
 		describe_scalar<T>("bool_t", value.native_value() ? "true" : "false", state, indent);
-	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, int_t>) {
+	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, int_t<>>) {
 		describe_scalar<T>("int_t", std::to_string(value.native_value()), state, indent);
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, float_t>) {
 		std::ostringstream out;
@@ -364,7 +364,7 @@ void describe_value(const T &value, dbg_state_t &state, int indent, int) {
 }
 
 template <typename T>
-void dbg_emit(const char *source_file, int source_line, const char *label, const T &value, int_t flags) {
+void dbg_emit(const char *source_file, int source_line, const char *label, const T &value, int_t<> flags) {
 	try {
 		dbg_state_t state;
 		state.options = normalize_options(flags);
@@ -408,12 +408,12 @@ void dbg_at(const char *source_file, int source_line, const char *label, const T
 }
 
 template <typename T>
-void dbg_at(const char *source_file, int source_line, const string_t &label, const T &value, int_t flags) {
+void dbg_at(const char *source_file, int source_line, const string_t &label, const T &value, int_t<> flags) {
 	dbg_detail::dbg_emit(source_file, source_line, label.native_value().c_str(), value, flags);
 }
 
 template <typename T>
-void dbg_at(const char *source_file, int source_line, const char *label, const T &value, int_t flags) {
+void dbg_at(const char *source_file, int source_line, const char *label, const T &value, int_t<> flags) {
 	dbg_detail::dbg_emit(source_file, source_line, label, value, flags);
 }
 

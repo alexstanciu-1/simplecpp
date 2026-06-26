@@ -927,7 +927,7 @@ final class Generator
 			return false;
 		}
 
-		return in_array($this->typeMapper->mapDeclaredType($param->type), ['int_t', 'float_t', 'bool_t', 'string_t'], true);
+		return in_array($this->typeMapper->mapDeclaredType($param->type), ['int_t<>', 'float_t', 'bool_t', 'string_t'], true);
 	}
 
 	private function isScalarLikeUnionType(string $phpType): bool
@@ -1378,7 +1378,7 @@ final class Generator
 			$mapped === 'mixed_t' => 'mixed',
 			$mapped === 'string_t' => 'string',
 			$mapped === 'bool_t' => 'bool',
-			$mapped === 'int_t', $mapped === 'float_t' => 'number',
+			str_starts_with($mapped, 'int_t<'), $mapped === 'float_t' => 'number',
 			str_starts_with($mapped, 'nullable<'),
 			str_starts_with($mapped, 'result<'),
 			str_starts_with($mapped, 'result_or_false<'),
@@ -1627,7 +1627,7 @@ final class Generator
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
 		}
-		if (in_array($normalized, ['int', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+		if (in_array($normalized, ['int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'int_t<>', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
 			return;
 		}
 		$out[$normalized] = true;
@@ -3632,7 +3632,7 @@ final class Generator
 	private function renderSyntheticMainCliPreamble(): array
 	{
 		return [
-			'int_t argc = php::cli_argc();',
+			'int_t<> argc = php::cli_argc();',
 			'mixed_t argv = php::cli_argv();',
 		];
 	}
@@ -3931,7 +3931,7 @@ final class Generator
 			$name = (string) (($varNode->children['name'] ?? '') ?: 'tmp');
 			$default = $this->renderExpr($statement->payload['default'] ?? null, $namespacePhp);
 			$this->declaredLocals[$name] = true;
-			return $this->statementCodeLines($statement, ['static int_t ' . $this->localCppName($name) . ' = ' . $default . ';']);
+			return $this->statementCodeLines($statement, ['static int_t<> ' . $this->localCppName($name) . ' = ' . $default . ';']);
 		}
 
 		if ($statement->kind === 'return') {
@@ -4521,7 +4521,7 @@ final class Generator
 			$keyCppName = $this->localCppName($keyName);
 			$lines[] = $this->code($this->indent(1) . 'auto&& ' . $keyCppName . ' = ' . $entryName . '.key();', $statement->line);
 			$keyStoredType = $isVectorLikeForeach
-				? 'int_t'
+				? 'int_t<>'
 				: ($hashTypeParts !== null ? $hashTypeParts['key'] : ($isExplicitDynamicForeach ? 'mixed_t' : null));
 			if ($keyStoredType !== null) {
 				$this->declaredLocalTypes[$keyName] = $keyStoredType;
@@ -6535,7 +6535,7 @@ final class Generator
 			return $normalized;
 		}
 
-		if (preg_match('/^(?:int|float|bool|string|array|mixed|void|int_t|float_t|bool_t|string_t|mixed_t|hash_t|vector_t)$/', $normalized) === 1) {
+		if (preg_match('/^(?:int|int8|int16|int32|int64|uint8|byte|uint16|uint32|uint64|float|bool|string|array|mixed|void|int_t|int_t<>|float_t|bool_t|string_t|mixed_t|hash_t|vector_t)$/', $normalized) === 1) {
 			return $normalized;
 		}
 
@@ -6588,7 +6588,7 @@ final class Generator
 	private function renderExpr(mixed $expr, ?string $namespacePhp): string
 	{
 		if (is_int($expr)) {
-			return 'static_cast<int_t>(' . $expr . ')';
+			return 'static_cast<int_t<> >(' . $expr . ')';
 		}
 		if (is_float($expr)) {
 			return 'static_cast<float_t>(' . $expr . ')';
@@ -6672,7 +6672,7 @@ final class Generator
 			$flags = (int) ($expr->flags ?? 0);
 			return match ($flags) {
 				AstKind::TYPE_STRING => $this->renderGeneratedCast('string_t', $inner),
-				AstKind::TYPE_LONG => $this->renderGeneratedCast('int_t', $inner),
+				AstKind::TYPE_LONG => $this->renderGeneratedCast('int_t<>', $inner),
 				AstKind::TYPE_DOUBLE => $this->renderGeneratedCast('float_t', $inner),
 				AstKind::TYPE_BOOL => $this->renderGeneratedCast('bool_t', $inner),
 				AstKind::TYPE_OBJECT => $this->renderObjectCastExpr($innerNode, $namespacePhp),
@@ -7890,7 +7890,7 @@ final class Generator
 	private function inferExprType(mixed $expr): string
 	{
 		if (is_int($expr)) {
-			return 'int_t';
+			return 'int_t<>';
 		}
 		if (is_float($expr)) {
 			return 'float_t';
@@ -8142,7 +8142,7 @@ private function renderObjectCastExpr(mixed $expr, ?string $namespacePhp): strin
 	private function inferConstantType(mixed $expr, ?string $namespacePhp): string
 	{
 		if (is_int($expr)) {
-			return 'int_t';
+			return 'int_t<>';
 		}
 		if (is_float($expr)) {
 			return 'float_t';
@@ -8168,7 +8168,7 @@ private function renderObjectCastExpr(mixed $expr, ?string $namespacePhp): strin
 			$flags = (int) ($expr->flags ?? 0);
 			return match ($flags) {
 				AstKind::TYPE_STRING => 'string_t',
-				AstKind::TYPE_LONG => 'int_t',
+				AstKind::TYPE_LONG => 'int_t<>',
 				AstKind::TYPE_DOUBLE => 'float_t',
 				AstKind::TYPE_BOOL => 'bool_t',
 				AstKind::TYPE_OBJECT => 'mixed_t',

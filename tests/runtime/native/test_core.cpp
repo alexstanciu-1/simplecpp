@@ -14,12 +14,12 @@ static void test_bool_operations() {
 
 // Verifies integer arithmetic, mutation, and comparison operators.
 static void test_int_operations() {
-	const scpp::int_t a(7);
-	const scpp::int_t b(3);
+	const scpp::int_t<> a(7);
+	const scpp::int_t<> b(3);
 
 	assert((+a).native_value() == 7);
 	assert((-b).native_value() == -3);
-	assert((~scpp::int_t(0)).native_value() == -1);
+	assert((~scpp::int_t<>(0)).native_value() == -1);
 	assert((a + b).native_value() == 10);
 	assert((a - b).native_value() == 4);
 	assert((a * b).native_value() == 21);
@@ -28,40 +28,40 @@ static void test_int_operations() {
 	assert((a & b).native_value() == 3);
 	assert((a | b).native_value() == 7);
 	assert((a ^ b).native_value() == 4);
-	assert((scpp::int_t(8) << scpp::int_t(1)).native_value() == 16);
-	assert((scpp::int_t(8) >> scpp::int_t(1)).native_value() == 4);
+	assert((scpp::int_t<>(8) << scpp::int_t<>(1)).native_value() == 16);
+	assert((scpp::int_t<>(8) >> scpp::int_t<>(1)).native_value() == 4);
 	assert((a > b).native_value() == true);
 	assert((a >= b).native_value() == true);
 	assert((b < a).native_value() == true);
 	assert((b <= a).native_value() == true);
-	assert((a == scpp::int_t(7)).native_value() == true);
+	assert((a == scpp::int_t<>(7)).native_value() == true);
 	assert((a != b).native_value() == true);
 
-	scpp::int_t value(10);
+	scpp::int_t<> value(10);
 	assert((++value).native_value() == 11);
 	assert((value++).native_value() == 11);
 	assert(value.native_value() == 12);
 	assert((--value).native_value() == 11);
 	assert((value--).native_value() == 11);
 	assert(value.native_value() == 10);
-	value += scpp::int_t(5);
-	value -= scpp::int_t(3);
-	value *= scpp::int_t(4);
-	value /= scpp::int_t(6);
-	value %= scpp::int_t(4);
-	value |= scpp::int_t(8);
-	value &= scpp::int_t(10);
-	value ^= scpp::int_t(3);
-	value <<= scpp::int_t(1);
-	value >>= scpp::int_t(2);
+	value += scpp::int_t<>(5);
+	value -= scpp::int_t<>(3);
+	value *= scpp::int_t<>(4);
+	value /= scpp::int_t<>(6);
+	value %= scpp::int_t<>(4);
+	value |= scpp::int_t<>(8);
+	value &= scpp::int_t<>(10);
+	value ^= scpp::int_t<>(3);
+	value <<= scpp::int_t<>(1);
+	value >>= scpp::int_t<>(2);
 	assert(value.native_value() == 5);
 }
 
-// Verifies floating-point arithmetic plus configured mixed int_t/float_t behavior.
+// Verifies floating-point arithmetic plus configured mixed int_t<>/float_t behavior.
 static void test_float_operations() {
 	const scpp::float_t x(2.5);
 	const scpp::float_t y(0.5);
-	const scpp::int_t n(2);
+	const scpp::int_t<> n(2);
 
 	assert((+x).native_value() == 2.5);
 	assert((-y).native_value() == -0.5);
@@ -87,30 +87,30 @@ static void test_float_operations() {
 	assert((value--).native_value() == 2.5);
 	assert(value.native_value() == 1.5);
 	value += scpp::float_t(0.5);
-	value -= scpp::int_t(1);
-	value *= scpp::int_t(4);
+	value -= scpp::int_t<>(1);
+	value *= scpp::int_t<>(4);
 	value /= scpp::float_t(2.0);
 	assert(value.native_value() == 2.0);
 }
 
 // Verifies the currently configured named cast surface.
 static void test_named_casts() {
-	assert(scpp::cast<scpp::bool_t>(scpp::int_t(0)).native_value() == false);
-	assert(scpp::cast<scpp::bool_t>(scpp::int_t(9)).native_value() == true);
+	assert(scpp::cast<scpp::bool_t>(scpp::int_t<>(0)).native_value() == false);
+	assert(scpp::cast<scpp::bool_t>(scpp::int_t<>(9)).native_value() == true);
 	assert(scpp::cast<scpp::bool_t>(scpp::float_t(0.0)).native_value() == false);
 	assert(scpp::cast<scpp::bool_t>(scpp::float_t(-1.25)).native_value() == true);
-	assert(scpp::cast<scpp::int_t>(scpp::float_t(3.75)).native_value() == 3);
-	assert(scpp::cast<scpp::int_t>(scpp::bool_t(true)).native_value() == 1);
+	assert(scpp::cast<scpp::int_t<>>(scpp::float_t(3.75)).native_value() == 3);
+	assert(scpp::cast<scpp::int_t<>>(scpp::bool_t(true)).native_value() == 1);
 	assert(scpp::cast<scpp::float_t>(scpp::bool_t(true)).native_value() == 1.0);
-	assert(scpp::cast<scpp::float_t>(scpp::int_t(42)).native_value() == 42.0);
+	assert(scpp::cast<scpp::float_t>(scpp::int_t<>(42)).native_value() == 42.0);
 	assert(scpp::cast<scpp::bool_t>(scpp::string_t("true")).native_value() == true);
 	assert(scpp::cast<scpp::bool_t>(scpp::string_t("")).native_value() == false);
 	scpp_test::expect_throw<std::runtime_error>([]() {
 		(void)scpp::cast<scpp::bool_t>(scpp::string_t("False"));
 	});
-	assert(scpp::cast<scpp::int_t>(scpp::string_t("-42")).native_value() == -42);
+	assert(scpp::cast<scpp::int_t<>>(scpp::string_t("-42")).native_value() == -42);
 	assert(scpp::cast<scpp::float_t>(scpp::string_t("3.5")).native_value() == 3.5);
-	assert(scpp::cast<scpp::string_t>(scpp::int_t(42)).native_value() == "42");
+	assert(scpp::cast<scpp::string_t>(scpp::int_t<>(42)).native_value() == "42");
 	assert(scpp::cast<scpp::string_t>(scpp::float_t(3.5)).native_value() == "3.5");
 	assert(scpp::cast<scpp::string_t>(scpp::bool_t(true)).native_value() == "1");
 
@@ -118,7 +118,7 @@ static void test_named_casts() {
 		(void)scpp::cast<scpp::bool_t>(scpp::string_t("yes"));
 	});
 	scpp_test::expect_throw<std::runtime_error>([]() {
-		(void)scpp::cast<scpp::int_t>(scpp::string_t("12x"));
+		(void)scpp::cast<scpp::int_t<>>(scpp::string_t("12x"));
 	});
 	scpp_test::expect_throw<std::runtime_error>([]() {
 		(void)scpp::cast<scpp::float_t>(scpp::string_t("1.2x"));
@@ -128,7 +128,7 @@ static void test_named_casts() {
 // Verifies the PHP coercion layer used by php::echo.
 static void test_php_to_string_coercions() {
 	assert(scpp::php::to_string(scpp::string_t("abc")).native_value() == "abc");
-	assert(scpp::php::to_string(scpp::int_t(42)).native_value() == "42");
+	assert(scpp::php::to_string(scpp::int_t<>(42)).native_value() == "42");
 	assert(scpp::php::to_string(scpp::bool_t(true)).native_value() == "1");
 	assert(scpp::php::to_string(scpp::bool_t(false)).native_value() == "");
 	assert(scpp::php::to_string(scpp::null).native_value() == "");
@@ -137,8 +137,8 @@ static void test_php_to_string_coercions() {
 	assert(scpp::php::to_string(scpp::float_t(2.5)).native_value() == "2.5");
 	assert(scpp::php::to_string(scpp::float_t(3.0)).native_value() == "3");
 
-	const scpp::nullable<scpp::int_t> present_int(scpp::int_t(7));
-	const scpp::nullable<scpp::int_t> empty_int(scpp::null);
+	const scpp::nullable<scpp::int_t<>> present_int(scpp::int_t<>(7));
+	const scpp::nullable<scpp::int_t<>> empty_int(scpp::null);
 	const scpp::nullable<scpp::bool_t> present_bool(scpp::bool_t(true));
 	const scpp::nullable<scpp::string_t> present_string(scpp::string_t("ok"));
 
@@ -146,12 +146,12 @@ static void test_php_to_string_coercions() {
 	assert(scpp::php::to_string(empty_int).native_value() == "");
 	assert(scpp::php::to_string(present_bool).native_value() == "1");
 	assert(scpp::php::to_string(present_string).native_value() == "ok");
-	assert(scpp::php::identical(scpp::int_t(7), scpp::int_t(7)).native_value() == true);
-	assert(scpp::php::identical(scpp::int_t(7), scpp::float_t(7.0)).native_value() == false);
-	assert(scpp::php::not_identical(scpp::int_t(7), scpp::float_t(7.0)).native_value() == true);
+	assert(scpp::php::identical(scpp::int_t<>(7), scpp::int_t<>(7)).native_value() == true);
+	assert(scpp::php::identical(scpp::int_t<>(7), scpp::float_t(7.0)).native_value() == false);
+	assert(scpp::php::not_identical(scpp::int_t<>(7), scpp::float_t(7.0)).native_value() == true);
 	assert(scpp::php::identical(scpp::null, scpp::null).native_value() == true);
 	scpp::mixed_t empty_mixed(scpp::null);
-	scpp::mixed_t int_mixed(scpp::int_t(7));
+	scpp::mixed_t int_mixed(scpp::int_t<>(7));
 	assert(scpp::php::identical(empty_mixed, scpp::null).native_value() == true);
 	assert(scpp::php::identical(scpp::null, empty_mixed).native_value() == true);
 	assert(scpp::php::identical(int_mixed, scpp::null).native_value() == false);
@@ -164,14 +164,14 @@ static void test_php_to_string_coercions() {
 
 // Verifies strict identity uses object/referent identity for pointer/reference wrappers.
 static void test_php_identity_helpers() {
-	auto a = scpp::create<scpp::int_t>(scpp::int_t(5));
+	auto a = scpp::create<scpp::int_t<>>(scpp::int_t<>(5));
 	auto b = a;
-	auto c = scpp::create<scpp::int_t>(scpp::int_t(5));
+	auto c = scpp::create<scpp::int_t<>>(scpp::int_t<>(5));
 	assert(scpp::php::identical(a, b).native_value() == true);
 	assert(scpp::php::identical(a, c).native_value() == false);
 
-	scpp::unique_p<scpp::int_t> u1(std::make_unique<scpp::int_t>(scpp::int_t(9)));
-	scpp::unique_p<scpp::int_t> u2(std::make_unique<scpp::int_t>(scpp::int_t(9)));
+	scpp::unique_p<scpp::int_t<>> u1(std::make_unique<scpp::int_t<>>(scpp::int_t<>(9)));
+	scpp::unique_p<scpp::int_t<>> u2(std::make_unique<scpp::int_t<>>(scpp::int_t<>(9)));
 	assert(scpp::php::identical(u1, u1).native_value() == true);
 	assert(scpp::php::identical(u1, u2).native_value() == false);
 
@@ -187,38 +187,38 @@ static void test_containers_and_strings() {
 	assert((left == scpp::string_t("Hello, world!")).native_value() == true);
 	assert(left.empty().native_value() == false);
 
-	scpp::vector_t<scpp::int_t> values;
+	scpp::vector_t<scpp::int_t<>> values;
 	assert(values.empty().native_value() == true);
-	values.append(scpp::int_t(4));
-	values.append(scpp::int_t(9));
+	values.append(scpp::int_t<>(4));
+	values.append(scpp::int_t<>(9));
 	assert(values.size() == 2);
 	assert(values.at(0).native_value() == 4);
 	assert(values.index(1).native_value() == 9);
 }
 
 static void test_php_countable_contract_helpers() {
-	scpp::vector_t<scpp::int_t> values;
-	values.append(scpp::int_t(4));
-	values.append(scpp::int_t(9));
+	scpp::vector_t<scpp::int_t<>> values;
+	values.append(scpp::int_t<>(4));
+	values.append(scpp::int_t<>(9));
 	assert(scpp::php::count(values).native_value() == 2);
 	assert(scpp::php::empty(values).native_value() == false);
-	assert(scpp::php::isset(values, scpp::int_t(0)).native_value() == true);
-	assert(scpp::php::isset(values, scpp::int_t(2)).native_value() == false);
+	assert(scpp::php::isset(values, scpp::int_t<>(0)).native_value() == true);
+	assert(scpp::php::isset(values, scpp::int_t<>(2)).native_value() == false);
 
-	scpp::hash_t<scpp::int_t> typed_hash;
-	typed_hash.set(scpp::string_t("a"), scpp::int_t(1));
-	typed_hash.set(scpp::string_t("b"), scpp::int_t(2));
+	scpp::hash_t<scpp::int_t<>> typed_hash;
+	typed_hash.set(scpp::string_t("a"), scpp::int_t<>(1));
+	typed_hash.set(scpp::string_t("b"), scpp::int_t<>(2));
 	assert(scpp::php::count(typed_hash).native_value() == 2);
 	assert(scpp::php::empty(typed_hash).native_value() == false);
 	assert(scpp::php::isset(typed_hash, scpp::string_t("a")).native_value() == true);
 	assert(scpp::php::isset(typed_hash, scpp::string_t("missing")).native_value() == false);
 
 	scpp::mixed_t mixed_hash(scpp::shared_table_(
-		scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1)),
+		scpp::table_kv_(scpp::string_t("id"), scpp::int_t<>(1)),
 		scpp::table_kv_(scpp::string_t("name"), scpp::string_t("Alex")),
 		scpp::table_kv_(
 			scpp::string_t("child"),
-			scpp::mixed_t(scpp::shared_table_(scpp::table_kv_(scpp::string_t("nested"), scpp::int_t(1))))
+			scpp::mixed_t(scpp::shared_table_(scpp::table_kv_(scpp::string_t("nested"), scpp::int_t<>(1))))
 		)
 	));
 	assert(scpp::php::count(mixed_hash).native_value() == 3);
@@ -230,19 +230,19 @@ static void test_php_countable_contract_helpers() {
 	assert(scpp::php::isset(mixed_hash.get(scpp::string_t("child")), scpp::string_t("nested")).native_value() == true);
 
 	scpp_test::expect_throw<std::runtime_error>([]() {
-		(void)scpp::php::count(scpp::mixed_t(scpp::int_t(42)));
+		(void)scpp::php::count(scpp::mixed_t(scpp::int_t<>(42)));
 	});
-	assert(scpp::php::empty(scpp::mixed_t(scpp::int_t(42))).native_value() == false);
+	assert(scpp::php::empty(scpp::mixed_t(scpp::int_t<>(42))).native_value() == false);
 	assert(scpp::php::empty(scpp::mixed_t(scpp::null_t{})).native_value() == true);
 	assert(scpp::php::empty(scpp::string_t("")).native_value() == true);
 	assert(scpp::php::empty(scpp::string_t("0")).native_value() == false);
 	assert(scpp::php::empty(scpp::bool_t(false)).native_value() == true);
-	assert(scpp::php::empty(scpp::int_t(0)).native_value() == true);
+	assert(scpp::php::empty(scpp::int_t<>(0)).native_value() == true);
 	assert(scpp::php::empty(scpp::float_t(0.0)).native_value() == true);
-	assert(scpp::php::isset(scpp::mixed_t(scpp::int_t(42)), scpp::string_t("id")).native_value() == false);
+	assert(scpp::php::isset(scpp::mixed_t(scpp::int_t<>(42)), scpp::string_t("id")).native_value() == false);
 
 	scpp::mixed_t mixed_with_null(scpp::shared_table_(
-		scpp::table_kv_(scpp::string_t("id"), scpp::int_t(1)),
+		scpp::table_kv_(scpp::string_t("id"), scpp::int_t<>(1)),
 		scpp::table_kv_(scpp::string_t("maybe"), scpp::null_t{})
 	));
 	assert(scpp::php::isset(mixed_with_null, scpp::string_t("id")).native_value() == true);

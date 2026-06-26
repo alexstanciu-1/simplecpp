@@ -939,6 +939,7 @@ final class StanExpressionTypeResolver
 					$type = (string) ($event['type'] ?? '');
 					if ($type !== '') {
 						$localTypes[$name] = $this->canonicalizeTypeSet([$type], $classLookup, $selfType);
+						$this->recordFixedWidthIntegerLiteralRangeDiagnostic($diagnostics, $name, $type, $event['literal_int_value'] ?? null, $context, $path, (int) ($event['line'] ?? 0));
 					}
 					if ((bool) ($event['is_initialized'] ?? false)) {
 						$this->markLocalInitialized($initializedLocals, $initializedLocalLines, $name, (int) ($event['line'] ?? 0));
@@ -1316,6 +1317,7 @@ final class StanExpressionTypeResolver
 				'name' => (string) ($typedLocal['name'] ?? ''),
 				'type' => (string) ($typedLocal['type'] ?? ''),
 				'is_initialized' => (bool) ($typedLocal['is_initialized'] ?? false),
+				'literal_int_value' => $typedLocal['literal_int_value'] ?? null,
 			];
 		}
 		foreach (['expression_chains', 'return_chains'] as $field) {
@@ -1613,7 +1615,7 @@ final class StanExpressionTypeResolver
 	{
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
-			if (($diagnostic['kind'] ?? null) !== 'local_type_morph_warning') {
+			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -2774,12 +2776,33 @@ final class StanExpressionTypeResolver
 		$currentTypes = $localTypes[$name] ?? [];
 		$currentTypes = $this->canonicalizeTypeSet($currentTypes, $classLookup, $selfType);
 		if ($currentTypes !== [] && !$this->typeSetsAreCompatible($assignedTypes, $currentTypes, [], false)) {
+			if (count($currentTypes) === 1 && count($assignedTypes) === 1 && $this->fixedWidthIntegerInfo($currentTypes[0]) !== null && $this->fixedWidthIntegerInfo($assignedTypes[0]) !== null) {
+				$this->recordFixedWidthIntegerAssignmentDiagnostic($diagnostics, $name, $assignedTypes[0], $currentTypes[0], $context, $path, $line);
+				unset($morphedLocals[$name]);
+				return;
+			}
 			$this->recordLocalTypeMorph($diagnostics, $localTypes, $morphedLocals, $name, $this->canonicalizeTypeSet(array_merge($currentTypes, $assignedTypes), $classLookup, $selfType), $context, $path, $line);
 			return;
 		}
 
 		unset($morphedLocals[$name]);
-		$localTypes[$name] = $assignedTypes;
+		$localTypes[$name] = $currentTypes !== [] ? $currentTypes : $assignedTypes;
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics */
+	private function recordFixedWidthIntegerAssignmentDiagnostic(array &$diagnostics, string $name, string $sourceType, string $targetType, string $context, string $path, int $line): void
+	{
+		$diagnostics[] = [
+			'kind' => 'fixed_width_integer_assignment',
+			'severity' => 'error',
+			'context' => $context,
+			'path' => $path,
+			'line' => $line,
+			'local_name' => $name,
+			'source_type' => $sourceType,
+			'target_type' => $targetType,
+			'message' => 'Fixed-width integer assignment to local `$' . $name . '` in `' . $context . '` requires compatible same-signedness widening: cannot assign `' . $sourceType . '` to `' . $targetType . '`.',
+		];
 	}
 
 	/** @param array<string,list<string>> $localTypes @param array<string,bool> $morphedLocals @param list<array<string,mixed>> $diagnostics @param list<string> $candidateTypes */
@@ -2798,6 +2821,59 @@ final class StanExpressionTypeResolver
 		];
 		$morphedLocals[$name] = true;
 		unset($localTypes[$name]);
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics */
+	private function recordFixedWidthIntegerLiteralRangeDiagnostic(array &$diagnostics, string $name, string $type, mixed $literalValue, string $context, string $path, int $line): void
+	{
+		if (!is_int($literalValue)) {
+			return;
+		}
+		$range = $this->fixedWidthIntegerRange($type);
+		if ($range === null) {
+			return;
+		}
+		$min = $range['min'];
+		$max = $range['max'];
+		if ($literalValue >= $min && ($max === null || $literalValue <= $max)) {
+			return;
+		}
+		$targetType = strtolower(ltrim($type, '\\'));
+		$diagnostics[] = [
+			'kind' => 'fixed_width_integer_literal_range',
+			'severity' => 'error',
+			'context' => $context,
+			'path' => $path,
+			'line' => $line,
+			'local_name' => $name,
+			'target_type' => $targetType,
+			'literal_value' => $literalValue,
+			'message' => 'Integer literal `' . (string) $literalValue . '` is outside the range of fixed-width type `' . $targetType . '` for local `$' . $name . '` in `' . $context . '`: expected ' . $this->formatFixedWidthRange($min, $max) . '.',
+		];
+	}
+
+	/** @return array{min:int,max:int|null}|null */
+	private function fixedWidthIntegerRange(string $type): ?array
+	{
+		return match (strtolower(ltrim($type, '\\'))) {
+			'int8' => ['min' => -128, 'max' => 127],
+			'int16' => ['min' => -32768, 'max' => 32767],
+			'int32' => ['min' => -2147483648, 'max' => 2147483647],
+			'int64' => ['min' => PHP_INT_MIN, 'max' => PHP_INT_MAX],
+			'uint8', 'byte' => ['min' => 0, 'max' => 255],
+			'uint16' => ['min' => 0, 'max' => 65535],
+			'uint32' => ['min' => 0, 'max' => 4294967295],
+			'uint64' => ['min' => 0, 'max' => null],
+			default => null,
+		};
+	}
+
+	private function formatFixedWidthRange(int $min, ?int $max): string
+	{
+		if ($max === null) {
+			return (string) $min . '..18446744073709551615';
+		}
+		return (string) $min . '..' . (string) $max;
 	}
 
 	private function applyPropertyAssignment(array &$diagnostics, array $declaredLocals, array $localTypes, array $initializedLocals, array $morphedLocals, array &$initializedProperties, array &$initializedPropertyLines, array &$initializationKeys, array $event, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path): void
@@ -3432,7 +3508,7 @@ final class StanExpressionTypeResolver
 	private function isKnownNonObjectType(string $type): bool
 	{
 		$normalized = strtolower(trim($type));
-		return in_array($normalized, ['string', 'int', 'float', 'bool', 'null', 'array', 'mixed', 'dynamic', 'void'], true);
+		return in_array($normalized, ['string', 'int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool', 'null', 'array', 'mixed', 'dynamic', 'void'], true);
 	}
 
 	private function resolveStaticRootClassName(string $className, ?string $selfType, array $classLookup): string
@@ -3536,6 +3612,9 @@ final class StanExpressionTypeResolver
 		if ($actual === $expected) {
 			return true;
 		}
+		if ($this->isFixedWidthIntegerAssignable($actual, $expected)) {
+			return true;
+		}
 		if (strtolower($expected) === 'mixed') {
 			return true;
 		}
@@ -3554,6 +3633,35 @@ final class StanExpressionTypeResolver
 			return true;
 		}
 		return false;
+	}
+
+	private function isFixedWidthIntegerAssignable(string $actualType, string $expectedType): bool
+	{
+		$actual = $this->fixedWidthIntegerInfo($actualType);
+		$expected = $this->fixedWidthIntegerInfo($expectedType);
+		if ($actual === null || $expected === null) {
+			return false;
+		}
+		if ($actual['signed'] !== $expected['signed']) {
+			return false;
+		}
+		return $actual['bytes'] <= $expected['bytes'];
+	}
+
+	/** @return array{signed:bool,bytes:int}|null */
+	private function fixedWidthIntegerInfo(string $type): ?array
+	{
+		return match (strtolower(ltrim(trim($type), '\\'))) {
+			'int8' => ['signed' => true, 'bytes' => 1],
+			'int16' => ['signed' => true, 'bytes' => 2],
+			'int32' => ['signed' => true, 'bytes' => 4],
+			'int64', 'int' => ['signed' => true, 'bytes' => 8],
+			'uint8', 'byte' => ['signed' => false, 'bytes' => 1],
+			'uint16' => ['signed' => false, 'bytes' => 2],
+			'uint32' => ['signed' => false, 'bytes' => 4],
+			'uint64' => ['signed' => false, 'bytes' => 8],
+			default => null,
+		};
 	}
 
 	private function unwrapNullableType(string $type): ?string

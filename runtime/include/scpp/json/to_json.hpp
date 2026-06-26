@@ -22,7 +22,7 @@ struct is_supported : std::false_type {};
 
 template <> struct is_supported<null_t> : std::true_type {};
 template <> struct is_supported<bool_t> : std::true_type {};
-template <> struct is_supported<int_t> : std::true_type {};
+template <> struct is_supported<int_t<>> : std::true_type {};
 template <> struct is_supported<float_t> : std::true_type {};
 template <> struct is_supported<string_t> : std::true_type {};
 template <> struct is_supported<mixed_t> : std::true_type {};
@@ -35,7 +35,7 @@ struct is_supported<vector_t<T>> : std::bool_constant<is_supported<T>::value> {}
 
 template <typename T, typename K>
 struct is_supported<hash_t<T, K>> : std::bool_constant<
-	is_supported<T>::value && (std::is_same_v<detail::remove_cvref_t<K>, string_t> || std::is_same_v<detail::remove_cvref_t<K>, int_t>)
+	is_supported<T>::value && (std::is_same_v<detail::remove_cvref_t<K>, string_t> || std::is_same_v<detail::remove_cvref_t<K>, int_t<>>)
 > {};
 
 template <typename T>
@@ -55,7 +55,7 @@ template <>
 }
 
 template <>
-[[nodiscard]] inline mixed_t convert<int_t>(const int_t &value) {
+[[nodiscard]] inline mixed_t convert<int_t<>>(const int_t<> &value) {
 	return mixed_t(value);
 }
 
@@ -98,10 +98,10 @@ template <typename T, typename K>
 		const auto entry = *it;
 		if constexpr (std::is_same_v<detail::remove_cvref_t<K>, string_t>) {
 			out->set(entry.key(), convert(entry.value_ref()));
-		} else if constexpr (std::is_same_v<detail::remove_cvref_t<K>, int_t>) {
+		} else if constexpr (std::is_same_v<detail::remove_cvref_t<K>, int_t<>>) {
 			out->set(entry.key(), convert(entry.value_ref()));
 		} else {
-			static_assert(detail::always_false_v<K>, "scpp::json::to_json supports hash_t<T, string_t> and hash_t<T, int_t> keys only");
+			static_assert(detail::always_false_v<K>, "scpp::json::to_json supports hash_t<T, string_t> and hash_t<T, int_t<>> keys only");
 		}
 	}
 	return mixed_t(std::move(out));
@@ -115,8 +115,8 @@ template <typename T>
 		return convert<null_t>(value);
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, bool_t>) {
 		return convert<bool_t>(value);
-	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, int_t>) {
-		return convert<int_t>(value);
+	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, int_t<>>) {
+		return convert<int_t<>>(value);
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, float_t>) {
 		return convert<float_t>(value);
 	} else if constexpr (std::is_same_v<detail::remove_cvref_t<T>, string_t>) {

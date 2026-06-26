@@ -2,7 +2,7 @@
 
 int main() {
 	scpp::hash_t<scpp::mixed_t> row;
-	row.set(scpp::string_t("id"), scpp::mixed_t(scpp::int_t(42)));
+	row.set(scpp::string_t("id"), scpp::mixed_t(scpp::int_t<>(42)));
 	row.set(scpp::string_t("maybe"), scpp::mixed_t(scpp::null));
 	row.set(scpp::string_t("name"), scpp::mixed_t(scpp::string_t("")));
 

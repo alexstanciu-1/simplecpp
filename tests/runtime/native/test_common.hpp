@@ -11,10 +11,10 @@ namespace scpp_test {
 // Simple record used by pointer and container smoke tests.
 // It stays intentionally small so failures isolate runtime behavior rather than test complexity.
 struct sample_object final {
-	scpp::int_t value;
+	scpp::int_t<> value;
 
 	// Stores the provided semantic integer payload.
-	explicit sample_object(scpp::int_t initial_value)
+	explicit sample_object(scpp::int_t<> initial_value)
 		: value(std::move(initial_value)) {
 	}
 };

@@ -6,7 +6,7 @@ int main() {
 	assert(text_ref.native_value() == "sample");
 	assert(text_ref.size() == 6U);
 
-	const auto value = scpp::value<runtime_test::sample_object>(scpp::int_t(9));
+	const auto value = scpp::value<runtime_test::sample_object>(scpp::int_t<>(9));
 	const auto &native = value.get();
 	assert(native.value.native_value() == 9);
 	return 0;

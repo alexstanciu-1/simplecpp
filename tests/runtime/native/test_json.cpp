@@ -35,7 +35,7 @@ static void test_json_decode_array_and_object_shapes() {
 	assert(array_value.kind() == scpp::mixed_t::kind_t::dynamic_v);
 	assert(array_value.get_hash().is_packed().native_value());
 	assert(array_value.get_hash().size() == 3);
-	assert(array_value.get_hash().at(scpp::int_t(0)).get_int().native_value() == 1);
+	assert(array_value.get_hash().at(scpp::int_t<>(0)).get_int().native_value() == 1);
 
 	const auto object_value = scpp::json::json_decode(scpp::string_t("{\"id\":10,\"name\":\"Alex\"}"));
 	assert(object_value.kind() == scpp::mixed_t::kind_t::dynamic_v);
@@ -50,9 +50,9 @@ static void test_json_decode_nested_shared_model() {
 
 	const auto &outer = value.get_hash();
 	assert(outer.is_packed().native_value());
-	assert(outer.at(scpp::int_t(0)).kind() == scpp::mixed_t::kind_t::dynamic_v);
-	assert(!outer.at(scpp::int_t(0)).get_hash().is_packed().native_value());
-	assert(outer.at(scpp::int_t(0)).get_hash().at(scpp::string_t("id")).get_int().native_value() == 10);
+	assert(outer.at(scpp::int_t<>(0)).kind() == scpp::mixed_t::kind_t::dynamic_v);
+	assert(!outer.at(scpp::int_t<>(0)).get_hash().is_packed().native_value());
+	assert(outer.at(scpp::int_t<>(0)).get_hash().at(scpp::string_t("id")).get_int().native_value() == 10);
 }
 
 static void test_json_decode_unicode_and_escapes() {
@@ -70,37 +70,37 @@ static void test_json_encode_shapes() {
 		assert(decoded_object.dynamic_if() != nullptr);
 
 	auto shared_table = scpp::shared<scpp::hash_t<scpp::mixed_t>>();
-	static_cast<void>(shared_table->append(scpp::mixed_t(scpp::int_t(7))));
+	static_cast<void>(shared_table->append(scpp::mixed_t(scpp::int_t<>(7))));
 	static_cast<void>(shared_table->append(scpp::mixed_t(scpp::string_t("ok"))));
 	assert(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t<>(shared_table)))).native_value() == "[7,\"ok\"]");
 }
 
 static void test_json_encode_typed_values() {
-	scpp::vector_t<scpp::int_t> items;
-	items.append(scpp::int_t(1));
-	items.append(scpp::int_t(2));
-	items.append(scpp::int_t(3));
+	scpp::vector_t<scpp::int_t<>> items;
+	items.append(scpp::int_t<>(1));
+	items.append(scpp::int_t<>(2));
+	items.append(scpp::int_t<>(3));
 	assert(scpp::json::json_encode(items).native_value() == "[1,2,3]");
 
-	scpp::hash_t<scpp::int_t> scores;
-	scores.set(scpp::string_t("a"), scpp::int_t(1));
-	scores.set(scpp::string_t("b"), scpp::int_t(2));
+	scpp::hash_t<scpp::int_t<>> scores;
+	scores.set(scpp::string_t("a"), scpp::int_t<>(1));
+	scores.set(scpp::string_t("b"), scpp::int_t<>(2));
 	assert(scpp::json::json_encode(scores).native_value() == "{\"a\":1,\"b\":2}");
 
-	scpp::hash_t<scpp::vector_t<scpp::int_t>> matrix;
+	scpp::hash_t<scpp::vector_t<scpp::int_t<>>> matrix;
 	matrix.set(scpp::string_t("row"), items);
 	assert(scpp::json::json_encode(matrix).native_value() == "{\"row\":[1,2,3]}");
 
-	scpp::nullable<scpp::int_t> empty;
+	scpp::nullable<scpp::int_t<>> empty;
 	assert(scpp::json::json_encode(empty).native_value() == "null");
-	scpp::nullable<scpp::int_t> present(scpp::int_t(7));
+	scpp::nullable<scpp::int_t<>> present(scpp::int_t<>(7));
 	assert(scpp::json::json_encode(present).native_value() == "7");
 }
 
 static void test_json_encode_key_and_error_contracts() {
 	auto object_like = scpp::shared<scpp::hash_t<scpp::mixed_t>>();
-	object_like->set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t(1)));
-	object_like->set(scpp::int_t(42), scpp::mixed_t(scpp::int_t(2)));
+	object_like->set(scpp::string_t("a"), scpp::mixed_t(scpp::int_t<>(1)));
+	object_like->set(scpp::int_t<>(42), scpp::mixed_t(scpp::int_t<>(2)));
 	assert(scpp::json::json_encode(scpp::mixed_t(scpp::dynamic_box(scpp::dynamic_t<>(object_like)))).native_value() == "{\"a\":1,\"42\":2}");
 
 	scpp_test::expect_throw<std::runtime_error>([]() {

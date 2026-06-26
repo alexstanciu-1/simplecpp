@@ -90,17 +90,17 @@ static void test_stdio_roundtrip_and_aliases() {
 	assert(position_after_line.has_value().native_value());
 	assert(position_after_line.value().native_value() == 6);
 
-	const auto second_chunk = scpp::php::fread(file, scpp::int_t(4));
+	const auto second_chunk = scpp::php::fread(file, scpp::int_t<>(4));
 	assert(second_chunk.has_value().native_value());
 	assert(second_chunk.value().native_value() == "beta");
 	assert(!scpp::php::feof(file).native_value());
 
-	const auto eof_probe = scpp::php::fread(file, scpp::int_t(1));
+	const auto eof_probe = scpp::php::fread(file, scpp::int_t<>(1));
 	assert(eof_probe.has_value().native_value());
 	assert(eof_probe.value().native_value() == "");
 	assert(scpp::php::feof(file).native_value());
 
-	const auto seek_start = scpp::php::fseek(file, scpp::int_t(0));
+	const auto seek_start = scpp::php::fseek(file, scpp::int_t<>(0));
 	assert(seek_start.has_value().native_value());
 	assert(seek_start.value().native_value() == 0);
 	assert(!scpp::php::feof(file).native_value());
@@ -109,7 +109,7 @@ static void test_stdio_roundtrip_and_aliases() {
 	assert_true(scpp::php::fclose(file));
 
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		static_cast<void>(scpp::php::fread(file, scpp::int_t(1)));
+		static_cast<void>(scpp::php::fread(file, scpp::int_t<>(1)));
 	});
 }
 
@@ -124,7 +124,7 @@ static void test_fgets_length_and_partial_line() {
 	auto file = scpp::php::fopen(to_string_t(file_path), scpp::string_t("rb"));
 	assert(file.has_value().native_value());
 
-	const auto limited = scpp::php::fgets(file, scpp::int_t(4));
+	const auto limited = scpp::php::fgets(file, scpp::int_t<>(4));
 	assert(limited.has_value().native_value());
 	assert(limited.value().native_value() == "abc");
 
@@ -144,7 +144,7 @@ static void test_fgets_length_and_partial_line() {
 	file = scpp::php::fopen(to_string_t(file_path), scpp::string_t("rb"));
 	assert(file.has_value().native_value());
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		static_cast<void>(scpp::php::fgets(file, scpp::int_t(0)));
+		static_cast<void>(scpp::php::fgets(file, scpp::int_t<>(0)));
 	});
 	assert_true(scpp::php::fclose(file));
 }
@@ -159,7 +159,7 @@ static void test_fread_and_fwrite_error_contracts() {
 
 	auto read_only = scpp::php::fopen(to_string_t(file_path), scpp::string_t("rb"));
 	assert(read_only.has_value().native_value());
-	const auto zero_read = scpp::php::fread(read_only, scpp::int_t(0));
+	const auto zero_read = scpp::php::fread(read_only, scpp::int_t<>(0));
 	assert(zero_read.has_value().native_value());
 	assert(zero_read.value().native_value().empty());
 	assert_true(scpp::php::fclose(read_only));
@@ -174,14 +174,14 @@ static void test_fread_and_fwrite_error_contracts() {
 	auto write_only = scpp::php::fopen(to_string_t(file_path), scpp::string_t("wb"));
 	assert(write_only.has_value().native_value());
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		static_cast<void>(scpp::php::fread(write_only, scpp::int_t(1)));
+		static_cast<void>(scpp::php::fread(write_only, scpp::int_t<>(1)));
 	});
 	assert_true(scpp::php::fclose(write_only));
 
 	auto readable = scpp::php::fopen(to_string_t(file_path), scpp::string_t("rb"));
 	assert(readable.has_value().native_value());
 	scpp_test::expect_throw<std::runtime_error>([&]() {
-		static_cast<void>(scpp::php::fread(readable, scpp::int_t(-1)));
+		static_cast<void>(scpp::php::fread(readable, scpp::int_t<>(-1)));
 	});
 	assert_true(scpp::php::fclose(readable));
 }
@@ -190,13 +190,13 @@ static void test_var_dump_or_false_outputs() {
 	std::ostringstream captured;
 	auto *old_buf = std::cout.rdbuf(captured.rdbuf());
 
-	const scpp::result_or_false<scpp::int_t> bytes_written = scpp::int_t(12);
+	const scpp::result_or_false<scpp::int_t<>> bytes_written = scpp::int_t<>(12);
 	scpp::php::var_dump(bytes_written);
 
 	const scpp::result_or_false<scpp::string_t> file_text = scpp::string_t("Hello World\n");
 	scpp::php::var_dump(file_text);
 
-	const scpp::result_or_false<scpp::int_t> missing = scpp::false_sentinel;
+	const scpp::result_or_false<scpp::int_t<>> missing = scpp::false_sentinel;
 	scpp::php::var_dump(missing);
 
 	std::cout.rdbuf(old_buf);
@@ -317,9 +317,9 @@ static void test_scandir_sorted_names() {
 	assert(listing.has_value().native_value());
 	const auto &table = listing.value();
 	assert(table.size() == 3);
-	assert(table.at(scpp::int_t(0)).get_string().native_value() == "A.txt");
-	assert(table.at(scpp::int_t(1)).get_string().native_value() == "a.txt");
-	assert(table.at(scpp::int_t(2)).get_string().native_value() == "b.txt");
+	assert(table.at(scpp::int_t<>(0)).get_string().native_value() == "A.txt");
+	assert(table.at(scpp::int_t<>(1)).get_string().native_value() == "a.txt");
+	assert(table.at(scpp::int_t<>(2)).get_string().native_value() == "b.txt");
 
 	scpp::hash_t<scpp::mixed_t> taken_listing;
 	assert(scpp::php::take(taken_listing, scpp::php::scandir(to_string_t(dir_path))).native_value());
@@ -387,7 +387,7 @@ static void test_shared_surfaces() {
 
 	auto file = scpp::io::open(to_string_t(file_path), scpp::string_t("rb"));
 	assert(file.has_value().native_value());
-	const auto bytes = scpp::io::read(file, scpp::int_t(7));
+	const auto bytes = scpp::io::read(file, scpp::int_t<>(7));
 	assert(bytes.has_value().native_value());
 	assert(bytes.value().native_value() == "payload");
 	assert(scpp::io::close(file).native_value());

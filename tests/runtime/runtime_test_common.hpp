@@ -11,26 +11,26 @@
 namespace runtime_test {
 
 struct sample_object final {
-	scpp::int_t value;
+	scpp::int_t<> value;
 
-	explicit sample_object(scpp::int_t initial_value)
+	explicit sample_object(scpp::int_t<> initial_value)
 		: value(std::move(initial_value)) {
 	}
 };
 
 struct base_reader {
 	virtual ~base_reader() = default;
-	virtual scpp::int_t read() const = 0;
+	virtual scpp::int_t<> read() const = 0;
 };
 
 struct counter_reader final : base_reader {
-	scpp::int_t value;
+	scpp::int_t<> value;
 
-	explicit counter_reader(scpp::int_t initial_value)
+	explicit counter_reader(scpp::int_t<> initial_value)
 		: value(std::move(initial_value)) {
 	}
 
-	scpp::int_t read() const override {
+	scpp::int_t<> read() const override {
 		return value;
 	}
 };
@@ -42,9 +42,9 @@ struct lifetime_probe final {
 	static inline std::int32_t destructions = 0;
 	static inline std::int32_t alive = 0;
 
-	scpp::int_t value;
+	scpp::int_t<> value;
 
-	explicit lifetime_probe(scpp::int_t initial_value = scpp::int_t(0))
+	explicit lifetime_probe(scpp::int_t<> initial_value = scpp::int_t<>(0))
 		: value(std::move(initial_value)) {
 		++constructions;
 		++alive;

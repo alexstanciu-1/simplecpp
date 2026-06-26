@@ -65,7 +65,7 @@ inline bool_t condition_truthy_impl(Value &&value, const char *component, const 
 	using value_t = std::remove_cvref_t<Value>;
 	if constexpr (std::is_same_v<value_t, bool_t>) {
 		return value;
-	} else if constexpr (std::is_same_v<value_t, int_t>) {
+	} else if constexpr (::scpp::detail::is_int_t_v<value_t>) {
 		return bool_t(value.native_value() != 0);
 	} else if constexpr (std::is_same_v<value_t, float_t>) {
 		return bool_t(value.native_value() != 0.0);

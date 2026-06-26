@@ -101,7 +101,7 @@ template <typename T>
 struct is_supported : std::false_type {};
 
 template <> struct is_supported<bool_t> : std::true_type {};
-template <> struct is_supported<int_t> : std::true_type {};
+template <> struct is_supported<int_t<>> : std::true_type {};
 template <> struct is_supported<float_t> : std::true_type {};
 template <> struct is_supported<string_t> : std::true_type {};
 template <> struct is_supported<mixed_t> : std::true_type {};
@@ -128,7 +128,7 @@ struct target_type_name_t<bool_t> final {
 };
 
 template <>
-struct target_type_name_t<int_t> final {
+struct target_type_name_t<int_t<>> final {
 	[[nodiscard]] static std::string get() { return "int_t"; }
 };
 
@@ -181,9 +181,9 @@ template <>
 }
 
 template <>
-[[nodiscard]] inline int_t convert<int_t>(const json_value &value, const std::string &path) {
+[[nodiscard]] inline int_t<> convert<int_t<>>(const json_value &value, const std::string &path) {
 	if (!value.is_int().native_value()) {
-		throw_conversion_error("expected JSON integer number", path, target_type_name<int_t>(), value);
+		throw_conversion_error("expected JSON integer number", path, target_type_name<int_t<>>(), value);
 	}
 	return value.get_int();
 }
@@ -279,8 +279,8 @@ template <typename T>
 
 	if constexpr (std::is_same_v<T, bool_t>) {
 		return convert<bool_t>(value, path);
-	} else if constexpr (std::is_same_v<T, int_t>) {
-		return convert<int_t>(value, path);
+	} else if constexpr (std::is_same_v<T, int_t<>>) {
+		return convert<int_t<>>(value, path);
 	} else if constexpr (std::is_same_v<T, float_t>) {
 		return convert<float_t>(value, path);
 	} else if constexpr (std::is_same_v<T, string_t>) {
