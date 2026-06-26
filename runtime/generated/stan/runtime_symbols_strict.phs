@@ -108,7 +108,15 @@ function str_pad(string $text, int $length): string {}
 function str_replace(string $search, string $replace, string $subject): string {}
 function str_starts_with(string $text, string $prefix): bool {}
 function string_byte_at(string $text, int $offset): int {}
+function string_byte_find(string $haystack, string $needle, int $offset = 0): result_or_false<int> {}
+function string_byte_len(string $text): int {}
+function string_byte_slice(string $text, int $offset, int $length): string {}
 function string_byte_slice_equals(string $text, int $offset, int $length, string $literal): bool {}
+function string_grapheme_count(string $text): int {}
+function string_grapheme_slice(string $text, int $start, int $length): string {}
+function string_utf8_codepoint_at(string $text, int $index): int {}
+function string_utf8_codepoint_count(string $text): int {}
+function string_utf8_slice_codepoints(string $text, int $start, int $length): string {}
 function strlen(string $text): int {}
 function strpos(string $haystack, string $needle): result_or_false<int> {}
 function strrpos(string $haystack, string $needle): result_or_false<int> {}

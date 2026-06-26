@@ -9,6 +9,12 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+- Added explicit string unit APIs for byte, UTF-8 codepoint, and grapheme
+  operations, including `string_byte_len`, `string_byte_find`,
+  `string_byte_slice`, `string_utf8_codepoint_count`,
+  `string_utf8_codepoint_at`, `string_utf8_slice_codepoints`,
+  `string_grapheme_count`, and `string_grapheme_slice`.
+
 ## 0.1.74 - 2026-07-01
 
 ### Additions
