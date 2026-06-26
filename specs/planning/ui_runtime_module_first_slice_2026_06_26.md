@@ -238,7 +238,7 @@ runtime/src/modules/ui/
 Notes:
 
 - macOS backend likely needs Objective-C++ (`.mm`) for Cocoa/AppKit integration.
-- Windows backend should use Win32 directly for first slice.
+- Windows backend should use the Win32 desktop API directly for first slice. In this context, Win32 names the current desktop API family (`HWND`, message loop, `user32`, `gdi32`, `shell32`) and does not imply 32-bit binaries or old Windows support. The first support target is 64-bit Windows 11.
 - Linux backend should use GTK first.
 - GTK is the practical first Linux target because it covers the GNOME/GTK path common on Ubuntu, Debian, Fedora, and many derivative desktops; Linux Mint is also Ubuntu/Debian-family and ships GTK-oriented desktops. KDE/Qt and gaming-focused Arch/SteamOS/Bazzite-style environments matter, but the first backend should stay hidden behind the facade and can be broadened later.
 - Backend-specific native handles remain private to runtime implementation.
@@ -264,7 +264,7 @@ Notes:
 
 Initial platform link expectations:
 
-- Windows: Win32 user/windowing libraries
+- Windows: Win32 desktop libraries (`user32`, `gdi32`, later `shell32` for tray)
 - macOS: Cocoa/AppKit frameworks
 - Linux: GTK for first slice
 

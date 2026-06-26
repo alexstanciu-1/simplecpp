@@ -57,6 +57,10 @@ final class ScppUiModuleTest
 					$this->assertContains('-DSCPP_UI_BACKEND_APPKIT=1', implode(' ', $uiBuild['compile_defines']), 'macOS ui build spec should select the AppKit backend');
 					$this->assertContains('-framework', implode(' ', $uiBuild['ldflags']), 'macOS ui build spec should link Cocoa frameworks');
 					$this->assertContains('Cocoa', implode(' ', $uiBuild['ldflags']), 'macOS ui build spec should link Cocoa');
+				} elseif (PHP_OS_FAMILY === 'Windows') {
+					$this->assertContains('-DSCPP_UI_BACKEND_WIN32=1', implode(' ', $uiBuild['compile_defines']), 'Windows ui build spec should select the Win32 backend');
+					$this->assertContains('user32.lib', implode(' ', $uiBuild['ldflags']), 'Windows ui build spec should link user32');
+					$this->assertContains('gdi32.lib', implode(' ', $uiBuild['ldflags']), 'Windows ui build spec should link gdi32');
 				}
 			}
 
