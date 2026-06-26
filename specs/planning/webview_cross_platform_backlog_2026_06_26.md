@@ -47,6 +47,7 @@ Latest heartbeat slice:
 - WebKitGTK and WKWebView now expose a `SimpleCpp` JavaScript message handler; Linux, macOS, iOS, Windows, and Android WebView smokes assert `webview_message` payload delivery. CI run `28245240915` validated the cross-platform message slice.
 - Added an opt-in strict PHP++ `strict_webview_events` project sample that demonstrates `ui_app_poll`, `ui_event_type`, `ui_event_message`, and `ui_event_url` for browser-like WebView events. CI run `28246508869` validated the sample metadata/test slice.
 - Windows WebView2 smoke now waits for the async `webview_ready` event before loading HTML and sends the JavaScript message probe after navigation completion. CI run `28247631339` validated the stabilized Windows launch plus the full current matrix.
+- Windows WebView2 now emits `webview_title_changed` through the shared `ui_event` queue; CI run `28248575256` validated build, launch, screenshot, and title-event delivery.
 
 ## Done Definition
 
@@ -184,7 +185,7 @@ Initial implementation slice:
 - `webview_runtime::enqueue_event(...)` provides the backend callback handoff point into `ui_app.pending_events`.
 - Linux WebKitGTK emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, `webview_title_changed`, and `webview_message`.
 - Apple WKWebView emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message`.
-- WebView2 emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message`.
+- WebView2 emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, `webview_title_changed`, and `webview_message`.
 - Android emits `webview_ready`, `webview_navigation_started`, `webview_navigation_finished`, `webview_load_failed`, and `webview_message` through the Java-hosted `WebViewClient`/`JavascriptInterface` bridge contract.
 - Strict PHP++ source-facing example added under `docs/examples/php/strict/project_samples/strict_webview_events`; it remains outside the default console sample runner because it requires a GUI/WebView backend.
 
@@ -200,7 +201,7 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28247631339` validated:
+Run `28248575256` validated:
 
 - Linux WebKitGTK WebView screenshot retry and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
@@ -220,3 +221,4 @@ Run `28247631339` validated:
 - Linux WebKitGTK, macOS WKWebView, and iOS WKWebView JavaScript-to-native `webview_message` payload delivery
 - Strict PHP++ opt-in WebView event sample metadata and source-facing event accessor coverage
 - Windows WebView2 async readiness before load, navigation-finished delivery, JavaScript-to-native `webview_message`, launch, and screenshot artifact
+- Windows WebView2 `webview_title_changed` delivery through the `ui_app` queue
