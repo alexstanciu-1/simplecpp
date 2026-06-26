@@ -46,6 +46,7 @@ Latest heartbeat slice:
 - WebView build reporting now carries structured dependency diagnostics and renders missing Linux `pkg-config`/WebKitGTK package guidance in `scpp explain-build`; CI run `28244035315` validated the slice.
 - WebKitGTK and WKWebView now expose a `SimpleCpp` JavaScript message handler; Linux, macOS, iOS, Windows, and Android WebView smokes assert `webview_message` payload delivery. CI run `28245240915` validated the cross-platform message slice.
 - Added an opt-in strict PHP++ `strict_webview_events` project sample that demonstrates `ui_app_poll`, `ui_event_type`, `ui_event_message`, and `ui_event_url` for browser-like WebView events. CI run `28246508869` validated the sample metadata/test slice.
+- Windows WebView2 smoke now waits for the async `webview_ready` event before loading HTML and sends the JavaScript message probe after navigation completion. CI run `28247631339` validated the stabilized Windows launch plus the full current matrix.
 
 ## Done Definition
 
@@ -199,7 +200,7 @@ Initial implementation slice:
 
 ## Latest Known Good CI Run
 
-Run `28246508869` validated:
+Run `28247631339` validated:
 
 - Linux WebKitGTK WebView screenshot retry and `webview_navigation_finished` event delivery through the `ui_app` queue
 - macOS WKWebView screenshot and `webview_navigation_finished` event delivery through the `ui_app` queue
@@ -218,3 +219,4 @@ Run `28246508869` validated:
 - Linux WebView missing dependency diagnostics in the WebView build spec and explain-build rendering
 - Linux WebKitGTK, macOS WKWebView, and iOS WKWebView JavaScript-to-native `webview_message` payload delivery
 - Strict PHP++ opt-in WebView event sample metadata and source-facing event accessor coverage
+- Windows WebView2 async readiness before load, navigation-finished delivery, JavaScript-to-native `webview_message`, launch, and screenshot artifact
