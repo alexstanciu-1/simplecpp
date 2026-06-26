@@ -32,6 +32,71 @@
 #include <memory>
 #include <string>
 
+#if (defined(SCPP_WEBVIEW_BACKEND_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_WKWEBVIEW) || (defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW)
+@interface ScppWebViewNavigationDelegate : NSObject<WKNavigationDelegate> {
+	scpp::shared_p<scpp::webview_runtime::view> _target;
+}
+- (instancetype)initWithTarget:(scpp::shared_p<scpp::webview_runtime::view>)target;
+@end
+
+@implementation ScppWebViewNavigationDelegate
+- (instancetype)initWithTarget:(scpp::shared_p<scpp::webview_runtime::view>)target
+{
+	self = [super init];
+	if (self != nil) {
+		_target = target;
+	}
+	return self;
+}
+
+- (NSString *)currentURLString:(WKWebView *)webView
+{
+	NSURL *url = webView.URL;
+	if (url == nil) {
+		return @"";
+	}
+	NSString *absolute = url.absoluteString;
+	return absolute == nil ? @"" : absolute;
+}
+
+- (void)enqueueType:(const char *)type message:(NSString *)message url:(NSString *)url
+{
+	const char *messageText = message == nil ? "" : message.UTF8String;
+	const char *urlText = url == nil ? "" : url.UTF8String;
+	(void) scpp::webview_runtime::enqueue_event(
+		_target,
+		scpp::string_t(type),
+		scpp::string_t(messageText == nullptr ? "" : messageText),
+		scpp::string_t(urlText == nullptr ? "" : urlText)
+	);
+}
+
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation
+{
+	(void)navigation;
+	[self enqueueType:"webview_navigation_started" message:@"" url:[self currentURLString:webView]];
+}
+
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
+{
+	(void)navigation;
+	[self enqueueType:"webview_navigation_finished" message:@"" url:[self currentURLString:webView]];
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+	(void)navigation;
+	[self enqueueType:"webview_load_failed" message:error.localizedDescription url:[self currentURLString:webView]];
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+	(void)navigation;
+	[self enqueueType:"webview_load_failed" message:error.localizedDescription url:[self currentURLString:webView]];
+}
+@end
+#endif
+
 namespace scpp::webview_runtime {
 
 namespace {
@@ -333,6 +398,10 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		auto target = shared<view>();
 		target->window_handle = window;
 		target->native_handle = native;
+		ScppWebViewNavigationDelegate *delegate = [[ScppWebViewNavigationDelegate alloc] initWithTarget:target];
+		native.navigationDelegate = delegate;
+		target->native_controller = delegate;
+		(void) enqueue_event(target, string_t("webview_ready"));
 		return target;
 	}
 #elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
@@ -353,6 +422,10 @@ result<shared_p<view>> create(const shared_p<ui::window> &window) {
 		auto target = shared<view>();
 		target->window_handle = window;
 		target->native_handle = native;
+		ScppWebViewNavigationDelegate *delegate = [[ScppWebViewNavigationDelegate alloc] initWithTarget:target];
+		native.navigationDelegate = delegate;
+		target->native_controller = delegate;
+		(void) enqueue_event(target, string_t("webview_ready"));
 		return target;
 	}
 #elif defined(SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW) && SCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW
@@ -677,15 +750,23 @@ void close(const shared_p<view> &target) {
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
 			[native stopLoading];
+			native.navigationDelegate = nil;
 			[native removeFromSuperview];
 			[native release];
+		}
+		if (target->native_controller != nullptr) {
+			[static_cast<ScppWebViewNavigationDelegate *>(target->native_controller) release];
 		}
 #elif defined(SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW) && SCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW
 		if (target->native_handle != nullptr) {
 			WKWebView *native = static_cast<WKWebView *>(target->native_handle);
 			[native stopLoading];
+			native.navigationDelegate = nil;
 			[native removeFromSuperview];
 			[native release];
+		}
+		if (target->native_controller != nullptr) {
+			[static_cast<ScppWebViewNavigationDelegate *>(target->native_controller) release];
 		}
 #elif defined(SCPP_WEBVIEW_BACKEND_WEBVIEW2) && SCPP_WEBVIEW_BACKEND_WEBVIEW2
 		auto *holder = static_cast<win32_webview_state_ptr *>(target->native_state);

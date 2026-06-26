@@ -29,7 +29,7 @@ int main() {
 	auto view = view_result.value();
 	auto html_result = scpp::webview_runtime::load_html(
 		view,
-		scpp::string_t("<!doctype html><html><body style=\"font-family:-apple-system,sans-serif;margin:48px\"><h1>Simple C++ WebView</h1><p>Native WKWebView smoke.</p></body></html>")
+		scpp::string_t("<!doctype html><html><head><title>Simple C++ WebView</title></head><body style=\"font-family:-apple-system,sans-serif;margin:48px\"><h1>Simple C++ WebView</h1><p>Native WKWebView smoke.</p></body></html>")
 	);
 	if (!html_result.has_value().native_value()) {
 		std::cerr << html_result.error()->get_message().native_value() << "\n";
@@ -42,9 +42,32 @@ int main() {
 		return 1;
 	}
 
+	bool saw_webview_ready = false;
+	bool saw_navigation_finished = false;
 	for (int i = 0; i < 160; ++i) {
 		(void) scpp::ui::app_poll(app);
+		for (;;) {
+			auto event = scpp::ui::app_next_event(app);
+			if (!event.has_value().native_value()) {
+				break;
+			}
+			const auto type = scpp::ui::event_type(event).native_value();
+			if (type == "webview_ready") {
+				saw_webview_ready = true;
+			}
+			if (type == "webview_navigation_finished") {
+				saw_navigation_finished = true;
+			}
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	}
+	if (!saw_webview_ready) {
+		std::cerr << "Did not receive webview_ready\n";
+		return 1;
+	}
+	if (!saw_navigation_finished) {
+		std::cerr << "Did not receive webview_navigation_finished\n";
+		return 1;
 	}
 
 	scpp::webview_runtime::close(view);
