@@ -117,6 +117,13 @@ function source_buffer_release(source_buffer $buffer): string {}
 function source_buffer_slice(source_buffer $buffer, int $offset, int $length): string {}
 function source_buffer_span(source_buffer $buffer, int $offset, int $length): byte_span {}
 function source_buffer_take(string $text): source_buffer {}
+function source_line_index_build(source_buffer $buffer): source_line_index {}
+function source_line_index_line_column_to_offset(source_line_index $index, int $line, int $column): uint32 {}
+function source_line_index_line_count(source_line_index $index): uint32 {}
+function source_line_index_offset_to_location(source_line_index $index, int $offset): source_location {}
+function source_location_column(source_location $location): uint32 {}
+function source_location_line(source_location $location): uint32 {}
+function source_location_offset(source_location $location): uint32 {}
 function str_contains(string $text, string $needle): bool {}
 function str_ends_with(string $text, string $suffix): bool {}
 function str_pad(string $text, int $length): string {}
@@ -195,6 +202,14 @@ function vector_reserve(): mixed {}
 namespace scpp;
 
 class token_buffer
+{
+}
+
+class source_line_index
+{
+}
+
+class source_location
 {
 }
 

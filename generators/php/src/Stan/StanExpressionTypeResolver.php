@@ -2099,19 +2099,82 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
-		$catalog['source_buffer_slice'] = [
-			'name' => 'source_buffer_slice',
-			'namespace' => null,
+			$catalog['source_buffer_slice'] = [
+				'name' => 'source_buffer_slice',
+				'namespace' => null,
 			'params' => [
 				['name' => 'buffer', 'type' => 'source_buffer'],
 				['name' => 'offset', 'type' => 'int'],
 				['name' => 'length', 'type' => 'int'],
 			],
 			'return_type' => 'string',
-			'line' => 0,
-			'is_static' => false,
-		];
-		$catalog['byte_span_len'] = [
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_build'] = [
+				'name' => 'source_line_index_build',
+				'namespace' => null,
+				'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+				'return_type' => 'source_line_index',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_line_count'] = [
+				'name' => 'source_line_index_line_count',
+				'namespace' => null,
+				'params' => [['name' => 'index', 'type' => 'source_line_index']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_offset_to_location'] = [
+				'name' => 'source_line_index_offset_to_location',
+				'namespace' => null,
+				'params' => [
+					['name' => 'index', 'type' => 'source_line_index'],
+					['name' => 'offset', 'type' => 'int'],
+				],
+				'return_type' => 'source_location',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_line_column_to_offset'] = [
+				'name' => 'source_line_index_line_column_to_offset',
+				'namespace' => null,
+				'params' => [
+					['name' => 'index', 'type' => 'source_line_index'],
+					['name' => 'line', 'type' => 'int'],
+					['name' => 'column', 'type' => 'int'],
+				],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_offset'] = [
+				'name' => 'source_location_offset',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_line'] = [
+				'name' => 'source_location_line',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_column'] = [
+				'name' => 'source_location_column',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['byte_span_len'] = [
 			'name' => 'byte_span_len',
 			'namespace' => null,
 			'params' => [['name' => 'span', 'type' => 'byte_span']],

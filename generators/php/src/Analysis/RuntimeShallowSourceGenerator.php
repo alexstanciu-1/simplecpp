@@ -268,10 +268,17 @@ final class RuntimeShallowSourceGenerator
 				'source_buffer_take' => ['return' => 'source_buffer', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'source_buffer_release' => ['return' => 'string', 'params' => [['name' => 'buffer', 'type' => 'source_buffer']]],
 				'source_buffer_byte_len' => ['return' => 'uint32', 'params' => [['name' => 'buffer', 'type' => 'source_buffer']]],
-				'source_buffer_byte_at' => ['return' => 'byte', 'params' => [['name' => 'buffer', 'type' => 'source_buffer'], ['name' => 'offset', 'type' => 'int']]],
-				'source_buffer_span' => ['return' => 'byte_span', 'params' => [['name' => 'buffer', 'type' => 'source_buffer'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
-				'source_buffer_slice' => ['return' => 'string', 'params' => [['name' => 'buffer', 'type' => 'source_buffer'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
-				'byte_span_len' => ['return' => 'uint32', 'params' => [['name' => 'span', 'type' => 'byte_span']]],
+					'source_buffer_byte_at' => ['return' => 'byte', 'params' => [['name' => 'buffer', 'type' => 'source_buffer'], ['name' => 'offset', 'type' => 'int']]],
+					'source_buffer_span' => ['return' => 'byte_span', 'params' => [['name' => 'buffer', 'type' => 'source_buffer'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
+					'source_buffer_slice' => ['return' => 'string', 'params' => [['name' => 'buffer', 'type' => 'source_buffer'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
+					'source_line_index_build' => ['return' => 'source_line_index', 'params' => [['name' => 'buffer', 'type' => 'source_buffer']]],
+					'source_line_index_line_count' => ['return' => 'uint32', 'params' => [['name' => 'index', 'type' => 'source_line_index']]],
+					'source_line_index_offset_to_location' => ['return' => 'source_location', 'params' => [['name' => 'index', 'type' => 'source_line_index'], ['name' => 'offset', 'type' => 'int']]],
+					'source_line_index_line_column_to_offset' => ['return' => 'uint32', 'params' => [['name' => 'index', 'type' => 'source_line_index'], ['name' => 'line', 'type' => 'int'], ['name' => 'column', 'type' => 'int']]],
+					'source_location_offset' => ['return' => 'uint32', 'params' => [['name' => 'location', 'type' => 'source_location']]],
+					'source_location_line' => ['return' => 'uint32', 'params' => [['name' => 'location', 'type' => 'source_location']]],
+					'source_location_column' => ['return' => 'uint32', 'params' => [['name' => 'location', 'type' => 'source_location']]],
+					'byte_span_len' => ['return' => 'uint32', 'params' => [['name' => 'span', 'type' => 'byte_span']]],
 				'byte_span_at' => ['return' => 'byte', 'params' => [['name' => 'span', 'type' => 'byte_span'], ['name' => 'offset', 'type' => 'int']]],
 				'byte_span_to_string' => ['return' => 'string', 'params' => [['name' => 'span', 'type' => 'byte_span']]],
 				'hash_bytes' => ['return' => 'string', 'params' => [['name' => 'span', 'type' => 'byte_span']]],
@@ -500,9 +507,11 @@ final class RuntimeShallowSourceGenerator
 		$blocks = [];
 		$scppClasses = [];
 		if ($isStrict) {
-			$scppClasses = [
-				$this->renderClassStub('token_buffer', [], $isStrict),
-				$this->renderClassStub('task_batch', [], $isStrict),
+				$scppClasses = [
+					$this->renderClassStub('token_buffer', [], $isStrict),
+					$this->renderClassStub('source_line_index', [], $isStrict),
+					$this->renderClassStub('source_location', [], $isStrict),
+					$this->renderClassStub('task_batch', [], $isStrict),
 				$this->renderClassStub('task_context', [], $isStrict),
 				$this->renderClassStub('task_progress_info', [
 					['kind' => 'method', 'name' => 'total', 'return' => 'int', 'params' => []],
