@@ -120,6 +120,47 @@ final class StanExpressionTypeResolver
 	}
 
 	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectUnsupportedHashKeyDiagnostics(array $fileSummaries, array $symbolIndex): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries);
+		$classLookup = $this->buildClassLookup($classCatalog);
+		$diagnostics = [];
+
+		foreach ($fileSummaries as $summary) {
+			$path = (string) ($summary['path'] ?? '(unknown)');
+			foreach (($summary['root_functions'] ?? []) as $function) {
+				if (is_array($function)) {
+					$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($function, (string) ($function['name'] ?? 'function'), $path, $classLookup));
+				}
+			}
+			foreach (($summary['root_classes'] ?? []) as $class) {
+				if (is_array($class)) {
+					$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForClass($class, (string) ($class['name'] ?? 'class'), $path, $classLookup));
+				}
+			}
+			foreach (($summary['namespaces'] ?? []) as $namespace) {
+				if (!is_array($namespace)) {
+					continue;
+				}
+				$namespaceName = (string) ($namespace['name'] ?? '');
+				foreach (($namespace['functions'] ?? []) as $function) {
+					if (is_array($function)) {
+						$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($function, $this->contextName($namespaceName, (string) ($function['name'] ?? 'function')), $path, $classLookup));
+					}
+				}
+				foreach (($namespace['classes'] ?? []) as $class) {
+					if (is_array($class)) {
+						$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForClass($class, $this->contextName($namespaceName, (string) ($class['name'] ?? 'class')), $path, $classLookup));
+					}
+				}
+			}
+		}
+
+		usort($diagnostics, static fn (array $a, array $b): int => strcmp($a['message'], $b['message']));
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
 	public function collectPropertyTypeDiagnostics(array $fileSummaries, array $symbolIndex): array
 	{
 		$classCatalog = $this->buildClassCatalog($fileSummaries);
@@ -749,6 +790,121 @@ final class StanExpressionTypeResolver
 			$map[$name] = $this->normalizeTypeSet([$type]);
 		}
 		return $map;
+	}
+
+	/** @param array<string,mixed> $owner @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForOwner(array $owner, string $context, string $path, array $classLookup): array
+	{
+		$diagnostics = [];
+		foreach (($owner['params'] ?? []) as $param) {
+			if (is_array($param)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($param['type'] ?? ''), (int) ($param['line'] ?? 0), 'parameter $' . (string) ($param['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($owner['return_type'] ?? ''), (int) ($owner['line'] ?? 0), 'return type', $context, $path, $classLookup));
+		foreach (($owner['typed_locals'] ?? []) as $local) {
+			if (is_array($local)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($local['type'] ?? ''), (int) ($local['line'] ?? 0), 'local $' . (string) ($local['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForClass(array $class, string $context, string $path, array $classLookup): array
+	{
+		$diagnostics = [];
+		foreach (($class['properties'] ?? []) as $property) {
+			if (is_array($property)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($property['type'] ?? ''), (int) ($property['line'] ?? 0), 'property $' . (string) ($property['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($method, $context . '::' . (string) ($method['name'] ?? 'method'), $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForType(string $type, int $line, string $slot, string $context, string $path, array $classLookup): array
+	{
+		$type = trim($type);
+		if ($type === '') {
+			return [];
+		}
+		$diagnostics = [];
+		if (preg_match('/^(?:hash|hash_t)\s*<\s*(.+)\s*>$/i', $type, $matches) === 1) {
+			$args = $this->splitTopLevelGenericArgs((string) $matches[1]);
+			if (count($args) === 2 && !$this->isSupportedSourceHashKeyType($args[1], $classLookup)) {
+				$diagnostics[] = [
+					'kind' => 'unsupported_hash_key_type',
+					'severity' => 'error',
+					'context' => $context,
+					'path' => $path,
+					'line' => $line,
+					'target_type' => $type,
+					'slot' => $slot,
+					'message' => 'Unsupported hash<T,T_KEY> key type `' . trim($args[1]) . '` in ' . $slot . ' of `' . $context . '`. Supported key families are string, integer aliases, enum types, shared<T>, unique<T>, and weak<T>.',
+				];
+			}
+			foreach ($args as $arg) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType($arg, $line, $slot, $context, $path, $classLookup));
+			}
+			return $diagnostics;
+		}
+		if (preg_match('/^[a-zA-Z_\\\\][a-zA-Z0-9_\\\\]*\s*<\s*(.+)\s*>$/', $type, $matches) === 1) {
+			foreach ($this->splitTopLevelGenericArgs((string) $matches[1]) as $arg) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType($arg, $line, $slot, $context, $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup */
+	private function isSupportedSourceHashKeyType(string $type, array $classLookup): bool
+	{
+		$normalized = strtolower(ltrim(trim($type), '\\'));
+		if (in_array($normalized, ['string', 'string_t', 'int', 'int_t', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
+			return true;
+		}
+		if ($this->enumTypeId($type, $classLookup, null) !== null) {
+			return true;
+		}
+		return preg_match('/^(?:shared|unique|weak|weakref|shared_p|unique_p|weak_p)\s*<\s*.+\s*>$/i', trim($type)) === 1;
+	}
+
+	/** @return list<string> */
+	private function splitTopLevelGenericArgs(string $text): array
+	{
+		$args = [];
+		$current = '';
+		$depth = 0;
+		$length = strlen($text);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $text[$i];
+			if ($ch === '<') {
+				++$depth;
+			} elseif ($ch === '>') {
+				$depth = max(0, $depth - 1);
+			} elseif ($ch === ',' && $depth === 0) {
+				$args[] = trim($current);
+				$current = '';
+				continue;
+			}
+			$current .= $ch;
+		}
+		if (trim($current) !== '') {
+			$args[] = trim($current);
+		}
+		return $args;
+	}
+
+	private function contextName(string $namespace, string $name): string
+	{
+		$namespace = trim($namespace, '\\');
+		return $namespace === '' ? $name : $namespace . '\\' . $name;
 	}
 
 	/** @param array<string,mixed> $chain @param array<string,string> $paramTypes @param array<string,array<string,mixed>> $classLookup */

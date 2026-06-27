@@ -30,6 +30,7 @@ final class StanSemanticPass
 		$expressionChainTypes = $this->expressionTypeResolver->resolveExpressionChains($fileSummaries, $symbolIndex);
 		$expressionChainDiagnostics = $this->expressionTypeResolver->collectExpressionChainDiagnostics($fileSummaries, $symbolIndex);
 		$localTypeDiagnostics = $this->expressionTypeResolver->collectLocalTypeDiagnostics($fileSummaries, $symbolIndex);
+		$localTypeDiagnostics = array_merge($localTypeDiagnostics, $this->expressionTypeResolver->collectUnsupportedHashKeyDiagnostics($fileSummaries, $symbolIndex));
 		$propertyTypeDiagnostics = $this->expressionTypeResolver->collectPropertyTypeDiagnostics($fileSummaries, $symbolIndex);
 		$propertyReadDiagnostics = $this->expressionTypeResolver->collectPropertyReadDiagnostics($fileSummaries, $symbolIndex);
 		$initializationDiagnostics = $this->expressionTypeResolver->collectInitializationDiagnostics($fileSummaries, $symbolIndex);

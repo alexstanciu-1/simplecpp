@@ -124,6 +124,29 @@ PHS
 			$this->writeProject($project, <<<'PHS'
 function main(): void
 {
+	$labels hash<string,float> = [];
+	$labels[1.5] = "bad";
+	echo "bad\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$unsupportedHashKey = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $unsupportedHashKey['warning_count'] ?? null, 'unsupported explicit hash key should produce one STAN finding');
+			$unsupportedHashKeyDiagnostic = $unsupportedHashKey['diagnostics'][0] ?? null;
+			if (!is_array($unsupportedHashKeyDiagnostic)) {
+				throw new RuntimeException('unsupported hash key diagnostic should be present');
+			}
+			$this->assertSame('stan.unsupported_hash_key_type', $unsupportedHashKeyDiagnostic['code'] ?? null, 'unsupported hash key diagnostic code should be stable');
+			$this->assertContains('Unsupported hash<T,T_KEY> key type `float`', (string) ($unsupportedHashKeyDiagnostic['message'] ?? ''), 'unsupported hash key diagnostic should name the rejected key family');
+			$classifiedUnsupportedHashKey = classify_stan_build_diagnostics([$unsupportedHashKeyDiagnostic]);
+			$this->assertSame(1, $classifiedUnsupportedHashKey['compile_error_count'] ?? null, 'unsupported hash key diagnostics should block pre-build');
+
+			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
 	$small int8 = 7;
 	$bad uint16 = $small;
 	echo (int)$bad, "\n";
