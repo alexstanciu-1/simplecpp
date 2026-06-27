@@ -512,12 +512,25 @@ First home:
 
 Tasks:
 
-- [ ] Add vector count/capacity/estimated-byte helpers.
-- [ ] Add string byte length/capacity helper where available.
-- [ ] Add hash count/capacity/estimated-byte helpers where available.
-- [ ] Add process RSS/peak RSS helpers if not already covered.
-- [ ] Document approximation limits.
-- [ ] Add trend-oriented tests/probes.
+- [x] Add vector count/capacity/estimated-byte helpers.
+- [x] Add string byte length/capacity helper where available.
+- [x] Add hash count/capacity/estimated-byte helpers where available.
+- [x] Add process RSS/peak RSS helpers if not already covered.
+- [x] Document approximation limits.
+- [x] Add trend-oriented tests/probes.
+
+Result:
+- Added wrapper-owned memory accounting helpers in
+  `scpp/memory_accounting.hpp`.
+- Added `string_t::byte_capacity`, `string_t::estimated_storage_bytes`,
+  `vector_t::estimated_storage_bytes`, and hash capacity/estimate helpers.
+- Existing `memory_get_usage` / `memory_get_peak_usage` remain the process RSS
+  and peak RSS helpers.
+- Estimates are intentionally approximate: they include wrapper-owned backing
+  capacities and do not include allocator metadata, recursively owned child
+  graphs, or shared global pools.
+- Added native tests and `tools/runtime_benchmarks/run_memory_accounting_probe.sh`
+  for trend-oriented output.
 
 ## Priority 15: Stable Hash Helpers
 

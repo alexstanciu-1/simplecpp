@@ -83,6 +83,31 @@ using hash_index_variant_t = std::variant<
 	flat_hash_index_t<std::uint32_t>
 >;
 
+[[nodiscard]] inline std::size_t index_capacity(const hash_index_variant_t &index) noexcept {
+	std::size_t capacity = 0;
+	std::visit([&](const auto &idx) {
+		using I = std::decay_t<decltype(idx)>;
+		if constexpr (!std::is_same_v<I, std::monostate>) {
+			capacity = idx.capacity_;
+		}
+	}, index);
+	return capacity;
+}
+
+[[nodiscard]] inline std::size_t estimated_index_storage_bytes(const hash_index_variant_t &index) noexcept {
+	std::size_t bytes = 0;
+	std::visit([&](const auto &idx) {
+		using I = std::decay_t<decltype(idx)>;
+		if constexpr (!std::is_same_v<I, std::monostate>) {
+			using bucket_vector_t = std::decay_t<decltype(idx.buckets_)>;
+			bytes = sizeof(I)
+				+ idx.ctrl_bytes_.capacity() * sizeof(std::uint8_t)
+				+ idx.buckets_.capacity() * sizeof(typename bucket_vector_t::value_type);
+		}
+	}, index);
+	return bytes;
+}
+
 [[nodiscard]] inline std::uint64_t mix64(std::uint64_t value) noexcept {
 	value ^= value >> 16;
 	value *= 0x85ebca6bull;
@@ -492,6 +517,26 @@ public:
 
 	[[nodiscard]] std::size_t size() const noexcept {
 		return live_size_;
+	}
+
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return values_.capacity();
+	}
+
+	[[nodiscard]] std::size_t key_capacity() const noexcept {
+		return keys_.capacity();
+	}
+
+	[[nodiscard]] std::size_t index_capacity() const noexcept {
+		return hash_detail::index_capacity(hash_index_);
+	}
+
+	[[nodiscard]] std::size_t estimated_storage_bytes() const noexcept {
+		return sizeof(*this)
+			+ values_.capacity() * sizeof(T_VALUE)
+			+ keys_.capacity() * sizeof(T_KEY)
+			+ live_.capacity() * sizeof(std::uint8_t)
+			+ hash_detail::estimated_index_storage_bytes(hash_index_);
 	}
 
 	[[nodiscard]] bool_t is_packed() const noexcept {
@@ -1076,6 +1121,29 @@ public:
 			if (key != TOMBSTONE_KEY) ++count;
 		}
 		return count;
+	}
+
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return values_.capacity();
+	}
+
+	[[nodiscard]] std::size_t key_capacity() const noexcept {
+		if (std::holds_alternative<std::monostate>(keys_)) return 0;
+		return std::get<native_keys_t>(keys_).capacity();
+	}
+
+	[[nodiscard]] std::size_t index_capacity() const noexcept {
+		return hash_detail::index_capacity(hash_index_);
+	}
+
+	[[nodiscard]] std::size_t estimated_storage_bytes() const noexcept {
+		const auto keys_bytes = std::holds_alternative<native_keys_t>(keys_)
+			? std::get<native_keys_t>(keys_).capacity() * sizeof(native_keys_t::value_type)
+			: std::size_t{0};
+		return sizeof(*this)
+			+ values_.capacity() * sizeof(mixed_t)
+			+ keys_bytes
+			+ hash_detail::estimated_index_storage_bytes(hash_index_);
 	}
 
 	[[nodiscard]] bool_t is_packed() const noexcept {

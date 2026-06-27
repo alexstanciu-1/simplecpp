@@ -39,6 +39,7 @@
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/memory.hpp"
+#include "scpp/memory_accounting.hpp"
 #include "scpp/cast.hpp"
 #include "scpp/fs.hpp"
 #include "scpp/io.hpp"

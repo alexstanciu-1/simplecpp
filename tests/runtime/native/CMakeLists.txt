@@ -79,6 +79,11 @@ add_executable(test_binary_codec test_binary_codec.cpp)
 target_link_libraries(test_binary_codec PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_binary_codec COMMAND test_binary_codec)
 
+# Approximate memory accounting helper coverage.
+add_executable(test_memory_accounting test_memory_accounting.cpp)
+target_link_libraries(test_memory_accounting PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_memory_accounting COMMAND test_memory_accounting)
+
 # string_parts_builder coverage for artifact-style string assembly.
 add_executable(test_string_parts_builder test_string_parts_builder.cpp)
 target_link_libraries(test_string_parts_builder PRIVATE scpp_runtime scpp_runtime_test_support)
