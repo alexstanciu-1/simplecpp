@@ -377,12 +377,16 @@ Recommended first slice:
 
 Current implementation:
 
-- no dedicated bitset library was found
+- `runtime/include/scpp/bitset_t.hpp` provides a compact fixed-size bitset over
+  `vector_t<uint64_t>`
+- operations are explicit-size and range-checked: `resize`, `set`, `clear`,
+  `test`, `any_set`, `count`, `clear_all_bits`, and full `clear`
 
 Recommended first slice:
 
-- implement over `vector<uint64>` first
-- add set/clear/test/count only as needed by dirty queues and dependency walks
+- done; keep it compiler/runtime-support level for now and promote to a broader
+  collections module only after dirty queue/dependency traversal usage proves
+  the final shape
 
 ## 12. Deque / Ring Work Queue
 
