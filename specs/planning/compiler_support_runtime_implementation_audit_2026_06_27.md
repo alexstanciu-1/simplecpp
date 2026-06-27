@@ -185,8 +185,9 @@ Recommended first slice:
 - keep PHP-style semicolon cases
 - add fixed-width integer-backed enum lowering for `byte`, `uint16`, and the
   other fixed-width integer aliases
-- add explicit enum-to-backing and backing-to-enum helper design before using
-  enums as artifact numeric fields broadly
+- use explicit `enum_value($case)` and
+  `enum_from_value(token_kind::class, $raw)` helpers before using enums as
+  artifact numeric fields broadly
 
 ## 3. Fixed-Width Integers
 

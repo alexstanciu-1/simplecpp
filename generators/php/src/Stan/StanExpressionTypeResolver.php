@@ -1830,6 +1830,25 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
+		$catalog['enum_value'] = [
+			'name' => 'enum_value',
+			'namespace' => null,
+			'params' => [['name' => 'case', 'type' => 'mixed']],
+			'return_type' => 'int',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['enum_from_value'] = [
+			'name' => 'enum_from_value',
+			'namespace' => null,
+			'params' => [
+				['name' => 'enum_class', 'type' => 'mixed'],
+				['name' => 'value', 'type' => 'mixed'],
+			],
+			'return_type' => 'mixed',
+			'line' => 0,
+			'is_static' => false,
+		];
 		return $catalog;
 	}
 

@@ -654,6 +654,16 @@ final class Generator
 		return ($class instanceof ClassDecl && $class->isEnum) || $this->typeMapper->declaredTypeKind($trimmed) === 'enum';
 	}
 
+	private function lookupEnumDeclByTypeName(string $name): ?ClassDecl
+	{
+		$trimmed = ltrim(trim($name), '\\');
+		if ($trimmed === '') {
+			return null;
+		}
+		$class = $this->classDecls[$trimmed] ?? $this->classDecls[basename(str_replace('\\', '/', $trimmed))] ?? null;
+		return $class instanceof ClassDecl && $class->isEnum ? $class : null;
+	}
+
 	private function lookupFunctionDeclByCall(mixed $nameExpr, ?string $namespacePhp): ?FunctionDecl
 	{
 		if (!is_object($nameExpr) || ($nameExpr->kind ?? null) !== AstKind::NAME) {
@@ -2051,6 +2061,30 @@ final class Generator
 			'uint64' => [0, PHP_INT_MAX],
 			default => null,
 		};
+	}
+
+	private function enumBackingRuntimeType(ClassDecl $class): string
+	{
+		$backingType = $class->enumBackingType !== null ? strtolower($class->enumBackingType) : null;
+		return match ($backingType) {
+			'int8' => 'int_t<std::int8_t>',
+			'int16' => 'int_t<std::int16_t>',
+			'int32' => 'int_t<std::int32_t>',
+			'int64' => 'int_t<std::int64_t>',
+			'uint8', 'byte' => 'int_t<std::uint8_t>',
+			'uint16' => 'int_t<std::uint16_t>',
+			'uint32' => 'int_t<std::uint32_t>',
+			'uint64' => 'int_t<std::uint64_t>',
+			default => 'int_t<>',
+		};
+	}
+
+	private function enumBackingNativeType(ClassDecl $class): string
+	{
+		$storage = $this->enumStorageType($class);
+		return $class->enumBackingType !== null && strtolower($class->enumBackingType) === 'int'
+			? 'std::int64_t'
+			: $storage;
 	}
 
 	private function enumCaseIntValue(ConstantDecl $case): int
@@ -7360,6 +7394,12 @@ final class Generator
 			if ($this->isLayoutProbeCallName($nameExpr)) {
 				return $this->renderLayoutProbeCallExpr($nameExpr, $args, $namespacePhp, (int) ($expr->lineno ?? 0));
 			}
+			if ($this->isEnumValueCallName($nameExpr)) {
+				return $this->renderEnumValueCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
+			if ($this->isEnumFromValueCallName($nameExpr)) {
+				return $this->renderEnumFromValueCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			$name = $functionDecl !== null
 				? $this->renderNameExpr($nameExpr, $namespacePhp)
@@ -7734,6 +7774,24 @@ final class Generator
 		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'dbg_if';
 	}
 
+	private function isEnumValueCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'enum_value';
+	}
+
+	private function isEnumFromValueCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'enum_from_value';
+	}
+
 	private function isScppDebugDumpCallName(mixed $expr): bool
 	{
 		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
@@ -7885,6 +7943,58 @@ final class Generator
 			. $this->cppStringLiteral($this->currentSourcePath) . ', '
 			. (string) $line
 			. ')';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderEnumValueCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 1) {
+			$this->fail('enum_value() expects exactly one enum argument at line ' . $line . '.');
+		}
+		$arg = $args[0] ?? null;
+		$enumType = $this->inferExprTypeWithNamespace($arg, $namespacePhp);
+		$class = $this->lookupEnumDeclByTypeName($enumType);
+		if (!$class instanceof ClassDecl) {
+			$this->fail('enum_value() expects an enum argument at line ' . $line . '.');
+		}
+		$runtimeType = $this->enumBackingRuntimeType($class);
+		$nativeType = $this->enumBackingNativeType($class);
+		return $runtimeType . '(static_cast<' . $nativeType . '>(' . $this->renderExpr($arg, $namespacePhp) . '))';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderEnumFromValueCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 2) {
+			$this->fail('enum_from_value() expects enum_from_value(Enum::class, value) at line ' . $line . '.');
+		}
+		$className = $this->extractEnumClassNameMarker($args[0] ?? null, $namespacePhp);
+		$class = $className !== null ? $this->lookupEnumDeclByTypeName($className) : null;
+		if (!$class instanceof ClassDecl) {
+			$this->fail('enum_from_value() first argument must be an enum class marker such as token_kind::class at line ' . $line . '.');
+		}
+		$runtimeType = $this->enumBackingRuntimeType($class);
+		$nativeType = $this->enumBackingNativeType($class);
+		$valueExpr = $this->renderExpr($args[1] ?? null, $namespacePhp);
+		$cases = [];
+		foreach ($class->enumCases as $index => $case) {
+			$value = $class->enumBackingType === null ? $index : $this->enumCaseIntValue($case);
+			$cases[] = 'case static_cast<' . $nativeType . '>(' . (string) $value . '): return ' . $class->name . '::' . $this->cppIdentifier($case->name) . ';';
+		}
+		return '([&]() -> ' . $class->name . ' { const auto __scpp_enum_value = cast<' . $runtimeType . '>(' . $valueExpr . ').native_value(); switch (__scpp_enum_value) { ' . implode(' ', $cases) . ' default: throw std::runtime_error("Invalid value for enum ' . $class->name . '"); } }())';
+	}
+
+	private function extractEnumClassNameMarker(mixed $expr, ?string $namespacePhp): ?string
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::CLASS_NAME)) {
+			return null;
+		}
+		$classNode = $expr->children['class'] ?? null;
+		if (!is_object($classNode) || (($classNode->kind ?? null) !== AstKind::NAME)) {
+			return null;
+		}
+		$name = (string) ($classNode->children['name'] ?? '');
+		return $this->resolveDeclaredClassLikeType($name, $namespacePhp);
 	}
 
 	/** @param list<mixed> $args */
@@ -8498,6 +8608,15 @@ final class Generator
 			}
 			if ($this->isLayoutProbeCallName($nameExpr)) {
 				return 'int_t<>';
+			}
+			if ($this->isEnumValueCallName($nameExpr)) {
+				$args = $expr->children['args']->children ?? [];
+				$class = $this->lookupEnumDeclByTypeName($this->inferExprTypeWithNamespace($args[0] ?? null, $namespacePhp));
+				return $class instanceof ClassDecl ? $this->enumBackingRuntimeType($class) : 'auto';
+			}
+			if ($this->isEnumFromValueCallName($nameExpr)) {
+				$args = $expr->children['args']->children ?? [];
+				return $this->extractEnumClassNameMarker($args[0] ?? null, $namespacePhp) ?? 'auto';
 			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			if ($functionDecl !== null && $functionDecl->returnType !== null) {
