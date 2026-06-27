@@ -484,12 +484,22 @@ First home:
 
 Tasks:
 
-- [ ] Add write/read helpers for uint8/uint16/uint32/uint64.
-- [ ] Add length-prefixed string helpers.
-- [ ] Add byte-span write helper after `byte_span` exists.
-- [ ] Define endianness.
-- [ ] Add roundtrip tests.
-- [ ] Add truncated-input diagnostics.
+- [x] Add write/read helpers for uint8/uint16/uint32/uint64.
+- [x] Add length-prefixed string helpers.
+- [x] Add byte-span write helper after `byte_span` exists.
+- [x] Define endianness.
+- [x] Add roundtrip tests.
+- [x] Add truncated-input diagnostics.
+
+Result:
+- Added `modules/binary` with `scpp::binary::writer` and
+  `scpp::binary::reader`.
+- The codec is explicitly little-endian and schema-agnostic; higher compiler
+  layers own versions, tags, and compatibility.
+- Added fixed-width unsigned integer helpers, length-prefixed strings with
+  `uint32` byte lengths, raw byte reads/writes, and `byte_span` writes.
+- Added native tests for endianness, roundtrips, byte-span writes, and truncated
+  input diagnostics.
 
 ## Priority 14: Memory Accounting Helpers
 

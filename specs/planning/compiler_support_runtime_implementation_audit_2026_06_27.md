@@ -406,7 +406,10 @@ Recommended first slice:
 
 Current implementation:
 
-- no compiler-facing binary artifact codec was found in the runtime audit
+- `runtime/include/modules/binary/binary.hpp` provides `scpp::binary::writer`
+  and `scpp::binary::reader`
+- supported primitives: uint8, uint16, uint32, uint64, raw bytes,
+  length-prefixed strings, and `source::byte_span` writes
 
 Accepted direction:
 
@@ -415,8 +418,7 @@ Accepted direction:
 
 Recommended first slice:
 
-- add narrow helpers for writing/reading unsigned fixed-width integers
-- keep schema evolution outside the low-level codec
+- done; keep schema evolution outside the low-level codec
 
 ## 14. Memory Accounting
 

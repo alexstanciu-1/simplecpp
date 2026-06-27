@@ -74,6 +74,11 @@ add_executable(test_work_queue_t test_work_queue_t.cpp)
 target_link_libraries(test_work_queue_t PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_work_queue_t COMMAND test_work_queue_t)
 
+# Little-endian binary codec coverage for future compiler artifacts.
+add_executable(test_binary_codec test_binary_codec.cpp)
+target_link_libraries(test_binary_codec PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_binary_codec COMMAND test_binary_codec)
+
 # string_parts_builder coverage for artifact-style string assembly.
 add_executable(test_string_parts_builder test_string_parts_builder.cpp)
 target_link_libraries(test_string_parts_builder PRIVATE scpp_runtime scpp_runtime_test_support)
