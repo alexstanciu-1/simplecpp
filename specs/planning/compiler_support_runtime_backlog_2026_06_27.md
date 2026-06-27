@@ -188,9 +188,21 @@ Tasks:
 - [x] Add `vector_clear` that preserves capacity.
 - [x] Add `vector_compact($v)`.
 - [x] Add optional explicit capacity target for `vector_compact($v, $capacity)`.
-- [ ] Add typed-vector tests.
-- [ ] Add fixed-width vector tests.
-- [ ] Add docs for count vs capacity.
+- [x] Add typed-vector tests.
+- [x] Add fixed-width vector tests.
+- [x] Add docs for count vs capacity.
+
+Count versus capacity:
+
+- `count($vector)` remains the number of live elements.
+- `vector_capacity($vector)` reports reserved storage slots and can be larger
+  than `count($vector)`.
+- `vector_clear($vector)` removes elements but preserves capacity for resident
+  reuse.
+- `vector_compact($vector)` asks the runtime to release spare capacity where the
+  C++ standard library can do so.
+- `vector_compact($vector, $capacity)` preserves all live elements and treats
+  `$capacity` as a target lower bound, not as a truncation request.
 
 ## Priority 5: `source_buffer` And `byte_span`
 
