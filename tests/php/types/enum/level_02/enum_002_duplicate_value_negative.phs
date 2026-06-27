@@ -1,0 +1,5 @@
+enum token_kind: byte {
+    case eof = 0;
+    case identifier = 1;
+    case also_identifier = 1;
+}

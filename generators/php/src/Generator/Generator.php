@@ -644,6 +644,16 @@ final class Generator
 		return $out;
 	}
 
+	private function isKnownEnumTypeName(string $name): bool
+	{
+		$trimmed = ltrim(trim($name), '\\');
+		if ($trimmed === '') {
+			return false;
+		}
+		$class = $this->classDecls[$trimmed] ?? $this->classDecls[basename(str_replace('\\', '/', $trimmed))] ?? null;
+		return ($class instanceof ClassDecl && $class->isEnum) || $this->typeMapper->declaredTypeKind($trimmed) === 'enum';
+	}
+
 	private function lookupFunctionDeclByCall(mixed $nameExpr, ?string $namespacePhp): ?FunctionDecl
 	{
 		if (!is_object($nameExpr) || ($nameExpr->kind ?? null) !== AstKind::NAME) {
@@ -869,6 +879,10 @@ final class Generator
 
 		if (preg_match('/^int_t<.+>$/', $expectedType) === 1 && str_starts_with($exprType, 'int_t')) {
 			return $this->renderGeneratedCast($expectedType, $renderedExpr);
+		}
+
+		if ($expectedType === 'bool_t' && $exprType === 'bool_t') {
+			return 'bool_t(' . $renderedExpr . ')';
 		}
 
 		if ($exprType === 'dynamic_t<>') {
@@ -2320,6 +2334,7 @@ final class Generator
 		if ($class->enumCases === []) {
 			throw new \RuntimeException('Enums must declare at least one case in the current enum lowering');
 		}
+		$this->validateEnumCases($class);
 		$storage = $this->enumStorageType($class);
 		$this->appendHeaderLines($header, $this->code('enum class ' . $class->name . ' : ' . $storage . ' {', $class->line));
 		foreach ($class->enumCases as $index => $case) {
@@ -2332,6 +2347,29 @@ final class Generator
 		}
 		$this->appendHeaderLines($header, $this->code('};', $class->line));
 		$this->appendHeaderLines($header, $this->code('', 0));
+	}
+
+	private function validateEnumCases(ClassDecl $class): void
+	{
+		$seenNames = [];
+		$seenValues = [];
+		foreach ($class->enumCases as $index => $case) {
+			$name = $case->name;
+			if (isset($seenNames[$name])) {
+				throw new \RuntimeException('Duplicate enum case name `' . $name . '` in enum `' . $class->name . '`');
+			}
+			$seenNames[$name] = true;
+
+			if ($class->enumBackingType === null) {
+				$value = $index;
+			} else {
+				$value = $this->enumCaseIntValue($case);
+			}
+			if (isset($seenValues[$value])) {
+				throw new \RuntimeException('Duplicate enum case value `' . (string) $value . '` in enum `' . $class->name . '`');
+			}
+			$seenValues[$value] = true;
+		}
 	}
 
 	private function emitStructClass(array &$header, ClassDecl $class, ?string $namespacePhp): void
@@ -7112,6 +7150,17 @@ final class Generator
 			$left = $this->renderExpr($leftNode, $namespacePhp);
 			$right = $this->renderExpr($rightNode, $namespacePhp);
 			$flags = (int) ($expr->flags ?? 0);
+			if ($flags === AstKind::BINARY_IS_EQUAL || $flags === AstKind::BINARY_IS_NOT_EQUAL) {
+				$leftType = $this->inferConstantType($leftNode, $namespacePhp);
+				$rightType = $this->inferConstantType($rightNode, $namespacePhp);
+				if ($leftType === $rightType && $this->isKnownEnumTypeName($leftType)) {
+					$comparison = '(' . $left . ' == ' . $right . ')';
+					if ($flags === AstKind::BINARY_IS_NOT_EQUAL) {
+						$comparison = '(!' . $comparison . ')';
+					}
+					return 'bool_t(' . $comparison . ')';
+				}
+			}
 
 			return match ($flags) {
 				AstKind::PLUS => '(' . $left . ' + ' . $right . ')',
@@ -8315,8 +8364,27 @@ final class Generator
 		}
 
 		$rendered = $this->renderExpr($expr, $namespacePhp);
+		if ($expected === 'bool_t' && $this->isBinaryComparisonExpr($expr)) {
+			return 'bool_t(' . $rendered . ')';
+		}
 		$exprType = $this->inferExprType($expr);
 		return $this->wrapExprForExpectedType($rendered, $exprType, $expected);
+	}
+
+	private function isBinaryComparisonExpr(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::BINARY_OP)) {
+			return false;
+		}
+		return in_array((int) ($expr->flags ?? 0), [
+			AstKind::BINARY_IS_SMALLER,
+			AstKind::BINARY_IS_SMALLER_OR_EQUAL,
+			AstKind::BINARY_IS_GREATER,
+			AstKind::BINARY_IS_NOT_EQUAL,
+			AstKind::BINARY_IS_EQUAL,
+			AstKind::BINARY_IS_IDENTICAL,
+			AstKind::BINARY_IS_NOT_IDENTICAL,
+		], true);
 	}
 
 	private function isLvalueCapableExpr(mixed $expr, ?string $namespacePhp = null): bool

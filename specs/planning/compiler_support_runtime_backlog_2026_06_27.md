@@ -77,21 +77,21 @@ First home:
 
 Tasks:
 
-- [ ] Audit existing enum parser/AST coverage.
-- [ ] Decide whether compiler-focused enums reuse PHP-style `case Name;`
+- [x] Audit existing enum parser/AST coverage.
+- [x] Decide whether compiler-focused enums reuse PHP-style `case Name;`
       syntax or a stricter Simple C++ subset.
-- [ ] Define enum grammar with required backing type if the existing enum
+- [x] Define enum grammar with required backing type if the existing enum
       surface is not sufficient.
-- [ ] Add duplicate-name and duplicate-value diagnostics.
+- [x] Add duplicate-name and duplicate-value diagnostics.
 - [x] Lower simple enum declarations to C++ `enum class`.
-- [ ] Support enum member references such as `kind::value`.
-- [ ] Support equality for same enum type.
+- [x] Support enum member references such as `kind::value`.
+- [x] Support equality for same enum type.
 - [ ] Reject implicit assignment from raw integer to enum.
 - [ ] Add explicit enum-to-backing conversion helper.
 - [ ] Add explicit backing-to-enum conversion helper.
 - [ ] Add STAN checks for enum assignment and comparison discipline.
-- [ ] Add tests for byte-backed enum.
-- [ ] Add tests for uint16-backed enum.
+- [x] Add tests for byte-backed enum.
+- [x] Add tests for uint16-backed enum.
 - [ ] Add tests for enum as `hash_t` key after generic hash support lands.
 - [ ] Add optional enum name/value metadata helpers after the base feature is
       stable.

@@ -1,0 +1,30 @@
+enum token_kind: byte {
+    case eof = 0;
+    case identifier = 1;
+    case number = 2;
+}
+
+enum node_kind: uint16 {
+    case source_unit = 1;
+    case declaration_function = 20;
+    case expression_binary = 100;
+}
+
+$kind /** token_kind */ = token_kind::identifier;
+$node /** node_kind */ = node_kind::declaration_function;
+
+if ($kind == token_kind::identifier) {
+    echo "identifier\n";
+}
+
+if ($node == node_kind::declaration_function) {
+    echo "function\n";
+}
+
+function is_source_unit(node_kind $kind): bool {
+    return $kind == node_kind::source_unit;
+}
+
+if (!is_source_unit($node)) {
+    echo "not_source\n";
+}
