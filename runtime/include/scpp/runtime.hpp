@@ -43,6 +43,8 @@
 #include "scpp/curl.hpp"
 #include "scpp/datetime.hpp"
 #include "scpp/tasks.hpp"
+#include "scpp/ui.hpp"
+#include "scpp/webview.hpp"
 #include "scpp/async_core.hpp"
 #include "scpp/str.hpp"
 #include "hosts/fastcgi/fastcgi.hpp"

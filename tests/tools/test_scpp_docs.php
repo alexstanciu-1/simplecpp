@@ -12,6 +12,7 @@ final class ScppDocsTest
 		$this->assertArrayHasKey('strict', $registry, 'docs registry should expose strict quick-learn');
 		$this->assertArrayHasKey('diagnostics', $registry, 'docs registry should expose diagnostics guidance');
 		$this->assertArrayHasKey('skill', $registry, 'docs registry should expose the strict Agent Skill');
+		$this->assertArrayHasKey('ui-webview', $registry, 'docs registry should expose UI/WebView preview guidance');
 
 		$repoRoot = resolve_repo_root();
 		foreach ($registry as $name => $entry) {
@@ -24,6 +25,7 @@ final class ScppDocsTest
 		$index = render_docs_index($registry);
 		$this->assertContains('Usage: scpp docs <name>', $index, 'docs index should show usage');
 		$this->assertContains('strict', $index, 'docs index should list strict docs');
+		$this->assertContains('ui-webview', $index, 'docs index should list UI/WebView preview docs');
 
 		$script = normalize_path($repoRoot . '/bin/scpp.php');
 		$strict = scpp_run_optional_command($repoRoot, [PHP_BINARY, $script, 'docs', 'strict'], [], 5.0);
@@ -31,6 +33,13 @@ final class ScppDocsTest
 		$this->assertContains('Doc: strict', $strict['stdout'], 'strict docs output should identify requested doc');
 		$this->assertContains('Source: specs/simple_cpp_php_strict_quick_learn.md', $strict['stdout'], 'strict docs output should identify source path');
 		$this->assertContains('PHP++ Quick Learn', $strict['stdout'], 'strict docs output should print content');
+
+		$uiWebview = scpp_run_optional_command($repoRoot, [PHP_BINARY, $script, 'docs', 'ui-webview'], [], 5.0);
+		$this->assertSame(0, $uiWebview['exit_code'], 'ui-webview docs command should succeed');
+		$this->assertContains('Doc: ui-webview', $uiWebview['stdout'], 'ui-webview docs output should identify requested doc');
+		$this->assertContains('Source: docs/ui_webview_preview.md', $uiWebview['stdout'], 'ui-webview docs output should identify source path');
+		$this->assertContains('Frozen Initial API', $uiWebview['stdout'], 'ui-webview docs output should print API freeze content');
+		$this->assertContains('strict_webview_bridge', $uiWebview['stdout'], 'ui-webview docs output should reference the golden bridge sample');
 
 		$unknown = scpp_run_optional_command($repoRoot, [PHP_BINARY, $script, 'docs', 'definitely-missing-doc'], [], 5.0);
 		$this->assertSame(1, $unknown['exit_code'], 'unknown docs name should fail');

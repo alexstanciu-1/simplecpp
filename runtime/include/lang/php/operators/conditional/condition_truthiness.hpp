@@ -1,6 +1,6 @@
 #pragma once
 
-#include "operators/conditional/condition_truthiness.hpp"
+#include "../../../../operators/conditional/condition_truthiness.hpp"
 
 namespace scpp::php {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "operators/debug_use_count/debug_use_count.hpp"
+#include "../../../../operators/debug_use_count/debug_use_count.hpp"
 
 namespace scpp::php {
 

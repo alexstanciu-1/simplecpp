@@ -9,6 +9,30 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.73 - 2026-06-27
+
+### Additions
+
+- Added the initial developer-preview `ui` runtime module for native application windows across Windows 11, Linux, macOS, iOS, and Android backend boundaries.
+- Added the initial developer-preview `webview` runtime module with WebView2, WebKitGTK, WKWebView, and Android WebView backends, including HTML/URL/app-folder loading, fire-and-forget JavaScript evaluation, browser-like events, and JavaScript-to-native message replies.
+- Added strict PHP++ `ui_*` and `webview_*` helper surfaces, source-facing event accessors, shallow STAN/runtime symbol coverage, native smoke apps, screenshot artifacts, Android APK smoke packaging, and the golden `strict_webview_bridge` sample.
+- Added `scpp docs ui-webview` with the preview API freeze, platform support promise, dependency checklist, diagnostics workflow, golden sample, and release gate.
+
+### Fixes
+
+- Improved WebView dependency diagnostics for Linux WebKitGTK and Windows WebView2 SDK setup, including clearer `scpp explain-build` output for implicit `webview -> ui` enablement and selected WebView backend.
+- Stabilized hosted CI smoke behavior for Linux WebKitGTK and Windows WebView2 render/event timing, including screenshot capture and WebView2 readiness/message/title event probes.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- This is a developer preview, not a stable UI/WebView API guarantee. Menu bar, system tray, custom schemes, file chooser/download callbacks, rich JavaScript return-value marshalling, and full packaging flows remain future work.
+- Strict projects must opt into the `webview` runtime module to use WebView helpers; `ui` is enabled implicitly when `webview` is requested.
+- Linux WebView builds require GTK and WebKitGTK development packages. Windows WebView builds require the Microsoft.Web.WebView2 SDK at compile time; app users only need the installed Microsoft Edge WebView2 Runtime.
+
 ## 0.1.72 - 2026-06-26
 
 ### Additions

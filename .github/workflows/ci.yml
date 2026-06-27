@@ -1,0 +1,841 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - "codex/**"
+  pull_request:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      SCPP_CI_ARTIFACT_DIR: /tmp/scpp_ci_artifacts
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            native_check: true
+            build_options: true
+          - os: macos-latest
+            native_check: true
+            build_options: false
+          - os: windows-latest
+            native_check: false
+            build_options: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: ast
+          coverage: none
+
+      - name: Install build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y ninja-build g++ pkg-config libgtk-3-dev xvfb imagemagick dbus-x11
+            if apt-cache show libwebkit2gtk-4.1-dev >/dev/null 2>&1; then
+              sudo apt-get install -y libwebkit2gtk-4.1-dev
+            else
+              sudo apt-get install -y libwebkit2gtk-4.0-dev
+            fi
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            command -v ninja >/dev/null 2>&1 || brew install ninja
+            command -v pkg-config >/dev/null 2>&1 || brew install pkg-config
+          else
+            echo "No extra build tools needed for this Windows smoke slice."
+          fi
+
+      - name: PHP syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -v
+          php -l bin/project_services.php
+          php -l generators/php/src/Analysis/RuntimeShallowSourceGenerator.php
+          php -l generators/php/src/Stan/StanPhpRuntimeFunctionCatalog.php
+          php -l tests/tools/test_scpp_ui_module.php
+          php -l tests/tools/test_scpp_webview_module.php
+
+      - name: UI module smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          php tests/tools/test_scpp_ui_module.php
+          php tests/tools/test_scpp_webview_module.php
+
+      - name: Build options smoke
+        if: matrix.build_options
+        shell: bash
+        run: php tests/tools/test_scpp_build_options.php
+
+      - name: UI runtime C++ compile smoke
+        if: matrix.native_check
+        shell: bash
+        run: |
+          set -euo pipefail
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -c runtime/include/modules/ui/ui.cpp -o ui_disabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -c runtime/include/modules/ui/ui.cpp -o ui_enabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -c runtime/include/modules/webview/webview.cpp -o webview_disabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 -DSCPP_HAS_WEBVIEW=0 -c tests/native/webview_compile.cpp -o webview_compile_disabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -DSCPP_HAS_WEBVIEW=1 -c runtime/include/modules/webview/webview.cpp -o webview_enabled.o
+          c++ -std=c++23 -Iruntime/include -DSCPP_HAS_UI=1 -DSCPP_HAS_WEBVIEW=1 -c tests/native/webview_compile.cpp -o webview_compile_enabled.o
+
+      - name: Build Windows Win32 UI smoke app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            throw "Visual Studio C++ tools were not found."
+          }
+          $vsDevCmd = Join-Path $installPath "Common7\Tools\VsDevCmd.bat"
+          cmd /c "`"$vsDevCmd`" -arch=x64 && cl /nologo /EHsc /std:c++latest /I runtime/include /DSCPP_HAS_UI=1 /DSCPP_UI_BACKEND_WIN32=1 tests\native\ui_smoke_windows.cpp runtime\include\modules\ui\ui.cpp /link user32.lib gdi32.lib shell32.lib ole32.lib /out:ui_smoke_windows.exe"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Build Windows WebView2 smoke app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $nuget = Get-Command nuget -ErrorAction SilentlyContinue
+          if ($nuget) {
+            $nugetCommand = $nuget.Source
+          } else {
+            Invoke-WebRequest "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "nuget.exe"
+            $nugetCommand = (Resolve-Path ".\nuget.exe").Path
+          }
+          & $nugetCommand install Microsoft.Web.WebView2 -OutputDirectory .nuget-packages -ExcludeVersion -NonInteractive
+
+          $webView2Root = (Resolve-Path ".nuget-packages\Microsoft.Web.WebView2").Path
+          $webView2Include = Join-Path $webView2Root "build\native\include"
+          $webView2Lib = Join-Path $webView2Root "build\native\x64\WebView2LoaderStatic.lib"
+          if (-not (Test-Path $webView2Lib)) {
+            $webView2Lib = Join-Path $webView2Root "build\native\x64\WebView2Loader.dll.lib"
+          }
+          if (-not (Test-Path $webView2Lib)) {
+            throw "WebView2 loader library was not found under $webView2Root."
+          }
+          $webView2Dll = Join-Path $webView2Root "build\native\x64\WebView2Loader.dll"
+          if (Test-Path $webView2Dll) {
+            Copy-Item $webView2Dll . -Force
+          }
+
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            throw "Visual Studio C++ tools were not found."
+          }
+          $vsDevCmd = Join-Path $installPath "Common7\Tools\VsDevCmd.bat"
+          cmd /c "`"$vsDevCmd`" -arch=x64 && cl /nologo /EHsc /std:c++latest /I runtime/include /I `"$webView2Include`" /DSCPP_HAS_UI=1 /DSCPP_UI_BACKEND_WIN32=1 /DSCPP_HAS_WEBVIEW=1 /DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1 tests\native\webview_smoke_windows.cpp runtime\include\modules\ui\ui.cpp runtime\include\modules\webview\webview.cpp /link user32.lib gdi32.lib shell32.lib ole32.lib advapi32.lib `"$webView2Lib`" /out:webview_smoke_windows.exe"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Build Windows scpp WebView project
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $project = Join-Path $env:RUNNER_TEMP "scpp_webview_project"
+          New-Item -ItemType Directory -Force -Path $project | Out-Null
+          @'
+          {
+            "config_version": 1,
+            "project_name": "scpp-webview-project-smoke",
+            "entrypoint": "main.phs",
+            "build_dir": ".prism/build",
+            "generated_dir": ".prism/generated",
+            "cache_dir": ".prism/cache",
+            "native_cpp_dir": "native_cpp",
+            "dependencies": [],
+            "libraries": [],
+            "build": {
+              "backend": "ninja",
+              "mode": "debug",
+              "cxx": "cl"
+            },
+            "runtime": {
+              "languages": {
+                "php": {
+                  "profile": "strict"
+                }
+              },
+              "modules": ["webview"]
+            }
+          }
+          '@ | Set-Content -Path (Join-Path $project "prism.json")
+          $appDir = Join-Path $project "app"
+          New-Item -ItemType Directory -Force -Path $appDir | Out-Null
+          @'
+          <!doctype html>
+          <html>
+          <body>
+            <h1>Simple C++ WebView App</h1>
+            <p>Built by scpp on Windows.</p>
+          </body>
+          </html>
+          '@ | Set-Content -Path (Join-Path $appDir "index.html")
+          @'
+          $err error;
+
+          $app ui_app = null;
+          if (!take($app, $err, ui_app_create())) {
+            echo "ui_app_create failed\n";
+          } else {
+            $window ui_window = null;
+            if (!take($window, $err, ui_window_create($app, "Simple C++ WebView", 900, 600))) {
+              echo "ui_window_create failed\n";
+              ui_app_exit($app);
+            } else {
+              $view webview = null;
+              if (!take($view, $err, webview_create($window))) {
+                echo "webview_create failed\n";
+                ui_window_close($window);
+                ui_app_exit($app);
+              } else {
+                webview_load_app($view, "app");
+                webview_close($view);
+                ui_window_close($window);
+                ui_app_exit($app);
+              }
+            }
+          }
+          '@ | Set-Content -Path (Join-Path $project "main.phs")
+
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installPath) {
+            throw "Visual Studio C++ tools were not found."
+          }
+          $vsDevCmd = Join-Path $installPath "Common7\Tools\VsDevCmd.bat"
+          $repo = (Get-Location).Path
+          cmd /c "`"$vsDevCmd`" -arch=x64 && cd /d `"$project`" && php `"$repo\bin\scpp.php`" build --no-stan --build-runtime"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Launch Windows WebView2 smoke app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path $env:SCPP_CI_ARTIFACT_DIR | Out-Null
+          $screenshotPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.png"
+          $stdoutPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.out.txt"
+          $stderrPath = Join-Path $env:SCPP_CI_ARTIFACT_DIR "windows-webview-ui-$env:GITHUB_RUN_ID.err.txt"
+          $process = Start-Process -FilePath ".\webview_smoke_windows.exe" -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
+          Start-Sleep -Seconds 4
+
+          Add-Type -AssemblyName System.Drawing
+          Add-Type -AssemblyName System.Windows.Forms
+          $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+          $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+          try {
+            $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+            $bitmap.Save($screenshotPath, [System.Drawing.Imaging.ImageFormat]::Png)
+          } finally {
+            $graphics.Dispose()
+            $bitmap.Dispose()
+          }
+
+          $exited = $process.WaitForExit(20000)
+          if (-not $exited) {
+            Stop-Process -Id $process.Id -Force
+            throw "Windows WebView2 smoke app did not exit in time."
+          }
+          if ($process.ExitCode -ne 0) {
+            if (Test-Path $stdoutPath) { Get-Content $stdoutPath }
+            if (Test-Path $stderrPath) { Get-Content $stderrPath }
+            throw "Windows WebView2 smoke app failed with exit code $($process.ExitCode)."
+          }
+          python tests/tools/check_ui_screenshot.py "$screenshotPath" --min-width 640 --min-height 420
+
+      - name: Upload Windows WebView2 executable
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-webview-exe-${{ github.run_id }}
+          path: |
+            webview_smoke_windows.exe
+            .nuget-packages\Microsoft.Web.WebView2\build\native\x64\WebView2Loader.dll
+          if-no-files-found: error
+
+      - name: Upload Windows WebView2 screenshot
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-webview-screenshot-${{ github.run_id }}
+          path: |
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.png
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.out.txt
+            /tmp/scpp_ci_artifacts/windows-webview-ui-${{ github.run_id }}.err.txt
+          if-no-files-found: warn
+
+      - name: Build Linux GTK UI smoke app
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          g++ -std=c++23 -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_GTK=1 \
+            tests/native/ui_smoke_desktop.cpp runtime/include/modules/ui/ui.cpp \
+            $(pkg-config --cflags --libs gtk+-3.0) \
+            -o ui_smoke_gtk
+
+      - name: Launch Linux GTK UI smoke app
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/linux-gtk-ui-${GITHUB_RUN_ID}.png"
+          xvfb-run -a --server-args="-screen 0 1024x768x24" bash -c '
+            set -euo pipefail
+            ./ui_smoke_gtk &
+            pid=$!
+            sleep 3
+            import -window root "'"$screenshot_path"'"
+            wait "$pid"
+          '
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
+
+      - name: Upload Linux GTK UI screenshot
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-gtk-ui-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/linux-gtk-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+      - name: Build Linux WebKitGTK WebView smoke app
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          webkit_pkg="$(pkg-config --exists webkit2gtk-4.1 && echo webkit2gtk-4.1 || echo webkit2gtk-4.0)"
+          g++ -std=c++23 -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_GTK=1 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_WEBKITGTK=1 \
+            tests/native/webview_smoke_desktop.cpp runtime/include/modules/ui/ui.cpp runtime/include/modules/webview/webview.cpp \
+            $(pkg-config --cflags --libs gtk+-3.0 "$webkit_pkg") \
+            -o webview_smoke_gtk
+
+      - name: Launch Linux WebKitGTK WebView smoke app
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/linux-webview-ui-${GITHUB_RUN_ID}.png"
+          xvfb-run -a --server-args="-screen 0 1024x768x24" dbus-run-session -- bash -c '
+            set -euo pipefail
+            GDK_BACKEND=x11 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 ./webview_smoke_gtk &
+            pid=$!
+            captured=0
+            for attempt in 1 2 3 4 5 6; do
+              sleep 2
+              import -window root "'"$screenshot_path"'"
+              convert "'"$screenshot_path"'" PNG24:"'"$screenshot_path"'"
+              if python3 tests/tools/check_ui_screenshot.py "'"$screenshot_path"'" --min-width 640 --min-height 420; then
+                captured=1
+                break
+              fi
+              if ! kill -0 "$pid" >/dev/null 2>&1; then
+                wait "$pid"
+                exit 1
+              fi
+            done
+            wait "$pid"
+            test "$captured" = "1"
+          '
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
+
+      - name: Upload Linux WebView screenshot
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-webview-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/linux-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+      - name: Build strict WebView bridge sample
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          (
+            cd docs/examples/php/strict/project_samples/strict_webview_bridge
+            php ../../../../../../bin/scpp.php build --build-runtime
+          )
+
+      - name: Android NDK UI compile smoke
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -c runtime/include/modules/ui/ui.cpp -o ui_android_runtime.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -c tests/native/ui_android_compile.cpp -o ui_android_compile.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -c runtime/include/modules/webview/webview.cpp -o webview_android_runtime.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -c tests/native/webview_android_compile.cpp -o webview_android_compile.o
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -shared -fPIC \
+            tests/native/android_webview_smoke/simplecpp_webview_smoke.cpp runtime/include/modules/webview/webview.cpp \
+            -o libsimplecpp_webview_smoke.so
+
+      - name: Android WebView activity compile smoke
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-35/android.jar"
+          if [ ! -f "$android_jar" ]; then
+            android_jar="$(find "$ANDROID_HOME/platforms" -name android.jar | sort -V | tail -n 1)"
+          fi
+          test -f "$android_jar"
+          mkdir -p android_webview_smoke_classes
+          javac \
+            -source 17 -target 17 \
+            -classpath "$android_jar" \
+            -d android_webview_smoke_classes \
+            tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
+
+      - name: Android WebView APK package smoke
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-35/android.jar"
+          if [ ! -f "$android_jar" ]; then
+            android_jar="$(find "$ANDROID_HOME/platforms" -name android.jar | sort -V | tail -n 1)"
+          fi
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          test -f "$android_jar"
+          test -n "$build_tools"
+
+          cxx_shared="$(find "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android" -name libc++_shared.so | sort -V | tail -n 1)"
+          test -f "$cxx_shared"
+
+          mkdir -p android_webview_smoke_classes android_webview_smoke_dex android_webview_smoke_package/lib/arm64-v8a
+          javac \
+            -source 17 -target 17 \
+            -classpath "$android_jar" \
+            -d android_webview_smoke_classes \
+            tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
+          "$build_tools/d8" \
+            --min-api 24 \
+            --output android_webview_smoke_dex \
+            $(find android_webview_smoke_classes -name '*.class' | sort)
+          "$build_tools/aapt2" compile \
+            --dir tests/native/android_webview_smoke/res \
+            -o android_webview_smoke_res.zip
+          "$build_tools/aapt2" link \
+            -I "$android_jar" \
+            --manifest tests/native/android_webview_smoke/AndroidManifest.xml \
+            -o android_webview_smoke-unsigned.apk \
+            android_webview_smoke_res.zip
+          cp android_webview_smoke_dex/classes.dex android_webview_smoke_package/classes.dex
+          cp libsimplecpp_webview_smoke.so android_webview_smoke_package/lib/arm64-v8a/libsimplecpp_webview_smoke.so
+          cp "$cxx_shared" android_webview_smoke_package/lib/arm64-v8a/libc++_shared.so
+          (cd android_webview_smoke_package && zip -qr ../android_webview_smoke-unsigned.apk classes.dex lib)
+          "$build_tools/zipalign" -f 4 android_webview_smoke-unsigned.apk android_webview_smoke-aligned.apk
+          keytool \
+            -genkeypair \
+            -keystore android_webview_smoke-debug.keystore \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=SimpleCpp"
+          "$build_tools/apksigner" sign \
+            --ks android_webview_smoke-debug.keystore \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out android_webview_smoke-signed.apk \
+            android_webview_smoke-aligned.apk
+          "$build_tools/apksigner" verify android_webview_smoke-signed.apk
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          cp android_webview_smoke-signed.apk "$SCPP_CI_ARTIFACT_DIR/android-webview-smoke-${GITHUB_RUN_ID}.apk"
+          test -s "$SCPP_CI_ARTIFACT_DIR/android-webview-smoke-${GITHUB_RUN_ID}.apk"
+
+      - name: Upload Android WebView smoke APK
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-webview-smoke-apk-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/android-webview-smoke-${{ github.run_id }}.apk
+          if-no-files-found: warn
+
+      - name: Build macOS UI smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang++ -std=c++23 -x objective-c++ -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_APPKIT=1 \
+            tests/native/ui_smoke_macos.mm runtime/include/modules/ui/ui.cpp \
+            -framework Cocoa \
+            -o ui_smoke_macos
+
+      - name: Launch macOS UI smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/macos-ui-${GITHUB_RUN_ID}.png"
+          pid_path="$SCPP_CI_ARTIFACT_DIR/ui_smoke_macos-${GITHUB_RUN_ID}.pid"
+          ./ui_smoke_macos &
+          echo $! > "$pid_path"
+          sleep 3
+          screencapture -x "$screenshot_path"
+          wait "$(cat "$pid_path")"
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
+
+      - name: Upload macOS UI screenshot
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-ui-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/macos-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+      - name: Build macOS WKWebView smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang++ -std=c++23 -x objective-c++ -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_APPKIT=1 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1 \
+            tests/native/webview_smoke_macos.mm runtime/include/modules/ui/ui.cpp runtime/include/modules/webview/webview.cpp \
+            -framework Cocoa -framework WebKit \
+            -o webview_smoke_macos
+
+      - name: Launch macOS WKWebView smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/macos-webview-ui-${GITHUB_RUN_ID}.png"
+          pid_path="$SCPP_CI_ARTIFACT_DIR/webview_smoke_macos-${GITHUB_RUN_ID}.pid"
+          ./webview_smoke_macos &
+          echo $! > "$pid_path"
+          sleep 4
+          screencapture -x "$screenshot_path"
+          wait "$(cat "$pid_path")"
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 640 --min-height 420
+
+      - name: Upload macOS WebView screenshot
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-webview-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/macos-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+      - name: Build iOS Simulator UI smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p SimpleCppUiIOS.app
+          cp tests/native/ios_smoke/Info.plist SimpleCppUiIOS.app/Info.plist
+          IOS_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          IOS_TARGET="arm64-apple-ios15.0-simulator"
+          clang++ -std=c++23 -x objective-c++ -target "$IOS_TARGET" -isysroot "$IOS_SDK" \
+            -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_UIKIT=1 \
+            tests/native/ui_smoke_ios.mm runtime/include/modules/ui/ui.cpp \
+            -framework UIKit -framework Foundation \
+            -o SimpleCppUiIOS.app/SimpleCppUiIOS
+          codesign --force --sign - SimpleCppUiIOS.app
+
+      - name: Launch iOS Simulator UI smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/ios-ui-${GITHUB_RUN_ID}.png"
+          DEVICE_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ && /Shutdown/ { print $2; exit }')"
+          if [ -z "$DEVICE_ID" ]; then
+            echo "No available iPhone simulator found."
+            xcrun simctl list devices available
+            exit 1
+          fi
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" SimpleCppUiIOS.app
+          xcrun simctl launch --terminate-running-process "$DEVICE_ID" dev.simplecpp.ui-smoke
+          sleep 2
+          xcrun simctl io "$DEVICE_ID" screenshot "$screenshot_path"
+          xcrun simctl terminate "$DEVICE_ID" dev.simplecpp.ui-smoke || true
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 300 --min-height 600
+
+      - name: Upload iOS UI screenshot
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ui-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/ios-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+      - name: Build iOS Simulator WKWebView smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p SimpleCppWebViewIOS.app
+          cp tests/native/ios_webview_smoke/Info.plist SimpleCppWebViewIOS.app/Info.plist
+          IOS_SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          IOS_TARGET="arm64-apple-ios15.0-simulator"
+          clang++ -std=c++23 -x objective-c++ -target "$IOS_TARGET" -isysroot "$IOS_SDK" \
+            -Iruntime/include \
+            -DSCPP_HAS_UI=1 -DSCPP_UI_BACKEND_UIKIT=1 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_UIKIT_WKWEBVIEW=1 \
+            tests/native/webview_smoke_ios.mm runtime/include/modules/ui/ui.cpp runtime/include/modules/webview/webview.cpp \
+            -framework UIKit -framework Foundation -framework WebKit \
+            -o SimpleCppWebViewIOS.app/SimpleCppWebViewIOS
+          codesign --force --sign - SimpleCppWebViewIOS.app
+
+      - name: Launch iOS Simulator WKWebView smoke app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/ios-webview-ui-${GITHUB_RUN_ID}.png"
+          DEVICE_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ && /Shutdown|Booted/ { print $2; exit }')"
+          if [ -z "$DEVICE_ID" ]; then
+            echo "No available iPhone simulator found."
+            xcrun simctl list devices available
+            exit 1
+          fi
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl install "$DEVICE_ID" SimpleCppWebViewIOS.app
+          xcrun simctl launch --terminate-running-process "$DEVICE_ID" dev.simplecpp.webview-smoke
+          sleep 3
+          xcrun simctl io "$DEVICE_ID" screenshot "$screenshot_path"
+          xcrun simctl terminate "$DEVICE_ID" dev.simplecpp.webview-smoke || true
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 300 --min-height 600
+
+      - name: Upload iOS WebView screenshot
+        if: always() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-webview-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/ios-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+  android-webview-render:
+    name: Android WebView render smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SCPP_CI_ARTIFACT_DIR: /tmp/scpp_ci_artifacts
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Android WebView emulator APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-35/android.jar"
+          if [ ! -f "$android_jar" ]; then
+            android_jar="$(find "$ANDROID_HOME/platforms" -name android.jar | sort -V | tail -n 1)"
+          fi
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          test -f "$android_jar"
+          test -n "$build_tools"
+
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android35-clang++" \
+            -std=c++23 -Iruntime/include -DSCPP_HAS_UI=0 \
+            -DSCPP_HAS_WEBVIEW=1 -DSCPP_WEBVIEW_BACKEND_ANDROID_WEBVIEW=1 \
+            -shared -fPIC \
+            tests/native/android_webview_smoke/simplecpp_webview_smoke.cpp runtime/include/modules/webview/webview.cpp \
+            -o libsimplecpp_webview_smoke.so
+
+          cxx_shared="$(find "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android" -name libc++_shared.so | sort -V | tail -n 1)"
+          test -f "$cxx_shared"
+
+          mkdir -p android_webview_smoke_classes android_webview_smoke_dex android_webview_smoke_package/lib/x86_64
+          javac \
+            -source 17 -target 17 \
+            -classpath "$android_jar" \
+            -d android_webview_smoke_classes \
+            tests/native/android_webview_smoke/src/dev/simplecpp/smoke/ScppWebViewSmokeActivity.java
+          "$build_tools/d8" \
+            --min-api 24 \
+            --output android_webview_smoke_dex \
+            $(find android_webview_smoke_classes -name '*.class' | sort)
+          "$build_tools/aapt2" compile \
+            --dir tests/native/android_webview_smoke/res \
+            -o android_webview_smoke_res.zip
+          "$build_tools/aapt2" link \
+            -I "$android_jar" \
+            --manifest tests/native/android_webview_smoke/AndroidManifest.xml \
+            -o android_webview_smoke-unsigned.apk \
+            android_webview_smoke_res.zip
+          cp android_webview_smoke_dex/classes.dex android_webview_smoke_package/classes.dex
+          cp libsimplecpp_webview_smoke.so android_webview_smoke_package/lib/x86_64/libsimplecpp_webview_smoke.so
+          cp "$cxx_shared" android_webview_smoke_package/lib/x86_64/libc++_shared.so
+          (cd android_webview_smoke_package && zip -qr ../android_webview_smoke-unsigned.apk classes.dex lib)
+          "$build_tools/zipalign" -f 4 android_webview_smoke-unsigned.apk android_webview_smoke-aligned.apk
+          keytool \
+            -genkeypair \
+            -keystore android_webview_smoke-debug.keystore \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=SimpleCpp"
+          "$build_tools/apksigner" sign \
+            --ks android_webview_smoke-debug.keystore \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out android_webview_smoke-signed.apk \
+            android_webview_smoke-aligned.apk
+          "$build_tools/apksigner" verify android_webview_smoke-signed.apk
+
+      - name: Launch Android WebView smoke app
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          mkdir -p "$SCPP_CI_ARTIFACT_DIR"
+          sdkmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -path "*/bin/sdkmanager" | sort -V | tail -n 1)"
+          avdmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -path "*/bin/avdmanager" | sort -V | tail -n 1)"
+          test -x "$sdkmanager_bin"
+          test -x "$avdmanager_bin"
+          "$sdkmanager_bin" "platform-tools" "emulator" "system-images;android-35;google_apis;x86_64"
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo "no" | "$avdmanager_bin" create avd --force --name scpp_webview_smoke --package "system-images;android-35;google_apis;x86_64" --device pixel_2
+          adb_bin="$ANDROID_HOME/platform-tools/adb"
+          test -x "$adb_bin"
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+          fi
+
+          emulator_log="$SCPP_CI_ARTIFACT_DIR/android-emulator-${GITHUB_RUN_ID}.log"
+          "$ANDROID_HOME/emulator/emulator" -list-avds
+          "$ANDROID_HOME/emulator/emulator" \
+            -avd scpp_webview_smoke \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-metrics \
+            -no-snapshot \
+            -no-snapshot-save \
+            -wipe-data \
+            -gpu swiftshader_indirect \
+            -accel auto \
+            > "$emulator_log" 2>&1 &
+          emulator_pid="$!"
+          trap 'kill "$emulator_pid" >/dev/null 2>&1 || true' EXIT
+
+          timeout 180 "$adb_bin" wait-for-device || {
+            cat "$emulator_log"
+            exit 1
+          }
+          boot_completed=""
+          for _ in $(seq 1 120); do
+            boot_completed="$("$adb_bin" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            if [ "$boot_completed" = "1" ]; then
+              break
+            fi
+            sleep 2
+          done
+          if [ "$boot_completed" != "1" ]; then
+            "$adb_bin" devices -l || true
+            cat "$emulator_log"
+            exit 1
+          fi
+
+          "$adb_bin" install -r android_webview_smoke-signed.apk
+          "$adb_bin" logcat -c
+          "$adb_bin" shell am start -W -n dev.simplecpp.smoke/.ScppWebViewSmokeActivity
+          sleep 8
+          "$adb_bin" shell pidof dev.simplecpp.smoke >/dev/null || {
+            "$adb_bin" logcat -d > "$SCPP_CI_ARTIFACT_DIR/android-logcat-${GITHUB_RUN_ID}.log" || true
+            exit 1
+          }
+          "$adb_bin" shell dumpsys window > "$SCPP_CI_ARTIFACT_DIR/android-window-${GITHUB_RUN_ID}.txt" || true
+          grep -q "dev.simplecpp.smoke" "$SCPP_CI_ARTIFACT_DIR/android-window-${GITHUB_RUN_ID}.txt" || {
+            "$adb_bin" logcat -d > "$SCPP_CI_ARTIFACT_DIR/android-logcat-${GITHUB_RUN_ID}.log" || true
+            cat "$SCPP_CI_ARTIFACT_DIR/android-window-${GITHUB_RUN_ID}.txt" || true
+            exit 1
+          }
+          screenshot_path="$SCPP_CI_ARTIFACT_DIR/android-webview-ui-${GITHUB_RUN_ID}.png"
+          "$adb_bin" exec-out screencap -p > "$screenshot_path"
+          test -s "$screenshot_path"
+          python3 tests/tools/check_ui_screenshot.py "$screenshot_path" --min-width 300 --min-height 600
+
+      - name: Upload Android WebView screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-webview-screenshot-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/android-webview-ui-${{ github.run_id }}.png
+          if-no-files-found: warn
+
+      - name: Upload Android emulator log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-log-${{ github.run_id }}
+          path: /tmp/scpp_ci_artifacts/android-emulator-${{ github.run_id }}.log
+          if-no-files-found: warn
+
+      - name: Upload Android app diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app-diagnostics-${{ github.run_id }}
+          path: |
+            /tmp/scpp_ci_artifacts/android-logcat-${{ github.run_id }}.log
+            /tmp/scpp_ci_artifacts/android-window-${{ github.run_id }}.txt
+          if-no-files-found: warn

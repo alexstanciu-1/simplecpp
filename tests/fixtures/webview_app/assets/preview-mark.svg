@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Simple C++ preview mark">
+	<rect width="160" height="160" rx="28" fill="#0f766e"/>
+	<path d="M38 84 66 55v22h55v14H66v23L38 84Z" fill="#ffffff"/>
+	<circle cx="118" cy="50" r="14" fill="#f5c542"/>
+	<path d="M45 123h72" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+</svg>

@@ -1719,6 +1719,10 @@ function scpp_docs_registry(): array
 			'title' => 'Strict PHP Examples',
 			'path' => 'docs/examples/php/strict/README.md',
 		],
+		'ui-webview' => [
+			'title' => 'UI And WebView Preview',
+			'path' => 'docs/ui_webview_preview.md',
+		],
 		'authoring' => [
 			'title' => 'Strict PHP++ Authoring Rules',
 			'path' => '.agents/skills/simple-cpp-php-strict/references/authoring-rules.md',
@@ -3219,7 +3223,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 					null,
-					$command
+					$command,
+					$runtimeConfig
 				),
 			]
 		);
@@ -3333,7 +3338,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 				$outputPath,
-				$command
+				$command,
+				$runtimeConfig
 			),
 		]
 	);
@@ -3374,7 +3380,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 			$outputPath,
-			$command
+			$command,
+			$runtimeConfig
 		),
 	];
 }
@@ -4695,7 +4702,8 @@ function resolve_project_library_config(array $config): array
  * @return array{
  *   languages:list<string>,
  *   language_profiles:array<string, array{profile:string}>,
- *   modules:list<string>
+ *   modules:list<string>,
+ *   implicit_modules:array<string,string>
  * }
  */
 function resolve_runtime_build_config(array $config): array
@@ -4744,9 +4752,14 @@ function resolve_runtime_build_config(array $config): array
 	$modules = array_values(array_unique(array_map(static fn ($value): string => strtolower(trim((string) $value)), $modules)));
 	$languages = array_values(array_filter($languages, static fn (string $value): bool => $value !== ''));
 	$modules = array_values(array_filter($modules, static fn (string $value): bool => $value !== ''));
+	$implicitModules = [];
+	if (in_array('webview', $modules, true) && !in_array('ui', $modules, true)) {
+		$modules[] = 'ui';
+		$implicitModules['ui'] = 'webview';
+	}
 	$safety = is_array($runtime['safety'] ?? null) ? $runtime['safety'] : [];
 	$allowedLanguages = ['php'];
-	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks'];
+	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'ui', 'webview'];
 	foreach ($languages as $language) {
 		if (!in_array($language, $allowedLanguages, true)) {
 			scpp_fail('Unsupported runtime language `' . $language . '` in ' . SCPP_PROJECT_CONFIG . PHP_EOL, 2);
@@ -4764,6 +4777,7 @@ function resolve_runtime_build_config(array $config): array
 		'languages' => $languages,
 		'language_profiles' => $languageProfiles,
 		'modules' => $modules,
+		'implicit_modules' => $implicitModules,
 		'safety' => $safety,
 	];
 }
@@ -5028,6 +5042,7 @@ function build_explanation_details(
 	?string $entryObjectPath = null,
 	?string $outputPath = null,
 	array $ninjaCommand = [],
+	array $runtimeConfig = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -5065,8 +5080,59 @@ function build_explanation_details(
 			'action' => $options['compile_dependencies'] ? 'rebuild' : 'reuse',
 			'reasons' => $dependencyReasons,
 		],
+		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
 		'sources' => array_values($sourceRebuildReasons),
 		'rebuilt_outputs' => $rebuilt,
+	];
+}
+
+/**
+ * @param array<string,mixed> $runtimeConfig
+ * @return array{modules:list<array{name:string,implicit_reason:?string}>,webview:?array{backend:string,enabled:bool,diagnostics:list<string>}}
+ */
+function build_runtime_module_explanation(array $runtimeConfig): array
+{
+	$modules = [];
+	foreach ((array) ($runtimeConfig['modules'] ?? []) as $module) {
+		if (is_string($module) && trim($module) !== '') {
+			$modules[] = strtolower(trim($module));
+		}
+	}
+	$modules = array_values(array_unique($modules));
+
+	$implicitModules = [];
+	if (is_array($runtimeConfig['implicit_modules'] ?? null)) {
+		foreach ($runtimeConfig['implicit_modules'] as $module => $reason) {
+			if (is_string($module) && is_string($reason) && trim($module) !== '' && trim($reason) !== '') {
+				$implicitModules[strtolower(trim($module))] = strtolower(trim($reason));
+			}
+		}
+	}
+
+	$moduleRows = [];
+	foreach ($modules as $module) {
+		$moduleRows[] = [
+			'name' => $module,
+			'implicit_reason' => $implicitModules[$module] ?? null,
+		];
+	}
+
+	$webview = null;
+	if (in_array('webview', $modules, true)) {
+		$webviewSpec = resolve_runtime_webview_build_spec();
+		$webview = [
+			'backend' => (string) ($webviewSpec['backend'] ?? 'unknown'),
+			'enabled' => (bool) ($webviewSpec['enabled'] ?? false),
+			'diagnostics' => array_values(array_filter(
+				array_map(static fn ($value): string => trim((string) $value), is_array($webviewSpec['diagnostics'] ?? null) ? $webviewSpec['diagnostics'] : []),
+				static fn (string $value): bool => $value !== ''
+			)),
+		];
+	}
+
+	return [
+		'modules' => $moduleRows,
+		'webview' => $webview,
 	];
 }
 
@@ -5083,6 +5149,9 @@ function render_build_explanation_lines(array $details): array
 	$runtime = is_array($details['runtime'] ?? null) ? $details['runtime'] : [];
 	$runtimeReasons = is_array($runtime['reasons'] ?? null) ? $runtime['reasons'] : [];
 	$lines[] = 'Runtime: ' . (string) ($runtime['action'] ?? 'unknown') . format_reason_suffix($runtimeReasons);
+	foreach (render_runtime_module_explanation_lines(is_array($details['runtime_modules'] ?? null) ? $details['runtime_modules'] : []) as $line) {
+		$lines[] = $line;
+	}
 
 	$dependencies = is_array($details['dependencies'] ?? null) ? $details['dependencies'] : [];
 	$dependencyReasons = is_array($dependencies['reasons'] ?? null) ? $dependencies['reasons'] : [];
@@ -5130,6 +5199,52 @@ function render_build_explanation_lines(array $details): array
 		$lines[] = 'Outputs rebuilt: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $rebuiltOutputs));
 	}
 
+	return $lines;
+}
+
+/**
+ * @param array<string,mixed> $runtimeModules
+ * @return list<string>
+ */
+function render_runtime_module_explanation_lines(array $runtimeModules): array
+{
+	$modules = is_array($runtimeModules['modules'] ?? null) ? $runtimeModules['modules'] : [];
+	if ($modules === []) {
+		return [];
+	}
+
+	$labels = [];
+	foreach ($modules as $module) {
+		if (!is_array($module)) {
+			continue;
+		}
+		$name = trim((string) ($module['name'] ?? ''));
+		if ($name === '') {
+			continue;
+		}
+		$implicitReason = trim((string) ($module['implicit_reason'] ?? ''));
+		$labels[] = $implicitReason !== ''
+			? $name . ' (implicit via ' . $implicitReason . ')'
+			: $name;
+	}
+	if ($labels === []) {
+		return [];
+	}
+
+	$lines = ['Runtime modules: ' . implode(', ', $labels)];
+	$webview = is_array($runtimeModules['webview'] ?? null) ? $runtimeModules['webview'] : null;
+	if ($webview !== null) {
+		$backend = trim((string) ($webview['backend'] ?? 'unknown'));
+		$enabled = (bool) ($webview['enabled'] ?? false);
+		$lines[] = 'WebView backend: ' . ($backend !== '' ? $backend : 'unknown') . ($enabled ? '' : ' (disabled)');
+		$diagnostics = is_array($webview['diagnostics'] ?? null) ? $webview['diagnostics'] : [];
+		foreach ($diagnostics as $diagnostic) {
+			$message = trim((string) $diagnostic);
+			if ($message !== '') {
+				$lines[] = 'WebView diagnostic: ' . $message;
+			}
+		}
+	}
 	return $lines;
 }
 
@@ -7448,6 +7563,9 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$fastcgiLdFlags = is_array($fastcgiBuild['ldflags'] ?? null) ? $fastcgiBuild['ldflags'] : [];
 	$baseLinkFlags = $linkerFlags;
 	$binaryLinkFlags = array_merge($baseLinkFlags, $projectLibraryFlags);
+	if (($runtimeBuild['kind'] ?? null) === 'object' && is_array($runtimeBuild['link_flags'] ?? null)) {
+		$binaryLinkFlags = array_merge($binaryLinkFlags, $runtimeBuild['link_flags']);
+	}
 	if (is_string($runtimeBuild['rpath_dir'] ?? null) && $runtimeBuild['rpath_dir'] !== '') {
 		$binaryLinkFlags[] = '-Wl,-rpath,' . ninja_escape_path($runtimeBuild['rpath_dir']);
 	}
@@ -7518,7 +7636,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 			$lines[] = '  description = CXX $out';
 			$lines[] = '';
 			$lines[] = 'rule link_runtime_shared';
-			$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $base_ldflags $runtime_ldflags $in -o $out');
+			$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $base_ldflags $in $runtime_ldflags -o $out');
 			$lines[] = '  description = LINK $out';
 			$lines[] = '';
 		}
@@ -7535,9 +7653,9 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$lines[] = '';
 	$lines[] = 'rule link';
 	if ($compiler['kind'] === 'msvc') {
-		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx /nologo $in /Fe$out');
+		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx /nologo $in $ldflags /Fe$out');
 	} else {
-		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $ldflags $in -o $out');
+		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $in $ldflags -o $out');
 	}
 	$lines[] = '  description = LINK $out';
 	$lines[] = '';
@@ -7717,6 +7835,12 @@ function render_runtime_composition_source(array $runtimeConfig): string
 	}
 	if (in_array('tasks', $modules, true)) {
 		$lines[] = '#include "modules/tasks/tasks.cpp"';
+	}
+	if (in_array('ui', $modules, true)) {
+		$lines[] = '#include "modules/ui/ui.cpp"';
+	}
+	if (in_array('webview', $modules, true)) {
+		$lines[] = '#include "modules/webview/webview.cpp"';
 	}
 	if (in_array('php', $languages, true) && ($phpProfile === 'legacy' || $phpProfile === 'strict')) {
 		if (in_array('filesystem', $modules, true)) {
@@ -7991,6 +8115,187 @@ function resolve_runtime_curl_build_spec(): array
 	];
 }
 
+/** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
+function resolve_runtime_ui_build_spec(): array
+{
+	if (PHP_OS_FAMILY === 'Linux') {
+		$pkgConfig = find_command_path(['pkg-config']);
+		if ($pkgConfig === null) {
+			return [
+				'enabled' => false,
+				'cflags' => [],
+				'ldflags' => [],
+				'compile_defines' => ['-DSCPP_HAS_UI=0'],
+			];
+		}
+
+		$cflagsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --cflags gtk+-3.0 2>/dev/null');
+		$libsOutput = shell_exec(escapeshellarg($pkgConfig) . ' --libs gtk+-3.0 2>/dev/null');
+		if (!is_string($libsOutput) || trim($libsOutput) === '') {
+			return [
+				'enabled' => false,
+				'cflags' => [],
+				'ldflags' => [],
+				'compile_defines' => ['-DSCPP_HAS_UI=0'],
+			];
+		}
+
+		return [
+			'enabled' => true,
+			'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
+			'ldflags' => split_shell_tokens($libsOutput),
+			'compile_defines' => ['-DSCPP_HAS_UI=1', '-DSCPP_UI_BACKEND_GTK=1'],
+		];
+	}
+
+	if (PHP_OS_FAMILY === 'Darwin') {
+		return [
+			'enabled' => true,
+			'cflags' => ['-x', 'objective-c++'],
+			'ldflags' => ['-framework', 'Cocoa'],
+			'compile_defines' => ['-DSCPP_HAS_UI=1', '-DSCPP_UI_BACKEND_APPKIT=1'],
+		];
+	}
+
+	if (PHP_OS_FAMILY === 'Windows') {
+		return [
+			'enabled' => true,
+			'cflags' => [],
+			'ldflags' => ['user32.lib', 'gdi32.lib', 'shell32.lib', 'ole32.lib'],
+			'compile_defines' => ['-DSCPP_HAS_UI=1', '-DSCPP_UI_BACKEND_WIN32=1'],
+		];
+	}
+
+	return [
+		'enabled' => true,
+		'cflags' => [],
+		'ldflags' => [],
+		'compile_defines' => ['-DSCPP_HAS_UI=1'],
+	];
+}
+
+/**
+ * @param ?callable(list<string>):?string $commandFinder
+ * @param ?callable(string):mixed $shellRunner
+ * @return array{enabled:bool,backend:string,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>,diagnostics:list<string>}
+ */
+function resolve_runtime_webview_build_spec(?string $osFamily = null, ?callable $commandFinder = null, ?callable $shellRunner = null): array
+{
+	$osFamily = $osFamily ?? PHP_OS_FAMILY;
+	$commandFinder = $commandFinder ?? static fn (array $commands): ?string => find_command_path($commands);
+	$shellRunner = $shellRunner ?? static fn (string $command): mixed => shell_exec($command);
+
+	if ($osFamily === 'Linux') {
+		$pkgConfig = $commandFinder(['pkg-config']);
+		if ($pkgConfig === null) {
+			return [
+				'enabled' => false,
+				'backend' => 'none',
+				'cflags' => [],
+				'ldflags' => [],
+				'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
+				'diagnostics' => [
+					'WebView disabled on Linux: pkg-config was not found. Install pkg-config and WebKitGTK development files such as libwebkit2gtk-4.1-dev on Debian/Ubuntu or webkit2gtk4.1-devel on Fedora.',
+				],
+			];
+		}
+
+		foreach (['webkit2gtk-4.1', 'webkit2gtk-4.0'] as $packageName) {
+			$cflagsOutput = $shellRunner(escapeshellarg($pkgConfig) . ' --cflags ' . escapeshellarg($packageName) . ' 2>/dev/null');
+			$libsOutput = $shellRunner(escapeshellarg($pkgConfig) . ' --libs ' . escapeshellarg($packageName) . ' 2>/dev/null');
+			if (!is_string($libsOutput) || trim($libsOutput) === '') {
+				continue;
+			}
+			return [
+				'enabled' => true,
+				'backend' => 'webkitgtk',
+				'cflags' => is_string($cflagsOutput) ? split_shell_tokens($cflagsOutput) : [],
+				'ldflags' => split_shell_tokens($libsOutput),
+				'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBKITGTK=1'],
+				'diagnostics' => [],
+			];
+		}
+
+		return [
+			'enabled' => false,
+			'backend' => 'none',
+			'cflags' => [],
+			'ldflags' => [],
+			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=0'],
+			'diagnostics' => [
+				'WebView disabled on Linux: WebKitGTK pkg-config package webkit2gtk-4.1 or webkit2gtk-4.0 was not found. Install libwebkit2gtk-4.1-dev on Debian/Ubuntu or webkit2gtk4.1-devel on Fedora.',
+			],
+		];
+	}
+
+	if ($osFamily === 'Darwin') {
+		return [
+			'enabled' => true,
+			'backend' => 'wkwebview',
+			'cflags' => ['-x', 'objective-c++'],
+			'ldflags' => ['-framework', 'WebKit'],
+			'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WKWEBVIEW=1'],
+			'diagnostics' => [],
+		];
+	}
+
+	if ($osFamily === 'Windows') {
+		$webview2 = resolve_windows_webview2_sdk();
+		return [
+			'enabled' => $webview2 !== null,
+			'backend' => 'webview2',
+			'cflags' => $webview2 === null ? [] : ['-I' . $webview2['include_dir']],
+			'ldflags' => $webview2 === null ? [] : [$webview2['loader_lib'], 'advapi32.lib', 'ole32.lib', 'uuid.lib'],
+			'compile_defines' => $webview2 === null ? ['-DSCPP_HAS_WEBVIEW=0'] : ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
+			'diagnostics' => $webview2 === null ? [
+				'WebView disabled on Windows: WebView2 SDK headers or loader library were not found. Install the Microsoft.Web.WebView2 NuGet package or set SCPP_WEBVIEW2_SDK_DIR to a restored package root; app users still only need the installed Microsoft Edge WebView2 Runtime.',
+			] : [],
+		];
+	}
+
+	return [
+		'enabled' => true,
+		'backend' => 'facade',
+		'cflags' => [],
+		'ldflags' => [],
+		'compile_defines' => ['-DSCPP_HAS_WEBVIEW=1'],
+		'diagnostics' => [],
+	];
+}
+
+/** @return array{include_dir:string,loader_lib:string}|null */
+function resolve_windows_webview2_sdk(): ?array
+{
+	$candidates = [];
+	$envRoot = getenv('SCPP_WEBVIEW2_SDK_DIR');
+	if (is_string($envRoot) && trim($envRoot) !== '') {
+		$candidates[] = normalize_path(trim($envRoot));
+	}
+	$candidates[] = normalize_path(resolve_repo_root() . '/.nuget-packages/Microsoft.Web.WebView2');
+	$candidates[] = normalize_path(getcwd() . '/.nuget-packages/Microsoft.Web.WebView2');
+
+	foreach (array_values(array_unique($candidates)) as $root) {
+		$includeDir = normalize_path($root . '/build/native/include');
+		if (!is_dir($includeDir)) {
+			continue;
+		}
+		foreach ([
+			$root . '/build/native/x64/WebView2Loader.dll.lib',
+			$root . '/build/native/x64/WebView2LoaderStatic.lib',
+		] as $loaderLib) {
+			$loaderLib = normalize_path($loaderLib);
+			if (is_file($loaderLib)) {
+				return [
+					'include_dir' => $includeDir,
+					'loader_lib' => $loaderLib,
+				];
+			}
+		}
+	}
+
+	return null;
+}
+
 function build_runtime_compiler_flags(string $compilerKind, string $buildMode, string $runtimeIncludeDir): string
 {
 	if ($compilerKind === 'msvc') {
@@ -8086,12 +8391,33 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=0';
 	}
+	if (in_array('ui', $modules, true)) {
+		$uiBuild = resolve_runtime_ui_build_spec();
+		if (!$uiBuild['enabled']) {
+			scpp_fail('Runtime module `ui` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported GTK development environment was found. On Linux, install GTK 3 development files that provide pkg-config package `gtk+-3.0` or disable the module.' . PHP_EOL, 1);
+		}
+		$extraCxxFlags = array_merge($extraCxxFlags, $uiBuild['compile_defines'], $uiBuild['cflags']);
+		$extraLinkFlags = array_merge($extraLinkFlags, $uiBuild['ldflags']);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_HAS_UI=0';
+	}
+	if (in_array('webview', $modules, true)) {
+		$webviewBuild = resolve_runtime_webview_build_spec();
+		if (!$webviewBuild['enabled']) {
+			scpp_fail('Runtime module `webview` is enabled in ' . SCPP_PROJECT_CONFIG . ' but no supported WebView development environment was found. On Linux, install WebKitGTK development files that provide pkg-config package `webkit2gtk-4.1` or `webkit2gtk-4.0`. On Windows, restore the Microsoft.Web.WebView2 NuGet package under the repo or project .nuget-packages directory, or set SCPP_WEBVIEW2_SDK_DIR.' . PHP_EOL, 1);
+		}
+		$extraCxxFlags = array_merge($extraCxxFlags, $webviewBuild['compile_defines'], $webviewBuild['cflags']);
+		$extraLinkFlags = array_merge($extraLinkFlags, $webviewBuild['ldflags']);
+	} else {
+		$extraCxxFlags[] = '-DSCPP_HAS_WEBVIEW=0';
+	}
 	if (call_depth_guard_enabled($runtimeConfig, $buildMode)) {
 		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=1';
 		$extraCxxFlags[] = '-DSCPP_MAX_CALL_DEPTH=' . call_depth_guard_limit($runtimeConfig);
 	} else {
 		$extraCxxFlags[] = '-DSCPP_ENABLE_CALL_DEPTH_GUARD=0';
 	}
+	$extraLinkFlags = adapt_windows_runtime_link_flags_for_compiler($extraLinkFlags, $compiler);
 
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = PHP_OS_FAMILY === 'Darwin' ? 'libruntime.dylib' : 'libruntime.so';
@@ -8125,6 +8451,24 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 		'rpath_dir' => null,
 		'extra_cxxflags' => $extraCxxFlags,
 	];
+}
+
+/** @param list<string> $flags @param array{command:string,kind:string,launcher?:?string,linker_flags?:list<string>,archiver?:?string} $compiler @return list<string> */
+function adapt_windows_runtime_link_flags_for_compiler(array $flags, array $compiler): array
+{
+	if (PHP_OS_FAMILY !== 'Windows' || ($compiler['kind'] ?? '') !== 'gnu_like') {
+		return $flags;
+	}
+
+	$adapted = [];
+	foreach ($flags as $flag) {
+		if (preg_match('/^([A-Za-z0-9_]+)\\.lib$/', $flag, $matches) === 1) {
+			$adapted[] = '-l' . $matches[1];
+		} else {
+			$adapted[] = $flag;
+		}
+	}
+	return $adapted;
 }
 
 /** @return list<string> */
@@ -8179,6 +8523,7 @@ function build_runtime_module_artifact_spec(string $repoRoot, string $projectRoo
 	} elseif ($moduleName === 'tasks') {
 		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=1';
 	}
+	$extraLinkFlags = adapt_windows_runtime_link_flags_for_compiler($extraLinkFlags, $compiler);
 
 	if ($compiler['kind'] === 'gnu_like') {
 		$libraryName = 'libruntime_module_' . $moduleName . (PHP_OS_FAMILY === 'Darwin' ? '.dylib' : '.so');
@@ -8221,7 +8566,7 @@ function build_runtime_module_artifact_spec(string $repoRoot, string $projectRoo
 function compute_runtime_build_signature(string $repoRoot, array $compiler, string $buildMode, array $runtimeConfig): string
 {
 	$parts = [
-		'runtime-v4',
+		'runtime-v5',
 		'kind:' . $compiler['kind'],
 		'command:' . $compiler['command'],
 		'mode:' . $buildMode,
@@ -8347,8 +8692,9 @@ function scpp_compile_runtime_artifact_spec(string $repoRoot, string $projectRoo
 				scpp_compiler_command_prefix($compiler),
 				[$compiler['command']],
 				$linkFlags,
+				[$objectPath],
 				$runtimeLinkFlags,
-				[$objectPath, '-o', $linkOutputPath]
+				['-o', $linkOutputPath]
 			);
 			scpp_run_or_fail_process($linkCommand, $projectRoot, 'Failed to link runtime artifact.');
 			if ($publishLinkedArtifactAtomically) {
@@ -8356,7 +8702,9 @@ function scpp_compile_runtime_artifact_spec(string $repoRoot, string $projectRoo
 			}
 		} else {
 			$tmpArtifactPath = $artifactPath . '.tmp.' . bin2hex(random_bytes(4));
-			$compileCommand = array_merge($compileCommand, ['-c', $sourcePath, '-o', $tmpArtifactPath]);
+			$compileCommand = $compiler['kind'] === 'msvc'
+				? array_merge($compileCommand, ['/c', $sourcePath, '/Fo' . $tmpArtifactPath])
+				: array_merge($compileCommand, ['-c', $sourcePath, '-o', $tmpArtifactPath]);
 			scpp_run_or_fail_process($compileCommand, $projectRoot, 'Failed to compile runtime artifact.');
 			replace_file_atomically($tmpArtifactPath, $artifactPath, 'Failed to publish runtime artifact');
 		}
@@ -8563,7 +8911,11 @@ function scpp_build_process_environment(array $extra = []): array
 		}
 		$env[$key] = (string) $value;
 	}
-	$env['PATH'] = scpp_effective_path_env($env['PATH'] ?? null);
+	$pathEnv = $env['PATH'] ?? ($env['Path'] ?? null);
+	$env['PATH'] = scpp_effective_path_env(is_string($pathEnv) ? $pathEnv : null);
+	if (PHP_OS_FAMILY === 'Windows') {
+		$env['Path'] = $env['PATH'];
+	}
 	$env = scpp_normalize_windows_temp_environment($env);
 	return $env;
 }

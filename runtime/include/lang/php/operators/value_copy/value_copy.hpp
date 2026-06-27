@@ -1,6 +1,6 @@
 #pragma once
 
-#include "operators/value_copy/value_copy.hpp"
+#include "../../../../operators/value_copy/value_copy.hpp"
 
 namespace scpp::php {
 

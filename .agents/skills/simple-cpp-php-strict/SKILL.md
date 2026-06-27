@@ -129,6 +129,7 @@ Use `dbg_set("gate", $condition)` and `dbg_unset("gate", $condition)` to activat
 For multi-file and multi-project work:
 
 - Add runtime modules in `prism.json` when strict builtins require them.
+- For native-window or embedded-browser preview projects, enable the `webview` runtime module explicitly and use the `ui_*` / `webview_*` helper families. `webview` auto-enables `ui`; use `scpp docs ui-webview` for the current preview API, platform support promise, dependency checklist, and golden `strict_webview_bridge` sample.
 - Let `scpp build` compose files inside the same project; same-project `.phs` files should not include generated `.hpp` files.
 - Use `dependencies` for other Simple C++/Prism projects built from source.
 - Dependency project export headers are generated build artifacts too; do not add generated dependency `.hpp` names to PHP++ source to force ordering.

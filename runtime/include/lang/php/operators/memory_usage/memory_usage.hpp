@@ -1,6 +1,6 @@
 #pragma once
 
-#include "operators/memory_usage/memory_usage.hpp"
+#include "../../../../operators/memory_usage/memory_usage.hpp"
 
 namespace scpp::php {
 
