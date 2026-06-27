@@ -61,6 +61,10 @@ public:
 		return value_.capacity();
 	}
 
+	[[nodiscard]] std::size_t estimated_storage_bytes() const noexcept {
+		return sizeof(*this) + (value_.capacity() * sizeof(T));
+	}
+
 	void reserve(std::size_t capacity) {
 		value_.reserve(capacity);
 	}

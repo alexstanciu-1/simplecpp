@@ -426,16 +426,18 @@ Current implementation:
 
 - `memory_get_usage()` and `memory_get_peak_usage()` report process-level RSS
   and peak RSS when available
+- `runtime/include/scpp/memory_accounting.hpp` exposes approximate string,
+  vector, and hash count/capacity/estimated-byte helpers
 
 Missing:
 
-- container-level capacity/memory approximation
-- string/vector/hash capacity helpers for compiler memory probes
+- exact allocator overhead, recursive child object graph accounting, and shared
+  global pool attribution remain intentionally out of scope
 
 Recommended first slice:
 
-- add approximate capacity-byte helpers for `vector_t`, `hash_t`, and `string_t`
-- keep process RSS helpers as benchmark-level measurements
+- done; keep process RSS helpers as benchmark-level measurements and treat
+  container estimates as trend signals only
 
 ## 15. Hashing
 
