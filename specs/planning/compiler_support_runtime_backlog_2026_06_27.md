@@ -459,12 +459,20 @@ First home:
 
 Tasks:
 
-- [ ] Implement `work_queue<T>` over vector/ring indexes.
-- [ ] Add push back.
-- [ ] Add pop front.
-- [ ] Add empty/count.
-- [ ] Add clear with capacity retention.
-- [ ] Add wraparound tests.
+- [x] Implement `work_queue<T>` over vector/ring indexes.
+- [x] Add push back.
+- [x] Add pop front.
+- [x] Add empty/count.
+- [x] Add clear with capacity retention.
+- [x] Add wraparound tests.
+
+Result:
+- Added `scpp::work_queue_t<T>` as a ring-buffer queue over
+  `vector_t<std::optional<T>>`.
+- `push_back` grows capacity geometrically, `pop_front` moves out from the
+  logical head without vector front-removal, and `clear` retains queue capacity.
+- Added native tests for FIFO order, wraparound, wraparound plus growth, clear
+  reuse, and empty-pop diagnostics.
 
 ## Priority 13: Typed Binary Codec Helpers
 

@@ -21,6 +21,7 @@
 #include "scpp/vector_t.hpp"
 #include "scpp/row_arena_t.hpp"
 #include "scpp/bitset_t.hpp"
+#include "scpp/work_queue_t.hpp"
 #include "scpp/fixed_array_t.hpp"
 #include "scpp/shared_p.hpp"
 #include "scpp/dynamic_t.hpp"
