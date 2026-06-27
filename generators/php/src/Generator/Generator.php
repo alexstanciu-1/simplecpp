@@ -881,6 +881,10 @@ final class Generator
 			return $this->renderGeneratedCast($expectedType, $renderedExpr);
 		}
 
+		if ($this->isKnownEnumTypeName($expectedType) && $this->isIntegerRuntimeType($exprType)) {
+			throw new \RuntimeException('Implicit assignment from raw integer to enum `' . $expectedType . '` is not supported; use an explicit enum conversion helper.');
+		}
+
 		if ($expectedType === 'bool_t' && $exprType === 'bool_t') {
 			return 'bool_t(' . $renderedExpr . ')';
 		}
@@ -906,6 +910,11 @@ final class Generator
 	private function isFixedWidthIntegerRuntimeType(string $type): bool
 	{
 		return preg_match('/^int_t<std::(?:u?int(?:8|16|32|64)_t)>$/', $type) === 1;
+	}
+
+	private function isIntegerRuntimeType(string $type): bool
+	{
+		return $type === 'int_t<>' || $this->isFixedWidthIntegerRuntimeType($type);
 	}
 
 	private function renderCallArgExpr(mixed $arg, ?string $namespacePhp): string

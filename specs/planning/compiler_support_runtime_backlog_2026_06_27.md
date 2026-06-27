@@ -86,7 +86,7 @@ Tasks:
 - [x] Lower simple enum declarations to C++ `enum class`.
 - [x] Support enum member references such as `kind::value`.
 - [x] Support equality for same enum type.
-- [ ] Reject implicit assignment from raw integer to enum.
+- [x] Reject implicit assignment from raw integer to enum.
 - [ ] Add explicit enum-to-backing conversion helper.
 - [ ] Add explicit backing-to-enum conversion helper.
 - [ ] Add STAN checks for enum assignment and comparison discipline.

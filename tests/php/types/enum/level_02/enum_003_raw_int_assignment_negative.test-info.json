@@ -1,0 +1,53 @@
+{
+    "id": "enum_003_raw_int_assignment_negative",
+    "feature": "enum",
+    "level": "level_02",
+    "outcome": "negative",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": false,
+            "error_contains": [
+                "Implicit assignment from raw integer to enum `token_kind` is not supported"
+            ]
+        },
+        "compile": {
+            "success": false,
+            "error_contains": []
+        },
+        "run": {
+            "success": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "types",
+        "enum",
+        "negative_generate"
+    ],
+    "notes": "Enum-typed boundaries should not accept raw integers without an explicit conversion helper.",
+    "build": {
+        "sanitizers": null
+    }
+}
