@@ -266,11 +266,19 @@ First home:
 
 Tasks:
 
-- [ ] Add `dt_monotonic_us(): uint64`.
-- [ ] Add `dt_monotonic_ns(): uint64`.
-- [ ] Document host clock caveats.
-- [ ] Add monotonicity tests.
-- [ ] Add basic elapsed-time smoke tests.
+- [x] Add `dt_monotonic_us(): uint64`.
+- [x] Add `dt_monotonic_ns(): uint64`.
+- [x] Document host clock caveats.
+- [x] Add monotonicity tests.
+- [x] Add basic elapsed-time smoke tests.
+
+Clock caveats:
+
+- `dt_monotonic_ms/us/ns` are based on the host C++ `std::chrono::steady_clock`.
+- Values are process-local monotonic ticks, not Unix timestamps, and should only
+  be compared with other monotonic values from the same run.
+- The returned unit is explicit; the actual precision still depends on the host
+  clock and operating system.
 
 ## Priority 7: Runtime Tokenizer Typed Buffer Contract
 

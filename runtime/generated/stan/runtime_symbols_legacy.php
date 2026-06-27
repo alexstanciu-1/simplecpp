@@ -39,6 +39,8 @@ function dt_format(int $stamp, string $format): string {}
 function dt_format_iso_utc(int $stamp): string {}
 function dt_format_now(string $format): string {}
 function dt_monotonic_ms(): int {}
+function dt_monotonic_ns(): uint64 {}
+function dt_monotonic_us(): uint64 {}
 function dt_now(): int {}
 function dt_now_ms(): int {}
 function dt_parse(string $text) /** result<int> */ {}

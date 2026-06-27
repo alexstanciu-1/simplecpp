@@ -146,6 +146,8 @@
         "dt_now": "dt::now_unix_seconds",
         "dt_now_ms": "dt::now_unix_millis",
         "dt_monotonic_ms": "dt::monotonic_millis",
+        "dt_monotonic_us": "dt::monotonic_micros",
+        "dt_monotonic_ns": "dt::monotonic_nanos",
         "dt_sleep_ms": "dt::sleep_millis",
         "dt_format_iso_utc": "dt::format_iso_utc",
         "dt_parse_iso_utc": "dt::parse_iso_utc",
