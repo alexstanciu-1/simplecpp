@@ -297,7 +297,7 @@ final class TypeMapper
 
 		$keyType = $this->mapDeclaredType($args[1]);
 		if (!$this->isSupportedHashKeyType($keyType)) {
-			throw new GenerationException('Unsupported hash<T,T_KEY> key type `' . trim($args[1]) . '`. Supported key families are string, integer aliases, shared<T>, unique<T>, and weak<T>.');
+			throw new GenerationException('Unsupported hash<T,T_KEY> key type `' . trim($args[1]) . '`. Supported key families are string, integer aliases, enum types, shared<T>, unique<T>, and weak<T>.');
 		}
 		return 'hash_t<' . $valueType . ', ' . $keyType . '>';
 	}
@@ -307,6 +307,7 @@ final class TypeMapper
 		$normalized = trim($mappedKeyType);
 		return $normalized === 'string_t'
 			|| preg_match('/^int_t(?:<.*>)?$/', $normalized) === 1
+			|| $this->isEnumType($normalized)
 			|| preg_match('/^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) === 1;
 	}
 
