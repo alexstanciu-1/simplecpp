@@ -12,6 +12,7 @@ Purpose:
 Related plan:
 
 - `specs/planning/compiler_support_runtime_plan_2026_06_27.md`
+- `specs/planning/compiler_support_runtime_implementation_audit_2026_06_27.md`
 
 ## Priority 1: Generic `hash_t<T_VALUE, T_KEY = string_t>`
 
@@ -21,18 +22,21 @@ Value:
 
 Tasks:
 
-- [ ] Audit current source syntax support for `hash<T_VALUE, T_KEY>`.
+- [x] Audit current source syntax support for `hash<T_VALUE, T_KEY>`.
 - [ ] Audit STAN handling for typed hash key parameters.
-- [ ] Audit generated C++ for one- and two-parameter hash declarations.
-- [ ] Audit runtime `hash_t` template shape and specializations.
+- [x] Audit generated C++ for one- and two-parameter hash declarations.
+- [x] Audit runtime `hash_t` template shape and specializations.
 - [ ] Audit existing operations: `[]`, `isset`, write, delete, count, foreach,
       append, and iteration.
-- [ ] Audit key families currently supported by implementation.
+- [x] Audit key families currently supported by implementation.
 - [ ] Write focused tests for `hash<int>` compatibility.
 - [ ] Write focused tests for `hash<int, int>`.
 - [ ] Write focused tests for `hash<int, uint32>`.
 - [ ] Write focused tests for `hash<int, byte>`.
-- [ ] Implement explicit key hashing/equality policy.
+- [ ] Implement generic `key_ops<int_t<Rep>>` for fixed-width integer keys.
+- [ ] Decide typed-integer append return type for `hash<T, uint32>` and similar
+      key families.
+- [ ] Implement append for accepted integer key families.
 - [ ] Preserve current `hash<T>` string-key default behavior.
 - [ ] Preserve current `hash<mixed>` dynamic compatibility behavior.
 - [ ] Add clear diagnostics for unsupported key types.
@@ -45,10 +49,13 @@ Value:
 
 Tasks:
 
-- [ ] Define enum grammar with required backing type.
-- [ ] Add parser/AST support for enum declarations.
+- [ ] Audit existing enum parser/AST coverage.
+- [ ] Decide whether compiler-focused enums reuse PHP-style `case Name;`
+      syntax or a stricter Simple C++ subset.
+- [ ] Define enum grammar with required backing type if the existing enum
+      surface is not sufficient.
 - [ ] Add duplicate-name and duplicate-value diagnostics.
-- [ ] Lower enum declarations to C++ `enum class`.
+- [x] Lower simple enum declarations to C++ `enum class`.
 - [ ] Support enum member references such as `kind::value`.
 - [ ] Support equality for same enum type.
 - [ ] Reject implicit assignment from raw integer to enum.
@@ -85,9 +92,8 @@ Tasks:
 - [ ] Add `vector_reserve`.
 - [ ] Add `vector_capacity`.
 - [ ] Add `vector_clear` that preserves capacity.
-- [ ] Add `vector_shrink_to_fit` or `vector_compact`.
-- [ ] Decide whether both `shrink_to_fit` and `compact` are needed or one alias
-      is enough.
+- [ ] Add `vector_compact($v)`.
+- [ ] Add optional explicit capacity target for `vector_compact($v, $capacity)`.
 - [ ] Add typed-vector tests.
 - [ ] Add fixed-width vector tests.
 - [ ] Add docs for count vs capacity.
@@ -102,6 +108,8 @@ Tasks:
 
 - [ ] Define `source_buffer` ownership contract.
 - [ ] Define `byte_span` view contract.
+- [ ] Decide conservative owning-buffer v1 versus immediate move-out
+      optimization from `string_t`.
 - [ ] Implement `source_buffer_take($text): source_buffer`.
 - [ ] Ensure `source_buffer_take` leaves `$text` as `""`.
 - [ ] Implement `source_buffer_release($buffer): string`.
@@ -137,6 +145,8 @@ Value:
 
 Tasks:
 
+- [x] Provide typed `phs_tokenize_buffer` and `jss_tokenize_buffer` runtime
+      entry points.
 - [ ] Promote typed token-buffer columns into a runtime contract.
 - [ ] Standardize kind, offset, length, line, column, and flags types.
 - [ ] Decide token kind representation before/after enum support.
