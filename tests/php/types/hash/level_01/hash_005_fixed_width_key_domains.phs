@@ -1,0 +1,14 @@
+$by_u32 /** hash<int,uint32> */ = [];
+$by_u32[7] = 70;
+$by_u32[9] = 90;
+
+$by_byte /** hash<string,byte> */ = [];
+$assigned = $by_byte[] = "zero";
+$by_byte[] = "one";
+
+echo count($by_u32), "\n";
+echo $by_u32[7], "\n";
+echo $by_u32[9], "\n";
+echo $assigned, "\n";
+echo $by_byte[0], "\n";
+echo $by_byte[1], "\n";
