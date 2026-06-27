@@ -104,11 +104,73 @@ Value:
 
 Tasks:
 
-- [ ] Convert the Priority 1 audit into a detailed implementation checklist.
-- [ ] Split checklist by owner: language, STAN, generator, runtime, tests, docs.
-- [ ] Mark compatibility blockers separately from performance improvements.
-- [ ] Add a narrow migration note for existing string-keyed code.
+- [x] Convert the Priority 1 audit into a detailed implementation checklist.
+- [x] Split checklist by owner: language, STAN, generator, runtime, tests, docs.
+- [x] Mark compatibility blockers separately from performance improvements.
+- [x] Add a narrow migration note for existing string-keyed code.
 - [ ] Add benchmark probes for string-key and int-key hash use.
+
+Implementation checklist:
+
+- Language:
+  - [x] Keep `hash<T>` as the string-keyed default.
+  - [x] Support explicit `hash<T,T_KEY>` source notation.
+  - [x] Preserve append expression value semantics, so `$w = $x[] = VALUE`
+        gives `$w` the assigned value, not the generated key.
+  - [x] Allow fixed-width integer aliases as explicit keys.
+  - [x] Allow enum types as explicit keys.
+- Generator:
+  - [x] Lower `hash<T>` to `hash_t<T>`.
+  - [x] Lower `hash<T,T_KEY>` to `hash_t<T,T_KEY>`.
+  - [x] Reject unsupported explicit key families with a clear diagnostic.
+  - [x] Cast generated append keys to the declared fixed-width key type.
+- STAN:
+  - [x] Infer `foreach` key/value types for `hash<T,T_KEY>` as `T_KEY` and
+        `T`.
+  - [x] Keep `hash<T>` compatibility behavior unchanged for string-keyed
+        code.
+  - [ ] Add dedicated diagnostics for unsupported explicit key families before
+        generation when enough source facts are available.
+- Runtime:
+  - [x] Keep `hash_t<mixed_t,mixed_t>` as the dynamic compatibility path.
+  - [x] Keep generic typed hashes on explicit key storage.
+  - [x] Support `string_t`, `int_t<Rep>`, enum, `shared_p<T>`, `unique_p<T>`,
+        and `weak_p<T>` key hashing/equality.
+  - [x] Keep unsupported append on non-integer key modes loud.
+- Tests:
+  - [x] Cover default string-keyed `hash<T>`.
+  - [x] Cover `hash<T,int>`, `hash<T,uint32>`, and `hash<T,byte>`.
+  - [x] Cover enum keys.
+  - [x] Preserve dynamic `hash_t<mixed_t,mixed_t>` runtime coverage.
+- Docs:
+  - [x] Document that existing `hash<T>` code remains string-keyed.
+  - [x] Document that integer and enum append modes are explicit opt-ins.
+  - [x] Document compatibility blockers separately from performance follow-ups.
+
+Migration note:
+
+- Existing `hash<T>` code does not need to change. It remains string-keyed.
+- Code that wants append-style numeric keys should choose an explicit integer key
+  family such as `hash<T,int>`, `hash<T,uint32>`, or `hash<T,byte>`.
+- Code that wants compact semantic keys should use enum-backed keys such as
+  `hash<T,token_kind>`.
+- Dynamic compatibility tables continue to use `hash_t<mixed_t,mixed_t>` and
+  are not affected by typed key-family additions.
+
+Compatibility blockers:
+
+- No known blocker remains for fixed-width integer or enum key families in the
+  current compiler-support slice.
+- Dedicated STAN diagnostics for unsupported key families can improve feedback
+  timing, but generator diagnostics already block invalid output.
+
+Performance follow-ups:
+
+- Add probes for string-key lookup/insert.
+- Add probes for fixed-width integer-key lookup/insert.
+- Add probes for enum-key lookup/insert.
+- Compare memory footprint of explicit typed-key mode against dynamic
+  compatibility mode.
 
 ## Priority 4: `vector_t` Capacity Operations
 
