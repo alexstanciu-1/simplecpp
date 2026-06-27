@@ -165,7 +165,7 @@ result<shared_p<app>> app_create() {
 	return owner;
 }
 
-result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t &width, const int_t &height) {
+result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t<> &width, const int_t<> &height) {
 	auto checked_owner = require_app(owner, "ui_window_create()");
 	if (!checked_owner.has_value().native_value()) {
 		return *checked_owner.error();
@@ -358,7 +358,7 @@ result<shared_p<app>> app_create() {
 	return owner;
 }
 
-result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t &width, const int_t &height) {
+result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t<> &width, const int_t<> &height) {
 	auto checked_owner = require_app(owner, "ui_window_create()");
 	if (!checked_owner.has_value().native_value()) {
 		return *checked_owner.error();
@@ -525,7 +525,7 @@ result<shared_p<app>> app_create() {
 	}
 }
 
-result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t &width, const int_t &height) {
+result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t<> &width, const int_t<> &height) {
 	auto checked_owner = require_app(owner, "ui_window_create()");
 	if (!checked_owner.has_value().native_value()) {
 		return *checked_owner.error();
@@ -671,7 +671,7 @@ result<shared_p<app>> app_create() {
 	}
 }
 
-result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t &width, const int_t &height) {
+result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t<> &width, const int_t<> &height) {
 	auto checked_owner = require_app(owner, "ui_window_create()");
 	if (!checked_owner.has_value().native_value()) {
 		return *checked_owner.error();
@@ -763,7 +763,7 @@ result<shared_p<app>> app_create() {
 	return error_t(string_t("ui_app_create(): native ui backend is not implemented yet for this platform"));
 }
 
-result<shared_p<window>> window_create(const shared_p<app> &, const string_t &, const int_t &, const int_t &) {
+result<shared_p<window>> window_create(const shared_p<app> &, const string_t &, const int_t<> &, const int_t<> &) {
 	return error_t(string_t("ui_window_create(): native ui backend is not implemented yet for this platform"));
 }
 

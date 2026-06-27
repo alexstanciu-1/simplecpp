@@ -34,8 +34,8 @@ class window final {
 public:
 	shared_p<app> app_handle = null;
 	string_t title = string_t("");
-	int_t width = int_t(0);
-	int_t height = int_t(0);
+	int_t<> width = int_t<>(0);
+	int_t<> height = int_t<>(0);
 	bool_t visible = bool_t(false);
 	bool_t closed = bool_t(false);
 	void *native_handle = nullptr;
@@ -54,7 +54,7 @@ public:
 
 #if SCPP_HAS_UI
 [[nodiscard]] result<shared_p<app>> app_create();
-[[nodiscard]] result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t &width, const int_t &height);
+[[nodiscard]] result<shared_p<window>> window_create(const shared_p<app> &owner, const string_t &title, const int_t<> &width, const int_t<> &height);
 [[nodiscard]] result<bool_t> window_show(const shared_p<window> &target);
 [[nodiscard]] result<bool_t> window_close(const shared_p<window> &target);
 [[nodiscard]] bool_t app_poll(const shared_p<app> &owner);
@@ -71,7 +71,7 @@ inline result<shared_p<app>> app_create() {
 	return error_t(string_t("ui_app_create(): ui runtime module is not enabled in this build"));
 }
 
-inline result<shared_p<window>> window_create(const shared_p<app> &, const string_t &, const int_t &, const int_t &) {
+inline result<shared_p<window>> window_create(const shared_p<app> &, const string_t &, const int_t<> &, const int_t<> &) {
 	return error_t(string_t("ui_window_create(): ui runtime module is not enabled in this build"));
 }
 

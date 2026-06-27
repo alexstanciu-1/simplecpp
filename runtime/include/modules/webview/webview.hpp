@@ -36,9 +36,9 @@ public:
 [[nodiscard]] result<bool_t> load_app(const shared_p<view> &target, const string_t &folder);
 [[nodiscard]] result<bool_t> eval(const shared_p<view> &target, const string_t &script);
 [[nodiscard]] result<bool_t> enqueue_event(const shared_p<view> &target, const string_t &type, const string_t &message = string_t(""), const string_t &url = string_t(""));
-[[nodiscard]] result<bool_t> reply_ok(const shared_p<view> &target, const int_t &id, const string_t &value_json);
-[[nodiscard]] result<bool_t> reply_error(const shared_p<view> &target, const int_t &id, const string_t &code, const string_t &message);
-[[nodiscard]] int_t message_id(const shared_p<ui::event> &message);
+[[nodiscard]] result<bool_t> reply_ok(const shared_p<view> &target, const int_t<> &id, const string_t &value_json);
+[[nodiscard]] result<bool_t> reply_error(const shared_p<view> &target, const int_t<> &id, const string_t &code, const string_t &message);
+[[nodiscard]] int_t<> message_id(const shared_p<ui::event> &message);
 [[nodiscard]] string_t message_command(const shared_p<ui::event> &message);
 [[nodiscard]] string_t message_payload_json(const shared_p<ui::event> &message);
 void close(const shared_p<view> &target);
@@ -72,16 +72,16 @@ inline result<bool_t> enqueue_event(const shared_p<view> &, const string_t &, co
 	return error_t(string_t("webview_enqueue_event(): webview runtime module is not enabled in this build"));
 }
 
-inline result<bool_t> reply_ok(const shared_p<view> &, const int_t &, const string_t &) {
+inline result<bool_t> reply_ok(const shared_p<view> &, const int_t<> &, const string_t &) {
 	return error_t(string_t("webview_reply_ok(): webview runtime module is not enabled in this build"));
 }
 
-inline result<bool_t> reply_error(const shared_p<view> &, const int_t &, const string_t &, const string_t &) {
+inline result<bool_t> reply_error(const shared_p<view> &, const int_t<> &, const string_t &, const string_t &) {
 	return error_t(string_t("webview_reply_error(): webview runtime module is not enabled in this build"));
 }
 
-inline int_t message_id(const shared_p<ui::event> &) {
-	return int_t(0);
+inline int_t<> message_id(const shared_p<ui::event> &) {
+	return int_t<>(0);
 }
 
 inline string_t message_command(const shared_p<ui::event> &) {

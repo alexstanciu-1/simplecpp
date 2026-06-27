@@ -1512,7 +1512,7 @@ result<bool_t> enqueue_event(const shared_p<view> &target, const string_t &type,
 	return bool_t(true);
 }
 
-result<bool_t> reply_ok(const shared_p<view> &target, const int_t &id, const string_t &value_json) {
+result<bool_t> reply_ok(const shared_p<view> &target, const int_t<> &id, const string_t &value_json) {
 	const std::string payload = value_json.native_value().empty() ? "null" : value_json.native_value();
 	const std::string script = "window.scpp&&window.scpp.__resolve&&window.scpp.__resolve({\"id\":"
 		+ std::to_string(id.native_value())
@@ -1522,7 +1522,7 @@ result<bool_t> reply_ok(const shared_p<view> &target, const int_t &id, const str
 	return eval(target, string_t(script));
 }
 
-result<bool_t> reply_error(const shared_p<view> &target, const int_t &id, const string_t &code, const string_t &message) {
+result<bool_t> reply_error(const shared_p<view> &target, const int_t<> &id, const string_t &code, const string_t &message) {
 	const std::string script = "window.scpp&&window.scpp.__resolve&&window.scpp.__resolve({\"id\":"
 		+ std::to_string(id.native_value())
 		+ ",\"ok\":false,\"error\":{\"code\":"
@@ -1533,19 +1533,19 @@ result<bool_t> reply_error(const shared_p<view> &target, const int_t &id, const 
 	return eval(target, string_t(script));
 }
 
-int_t message_id(const shared_p<ui::event> &message) {
+int_t<> message_id(const shared_p<ui::event> &message) {
 	const std::string text = event_message_or_empty(message);
 	std::size_t start = 0;
 	std::size_t end = 0;
 	if (!top_level_json_field(text, "id", start, end)) {
-		return int_t(0);
+		return int_t<>(0);
 	}
 	std::int64_t value = 0;
 	const auto parsed = std::from_chars(text.data() + start, text.data() + end, value);
 	if (parsed.ec != std::errc{} || parsed.ptr != text.data() + end) {
-		return int_t(0);
+		return int_t<>(0);
 	}
-	return int_t(value);
+	return int_t<>(value);
 }
 
 string_t message_command(const shared_p<ui::event> &message) {
