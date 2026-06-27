@@ -2,6 +2,7 @@
 
 #include "lang/php/support/php_common.hpp"
 #include "modules/strings/strings.hpp"
+#include "scpp/stable_hash.hpp"
 
 namespace scpp::php {
 
@@ -66,14 +67,11 @@ inline string_t string_grapheme_slice(const string_t &value, const int_t<> &star
 }
 
 inline string_t hash_string(const string_t &value) {
-	const std::uint64_t hash = scpp::hash_detail::key_ops<string_t>::hash(value);
-	const char *digits = "0123456789abcdef";
-	char buffer[16];
-	for (int index = 15; index >= 0; --index) {
-		const auto shift = static_cast<unsigned>((15 - index) * 4);
-		buffer[index] = digits[(hash >> shift) & 0x0fU];
-	}
-	return string_t(std::string(buffer, 16));
+	return scpp::stable_hash::string_hex(value);
+}
+
+inline int_t<std::uint64_t> stable_hash_string_u64(const string_t &value) {
+	return scpp::stable_hash::string_uint64(value);
 }
 
 inline result_or_false<int_t<>> strpos(const string_t &haystack, const string_t &needle) {

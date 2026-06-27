@@ -539,12 +539,27 @@ Value:
 
 Tasks:
 
-- [ ] Keep `hash_string(string): uint64` as a stable public helper.
-- [ ] Add `hash_bytes(byte_span): uint64`.
-- [ ] Document algorithm stability expectations.
-- [ ] Add cross-run stability tests.
-- [ ] Add empty input tests.
-- [ ] Add UTF-8 byte-sequence tests.
+- [x] Keep `hash_string(string)` as the stable legacy hex-string public helper.
+- [x] Add `stable_hash_string_u64(string): uint64`.
+- [x] Keep `hash_bytes(byte_span)` as the stable legacy hex-string helper.
+- [x] Add `stable_hash_bytes_u64(byte_span): uint64`.
+- [x] Document algorithm stability expectations.
+- [x] Add cross-run stability tests.
+- [x] Add empty input tests.
+- [x] Add UTF-8 byte-sequence tests.
+
+Result:
+- Added `scpp/stable_hash.hpp` with stable string hash, hex formatting, and
+  `uint64` wrappers.
+- Preserved existing `hash_string` / `hash_bytes` hex-string behavior for
+  compatibility with existing source tests and generated code.
+- Added numeric `stable_hash_string_u64` and `stable_hash_bytes_u64` helpers for
+  compiler cache/model ids.
+- Stability contract: the algorithm is the Simple C++ runtime string-key hash;
+  changing it is a persistent-artifact compatibility break and must be versioned
+  by cache/artifact layers.
+- Added native constants for empty, ASCII, byte-span, and UTF-8 byte sequences,
+  plus a strict PHS source test for string/span agreement.
 
 ## Later Review Gates
 
