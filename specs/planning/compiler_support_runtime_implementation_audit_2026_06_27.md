@@ -121,6 +121,10 @@ Implemented after this audit:
 - runtime generic `key_ops<int_t<Rep>>`
 - runtime tests for `hash_t<int_t<>, int_t<std::uint32_t>>`
 - runtime tests for `hash_t<string_t, int_t<std::uint8_t>>`
+- source tests for `hash<int>`, `hash<int,int>`, `hash<int,uint32>`, and
+  `hash<string,byte>` focused on key access and append behavior
+- STAN foreach key/value inference now treats `hash<T, T_KEY>` as value `T` and
+  key `T_KEY`
 
 Append status:
 
@@ -140,8 +144,8 @@ Append expression decision:
 
 Recommended first slice:
 
-- add source-level tests for `hash<int>`, `hash<int, int>`,
-  `hash<int, uint32>`, and `hash<int, byte>`
+- keep source-level tests for `hash<int>`, `hash<int, int>`,
+  `hash<int, uint32>`, and `hash<int, byte>` in the active suite
 - keep dynamic `hash_t<mixed_t, mixed_t>` untouched
 
 ## 2. Enums
