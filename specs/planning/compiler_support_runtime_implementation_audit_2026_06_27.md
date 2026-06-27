@@ -125,6 +125,10 @@ Implemented after this audit:
   `hash<string,byte>` focused on key access and append behavior
 - STAN foreach key/value inference now treats `hash<T, T_KEY>` as value `T` and
   key `T_KEY`
+- unsupported explicit hash key families now fail in the generator with a clear
+  `Unsupported hash<T,T_KEY> key type ...` diagnostic
+- `hash_t<mixed_t, mixed_t>` compatibility is preserved by the existing runtime
+  hash tests and the active hash source suite
 
 Append status:
 
