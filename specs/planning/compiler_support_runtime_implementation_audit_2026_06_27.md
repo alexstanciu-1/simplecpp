@@ -188,6 +188,8 @@ Recommended first slice:
 - use explicit `enum_value($case)` and
   `enum_from_value(token_kind::class, $raw)` helpers before using enums as
   artifact numeric fields broadly
+- use `enum_name($case)` when metadata/debug output needs the declared case
+  name without changing enum representation
 
 ## 3. Fixed-Width Integers
 

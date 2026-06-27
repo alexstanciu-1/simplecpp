@@ -7397,6 +7397,9 @@ final class Generator
 			if ($this->isEnumValueCallName($nameExpr)) {
 				return $this->renderEnumValueCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
 			}
+			if ($this->isEnumNameCallName($nameExpr)) {
+				return $this->renderEnumNameCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
 			if ($this->isEnumFromValueCallName($nameExpr)) {
 				return $this->renderEnumFromValueCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
 			}
@@ -7783,6 +7786,15 @@ final class Generator
 		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'enum_value';
 	}
 
+	private function isEnumNameCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'enum_name';
+	}
+
 	private function isEnumFromValueCallName(mixed $expr): bool
 	{
 		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
@@ -7960,6 +7972,25 @@ final class Generator
 		$runtimeType = $this->enumBackingRuntimeType($class);
 		$nativeType = $this->enumBackingNativeType($class);
 		return $runtimeType . '(static_cast<' . $nativeType . '>(' . $this->renderExpr($arg, $namespacePhp) . '))';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderEnumNameCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 1) {
+			$this->fail('enum_name() expects exactly one enum argument at line ' . $line . '.');
+		}
+		$arg = $args[0] ?? null;
+		$enumType = $this->inferExprTypeWithNamespace($arg, $namespacePhp);
+		$class = $this->lookupEnumDeclByTypeName($enumType);
+		if (!$class instanceof ClassDecl) {
+			$this->fail('enum_name() expects an enum argument at line ' . $line . '.');
+		}
+		$cases = [];
+		foreach ($class->enumCases as $case) {
+			$cases[] = 'case ' . $class->name . '::' . $this->cppIdentifier($case->name) . ': return string_t(' . $this->cppStringLiteral($case->name) . ');';
+		}
+		return '([&]() -> string_t { switch (' . $this->renderExpr($arg, $namespacePhp) . ') { ' . implode(' ', $cases) . ' default: throw std::runtime_error("Invalid value for enum ' . $class->name . '"); } }())';
 	}
 
 	/** @param list<mixed> $args */
@@ -8613,6 +8644,9 @@ final class Generator
 				$args = $expr->children['args']->children ?? [];
 				$class = $this->lookupEnumDeclByTypeName($this->inferExprTypeWithNamespace($args[0] ?? null, $namespacePhp));
 				return $class instanceof ClassDecl ? $this->enumBackingRuntimeType($class) : 'auto';
+			}
+			if ($this->isEnumNameCallName($nameExpr)) {
+				return 'string_t';
 			}
 			if ($this->isEnumFromValueCallName($nameExpr)) {
 				$args = $expr->children['args']->children ?? [];

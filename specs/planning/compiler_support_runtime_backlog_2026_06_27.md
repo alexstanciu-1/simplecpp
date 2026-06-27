@@ -93,7 +93,7 @@ Tasks:
 - [x] Add tests for byte-backed enum.
 - [x] Add tests for uint16-backed enum.
 - [x] Add tests for enum as `hash_t` key after generic hash support lands.
-- [ ] Add optional enum name/value metadata helpers after the base feature is
+- [x] Add optional enum name/value metadata helpers after the base feature is
       stable.
 
 ## Priority 3: `hash_t` Todo From Audit
