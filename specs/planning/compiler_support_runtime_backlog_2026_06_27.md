@@ -183,11 +183,11 @@ First home:
 
 Tasks:
 
-- [ ] Add `vector_reserve`.
-- [ ] Add `vector_capacity`.
-- [ ] Add `vector_clear` that preserves capacity.
-- [ ] Add `vector_compact($v)`.
-- [ ] Add optional explicit capacity target for `vector_compact($v, $capacity)`.
+- [x] Add `vector_reserve`.
+- [x] Add `vector_capacity`.
+- [x] Add `vector_clear` that preserves capacity.
+- [x] Add `vector_compact($v)`.
+- [x] Add optional explicit capacity target for `vector_compact($v, $capacity)`.
 - [ ] Add typed-vector tests.
 - [ ] Add fixed-width vector tests.
 - [ ] Add docs for count vs capacity.

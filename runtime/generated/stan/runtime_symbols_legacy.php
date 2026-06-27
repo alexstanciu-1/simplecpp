@@ -135,6 +135,10 @@ function trim(string $text): string {}
 function ucfirst(string $text): string {}
 function unlink(string $path): bool {}
 function var_dump(mixed $value): void {}
+function vector_capacity(): mixed {}
+function vector_clear(): mixed {}
+function vector_compact(): mixed {}
+function vector_reserve(): mixed {}
 
 namespace scpp;
 
