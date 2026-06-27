@@ -14,11 +14,31 @@ Related plan:
 - `specs/planning/compiler_support_runtime_plan_2026_06_27.md`
 - `specs/planning/compiler_support_runtime_implementation_audit_2026_06_27.md`
 
+## Placement Rule
+
+Before implementation, each task should keep to its first home:
+
+- core `scpp/` only for scalar wrappers, ownership wrappers, core containers,
+  result/null/error primitives, and generated-code traits
+- existing modules for strings, datetime, tokenizer, JSON, and filesystem
+- new `modules/source` for source buffers, byte spans, and line indexes
+- new `modules/binary` for little-endian binary codec helpers
+- compiler-side Simple C++ code first for row arenas, artifact builders,
+  bitsets, work queues, dependency helpers, and watcher storage
+
+Promotion from compiler-side code into the runtime should require either broad
+reuse outside the compiler or benchmark evidence that a runtime primitive is
+needed.
+
 ## Priority 1: Generic `hash_t<T_VALUE, T_KEY = string_t>`
 
 Value:
 - unlocks efficient compiler maps keyed by integer ids, enums, and strings
 - fixes the current limitation observed when trying id-keyed compiler caches
+
+First home:
+- core `runtime/include/scpp/support/hash_t.hpp`
+- generator/STAN changes only where source typing needs them
 
 Tasks:
 
@@ -46,6 +66,10 @@ Tasks:
 
 Value:
 - makes token/node/operator kinds type-safe without losing compact storage
+
+First home:
+- parser/AST, generator, and STAN
+- runtime helper headers only for explicit enum metadata/conversion helpers
 
 Tasks:
 
@@ -87,6 +111,10 @@ Tasks:
 Value:
 - lets compiler stages reserve known row counts and reuse resident storage
 
+First home:
+- core `runtime/include/scpp/vector_t.hpp`
+- language/PHP wrapper helpers where needed for source calls
+
 Tasks:
 
 - [ ] Add `vector_reserve`.
@@ -103,6 +131,11 @@ Tasks:
 Value:
 - avoids duplicate source copies and enables safe non-copying tokenizer/parser
   views
+
+First home:
+- new `runtime/include/modules/source`
+- thin `runtime/include/scpp/source.hpp` include wrapper only if consistent with
+  other module facades
 
 Tasks:
 
@@ -130,6 +163,10 @@ Tasks:
 Value:
 - improves compiler profiling fidelity without coarse millisecond noise
 
+First home:
+- existing `runtime/include/modules/datetime`
+- PHP support wrappers for source-level calls
+
 Tasks:
 
 - [ ] Add `dt_monotonic_us(): uint64`.
@@ -142,6 +179,9 @@ Tasks:
 
 Value:
 - makes PHS/JSS tokenizers efficient and stable for compiler stages
+
+First home:
+- existing `runtime/include/modules/tokenizer`
 
 Tasks:
 
@@ -160,6 +200,10 @@ Value:
 - centralizes offset/line/column conversion for diagnostics, source maps, and
   debugger queries
 
+First home:
+- new `runtime/include/modules/source`
+- share the same source ownership/lifetime contract as `source_buffer`
+
 Tasks:
 
 - [ ] Define `source_location` record.
@@ -177,6 +221,10 @@ Tasks:
 Value:
 - gives compiler models stable row ids without introducing a new core container
 
+First home:
+- compiler-side Simple C++ library
+- do not add a core runtime arena until measurements justify it
+
 Tasks:
 
 - [ ] Implement `row_arena<T>` over `vector<T>`.
@@ -191,6 +239,10 @@ Tasks:
 
 Value:
 - improves artifact/string construction without adding a broad builder primitive
+
+First home:
+- generic string builder: existing `modules/strings`
+- artifact-specific builders: compiler-side Simple C++ library
 
 Tasks:
 
@@ -207,6 +259,10 @@ Tasks:
 Value:
 - compact dirty/visited state for dependency and incremental flows
 
+First home:
+- compiler-side Simple C++ library
+- possible future `modules/collections` only after shape stabilizes
+
 Tasks:
 
 - [ ] Implement bitset over `vector<uint64>`.
@@ -219,6 +275,10 @@ Tasks:
 
 Value:
 - efficient incremental work queues without vector front-removal
+
+First home:
+- compiler-side Simple C++ library
+- possible future `modules/collections` only after shape stabilizes
 
 Tasks:
 
@@ -234,6 +294,9 @@ Tasks:
 Value:
 - future replacement path for large JSON caches and artifacts
 
+First home:
+- new `runtime/include/modules/binary`
+
 Tasks:
 
 - [ ] Add write/read helpers for uint8/uint16/uint32/uint64.
@@ -247,6 +310,10 @@ Tasks:
 
 Value:
 - supports compiler memory-per-KB budgeting and regression tracking
+
+First home:
+- process memory: existing `runtime/include/operators/memory_usage`
+- container capacity estimates: near `vector_t`, `hash_t`, and `string_t`
 
 Tasks:
 

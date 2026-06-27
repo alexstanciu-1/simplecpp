@@ -41,6 +41,46 @@ Most valuable near-term gaps:
    expose move-out/lifetime primitives
 5. add high-resolution monotonic timers and container memory-capacity helpers
 
+## Placement Audit
+
+The implementation should not place every compiler-support feature in the main
+runtime core.
+
+Core runtime placement is appropriate for:
+
+- `hash_t` fixed-width key support
+- `vector_t` capacity helpers
+- fixed-width integer traits/helpers
+- container-owned memory/capacity estimates
+
+Existing module placement is appropriate for:
+
+- string byte/UTF-8/grapheme helpers in `modules/strings`
+- high-resolution timers in `modules/datetime`
+- tokenizer and typed `token_buffer` in `modules/tokenizer`
+- process memory probes in `operators/memory_usage`
+
+New module placement is appropriate for:
+
+- `modules/source`: `source_buffer`, `byte_span`, and `source_line_index`
+- `modules/binary`: little-endian binary codec helpers
+
+Compiler-side placement is appropriate first for:
+
+- row arenas
+- artifact builders
+- bitsets
+- ring/work queues
+- dependency graph helpers
+- watcher storage helpers
+
+Reasoning:
+
+- core `scpp/` should stay focused on types generated code needs everywhere
+- modules should host domain services
+- compiler-side libraries let us measure and revise shapes before promoting them
+  into the public runtime
+
 ## 1. Generic `hash_t`
 
 Current implementation:

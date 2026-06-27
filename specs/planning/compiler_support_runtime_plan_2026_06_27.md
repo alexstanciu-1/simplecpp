@@ -30,6 +30,62 @@ Prefer fewer, stronger building blocks:
 Avoid creating many near-duplicate container types unless a later benchmark or
 contract proves the need.
 
+## Runtime Placement Policy
+
+Keep core `runtime/include/scpp` small and reserved for:
+
+- scalar wrappers
+- ownership wrappers
+- core containers
+- result/null/error primitives
+- traits needed by generated code
+
+Use existing modules for clear runtime domains:
+
+- `modules/strings` for string operations
+- `modules/datetime` for clock and time APIs
+- `modules/tokenizer` for PHS/JSS tokenization
+- `modules/json` for JSON codecs
+- `modules/filesystem` for filesystem APIs
+
+Add new modules only when the concept is distinct from normal language
+containers:
+
+- `modules/source` for `source_buffer`, `byte_span`, and `source_line_index`
+- `modules/binary` for little-endian binary artifact helpers
+
+Start compiler-specific abstractions in compiler-side Simple C++ code:
+
+- row arenas
+- artifact builders
+- dirty queues
+- dependency graph helpers
+- watcher storage helpers
+
+These can later graduate into a runtime module only if they become broadly
+useful outside the compiler.
+
+## Placement Map
+
+| Feature | First home | Reason |
+| --- | --- | --- |
+| fixed-width `hash_t` key support | core `scpp/support/hash_t.hpp` | core container behavior |
+| `vector_t` capacity APIs | core `scpp/vector_t.hpp` and wrappers | core container behavior |
+| fixed-width integer traits/helpers | core `scpp/int_t.hpp` / `scpp/detail.hpp` | type infrastructure |
+| enums | generator/language/STAN, runtime helpers only where needed | syntax/lowering concern first |
+| string byte/UTF-8/grapheme APIs | existing `modules/strings` | string domain |
+| monotonic timers | existing `modules/datetime` | time domain |
+| process memory usage | existing `operators/memory_usage` | process/runtime operator utility |
+| container capacity/memory helpers | near owning containers | container-specific introspection |
+| tokenizer and `token_buffer` | existing `modules/tokenizer` | tokenizer domain |
+| `source_buffer`, `byte_span` | new `modules/source` | source ownership/view domain |
+| `source_line_index` | new `modules/source` | source mapping domain |
+| binary codec helpers | new `modules/binary` | binary artifact domain |
+| row arena | compiler-side library first | compiler model/storage pattern |
+| string parts builder | `modules/strings` if generic, compiler-side if artifact-specific | depends on final contract |
+| bitset | compiler-side first, possible `modules/collections` later | prove shape before promotion |
+| ring/work queue | compiler-side first | workload-specific |
+
 ## Agreed Direction
 
 ### 1. Generic `hash_t`
