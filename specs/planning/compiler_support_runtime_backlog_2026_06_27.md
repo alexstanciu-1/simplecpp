@@ -296,8 +296,8 @@ Tasks:
 - [x] Standardize kind, offset, length, line, column, and flags types.
 - [x] Decide token kind representation before/after enum support.
 - [x] Add accessor API docs.
-- [ ] Add memory/cpu benchmark fixture.
-- [ ] Add parity tests against existing readable token output.
+- [x] Add memory/cpu benchmark fixture.
+- [x] Add parity tests against existing readable token output.
 
 Decision:
 
@@ -307,8 +307,24 @@ Decision:
 - Token kind ids remain numeric runtime constants for now; the byte-width column
   leaves room to expose them as enum-backed values later.
 - Added strict typed-accessor smoke coverage for PHS and JSS buffers; readable
-  adapter parity remains a follow-up.
+  adapter parity is covered by the compiler-side M7 runtime tokenizer harness.
 - Contract doc: `specs/builtins/tokenizer/token_buffer.md`.
+
+Local native benchmark fixture:
+
+- `tools/runtime_benchmarks/run_tokenizer_buffer_probe.sh`
+- 10KB baseline, 100 iterations:
+  - PHS: `avg_us=55`, `token_count=3841`,
+    `estimated_buffer_bytes=97808`, `bytes_per_source_byte=9.749`
+  - JSS: `avg_us=56`, `token_count=3941`,
+    `estimated_buffer_bytes=99685`, `bytes_per_source_byte=9.955`
+- 100KB baseline, 100 iterations:
+  - PHS: `avg_us=934`, `token_count=37681`,
+    `estimated_buffer_bytes=983357`, `bytes_per_source_byte=9.832`
+  - JSS: `avg_us=881`, `token_count=38601`,
+    `estimated_buffer_bytes=983604`, `bytes_per_source_byte=9.832`
+- Adapter parity validation: `bash compiler/tests/run_m7_runtime_tokenizers.sh`
+  from the outer compiler workspace.
 
 ## Priority 8: `source_line_index`
 
