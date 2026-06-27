@@ -151,9 +151,12 @@ Print local documentation without web access:
 ```bash
 scpp docs
 scpp docs strict
+scpp docs ui-webview
 scpp docs jss
 scpp docs diagnostics
 ```
+
+Use `scpp docs ui-webview` for the initial native window and WebView preview guide. It covers the frozen preview helper set, platform support promise, dependency checklist, and the golden strict WebView bridge sample.
 
 Inspect the most recent saved build/run report:
 

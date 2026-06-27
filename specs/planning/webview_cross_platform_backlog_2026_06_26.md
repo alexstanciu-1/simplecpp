@@ -51,6 +51,7 @@ Latest heartbeat slice:
 - Added an opt-in strict PHP++ `strict_webview_events` project sample that demonstrates `ui_app_poll`, `ui_event_type`, `ui_event_message`, and `ui_event_url` for browser-like WebView events. CI run `28246508869` validated the sample metadata/test slice.
 - Windows WebView2 smoke now waits for the async `webview_ready` event before loading HTML and sends the JavaScript message probe after navigation completion. CI run `28247631339` validated the stabilized Windows launch plus the full current matrix.
 - Windows WebView2 now emits `webview_title_changed` through the shared `ui_event` queue; CI run `28248575256` validated build, launch, screenshot, and title-event delivery.
+- Initial release-readiness docs now live in `docs/ui_webview_preview.md` and are exposed through `scpp docs ui-webview`; the guide freezes the preview helper set, support promise, diagnostics checklist, golden bridge sample, and CI release gate.
 
 ## Done Definition
 

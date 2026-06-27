@@ -17,6 +17,8 @@ Regex-specific samples opt into `"regex"` explicitly.
 
 WebView-specific samples such as `strict_webview_bridge/` and `strict_webview_events/` opt into `"webview"` explicitly. They are reference projects for GUI-capable machines and CI render jobs, not part of the default console sample runner. On Linux, building them requires GTK and WebKitGTK development packages.
 
+`strict_webview_bridge/` is the golden initial-preview WebView example. It demonstrates a local app folder, browser-to-native messages, and native replies. See `scpp docs ui-webview` for the release-preview support promise and platform dependency checklist.
+
 The visible strict API uses plain PHP-like names for general helpers and family-prefixed names for subsystem helpers, such as:
 
 - `fs_get(...)`

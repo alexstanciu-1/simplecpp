@@ -1719,6 +1719,10 @@ function scpp_docs_registry(): array
 			'title' => 'Strict PHP Examples',
 			'path' => 'docs/examples/php/strict/README.md',
 		],
+		'ui-webview' => [
+			'title' => 'UI And WebView Preview',
+			'path' => 'docs/ui_webview_preview.md',
+		],
 		'authoring' => [
 			'title' => 'Strict PHP++ Authoring Rules',
 			'path' => '.agents/skills/simple-cpp-php-strict/references/authoring-rules.md',
@@ -8242,7 +8246,7 @@ function resolve_runtime_webview_build_spec(?string $osFamily = null, ?callable 
 			'ldflags' => $webview2 === null ? [] : [$webview2['loader_lib'], 'advapi32.lib', 'ole32.lib', 'uuid.lib'],
 			'compile_defines' => $webview2 === null ? ['-DSCPP_HAS_WEBVIEW=0'] : ['-DSCPP_HAS_WEBVIEW=1', '-DSCPP_WEBVIEW_BACKEND_WEBVIEW2=1'],
 			'diagnostics' => $webview2 === null ? [
-				'WebView disabled on Windows: WebView2 SDK headers or loader library were not found.',
+				'WebView disabled on Windows: WebView2 SDK headers or loader library were not found. Install the Microsoft.Web.WebView2 NuGet package or set SCPP_WEBVIEW2_SDK_DIR to a restored package root; app users still only need the installed Microsoft Edge WebView2 Runtime.',
 			] : [],
 		];
 	}

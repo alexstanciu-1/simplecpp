@@ -130,6 +130,14 @@ final class ScppWebviewModuleTest
 		$this->assertSame(false, $missingWebKit['enabled'], 'Linux webview build spec should disable cleanly without WebKitGTK');
 		$this->assertContains('WebKitGTK pkg-config package', implode("\n", $missingWebKit['diagnostics']), 'missing WebKitGTK diagnostic should name the missing pkg-config package');
 
+		$windowsWebView = resolve_runtime_webview_build_spec('Windows');
+		if (!$windowsWebView['enabled']) {
+			$windowsDiagnostics = implode("\n", $windowsWebView['diagnostics']);
+			$this->assertContains('Microsoft.Web.WebView2 NuGet package', $windowsDiagnostics, 'missing WebView2 SDK diagnostic should name the SDK package');
+			$this->assertContains('SCPP_WEBVIEW2_SDK_DIR', $windowsDiagnostics, 'missing WebView2 SDK diagnostic should name the override environment variable');
+			$this->assertContains('app users still only need', $windowsDiagnostics, 'missing WebView2 SDK diagnostic should separate developer SDK setup from app-user runtime needs');
+		}
+
 		$simulatedWebKit = resolve_runtime_webview_build_spec(
 			'Linux',
 			static fn (array $commands): ?string => '/usr/bin/pkg-config',
@@ -170,6 +178,25 @@ final class ScppWebviewModuleTest
 		$this->assertContains('ui_event_message($event)', $sampleSource, 'strict WebView event sample should read webview message payloads');
 		$this->assertContains('ui_event_url($event)', $sampleSource, 'strict WebView event sample should read webview URL payloads');
 		$this->assertContains('webview_message', $sampleSource, 'strict WebView event sample should demonstrate the message event');
+
+		$bridgeRoot = resolve_repo_root() . '/docs/examples/php/strict/project_samples/strict_webview_bridge';
+		$bridgeSource = $this->read($bridgeRoot . '/main.phs');
+		$bridgeConfig = json_decode($this->read($bridgeRoot . '/prism.json'), true);
+		if (!is_array($bridgeConfig)) {
+			throw new RuntimeException('strict_webview_bridge prism.json should decode');
+		}
+		$bridgeModules = $bridgeConfig['runtime']['modules'] ?? [];
+		$this->assertSame(true, is_array($bridgeModules) && in_array('webview', $bridgeModules, true), 'strict WebView bridge sample should opt into the webview runtime module');
+		$this->assertContains('webview_load_app($view, "app")', $bridgeSource, 'strict WebView bridge sample should load the checked-in local app folder');
+		$this->assertContains('webview_message_id($event)', $bridgeSource, 'strict WebView bridge sample should read message ids for replies');
+		$this->assertContains('webview_reply_ok($view, $id, $reply_json)', $bridgeSource, 'strict WebView bridge sample should demonstrate successful native replies');
+
+		$previewDocs = $this->read(resolve_repo_root() . '/docs/ui_webview_preview.md');
+		$this->assertContains('Frozen Initial API', $previewDocs, 'UI/WebView preview docs should freeze the first public API');
+		$this->assertContains('Release Promise', $previewDocs, 'UI/WebView preview docs should state the initial support promise');
+		$this->assertContains('Diagnostics Checklist', $previewDocs, 'UI/WebView preview docs should describe diagnostics workflow');
+		$this->assertContains('strict_webview_bridge', $previewDocs, 'UI/WebView preview docs should identify the golden bridge sample');
+		$this->assertContains('Release Gate', $previewDocs, 'UI/WebView preview docs should document CI release gating');
 
 		echo "PASS: scpp webview module\n";
 		return 0;

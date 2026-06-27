@@ -11,6 +11,8 @@ It demonstrates:
 - using `webview_message_id(...)`, `webview_message_command(...)`, and `webview_message_payload_json(...)`
 - replying with `webview_reply_ok(...)`
 
+This sample is the golden initial-preview WebView bridge example referenced by `scpp docs ui-webview`.
+
 Run from this folder:
 
 ```bash
