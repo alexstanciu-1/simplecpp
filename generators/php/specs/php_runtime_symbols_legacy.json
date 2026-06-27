@@ -139,6 +139,8 @@
         "dt_now": "php::dt_now",
         "dt_now_ms": "php::dt_now_ms",
         "dt_monotonic_ms": "php::dt_monotonic_ms",
+        "dt_monotonic_us": "php::dt_monotonic_us",
+        "dt_monotonic_ns": "php::dt_monotonic_ns",
         "dt_sleep_ms": "php::dt_sleep_ms",
         "dt_format_iso_utc": "php::dt_format_iso_utc",
         "dt_parse_iso_utc": "php::dt_parse_iso_utc",

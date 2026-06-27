@@ -312,6 +312,8 @@ final class RuntimeShallowSourceGenerator
 				'dt_now' => ['return' => 'int', 'params' => []],
 				'dt_now_ms' => ['return' => 'int', 'params' => []],
 				'dt_monotonic_ms' => ['return' => 'int', 'params' => []],
+				'dt_monotonic_us' => ['return' => 'uint64', 'params' => []],
+				'dt_monotonic_ns' => ['return' => 'uint64', 'params' => []],
 				'dt_sleep_ms' => ['return' => 'void', 'params' => [['name' => 'millis', 'type' => 'int']]],
 				'dt_format_iso_utc' => ['return' => 'string', 'params' => [['name' => 'stamp', 'type' => 'int']]],
 				'dt_parse_iso_utc' => ['return' => 'result<int>', 'params' => [['name' => 'text', 'type' => 'string']]],
