@@ -161,6 +161,9 @@ Current implementation:
   `enum class` with explicit values
 - storage is compacted to the smallest fitting integer type
 - enum case name helpers exist through `scpp::php::enum_name`
+- parser/IR already carry enum backing type names such as `byte` and
+  `uint16`; PHP built-in `int` arrives as a builtin type node while
+  fixed-width Simple C++ aliases arrive as named type nodes
 
 Current documented limits:
 
@@ -173,16 +176,17 @@ Syntax note:
 
 - current enum support follows the PHP-style case surface, for example
   `case Hearts;`
-- the proposed compact compiler enum shape must respect semicolon-style cases
-  unless a separate Simple C++ enum syntax is accepted
+- compact compiler enums should reuse this PHP-style case surface, for example
+  `case source_unit = 1;`, so the language does not gain a second enum
+  grammar for the same concept
 
 Recommended first slice:
 
-- audit existing enum tests and parser coverage
-- decide whether compiler-focused fixed-width enums reuse PHP enum syntax or get
-  a stricter Simple C++ subset
+- keep PHP-style semicolon cases
+- add fixed-width integer-backed enum lowering for `byte`, `uint16`, and the
+  other fixed-width integer aliases
 - add explicit enum-to-backing and backing-to-enum helper design before using
-  enums as artifact numeric fields
+  enums as artifact numeric fields broadly
 
 ## 3. Fixed-Width Integers
 

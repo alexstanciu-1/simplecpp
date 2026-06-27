@@ -118,9 +118,9 @@ Candidate surface:
 
 ```php
 enum compact_node_kind: byte {
-    source_unit = 1;
-    param = 2;
-    declaration_function = 10;
+    case source_unit = 1;
+    case param = 2;
+    case declaration_function = 10;
 }
 ```
 
