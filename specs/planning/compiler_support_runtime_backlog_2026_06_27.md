@@ -338,15 +338,24 @@ First home:
 
 Tasks:
 
-- [ ] Define `source_location` record.
-- [ ] Define `source_line_index` record.
-- [ ] Build line-start offsets from `source_buffer`.
-- [ ] Implement offset-to-line/column.
-- [ ] Implement line/column-to-offset.
-- [ ] Use byte columns for compiler-internal mapping.
-- [ ] Add tests for empty source.
-- [ ] Add tests for Unix and Windows newlines.
-- [ ] Add tests for UTF-8 byte-column behavior.
+- [x] Define `source_location` record.
+- [x] Define `source_line_index` record.
+- [x] Build line-start offsets from `source_buffer`.
+- [x] Implement offset-to-line/column.
+- [x] Implement line/column-to-offset.
+- [x] Use byte columns for compiler-internal mapping.
+- [x] Add tests for empty source.
+- [x] Add tests for Unix and Windows newlines.
+- [x] Add tests for UTF-8 byte-column behavior.
+
+Decision:
+
+- `source_line_index` stores `uint32` source byte length and `uint32` line-start
+  byte offsets.
+- `source_location` stores `offset:uint32`, `line:uint32`, and `column:uint32`.
+- Lines and columns are 1-based; offsets and columns are byte based.
+- CRLF is treated as one newline with the next line starting after `\r\n`.
+- The EOF offset is valid and maps to the current final line/column.
 
 ## Priority 9: Row Arena Library
 
