@@ -109,34 +109,38 @@ Current key support:
 - `unique_p<T>`
 - `weak_p<T>`
 
-Likely missing:
+Original likely missing items:
 
 - generic `key_ops<int_t<Rep>>` for fixed-width aliases such as `uint32`,
   `uint16`, `byte`, and `int16`
 - tests proving `hash<int, uint32>` and `hash<int, byte>` work end-to-end
 - diagnostics for unsupported key families at source/STAN level
 
+Implemented after this audit:
+
+- runtime generic `key_ops<int_t<Rep>>`
+- runtime tests for `hash_t<int_t<>, int_t<std::uint32_t>>`
+- runtime tests for `hash_t<string_t, int_t<std::uint8_t>>`
+
 Append status:
 
-- generic typed `append()` currently works only when `T_KEY` is exactly
-  `int_t<>`
+- generic typed `append()` works for integer key families represented as
+  `int_t<Rep>`
 - `hash_t<mixed_t, mixed_t>` has its own dynamic append behavior
 - `hash<T>` with default string keys does not support append, which is
   consistent with the current runtime error
 
-Open design point before implementation:
+Append expression decision:
 
-- For `hash<T, uint32>` or `hash<T, byte>`, append can be extended to all
-  `int_t<Rep>` key families, but the return type should be chosen deliberately.
-  Returning `T_KEY` preserves the explicit key family. Returning `int_t<>`
-  preserves the current generic append signature. The compiler project likely
-  benefits from returning `T_KEY`, but this is a language-surface compatibility
-  decision.
+- low-level runtime append returns the generated `T_KEY`
+- source assignment expressions such as `$w = $x[] = VALUE` should evaluate to
+  the assigned value, so `$w` has type `T`
+- the generator must preserve that source-level expression result instead of
+  exposing the internal generated-key return
 
 Recommended first slice:
 
-- add a generic `key_ops<int_t<Rep>>`
-- add compile/runtime tests for `hash<int>`, `hash<int, int>`,
+- add source-level tests for `hash<int>`, `hash<int, int>`,
   `hash<int, uint32>`, and `hash<int, byte>`
 - keep dynamic `hash_t<mixed_t, mixed_t>` untouched
 

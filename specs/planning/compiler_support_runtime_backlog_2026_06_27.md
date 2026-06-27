@@ -51,12 +51,16 @@ Tasks:
 - [x] Audit key families currently supported by implementation.
 - [ ] Write focused tests for `hash<int>` compatibility.
 - [ ] Write focused tests for `hash<int, int>`.
-- [ ] Write focused tests for `hash<int, uint32>`.
-- [ ] Write focused tests for `hash<int, byte>`.
-- [ ] Implement generic `key_ops<int_t<Rep>>` for fixed-width integer keys.
-- [ ] Decide typed-integer append return type for `hash<T, uint32>` and similar
+- [x] Write focused runtime tests for `hash_t<int, uint32>`.
+- [x] Write focused runtime tests for `hash_t<int, byte>`.
+- [x] Implement generic `key_ops<int_t<Rep>>` for fixed-width integer keys.
+- [x] Decide typed-integer append return type for `hash<T, uint32>` and similar
       key families.
-- [ ] Implement append for accepted integer key families.
+- [x] Implement append for accepted integer key families.
+- [x] Write source-level tests for `hash<int, uint32>`.
+- [x] Write source-level tests for `hash<int, byte>`.
+- [x] Ensure source append assignment evaluates to assigned value, not generated
+      key.
 - [ ] Preserve current `hash<T>` string-key default behavior.
 - [ ] Preserve current `hash<mixed>` dynamic compatibility behavior.
 - [ ] Add clear diagnostics for unsupported key types.

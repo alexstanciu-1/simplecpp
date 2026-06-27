@@ -149,13 +149,13 @@ struct key_ops<string_t> final {
 	}
 };
 
-template <>
-struct key_ops<int_t<>> final {
-	[[nodiscard]] static std::uint64_t hash(const int_t<> &key) {
+template <typename Rep>
+struct key_ops<int_t<Rep>> final {
+	[[nodiscard]] static std::uint64_t hash(const int_t<Rep> &key) {
 		return mix64(static_cast<std::uint64_t>(key.native_value()));
 	}
 
-	[[nodiscard]] static bool equal(const int_t<> &left, const int_t<> &right) {
+	[[nodiscard]] static bool equal(const int_t<Rep> &left, const int_t<Rep> &right) {
 		return left.native_value() == right.native_value();
 	}
 };
@@ -425,15 +425,31 @@ private:
 		return values_[index];
 	}
 
-	[[nodiscard]] int_t<> next_append_key() const requires std::same_as<T_KEY, int_t<>> {
-		std::int64_t max_key = -1;
+	[[nodiscard]] T_KEY next_append_key() const requires detail::is_int_t_v<T_KEY> {
+		using rep_t = detail::int_rep_t<T_KEY>;
+		std::uint64_t max_key = 0;
+		bool found_non_negative_key = false;
 		for (std::uint32_t i = 0; i < keys_.size(); ++i) {
 			if (!live_[i]) continue;
-			if (keys_[i].native_value() > max_key) {
-				max_key = keys_[i].native_value();
+			const auto native_key = keys_[i].native_value();
+			if constexpr (std::is_signed_v<rep_t>) {
+				if (native_key < 0) {
+					continue;
+				}
+			}
+			const auto unsigned_key = static_cast<std::uint64_t>(native_key);
+			if (!found_non_negative_key || unsigned_key > max_key) {
+				max_key = unsigned_key;
+				found_non_negative_key = true;
 			}
 		}
-		return int_t<>{max_key + 1};
+		if (!found_non_negative_key) {
+			return T_KEY{static_cast<rep_t>(0)};
+		}
+		if (max_key >= static_cast<std::uint64_t>(std::numeric_limits<rep_t>::max())) {
+			throw std::overflow_error("hash_t::append key overflow");
+		}
+		return T_KEY{static_cast<rep_t>(max_key + 1)};
 	}
 
 public:
@@ -618,22 +634,22 @@ public:
 		return const_entry_iterator(this, static_cast<std::uint32_t>(values_.size()));
 	}
 
-	[[nodiscard]] int_t<> append(const T_VALUE &value) requires std::copyable<T_VALUE> {
-		if constexpr (std::same_as<T_KEY, int_t<>>) {
+	[[nodiscard]] T_KEY append(const T_VALUE &value) requires std::copyable<T_VALUE> {
+		if constexpr (detail::is_int_t_v<T_KEY>) {
 			const auto key = next_append_key();
 			insert_or_assign_key(key, T_VALUE{value});
 			return key;
 		}
-		throw std::runtime_error("hash_t::append requires int_t<> keys");
+		throw std::runtime_error("hash_t::append requires integer keys");
 	}
 
-	[[nodiscard]] int_t<> append(T_VALUE &&value) {
-		if constexpr (std::same_as<T_KEY, int_t<>>) {
+	[[nodiscard]] T_KEY append(T_VALUE &&value) {
+		if constexpr (detail::is_int_t_v<T_KEY>) {
 			const auto key = next_append_key();
 			insert_or_assign_key(key, std::move(value));
 			return key;
 		}
-		throw std::runtime_error("hash_t::append requires int_t<> keys");
+		throw std::runtime_error("hash_t::append requires integer keys");
 	}
 
 	hash_t &set(const T_KEY &key, const T_VALUE &value) requires(std::copyable<T_KEY> && std::copyable<T_VALUE>) {

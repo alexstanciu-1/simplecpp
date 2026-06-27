@@ -4921,8 +4921,9 @@ final class Generator
 		if (preg_match('/^fixed_array_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if ($this->parseHashTypeParts($baseType) !== null) {
-			return $base . '.at(' . $dim . ')';
+		$hashTypeParts = $this->parseHashTypeParts($baseType);
+		if ($hashTypeParts !== null) {
+			return $base . '.at(' . $this->renderHashKeyExpr($dim, $hashTypeParts['key']) . ')';
 		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '.get(' . $dim . ')';
@@ -4964,8 +4965,9 @@ final class Generator
 		if (preg_match('/^fixed_array_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if ($this->parseHashTypeParts($baseType) !== null) {
-			return $base . '[' . $dim . ']';
+		$hashTypeParts = $this->parseHashTypeParts($baseType);
+		if ($hashTypeParts !== null) {
+			return $base . '[' . $this->renderHashKeyExpr($dim, $hashTypeParts['key']) . ']';
 		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '[' . $dim . ']';
@@ -5031,6 +5033,15 @@ final class Generator
 		}
 
 		return $base;
+	}
+
+	private function renderHashKeyExpr(string $expr, string $keyType): string
+	{
+		$normalized = trim($keyType);
+		if ($normalized === 'mixed_t') {
+			return $expr;
+		}
+		return $this->renderGeneratedCast($normalized, $expr);
 	}
 
 	private function renderAssignmentExpr(mixed $varNode, mixed $valueNode, ?string $namespacePhp): string
