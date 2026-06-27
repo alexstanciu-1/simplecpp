@@ -1,6 +1,6 @@
 #pragma once
 
-#include "operators/weakref/weakref.hpp"
+#include "../../../../operators/weakref/weakref.hpp"
 
 namespace scpp::php {
 

@@ -243,9 +243,35 @@ final class ScppBuildOptionsTest
 		$this->assertContains('compile_pch_runtime', $fullNinja, 'full build mode should include runtime pch rules');
 		$this->assertContains('build main.o: compile ../generated/main.cpp', $fullNinja, 'root project compile edges should be relative to build_dir');
 		$this->assertContains('build ../../../dep/.prism/build/dep.o: compile', $fullNinja, 'full build mode should include dependency compile edges');
+		$this->assertContains('$base_ldflags $in $runtime_ldflags -o $out', $fullNinja, 'GNU-like shared runtime link should place runtime libraries after object inputs');
+		$this->assertContains('$cxx $in $ldflags -o $out', $fullNinja, 'GNU-like app link should place libraries after object inputs');
 		if (PHP_OS_FAMILY === 'Linux') {
 			$this->assertContains('-Wl,-soname,libruntime.so', $fullNinja, 'Linux shared runtime should declare a SONAME so executables do not need a slash-containing DT_NEEDED path');
 		}
+
+		$msvcCompiler = [
+			'command' => 'cl',
+			'kind' => 'msvc',
+			'launcher' => null,
+			'linker_flags' => ['base.lib'],
+		];
+		$msvcNinja = render_build_ninja(
+			$projectRoot,
+			$repoRoot,
+			$buildDir,
+			$generatedDir,
+			$generatedUnits,
+			[],
+			'app.exe',
+			$msvcCompiler,
+			'debug',
+			$runtimeConfig,
+			['project.lib'],
+			null,
+			['compile_runtime' => true, 'compile_dependencies' => true]
+		);
+		$this->assertContains('ldflags = base.lib project.lib', $msvcNinja, 'MSVC Ninja rendering should preserve configured linker flags');
+		$this->assertContains('$cxx /nologo $in $ldflags /Fe$out', $msvcNinja, 'MSVC link rule should pass ldflags to the compiler driver');
 	}
 
 	private function assertEntryOverrideCanSelectAnotherFile(): void

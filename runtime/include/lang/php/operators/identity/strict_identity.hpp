@@ -1,6 +1,6 @@
 #pragma once
 
-#include "operators/identity/strict_identity.hpp"
+#include "../../../../operators/identity/strict_identity.hpp"
 
 namespace scpp::php {
 
