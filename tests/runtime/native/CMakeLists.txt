@@ -84,6 +84,11 @@ add_executable(test_memory_accounting test_memory_accounting.cpp)
 target_link_libraries(test_memory_accounting PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_memory_accounting COMMAND test_memory_accounting)
 
+# Stable hash helper coverage for compiler cache keys.
+add_executable(test_stable_hash test_stable_hash.cpp)
+target_link_libraries(test_stable_hash PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_stable_hash COMMAND test_stable_hash)
+
 # string_parts_builder coverage for artifact-style string assembly.
 add_executable(test_string_parts_builder test_string_parts_builder.cpp)
 target_link_libraries(test_string_parts_builder PRIVATE scpp_runtime scpp_runtime_test_support)

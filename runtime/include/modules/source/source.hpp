@@ -3,6 +3,7 @@
 #include "scpp/int_t.hpp"
 #include "scpp/runtime_error.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/stable_hash.hpp"
 #include "scpp/support/hash_t.hpp"
 
 #include <algorithm>
@@ -40,17 +41,7 @@ namespace detail {
 	return static_cast<std::uint32_t>(native);
 }
 
-[[nodiscard]] inline string_t hash_to_hex(const std::uint64_t value) {
-	char buffer[17];
-	static constexpr char digits[] = "0123456789abcdef";
-	for (int i = 15; i >= 0; --i) {
-		buffer[i] = digits[(value >> ((15 - i) * 4)) & 0x0F];
-	}
-	buffer[16] = '\0';
-	return string_t(std::string(buffer, 16));
-}
-
-} // namespace detail
+	} // namespace detail
 
 class source_buffer final {
 private:
@@ -271,7 +262,11 @@ inline byte_span source_buffer::span(const std::size_t offset, const std::size_t
 }
 
 [[nodiscard]] inline string_t hash_bytes(const byte_span &span) {
-	return detail::hash_to_hex(scpp::hash_detail::key_ops<string_t>::hash(span.to_string()));
+	return scpp::stable_hash::to_hex(scpp::stable_hash::string_u64(span.to_string()));
+}
+
+[[nodiscard]] inline int_t<std::uint64_t> stable_hash_bytes_u64(const byte_span &span) {
+	return scpp::stable_hash::string_uint64(span.to_string());
 }
 
 [[nodiscard]] inline source_line_index source_line_index_build(const source_buffer &buffer) {

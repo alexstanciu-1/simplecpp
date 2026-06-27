@@ -38,6 +38,7 @@
 #include "scpp/result.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
+#include "scpp/stable_hash.hpp"
 #include "scpp/memory.hpp"
 #include "scpp/memory_accounting.hpp"
 #include "scpp/cast.hpp"

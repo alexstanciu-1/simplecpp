@@ -1,0 +1,10 @@
+$empty string = "";
+$text string = "abcdef";
+$buffer /** source_buffer */ = source_buffer_take($text);
+$span /** byte_span */ = source_buffer_span($buffer, 1, 3);
+
+echo hash_string($empty), "\n";
+echo hash_bytes($span), "\n";
+echo stable_hash_bytes_u64($span) === stable_hash_string_u64("bcd") ? "u64-match\n" : "u64-mismatch\n";
+echo stable_hash_string_u64("abc") === stable_hash_string_u64("abc") ? "repeat-ok\n" : "repeat-bad\n";
+echo stable_hash_string_u64("abc") === stable_hash_string_u64("abd") ? "collision\n" : "distinct\n";

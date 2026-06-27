@@ -445,18 +445,21 @@ Current implementation:
 
 - `hash_string($s)` exists in the PHP support layer
 - it returns a hex `string_t` generated from the runtime string key hash
+- `hash_bytes(byte_span)` exists in the source module with the same hex-string
+  compatibility shape
+- `stable_hash_string_u64(string)` and `stable_hash_bytes_u64(byte_span)` expose
+  numeric `uint64` values for compiler cache/model ids
 
 Missing:
 
-- numeric hash helper for compiler ids, likely `uint64`
-- `hash_bytes(byte_span)` once `byte_span` exists
-- explicit stability contract for hashes stored in persistent compiler artifacts
+- no remaining first-slice gap; future cache schemas still need their own
+  algorithm/version field
 
 Recommended first slice:
 
-- decide whether persistent compiler fingerprints need stable algorithm naming
-- avoid using an implementation-detail hash for on-disk cache identity without a
-  versioned contract
+- done; the stable algorithm is the Simple C++ runtime string-key hash, and any
+  future change is a persistent-artifact compatibility break that cache/artifact
+  layers must version explicitly
 
 ## Implementation Order Adjustment
 

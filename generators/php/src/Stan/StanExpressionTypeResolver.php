@@ -2201,15 +2201,31 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
-			$catalog['hash_bytes'] = [
-				'name' => 'hash_bytes',
+		$catalog['hash_bytes'] = [
+			'name' => 'hash_bytes',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+			$catalog['stable_hash_string_u64'] = [
+				'name' => 'stable_hash_string_u64',
 				'namespace' => null,
-				'params' => [['name' => 'span', 'type' => 'byte_span']],
-				'return_type' => 'string',
+				'params' => [['name' => 'text', 'type' => 'string']],
+				'return_type' => 'uint64',
 				'line' => 0,
 				'is_static' => false,
 			];
-			$catalog['string_parts_builder_create'] = [
+		$catalog['stable_hash_bytes_u64'] = [
+			'name' => 'stable_hash_bytes_u64',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'uint64',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['string_parts_builder_create'] = [
 				'name' => 'string_parts_builder_create',
 				'namespace' => null,
 				'params' => [],
