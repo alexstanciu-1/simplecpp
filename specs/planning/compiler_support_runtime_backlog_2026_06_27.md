@@ -378,14 +378,18 @@ Tasks:
 
 Decision:
 
-- Generic `row_arena<T>` is deferred until strict PHS has a clean reusable
-  generic-class/library surface.
-- First implementation is concrete compiler-side arenas:
+- Runtime generic template exists as `scpp::row_arena_t<T, Id = uint32_t>`,
+  using `vector_t<T>` backing by default.
+- Strict PHS generic class/library surface is still future work, so the compiler
+  first consumes concrete compiler-side arenas:
   - `SymbolRowArena`
   - `FactRowArena`
 - Arena ids are 1-based. `*_can_read($arena, 0)` returns false, and `*_get`
   maps id `0` to an invalid storage index so reads are not silently accepted.
 - `*_clear` uses `vector_clear`, preserving capacity for resident reuse.
+- Future runtime improvement: keep the public id contract but consider
+  chunked/fixed-array pages if vector relocation or spare capacity shows up in
+  resident compiler memory benchmarks.
 - Validation: `compiler/tests/run_row_arenas.sh`.
 
 ## Priority 10: Builder Library On Top Of `vector_t`
