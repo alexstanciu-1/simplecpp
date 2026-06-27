@@ -368,13 +368,25 @@ First home:
 
 Tasks:
 
-- [ ] Implement `row_arena<T>` over `vector<T>`.
-- [ ] Add reserve/append/get/set/count/clear helpers.
-- [ ] Use 1-based ids.
-- [ ] Reject id `0` reads.
-- [ ] Add tests for stable ids.
-- [ ] Add tests for clear-and-reuse.
-- [ ] Revisit chunked/fixed-array backing only after benchmarks.
+- [x] Implement concrete row arenas over `vector<T>`.
+- [x] Add reserve/append/get/set/count/clear helpers.
+- [x] Use 1-based ids.
+- [x] Reject id `0` reads.
+- [x] Add tests for stable ids.
+- [x] Add tests for clear-and-reuse.
+- [x] Revisit chunked/fixed-array backing only after benchmarks.
+
+Decision:
+
+- Generic `row_arena<T>` is deferred until strict PHS has a clean reusable
+  generic-class/library surface.
+- First implementation is concrete compiler-side arenas:
+  - `SymbolRowArena`
+  - `FactRowArena`
+- Arena ids are 1-based. `*_can_read($arena, 0)` returns false, and `*_get`
+  maps id `0` to an invalid storage index so reads are not silently accepted.
+- `*_clear` uses `vector_clear`, preserving capacity for resident reuse.
+- Validation: `compiler/tests/run_row_arenas.sh`.
 
 ## Priority 10: Builder Library On Top Of `vector_t`
 
