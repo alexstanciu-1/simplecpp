@@ -172,6 +172,10 @@ function webview_message_id(ui_event $event): int {}
 function webview_message_payload_json(ui_event $event): string {}
 function webview_reply_error(webview $view, int $id, string $code, string $message): result<bool> {}
 function webview_reply_ok(webview $view, int $id, string $value_json): result<bool> {}
+function vector_capacity(): mixed {}
+function vector_clear(): mixed {}
+function vector_compact(): mixed {}
+function vector_reserve(): mixed {}
 
 namespace scpp;
 

@@ -1857,6 +1857,44 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
+		$catalog['vector_reserve'] = [
+			'name' => 'vector_reserve',
+			'namespace' => null,
+			'params' => [
+				['name' => 'values', 'type' => 'mixed'],
+				['name' => 'capacity', 'type' => 'int'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_capacity'] = [
+			'name' => 'vector_capacity',
+			'namespace' => null,
+			'params' => [['name' => 'values', 'type' => 'mixed']],
+			'return_type' => 'int',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_clear'] = [
+			'name' => 'vector_clear',
+			'namespace' => null,
+			'params' => [['name' => 'values', 'type' => 'mixed']],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_compact'] = [
+			'name' => 'vector_compact',
+			'namespace' => null,
+			'params' => [
+				['name' => 'values', 'type' => 'mixed'],
+				['name' => 'capacity', 'type' => '?int'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
 		return $catalog;
 	}
 
