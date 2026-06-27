@@ -138,6 +138,18 @@ struct dyn_keys final {
 template <typename T_KEY>
 struct key_ops;
 
+template <typename T_KEY>
+	requires std::is_enum_v<T_KEY>
+struct key_ops<T_KEY> final {
+	[[nodiscard]] static std::uint64_t hash(const T_KEY &key) {
+		return mix64(static_cast<std::uint64_t>(static_cast<std::underlying_type_t<T_KEY>>(key)));
+	}
+
+	[[nodiscard]] static bool equal(const T_KEY &left, const T_KEY &right) {
+		return left == right;
+	}
+};
+
 template <>
 struct key_ops<string_t> final {
 	[[nodiscard]] static std::uint64_t hash(const string_t &key) {

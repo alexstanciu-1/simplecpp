@@ -92,7 +92,7 @@ Tasks:
 - [ ] Add STAN checks for enum assignment and comparison discipline.
 - [x] Add tests for byte-backed enum.
 - [x] Add tests for uint16-backed enum.
-- [ ] Add tests for enum as `hash_t` key after generic hash support lands.
+- [x] Add tests for enum as `hash_t` key after generic hash support lands.
 - [ ] Add optional enum name/value metadata helpers after the base feature is
       stable.
 
