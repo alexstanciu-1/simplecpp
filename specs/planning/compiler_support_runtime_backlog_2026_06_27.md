@@ -565,8 +565,19 @@ Result:
 
 After each priority lands:
 
-- [ ] Check whether the compiler can delete a local workaround.
-- [ ] Add one compiler-side probe that benefits from the new helper.
-- [ ] Record performance and memory impact.
-- [ ] Promote planning text into normative specs only after implementation and
+- [x] Check whether the compiler can delete a local workaround.
+- [x] Add one compiler-side probe that benefits from the new helper.
+- [x] Record performance and memory impact.
+- [x] Promote planning text into normative specs only after implementation and
       tests settle.
+
+Review result:
+
+- The compiler now wraps `stable_hash_string_u64` as
+  `compiler_stable_hash_key` and no longer derives symbol/body/persisted/
+  generated/backend cache keys directly from `hash_string`.
+- Added `compiler/tests/run_runtime_support_review_gates.sh`.
+- Recorded impact in
+  `/home/alexv/__AI/simple_cpp_compiler/compiler/specs/runtime_support_review_gates.md`.
+- Promoted the settled helper contract to
+  `specs/compiler_support_runtime_contract.md`.
