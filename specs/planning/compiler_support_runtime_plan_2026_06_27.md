@@ -254,22 +254,26 @@ source_buffer_release($buffer): string
 
 Rules:
 
-- `source_buffer_take($text)` moves string storage into the buffer when possible
+- `source_buffer_take($text)` copies into an owning buffer in v1 and may move
+  string storage into the buffer when attach/detach support lands
 - after take, `$text` becomes `""`
-- `source_buffer_release($buffer)` moves storage back into a string when possible
+- `source_buffer_release($buffer)` returns the owned bytes as a string and may
+  move storage back into a string when attach/detach support lands
 - after release, the buffer is empty
 - all spans from that buffer become invalid after release
+- language-facing offsets and lengths accept normal `int` values and
+  range-check to `uint32`
 
-Candidate API:
+Current API:
 
 ```php
 source_buffer_byte_len($buffer): uint32
-source_buffer_byte_at($buffer, uint32 $offset): byte
-source_buffer_span($buffer, uint32 $offset, uint32 $length): byte_span
-source_buffer_slice($buffer, uint32 $offset, uint32 $length): string
+source_buffer_byte_at($buffer, int $offset): byte
+source_buffer_span($buffer, int $offset, int $length): byte_span
+source_buffer_slice($buffer, int $offset, int $length): string
 byte_span_len($span): uint32
-byte_span_at($span, uint32 $offset): byte
-byte_span_hash($span): uint64
+byte_span_at($span, int $offset): byte
+hash_bytes($span): string
 byte_span_to_string($span): string
 ```
 
@@ -359,8 +363,8 @@ These do not need perfect accounting in v1. They need stable trend visibility.
 Keep and extend:
 
 ```php
-hash_string(string $value): uint64
-hash_bytes(byte_span $span): uint64
+hash_string(string $value): string
+hash_bytes(byte_span $span): string
 ```
 
 Use cases:

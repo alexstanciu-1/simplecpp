@@ -291,8 +291,11 @@ Recommended first slice:
 
 Current implementation:
 
-- no public `source_buffer` or `byte_span` runtime type was found
-- `string_t` owns a `std::string` and exposes read-only native access
+- `modules/source/source.hpp` now exposes `source_buffer` and `byte_span`
+- `source_buffer` owns immutable bytes and uses a generation counter to
+  invalidate spans after release
+- `source_buffer_take($text)` currently copies from `string_t` and clears the
+  source text because `string_t` still exposes only read-only native access
 - tokenizer internals use `std::string_view` over `string_t.native_value()`
 - there is no public take/release API for moving string storage out of
   `string_t`
@@ -308,17 +311,19 @@ Accepted direction:
 - no mutation API is exposed except release
 - using spans after release is a runtime error
 
-Risks:
+Remaining risks/follow-ups:
 
 - Simple C++ currently needs clearer by-reference/read-only/move semantics for a
   helper that mutates `$text` to `""`
-- span invalidation needs a generation/owner validity check, not a raw pointer
-  view
+- true zero-copy take/release still needs explicit `string_t` storage
+  attach/detach primitives
+- current `hash_bytes(byte_span)` returns the same hex-string shape as
+  `hash_string`; future hash API cleanup may move both to `uint64`
 
 Recommended first slice:
 
-- write the source ownership contract before implementation
-- implement a conservative owning `source_buffer` first
+- conservative owning `source_buffer` is implemented and covered by native and
+  strict PHS tests
 - add move/take optimization only after the source-level by-reference contract is
   proven
 

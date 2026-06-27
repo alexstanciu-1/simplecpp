@@ -217,24 +217,39 @@ First home:
 
 Tasks:
 
-- [ ] Define `source_buffer` ownership contract.
-- [ ] Define `byte_span` view contract.
-- [ ] Decide conservative owning-buffer v1 versus immediate move-out
+- [x] Define `source_buffer` ownership contract.
+- [x] Define `byte_span` view contract.
+- [x] Decide conservative owning-buffer v1 versus immediate move-out
       optimization from `string_t`.
-- [ ] Implement `source_buffer_take($text): source_buffer`.
-- [ ] Ensure `source_buffer_take` leaves `$text` as `""`.
-- [ ] Implement `source_buffer_release($buffer): string`.
-- [ ] Ensure release empties the buffer.
-- [ ] Document that release invalidates all spans.
-- [ ] Add `source_buffer_byte_len`.
-- [ ] Add `source_buffer_byte_at`.
-- [ ] Add `source_buffer_span`.
-- [ ] Add `source_buffer_slice`.
-- [ ] Add `byte_span_len`.
-- [ ] Add `byte_span_at`.
-- [ ] Add `byte_span_to_string`.
-- [ ] Add `hash_bytes(byte_span)`.
-- [ ] Add lifetime and mutation tests.
+- [x] Implement `source_buffer_take($text): source_buffer`.
+- [x] Ensure `source_buffer_take` leaves `$text` as `""`.
+- [x] Implement `source_buffer_release($buffer): string`.
+- [x] Ensure release empties the buffer.
+- [x] Document that release invalidates all spans.
+- [x] Add `source_buffer_byte_len`.
+- [x] Add `source_buffer_byte_at`.
+- [x] Add `source_buffer_span`.
+- [x] Add `source_buffer_slice`.
+- [x] Add `byte_span_len`.
+- [x] Add `byte_span_at`.
+- [x] Add `byte_span_to_string`.
+- [x] Add `hash_bytes(byte_span)`.
+- [x] Add lifetime and mutation tests.
+
+V1 notes:
+
+- `source_buffer_take($text)` copies the current `string_t` bytes into an owning
+  read-only source buffer, then clears `$text`. This preserves the accepted
+  language contract today without exposing unsafe mutable string internals.
+- A later optimization should add explicit `string_t` attach/detach storage
+  primitives so `source_buffer_take` and `source_buffer_release` can move
+  storage instead of copying where ownership allows it.
+- `byte_span` captures the source buffer generation and throws a runtime error
+  if read after `source_buffer_release`.
+- Language-facing offset/length arguments accept normal `int` values and
+  range-check to `uint32`; byte lengths are returned as `uint32`.
+- `hash_bytes(byte_span)` currently returns the same stable hex-string shape as
+  `hash_string(string)` for API consistency.
 
 ## Priority 6: High-Resolution Monotonic Timers
 

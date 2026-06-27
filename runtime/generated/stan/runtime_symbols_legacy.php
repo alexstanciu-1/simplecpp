@@ -9,6 +9,9 @@ function __scpp_debug_dump(string $phase, string $label, mixed $value): void {}
 function __scpp_debug_exit(): void {}
 function basename(string $path): string {}
 function bin2hex(string $bytes): string {}
+function byte_span_at(byte_span $span, int $offset): byte {}
+function byte_span_len(byte_span $span): uint32 {}
+function byte_span_to_string(byte_span $span): string {}
 function cli_argc(): int {}
 function cli_args(): mixed {}
 function cli_argv(): mixed {}
@@ -60,6 +63,7 @@ function fread(mixed $fh, int $length): mixed {}
 function fseek(mixed $fh, int $offset): mixed {}
 function ftell(mixed $fh): mixed {}
 function fwrite(mixed $fh, string $data): mixed {}
+function hash_bytes(byte_span $span): string {}
 function hash_string(string $text): string {}
 function hex2bin(string $hex) /** result_or_false<string> */ {}
 function identical(mixed $left, mixed $right): bool {}
@@ -97,6 +101,12 @@ function rmdir(string $path): bool {}
 function rtrim(string $text): string {}
 function scandir(string $path): mixed {}
 function shell_exec(string $command): mixed {}
+function source_buffer_byte_at(source_buffer $buffer, int $offset): byte {}
+function source_buffer_byte_len(source_buffer $buffer): uint32 {}
+function source_buffer_release(source_buffer $buffer): string {}
+function source_buffer_slice(source_buffer $buffer, int $offset, int $length): string {}
+function source_buffer_span(source_buffer $buffer, int $offset, int $length): byte_span {}
+function source_buffer_take(string $text): source_buffer {}
 function str_ends_with(string $text, string $suffix): bool {}
 function str_pad(string $text, int $length): string {}
 function str_replace(string $search, string $replace, string $subject): string {}
