@@ -129,7 +129,7 @@ Implementation checklist:
         `T`.
   - [x] Keep `hash<T>` compatibility behavior unchanged for string-keyed
         code.
-  - [ ] Add dedicated diagnostics for unsupported explicit key families before
+  - [x] Add dedicated diagnostics for unsupported explicit key families before
         generation when enough source facts are available.
 - Runtime:
   - [x] Keep `hash_t<mixed_t,mixed_t>` as the dynamic compatibility path.
