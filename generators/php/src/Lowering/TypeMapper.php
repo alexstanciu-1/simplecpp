@@ -338,7 +338,18 @@ final class TypeMapper
 		}
 
 		$keyType = $this->mapDeclaredType($args[1]);
+		if (!$this->isSupportedHashKeyType($keyType)) {
+			throw new GenerationException('Unsupported hash<T,T_KEY> key type `' . trim($args[1]) . '`. Supported key families are string, integer aliases, shared<T>, unique<T>, and weak<T>.');
+		}
 		return 'hash_t<' . $valueType . ', ' . $keyType . '>';
+	}
+
+	private function isSupportedHashKeyType(string $mappedKeyType): bool
+	{
+		$normalized = trim($mappedKeyType);
+		return $normalized === 'string_t'
+			|| preg_match('/^int_t(?:<.*>)?$/', $normalized) === 1
+			|| preg_match('/^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) === 1;
 	}
 
 	private function mapContainerElementType(string $phpType): string

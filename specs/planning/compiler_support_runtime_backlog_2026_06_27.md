@@ -62,9 +62,9 @@ Tasks:
 - [x] Ensure source append assignment evaluates to assigned value, not generated
       key.
 - [x] Preserve current `hash<T>` string-key default behavior.
-- [ ] Preserve current `hash<mixed>` dynamic compatibility behavior.
-- [ ] Add clear diagnostics for unsupported key types.
-- [ ] Update docs/specs after behavior is stable.
+- [x] Preserve current `hash<mixed>` dynamic compatibility behavior.
+- [x] Add clear diagnostics for unsupported key types.
+- [x] Update docs/specs after behavior is stable.
 
 ## Priority 2: Enums Backed By Fixed-Width Integers
 
