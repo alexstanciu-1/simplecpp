@@ -392,12 +392,15 @@ Recommended first slice:
 
 Current implementation:
 
-- no dedicated work-queue abstraction was found
+- `runtime/include/scpp/work_queue_t.hpp` provides a ring-buffer work queue over
+  `vector_t<std::optional<T>>`
+- `push_back` grows geometrically, `pop_front` moves from the logical head
+  without vector front-removal, and `clear` retains capacity
 
 Recommended first slice:
 
-- implement a ring queue over vector storage
-- keep clear-with-capacity-retention behavior explicit
+- done; keep this as a compiler/runtime-support helper until dependency and
+  resident task queues prove whether additional operations are needed
 
 ## 13. Binary Codec
 
