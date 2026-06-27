@@ -2201,16 +2201,108 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
-		$catalog['hash_bytes'] = [
-			'name' => 'hash_bytes',
-			'namespace' => null,
-			'params' => [['name' => 'span', 'type' => 'byte_span']],
-			'return_type' => 'string',
-			'line' => 0,
-			'is_static' => false,
-		];
-		return $catalog;
-	}
+			$catalog['hash_bytes'] = [
+				'name' => 'hash_bytes',
+				'namespace' => null,
+				'params' => [['name' => 'span', 'type' => 'byte_span']],
+				'return_type' => 'string',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_create'] = [
+				'name' => 'string_parts_builder_create',
+				'namespace' => null,
+				'params' => [],
+				'return_type' => 'string_parts_builder',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_reserve'] = [
+				'name' => 'string_parts_builder_reserve',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'capacity', 'type' => 'int'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_count'] = [
+				'name' => 'string_parts_builder_count',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_capacity'] = [
+				'name' => 'string_parts_builder_capacity',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_byte_len'] = [
+				'name' => 'string_parts_builder_byte_len',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_string'] = [
+				'name' => 'string_parts_builder_append_string',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'string'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_int'] = [
+				'name' => 'string_parts_builder_append_int',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'int'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_bool'] = [
+				'name' => 'string_parts_builder_append_bool',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'bool'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_to_string'] = [
+				'name' => 'string_parts_builder_to_string',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'string',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_clear'] = [
+				'name' => 'string_parts_builder_clear',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			return $catalog;
+		}
 
 	/** @param list<string> $types @return list<string> */
 	private function normalizeTypeSet(array $types): array

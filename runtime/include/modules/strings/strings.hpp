@@ -11,9 +11,103 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace scpp::str {
+
+class string_parts_builder final {
+private:
+	vector_t<string_t> parts_;
+	std::size_t byte_length_ = 0;
+
+public:
+	string_parts_builder() = default;
+
+	void reserve(const std::size_t capacity) {
+		parts_.reserve(capacity);
+	}
+
+	[[nodiscard]] std::size_t count() const noexcept {
+		return parts_.size();
+	}
+
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return parts_.capacity();
+	}
+
+	[[nodiscard]] std::size_t byte_length() const noexcept {
+		return byte_length_;
+	}
+
+	void append(const string_t &value) {
+		byte_length_ += value.native_value().size();
+		parts_.append(value);
+	}
+
+	void append(string_t &&value) {
+		byte_length_ += value.native_value().size();
+		parts_.append(std::move(value));
+	}
+
+	void clear() noexcept {
+		parts_.clear();
+		byte_length_ = 0;
+	}
+
+	[[nodiscard]] string_t to_string() const {
+		std::string out;
+		out.reserve(byte_length_);
+		for (const auto &part : parts_.native_value()) {
+			out += part.native_value();
+		}
+		return string_t(std::move(out));
+	}
+};
+
+[[nodiscard]] inline string_parts_builder string_parts_builder_create() {
+	return string_parts_builder();
+}
+
+inline void string_parts_builder_reserve(string_parts_builder &builder, const int_t<> &capacity) {
+	const auto native = capacity.native_value();
+	if (native < 0) {
+		throw scpp::ValueError("string_parts_builder_reserve(): capacity must be non-negative");
+	}
+	builder.reserve(static_cast<std::size_t>(native));
+}
+
+[[nodiscard]] inline int_t<> string_parts_builder_count(const string_parts_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.count()));
+}
+
+[[nodiscard]] inline int_t<> string_parts_builder_capacity(const string_parts_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.capacity()));
+}
+
+[[nodiscard]] inline int_t<> string_parts_builder_byte_len(const string_parts_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.byte_length()));
+}
+
+inline void string_parts_builder_append_string(string_parts_builder &builder, const string_t &value) {
+	builder.append(value);
+}
+
+inline void string_parts_builder_append_int(string_parts_builder &builder, const int_t<> &value) {
+	builder.append(string_t(std::to_string(value.native_value())));
+}
+
+inline void string_parts_builder_append_bool(string_parts_builder &builder, const bool_t &value) {
+	builder.append(string_t(value.native_value() ? "1" : ""));
+}
+
+[[nodiscard]] inline string_t string_parts_builder_to_string(const string_parts_builder &builder) {
+	return builder.to_string();
+}
+
+inline void string_parts_builder_clear(string_parts_builder &builder) {
+	builder.clear();
+}
 
 inline int_t<> length(const string_t &value) {
 	return int_t<>(static_cast<std::int64_t>(value.length_cp()));

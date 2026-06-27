@@ -64,6 +64,11 @@ add_executable(test_row_arena_t test_row_arena_t.cpp)
 target_link_libraries(test_row_arena_t PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_row_arena_t COMMAND test_row_arena_t)
 
+# string_parts_builder coverage for artifact-style string assembly.
+add_executable(test_string_parts_builder test_string_parts_builder.cpp)
+target_link_libraries(test_string_parts_builder PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_string_parts_builder COMMAND test_string_parts_builder)
+
 # mixed_t dynamic dispatch coverage.
 add_executable(test_mixed_t_dynamic test_mixed_t_dynamic.cpp)
 target_link_libraries(test_mixed_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
