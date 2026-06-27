@@ -108,7 +108,7 @@ Tasks:
 - [x] Split checklist by owner: language, STAN, generator, runtime, tests, docs.
 - [x] Mark compatibility blockers separately from performance improvements.
 - [x] Add a narrow migration note for existing string-keyed code.
-- [ ] Add benchmark probes for string-key and int-key hash use.
+- [x] Add benchmark probes for string-key and int-key hash use.
 
 Implementation checklist:
 
@@ -166,8 +166,12 @@ Compatibility blockers:
 
 Performance follow-ups:
 
-- Add probes for string-key lookup/insert.
-- Add probes for fixed-width integer-key lookup/insert.
+- Added `tools/runtime_benchmarks/run_hash_key_probe.sh` for string-key,
+  `int`, and `uint32` insert/lookup timings.
+- Informational local baseline on 2026-06-27 for 100k entries:
+  `hash_string_key insert_us=32956 lookup_us=7132`,
+  `hash_int_key insert_us=13996 lookup_us=1959`,
+  `hash_uint32_key insert_us=10259 lookup_us=5713`.
 - Add probes for enum-key lookup/insert.
 - Compare memory footprint of explicit typed-key mode against dynamic
   compatibility mode.
