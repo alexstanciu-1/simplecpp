@@ -292,12 +292,23 @@ Tasks:
 
 - [x] Provide typed `phs_tokenize_buffer` and `jss_tokenize_buffer` runtime
       entry points.
-- [ ] Promote typed token-buffer columns into a runtime contract.
-- [ ] Standardize kind, offset, length, line, column, and flags types.
-- [ ] Decide token kind representation before/after enum support.
-- [ ] Add accessor API docs.
+- [x] Promote typed token-buffer columns into a runtime contract.
+- [x] Standardize kind, offset, length, line, column, and flags types.
+- [x] Decide token kind representation before/after enum support.
+- [x] Add accessor API docs.
 - [ ] Add memory/cpu benchmark fixture.
 - [ ] Add parity tests against existing readable token output.
+
+Decision:
+
+- `token_buffer` stores `kind:uint8`, `offset:uint32`, `length:uint32`,
+  `line:uint32`, `column:uint32`, and `flags:uint16`.
+- Public accessors still return regular `int` for source compatibility.
+- Token kind ids remain numeric runtime constants for now; the byte-width column
+  leaves room to expose them as enum-backed values later.
+- Added strict typed-accessor smoke coverage for PHS and JSS buffers; readable
+  adapter parity remains a follow-up.
+- Contract doc: `specs/builtins/tokenizer/token_buffer.md`.
 
 ## Priority 8: `source_line_index`
 

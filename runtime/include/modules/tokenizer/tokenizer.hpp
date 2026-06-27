@@ -8,12 +8,15 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
+#include <stdexcept>
+#include <string>
 #include <string_view>
 #include <vector>
 
 namespace scpp::tokenizer {
 
-enum token_kind_id : std::int64_t {
+enum token_kind_id : std::uint8_t {
 	token_eof = 0,
 	token_identifier = 1,
 	token_keyword = 2,
@@ -26,9 +29,9 @@ enum token_kind_id : std::int64_t {
 
 struct token_diagnostic final {
 	const char *kind = "";
-	std::size_t offset = 0;
-	std::int64_t line = 0;
-	std::int64_t column = 0;
+	std::uint32_t offset = 0;
+	std::uint32_t line = 0;
+	std::uint32_t column = 0;
 };
 
 namespace detail {
@@ -42,22 +45,43 @@ unique_p<hash_t<mixed_t>> make_int_column(const std::vector<Integer> &values) {
 	return column;
 }
 
+[[nodiscard]] inline std::uint32_t checked_u32(const std::size_t value, const char *field) {
+	if (value > static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max())) {
+		throw std::runtime_error(std::string("token_buffer ") + field + " is outside uint32 range");
+	}
+	return static_cast<std::uint32_t>(value);
+}
+
+[[nodiscard]] inline std::uint32_t checked_u32(const std::int64_t value, const char *field) {
+	if (value < 0 || value > static_cast<std::int64_t>(std::numeric_limits<std::uint32_t>::max())) {
+		throw std::runtime_error(std::string("token_buffer ") + field + " is outside uint32 range");
+	}
+	return static_cast<std::uint32_t>(value);
+}
+
+[[nodiscard]] inline std::uint16_t checked_u16(const std::int64_t value, const char *field) {
+	if (value < 0 || value > static_cast<std::int64_t>(std::numeric_limits<std::uint16_t>::max())) {
+		throw std::runtime_error(std::string("token_buffer ") + field + " is outside uint16 range");
+	}
+	return static_cast<std::uint16_t>(value);
+}
+
 } // namespace detail
 
 struct token_buffer final {
-	std::vector<std::int64_t> kind_ids;
-	std::vector<std::size_t> start_offsets;
-	std::vector<std::size_t> lengths;
-	std::vector<std::int64_t> line_numbers;
-	std::vector<std::int64_t> columns;
-	std::vector<std::int64_t> flags;
-	std::vector<std::size_t> line_start_offsets;
+	std::vector<std::uint8_t> kind_ids;
+	std::vector<std::uint32_t> start_offsets;
+	std::vector<std::uint32_t> lengths;
+	std::vector<std::uint32_t> line_numbers;
+	std::vector<std::uint32_t> columns;
+	std::vector<std::uint16_t> flags;
+	std::vector<std::uint32_t> line_start_offsets;
 	std::vector<token_diagnostic> diagnostics;
 	const char *language = "";
-	std::size_t source_length = 0;
+	std::uint32_t source_length = 0;
 
 	explicit token_buffer(const char *language_value, const std::size_t source_length_value)
-		: language(language_value), source_length(source_length_value) {
+		: language(language_value), source_length(detail::checked_u32(source_length_value, "source_length")) {
 		const auto estimated_tokens = (source_length / 2U) + 8U;
 		kind_ids.reserve(estimated_tokens);
 		start_offsets.reserve(estimated_tokens);
@@ -70,7 +94,7 @@ struct token_buffer final {
 	}
 
 	void add_line_start(const std::size_t offset) {
-		line_start_offsets.push_back(offset);
+		line_start_offsets.push_back(detail::checked_u32(offset, "line_start_offset"));
 	}
 
 	void add_token(
@@ -81,20 +105,20 @@ struct token_buffer final {
 		const std::int64_t column,
 		const std::int64_t flag_value = 0
 	) {
-		kind_ids.push_back(static_cast<std::int64_t>(kind));
-		start_offsets.push_back(start);
-		lengths.push_back(length);
-		line_numbers.push_back(line);
-		columns.push_back(column);
-		flags.push_back(flag_value);
+		kind_ids.push_back(static_cast<std::uint8_t>(kind));
+		start_offsets.push_back(detail::checked_u32(start, "start_offset"));
+		lengths.push_back(detail::checked_u32(length, "length"));
+		line_numbers.push_back(detail::checked_u32(line, "line"));
+		columns.push_back(detail::checked_u32(column, "column"));
+		flags.push_back(detail::checked_u16(flag_value, "flags"));
 	}
 
 	void add_diagnostic(const char *kind, const std::size_t offset, const std::int64_t line, const std::int64_t column) {
 		diagnostics.push_back(token_diagnostic{
 			.kind = kind,
-			.offset = offset,
-			.line = line,
-			.column = column,
+			.offset = detail::checked_u32(offset, "diagnostic_offset"),
+			.line = detail::checked_u32(line, "diagnostic_line"),
+			.column = detail::checked_u32(column, "diagnostic_column"),
 		});
 	}
 
@@ -381,6 +405,18 @@ mixed_t tokenize_ascii_language(const string_t &source_value, const char *langua
 
 [[nodiscard]] inline int_t<> token_buffer_length(const token_buffer_t &buffer, const int_t<> &index) {
 	return int_t(static_cast<std::int64_t>(buffer->lengths.at(static_cast<std::size_t>(index.native_value()))));
+}
+
+[[nodiscard]] inline int_t<> token_buffer_line(const token_buffer_t &buffer, const int_t<> &index) {
+	return int_t(static_cast<std::int64_t>(buffer->line_numbers.at(static_cast<std::size_t>(index.native_value()))));
+}
+
+[[nodiscard]] inline int_t<> token_buffer_column(const token_buffer_t &buffer, const int_t<> &index) {
+	return int_t(static_cast<std::int64_t>(buffer->columns.at(static_cast<std::size_t>(index.native_value()))));
+}
+
+[[nodiscard]] inline int_t<> token_buffer_flags(const token_buffer_t &buffer, const int_t<> &index) {
+	return int_t(static_cast<std::int64_t>(buffer->flags.at(static_cast<std::size_t>(index.native_value()))));
 }
 
 [[nodiscard]] inline mixed_t token_buffer_to_mixed(const token_buffer_t &buffer) {
