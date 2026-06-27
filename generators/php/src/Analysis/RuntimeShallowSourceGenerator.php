@@ -305,6 +305,16 @@ final class RuntimeShallowSourceGenerator
 				'string_utf8_slice_codepoints' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'start', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
 				'string_grapheme_count' => ['return' => 'int', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'string_grapheme_slice' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string'], ['name' => 'start', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],
+				'string_parts_builder_create' => ['return' => 'string_parts_builder', 'params' => []],
+				'string_parts_builder_reserve' => ['return' => 'void', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder'], ['name' => 'capacity', 'type' => 'int']]],
+				'string_parts_builder_count' => ['return' => 'int', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder']]],
+				'string_parts_builder_capacity' => ['return' => 'int', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder']]],
+				'string_parts_builder_byte_len' => ['return' => 'int', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder']]],
+				'string_parts_builder_append_string' => ['return' => 'void', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder'], ['name' => 'value', 'type' => 'string']]],
+				'string_parts_builder_append_int' => ['return' => 'void', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder'], ['name' => 'value', 'type' => 'int']]],
+				'string_parts_builder_append_bool' => ['return' => 'void', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder'], ['name' => 'value', 'type' => 'bool']]],
+				'string_parts_builder_to_string' => ['return' => 'string', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder']]],
+				'string_parts_builder_clear' => ['return' => 'void', 'params' => [['name' => 'builder', 'type' => 'string_parts_builder']]],
 				'strpos' => ['return' => 'result_or_false<int>', 'params' => [['name' => 'haystack', 'type' => 'string'], ['name' => 'needle', 'type' => 'string']]],
 				'strrpos' => ['return' => 'result_or_false<int>', 'params' => [['name' => 'haystack', 'type' => 'string'], ['name' => 'needle', 'type' => 'string']]],
 				'strtolower' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
@@ -478,11 +488,12 @@ final class RuntimeShallowSourceGenerator
 		$blocks = [];
 		$scppClasses = [];
 		if ($isStrict) {
-				$scppClasses = [
-					$this->renderClassStub('token_buffer', [], $isStrict),
-					$this->renderClassStub('source_line_index', [], $isStrict),
-					$this->renderClassStub('source_location', [], $isStrict),
-					$this->renderClassStub('task_batch', [], $isStrict),
+			$scppClasses = [
+				$this->renderClassStub('token_buffer', [], $isStrict),
+				$this->renderClassStub('string_parts_builder', [], $isStrict),
+				$this->renderClassStub('source_line_index', [], $isStrict),
+				$this->renderClassStub('source_location', [], $isStrict),
+				$this->renderClassStub('task_batch', [], $isStrict),
 				$this->renderClassStub('task_context', [], $isStrict),
 				$this->renderClassStub('task_progress_info', [
 					['kind' => 'method', 'name' => 'total', 'return' => 'int', 'params' => []],

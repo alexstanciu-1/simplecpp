@@ -127,6 +127,16 @@ function string_byte_slice(string $text, int $offset, int $length): string {}
 function string_byte_slice_equals(string $text, int $offset, int $length, string $literal): bool {}
 function string_grapheme_count(string $text): int {}
 function string_grapheme_slice(string $text, int $start, int $length): string {}
+function string_parts_builder_append_bool(string_parts_builder $builder, bool $value): void {}
+function string_parts_builder_append_int(string_parts_builder $builder, int $value): void {}
+function string_parts_builder_append_string(string_parts_builder $builder, string $value): void {}
+function string_parts_builder_byte_len(string_parts_builder $builder): int {}
+function string_parts_builder_capacity(string_parts_builder $builder): int {}
+function string_parts_builder_clear(string_parts_builder $builder): void {}
+function string_parts_builder_count(string_parts_builder $builder): int {}
+function string_parts_builder_create(): string_parts_builder {}
+function string_parts_builder_reserve(string_parts_builder $builder, int $capacity): void {}
+function string_parts_builder_to_string(string_parts_builder $builder): string {}
 function string_utf8_codepoint_at(string $text, int $index): int {}
 function string_utf8_codepoint_count(string $text): int {}
 function string_utf8_slice_codepoints(string $text, int $start, int $length): string {}

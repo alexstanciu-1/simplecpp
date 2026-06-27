@@ -403,13 +403,24 @@ First home:
 
 Tasks:
 
-- [ ] Implement `string_parts_builder` over `vector<string_t>`.
-- [ ] Add reserve helper after vector capacity API exists.
-- [ ] Add append string.
-- [ ] Add append integer.
-- [ ] Add append boolean.
-- [ ] Add `string_parts_builder_to_string`.
-- [ ] Add JSON-artifact benchmark before replacing existing writers.
+- [x] Implement `string_parts_builder` over `vector<string_t>`.
+- [x] Add reserve helper after vector capacity API exists.
+- [x] Add append string.
+- [x] Add append integer.
+- [x] Add append boolean.
+- [x] Add `string_parts_builder_to_string`.
+- [x] Add JSON-artifact benchmark before replacing existing writers.
+
+Result:
+- Added the helper in `modules/strings` and exposed it through strict/legacy
+  runtime symbol metadata, STAN stubs, and generated-code type lowering.
+- Added strict PHS and native runtime smoke coverage.
+- Added `tools/runtime_benchmarks/run_string_parts_builder_probe.sh`.
+- Initial 1k-row JSON probe: builder `avg_us=108`, pre-reserved direct string
+  `avg_us=55`, equal bytes/checksum. This helper is correct and useful for
+  explicit piece collection, but hot compiler writers should not be replaced
+  blindly; a future byte/text builder that writes into one contiguous buffer may
+  be better for artifact emission.
 
 ## Priority 11: Bitset Library
 
