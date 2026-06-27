@@ -89,7 +89,7 @@ Tasks:
 - [x] Reject implicit assignment from raw integer to enum.
 - [x] Add explicit enum-to-backing conversion helper.
 - [x] Add explicit backing-to-enum conversion helper.
-- [ ] Add STAN checks for enum assignment and comparison discipline.
+- [x] Add STAN checks for enum assignment and comparison discipline.
 - [x] Add tests for byte-backed enum.
 - [x] Add tests for uint16-backed enum.
 - [x] Add tests for enum as `hash_t` key after generic hash support lands.
