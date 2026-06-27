@@ -94,6 +94,34 @@ PHS
 			$this->assertSame(0, $validFixedWidthWidening['warning_count'] ?? null, 'same-signed fixed-width integer widening should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
+function consume_id(int $id): void
+{
+	echo $id, "\n";
+}
+
+function consume_label(string $label): void
+{
+	echo $label, "\n";
+}
+
+function main(): void
+{
+	$labels hash<string,int> = [];
+	$labels[10] = "ten";
+	foreach ($labels as $id => $label) {
+		consume_id($id);
+		consume_label($label);
+	}
+}
+
+main();
+PHS
+ . "\n");
+
+			$typedHashForeachKey = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $typedHashForeachKey['warning_count'] ?? null, 'hash<T,T_KEY> foreach key should use the explicit key generic');
+
+			$this->writeProject($project, <<<'PHS'
 function main(): void
 {
 	$small int8 = 7;

@@ -3833,7 +3833,7 @@ final class StanExpressionTypeResolver
 				}
 				if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 					$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-					$keyTypes[] = count($parts) === 2 ? $parts[0] : 'string';
+					$keyTypes[] = count($parts) === 2 ? $parts[1] : 'string';
 				}
 			}
 			return $this->normalizeTypeSet($keyTypes !== [] ? $keyTypes : ['mixed']);
@@ -3854,7 +3854,7 @@ final class StanExpressionTypeResolver
 			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
 				if (count($parts) === 2) {
-					$valueTypes[] = $parts[1];
+					$valueTypes[] = $parts[0];
 				} elseif (count($parts) === 1 && $parts[0] !== '') {
 					$valueTypes[] = $parts[0];
 				}

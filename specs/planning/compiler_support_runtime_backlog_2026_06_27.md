@@ -43,14 +43,14 @@ First home:
 Tasks:
 
 - [x] Audit current source syntax support for `hash<T_VALUE, T_KEY>`.
-- [ ] Audit STAN handling for typed hash key parameters.
+- [x] Audit STAN handling for typed hash key parameters.
 - [x] Audit generated C++ for one- and two-parameter hash declarations.
 - [x] Audit runtime `hash_t` template shape and specializations.
-- [ ] Audit existing operations: `[]`, `isset`, write, delete, count, foreach,
+- [x] Audit existing operations: `[]`, `isset`, write, delete, count, foreach,
       append, and iteration.
 - [x] Audit key families currently supported by implementation.
-- [ ] Write focused tests for `hash<int>` compatibility.
-- [ ] Write focused tests for `hash<int, int>`.
+- [x] Write focused tests for `hash<int>` compatibility.
+- [x] Write focused tests for `hash<int, int>`.
 - [x] Write focused runtime tests for `hash_t<int, uint32>`.
 - [x] Write focused runtime tests for `hash_t<int, byte>`.
 - [x] Implement generic `key_ops<int_t<Rep>>` for fixed-width integer keys.
@@ -61,7 +61,7 @@ Tasks:
 - [x] Write source-level tests for `hash<int, byte>`.
 - [x] Ensure source append assignment evaluates to assigned value, not generated
       key.
-- [ ] Preserve current `hash<T>` string-key default behavior.
+- [x] Preserve current `hash<T>` string-key default behavior.
 - [ ] Preserve current `hash<mixed>` dynamic compatibility behavior.
 - [ ] Add clear diagnostics for unsupported key types.
 - [ ] Update docs/specs after behavior is stable.
