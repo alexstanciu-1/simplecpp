@@ -137,9 +137,12 @@ function ternary_eval(): mixed {}
 function time(): int {}
 function to_dynamic(): mixed {}
 function to_hash(mixed $value) /** hash<mixed> */ {}
+function token_buffer_column(token_buffer $buffer, int $index): int {}
 function token_buffer_count(token_buffer $buffer): int {}
+function token_buffer_flags(token_buffer $buffer, int $index): int {}
 function token_buffer_kind_id(token_buffer $buffer, int $index): int {}
 function token_buffer_length(token_buffer $buffer, int $index): int {}
+function token_buffer_line(token_buffer $buffer, int $index): int {}
 function token_buffer_start_offset(token_buffer $buffer, int $index): int {}
 function token_buffer_to_mixed(token_buffer $buffer): mixed {}
 function touch(string $path): bool {}
