@@ -1,0 +1,53 @@
+{
+    "id": "enum_005_from_value_class_marker_negative",
+    "feature": "enum",
+    "level": "level_02",
+    "outcome": "negative",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": false,
+            "error_contains": [
+                "enum_from_value() first argument must be an enum class marker"
+            ]
+        },
+        "compile": {
+            "success": false,
+            "error_contains": []
+        },
+        "run": {
+            "success": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "types",
+        "enum",
+        "negative_generate"
+    ],
+    "notes": "enum_from_value should require an explicit Enum::class marker so the compiler knows the target enum.",
+    "build": {
+        "sanitizers": null
+    }
+}

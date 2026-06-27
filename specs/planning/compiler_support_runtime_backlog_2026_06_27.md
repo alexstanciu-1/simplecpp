@@ -87,8 +87,8 @@ Tasks:
 - [x] Support enum member references such as `kind::value`.
 - [x] Support equality for same enum type.
 - [x] Reject implicit assignment from raw integer to enum.
-- [ ] Add explicit enum-to-backing conversion helper.
-- [ ] Add explicit backing-to-enum conversion helper.
+- [x] Add explicit enum-to-backing conversion helper.
+- [x] Add explicit backing-to-enum conversion helper.
 - [ ] Add STAN checks for enum assignment and comparison discipline.
 - [x] Add tests for byte-backed enum.
 - [x] Add tests for uint16-backed enum.

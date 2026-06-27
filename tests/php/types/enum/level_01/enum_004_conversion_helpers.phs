@@ -1,0 +1,21 @@
+enum token_kind: byte {
+    case eof = 0;
+    case identifier = 1;
+    case number = 2;
+}
+
+$raw /** byte */ = enum_value(token_kind::identifier);
+$kind /** token_kind */ = enum_from_value(token_kind::class, $raw);
+
+echo $raw, "\n";
+
+if ($kind == token_kind::identifier) {
+    echo "roundtrip\n";
+}
+
+$raw_number /** byte */ = 2;
+$number /** token_kind */ = enum_from_value(token_kind::class, $raw_number);
+
+if ($number == token_kind::number) {
+    echo enum_value($number), "\n";
+}
