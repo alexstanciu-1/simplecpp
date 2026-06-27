@@ -14,3 +14,12 @@ vector_compact($items, 4);
 echo count($items), "\n";
 echo $items[0], "\n";
 echo vector_capacity($items) >= 4 ? "target\n" : "small\n";
+
+$bytes /** vector<byte> */ = [];
+vector_reserve($bytes, 2);
+$seven /** byte */ = 7;
+$eight /** byte */ = 8;
+$bytes[] = $seven;
+$bytes[] = $eight;
+echo vector_capacity($bytes) >= 2 ? "byte_reserved\n" : "byte_lost\n";
+echo $bytes[1], "\n";
