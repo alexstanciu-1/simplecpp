@@ -433,11 +433,20 @@ First home:
 
 Tasks:
 
-- [ ] Implement bitset over `vector<uint64>`.
-- [ ] Add set/clear/test.
-- [ ] Add count or any-set helper if cheap enough.
-- [ ] Add resize/clear behavior.
-- [ ] Add tests for boundary bit positions.
+- [x] Implement bitset over `vector<uint64>`.
+- [x] Add set/clear/test.
+- [x] Add count or any-set helper if cheap enough.
+- [x] Add resize/clear behavior.
+- [x] Add tests for boundary bit positions.
+
+Result:
+- Added `scpp::bitset_t` as a compact fixed-size bitset over
+  `vector_t<uint64_t>`.
+- Indexed operations are explicit-size and range-checked to catch stale
+  dependency/dirty indexes early.
+- Added `any_set`, `count`, `resize`, `clear_all_bits`, and full clear.
+- Added native boundary coverage for bits around word edges: 0, 63, 64, 65,
+  127, and 128.
 
 ## Priority 12: Deque / Ring Work Queue
 

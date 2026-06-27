@@ -64,6 +64,11 @@ add_executable(test_row_arena_t test_row_arena_t.cpp)
 target_link_libraries(test_row_arena_t PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_row_arena_t COMMAND test_row_arena_t)
 
+# bitset_t compact dirty/visited storage coverage.
+add_executable(test_bitset_t test_bitset_t.cpp)
+target_link_libraries(test_bitset_t PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_bitset_t COMMAND test_bitset_t)
+
 # string_parts_builder coverage for artifact-style string assembly.
 add_executable(test_string_parts_builder test_string_parts_builder.cpp)
 target_link_libraries(test_string_parts_builder PRIVATE scpp_runtime scpp_runtime_test_support)
