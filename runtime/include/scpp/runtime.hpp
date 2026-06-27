@@ -49,6 +49,7 @@
 #include "scpp/ui.hpp"
 #include "scpp/webview.hpp"
 #include "scpp/tokenizer.hpp"
+#include "scpp/binary.hpp"
 #include "scpp/async_core.hpp"
 #include "scpp/str.hpp"
 #include "hosts/fastcgi/fastcgi.hpp"
