@@ -1895,6 +1895,100 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
+		$catalog['source_buffer_take'] = [
+			'name' => 'source_buffer_take',
+			'namespace' => null,
+			'params' => [['name' => 'text', 'type' => 'string']],
+			'return_type' => 'source_buffer',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_release'] = [
+			'name' => 'source_buffer_release',
+			'namespace' => null,
+			'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_byte_len'] = [
+			'name' => 'source_buffer_byte_len',
+			'namespace' => null,
+			'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+			'return_type' => 'uint32',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_byte_at'] = [
+			'name' => 'source_buffer_byte_at',
+			'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+			],
+			'return_type' => 'byte',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_span'] = [
+			'name' => 'source_buffer_span',
+			'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+				['name' => 'length', 'type' => 'int'],
+			],
+			'return_type' => 'byte_span',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_slice'] = [
+			'name' => 'source_buffer_slice',
+			'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+				['name' => 'length', 'type' => 'int'],
+			],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['byte_span_len'] = [
+			'name' => 'byte_span_len',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'uint32',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['byte_span_at'] = [
+			'name' => 'byte_span_at',
+			'namespace' => null,
+			'params' => [
+				['name' => 'span', 'type' => 'byte_span'],
+				['name' => 'offset', 'type' => 'int'],
+			],
+			'return_type' => 'byte',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['byte_span_to_string'] = [
+			'name' => 'byte_span_to_string',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['hash_bytes'] = [
+			'name' => 'hash_bytes',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
 		return $catalog;
 	}
 

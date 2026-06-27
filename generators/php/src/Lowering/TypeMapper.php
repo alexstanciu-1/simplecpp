@@ -859,6 +859,8 @@ final class TypeMapper
 			'nullable_resource_handle' => 'nullable_resource_handle_t',
 			'falseable_resource_handle' => 'falseable_resource_handle_t',
 			'token_buffer' => 'tokenizer::token_buffer_t',
+			'source_buffer' => 'source::source_buffer',
+			'byte_span' => 'source::byte_span',
 			'vector_t' => 'vector_t',
 			default => $this->mapUserTypeName($phpType),
 		};
@@ -967,6 +969,8 @@ final class TypeMapper
 			'nullable_resource_handle',
 			'falseable_resource_handle',
 			'token_buffer',
+			'source_buffer',
+			'byte_span',
 			'vector_t',
 			'fixed_array_t',
 			'int_t',
@@ -992,6 +996,8 @@ final class TypeMapper
 			'falseable_resource_handle_t',
 			'token_buffer_t',
 			'tokenizer::token_buffer_t',
+			'source::source_buffer',
+			'source::byte_span',
 		], true);
 	}
 }
