@@ -174,6 +174,82 @@ PHS
 			$this->assertSame(3, $classifiedFixedWidth['compile_error_count'] ?? null, 'fixed-width literal range diagnostics should block pre-build');
 
 			$this->writeProject($project, <<<'PHS'
+enum token_kind: byte {
+	case eof = 0;
+	case identifier = 1;
+}
+
+function main(): void
+{
+	$kind /** token_kind */ = 1;
+	echo enum_name($kind), "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$enumAssignment = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $enumAssignment['warning_count'] ?? null, 'raw integer enum assignment should produce one STAN finding');
+			$enumAssignmentDiagnostic = $enumAssignment['diagnostics'][0] ?? null;
+			if (!is_array($enumAssignmentDiagnostic)) {
+				throw new RuntimeException('enum assignment diagnostic should be present');
+			}
+			$this->assertSame('stan.enum_assignment', $enumAssignmentDiagnostic['code'] ?? null, 'enum assignment diagnostic code should be stable');
+			$this->assertContains('cannot assign `int` to `token_kind`', (string) ($enumAssignmentDiagnostic['message'] ?? ''), 'enum assignment diagnostic should describe raw integer rejection');
+			$classifiedEnumAssignment = classify_stan_build_diagnostics([$enumAssignmentDiagnostic]);
+			$this->assertSame(1, $classifiedEnumAssignment['compile_error_count'] ?? null, 'enum assignment diagnostics should block pre-build');
+
+			$this->writeProject($project, <<<'PHS'
+enum token_kind: byte {
+	case eof = 0;
+	case identifier = 1;
+}
+
+function main(): void
+{
+	$kind /** token_kind */ = token_kind::identifier;
+	$other /** token_kind */ = token_kind::eof;
+	$same bool = $kind !== $other;
+	echo $same ? "different\n" : "same\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$validEnum = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $validEnum['warning_count'] ?? null, 'same-enum assignment and equality should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
+enum token_kind: byte {
+	case eof = 0;
+	case identifier = 1;
+}
+
+function main(): void
+{
+	$kind /** token_kind */ = token_kind::identifier;
+	$bad bool = $kind === 1;
+	echo $bad ? "bad\n" : "ok\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$enumComparison = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $enumComparison['warning_count'] ?? null, 'enum/raw comparison should produce one STAN finding');
+			$enumComparisonDiagnostic = $enumComparison['diagnostics'][0] ?? null;
+			if (!is_array($enumComparisonDiagnostic)) {
+				throw new RuntimeException('enum comparison diagnostic should be present');
+			}
+			$this->assertSame('stan.enum_comparison', $enumComparisonDiagnostic['code'] ?? null, 'enum comparison diagnostic code should be stable');
+			$this->assertContains('requires operands of the same enum type', (string) ($enumComparisonDiagnostic['message'] ?? ''), 'enum comparison diagnostic should describe same-enum requirement');
+			$classifiedEnumComparison = classify_stan_build_diagnostics([$enumComparisonDiagnostic]);
+			$this->assertSame(1, $classifiedEnumComparison['compile_error_count'] ?? null, 'enum comparison diagnostics should block pre-build');
+
+			$this->writeProject($project, <<<'PHS'
 function consume(string $text): void
 {
 	echo strlen($text), "\n";

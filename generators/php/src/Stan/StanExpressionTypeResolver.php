@@ -1066,6 +1066,7 @@ final class StanExpressionTypeResolver
 					continue;
 				}
 				$declaredLocals[$name] = true;
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (int) ($event['line'] ?? 0));
 				$resolvedTypes = $this->resolveAssignmentDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 				$resolvedTypes = $this->normalizeTypeSet($resolvedTypes);
 				if ($resolvedTypes !== []) {
@@ -1615,7 +1616,7 @@ final class StanExpressionTypeResolver
 	{
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
-			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment'], true)) {
+			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment', 'enum_assignment', 'enum_comparison'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -2111,6 +2112,12 @@ final class StanExpressionTypeResolver
 			$source = (string) ($descriptor['source'] ?? '');
 			return $source !== '' ? $this->canonicalizeTypeSet($localTypes[$source] ?? [], $classLookup, $selfType) : [];
 		}
+		if ($kind === 'class_constant') {
+			return $this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
+		}
+		if ($kind === 'comparison') {
+			return ['bool'];
+		}
 		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
 			return $this->canonicalizeTypeSet(
 				$this->resolveContainerElementTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup),
@@ -2193,7 +2200,22 @@ final class StanExpressionTypeResolver
 			if ($descriptor === null) {
 				continue;
 			}
+			$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (int) ($assignment['line'] ?? 0));
 			$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			$enumDiagnostic = $this->makeEnumAssignmentDiagnosticForTypes(
+				(string) ($assignment['name'] ?? ''),
+				$sourceTypes,
+				[$targetType],
+				$context,
+				$path,
+				(int) ($assignment['line'] ?? 0),
+				$classLookup,
+				$selfType
+			);
+			if ($enumDiagnostic !== null) {
+				$diagnostics[] = $enumDiagnostic;
+				continue;
+			}
 			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
 			if ($wrapperTypes !== []) {
 				$diagnostics[] = $this->makeCallDiagnostic(
@@ -2824,8 +2846,21 @@ final class StanExpressionTypeResolver
 			$source = (string) ($descriptor['source'] ?? '');
 			return $source !== '' ? ($localTypes[$source] ?? []) : [];
 		}
+		if ($kind === 'class_constant') {
+			$className = (string) ($descriptor['class_name'] ?? '');
+			$constantName = (string) ($descriptor['constant_name'] ?? '');
+			$classInfo = $className !== '' ? $this->findClassInfo($className, $classLookup, $selfType) : null;
+			if ($classInfo !== null && (bool) ($classInfo['is_enum'] ?? false) && strtolower($constantName) !== 'class') {
+				$fqcn = (string) ($classInfo['fqcn'] ?? '');
+				return $fqcn !== '' ? [$fqcn] : [];
+			}
+			return [];
+		}
 		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
 			return $this->resolveContainerElementTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup);
+		}
+		if ($kind === 'comparison') {
+			return ['bool'];
 		}
 		if ($kind === 'conditional') {
 			$merged = [];
@@ -2989,7 +3024,13 @@ final class StanExpressionTypeResolver
 
 		$currentTypes = $localTypes[$name] ?? [];
 		$currentTypes = $this->canonicalizeTypeSet($currentTypes, $classLookup, $selfType);
-		if ($currentTypes !== [] && !$this->typeSetsAreCompatible($assignedTypes, $currentTypes, [], false)) {
+		if ($currentTypes !== [] && !$this->typeSetsAreCompatible($assignedTypes, $currentTypes, $classLookup, false)) {
+			$enumDiagnostic = $this->makeEnumAssignmentDiagnosticForTypes($name, $assignedTypes, $currentTypes, $context, $path, $line, $classLookup, $selfType);
+			if ($enumDiagnostic !== null) {
+				$diagnostics[] = $enumDiagnostic;
+				unset($morphedLocals[$name]);
+				return;
+			}
 			if (count($currentTypes) === 1 && count($assignedTypes) === 1 && $this->fixedWidthIntegerInfo($currentTypes[0]) !== null && $this->fixedWidthIntegerInfo($assignedTypes[0]) !== null) {
 				$this->recordFixedWidthIntegerAssignmentDiagnostic($diagnostics, $name, $assignedTypes[0], $currentTypes[0], $context, $path, $line);
 				unset($morphedLocals[$name]);
@@ -3017,6 +3058,103 @@ final class StanExpressionTypeResolver
 			'target_type' => $targetType,
 			'message' => 'Fixed-width integer assignment to local `$' . $name . '` in `' . $context . '` requires compatible same-signedness widening: cannot assign `' . $sourceType . '` to `' . $targetType . '`.',
 		];
+	}
+
+	/** @param list<string> $sourceTypes @param list<string> $targetTypes @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function makeEnumAssignmentDiagnosticForTypes(string $name, array $sourceTypes, array $targetTypes, string $context, string $path, int $line, array $classLookup, ?string $selfType): ?array
+	{
+		$sourceTypes = $this->canonicalizeTypeSet($sourceTypes, $classLookup, $selfType);
+		$targetTypes = $this->canonicalizeTypeSet($targetTypes, $classLookup, $selfType);
+		if (count($sourceTypes) !== 1 || count($targetTypes) !== 1) {
+			return null;
+		}
+		$sourceEnum = $this->enumTypeId($sourceTypes[0], $classLookup, $selfType);
+		$targetEnum = $this->enumTypeId($targetTypes[0], $classLookup, $selfType);
+		if ($sourceEnum === null && $targetEnum === null) {
+			return null;
+		}
+		if ($sourceEnum !== null && $targetEnum !== null && strtolower($sourceEnum) === strtolower($targetEnum)) {
+			return null;
+		}
+		return [
+			'kind' => 'enum_assignment',
+			'severity' => 'error',
+			'context' => $context,
+			'path' => $path,
+			'line' => $line,
+			'local_name' => $name,
+			'source_type' => $sourceTypes[0],
+			'target_type' => $targetTypes[0],
+			'message' => 'Enum assignment to local `$' . $name . '` in `' . $context . '` requires the same enum type: cannot assign `' . $sourceTypes[0] . '` to `' . $targetTypes[0] . '`. Use an explicit enum conversion helper for raw backing values.',
+		];
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @param array<string,mixed> $descriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup */
+	private function recordEnumComparisonDiagnostics(array &$diagnostics, array $descriptor, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, int $line): void
+	{
+		$kind = (string) ($descriptor['kind'] ?? '');
+		if ($kind === 'conditional') {
+			if (is_array($descriptor['if_true'] ?? null)) {
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $line);
+			}
+			if (is_array($descriptor['if_false'] ?? null)) {
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $line);
+			}
+			return;
+		}
+		if ($kind !== 'comparison') {
+			return;
+		}
+		$leftTypes = is_array($descriptor['left'] ?? null)
+			? $this->canonicalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor['left'], $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType)
+			: [];
+		$rightTypes = is_array($descriptor['right'] ?? null)
+			? $this->canonicalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor['right'], $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType)
+			: [];
+		$leftEnum = count($leftTypes) === 1 ? $this->enumTypeId($leftTypes[0], $classLookup, $selfType) : null;
+		$rightEnum = count($rightTypes) === 1 ? $this->enumTypeId($rightTypes[0], $classLookup, $selfType) : null;
+		if ($leftEnum === null && $rightEnum === null) {
+			return;
+		}
+		$operator = (string) ($descriptor['operator'] ?? '?');
+		$leftLabel = $leftTypes === [] ? 'unknown' : implode('|', $leftTypes);
+		$rightLabel = $rightTypes === [] ? 'unknown' : implode('|', $rightTypes);
+		if (!in_array($operator, ['===', '!==', '==', '!='], true)) {
+			$diagnostics[] = [
+				'kind' => 'enum_comparison',
+				'severity' => 'error',
+				'context' => $context,
+				'path' => $path,
+				'line' => $line,
+				'source_type' => $leftLabel,
+				'target_type' => $rightLabel,
+				'message' => 'Enum comparison in `' . $context . '` only supports equality or inequality operators: got `' . $operator . '` for `' . $leftLabel . '` and `' . $rightLabel . '`.',
+			];
+			return;
+		}
+		if ($leftEnum === null || $rightEnum === null || strtolower($leftEnum) !== strtolower($rightEnum)) {
+			$diagnostics[] = [
+				'kind' => 'enum_comparison',
+				'severity' => 'error',
+				'context' => $context,
+				'path' => $path,
+				'line' => $line,
+				'source_type' => $leftLabel,
+				'target_type' => $rightLabel,
+				'message' => 'Enum comparison in `' . $context . '` requires operands of the same enum type: got `' . $leftLabel . '` and `' . $rightLabel . '`.',
+			];
+		}
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup */
+	private function enumTypeId(string $type, array $classLookup, ?string $selfType): ?string
+	{
+		$classInfo = $this->findClassInfo($type, $classLookup, $selfType);
+		if ($classInfo === null || !(bool) ($classInfo['is_enum'] ?? false)) {
+			return null;
+		}
+		$fqcn = (string) ($classInfo['fqcn'] ?? '');
+		return $fqcn !== '' ? $fqcn : (string) ($classInfo['name'] ?? '');
 	}
 
 	/** @param array<string,list<string>> $localTypes @param array<string,bool> $morphedLocals @param list<array<string,mixed>> $diagnostics @param list<string> $candidateTypes */
