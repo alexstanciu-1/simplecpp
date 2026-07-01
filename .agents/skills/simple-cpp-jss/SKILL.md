@@ -51,6 +51,9 @@ JSS should feel script-like at the surface but remain typed and compiled underne
 - Use explicit types at meaningful boundaries.
 - Use `let name: T = value;`.
 - Use `vector<T>` and `hash<T>` for known containers.
+- Use `struct Name { field: uint32 = 0; }` for compact inline value-layout records that should lower to PHS `struct` and generated C++ value storage.
+- Use `union Name { payload: uint32; nested: PayloadStruct; }` only for restricted mutually exclusive fixed-layout payloads; current union payloads may contain fixed-width integers, fixed-backed enums, and recursively trivial structs, but not strings, vectors, hashes, object/reference types, defaults, methods, constants, inheritance, or nested unions.
+- Use fixed-backed enums through the PHS-compatible compact-layout path when discriminators need exact storage width; JSS should emit clean PHS rather than internal parser carrier comments.
 - Use `dynamic` / `mixed` intentionally, especially around JSON or other dynamic input.
 - Stabilize dynamic values into typed locals, properties, returns, or containers quickly.
 - Use `take(...)` for wrapper-shaped result extraction.
@@ -80,6 +83,7 @@ Generally usable in v1 alpha:
 - `let alias = &value;` / `alias = &value;` for simple identifier references
 - explicit local typed arrows like `let f = (x: int): int => x + 1;`
 - stackless async/await alpha surface, lowering through PHS and `scpp::async_core`
+- compact-layout structs and restricted unions, lowering through clean PHS compact-layout syntax
 - reserved helper families `fs`, `io`, `json`, `dt`
 
 Partial or blocked:
