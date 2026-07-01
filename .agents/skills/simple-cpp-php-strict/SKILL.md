@@ -60,6 +60,10 @@ The main job is to identify those boundaries clearly and handle wrapper/dynamic 
 - Use `hash<T>` for typed string-keyed data.
 - Use `hash<T, T_KEY>` for intentionally typed key families.
 - Use fixed-width integer aliases such as `int8`, `int16`, `int32`, `int64`, `uint8`/`byte`, `uint16`, `uint32`, and `uint64` when compact storage or interop boundaries need a narrower representation. Same-signed widening is allowed, while narrowing and signed/unsigned crossings should be explicit casts.
+- Use `struct Name { ... }` for compact inline value-layout records when fields should be stored by value rather than through `shared_p<T>`. First-slice structs support public instance fields only and may contain fixed-width integers, fixed-backed enums, other first-slice structs, and typed struct containers such as `vector_t<StructName>`, `hash_t<StructName>`, and `fixed_array_t<StructName, N>`.
+- Use fixed-backed enums such as `enum ExpressionKind : uint16 { case Error = 0; }` for compact discriminators and ids that need predictable generated storage width.
+- Use restricted `union Name { ... }` only for mutually exclusive fixed-layout payloads. Current union payloads may contain fixed-width integers, fixed-backed enums, and recursively trivial structs; do not put strings, vectors, hashes, object/reference types, defaults, methods, constants, inheritance, or nested unions in union payloads.
+- Use `layout_sizeof(TypeName)`, `layout_alignof(TypeName)`, `layout_offsetof(TypeName, field_name)`, and `layout_field_sizeof(TypeName, field_name)` for generated-layout probes in focused diagnostics and compact-row validation.
 - Stabilize dynamic values early at explicit typed boundaries, but do not make strict mode sound like every line needs defensive handling.
 - Treat a stable explicit left side as an ordinary typed boundary. Typed locals, properties, `hash<T>[...]` writes, `vector<T>[]` appends, typed args, and typed returns normally do not need an extra cast.
 - If the destination is explicitly `mixed` or `dynamic`, no cast is needed and the value remains on the dynamic carrier path.

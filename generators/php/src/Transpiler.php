@@ -65,6 +65,12 @@ final class Transpiler
 		return $this->jssTranspiler->transpileToPhs($source);
 	}
 
+	/** @param array<string,string> $declaredTypeKinds */
+	public function setDeclaredTypeKinds(array $declaredTypeKinds): void
+	{
+		$this->generator->setDeclaredTypeKinds($declaredTypeKinds);
+	}
+
 	/** @param array<string,array<string,mixed>> $frontendClassifications */
 	public function transpileJssToPhsWithClassifications(string $source, string $path, array $frontendClassifications): string
 	{

@@ -10,16 +10,25 @@ namespace Scpp\S2S\PreTokenizer;
 final class PreTokenizer
 {
 	private readonly TokenSiteScanner $scanner;
+	private readonly StructSyntaxRewriter $structSyntaxRewriter;
+	private readonly UnionSyntaxRewriter $unionSyntaxRewriter;
+	private readonly EnumBackingSyntaxRewriter $enumBackingSyntaxRewriter;
 	private readonly AsyncSyntaxRewriter $asyncSyntaxRewriter;
 
-	public function __construct(?TokenSiteScanner $scanner = null, ?AsyncSyntaxRewriter $asyncSyntaxRewriter = null)
+	public function __construct(?TokenSiteScanner $scanner = null, ?AsyncSyntaxRewriter $asyncSyntaxRewriter = null, ?StructSyntaxRewriter $structSyntaxRewriter = null, ?EnumBackingSyntaxRewriter $enumBackingSyntaxRewriter = null, ?UnionSyntaxRewriter $unionSyntaxRewriter = null)
 	{
 		$this->scanner = $scanner ?? new TokenSiteScanner();
+		$this->structSyntaxRewriter = $structSyntaxRewriter ?? new StructSyntaxRewriter();
+		$this->unionSyntaxRewriter = $unionSyntaxRewriter ?? new UnionSyntaxRewriter();
+		$this->enumBackingSyntaxRewriter = $enumBackingSyntaxRewriter ?? new EnumBackingSyntaxRewriter();
 		$this->asyncSyntaxRewriter = $asyncSyntaxRewriter ?? new AsyncSyntaxRewriter();
 	}
 
 	public function rewrite(string $source): PreTokenizedInput
 	{
+		$source = $this->structSyntaxRewriter->rewrite($source);
+		$source = $this->unionSyntaxRewriter->rewrite($source);
+		$source = $this->enumBackingSyntaxRewriter->rewrite($source);
 		$lexed = new LexedSource($source);
 		$sites = $this->scanner->scan($lexed);
 

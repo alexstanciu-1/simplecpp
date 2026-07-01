@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use Scpp\S2S\Stan\StanRunner;
 use Scpp\S2S\Transpiler;
+use Scpp\S2S\Analysis\DeclarationKindCatalogBuilder;
 use Scpp\S2S\Support\S2SException;
 
 require_once __DIR__ . '/debug/debug_plan.php';
@@ -2871,9 +2872,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$runtimeBuildSignature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode, $runtimeConfig);
 	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
 	$sourceOverrides = is_array($options['source_overrides'] ?? null) ? normalize_source_override_map($options['source_overrides']) : [];
+	$declaredTypeKinds = build_s2s_declared_type_kind_catalog($projectGraph, $sourceOverrides);
 	$transpiler = new Transpiler(phpProfile: $phpProfile);
+	$transpiler->setDeclaredTypeKinds($declaredTypeKinds);
 	$stanFrontendClassifications = $options['disable_stan'] ? [] : load_stan_frontend_classifications_for_build($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE);
-	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides);
+	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides, $declaredTypeKinds);
 	$projectLibraryFlags = resolve_project_library_link_flags($projectRoot, $projectGraph, $compiler);
 	$generatedUnits = [];
 	$nativeCppUnits = [];
@@ -4077,13 +4080,21 @@ function write_project_forward_declaration_header(string $generatedDir, array $h
 	$declarations = collect_project_header_declarations($headerPaths);
 	$headerPath = normalize_path($generatedDir . '/__project_fwd.hpp');
 	$lines = ['#pragma once', ''];
-	foreach ($declarations as $namespace => $classNames) {
-		if ($classNames === []) {
+	foreach ($declarations as $namespace => $decls) {
+		if ($decls === []) {
 			continue;
 		}
 		$lines[] = 'namespace ' . $namespace . ' {';
-		foreach ($classNames as $className) {
-			$lines[] = 'class ' . $className . ';';
+		foreach ($decls as $decl) {
+			if (($decl['kind'] ?? 'class') === 'enum') {
+				continue;
+			}
+			$prefix = match ($decl['kind'] ?? 'class') {
+				'struct' => 'struct ',
+				'union' => 'union ',
+				default => 'class ',
+			};
+			$lines[] = $prefix . $decl['name'] . ';';
 		}
 		$lines[] = '}';
 		$lines[] = '';
@@ -4093,7 +4104,7 @@ function write_project_forward_declaration_header(string $generatedDir, array $h
 
 /**
  * @param list<string> $headerPaths
- * @return array<string,list<string>>
+ * @return array<string,list<array{name:string,kind:string}>>
  */
 function collect_project_header_declarations(array $headerPaths): array
 {
@@ -4105,15 +4116,18 @@ function collect_project_header_declarations(array $headerPaths): array
 			if (!isset($declarations[$namespace])) {
 				$declarations[$namespace] = [];
 			}
-			$declarations[$namespace][$name] = $name;
+			$declarations[$namespace][$name] = [
+				'name' => $name,
+				'kind' => $class['kind'] ?? 'class',
+			];
 		}
 	}
 	ksort($declarations, SORT_STRING);
-	foreach ($declarations as &$classNames) {
-		ksort($classNames, SORT_STRING);
-		$classNames = array_values($classNames);
+	foreach ($declarations as &$decls) {
+		ksort($decls, SORT_STRING);
+		$decls = array_values($decls);
 	}
-	unset($classNames);
+	unset($decls);
 	return $declarations;
 }
 
@@ -4124,6 +4138,7 @@ function collect_project_header_declarations(array $headerPaths): array
 function sort_project_unit_include_headers(array $includeHeaders): array
 {
 	$knownClasses = [];
+	$knownNames = [];
 	$headerClasses = [];
 	foreach ($includeHeaders as $headerPath) {
 		if (!is_file($headerPath)) {
@@ -4133,6 +4148,7 @@ function sort_project_unit_include_headers(array $includeHeaders): array
 		foreach ($metadata['classes'] as $class) {
 			$key = $class['namespace'] . '::' . $class['name'];
 			$knownClasses[$key] = $headerPath;
+			$knownNames[$class['name']][$headerPath] = $headerPath;
 			$headerClasses[$headerPath][] = $class;
 		}
 	}
@@ -4151,6 +4167,23 @@ function sort_project_unit_include_headers(array $includeHeaders): array
 				continue;
 			}
 			$dependencies[$headerPath][$parentHeader] = $parentHeader;
+		}
+		$contents = @file_get_contents($headerPath);
+		if (!is_string($contents)) {
+			continue;
+		}
+		foreach ($knownNames as $name => $declaringHeaders) {
+			if (isset($declaringHeaders[$headerPath])) {
+				continue;
+			}
+			if (preg_match('/\b' . preg_quote((string) $name, '/') . '\b/', $contents) !== 1) {
+				continue;
+			}
+			foreach ($declaringHeaders as $dependencyHeader) {
+				if ($dependencyHeader !== $headerPath) {
+					$dependencies[$headerPath][$dependencyHeader] = $dependencyHeader;
+				}
+			}
 		}
 	}
 
@@ -4186,7 +4219,7 @@ function visit_project_unit_include_header(string $headerPath, array $dependenci
 	$ordered[] = $headerPath;
 }
 
-/** @return array{classes:list<array{namespace:string,name:string,parent:?string}>} */
+/** @return array{classes:list<array{namespace:string,name:string,parent:?string,kind:string}>} */
 function read_project_header_class_metadata(string $headerPath): array
 {
 	$contents = @file_get_contents($headerPath);
@@ -4198,15 +4231,31 @@ function read_project_header_class_metadata(string $headerPath): array
 	}
 	$namespace = $namespaceMatch[1];
 	$classes = [];
-	if (preg_match_all('/^class\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))?\s*([;{])/m', $contents, $matches, PREG_SET_ORDER) !== false) {
+	if (preg_match_all('/^(class|struct|union)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))?\s*([;{])/m', $contents, $matches, PREG_SET_ORDER) !== false) {
 		foreach ($matches as $match) {
-			if (($match[3] ?? '') !== '{') {
+			if (($match[4] ?? '') !== '{') {
 				continue;
 			}
+			$kind = match ($match[1]) {
+				'struct' => 'struct',
+				'union' => 'union',
+				default => 'class',
+			};
+			$classes[] = [
+				'namespace' => $namespace,
+				'name' => $match[2],
+				'parent' => isset($match[3]) && $match[3] !== '' ? $match[3] : null,
+				'kind' => $kind,
+			];
+		}
+	}
+	if (preg_match_all('/^enum\s+class\s+([A-Za-z_][A-Za-z0-9_]*)\s*:/m', $contents, $matches, PREG_SET_ORDER) !== false) {
+		foreach ($matches as $match) {
 			$classes[] = [
 				'namespace' => $namespace,
 				'name' => $match[1],
-				'parent' => isset($match[2]) && $match[2] !== '' ? $match[2] : null,
+				'parent' => null,
+				'kind' => 'enum',
 			];
 		}
 	}
@@ -5882,6 +5931,21 @@ function source_type_name_from_cpp_type(string $type): string
 	$type = preg_replace('/^const\s+/', '', $type) ?? $type;
 	$type = preg_replace('/[&*]+$/', '', $type) ?? $type;
 	$type = trim(str_replace('scpp::', '', $type));
+	$fixedIntMap = [
+		'' => 'int',
+		'std::int8_t' => 'int8',
+		'std::int16_t' => 'int16',
+		'std::int32_t' => 'int32',
+		'std::int64_t' => 'int64',
+		'std::uint8_t' => 'uint8',
+		'std::uint16_t' => 'uint16',
+		'std::uint32_t' => 'uint32',
+		'std::uint64_t' => 'uint64',
+	];
+	if (preg_match('/^int_t(?:<\s*([^>]*)\s*>)?$/', $type, $matches) === 1) {
+		$key = trim((string) ($matches[1] ?? ''));
+		return $fixedIntMap[$key] ?? 'int';
+	}
 	$map = [
 		'int_t' => 'int',
 		'float_t' => 'float',
@@ -6407,18 +6471,42 @@ function collect_project_stan_source_files(string $projectRoot): array
 	return $files;
 }
 
-/** @return string */
-function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 'legacy', array $sourceOverrides = []): string
+/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @return array<string,string> */
+function build_s2s_declared_type_kind_catalog(array $projectGraph, array $sourceOverrides = []): array
+{
+	$sourcePaths = [];
+	foreach ($projectGraph as $projectSpec) {
+		$projectRoot = normalize_path((string) ($projectSpec['project_root'] ?? ''));
+		if ($projectRoot === '') {
+			continue;
+		}
+		foreach (collect_project_php_files($projectRoot) as $sourcePath) {
+			$sourcePaths[] = normalize_path($sourcePath);
+		}
+	}
+	$builder = new DeclarationKindCatalogBuilder();
+	return $builder->buildFromSources(array_values(array_unique($sourcePaths)), $sourceOverrides);
+}
+
+/** @param array<string,string> $sourceOverrides @param array<string,string> $declaredTypeKinds @return string */
+function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 'legacy', array $sourceOverrides = [], array $declaredTypeKinds = []): string
 {
 	$parts = [
 		'version:' . SCPP_S2S_SIGNATURE_VERSION,
 		'php_profile:' . strtolower(trim($phpProfile)),
 		'source_overrides:' . ($sourceOverrides === [] ? 'none' : hash('sha256', json_encode($sourceOverrides, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))),
+		'declared_type_kinds:' . ($declaredTypeKinds === [] ? 'none' : hash('sha256', json_encode($declaredTypeKinds, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))),
 	];
 
 	$files = [
 		$repoRoot . '/bin/scpp.php',
 		$repoRoot . '/generators/php/src/Transpiler.php',
+		$repoRoot . '/generators/php/src/Analysis/FrontEndSymbolExtractor.php',
+		$repoRoot . '/generators/php/src/Analysis/DeclarationKindCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/PreTokenizer.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/StructSyntaxRewriter.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/UnionSyntaxRewriter.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/EnumBackingSyntaxRewriter.php',
 		$repoRoot . '/generators/php/src/Jss/JssToken.php',
 		$repoRoot . '/generators/php/src/Jss/JssNode.php',
 		$repoRoot . '/generators/php/src/Jss/JssTokenizer.php',
@@ -6433,6 +6521,7 @@ function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 
 		$repoRoot . '/generators/php/src/Stan/StanTakeContractResolver.php',
 		$repoRoot . '/generators/php/src/Stan/StanFrontendClassifier.php',
 		$repoRoot . '/generators/php/src/Generator/Generator.php',
+		$repoRoot . '/generators/php/src/Lowering/TypeMapper.php',
 		$repoRoot . '/generators/php/specs/php_runtime_symbols_legacy.json',
 		$repoRoot . '/generators/php/specs/php_runtime_symbols_strict.json',
 	];
@@ -6645,6 +6734,8 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'member_visibility_violation',
 		'interface_contract_mismatch',
 		'abstract_contract_mismatch',
+		'struct_contract_mismatch',
+		'union_contract_mismatch',
 	], true)) {
 		return 'compile-errors';
 	}

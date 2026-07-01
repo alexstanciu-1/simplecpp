@@ -337,6 +337,289 @@ final class StanDiagnosticCollector
 		return $diagnostics;
 	}
 
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectStructContractDiagnostics(array $fileSummaries, array $symbolIndex, string $projectRoot): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries, $projectRoot);
+		$diagnostics = [];
+		foreach ($classCatalog as $classFqcn => $classInfo) {
+			if ((string) ($classInfo['declaration_kind'] ?? '') !== 'struct') {
+				continue;
+			}
+			$path = (string) ($classInfo['path'] ?? '');
+			$classLine = (int) ($classInfo['line'] ?? 0);
+			if (($classInfo['parent_class'] ?? null) !== null && (string) ($classInfo['parent_class'] ?? '') !== '') {
+				$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $classLine, 'inheritance', 'Struct `' . $classFqcn . '` cannot extend another class in the first struct slice.');
+			}
+			if (is_array($classInfo['interfaces'] ?? null) && $classInfo['interfaces'] !== []) {
+				$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $classLine, 'interfaces', 'Struct `' . $classFqcn . '` cannot implement interfaces in the first struct slice.');
+			}
+			if ((bool) ($classInfo['is_interface'] ?? false) || (bool) ($classInfo['is_abstract'] ?? false)) {
+				$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $classLine, 'concrete', 'Struct `' . $classFqcn . '` must be a concrete value declaration.');
+			}
+			if (($classInfo['method_signatures'] ?? []) !== []) {
+				$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $classLine, 'methods', 'Struct `' . $classFqcn . '` cannot declare methods in the first struct slice.');
+			}
+			if (($classInfo['constants'] ?? []) !== []) {
+				$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $classLine, 'constants', 'Struct `' . $classFqcn . '` cannot declare constants in the first struct slice.');
+			}
+			foreach (($classInfo['property_details'] ?? []) as $propertyName => $property) {
+				if (!is_array($property)) {
+					continue;
+				}
+				$line = (int) ($property['line'] ?? $classLine);
+				$type = (string) ($property['type'] ?? '');
+				if ((string) ($property['visibility'] ?? 'public') !== 'public') {
+					$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $line, 'field_visibility', 'Struct field `' . $classFqcn . '::$' . $propertyName . '` must be public.', (string) $propertyName);
+				}
+				if ((bool) ($property['is_static'] ?? false)) {
+					$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $line, 'field_static', 'Struct field `' . $classFqcn . '::$' . $propertyName . '` cannot be static.', (string) $propertyName);
+				}
+				if ($type === '') {
+					$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $line, 'field_type_missing', 'Struct field `' . $classFqcn . '::$' . $propertyName . '` requires an explicit first-slice field type.', (string) $propertyName);
+					continue;
+				}
+				if (!$this->isStructFieldTypeSupported($type, $classCatalog)) {
+					$diagnostics[] = $this->structDiagnostic($classFqcn, $path, $line, 'field_type', 'Struct field `' . $classFqcn . '::$' . $propertyName . '` uses unsupported first-slice field type `' . $type . '`.', (string) $propertyName);
+				}
+			}
+		}
+		usort($diagnostics, static fn (array $left, array $right): int => strcmp((string) ($left['message'] ?? ''), (string) ($right['message'] ?? '')));
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectUnionContractDiagnostics(array $fileSummaries, array $symbolIndex, string $projectRoot): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries, $projectRoot);
+		$diagnostics = [];
+		foreach ($classCatalog as $classFqcn => $classInfo) {
+			if ((string) ($classInfo['declaration_kind'] ?? '') !== 'union') {
+				continue;
+			}
+			$path = (string) ($classInfo['path'] ?? '');
+			$classLine = (int) ($classInfo['line'] ?? 0);
+			if (($classInfo['parent_class'] ?? null) !== null && (string) ($classInfo['parent_class'] ?? '') !== '') {
+				$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $classLine, 'inheritance', 'Union `' . $classFqcn . '` cannot extend another class in the first union slice.');
+			}
+			if (is_array($classInfo['interfaces'] ?? null) && $classInfo['interfaces'] !== []) {
+				$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $classLine, 'interfaces', 'Union `' . $classFqcn . '` cannot implement interfaces in the first union slice.');
+			}
+			if ((bool) ($classInfo['is_interface'] ?? false) || (bool) ($classInfo['is_abstract'] ?? false)) {
+				$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $classLine, 'concrete', 'Union `' . $classFqcn . '` must be a concrete value declaration.');
+			}
+			if (($classInfo['method_signatures'] ?? []) !== []) {
+				$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $classLine, 'methods', 'Union `' . $classFqcn . '` cannot declare methods in the first union slice.');
+			}
+			if (($classInfo['constants'] ?? []) !== []) {
+				$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $classLine, 'constants', 'Union `' . $classFqcn . '` cannot declare constants in the first union slice.');
+			}
+			foreach (($classInfo['property_details'] ?? []) as $propertyName => $property) {
+				if (!is_array($property)) {
+					continue;
+				}
+				$line = (int) ($property['line'] ?? $classLine);
+				$type = (string) ($property['type'] ?? '');
+				if ((string) ($property['visibility'] ?? 'public') !== 'public') {
+					$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $line, 'field_visibility', 'Union field `' . $classFqcn . '::$' . $propertyName . '` must be public.', (string) $propertyName);
+				}
+				if ((bool) ($property['is_static'] ?? false)) {
+					$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $line, 'field_static', 'Union field `' . $classFqcn . '::$' . $propertyName . '` cannot be static.', (string) $propertyName);
+				}
+				if ((bool) ($property['has_default'] ?? false)) {
+					$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $line, 'field_default', 'Union field `' . $classFqcn . '::$' . $propertyName . '` cannot declare a default initializer in the first union slice.', (string) $propertyName);
+				}
+				if ($type === '') {
+					$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $line, 'field_type_missing', 'Union field `' . $classFqcn . '::$' . $propertyName . '` requires an explicit first-slice payload type.', (string) $propertyName);
+					continue;
+				}
+				if (!$this->isUnionFieldTypeSupported($type, $classCatalog)) {
+					$diagnostics[] = $this->unionDiagnostic($classFqcn, $path, $line, 'field_type', 'Union field `' . $classFqcn . '::$' . $propertyName . '` uses unsupported first-slice payload type `' . $type . '`.', (string) $propertyName);
+				}
+			}
+		}
+		usort($diagnostics, static fn (array $left, array $right): int => strcmp((string) ($left['message'] ?? ''), (string) ($right['message'] ?? '')));
+		return $diagnostics;
+	}
+
+	private function structDiagnostic(string $classFqcn, string $path, int $line, string $mismatchKind, string $message, ?string $propertyName = null): array
+	{
+		$diagnostic = [
+			'kind' => 'struct_contract_mismatch',
+			'mismatch_kind' => $mismatchKind,
+			'class' => $classFqcn,
+			'path' => $path,
+			'line' => $line,
+			'message' => $message,
+		];
+		if ($propertyName !== null && $propertyName !== '') {
+			$diagnostic['property_name'] = $propertyName;
+		}
+		return $diagnostic;
+	}
+
+	private function unionDiagnostic(string $classFqcn, string $path, int $line, string $mismatchKind, string $message, ?string $propertyName = null): array
+	{
+		$diagnostic = [
+			'kind' => 'union_contract_mismatch',
+			'mismatch_kind' => $mismatchKind,
+			'class' => $classFqcn,
+			'path' => $path,
+			'line' => $line,
+			'message' => $message,
+		];
+		if ($propertyName !== null && $propertyName !== '') {
+			$diagnostic['property_name'] = $propertyName;
+		}
+		return $diagnostic;
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog */
+	private function isStructFieldTypeSupported(string $type, array $classCatalog): bool
+	{
+		$normalized = trim($type);
+		$lower = strtolower($normalized);
+		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
+			return true;
+		}
+		$kind = $this->declaredKindForType($normalized, $classCatalog);
+		if (in_array($kind, ['enum', 'struct', 'union'], true)) {
+			return true;
+		}
+		if (preg_match('/^(vector|vector_t|hash|hash_t|fixed_array|fixed_array_t)\s*<(.+)>$/', $normalized, $matches) === 1) {
+			$args = $this->splitTopLevelTypeArgs((string) $matches[2]);
+			$container = strtolower((string) $matches[1]);
+			if (in_array($container, ['vector', 'vector_t'], true) && count($args) !== 1) {
+				return false;
+			}
+			if (in_array($container, ['hash', 'hash_t'], true) && (count($args) < 1 || count($args) > 2)) {
+				return false;
+			}
+			if (in_array($container, ['fixed_array', 'fixed_array_t'], true) && count($args) !== 2) {
+				return false;
+			}
+			return isset($args[0]) && $this->isStructFieldTypeSupported($args[0], $classCatalog);
+		}
+		return false;
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog */
+	private function isUnionFieldTypeSupported(string $type, array $classCatalog): bool
+	{
+		return $this->isUnionFieldTypeSupportedInner($type, $classCatalog, []);
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog @param array<string,bool> $seenStructs */
+	private function isUnionFieldTypeSupportedInner(string $type, array $classCatalog, array $seenStructs): bool
+	{
+		$normalized = trim($type);
+		$lower = strtolower($normalized);
+		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
+			return true;
+		}
+		$kind = $this->declaredKindForType($normalized, $classCatalog);
+		if ($kind === 'enum') {
+			return true;
+		}
+		if ($kind !== 'struct') {
+			return false;
+		}
+		$structInfo = $this->classCatalogEntryForType($normalized, $classCatalog);
+		if ($structInfo === null) {
+			return true;
+		}
+		$structKey = (string) ($structInfo['fqcn'] ?? $structInfo['name'] ?? $normalized);
+		if (isset($seenStructs[$structKey])) {
+			return true;
+		}
+		$seenStructs[$structKey] = true;
+		if ((string) ($structInfo['declaration_kind'] ?? '') !== 'struct') {
+			return false;
+		}
+		foreach (($structInfo['property_details'] ?? []) as $property) {
+			if (!is_array($property)) {
+				continue;
+			}
+			if ((string) ($property['visibility'] ?? 'public') !== 'public' || (bool) ($property['is_static'] ?? false)) {
+				return false;
+			}
+			$fieldType = (string) ($property['type'] ?? '');
+			if ($fieldType === '' || !$this->isUnionFieldTypeSupportedInner($fieldType, $classCatalog, $seenStructs)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog */
+	private function declaredKindForType(string $type, array $classCatalog): ?string
+	{
+		$trimmed = ltrim(trim($type), '\\');
+		if (isset($classCatalog[$trimmed])) {
+			return (string) ($classCatalog[$trimmed]['declaration_kind'] ?? 'class');
+		}
+		$short = basename(str_replace('\\', '/', $trimmed));
+		foreach ($classCatalog as $classInfo) {
+			if ((string) ($classInfo['name'] ?? '') === $short) {
+				return (string) ($classInfo['declaration_kind'] ?? 'class');
+			}
+		}
+		return null;
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog @return ?array<string,mixed> */
+	private function classCatalogEntryForType(string $type, array $classCatalog): ?array
+	{
+		$trimmed = ltrim(trim($type), '\\');
+		if (isset($classCatalog[$trimmed])) {
+			return $classCatalog[$trimmed];
+		}
+		$short = basename(str_replace('\\', '/', $trimmed));
+		foreach ($classCatalog as $fqcn => $classInfo) {
+			if ((string) ($classInfo['name'] ?? '') === $short) {
+				$classInfo['fqcn'] = $fqcn;
+				return $classInfo;
+			}
+		}
+		return null;
+	}
+
+	/** @return list<string> */
+	private function splitTopLevelTypeArgs(string $args): array
+	{
+		$out = [];
+		$current = '';
+		$depth = 0;
+		$length = strlen($args);
+		for ($i = 0; $i < $length; $i++) {
+			$ch = $args[$i];
+			if ($ch === '<') {
+				$depth++;
+				$current .= $ch;
+				continue;
+			}
+			if ($ch === '>') {
+				$depth--;
+				$current .= $ch;
+				continue;
+			}
+			if ($ch === ',' && $depth === 0) {
+				$trimmed = trim($current);
+				if ($trimmed !== '') {
+					$out[] = $trimmed;
+				}
+				$current = '';
+				continue;
+			}
+			$current .= $ch;
+		}
+		$trimmed = trim($current);
+		if ($trimmed !== '') {
+			$out[] = $trimmed;
+		}
+		return $out;
+	}
+
 	/** @param array<string,mixed> $symbol */
 	private function duplicateMessage(array $symbol): string
 	{
@@ -413,9 +696,19 @@ final class StanDiagnosticCollector
 			}
 		}
 		$properties = [];
+		$propertyDetails = [];
 		foreach (($class['properties'] ?? []) as $property) {
 			if (is_array($property) && (string) ($property['name'] ?? '') !== '') {
-				$properties[(string) $property['name']] = (int) ($property['line'] ?? 0);
+				$propertyName = (string) $property['name'];
+				$properties[$propertyName] = (int) ($property['line'] ?? 0);
+				$propertyDetails[$propertyName] = [
+					'name' => $propertyName,
+					'type' => (string) ($property['type'] ?? ''),
+					'line' => (int) ($property['line'] ?? 0),
+					'is_static' => (bool) ($property['is_static'] ?? false),
+					'has_default' => (bool) ($property['has_default'] ?? false),
+					'visibility' => (string) ($property['visibility'] ?? 'public'),
+				];
 			}
 		}
 		return [
@@ -430,9 +723,14 @@ final class StanDiagnosticCollector
 			'interfaces' => is_array($class['interfaces'] ?? null) ? $class['interfaces'] : [],
 			'is_interface' => $isInterface,
 			'is_abstract' => $isAbstract,
+			'is_struct' => (bool) ($class['is_struct'] ?? false),
+			'is_union' => (bool) ($class['is_union'] ?? false),
+			'declaration_kind' => (string) ($class['declaration_kind'] ?? ((bool) ($class['is_union'] ?? false) ? 'union' : ((bool) ($class['is_struct'] ?? false) ? 'struct' : ((bool) ($class['is_enum'] ?? false) ? 'enum' : 'class')))),
 			'methods' => $methods,
 			'method_signatures' => $methodSignatures,
 			'properties' => $properties,
+			'property_details' => $propertyDetails,
+			'constants' => is_array($class['constants'] ?? null) ? $class['constants'] : [],
 		];
 	}
 

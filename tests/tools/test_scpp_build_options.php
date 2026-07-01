@@ -82,6 +82,14 @@ final class ScppBuildOptionsTest
 			$this->assertRuntimeArtifactPlacementPolicy();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
+			$this->assertCrossFileEnumTypesLowerThroughDeclarationCatalog();
+			$this->assertCrossFileStructTypesLowerThroughDeclarationCatalog();
+			$this->assertStructContainersLowerThroughDeclarationCatalog();
+			$this->assertStructValidationRejectsClassLikeFeatures();
+			$this->assertFixedWidthEnumBackingLowersExactly();
+			$this->assertLayoutProbesLowerToCppOperators();
+			$this->assertUnionPayloadsLowerAndProbeLayout();
+			$this->assertUnionValidationRejectsClassLikeFeatures();
 			$this->assertEntryOverrideCanSelectAnotherFile();
 
 			echo "PASS: scpp build options\n";
@@ -328,6 +336,385 @@ final class ScppBuildOptionsTest
 		$this->assertContains('.prism/build/alt', $overrideBuild['output'], 'entry override build should target the alternate entry output');
 	}
 
+	private function assertCrossFileEnumTypesLowerThroughDeclarationCatalog(): void
+	{
+		if (find_command_path(['ninja']) === null) {
+			return;
+		}
+		if (resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+
+		$projectRoot = $this->root . '/cross_file_enum_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/kind.phs', implode("\n", [
+			'enum Kind {',
+			'	case One;',
+			'}',
+			'',
+		]));
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'class Row {',
+			'	public Kind $kind = Kind::One;',
+			'}',
+			'$row = new Row();',
+			'echo "ok\n";',
+			'',
+		]));
+		$config = [
+			'config_version' => 1,
+			'project_name' => 'cross_file_enum_project',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'native_cpp_dir' => 'native_cpp',
+			'dependencies' => [],
+			'libraries' => [],
+			'build' => [
+				'backend' => 'ninja',
+				'cxx' => null,
+				'mode' => 'debug',
+			],
+			'runtime' => [
+				'languages' => ['php'],
+				'modules' => ['json', 'filesystem'],
+				'language_profiles' => [
+					'php' => ['profile' => 'strict'],
+				],
+			],
+		];
+		$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+		if (!is_string($json)) {
+			throw new RuntimeException('Failed to encode cross-file enum prism.json');
+		}
+		$this->write($projectRoot . '/prism.json', $json . PHP_EOL);
+
+		scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', [
+			'disable_stan' => true,
+		]);
+
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for cross-file enum project');
+		}
+		$this->assertContains('Kind kind = Kind::One;', $mainHeader, 'cross-file enum property should lower to raw enum storage');
+		$this->assertNotContains('shared_p<Kind> kind', $mainHeader, 'cross-file enum property should not lower as shared object handle');
+		$this->assertNotContains('class Kind;', $mainHeader, 'cross-file enum property should not emit a bogus class forward declaration');
+	}
+
+	private function assertCrossFileStructTypesLowerThroughDeclarationCatalog(): void
+	{
+		if (find_command_path(['ninja']) === null) {
+			return;
+		}
+		if (resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+
+		$projectRoot = $this->root . '/cross_file_struct_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/span.phs', implode("\n", [
+			'struct CompactChildSpan {',
+			'	uint32 $first_child_index = 0;',
+			'	uint16 $child_count = 0;',
+			'}',
+			'',
+		]));
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'class Row {',
+			'	public CompactChildSpan $children;',
+			'}',
+			'$row = new Row();',
+			'echo "ok\n";',
+			'',
+		]));
+		$config = [
+			'config_version' => 1,
+			'project_name' => 'cross_file_struct_project',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'native_cpp_dir' => 'native_cpp',
+			'dependencies' => [],
+			'libraries' => [],
+			'build' => [
+				'backend' => 'ninja',
+				'cxx' => null,
+				'mode' => 'debug',
+			],
+			'runtime' => [
+				'languages' => ['php'],
+				'modules' => ['json', 'filesystem'],
+				'language_profiles' => [
+					'php' => ['profile' => 'strict'],
+				],
+			],
+		];
+		$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+		if (!is_string($json)) {
+			throw new RuntimeException('Failed to encode cross-file struct prism.json');
+		}
+		$this->write($projectRoot . '/prism.json', $json . PHP_EOL);
+
+		scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', [
+			'disable_stan' => true,
+		]);
+
+		$spanHeader = file_get_contents($projectRoot . '/.prism/generated/span.hpp');
+		if (!is_string($spanHeader)) {
+			throw new RuntimeException('Expected generated span.hpp for cross-file struct project');
+		}
+		$this->assertContains('struct CompactChildSpan {', $spanHeader, 'struct source should lower to a C++ struct');
+		$this->assertContains('int_t<std::uint32_t> first_child_index', $spanHeader, 'uint32 struct fields should keep exact generated storage width');
+		$this->assertContains('int_t<std::uint16_t> child_count', $spanHeader, 'uint16 struct fields should keep exact generated storage width');
+
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for cross-file struct project');
+		}
+		$this->assertContains('CompactChildSpan children;', $mainHeader, 'cross-file struct property should lower to raw value storage');
+		$this->assertNotContains('shared_p<CompactChildSpan> children', $mainHeader, 'cross-file struct property should not lower as shared object handle');
+		$this->assertNotContains('class CompactChildSpan;', $mainHeader, 'cross-file struct property should not emit a bogus class forward declaration');
+	}
+
+	private function assertStructContainersLowerThroughDeclarationCatalog(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/struct_container_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/span.phs', implode("\n", [
+			'struct CompactChildSpan {',
+			'	uint32 $first_child_index = 0;',
+			'}',
+			'',
+		]));
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'class RowStore {',
+			'	public $spans vector_t<CompactChildSpan>;',
+			'	public $by_name hash_t<CompactChildSpan>;',
+			'	public $first_two fixed_array_t<CompactChildSpan, 2>;',
+			'}',
+			'$store = new RowStore();',
+			'echo "ok\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'struct_container_project', 'main.phs');
+
+		scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', ['disable_stan' => true]);
+
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for struct container project');
+		}
+		$this->assertContains('vector_t<CompactChildSpan> spans;', $mainHeader, 'vector_t<StructName> should lower with raw struct element type');
+		$this->assertContains('hash_t<CompactChildSpan> by_name;', $mainHeader, 'hash_t<StructName> should lower with raw struct value type');
+		$this->assertContains('fixed_array_t<CompactChildSpan, 2> first_two;', $mainHeader, 'fixed_array_t<StructName, N> should lower with raw struct element type');
+		$this->assertNotContains('shared_p<CompactChildSpan>', $mainHeader, 'struct containers should not wrap elements as shared object handles');
+	}
+
+	private function assertStructValidationRejectsClassLikeFeatures(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/invalid_struct_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'class Box {',
+			'	public uint32 $value = 0;',
+			'}',
+			'struct BadRow {',
+			'	private uint16 $hidden = 0;',
+			'	public static uint16 $counter = 0;',
+			'	public Box $box;',
+			'	public function nope(): void {',
+			'		return;',
+			'	}',
+			'}',
+			'echo "ok\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'invalid_struct_project', 'main.phs');
+
+		$build = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', ['disable_stan' => true]);
+		$this->assertSame(false, $build['ok'], 'invalid struct build should fail during generation');
+		$diagnostics = (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? '');
+		$this->assertContains('Struct field BadRow::$hidden must be public', $diagnostics, 'private struct fields should be rejected');
+		$this->assertContains('Struct field BadRow::$counter cannot be static', $diagnostics, 'static struct fields should be rejected');
+		$this->assertContains('unsupported first-slice field type Box', $diagnostics, 'class object fields should be rejected in structs');
+		$this->assertContains('Struct BadRow cannot declare methods', $diagnostics, 'struct methods should be rejected in the first slice');
+	}
+
+	private function assertFixedWidthEnumBackingLowersExactly(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/fixed_enum_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'enum ExpressionKind : uint16 {',
+			'	case Error = 0;',
+			'	case Variable = 1;',
+			'	case IntLiteral = 2;',
+			'}',
+			'class Row {',
+			'	public ExpressionKind $kind = ExpressionKind::Error;',
+			'}',
+			'$row = new Row();',
+			'echo "ok\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'fixed_enum_project', 'main.phs');
+
+		scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', ['disable_stan' => true]);
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for fixed enum project');
+		}
+		$this->assertContains('enum class ExpressionKind : std::uint16_t {', $mainHeader, 'uint16 enum backing should lower to exact C++ storage');
+		$this->assertContains('ExpressionKind kind = ExpressionKind::Error;', $mainHeader, 'fixed-backed enum properties should lower as raw enum storage');
+	}
+
+	private function assertLayoutProbesLowerToCppOperators(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/layout_probe_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'struct CompactChildSpan {',
+			'	uint32 $first_child_index = 0;',
+			'	uint16 $child_count = 0;',
+			'}',
+			'$span_size int = layout_sizeof(CompactChildSpan);',
+			'$span_align int = layout_alignof(CompactChildSpan);',
+			'$count_offset int = layout_offsetof(CompactChildSpan, child_count);',
+			'$count_size int = layout_field_sizeof(CompactChildSpan, child_count);',
+			'echo $span_size, " ", $span_align, " ", $count_offset, " ", $count_size, "\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'layout_probe_project', 'main.phs');
+
+		scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', ['disable_stan' => true]);
+
+		$mainCpp = file_get_contents($projectRoot . '/.prism/generated/main.cpp');
+		if (!is_string($mainCpp)) {
+			throw new RuntimeException('Expected generated main.cpp for layout probe project');
+		}
+		$this->assertContains('sizeof(CompactChildSpan)', $mainCpp, 'layout_sizeof should lower to C++ sizeof');
+		$this->assertContains('alignof(CompactChildSpan)', $mainCpp, 'layout_alignof should lower to C++ alignof');
+		$this->assertContains('offsetof(CompactChildSpan, child_count)', $mainCpp, 'layout_offsetof should lower to C++ offsetof');
+		$this->assertContains('sizeof(std::declval<CompactChildSpan>().child_count)', $mainCpp, 'layout_field_sizeof should lower to C++ field sizeof');
+	}
+
+	private function assertUnionPayloadsLowerAndProbeLayout(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/union_payload_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/payload.phs', implode("\n", [
+			'struct PairPayload {',
+			'	uint16 $left = 0;',
+			'	uint16 $right = 0;',
+			'}',
+			'union ExpressionPayload {',
+			'	uint32 $int_value;',
+			'	PairPayload $pair;',
+			'}',
+			'',
+		]));
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'struct Row {',
+			'	ExpressionPayload $payload;',
+			'}',
+			'$payload_size int = layout_sizeof(ExpressionPayload);',
+			'$payload_align int = layout_alignof(ExpressionPayload);',
+			'echo $payload_size, " ", $payload_align, "\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'union_payload_project', 'main.phs');
+
+		scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', ['disable_stan' => true]);
+
+		$payloadHeader = file_get_contents($projectRoot . '/.prism/generated/payload.hpp');
+		if (!is_string($payloadHeader)) {
+			throw new RuntimeException('Expected generated payload.hpp for union payload project');
+		}
+		$this->assertContains('union ExpressionPayload {', $payloadHeader, 'union source should lower to a C++ union');
+		$this->assertContains('int_t<std::uint32_t> int_value;', $payloadHeader, 'union fixed-width fields should lower as payload fields');
+		$this->assertContains('PairPayload pair;', $payloadHeader, 'union struct fields should lower as inline payload fields');
+
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for union payload project');
+		}
+		$this->assertContains('ExpressionPayload payload;', $mainHeader, 'struct fields may store union payloads inline');
+
+		$mainCpp = file_get_contents($projectRoot . '/.prism/generated/main.cpp');
+		if (!is_string($mainCpp)) {
+			throw new RuntimeException('Expected generated main.cpp for union payload project');
+		}
+		$this->assertContains('sizeof(ExpressionPayload)', $mainCpp, 'layout_sizeof should support unions');
+		$this->assertContains('alignof(ExpressionPayload)', $mainCpp, 'layout_alignof should support unions');
+
+		$projectUnits = file_get_contents($projectRoot . '/.prism/generated/__project_units.hpp');
+		if (!is_string($projectUnits)) {
+			throw new RuntimeException('Expected generated __project_units.hpp for union payload project');
+		}
+		$this->assertContains('#include "payload.hpp"' . "\n" . '#include "main.hpp"', $projectUnits, 'union dependency headers should be included before users');
+	}
+
+	private function assertUnionValidationRejectsClassLikeFeatures(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/invalid_union_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'class Box {',
+			'	public uint32 $value = 0;',
+			'}',
+			'struct TrivialLeaf {',
+			'	public uint16 $value = 0;',
+			'}',
+			'struct NonTrivialPayload {',
+			'	public $items vector_t<TrivialLeaf>;',
+			'}',
+			'union BadPayload {',
+			'	private uint16 $hidden;',
+			'	public static uint16 $counter;',
+			'	public uint16 $defaulted = 0;',
+			'	public Box $box;',
+			'	public NonTrivialPayload $non_trivial;',
+			'	public function nope(): void {',
+			'		return;',
+			'	}',
+			'}',
+			'echo "bad\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'invalid_union_project', 'main.phs');
+
+		$build = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', ['disable_stan' => true]);
+		$this->assertSame(false, $build['ok'], 'invalid union build should fail during generation');
+		$diagnostics = (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? '');
+		$this->assertContains('Union field BadPayload::$hidden must be public', $diagnostics, 'private union fields should be rejected');
+		$this->assertContains('Union field BadPayload::$counter cannot be static', $diagnostics, 'static union fields should be rejected');
+		$this->assertContains('Union field BadPayload::$defaulted cannot declare a default initializer', $diagnostics, 'union defaults should be rejected');
+		$this->assertContains('unsupported first-slice payload type Box', $diagnostics, 'class object fields should be rejected in unions');
+		$this->assertContains('unsupported first-slice payload type NonTrivialPayload', $diagnostics, 'structs with non-trivial fields should be rejected in unions');
+		$this->assertContains('Union BadPayload cannot declare methods', $diagnostics, 'union methods should be rejected in the first slice');
+	}
+
 	private function assertSame(mixed $expected, mixed $actual, string $message): void
 	{
 		if ($expected !== $actual) {
@@ -365,6 +752,38 @@ final class ScppBuildOptionsTest
 		if (file_put_contents($path, $contents) === false) {
 			throw new RuntimeException('Failed to write ' . $path);
 		}
+	}
+
+	private function writeProjectConfig(string $projectRoot, string $projectName, string $entrypoint): void
+	{
+		$config = [
+			'config_version' => 1,
+			'project_name' => $projectName,
+			'entrypoint' => $entrypoint,
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'native_cpp_dir' => 'native_cpp',
+			'dependencies' => [],
+			'libraries' => [],
+			'build' => [
+				'backend' => 'ninja',
+				'cxx' => null,
+				'mode' => 'debug',
+			],
+			'runtime' => [
+				'languages' => ['php'],
+				'modules' => ['json', 'filesystem'],
+				'language_profiles' => [
+					'php' => ['profile' => 'strict'],
+				],
+			],
+		];
+		$json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+		if (!is_string($json)) {
+			throw new RuntimeException('Failed to encode prism.json');
+		}
+		$this->write($projectRoot . '/prism.json', $json . PHP_EOL);
 	}
 
 	private function removeTree(string $path): void
