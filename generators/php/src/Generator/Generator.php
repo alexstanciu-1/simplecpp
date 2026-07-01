@@ -2321,6 +2321,8 @@ final class Generator
 		}
 
 		$this->appendHeaderLines($header, $this->code('union ' . $class->name . ' {', $class->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . $class->name . '() {}', $class->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . '~' . $class->name . '() {}', $class->line));
 		foreach ($class->properties as $property) {
 			if ($property->visibility !== 'public' || $property->isStatic || $property->hasDefault) {
 				throw new \RuntimeException('Only public instance payload fields without defaults are supported in the current union lowering');
