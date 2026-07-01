@@ -506,12 +506,49 @@ final class StanDiagnosticCollector
 	/** @param array<string,array<string,mixed>> $classCatalog */
 	private function isUnionFieldTypeSupported(string $type, array $classCatalog): bool
 	{
+		return $this->isUnionFieldTypeSupportedInner($type, $classCatalog, []);
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog @param array<string,bool> $seenStructs */
+	private function isUnionFieldTypeSupportedInner(string $type, array $classCatalog, array $seenStructs): bool
+	{
 		$normalized = trim($type);
 		$lower = strtolower($normalized);
 		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
 			return true;
 		}
-		return in_array($this->declaredKindForType($normalized, $classCatalog), ['enum', 'struct'], true);
+		$kind = $this->declaredKindForType($normalized, $classCatalog);
+		if ($kind === 'enum') {
+			return true;
+		}
+		if ($kind !== 'struct') {
+			return false;
+		}
+		$structInfo = $this->classCatalogEntryForType($normalized, $classCatalog);
+		if ($structInfo === null) {
+			return true;
+		}
+		$structKey = (string) ($structInfo['fqcn'] ?? $structInfo['name'] ?? $normalized);
+		if (isset($seenStructs[$structKey])) {
+			return true;
+		}
+		$seenStructs[$structKey] = true;
+		if ((string) ($structInfo['declaration_kind'] ?? '') !== 'struct') {
+			return false;
+		}
+		foreach (($structInfo['property_details'] ?? []) as $property) {
+			if (!is_array($property)) {
+				continue;
+			}
+			if ((string) ($property['visibility'] ?? 'public') !== 'public' || (bool) ($property['is_static'] ?? false)) {
+				return false;
+			}
+			$fieldType = (string) ($property['type'] ?? '');
+			if ($fieldType === '' || !$this->isUnionFieldTypeSupportedInner($fieldType, $classCatalog, $seenStructs)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** @param array<string,array<string,mixed>> $classCatalog */
@@ -525,6 +562,23 @@ final class StanDiagnosticCollector
 		foreach ($classCatalog as $classInfo) {
 			if ((string) ($classInfo['name'] ?? '') === $short) {
 				return (string) ($classInfo['declaration_kind'] ?? 'class');
+			}
+		}
+		return null;
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog @return ?array<string,mixed> */
+	private function classCatalogEntryForType(string $type, array $classCatalog): ?array
+	{
+		$trimmed = ltrim(trim($type), '\\');
+		if (isset($classCatalog[$trimmed])) {
+			return $classCatalog[$trimmed];
+		}
+		$short = basename(str_replace('\\', '/', $trimmed));
+		foreach ($classCatalog as $fqcn => $classInfo) {
+			if ((string) ($classInfo['name'] ?? '') === $short) {
+				$classInfo['fqcn'] = $fqcn;
+				return $classInfo;
 			}
 		}
 		return null;

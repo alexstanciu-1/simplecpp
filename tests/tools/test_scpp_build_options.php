@@ -683,11 +683,18 @@ final class ScppBuildOptionsTest
 			'class Box {',
 			'	public uint32 $value = 0;',
 			'}',
+			'struct TrivialLeaf {',
+			'	public uint16 $value = 0;',
+			'}',
+			'struct NonTrivialPayload {',
+			'	public $items vector_t<TrivialLeaf>;',
+			'}',
 			'union BadPayload {',
 			'	private uint16 $hidden;',
 			'	public static uint16 $counter;',
 			'	public uint16 $defaulted = 0;',
 			'	public Box $box;',
+			'	public NonTrivialPayload $non_trivial;',
 			'	public function nope(): void {',
 			'		return;',
 			'	}',
@@ -704,6 +711,7 @@ final class ScppBuildOptionsTest
 		$this->assertContains('Union field BadPayload::$counter cannot be static', $diagnostics, 'static union fields should be rejected');
 		$this->assertContains('Union field BadPayload::$defaulted cannot declare a default initializer', $diagnostics, 'union defaults should be rejected');
 		$this->assertContains('unsupported first-slice payload type Box', $diagnostics, 'class object fields should be rejected in unions');
+		$this->assertContains('unsupported first-slice payload type NonTrivialPayload', $diagnostics, 'structs with non-trivial fields should be rejected in unions');
 		$this->assertContains('Union BadPayload cannot declare methods', $diagnostics, 'union methods should be rejected in the first slice');
 	}
 

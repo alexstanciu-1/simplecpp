@@ -187,11 +187,20 @@ class Box
 	public uint32 $value = 0;
 }
 
+struct TrivialLeaf {
+	public uint16 $value = 0;
+}
+
+struct NonTrivialPayload {
+	public $items vector_t<TrivialLeaf>;
+}
+
 union BadPayload {
 	private uint16 $hidden;
 	public static uint16 $counter;
 	public uint16 $defaulted = 0;
 	public Box $box;
+	public NonTrivialPayload $non_trivial;
 	public function nope(): void {
 		return;
 	}
@@ -202,7 +211,7 @@ PHS
  . "\n");
 
 			$invalidUnion = $session->runDiagnostics($project, $project . '/prism.json');
-			$this->assertSame(5, $invalidUnion['warning_count'] ?? null, 'invalid union declaration should produce STAN findings');
+			$this->assertSame(6, $invalidUnion['warning_count'] ?? null, 'invalid union declaration should produce STAN findings');
 			$unionDiagnostics = is_array($invalidUnion['diagnostics'] ?? null) ? $invalidUnion['diagnostics'] : [];
 			foreach ($unionDiagnostics as $diagnostic) {
 				if (!is_array($diagnostic)) {
@@ -216,8 +225,9 @@ PHS
 			$this->assertContains('Union field `BadPayload::$counter` cannot be static', $unionMessages, 'union static field diagnostic should be reported by STAN');
 			$this->assertContains('Union field `BadPayload::$defaulted` cannot declare a default initializer', $unionMessages, 'union default field diagnostic should be reported by STAN');
 			$this->assertContains('unsupported first-slice payload type `Box`', $unionMessages, 'union object payload diagnostic should be reported by STAN');
+			$this->assertContains('unsupported first-slice payload type `NonTrivialPayload`', $unionMessages, 'union non-trivial struct payload diagnostic should be reported by STAN');
 			$classifiedUnion = classify_stan_build_diagnostics($unionDiagnostics);
-			$this->assertSame(5, $classifiedUnion['compile_error_count'] ?? null, 'union contract diagnostics should block pre-build');
+			$this->assertSame(6, $classifiedUnion['compile_error_count'] ?? null, 'union contract diagnostics should block pre-build');
 
 			$this->writeProject($project, <<<'PHS'
 function consume(string $text): void

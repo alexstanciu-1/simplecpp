@@ -867,6 +867,10 @@ final class Generator
 			return $this->renderGeneratedCast($expectedType, $renderedExpr);
 		}
 
+		if (preg_match('/^int_t<.+>$/', $expectedType) === 1 && str_starts_with($exprType, 'int_t')) {
+			return $this->renderGeneratedCast($expectedType, $renderedExpr);
+		}
+
 		if ($exprType === 'dynamic_t<>') {
 			return $expectedType === 'mixed_t' ? ('mixed_t{dynamic_box(' . $renderedExpr . ')}') : $renderedExpr;
 		}
@@ -1189,13 +1193,55 @@ final class Generator
 
 	private function isFirstSliceUnionFieldType(string $type): bool
 	{
+		return $this->isFirstSliceUnionFieldTypeInner($type, []);
+	}
+
+	/** @param array<string,bool> $seenStructs */
+	private function isFirstSliceUnionFieldTypeInner(string $type, array $seenStructs): bool
+	{
 		$normalized = trim($type);
 		$lower = strtolower($normalized);
 		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
 			return true;
 		}
 		$kind = $this->typeMapper->declaredTypeKind($normalized);
-		return in_array($kind, ['enum', 'struct'], true);
+		if ($kind === 'enum') {
+			return true;
+		}
+		if ($kind !== 'struct') {
+			return false;
+		}
+		$struct = $this->resolveClassDeclByTypeName($normalized);
+		if (!$struct instanceof ClassDecl) {
+			return true;
+		}
+		$key = spl_object_id($struct);
+		if (isset($seenStructs[(string) $key])) {
+			return true;
+		}
+		$seenStructs[(string) $key] = true;
+		if (!$struct->isStruct || $struct->parentClass !== null || $struct->interfaces !== [] || $struct->constants !== [] || $struct->methods !== [] || $struct->isAbstract || $struct->isInterface) {
+			return false;
+		}
+		foreach ($struct->properties as $property) {
+			if ($property->visibility !== 'public' || $property->isStatic || $property->type === null) {
+				return false;
+			}
+			if (!$this->isFirstSliceUnionFieldTypeInner($property->type, $seenStructs)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private function resolveClassDeclByTypeName(string $type): ?ClassDecl
+	{
+		$trimmed = ltrim(trim($type), '\\');
+		if (isset($this->classDecls[$trimmed])) {
+			return $this->classDecls[$trimmed];
+		}
+		$short = basename(str_replace('\\', '/', $trimmed));
+		return $this->classDecls[$short] ?? null;
 	}
 
 	/** @return list<string> */

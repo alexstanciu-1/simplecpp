@@ -25,8 +25,8 @@ final class ScppUnionCompileProbeTest
 			$this->mkdir($project . '/native_cpp');
 			$this->write($project . '/payload.phs', implode("\n", [
 				'struct PairPayload {',
-				'	uint16 $left;',
-				'	uint16 $right;',
+				'	uint16 $left = 0;',
+				'	uint16 $right = 0;',
 				'}',
 				'union ExpressionPayload {',
 				'	uint32 $int_value;',
