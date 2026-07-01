@@ -304,7 +304,13 @@ final class Generator
 
 	private function isDirectInitializerBoundaryType(string $type): bool
 	{
-		return preg_match('/^(?:nullable|result|result_or_false|result_or_bool|shared_p|unique_p|weak_p|value_p|fixed_array_t)<.+>$/', $type) === 1;
+		if (preg_match('/^(?:nullable|result|result_or_false|result_or_bool|shared_p|unique_p|weak_p|value_p|fixed_array_t)<.+>$/', $type) === 1) {
+			return true;
+		}
+		if ($this->resolveStructDeclByMappedType($type) instanceof ClassDecl) {
+			return true;
+		}
+		return $this->typeMapper->declaredTypeKind(str_replace('::', '\\', trim($type))) === 'struct';
 	}
 
 	/** @param list<string> $lines @return list<CodeBlock> */
@@ -2422,6 +2428,8 @@ final class Generator
 		}
 
 		$this->appendHeaderLines($header, $this->code('struct ' . $class->name . ' {', $class->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . $class->name . '* operator->() { return this; }', $class->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'const ' . $class->name . '* operator->() const { return this; }', $class->line));
 		foreach ($class->properties as $property) {
 			if ($property->visibility !== 'public' || $property->isStatic) {
 				throw new \RuntimeException('Only public instance fields are supported in the current struct lowering');
@@ -6128,6 +6136,11 @@ final class Generator
 			return implode("\n", $lines);
 		}
 
+		$mappedStructType = $typedLocalType !== null ? $this->mapTypedStructLocalType($typedLocalType) : null;
+		if ($mappedStructType !== null) {
+			return $this->renderTypedStructArrayLiteral($expr, $namespacePhp, $typedLocalType, $mappedStructType);
+		}
+
 		if ($elements === []) {
 			return 'mixed_t{shared_table_()}';
 		}
@@ -6223,6 +6236,130 @@ final class Generator
 		}
 		if ($this->parseMappedFixedArrayType($normalized) !== null) {
 			return $this->renderTypedFixedArrayLiteral($expr, $namespacePhp, $normalized);
+		}
+		$struct = $this->resolveStructDeclByMappedType($normalized);
+		if ($struct instanceof ClassDecl) {
+			return $this->renderTypedStructArrayLiteral($expr, $namespacePhp, $struct->name, $normalized);
+		}
+		return null;
+	}
+
+	private function mapTypedStructLocalType(string $typedLocalType): ?string
+	{
+		if ($this->typeMapper->declaredTypeKind($typedLocalType) !== 'struct') {
+			return null;
+		}
+
+		return $this->typeMapper->mapTypedLocalType($typedLocalType);
+	}
+
+	private function resolveStructDeclByMappedType(string $mappedType): ?ClassDecl
+	{
+		$normalized = trim($mappedType);
+		foreach ($this->classDecls as $name => $class) {
+			if (!$class->isStruct) {
+				continue;
+			}
+			if ($this->typeMapper->mapDeclaredType($name) === $normalized || $this->typeMapper->mapDeclaredType($class->name) === $normalized) {
+				return $class;
+			}
+		}
+		return null;
+	}
+
+	private function renderTypedStructArrayLiteral(mixed $expr, ?string $namespacePhp, string $typedStructType, string $mappedStructType): string
+	{
+		$elements = is_object($expr) && isset($expr->children) && is_array($expr->children)
+			? array_values($expr->children)
+			: [];
+		if ($elements === []) {
+			return $mappedStructType . '{}';
+		}
+
+		$valuesByField = [];
+		foreach ($elements as $element) {
+			if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+				$this->errors[] = 'Unsupported struct initializer element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+				return '/* unsupported-struct-initializer */';
+			}
+
+			$keyNode = $element->children['key'] ?? null;
+			$fieldName = $this->extractStructInitializerFieldName($keyNode);
+			if ($fieldName === null) {
+				$this->errors[] = 'Struct initializers require literal string field keys at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-struct-initializer-key */';
+			}
+			if (isset($valuesByField[$fieldName])) {
+				$this->errors[] = 'Struct initializer field `' . $fieldName . '` is assigned more than once at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* duplicate-struct-initializer-field */';
+			}
+
+			$valueNode = $element->children['value'] ?? null;
+			if ($valueNode === null) {
+				$this->errors[] = 'Array unpack and empty struct initializer elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-struct-initializer-element */';
+			}
+			$valuesByField[$fieldName] = $valueNode;
+		}
+
+		$struct = $this->resolveClassDeclByTypeName($typedStructType);
+		if (!$struct instanceof ClassDecl || !$struct->isStruct) {
+			$items = [];
+			foreach ($valuesByField as $fieldName => $valueNode) {
+				$items[] = '.' . $this->cppIdentifier($fieldName) . ' = ' . $this->renderExpr($valueNode, $namespacePhp);
+			}
+			return $mappedStructType . '{' . implode(', ', $items) . '}';
+		}
+
+		$fieldTypes = [];
+		foreach ($struct->properties as $property) {
+			$fieldTypes[$property->name] = $property->type;
+		}
+		foreach (array_keys($valuesByField) as $fieldName) {
+			if (!array_key_exists($fieldName, $fieldTypes)) {
+				$this->errors[] = 'Struct initializer for ' . $struct->name . ' references unknown field `' . $fieldName . '`.';
+				return '/* unknown-struct-initializer-field */';
+			}
+		}
+
+		$items = [];
+		foreach ($struct->properties as $property) {
+			if (!array_key_exists($property->name, $valuesByField)) {
+				continue;
+			}
+			$valueNode = $valuesByField[$property->name];
+			$value = $this->renderStructInitializerFieldValue($valueNode, $namespacePhp, $property->type);
+			$items[] = '.' . $this->cppIdentifier($property->name) . ' = ' . $value;
+		}
+
+		return $mappedStructType . '{' . implode(', ', $items) . '}';
+	}
+
+	private function renderStructInitializerFieldValue(mixed $valueNode, ?string $namespacePhp, ?string $fieldType): string
+	{
+		if ($fieldType !== null && is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::ARRAY)) {
+			$nestedMappedType = $this->mapTypedStructLocalType($fieldType);
+			if ($nestedMappedType !== null) {
+				return $this->renderTypedStructArrayLiteral($valueNode, $namespacePhp, $fieldType, $nestedMappedType);
+			}
+			$expectedMappedType = $this->typeMapper->mapDeclaredType($fieldType);
+			$nestedLiteral = $this->renderArrayLiteralForExpectedMappedType($valueNode, $namespacePhp, $expectedMappedType);
+			if ($nestedLiteral !== null) {
+				return $nestedLiteral;
+			}
+		}
+
+		$rendered = $this->renderExpr($valueNode, $namespacePhp);
+		if ($fieldType === null) {
+			return $rendered;
+		}
+		return $this->wrapExprForExpectedType($rendered, $this->inferExprType($valueNode), $this->typeMapper->mapDeclaredType($fieldType));
+	}
+
+	private function extractStructInitializerFieldName(mixed $keyNode): ?string
+	{
+		if (is_string($keyNode) && $keyNode !== '') {
+			return $keyNode;
 		}
 		return null;
 	}

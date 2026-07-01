@@ -155,6 +155,18 @@ Current struct fields may use:
 Explicit struct field initializers lower to generated member initializers.
 Omitted initializers use the generated C++ default for the field type.
 
+Typed struct locals may use keyed array initializer sugar:
+
+```php
+$row Row = ["x" => 10, "y" => 20];
+```
+
+This lowers as a value struct initializer, not as a dynamic array/table. When
+the struct declaration is available to the generator, fields are emitted in
+declaration order so generated C++ designated initialization remains valid even
+if source keys appear in a different order. Nested keyed initializers are
+supported for fields whose declared type is another first-slice struct.
+
 Required-field and maybe-uninitialized guarantees remain subject to STAN and
 generator diagnostics; they are not broadened by this first-slice spec.
 
