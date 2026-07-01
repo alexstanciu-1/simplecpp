@@ -9,6 +9,32 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ### Changes
 
+## 0.1.74 - 2026-07-01
+
+### Additions
+
+- Added compact-layout `struct` source support for PHS and JSS, lowering first-slice value structs as inline generated C++ storage instead of object/reference handles.
+- Added fixed-backed enum lowering for compact discriminators such as `enum ExpressionKind : uint16`, with exact generated C++ storage width and range diagnostics.
+- Added restricted payload `union` source support for PHS and JSS, including generated C++ unions, STAN/generator diagnostics, and native compile coverage for union-bearing structs.
+- Added layout probes for generated type and field inspection: `layout_sizeof`, `layout_alignof`, `layout_offsetof`, and `layout_field_sizeof`.
+- Added compact parsed-expression acceptance coverage demonstrating a 32-byte `CompactParsedExpressionRecord`, substantially below the previous 296-byte readable record baseline.
+
+### Fixes
+
+- Fixed cross-file enum and struct declaration-kind lowering so compact value types keep raw storage across project files.
+- Fixed fixed-width integer default initializers such as `uint16 $x = 0` so they cast into the exact expected generated storage type.
+- Tightened union payload validation to reject non-trivial struct payloads, containers, object/reference fields, methods, constants, defaults, inheritance, and nested union payloads in the V1 slice.
+
+### Breaking Changes
+
+- None
+
+### Migration Notes
+
+- Compact-layout declarations are a first-slice value-layout surface. Restricted unions intentionally exclude strings, vectors, hashes, object/reference types, defaults, methods, constants, inheritance, and nested union payloads.
+- Existing class declarations keep the current object/reference-oriented model; use `struct` only for intended inline value storage.
+- The compact parsed-expression acceptance fixture proves the language support needed for compiler row compaction, but the compiler's own resident parse model migration remains separate follow-up work.
+
 ## 0.1.73 - 2026-06-27
 
 ### Additions
