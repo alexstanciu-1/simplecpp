@@ -92,6 +92,7 @@ final class JssFileSummaryBuilder
 		array $methods,
 		array $properties,
 		array $constants,
+		bool $isStruct = false,
 	): array {
 		return [
 			'name' => $name,
@@ -102,6 +103,8 @@ final class JssFileSummaryBuilder
 			'is_interface' => false,
 			'is_abstract' => false,
 			'is_enum' => false,
+			'is_struct' => $isStruct,
+			'declaration_kind' => $isStruct ? 'struct' : 'class',
 			'is_lib_export' => false,
 			'methods' => $methods,
 			'properties' => $properties,

@@ -14,6 +14,8 @@ final class TypeMapper
 {
 	/** @var array<string, bool> */
 	private array $enumNames = [];
+	/** @var array<string, string> */
+	private array $declaredTypeKinds = [];
 
 	/**
 	 * Maps a declared PHP property or constant-adjacent type into the canonical Prism++ type.
@@ -26,6 +28,40 @@ final class TypeMapper
 	public function setEnumNames(array $enumNames): void
 	{
 		$this->enumNames = $enumNames;
+	}
+
+	/** @param array<string, string> $declaredTypeKinds */
+	public function setDeclaredTypeKinds(array $declaredTypeKinds): void
+	{
+		$normalized = [];
+		foreach ($declaredTypeKinds as $name => $kind) {
+			if (!is_string($name) || !is_string($kind)) {
+				continue;
+			}
+			$trimmedName = ltrim(trim($name), '\\');
+			$trimmedKind = strtolower(trim($kind));
+			if ($trimmedName === '' || !in_array($trimmedKind, ['class', 'enum', 'struct', 'union'], true)) {
+				continue;
+			}
+			$normalized[$trimmedName] = $trimmedKind;
+		}
+		$this->declaredTypeKinds = $normalized;
+	}
+
+	public function declaredTypeKind(string $phpType): ?string
+	{
+		$trimmed = ltrim(trim($phpType), '\\');
+		if ($trimmed === '') {
+			return null;
+		}
+		if (isset($this->declaredTypeKinds[$trimmed])) {
+			return $this->declaredTypeKinds[$trimmed];
+		}
+		if (str_contains($trimmed, '\\')) {
+			$short = basename(str_replace('\\', '/', $trimmed));
+			return $this->declaredTypeKinds[$short] ?? null;
+		}
+		return null;
 	}
 
 	/** @return list<string> */
@@ -115,7 +151,10 @@ final class TypeMapper
 				return $this->mapValueType($inner);
 			}
 			if ($this->isObjectType($inner)) {
-				return $this->isEnumType($inner) ? $this->mapUserTypeName($inner) : 'shared_p<' . $this->mapUserTypeName($inner) . '>';
+				$kind = $this->declaredTypeKind($inner);
+				return ($kind === 'enum' || $kind === 'struct')
+					? $this->mapUserTypeName($inner)
+					: ($this->isEnumType($inner) ? $this->mapUserTypeName($inner) : 'shared_p<' . $this->mapUserTypeName($inner) . '>');
 			}
 			return 'nullable<' . $this->mapValueType($inner) . '>';
 		}
@@ -125,7 +164,10 @@ final class TypeMapper
 		}
 
 		if ($this->isObjectType($phpType)) {
-			return $this->isEnumType($phpType) ? $this->mapUserTypeName($phpType) : 'shared_p<' . $this->mapUserTypeName($phpType) . '>';
+			$kind = $this->declaredTypeKind($phpType);
+			return ($kind === 'enum' || $kind === 'struct')
+				? $this->mapUserTypeName($phpType)
+				: ($this->isEnumType($phpType) ? $this->mapUserTypeName($phpType) : 'shared_p<' . $this->mapUserTypeName($phpType) . '>');
 		}
 
 		return $this->mapValueType($phpType);

@@ -268,7 +268,7 @@ final class ScppMemberVisibilityTest
 		$header = $this->read($project . '/.prism/generated/main.hpp');
 		$this->assertContains('protected:', $header, 'generated C++ should include protected access sections');
 		$this->assertContains('private:', $header, 'generated C++ should include private access sections');
-		$this->assertContains('int_t value;', $header, 'private property should still be emitted');
+		$this->assertContains('int_t<> value;', $header, 'private property should still be emitted');
 		$this->assertContains('static inline const auto HIDDEN', $header, 'private class constant should still be emitted');
 		$this->assertContains('public:', $header, 'generated C++ should keep public sections for public API members');
 	}

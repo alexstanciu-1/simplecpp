@@ -32,6 +32,7 @@ final class ClassDecl
 		public readonly bool $isEnum = false,
 		public readonly ?string $enumBackingType = null,
 		public readonly array $enumCases = [],
+		public readonly bool $isStruct = false,
 		public readonly bool $isLibExport = false,
 	) {
 	}

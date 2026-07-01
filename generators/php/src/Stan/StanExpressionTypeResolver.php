@@ -3410,6 +3410,8 @@ final class StanExpressionTypeResolver
 			'fqcn' => $fqcn,
 			'parent_class' => (string) ($class['parent_class'] ?? ''),
 			'is_enum' => (bool) ($class['is_enum'] ?? false),
+			'is_struct' => (bool) ($class['is_struct'] ?? false),
+			'declaration_kind' => (string) ($class['declaration_kind'] ?? ((bool) ($class['is_struct'] ?? false) ? 'struct' : ((bool) ($class['is_enum'] ?? false) ? 'enum' : 'class'))),
 			'ancestor_types' => [],
 			'method_return_types' => $methodReturnTypes,
 			'method_signatures' => $methodSignatures,

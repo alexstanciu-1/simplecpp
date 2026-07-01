@@ -319,6 +319,8 @@ final class FrontEndSymbolExtractor
 			'is_interface' => $class->isInterface,
 			'is_abstract' => $class->isAbstract,
 			'is_enum' => $class->isEnum,
+			'is_struct' => $class->isStruct,
+			'declaration_kind' => $class->isStruct ? 'struct' : ($class->isEnum ? 'enum' : 'class'),
 			'is_lib_export' => $class->isLibExport,
 			'methods' => $methods,
 			'properties' => $properties,

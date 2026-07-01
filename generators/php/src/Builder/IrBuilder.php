@@ -364,8 +364,9 @@ final class IrBuilder
 			isInterface: (((int) ($node->flags ?? 0)) & AstKind::CLASS_INTERFACE) !== 0,
 			isAbstract: (((int) ($node->flags ?? 0)) & AstKind::CLASS_ABSTRACT) !== 0,
 			isEnum: $enumCases !== [],
-			enumBackingType: $this->readTypeName($children['type'] ?? null),
+			enumBackingType: $this->readEnumBackingType($children['type'] ?? null, $children['docComment'] ?? null),
 			enumCases: $enumCases,
+			isStruct: $this->hasStructTag($children['docComment'] ?? null),
 			isLibExport: $this->hasLibExportTag($children['docComment'] ?? null),
 		);
 	}
@@ -457,6 +458,22 @@ final class IrBuilder
 			return false;
 		}
 		return preg_match('/@lib-export\b/', $docComment) === 1;
+	}
+
+	private function hasStructTag(mixed $docComment): bool
+	{
+		if (!is_string($docComment) || trim($docComment) === '') {
+			return false;
+		}
+		return preg_match('/@scpp-struct\b/', $docComment) === 1;
+	}
+
+	private function readEnumBackingType(mixed $typeNode, mixed $docComment): ?string
+	{
+		if (is_string($docComment) && preg_match('/@scpp-enum-backing\s+([A-Za-z_][A-Za-z0-9_]*)\b/', $docComment, $matches) === 1) {
+			return $matches[1];
+		}
+		return $this->readTypeName($typeNode);
 	}
 
 	private function hasAsyncTag(mixed $docComment): bool

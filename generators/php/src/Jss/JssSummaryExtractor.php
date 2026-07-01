@@ -150,7 +150,7 @@ final class JssSummaryExtractor
 				$this->collectFunctionLikeRequests($statement->fields['params'] ?? [], $statement->fields['body'] ?? [], $requests, $visibleTypes);
 				continue;
 			}
-			if ($statement->kind === 'class_decl') {
+			if ($statement->kind === 'class_decl' || $statement->kind === 'struct_decl') {
 				$classSummary = $this->summarizeClass($statement, $currentNamespace);
 				if ($currentNamespace === null) {
 					$rootClasses[] = $classSummary;
@@ -244,6 +244,7 @@ final class JssSummaryExtractor
 			$methods,
 			$properties,
 			$constants,
+			$class->kind === 'struct_decl',
 		);
 	}
 

@@ -58,6 +58,8 @@ final class ScppJssFrontendFirstSliceTest
 			$this->testJssNamespaceBlockTranspilesToExistingNamespaceSemantics();
 			$this->testJssParserBlocksReservedHelperRootsFromUserNamespaces();
 			$this->testJssParserSupportsPublicClassMembersOnly();
+			$this->testJssStructTranspilesToCleanPhs();
+			$this->testJssStructSummaryCarriesDeclarationKind();
 			$this->testJssParserRequiresFunctionAndMethodReturnTypes();
 			$this->testJssParserEnforcesConstructorShape();
 			$this->testJssParserRejectsLocalConstUntilSemanticsExist();
@@ -1020,6 +1022,47 @@ final class ScppJssFrontendFirstSliceTest
 		);
 	}
 
+	private function testJssStructTranspilesToCleanPhs(): void
+	{
+		$source = implode("\n", [
+			'struct CompactChildSpan {',
+			'    first_child_index: uint32 = 0;',
+			'    child_count: uint16 = 0;',
+			'    first_two: fixed_array_t<CompactChildSpan, 2>;',
+			'}',
+			'',
+		]);
+		$phs = (new JssTranspiler())->transpileToPhs($source);
+		$this->assertSame(
+			implode("\n", [
+				'struct CompactChildSpan {',
+				"\t" . 'uint32 $first_child_index = 0;',
+				"\t" . 'uint16 $child_count = 0;',
+				"\t" . 'fixed_array_t<CompactChildSpan, 2> $first_two;',
+				'}',
+				'',
+			]),
+			$phs,
+			'JSS struct syntax should emit clean PHS struct syntax'
+		);
+		$this->assertNotContains('@scpp-struct', $phs, 'JSS output should not expose internal struct carrier comments');
+	}
+
+	private function testJssStructSummaryCarriesDeclarationKind(): void
+	{
+		$source = implode("\n", [
+			'struct CompactChildSpan {',
+			'    first_child_index: uint32 = 0;',
+			'}',
+			'',
+		]);
+		$program = (new JssParser())->parse((new JssTokenizer())->tokenize($source));
+		$summary = (new JssSummaryExtractor())->summarize($program, 'main.jss');
+		$this->assertSame('CompactChildSpan', $summary['root_classes'][0]['name'] ?? null, 'JSS summary should expose struct declarations as class-summary entries');
+		$this->assertSame(true, $summary['root_classes'][0]['is_struct'] ?? null, 'JSS summary should mark struct declarations');
+		$this->assertSame('struct', $summary['root_classes'][0]['declaration_kind'] ?? null, 'JSS summary should carry struct declaration kind');
+	}
+
 	private function testJssParserRequiresFunctionAndMethodReturnTypes(): void
 	{
 		$source = implode("\n", [
@@ -1421,6 +1464,14 @@ final class ScppJssFrontendFirstSliceTest
 			return;
 		}
 		throw new RuntimeException($message . ' missing `' . $needle . '` in `' . $haystack . '`');
+	}
+
+	private function assertNotContains(string $needle, string $haystack, string $message): void
+	{
+		if (!str_contains($haystack, $needle)) {
+			return;
+		}
+		throw new RuntimeException($message . ' unexpectedly found `' . $needle . '` in `' . $haystack . '`');
 	}
 
 	private function assertParseFails(string $source, string $expectedMessage, string $message, ?string $expectedLocation = null): void

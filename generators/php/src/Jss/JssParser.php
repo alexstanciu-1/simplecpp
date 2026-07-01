@@ -139,6 +139,18 @@ final class JssParser
 			return $this->node('class_decl', ['name' => $name, 'extends' => $extends, 'members' => $members], $start);
 		}
 
+		if ($this->match('struct')) {
+			$start = $this->previous();
+			$name = $this->consume('identifier', 'Expected struct name.')->text;
+			$this->consume('{', 'Expected `{` after struct name.');
+			$members = [];
+			while (!$this->check('}') && !$this->check('eof')) {
+				$members[] = $this->parseStructField();
+			}
+			$this->consume('}', 'Expected `}` after struct body.');
+			return $this->node('struct_decl', ['name' => $name, 'members' => $members], $start);
+		}
+
 		if ($this->match('async')) {
 			$start = $this->previous();
 			$this->consume('function', 'Expected `function` after `async`.');
@@ -476,6 +488,26 @@ final class JssParser
 		return $this->node('property_decl', ['name' => $name, 'type' => $type, 'default' => $default, 'static' => $isStatic], $nameToken);
 	}
 
+	private function parseStructField(): JssNode
+	{
+		if ($this->check('identifier') && in_array($this->peek()->text, ['private', 'protected', 'static', 'const'], true)) {
+			$token = $this->peek();
+			throw new InputException('JSS struct field modifier `' . $token->text . '` is not supported at ' . $token->line . ':' . $token->column . '. Struct fields are public value fields.');
+		}
+		if ($this->check('identifier') && $this->peek()->text === 'public') {
+			$this->consume('identifier', 'Expected struct field modifier.');
+		}
+		$nameToken = $this->consume('identifier', 'Expected struct field name.');
+		$this->consume(':', 'Expected `:` after struct field name.');
+		$type = $this->parseTypeSpelling();
+		$default = null;
+		if ($this->match('=')) {
+			$default = $this->parseExpression();
+		}
+		$this->consume(';', 'Expected `;` after struct field declaration.');
+		return $this->node('property_decl', ['name' => $nameToken->text, 'type' => $type, 'default' => $default, 'static' => false], $nameToken);
+	}
+
 	private function parseQualifiedName(): string
 	{
 		$name = $this->consume('identifier', 'Expected qualified name.')->text;
@@ -665,15 +697,18 @@ final class JssParser
 	private function parseTypeSpelling(): string
 	{
 		$nullablePrefix = $this->match('?');
-		if (!$this->check('identifier') && !$this->check('void') && !$this->check('null')) {
+		if (!$this->check('identifier') && !$this->check('number') && !$this->check('void') && !$this->check('null')) {
 			$token = $this->peek();
 			throw new InputException('Expected type name after `:`. Found `' . $token->text . '` at ' . $token->line . ':' . $token->column . '.');
 		}
 		$type = $this->consume($this->peek()->kind, 'Expected type name after `:`.')->text;
 		if ($this->match('<')) {
-			$inner = $this->parseTypeSpelling();
+			$args = [$this->parseTypeSpelling()];
+			while ($this->match(',')) {
+				$args[] = $this->parseTypeSpelling();
+			}
 			$this->consume('>', 'Expected `>` after generic type argument.');
-			$type .= '<' . $inner . '>';
+			$type .= '<' . implode(', ', $args) . '>';
 		}
 		if ($this->match('|')) {
 			$right = $this->parseTypeSpelling();

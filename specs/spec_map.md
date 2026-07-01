@@ -71,6 +71,7 @@ The authority stack for the current project is:
 3. especially important top-level semantic authorities:
    - `specs/dynamic_types.md`
    - `specs/array_semantics.md`
+   - `specs/compact_layout_types.md`
    - `specs/count_empty_isset_contract.md`
    - `specs/async_await.md`
    - relevant builtin contracts under `specs/builtins/`

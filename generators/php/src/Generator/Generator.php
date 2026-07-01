@@ -46,6 +46,8 @@ final class Generator
 	private array $localTypeComments = [];
 	/** @var array<int, string> */
 	private array $scannerReturnAnnotationsByLine = [];
+	/** @var array<string,string> */
+	private array $declaredTypeKinds = [];
 	/** @var array<string, string> */
 	private array $declaredLocalTypes = [];
 	/** @var array<string, bool> */
@@ -159,6 +161,7 @@ final class Generator
 		$this->methodDecls = $this->collectMethodDecls($file);
 		$this->classDecls = $this->collectClassDecls($file);
 		$this->typeMapper->setEnumNames($this->collectEnumTypeNames());
+		$this->typeMapper->setDeclaredTypeKinds(array_replace($this->declaredTypeKinds, $this->collectLocalDeclaredTypeKinds()));
 		$this->validatePhpFile($file);
 		$this->throwIfErrors();
 
@@ -171,6 +174,7 @@ final class Generator
 		$this->appendHeaderLines($header, $this->code('#pragma once', 0));
 		$this->appendHeaderLines($header, $this->code('', 0));
 		$this->appendHeaderLines($header, $this->code('#include <scpp/lang/php.hpp>', 0));
+		$this->appendHeaderLines($header, $this->code('#include <cstddef>', 0));
 		$this->appendHeaderLines($header, $this->code('#include <type_traits>', 0));
 		$this->appendHeaderLines($header, $this->code('#include <utility>', 0));
 		foreach ($file->prologueIncludes as $includePath) {
@@ -245,6 +249,12 @@ final class Generator
 		$this->throwIfErrors();
 
 		return new CppFile($baseName, $this->flattenCodeText($header), $this->flattenCodeLineMap($header), $this->buildExportManifest($file), $this->flattenCodeText($source), $this->flattenCodeLineMap($source), $this->errors, $this->warnings);
+	}
+
+	/** @param array<string,string> $declaredTypeKinds */
+	public function setDeclaredTypeKinds(array $declaredTypeKinds): void
+	{
+		$this->declaredTypeKinds = $declaredTypeKinds;
 	}
 
 	private function code(string $text, int $srcLine = -1, int $srcColumn = -1, string $srcRelation = 'exact'): CodeBlock
@@ -439,8 +449,8 @@ final class Generator
 		if ($constants !== []) {
 			$headerLines[] = $this->code('', 0);
 		}
-		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className) {
-			$headerLines[] = $this->code('class ' . $className . ';', 0);
+		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className => $classKind) {
+			$headerLines[] = $this->code($classKind . ' ' . $className . ';', 0);
 		}
 		if ($classes !== []) {
 			$headerLines[] = $this->code('', 0);
@@ -619,6 +629,18 @@ final class Generator
 			$out[$class->name] = true;
 		}
 
+		return $out;
+	}
+
+	/** @return array<string,string> */
+	private function collectLocalDeclaredTypeKinds(): array
+	{
+		$out = [];
+		foreach ($this->classDecls as $name => $class) {
+			$kind = $class->isStruct ? 'struct' : ($class->isEnum ? 'enum' : 'class');
+			$out[ltrim($name, '\\')] = $kind;
+			$out[$class->name] = $kind;
+		}
 		return $out;
 	}
 
@@ -985,6 +1007,7 @@ final class Generator
 			$this->validateStatementList($function->statements, null);
 		}
 		foreach ($file->classes as $class) {
+			$this->validateClassDeclaration($class);
 			foreach ($class->properties as $property) {
 				$this->validatePropertyDeclaration($class, $property);
 			}
@@ -1010,6 +1033,7 @@ final class Generator
 				$this->validateStatementList($function->statements, $namespace->name);
 			}
 			foreach ($namespace->classes as $class) {
+				$this->validateClassDeclaration($class);
 				foreach ($class->properties as $property) {
 					$this->validatePropertyDeclaration($class, $property);
 				}
@@ -1023,6 +1047,139 @@ final class Generator
 				$this->currentClassName = $prevClassName;
 			}
 		}
+	}
+
+	private function validateClassDeclaration(ClassDecl $class): void
+	{
+		if ($class->isStruct) {
+			$this->validateStructDeclaration($class);
+			return;
+		}
+		if ($class->isEnum) {
+			$this->validateEnumDeclaration($class);
+		}
+	}
+
+	private function validateStructDeclaration(ClassDecl $class): void
+	{
+		if ($class->parentClass !== null) {
+			$this->errors[] = 'Struct ' . $class->name . ' cannot extend another class at line ' . $class->line . '.';
+		}
+		if ($class->interfaces !== []) {
+			$this->errors[] = 'Struct ' . $class->name . ' cannot implement interfaces at line ' . $class->line . '.';
+		}
+		if ($class->constants !== []) {
+			$this->errors[] = 'Struct ' . $class->name . ' cannot declare constants in the first struct slice at line ' . $class->line . '.';
+		}
+		if ($class->methods !== []) {
+			$this->errors[] = 'Struct ' . $class->name . ' cannot declare methods in the first struct slice at line ' . $class->line . '.';
+		}
+		if ($class->isAbstract || $class->isInterface) {
+			$this->errors[] = 'Struct ' . $class->name . ' must be a concrete value declaration at line ' . $class->line . '.';
+		}
+		foreach ($class->properties as $property) {
+			if ($property->visibility !== 'public') {
+				$this->errors[] = 'Struct field ' . $class->name . '::$' . $property->name . ' must be public at line ' . $property->line . '.';
+			}
+			if ($property->isStatic) {
+				$this->errors[] = 'Struct field ' . $class->name . '::$' . $property->name . ' cannot be static at line ' . $property->line . '.';
+			}
+			if ($property->type === null) {
+				$this->errors[] = 'Struct field ' . $class->name . '::$' . $property->name . ' requires an explicit first-slice field type at line ' . $property->line . '.';
+				continue;
+			}
+			if (!$this->isFirstSliceStructFieldType($property->type)) {
+				$this->errors[] = 'Struct field ' . $class->name . '::$' . $property->name . ' uses unsupported first-slice field type ' . $property->type . ' at line ' . $property->line . '.';
+			}
+		}
+	}
+
+	private function validateEnumDeclaration(ClassDecl $class): void
+	{
+		if ($class->enumBackingType === null) {
+			return;
+		}
+		$range = $this->enumBackingRange($class->enumBackingType);
+		if ($range === null) {
+			return;
+		}
+		foreach ($class->enumCases as $case) {
+			try {
+				$value = $this->enumCaseIntValue($case);
+			} catch (\RuntimeException $e) {
+				$this->errors[] = $e->getMessage() . ' at line ' . $case->line . '.';
+				continue;
+			}
+			if ($value < $range[0] || $value > $range[1]) {
+				$this->errors[] = 'Enum case ' . $class->name . '::' . $case->name . ' value ' . $value . ' is outside backing type ' . $class->enumBackingType . ' at line ' . $case->line . '.';
+			}
+		}
+	}
+
+	private function isFirstSliceStructFieldType(string $type): bool
+	{
+		$normalized = trim($type);
+		$lower = strtolower($normalized);
+		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
+			return true;
+		}
+		$kind = $this->typeMapper->declaredTypeKind($normalized);
+		if (in_array($kind, ['enum', 'struct'], true)) {
+			return true;
+		}
+		if (preg_match('/^(vector|vector_t|hash|hash_t|fixed_array|fixed_array_t)\s*<(.+)>$/', $normalized, $matches) === 1) {
+			$args = $this->splitTopLevelTypeArgs($matches[2]);
+			if ($args === []) {
+				return false;
+			}
+			if (in_array(strtolower($matches[1]), ['fixed_array', 'fixed_array_t'], true) && count($args) !== 2) {
+				return false;
+			}
+			if (in_array(strtolower($matches[1]), ['vector', 'vector_t'], true) && count($args) !== 1) {
+				return false;
+			}
+			if (in_array(strtolower($matches[1]), ['hash', 'hash_t'], true) && (count($args) < 1 || count($args) > 2)) {
+				return false;
+			}
+			return $this->isFirstSliceStructFieldType($args[0]);
+		}
+		return false;
+	}
+
+	/** @return list<string> */
+	private function splitTopLevelTypeArgs(string $args): array
+	{
+		$out = [];
+		$current = '';
+		$depth = 0;
+		$length = strlen($args);
+		for ($i = 0; $i < $length; $i++) {
+			$ch = $args[$i];
+			if ($ch === '<') {
+				$depth++;
+				$current .= $ch;
+				continue;
+			}
+			if ($ch === '>') {
+				$depth--;
+				$current .= $ch;
+				continue;
+			}
+			if ($ch === ',' && $depth === 0) {
+				$trimmed = trim($current);
+				if ($trimmed !== '') {
+					$out[] = $trimmed;
+				}
+				$current = '';
+				continue;
+			}
+			$current .= $ch;
+		}
+		$trimmed = trim($current);
+		if ($trimmed !== '') {
+			$out[] = $trimmed;
+		}
+		return $out;
 	}
 
 	/** @param list<ParamDecl> $params */
@@ -1529,8 +1686,8 @@ final class Generator
 		if ($constants !== []) {
 			$this->appendHeaderLines($header, $this->code('', 0));
 		}
-		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className) {
-			$this->appendHeaderLines($header, $this->code('class ' . $className . ';', 0));
+		foreach ($this->collectNamespaceForwardClassNames($classes, $functions, $namespacePhp) as $className => $classKind) {
+			$this->appendHeaderLines($header, $this->code($classKind . ' ' . $className . ';', 0));
 		}
 		if ($classes !== []) {
 			$this->appendHeaderLines($header, $this->code('', 0));
@@ -1553,13 +1710,13 @@ final class Generator
 		$this->currentNamespacePhp = $previousNamespacePhp;
 	}
 
-	/** @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @return list<string> */
+	/** @param list<ClassDecl> $classes @param list<FunctionDecl> $functions @return array<string,string> */
 	private function collectNamespaceForwardClassNames(array $classes, array $functions, ?string $namespacePhp): array
 	{
 		$out = [];
 		foreach ($classes as $class) {
 			if (!$class->isEnum) {
-				$out[$class->name] = true;
+				$out[$class->name] = $class->isStruct ? 'struct' : 'class';
 			}
 			if ($class->parentClass !== null) {
 				$this->collectForwardClassNamesFromType($class->parentClass, $out, $namespacePhp);
@@ -1594,12 +1751,11 @@ final class Generator
 			}
 		}
 
-		$names = array_keys($out);
-		sort($names);
-		return $names;
+		ksort($out);
+		return $out;
 	}
 
-	/** @param array<string, bool> $out */
+	/** @param array<string, string> $out */
 	private function collectForwardClassNamesFromType(string $type, array &$out, ?string $namespacePhp): void
 	{
 		$normalized = trim($this->qualifyDeclaredPhpType($type, $namespacePhp) ?? $type);
@@ -1633,7 +1789,10 @@ final class Generator
 		if (in_array($normalized, ['int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'fixed_array', 'fixed_array_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'int_t<>', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
 			return;
 		}
-		$out[$normalized] = true;
+		if (in_array($this->typeMapper->declaredTypeKind($normalized), ['enum', 'struct'], true)) {
+			return;
+		}
+		$out[$normalized] = $this->typeMapper->declaredTypeKind($normalized) === 'struct' ? 'struct' : 'class';
 	}
 
 	/** @param list<UseDecl> $uses @return list<string> */
@@ -1697,8 +1856,22 @@ final class Generator
 	private function enumStorageType(ClassDecl $class): string
 	{
 		$backingType = $class->enumBackingType !== null ? strtolower($class->enumBackingType) : null;
+		$explicitFixedStorage = match ($backingType) {
+			'int8' => 'std::int8_t',
+			'int16' => 'std::int16_t',
+			'int32' => 'std::int32_t',
+			'int64' => 'std::int64_t',
+			'uint8', 'byte' => 'std::uint8_t',
+			'uint16' => 'std::uint16_t',
+			'uint32' => 'std::uint32_t',
+			'uint64' => 'std::uint64_t',
+			default => null,
+		};
+		if ($explicitFixedStorage !== null) {
+			return $explicitFixedStorage;
+		}
 		if ($backingType !== null && $backingType !== 'int') {
-			throw new \RuntimeException('Only unit enums and int-backed enums are supported in the current enum lowering');
+			throw new \RuntimeException('Only unit enums and int/fixed-width int-backed enums are supported in the current enum lowering');
 		}
 
 		$minValue = 0;
@@ -1736,6 +1909,21 @@ final class Generator
 			return 'std::int32_t';
 		}
 		return 'std::int64_t';
+	}
+
+	private function enumBackingRange(string $backingType): ?array
+	{
+		return match (strtolower($backingType)) {
+			'int8' => [-128, 127],
+			'int16' => [-32768, 32767],
+			'int32' => [-2147483648, 2147483647],
+			'int64' => [PHP_INT_MIN, PHP_INT_MAX],
+			'uint8', 'byte' => [0, 255],
+			'uint16' => [0, 65535],
+			'uint32' => [0, 4294967295],
+			'uint64' => [0, PHP_INT_MAX],
+			default => null,
+		};
 	}
 
 	private function enumCaseIntValue(ConstantDecl $case): int
@@ -2042,10 +2230,45 @@ final class Generator
 		$this->appendHeaderLines($header, $this->code('', 0));
 	}
 
+	private function emitStructClass(array &$header, ClassDecl $class, ?string $namespacePhp): void
+	{
+		if ($class->parentClass !== null || $class->interfaces !== [] || $class->constants !== [] || $class->methods !== [] || $class->isAbstract || $class->isInterface) {
+			throw new \RuntimeException('Only simple structs with public instance fields are supported in the current struct lowering');
+		}
+
+		$this->appendHeaderLines($header, $this->code('struct ' . $class->name . ' {', $class->line));
+		foreach ($class->properties as $property) {
+			if ($property->visibility !== 'public' || $property->isStatic) {
+				throw new \RuntimeException('Only public instance fields are supported in the current struct lowering');
+			}
+			$initializer = $property->hasDefault
+				? $this->renderInitializerExpr($property->default, $property->type, $namespacePhp)
+				: null;
+			if ($property->type !== null) {
+				$type = $this->typeMapper->mapDeclaredType($property->type);
+			} elseif ($initializer !== null) {
+				$type = 'decltype(' . $initializer . ')';
+			} else {
+				$type = '/* ERROR missing-struct-field-type */';
+			}
+			$line = $type . ' ' . $this->cppIdentifier($property->name);
+			if ($initializer !== null) {
+				$line .= ' = ' . $initializer;
+			}
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . $line . ';', $property->line));
+		}
+		$this->appendHeaderLines($header, $this->code('};', $class->line));
+		$this->appendHeaderLines($header, $this->code('', 0));
+	}
+
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
 	{
 		if ($class->isEnum) {
 			$this->emitEnumClass($header, $class);
+			return;
+		}
+		if ($class->isStruct) {
+			$this->emitStructClass($header, $class, $namespacePhp);
 			return;
 		}
 		$extends = [];
@@ -6935,6 +7158,9 @@ final class Generator
 			if ($this->isScppDebugBreakCallName($nameExpr)) {
 				return $this->renderScppDebugBreakCallExpr($args, (int) ($expr->lineno ?? 0));
 			}
+			if ($this->isLayoutProbeCallName($nameExpr)) {
+				return $this->renderLayoutProbeCallExpr($nameExpr, $args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			$name = $functionDecl !== null
 				? $this->renderNameExpr($nameExpr, $namespacePhp)
@@ -7183,6 +7409,89 @@ final class Generator
 		}
 
 		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'take';
+	}
+
+	private function isLayoutProbeCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+		return in_array(strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')), [
+			'layout_sizeof',
+			'layout_alignof',
+			'layout_offsetof',
+			'layout_field_sizeof',
+		], true);
+	}
+
+	private function renderLayoutProbeCallExpr(mixed $nameExpr, array $args, ?string $namespacePhp, int $line): string
+	{
+		$name = strtolower(ltrim((string) ($nameExpr->children['name'] ?? ''), '\\'));
+		$typeName = $this->renderLayoutProbeTypeArg($args[0] ?? null, $namespacePhp, $line);
+		if ($typeName === null) {
+			return 'static_cast<int_t<> >(0)';
+		}
+		if ($name === 'layout_sizeof') {
+			if (count($args) !== 1) {
+				$this->errors[] = 'layout_sizeof(TypeName) expects exactly one type argument at line ' . $line . '.';
+			}
+			return 'static_cast<int_t<> >(sizeof(' . $typeName . '))';
+		}
+		if ($name === 'layout_alignof') {
+			if (count($args) !== 1) {
+				$this->errors[] = 'layout_alignof(TypeName) expects exactly one type argument at line ' . $line . '.';
+			}
+			return 'static_cast<int_t<> >(alignof(' . $typeName . '))';
+		}
+		$fieldName = $this->renderLayoutProbeFieldArg($args[1] ?? null, $line);
+		if ($fieldName === null) {
+			return 'static_cast<int_t<> >(0)';
+		}
+		if ($name === 'layout_offsetof') {
+			if (count($args) !== 2) {
+				$this->errors[] = 'layout_offsetof(TypeName, field_name) expects exactly two arguments at line ' . $line . '.';
+			}
+			return 'static_cast<int_t<> >(offsetof(' . $typeName . ', ' . $fieldName . '))';
+		}
+		if (count($args) !== 2) {
+			$this->errors[] = 'layout_field_sizeof(TypeName, field_name) expects exactly two arguments at line ' . $line . '.';
+		}
+		return 'static_cast<int_t<> >(sizeof(std::declval<' . $typeName . '>().' . $fieldName . '))';
+	}
+
+	private function renderLayoutProbeTypeArg(mixed $arg, ?string $namespacePhp, int $line): ?string
+	{
+		if (is_object($arg) && ($arg->kind ?? null) === AstKind::CONST) {
+			$nameNode = $arg->children['name'] ?? null;
+			$name = is_object($nameNode) ? (string) ($nameNode->children['name'] ?? '') : (string) $nameNode;
+			if ($name !== '') {
+				return $this->typeMapper->mapClassName($this->qualifyDeclaredPhpType($name, $namespacePhp) ?? $name);
+			}
+		}
+		if (is_object($arg) && ($arg->kind ?? null) === AstKind::CLASS_CONST) {
+			$classNode = $arg->children['class'] ?? null;
+			if (strtolower((string) ($arg->children['const'] ?? '')) === 'class') {
+				return $this->renderClassName($classNode, $namespacePhp);
+			}
+		}
+		$this->errors[] = 'Layout probes expect a type name argument at line ' . $line . '. Use layout_sizeof(TypeName) or layout_sizeof(TypeName::class).';
+		return null;
+	}
+
+	private function renderLayoutProbeFieldArg(mixed $arg, int $line): ?string
+	{
+		if (is_object($arg) && ($arg->kind ?? null) === AstKind::CONST) {
+			$nameNode = $arg->children['name'] ?? null;
+			$name = is_object($nameNode) ? (string) ($nameNode->children['name'] ?? '') : (string) $nameNode;
+			if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $name) === 1) {
+				return $this->cppIdentifier($name);
+			}
+		}
+		if (is_string($arg) && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $arg) === 1) {
+			return $this->cppIdentifier($arg);
+		}
+		$this->errors[] = 'Layout field probes expect a bare field name at line ' . $line . '.';
+		return null;
 	}
 
 	private function isAsyncWaitCallName(mixed $expr): bool
@@ -7969,6 +8278,9 @@ final class Generator
 			if ($this->isTakeCallName($nameExpr)) {
 				return 'bool_t';
 			}
+			if ($this->isLayoutProbeCallName($nameExpr)) {
+				return 'int_t<>';
+			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			if ($functionDecl !== null && $functionDecl->returnType !== null) {
 				return $this->typeMapper->mapReturnType($functionDecl->returnType, $functionDecl->returnsByReference);
@@ -8045,6 +8357,9 @@ final class Generator
 				$classDecl = $this->classDecls[$phpClass] ?? $this->classDecls[basename(str_replace('\\', '/', $phpClass))] ?? null;
 				if ($classDecl instanceof ClassDecl && $classDecl->isEnum) {
 					return $this->typeMapper->mapDeclaredType($classDecl->name);
+				}
+				if ($this->typeMapper->declaredTypeKind($phpClass) === 'enum') {
+					return $this->typeMapper->mapDeclaredType($phpClass);
 				}
 			}
 			return 'auto';

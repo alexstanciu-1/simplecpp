@@ -120,6 +120,21 @@ final class JssEmitter
 			$lines[] = '}';
 			return implode("\n", $lines);
 		}
+		if ($statement->kind === 'struct_decl') {
+			$name = (string) $statement->fields['name'];
+			$this->classNames[$name] = true;
+			if ($this->currentNamespace !== '') {
+				$this->classNames[$this->currentNamespace . '\\' . $name] = true;
+			}
+			$lines = ['struct ' . $name . ' {'];
+			foreach (($statement->fields['members'] ?? []) as $member) {
+				if ($member instanceof JssNode) {
+					$lines[] = "\t" . str_replace("\n", "\n\t", $this->emitStructMember($member));
+				}
+			}
+			$lines[] = '}';
+			return implode("\n", $lines);
+		}
 		if ($statement->kind === 'function_decl') {
 			$params = $this->emitParameters($statement->fields['params'] ?? []);
 			$returnType = is_string($statement->fields['return_type'] ?? null) ? ': ' . $this->emitType((string) $statement->fields['return_type']) : '';
@@ -311,6 +326,18 @@ final class JssEmitter
 			return $this->emitMethodLike((string) $member->fields['name'], $member->fields['params'] ?? [], $returnType, $member->fields['body'] ?? [], ($member->fields['static'] ?? false) === true);
 		}
 		return '';
+	}
+
+	private function emitStructMember(JssNode $member): string
+	{
+		if ($member->kind !== 'property_decl') {
+			return '';
+		}
+		$line = $this->emitType((string) $member->fields['type']) . ' $' . (string) $member->fields['name'];
+		if (($member->fields['default'] ?? null) instanceof JssNode) {
+			$line .= ' = ' . $this->emitExpression($member->fields['default']);
+		}
+		return $line . ';';
 	}
 
 	private function emitMethodLike(string $name, mixed $params, ?string $returnType, mixed $body, bool $isStatic = false): string
