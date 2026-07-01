@@ -13,6 +13,7 @@ require_once __DIR__ . '/../generators/php/src/PreTokenizer/LexedSource.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/PreTokenizedInput.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/TokenSiteScanner.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/StructSyntaxRewriter.php';
+require_once __DIR__ . '/../generators/php/src/PreTokenizer/UnionSyntaxRewriter.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/EnumBackingSyntaxRewriter.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/AsyncSyntaxRewriter.php';
 require_once __DIR__ . '/../generators/php/src/PreTokenizer/PreTokenizer.php';

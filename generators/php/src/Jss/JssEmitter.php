@@ -135,6 +135,21 @@ final class JssEmitter
 			$lines[] = '}';
 			return implode("\n", $lines);
 		}
+		if ($statement->kind === 'union_decl') {
+			$name = (string) $statement->fields['name'];
+			$this->classNames[$name] = true;
+			if ($this->currentNamespace !== '') {
+				$this->classNames[$this->currentNamespace . '\\' . $name] = true;
+			}
+			$lines = ['union ' . $name . ' {'];
+			foreach (($statement->fields['members'] ?? []) as $member) {
+				if ($member instanceof JssNode) {
+					$lines[] = "\t" . str_replace("\n", "\n\t", $this->emitStructMember($member));
+				}
+			}
+			$lines[] = '}';
+			return implode("\n", $lines);
+		}
 		if ($statement->kind === 'function_decl') {
 			$params = $this->emitParameters($statement->fields['params'] ?? []);
 			$returnType = is_string($statement->fields['return_type'] ?? null) ? ': ' . $this->emitType((string) $statement->fields['return_type']) : '';

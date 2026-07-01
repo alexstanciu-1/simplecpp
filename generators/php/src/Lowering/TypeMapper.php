@@ -152,7 +152,7 @@ final class TypeMapper
 			}
 			if ($this->isObjectType($inner)) {
 				$kind = $this->declaredTypeKind($inner);
-				return ($kind === 'enum' || $kind === 'struct')
+				return ($kind === 'enum' || $kind === 'struct' || $kind === 'union')
 					? $this->mapUserTypeName($inner)
 					: ($this->isEnumType($inner) ? $this->mapUserTypeName($inner) : 'shared_p<' . $this->mapUserTypeName($inner) . '>');
 			}
@@ -165,7 +165,7 @@ final class TypeMapper
 
 		if ($this->isObjectType($phpType)) {
 			$kind = $this->declaredTypeKind($phpType);
-			return ($kind === 'enum' || $kind === 'struct')
+			return ($kind === 'enum' || $kind === 'struct' || $kind === 'union')
 				? $this->mapUserTypeName($phpType)
 				: ($this->isEnumType($phpType) ? $this->mapUserTypeName($phpType) : 'shared_p<' . $this->mapUserTypeName($phpType) . '>');
 		}

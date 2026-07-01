@@ -151,6 +151,18 @@ final class JssParser
 			return $this->node('struct_decl', ['name' => $name, 'members' => $members], $start);
 		}
 
+		if ($this->match('union')) {
+			$start = $this->previous();
+			$name = $this->consume('identifier', 'Expected union name.')->text;
+			$this->consume('{', 'Expected `{` after union name.');
+			$members = [];
+			while (!$this->check('}') && !$this->check('eof')) {
+				$members[] = $this->parseUnionField();
+			}
+			$this->consume('}', 'Expected `}` after union body.');
+			return $this->node('union_decl', ['name' => $name, 'members' => $members], $start);
+		}
+
 		if ($this->match('async')) {
 			$start = $this->previous();
 			$this->consume('function', 'Expected `function` after `async`.');
@@ -505,6 +517,26 @@ final class JssParser
 			$default = $this->parseExpression();
 		}
 		$this->consume(';', 'Expected `;` after struct field declaration.');
+		return $this->node('property_decl', ['name' => $nameToken->text, 'type' => $type, 'default' => $default, 'static' => false], $nameToken);
+	}
+
+	private function parseUnionField(): JssNode
+	{
+		if ($this->check('identifier') && in_array($this->peek()->text, ['private', 'protected', 'static', 'const'], true)) {
+			$token = $this->peek();
+			throw new InputException('JSS union field modifier `' . $token->text . '` is not supported at ' . $token->line . ':' . $token->column . '. Union fields are public payload fields.');
+		}
+		if ($this->check('identifier') && $this->peek()->text === 'public') {
+			$this->consume('identifier', 'Expected union field modifier.');
+		}
+		$nameToken = $this->consume('identifier', 'Expected union field name.');
+		$this->consume(':', 'Expected `:` after union field name.');
+		$type = $this->parseTypeSpelling();
+		$default = null;
+		if ($this->match('=')) {
+			$default = $this->parseExpression();
+		}
+		$this->consume(';', 'Expected `;` after union field declaration.');
 		return $this->node('property_decl', ['name' => $nameToken->text, 'type' => $type, 'default' => $default, 'static' => false], $nameToken);
 	}
 

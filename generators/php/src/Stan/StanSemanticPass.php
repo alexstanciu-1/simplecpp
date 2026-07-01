@@ -26,6 +26,7 @@ final class StanSemanticPass
 		$overrideDiagnostics = $this->diagnosticCollector->collectOverrideDiagnostics($fileSummaries, $symbolIndex, $projectRoot);
 		$overrideDiagnostics = array_merge($overrideDiagnostics, $this->diagnosticCollector->collectInterfaceContractDiagnostics($fileSummaries, $symbolIndex, $projectRoot));
 		$overrideDiagnostics = array_merge($overrideDiagnostics, $this->diagnosticCollector->collectStructContractDiagnostics($fileSummaries, $symbolIndex, $projectRoot));
+		$overrideDiagnostics = array_merge($overrideDiagnostics, $this->diagnosticCollector->collectUnionContractDiagnostics($fileSummaries, $symbolIndex, $projectRoot));
 		$returnChainTypes = $this->expressionTypeResolver->resolveReturnChains($fileSummaries, $symbolIndex);
 		$returnChainDiagnostics = $this->expressionTypeResolver->collectReturnChainDiagnostics($fileSummaries, $symbolIndex);
 		$expressionChainTypes = $this->expressionTypeResolver->resolveExpressionChains($fileSummaries, $symbolIndex);

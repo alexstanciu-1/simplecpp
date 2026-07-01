@@ -48,7 +48,7 @@ final class DeclarationKindCatalogBuilder
 				continue;
 			}
 			$namespace = trim((string) ($class['namespace'] ?? ''), '\\');
-			$kind = strtolower(trim((string) ($class['declaration_kind'] ?? ((bool) ($class['is_struct'] ?? false) ? 'struct' : ((bool) ($class['is_enum'] ?? false) ? 'enum' : 'class')))));
+			$kind = strtolower(trim((string) ($class['declaration_kind'] ?? ((bool) ($class['is_union'] ?? false) ? 'union' : ((bool) ($class['is_struct'] ?? false) ? 'struct' : ((bool) ($class['is_enum'] ?? false) ? 'enum' : 'class'))))));
 			if (!in_array($kind, ['class', 'enum', 'struct', 'union'], true)) {
 				$kind = 'class';
 			}

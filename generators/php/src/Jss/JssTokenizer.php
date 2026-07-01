@@ -193,7 +193,7 @@ final class JssTokenizer
 			$this->advance($source[$offset], $offset, $line, $column);
 		}
 		$text = substr($source, $start, $offset - $start);
-		$kind = in_array($text, ['let', 'const', 'function', 'async', 'await', 'return', 'break', 'continue', 'class', 'struct', 'extends', 'constructor', 'new', 'namespace', 'use', 'as', 'static', 'if', 'else', 'while', 'do', 'for', 'of', 'switch', 'case', 'default', 'true', 'false', 'null', 'void', 'this', 'delete', 'import', 'export'], true) ? $text : 'identifier';
+		$kind = in_array($text, ['let', 'const', 'function', 'async', 'await', 'return', 'break', 'continue', 'class', 'struct', 'union', 'extends', 'constructor', 'new', 'namespace', 'use', 'as', 'static', 'if', 'else', 'while', 'do', 'for', 'of', 'switch', 'case', 'default', 'true', 'false', 'null', 'void', 'this', 'delete', 'import', 'export'], true) ? $text : 'identifier';
 		return new JssToken($kind, $text, $start, $startLine, $startColumn);
 	}
 

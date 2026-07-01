@@ -2,7 +2,7 @@
 Doc Status: normative
 
 Status: Active
-Purpose: define current Simple C++ compact-layout source semantics for first-slice value structs, exact-backed enums, and layout probes.
+Purpose: define current Simple C++ compact-layout source semantics for first-slice value structs, restricted payload unions, exact-backed enums, and layout probes.
 
 This document is top-level language authority for compact layout behavior. It
 does not define unrestricted C++ layout control, packed structs, arbitrary
@@ -44,7 +44,42 @@ struct CompactChildSpan {
 
 JSS output must not expose internal parser bridge comments or carrier metadata.
 
-### 1.3 Fixed-Backed Enums
+### 1.3 PHS Unions
+
+PHS supports clean restricted `union` declarations:
+
+```phs
+union ExpressionPayload {
+	uint32 $int_value;
+	CompactChildSpan $span;
+}
+```
+
+Union declarations are source-level value-layout declarations. They are not
+class declarations with different spelling.
+
+Union fields are public by default. Explicit `public` is accepted as equivalent
+to the default public field.
+
+The implementation may internally bridge unsupported parser syntax through
+temporary carrier forms, but authored `.phs` files should use the clean
+`union` form above.
+
+### 1.4 JSS Unions
+
+JSS supports clean restricted union declarations and lowers them to clean PHS
+syntax:
+
+```js
+union ExpressionPayload {
+	int_value: uint32;
+	span: CompactChildSpan;
+}
+```
+
+JSS output must not expose internal parser bridge comments or carrier metadata.
+
+### 1.5 Fixed-Backed Enums
 
 PHS supports fixed integer enum backing:
 
@@ -133,24 +168,64 @@ Generated C++ enum storage must match the source backing exactly. For example,
 
 Unit enums and existing int-backed behavior continue under their current rules.
 
-## 4. Project Composition
+## 4. Union Semantics
 
-Within a project, declaration-kind metadata distinguishes `class`, `enum`, and
-`struct` declarations for lowering. This metadata is limited declaration
-metadata, not general expression type inference.
+Restricted payload unions lower as generated C++ `union` declarations.
 
-Cross-file enum and struct fields must lower according to their declaration
+### 4.1 First-Slice Union Members
+
+The first slice supports public instance payload fields only.
+
+Rejected in current unions:
+
+- methods
+- constants
+- inheritance
+- implemented interfaces
+- private or protected fields
+- static fields
+- field default initializers
+- class/object fields
+- ownership/reference wrappers
+- `mixed`
+- `dynamic`
+- nullable fields
+- container fields
+- nested union fields
+
+### 4.2 First-Slice Payload Types
+
+Current union payload fields may use:
+
+- `bool`
+- fixed-width integer aliases: `int8`, `int16`, `int32`, `int64`,
+  `uint8`, `byte`, `uint16`, `uint32`, `uint64`
+- fixed-backed enums
+- first-slice structs
+
+Union fields intentionally omit default initializers. Source code that needs a
+tagged payload should store the tag separately, typically as a fixed-backed
+enum field in an enclosing first-slice struct.
+
+## 5. Project Composition
+
+Within a project, declaration-kind metadata distinguishes `class`, `enum`,
+`struct`, and `union` declarations for lowering. This metadata is limited
+declaration metadata, not general expression type inference.
+
+Cross-file enum, struct, and union fields must lower according to their declaration
 kind:
 
 - enum fields lower as raw enum storage;
 - struct fields lower as raw value storage;
+- union fields lower as raw union value storage;
 - ordinary class fields continue to use the current object/reference-oriented
   storage rules.
 
 Generated project force-include headers must order generated headers so by-value
-struct and enum uses see complete definitions before use.
+struct, union, and enum uses see complete definitions before use.
 
-## 5. Layout Probes
+## 6. Layout Probes
 
 Layout probes expose generated C++ layout facts as integer expressions.
 
@@ -170,11 +245,10 @@ Layout probes are compile-time generated-layout observations. They are intended
 for tests, assertions, diagnostics, and compact-row validation inside generated
 Simple C++ projects. They are not a portable external ABI promise.
 
-## 6. Deferred Compact Layout Features
+## 7. Deferred Compact Layout Features
 
 The following are not current first-slice semantics:
 
-- restricted payload unions
 - explicit packing controls
 - user-authored alignment attributes
 - ABI compatibility guarantees outside generated Simple C++ projects

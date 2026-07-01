@@ -367,6 +367,7 @@ final class IrBuilder
 			enumBackingType: $this->readEnumBackingType($children['type'] ?? null, $children['docComment'] ?? null),
 			enumCases: $enumCases,
 			isStruct: $this->hasStructTag($children['docComment'] ?? null),
+			isUnion: $this->hasUnionTag($children['docComment'] ?? null),
 			isLibExport: $this->hasLibExportTag($children['docComment'] ?? null),
 		);
 	}
@@ -466,6 +467,14 @@ final class IrBuilder
 			return false;
 		}
 		return preg_match('/@scpp-struct\b/', $docComment) === 1;
+	}
+
+	private function hasUnionTag(mixed $docComment): bool
+	{
+		if (!is_string($docComment) || trim($docComment) === '') {
+			return false;
+		}
+		return preg_match('/@scpp-union\b/', $docComment) === 1;
 	}
 
 	private function readEnumBackingType(mixed $typeNode, mixed $docComment): ?string

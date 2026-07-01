@@ -60,6 +60,8 @@ final class ScppJssFrontendFirstSliceTest
 			$this->testJssParserSupportsPublicClassMembersOnly();
 			$this->testJssStructTranspilesToCleanPhs();
 			$this->testJssStructSummaryCarriesDeclarationKind();
+			$this->testJssUnionTranspilesToCleanPhs();
+			$this->testJssUnionSummaryCarriesDeclarationKind();
 			$this->testJssParserRequiresFunctionAndMethodReturnTypes();
 			$this->testJssParserEnforcesConstructorShape();
 			$this->testJssParserRejectsLocalConstUntilSemanticsExist();
@@ -1061,6 +1063,45 @@ final class ScppJssFrontendFirstSliceTest
 		$this->assertSame('CompactChildSpan', $summary['root_classes'][0]['name'] ?? null, 'JSS summary should expose struct declarations as class-summary entries');
 		$this->assertSame(true, $summary['root_classes'][0]['is_struct'] ?? null, 'JSS summary should mark struct declarations');
 		$this->assertSame('struct', $summary['root_classes'][0]['declaration_kind'] ?? null, 'JSS summary should carry struct declaration kind');
+	}
+
+	private function testJssUnionTranspilesToCleanPhs(): void
+	{
+		$source = implode("\n", [
+			'union ExpressionPayload {',
+			'    int_value: uint32;',
+			'    small_value: uint16;',
+			'}',
+			'',
+		]);
+		$phs = (new JssTranspiler())->transpileToPhs($source);
+		$this->assertSame(
+			implode("\n", [
+				'union ExpressionPayload {',
+				"\t" . 'uint32 $int_value;',
+				"\t" . 'uint16 $small_value;',
+				'}',
+				'',
+			]),
+			$phs,
+			'JSS union syntax should emit clean PHS union syntax'
+		);
+		$this->assertNotContains('@scpp-union', $phs, 'JSS output should not expose internal union carrier comments');
+	}
+
+	private function testJssUnionSummaryCarriesDeclarationKind(): void
+	{
+		$source = implode("\n", [
+			'union ExpressionPayload {',
+			'    int_value: uint32;',
+			'}',
+			'',
+		]);
+		$program = (new JssParser())->parse((new JssTokenizer())->tokenize($source));
+		$summary = (new JssSummaryExtractor())->summarize($program, 'main.jss');
+		$this->assertSame('ExpressionPayload', $summary['root_classes'][0]['name'] ?? null, 'JSS summary should expose union declarations as class-summary entries');
+		$this->assertSame(true, $summary['root_classes'][0]['is_union'] ?? null, 'JSS summary should mark union declarations');
+		$this->assertSame('union', $summary['root_classes'][0]['declaration_kind'] ?? null, 'JSS summary should carry union declaration kind');
 	}
 
 	private function testJssParserRequiresFunctionAndMethodReturnTypes(): void

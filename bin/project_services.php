@@ -4089,7 +4089,12 @@ function write_project_forward_declaration_header(string $generatedDir, array $h
 			if (($decl['kind'] ?? 'class') === 'enum') {
 				continue;
 			}
-			$lines[] = ($decl['kind'] === 'struct' ? 'struct ' : 'class ') . $decl['name'] . ';';
+			$prefix = match ($decl['kind'] ?? 'class') {
+				'struct' => 'struct ',
+				'union' => 'union ',
+				default => 'class ',
+			};
+			$lines[] = $prefix . $decl['name'] . ';';
 		}
 		$lines[] = '}';
 		$lines[] = '';
@@ -4226,16 +4231,21 @@ function read_project_header_class_metadata(string $headerPath): array
 	}
 	$namespace = $namespaceMatch[1];
 	$classes = [];
-	if (preg_match_all('/^(class|struct)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))?\s*([;{])/m', $contents, $matches, PREG_SET_ORDER) !== false) {
+	if (preg_match_all('/^(class|struct|union)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*public\s+([A-Za-z_][A-Za-z0-9_:]*))?\s*([;{])/m', $contents, $matches, PREG_SET_ORDER) !== false) {
 		foreach ($matches as $match) {
 			if (($match[4] ?? '') !== '{') {
 				continue;
 			}
+			$kind = match ($match[1]) {
+				'struct' => 'struct',
+				'union' => 'union',
+				default => 'class',
+			};
 			$classes[] = [
 				'namespace' => $namespace,
 				'name' => $match[2],
 				'parent' => isset($match[3]) && $match[3] !== '' ? $match[3] : null,
-				'kind' => $match[1] === 'struct' ? 'struct' : 'class',
+				'kind' => $kind,
 			];
 		}
 	}
@@ -6495,6 +6505,7 @@ function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 
 		$repoRoot . '/generators/php/src/Analysis/DeclarationKindCatalogBuilder.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/PreTokenizer.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/StructSyntaxRewriter.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/UnionSyntaxRewriter.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/EnumBackingSyntaxRewriter.php',
 		$repoRoot . '/generators/php/src/Jss/JssToken.php',
 		$repoRoot . '/generators/php/src/Jss/JssNode.php',
@@ -6724,6 +6735,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'interface_contract_mismatch',
 		'abstract_contract_mismatch',
 		'struct_contract_mismatch',
+		'union_contract_mismatch',
 	], true)) {
 		return 'compile-errors';
 	}

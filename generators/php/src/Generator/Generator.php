@@ -637,7 +637,7 @@ final class Generator
 	{
 		$out = [];
 		foreach ($this->classDecls as $name => $class) {
-			$kind = $class->isStruct ? 'struct' : ($class->isEnum ? 'enum' : 'class');
+			$kind = $class->isUnion ? 'union' : ($class->isStruct ? 'struct' : ($class->isEnum ? 'enum' : 'class'));
 			$out[ltrim($name, '\\')] = $kind;
 			$out[$class->name] = $kind;
 		}
@@ -1055,6 +1055,10 @@ final class Generator
 			$this->validateStructDeclaration($class);
 			return;
 		}
+		if ($class->isUnion) {
+			$this->validateUnionDeclaration($class);
+			return;
+		}
 		if ($class->isEnum) {
 			$this->validateEnumDeclaration($class);
 		}
@@ -1124,7 +1128,7 @@ final class Generator
 			return true;
 		}
 		$kind = $this->typeMapper->declaredTypeKind($normalized);
-		if (in_array($kind, ['enum', 'struct'], true)) {
+		if (in_array($kind, ['enum', 'struct', 'union'], true)) {
 			return true;
 		}
 		if (preg_match('/^(vector|vector_t|hash|hash_t|fixed_array|fixed_array_t)\s*<(.+)>$/', $normalized, $matches) === 1) {
@@ -1144,6 +1148,54 @@ final class Generator
 			return $this->isFirstSliceStructFieldType($args[0]);
 		}
 		return false;
+	}
+
+	private function validateUnionDeclaration(ClassDecl $class): void
+	{
+		if ($class->parentClass !== null) {
+			$this->errors[] = 'Union ' . $class->name . ' cannot extend another class at line ' . $class->line . '.';
+		}
+		if ($class->interfaces !== []) {
+			$this->errors[] = 'Union ' . $class->name . ' cannot implement interfaces at line ' . $class->line . '.';
+		}
+		if ($class->constants !== []) {
+			$this->errors[] = 'Union ' . $class->name . ' cannot declare constants in the first union slice at line ' . $class->line . '.';
+		}
+		if ($class->methods !== []) {
+			$this->errors[] = 'Union ' . $class->name . ' cannot declare methods in the first union slice at line ' . $class->line . '.';
+		}
+		if ($class->isAbstract || $class->isInterface) {
+			$this->errors[] = 'Union ' . $class->name . ' must be a concrete value declaration at line ' . $class->line . '.';
+		}
+		foreach ($class->properties as $property) {
+			if ($property->visibility !== 'public') {
+				$this->errors[] = 'Union field ' . $class->name . '::$' . $property->name . ' must be public at line ' . $property->line . '.';
+			}
+			if ($property->isStatic) {
+				$this->errors[] = 'Union field ' . $class->name . '::$' . $property->name . ' cannot be static at line ' . $property->line . '.';
+			}
+			if ($property->hasDefault) {
+				$this->errors[] = 'Union field ' . $class->name . '::$' . $property->name . ' cannot declare a default initializer in the first union slice at line ' . $property->line . '.';
+			}
+			if ($property->type === null) {
+				$this->errors[] = 'Union field ' . $class->name . '::$' . $property->name . ' requires an explicit first-slice payload type at line ' . $property->line . '.';
+				continue;
+			}
+			if (!$this->isFirstSliceUnionFieldType($property->type)) {
+				$this->errors[] = 'Union field ' . $class->name . '::$' . $property->name . ' uses unsupported first-slice payload type ' . $property->type . ' at line ' . $property->line . '.';
+			}
+		}
+	}
+
+	private function isFirstSliceUnionFieldType(string $type): bool
+	{
+		$normalized = trim($type);
+		$lower = strtolower($normalized);
+		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
+			return true;
+		}
+		$kind = $this->typeMapper->declaredTypeKind($normalized);
+		return in_array($kind, ['enum', 'struct'], true);
 	}
 
 	/** @return list<string> */
@@ -1716,7 +1768,7 @@ final class Generator
 		$out = [];
 		foreach ($classes as $class) {
 			if (!$class->isEnum) {
-				$out[$class->name] = $class->isStruct ? 'struct' : 'class';
+				$out[$class->name] = $class->isUnion ? 'union' : ($class->isStruct ? 'struct' : 'class');
 			}
 			if ($class->parentClass !== null) {
 				$this->collectForwardClassNamesFromType($class->parentClass, $out, $namespacePhp);
@@ -1789,10 +1841,11 @@ final class Generator
 		if (in_array($normalized, ['int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'fixed_array', 'fixed_array_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'int_t<>', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
 			return;
 		}
-		if (in_array($this->typeMapper->declaredTypeKind($normalized), ['enum', 'struct'], true)) {
+		if (in_array($this->typeMapper->declaredTypeKind($normalized), ['enum', 'struct', 'union'], true)) {
 			return;
 		}
-		$out[$normalized] = $this->typeMapper->declaredTypeKind($normalized) === 'struct' ? 'struct' : 'class';
+		$declaredKind = $this->typeMapper->declaredTypeKind($normalized);
+		$out[$normalized] = $declaredKind === 'union' ? 'union' : ($declaredKind === 'struct' ? 'struct' : 'class');
 	}
 
 	/** @param list<UseDecl> $uses @return list<string> */
@@ -2261,6 +2314,26 @@ final class Generator
 		$this->appendHeaderLines($header, $this->code('', 0));
 	}
 
+	private function emitUnionClass(array &$header, ClassDecl $class): void
+	{
+		if ($class->parentClass !== null || $class->interfaces !== [] || $class->constants !== [] || $class->methods !== [] || $class->isAbstract || $class->isInterface) {
+			throw new \RuntimeException('Only simple unions with public instance payload fields are supported in the current union lowering');
+		}
+
+		$this->appendHeaderLines($header, $this->code('union ' . $class->name . ' {', $class->line));
+		foreach ($class->properties as $property) {
+			if ($property->visibility !== 'public' || $property->isStatic || $property->hasDefault) {
+				throw new \RuntimeException('Only public instance payload fields without defaults are supported in the current union lowering');
+			}
+			$type = $property->type !== null
+				? $this->typeMapper->mapDeclaredType($property->type)
+				: '/* ERROR missing-union-field-type */';
+			$this->appendHeaderLines($header, $this->code($this->indent(1) . $type . ' ' . $this->cppIdentifier($property->name) . ';', $property->line));
+		}
+		$this->appendHeaderLines($header, $this->code('};', $class->line));
+		$this->appendHeaderLines($header, $this->code('', 0));
+	}
+
 	private function emitClass(array &$header, array &$source, ClassDecl $class, ?string $namespacePhp): void
 	{
 		if ($class->isEnum) {
@@ -2269,6 +2342,10 @@ final class Generator
 		}
 		if ($class->isStruct) {
 			$this->emitStructClass($header, $class, $namespacePhp);
+			return;
+		}
+		if ($class->isUnion) {
+			$this->emitUnionClass($header, $class);
 			return;
 		}
 		$extends = [];

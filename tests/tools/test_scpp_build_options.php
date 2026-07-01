@@ -88,6 +88,8 @@ final class ScppBuildOptionsTest
 			$this->assertStructValidationRejectsClassLikeFeatures();
 			$this->assertFixedWidthEnumBackingLowersExactly();
 			$this->assertLayoutProbesLowerToCppOperators();
+			$this->assertUnionPayloadsLowerAndProbeLayout();
+			$this->assertUnionValidationRejectsClassLikeFeatures();
 			$this->assertEntryOverrideCanSelectAnotherFile();
 
 			echo "PASS: scpp build options\n";
@@ -609,6 +611,100 @@ final class ScppBuildOptionsTest
 		$this->assertContains('alignof(CompactChildSpan)', $mainCpp, 'layout_alignof should lower to C++ alignof');
 		$this->assertContains('offsetof(CompactChildSpan, child_count)', $mainCpp, 'layout_offsetof should lower to C++ offsetof');
 		$this->assertContains('sizeof(std::declval<CompactChildSpan>().child_count)', $mainCpp, 'layout_field_sizeof should lower to C++ field sizeof');
+	}
+
+	private function assertUnionPayloadsLowerAndProbeLayout(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/union_payload_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/payload.phs', implode("\n", [
+			'struct PairPayload {',
+			'	uint16 $left = 0;',
+			'	uint16 $right = 0;',
+			'}',
+			'union ExpressionPayload {',
+			'	uint32 $int_value;',
+			'	PairPayload $pair;',
+			'}',
+			'',
+		]));
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'struct Row {',
+			'	ExpressionPayload $payload;',
+			'}',
+			'$payload_size int = layout_sizeof(ExpressionPayload);',
+			'$payload_align int = layout_alignof(ExpressionPayload);',
+			'echo $payload_size, " ", $payload_align, "\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'union_payload_project', 'main.phs');
+
+		scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', ['disable_stan' => true]);
+
+		$payloadHeader = file_get_contents($projectRoot . '/.prism/generated/payload.hpp');
+		if (!is_string($payloadHeader)) {
+			throw new RuntimeException('Expected generated payload.hpp for union payload project');
+		}
+		$this->assertContains('union ExpressionPayload {', $payloadHeader, 'union source should lower to a C++ union');
+		$this->assertContains('int_t<std::uint32_t> int_value;', $payloadHeader, 'union fixed-width fields should lower as payload fields');
+		$this->assertContains('PairPayload pair;', $payloadHeader, 'union struct fields should lower as inline payload fields');
+
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for union payload project');
+		}
+		$this->assertContains('ExpressionPayload payload;', $mainHeader, 'struct fields may store union payloads inline');
+
+		$mainCpp = file_get_contents($projectRoot . '/.prism/generated/main.cpp');
+		if (!is_string($mainCpp)) {
+			throw new RuntimeException('Expected generated main.cpp for union payload project');
+		}
+		$this->assertContains('sizeof(ExpressionPayload)', $mainCpp, 'layout_sizeof should support unions');
+		$this->assertContains('alignof(ExpressionPayload)', $mainCpp, 'layout_alignof should support unions');
+
+		$projectUnits = file_get_contents($projectRoot . '/.prism/generated/__project_units.hpp');
+		if (!is_string($projectUnits)) {
+			throw new RuntimeException('Expected generated __project_units.hpp for union payload project');
+		}
+		$this->assertContains('#include "payload.hpp"' . "\n" . '#include "main.hpp"', $projectUnits, 'union dependency headers should be included before users');
+	}
+
+	private function assertUnionValidationRejectsClassLikeFeatures(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/invalid_union_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'class Box {',
+			'	public uint32 $value = 0;',
+			'}',
+			'union BadPayload {',
+			'	private uint16 $hidden;',
+			'	public static uint16 $counter;',
+			'	public uint16 $defaulted = 0;',
+			'	public Box $box;',
+			'	public function nope(): void {',
+			'		return;',
+			'	}',
+			'}',
+			'echo "bad\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'invalid_union_project', 'main.phs');
+
+		$build = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', ['disable_stan' => true]);
+		$this->assertSame(false, $build['ok'], 'invalid union build should fail during generation');
+		$diagnostics = (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? '');
+		$this->assertContains('Union field BadPayload::$hidden must be public', $diagnostics, 'private union fields should be rejected');
+		$this->assertContains('Union field BadPayload::$counter cannot be static', $diagnostics, 'static union fields should be rejected');
+		$this->assertContains('Union field BadPayload::$defaulted cannot declare a default initializer', $diagnostics, 'union defaults should be rejected');
+		$this->assertContains('unsupported first-slice payload type Box', $diagnostics, 'class object fields should be rejected in unions');
+		$this->assertContains('Union BadPayload cannot declare methods', $diagnostics, 'union methods should be rejected in the first slice');
 	}
 
 	private function assertSame(mixed $expected, mixed $actual, string $message): void

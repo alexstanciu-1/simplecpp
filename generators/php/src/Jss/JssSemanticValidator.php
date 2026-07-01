@@ -53,7 +53,7 @@ final class JssSemanticValidator
 			$this->validateStatements($statement->fields['body'] ?? [], $this->paramTypes($statement->fields['params'] ?? []), $options);
 			return $types;
 		}
-		if ($statement->kind === 'class_decl' || $statement->kind === 'struct_decl') {
+		if ($statement->kind === 'class_decl' || $statement->kind === 'struct_decl' || $statement->kind === 'union_decl') {
 			foreach (is_array($statement->fields['members'] ?? null) ? $statement->fields['members'] : [] as $member) {
 				if ($member instanceof JssNode && in_array($member->kind, ['method_decl', 'constructor_decl'], true)) {
 					$methodTypes = $this->paramTypes($member->fields['params'] ?? []);
