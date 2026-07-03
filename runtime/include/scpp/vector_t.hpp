@@ -69,6 +69,10 @@ public:
 		value_.reserve(capacity);
 	}
 
+	void resize(std::size_t count, const T &default_value) {
+		value_.resize(count, default_value);
+	}
+
 	// Runtime boolean wrapper for empty/non-empty state.
 	[[nodiscard]] bool_t empty() const noexcept {
 		return bool_t(value_.empty());

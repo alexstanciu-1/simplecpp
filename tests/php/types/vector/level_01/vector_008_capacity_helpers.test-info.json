@@ -35,7 +35,7 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "reserved\n0\nkept\n1\n3\ntarget\nbyte_reserved\n8\n",
+            "stdout": "reserved\n5\n9\n1\n1\n0\nkept\n1\n3\ntarget\nbyte_reserved\n8\n3\n6\n6\n",
             "stderr": ""
         }
     },
@@ -44,7 +44,7 @@
         "vector",
         "capacity"
     ],
-    "notes": "Source helpers expose reserve, capacity, clear-preserves-capacity, and compact with a target capacity for typed and fixed-width vectors.",
+    "notes": "Source helpers expose reserve, capacity, resize-with-fill, filled construction, clear-preserves-capacity, and compact with a target capacity for typed and fixed-width vectors.",
     "build": {
         "sanitizers": null
     }

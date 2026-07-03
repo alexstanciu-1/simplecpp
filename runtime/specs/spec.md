@@ -298,6 +298,13 @@ Included initially:
 - `vector_t<T>` is the semantic vector family
 - v1 should remain intentionally small
 - iterator-surface expansion should be deferred until required by the language design
+- strict source-facing vector capacity helpers may expose reserve, capacity,
+  resize-with-fill, filled construction, clear-keep-capacity, and compact
+  operations when they lower directly to runtime/native vector operations
+  instead of generated append loops
+- compiler row-like hot paths may use `vector<T>` with a documented local
+  1-based id convention before introducing any first-class row-buffer source
+  API; id `0` remains the conventional invalid/null id in that pattern
 
 ### 6.6 `shared_p<T>`, `unique_p<T>`, `weak_p<T>`
 - these wrappers have the same role as `std::shared_ptr`, `std::unique_ptr`, and `std::weak_ptr`, but remain part of the project semantic API rather than raw STL leakage

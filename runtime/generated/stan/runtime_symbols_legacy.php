@@ -169,10 +169,13 @@ function trim(string $text): string {}
 function ucfirst(string $text): string {}
 function unlink(string $path): bool {}
 function var_dump(mixed $value): void {}
-function vector_capacity(): mixed {}
-function vector_clear(): mixed {}
-function vector_compact(): mixed {}
-function vector_reserve(): mixed {}
+function vector_capacity(mixed $values): int {}
+function vector_clear(mixed $values): void {}
+function vector_clear_keep_capacity(mixed $values): void {}
+function vector_compact(mixed $values, int $capacity = 0): void {}
+function vector_filled(int $count, mixed $default_value): mixed {}
+function vector_reserve(mixed $values, int $capacity): void {}
+function vector_resize(mixed $values, int $count, mixed $default_value): void {}
 
 namespace scpp;
 
