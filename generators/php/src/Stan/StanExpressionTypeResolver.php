@@ -3358,11 +3358,16 @@ final class StanExpressionTypeResolver
 				unset($morphedLocals[$name]);
 				return;
 			}
-			if (count($currentTypes) === 1 && count($assignedTypes) === 1 && $this->fixedWidthIntegerInfo($currentTypes[0]) !== null && $this->fixedWidthIntegerInfo($assignedTypes[0]) !== null) {
-				$this->recordFixedWidthIntegerAssignmentDiagnostic($diagnostics, $name, $assignedTypes[0], $currentTypes[0], $context, $path, $line);
-				unset($morphedLocals[$name]);
-				return;
-			}
+				if (count($currentTypes) === 1
+					&& count($assignedTypes) === 1
+					&& $this->fixedWidthIntegerInfo($currentTypes[0]) !== null
+					&& $this->fixedWidthIntegerInfo($assignedTypes[0]) !== null) {
+					if (!$this->isFixedWidthIntegerAssignable($assignedTypes[0], $currentTypes[0])) {
+						$this->recordFixedWidthIntegerAssignmentDiagnostic($diagnostics, $name, $assignedTypes[0], $currentTypes[0], $context, $path, $line);
+					}
+					unset($morphedLocals[$name]);
+					return;
+				}
 			$this->recordLocalTypeMorph($diagnostics, $localTypes, $morphedLocals, $name, $this->canonicalizeTypeSet(array_merge($currentTypes, $assignedTypes), $classLookup, $selfType), $context, $path, $line);
 			return;
 		}
@@ -3374,6 +3379,9 @@ final class StanExpressionTypeResolver
 	/** @param list<array<string,mixed>> $diagnostics */
 	private function recordFixedWidthIntegerAssignmentDiagnostic(array &$diagnostics, string $name, string $sourceType, string $targetType, string $context, string $path, int $line): void
 	{
+		if ($this->normalizeFixedWidthIntegerTypeLabel($sourceType) === 'int') {
+			return;
+		}
 		$diagnostics[] = [
 			'kind' => 'fixed_width_integer_assignment',
 			'severity' => 'error',
@@ -4322,10 +4330,14 @@ final class StanExpressionTypeResolver
 
 	private function isFixedWidthIntegerAssignable(string $actualType, string $expectedType): bool
 	{
+		$actualNormalized = $this->normalizeFixedWidthIntegerTypeLabel($actualType);
 		$actual = $this->fixedWidthIntegerInfo($actualType);
 		$expected = $this->fixedWidthIntegerInfo($expectedType);
 		if ($actual === null || $expected === null) {
 			return false;
+		}
+		if ($actualNormalized === 'int') {
+			return true;
 		}
 		if ($actual['signed'] !== $expected['signed']) {
 			return false;
@@ -4347,6 +4359,11 @@ final class StanExpressionTypeResolver
 			'uint64' => ['signed' => false, 'bytes' => 8],
 			default => null,
 		};
+	}
+
+	private function normalizeFixedWidthIntegerTypeLabel(string $type): string
+	{
+		return strtolower((string) preg_replace('/[^A-Za-z0-9_]+/', '', ltrim(trim($type), '\\')));
 	}
 
 	private function unwrapNullableType(string $type): ?string

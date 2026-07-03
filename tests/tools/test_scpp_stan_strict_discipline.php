@@ -94,6 +94,21 @@ PHS
 			$this->assertSame(0, $validFixedWidthWidening['warning_count'] ?? null, 'same-signed fixed-width integer widening should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$source int = 7;
+	$id uint32 = $source;
+	echo (int)$id, "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$validGenericIntToFixedWidth = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $validGenericIntToFixedWidth['warning_count'] ?? null, 'generic int assignment to an explicit fixed-width local should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
 function consume_id(int $id): void
 {
 	echo $id, "\n";

@@ -52,13 +52,12 @@ using clock_t = std::chrono::steady_clock;
 
 [[nodiscard]] std::uint64_t estimated_token_buffer_bytes(const scpp::tokenizer::token_buffer &buffer) {
 	return static_cast<std::uint64_t>(sizeof(scpp::tokenizer::token_buffer))
-		+ static_cast<std::uint64_t>(buffer.kind_ids.capacity() * sizeof(std::uint8_t))
+		+ static_cast<std::uint64_t>(buffer.kind_ids.capacity() * sizeof(std::uint16_t))
 		+ static_cast<std::uint64_t>(buffer.start_offsets.capacity() * sizeof(std::uint32_t))
-		+ static_cast<std::uint64_t>(buffer.lengths.capacity() * sizeof(std::uint32_t))
-		+ static_cast<std::uint64_t>(buffer.line_numbers.capacity() * sizeof(std::uint32_t))
-		+ static_cast<std::uint64_t>(buffer.columns.capacity() * sizeof(std::uint32_t))
+		+ static_cast<std::uint64_t>(buffer.lengths.capacity() * sizeof(std::uint16_t))
 		+ static_cast<std::uint64_t>(buffer.flags.capacity() * sizeof(std::uint16_t))
 		+ static_cast<std::uint64_t>(buffer.line_start_offsets.capacity() * sizeof(std::uint32_t))
+		+ static_cast<std::uint64_t>(buffer.extended_lengths.capacity() * sizeof(scpp::tokenizer::token_extended_length))
 		+ static_cast<std::uint64_t>(buffer.diagnostics.capacity() * sizeof(scpp::tokenizer::token_diagnostic));
 }
 

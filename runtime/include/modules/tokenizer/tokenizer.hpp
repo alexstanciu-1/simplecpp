@@ -16,7 +16,7 @@
 
 namespace scpp::tokenizer {
 
-enum token_kind_id : std::uint8_t {
+enum token_kind_id : std::uint16_t {
 	token_eof = 0,
 	token_identifier = 1,
 	token_keyword = 2,
@@ -27,11 +27,23 @@ enum token_kind_id : std::uint8_t {
 	token_error = 7,
 };
 
+enum token_flag_id : std::uint16_t {
+	token_flag_none = 0,
+	token_flag_whitespace_before = 1U << 0U,
+	token_flag_newline_before = 1U << 1U,
+	token_flag_extended_length = 1U << 2U,
+};
+
 struct token_diagnostic final {
 	const char *kind = "";
 	std::uint32_t offset = 0;
 	std::uint32_t line = 0;
 	std::uint32_t column = 0;
+};
+
+struct token_extended_length final {
+	std::uint32_t token_index = 0;
+	std::uint32_t length = 0;
 };
 
 namespace detail {
@@ -69,13 +81,12 @@ unique_p<hash_t<mixed_t>> make_int_column(const std::vector<Integer> &values) {
 } // namespace detail
 
 struct token_buffer final {
-	std::vector<std::uint8_t> kind_ids;
+	std::vector<std::uint16_t> kind_ids;
 	std::vector<std::uint32_t> start_offsets;
-	std::vector<std::uint32_t> lengths;
-	std::vector<std::uint32_t> line_numbers;
-	std::vector<std::uint32_t> columns;
+	std::vector<std::uint16_t> lengths;
 	std::vector<std::uint16_t> flags;
 	std::vector<std::uint32_t> line_start_offsets;
+	std::vector<token_extended_length> extended_lengths;
 	std::vector<token_diagnostic> diagnostics;
 	const char *language = "";
 	std::uint32_t source_length = 0;
@@ -86,10 +97,9 @@ struct token_buffer final {
 		kind_ids.reserve(estimated_tokens);
 		start_offsets.reserve(estimated_tokens);
 		lengths.reserve(estimated_tokens);
-		line_numbers.reserve(estimated_tokens);
-		columns.reserve(estimated_tokens);
 		flags.reserve(estimated_tokens);
 		line_start_offsets.reserve(64U);
+		extended_lengths.reserve(1U);
 		diagnostics.reserve(4U);
 	}
 
@@ -105,12 +115,24 @@ struct token_buffer final {
 		const std::int64_t column,
 		const std::int64_t flag_value = 0
 	) {
-		kind_ids.push_back(static_cast<std::uint8_t>(kind));
+		(void)line;
+		(void)column;
+		auto stored_flags = detail::checked_u16(flag_value, "flags");
+		if (length >= static_cast<std::size_t>(std::numeric_limits<std::uint16_t>::max())) {
+			stored_flags = static_cast<std::uint16_t>(stored_flags | token_flag_extended_length);
+		}
+		kind_ids.push_back(static_cast<std::uint16_t>(kind));
 		start_offsets.push_back(detail::checked_u32(start, "start_offset"));
-		lengths.push_back(detail::checked_u32(length, "length"));
-		line_numbers.push_back(detail::checked_u32(line, "line"));
-		columns.push_back(detail::checked_u32(column, "column"));
-		flags.push_back(detail::checked_u16(flag_value, "flags"));
+		if (length >= static_cast<std::size_t>(std::numeric_limits<std::uint16_t>::max())) {
+			extended_lengths.push_back(token_extended_length{
+				.token_index = detail::checked_u32(lengths.size(), "extended_length_token_index"),
+				.length = detail::checked_u32(length, "extended_length"),
+			});
+			lengths.push_back(std::numeric_limits<std::uint16_t>::max());
+		} else {
+			lengths.push_back(static_cast<std::uint16_t>(length));
+		}
+		flags.push_back(stored_flags);
 	}
 
 	void add_diagnostic(const char *kind, const std::size_t offset, const std::int64_t line, const std::int64_t column) {
@@ -124,6 +146,41 @@ struct token_buffer final {
 
 	[[nodiscard]] std::int64_t token_count() const noexcept {
 		return static_cast<std::int64_t>(kind_ids.size());
+	}
+
+	[[nodiscard]] std::uint32_t token_length(const std::size_t index) const {
+		const auto length = lengths.at(index);
+		if (length != std::numeric_limits<std::uint16_t>::max()) {
+			return static_cast<std::uint32_t>(length);
+		}
+		for (const auto &row : extended_lengths) {
+			if (row.token_index == index) {
+				return row.length;
+			}
+		}
+		throw std::runtime_error("token_buffer extended length row missing");
+	}
+
+	[[nodiscard]] std::uint32_t line_for_offset(const std::uint32_t offset) const noexcept {
+		std::uint32_t line = 1;
+		for (std::size_t i = 0; i < line_start_offsets.size(); ++i) {
+			if (line_start_offsets[i] > offset) {
+				break;
+			}
+			line = static_cast<std::uint32_t>(i + 1U);
+		}
+		return line;
+	}
+
+	[[nodiscard]] std::uint32_t column_for_offset(const std::uint32_t offset) const noexcept {
+		std::uint32_t line_start = 0;
+		for (const auto start : line_start_offsets) {
+			if (start > offset) {
+				break;
+			}
+			line_start = start;
+		}
+		return static_cast<std::uint32_t>((offset - line_start) + 1U);
 	}
 
 	mixed_t to_mixed() const {
@@ -145,7 +202,24 @@ struct token_buffer final {
 		out->set(string_t("diagnostic_count"), mixed_t(int_t(static_cast<std::int64_t>(diagnostics.size()))));
 		out->set(string_t("kind_ids"), mixed_t(detail::make_int_column(kind_ids)));
 		out->set(string_t("start_offsets"), mixed_t(detail::make_int_column(start_offsets)));
-		out->set(string_t("lengths"), mixed_t(detail::make_int_column(lengths)));
+		auto expanded_lengths = std::vector<std::uint32_t>();
+		expanded_lengths.reserve(lengths.size());
+		auto line_numbers = std::vector<std::uint32_t>();
+		auto columns = std::vector<std::uint32_t>();
+		line_numbers.reserve(start_offsets.size());
+		columns.reserve(start_offsets.size());
+		std::size_t line_index = 0;
+		for (std::size_t i = 0; i < start_offsets.size(); ++i) {
+			const auto offset = start_offsets[i];
+			while (line_index + 1U < line_start_offsets.size() && line_start_offsets[line_index + 1U] <= offset) {
+				++line_index;
+			}
+			const auto line_start = line_start_offsets.empty() ? 0U : line_start_offsets[line_index];
+			expanded_lengths.push_back(token_length(i));
+			line_numbers.push_back(static_cast<std::uint32_t>(line_index + 1U));
+			columns.push_back(static_cast<std::uint32_t>((offset - line_start) + 1U));
+		}
+		out->set(string_t("lengths"), mixed_t(detail::make_int_column(expanded_lengths)));
 		out->set(string_t("line_numbers"), mixed_t(detail::make_int_column(line_numbers)));
 		out->set(string_t("columns"), mixed_t(detail::make_int_column(columns)));
 		out->set(string_t("flags"), mixed_t(detail::make_int_column(flags)));
@@ -222,6 +296,21 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 	std::size_t offset = 0;
 	std::int64_t line = 1;
 	std::int64_t column = 1;
+	bool whitespace_before = false;
+	bool newline_before = false;
+
+	const auto token_flags = [&]() {
+		std::uint16_t value = token_flag_none;
+		if (whitespace_before) {
+			value = static_cast<std::uint16_t>(value | token_flag_whitespace_before);
+		}
+		if (newline_before) {
+			value = static_cast<std::uint16_t>(value | token_flag_newline_before);
+		}
+		whitespace_before = false;
+		newline_before = false;
+		return value;
+	};
 
 	const auto advance_one = [&]() {
 		++offset;
@@ -240,10 +329,13 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 
 		if (ch == static_cast<unsigned char>('\n')) {
 			advance_newline();
+			whitespace_before = true;
+			newline_before = true;
 			continue;
 		}
 		if (is_whitespace_no_newline(ch)) {
 			advance_one();
+			whitespace_before = true;
 			continue;
 		}
 
@@ -257,7 +349,7 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 				while (offset < source.size() && source[offset] != '\n') {
 					advance_one();
 				}
-				out.add_token(token_comment, start, offset - start, line, start_column);
+				out.add_token(token_comment, start, offset - start, line, start_column, token_flags());
 				continue;
 			}
 			if (next == static_cast<unsigned char>('*')) {
@@ -280,7 +372,7 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 					}
 					advance_one();
 				}
-				out.add_token(token_comment, start, offset - start, start_line, start_column);
+				out.add_token(token_comment, start, offset - start, start_line, start_column, token_flags());
 				if (!closed) {
 					out.add_diagnostic("unterminated_comment", start, start_line, start_column);
 				}
@@ -315,7 +407,7 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 				}
 				advance_one();
 			}
-			out.add_token(token_string, start, offset - start, start_line, start_column);
+			out.add_token(token_string, start, offset - start, start_line, start_column, token_flags());
 			if (!closed && offset >= source.size()) {
 				out.add_diagnostic("unterminated_string", start, start_line, start_column);
 			}
@@ -330,7 +422,7 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 				advance_one();
 			}
 			const auto length = offset - start;
-			out.add_token(keyword_fn(source, start, length) ? token_keyword : token_identifier, start, length, line, start_column);
+			out.add_token(keyword_fn(source, start, length) ? token_keyword : token_identifier, start, length, line, start_column, token_flags());
 			continue;
 		}
 
@@ -341,12 +433,12 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 			while (offset < source.size() && is_digit(static_cast<unsigned char>(source[offset]))) {
 				advance_one();
 			}
-			out.add_token(token_number, start, offset - start, line, start_column);
+			out.add_token(token_number, start, offset - start, line, start_column, token_flags());
 			continue;
 		}
 
 		if (phs_variables && ch == static_cast<unsigned char>('$')) {
-			out.add_token(token_symbol, offset, 1, line, column);
+			out.add_token(token_symbol, offset, 1, line, column, token_flags());
 			advance_one();
 			continue;
 		}
@@ -369,16 +461,11 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 		}
 		offset += length;
 		column += static_cast<std::int64_t>(length);
-		out.add_token(token_symbol, start, length, line, start_column);
+		out.add_token(token_symbol, start, length, line, start_column, token_flags());
 	}
 
-	out.add_token(token_eof, offset, 0, line, column);
+	out.add_token(token_eof, offset, 0, line, column, token_flags());
 	return out;
-}
-
-template <typename KeywordFn>
-mixed_t tokenize_ascii_language(const string_t &source_value, const char *language, KeywordFn keyword_fn, const bool phs_variables) {
-	return scan_ascii_language(source_value, language, keyword_fn, phs_variables).to_mixed();
 }
 
 } // namespace detail
@@ -404,15 +491,15 @@ mixed_t tokenize_ascii_language(const string_t &source_value, const char *langua
 }
 
 [[nodiscard]] inline int_t<> token_buffer_length(const token_buffer_t &buffer, const int_t<> &index) {
-	return int_t(static_cast<std::int64_t>(buffer->lengths.at(static_cast<std::size_t>(index.native_value()))));
+	return int_t(static_cast<std::int64_t>(buffer->token_length(static_cast<std::size_t>(index.native_value()))));
 }
 
 [[nodiscard]] inline int_t<> token_buffer_line(const token_buffer_t &buffer, const int_t<> &index) {
-	return int_t(static_cast<std::int64_t>(buffer->line_numbers.at(static_cast<std::size_t>(index.native_value()))));
+	return int_t(static_cast<std::int64_t>(buffer->line_for_offset(buffer->start_offsets.at(static_cast<std::size_t>(index.native_value())))));
 }
 
 [[nodiscard]] inline int_t<> token_buffer_column(const token_buffer_t &buffer, const int_t<> &index) {
-	return int_t(static_cast<std::int64_t>(buffer->columns.at(static_cast<std::size_t>(index.native_value()))));
+	return int_t(static_cast<std::int64_t>(buffer->column_for_offset(buffer->start_offsets.at(static_cast<std::size_t>(index.native_value())))));
 }
 
 [[nodiscard]] inline int_t<> token_buffer_flags(const token_buffer_t &buffer, const int_t<> &index) {
@@ -429,14 +516,6 @@ mixed_t tokenize_ascii_language(const string_t &source_value, const char *langua
 
 [[nodiscard]] inline token_buffer_t jss_tokenize(const string_t &source) {
 	return jss_tokenize_buffer(source);
-}
-
-[[nodiscard]] inline int_t<> phs_tokenize_count(const string_t &source) {
-	return token_buffer_count(phs_tokenize_buffer(source));
-}
-
-[[nodiscard]] inline int_t<> jss_tokenize_count(const string_t &source) {
-	return token_buffer_count(jss_tokenize_buffer(source));
 }
 
 } // namespace scpp::tokenizer

@@ -91,6 +91,7 @@ final class ScppBuildOptionsTest
 			$this->assertFixedWidthEnumBackingLowersExactly();
 			$this->assertLayoutProbesLowerToCppOperators();
 			$this->assertUnionPayloadsLowerAndProbeLayout();
+			$this->assertUnionPointerStylePayloadAccessCompiles();
 			$this->assertUnionValidationRejectsClassLikeFeatures();
 			$this->assertEntryOverrideCanSelectAnotherFile();
 
@@ -745,6 +746,48 @@ final class ScppBuildOptionsTest
 			throw new RuntimeException('Expected generated __project_units.hpp for union payload project');
 		}
 		$this->assertContains('#include "payload.hpp"' . "\n" . '#include "main.hpp"', $projectUnits, 'union dependency headers should be included before users');
+	}
+
+	private function assertUnionPointerStylePayloadAccessCompiles(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/union_pointer_access_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'struct AccessPayload {',
+			'	public uint32 $subject_id = 0;',
+			'	public uint32 $member_id = 0;',
+			'}',
+			'union ExpressionPayload {',
+			'	public uint32 $name_id;',
+			'	public AccessPayload $access;',
+			'}',
+			'struct Row {',
+			'	public ExpressionPayload $payload;',
+			'}',
+			'$row Row = [];',
+			'$row->payload->name_id = 7;',
+			'$row->payload->access->subject_id = 11;',
+			'$row->payload->access->member_id = $row->payload->name_id;',
+			'echo layout_sizeof(ExpressionPayload), "\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'union_pointer_access_project', 'main.phs');
+
+		$build = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', [
+			'compile_runtime' => true,
+			'disable_stan' => true,
+		]);
+		$this->assertSame(true, $build['ok'], "value union pointer-style payload access should compile\n" . (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? ''));
+
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for union pointer access project');
+		}
+		$this->assertContains('ExpressionPayload* operator->() { return this; }', $mainHeader, 'value unions should expose pointer-style mutable payload access');
+		$this->assertContains('const ExpressionPayload* operator->() const { return this; }', $mainHeader, 'value unions should expose pointer-style const payload access');
 	}
 
 	private function assertUnionValidationRejectsClassLikeFeatures(): void
