@@ -619,6 +619,11 @@
                         "doc_status":  "planning"
                     },
                     {
+                        "path":  "specs/metaprogramming_contract.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
                         "path":  "specs/language/closures.md",
                         "kind":  "markdown",
                         "doc_status":  "normative"
