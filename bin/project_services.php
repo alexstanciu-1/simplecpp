@@ -9142,7 +9142,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				],
 			],
 		],
-		'function_count' => 2,
+		'function_count' => 3,
 		'functions' => [
 			[
 				'source_key' => 'operator:+:int:int',
@@ -9161,6 +9161,15 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				'llvm_return_type' => 'ptr',
 				'llvm_param_signature' => 'ptr',
 				'implementation_hash' => '7159f54bb5c22633d4a4713e0c745915c2e9dfc06c11778980fceba1651d1b44',
+			],
+			[
+				'source_key' => 'call:string_destroy',
+				'abi_symbol' => 'scpp_string_destroy',
+				'source_return_type' => 'void',
+				'source_param_signature' => 'string',
+				'llvm_return_type' => 'void',
+				'llvm_param_signature' => 'ptr',
+				'implementation_hash' => '5474ddcf5ea9f9ff23e25982f84a22f2a4a9f5149f157064529b3292f7b3339a',
 			],
 		],
 		'bridge_declaration_count' => 1,
