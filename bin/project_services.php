@@ -8963,6 +8963,16 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'method_aliases' => ['at'],
 					],
 					[
+						'operation_id' => 'count',
+						'source_name' => 'vector_count',
+						'return_type' => 'int',
+						'source_param_signature' => 'self',
+						'llvm_return_type' => 'i64',
+						'llvm_param_signature' => 'self',
+						'abi_symbol_template' => 'scpp_vector_{T_ABI}_count',
+						'method_aliases' => ['size'],
+					],
+					[
 						'operation_id' => 'destroy',
 						'source_name' => 'vector_destroy',
 						'return_type' => 'void',
@@ -9120,6 +9130,15 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'llvm_return_type' => 'ptr',
 						'llvm_param_signature' => '',
 						'abi_symbol_template' => 'scpp_shared_{T_ABI}_create',
+					],
+					[
+						'operation_id' => 'own',
+						'source_name' => 'shared_own',
+						'return_type' => 'self',
+						'source_param_signature' => 'T',
+						'llvm_return_type' => 'ptr',
+						'llvm_param_signature' => 'T_ABI',
+						'abi_symbol_template' => 'scpp_shared_{T_ABI}_own',
 					],
 					[
 						'operation_id' => 'has',
