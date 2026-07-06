@@ -455,9 +455,15 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 		const auto start = offset;
 		const auto start_column = column;
 		std::size_t length = 1;
+		if (offset + 2 < source.size()) {
+			if ((source[offset] == '=' && source[offset + 1] == '=' && source[offset + 2] == '=')
+				|| (source[offset] == '!' && source[offset + 1] == '=' && source[offset + 2] == '=')) {
+				length = 3;
+			}
+		}
 		if (offset + 1 < source.size()) {
 			const auto next = source[offset + 1];
-			if ((source[offset] == ':' && next == ':')
+			if (length == 1 && ((source[offset] == ':' && next == ':')
 				|| (source[offset] == '=' && next == '>')
 				|| (source[offset] == '=' && next == '=')
 				|| (source[offset] == '!' && next == '=')
@@ -466,7 +472,7 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 				|| (source[offset] == '&' && next == '&')
 				|| (source[offset] == '|' && next == '|')
 				|| (source[offset] == '?' && next == '?')
-				|| (source[offset] == '-' && next == '>')) {
+				|| (source[offset] == '-' && next == '>'))) {
 				length = 2;
 			}
 		}
