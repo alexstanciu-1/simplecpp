@@ -8930,7 +8930,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				],
 			],
 		],
-		'operator_count' => 20,
+		'operator_count' => 21,
 		'operators' => [
 			[
 				'source_key' => 'operator:+:int:int',
@@ -9015,6 +9015,18 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				'lowering_kind' => 'llvm_compare',
 				'llvm_predicate' => 'ne',
 				'diagnostic_key' => 'unsupported_operator_not_equal',
+			],
+			[
+				'source_key' => 'operator:+:string:string',
+				'operator_id' => 'plus',
+				'operator' => '+',
+				'arity' => 2,
+				'left_type' => 'string',
+				'right_type' => 'string',
+				'return_type' => 'string',
+				'lowering_kind' => 'runtime_call',
+				'abi_symbol' => 'scpp_string_concat',
+				'diagnostic_key' => 'unsupported_operator_plus',
 			],
 			[
 				'source_key' => 'operator:==:string:string',
@@ -9493,8 +9505,18 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				],
 			],
 		],
-		'function_count' => 8,
+		'function_count' => 9,
 		'functions' => [
+			[
+				'source_key' => 'operator:+:string:string',
+				'abi_symbol' => 'scpp_string_concat',
+				'source_return_type' => 'string',
+				'source_param_signature' => 'string, string',
+				'llvm_return_type' => 'ptr',
+				'llvm_param_signature' => 'ptr, ptr',
+				'implementation_hash' => 'a6c1df93a7cdb3278e7c3959d435cebcdf4bdbdddb76b02fc2fce4221ca0de49',
+				'bridge_provider' => 'project_generated',
+			],
 			[
 				'source_key' => 'operator:==:string:string',
 				'abi_symbol' => 'scpp_string_equal',
