@@ -9631,7 +9631,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				],
 			],
 		],
-		'function_count' => 32,
+		'function_count' => 34,
 		'functions' => [
 			[
 				'source_key' => 'call:dbg:bool',
@@ -9751,6 +9751,26 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				'llvm_return_type' => 'void',
 				'llvm_param_signature' => 'ptr, ptr, i64',
 				'implementation_hash' => '16a89b91ba70acefb05c1161388ce14cdb632ad007b8d1bc84e3b48db55cd47b',
+				'bridge_provider' => 'project_generated',
+			],
+			[
+				'source_key' => 'call:dbg_set:string:bool',
+				'abi_symbol' => 'scpp_dbg_set_string_bool',
+				'source_return_type' => 'void',
+				'source_param_signature' => 'string, bool',
+				'llvm_return_type' => 'void',
+				'llvm_param_signature' => 'ptr, i1',
+				'implementation_hash' => 'd37bbd69c657e79473a8c44d630e29b149378249600eb7124a9b61115e7b7659',
+				'bridge_provider' => 'project_generated',
+			],
+			[
+				'source_key' => 'call:dbg_unset:string:bool',
+				'abi_symbol' => 'scpp_dbg_unset_string_bool',
+				'source_return_type' => 'void',
+				'source_param_signature' => 'string, bool',
+				'llvm_return_type' => 'void',
+				'llvm_param_signature' => 'ptr, i1',
+				'implementation_hash' => '7defc278e62556922d76f5ecc7645bbb3e72994b1d34332fd18c4282c03f84e5',
 				'bridge_provider' => 'project_generated',
 			],
 			[
