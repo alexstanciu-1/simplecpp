@@ -9292,7 +9292,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'llvm_return_type' => 'i64',
 						'llvm_param_signature' => 'self',
 						'abi_symbol_template' => 'scpp_vector_{T_ABI}_count',
-						'method_aliases' => ['size'],
+						'method_aliases' => ['size', 'count'],
 					],
 					[
 						'operation_id' => 'destroy',
