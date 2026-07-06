@@ -276,6 +276,7 @@ namespace detail {
 		|| slice_equals(source, start, length, "throw")
 		|| slice_equals(source, start, length, "break")
 		|| slice_equals(source, start, length, "continue")
+		|| slice_equals(source, start, length, "echo")
 		|| slice_equals(source, start, length, "true")
 		|| slice_equals(source, start, length, "false")
 		|| slice_equals(source, start, length, "null");
