@@ -9566,6 +9566,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'llvm_return_type' => 'i1',
 						'llvm_param_signature' => 'self',
 						'abi_symbol_template' => 'scpp_nullable_{T_ABI}_has',
+						'method_aliases' => ['isset'],
 					],
 					[
 						'operation_id' => 'destroy',
@@ -9619,6 +9620,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'llvm_return_type' => 'i1',
 						'llvm_param_signature' => 'self',
 						'abi_symbol_template' => 'scpp_shared_{T_ABI}_has',
+						'method_aliases' => ['isset'],
 					],
 					[
 						'operation_id' => 'reset',
