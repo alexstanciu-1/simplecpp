@@ -8930,7 +8930,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				],
 			],
 		],
-		'operator_count' => 27,
+		'operator_count' => 28,
 		'operators' => [
 			[
 				'source_key' => 'operator:+:int:int',
@@ -9039,6 +9039,18 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				'lowering_kind' => 'llvm_compare',
 				'llvm_predicate' => 'ne',
 				'diagnostic_key' => 'unsupported_operator_not_identical',
+			],
+			[
+				'source_key' => 'operator:<=>:int:int',
+				'operator_id' => 'spaceship',
+				'operator' => '<=>',
+				'arity' => 2,
+				'left_type' => 'int',
+				'right_type' => 'int',
+				'return_type' => 'int',
+				'lowering_kind' => 'runtime_call',
+				'abi_symbol' => 'scpp_int_spaceship',
+				'diagnostic_key' => 'unsupported_operator_spaceship',
 			],
 			[
 				'source_key' => 'operator:===:bool:bool',
@@ -9577,7 +9589,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				],
 			],
 		],
-		'function_count' => 15,
+		'function_count' => 16,
 		'functions' => [
 			[
 				'source_key' => 'call:empty:bool',
@@ -9617,6 +9629,16 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				'llvm_return_type' => 'i1',
 				'llvm_param_signature' => 'ptr',
 				'implementation_hash' => 'ca7e1664f69460810b64e74efb9d096829acffaa3afd17f724027e8bf6068d8d',
+				'bridge_provider' => 'project_generated',
+			],
+			[
+				'source_key' => 'operator:<=>:int:int',
+				'abi_symbol' => 'scpp_int_spaceship',
+				'source_return_type' => 'int',
+				'source_param_signature' => 'int, int',
+				'llvm_return_type' => 'i64',
+				'llvm_param_signature' => 'i64, i64',
+				'implementation_hash' => '5c489a3b886b1bb4a038f79fcfe35a0620b0da74b63aa6aaa0000854a00afe0d',
 				'bridge_provider' => 'project_generated',
 			],
 			[

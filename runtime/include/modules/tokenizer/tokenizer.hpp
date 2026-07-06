@@ -457,6 +457,7 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 		std::size_t length = 1;
 		if (offset + 2 < source.size()) {
 			if ((source[offset] == '=' && source[offset + 1] == '=' && source[offset + 2] == '=')
+				|| (source[offset] == '<' && source[offset + 1] == '=' && source[offset + 2] == '>')
 				|| (source[offset] == '!' && source[offset + 1] == '=' && source[offset + 2] == '=')) {
 				length = 3;
 			}
