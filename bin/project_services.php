@@ -9497,6 +9497,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'llvm_return_type' => 'i1',
 						'llvm_param_signature' => 'self, K_ABI',
 						'abi_symbol_template' => 'scpp_hash_{K_ABI}_{V_ABI}_has',
+						'method_aliases' => ['isset'],
 					],
 					[
 						'operation_id' => 'count',
