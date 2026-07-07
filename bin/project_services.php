@@ -9505,6 +9505,16 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'method_aliases' => ['isset'],
 					],
 					[
+						'operation_id' => 'unset',
+						'source_name' => 'hash_unset',
+						'return_type' => 'void',
+						'source_param_signature' => 'self, K',
+						'llvm_return_type' => 'void',
+						'llvm_param_signature' => 'self, K_ABI',
+						'abi_symbol_template' => 'scpp_hash_{K_ABI}_{V_ABI}_unset',
+						'method_aliases' => ['unset'],
+					],
+					[
 						'operation_id' => 'count',
 						'source_name' => 'hash_count',
 						'return_type' => 'int',
