@@ -3171,6 +3171,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if (build_ninja_verbose_requested()) {
 		$command[] = '-v';
 	}
+	$ninjaJobs = getenv('SCPP_NINJA_JOBS');
+	if (is_string($ninjaJobs) && preg_match('/^[1-9][0-9]*$/', $ninjaJobs) === 1) {
+		$command[] = '-j';
+		$command[] = $ninjaJobs;
+	}
 	$captureSubprocessOutput = scpp_capture_subprocess_output_enabled();
 	$descriptor = [
 		0 => ['file', 'php://stdin', 'r'],
@@ -7562,7 +7567,7 @@ function detect_default_compiler(): ?array
 	$candidates = match (PHP_OS_FAMILY) {
 		'Windows' => ['g++', 'clang++', 'cl'],
 		'Darwin' => ['clang++', 'g++', 'c++'],
-		default => ['g++', 'clang++', 'c++'],
+		default => ['clang++', 'g++', 'c++'],
 	};
 
 	foreach ($candidates as $candidate) {
@@ -9645,7 +9650,7 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				],
 			],
 		],
-		'function_count' => 46,
+		'function_count' => 49,
 		'functions' => [
 			[
 				'source_key' => 'call:dbg:bool',
@@ -9685,6 +9690,36 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 				'llvm_return_type' => 'void',
 				'llvm_param_signature' => 'ptr',
 				'implementation_hash' => 'd4913b7f0211e0ff75e39742284726d2a0b8909444e3cdabdc04337a3587c61a',
+				'bridge_provider' => 'project_generated',
+			],
+			[
+				'source_key' => 'call:dbg:bool:int',
+				'abi_symbol' => 'scpp_dbg_flags_bool',
+				'source_return_type' => 'void',
+				'source_param_signature' => 'bool, int',
+				'llvm_return_type' => 'void',
+				'llvm_param_signature' => 'i1, i64',
+				'implementation_hash' => '65253de09b3ef3978c507cb008ed3fba55a45d199d55806961669a3ce5e734b1',
+				'bridge_provider' => 'project_generated',
+			],
+			[
+				'source_key' => 'call:dbg:int:int',
+				'abi_symbol' => 'scpp_dbg_flags_int',
+				'source_return_type' => 'void',
+				'source_param_signature' => 'int, int',
+				'llvm_return_type' => 'void',
+				'llvm_param_signature' => 'i64, i64',
+				'implementation_hash' => '9b8ac385edbdbfbdec48a14c342b15c5c753597187479fc56864bc2ca54c315c',
+				'bridge_provider' => 'project_generated',
+			],
+			[
+				'source_key' => 'call:dbg:int64:int',
+				'abi_symbol' => 'scpp_dbg_flags_i64',
+				'source_return_type' => 'void',
+				'source_param_signature' => 'int64, int',
+				'llvm_return_type' => 'void',
+				'llvm_param_signature' => 'i64, i64',
+				'implementation_hash' => '50a43ff1f3c4758ba6e6c4f4087f2401d41dad40e5bccc509394c1e48e73af6d',
 				'bridge_provider' => 'project_generated',
 			],
 			[

@@ -408,6 +408,11 @@ void dbg_at(const char *source_file, int source_line, const char *label, const T
 }
 
 template <typename T>
+void dbg_at(const char *source_file, int source_line, const T &value, int_t<> flags) {
+	dbg_detail::dbg_emit(source_file, source_line, nullptr, value, flags);
+}
+
+template <typename T>
 void dbg_at(const char *source_file, int source_line, const string_t &label, const T &value, int_t<> flags) {
 	dbg_detail::dbg_emit(source_file, source_line, label.native_value().c_str(), value, flags);
 }
