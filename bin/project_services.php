@@ -9603,6 +9603,16 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'method_aliases' => ['isset'],
 					],
 					[
+						'operation_id' => 'empty',
+						'source_name' => 'nullable_empty',
+						'return_type' => 'bool',
+						'source_param_signature' => 'self',
+						'llvm_return_type' => 'i1',
+						'llvm_param_signature' => 'self',
+						'abi_symbol_template' => 'scpp_nullable_{T_ABI}_empty',
+						'method_aliases' => ['empty'],
+					],
+					[
 						'operation_id' => 'reset',
 						'source_name' => 'nullable_reset',
 						'return_type' => 'void',
@@ -9665,6 +9675,16 @@ function render_runtime_metadata_export_json(string $buildMode, string $runtimeF
 						'llvm_param_signature' => 'self',
 						'abi_symbol_template' => 'scpp_shared_{T_ABI}_has',
 						'method_aliases' => ['isset'],
+					],
+					[
+						'operation_id' => 'empty',
+						'source_name' => 'shared_empty',
+						'return_type' => 'bool',
+						'source_param_signature' => 'self',
+						'llvm_return_type' => 'i1',
+						'llvm_param_signature' => 'self',
+						'abi_symbol_template' => 'scpp_shared_{T_ABI}_empty',
+						'method_aliases' => ['empty'],
 					],
 					[
 						'operation_id' => 'reset',
