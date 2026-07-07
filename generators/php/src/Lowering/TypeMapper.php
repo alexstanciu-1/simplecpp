@@ -806,7 +806,7 @@ final class TypeMapper
 		if ($this->hasDisallowedNullableMarkerPosition($normalized)) {
 			throw new GenerationException('Nullable marker (?) is only supported as a leading type marker or in value<?T>: ' . $phpType);
 		}
-		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
+		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$|^int_t\s*<\s*>$/', $normalized) !== 1) {
 			throw new GenerationException('Unsupported explicit type syntax: ' . $phpType);
 		}
 		if (preg_match('/^value\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
