@@ -6745,9 +6745,16 @@ final class Generator
 		if ($kind === AstKind::BINARY_OP) {
 			$leftNode = $expr->children['left'] ?? null;
 			$rightNode = $expr->children['right'] ?? null;
+			$flags = (int) ($expr->flags ?? 0);
+			if ($flags === AstKind::BINARY_CONCAT) {
+				return $this->renderStringConcat($leftNode, $rightNode, $namespacePhp);
+			}
+			if ($flags === AstKind::BINARY_COALESCE) {
+				return $this->renderCoalesceExpr($leftNode, $rightNode, $namespacePhp);
+			}
+
 			$left = $this->renderExpr($leftNode, $namespacePhp);
 			$right = $this->renderExpr($rightNode, $namespacePhp);
-			$flags = (int) ($expr->flags ?? 0);
 
 			return match ($flags) {
 				AstKind::PLUS => '(' . $left . ' + ' . $right . ')',
@@ -6760,7 +6767,6 @@ final class Generator
 				AstKind::BITWISE_XOR => '(' . $left . ' ^ ' . $right . ')',
 				AstKind::SHIFT_LEFT => '(' . $left . ' << ' . $right . ')',
 				AstKind::SHIFT_RIGHT => '(' . $left . ' >> ' . $right . ')',
-				AstKind::BINARY_CONCAT => $this->renderStringConcat($leftNode, $rightNode, $namespacePhp),
 				AstKind::BINARY_BOOL_AND => '(' . $left . ' && ' . $right . ')',
 				AstKind::BINARY_BOOL_OR => '(' . $left . ' || ' . $right . ')',
 				AstKind::BINARY_IS_SMALLER => '(' . $left . ' < ' . $right . ')',
@@ -6771,7 +6777,6 @@ final class Generator
 				AstKind::BINARY_IS_IDENTICAL => $this->qualifyKnownPhpRuntimeSymbol('identical') . '(' . $left . ', ' . $right . ')',
 				AstKind::BINARY_IS_NOT_IDENTICAL => $this->qualifyKnownPhpRuntimeSymbol('not_identical') . '(' . $left . ', ' . $right . ')',
 				257 => '(' . $left . ' >= ' . $right . ')',
-				AstKind::BINARY_COALESCE => $this->renderCoalesceExpr($leftNode, $rightNode, $namespacePhp),
 				default => '/* unsupported-binary-op-' . $flags . ' */',
 			};
 		}
@@ -7087,7 +7092,39 @@ final class Generator
 
 	private function renderStringConcat(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
 	{
-		return '(' . $this->renderStringOperand($leftNode, $namespacePhp) . ' + ' . $this->renderStringOperand($rightNode, $namespacePhp) . ')';
+		$parts = [];
+		foreach ($this->collectStringConcatOperands($leftNode, $rightNode) as $operand) {
+			$parts[] = $this->renderStringOperand($operand, $namespacePhp);
+		}
+		if ($parts === []) {
+			return 'string_t("")';
+		}
+
+		return '(' . implode(' + ', $parts) . ')';
+	}
+
+	/** @return list<mixed> */
+	private function collectStringConcatOperands(mixed $leftNode, mixed $rightNode): array
+	{
+		$pending = [$rightNode, $leftNode];
+		$operands = [];
+
+		while ($pending !== []) {
+			$node = array_pop($pending);
+			if (
+				is_object($node)
+				&& (($node->kind ?? null) === AstKind::BINARY_OP)
+				&& ((int) ($node->flags ?? 0) === AstKind::BINARY_CONCAT)
+			) {
+				$pending[] = $node->children['right'] ?? null;
+				$pending[] = $node->children['left'] ?? null;
+				continue;
+			}
+
+			$operands[] = $node;
+		}
+
+		return $operands;
 	}
 
 	/**
