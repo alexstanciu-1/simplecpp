@@ -443,6 +443,14 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 			while (offset < source.size() && is_digit(static_cast<unsigned char>(source[offset]))) {
 				advance_one();
 			}
+			if (offset + 1 < source.size()
+				&& source[offset] == '.'
+				&& is_digit(static_cast<unsigned char>(source[offset + 1]))) {
+				advance_one();
+				while (offset < source.size() && is_digit(static_cast<unsigned char>(source[offset]))) {
+					advance_one();
+				}
+			}
 			out.add_token(token_number, start, offset - start, line, start_column, token_flags());
 			continue;
 		}
@@ -459,6 +467,8 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 		if (offset + 2 < source.size()) {
 			if ((source[offset] == '=' && source[offset + 1] == '=' && source[offset + 2] == '=')
 				|| (source[offset] == '<' && source[offset + 1] == '=' && source[offset + 2] == '>')
+				|| (source[offset] == '<' && source[offset + 1] == '<' && source[offset + 2] == '=')
+				|| (source[offset] == '>' && source[offset + 1] == '>' && source[offset + 2] == '=')
 				|| (source[offset] == '!' && source[offset + 1] == '=' && source[offset + 2] == '=')) {
 				length = 3;
 			}
@@ -471,9 +481,12 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 				|| (source[offset] == '!' && next == '=')
 				|| (source[offset] == '<' && next == '=')
 				|| (source[offset] == '>' && next == '=')
+				|| (source[offset] == '<' && next == '<')
+				|| (source[offset] == '>' && next == '>')
 				|| (source[offset] == '&' && next == '&')
 				|| (source[offset] == '|' && next == '|')
 				|| (source[offset] == '?' && next == '?')
+				|| (source[offset] == '*' && next == '*')
 				|| (source[offset] == '-' && next == '>'))) {
 				length = 2;
 			}
