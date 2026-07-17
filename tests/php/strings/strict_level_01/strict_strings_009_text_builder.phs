@@ -1,0 +1,34 @@
+$builder text_builder = text_builder_create();
+
+text_builder_reserve_bytes($builder, 32);
+if (text_builder_capacity_bytes($builder) >= 32) {
+	echo "reserved\n";
+} else {
+	echo "not-reserved\n";
+}
+
+text_builder_append_string($builder, "hello");
+text_builder_append_string($builder, "-");
+text_builder_append_int($builder, 42);
+text_builder_append_string($builder, "-");
+text_builder_append_bool($builder, true);
+text_builder_append_bool($builder, false);
+
+$source string = "xxspanzz";
+$sourceBuffer source_buffer = source_buffer_take($source);
+$span byte_span = source_buffer_span($sourceBuffer, 2, 4);
+text_builder_append_string($builder, "-");
+text_builder_append_byte_span($builder, $span);
+
+echo text_builder_byte_len($builder), "\n";
+echo text_builder_to_string($builder), "\n";
+
+$taken string = text_builder_take_string($builder);
+echo $taken, "\n";
+echo text_builder_byte_len($builder), "\n";
+
+text_builder_append_string($builder, "again");
+echo text_builder_to_string($builder), "\n";
+
+text_builder_clear($builder);
+echo text_builder_byte_len($builder), "\n";

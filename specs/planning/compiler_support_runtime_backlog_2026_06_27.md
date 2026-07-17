@@ -421,6 +421,9 @@ Result:
   explicit piece collection, but hot compiler writers should not be replaced
   blindly; a future byte/text builder that writes into one contiguous buffer may
   be better for artifact emission.
+- Added `text_builder` as that contiguous-buffer follow-up, with byte-capacity
+  reserve, direct append helpers, byte-span append, materialize, take, and clear
+  helpers exposed through strict/legacy runtime symbols.
 
 ## Priority 11: Bitset Library
 

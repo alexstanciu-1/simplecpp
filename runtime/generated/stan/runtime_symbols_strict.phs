@@ -169,6 +169,17 @@ function task_set_status(task_context $ctx, string $status): void {}
 function task_start(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): task_batch {}
 function task_status(task_batch $batch): string {}
 function ternary_eval(): mixed {}
+function text_builder_append_bool(text_builder $builder, bool $value): void {}
+function text_builder_append_byte_span(text_builder $builder, byte_span $span): void {}
+function text_builder_append_int(text_builder $builder, int $value): void {}
+function text_builder_append_string(text_builder $builder, string $value): void {}
+function text_builder_byte_len(text_builder $builder): int {}
+function text_builder_capacity_bytes(text_builder $builder): int {}
+function text_builder_clear(text_builder $builder): void {}
+function text_builder_create(): text_builder {}
+function text_builder_reserve_bytes(text_builder $builder, int $capacity): void {}
+function text_builder_take_string(text_builder $builder): string {}
+function text_builder_to_string(text_builder $builder): string {}
 function to_dynamic(): mixed {}
 function to_hash(mixed $value): hash<mixed> {}
 function token_buffer_column(token_buffer $buffer, int $index): int {}
@@ -221,6 +232,10 @@ class token_buffer
 }
 
 class string_parts_builder
+{
+}
+
+class text_builder
 {
 }
 

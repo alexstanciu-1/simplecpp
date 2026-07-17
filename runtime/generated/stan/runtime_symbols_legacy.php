@@ -153,6 +153,17 @@ function substr_compare(string $main, string $str, int $offset, int $length = 0)
 function substr_replace(string $text, string $replace, int $offset, int $length = 0): string {}
 function take(mixed $out, mixed $source): bool {}
 function ternary_eval(): mixed {}
+function text_builder_append_bool(text_builder $builder, bool $value): void {}
+function text_builder_append_byte_span(text_builder $builder, byte_span $span): void {}
+function text_builder_append_int(text_builder $builder, int $value): void {}
+function text_builder_append_string(text_builder $builder, string $value): void {}
+function text_builder_byte_len(text_builder $builder): int {}
+function text_builder_capacity_bytes(text_builder $builder): int {}
+function text_builder_clear(text_builder $builder): void {}
+function text_builder_create(): text_builder {}
+function text_builder_reserve_bytes(text_builder $builder, int $capacity): void {}
+function text_builder_take_string(text_builder $builder): string {}
+function text_builder_to_string(text_builder $builder): string {}
 function time(): int {}
 function to_dynamic(): mixed {}
 function to_hash(mixed $value) /** hash<mixed> */ {}

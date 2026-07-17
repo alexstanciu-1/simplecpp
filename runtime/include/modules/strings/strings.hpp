@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/string_support.hpp"
+#include "modules/source/source.hpp"
 #include "scpp/result.hpp"
 #include "scpp/vector_t.hpp"
 
@@ -65,6 +66,62 @@ public:
 	}
 };
 
+class text_builder final {
+private:
+	std::string bytes_;
+
+public:
+	text_builder() = default;
+
+	void reserve(const std::size_t byte_capacity) {
+		bytes_.reserve(byte_capacity);
+	}
+
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return bytes_.capacity();
+	}
+
+	[[nodiscard]] std::size_t byte_length() const noexcept {
+		return bytes_.size();
+	}
+
+	void append(const std::string_view value) {
+		bytes_.append(value.data(), value.size());
+	}
+
+	void append(const string_t &value) {
+		append(value.native_value());
+	}
+
+	void append_int(const int_t<> &value) {
+		bytes_ += std::to_string(value.native_value());
+	}
+
+	void append_bool(const bool_t &value) {
+		if (value.native_value()) {
+			bytes_.push_back('1');
+		}
+	}
+
+	void append_byte_span(const source::byte_span &span) {
+		append(span.view());
+	}
+
+	void clear() noexcept {
+		bytes_.clear();
+	}
+
+	[[nodiscard]] string_t to_string() const {
+		return string_t(bytes_);
+	}
+
+	[[nodiscard]] string_t take_string() {
+		std::string out = std::move(bytes_);
+		bytes_.clear();
+		return string_t(std::move(out));
+	}
+};
+
 [[nodiscard]] inline string_parts_builder string_parts_builder_create() {
 	return string_parts_builder();
 }
@@ -106,6 +163,54 @@ inline void string_parts_builder_append_bool(string_parts_builder &builder, cons
 }
 
 inline void string_parts_builder_clear(string_parts_builder &builder) {
+	builder.clear();
+}
+
+[[nodiscard]] inline text_builder text_builder_create() {
+	return text_builder();
+}
+
+inline void text_builder_reserve_bytes(text_builder &builder, const int_t<> &capacity) {
+	const auto native = capacity.native_value();
+	if (native < 0) {
+		throw scpp::ValueError("text_builder_reserve_bytes(): capacity must be non-negative");
+	}
+	builder.reserve(static_cast<std::size_t>(native));
+}
+
+[[nodiscard]] inline int_t<> text_builder_capacity_bytes(const text_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.capacity()));
+}
+
+[[nodiscard]] inline int_t<> text_builder_byte_len(const text_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.byte_length()));
+}
+
+inline void text_builder_append_string(text_builder &builder, const string_t &value) {
+	builder.append(value);
+}
+
+inline void text_builder_append_int(text_builder &builder, const int_t<> &value) {
+	builder.append_int(value);
+}
+
+inline void text_builder_append_bool(text_builder &builder, const bool_t &value) {
+	builder.append_bool(value);
+}
+
+inline void text_builder_append_byte_span(text_builder &builder, const source::byte_span &span) {
+	builder.append_byte_span(span);
+}
+
+[[nodiscard]] inline string_t text_builder_to_string(const text_builder &builder) {
+	return builder.to_string();
+}
+
+[[nodiscard]] inline string_t text_builder_take_string(text_builder &builder) {
+	return builder.take_string();
+}
+
+inline void text_builder_clear(text_builder &builder) {
 	builder.clear();
 }
 

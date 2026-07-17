@@ -2348,6 +2348,73 @@ final class StanExpressionTypeResolver
 				'line' => 0,
 				'is_static' => false,
 			];
+			foreach ([
+				'text_builder_create' => ['return_type' => 'text_builder', 'params' => []],
+				'text_builder_reserve_bytes' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'capacity', 'type' => 'int'],
+					],
+				],
+				'text_builder_capacity_bytes' => [
+					'return_type' => 'int',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_byte_len' => [
+					'return_type' => 'int',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_append_string' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'string'],
+					],
+				],
+				'text_builder_append_int' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'int'],
+					],
+				],
+				'text_builder_append_bool' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'bool'],
+					],
+				],
+				'text_builder_append_byte_span' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'span', 'type' => 'byte_span'],
+					],
+				],
+				'text_builder_to_string' => [
+					'return_type' => 'string',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_take_string' => [
+					'return_type' => 'string',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_clear' => [
+					'return_type' => 'void',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+			] as $name => $entry) {
+				$catalog[$name] = [
+					'name' => $name,
+					'namespace' => null,
+					'params' => $entry['params'],
+					'return_type' => $entry['return_type'],
+					'line' => 0,
+					'is_static' => false,
+				];
+			}
 			return $catalog;
 		}
 

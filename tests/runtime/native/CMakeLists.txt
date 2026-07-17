@@ -94,6 +94,11 @@ add_executable(test_string_parts_builder test_string_parts_builder.cpp)
 target_link_libraries(test_string_parts_builder PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_string_parts_builder COMMAND test_string_parts_builder)
 
+# text_builder coverage for contiguous artifact-style text assembly.
+add_executable(test_text_builder test_text_builder.cpp)
+target_link_libraries(test_text_builder PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_text_builder COMMAND test_text_builder)
+
 # mixed_t dynamic dispatch coverage.
 add_executable(test_mixed_t_dynamic test_mixed_t_dynamic.cpp)
 target_link_libraries(test_mixed_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)
