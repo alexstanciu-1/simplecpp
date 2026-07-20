@@ -1000,7 +1000,7 @@ function handle_stan_worker(string $cwd, array $args = []): void
 
 				try {
 					$report = build_stan_worker_report($project['project_root'], $project['config_path'], $currentFingerprint);
-					write_json_file_atomic($paths['report_path'], $report);
+					$report = write_stan_report_file_atomic($paths['report_path'], $report);
 					write_json_file_atomic($paths['status_path'], [
 						'project_root' => normalize_path($project['project_root']),
 						'analysis_state' => 'ready',
@@ -9066,6 +9066,7 @@ function build_stan_worker_report(string $projectRoot, string $configPath, strin
 	$diagnosticResult = $session->buildDiagnosticsResultFromSnapshot($snapshot);
 	$classified = classify_stan_build_diagnostics(is_array($diagnosticResult['diagnostics'] ?? null) ? $diagnosticResult['diagnostics'] : []);
 	$finishedAt = microtime(true);
+	$timings = is_array($diagnosticResult['timings_ms'] ?? null) ? $diagnosticResult['timings_ms'] : [];
 	return [
 		'project_root' => normalize_path((string) ($diagnosticResult['project_root'] ?? $projectRoot)),
 		'php_profile' => (string) ($diagnosticResult['php_profile'] ?? ''),
@@ -9082,8 +9083,22 @@ function build_stan_worker_report(string $projectRoot, string $configPath, strin
 		'stan_error_count' => $classified['stan_error_count'],
 		'stan_warning_count' => $classified['stan_warning_count'],
 		'stan_notice_count' => $classified['stan_notice_count'],
+		'timings_ms' => $timings,
 		'diagnostics' => $classified['diagnostics'],
 	];
+}
+
+/** @param array<string,mixed> $report @return array<string,mixed> */
+function write_stan_report_file_atomic(string $path, array $report): array
+{
+	$timings = is_array($report['timings_ms'] ?? null) ? $report['timings_ms'] : [];
+	$timings['report_write_ms'] = 0;
+	$report['timings_ms'] = $timings;
+	$startedAt = microtime(true);
+	write_json_file_atomic($path, $report);
+	$report['timings_ms']['report_write_ms'] = (int) round(max(0.0, (microtime(true) - $startedAt) * 1000.0));
+	write_json_file_atomic($path, $report);
+	return $report;
 }
 
 /** @param array<string,mixed> $status */
@@ -9178,7 +9193,7 @@ function execute_stan_build_preflight(string $projectRoot, string $configPath, a
 		$heartbeat = read_json_file($paths['heartbeat_path']);
 		if (!stan_worker_heartbeat_is_live($heartbeat)) {
 			$report = build_stan_worker_report($projectRoot, $configPath, $sourceFingerprint);
-			write_json_file_atomic($paths['report_path'], $report);
+			$report = write_stan_report_file_atomic($paths['report_path'], $report);
 			write_json_file_atomic($paths['status_path'], [
 				'project_root' => normalize_path($projectRoot),
 				'analysis_state' => 'ready',
@@ -9241,6 +9256,7 @@ function build_stan_override_report(string $projectRoot, string $configPath, arr
 	$diagnosticResult = $session->buildDiagnosticsResultFromSnapshot($snapshot);
 	$classified = classify_stan_build_diagnostics(is_array($diagnosticResult['diagnostics'] ?? null) ? $diagnosticResult['diagnostics'] : []);
 	$finishedAt = microtime(true);
+	$timings = is_array($diagnosticResult['timings_ms'] ?? null) ? $diagnosticResult['timings_ms'] : [];
 	return [
 		'project_root' => normalize_path((string) ($diagnosticResult['project_root'] ?? $projectRoot)),
 		'php_profile' => (string) ($diagnosticResult['php_profile'] ?? ''),
@@ -9257,6 +9273,7 @@ function build_stan_override_report(string $projectRoot, string $configPath, arr
 		'stan_error_count' => $classified['stan_error_count'],
 		'stan_warning_count' => $classified['stan_warning_count'],
 		'stan_notice_count' => $classified['stan_notice_count'],
+		'timings_ms' => $timings,
 		'diagnostics' => $classified['diagnostics'],
 	];
 }
@@ -9280,7 +9297,7 @@ function load_or_execute_stan_cli_result(string $projectRoot, string $configPath
 		return build_stan_cli_result_from_report($projectRoot, $configPath, $report);
 	}
 	$report = build_stan_worker_report($projectRoot, $configPath, $sourceFingerprint);
-	write_json_file_atomic($paths['report_path'], $report);
+	$report = write_stan_report_file_atomic($paths['report_path'], $report);
 	write_json_file_atomic($paths['status_path'], [
 		'project_root' => normalize_path($projectRoot),
 		'analysis_state' => 'ready',
@@ -9370,6 +9387,7 @@ function build_stan_cli_result_from_report(string $projectRoot, string $configPa
 		'state_path' => normalize_path($projectRoot . '/' . normalize_config_path((string) (load_project_config($configPath)['cache_dir'] ?? '.prism/cache')) . '/' . SCPP_STAN_STATE_FILE),
 		'runtime_shallow_sources' => [],
 		'warning_samples' => is_array($report['warning_samples'] ?? null) ? $report['warning_samples'] : [],
+		'timings_ms' => is_array($report['timings_ms'] ?? null) ? $report['timings_ms'] : [],
 	];
 }
 

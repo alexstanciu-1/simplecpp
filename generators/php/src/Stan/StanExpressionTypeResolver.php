@@ -11,6 +11,82 @@ final class StanExpressionTypeResolver
 	{
 	}
 
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return array<string,list<array<string,mixed>>> */
+	public function analyzeWorkspaceExpressions(array $fileSummaries, array $symbolIndex): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries);
+		$classLookup = $this->buildClassLookup($classCatalog);
+		$functionCatalog = $this->buildFunctionCatalog($fileSummaries);
+		$functionLookup = $this->buildFunctionLookup($fileSummaries);
+		$result = [
+			'return_chain_types' => [],
+			'return_chain_diagnostics' => [],
+			'expression_chain_types' => [],
+			'expression_chain_diagnostics' => [],
+			'local_type_diagnostics' => [],
+			'property_type_diagnostics' => [],
+			'property_read_diagnostics' => [],
+			'initialization_diagnostics' => [],
+			'call_site_diagnostics' => [],
+			'return_type_diagnostics' => [],
+		];
+
+		foreach ($fileSummaries as $summary) {
+			$path = (string) ($summary['path'] ?? '(unknown)');
+			foreach (($summary['root_functions'] ?? []) as $function) {
+				if (is_array($function)) {
+					$this->appendFunctionExpressionAnalysis($result, $function, null, $path, $classLookup, $functionLookup, $functionCatalog);
+				}
+			}
+			foreach (($summary['root_classes'] ?? []) as $class) {
+				if (is_array($class)) {
+					$this->appendClassExpressionAnalysis($result, $class, '', $path, $classLookup, $functionLookup, $functionCatalog);
+					$result['local_type_diagnostics'] = array_merge(
+						$result['local_type_diagnostics'],
+						$this->collectUnsupportedHashKeyDiagnosticsForClass($class, (string) ($class['name'] ?? 'class'), $path, $classLookup)
+					);
+				}
+			}
+			foreach (($summary['namespaces'] ?? []) as $namespace) {
+				if (!is_array($namespace)) {
+					continue;
+				}
+				$namespaceName = (string) ($namespace['name'] ?? '');
+				foreach (($namespace['functions'] ?? []) as $function) {
+					if (is_array($function)) {
+						$this->appendFunctionExpressionAnalysis($result, $function, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog);
+					}
+				}
+				foreach (($namespace['classes'] ?? []) as $class) {
+					if (is_array($class)) {
+						$this->appendClassExpressionAnalysis($result, $class, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog);
+						$result['local_type_diagnostics'] = array_merge(
+							$result['local_type_diagnostics'],
+							$this->collectUnsupportedHashKeyDiagnosticsForClass($class, $this->contextName($namespaceName, (string) ($class['name'] ?? 'class')), $path, $classLookup)
+						);
+					}
+				}
+			}
+		}
+
+		usort($result['return_chain_types'], static fn (array $a, array $b): int => strcmp($a['context'], $b['context']));
+		usort($result['expression_chain_types'], static fn (array $a, array $b): int => strcmp($a['context'], $b['context']));
+		foreach ([
+			'return_chain_diagnostics',
+			'expression_chain_diagnostics',
+			'local_type_diagnostics',
+			'property_type_diagnostics',
+			'property_read_diagnostics',
+			'initialization_diagnostics',
+			'call_site_diagnostics',
+			'return_type_diagnostics',
+		] as $diagnosticKey) {
+			usort($result[$diagnosticKey], static fn (array $a, array $b): int => strcmp((string) ($a['message'] ?? ''), (string) ($b['message'] ?? '')));
+		}
+
+		return $result;
+	}
+
 	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
 	public function resolveReturnChains(array $fileSummaries, array $symbolIndex): array
 	{
@@ -763,6 +839,93 @@ final class StanExpressionTypeResolver
 			$results = array_merge($results, $this->collectReturnDiagnosticsForOwner($method, $analysis['final_local_types'], $classType, $classLookup, $functionLookup, $context, $path));
 		}
 		return $results;
+	}
+
+	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $function @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendFunctionExpressionAnalysis(array &$result, array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog): void
+	{
+		$baseTypes = $this->buildParamTypeMap($function['params'] ?? []);
+		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
+		$analysis = $this->analyzeChainSequence($function, $baseTypes, null, $classLookup, $functionLookup, $context, $path, $functionCatalog);
+		$this->appendOwnerExpressionAnalysis($result, $function, $analysis, null, $classLookup, $functionLookup, $functionCatalog, $context, $path, 'function_return_chain');
+		$result['local_type_diagnostics'] = array_merge(
+			$result['local_type_diagnostics'],
+			$this->collectUnsupportedHashKeyDiagnosticsForOwner($function, $context, $path, $classLookup)
+		);
+	}
+
+	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendClassExpressionAnalysis(array &$result, array $class, string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog): void
+	{
+		$className = (string) ($class['name'] ?? '');
+		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
+		foreach (($class['methods'] ?? []) as $method) {
+			if (!is_array($method)) {
+				continue;
+			}
+			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$analysis = $this->analyzeChainSequence(
+				$method,
+				$baseTypes,
+				$classType,
+				$classLookup,
+				$functionLookup,
+				$context,
+				$path,
+				$functionCatalog,
+				$this->constructorBaselineForMethod($methodName, $constructorInitializedProperties)
+			);
+			$this->appendOwnerExpressionAnalysis($result, $method, $analysis, $classType, $classLookup, $functionLookup, $functionCatalog, $context, $path, 'method_return_chain');
+		}
+	}
+
+	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $ownerNode @param array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>,call_site_diagnostics:list<array<string,mixed>>,property_read_diagnostics:list<array<string,mixed>>} $analysis @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendOwnerExpressionAnalysis(array &$result, array $ownerNode, array $analysis, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path, string $returnChainKind): void
+	{
+		$result['return_chain_types'] = array_merge(
+			$result['return_chain_types'],
+			$this->filterObservationResults($analysis['observations'], 'return_chains', $returnChainKind)
+		);
+		$result['return_chain_diagnostics'] = array_merge(
+			$result['return_chain_diagnostics'],
+			$this->filterDiagnosticResults($analysis['diagnostics'], 'return_chains', 'return_chain_resolution_warning')
+		);
+		$result['expression_chain_types'] = array_merge(
+			$result['expression_chain_types'],
+			$this->filterObservationResults($analysis['observations'], 'expression_chains', 'expression_chain')
+		);
+		$result['expression_chain_diagnostics'] = array_merge(
+			$result['expression_chain_diagnostics'],
+			$this->filterDiagnosticResults($analysis['diagnostics'], 'expression_chains', 'expression_chain_resolution_warning')
+		);
+		$result['local_type_diagnostics'] = array_merge(
+			$result['local_type_diagnostics'],
+			$this->filterLocalTypeDiagnostics($analysis['diagnostics'])
+		);
+		$result['property_type_diagnostics'] = array_merge(
+			$result['property_type_diagnostics'],
+			$this->filterPropertyTypeDiagnostics($analysis['diagnostics'])
+		);
+		$result['property_read_diagnostics'] = array_merge(
+			$result['property_read_diagnostics'],
+			$analysis['property_read_diagnostics']
+		);
+		$result['initialization_diagnostics'] = array_merge(
+			$result['initialization_diagnostics'],
+			$this->filterInitializationDiagnostics($analysis['diagnostics'])
+		);
+		$result['call_site_diagnostics'] = array_merge(
+			$result['call_site_diagnostics'],
+			$analysis['call_site_diagnostics'],
+			$this->collectWrapperBoundaryDiagnosticsForOwner($ownerNode, $analysis['final_local_types'], $selfType, $classLookup, $functionLookup, $functionCatalog, $context, $path)
+		);
+		$result['return_type_diagnostics'] = array_merge(
+			$result['return_type_diagnostics'],
+			$this->collectReturnDiagnosticsForOwner($ownerNode, $analysis['final_local_types'], $selfType, $classLookup, $functionLookup, $context, $path)
+		);
 	}
 
 	/** @param list<array<string,mixed>> $params @return array<string,string> */

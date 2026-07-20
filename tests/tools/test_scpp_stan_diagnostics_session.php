@@ -74,6 +74,8 @@ final class ScppStanDiagnosticsSessionTest
 			$diagnostics = $session->runDiagnostics($project, $project . '/prism.json');
 			$this->assertSame($this->normalizeRunSummary($normal), $this->normalizeDiagnosticsSummary($diagnostics), 'runDiagnostics summary should match normal run summary');
 			$this->assertSame(1, count($diagnostics['diagnostics'] ?? []), 'runDiagnostics should expose one diagnostic');
+			$this->assertTrue(isset($diagnostics['timings_ms']['context_build_ms']), 'runDiagnostics should expose STAN context timing');
+			$this->assertTrue(isset($diagnostics['timings_ms']['semantic_subpasses_ms']['expression_analysis_ms']), 'runDiagnostics should expose semantic expression-analysis timing');
 
 			$firstDiagnostic = $diagnostics['diagnostics'][0] ?? null;
 			if (!is_array($firstDiagnostic)) {
@@ -100,6 +102,24 @@ final class ScppStanDiagnosticsSessionTest
 			$normalAfterOverride = $session->run($project, $project . '/prism.json');
 			$this->assertSame(1, $normalAfterOverride['warning_count'] ?? null, 'normal run after override should keep the canonical source warning');
 			$this->assertSame(0, $normalAfterOverride['analyzed_count'] ?? null, 'normal run after override should reuse canonical cached summaries');
+
+			$bodyEditSource = implode("\n", [
+				'function main(): void',
+				'{',
+				'	$value = null;',
+				'	$value = "body edit";',
+				'	echo $value, "\n";',
+				'}',
+				'',
+			]);
+			$this->write($mainPath, $bodyEditSource);
+			$bodyEditRun = $session->run($project, $project . '/prism.json');
+			$this->assertSame(1, $bodyEditRun['analyzed_count'] ?? null, 'body-only source edit should reanalyze the changed source only');
+			$this->assertTrue((int) ($bodyEditRun['reused_count'] ?? 0) > 0, 'body-only source edit should reuse unchanged STAN file summaries');
+			$this->write($mainPath, $originalSource);
+			$restoredRun = $session->run($project, $project . '/prism.json');
+			$this->assertSame(1, $restoredRun['analyzed_count'] ?? null, 'restoring source content should still use per-file invalidation');
+			$this->assertTrue((int) ($restoredRun['reused_count'] ?? 0) > 0, 'restoring source content should keep runtime/cache summaries reusable');
 
 			$plainCli = $this->runCommand([
 				PHP_BINARY,
@@ -724,6 +744,13 @@ final class ScppStanDiagnosticsSessionTest
 	{
 		if ($expected !== $actual) {
 			throw new RuntimeException($message . ' expected ' . var_export($expected, true) . ', got ' . var_export($actual, true));
+		}
+	}
+
+	private function assertTrue(bool $condition, string $message): void
+	{
+		if (!$condition) {
+			throw new RuntimeException($message);
 		}
 	}
 }

@@ -66,6 +66,8 @@ PHS);
 			$this->assertSame('ready', is_array($status) ? ($status['analysis_state'] ?? null) : null, 'status file should end in ready state');
 			$this->assertSame(0, is_array($report) ? ($report['compile_error_count'] ?? null) : null, 'advisory project should not produce compile-errors');
 			$this->assertSame(1, is_array($report) ? ($report['stan_warning_count'] ?? null) : null, 'advisory project should preserve the warning in the report');
+			$this->assertTrue(is_array($report) && isset($report['timings_ms']['context_build_ms']), 'published STAN report should expose context build timing');
+			$this->assertTrue(is_array($report) && isset($report['timings_ms']['report_write_ms']), 'published STAN report should expose report write timing');
 
 			$this->write($projectRoot . '/main.phs', <<<'PHS'
 function main(): void

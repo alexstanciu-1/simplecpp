@@ -55,8 +55,9 @@ final class StanWorkspaceSession
 	/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
 	public function createBridgeSnapshot(string $projectRoot, string $configPath, array $sourceOverrides = []): array
 	{
-		[$context, $filePassResult, $semanticResult, $warningCount] = $this->analyzeWorkspace($projectRoot, $configPath, $sourceOverrides);
+		[$context, $filePassResult, $semanticResult, $warningCount, $timings] = $this->analyzeWorkspace($projectRoot, $configPath, $sourceOverrides);
 
+		$diagnosticAssemblyStart = microtime(true);
 		$allDiagnostics = $this->resultAssembler->flattenDiagnostics(
 			$semanticResult['duplicate_diagnostics'],
 			$semanticResult['resolution_diagnostics'],
@@ -72,6 +73,7 @@ final class StanWorkspaceSession
 			$semanticResult['frontend_diagnostics'] ?? [],
 		);
 		$diagnosticsByPath = $this->resultAssembler->groupDiagnosticsByPath($allDiagnostics);
+		$timings['diagnostic_assembly_ms'] = $this->elapsedMilliseconds($diagnosticAssemblyStart);
 
 		return [
 			'context' => $context,
@@ -85,6 +87,7 @@ final class StanWorkspaceSession
 				'reused_count' => (int) ($filePassResult['reused_count'] ?? 0),
 				'source_unit_count' => count($filePassResult['files'] ?? []),
 				'warning_count' => $warningCount,
+				'timings_ms' => $timings,
 			],
 		];
 	}
@@ -95,7 +98,7 @@ final class StanWorkspaceSession
 		$context = $snapshot['context'];
 		$filePassResult = $snapshot['file_pass_result'];
 		$semanticResult = $snapshot['semantic_result'];
-		return $this->resultAssembler->buildSessionDiagnosticsResult(
+		$result = $this->resultAssembler->buildSessionDiagnosticsResult(
 			$context->projectRoot,
 			$context->phpProfile,
 			count($filePassResult['files']),
@@ -108,6 +111,9 @@ final class StanWorkspaceSession
 			$snapshot['all_diagnostics'],
 			$snapshot['diagnostics_by_path'],
 		);
+		$debug = is_array($snapshot['debug'] ?? null) ? $snapshot['debug'] : [];
+		$result['timings_ms'] = is_array($debug['timings_ms'] ?? null) ? $debug['timings_ms'] : [];
+		return $result;
 	}
 
 	/** @param array<string,mixed> $snapshot @return array<string,mixed> */
@@ -225,15 +231,21 @@ final class StanWorkspaceSession
 		);
 	}
 
-	/** @param array<string,string> $sourceOverrides @return array{0:StanWorkspaceContext,1:array<string,mixed>,2:array<string,mixed>,3:int} */
+	/** @param array<string,string> $sourceOverrides @return array{0:StanWorkspaceContext,1:array<string,mixed>,2:array<string,mixed>,3:int,4:array<string,mixed>} */
 	private function analyzeWorkspace(string $projectRoot, string $configPath, array $sourceOverrides): array
 	{
 		$hasSourceOverrides = $sourceOverrides !== [];
+		$timings = [];
+		$contextStart = microtime(true);
 		$context = $this->contextBuilder->build($projectRoot, $configPath, $sourceOverrides);
+		$timings['context_build_ms'] = $this->elapsedMilliseconds($contextStart);
+		$stateLoadStart = microtime(true);
 		$state = $this->stateStore->load($context->statePath);
-		if (!$hasSourceOverrides && (string) ($state['source_fingerprint'] ?? '') !== $context->sourceFingerprint) {
+		$timings['state_load_ms'] = $this->elapsedMilliseconds($stateLoadStart);
+		if (!is_array($state['files'] ?? null)) {
 			$state = ['version' => 1, 'files' => []];
 		}
+		$filePassStart = microtime(true);
 		$filePassResult = $this->filePass->analyze(
 			$context->projectRoot,
 			$context->statePath,
@@ -243,10 +255,14 @@ final class StanWorkspaceSession
 			$context->sourceUnits,
 			!$hasSourceOverrides,
 		);
+		$timings['file_pass_ms'] = $this->elapsedMilliseconds($filePassStart);
 		$warningCount = (int) ($filePassResult['warning_count'] ?? 0);
 		$runtimeConfig = \resolve_runtime_build_config($context->config);
 		$activeRuntimeModules = is_array($runtimeConfig['modules'] ?? null) ? array_values(array_map('strval', $runtimeConfig['modules'])) : null;
+		$semanticStart = microtime(true);
 		$semanticResult = $this->semanticPass->analyze($filePassResult['file_summaries'], $context->projectRoot, $activeRuntimeModules);
+		$timings['semantic_pass_ms'] = $this->elapsedMilliseconds($semanticStart);
+		$timings['semantic_subpasses_ms'] = is_array($semanticResult['timings_ms'] ?? null) ? $semanticResult['timings_ms'] : [];
 		$warningCount += (int) ($semanticResult['warning_count'] ?? 0);
 
 		$newFilesState = $filePassResult['files_state'];
@@ -255,6 +271,7 @@ final class StanWorkspaceSession
 			$newFilesState[$sourceKey]['dependency_keys'] = $fileDependencyKeys[$sourceKey] ?? [];
 		}
 
+		$stateBuildStart = microtime(true);
 		$state = $this->resultAssembler->buildState(
 			$context->projectRoot,
 			$context->phpProfile,
@@ -278,12 +295,22 @@ final class StanWorkspaceSession
 			$newFilesState,
 			$context->activeRuntimeShallowPath,
 		);
+		$timings['state_build_ms'] = $this->elapsedMilliseconds($stateBuildStart);
 		if (!$hasSourceOverrides) {
+			$stateSaveStart = microtime(true);
 			$this->stateStore->save($context->statePath, $state);
+			$timings['state_save_ms'] = $this->elapsedMilliseconds($stateSaveStart);
+		} else {
+			$timings['state_save_ms'] = 0;
 		}
 		$filePassResult['files_state'] = $newFilesState;
 
-		return [$context, $filePassResult, $semanticResult, $warningCount];
+		return [$context, $filePassResult, $semanticResult, $warningCount, $timings];
+	}
+
+	private function elapsedMilliseconds(float $startedAt): int
+	{
+		return (int) round(max(0.0, (microtime(true) - $startedAt) * 1000.0));
 	}
 
 	/** @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */

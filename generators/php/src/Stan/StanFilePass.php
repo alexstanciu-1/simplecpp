@@ -109,6 +109,7 @@ final class StanFilePass
 				$reusedCount++;
 			}
 
+			$summary['is_runtime_shallow'] = $sourceUnit->isRuntimeShallow;
 			$warningCount += $this->diagnosticCollector->countWarnings($summary);
 			$fileSummaries[$relativeKey] = $summary;
 			$newFilesState[$relativeKey] = [

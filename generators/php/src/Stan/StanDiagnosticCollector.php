@@ -76,6 +76,9 @@ final class StanDiagnosticCollector
 		$lookup = $this->dependencyResolver->buildResolutionLookup($symbolIndex);
 		$diagnostics = [];
 		foreach ($fileSummaries as $summary) {
+			if ((bool) ($summary['is_runtime_shallow'] ?? false)) {
+				continue;
+			}
 			$path = (string) ($summary['path'] ?? '(unknown)');
 			foreach (($summary['dependencies'] ?? []) as $dependency) {
 				if (!is_array($dependency)) {
