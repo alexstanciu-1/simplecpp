@@ -21,6 +21,14 @@ The proposed fix is to replace the single broad force-include surface with
 dependency-scoped project unit headers, using the same source-summary /
 STAN-facing dependency knowledge that Simple C++ already computes.
 
+## Implementation Goal
+
+Implement dependency-scoped project unit headers end to end for issue 215:
+precise enough dependency modeling to reduce rebuild fanout, deterministic
+scoped pack generation for safe units, broad fallback for uncertain units,
+continued `--no-stan` compatibility, source-first diagnostics, regression
+coverage, and measured validation on a large strict PHS project.
+
 ## Evidence From v2 Compiler Work
 
 In the v2 compiler project under `compiler/v2/src`, a small PHS edit recently
@@ -233,6 +241,127 @@ Handle complete type requirements explicitly:
 
 This should reuse or extend the existing `sort_project_unit_include_headers(...)`
 logic rather than inventing an unrelated ordering system.
+
+## Implementation Backlog
+
+Status legend:
+
+- `done`: implemented and committed
+- `ready`: next practical implementation slice
+- `planned`: known follow-up, order may shift as evidence comes in
+- `blocked`: needs data or a prerequisite implementation slice
+
+### Done
+
+- [x] `PUH-001` Save the original issue locally as this planning note.
+- [x] `PUH-002` Add project-unit force-include diagnostics, broad-equivalent
+  hash packs, dependency summaries, and C0 scoped-pack candidate reporting.
+  Commit: `74823dc Add project unit force-include diagnostics`.
+- [x] `PUH-003` Activate scoped pack headers for generated PHS units classified
+  as `candidate_scoped`; keep blocked generated units, native C++ units, and
+  `--no-stan` builds on broad-equivalent fallback packs.
+  Commit: `23b9b23 Activate scoped project unit packs for safe units`.
+- [x] `PUH-004` Add active scoped/broad and candidate scoped/blocked fanout
+  counters to saved reports and `scpp explain-build project-units`.
+  Commit: `5d893d6 Report scoped project unit fanout counters`.
+- [x] `PUH-005` Add candidate blocker histograms so common broad-fallback
+  reasons are visible without scanning every source row.
+  Commit: `003f5de Summarize scoped project unit blockers`.
+- [x] `PUH-006` Annotate saved generated source rows and `generated-files`
+  output with the active project-unit status, pack mode, and force-include
+  header.
+  Commit: `ea36c85 Annotate build sources with project unit packs`.
+
+### Ready
+
+- [ ] `PUH-010` Run a real-project baseline on `compiler/v2/src` with the
+  current branch. Record active scoped units, active broad-fallback units,
+  candidate blocker histogram, no-change build behavior, and rebuild fanout for
+  the motivating support-file edit.
+- [ ] `PUH-011` Add a focused regression for active scoped packs across nested
+  namespaces and inheritance-only declarations, proving safe units compile with
+  scoped packs while richer units stay broad.
+- [ ] `PUH-012` Add a focused regression for dependency projects: scoped root
+  units must include dependency `__project.hpp` exports, and dependency project
+  units must keep deterministic local pack assignment.
+- [ ] `PUH-013` Add stale scoped-pack cleanup or manifesting so obsolete
+  `.prism/generated/__project_units/scoped-*.hpp` files do not accumulate
+  indefinitely after dependency sets change.
+- [ ] `PUH-014` Make `project-units` and `generated-files` output suitable for
+  large projects by keeping summaries compact and pushing verbose per-source
+  detail behind the focused view only.
+
+### Planned Dependency-Model Work
+
+- [ ] `PUH-020` Split the dependency summary loader from STAN state so the build
+  can consume cached frontend/source summaries without requiring a full STAN
+  pre-build run. `--no-stan` should still build safely; precision may remain
+  broad until local summaries are known fresh enough.
+- [ ] `PUH-021` Store/reuse a build-owned per-source dependency summary artifact
+  with direct source keys, local header paths, export header paths, candidate
+  status, blockers, and the summary freshness inputs that produced it.
+- [ ] `PUH-022` Expand candidate reasons from generic blockers into dependency
+  categories such as direct type reference, inheritance, function signature,
+  method signature, property layout, executable body, unresolved symbol, and
+  missing summary.
+- [ ] `PUH-023` Model function and method signatures separately from function
+  and method bodies. Signature-only declarations can often use scoped packs
+  earlier than body-heavy files.
+- [ ] `PUH-024` Model function-body dependencies for leaf helper files. Start
+  with conservative same-project type/function references already named by
+  source summaries; fallback broad on unresolved calls, dynamic construction, or
+  unmodeled generated helper needs.
+- [ ] `PUH-025` Model complete-type requirements for class properties,
+  constants, value-layout structs/unions, enum backing/type references, and
+  generated declarations whose headers require another generated header to be
+  complete.
+- [ ] `PUH-026` Reuse/extend `sort_project_unit_include_headers(...)` for scoped
+  packs so base-before-derived and generated-header dependency ordering stays
+  deterministic.
+- [ ] `PUH-027` Decide the native C++ unit policy. Initial likely rule: native
+  C++ stays on broad fallback unless a project config or manifest explicitly
+  declares a narrower generated-header dependency set.
+
+### Planned Validation And Rollout
+
+- [ ] `PUH-030` Add snapshot-style tests for saved `.prism/last_run.json`
+  project-unit report shape so future diagnostic additions remain compatible.
+- [ ] `PUH-031` Add compile probes for no-STAN, stale-STAN, dependency-reuse,
+  and clean-build paths after build-owned dependency summaries exist.
+- [ ] `PUH-032` Add rebuild-fanout measurement to the usability or build
+  diagnostics harness: record transpiled files, changed project-unit packs,
+  dirty native objects, and Ninja no-work behavior.
+- [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:
+  a narrow support-file edit should dirty a much smaller slice than the previous
+  ~387-object rebuild, while no-change builds remain Ninja no-work.
+- [ ] `PUH-034` Update `specs/project_build_v1.md`, strict quick-learn, and
+  getting-started docs once build-owned summaries and expanded scoped
+  activation are stable.
+- [ ] `PUH-035` Prepare a GitHub issue update for
+  `alexstanciu-1/simplecpp#215` summarizing implemented slices, measured
+  results, remaining blockers, and next release/risk notes.
+
+### Deferred / Blocked
+
+- [ ] `PUH-040` Shared-library packaging semantics remain out of scope for this
+  backlog. Project dependencies still mean source-built Prism projects in v1.
+- [ ] `PUH-041` Full semantic symbol resolution remains out of scope for the PHP
+  S2S generator boundary. Any precision that needs semantic guarantees should
+  come from STAN/build-planning artifacts or remain broad fallback.
+- [ ] `PUH-042` PCH interaction tuning is deferred until real-project fanout
+  measurements show whether changed scoped packs are still poisoning an app PCH
+  path.
+
+## Current Execution Policy
+
+Move one backlog item or tightly related group at a time. Each slice should:
+
+1. Preserve broad fallback for uncertain units.
+2. Preserve `scpp build --no-stan` behavior.
+3. Add focused tests at the smallest layer that proves the change.
+4. Run `php -l bin/project_services.php`, focused build tests, and
+   `git diff --check`.
+5. Commit after the verified slice.
 
 ## Important Constraints
 
