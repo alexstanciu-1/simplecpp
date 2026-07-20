@@ -87,6 +87,7 @@ final class ScppExplainBuildTest
 			if (!is_array($projectUnits)) {
 				throw new RuntimeException('build explanation should contain project unit force-include details');
 			}
+			$this->assertProjectUnitReportShape($projectUnits, 'warm STAN project-unit report');
 			$this->assertSame(3, $projectUnits['total_units'] ?? null, 'three-file project should report three compiled units');
 			$this->assertSame(3, $projectUnits['units_with_force_include'] ?? null, 'three-file project should force-include the project unit header for each generated unit');
 			$this->assertSame(3, $projectUnits['distinct_headers'] ?? null, 'three-file project should use scoped packs for safe declaration-only units and broad fallback for main');
@@ -258,6 +259,7 @@ final class ScppExplainBuildTest
 			$noStanBuildDetails = is_array($noStanBuildReport['details'] ?? null) ? $noStanBuildReport['details'] : [];
 			$noStanBuildExplanation = is_array($noStanBuildDetails['build_explanation'] ?? null) ? $noStanBuildDetails['build_explanation'] : [];
 			$noStanProjectUnits = is_array($noStanBuildExplanation['project_unit_force_includes'] ?? null) ? $noStanBuildExplanation['project_unit_force_includes'] : [];
+			$this->assertProjectUnitReportShape($noStanProjectUnits, 'warm no-STAN project-unit report');
 			$this->assertSame(3, $noStanProjectUnits['total_units'] ?? null, 'warm --no-stan build should still report all generated units');
 			$this->assertSame(1, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should fall back to one broad-equivalent pack even if stale STAN state exists');
 			$this->assertSame(0, $noStanProjectUnits['active_scoped_units'] ?? null, 'warm --no-stan build should count no active scoped units');
@@ -327,6 +329,7 @@ final class ScppExplainBuildTest
 				],
 				[]
 			);
+			$this->assertProjectUnitReportShape($noStanReport, 'direct no-STAN project-unit report');
 			$noStanSummaries = is_array($noStanReport['dependency_summaries'] ?? null) ? $noStanReport['dependency_summaries'] : [];
 			$noStanSummary = $noStanSummaries[0] ?? null;
 			if (!is_array($noStanSummary)) {
@@ -467,6 +470,75 @@ final class ScppExplainBuildTest
 		if (str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' contained `' . $needle . '`');
 		}
+	}
+
+	private function assertProjectUnitReportShape(array $projectUnits, string $context): void
+	{
+		$this->assertKeys([
+			'active_broad_fallback_units',
+			'active_scoped_units',
+			'candidate_blocked_units',
+			'candidate_blocker_counts',
+			'candidate_scoped_units',
+			'dependency_summaries',
+			'distinct_headers',
+			'headers',
+			'total_units',
+			'units_with_force_include',
+		], $projectUnits, $context . ' top-level keys');
+
+		foreach (is_array($projectUnits['headers'] ?? null) ? $projectUnits['headers'] : [] as $header) {
+			if (!is_array($header)) {
+				throw new RuntimeException($context . ' header row should be an object');
+			}
+			$this->assertKeys(['byte_count', 'line_count', 'mode', 'path', 'unit_count'], $header, $context . ' header row keys');
+		}
+		foreach (is_array($projectUnits['candidate_blocker_counts'] ?? null) ? $projectUnits['candidate_blocker_counts'] : [] as $row) {
+			if (!is_array($row)) {
+				throw new RuntimeException($context . ' candidate blocker row should be an object');
+			}
+			$this->assertKeys(['reason', 'unit_count'], $row, $context . ' candidate blocker row keys');
+		}
+		foreach (is_array($projectUnits['dependency_summaries'] ?? null) ? $projectUnits['dependency_summaries'] : [] as $summary) {
+			if (!is_array($summary)) {
+				throw new RuntimeException($context . ' dependency summary row should be an object');
+			}
+			$this->assertKeys([
+				'candidate_blocking_reasons',
+				'candidate_pack_hash',
+				'candidate_pack_header',
+				'candidate_scoped_headers',
+				'candidate_status',
+				'dependency_categories',
+				'dependency_export_headers',
+				'direct_local_headers',
+				'direct_source_dependencies',
+				'force_include_header',
+				'generated_header',
+				'project_root',
+				'reasons',
+				'scoped_local_headers',
+				'source',
+				'source_key',
+				'status',
+				'unresolved_dependency_keys',
+			], $summary, $context . ' dependency summary row keys');
+			foreach (is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : [] as $category) {
+				if (!is_array($category)) {
+					throw new RuntimeException($context . ' dependency category row should be an object');
+				}
+				$this->assertKeys(['category', 'kind', 'owner', 'resolution', 'source_dependencies', 'target'], $category, $context . ' dependency category row keys');
+			}
+		}
+	}
+
+	private function assertKeys(array $expected, array $actual, string $message): void
+	{
+		$keys = array_keys($actual);
+		sort($keys, SORT_STRING);
+		$expected = array_values($expected);
+		sort($expected, SORT_STRING);
+		$this->assertSame($expected, $keys, $message);
 	}
 
 	private function assertFileExists(string $path, string $message): void

@@ -316,6 +316,11 @@ Status legend:
   verbose candidate-pack, dependency, blocker, category, and reason details for
   one source row. `generated-files` remains one compact source/output/pack line
   per generated source.
+- [x] `PUH-030` Add snapshot-style tests for saved `.prism/last_run.json`
+  project-unit report shape. The explain-build regression now locks the
+  top-level force-include report keys, header rows, blocker rows, dependency
+  summary rows, and dependency category rows across STAN-backed, no-STAN, and
+  direct-report paths.
 
 ### Ready
 
@@ -338,8 +343,6 @@ Status legend:
 
 ### Planned Validation And Rollout
 
-- [ ] `PUH-030` Add snapshot-style tests for saved `.prism/last_run.json`
-  project-unit report shape so future diagnostic additions remain compatible.
 - [ ] `PUH-031` Add compile probes for no-STAN, stale-STAN, dependency-reuse,
   and clean-build paths after build-owned dependency summaries exist.
 - [ ] `PUH-032` Add rebuild-fanout measurement to the usability or build
