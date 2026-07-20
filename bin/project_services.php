@@ -24,6 +24,7 @@ const SCPP_PROJECT_CONFIG = 'prism.json';
 const SCPP_STATE_FILE = 's2s_state.php';
 const SCPP_STAN_STATE_FILE = 'stan_state.php';
 const SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE = 'project_unit_dependency_state.php';
+const SCPP_PROJECT_UNIT_DEPENDENCY_SUMMARY_FILE = 'project_unit_dependency_summary.php';
 const SCPP_STAN_STATUS_FILE = 'stan_status.json';
 const SCPP_STAN_REPORT_FILE = 'stan_report.json';
 const SCPP_STAN_WORKER_FILE = 'stan_worker.json';
@@ -2886,7 +2887,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$transpiler->setDeclaredTypeKinds($declaredTypeKinds);
 	$stanFrontendClassifications = $options['disable_stan'] ? [] : load_stan_frontend_classifications_for_build($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE);
 	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides, $declaredTypeKinds);
-	$projectUnitDependencySignature = $options['disable_stan'] ? compute_project_unit_dependency_summary_signature($repoRoot, $phpProfile) : '';
+	$projectUnitDependencySignature = compute_project_unit_dependency_summary_signature($repoRoot, $phpProfile);
 	$projectLibraryFlags = resolve_project_library_link_flags($projectRoot, $projectGraph, $compiler);
 	$generatedUnits = [];
 	$nativeCppUnits = [];
@@ -3104,6 +3105,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	cleanup_project_unit_pack_headers($projectContexts, $generatedUnits, $nativeCppUnits, $projectUnitForceIncludes);
 	$projectUnitPackChanges = compare_project_unit_pack_header_state($projectRoot, $projectUnitPackStateBefore, capture_project_unit_pack_header_state($projectContexts));
 	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, !$options['disable_stan'], $projectUnitPackChanges);
+	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, !$options['disable_stan']);
+	$projectUnitDependencySummaryArtifact = write_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitForceIncludeReport, $projectUnitDependencySummaryFreshness);
+	$projectUnitForceIncludeReport['dependency_summary_artifact'] = $projectUnitDependencySummaryArtifact;
 
 	if ($usePch) {
 		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
@@ -4111,6 +4115,7 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 		'candidate_blocker_counts' => $candidateBlockerCounts,
 		'headers' => $headers,
 		'pack_changes' => normalize_project_unit_pack_changes($packChanges),
+		'dependency_summary_artifact' => normalize_project_unit_dependency_summary_artifact_info([]),
 		'dependency_summaries' => $dependencySummaries,
 	];
 }
@@ -4823,6 +4828,140 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 }
 
 /**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param array<string,string> $sourceOverrides
+ * @return array<string,mixed>
+ */
+function collect_project_unit_dependency_summary_freshness(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature, bool $usedStanDependencyState): array
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$sourceInputs = [];
+	foreach ($projectContexts as $contextProjectRoot => $projectContext) {
+		$contextProjectRoot = normalize_path((string) $contextProjectRoot);
+		$phpFiles = is_array($projectContext['php_files'] ?? null)
+			? $projectContext['php_files']
+			: collect_project_php_files($contextProjectRoot);
+		foreach ($phpFiles as $sourcePath) {
+			$sourcePath = normalize_path((string) $sourcePath);
+			if ($sourcePath === '') {
+				continue;
+			}
+			$sourceOverride = array_key_exists($sourcePath, $sourceOverrides) ? (string) $sourceOverrides[$sourcePath] : null;
+			$meta = $sourceOverride !== null
+				? ['size' => strlen($sourceOverride), 'mtime' => 0, 'content_hash' => hash('sha256', $sourceOverride)]
+				: (is_file($sourcePath) ? build_file_meta($sourcePath) : null);
+			if (!is_array($meta)) {
+				continue;
+			}
+			$sourceInputs[] = [
+				'project_root' => normalize_config_path(relative_path($normalizedProjectRoot, $contextProjectRoot)),
+				'source' => normalize_config_path(relative_path($contextProjectRoot, $sourcePath)),
+				'source_key' => project_unit_stan_source_key($normalizedProjectRoot, $sourcePath),
+				'size' => (int) ($meta['size'] ?? 0),
+				'mtime' => (int) ($meta['mtime'] ?? 0),
+				'content_hash' => (string) ($meta['content_hash'] ?? ''),
+				'source_override' => $sourceOverride !== null,
+			];
+		}
+	}
+	usort($sourceInputs, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
+	$fingerprintParts = [];
+	$sourceOverridesActive = false;
+	foreach ($sourceInputs as $input) {
+		$sourceOverridesActive = $sourceOverridesActive || (bool) ($input['source_override'] ?? false);
+		$fingerprintParts[] = implode(':', [
+			(string) ($input['source_key'] ?? ''),
+			(string) ($input['content_hash'] ?? ''),
+			(string) ((int) ($input['size'] ?? 0)),
+			((bool) ($input['source_override'] ?? false)) ? 'override' : 'file',
+		]);
+	}
+
+	return [
+		'summary_signature' => $summarySignature,
+		'source_fingerprint' => hash('sha256', implode("\n", $fingerprintParts)),
+		'source_count' => count($sourceInputs),
+		'used_stan_dependency_state' => $usedStanDependencyState,
+		'source_overrides_active' => $sourceOverridesActive,
+		'source_inputs' => $sourceInputs,
+	];
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param array<string,mixed> $report
+ * @param array<string,mixed> $freshness
+ * @return array<string,mixed>
+ */
+function write_project_unit_dependency_summary_artifact(string $projectRoot, array $projectContexts, array $report, array $freshness): array
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
+	if (!is_array($rootContext) || !is_string($rootContext['cache_dir'] ?? null)) {
+		return normalize_project_unit_dependency_summary_artifact_info([]);
+	}
+	$artifactPath = normalize_path($rootContext['cache_dir'] . '/' . SCPP_PROJECT_UNIT_DEPENDENCY_SUMMARY_FILE);
+	$freshness = normalize_project_unit_dependency_summary_freshness($freshness);
+	$sourceInputsByKey = [];
+	foreach (is_array($freshness['source_inputs'] ?? null) ? $freshness['source_inputs'] : [] as $input) {
+		if (!is_array($input)) {
+			continue;
+		}
+		$sourceKey = trim((string) ($input['source_key'] ?? ''));
+		if ($sourceKey !== '') {
+			$sourceInputsByKey[$sourceKey] = $input;
+		}
+	}
+
+	$sources = [];
+	foreach (normalize_project_unit_dependency_summaries(is_array($report['dependency_summaries'] ?? null) ? $report['dependency_summaries'] : []) as $summary) {
+		$sourceKey = trim((string) ($summary['source_key'] ?? ''));
+		if ($sourceKey === '') {
+			continue;
+		}
+		$sources[] = [
+			'source' => (string) ($summary['source'] ?? ''),
+			'source_key' => $sourceKey,
+			'project_root' => (string) ($summary['project_root'] ?? ''),
+			'status' => (string) ($summary['status'] ?? 'fallback_broad'),
+			'force_include_header' => (string) ($summary['force_include_header'] ?? ''),
+			'generated_header' => (string) ($summary['generated_header'] ?? ''),
+			'direct_source_keys' => normalize_string_list($summary['direct_source_dependencies'] ?? []),
+			'direct_local_headers' => normalize_string_list($summary['direct_local_headers'] ?? []),
+			'scoped_local_headers' => normalize_string_list($summary['scoped_local_headers'] ?? []),
+			'dependency_export_headers' => normalize_string_list($summary['dependency_export_headers'] ?? []),
+			'unresolved_dependency_keys' => normalize_string_list($summary['unresolved_dependency_keys'] ?? []),
+			'candidate_status' => (string) ($summary['candidate_status'] ?? 'blocked_broad_fallback'),
+			'candidate_blocking_reasons' => normalize_string_list($summary['candidate_blocking_reasons'] ?? []),
+			'candidate_scoped_headers' => normalize_string_list($summary['candidate_scoped_headers'] ?? []),
+			'candidate_pack_hash' => (string) ($summary['candidate_pack_hash'] ?? ''),
+			'candidate_pack_header' => (string) ($summary['candidate_pack_header'] ?? ''),
+			'dependency_categories' => normalize_project_unit_dependency_category_rows(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []),
+			'reasons' => normalize_string_list($summary['reasons'] ?? []),
+			'freshness' => is_array($sourceInputsByKey[$sourceKey] ?? null) ? $sourceInputsByKey[$sourceKey] : null,
+		];
+	}
+	usort($sources, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
+
+	save_s2s_state($artifactPath, [
+		'version' => 1,
+		'project_root' => $normalizedProjectRoot,
+		'updated_at' => time(),
+		'freshness' => $freshness,
+		'sources' => $sources,
+	]);
+
+	return normalize_project_unit_dependency_summary_artifact_info([
+		'path' => normalize_config_path(relative_path($normalizedProjectRoot, $artifactPath)),
+		'summary_signature' => (string) ($freshness['summary_signature'] ?? ''),
+		'source_fingerprint' => (string) ($freshness['source_fingerprint'] ?? ''),
+		'source_count' => (int) ($freshness['source_count'] ?? count($sources)),
+		'used_stan_dependency_state' => (bool) ($freshness['used_stan_dependency_state'] ?? false),
+		'source_overrides_active' => (bool) ($freshness['source_overrides_active'] ?? false),
+	]);
+}
+
+/**
  * @param array<string,string> $dependencyExportHeaderPaths
  * @param list<string> $directLocalHeaderPaths
  * @return list<string>
@@ -5082,6 +5221,7 @@ function normalize_project_unit_force_include_report(array $report): array
 		'candidate_blocker_counts' => normalize_project_unit_candidate_blocker_counts(is_array($report['candidate_blocker_counts'] ?? null) ? $report['candidate_blocker_counts'] : []),
 		'headers' => $headers,
 		'pack_changes' => normalize_project_unit_pack_changes(is_array($report['pack_changes'] ?? null) ? $report['pack_changes'] : []),
+		'dependency_summary_artifact' => normalize_project_unit_dependency_summary_artifact_info(is_array($report['dependency_summary_artifact'] ?? null) ? $report['dependency_summary_artifact'] : []),
 		'dependency_summaries' => normalize_project_unit_dependency_summaries(is_array($report['dependency_summaries'] ?? null) ? $report['dependency_summaries'] : []),
 	];
 }
@@ -5111,6 +5251,48 @@ function normalize_project_unit_candidate_blocker_counts(array $rows): array
 		return $byCount !== 0 ? $byCount : strcmp((string) ($left['reason'] ?? ''), (string) ($right['reason'] ?? ''));
 	});
 	return $normalized;
+}
+
+/** @return array{path:string,summary_signature:string,source_fingerprint:string,source_count:int,used_stan_dependency_state:bool,source_overrides_active:bool} */
+function normalize_project_unit_dependency_summary_artifact_info(array $artifact): array
+{
+	return [
+		'path' => trim((string) ($artifact['path'] ?? '')),
+		'summary_signature' => trim((string) ($artifact['summary_signature'] ?? '')),
+		'source_fingerprint' => trim((string) ($artifact['source_fingerprint'] ?? '')),
+		'source_count' => max(0, (int) ($artifact['source_count'] ?? 0)),
+		'used_stan_dependency_state' => (bool) ($artifact['used_stan_dependency_state'] ?? false),
+		'source_overrides_active' => (bool) ($artifact['source_overrides_active'] ?? false),
+	];
+}
+
+/** @return array<string,mixed> */
+function normalize_project_unit_dependency_summary_freshness(array $freshness): array
+{
+	$sourceInputs = [];
+	foreach (is_array($freshness['source_inputs'] ?? null) ? $freshness['source_inputs'] : [] as $input) {
+		if (!is_array($input)) {
+			continue;
+		}
+		$sourceInputs[] = [
+			'project_root' => normalize_config_path((string) ($input['project_root'] ?? '')),
+			'source' => normalize_config_path((string) ($input['source'] ?? '')),
+			'source_key' => trim((string) ($input['source_key'] ?? '')),
+			'size' => max(0, (int) ($input['size'] ?? 0)),
+			'mtime' => max(0, (int) ($input['mtime'] ?? 0)),
+			'content_hash' => trim((string) ($input['content_hash'] ?? '')),
+			'source_override' => (bool) ($input['source_override'] ?? false),
+		];
+	}
+	usort($sourceInputs, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
+	return [
+		'summary_signature' => trim((string) ($freshness['summary_signature'] ?? '')),
+		'source_fingerprint' => trim((string) ($freshness['source_fingerprint'] ?? '')),
+		'source_count' => max(0, (int) ($freshness['source_count'] ?? count($sourceInputs))),
+		'used_stan_dependency_state' => (bool) ($freshness['used_stan_dependency_state'] ?? false),
+		'source_overrides_active' => (bool) ($freshness['source_overrides_active'] ?? false),
+		'source_inputs' => $sourceInputs,
+	];
 }
 
 /**
@@ -6734,6 +6916,13 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 		if (($packChanges['removed_headers'] ?? []) !== []) {
 			$lines[] = '  removed pack headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $packChanges['removed_headers']));
 		}
+	}
+	$summaryArtifact = normalize_project_unit_dependency_summary_artifact_info(is_array($report['dependency_summary_artifact'] ?? null) ? $report['dependency_summary_artifact'] : []);
+	if ($includeDependencySummaries && ($summaryArtifact['path'] ?? '') !== '') {
+		$lines[] = 'Project unit dependency summary artifact: ' . (string) ($summaryArtifact['path'] ?? '')
+			. ' (sources ' . (int) ($summaryArtifact['source_count'] ?? 0)
+			. ', STAN ' . (($summaryArtifact['used_stan_dependency_state'] ?? false) ? 'yes' : 'no')
+			. ', overrides ' . (($summaryArtifact['source_overrides_active'] ?? false) ? 'yes' : 'no') . ')';
 	}
 	$headerRows = count($headers) > SCPP_EXPLAIN_PROJECT_UNIT_HEADER_LIMIT
 		? array_slice($headers, 0, SCPP_EXPLAIN_PROJECT_UNIT_HEADER_LIMIT)

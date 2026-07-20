@@ -331,6 +331,11 @@ Status legend:
   outputs, changed generated/native/runtime object counts, changed/removed
   project-unit packs, and Ninja no-work status; explain-build coverage locks
   the warm STAN no-work shape and no-STAN stale-pack removal reporting.
+- [x] `PUH-021` Store a build-owned per-source dependency summary artifact at
+  `.prism/cache/project_unit_dependency_summary.php`. The artifact captures
+  direct source keys, direct/scoped local headers, dependency export headers,
+  candidate status/blockers, dependency categories, and per-source freshness
+  inputs, while saved project-unit reports carry a compact artifact pointer.
 
 ### Ready
 
@@ -340,9 +345,6 @@ Status legend:
   the motivating support-file edit.
 ### Planned Dependency-Model Work
 
-- [ ] `PUH-021` Store/reuse a build-owned per-source dependency summary artifact
-  with direct source keys, local header paths, export header paths, candidate
-  status, blockers, and the summary freshness inputs that produced it.
 - [ ] `PUH-025` Model complete-type requirements for class properties,
   constants, value-layout structs/unions, enum backing/type references, and
   generated declarations whose headers require another generated header to be

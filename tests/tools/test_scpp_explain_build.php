@@ -89,6 +89,35 @@ final class ScppExplainBuildTest
 			}
 			$this->assertProjectUnitReportShape($projectUnits, 'warm STAN project-unit report');
 			$this->assertSame(['changed_headers' => [], 'removed_headers' => [], 'changed_count' => 0, 'removed_count' => 0], $projectUnits['pack_changes'] ?? null, 'warm STAN project-unit report should record no changed pack headers');
+			$summaryArtifact = is_array($projectUnits['dependency_summary_artifact'] ?? null) ? $projectUnits['dependency_summary_artifact'] : [];
+			$this->assertSame('.prism/cache/project_unit_dependency_summary.php', $summaryArtifact['path'] ?? null, 'warm STAN project-unit report should point to the build-owned dependency summary artifact');
+			$this->assertSame(3, $summaryArtifact['source_count'] ?? null, 'warm STAN dependency summary artifact should count project sources');
+			$this->assertSame(true, $summaryArtifact['used_stan_dependency_state'] ?? null, 'warm STAN dependency summary artifact should record STAN-backed inputs');
+			$this->assertSame(false, $summaryArtifact['source_overrides_active'] ?? null, 'warm STAN dependency summary artifact should record source override state');
+			$this->assertFileExists($project . '/' . (string) ($summaryArtifact['path'] ?? ''), 'warm STAN build should write the project-unit dependency summary artifact');
+			$summaryArtifactState = require $project . '/' . (string) ($summaryArtifact['path'] ?? '');
+			if (!is_array($summaryArtifactState)) {
+				throw new RuntimeException('project-unit dependency summary artifact should return an object');
+			}
+			$this->assertSame(1, $summaryArtifactState['version'] ?? null, 'project-unit dependency summary artifact should record version');
+			$artifactSources = is_array($summaryArtifactState['sources'] ?? null) ? $summaryArtifactState['sources'] : [];
+			$artifactSourceByName = [];
+			foreach ($artifactSources as $artifactSource) {
+				if (is_array($artifactSource) && is_string($artifactSource['source'] ?? null)) {
+					$artifactSourceByName[$artifactSource['source']] = $artifactSource;
+				}
+			}
+			$childArtifactSource = $artifactSourceByName['child.phs'] ?? null;
+			if (!is_array($childArtifactSource)) {
+				throw new RuntimeException('project-unit dependency summary artifact should contain child.phs');
+			}
+			$this->assertSame(['base.phs'], $childArtifactSource['direct_source_keys'] ?? null, 'project-unit dependency summary artifact should persist direct source keys');
+			$this->assertSame(['.prism/generated/base.hpp'], $childArtifactSource['direct_local_headers'] ?? null, 'project-unit dependency summary artifact should persist direct local headers');
+			$this->assertSame('candidate_scoped', $childArtifactSource['candidate_status'] ?? null, 'project-unit dependency summary artifact should persist candidate status');
+			$this->assertSame([], $childArtifactSource['candidate_blocking_reasons'] ?? null, 'project-unit dependency summary artifact should persist candidate blockers');
+			$childArtifactFreshness = is_array($childArtifactSource['freshness'] ?? null) ? $childArtifactSource['freshness'] : [];
+			$this->assertSame('child.phs', $childArtifactFreshness['source'] ?? null, 'project-unit dependency summary artifact should persist per-source freshness');
+			$this->assertTrue(is_string($childArtifactFreshness['content_hash'] ?? null) && strlen((string) $childArtifactFreshness['content_hash']) === 64, 'project-unit dependency summary artifact should persist source content hash');
 			$topLevelFanout = is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : null;
 			if (!is_array($topLevelFanout)) {
 				throw new RuntimeException('last_run details should contain rebuild fanout');
@@ -210,6 +239,7 @@ final class ScppExplainBuildTest
 			$this->assertContains('Project unit scoped fanout: active scoped 2, active broad fallback 1, candidates scoped 2, candidates blocked 1', $projectUnitsView['stdout'], 'project-units should summarize scoped activation fanout');
 			$this->assertContains('Project unit candidate blockers: executable body present (1 unit(s))', $projectUnitsView['stdout'], 'project-units should summarize candidate blocker counts');
 			$this->assertContains('Project unit pack changes: changed 0, removed 0', $projectUnitsView['stdout'], 'project-units should summarize project-unit pack changes');
+			$this->assertContains('Project unit dependency summary artifact: .prism/cache/project_unit_dependency_summary.php (sources 3, STAN yes, overrides no)', $projectUnitsView['stdout'], 'project-units should show the dependency summary artifact pointer');
 			$this->assertContains('.prism/generated/__project_units/', $projectUnitsView['stdout'], 'project-units should list the force-included hash-pack header');
 			$this->assertContains('scoped', $projectUnitsView['stdout'], 'project-units should classify active scoped pack headers');
 			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify fallback broad pack headers');
@@ -283,6 +313,16 @@ final class ScppExplainBuildTest
 			$noStanBuildExplanation = is_array($noStanBuildDetails['build_explanation'] ?? null) ? $noStanBuildDetails['build_explanation'] : [];
 			$noStanProjectUnits = is_array($noStanBuildExplanation['project_unit_force_includes'] ?? null) ? $noStanBuildExplanation['project_unit_force_includes'] : [];
 			$this->assertProjectUnitReportShape($noStanProjectUnits, 'warm no-STAN project-unit report');
+			$noStanSummaryArtifact = is_array($noStanProjectUnits['dependency_summary_artifact'] ?? null) ? $noStanProjectUnits['dependency_summary_artifact'] : [];
+			$this->assertSame('.prism/cache/project_unit_dependency_summary.php', $noStanSummaryArtifact['path'] ?? null, 'warm --no-stan project-unit report should point to the build-owned dependency summary artifact');
+			$this->assertSame(3, $noStanSummaryArtifact['source_count'] ?? null, 'warm --no-stan dependency summary artifact should count project sources');
+			$this->assertSame(false, $noStanSummaryArtifact['used_stan_dependency_state'] ?? null, 'warm --no-stan dependency summary artifact should record non-STAN inputs');
+			$noStanSummaryArtifactState = require $project . '/' . (string) ($noStanSummaryArtifact['path'] ?? '');
+			if (!is_array($noStanSummaryArtifactState)) {
+				throw new RuntimeException('warm --no-stan project-unit dependency summary artifact should return an object');
+			}
+			$noStanArtifactFreshness = is_array($noStanSummaryArtifactState['freshness'] ?? null) ? $noStanSummaryArtifactState['freshness'] : [];
+			$this->assertSame(false, $noStanArtifactFreshness['used_stan_dependency_state'] ?? null, 'warm --no-stan dependency summary artifact freshness should record non-STAN inputs');
 			$noStanPackChanges = is_array($noStanProjectUnits['pack_changes'] ?? null) ? $noStanProjectUnits['pack_changes'] : [];
 			$this->assertTrue((int) ($noStanPackChanges['removed_count'] ?? 0) >= 2, 'warm --no-stan build should report stale pack removals');
 			$removedPackHeaders = is_array($noStanPackChanges['removed_headers'] ?? null) ? $noStanPackChanges['removed_headers'] : [];
@@ -515,6 +555,7 @@ final class ScppExplainBuildTest
 			'candidate_blocked_units',
 			'candidate_blocker_counts',
 			'candidate_scoped_units',
+			'dependency_summary_artifact',
 			'dependency_summaries',
 			'distinct_headers',
 			'headers',
@@ -528,6 +569,12 @@ final class ScppExplainBuildTest
 			throw new RuntimeException($context . ' pack_changes should be an object');
 		}
 		$this->assertKeys(['changed_count', 'changed_headers', 'removed_count', 'removed_headers'], $packChanges, $context . ' pack_changes keys');
+
+		$summaryArtifact = is_array($projectUnits['dependency_summary_artifact'] ?? null) ? $projectUnits['dependency_summary_artifact'] : null;
+		if (!is_array($summaryArtifact)) {
+			throw new RuntimeException($context . ' dependency_summary_artifact should be an object');
+		}
+		$this->assertKeys(['path', 'source_count', 'source_fingerprint', 'source_overrides_active', 'summary_signature', 'used_stan_dependency_state'], $summaryArtifact, $context . ' dependency_summary_artifact keys');
 
 		foreach (is_array($projectUnits['headers'] ?? null) ? $projectUnits['headers'] : [] as $header) {
 			if (!is_array($header)) {

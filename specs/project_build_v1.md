@@ -348,6 +348,16 @@ generated PHS unit. Candidate rows include the scoped header list, the stable
 candidate hash/path, a candidate status, and any blocking reasons that kept the
 active compile edge on the broad-equivalent pack.
 
+Each successful build also writes a build-owned per-source dependency summary
+artifact at `.prism/cache/project_unit_dependency_summary.php`. The artifact
+stores the normalized project-unit planning row for each generated source:
+direct source keys, direct local generated headers, transitive scoped local
+headers, dependency export headers, candidate pack status/path, candidate
+blockers, dependency categories, and per-source freshness inputs. The saved
+project-unit report includes a compact `dependency_summary_artifact` pointer so
+diagnostics can find the artifact without embedding every freshness row in
+`.prism/last_run.json`.
+
 Current lightweight source dependency summaries derive direct dependency keys
 from inheritance and interface declarations, `use` declarations, class property
 types, function/method parameter and return types, and conservative function
