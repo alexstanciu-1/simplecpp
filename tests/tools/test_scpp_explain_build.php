@@ -218,8 +218,26 @@ final class ScppExplainBuildTest
 			$this->assertContains('Direct Ninja target: main', $ninjaTargetView['stdout'], 'ninja-target should list the direct Ninja target');
 			$this->assertContains('Use `main` as the Ninja target, not `.prism/build/main`.', $ninjaTargetView['stdout'], 'ninja-target should explicitly contrast the target and executable path');
 
+			$packDir = $project . '/.prism/generated/__project_units';
+			$staleScopedPack = $packDir . '/scoped-deadbeefdeadbeef.hpp';
+			$staleBroadPack = $packDir . '/0123456789abcdef.hpp';
+			$customPack = $packDir . '/custom.hpp';
+			$this->write($staleScopedPack, "#pragma once\n");
+			$this->write($staleBroadPack, "#pragma once\n");
+			$this->write($customPack, "#pragma once\n");
+
 			$noStanWarmBuild = scpp_run_build_service($project, $project . '/prism.json', ['disable_stan' => true]);
 			$this->assertSame(true, $noStanWarmBuild['ok'], 'warm --no-stan build should still succeed after a STAN-backed scoped-pack build');
+			$this->assertFileMissing($staleScopedPack, 'warm --no-stan build should remove stale scoped pack headers');
+			$this->assertFileMissing($staleBroadPack, 'warm --no-stan build should remove stale broad hash-pack headers');
+			$this->assertFileExists($customPack, 'project unit pack cleanup should not remove non-build-owned files');
+			$packManifest = json_decode($this->read($packDir . '/manifest.json'), true);
+			if (!is_array($packManifest)) {
+				throw new RuntimeException('project unit pack manifest should decode as an object');
+			}
+			$manifestHeaders = is_array($packManifest['pack_headers'] ?? null) ? $packManifest['pack_headers'] : [];
+			$this->assertTrue(in_array('.prism/generated/__project_units/broad.hpp', $manifestHeaders, true), 'project unit pack manifest should keep the broad alias header');
+			$this->assertTrue(!in_array('.prism/generated/__project_units/scoped-deadbeefdeadbeef.hpp', $manifestHeaders, true), 'project unit pack manifest should omit stale scoped headers');
 			$noStanBuildReport = json_decode($this->read($project . '/.prism/last_run.json'), true);
 			if (!is_array($noStanBuildReport)) {
 				throw new RuntimeException('no-STAN last_run.json should decode as an object');
@@ -381,6 +399,20 @@ final class ScppExplainBuildTest
 	{
 		if (!str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' missing `' . $needle . '`');
+		}
+	}
+
+	private function assertFileExists(string $path, string $message): void
+	{
+		if (!is_file($path)) {
+			throw new RuntimeException($message . ' missing file `' . $path . '`');
+		}
+	}
+
+	private function assertFileMissing(string $path, string $message): void
+	{
+		if (file_exists($path)) {
+			throw new RuntimeException($message . ' unexpected file `' . $path . '`');
 		}
 	}
 }

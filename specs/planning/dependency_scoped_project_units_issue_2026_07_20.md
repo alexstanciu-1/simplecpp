@@ -271,6 +271,9 @@ Status legend:
   output with the active project-unit status, pack mode, and force-include
   header.
   Commit: `ea36c85 Annotate build sources with project unit packs`.
+- [x] `PUH-013` Add stale scoped-pack cleanup and manifesting so obsolete
+  `.prism/generated/__project_units/scoped-*.hpp` and broad hash-pack files do
+  not accumulate after dependency sets change.
 
 ### Ready
 
@@ -284,9 +287,6 @@ Status legend:
 - [ ] `PUH-012` Add a focused regression for dependency projects: scoped root
   units must include dependency `__project.hpp` exports, and dependency project
   units must keep deterministic local pack assignment.
-- [ ] `PUH-013` Add stale scoped-pack cleanup or manifesting so obsolete
-  `.prism/generated/__project_units/scoped-*.hpp` files do not accumulate
-  indefinitely after dependency sets change.
 - [ ] `PUH-014` Make `project-units` and `generated-files` output suitable for
   large projects by keeping summaries compact and pushing verbose per-source
   detail behind the focused view only.

@@ -3087,6 +3087,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$nativeUnit['force_include_header'] = $projectUnitForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
 	}
 	unset($nativeUnit);
+	cleanup_project_unit_pack_headers($projectContexts, $generatedUnits, $nativeCppUnits, $projectUnitForceIncludes);
 	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, !$options['disable_stan']);
 
 	if ($usePch) {
@@ -4111,6 +4112,97 @@ function apply_project_unit_scoped_force_include_candidates(string $projectRoot,
 		}
 	}
 	unset($unit);
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @param list<array{project_root:string,source_path:string,object_path:string,force_include_header:?string}> $nativeCppUnits
+ * @param array<string,string> $projectUnitForceIncludes
+ */
+function cleanup_project_unit_pack_headers(array $projectContexts, array $generatedUnits, array $nativeCppUnits, array $projectUnitForceIncludes): void
+{
+	$activeHeadersByProjectRoot = [];
+	foreach ($projectContexts as $projectRoot => $projectContext) {
+		$normalizedProjectRoot = normalize_path($projectRoot);
+		$activeHeadersByProjectRoot[$normalizedProjectRoot] = [];
+		$broadPackHeader = $projectUnitForceIncludes[$normalizedProjectRoot] ?? null;
+		if (is_string($broadPackHeader) && $broadPackHeader !== '') {
+			$activeHeadersByProjectRoot[$normalizedProjectRoot][normalize_path($broadPackHeader)] = true;
+		}
+		if (is_string($projectContext['generated_dir'] ?? null)) {
+			$activeHeadersByProjectRoot[$normalizedProjectRoot][normalize_path($projectContext['generated_dir'] . '/__project_units/broad.hpp')] = true;
+		}
+	}
+
+	foreach (array_merge($generatedUnits, $nativeCppUnits) as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$forceIncludeHeader = is_string($unit['force_include_header'] ?? null) ? normalize_path($unit['force_include_header']) : '';
+		if ($unitProjectRoot === '' || $forceIncludeHeader === '' || !isset($activeHeadersByProjectRoot[$unitProjectRoot])) {
+			continue;
+		}
+		$activeHeadersByProjectRoot[$unitProjectRoot][$forceIncludeHeader] = true;
+	}
+
+	foreach ($projectContexts as $projectRoot => $projectContext) {
+		$normalizedProjectRoot = normalize_path($projectRoot);
+		if (!is_string($projectContext['generated_dir'] ?? null)) {
+			continue;
+		}
+		$packDir = normalize_path($projectContext['generated_dir'] . '/__project_units');
+		if (!is_dir($packDir)) {
+			continue;
+		}
+		$activeHeaders = $activeHeadersByProjectRoot[$normalizedProjectRoot] ?? [];
+		$items = scandir($packDir);
+		if ($items === false) {
+			scpp_fail('Failed to read project unit pack directory: ' . $packDir . PHP_EOL, 2);
+		}
+		foreach ($items as $item) {
+			if (!project_unit_pack_header_filename_is_build_owned($item)) {
+				continue;
+			}
+			$headerPath = normalize_path($packDir . '/' . $item);
+			if (isset($activeHeaders[$headerPath])) {
+				continue;
+			}
+			if (is_file($headerPath) && !@unlink($headerPath)) {
+				scpp_fail('Failed to remove stale project unit pack header: ' . $headerPath . PHP_EOL, 2);
+			}
+		}
+		write_project_unit_pack_manifest($normalizedProjectRoot, $packDir, array_keys($activeHeaders));
+	}
+}
+
+function project_unit_pack_header_filename_is_build_owned(string $filename): bool
+{
+	return preg_match('/^(?:scoped-)?[0-9a-f]{16}\.hpp$/', $filename) === 1;
+}
+
+/** @param list<string> $activeHeaderPaths */
+function write_project_unit_pack_manifest(string $projectRoot, string $packDir, array $activeHeaderPaths): void
+{
+	$headers = [];
+	foreach ($activeHeaderPaths as $headerPath) {
+		$normalizedHeaderPath = normalize_path($headerPath);
+		if (normalize_path(dirname($normalizedHeaderPath)) !== $packDir) {
+			continue;
+		}
+		if (!is_file($normalizedHeaderPath)) {
+			continue;
+		}
+		$headers[] = normalize_config_path(relative_path($projectRoot, $normalizedHeaderPath));
+	}
+	sort($headers, SORT_STRING);
+	$manifest = [
+		'version' => 1,
+		'pack_headers' => array_values(array_unique($headers)),
+	];
+	$json = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if (!is_string($json)) {
+		scpp_fail('Failed to encode project unit pack manifest: ' . $packDir . PHP_EOL, 2);
+	}
+	write_text_file(normalize_path($packDir . '/manifest.json'), $json . PHP_EOL);
 }
 
 /**
