@@ -4241,12 +4241,16 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 
 	$sourceKeyToHeader = [];
 	foreach ($generatedUnits as $unit) {
-		$sourcePath = normalize_path((string) ($unit['project_root'] ?? '') . '/' . (string) ($unit['relative_php'] ?? ''));
+		$sourceProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$sourcePath = normalize_path($sourceProjectRoot . '/' . (string) ($unit['relative_php'] ?? ''));
 		$generatedHeader = normalize_path((string) ($unit['generated_header'] ?? ''));
-		if ($sourcePath === '' || $generatedHeader === '') {
+		if ($sourceProjectRoot === '' || $sourcePath === '' || $generatedHeader === '') {
 			continue;
 		}
-		$sourceKeyToHeader[project_unit_stan_source_key($normalizedProjectRoot, $sourcePath)] = $generatedHeader;
+		$sourceKeyToHeader[project_unit_stan_source_key($normalizedProjectRoot, $sourcePath)] = [
+			'project_root' => $sourceProjectRoot,
+			'header' => $generatedHeader,
+		];
 	}
 
 	$summaries = [];
@@ -4267,8 +4271,12 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		$directLocalHeaderPaths = [];
 		$unresolvedDependencyKeys = [];
 		foreach ($dependencyKeys as $dependencyKey) {
-			$header = $sourceKeyToHeader[$dependencyKey] ?? null;
-			if (is_string($header) && $header !== '') {
+			$dependencyHeader = is_array($sourceKeyToHeader[$dependencyKey] ?? null) ? $sourceKeyToHeader[$dependencyKey] : null;
+			if ($dependencyHeader !== null && normalize_path((string) ($dependencyHeader['project_root'] ?? '')) !== $unitProjectRoot) {
+				continue;
+			}
+			$header = is_array($dependencyHeader) ? normalize_path((string) ($dependencyHeader['header'] ?? '')) : '';
+			if ($header !== '') {
 				$directLocalHeaders[$header] = normalize_config_path(relative_path($normalizedProjectRoot, $header));
 				$directLocalHeaderPaths[$header] = $header;
 				continue;

@@ -278,6 +278,13 @@ Status legend:
   no-STAN build path. `--no-stan` now writes a build-owned lightweight
   project-unit dependency state from frontend summaries, keeps scoped activation
   broad-safe, and reports direct dependency evidence when available.
+- [x] `PUH-011` Add a focused regression for active scoped packs across nested
+  namespaces and inheritance-only declarations, proving safe units compile with
+  scoped packs while richer units stay broad.
+- [x] `PUH-012` Add a focused regression for dependency projects and enforce the
+  scoped-pack boundary: consuming project units include dependency `__project.hpp`
+  exports, while dependency project units keep deterministic same-project local
+  pack assignment.
 
 ### Ready
 
@@ -285,12 +292,6 @@ Status legend:
   current branch. Record active scoped units, active broad-fallback units,
   candidate blocker histogram, no-change build behavior, and rebuild fanout for
   the motivating support-file edit.
-- [ ] `PUH-011` Add a focused regression for active scoped packs across nested
-  namespaces and inheritance-only declarations, proving safe units compile with
-  scoped packs while richer units stay broad.
-- [ ] `PUH-012` Add a focused regression for dependency projects: scoped root
-  units must include dependency `__project.hpp` exports, and dependency project
-  units must keep deterministic local pack assignment.
 - [ ] `PUH-014` Make `project-units` and `generated-files` output suitable for
   large projects by keeping summaries compact and pushing verbose per-source
   detail behind the focused view only.

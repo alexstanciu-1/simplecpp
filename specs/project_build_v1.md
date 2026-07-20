@@ -411,6 +411,10 @@ The project unit headers include:
 When same-project generated headers contain inheritance relationships discovered from the generated class declarations, base-class headers are emitted before derived-class headers in the project unit headers.
 
 Dependency project export headers are included before the consuming project's local generated headers so local headers may reference exported dependency types without source-level generated-header includes. The dependency export header uses the same discovered base-before-derived ordering for its generated headers.
+Scoped packs for consuming project units use dependency project `__project.hpp`
+export headers for cross-project declarations; they do not direct-include
+dependency generated unit headers as local headers. Scoped packs may still
+direct-include generated headers from the same owning project.
 
 Generated source cache entries distinguish standalone entrypoint emission from dependency-unit emission. A file generated with a program `main` for standalone execution must be regenerated when reused as a dependency unit so dependency objects do not export duplicate executable entrypoints.
 
