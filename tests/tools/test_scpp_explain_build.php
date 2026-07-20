@@ -88,6 +88,23 @@ final class ScppExplainBuildTest
 				throw new RuntimeException('build explanation should contain project unit force-include details');
 			}
 			$this->assertProjectUnitReportShape($projectUnits, 'warm STAN project-unit report');
+			$this->assertSame(['changed_headers' => [], 'removed_headers' => [], 'changed_count' => 0, 'removed_count' => 0], $projectUnits['pack_changes'] ?? null, 'warm STAN project-unit report should record no changed pack headers');
+			$topLevelFanout = is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : null;
+			if (!is_array($topLevelFanout)) {
+				throw new RuntimeException('last_run details should contain rebuild fanout');
+			}
+			$this->assertRebuildFanoutShape($topLevelFanout, 'warm STAN top-level rebuild fanout');
+			$rebuildFanout = is_array($explanation['rebuild_fanout'] ?? null) ? $explanation['rebuild_fanout'] : null;
+			if (!is_array($rebuildFanout)) {
+				throw new RuntimeException('build explanation should contain rebuild fanout');
+			}
+			$this->assertRebuildFanoutShape($rebuildFanout, 'warm STAN explanation rebuild fanout');
+			$this->assertSame($topLevelFanout, $rebuildFanout, 'top-level and explanation rebuild fanout should match');
+			$this->assertSame(0, $rebuildFanout['rebuilt_output_count'] ?? null, 'warm STAN build should record no changed outputs');
+			$this->assertSame(0, $rebuildFanout['rebuilt_object_count'] ?? null, 'warm STAN build should record no rebuilt objects');
+			$this->assertSame(0, $rebuildFanout['changed_project_unit_pack_count'] ?? null, 'warm STAN build should record no changed project-unit packs');
+			$this->assertSame(0, $rebuildFanout['removed_project_unit_pack_count'] ?? null, 'warm STAN build should record no removed project-unit packs');
+			$this->assertSame(true, $rebuildFanout['ninja_no_work'] ?? null, 'warm STAN build should record Ninja no-work');
 			$this->assertSame(3, $projectUnits['total_units'] ?? null, 'three-file project should report three compiled units');
 			$this->assertSame(3, $projectUnits['units_with_force_include'] ?? null, 'three-file project should force-include the project unit header for each generated unit');
 			$this->assertSame(3, $projectUnits['distinct_headers'] ?? null, 'three-file project should use scoped packs for safe declaration-only units and broad fallback for main');
@@ -168,6 +185,7 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $explain['exit_code'], 'scpp explain-build should succeed');
 			$this->assertContains('Explain build: build', $explain['stdout'], 'explain-build should identify the saved command');
 			$this->assertContains('Runtime: reuse (reusing existing runtime artifact by default)', $explain['stdout'], 'explain-build should explain runtime reuse');
+			$this->assertContains('Rebuild fanout: outputs 0, objects 0 (generated 0, native 0, runtime 0), project-unit packs changed 0, removed 0, Ninja no-work yes', $explain['stdout'], 'explain-build should summarize warm no-work fanout');
 			$this->assertContains('main.phs -> reused (source metadata and generated artifacts unchanged)', $explain['stdout'], 'explain-build should explain source reuse');
 			$this->assertContains('Direct Ninja target: main', $explain['stdout'], 'explain-build should report the direct Ninja target name');
 			$this->assertContains('ninja -C .prism/build -d explain main', $explain['stdout'], 'explain-build should report the direct Ninja debug command');
@@ -182,11 +200,16 @@ final class ScppExplainBuildTest
 			$this->assertContains('Files reused:', $reusedView['stdout'], 'files-reused should include a header');
 			$this->assertContains('main.phs (source metadata and generated artifacts unchanged)', $reusedView['stdout'], 'files-reused should list the reused source');
 
+			$fanoutView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'rebuild-fanout'], [], 20.0);
+			$this->assertSame(0, $fanoutView['exit_code'], 'scpp explain-build rebuild-fanout should succeed');
+			$this->assertContains('Rebuild fanout: outputs 0, objects 0 (generated 0, native 0, runtime 0), project-unit packs changed 0, removed 0, Ninja no-work yes', $fanoutView['stdout'], 'rebuild-fanout should report warm no-work fanout');
+
 			$projectUnitsView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-units'], [], 20.0);
 			$this->assertSame(0, $projectUnitsView['exit_code'], 'scpp explain-build project-units should succeed');
 			$this->assertContains('Project unit force-includes: 3/3 unit(s), 3 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
 			$this->assertContains('Project unit scoped fanout: active scoped 2, active broad fallback 1, candidates scoped 2, candidates blocked 1', $projectUnitsView['stdout'], 'project-units should summarize scoped activation fanout');
 			$this->assertContains('Project unit candidate blockers: executable body present (1 unit(s))', $projectUnitsView['stdout'], 'project-units should summarize candidate blocker counts');
+			$this->assertContains('Project unit pack changes: changed 0, removed 0', $projectUnitsView['stdout'], 'project-units should summarize project-unit pack changes');
 			$this->assertContains('.prism/generated/__project_units/', $projectUnitsView['stdout'], 'project-units should list the force-included hash-pack header');
 			$this->assertContains('scoped', $projectUnitsView['stdout'], 'project-units should classify active scoped pack headers');
 			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify fallback broad pack headers');
@@ -260,6 +283,18 @@ final class ScppExplainBuildTest
 			$noStanBuildExplanation = is_array($noStanBuildDetails['build_explanation'] ?? null) ? $noStanBuildDetails['build_explanation'] : [];
 			$noStanProjectUnits = is_array($noStanBuildExplanation['project_unit_force_includes'] ?? null) ? $noStanBuildExplanation['project_unit_force_includes'] : [];
 			$this->assertProjectUnitReportShape($noStanProjectUnits, 'warm no-STAN project-unit report');
+			$noStanPackChanges = is_array($noStanProjectUnits['pack_changes'] ?? null) ? $noStanProjectUnits['pack_changes'] : [];
+			$this->assertTrue((int) ($noStanPackChanges['removed_count'] ?? 0) >= 2, 'warm --no-stan build should report stale pack removals');
+			$removedPackHeaders = is_array($noStanPackChanges['removed_headers'] ?? null) ? $noStanPackChanges['removed_headers'] : [];
+			$this->assertContains('.prism/generated/__project_units/0123456789abcdef.hpp', implode("\n", $removedPackHeaders), 'warm --no-stan build should report stale broad hash-pack removal');
+			$this->assertContains('.prism/generated/__project_units/scoped-deadbeefdeadbeef.hpp', implode("\n", $removedPackHeaders), 'warm --no-stan build should report stale scoped-pack removal');
+			$noStanFanout = is_array($noStanBuildExplanation['rebuild_fanout'] ?? null) ? $noStanBuildExplanation['rebuild_fanout'] : null;
+			if (!is_array($noStanFanout)) {
+				throw new RuntimeException('warm --no-stan build explanation should contain rebuild fanout');
+			}
+			$this->assertRebuildFanoutShape($noStanFanout, 'warm no-STAN rebuild fanout');
+			$this->assertSame($noStanPackChanges['removed_count'] ?? null, $noStanFanout['removed_project_unit_pack_count'] ?? null, 'warm --no-stan rebuild fanout should mirror removed project-unit packs');
+			$this->assertSame($noStanPackChanges['removed_headers'] ?? null, $noStanFanout['removed_project_unit_pack_headers'] ?? null, 'warm --no-stan rebuild fanout should mirror removed project-unit pack headers');
 			$this->assertSame(3, $noStanProjectUnits['total_units'] ?? null, 'warm --no-stan build should still report all generated units');
 			$this->assertSame(1, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should fall back to one broad-equivalent pack even if stale STAN state exists');
 			$this->assertSame(0, $noStanProjectUnits['active_scoped_units'] ?? null, 'warm --no-stan build should count no active scoped units');
@@ -483,9 +518,16 @@ final class ScppExplainBuildTest
 			'dependency_summaries',
 			'distinct_headers',
 			'headers',
+			'pack_changes',
 			'total_units',
 			'units_with_force_include',
 		], $projectUnits, $context . ' top-level keys');
+
+		$packChanges = is_array($projectUnits['pack_changes'] ?? null) ? $projectUnits['pack_changes'] : null;
+		if (!is_array($packChanges)) {
+			throw new RuntimeException($context . ' pack_changes should be an object');
+		}
+		$this->assertKeys(['changed_count', 'changed_headers', 'removed_count', 'removed_headers'], $packChanges, $context . ' pack_changes keys');
 
 		foreach (is_array($projectUnits['headers'] ?? null) ? $projectUnits['headers'] : [] as $header) {
 			if (!is_array($header)) {
@@ -530,6 +572,26 @@ final class ScppExplainBuildTest
 				$this->assertKeys(['category', 'kind', 'owner', 'resolution', 'source_dependencies', 'target'], $category, $context . ' dependency category row keys');
 			}
 		}
+	}
+
+	private function assertRebuildFanoutShape(array $fanout, string $context): void
+	{
+		$this->assertKeys([
+			'changed_project_unit_pack_count',
+			'changed_project_unit_pack_headers',
+			'ninja_no_work',
+			'rebuilt_generated_object_count',
+			'rebuilt_generated_objects',
+			'rebuilt_native_object_count',
+			'rebuilt_native_objects',
+			'rebuilt_object_count',
+			'rebuilt_other_outputs',
+			'rebuilt_output_count',
+			'rebuilt_runtime_object_count',
+			'rebuilt_runtime_objects',
+			'removed_project_unit_pack_count',
+			'removed_project_unit_pack_headers',
+		], $fanout, $context . ' keys');
 	}
 
 	private function assertKeys(array $expected, array $actual, string $message): void

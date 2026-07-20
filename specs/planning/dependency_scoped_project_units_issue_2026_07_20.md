@@ -326,6 +326,11 @@ Status legend:
   checks no-STAN build-owned summaries and stale pack cleanup; scoped-pack
   regression coverage now also rebuilds through dependency reuse and `scpp
   clean` before rechecking dependency export scoped packs.
+- [x] `PUH-032` Add rebuild-fanout measurement to saved build diagnostics and
+  `scpp explain-build rebuild-fanout`. Successful builds now record changed
+  outputs, changed generated/native/runtime object counts, changed/removed
+  project-unit packs, and Ninja no-work status; explain-build coverage locks
+  the warm STAN no-work shape and no-STAN stale-pack removal reporting.
 
 ### Ready
 
@@ -348,9 +353,6 @@ Status legend:
 
 ### Planned Validation And Rollout
 
-- [ ] `PUH-032` Add rebuild-fanout measurement to the usability or build
-  diagnostics harness: record transpiled files, changed project-unit packs,
-  dirty native objects, and Ninja no-work behavior.
 - [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:
   a narrow support-file edit should dirty a much smaller slice than the previous
   ~387-object rebuild, while no-change builds remain Ninja no-work.

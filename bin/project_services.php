@@ -3088,6 +3088,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	validate_runtime_module_symbol_usage($projectRoot, $generatedUnits, $runtimeConfig);
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
+	$projectUnitPackStateBefore = capture_project_unit_pack_header_state($projectContexts);
 	$projectUnitForceIncludes = write_project_unit_force_include_headers($projectContexts);
 	foreach ($generatedUnits as &$unit) {
 		$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
@@ -3101,7 +3102,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	unset($nativeUnit);
 	cleanup_project_unit_pack_headers($projectContexts, $generatedUnits, $nativeCppUnits, $projectUnitForceIncludes);
-	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, !$options['disable_stan']);
+	$projectUnitPackChanges = compare_project_unit_pack_header_state($projectRoot, $projectUnitPackStateBefore, capture_project_unit_pack_header_state($projectContexts));
+	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, !$options['disable_stan'], $projectUnitPackChanges);
 
 	if ($usePch) {
 		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
@@ -3310,6 +3312,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 
 	$buildOutputMtimesAfter = capture_file_mtimes($buildOutputs);
 	$rebuiltOutputs = detect_rebuilt_outputs($buildOutputMtimesBefore, $buildOutputMtimesAfter);
+	$rebuildFanout = summarize_build_rebuild_fanout($projectRoot, $generatedUnits, $nativeCppUnits, $runtimeBuild, $rebuiltOutputs, $projectUnitPackChanges);
 	if ($rebuiltOutputs !== []) {
 		echo 'Rebuilt outputs: ' . implode(', ', array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)) . PHP_EOL;
 	} else {
@@ -3348,6 +3351,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			'transpiled_count' => $transpiledCount,
 			'skipped_count' => $skippedCount,
 			'rebuilt_outputs' => array_values(array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)),
+			'rebuild_fanout' => $rebuildFanout,
 			'ninja_command' => $command,
 			'timing_breakdown_ms' => $timingDetails,
 			'build_explanation' => build_explanation_details(
@@ -3364,7 +3368,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$outputPath,
 				$command,
 				$runtimeConfig,
-				$projectUnitForceIncludeReport
+				$projectUnitForceIncludeReport,
+				$rebuildFanout
 			),
 		]
 	);
@@ -3407,7 +3412,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$outputPath,
 			$command,
 			$runtimeConfig,
-			$projectUnitForceIncludeReport
+			$projectUnitForceIncludeReport,
+			$rebuildFanout
 		),
 	];
 }
@@ -3970,12 +3976,101 @@ function detect_rebuilt_outputs(array $before, array $after): array
 }
 
 /**
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @param list<array{project_root:string,source_path:string,object_path:string,force_include_header:?string}> $nativeCppUnits
+ * @param array<string,mixed> $runtimeBuild
+ * @param list<string> $rebuiltOutputs
+ * @return array<string,mixed>
+ */
+function summarize_build_rebuild_fanout(string $projectRoot, array $generatedUnits, array $nativeCppUnits, array $runtimeBuild, array $rebuiltOutputs, array $projectUnitPackChanges): array
+{
+	$rebuiltSet = [];
+	foreach ($rebuiltOutputs as $output) {
+		$output = normalize_path($output);
+		if ($output !== '') {
+			$rebuiltSet[$output] = true;
+		}
+	}
+	$generatedObjects = [];
+	foreach ($generatedUnits as $unit) {
+		$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+		if ($objectPath !== '' && isset($rebuiltSet[$objectPath])) {
+			$generatedObjects[] = normalize_config_path(relative_path($projectRoot, $objectPath));
+		}
+	}
+	sort($generatedObjects, SORT_STRING);
+	$nativeObjects = [];
+	foreach ($nativeCppUnits as $unit) {
+		$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+		if ($objectPath !== '' && isset($rebuiltSet[$objectPath])) {
+			$nativeObjects[] = normalize_config_path(relative_path($projectRoot, $objectPath));
+		}
+	}
+	sort($nativeObjects, SORT_STRING);
+	$runtimeObjects = [];
+	$runtimeObjectPath = normalize_path((string) ($runtimeBuild['object_path'] ?? ''));
+	if ($runtimeObjectPath !== '' && isset($rebuiltSet[$runtimeObjectPath])) {
+		$runtimeObjects[] = normalize_config_path(relative_path($projectRoot, $runtimeObjectPath));
+	}
+	$knownObjects = [];
+	foreach (array_merge($generatedObjects, $nativeObjects, $runtimeObjects) as $object) {
+		$knownObjects[normalize_path($projectRoot . '/' . $object)] = true;
+	}
+	$otherOutputs = [];
+	foreach ($rebuiltSet as $output => $_present) {
+		if (isset($knownObjects[$output])) {
+			continue;
+		}
+		$otherOutputs[] = normalize_config_path(relative_path($projectRoot, $output));
+	}
+	sort($otherOutputs, SORT_STRING);
+	$packChanges = normalize_project_unit_pack_changes($projectUnitPackChanges);
+	return [
+		'rebuilt_output_count' => count($rebuiltSet),
+		'rebuilt_object_count' => count($generatedObjects) + count($nativeObjects) + count($runtimeObjects),
+		'rebuilt_generated_object_count' => count($generatedObjects),
+		'rebuilt_native_object_count' => count($nativeObjects),
+		'rebuilt_runtime_object_count' => count($runtimeObjects),
+		'rebuilt_generated_objects' => array_values(array_unique($generatedObjects)),
+		'rebuilt_native_objects' => array_values(array_unique($nativeObjects)),
+		'rebuilt_runtime_objects' => array_values(array_unique($runtimeObjects)),
+		'rebuilt_other_outputs' => array_values(array_unique($otherOutputs)),
+		'changed_project_unit_pack_count' => (int) ($packChanges['changed_count'] ?? 0),
+		'removed_project_unit_pack_count' => (int) ($packChanges['removed_count'] ?? 0),
+		'changed_project_unit_pack_headers' => $packChanges['changed_headers'] ?? [],
+		'removed_project_unit_pack_headers' => $packChanges['removed_headers'] ?? [],
+		'ninja_no_work' => count($rebuiltSet) === 0,
+	];
+}
+
+/** @return array<string,mixed> */
+function normalize_build_rebuild_fanout(array $fanout): array
+{
+	return [
+		'rebuilt_output_count' => max(0, (int) ($fanout['rebuilt_output_count'] ?? 0)),
+		'rebuilt_object_count' => max(0, (int) ($fanout['rebuilt_object_count'] ?? 0)),
+		'rebuilt_generated_object_count' => max(0, (int) ($fanout['rebuilt_generated_object_count'] ?? 0)),
+		'rebuilt_native_object_count' => max(0, (int) ($fanout['rebuilt_native_object_count'] ?? 0)),
+		'rebuilt_runtime_object_count' => max(0, (int) ($fanout['rebuilt_runtime_object_count'] ?? 0)),
+		'rebuilt_generated_objects' => normalize_string_list($fanout['rebuilt_generated_objects'] ?? []),
+		'rebuilt_native_objects' => normalize_string_list($fanout['rebuilt_native_objects'] ?? []),
+		'rebuilt_runtime_objects' => normalize_string_list($fanout['rebuilt_runtime_objects'] ?? []),
+		'rebuilt_other_outputs' => normalize_string_list($fanout['rebuilt_other_outputs'] ?? []),
+		'changed_project_unit_pack_count' => max(0, (int) ($fanout['changed_project_unit_pack_count'] ?? 0)),
+		'removed_project_unit_pack_count' => max(0, (int) ($fanout['removed_project_unit_pack_count'] ?? 0)),
+		'changed_project_unit_pack_headers' => normalize_string_list($fanout['changed_project_unit_pack_headers'] ?? []),
+		'removed_project_unit_pack_headers' => normalize_string_list($fanout['removed_project_unit_pack_headers'] ?? []),
+		'ninja_no_work' => (bool) ($fanout['ninja_no_work'] ?? false),
+	];
+}
+
+/**
  * @param array<string,array<string,mixed>> $projectContexts
  * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
  * @param list<array{project_root:string,source_path:string,object_path:string,force_include_header:?string}> $nativeCppUnits
  * @return array<string,mixed>
  */
-function collect_project_unit_force_include_report(string $projectRoot, array $projectContexts, array $generatedUnits, array $nativeCppUnits, bool $useStanDependencyState = true): array
+function collect_project_unit_force_include_report(string $projectRoot, array $projectContexts, array $generatedUnits, array $nativeCppUnits, bool $useStanDependencyState = true, array $packChanges = []): array
 {
 	$units = array_merge($generatedUnits, $nativeCppUnits);
 	$headerCounts = [];
@@ -4015,7 +4110,23 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 		'candidate_blocked_units' => $statusCounts['candidate_blocked_units'],
 		'candidate_blocker_counts' => $candidateBlockerCounts,
 		'headers' => $headers,
+		'pack_changes' => normalize_project_unit_pack_changes($packChanges),
 		'dependency_summaries' => $dependencySummaries,
+	];
+}
+
+/**
+ * @return array{changed_headers:list<string>,removed_headers:list<string>,changed_count:int,removed_count:int}
+ */
+function normalize_project_unit_pack_changes(array $packChanges): array
+{
+	$changedHeaders = normalize_string_list($packChanges['changed_headers'] ?? []);
+	$removedHeaders = normalize_string_list($packChanges['removed_headers'] ?? []);
+	return [
+		'changed_headers' => $changedHeaders,
+		'removed_headers' => $removedHeaders,
+		'changed_count' => max(0, (int) ($packChanges['changed_count'] ?? count($changedHeaders))),
+		'removed_count' => max(0, (int) ($packChanges['removed_count'] ?? count($removedHeaders))),
 	];
 }
 
@@ -4190,6 +4301,78 @@ function cleanup_project_unit_pack_headers(array $projectContexts, array $genera
 function project_unit_pack_header_filename_is_build_owned(string $filename): bool
 {
 	return preg_match('/^(?:scoped-)?[0-9a-f]{16}\.hpp$/', $filename) === 1;
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @return array<string,string>
+ */
+function capture_project_unit_pack_header_state(array $projectContexts): array
+{
+	$state = [];
+	foreach ($projectContexts as $projectContext) {
+		if (!is_array($projectContext) || !is_string($projectContext['generated_dir'] ?? null)) {
+			continue;
+		}
+		$generatedDir = normalize_path($projectContext['generated_dir']);
+		foreach ([$generatedDir . '/__project_units.hpp', $generatedDir . '/__project_units/broad.hpp'] as $path) {
+			$path = normalize_path($path);
+			if (is_file($path)) {
+				$state[$path] = hash_file('sha256', $path) ?: '';
+			}
+		}
+		$packDir = normalize_path($generatedDir . '/__project_units');
+		if (!is_dir($packDir)) {
+			continue;
+		}
+		$items = scandir($packDir);
+		if ($items === false) {
+			continue;
+		}
+		foreach ($items as $item) {
+			if ($item === '.' || $item === '..') {
+				continue;
+			}
+			if (!project_unit_pack_header_filename_is_build_owned($item)) {
+				continue;
+			}
+			$path = normalize_path($packDir . '/' . $item);
+			if (is_file($path)) {
+				$state[$path] = hash_file('sha256', $path) ?: '';
+			}
+		}
+	}
+	ksort($state, SORT_STRING);
+	return $state;
+}
+
+/**
+ * @param array<string,string> $before
+ * @param array<string,string> $after
+ * @return array{changed_headers:list<string>,removed_headers:list<string>,changed_count:int,removed_count:int}
+ */
+function compare_project_unit_pack_header_state(string $projectRoot, array $before, array $after): array
+{
+	$changed = [];
+	foreach ($after as $path => $hash) {
+		if (($before[$path] ?? null) !== $hash) {
+			$changed[] = normalize_config_path(relative_path($projectRoot, (string) $path));
+		}
+	}
+	$removed = [];
+	foreach ($before as $path => $_hash) {
+		if (!array_key_exists($path, $after)) {
+			$removed[] = normalize_config_path(relative_path($projectRoot, (string) $path));
+		}
+	}
+	sort($changed, SORT_STRING);
+	sort($removed, SORT_STRING);
+	return [
+		'changed_headers' => array_values(array_unique($changed)),
+		'removed_headers' => array_values(array_unique($removed)),
+		'changed_count' => count(array_unique($changed)),
+		'removed_count' => count(array_unique($removed)),
+	];
 }
 
 /** @param list<string> $activeHeaderPaths */
@@ -4898,6 +5081,7 @@ function normalize_project_unit_force_include_report(array $report): array
 		'candidate_blocked_units' => max(0, (int) ($report['candidate_blocked_units'] ?? 0)),
 		'candidate_blocker_counts' => normalize_project_unit_candidate_blocker_counts(is_array($report['candidate_blocker_counts'] ?? null) ? $report['candidate_blocker_counts'] : []),
 		'headers' => $headers,
+		'pack_changes' => normalize_project_unit_pack_changes(is_array($report['pack_changes'] ?? null) ? $report['pack_changes'] : []),
 		'dependency_summaries' => normalize_project_unit_dependency_summaries(is_array($report['dependency_summaries'] ?? null) ? $report['dependency_summaries'] : []),
 	];
 }
@@ -6233,6 +6417,7 @@ function collect_transpile_reasons(
  * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options
  * @param list<array<string,mixed>> $sourceRebuildReasons
  * @param list<string> $rebuiltOutputs
+ * @param array<string,mixed> $rebuildFanout
  * @return array<string,mixed>
  */
 function build_explanation_details(
@@ -6250,6 +6435,7 @@ function build_explanation_details(
 	array $ninjaCommand = [],
 	array $runtimeConfig = [],
 	array $projectUnitForceIncludeReport = [],
+	array $rebuildFanout = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -6292,6 +6478,7 @@ function build_explanation_details(
 		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
 		'sources' => $sources,
 		'rebuilt_outputs' => $rebuilt,
+		'rebuild_fanout' => normalize_build_rebuild_fanout($rebuildFanout),
 		'project_unit_force_includes' => $projectUnitForceIncludeReport,
 	];
 }
@@ -6422,6 +6609,9 @@ function render_build_explanation_lines(array $details): array
 	foreach (render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], false) as $line) {
 		$lines[] = $line;
 	}
+	foreach (render_build_rebuild_fanout_lines(is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : []) as $line) {
+		$lines[] = $line;
+	}
 
 	$sources = is_array($details['sources'] ?? null) ? $details['sources'] : [];
 	$transpiled = [];
@@ -6469,6 +6659,38 @@ function render_build_explanation_lines(array $details): array
 }
 
 /**
+ * @param array<string,mixed> $fanout
+ * @return list<string>
+ */
+function render_build_rebuild_fanout_lines(array $fanout): array
+{
+	$fanout = normalize_build_rebuild_fanout($fanout);
+	$lines = [
+		'Rebuild fanout: outputs ' . (int) ($fanout['rebuilt_output_count'] ?? 0)
+			. ', objects ' . (int) ($fanout['rebuilt_object_count'] ?? 0)
+			. ' (generated ' . (int) ($fanout['rebuilt_generated_object_count'] ?? 0)
+			. ', native ' . (int) ($fanout['rebuilt_native_object_count'] ?? 0)
+			. ', runtime ' . (int) ($fanout['rebuilt_runtime_object_count'] ?? 0)
+			. '), project-unit packs changed ' . (int) ($fanout['changed_project_unit_pack_count'] ?? 0)
+			. ', removed ' . (int) ($fanout['removed_project_unit_pack_count'] ?? 0)
+			. ', Ninja no-work ' . (($fanout['ninja_no_work'] ?? false) ? 'yes' : 'no'),
+	];
+	foreach ([
+		'rebuilt_generated_objects' => 'rebuilt generated objects',
+		'rebuilt_native_objects' => 'rebuilt native objects',
+		'rebuilt_runtime_objects' => 'rebuilt runtime objects',
+		'changed_project_unit_pack_headers' => 'changed project-unit pack headers',
+		'removed_project_unit_pack_headers' => 'removed project-unit pack headers',
+	] as $key => $label) {
+		$values = normalize_string_list($fanout[$key] ?? []);
+		if ($values !== []) {
+			$lines[] = '  ' . $label . ': ' . implode(', ', $values);
+		}
+	}
+	return $lines;
+}
+
+/**
  * @param array<string,mixed> $report
  * @return list<string>
  */
@@ -6502,6 +6724,16 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 			$blockerParts[] = (string) ($row['reason'] ?? '') . ' (' . (int) ($row['unit_count'] ?? 0) . ' unit(s))';
 		}
 		$lines[] = 'Project unit candidate blockers: ' . implode('; ', $blockerParts);
+	}
+	$packChanges = normalize_project_unit_pack_changes(is_array($report['pack_changes'] ?? null) ? $report['pack_changes'] : []);
+	$lines[] = 'Project unit pack changes: changed ' . (int) ($packChanges['changed_count'] ?? 0) . ', removed ' . (int) ($packChanges['removed_count'] ?? 0);
+	if (($includeDependencySummaries || (bool) ($report['show_pack_change_headers'] ?? false)) && (($packChanges['changed_headers'] ?? []) !== [] || ($packChanges['removed_headers'] ?? []) !== [])) {
+		if (($packChanges['changed_headers'] ?? []) !== []) {
+			$lines[] = '  changed pack headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $packChanges['changed_headers']));
+		}
+		if (($packChanges['removed_headers'] ?? []) !== []) {
+			$lines[] = '  removed pack headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $packChanges['removed_headers']));
+		}
 	}
 	$headerRows = count($headers) > SCPP_EXPLAIN_PROJECT_UNIT_HEADER_LIMIT
 		? array_slice($headers, 0, SCPP_EXPLAIN_PROJECT_UNIT_HEADER_LIMIT)
@@ -6813,6 +7045,10 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 		return $lines;
 	}
 
+	if ($view === 'rebuild-fanout') {
+		return render_build_rebuild_fanout_lines(is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : []);
+	}
+
 	if ($view === 'project-units') {
 		return render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], true, null, true);
 	}
@@ -6878,7 +7114,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, project-units, project-unit <source>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, project-units, project-unit <source>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }

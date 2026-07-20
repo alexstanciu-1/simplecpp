@@ -302,14 +302,18 @@ The initial registry includes:
 - which source files were transpiled versus reused
 - why a transpile happened when a source file rebuilt
 - which outputs changed in the most recent saved build
+- rebuild fanout for the most recent saved build, including changed objects,
+  changed/removed project-unit packs, and Ninja no-work status
 - which generated project unit force-include headers were assigned, including
-  unit counts, header size, and report-only per-source dependency summaries
+  unit counts, header size, pack-change counts, and report-only per-source
+  dependency summaries
 
 `scpp explain-build` also accepts focused view arguments so users do not need to scan the full summary when they only want one answer:
 
 - `scpp explain-build files-transpiled`
 - `scpp explain-build files-reused`
 - `scpp explain-build outputs-rebuilt`
+- `scpp explain-build rebuild-fanout`
 - `scpp explain-build project-units`
 - `scpp explain-build project-unit <source>`
 - `scpp explain-build entrypoint`
@@ -320,6 +324,13 @@ The initial registry includes:
 The default `scpp explain-build` summary should also print the direct Ninja target name for the current executable and warn that the built executable path, such as `.prism/build/main`, is not itself a valid Ninja target name.
 
 The saved `.prism/last_run.json` payload should include build explanation details gathered during `execute_build()` so the explanation command does not need to reverse-engineer the build after the fact.
+
+Saved successful build details include a `rebuild_fanout` summary. The summary
+counts changed outputs, changed object files by generated/native/runtime owner,
+changed and removed project-unit pack headers, and whether Ninja observed a
+no-work build. The same normalized fanout is stored under
+`details.build_explanation.rebuild_fanout` so `scpp explain-build
+rebuild-fanout` can report it without recomputing mtimes or build ownership.
 
 The `project-units` view reports the current project unit force-include fanout
 and per-source dependency summaries. These summaries may use STAN's stored
@@ -374,6 +385,12 @@ The project-unit report also includes scoped fanout counters: active scoped
 generated units, active broad-fallback generated units, scoped candidates, and
 blocked candidates. These counters are intended to make rebuild-fanout changes
 measurable as dependency precision expands.
+
+The project-unit report also records `pack_changes` for the current build:
+changed project-unit pack headers and removed build-owned stale pack headers.
+The broad alias, broad hash packs, and scoped hash packs are included in this
+measurement; custom non-build-owned files in `.prism/generated/__project_units/`
+remain outside cleanup and reporting.
 
 Blocked candidate reports include blocker histograms so the most common reasons
 for broad fallback can be tracked across a project without scanning every unit
