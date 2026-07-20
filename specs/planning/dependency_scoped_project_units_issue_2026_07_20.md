@@ -377,10 +377,23 @@ Status legend:
 
 ### Ready
 
-- [ ] `PUH-010` Run a real-project baseline on `compiler/v2/src` with the
+- [x] `PUH-010` Run a real-project baseline on `compiler/v2/src` with the
   current branch. Record active scoped units, active broad-fallback units,
   candidate blocker histogram, no-change build behavior, and rebuild fanout for
   the motivating support-file edit.
+  Measured against the sandbox clone of the pushed compiler `main` checkpoint
+  after merging `codex/compiler-vector-runtime` into this branch. Current
+  project-unit report: 388 total generated PHS units, 388 units with
+  force-includes, 276 distinct project-unit headers, 275 active scoped units,
+  and 113 active broad-fallback units. Candidate blockers: 112 units with
+  method bodies, 87 units with an unresolved external strict-runtime shallow
+  dependency key, and 1 unit with unmodeled function-body evidence.
+  A no-change `scpp build --build-runtime --timings` kept 0 transpiled files,
+  388 skipped files, 0 rebuilt outputs, and Ninja no-work behavior.
+  A sandbox-only header-surface edit to
+  `compile/support/compiler_profile_events.phs` transpiled 1 file, skipped 387,
+  rebuilt 113 generated objects plus the linked output, and rebuilt 0 runtime or
+  native C++ units. The probe edit was removed after measurement.
 ### Planned Dependency-Model Work
 
 - [ ] `PUH-025` Finish any remaining complete-type activation requirements for
@@ -392,6 +405,10 @@ Status legend:
 - [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:
   a narrow support-file edit should dirty a much smaller slice than the previous
   ~387-object rebuild, while no-change builds remain Ninja no-work.
+  Current C2 measurement reduces the motivating header-surface edit to 113
+  generated object rebuilds plus link, which is a clear reduction but still above
+  the ideal under-50 target. Next precision work should focus on the remaining
+  broad-fallback blockers and public-surface/body dependency separation.
 - [ ] `PUH-035` Prepare a GitHub issue update for
   `alexstanciu-1/simplecpp#215` summarizing implemented slices, measured
   results, remaining blockers, and next release/risk notes.

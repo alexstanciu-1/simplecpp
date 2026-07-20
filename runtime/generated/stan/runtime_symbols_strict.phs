@@ -89,8 +89,14 @@ function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
 function jss_tokenize(string $source): token_buffer {}
 function jss_tokenize_buffer(string $source): token_buffer {}
+function layout_alignof(mixed $type_name): int {}
+function layout_field_sizeof(mixed $type_name, mixed $field_name): int {}
+function layout_offsetof(mixed $type_name, mixed $field_name): int {}
+function layout_sizeof(mixed $type_name): int {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
+function memory_get_peak_usage(bool $real_usage = false): int {}
+function memory_get_usage(bool $real_usage = false): int {}
 function microtime(bool $as_float = false): mixed {}
 function not_identical(mixed $left, mixed $right): bool {}
 function number_format(float $value): string {}
