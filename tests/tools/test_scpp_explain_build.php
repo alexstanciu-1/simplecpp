@@ -138,18 +138,28 @@ final class ScppExplainBuildTest
 			$this->assertContains('function or executable statement body present', implode("\n", is_array($mainDependencySummary['candidate_blocking_reasons'] ?? null) ? $mainDependencySummary['candidate_blocking_reasons'] : []), 'executable source should explain the scoped candidate blocker');
 
 			$sources = is_array($explanation['sources'] ?? null) ? $explanation['sources'] : [];
-			$mainSource = null;
+			$sourceByPath = [];
 			foreach ($sources as $source) {
-				if (is_array($source) && ($source['path'] ?? null) === 'main.phs') {
-					$mainSource = $source;
-					break;
+				if (is_array($source) && is_string($source['path'] ?? null)) {
+					$sourceByPath[$source['path']] = $source;
 				}
 			}
+			$mainSource = $sourceByPath['main.phs'] ?? null;
 			if (!is_array($mainSource)) {
 				throw new RuntimeException('build explanation should include the main source record');
 			}
 			$this->assertSame('main.phs', $mainSource['path'] ?? null, 'source explanation should preserve relative path');
 			$this->assertSame('reused', $mainSource['action'] ?? null, 'warm build should reuse unchanged source');
+			$this->assertSame('fallback_broad', $mainSource['project_unit_status'] ?? null, 'source explanation should annotate main broad fallback status');
+			$this->assertSame('broad_equivalent_pack', $mainSource['project_unit_force_include_mode'] ?? null, 'source explanation should annotate main broad pack mode');
+			$this->assertTrue(str_starts_with((string) ($mainSource['project_unit_force_include_header'] ?? ''), '.prism/generated/__project_units/'), 'source explanation should annotate main force-include header');
+			$childSource = $sourceByPath['child.phs'] ?? null;
+			if (!is_array($childSource)) {
+				throw new RuntimeException('build explanation should include the child source record');
+			}
+			$this->assertSame('scoped', $childSource['project_unit_status'] ?? null, 'source explanation should annotate child scoped status');
+			$this->assertSame('scoped', $childSource['project_unit_force_include_mode'] ?? null, 'source explanation should annotate child scoped pack mode');
+			$this->assertSame($childDependencySummary['candidate_pack_header'] ?? null, $childSource['project_unit_force_include_header'] ?? null, 'source explanation should annotate child scoped force-include header');
 
 			$script = normalize_path(resolve_repo_root() . '/bin/scpp.php');
 			$explain = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build'], [], 20.0);
@@ -200,7 +210,8 @@ final class ScppExplainBuildTest
 			$generatedFilesView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'generated-files'], [], 20.0);
 			$this->assertSame(0, $generatedFilesView['exit_code'], 'scpp explain-build generated-files should succeed');
 			$this->assertContains('Generated files:', $generatedFilesView['stdout'], 'generated-files should include a header');
-			$this->assertContains('main.phs -> .prism/generated/main.cpp -> .prism/build/main.o', $generatedFilesView['stdout'], 'generated-files should map source to generated and object outputs');
+			$this->assertContains('main.phs -> .prism/generated/main.cpp -> .prism/build/main.o (project unit: broad_equivalent_pack .prism/generated/__project_units/', $generatedFilesView['stdout'], 'generated-files should map main source to generated outputs and active broad pack');
+			$this->assertContains('child.phs -> .prism/generated/child.cpp -> .prism/build/child.o (project unit: scoped .prism/generated/__project_units/scoped-', $generatedFilesView['stdout'], 'generated-files should map child source to generated outputs and active scoped pack');
 
 			$ninjaTargetView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'ninja-target'], [], 20.0);
 			$this->assertSame(0, $ninjaTargetView['exit_code'], 'scpp explain-build ninja-target should succeed');

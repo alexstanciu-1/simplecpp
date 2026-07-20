@@ -5745,6 +5745,8 @@ function build_explanation_details(
 	foreach ($rebuiltOutputs as $path) {
 		$rebuilt[] = normalize_config_path(relative_path($projectRoot, $path));
 	}
+	$projectUnitForceIncludeReport = normalize_project_unit_force_include_report($projectUnitForceIncludeReport);
+	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport);
 
 	return [
 		'status' => $exitCode === 0 ? 'success' : 'failure',
@@ -5766,10 +5768,63 @@ function build_explanation_details(
 			'reasons' => $dependencyReasons,
 		],
 		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
-		'sources' => array_values($sourceRebuildReasons),
+		'sources' => $sources,
 		'rebuilt_outputs' => $rebuilt,
-		'project_unit_force_includes' => normalize_project_unit_force_include_report($projectUnitForceIncludeReport),
+		'project_unit_force_includes' => $projectUnitForceIncludeReport,
 	];
+}
+
+/**
+ * @param list<array<string,mixed>> $sources
+ * @param array<string,mixed> $projectUnitForceIncludeReport
+ * @return list<array<string,mixed>>
+ */
+function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport): array
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$headerModes = [];
+	foreach (is_array($projectUnitForceIncludeReport['headers'] ?? null) ? $projectUnitForceIncludeReport['headers'] : [] as $header) {
+		if (!is_array($header)) {
+			continue;
+		}
+		$path = trim((string) ($header['path'] ?? ''));
+		if ($path === '') {
+			continue;
+		}
+		$headerModes[$path] = trim((string) ($header['mode'] ?? 'unknown'));
+	}
+
+	$summaryBySource = [];
+	foreach (is_array($projectUnitForceIncludeReport['dependency_summaries'] ?? null) ? $projectUnitForceIncludeReport['dependency_summaries'] : [] as $summary) {
+		if (!is_array($summary)) {
+			continue;
+		}
+		$source = normalize_config_path((string) ($summary['source'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$projectRootKey = normalize_config_path((string) ($summary['project_root'] ?? ''));
+		$summaryBySource[$projectRootKey . "\0" . $source] = $summary;
+	}
+
+	$annotated = [];
+	foreach ($sources as $source) {
+		if (!is_array($source)) {
+			continue;
+		}
+		$sourceProjectRoot = is_string($source['project_root'] ?? null) ? normalize_path($source['project_root']) : $normalizedProjectRoot;
+		$projectRootKey = normalize_config_path(relative_path($normalizedProjectRoot, $sourceProjectRoot));
+		$sourcePath = normalize_config_path((string) ($source['path'] ?? ''));
+		$summary = $summaryBySource[$projectRootKey . "\0" . $sourcePath] ?? null;
+		if (is_array($summary)) {
+			$forceIncludeHeader = trim((string) ($summary['force_include_header'] ?? ''));
+			$source['project_unit_status'] = trim((string) ($summary['status'] ?? 'fallback_broad'));
+			$source['project_unit_force_include_header'] = $forceIncludeHeader;
+			$source['project_unit_force_include_mode'] = $headerModes[$forceIncludeHeader] ?? ($forceIncludeHeader !== '' ? project_unit_force_include_header_mode(normalize_path($normalizedProjectRoot . '/' . $forceIncludeHeader)) : '');
+		}
+		$annotated[] = $source;
+	}
+	return $annotated;
 }
 
 /**
@@ -6144,6 +6199,11 @@ function render_explain_build_view_lines(array $details, string $view): array
 			}
 			if ($object !== '') {
 				$line .= ' -> ' . $object;
+			}
+			$projectUnitMode = trim((string) ($source['project_unit_force_include_mode'] ?? ''));
+			$projectUnitHeader = trim((string) ($source['project_unit_force_include_header'] ?? ''));
+			if ($projectUnitHeader !== '') {
+				$line .= ' (project unit: ' . ($projectUnitMode !== '' ? $projectUnitMode . ' ' : '') . $projectUnitHeader . ')';
 			}
 			$lines[] = $line;
 		}

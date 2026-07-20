@@ -340,6 +340,10 @@ measurable as dependency precision expands.
 Blocked candidate reports include blocker histograms so the most common reasons
 for broad fallback can be tracked across a project without scanning every unit
 row.
+
+Generated source rows in the saved build explanation also carry the active
+project-unit status, force-include header, and header mode so focused views such
+as `generated-files` can show which pack each generated object compiles with.
 - `examples`
 - `authoring`
 - `gotchas`
