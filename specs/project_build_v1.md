@@ -331,6 +331,11 @@ The same diagnostic payload reports the scoped-pack candidate for each
 generated PHS unit. Candidate rows include the scoped header list, the stable
 candidate hash/path, a candidate status, and any blocking reasons that kept the
 active compile edge on the broad-equivalent pack.
+
+The project-unit report also includes scoped fanout counters: active scoped
+generated units, active broad-fallback generated units, scoped candidates, and
+blocked candidates. These counters are intended to make rebuild-fanout changes
+measurable as dependency precision expands.
 - `examples`
 - `authoring`
 - `gotchas`

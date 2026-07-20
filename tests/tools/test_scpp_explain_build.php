@@ -90,6 +90,10 @@ final class ScppExplainBuildTest
 			$this->assertSame(3, $projectUnits['total_units'] ?? null, 'three-file project should report three compiled units');
 			$this->assertSame(3, $projectUnits['units_with_force_include'] ?? null, 'three-file project should force-include the project unit header for each generated unit');
 			$this->assertSame(3, $projectUnits['distinct_headers'] ?? null, 'three-file project should use scoped packs for safe declaration-only units and broad fallback for main');
+			$this->assertSame(2, $projectUnits['active_scoped_units'] ?? null, 'three-file project should count two active scoped units');
+			$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'three-file project should count one active broad fallback unit');
+			$this->assertSame(2, $projectUnits['candidate_scoped_units'] ?? null, 'three-file project should count two scoped candidates');
+			$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'three-file project should count one blocked scoped candidate');
 			$projectUnitHeaders = is_array($projectUnits['headers'] ?? null) ? $projectUnits['headers'] : [];
 			$headerModes = [];
 			foreach ($projectUnitHeaders as $projectUnitHeader) {
@@ -168,6 +172,7 @@ final class ScppExplainBuildTest
 			$projectUnitsView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-units'], [], 20.0);
 			$this->assertSame(0, $projectUnitsView['exit_code'], 'scpp explain-build project-units should succeed');
 			$this->assertContains('Project unit force-includes: 3/3 unit(s), 3 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
+			$this->assertContains('Project unit scoped fanout: active scoped 2, active broad fallback 1, candidates scoped 2, candidates blocked 1', $projectUnitsView['stdout'], 'project-units should summarize scoped activation fanout');
 			$this->assertContains('.prism/generated/__project_units/', $projectUnitsView['stdout'], 'project-units should list the force-included hash-pack header');
 			$this->assertContains('scoped', $projectUnitsView['stdout'], 'project-units should classify active scoped pack headers');
 			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify fallback broad pack headers');
@@ -211,6 +216,10 @@ final class ScppExplainBuildTest
 			$noStanProjectUnits = is_array($noStanBuildExplanation['project_unit_force_includes'] ?? null) ? $noStanBuildExplanation['project_unit_force_includes'] : [];
 			$this->assertSame(3, $noStanProjectUnits['total_units'] ?? null, 'warm --no-stan build should still report all generated units');
 			$this->assertSame(1, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should fall back to one broad-equivalent pack even if stale STAN state exists');
+			$this->assertSame(0, $noStanProjectUnits['active_scoped_units'] ?? null, 'warm --no-stan build should count no active scoped units');
+			$this->assertSame(3, $noStanProjectUnits['active_broad_fallback_units'] ?? null, 'warm --no-stan build should count all generated units as broad fallback');
+			$this->assertSame(0, $noStanProjectUnits['candidate_scoped_units'] ?? null, 'warm --no-stan build should count no scoped candidates');
+			$this->assertSame(3, $noStanProjectUnits['candidate_blocked_units'] ?? null, 'warm --no-stan build should count all generated candidates as blocked');
 			$noStanBuildHeaders = is_array($noStanProjectUnits['headers'] ?? null) ? $noStanProjectUnits['headers'] : [];
 			$noStanBuildHeader = $noStanBuildHeaders[0] ?? null;
 			if (!is_array($noStanBuildHeader)) {
@@ -270,6 +279,10 @@ final class ScppExplainBuildTest
 				throw new RuntimeException('no-STAN project unit report should still contain a dependency summary');
 			}
 			$this->assertSame('fallback_broad', $noStanSummary['status'] ?? null, 'no-STAN dependency summaries should preserve broad fallback status');
+			$this->assertSame(0, $noStanReport['active_scoped_units'] ?? null, 'direct no-STAN report should count no active scoped units');
+			$this->assertSame(1, $noStanReport['active_broad_fallback_units'] ?? null, 'direct no-STAN report should count one active broad fallback unit');
+			$this->assertSame(0, $noStanReport['candidate_scoped_units'] ?? null, 'direct no-STAN report should count no scoped candidates');
+			$this->assertSame(1, $noStanReport['candidate_blocked_units'] ?? null, 'direct no-STAN report should count one blocked scoped candidate');
 			$this->assertSame('blocked_broad_fallback', $noStanSummary['candidate_status'] ?? null, 'no-STAN scoped candidates should be marked blocked');
 			$this->assertSame(['.prism/generated/main.hpp'], $noStanSummary['candidate_scoped_headers'] ?? null, 'no-STAN scoped candidate should still report its own header');
 			$this->assertContains('STAN dependency state unavailable', implode("\n", is_array($noStanSummary['candidate_blocking_reasons'] ?? null) ? $noStanSummary['candidate_blocking_reasons'] : []), 'no-STAN scoped candidate should explain missing STAN state');

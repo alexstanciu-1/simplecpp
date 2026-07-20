@@ -3988,14 +3988,49 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 	}
 
 	$dependencySummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
+	$statusCounts = summarize_project_unit_dependency_status_counts($dependencySummaries);
 
 	return [
 		'total_units' => count($units),
 		'units_with_force_include' => array_sum($headerCounts),
 		'distinct_headers' => count($headers),
+		'active_scoped_units' => $statusCounts['active_scoped_units'],
+		'active_broad_fallback_units' => $statusCounts['active_broad_fallback_units'],
+		'candidate_scoped_units' => $statusCounts['candidate_scoped_units'],
+		'candidate_blocked_units' => $statusCounts['candidate_blocked_units'],
 		'headers' => $headers,
 		'dependency_summaries' => $dependencySummaries,
 	];
+}
+
+/**
+ * @param list<array<string,mixed>> $dependencySummaries
+ * @return array{active_scoped_units:int,active_broad_fallback_units:int,candidate_scoped_units:int,candidate_blocked_units:int}
+ */
+function summarize_project_unit_dependency_status_counts(array $dependencySummaries): array
+{
+	$counts = [
+		'active_scoped_units' => 0,
+		'active_broad_fallback_units' => 0,
+		'candidate_scoped_units' => 0,
+		'candidate_blocked_units' => 0,
+	];
+	foreach ($dependencySummaries as $summary) {
+		if (!is_array($summary)) {
+			continue;
+		}
+		if (($summary['status'] ?? null) === 'scoped') {
+			$counts['active_scoped_units']++;
+		} else {
+			$counts['active_broad_fallback_units']++;
+		}
+		if (($summary['candidate_status'] ?? null) === 'candidate_scoped') {
+			$counts['candidate_scoped_units']++;
+		} else {
+			$counts['candidate_blocked_units']++;
+		}
+	}
+	return $counts;
 }
 
 /**
@@ -4398,6 +4433,10 @@ function normalize_project_unit_force_include_report(array $report): array
 		'total_units' => max(0, (int) ($report['total_units'] ?? 0)),
 		'units_with_force_include' => max(0, (int) ($report['units_with_force_include'] ?? 0)),
 		'distinct_headers' => max(0, (int) ($report['distinct_headers'] ?? count($headers))),
+		'active_scoped_units' => max(0, (int) ($report['active_scoped_units'] ?? 0)),
+		'active_broad_fallback_units' => max(0, (int) ($report['active_broad_fallback_units'] ?? 0)),
+		'candidate_scoped_units' => max(0, (int) ($report['candidate_scoped_units'] ?? 0)),
+		'candidate_blocked_units' => max(0, (int) ($report['candidate_blocked_units'] ?? 0)),
 		'headers' => $headers,
 		'dependency_summaries' => normalize_project_unit_dependency_summaries(is_array($report['dependency_summaries'] ?? null) ? $report['dependency_summaries'] : []),
 	];
@@ -5810,6 +5849,16 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 	$lines = [
 		'Project unit force-includes: ' . $unitsWithForceInclude . '/' . $totalUnits . ' unit(s), ' . $distinctHeaders . ' distinct header(s)',
 	];
+	$activeScopedUnits = max(0, (int) ($report['active_scoped_units'] ?? 0));
+	$activeBroadFallbackUnits = max(0, (int) ($report['active_broad_fallback_units'] ?? 0));
+	$candidateScopedUnits = max(0, (int) ($report['candidate_scoped_units'] ?? 0));
+	$candidateBlockedUnits = max(0, (int) ($report['candidate_blocked_units'] ?? 0));
+	if (($activeScopedUnits + $activeBroadFallbackUnits + $candidateScopedUnits + $candidateBlockedUnits) > 0) {
+		$lines[] = 'Project unit scoped fanout: active scoped ' . $activeScopedUnits
+			. ', active broad fallback ' . $activeBroadFallbackUnits
+			. ', candidates scoped ' . $candidateScopedUnits
+			. ', candidates blocked ' . $candidateBlockedUnits;
+	}
 	foreach ($headers as $header) {
 		if (!is_array($header)) {
 			continue;
