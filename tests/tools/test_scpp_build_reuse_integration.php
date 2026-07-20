@@ -329,11 +329,14 @@ PHS);
 		$this->assertSame(true, $build['ok'], 'strict same-project units should build without source-level generated-header includes');
 
 		$unitHeader = $project . '/.prism/generated/__project_units.hpp';
+		$unitPackHeaders = glob($project . '/.prism/generated/__project_units/*.hpp');
+		$unitPackHeaders = is_array($unitPackHeaders) ? $unitPackHeaders : [];
 		$buildFile = $project . '/.prism/build/build.ninja';
 		$this->assertFileExists($unitHeader, 'project unit force-include header should be generated');
+		$this->assertTrue($unitPackHeaders !== [], 'broad-equivalent project unit pack header should be generated');
 		$this->assertFileExists($buildFile, 'strict same-project build should emit build.ninja');
 		$this->assertContains('#include "model.hpp"', $this->read($unitHeader), 'project unit header should include same-project generated model header');
-		$this->assertContains('-include ../generated/__project_units.hpp', $this->read($buildFile), 'generated unit compile edges should force-include the project unit header');
+		$this->assertContains('-include ../generated/__project_units/', $this->read($buildFile), 'generated unit compile edges should force-include the broad-equivalent project unit pack header');
 	}
 
 	private function assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder(): void

@@ -399,6 +399,7 @@ Use each tool for the question it answers:
   `scpp explain-build files-transpiled`,
   `scpp explain-build files-reused`,
   `scpp explain-build outputs-rebuilt`,
+  `scpp explain-build project-units` for force-include and dependency-summary diagnostics,
   `scpp explain-build entrypoint`,
   `scpp explain-build final-output`,
   `scpp explain-build generated-files`,

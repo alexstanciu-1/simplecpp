@@ -302,12 +302,15 @@ The initial registry includes:
 - which source files were transpiled versus reused
 - why a transpile happened when a source file rebuilt
 - which outputs changed in the most recent saved build
+- which generated project unit force-include headers were assigned, including
+  unit counts, header size, and report-only per-source dependency summaries
 
 `scpp explain-build` also accepts focused view arguments so users do not need to scan the full summary when they only want one answer:
 
 - `scpp explain-build files-transpiled`
 - `scpp explain-build files-reused`
 - `scpp explain-build outputs-rebuilt`
+- `scpp explain-build project-units`
 - `scpp explain-build entrypoint`
 - `scpp explain-build final-output`
 - `scpp explain-build generated-files`
@@ -316,6 +319,19 @@ The initial registry includes:
 The default `scpp explain-build` summary should also print the direct Ninja target name for the current executable and warn that the built executable path, such as `.prism/build/main`, is not itself a valid Ninja target name.
 
 The saved `.prism/last_run.json` payload should include build explanation details gathered during `execute_build()` so the explanation command does not need to reverse-engineer the build after the fact.
+
+The `project-units` view reports the current project unit force-include fanout
+and per-source dependency summaries. These summaries may use STAN's stored
+dependency keys when available, but they remain diagnostic/build-planning
+metadata only: current v1 builds still use broad-equivalent project unit packs
+until the dependency model is complete enough to narrow safely.
+
+The same diagnostic payload also reports dry-run scoped-pack candidates for
+each generated PHS unit. Candidate rows include the scoped header list, the
+stable candidate hash/path that would be used by a future scoped pack, a
+candidate status, and any blocking reasons that kept the active compile edge on
+the broad-equivalent pack. Phase C0 does not write these candidate scoped pack
+headers and does not attach them to compile edges.
 - `examples`
 - `authoring`
 - `gotchas`
@@ -361,7 +377,11 @@ For v1, the dependency contract is:
 - shared-library packaging is a later build mode and is not the semantic meaning of `dependencies` in v1
 - dependency resolution remains active even when dependency compilation is not requested; reuse only suppresses recompilation of already-built dependency units
 
-`scpp build` generates internal project unit headers under `.prism/generated/` and force-includes `.prism/generated/__project_units.hpp` when compiling the project's generated and native C++ units. These headers are build artifacts only. PHP++ source must not name generated `.hpp` files.
+`scpp build` generates internal project unit headers under `.prism/generated/`.
+The compatibility broad header remains `.prism/generated/__project_units.hpp`.
+Current compile edges force-include deterministic broad-equivalent pack headers
+under `.prism/generated/__project_units/<hash>.hpp`. These headers are build
+artifacts only. PHP++ source must not name generated `.hpp` files.
 
 The project unit headers include:
 
@@ -369,7 +389,7 @@ The project unit headers include:
 - all generated headers for the same project
 - generated `__project.hpp` export headers from transitive Prism project dependencies
 
-When same-project generated headers contain inheritance relationships discovered from the generated class declarations, base-class headers are emitted before derived-class headers in `__project_units.hpp`.
+When same-project generated headers contain inheritance relationships discovered from the generated class declarations, base-class headers are emitted before derived-class headers in the project unit headers.
 
 Dependency project export headers are included before the consuming project's local generated headers so local headers may reference exported dependency types without source-level generated-header includes. The dependency export header uses the same discovered base-before-derived ordering for its generated headers.
 

@@ -706,7 +706,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|project-units|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -3001,6 +3001,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$generatedUnits[] = [
 				'project_root' => $contextProjectRoot,
 				'relative_php' => $relativePhp,
+				'generated_header' => $generatedHeader,
 				'generated_cpp' => $generatedCpp,
 				'object_path' => build_object_path($projectContext['build_dir'], build_project_scoped_relative_path($projectRoot, $contextProjectRoot, $relativePhp), $compiler['kind']),
 				'is_entrypoint' => $emitProgramEntry,
@@ -3083,6 +3084,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$nativeUnit['force_include_header'] = $projectUnitForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
 	}
 	unset($nativeUnit);
+	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits);
 
 	if ($usePch) {
 		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
@@ -3145,7 +3147,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$entrypointAbs,
 			$entryGeneratedUnit,
 			$startedAt,
-			$phpProfile
+			$phpProfile,
+			$projectUnitForceIncludeReport
 		);
 	}
 	if (!$options['compile_dependencies']) {
@@ -3227,7 +3230,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 					null,
 					$command,
-					$runtimeConfig
+					$runtimeConfig,
+					$projectUnitForceIncludeReport
 				),
 			]
 		);
@@ -3342,7 +3346,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 				$outputPath,
 				$command,
-				$runtimeConfig
+				$runtimeConfig,
+				$projectUnitForceIncludeReport
 			),
 		]
 	);
@@ -3384,7 +3389,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 			$outputPath,
 			$command,
-			$runtimeConfig
+			$runtimeConfig,
+			$projectUnitForceIncludeReport
 		),
 	];
 }
@@ -3566,6 +3572,7 @@ function validate_reused_runtime_artifact(
 	?array $entryGeneratedUnit,
 	float $startedAt,
 	string $phpProfile,
+	array $projectUnitForceIncludeReport = [],
 ): void {
 	$artifactPath = normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
 	$requiredArtifacts = [$artifactPath];
@@ -3625,7 +3632,9 @@ function validate_reused_runtime_artifact(
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['generated_cpp'] ?? '') : null,
 				is_array($entryGeneratedUnit) ? (string) ($entryGeneratedUnit['object_path'] ?? '') : null,
 				null,
-				[]
+				[],
+				[],
+				$projectUnitForceIncludeReport
 			),
 		]
 	);
@@ -3943,6 +3952,449 @@ function detect_rebuilt_outputs(array $before, array $after): array
 	return $rebuilt;
 }
 
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @param list<array{project_root:string,source_path:string,object_path:string,force_include_header:?string}> $nativeCppUnits
+ * @return array<string,mixed>
+ */
+function collect_project_unit_force_include_report(string $projectRoot, array $projectContexts, array $generatedUnits, array $nativeCppUnits): array
+{
+	$units = array_merge($generatedUnits, $nativeCppUnits);
+	$headerCounts = [];
+	foreach ($units as $unit) {
+		$header = is_string($unit['force_include_header'] ?? null) ? normalize_path($unit['force_include_header']) : '';
+		if ($header === '') {
+			continue;
+		}
+		$headerCounts[$header] = ($headerCounts[$header] ?? 0) + 1;
+	}
+	ksort($headerCounts, SORT_STRING);
+
+	$headers = [];
+	foreach ($headerCounts as $header => $unitCount) {
+		$contents = is_file($header) ? file_get_contents($header) : null;
+		$contents = is_string($contents) ? $contents : '';
+		$headers[] = [
+			'path' => normalize_config_path(relative_path($projectRoot, $header)),
+			'unit_count' => $unitCount,
+			'line_count' => $contents === '' ? 0 : substr_count($contents, PHP_EOL),
+			'byte_count' => strlen($contents),
+			'mode' => project_unit_force_include_header_mode($header),
+		];
+	}
+
+	$dependencySummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits);
+
+	return [
+		'total_units' => count($units),
+		'units_with_force_include' => array_sum($headerCounts),
+		'distinct_headers' => count($headers),
+		'headers' => $headers,
+		'dependency_summaries' => $dependencySummaries,
+	];
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @return list<array<string,mixed>>
+ */
+function collect_project_unit_dependency_summaries(string $projectRoot, array $projectContexts, array $generatedUnits): array
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
+	$stanStatePath = is_array($rootContext) && is_string($rootContext['cache_dir'] ?? null)
+		? normalize_path($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE)
+		: '';
+	$stanDependencyState = load_project_unit_dependency_state_from_stan_state($stanStatePath);
+	$hasStanDependencyState = $stanDependencyState !== null;
+	$stanDependencyKeys = is_array($stanDependencyState['dependency_keys'] ?? null) ? $stanDependencyState['dependency_keys'] : [];
+	$stanFileSummaries = is_array($stanDependencyState['file_summaries'] ?? null) ? $stanDependencyState['file_summaries'] : [];
+
+	$sourceKeyToHeader = [];
+	foreach ($generatedUnits as $unit) {
+		$sourcePath = normalize_path((string) ($unit['project_root'] ?? '') . '/' . (string) ($unit['relative_php'] ?? ''));
+		$generatedHeader = normalize_path((string) ($unit['generated_header'] ?? ''));
+		if ($sourcePath === '' || $generatedHeader === '') {
+			continue;
+		}
+		$sourceKeyToHeader[project_unit_stan_source_key($normalizedProjectRoot, $sourcePath)] = $generatedHeader;
+	}
+
+	$summaries = [];
+	foreach ($generatedUnits as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$relativePhp = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		$sourcePath = normalize_path($unitProjectRoot . '/' . $relativePhp);
+		$sourceKey = project_unit_stan_source_key($normalizedProjectRoot, $sourcePath);
+		$dependencyKeys = array_values(array_filter(
+			array_map(static fn ($value): string => trim((string) $value), is_array($stanDependencyKeys[$sourceKey] ?? null) ? $stanDependencyKeys[$sourceKey] : []),
+			static fn (string $value): bool => $value !== ''
+		));
+		sort($dependencyKeys, SORT_STRING);
+
+		$directLocalHeaders = [];
+		$directLocalHeaderPaths = [];
+		$unresolvedDependencyKeys = [];
+		foreach ($dependencyKeys as $dependencyKey) {
+			$header = $sourceKeyToHeader[$dependencyKey] ?? null;
+			if (is_string($header) && $header !== '') {
+				$directLocalHeaders[$header] = normalize_config_path(relative_path($normalizedProjectRoot, $header));
+				$directLocalHeaderPaths[$header] = $header;
+				continue;
+			}
+			$unresolvedDependencyKeys[] = $dependencyKey;
+		}
+
+		$dependencyExportHeaders = [];
+		$dependencyExportHeaderPaths = [];
+		foreach (collect_transitive_project_dependency_roots($unitProjectRoot, $projectContexts) as $dependencyRoot) {
+			$dependencyContext = $projectContexts[$dependencyRoot] ?? null;
+			if (!is_array($dependencyContext) || !is_string($dependencyContext['generated_dir'] ?? null)) {
+				continue;
+			}
+			$dependencyExportHeader = normalize_path($dependencyContext['generated_dir'] . '/__project.hpp');
+			$dependencyExportHeaderPaths[$dependencyExportHeader] = $dependencyExportHeader;
+			$dependencyExportHeaders[] = normalize_config_path(relative_path($normalizedProjectRoot, $dependencyExportHeader));
+		}
+		sort($dependencyExportHeaders, SORT_STRING);
+
+		$unitContext = $projectContexts[$unitProjectRoot] ?? null;
+		$unitGeneratedDir = is_array($unitContext) && is_string($unitContext['generated_dir'] ?? null)
+			? normalize_path($unitContext['generated_dir'])
+			: normalize_path(dirname((string) ($unit['generated_header'] ?? '')));
+		$forwardHeader = normalize_path($unitGeneratedDir . '/__project_fwd.hpp');
+		$ownHeader = normalize_path((string) ($unit['generated_header'] ?? ''));
+		$candidateHeaderPaths = build_project_unit_candidate_scoped_header_paths(
+			$dependencyExportHeaderPaths,
+			is_file($forwardHeader) ? $forwardHeader : null,
+			array_values($directLocalHeaderPaths),
+			$ownHeader
+		);
+		$candidateHeaders = array_map(
+			static fn (string $header): string => normalize_config_path(relative_path($normalizedProjectRoot, $header)),
+			$candidateHeaderPaths
+		);
+		$candidateHash = $candidateHeaderPaths === [] ? '' : project_unit_candidate_scoped_pack_hash($candidateHeaders);
+		$candidatePackHeader = $candidateHash === ''
+			? ''
+			: normalize_config_path(relative_path($normalizedProjectRoot, normalize_path($unitGeneratedDir . '/__project_units/scoped-' . $candidateHash . '.hpp')));
+		$sourceSummary = is_array($stanFileSummaries[$sourceKey] ?? null) ? $stanFileSummaries[$sourceKey] : null;
+		$candidate = classify_project_unit_scoped_candidate($hasStanDependencyState, $sourceSummary, $unresolvedDependencyKeys, $ownHeader);
+
+		$reasons = ['Phase C0 computes scoped pack candidates only; active compile edges still use broad-equivalent packs'];
+		if (!$hasStanDependencyState) {
+			$reasons[] = 'STAN dependency state unavailable for this build';
+		} elseif ($dependencyKeys === []) {
+			$reasons[] = 'no direct STAN dependency keys recorded';
+		} else {
+			foreach ($dependencyKeys as $dependencyKey) {
+				$reasons[] = 'STAN dependency key: ' . $dependencyKey;
+			}
+		}
+
+		$summaries[] = [
+			'source' => normalize_config_path(relative_path($unitProjectRoot, $sourcePath)),
+			'source_key' => $sourceKey,
+			'project_root' => normalize_config_path(relative_path($normalizedProjectRoot, $unitProjectRoot)),
+			'generated_header' => normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['generated_header'] ?? '')))),
+			'force_include_header' => normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['force_include_header'] ?? '')))),
+			'status' => 'fallback_broad',
+			'candidate_status' => $candidate['status'],
+			'candidate_scoped_headers' => $candidateHeaders,
+			'candidate_pack_hash' => $candidateHash,
+			'candidate_pack_header' => $candidatePackHeader,
+			'candidate_blocking_reasons' => $candidate['blocking_reasons'],
+			'direct_source_dependencies' => $dependencyKeys,
+			'direct_local_headers' => array_values($directLocalHeaders),
+			'dependency_export_headers' => array_values(array_unique($dependencyExportHeaders)),
+			'unresolved_dependency_keys' => $unresolvedDependencyKeys,
+			'reasons' => $reasons,
+		];
+	}
+
+	usort($summaries, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
+	return $summaries;
+}
+
+/**
+ * @return array{dependency_keys:array<string,list<string>>,file_summaries:array<string,array<string,mixed>>}|null
+ */
+function load_project_unit_dependency_state_from_stan_state(string $statePath): ?array
+{
+	if ($statePath === '' || !is_file($statePath)) {
+		return null;
+	}
+	$state = require $statePath;
+	if (!is_array($state) || !is_array($state['files'] ?? null)) {
+		return null;
+	}
+	$dependencyKeys = [];
+	$fileSummaries = [];
+	foreach ($state['files'] as $sourceKey => $fileState) {
+		if (!is_string($sourceKey) || !is_array($fileState)) {
+			continue;
+		}
+		$keys = [];
+		foreach (is_array($fileState['dependency_keys'] ?? null) ? $fileState['dependency_keys'] : [] as $dependencyKey) {
+			if (is_string($dependencyKey) && trim($dependencyKey) !== '') {
+				$keys[] = trim($dependencyKey);
+			}
+		}
+		sort($keys, SORT_STRING);
+		$dependencyKeys[$sourceKey] = array_values(array_unique($keys));
+		$cachePath = is_string($fileState['cache_path'] ?? null) ? normalize_path($fileState['cache_path']) : '';
+		if ($cachePath === '' || !is_file($cachePath)) {
+			continue;
+		}
+		$cacheState = require $cachePath;
+		if (is_array($cacheState) && is_array($cacheState['summary'] ?? null)) {
+			$fileSummaries[$sourceKey] = $cacheState['summary'];
+		}
+	}
+	return [
+		'dependency_keys' => $dependencyKeys,
+		'file_summaries' => $fileSummaries,
+	];
+}
+
+/**
+ * @param array<string,string> $dependencyExportHeaderPaths
+ * @param list<string> $directLocalHeaderPaths
+ * @return list<string>
+ */
+function build_project_unit_candidate_scoped_header_paths(array $dependencyExportHeaderPaths, ?string $forwardHeader, array $directLocalHeaderPaths, string $ownHeader): array
+{
+	$headers = array_values(array_unique(array_filter(
+		array_map(static fn (string $header): string => normalize_path($header), array_values($dependencyExportHeaderPaths)),
+		static fn (string $header): bool => $header !== ''
+	)));
+	if ($forwardHeader !== null && $forwardHeader !== '') {
+		$headers[] = normalize_path($forwardHeader);
+	}
+	$localHeaders = array_values(array_unique(array_filter(
+		array_map(static fn (string $header): string => normalize_path($header), array_merge($directLocalHeaderPaths, [$ownHeader])),
+		static fn (string $header): bool => $header !== ''
+	)));
+	foreach (sort_project_unit_include_headers($localHeaders) as $localHeader) {
+		$headers[] = $localHeader;
+	}
+	return array_values(array_unique($headers));
+}
+
+/** @param list<string> $candidateHeaders */
+function project_unit_candidate_scoped_pack_hash(array $candidateHeaders): string
+{
+	return substr(hash('sha256', implode("\n", array_merge(['v1-scoped-candidate'], $candidateHeaders))), 0, 16);
+}
+
+/**
+ * @param array<string,mixed>|null $sourceSummary
+ * @param list<string> $unresolvedDependencyKeys
+ * @return array{status:string,blocking_reasons:list<string>}
+ */
+function classify_project_unit_scoped_candidate(bool $hasStanDependencyState, ?array $sourceSummary, array $unresolvedDependencyKeys, string $ownHeader): array
+{
+	$blockingReasons = [];
+	if (!$hasStanDependencyState) {
+		$blockingReasons[] = 'STAN dependency state unavailable';
+	}
+	if ($sourceSummary === null) {
+		$blockingReasons[] = 'source summary unavailable';
+	}
+	if ($ownHeader === '' || !is_file($ownHeader)) {
+		$blockingReasons[] = 'own generated header unavailable';
+	}
+	foreach ($unresolvedDependencyKeys as $dependencyKey) {
+		$blockingReasons[] = 'unresolved dependency key `' . $dependencyKey . '`';
+	}
+	if ($sourceSummary !== null) {
+		$blockingReasons = array_merge($blockingReasons, collect_project_unit_scoped_candidate_summary_blockers($sourceSummary));
+	}
+	$blockingReasons = normalize_string_list($blockingReasons);
+	return [
+		'status' => $blockingReasons === [] ? 'candidate_scoped' : 'blocked_broad_fallback',
+		'blocking_reasons' => $blockingReasons,
+	];
+}
+
+/** @param array<string,mixed> $summary @return list<string> */
+function collect_project_unit_scoped_candidate_summary_blockers(array $summary): array
+{
+	$blockers = [];
+	if (normalize_string_list($summary['build_errors'] ?? []) !== []) {
+		$blockers[] = 'source summary contains build errors';
+	}
+	foreach (project_unit_summary_function_buckets($summary) as $function) {
+		if ((int) ($function['statement_count'] ?? 0) > 0) {
+			$blockers[] = 'function or executable statement body present';
+			break;
+		}
+	}
+	foreach (project_unit_summary_classes($summary) as $class) {
+		if (is_array($class['properties'] ?? null) && $class['properties'] !== []) {
+			$blockers[] = 'class properties require complete-type dependency modeling';
+		}
+		if (is_array($class['constants'] ?? null) && $class['constants'] !== []) {
+			$blockers[] = 'class constants require dependency modeling';
+		}
+		foreach (is_array($class['methods'] ?? null) ? $class['methods'] : [] as $method) {
+			if (is_array($method) && (int) ($method['statement_count'] ?? 0) > 0) {
+				$blockers[] = 'method body present';
+				break 2;
+			}
+		}
+	}
+	return normalize_string_list($blockers);
+}
+
+/** @param array<string,mixed> $summary @return list<array<string,mixed>> */
+function project_unit_summary_function_buckets(array $summary): array
+{
+	$functions = [];
+	foreach (is_array($summary['root_functions'] ?? null) ? $summary['root_functions'] : [] as $function) {
+		if (is_array($function)) {
+			$functions[] = $function;
+		}
+	}
+	foreach (is_array($summary['namespaces'] ?? null) ? $summary['namespaces'] : [] as $namespace) {
+		if (!is_array($namespace)) {
+			continue;
+		}
+		foreach (is_array($namespace['functions'] ?? null) ? $namespace['functions'] : [] as $function) {
+			if (is_array($function)) {
+				$functions[] = $function;
+			}
+		}
+	}
+	return $functions;
+}
+
+/** @param array<string,mixed> $summary @return list<array<string,mixed>> */
+function project_unit_summary_classes(array $summary): array
+{
+	$classes = [];
+	foreach (is_array($summary['root_classes'] ?? null) ? $summary['root_classes'] : [] as $class) {
+		if (is_array($class)) {
+			$classes[] = $class;
+		}
+	}
+	foreach (is_array($summary['namespaces'] ?? null) ? $summary['namespaces'] : [] as $namespace) {
+		if (!is_array($namespace)) {
+			continue;
+		}
+		foreach (is_array($namespace['classes'] ?? null) ? $namespace['classes'] : [] as $class) {
+			if (is_array($class)) {
+				$classes[] = $class;
+			}
+		}
+	}
+	return $classes;
+}
+
+function project_unit_stan_source_key(string $projectRoot, string $sourcePath): string
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$normalizedSourcePath = normalize_path($sourcePath);
+	if (path_is_inside($normalizedProjectRoot, $normalizedSourcePath)) {
+		return normalize_config_path(relative_path($normalizedProjectRoot, $normalizedSourcePath));
+	}
+	return '@external/' . sha1($normalizedSourcePath) . '/' . basename($normalizedSourcePath);
+}
+
+function project_unit_force_include_header_mode(string $headerPath): string
+{
+	$normalizedHeaderPath = normalize_path($headerPath);
+	if (basename($normalizedHeaderPath) === '__project_units.hpp') {
+		return 'broad';
+	}
+	if (basename(dirname($normalizedHeaderPath)) === '__project_units') {
+		return 'broad_equivalent_pack';
+	}
+	return 'scoped';
+}
+
+/** @return array<string,mixed> */
+function normalize_project_unit_force_include_report(array $report): array
+{
+	$headers = [];
+	foreach (is_array($report['headers'] ?? null) ? $report['headers'] : [] as $header) {
+		if (!is_array($header)) {
+			continue;
+		}
+		$path = trim((string) ($header['path'] ?? ''));
+		if ($path === '') {
+			continue;
+		}
+		$headers[] = [
+			'path' => $path,
+			'unit_count' => max(0, (int) ($header['unit_count'] ?? 0)),
+			'line_count' => max(0, (int) ($header['line_count'] ?? 0)),
+			'byte_count' => max(0, (int) ($header['byte_count'] ?? 0)),
+			'mode' => trim((string) ($header['mode'] ?? 'unknown')),
+		];
+	}
+	return [
+		'total_units' => max(0, (int) ($report['total_units'] ?? 0)),
+		'units_with_force_include' => max(0, (int) ($report['units_with_force_include'] ?? 0)),
+		'distinct_headers' => max(0, (int) ($report['distinct_headers'] ?? count($headers))),
+		'headers' => $headers,
+		'dependency_summaries' => normalize_project_unit_dependency_summaries(is_array($report['dependency_summaries'] ?? null) ? $report['dependency_summaries'] : []),
+	];
+}
+
+/**
+ * @param list<array<string,mixed>> $summaries
+ * @return list<array<string,mixed>>
+ */
+function normalize_project_unit_dependency_summaries(array $summaries): array
+{
+	$normalized = [];
+	foreach ($summaries as $summary) {
+		if (!is_array($summary)) {
+			continue;
+		}
+		$source = trim((string) ($summary['source'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$normalized[] = [
+			'source' => $source,
+			'source_key' => trim((string) ($summary['source_key'] ?? '')),
+			'project_root' => trim((string) ($summary['project_root'] ?? '')),
+			'generated_header' => trim((string) ($summary['generated_header'] ?? '')),
+			'force_include_header' => trim((string) ($summary['force_include_header'] ?? '')),
+			'status' => trim((string) ($summary['status'] ?? 'fallback_broad')),
+			'candidate_status' => trim((string) ($summary['candidate_status'] ?? 'blocked_broad_fallback')),
+			'candidate_scoped_headers' => normalize_string_list($summary['candidate_scoped_headers'] ?? []),
+			'candidate_pack_hash' => trim((string) ($summary['candidate_pack_hash'] ?? '')),
+			'candidate_pack_header' => trim((string) ($summary['candidate_pack_header'] ?? '')),
+			'candidate_blocking_reasons' => normalize_string_list($summary['candidate_blocking_reasons'] ?? []),
+			'direct_source_dependencies' => normalize_string_list($summary['direct_source_dependencies'] ?? []),
+			'direct_local_headers' => normalize_string_list($summary['direct_local_headers'] ?? []),
+			'dependency_export_headers' => normalize_string_list($summary['dependency_export_headers'] ?? []),
+			'unresolved_dependency_keys' => normalize_string_list($summary['unresolved_dependency_keys'] ?? []),
+			'reasons' => normalize_string_list($summary['reasons'] ?? []),
+		];
+	}
+	return $normalized;
+}
+
+/** @return list<string> */
+function normalize_string_list(mixed $values): array
+{
+	$strings = [];
+	foreach (is_array($values) ? $values : [] as $value) {
+		$string = trim((string) $value);
+		if ($string !== '') {
+			$strings[] = $string;
+		}
+	}
+	sort($strings, SORT_STRING);
+	return array_values(array_unique($strings));
+}
+
 /** @param array<string,mixed> $manifest */
 function write_export_manifest_file(string $path, array $manifest): void
 {
@@ -4058,20 +4510,46 @@ function write_project_unit_force_include_headers(array $projectContexts): array
 		if ($includeHeaders === []) {
 			continue;
 		}
-		$headerPath = normalize_path($projectContext['generated_dir'] . '/__project_units.hpp');
-		$lines = ['#pragma once', ''];
 		$forwardHeader = normalize_path($projectContext['generated_dir'] . '/__project_fwd.hpp');
-		if (is_file($forwardHeader)) {
-			$lines[] = '#include "__project_fwd.hpp"';
-		}
-		foreach ($includeHeaders as $includeHeader) {
-			$lines[] = '#include "' . normalize_config_path(relative_path(dirname($headerPath), $includeHeader)) . '"';
-		}
-		$lines[] = '';
-		write_text_file($headerPath, implode(PHP_EOL, $lines) . PHP_EOL);
-		$headers[normalize_path($projectRoot)] = $headerPath;
+		$legacyHeaderPath = normalize_path($projectContext['generated_dir'] . '/__project_units.hpp');
+		write_text_file($legacyHeaderPath, render_project_unit_force_include_header($legacyHeaderPath, $forwardHeader, $includeHeaders));
+
+		$packDir = normalize_path($projectContext['generated_dir'] . '/__project_units');
+		ensure_directory($packDir);
+		$packHash = project_unit_force_include_pack_hash($projectContext['generated_dir'], $forwardHeader, $includeHeaders);
+		$packHeaderPath = normalize_path($packDir . '/' . $packHash . '.hpp');
+		write_text_file($packHeaderPath, render_project_unit_force_include_header($packHeaderPath, $forwardHeader, $includeHeaders));
+		write_text_file(normalize_path($packDir . '/broad.hpp'), render_project_unit_force_include_header(normalize_path($packDir . '/broad.hpp'), $forwardHeader, $includeHeaders));
+		$headers[normalize_path($projectRoot)] = $packHeaderPath;
 	}
 	return $headers;
+}
+
+/** @param list<string> $includeHeaders */
+function render_project_unit_force_include_header(string $headerPath, string $forwardHeader, array $includeHeaders): string
+{
+	$lines = ['#pragma once', ''];
+	if (is_file($forwardHeader)) {
+		$lines[] = '#include "' . normalize_config_path(relative_path(dirname($headerPath), $forwardHeader)) . '"';
+	}
+	foreach ($includeHeaders as $includeHeader) {
+		$lines[] = '#include "' . normalize_config_path(relative_path(dirname($headerPath), $includeHeader)) . '"';
+	}
+	$lines[] = '';
+	return implode(PHP_EOL, $lines) . PHP_EOL;
+}
+
+/** @param list<string> $includeHeaders */
+function project_unit_force_include_pack_hash(string $generatedDir, string $forwardHeader, array $includeHeaders): string
+{
+	$parts = ['v1-broad-equivalent'];
+	if (is_file($forwardHeader)) {
+		$parts[] = normalize_config_path(relative_path($generatedDir, $forwardHeader));
+	}
+	foreach ($includeHeaders as $includeHeader) {
+		$parts[] = normalize_config_path(relative_path($generatedDir, $includeHeader));
+	}
+	return substr(hash('sha256', implode("\n", $parts)), 0, 16);
 }
 
 /** @param list<string> $headerPaths */
@@ -5092,6 +5570,7 @@ function build_explanation_details(
 	?string $outputPath = null,
 	array $ninjaCommand = [],
 	array $runtimeConfig = [],
+	array $projectUnitForceIncludeReport = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -5132,6 +5611,7 @@ function build_explanation_details(
 		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
 		'sources' => array_values($sourceRebuildReasons),
 		'rebuilt_outputs' => $rebuilt,
+		'project_unit_force_includes' => normalize_project_unit_force_include_report($projectUnitForceIncludeReport),
 	];
 }
 
@@ -5205,6 +5685,9 @@ function render_build_explanation_lines(array $details): array
 	$dependencies = is_array($details['dependencies'] ?? null) ? $details['dependencies'] : [];
 	$dependencyReasons = is_array($dependencies['reasons'] ?? null) ? $dependencies['reasons'] : [];
 	$lines[] = 'Dependencies: ' . (string) ($dependencies['action'] ?? 'unknown') . format_reason_suffix($dependencyReasons);
+	foreach (render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], false) as $line) {
+		$lines[] = $line;
+	}
 
 	$sources = is_array($details['sources'] ?? null) ? $details['sources'] : [];
 	$transpiled = [];
@@ -5248,6 +5731,98 @@ function render_build_explanation_lines(array $details): array
 		$lines[] = 'Outputs rebuilt: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $rebuiltOutputs));
 	}
 
+	return $lines;
+}
+
+/**
+ * @param array<string,mixed> $report
+ * @return list<string>
+ */
+function render_project_unit_force_include_lines(array $report, bool $includeDependencySummaries = false): array
+{
+	$totalUnits = (int) ($report['total_units'] ?? 0);
+	$unitsWithForceInclude = (int) ($report['units_with_force_include'] ?? 0);
+	$distinctHeaders = (int) ($report['distinct_headers'] ?? 0);
+	$headers = is_array($report['headers'] ?? null) ? $report['headers'] : [];
+	if ($totalUnits === 0 && $unitsWithForceInclude === 0 && $headers === []) {
+		return ['Project unit force-includes: none'];
+	}
+
+	$lines = [
+		'Project unit force-includes: ' . $unitsWithForceInclude . '/' . $totalUnits . ' unit(s), ' . $distinctHeaders . ' distinct header(s)',
+	];
+	foreach ($headers as $header) {
+		if (!is_array($header)) {
+			continue;
+		}
+		$path = trim((string) ($header['path'] ?? ''));
+		if ($path === '') {
+			continue;
+		}
+		$mode = trim((string) ($header['mode'] ?? 'unknown'));
+		$lines[] = '  - ' . $path . ': '
+			. (int) ($header['unit_count'] ?? 0) . ' unit(s), '
+			. (int) ($header['line_count'] ?? 0) . ' line(s), '
+			. (int) ($header['byte_count'] ?? 0) . ' byte(s), '
+			. ($mode !== '' ? $mode : 'unknown');
+	}
+	if ($includeDependencySummaries) {
+		$dependencySummaries = is_array($report['dependency_summaries'] ?? null) ? $report['dependency_summaries'] : [];
+		if ($dependencySummaries === []) {
+			$lines[] = 'Dependency summaries: none';
+		} else {
+			$lines[] = 'Dependency summaries:';
+			foreach ($dependencySummaries as $summary) {
+				if (!is_array($summary)) {
+					continue;
+				}
+				$source = trim((string) ($summary['source'] ?? ''));
+				if ($source === '') {
+					continue;
+				}
+				$status = trim((string) ($summary['status'] ?? 'fallback_broad'));
+				$lines[] = '  - ' . $source . ': ' . ($status !== '' ? $status : 'fallback_broad');
+				$candidateStatus = trim((string) ($summary['candidate_status'] ?? ''));
+				if ($candidateStatus !== '') {
+					$lines[] = '    candidate status: ' . $candidateStatus;
+				}
+				$candidatePackHeader = trim((string) ($summary['candidate_pack_header'] ?? ''));
+				if ($candidatePackHeader !== '') {
+					$lines[] = '    candidate pack: ' . $candidatePackHeader;
+				}
+				$candidateHeaders = is_array($summary['candidate_scoped_headers'] ?? null) ? $summary['candidate_scoped_headers'] : [];
+				if ($candidateHeaders !== []) {
+					$lines[] = '    candidate scoped headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $candidateHeaders));
+				}
+				$candidateBlockers = is_array($summary['candidate_blocking_reasons'] ?? null) ? $summary['candidate_blocking_reasons'] : [];
+				foreach ($candidateBlockers as $blocker) {
+					$message = trim((string) $blocker);
+					if ($message !== '') {
+						$lines[] = '    candidate blocker: ' . $message;
+					}
+				}
+				$generatedHeader = trim((string) ($summary['generated_header'] ?? ''));
+				if ($generatedHeader !== '') {
+					$lines[] = '    generated header: ' . $generatedHeader;
+				}
+				$directDependencies = is_array($summary['direct_source_dependencies'] ?? null) ? $summary['direct_source_dependencies'] : [];
+				$lines[] = '    direct source dependencies: ' . ($directDependencies === [] ? 'none' : implode(', ', array_map(static fn ($value): string => (string) $value, $directDependencies)));
+				$directHeaders = is_array($summary['direct_local_headers'] ?? null) ? $summary['direct_local_headers'] : [];
+				$lines[] = '    direct local headers: ' . ($directHeaders === [] ? 'none' : implode(', ', array_map(static fn ($value): string => (string) $value, $directHeaders)));
+				$unresolvedKeys = is_array($summary['unresolved_dependency_keys'] ?? null) ? $summary['unresolved_dependency_keys'] : [];
+				if ($unresolvedKeys !== []) {
+					$lines[] = '    unresolved dependency keys: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $unresolvedKeys));
+				}
+				$reasons = is_array($summary['reasons'] ?? null) ? $summary['reasons'] : [];
+				foreach ($reasons as $reason) {
+					$message = trim((string) $reason);
+					if ($message !== '') {
+						$lines[] = '    reason: ' . $message;
+					}
+				}
+			}
+		}
+	}
 	return $lines;
 }
 
@@ -5353,6 +5928,10 @@ function render_explain_build_view_lines(array $details, string $view): array
 		return $lines;
 	}
 
+	if ($view === 'project-units') {
+		return render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], true);
+	}
+
 	if ($view === 'entrypoint') {
 		$entrySource = (string) ($entrypoint['source_path'] ?? '');
 		if ($entrySource === '') {
@@ -5401,7 +5980,7 @@ function render_explain_build_view_lines(array $details, string $view): array
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, project-units, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }
