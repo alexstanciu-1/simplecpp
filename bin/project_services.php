@@ -2,6 +2,11 @@
 declare(strict_types=1);
 
 use Scpp\S2S\Stan\StanRunner;
+use Scpp\S2S\Stan\StanDependencyResolver;
+use Scpp\S2S\Stan\StanFilePass;
+use Scpp\S2S\Stan\StanSourceCatalogBuilder;
+use Scpp\S2S\Stan\StanStateStore;
+use Scpp\S2S\Stan\StanSymbolIndexBuilder;
 use Scpp\S2S\Transpiler;
 use Scpp\S2S\Analysis\DeclarationKindCatalogBuilder;
 use Scpp\S2S\Support\S2SException;
@@ -18,6 +23,7 @@ const SCPP_VERSION = '0.1.0-dev';
 const SCPP_PROJECT_CONFIG = 'prism.json';
 const SCPP_STATE_FILE = 's2s_state.php';
 const SCPP_STAN_STATE_FILE = 'stan_state.php';
+const SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE = 'project_unit_dependency_state.php';
 const SCPP_STAN_STATUS_FILE = 'stan_status.json';
 const SCPP_STAN_REPORT_FILE = 'stan_report.json';
 const SCPP_STAN_WORKER_FILE = 'stan_worker.json';
@@ -25,6 +31,7 @@ const SCPP_STAN_REQUEST_FILE = 'stan_request.json';
 const SCPP_STAN_WORKER_LOCK_FILE = 'stan_worker.lock';
 const SCPP_S2S_SIGNATURE_VERSION = 2;
 const SCPP_STAN_SIGNATURE_VERSION = 1;
+const SCPP_PROJECT_UNIT_DEPENDENCY_SIGNATURE_VERSION = 1;
 const SCPP_CANONICAL_SOURCE_EXTENSION = 'phs';
 const SCPP_COMPAT_SOURCE_EXTENSIONS = ['phs', 'php', 'jss'];
 
@@ -2877,6 +2884,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$transpiler->setDeclaredTypeKinds($declaredTypeKinds);
 	$stanFrontendClassifications = $options['disable_stan'] ? [] : load_stan_frontend_classifications_for_build($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE);
 	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides, $declaredTypeKinds);
+	$projectUnitDependencySignature = $options['disable_stan'] ? compute_project_unit_dependency_summary_signature($repoRoot, $phpProfile) : '';
 	$projectLibraryFlags = resolve_project_library_link_flags($projectRoot, $projectGraph, $compiler);
 	$generatedUnits = [];
 	$nativeCppUnits = [];
@@ -3073,6 +3081,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	unset($projectContext);
 	$markTiming('source_scan_complete');
+	if ($options['disable_stan']) {
+		write_project_unit_dependency_summary_state($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature);
+	}
 	validate_runtime_module_symbol_usage($projectRoot, $generatedUnits, $runtimeConfig);
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
 	$projectUnitForceIncludes = write_project_unit_force_include_headers($projectContexts);
@@ -4217,10 +4228,16 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 	$stanStatePath = is_array($rootContext) && is_string($rootContext['cache_dir'] ?? null)
 		? normalize_path($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE)
 		: '';
+	$buildDependencyStatePath = is_array($rootContext) && is_string($rootContext['cache_dir'] ?? null)
+		? normalize_path($rootContext['cache_dir'] . '/' . SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE)
+		: '';
 	$stanDependencyState = $useStanDependencyState ? load_project_unit_dependency_state_from_stan_state($stanStatePath) : null;
+	$buildDependencyState = $useStanDependencyState ? null : load_project_unit_dependency_state_from_build_state($buildDependencyStatePath);
 	$hasStanDependencyState = $stanDependencyState !== null;
 	$stanDependencyKeys = is_array($stanDependencyState['dependency_keys'] ?? null) ? $stanDependencyState['dependency_keys'] : [];
 	$stanFileSummaries = is_array($stanDependencyState['file_summaries'] ?? null) ? $stanDependencyState['file_summaries'] : [];
+	$buildDependencyKeys = is_array($buildDependencyState['dependency_keys'] ?? null) ? $buildDependencyState['dependency_keys'] : [];
+	$buildFileSummaries = is_array($buildDependencyState['file_summaries'] ?? null) ? $buildDependencyState['file_summaries'] : [];
 
 	$sourceKeyToHeader = [];
 	foreach ($generatedUnits as $unit) {
@@ -4238,8 +4255,10 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		$relativePhp = normalize_config_path((string) ($unit['relative_php'] ?? ''));
 		$sourcePath = normalize_path($unitProjectRoot . '/' . $relativePhp);
 		$sourceKey = project_unit_stan_source_key($normalizedProjectRoot, $sourcePath);
+		$dependencyKeySource = array_key_exists($sourceKey, $stanDependencyKeys) ? 'stan' : (array_key_exists($sourceKey, $buildDependencyKeys) ? 'build' : 'none');
+		$dependencyKeySourceMap = $dependencyKeySource === 'stan' ? $stanDependencyKeys : $buildDependencyKeys;
 		$dependencyKeys = array_values(array_filter(
-			array_map(static fn ($value): string => trim((string) $value), is_array($stanDependencyKeys[$sourceKey] ?? null) ? $stanDependencyKeys[$sourceKey] : []),
+			array_map(static fn ($value): string => trim((string) $value), is_array($dependencyKeySourceMap[$sourceKey] ?? null) ? $dependencyKeySourceMap[$sourceKey] : []),
 			static fn (string $value): bool => $value !== ''
 		));
 		sort($dependencyKeys, SORT_STRING);
@@ -4290,8 +4309,11 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		$candidatePackHeader = $candidateHash === ''
 			? ''
 			: normalize_config_path(relative_path($normalizedProjectRoot, normalize_path($unitGeneratedDir . '/__project_units/scoped-' . $candidateHash . '.hpp')));
-		$sourceSummary = is_array($stanFileSummaries[$sourceKey] ?? null) ? $stanFileSummaries[$sourceKey] : null;
-		$candidate = classify_project_unit_scoped_candidate($hasStanDependencyState, $sourceSummary, $unresolvedDependencyKeys, $ownHeader);
+		$sourceSummary = is_array($stanFileSummaries[$sourceKey] ?? null)
+			? $stanFileSummaries[$sourceKey]
+			: (is_array($buildFileSummaries[$sourceKey] ?? null) ? $buildFileSummaries[$sourceKey] : null);
+		$hasStanDependencyStateForSource = $hasStanDependencyState && array_key_exists($sourceKey, $stanDependencyKeys);
+		$candidate = classify_project_unit_scoped_candidate($hasStanDependencyStateForSource, $sourceSummary, $unresolvedDependencyKeys, $ownHeader);
 		$forceIncludeHeader = normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['force_include_header'] ?? ''))));
 		$status = $candidate['status'] === 'candidate_scoped' && $forceIncludeHeader !== '' && $forceIncludeHeader === $candidatePackHeader
 			? 'scoped'
@@ -4300,11 +4322,16 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		$reasons = ['Phase C1 activates scoped packs for candidate_scoped units; blocked units still use broad-equivalent packs'];
 		if (!$hasStanDependencyState) {
 			$reasons[] = 'STAN dependency state unavailable for this build';
+			if ($buildDependencyState !== null) {
+				$reasons[] = 'build-owned project unit dependency summary available';
+			}
+		} elseif (!$hasStanDependencyStateForSource) {
+			$reasons[] = 'STAN dependency state unavailable for this source';
 		} elseif ($dependencyKeys === []) {
 			$reasons[] = 'no direct STAN dependency keys recorded';
 		} else {
 			foreach ($dependencyKeys as $dependencyKey) {
-				$reasons[] = 'STAN dependency key: ' . $dependencyKey;
+				$reasons[] = strtoupper($dependencyKeySource) . ' dependency key: ' . $dependencyKey;
 			}
 		}
 
@@ -4336,6 +4363,22 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
  * @return array{dependency_keys:array<string,list<string>>,file_summaries:array<string,array<string,mixed>>}|null
  */
 function load_project_unit_dependency_state_from_stan_state(string $statePath): ?array
+{
+	return load_project_unit_dependency_state_from_state_file($statePath);
+}
+
+/**
+ * @return array{dependency_keys:array<string,list<string>>,file_summaries:array<string,array<string,mixed>>}|null
+ */
+function load_project_unit_dependency_state_from_build_state(string $statePath): ?array
+{
+	return load_project_unit_dependency_state_from_state_file($statePath);
+}
+
+/**
+ * @return array{dependency_keys:array<string,list<string>>,file_summaries:array<string,array<string,mixed>>}|null
+ */
+function load_project_unit_dependency_state_from_state_file(string $statePath): ?array
 {
 	if ($statePath === '' || !is_file($statePath)) {
 		return null;
@@ -4371,6 +4414,62 @@ function load_project_unit_dependency_state_from_stan_state(string $statePath): 
 		'dependency_keys' => $dependencyKeys,
 		'file_summaries' => $fileSummaries,
 	];
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param array<string,string> $sourceOverrides
+ */
+function write_project_unit_dependency_summary_state(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature): void
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
+	if (!is_array($rootContext) || !is_string($rootContext['cache_dir'] ?? null)) {
+		return;
+	}
+	$statePath = normalize_path($rootContext['cache_dir'] . '/' . SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE);
+	$cacheDir = normalize_path($rootContext['cache_dir'] . '/project_units/files');
+	ensure_directory($cacheDir);
+
+	$sourceUnits = (new StanSourceCatalogBuilder())->build($normalizedProjectRoot, $projectContexts, [], $sourceOverrides);
+	$stateStore = new StanStateStore();
+	$previousState = $stateStore->load($statePath);
+	$filePassResult = (new StanFilePass())->analyze(
+		$normalizedProjectRoot,
+		$statePath,
+		$cacheDir,
+		$summarySignature,
+		$previousState,
+		$sourceUnits,
+		false
+	);
+	$fileSummaries = is_array($filePassResult['file_summaries'] ?? null) ? $filePassResult['file_summaries'] : [];
+	$symbolIndex = (new StanSymbolIndexBuilder())->build($fileSummaries);
+	$dependencyKeys = (new StanDependencyResolver())->collectFileDependencyKeys($fileSummaries, $symbolIndex, $normalizedProjectRoot);
+	$filesState = is_array($filePassResult['files_state'] ?? null) ? $filePassResult['files_state'] : [];
+	foreach ($filesState as $sourceKey => $fileState) {
+		if (!is_array($fileState)) {
+			continue;
+		}
+		$filesState[$sourceKey]['dependency_keys'] = $dependencyKeys[$sourceKey] ?? [];
+	}
+
+	$sourceFingerprintParts = [];
+	foreach ($sourceUnits as $sourceUnit) {
+		$sourceFingerprintParts[] = normalize_path($sourceUnit->path) . ':' . (string) ($sourceUnit->meta['content_hash'] ?? '');
+	}
+	sort($sourceFingerprintParts, SORT_STRING);
+	$stateStore->save($statePath, [
+		'version' => 1,
+		'project_root' => $normalizedProjectRoot,
+		'summary_signature' => $summarySignature,
+		'source_fingerprint' => hash('sha256', implode("\n", $sourceFingerprintParts)),
+		'source_count' => count($sourceUnits),
+		'analyzed_count' => max(0, (int) ($filePassResult['analyzed_count'] ?? 0)),
+		'reused_count' => max(0, (int) ($filePassResult['reused_count'] ?? 0)),
+		'updated_at' => time(),
+		'files' => $filesState,
+	]);
 }
 
 /**
@@ -7430,6 +7529,43 @@ function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 
 		$repoRoot . '/generators/php/src/Lowering/TypeMapper.php',
 		$repoRoot . '/generators/php/specs/php_runtime_symbols_legacy.json',
 		$repoRoot . '/generators/php/specs/php_runtime_symbols_strict.json',
+	];
+
+	foreach ($files as $file) {
+		if (!is_file($file)) {
+			$parts[] = 'missing:' . normalize_config_path($file);
+			continue;
+		}
+		$hash = hash_file('sha256', $file);
+		$parts[] = normalize_config_path($file) . ':' . ($hash === false ? 'hash-failed' : $hash);
+	}
+
+	return hash('sha256', implode("\n", $parts));
+}
+
+function compute_project_unit_dependency_summary_signature(string $repoRoot, string $phpProfile = 'legacy'): string
+{
+	$parts = [
+		'version:' . SCPP_PROJECT_UNIT_DEPENDENCY_SIGNATURE_VERSION,
+		'php_profile:' . strtolower(trim($phpProfile)),
+	];
+
+	$files = [
+		$repoRoot . '/bin/project_services.php',
+		$repoRoot . '/generators/php/src/Analysis/FrontEndSymbolExtractor.php',
+		$repoRoot . '/generators/php/src/Builder/IrBuilder.php',
+		$repoRoot . '/generators/php/src/Jss/JssFileSummaryBuilder.php',
+		$repoRoot . '/generators/php/src/Jss/JssNode.php',
+		$repoRoot . '/generators/php/src/Jss/JssParser.php',
+		$repoRoot . '/generators/php/src/Jss/JssSummaryExtractor.php',
+		$repoRoot . '/generators/php/src/Jss/JssTokenizer.php',
+		$repoRoot . '/generators/php/src/Loader/InputLoader.php',
+		$repoRoot . '/generators/php/src/Stan/StanDependencyResolver.php',
+		$repoRoot . '/generators/php/src/Stan/StanPathMapper.php',
+		$repoRoot . '/generators/php/src/Stan/StanSourceCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/Stan/StanSourceMetaBuilder.php',
+		$repoRoot . '/generators/php/src/Stan/StanSourceUnit.php',
+		$repoRoot . '/generators/php/src/Stan/StanSymbolIndexBuilder.php',
 	];
 
 	foreach ($files as $file) {

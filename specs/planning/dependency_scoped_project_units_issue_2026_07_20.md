@@ -274,6 +274,10 @@ Status legend:
 - [x] `PUH-013` Add stale scoped-pack cleanup and manifesting so obsolete
   `.prism/generated/__project_units/scoped-*.hpp` and broad hash-pack files do
   not accumulate after dependency sets change.
+- [x] `PUH-020` Split the dependency summary loader from STAN state for the
+  no-STAN build path. `--no-stan` now writes a build-owned lightweight
+  project-unit dependency state from frontend summaries, keeps scoped activation
+  broad-safe, and reports direct dependency evidence when available.
 
 ### Ready
 
@@ -293,10 +297,6 @@ Status legend:
 
 ### Planned Dependency-Model Work
 
-- [ ] `PUH-020` Split the dependency summary loader from STAN state so the build
-  can consume cached frontend/source summaries without requiring a full STAN
-  pre-build run. `--no-stan` should still build safely; precision may remain
-  broad until local summaries are known fresh enough.
 - [ ] `PUH-021` Store/reuse a build-owned per-source dependency summary artifact
   with direct source keys, local header paths, export header paths, candidate
   status, blockers, and the summary freshness inputs that produced it.

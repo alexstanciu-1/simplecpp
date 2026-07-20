@@ -322,10 +322,14 @@ The saved `.prism/last_run.json` payload should include build explanation detail
 
 The `project-units` view reports the current project unit force-include fanout
 and per-source dependency summaries. These summaries may use STAN's stored
-dependency keys when available. Current v1 builds activate scoped project unit
-packs only for generated PHS units whose dependency summaries are classified as
-`candidate_scoped`; blocked generated units, no-STAN builds, and native C++
-units keep using broad-equivalent project unit packs.
+dependency keys when available. When `--no-stan` is used, the build writes a
+build-owned lightweight project-unit dependency state from frontend/source
+summaries so diagnostics can still show direct dependency evidence; scoped
+activation remains STAN-gated, so no-STAN generated units keep using
+broad-equivalent project unit packs. Current v1 builds activate scoped project
+unit packs only for generated PHS units whose dependency summaries are
+classified as `candidate_scoped`; blocked generated units, no-STAN builds, and
+native C++ units keep using broad-equivalent project unit packs.
 
 The same diagnostic payload reports the scoped-pack candidate for each
 generated PHS unit. Candidate rows include the scoped header list, the stable

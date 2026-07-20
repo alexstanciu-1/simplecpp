@@ -253,8 +253,9 @@ final class ScppExplainBuildTest
 			$this->assertSame(3, $noStanProjectUnits['candidate_blocked_units'] ?? null, 'warm --no-stan build should count all generated candidates as blocked');
 			$this->assertSame([
 				['reason' => 'STAN dependency state unavailable', 'unit_count' => 3],
-				['reason' => 'source summary unavailable', 'unit_count' => 3],
-			], $noStanProjectUnits['candidate_blocker_counts'] ?? null, 'warm --no-stan build should count missing-STAN blocker reasons');
+				['reason' => 'function or executable statement body present', 'unit_count' => 1],
+			], $noStanProjectUnits['candidate_blocker_counts'] ?? null, 'warm --no-stan build should use build-owned source summaries while keeping STAN-gated scoped activation blocked');
+			$this->assertFileExists($project . '/.prism/cache/project_unit_dependency_state.php', 'warm --no-stan build should write a build-owned project unit dependency state');
 			$noStanBuildHeaders = is_array($noStanProjectUnits['headers'] ?? null) ? $noStanProjectUnits['headers'] : [];
 			$noStanBuildHeader = $noStanBuildHeaders[0] ?? null;
 			if (!is_array($noStanBuildHeader)) {
@@ -276,6 +277,10 @@ final class ScppExplainBuildTest
 			$this->assertSame('fallback_broad', $noStanChildSummary['status'] ?? null, 'warm --no-stan child unit should keep broad fallback active status');
 			$this->assertSame('blocked_broad_fallback', $noStanChildSummary['candidate_status'] ?? null, 'warm --no-stan child unit should block scoped activation');
 			$this->assertContains('STAN dependency state unavailable', implode("\n", is_array($noStanChildSummary['candidate_blocking_reasons'] ?? null) ? $noStanChildSummary['candidate_blocking_reasons'] : []), 'warm --no-stan child unit should explain that STAN data is intentionally unavailable');
+			$this->assertNotContains('source summary unavailable', implode("\n", is_array($noStanChildSummary['candidate_blocking_reasons'] ?? null) ? $noStanChildSummary['candidate_blocking_reasons'] : []), 'warm --no-stan child unit should use the build-owned source summary');
+			$this->assertSame(['base.phs'], $noStanChildSummary['direct_source_dependencies'] ?? null, 'warm --no-stan child unit should still report direct dependencies from build-owned summaries');
+			$this->assertSame(['.prism/generated/base.hpp'], $noStanChildSummary['direct_local_headers'] ?? null, 'warm --no-stan child unit should still map direct dependencies to generated headers');
+			$this->assertContains('build-owned project unit dependency summary available', implode("\n", is_array($noStanChildSummary['reasons'] ?? null) ? $noStanChildSummary['reasons'] : []), 'warm --no-stan child summary should identify the build-owned summary source');
 
 			$noStanProject = $this->root . '/no_stan_report';
 			$this->mkdir($noStanProject . '/.prism/generated');
@@ -399,6 +404,13 @@ final class ScppExplainBuildTest
 	{
 		if (!str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' missing `' . $needle . '`');
+		}
+	}
+
+	private function assertNotContains(string $needle, string $haystack, string $message): void
+	{
+		if (str_contains($haystack, $needle)) {
+			throw new RuntimeException($message . ' contained `' . $needle . '`');
 		}
 	}
 
