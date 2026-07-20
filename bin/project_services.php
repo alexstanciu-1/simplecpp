@@ -5043,6 +5043,10 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary, 
 	if (normalize_string_list($summary['build_errors'] ?? []) !== []) {
 		$blockers[] = 'source summary contains build errors';
 	}
+	$topLevelConstants = project_unit_summary_top_level_constants($summary);
+	if ($topLevelConstants !== [] && !project_unit_constant_rows_are_scoped_candidate_safe($topLevelConstants, $dependencyCategories, 'constant_value')) {
+		$blockers[] = 'top-level constants contain unmodeled dependency evidence';
+	}
 	foreach (project_unit_summary_function_buckets($summary) as $function) {
 		if ((int) ($function['statement_count'] ?? 0) > 0) {
 			if ((bool) ($function['is_synthetic_entrypoint'] ?? false)) {
@@ -5072,12 +5076,22 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary, 
 /** @param array<string,mixed> $class @param list<array<string,mixed>> $dependencyCategories */
 function project_unit_class_constants_are_scoped_candidate_safe(array $class, array $dependencyCategories): bool
 {
-	foreach (is_array($class['constants'] ?? null) ? $class['constants'] : [] as $constant) {
+	return project_unit_constant_rows_are_scoped_candidate_safe(
+		is_array($class['constants'] ?? null) ? $class['constants'] : [],
+		$dependencyCategories,
+		'class_constant_value'
+	);
+}
+
+/** @param list<array<string,mixed>> $constants @param list<array<string,mixed>> $dependencyCategories */
+function project_unit_constant_rows_are_scoped_candidate_safe(array $constants, array $dependencyCategories, string $dependencyKind): bool
+{
+	foreach ($constants as $constant) {
 		if (!is_array($constant)) {
 			return false;
 		}
 		$descriptor = is_array($constant['value_descriptor'] ?? null) ? $constant['value_descriptor'] : null;
-		if ($descriptor === null || !project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor, $dependencyCategories)) {
+		if ($descriptor === null || !project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor, $dependencyCategories, $dependencyKind)) {
 			return false;
 		}
 	}
@@ -5085,32 +5099,32 @@ function project_unit_class_constants_are_scoped_candidate_safe(array $class, ar
 }
 
 /** @param array<string,mixed> $descriptor @param list<array<string,mixed>> $dependencyCategories */
-function project_unit_constant_descriptor_is_scoped_candidate_safe(array $descriptor, array $dependencyCategories): bool
+function project_unit_constant_descriptor_is_scoped_candidate_safe(array $descriptor, array $dependencyCategories, string $dependencyKind): bool
 {
 	$kind = trim((string) ($descriptor['kind'] ?? 'unknown'));
 	if ($kind === 'type') {
 		return project_unit_constant_descriptor_type_is_scalar_like((string) ($descriptor['type'] ?? ''));
 	}
 	if ($kind === 'class_constant') {
-		return project_unit_class_constant_dependency_is_resolved($descriptor, $dependencyCategories);
+		return project_unit_class_constant_dependency_is_resolved($descriptor, $dependencyCategories, $dependencyKind);
 	}
 	if ($kind === 'arithmetic') {
 		return is_array($descriptor['left'] ?? null)
 			&& is_array($descriptor['right'] ?? null)
-			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['left'], $dependencyCategories)
-			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['right'], $dependencyCategories);
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['left'], $dependencyCategories, $dependencyKind)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['right'], $dependencyCategories, $dependencyKind);
 	}
 	if ($kind === 'conditional') {
 		return is_array($descriptor['if_true'] ?? null)
 			&& is_array($descriptor['if_false'] ?? null)
-			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['if_true'], $dependencyCategories)
-			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['if_false'], $dependencyCategories);
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['if_true'], $dependencyCategories, $dependencyKind)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['if_false'], $dependencyCategories, $dependencyKind);
 	}
 	if ($kind === 'string_concat') {
 		return is_array($descriptor['left'] ?? null)
 			&& is_array($descriptor['right'] ?? null)
-			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['left'], $dependencyCategories)
-			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['right'], $dependencyCategories);
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['left'], $dependencyCategories, $dependencyKind)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['right'], $dependencyCategories, $dependencyKind);
 	}
 	return false;
 }
@@ -5122,14 +5136,14 @@ function project_unit_constant_descriptor_type_is_scalar_like(string $type): boo
 }
 
 /** @param array<string,mixed> $descriptor @param list<array<string,mixed>> $dependencyCategories */
-function project_unit_class_constant_dependency_is_resolved(array $descriptor, array $dependencyCategories): bool
+function project_unit_class_constant_dependency_is_resolved(array $descriptor, array $dependencyCategories, string $dependencyKind): bool
 {
 	$className = trim((string) ($descriptor['root_class'] ?? ''), "\\ \t\n\r\0\x0B");
 	if ($className === '' || in_array(strtolower($className), ['parent', 'self', 'static'], true)) {
 		return false;
 	}
 	foreach (normalize_project_unit_dependency_category_rows($dependencyCategories) as $row) {
-		if (($row['kind'] ?? '') !== 'class_constant_value') {
+		if (($row['kind'] ?? '') !== $dependencyKind) {
 			continue;
 		}
 		$target = trim((string) ($row['target'] ?? ''), "\\ \t\n\r\0\x0B");
@@ -5203,6 +5217,28 @@ function project_unit_summary_function_owner(array $function): string
 	}
 	$namespace = trim((string) ($function['namespace'] ?? ''));
 	return $namespace === '' ? $name : $namespace . '\\' . $name;
+}
+
+/** @param array<string,mixed> $summary @return list<array<string,mixed>> */
+function project_unit_summary_top_level_constants(array $summary): array
+{
+	$constants = [];
+	foreach (is_array($summary['root_constants'] ?? null) ? $summary['root_constants'] : [] as $constant) {
+		if (is_array($constant)) {
+			$constants[] = $constant;
+		}
+	}
+	foreach (is_array($summary['namespaces'] ?? null) ? $summary['namespaces'] : [] as $namespace) {
+		if (!is_array($namespace)) {
+			continue;
+		}
+		foreach (is_array($namespace['constants'] ?? null) ? $namespace['constants'] : [] as $constant) {
+			if (is_array($constant)) {
+				$constants[] = $constant;
+			}
+		}
+	}
+	return $constants;
 }
 
 /** @param array<string,mixed> $summary @return list<array<string,mixed>> */

@@ -28,6 +28,7 @@ final class ScppProjectUnitScopedPacksTest
 			$this->assertNestedNamespaceInheritanceScopedPacks();
 			$this->assertDependencyScopedPacksUseExportHeaders();
 			$this->assertCompactLayoutScopedPacksIncludeValueDependencies();
+			$this->assertTopLevelConstantScopedPackSafety();
 			echo "PASS: scpp project unit scoped packs\n";
 			return 0;
 		} finally {
@@ -331,6 +332,53 @@ PHS);
 		$this->assertOrderBefore('#include "../kind.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include enum before record');
 		$this->assertOrderBefore('#include "../span.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include child span before record');
 		$this->assertOrderBefore('#include "../payload.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include union before record');
+	}
+
+	private function assertTopLevelConstantScopedPackSafety(): void
+	{
+		$project = $this->root . '/top_level_constant_units';
+		$this->writeProject($project, [], "echo \"constants\\n\";\n", 'strict');
+		$this->write($project . '/kind.phs', <<<'PHS'
+class Kind {
+    public const LABEL = "item";
+}
+PHS);
+		$this->write($project . '/safe_label.phs', <<<'PHS'
+const SAFE_LABEL = "safe-" . Kind::LABEL;
+PHS);
+		$this->write($project . '/array_labels.phs', <<<'PHS'
+const LABEL_FLAGS = [
+    "dynamic" => true,
+];
+PHS);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(true, $build['ok'], 'top-level constant scoped-pack project should build');
+
+		$projectUnits = $this->loadProjectUnits($project);
+		$this->assertSame(4, $projectUnits['total_units'] ?? null, 'top-level constant project should report four generated units');
+		$this->assertSame(2, $projectUnits['active_scoped_units'] ?? null, 'safe top-level constant and class-constant provider should activate scoped packs');
+		$this->assertSame(2, $projectUnits['active_broad_fallback_units'] ?? null, 'executable and unmodeled top-level constant units should stay broad');
+		$this->assertSame(2, $projectUnits['candidate_scoped_units'] ?? null, 'top-level constant project should report two scoped candidates');
+		$this->assertSame(2, $projectUnits['candidate_blocked_units'] ?? null, 'top-level constant project should report two blocked candidates');
+
+		$safeSummary = $this->findSummary($projectUnits, 'safe_label.phs', '');
+		$this->assertSame('scoped', $safeSummary['status'] ?? null, 'safe top-level class-constant reference should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $safeSummary['candidate_status'] ?? null, 'safe top-level constant should be a scoped candidate');
+		$this->assertSame(['kind.phs'], $safeSummary['direct_source_dependencies'] ?? null, 'top-level constant values should report class-constant source dependencies');
+		$this->assertSame(['.prism/generated/kind.hpp'], $safeSummary['direct_local_headers'] ?? null, 'top-level constant values should map class-constant dependencies to generated headers');
+		$this->assertSame(['kind.phs'], $this->dependencyCategorySources($safeSummary, 'constant value'), 'top-level constants should categorize direct dependencies');
+		$this->assertSame(['SAFE_LABEL'], $this->dependencyCategoryOwners($safeSummary, 'constant value'), 'top-level constant dependency rows should preserve the constant owner');
+		$safePackContents = $this->read($project . '/' . (string) ($safeSummary['candidate_pack_header'] ?? ''));
+		$this->assertOrderBefore('#include "../kind.hpp"', '#include "../safe_label.hpp"', $safePackContents, 'top-level constant scoped pack should include referenced class before owning constant header');
+
+		$arraySummary = $this->findSummary($projectUnits, 'array_labels.phs', '');
+		$this->assertSame('fallback_broad', $arraySummary['status'] ?? null, 'unmodeled top-level constant initializer should stay on broad fallback');
+		$this->assertSame('blocked_broad_fallback', $arraySummary['candidate_status'] ?? null, 'unmodeled top-level constant initializer should block scoped candidacy');
+		$this->assertContains('top-level constants contain unmodeled dependency evidence', implode("\n", is_array($arraySummary['candidate_blocking_reasons'] ?? null) ? $arraySummary['candidate_blocking_reasons'] : []), 'unmodeled top-level constant initializer should report a blocker');
 	}
 
 	/** @param list<string> $dependencies */

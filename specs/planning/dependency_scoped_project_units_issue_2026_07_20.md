@@ -365,6 +365,10 @@ Status legend:
   coverage proving direct value-layout dependencies, transitive union payload
   dependencies, and base generated-header ordering are preserved in scoped
   packs.
+- [x] `PUH-025g` Add a conservative top-level constant scoped-pack gate.
+  Top-level constants now share the safe constant-initializer rule used by class
+  constants, while unmodeled initializer evidence such as arrays remains on
+  broad fallback with an explicit blocker.
 - [x] `PUH-034` Update user-facing build diagnostic docs for the current
   project-unit diagnostics surface. The strict quick-learn, getting-started
   guide, onboarding workflow, and project-build spec now mention rebuild

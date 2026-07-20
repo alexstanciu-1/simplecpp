@@ -389,7 +389,10 @@ backing types do not add generated-header dependencies. Files with class
 constants may activate scoped packs only when their initializer descriptors are
 simple scalar expressions, recursively simple arithmetic/conditional/string-concat
 expressions, or resolved class-constant references whose generated headers are
-included before the owning header.
+included before the owning header. Files with top-level constants use the same
+initializer safety rule under `constant_value` dependency rows; unmodeled
+initializer evidence, such as array literals or calls, keeps the unit on broad
+fallback.
 Top-level helper function bodies may activate scoped packs only when their body
 evidence is limited to resolved direct function/static calls and resolved type
 references. Executable bodies, method bodies, property/static access, unresolved
