@@ -336,6 +336,11 @@ Status legend:
   direct source keys, direct/scoped local headers, dependency export headers,
   candidate status/blockers, dependency categories, and per-source freshness
   inputs, while saved project-unit reports carry a compact artifact pointer.
+- [x] `PUH-025b` Extend complete-type dependency evidence to class constant
+  value expressions. Constant initializers that name another generated class now
+  produce direct source/header evidence and a `class constant value` category,
+  while class-constant files remain on broad fallback until scoped activation is
+  validated for that header shape.
 
 ### Ready
 
@@ -345,10 +350,10 @@ Status legend:
   the motivating support-file edit.
 ### Planned Dependency-Model Work
 
-- [ ] `PUH-025` Model complete-type requirements for class properties,
-  constants, value-layout structs/unions, enum backing/type references, and
-  generated declarations whose headers require another generated header to be
-  complete.
+- [ ] `PUH-025` Finish complete-type activation requirements for class
+  properties, class constants, value-layout structs/unions, enum backing/type
+  references, and generated declarations whose headers require another
+  generated header to be complete.
 - [ ] `PUH-027` Decide the native C++ unit policy. Initial likely rule: native
   C++ stays on broad fallback unless a project config or manifest explicitly
   declares a narrower generated-header dependency set.

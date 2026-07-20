@@ -50,10 +50,24 @@ namespace App\Schema;
 class Item {
 }
 PHS);
+		$this->write($project . '/schema/kind.phs', <<<'PHS'
+namespace App\Schema;
+
+class Kind {
+    public const ITEM = 7;
+}
+PHS);
 		$this->write($project . '/orm/child_node.phs', <<<'PHS'
 namespace App\Orm;
 
 class ChildNode extends \App\Schema\BaseNode {
+}
+PHS);
+		$this->write($project . '/config/defaults.phs', <<<'PHS'
+namespace App\Config;
+
+class Defaults {
+    public const ITEM_KIND = \App\Schema\Kind::ITEM;
 }
 PHS);
 		$this->write($project . '/contracts/sink.phs', <<<'PHS'
@@ -90,11 +104,11 @@ PHS);
 		$this->assertSame(true, $build['ok'], 'nested namespace scoped-pack project should build');
 
 		$projectUnits = $this->loadProjectUnits($project);
-		$this->assertSame(7, $projectUnits['total_units'] ?? null, 'nested project should report seven generated units');
+		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'nested project should report nine generated units');
 		$this->assertSame(5, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only, signature-only, and safe helper units');
-		$this->assertSame(2, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep the executable and property-layout unit broad');
+		$this->assertSame(4, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep the executable, constants, and property-layout unit broad');
 		$this->assertSame(5, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report five scoped candidates');
-		$this->assertSame(2, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report two blocked candidates');
+		$this->assertSame(4, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report four blocked candidates');
 
 		$childSummary = $this->findSummary($projectUnits, 'orm/child_node.phs', '');
 		$this->assertSame('scoped', $childSummary['status'] ?? null, 'inheritance-only child should compile with a scoped pack');
@@ -135,6 +149,14 @@ PHS);
 		$this->assertSame(['.prism/generated/schema/base_node.hpp', '.prism/generated/schema/item.hpp'], $holderSummary['direct_local_headers'] ?? null, 'property types should map direct type dependencies to generated headers');
 		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $this->dependencyCategorySources($holderSummary, 'property layout'), 'property types should categorize direct dependencies as layout-sensitive');
 		$this->assertContains('class properties require complete-type dependency modeling', implode("\n", $holderSummary['candidate_blocking_reasons'] ?? []), 'property-layout blocker should be reported');
+
+		$defaultsSummary = $this->findSummary($projectUnits, 'config/defaults.phs', '');
+		$this->assertSame('fallback_broad', $defaultsSummary['status'] ?? null, 'class-constant dependency file should stay on broad fallback');
+		$this->assertSame('blocked_broad_fallback', $defaultsSummary['candidate_status'] ?? null, 'class-constant dependency file should stay blocked from scoped activation');
+		$this->assertSame(['schema/kind.phs'], $defaultsSummary['direct_source_dependencies'] ?? null, 'class constant values should report direct source dependencies');
+		$this->assertSame(['.prism/generated/schema/kind.hpp'], $defaultsSummary['direct_local_headers'] ?? null, 'class constant values should map direct dependencies to generated headers');
+		$this->assertSame(['schema/kind.phs'], $this->dependencyCategorySources($defaultsSummary, 'class constant value'), 'class constant values should categorize direct dependencies');
+		$this->assertContains('class constants require complete-type activation validation', implode("\n", $defaultsSummary['candidate_blocking_reasons'] ?? []), 'class-constant blocker should be reported');
 	}
 
 	private function assertDependencyScopedPacksUseExportHeaders(): void

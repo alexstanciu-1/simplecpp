@@ -4696,6 +4696,12 @@ function project_unit_dependency_category_for_kind(string $kind): string
 	if ($kind === 'property_type') {
 		return 'property layout';
 	}
+	if ($kind === 'class_constant_value') {
+		return 'class constant value';
+	}
+	if ($kind === 'constant_value') {
+		return 'constant value';
+	}
 	if ($kind === 'function_body_call' || $kind === 'function_body_type') {
 		return 'function body';
 	}
@@ -5045,7 +5051,7 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary, 
 			$blockers[] = 'class properties require complete-type dependency modeling';
 		}
 		if (is_array($class['constants'] ?? null) && $class['constants'] !== []) {
-			$blockers[] = 'class constants require dependency modeling';
+			$blockers[] = 'class constants require complete-type activation validation';
 		}
 		foreach (is_array($class['methods'] ?? null) ? $class['methods'] : [] as $method) {
 			if (is_array($method) && (int) ($method['statement_count'] ?? 0) > 0) {

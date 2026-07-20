@@ -338,6 +338,7 @@ final class FrontEndSymbolExtractor
 			'line' => $constant->line,
 			'is_lib_export' => $constant->isLibExport,
 			'visibility' => $constant->visibility,
+			'value_descriptor' => $this->describeExpression($constant->value, $constant->line),
 		];
 	}
 
@@ -352,6 +353,12 @@ final class FrontEndSymbolExtractor
 			}
 			$this->appendCallableTypeDependencies($dependencies, 'function', $function->params, $function->returnType, $function->name);
 			$this->appendCallableBodyDependencies($dependencies, 'function_body', $function->statements, $sourceLines, $function->name);
+		}
+		foreach ($file->constants as $constant) {
+			if (!$constant instanceof ConstantDecl) {
+				continue;
+			}
+			$this->appendConstantValueDependencies($dependencies, 'constant_value', $constant, $constant->name);
 		}
 		$this->appendCallableBodyDependencies($dependencies, 'executable_body', $file->rootStatements, $sourceLines, '__scpp_main');
 
@@ -388,6 +395,13 @@ final class FrontEndSymbolExtractor
 				$functionOwner = $namespaceBlock->name . '\\' . $function->name;
 				$this->appendCallableTypeDependencies($dependencies, 'function', $function->params, $function->returnType, $functionOwner);
 				$this->appendCallableBodyDependencies($dependencies, 'function_body', $function->statements, $sourceLines, $functionOwner);
+			}
+			foreach ($namespaceBlock->constants as $constant) {
+				if (!$constant instanceof ConstantDecl) {
+					continue;
+				}
+				$constantOwner = $namespaceBlock->name . '\\' . $constant->name;
+				$this->appendConstantValueDependencies($dependencies, 'constant_value', $constant, $constantOwner);
 			}
 			$this->appendCallableBodyDependencies($dependencies, 'executable_body', $namespaceBlock->statements, $sourceLines, $namespaceBlock->name . '\\__scpp_main');
 			foreach ($namespaceBlock->classes as $class) {
@@ -465,6 +479,12 @@ final class FrontEndSymbolExtractor
 			}
 			$this->appendTypeDependencies($dependencies, 'property_type', $property->type, $classOwner);
 		}
+		foreach ($class->constants as $constant) {
+			if (!$constant instanceof ConstantDecl) {
+				continue;
+			}
+			$this->appendConstantValueDependencies($dependencies, 'class_constant_value', $constant, $classOwner . '::' . $constant->name);
+		}
 		foreach ($class->methods as $method) {
 			if (!$method instanceof MethodDecl) {
 				continue;
@@ -473,6 +493,14 @@ final class FrontEndSymbolExtractor
 			$this->appendCallableTypeDependencies($dependencies, 'method', $method->params, $method->returnType, $methodOwner);
 			$this->appendCallableBodyDependencies($dependencies, 'method_body', $method->statements, $sourceLines, $methodOwner);
 		}
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 */
+	private function appendConstantValueDependencies(array &$dependencies, string $kind, ConstantDecl $constant, ?string $owner): void
+	{
+		$this->appendDescriptorTypeDependencies($dependencies, $kind, $this->describeExpression($constant->value, $constant->line), $owner);
 	}
 
 	/**
@@ -1982,6 +2010,14 @@ final class FrontEndSymbolExtractor
 		$chain = $this->extractChainDescriptor($expr, $line);
 		if ($chain !== null) {
 			return ['kind' => 'chain', 'chain' => $chain];
+		}
+		$classConstant = $this->describeClassConstantAccess($expr, $line);
+		if ($classConstant !== null) {
+			return [
+				'kind' => 'class_constant',
+				'root_class' => $classConstant['class_name'],
+				'constant_name' => $classConstant['constant_name'],
+			];
 		}
 		$coalesce = $this->describeCoalesceExpression($expr, $line);
 		if ($coalesce !== null) {
