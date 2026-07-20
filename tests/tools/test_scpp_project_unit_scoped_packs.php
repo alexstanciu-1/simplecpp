@@ -194,6 +194,35 @@ PHS);
 		$dependencyNodeSummary = $this->findSummary($projectUnits, 'base/node.phs', '../lib');
 		$this->assertSame('scoped', $dependencyNodeSummary['status'] ?? null, 'dependency project inheritance-only unit should get a scoped local pack');
 		$this->assertSame(['../lib/.prism/generated/base/node_base.hpp'], $dependencyNodeSummary['direct_local_headers'] ?? null, 'dependency project unit should keep same-project direct headers');
+
+		$reuseBuild = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => false,
+			'compile_dependencies' => false,
+		]);
+		$this->assertSame(true, $reuseBuild['ok'], 'dependency reuse-mode scoped-pack project should build after artifacts exist');
+		$reuseProjectUnits = $this->loadProjectUnits($project);
+		$reuseLocalSummary = $this->findSummary($reuseProjectUnits, 'local_node.phs', '');
+		$this->assertSame('scoped', $reuseLocalSummary['status'] ?? null, 'dependency reuse-mode build should keep root scoped pack active');
+		$this->assertSame(['../lib/.prism/generated/__project.hpp'], $reuseLocalSummary['dependency_export_headers'] ?? null, 'dependency reuse-mode build should still expose dependency project exports');
+		$reuseReport = $this->loadLastRunReport($project);
+		$reuseDetails = is_array($reuseReport['details'] ?? null) ? $reuseReport['details'] : [];
+		$reuseExplanation = is_array($reuseDetails['build_explanation'] ?? null) ? $reuseDetails['build_explanation'] : [];
+		$reuseDependencies = is_array($reuseExplanation['dependencies'] ?? null) ? $reuseExplanation['dependencies'] : [];
+		$this->assertSame('reuse', $reuseDependencies['action'] ?? null, 'dependency reuse-mode build explanation should record dependency reuse');
+
+		$clean = scpp_run_clean_service($project, $project . '/prism.json');
+		$this->assertSame(true, $clean['ok'], 'dependency scoped-pack project clean should succeed');
+		$this->assertFileMissing($project . '/.prism/generated/__project_units/manifest.json', 'clean should remove root project unit pack manifest');
+		$this->assertFileMissing($dependency . '/.prism/generated/__project_units/manifest.json', 'clean should remove dependency project unit pack manifest');
+		$cleanBuild = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(true, $cleanBuild['ok'], 'clean dependency scoped-pack project should rebuild');
+		$cleanProjectUnits = $this->loadProjectUnits($project);
+		$cleanLocalSummary = $this->findSummary($cleanProjectUnits, 'local_node.phs', '');
+		$this->assertSame('scoped', $cleanLocalSummary['status'] ?? null, 'clean rebuild should restore the root scoped pack');
+		$this->assertSame(['../lib/.prism/generated/__project.hpp'], $cleanLocalSummary['dependency_export_headers'] ?? null, 'clean rebuild should restore dependency project exports in scoped packs');
 	}
 
 	/** @param list<string> $dependencies */
@@ -235,10 +264,7 @@ PHS);
 	/** @return array<string,mixed> */
 	private function loadProjectUnits(string $project): array
 	{
-		$report = json_decode($this->read($project . '/.prism/last_run.json'), true);
-		if (!is_array($report)) {
-			throw new RuntimeException('last_run.json should decode as an object');
-		}
+		$report = $this->loadLastRunReport($project);
 		$details = is_array($report['details'] ?? null) ? $report['details'] : [];
 		$explanation = is_array($details['build_explanation'] ?? null) ? $details['build_explanation'] : [];
 		$projectUnits = is_array($explanation['project_unit_force_includes'] ?? null) ? $explanation['project_unit_force_includes'] : [];
@@ -246,6 +272,16 @@ PHS);
 			throw new RuntimeException('last_run.json should contain project unit force-include details');
 		}
 		return $projectUnits;
+	}
+
+	/** @return array<string,mixed> */
+	private function loadLastRunReport(string $project): array
+	{
+		$report = json_decode($this->read($project . '/.prism/last_run.json'), true);
+		if (!is_array($report)) {
+			throw new RuntimeException('last_run.json should decode as an object');
+		}
+		return $report;
 	}
 
 	/** @return array<string,mixed> */
@@ -358,6 +394,13 @@ PHS);
 	{
 		if (str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' contained `' . $needle . '`');
+		}
+	}
+
+	private function assertFileMissing(string $path, string $message): void
+	{
+		if (file_exists($path)) {
+			throw new RuntimeException($message . ' unexpected file `' . $path . '`');
 		}
 	}
 

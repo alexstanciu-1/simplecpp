@@ -321,6 +321,11 @@ Status legend:
   top-level force-include report keys, header rows, blocker rows, dependency
   summary rows, and dependency category rows across STAN-backed, no-STAN, and
   direct-report paths.
+- [x] `PUH-031` Add compile probes for no-STAN, stale scoped-pack cleanup,
+  dependency-reuse, and clean-build paths. Existing explain-build coverage
+  checks no-STAN build-owned summaries and stale pack cleanup; scoped-pack
+  regression coverage now also rebuilds through dependency reuse and `scpp
+  clean` before rechecking dependency export scoped packs.
 
 ### Ready
 
@@ -343,8 +348,6 @@ Status legend:
 
 ### Planned Validation And Rollout
 
-- [ ] `PUH-031` Add compile probes for no-STAN, stale-STAN, dependency-reuse,
-  and clean-build paths after build-owned dependency summaries exist.
 - [ ] `PUH-032` Add rebuild-fanout measurement to the usability or build
   diagnostics harness: record transpiled files, changed project-unit packs,
   dirty native objects, and Ninja no-work behavior.
