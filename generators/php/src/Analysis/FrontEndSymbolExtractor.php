@@ -87,7 +87,7 @@ final class FrontEndSymbolExtractor
 			'namespaces' => $namespaces,
 			'build_errors' => $file->buildErrors,
 			'scanner_annotations' => $file->scannerAnnotations,
-			'dependencies' => $this->collectDependencies($file),
+			'dependencies' => $this->collectDependencies($file, $sourceLines),
 		];
 	}
 
@@ -342,7 +342,7 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @return list<array{kind:string,target:string,owner:?string}> */
-	private function collectDependencies(PhpFile $file): array
+	private function collectDependencies(PhpFile $file, array $sourceLines): array
 	{
 		$dependencies = [];
 
@@ -351,7 +351,9 @@ final class FrontEndSymbolExtractor
 				continue;
 			}
 			$this->appendCallableTypeDependencies($dependencies, 'function', $function->params, $function->returnType, $function->name);
+			$this->appendCallableBodyDependencies($dependencies, 'function_body', $function->statements, $sourceLines, $function->name);
 		}
+		$this->appendCallableBodyDependencies($dependencies, 'executable_body', $file->rootStatements, $sourceLines, '__scpp_main');
 
 		foreach ($file->classes as $class) {
 			if (!$class instanceof ClassDecl) {
@@ -372,7 +374,7 @@ final class FrontEndSymbolExtractor
 					'owner' => $classOwner,
 				];
 			}
-			$this->appendClassTypeDependencies($dependencies, $class, $classOwner);
+			$this->appendClassTypeDependencies($dependencies, $class, $classOwner, $sourceLines);
 		}
 
 		foreach ($file->namespaces as $namespaceBlock) {
@@ -385,7 +387,9 @@ final class FrontEndSymbolExtractor
 				}
 				$functionOwner = $namespaceBlock->name . '\\' . $function->name;
 				$this->appendCallableTypeDependencies($dependencies, 'function', $function->params, $function->returnType, $functionOwner);
+				$this->appendCallableBodyDependencies($dependencies, 'function_body', $function->statements, $sourceLines, $functionOwner);
 			}
+			$this->appendCallableBodyDependencies($dependencies, 'executable_body', $namespaceBlock->statements, $sourceLines, $namespaceBlock->name . '\\__scpp_main');
 			foreach ($namespaceBlock->classes as $class) {
 				if (!$class instanceof ClassDecl) {
 					continue;
@@ -405,7 +409,7 @@ final class FrontEndSymbolExtractor
 						'owner' => $classOwner,
 					];
 				}
-				$this->appendClassTypeDependencies($dependencies, $class, $classOwner);
+				$this->appendClassTypeDependencies($dependencies, $class, $classOwner, $sourceLines);
 			}
 
 			foreach ($namespaceBlock->uses as $useDecl) {
@@ -452,7 +456,7 @@ final class FrontEndSymbolExtractor
 	/**
 	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
 	 */
-	private function appendClassTypeDependencies(array &$dependencies, ClassDecl $class, string $classOwner): void
+	private function appendClassTypeDependencies(array &$dependencies, ClassDecl $class, string $classOwner, array $sourceLines): void
 	{
 		$this->appendTypeDependencies($dependencies, 'enum_backing_type', $class->enumBackingType, $classOwner);
 		foreach ($class->properties as $property) {
@@ -467,6 +471,81 @@ final class FrontEndSymbolExtractor
 			}
 			$methodOwner = $classOwner . '::' . $method->name;
 			$this->appendCallableTypeDependencies($dependencies, 'method', $method->params, $method->returnType, $methodOwner);
+			$this->appendCallableBodyDependencies($dependencies, 'method_body', $method->statements, $sourceLines, $methodOwner);
+		}
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 * @param list<\Scpp\S2S\IR\Statement> $statements
+	 */
+	private function appendCallableBodyDependencies(array &$dependencies, string $kindPrefix, array $statements, array $sourceLines, ?string $owner): void
+	{
+		if ($statements === []) {
+			return;
+		}
+		foreach ($this->summarizeTypedLocals($statements, $sourceLines) as $local) {
+			$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($local['type'] ?? null) ? $local['type'] : null, $owner);
+		}
+		foreach ($this->summarizeLocalTypeAssignments($statements, $sourceLines) as $assignment) {
+			$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($assignment['type'] ?? null) ? $assignment['type'] : null, $owner);
+		}
+		foreach ($this->summarizeLocalConstructedAssignments($statements, $sourceLines) as $assignment) {
+			$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($assignment['type'] ?? null) ? $assignment['type'] : null, $owner);
+		}
+		foreach ($this->summarizeReturnValues($statements) as $returnValue) {
+			$this->appendDescriptorTypeDependencies($dependencies, $kindPrefix . '_type', $returnValue['descriptor'] ?? null, $owner);
+		}
+		foreach ($this->summarizeCallSites($statements) as $callSite) {
+			if (!is_array($callSite)) {
+				continue;
+			}
+			$callKind = (string) ($callSite['call_kind'] ?? '');
+			if ($callKind === 'function') {
+				$name = trim((string) ($callSite['name'] ?? ''));
+				if ($name !== '') {
+					$dependencies[] = [
+						'kind' => $kindPrefix . '_call',
+						'target' => $name,
+						'owner' => $owner,
+					];
+				}
+			} elseif ($callKind === 'static_method') {
+				$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($callSite['class_name'] ?? null) ? $callSite['class_name'] : null, $owner);
+			}
+			foreach (is_array($callSite['args'] ?? null) ? $callSite['args'] : [] as $argDescriptor) {
+				$this->appendDescriptorTypeDependencies($dependencies, $kindPrefix . '_type', $argDescriptor, $owner);
+			}
+			$this->appendDescriptorTypeDependencies($dependencies, $kindPrefix . '_type', $callSite['receiver'] ?? null, $owner);
+		}
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 */
+	private function appendDescriptorTypeDependencies(array &$dependencies, string $kind, mixed $descriptor, ?string $owner): void
+	{
+		if (!is_array($descriptor)) {
+			return;
+		}
+		if (($descriptor['kind'] ?? null) === 'type') {
+			$this->appendTypeDependencies($dependencies, $kind, is_string($descriptor['type'] ?? null) ? $descriptor['type'] : null, $owner);
+		}
+		if (is_string($descriptor['root_class'] ?? null)) {
+			$this->appendTypeDependencies($dependencies, $kind, $descriptor['root_class'], $owner);
+		}
+		foreach ($descriptor as $value) {
+			if (!is_array($value)) {
+				continue;
+			}
+			$isList = array_is_list($value);
+			if ($isList) {
+				foreach ($value as $nested) {
+					$this->appendDescriptorTypeDependencies($dependencies, $kind, $nested, $owner);
+				}
+				continue;
+			}
+			$this->appendDescriptorTypeDependencies($dependencies, $kind, $value, $owner);
 		}
 	}
 

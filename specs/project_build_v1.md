@@ -338,19 +338,34 @@ active compile edge on the broad-equivalent pack.
 
 Current lightweight source dependency summaries derive direct dependency keys
 from inheritance and interface declarations, `use` declarations, class property
-types, and function/method parameter and return types. These keys are used to
+types, function/method parameter and return types, and conservative function
+body evidence such as direct function calls, static-call class names, typed
+locals, constructed locals, and typed return descriptors. These keys are used to
 report direct source dependencies and direct generated local headers for
-scoped-pack candidates. Layout-sensitive files with class properties still stay
-on broad fallback until complete-type scoped activation is modeled, even though
-their direct property type evidence is reported.
+scoped-pack candidates.
+
+Scoped candidate packs direct-include same-project generated headers through
+the same-project dependency-key closure, not only the first direct edge. This
+keeps a unit that directly depends on a derived class from missing that class's
+base header. The final scoped header list still uses the generated-header
+ordering routine so base headers appear before derived headers.
+
+Current v1 scoped activation remains conservative. Layout-sensitive files with
+class properties still stay on broad fallback until complete-type scoped
+activation is modeled, even though their direct property type evidence is
+reported. Top-level helper function bodies may activate scoped packs only when
+their body evidence is limited to resolved direct function/static calls and
+resolved type references. Executable bodies, method bodies, property/static
+access, unresolved calls/types, and unmodeled body evidence keep broad fallback.
 
 Saved per-source dependency summary rows also include compact dependency
 category evidence. The current categories distinguish inheritance, direct type
-references, function signatures, method signatures, property layout, unresolved
-symbols, unresolved dependency keys, and missing source summaries. The focused
-`scpp explain-build project-units` view renders these categories as compact
-per-source lines so large-project blocker and dependency patterns can be audited
-without reading raw state files.
+references, function signatures, method signatures, function bodies, method
+bodies, executable bodies, property layout, unresolved symbols, unresolved
+dependency keys, and missing source summaries. The focused `scpp explain-build
+project-units` view renders these categories as compact per-source lines so
+large-project blocker and dependency patterns can be audited without reading
+raw state files.
 
 The project-unit report also includes scoped fanout counters: active scoped
 generated units, active broad-fallback generated units, scoped candidates, and

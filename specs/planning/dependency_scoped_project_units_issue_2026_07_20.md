@@ -299,6 +299,17 @@ Status legend:
   focused `project-units` output. Rows now categorize inheritance, direct type
   references, function signatures, method signatures, property layout,
   unresolved symbols, unresolved dependency keys, and missing source summaries.
+- [x] `PUH-024` Model and activate conservative function-body dependencies for
+  leaf helper files. Top-level function bodies may use scoped packs when body
+  evidence is limited to resolved direct function/static calls and resolved type
+  references; executable bodies, method bodies, property/static access,
+  control-flow-heavy summaries, unresolved calls/types, and other unmodeled
+  evidence stay broad.
+- [x] `PUH-026` Reuse the existing generated-header ordering for scoped packs
+  and expand same-project local dependencies through the dependency-key closure
+  before writing candidate scoped headers. A helper returning a derived type now
+  gets the derived header and its transitive base header in base-before-derived
+  order.
 
 ### Ready
 
@@ -315,17 +326,10 @@ Status legend:
 - [ ] `PUH-021` Store/reuse a build-owned per-source dependency summary artifact
   with direct source keys, local header paths, export header paths, candidate
   status, blockers, and the summary freshness inputs that produced it.
-- [ ] `PUH-024` Model function-body dependencies for leaf helper files. Start
-  with conservative same-project type/function references already named by
-  source summaries; fallback broad on unresolved calls, dynamic construction, or
-  unmodeled generated helper needs.
 - [ ] `PUH-025` Model complete-type requirements for class properties,
   constants, value-layout structs/unions, enum backing/type references, and
   generated declarations whose headers require another generated header to be
   complete.
-- [ ] `PUH-026` Reuse/extend `sort_project_unit_include_headers(...)` for scoped
-  packs so base-before-derived and generated-header dependency ordering stays
-  deterministic.
 - [ ] `PUH-027` Decide the native C++ unit policy. Initial likely rule: native
   C++ stays on broad fallback unless a project config or manifest explicitly
   declares a narrower generated-header dependency set.

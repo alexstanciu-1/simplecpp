@@ -4287,6 +4287,11 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			}
 			$unresolvedDependencyKeys[] = $dependencyKey;
 		}
+		$scopedLocalHeaderPaths = collect_project_unit_scoped_same_project_header_paths($dependencyKeys, $dependencyKeySourceMap, $sourceKeyToHeader, $unitProjectRoot);
+		$scopedLocalHeaders = array_map(
+			static fn (string $header): string => normalize_config_path(relative_path($normalizedProjectRoot, $header)),
+			array_values($scopedLocalHeaderPaths)
+		);
 
 		$dependencyExportHeaders = [];
 		$dependencyExportHeaderPaths = [];
@@ -4310,7 +4315,7 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		$candidateHeaderPaths = build_project_unit_candidate_scoped_header_paths(
 			$dependencyExportHeaderPaths,
 			is_file($forwardHeader) ? $forwardHeader : null,
-			array_values($directLocalHeaderPaths),
+			array_values($scopedLocalHeaderPaths),
 			$ownHeader
 		);
 		$candidateHeaders = array_map(
@@ -4327,7 +4332,7 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		$dependencyCategoryLookup = $dependencyKeySource === 'stan' ? $stanDependencyLookup : ($dependencyKeySource === 'build' ? $buildDependencyLookup : []);
 		$dependencyCategories = collect_project_unit_dependency_category_rows($normalizedProjectRoot, $sourceKey, $sourceSummary, $dependencyCategoryLookup, $sourceKeyToHeader);
 		$hasStanDependencyStateForSource = $hasStanDependencyState && array_key_exists($sourceKey, $stanDependencyKeys);
-		$candidate = classify_project_unit_scoped_candidate($hasStanDependencyStateForSource, $sourceSummary, $unresolvedDependencyKeys, $ownHeader);
+		$candidate = classify_project_unit_scoped_candidate($hasStanDependencyStateForSource, $sourceSummary, $unresolvedDependencyKeys, $ownHeader, $dependencyCategories);
 		$forceIncludeHeader = normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['force_include_header'] ?? ''))));
 		$status = $candidate['status'] === 'candidate_scoped' && $forceIncludeHeader !== '' && $forceIncludeHeader === $candidatePackHeader
 			? 'scoped'
@@ -4363,6 +4368,7 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			'candidate_blocking_reasons' => $candidate['blocking_reasons'],
 			'direct_source_dependencies' => $dependencyKeys,
 			'direct_local_headers' => array_values($directLocalHeaders),
+			'scoped_local_headers' => array_values(array_unique($scopedLocalHeaders)),
 			'dependency_export_headers' => array_values(array_unique($dependencyExportHeaders)),
 			'unresolved_dependency_keys' => $unresolvedDependencyKeys,
 			'dependency_categories' => $dependencyCategories,
@@ -4372,6 +4378,43 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 
 	usort($summaries, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
 	return $summaries;
+}
+
+/**
+ * @param list<string> $dependencyKeys
+ * @param array<string,list<string>> $dependencyKeyMap
+ * @param array<string,array{project_root:string,header:string}> $sourceKeyToHeader
+ * @return array<string,string>
+ */
+function collect_project_unit_scoped_same_project_header_paths(array $dependencyKeys, array $dependencyKeyMap, array $sourceKeyToHeader, string $unitProjectRoot): array
+{
+	$queue = array_values($dependencyKeys);
+	$seen = [];
+	$headers = [];
+	while ($queue !== []) {
+		$dependencyKey = array_shift($queue);
+		$dependencyKey = trim((string) $dependencyKey);
+		if ($dependencyKey === '' || isset($seen[$dependencyKey])) {
+			continue;
+		}
+		$seen[$dependencyKey] = true;
+		$dependencyHeader = is_array($sourceKeyToHeader[$dependencyKey] ?? null) ? $sourceKeyToHeader[$dependencyKey] : null;
+		if ($dependencyHeader === null || normalize_path((string) ($dependencyHeader['project_root'] ?? '')) !== $unitProjectRoot) {
+			continue;
+		}
+		$header = normalize_path((string) ($dependencyHeader['header'] ?? ''));
+		if ($header !== '') {
+			$headers[$header] = $header;
+		}
+		foreach (is_array($dependencyKeyMap[$dependencyKey] ?? null) ? $dependencyKeyMap[$dependencyKey] : [] as $transitiveDependencyKey) {
+			$transitiveDependencyKey = trim((string) $transitiveDependencyKey);
+			if ($transitiveDependencyKey !== '' && !isset($seen[$transitiveDependencyKey])) {
+				$queue[] = $transitiveDependencyKey;
+			}
+		}
+	}
+	ksort($headers, SORT_STRING);
+	return $headers;
 }
 
 /**
@@ -4462,6 +4505,15 @@ function project_unit_dependency_category_for_kind(string $kind): string
 	}
 	if ($kind === 'property_type') {
 		return 'property layout';
+	}
+	if ($kind === 'function_body_call' || $kind === 'function_body_type') {
+		return 'function body';
+	}
+	if ($kind === 'method_body_call' || $kind === 'method_body_type') {
+		return 'method body';
+	}
+	if ($kind === 'executable_body_call' || $kind === 'executable_body_type') {
+		return 'executable body';
 	}
 	if ($kind === 'use') {
 		return 'direct type reference';
@@ -4620,7 +4672,7 @@ function project_unit_candidate_scoped_pack_hash(array $candidateHeaders): strin
  * @param list<string> $unresolvedDependencyKeys
  * @return array{status:string,blocking_reasons:list<string>}
  */
-function classify_project_unit_scoped_candidate(bool $hasStanDependencyState, ?array $sourceSummary, array $unresolvedDependencyKeys, string $ownHeader): array
+function classify_project_unit_scoped_candidate(bool $hasStanDependencyState, ?array $sourceSummary, array $unresolvedDependencyKeys, string $ownHeader, array $dependencyCategories = []): array
 {
 	$blockingReasons = [];
 	if (!$hasStanDependencyState) {
@@ -4636,7 +4688,7 @@ function classify_project_unit_scoped_candidate(bool $hasStanDependencyState, ?a
 		$blockingReasons[] = 'unresolved dependency key `' . $dependencyKey . '`';
 	}
 	if ($sourceSummary !== null) {
-		$blockingReasons = array_merge($blockingReasons, collect_project_unit_scoped_candidate_summary_blockers($sourceSummary));
+		$blockingReasons = array_merge($blockingReasons, collect_project_unit_scoped_candidate_summary_blockers($sourceSummary, $dependencyCategories));
 	}
 	$blockingReasons = normalize_string_list($blockingReasons);
 	return [
@@ -4645,8 +4697,8 @@ function classify_project_unit_scoped_candidate(bool $hasStanDependencyState, ?a
 	];
 }
 
-/** @param array<string,mixed> $summary @return list<string> */
-function collect_project_unit_scoped_candidate_summary_blockers(array $summary): array
+/** @param array<string,mixed> $summary @param list<array<string,mixed>> $dependencyCategories @return list<string> */
+function collect_project_unit_scoped_candidate_summary_blockers(array $summary, array $dependencyCategories = []): array
 {
 	$blockers = [];
 	if (normalize_string_list($summary['build_errors'] ?? []) !== []) {
@@ -4654,9 +4706,13 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary):
 	}
 	foreach (project_unit_summary_function_buckets($summary) as $function) {
 		if ((int) ($function['statement_count'] ?? 0) > 0) {
-			$blockers[] = (bool) ($function['is_synthetic_entrypoint'] ?? false)
-				? 'executable body present'
-				: 'function body present';
+			if ((bool) ($function['is_synthetic_entrypoint'] ?? false)) {
+				$blockers[] = 'executable body present';
+				break;
+			}
+			if (!project_unit_function_body_is_scoped_candidate_safe($function, $dependencyCategories)) {
+				$blockers[] = 'function body contains unmodeled dependency evidence';
+			}
 			break;
 		}
 	}
@@ -4675,6 +4731,70 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary):
 		}
 	}
 	return normalize_string_list($blockers);
+}
+
+/** @param array<string,mixed> $function @param list<array<string,mixed>> $dependencyCategories */
+function project_unit_function_body_is_scoped_candidate_safe(array $function, array $dependencyCategories): bool
+{
+	foreach ([
+		'local_invalidations',
+		'local_branch_assignments',
+		'local_descriptor_assignments',
+		'typed_boundary_assignments',
+		'foreach_locals',
+		'for_loop_locals',
+		'property_reads',
+		'property_assignments',
+		'static_property_assignments',
+		'property_branch_assignments',
+		'static_property_reads',
+		'class_constant_accesses',
+		'return_chains',
+		'non_null_guards',
+		'non_false_guards',
+	] as $bucket) {
+		if (is_array($function[$bucket] ?? null) && $function[$bucket] !== []) {
+			return false;
+		}
+	}
+	foreach (is_array($function['call_sites'] ?? null) ? $function['call_sites'] : [] as $callSite) {
+		if (!is_array($callSite)) {
+			return false;
+		}
+		$callKind = (string) ($callSite['call_kind'] ?? '');
+		if ($callKind !== 'function' && $callKind !== 'static_method') {
+			return false;
+		}
+	}
+	$owner = project_unit_summary_function_owner($function);
+	foreach ($dependencyCategories as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$kind = (string) ($row['kind'] ?? '');
+		if (!str_starts_with($kind, 'function_body_')) {
+			continue;
+		}
+		$rowOwner = trim((string) ($row['owner'] ?? ''));
+		if ($rowOwner !== '' && $owner !== '' && $rowOwner !== $owner) {
+			continue;
+		}
+		if ((string) ($row['resolution'] ?? '') !== 'resolved') {
+			return false;
+		}
+	}
+	return true;
+}
+
+/** @param array<string,mixed> $function */
+function project_unit_summary_function_owner(array $function): string
+{
+	$name = trim((string) ($function['name'] ?? ''));
+	if ($name === '') {
+		return '';
+	}
+	$namespace = trim((string) ($function['namespace'] ?? ''));
+	return $namespace === '' ? $name : $namespace . '\\' . $name;
 }
 
 /** @param array<string,mixed> $summary @return list<array<string,mixed>> */
@@ -4836,6 +4956,7 @@ function normalize_project_unit_dependency_summaries(array $summaries): array
 			'candidate_blocking_reasons' => normalize_string_list($summary['candidate_blocking_reasons'] ?? []),
 			'direct_source_dependencies' => normalize_string_list($summary['direct_source_dependencies'] ?? []),
 			'direct_local_headers' => normalize_string_list($summary['direct_local_headers'] ?? []),
+			'scoped_local_headers' => normalize_string_list($summary['scoped_local_headers'] ?? []),
 			'dependency_export_headers' => normalize_string_list($summary['dependency_export_headers'] ?? []),
 			'unresolved_dependency_keys' => normalize_string_list($summary['unresolved_dependency_keys'] ?? []),
 			'dependency_categories' => normalize_project_unit_dependency_category_rows(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []),
@@ -6438,6 +6559,10 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 				$lines[] = '    direct source dependencies: ' . ($directDependencies === [] ? 'none' : implode(', ', array_map(static fn ($value): string => (string) $value, $directDependencies)));
 				$directHeaders = is_array($summary['direct_local_headers'] ?? null) ? $summary['direct_local_headers'] : [];
 				$lines[] = '    direct local headers: ' . ($directHeaders === [] ? 'none' : implode(', ', array_map(static fn ($value): string => (string) $value, $directHeaders)));
+				$scopedHeaders = is_array($summary['scoped_local_headers'] ?? null) ? $summary['scoped_local_headers'] : [];
+				if ($scopedHeaders !== [] && normalize_string_list($scopedHeaders) !== normalize_string_list($directHeaders)) {
+					$lines[] = '    scoped local headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $scopedHeaders));
+				}
 				$unresolvedKeys = is_array($summary['unresolved_dependency_keys'] ?? null) ? $summary['unresolved_dependency_keys'] : [];
 				if ($unresolvedKeys !== []) {
 					$lines[] = '    unresolved dependency keys: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $unresolvedKeys));

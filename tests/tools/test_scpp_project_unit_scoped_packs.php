@@ -63,6 +63,13 @@ interface Sink {
     public function accept(\App\Schema\Item $item): \App\Schema\BaseNode;
 }
 PHS);
+		$this->write($project . '/helpers/factory.phs', <<<'PHS'
+namespace App\Helpers;
+
+function make_child(): \App\Orm\ChildNode {
+    return new \App\Orm\ChildNode();
+}
+PHS);
 		$this->write($project . '/db/holder.phs', <<<'PHS'
 namespace App\Db;
 
@@ -83,10 +90,10 @@ PHS);
 		$this->assertSame(true, $build['ok'], 'nested namespace scoped-pack project should build');
 
 		$projectUnits = $this->loadProjectUnits($project);
-		$this->assertSame(6, $projectUnits['total_units'] ?? null, 'nested project should report six generated units');
-		$this->assertSame(4, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only and signature-only units');
+		$this->assertSame(7, $projectUnits['total_units'] ?? null, 'nested project should report seven generated units');
+		$this->assertSame(5, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only, signature-only, and safe helper units');
 		$this->assertSame(2, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep the executable and property-layout unit broad');
-		$this->assertSame(4, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report four scoped candidates');
+		$this->assertSame(5, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report five scoped candidates');
 		$this->assertSame(2, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report two blocked candidates');
 
 		$childSummary = $this->findSummary($projectUnits, 'orm/child_node.phs', '');
@@ -107,6 +114,19 @@ PHS);
 		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $sinkSummary['direct_source_dependencies'] ?? null, 'method signatures should report direct type source dependencies');
 		$this->assertSame(['.prism/generated/schema/base_node.hpp', '.prism/generated/schema/item.hpp'], $sinkSummary['direct_local_headers'] ?? null, 'method signatures should map direct type dependencies to generated headers');
 		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $this->dependencyCategorySources($sinkSummary, 'method signature'), 'method signatures should categorize direct type source dependencies');
+
+		$factorySummary = $this->findSummary($projectUnits, 'helpers/factory.phs', '');
+		$this->assertSame('scoped', $factorySummary['status'] ?? null, 'safe top-level helper body should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $factorySummary['candidate_status'] ?? null, 'safe top-level helper body should be a scoped candidate');
+		$this->assertSame(['orm/child_node.phs'], $factorySummary['direct_source_dependencies'] ?? null, 'safe helper should report its direct return/body type dependency');
+		$this->assertSame(['.prism/generated/orm/child_node.hpp'], $factorySummary['direct_local_headers'] ?? null, 'safe helper direct local headers should stay direct');
+		$this->assertSame(['.prism/generated/orm/child_node.hpp', '.prism/generated/schema/base_node.hpp'], $factorySummary['scoped_local_headers'] ?? null, 'safe helper scoped local headers should include transitive base dependencies');
+		$this->assertSame(['orm/child_node.phs'], $this->dependencyCategorySources($factorySummary, 'function body'), 'safe helper should categorize constructed return type as a function-body dependency');
+		$this->assertSame(['orm/child_node.phs'], $this->dependencyCategorySources($factorySummary, 'function signature'), 'safe helper should categorize declared return type as a function signature dependency');
+		$factoryPack = $project . '/' . (string) ($factorySummary['candidate_pack_header'] ?? '');
+		$factoryPackContents = $this->read($factoryPack);
+		$this->assertOrderBefore('#include "../schema/base_node.hpp"', '#include "../orm/child_node.hpp"', $factoryPackContents, 'helper scoped pack should include child transitive base before child');
+		$this->assertOrderBefore('#include "../orm/child_node.hpp"', '#include "../helpers/factory.hpp"', $factoryPackContents, 'helper scoped pack should include direct child before helper header');
 
 		$holderSummary = $this->findSummary($projectUnits, 'db/holder.phs', '');
 		$this->assertSame('fallback_broad', $holderSummary['status'] ?? null, 'property-layout class should stay on broad fallback');
