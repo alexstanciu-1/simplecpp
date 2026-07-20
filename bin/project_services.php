@@ -5056,9 +5056,6 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary, 
 		}
 	}
 	foreach (project_unit_summary_classes($summary) as $class) {
-		if (is_array($class['properties'] ?? null) && $class['properties'] !== []) {
-			$blockers[] = 'class properties require complete-type dependency modeling';
-		}
 		if (is_array($class['constants'] ?? null) && $class['constants'] !== []) {
 			$blockers[] = 'class constants require complete-type activation validation';
 		}

@@ -105,10 +105,10 @@ PHS);
 
 		$projectUnits = $this->loadProjectUnits($project);
 		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'nested project should report nine generated units');
-		$this->assertSame(5, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only, signature-only, and safe helper units');
-		$this->assertSame(4, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep the executable, constants, and property-layout unit broad');
-		$this->assertSame(5, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report five scoped candidates');
-		$this->assertSame(4, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report four blocked candidates');
+		$this->assertSame(6, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only, signature-only, property-layout, and safe helper units');
+		$this->assertSame(3, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep the executable and constant units broad');
+		$this->assertSame(6, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report six scoped candidates');
+		$this->assertSame(3, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report three blocked candidates');
 
 		$childSummary = $this->findSummary($projectUnits, 'orm/child_node.phs', '');
 		$this->assertSame('scoped', $childSummary['status'] ?? null, 'inheritance-only child should compile with a scoped pack');
@@ -120,7 +120,7 @@ PHS);
 		$childPack = $project . '/' . (string) ($childSummary['candidate_pack_header'] ?? '');
 		$childPackContents = $this->read($childPack);
 		$this->assertOrderBefore('#include "../schema/base_node.hpp"', '#include "../orm/child_node.hpp"', $childPackContents, 'child scoped pack should include the base header before the child header');
-		$this->assertNotContains('db/holder.hpp', $childPackContents, 'child scoped pack should not include unrelated broad-fallback headers');
+		$this->assertNotContains('db/holder.hpp', $childPackContents, 'child scoped pack should not include unrelated property-layout headers');
 
 		$sinkSummary = $this->findSummary($projectUnits, 'contracts/sink.phs', '');
 		$this->assertSame('scoped', $sinkSummary['status'] ?? null, 'signature-only interface should compile with a scoped pack');
@@ -143,12 +143,16 @@ PHS);
 		$this->assertOrderBefore('#include "../orm/child_node.hpp"', '#include "../helpers/factory.hpp"', $factoryPackContents, 'helper scoped pack should include direct child before helper header');
 
 		$holderSummary = $this->findSummary($projectUnits, 'db/holder.phs', '');
-		$this->assertSame('fallback_broad', $holderSummary['status'] ?? null, 'property-layout class should stay on broad fallback');
-		$this->assertSame('blocked_broad_fallback', $holderSummary['candidate_status'] ?? null, 'property-layout class should be blocked from scoped activation');
-		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $holderSummary['direct_source_dependencies'] ?? null, 'property types should report direct source dependencies even while layout remains broad');
+		$this->assertSame('scoped', $holderSummary['status'] ?? null, 'property-layout class should compile with a scoped pack once direct headers are modeled');
+		$this->assertSame('candidate_scoped', $holderSummary['candidate_status'] ?? null, 'property-layout class should be a scoped candidate once direct headers are modeled');
+		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $holderSummary['direct_source_dependencies'] ?? null, 'property types should report direct source dependencies');
 		$this->assertSame(['.prism/generated/schema/base_node.hpp', '.prism/generated/schema/item.hpp'], $holderSummary['direct_local_headers'] ?? null, 'property types should map direct type dependencies to generated headers');
 		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $this->dependencyCategorySources($holderSummary, 'property layout'), 'property types should categorize direct dependencies as layout-sensitive');
-		$this->assertContains('class properties require complete-type dependency modeling', implode("\n", $holderSummary['candidate_blocking_reasons'] ?? []), 'property-layout blocker should be reported');
+		$this->assertSame([], $holderSummary['candidate_blocking_reasons'] ?? null, 'resolved property-layout dependencies should not block scoped activation');
+		$holderPack = $project . '/' . (string) ($holderSummary['candidate_pack_header'] ?? '');
+		$holderPackContents = $this->read($holderPack);
+		$this->assertOrderBefore('#include "../schema/base_node.hpp"', '#include "../db/holder.hpp"', $holderPackContents, 'property-layout scoped pack should include base node before holder');
+		$this->assertOrderBefore('#include "../schema/item.hpp"', '#include "../db/holder.hpp"', $holderPackContents, 'property-layout scoped pack should include item before holder');
 
 		$defaultsSummary = $this->findSummary($projectUnits, 'config/defaults.phs', '');
 		$this->assertSame('fallback_broad', $defaultsSummary['status'] ?? null, 'class-constant dependency file should stay on broad fallback');

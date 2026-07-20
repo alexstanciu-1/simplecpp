@@ -380,14 +380,16 @@ keeps a unit that directly depends on a derived class from missing that class's
 base header. The final scoped header list still uses the generated-header
 ordering routine so base headers appear before derived headers.
 
-Current v1 scoped activation remains conservative. Layout-sensitive files with
-class properties or class constants still stay on broad fallback until
-complete-type scoped activation is validated, even though their direct property
-type and constant-value evidence is reported. Top-level helper function bodies
-may activate scoped packs only when their body evidence is limited to resolved
-direct function/static calls and resolved type references. Executable bodies,
-method bodies, property/static access, unresolved calls/types, and unmodeled
-body evidence keep broad fallback.
+Current v1 scoped activation remains conservative. Files with class properties
+may activate scoped packs when their direct property type dependencies resolve
+to generated headers, and those headers are placed before the owning header in
+the scoped pack. Files with class constants still stay on broad fallback until
+complete-type scoped activation is validated for constant initializer header
+shapes, even though their direct constant-value evidence is reported. Top-level
+helper function bodies may activate scoped packs only when their body evidence
+is limited to resolved direct function/static calls and resolved type
+references. Executable bodies, method bodies, property/static access, unresolved
+calls/types, and unmodeled body evidence keep broad fallback.
 
 Saved per-source dependency summary rows also include compact dependency
 category evidence. The current categories distinguish inheritance, direct type

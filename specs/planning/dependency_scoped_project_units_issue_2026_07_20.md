@@ -345,6 +345,10 @@ Status legend:
   stay on broad-equivalent project-unit packs under
   `broad_fallback_without_dependency_manifest`, with saved report counters and
   focused `project-units` output showing the native broad-fallback count.
+- [x] `PUH-025c` Activate scoped packs for resolved class property-layout
+  dependencies. Property-layout units now become scoped candidates when their
+  direct property type dependencies resolve to generated headers, and focused
+  coverage proves dependency headers are included before the owning header.
 
 ### Ready
 
@@ -355,9 +359,9 @@ Status legend:
 ### Planned Dependency-Model Work
 
 - [ ] `PUH-025` Finish complete-type activation requirements for class
-  properties, class constants, value-layout structs/unions, enum backing/type
-  references, and generated declarations whose headers require another
-  generated header to be complete.
+  constants, value-layout structs/unions, enum backing/type references, and
+  generated declarations whose headers require another generated header to be
+  complete.
 ### Planned Validation And Rollout
 
 - [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:
