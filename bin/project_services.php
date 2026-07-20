@@ -704,7 +704,7 @@ function print_help(): void
 	echo "  scpp debug [--format=text|json|ndjson] [--args=<json>] [--env=NAME=VALUE] [--stdin-file=<path>] [--plan-only] [--save-session=<path>] [--load-session=<path>]\n";
 	echo "  scpp runtime-build [--debug|--release] [--force]\n";
 	echo "  scpp stan\n";
-	echo "  scpp stan worker [--once] [--idle-seconds=<n>] [--poll-interval-ms=<n>]\n";
+	echo "  scpp stan worker [--once] [--idle-seconds=<n>] [--poll-interval-ms=<n>] [--debounce-ms=<ms>]\n";
 	echo "  scpp stan-lsp document-diagnostics --path <file> [--override-source <file>] [--jsonrpc-id <id>] [--debug]\n";
 	echo "  scpp stan-lsp document-symbols --path <file> [--override-source <file>] [--jsonrpc-id <id>] [--debug]\n";
 	echo "  scpp stan-lsp hover --path <file> --line <n> [--column <n>] [--override-source <file>] [--jsonrpc-id <id>] [--debug]\n";
@@ -909,6 +909,7 @@ function handle_stan_worker(string $cwd, array $args = []): void
 		'once' => false,
 		'idle_seconds' => scpp_stan_worker_idle_seconds(),
 		'poll_interval_ms' => scpp_stan_worker_poll_interval_ms(),
+		'debounce_ms' => scpp_stan_worker_debounce_ms(),
 	];
 	foreach ($args as $arg) {
 		if ($arg === '--once') {
@@ -929,6 +930,14 @@ function handle_stan_worker(string $cwd, array $args = []): void
 				scpp_fail('Invalid `--poll-interval-ms` for `scpp stan worker`: ' . $arg . PHP_EOL, 1);
 			}
 			$options['poll_interval_ms'] = max(10, (int) $value);
+			continue;
+		}
+		if (str_starts_with($arg, '--debounce-ms=')) {
+			$value = substr($arg, strlen('--debounce-ms='));
+			if (!ctype_digit($value)) {
+				scpp_fail('Invalid `--debounce-ms` for `scpp stan worker`: ' . $arg . PHP_EOL, 1);
+			}
+			$options['debounce_ms'] = max(0, (int) $value);
 			continue;
 		}
 		scpp_fail('Unknown option for `scpp stan worker`: ' . $arg . PHP_EOL, 1);
@@ -957,18 +966,13 @@ function handle_stan_worker(string $cwd, array $args = []): void
 		$pid = null;
 	}
 	$lastActivityAt = microtime(true);
+	$pendingFingerprint = null;
+	$pendingSince = 0.0;
 
 	try {
 		while (true) {
 			$now = microtime(true);
 			$requestForHeartbeat = read_json_file($paths['request_path']);
-			write_stan_worker_heartbeat($paths['heartbeat_path'], [
-				'pid' => $pid,
-				'project_root' => normalize_path($project['project_root']),
-				'last_heartbeat_at' => $now,
-				'last_seen_request_at' => is_array($requestForHeartbeat) ? (float) ($requestForHeartbeat['requested_at'] ?? 0.0) : 0.0,
-			]);
-
 			$currentFingerprint = compute_stan_source_fingerprint($project['project_root'], $project['config_path']);
 			$request = $requestForHeartbeat;
 			$status = read_json_file($paths['status_path']);
@@ -976,11 +980,55 @@ function handle_stan_worker(string $cwd, array $args = []): void
 			$requestFingerprint = is_array($request) ? (string) ($request['requested_fingerprint'] ?? '') : '';
 			$requestTime = is_array($request) ? (float) ($request['requested_at'] ?? 0.0) : 0.0;
 			$finishedAt = is_array($status) ? (float) ($status['finished_at'] ?? 0.0) : 0.0;
-			$needsAnalysis = $publishedFingerprint !== $currentFingerprint
-				|| ($requestFingerprint !== '' && $requestFingerprint === $currentFingerprint && $requestTime > $finishedAt);
+			$proactiveNeedsAnalysis = $publishedFingerprint !== $currentFingerprint;
+			$explicitRequestNeedsAnalysis = $requestFingerprint !== '' && $requestFingerprint === $currentFingerprint && $requestTime > $finishedAt;
+			$needsAnalysis = $proactiveNeedsAnalysis || $explicitRequestNeedsAnalysis;
+
+			if (!$needsAnalysis) {
+				$pendingFingerprint = null;
+				$pendingSince = 0.0;
+			} elseif (
+				!$explicitRequestNeedsAnalysis
+				&& is_array($status)
+				&& $publishedFingerprint !== ''
+				&& $options['debounce_ms'] > 0
+			) {
+				if ($pendingFingerprint !== $currentFingerprint) {
+					$pendingFingerprint = $currentFingerprint;
+					$pendingSince = $now;
+				}
+				$elapsedDebounceMs = (int) round(max(0.0, ($now - $pendingSince) * 1000.0));
+				write_stan_worker_heartbeat($paths['heartbeat_path'], [
+					'pid' => $pid,
+					'project_root' => normalize_path($project['project_root']),
+					'last_heartbeat_at' => $now,
+					'last_seen_request_at' => is_array($requestForHeartbeat) ? (float) ($requestForHeartbeat['requested_at'] ?? 0.0) : 0.0,
+					'pending_fingerprint' => $pendingFingerprint,
+					'debounce_ms' => $options['debounce_ms'],
+				]);
+				if ($elapsedDebounceMs < $options['debounce_ms']) {
+					if ($options['once']) {
+						usleep(min($options['poll_interval_ms'], max(10, $options['debounce_ms'] - $elapsedDebounceMs)) * 1000);
+					} else {
+						usleep($options['poll_interval_ms'] * 1000);
+					}
+					continue;
+				}
+			}
+
+			write_stan_worker_heartbeat($paths['heartbeat_path'], [
+				'pid' => $pid,
+				'project_root' => normalize_path($project['project_root']),
+				'last_heartbeat_at' => $now,
+				'last_seen_request_at' => is_array($requestForHeartbeat) ? (float) ($requestForHeartbeat['requested_at'] ?? 0.0) : 0.0,
+				'pending_fingerprint' => $pendingFingerprint,
+				'debounce_ms' => $options['debounce_ms'],
+			]);
 
 			if ($needsAnalysis) {
 				$lastActivityAt = $now;
+				$pendingFingerprint = null;
+				$pendingSince = 0.0;
 				$runningStatus = [
 					'project_root' => normalize_path($project['project_root']),
 					'analysis_state' => 'running',
@@ -3395,6 +3443,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		]
 	);
 	$timingDetails['write_last_run_report_ms'] = (int) round(max(0, (microtime(true) - $reportStartedAt) * 1000));
+	if (!$options['disable_stan'] && $sourceOverrides === []) {
+		maybe_autostart_stan_worker($projectRoot, build_stan_worker_paths($projectRoot, load_project_config($configPath)));
+	}
 	if ($options['show_timings']) {
 		echo 'Build timing:' . PHP_EOL;
 		foreach ($timingDetails as $label => $milliseconds) {
@@ -8869,6 +8920,24 @@ function scpp_stan_worker_poll_interval_ms(): int
 	return 250;
 }
 
+function scpp_stan_worker_debounce_ms(): int
+{
+	$value = getenv('SCPP_STAN_WORKER_DEBOUNCE_MS');
+	if (is_string($value) && ctype_digit($value)) {
+		return max(0, (int) $value);
+	}
+	return 250;
+}
+
+function scpp_stan_worker_autostart_enabled(): bool
+{
+	$value = getenv('SCPP_STAN_WORKER_AUTOSTART');
+	if (is_string($value) && trim($value) !== '') {
+		return scpp_env_truthy($value);
+	}
+	return !scpp_capture_subprocess_output_enabled();
+}
+
 function scpp_stan_build_wait_seconds(): float
 {
 	$value = getenv('SCPP_STAN_BUILD_WAIT_SECONDS');
@@ -9109,7 +9178,7 @@ function stan_status_matches_fingerprint(?array $status, string $sourceFingerpri
 		&& (string) ($status['source_fingerprint'] ?? '') === $sourceFingerprint;
 }
 
-function spawn_stan_worker_process(string $projectRoot): void
+function spawn_stan_worker_process(string $projectRoot): bool
 {
 	$phpBinary = PHP_BINARY;
 	$scriptPath = resolve_repo_root() . '/bin/scpp.php';
@@ -9126,9 +9195,23 @@ function spawn_stan_worker_process(string $projectRoot): void
 	];
 	$process = proc_open(['/bin/sh', '-c', $command . ' >/dev/null 2>&1 &'], $descriptor, $pipes, $projectRoot, scpp_build_process_environment());
 	if (!is_resource($process)) {
-		scpp_fail('Failed to start STAN worker.' . PHP_EOL, 2);
+		return false;
 	}
 	proc_close($process);
+	return true;
+}
+
+/** @param array{heartbeat_path:string} $paths */
+function maybe_autostart_stan_worker(string $projectRoot, array $paths): void
+{
+	if (!scpp_stan_worker_autostart_enabled()) {
+		return;
+	}
+	$heartbeat = read_json_file($paths['heartbeat_path']);
+	if (stan_worker_heartbeat_is_live($heartbeat)) {
+		return;
+	}
+	spawn_stan_worker_process($projectRoot);
 }
 
 /** @param array<string,mixed> $report */
@@ -9236,6 +9319,7 @@ function execute_stan_build_preflight(string $projectRoot, string $configPath, a
 	if (!stan_status_matches_fingerprint($status, $sourceFingerprint)) {
 		scpp_fail('STAN pre-build check timed out while waiting for fresh analysis state.' . PHP_EOL, 2);
 	}
+	maybe_autostart_stan_worker($projectRoot, $paths);
 	$report = read_json_file($paths['report_path']);
 	if (!is_array($report) || (string) ($report['source_fingerprint'] ?? '') !== $sourceFingerprint) {
 		scpp_fail('STAN pre-build check did not publish a usable report for the current source state.' . PHP_EOL, 2);
@@ -9294,6 +9378,7 @@ function load_or_execute_stan_cli_result(string $projectRoot, string $configPath
 	$status = read_json_file($paths['status_path']);
 	$report = read_json_file($paths['report_path']);
 	if (stan_status_matches_fingerprint($status, $sourceFingerprint) && is_array($report) && (string) ($report['source_fingerprint'] ?? '') === $sourceFingerprint) {
+		maybe_autostart_stan_worker($projectRoot, $paths);
 		return build_stan_cli_result_from_report($projectRoot, $configPath, $report);
 	}
 	$report = build_stan_worker_report($projectRoot, $configPath, $sourceFingerprint);
@@ -9313,6 +9398,7 @@ function load_or_execute_stan_cli_result(string $projectRoot, string $configPath
 		'stan_notice_count' => $report['stan_notice_count'],
 		'report_path' => normalize_path($paths['report_path']),
 	]);
+	maybe_autostart_stan_worker($projectRoot, $paths);
 	return build_stan_cli_result_from_report($projectRoot, $configPath, $report);
 }
 

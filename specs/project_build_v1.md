@@ -202,9 +202,10 @@ The lower-level build service path used by helpers/tests also defaults to reuse 
 
 Current v1 behavior:
 
-- if a fresh matching STAN report already exists for the current project source fingerprint, the build reuses it
+- if a fresh matching STAN report already exists for the current project source fingerprint, the build reuses it and may start a background STAN worker when none is alive
 - if a live STAN worker exists but its report is stale, the build requests a refresh and waits briefly for a matching ready result
-- if no live STAN worker exists, the build performs an inline STAN refresh and publishes the same project-local status/report files used by worker mode
+- if no live STAN worker exists, the build performs an inline STAN refresh, publishes the same project-local status/report files used by worker mode, and then starts a worker for subsequent edits
+- background worker refreshes debounce source edits before proactive analysis; explicit build refresh requests bypass that debounce
 - if STAN reports `compile-errors`, the build stops before C++ generation/compilation continues
 - if STAN reports only advisory findings, the build continues and prints a short static-analysis summary
 - `--no-stan` bypasses this STAN pre-build check for that invocation only

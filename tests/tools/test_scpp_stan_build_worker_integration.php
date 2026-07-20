@@ -27,9 +27,13 @@ final class ScppStanBuildWorkerIntegrationTest
 		$previousIdle = getenv('SCPP_STAN_WORKER_IDLE_SECONDS');
 		$previousWait = getenv('SCPP_STAN_BUILD_WAIT_SECONDS');
 		$previousPoll = getenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS');
+		$previousDebounce = getenv('SCPP_STAN_WORKER_DEBOUNCE_MS');
+		$previousAutostart = getenv('SCPP_STAN_WORKER_AUTOSTART');
 		putenv('SCPP_STAN_WORKER_IDLE_SECONDS=1');
 		putenv('SCPP_STAN_BUILD_WAIT_SECONDS=5');
 		putenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS=100');
+		putenv('SCPP_STAN_WORKER_DEBOUNCE_MS=100');
+		putenv('SCPP_STAN_WORKER_AUTOSTART=1');
 
 		$workerProcess = null;
 		try {
@@ -59,6 +63,7 @@ PHS);
 
 			$statusPath = $projectRoot . '/.prism/cache/' . SCPP_STAN_STATUS_FILE;
 			$reportPath = $projectRoot . '/.prism/cache/' . SCPP_STAN_REPORT_FILE;
+			$heartbeatPath = $projectRoot . '/.prism/cache/' . SCPP_STAN_WORKER_FILE;
 			$this->assertFileExists($statusPath, 'STAN worker should publish a status file');
 			$this->assertFileExists($reportPath, 'STAN worker should publish a report file');
 			$status = read_json_file($statusPath);
@@ -68,6 +73,13 @@ PHS);
 			$this->assertSame(1, is_array($report) ? ($report['stan_warning_count'] ?? null) : null, 'advisory project should preserve the warning in the report');
 			$this->assertTrue(is_array($report) && isset($report['timings_ms']['context_build_ms']), 'published STAN report should expose context build timing');
 			$this->assertTrue(is_array($report) && isset($report['timings_ms']['report_write_ms']), 'published STAN report should expose report write timing');
+			$this->waitFor(function () use ($heartbeatPath): bool {
+				$heartbeat = read_json_file($heartbeatPath);
+				return stan_worker_heartbeat_is_live($heartbeat);
+			}, 3.0, 'inline STAN build preflight should auto-start a warm worker');
+			$autoHeartbeat = read_json_file($heartbeatPath);
+			$this->assertSame(normalize_path($projectRoot), is_array($autoHeartbeat) ? ($autoHeartbeat['project_root'] ?? null) : null, 'auto-started STAN worker heartbeat should point at the project');
+			$this->assertSame(100, is_array($autoHeartbeat) ? ($autoHeartbeat['debounce_ms'] ?? null) : null, 'auto-started STAN worker should receive debounce configuration');
 
 			$this->write($projectRoot . '/main.phs', <<<'PHS'
 function main(): void
@@ -175,6 +187,16 @@ PHS);
 				putenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS');
 			} else {
 				putenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS=' . $previousPoll);
+			}
+			if ($previousDebounce === false) {
+				putenv('SCPP_STAN_WORKER_DEBOUNCE_MS');
+			} else {
+				putenv('SCPP_STAN_WORKER_DEBOUNCE_MS=' . $previousDebounce);
+			}
+			if ($previousAutostart === false) {
+				putenv('SCPP_STAN_WORKER_AUTOSTART');
+			} else {
+				putenv('SCPP_STAN_WORKER_AUTOSTART=' . $previousAutostart);
 			}
 			$this->stopWorker($workerProcess);
 			usleep(1500000);
