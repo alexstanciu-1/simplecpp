@@ -322,16 +322,15 @@ The saved `.prism/last_run.json` payload should include build explanation detail
 
 The `project-units` view reports the current project unit force-include fanout
 and per-source dependency summaries. These summaries may use STAN's stored
-dependency keys when available, but they remain diagnostic/build-planning
-metadata only: current v1 builds still use broad-equivalent project unit packs
-until the dependency model is complete enough to narrow safely.
+dependency keys when available. Current v1 builds activate scoped project unit
+packs only for generated PHS units whose dependency summaries are classified as
+`candidate_scoped`; blocked generated units, no-STAN builds, and native C++
+units keep using broad-equivalent project unit packs.
 
-The same diagnostic payload also reports dry-run scoped-pack candidates for
-each generated PHS unit. Candidate rows include the scoped header list, the
-stable candidate hash/path that would be used by a future scoped pack, a
-candidate status, and any blocking reasons that kept the active compile edge on
-the broad-equivalent pack. Phase C0 does not write these candidate scoped pack
-headers and does not attach them to compile edges.
+The same diagnostic payload reports the scoped-pack candidate for each
+generated PHS unit. Candidate rows include the scoped header list, the stable
+candidate hash/path, a candidate status, and any blocking reasons that kept the
+active compile edge on the broad-equivalent pack.
 - `examples`
 - `authoring`
 - `gotchas`
@@ -379,9 +378,12 @@ For v1, the dependency contract is:
 
 `scpp build` generates internal project unit headers under `.prism/generated/`.
 The compatibility broad header remains `.prism/generated/__project_units.hpp`.
-Current compile edges force-include deterministic broad-equivalent pack headers
-under `.prism/generated/__project_units/<hash>.hpp`. These headers are build
-artifacts only. PHP++ source must not name generated `.hpp` files.
+Current compile edges force-include deterministic project unit pack headers
+under `.prism/generated/__project_units/<hash>.hpp` or
+`.prism/generated/__project_units/scoped-<hash>.hpp`. The non-scoped packs are
+broad-equivalent fallbacks; scoped packs are used only for safe generated PHS
+units. These headers are build artifacts only. PHP++ source must not name
+generated `.hpp` files.
 
 The project unit headers include:
 

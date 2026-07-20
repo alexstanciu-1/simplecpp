@@ -3080,11 +3080,14 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
 	}
 	unset($unit);
+	if (!$options['disable_stan']) {
+		apply_project_unit_scoped_force_include_candidates($projectRoot, $projectContexts, $generatedUnits);
+	}
 	foreach ($nativeCppUnits as &$nativeUnit) {
 		$nativeUnit['force_include_header'] = $projectUnitForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
 	}
 	unset($nativeUnit);
-	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits);
+	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, !$options['disable_stan']);
 
 	if ($usePch) {
 		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
@@ -3958,7 +3961,7 @@ function detect_rebuilt_outputs(array $before, array $after): array
  * @param list<array{project_root:string,source_path:string,object_path:string,force_include_header:?string}> $nativeCppUnits
  * @return array<string,mixed>
  */
-function collect_project_unit_force_include_report(string $projectRoot, array $projectContexts, array $generatedUnits, array $nativeCppUnits): array
+function collect_project_unit_force_include_report(string $projectRoot, array $projectContexts, array $generatedUnits, array $nativeCppUnits, bool $useStanDependencyState = true): array
 {
 	$units = array_merge($generatedUnits, $nativeCppUnits);
 	$headerCounts = [];
@@ -3984,7 +3987,7 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 		];
 	}
 
-	$dependencySummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits);
+	$dependencySummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
 
 	return [
 		'total_units' => count($units),
@@ -3998,16 +4001,65 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 /**
  * @param array<string,array<string,mixed>> $projectContexts
  * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ */
+function apply_project_unit_scoped_force_include_candidates(string $projectRoot, array $projectContexts, array &$generatedUnits): void
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$summaries = collect_project_unit_dependency_summaries($normalizedProjectRoot, $projectContexts, $generatedUnits);
+	$scopedPackBySourceKey = [];
+	foreach ($summaries as $summary) {
+		if (!is_array($summary) || ($summary['candidate_status'] ?? null) !== 'candidate_scoped') {
+			continue;
+		}
+		$sourceKey = trim((string) ($summary['source_key'] ?? ''));
+		$candidatePackHeader = trim((string) ($summary['candidate_pack_header'] ?? ''));
+		$candidateHeaders = is_array($summary['candidate_scoped_headers'] ?? null) ? $summary['candidate_scoped_headers'] : [];
+		if ($sourceKey === '' || $candidatePackHeader === '' || $candidateHeaders === []) {
+			continue;
+		}
+		$packHeaderPath = normalize_path($normalizedProjectRoot . '/' . $candidatePackHeader);
+		$includeHeaders = [];
+		foreach ($candidateHeaders as $candidateHeader) {
+			$header = normalize_path($normalizedProjectRoot . '/' . trim((string) $candidateHeader));
+			if ($header !== '') {
+				$includeHeaders[] = $header;
+			}
+		}
+		$includeHeaders = array_values(array_unique($includeHeaders));
+		if ($includeHeaders === []) {
+			continue;
+		}
+		write_text_file($packHeaderPath, render_project_unit_force_include_header($packHeaderPath, '', $includeHeaders));
+		$scopedPackBySourceKey[$sourceKey] = $packHeaderPath;
+	}
+	if ($scopedPackBySourceKey === []) {
+		return;
+	}
+	foreach ($generatedUnits as &$unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$relativePhp = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		$sourcePath = normalize_path($unitProjectRoot . '/' . $relativePhp);
+		$sourceKey = project_unit_stan_source_key($normalizedProjectRoot, $sourcePath);
+		if (isset($scopedPackBySourceKey[$sourceKey])) {
+			$unit['force_include_header'] = $scopedPackBySourceKey[$sourceKey];
+		}
+	}
+	unset($unit);
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
  * @return list<array<string,mixed>>
  */
-function collect_project_unit_dependency_summaries(string $projectRoot, array $projectContexts, array $generatedUnits): array
+function collect_project_unit_dependency_summaries(string $projectRoot, array $projectContexts, array $generatedUnits, bool $useStanDependencyState = true): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
 	$stanStatePath = is_array($rootContext) && is_string($rootContext['cache_dir'] ?? null)
 		? normalize_path($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE)
 		: '';
-	$stanDependencyState = load_project_unit_dependency_state_from_stan_state($stanStatePath);
+	$stanDependencyState = $useStanDependencyState ? load_project_unit_dependency_state_from_stan_state($stanStatePath) : null;
 	$hasStanDependencyState = $stanDependencyState !== null;
 	$stanDependencyKeys = is_array($stanDependencyState['dependency_keys'] ?? null) ? $stanDependencyState['dependency_keys'] : [];
 	$stanFileSummaries = is_array($stanDependencyState['file_summaries'] ?? null) ? $stanDependencyState['file_summaries'] : [];
@@ -4082,8 +4134,12 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			: normalize_config_path(relative_path($normalizedProjectRoot, normalize_path($unitGeneratedDir . '/__project_units/scoped-' . $candidateHash . '.hpp')));
 		$sourceSummary = is_array($stanFileSummaries[$sourceKey] ?? null) ? $stanFileSummaries[$sourceKey] : null;
 		$candidate = classify_project_unit_scoped_candidate($hasStanDependencyState, $sourceSummary, $unresolvedDependencyKeys, $ownHeader);
+		$forceIncludeHeader = normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['force_include_header'] ?? ''))));
+		$status = $candidate['status'] === 'candidate_scoped' && $forceIncludeHeader !== '' && $forceIncludeHeader === $candidatePackHeader
+			? 'scoped'
+			: 'fallback_broad';
 
-		$reasons = ['Phase C0 computes scoped pack candidates only; active compile edges still use broad-equivalent packs'];
+		$reasons = ['Phase C1 activates scoped packs for candidate_scoped units; blocked units still use broad-equivalent packs'];
 		if (!$hasStanDependencyState) {
 			$reasons[] = 'STAN dependency state unavailable for this build';
 		} elseif ($dependencyKeys === []) {
@@ -4099,8 +4155,8 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			'source_key' => $sourceKey,
 			'project_root' => normalize_config_path(relative_path($normalizedProjectRoot, $unitProjectRoot)),
 			'generated_header' => normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['generated_header'] ?? '')))),
-			'force_include_header' => normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['force_include_header'] ?? '')))),
-			'status' => 'fallback_broad',
+			'force_include_header' => $forceIncludeHeader,
+			'status' => $status,
 			'candidate_status' => $candidate['status'],
 			'candidate_scoped_headers' => $candidateHeaders,
 			'candidate_pack_hash' => $candidateHash,
@@ -4310,6 +4366,9 @@ function project_unit_force_include_header_mode(string $headerPath): string
 		return 'broad';
 	}
 	if (basename(dirname($normalizedHeaderPath)) === '__project_units') {
+		if (preg_match('/^scoped-[0-9a-f]{16}\.hpp$/', basename($normalizedHeaderPath)) === 1) {
+			return 'scoped';
+		}
 		return 'broad_equivalent_pack';
 	}
 	return 'scoped';

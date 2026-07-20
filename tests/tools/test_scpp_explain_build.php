@@ -89,15 +89,19 @@ final class ScppExplainBuildTest
 			}
 			$this->assertSame(3, $projectUnits['total_units'] ?? null, 'three-file project should report three compiled units');
 			$this->assertSame(3, $projectUnits['units_with_force_include'] ?? null, 'three-file project should force-include the project unit header for each generated unit');
-			$this->assertSame(1, $projectUnits['distinct_headers'] ?? null, 'three-file project should still use one broad project unit header');
+			$this->assertSame(3, $projectUnits['distinct_headers'] ?? null, 'three-file project should use scoped packs for safe declaration-only units and broad fallback for main');
 			$projectUnitHeaders = is_array($projectUnits['headers'] ?? null) ? $projectUnits['headers'] : [];
-			$projectUnitHeader = $projectUnitHeaders[0] ?? null;
-			if (!is_array($projectUnitHeader)) {
-				throw new RuntimeException('project unit report should contain a header row');
+			$headerModes = [];
+			foreach ($projectUnitHeaders as $projectUnitHeader) {
+				if (!is_array($projectUnitHeader)) {
+					continue;
+				}
+				$activeProjectUnitHeader = (string) ($projectUnitHeader['path'] ?? '');
+				$this->assertTrue(str_starts_with($activeProjectUnitHeader, '.prism/generated/__project_units/'), 'project unit report should name hash-pack headers');
+				$headerModes[] = (string) ($projectUnitHeader['mode'] ?? '');
 			}
-			$activeProjectUnitHeader = (string) ($projectUnitHeader['path'] ?? '');
-			$this->assertTrue(str_starts_with($activeProjectUnitHeader, '.prism/generated/__project_units/'), 'project unit report should name the active hash-pack header');
-			$this->assertSame('broad_equivalent_pack', $projectUnitHeader['mode'] ?? null, 'current project unit report should classify the active header as a broad-equivalent pack');
+			$this->assertTrue(in_array('scoped', $headerModes, true), 'project unit report should classify active scoped pack headers');
+			$this->assertTrue(in_array('broad_equivalent_pack', $headerModes, true), 'project unit report should preserve broad fallback pack headers');
 			$dependencySummaries = is_array($projectUnits['dependency_summaries'] ?? null) ? $projectUnits['dependency_summaries'] : [];
 			$dependencySummaryBySource = [];
 			foreach ($dependencySummaries as $summary) {
@@ -109,9 +113,10 @@ final class ScppExplainBuildTest
 			if (!is_array($childDependencySummary)) {
 				throw new RuntimeException('project unit report should contain a child.phs dependency summary');
 			}
-			$this->assertSame('fallback_broad', $childDependencySummary['status'] ?? null, 'dependency summaries should preserve the active broad fallback status');
-			$this->assertSame('candidate_scoped', $childDependencySummary['candidate_status'] ?? null, 'Phase C0 should recognize child.phs as a dry-run scoped pack candidate');
-			$this->assertTrue(str_starts_with((string) ($childDependencySummary['candidate_pack_header'] ?? ''), '.prism/generated/__project_units/scoped-'), 'Phase C0 should report the child scoped candidate pack path');
+			$this->assertSame('scoped', $childDependencySummary['status'] ?? null, 'C1 should activate scoped packs for safe declaration-only units');
+			$this->assertSame('candidate_scoped', $childDependencySummary['candidate_status'] ?? null, 'Phase C1 should recognize child.phs as a scoped pack candidate');
+			$this->assertTrue(str_starts_with((string) ($childDependencySummary['candidate_pack_header'] ?? ''), '.prism/generated/__project_units/scoped-'), 'Phase C1 should report the child scoped candidate pack path');
+			$this->assertSame($childDependencySummary['candidate_pack_header'] ?? null, $childDependencySummary['force_include_header'] ?? null, 'C1 should assign the scoped candidate pack to child.phs');
 			$childCandidateHeaders = is_array($childDependencySummary['candidate_scoped_headers'] ?? null) ? $childDependencySummary['candidate_scoped_headers'] : [];
 			$this->assertTrue(in_array('.prism/generated/__project_fwd.hpp', $childCandidateHeaders, true), 'child scoped candidate should include the project forward header');
 			$this->assertTrue(in_array('.prism/generated/base.hpp', $childCandidateHeaders, true), 'child scoped candidate should include its direct base header');
@@ -123,7 +128,8 @@ final class ScppExplainBuildTest
 			if (!is_array($mainDependencySummary)) {
 				throw new RuntimeException('project unit report should contain a main.phs dependency summary');
 			}
-			$this->assertSame('blocked_broad_fallback', $mainDependencySummary['candidate_status'] ?? null, 'executable source should stay blocked for scoped-pack activation during C0');
+			$this->assertSame('fallback_broad', $mainDependencySummary['status'] ?? null, 'executable source should keep the active broad fallback status during C1');
+			$this->assertSame('blocked_broad_fallback', $mainDependencySummary['candidate_status'] ?? null, 'executable source should stay blocked for scoped-pack activation during C1');
 			$this->assertContains('function or executable statement body present', implode("\n", is_array($mainDependencySummary['candidate_blocking_reasons'] ?? null) ? $mainDependencySummary['candidate_blocking_reasons'] : []), 'executable source should explain the scoped candidate blocker');
 
 			$sources = is_array($explanation['sources'] ?? null) ? $explanation['sources'] : [];
@@ -161,10 +167,12 @@ final class ScppExplainBuildTest
 
 			$projectUnitsView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-units'], [], 20.0);
 			$this->assertSame(0, $projectUnitsView['exit_code'], 'scpp explain-build project-units should succeed');
-			$this->assertContains('Project unit force-includes: 3/3 unit(s), 1 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
+			$this->assertContains('Project unit force-includes: 3/3 unit(s), 3 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
 			$this->assertContains('.prism/generated/__project_units/', $projectUnitsView['stdout'], 'project-units should list the force-included hash-pack header');
-			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify the active pack header');
-			$this->assertContains('child.phs: fallback_broad', $projectUnitsView['stdout'], 'project-units should list the child dependency summary');
+			$this->assertContains('scoped', $projectUnitsView['stdout'], 'project-units should classify active scoped pack headers');
+			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify fallback broad pack headers');
+			$this->assertContains('child.phs: scoped', $projectUnitsView['stdout'], 'project-units should list the active child scoped summary');
+			$this->assertContains('main.phs: fallback_broad', $projectUnitsView['stdout'], 'project-units should list the active main broad fallback summary');
 			$this->assertContains('candidate status: candidate_scoped', $projectUnitsView['stdout'], 'project-units should show scoped candidate status');
 			$this->assertContains('candidate pack: .prism/generated/__project_units/scoped-', $projectUnitsView['stdout'], 'project-units should show scoped candidate pack paths');
 			$this->assertContains('candidate scoped headers:', $projectUnitsView['stdout'], 'project-units should show scoped candidate header lists');
@@ -191,6 +199,39 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $ninjaTargetView['exit_code'], 'scpp explain-build ninja-target should succeed');
 			$this->assertContains('Direct Ninja target: main', $ninjaTargetView['stdout'], 'ninja-target should list the direct Ninja target');
 			$this->assertContains('Use `main` as the Ninja target, not `.prism/build/main`.', $ninjaTargetView['stdout'], 'ninja-target should explicitly contrast the target and executable path');
+
+			$noStanWarmBuild = scpp_run_build_service($project, $project . '/prism.json', ['disable_stan' => true]);
+			$this->assertSame(true, $noStanWarmBuild['ok'], 'warm --no-stan build should still succeed after a STAN-backed scoped-pack build');
+			$noStanBuildReport = json_decode($this->read($project . '/.prism/last_run.json'), true);
+			if (!is_array($noStanBuildReport)) {
+				throw new RuntimeException('no-STAN last_run.json should decode as an object');
+			}
+			$noStanBuildDetails = is_array($noStanBuildReport['details'] ?? null) ? $noStanBuildReport['details'] : [];
+			$noStanBuildExplanation = is_array($noStanBuildDetails['build_explanation'] ?? null) ? $noStanBuildDetails['build_explanation'] : [];
+			$noStanProjectUnits = is_array($noStanBuildExplanation['project_unit_force_includes'] ?? null) ? $noStanBuildExplanation['project_unit_force_includes'] : [];
+			$this->assertSame(3, $noStanProjectUnits['total_units'] ?? null, 'warm --no-stan build should still report all generated units');
+			$this->assertSame(1, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should fall back to one broad-equivalent pack even if stale STAN state exists');
+			$noStanBuildHeaders = is_array($noStanProjectUnits['headers'] ?? null) ? $noStanProjectUnits['headers'] : [];
+			$noStanBuildHeader = $noStanBuildHeaders[0] ?? null;
+			if (!is_array($noStanBuildHeader)) {
+				throw new RuntimeException('warm --no-stan project unit report should contain a header row');
+			}
+			$this->assertSame('broad_equivalent_pack', $noStanBuildHeader['mode'] ?? null, 'warm --no-stan build should keep active broad-equivalent pack mode');
+			$this->assertTrue(!str_contains((string) ($noStanBuildHeader['path'] ?? ''), '/scoped-'), 'warm --no-stan build should not assign stale scoped pack headers');
+			$noStanBuildSummaries = is_array($noStanProjectUnits['dependency_summaries'] ?? null) ? $noStanProjectUnits['dependency_summaries'] : [];
+			$noStanChildSummary = null;
+			foreach ($noStanBuildSummaries as $summary) {
+				if (is_array($summary) && ($summary['source'] ?? null) === 'child.phs') {
+					$noStanChildSummary = $summary;
+					break;
+				}
+			}
+			if (!is_array($noStanChildSummary)) {
+				throw new RuntimeException('warm --no-stan project unit report should contain a child.phs dependency summary');
+			}
+			$this->assertSame('fallback_broad', $noStanChildSummary['status'] ?? null, 'warm --no-stan child unit should keep broad fallback active status');
+			$this->assertSame('blocked_broad_fallback', $noStanChildSummary['candidate_status'] ?? null, 'warm --no-stan child unit should block scoped activation');
+			$this->assertContains('STAN dependency state unavailable', implode("\n", is_array($noStanChildSummary['candidate_blocking_reasons'] ?? null) ? $noStanChildSummary['candidate_blocking_reasons'] : []), 'warm --no-stan child unit should explain that STAN data is intentionally unavailable');
 
 			$noStanProject = $this->root . '/no_stan_report';
 			$this->mkdir($noStanProject . '/.prism/generated');
