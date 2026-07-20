@@ -285,6 +285,16 @@ Status legend:
   scoped-pack boundary: consuming project units include dependency `__project.hpp`
   exports, while dependency project units keep deterministic same-project local
   pack assignment.
+- [x] `PUH-023` Model function and method signatures separately from function
+  and method bodies. Source summaries now extract parameter and return type
+  dependencies for top-level functions and methods, while candidate blockers
+  distinguish executable bodies, function bodies, and method bodies. A
+  signature-only interface regression proves method signature dependencies can
+  activate scoped packs.
+- [x] `PUH-025a` Start complete-type dependency modeling by extracting class
+  property type dependencies into direct source/header evidence while keeping
+  property-layout units on broad fallback until layout-sensitive scoped
+  activation is implemented.
 
 ### Ready
 
@@ -295,19 +305,16 @@ Status legend:
 - [ ] `PUH-014` Make `project-units` and `generated-files` output suitable for
   large projects by keeping summaries compact and pushing verbose per-source
   detail behind the focused view only.
+- [ ] `PUH-022` Expose dependency categories in saved per-source rows and
+  focused `project-units` output, including direct type reference, inheritance,
+  function signature, method signature, property layout, unresolved symbol, and
+  missing summary evidence.
 
 ### Planned Dependency-Model Work
 
 - [ ] `PUH-021` Store/reuse a build-owned per-source dependency summary artifact
   with direct source keys, local header paths, export header paths, candidate
   status, blockers, and the summary freshness inputs that produced it.
-- [ ] `PUH-022` Expand candidate reasons from generic blockers into dependency
-  categories such as direct type reference, inheritance, function signature,
-  method signature, property layout, executable body, unresolved symbol, and
-  missing summary.
-- [ ] `PUH-023` Model function and method signatures separately from function
-  and method bodies. Signature-only declarations can often use scoped packs
-  earlier than body-heavy files.
 - [ ] `PUH-024` Model function-body dependencies for leaf helper files. Start
   with conservative same-project type/function references already named by
   source summaries; fallback broad on unresolved calls, dynamic construction, or

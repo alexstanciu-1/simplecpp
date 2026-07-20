@@ -336,6 +336,14 @@ generated PHS unit. Candidate rows include the scoped header list, the stable
 candidate hash/path, a candidate status, and any blocking reasons that kept the
 active compile edge on the broad-equivalent pack.
 
+Current lightweight source dependency summaries derive direct dependency keys
+from inheritance and interface declarations, `use` declarations, class property
+types, and function/method parameter and return types. These keys are used to
+report direct source dependencies and direct generated local headers for
+scoped-pack candidates. Layout-sensitive files with class properties still stay
+on broad fallback until complete-type scoped activation is modeled, even though
+their direct property type evidence is reported.
+
 The project-unit report also includes scoped fanout counters: active scoped
 generated units, active broad-fallback generated units, scoped candidates, and
 blocked candidates. These counters are intended to make rebuild-fanout changes

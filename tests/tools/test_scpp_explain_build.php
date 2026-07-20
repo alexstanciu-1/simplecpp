@@ -94,7 +94,7 @@ final class ScppExplainBuildTest
 			$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'three-file project should count one active broad fallback unit');
 			$this->assertSame(2, $projectUnits['candidate_scoped_units'] ?? null, 'three-file project should count two scoped candidates');
 			$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'three-file project should count one blocked scoped candidate');
-			$this->assertSame([['reason' => 'function or executable statement body present', 'unit_count' => 1]], $projectUnits['candidate_blocker_counts'] ?? null, 'three-file project should count the executable-body blocker');
+			$this->assertSame([['reason' => 'executable body present', 'unit_count' => 1]], $projectUnits['candidate_blocker_counts'] ?? null, 'three-file project should count the executable-body blocker');
 			$projectUnitHeaders = is_array($projectUnits['headers'] ?? null) ? $projectUnits['headers'] : [];
 			$headerModes = [];
 			foreach ($projectUnitHeaders as $projectUnitHeader) {
@@ -135,7 +135,7 @@ final class ScppExplainBuildTest
 			}
 			$this->assertSame('fallback_broad', $mainDependencySummary['status'] ?? null, 'executable source should keep the active broad fallback status during C1');
 			$this->assertSame('blocked_broad_fallback', $mainDependencySummary['candidate_status'] ?? null, 'executable source should stay blocked for scoped-pack activation during C1');
-			$this->assertContains('function or executable statement body present', implode("\n", is_array($mainDependencySummary['candidate_blocking_reasons'] ?? null) ? $mainDependencySummary['candidate_blocking_reasons'] : []), 'executable source should explain the scoped candidate blocker');
+			$this->assertContains('executable body present', implode("\n", is_array($mainDependencySummary['candidate_blocking_reasons'] ?? null) ? $mainDependencySummary['candidate_blocking_reasons'] : []), 'executable source should explain the scoped candidate blocker');
 
 			$sources = is_array($explanation['sources'] ?? null) ? $explanation['sources'] : [];
 			$sourceByPath = [];
@@ -184,7 +184,7 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $projectUnitsView['exit_code'], 'scpp explain-build project-units should succeed');
 			$this->assertContains('Project unit force-includes: 3/3 unit(s), 3 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
 			$this->assertContains('Project unit scoped fanout: active scoped 2, active broad fallback 1, candidates scoped 2, candidates blocked 1', $projectUnitsView['stdout'], 'project-units should summarize scoped activation fanout');
-			$this->assertContains('Project unit candidate blockers: function or executable statement body present (1 unit(s))', $projectUnitsView['stdout'], 'project-units should summarize candidate blocker counts');
+			$this->assertContains('Project unit candidate blockers: executable body present (1 unit(s))', $projectUnitsView['stdout'], 'project-units should summarize candidate blocker counts');
 			$this->assertContains('.prism/generated/__project_units/', $projectUnitsView['stdout'], 'project-units should list the force-included hash-pack header');
 			$this->assertContains('scoped', $projectUnitsView['stdout'], 'project-units should classify active scoped pack headers');
 			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify fallback broad pack headers');
@@ -193,7 +193,7 @@ final class ScppExplainBuildTest
 			$this->assertContains('candidate status: candidate_scoped', $projectUnitsView['stdout'], 'project-units should show scoped candidate status');
 			$this->assertContains('candidate pack: .prism/generated/__project_units/scoped-', $projectUnitsView['stdout'], 'project-units should show scoped candidate pack paths');
 			$this->assertContains('candidate scoped headers:', $projectUnitsView['stdout'], 'project-units should show scoped candidate header lists');
-			$this->assertContains('candidate blocker: function or executable statement body present', $projectUnitsView['stdout'], 'project-units should show scoped candidate blockers');
+			$this->assertContains('candidate blocker: executable body present', $projectUnitsView['stdout'], 'project-units should show scoped candidate blockers');
 			$this->assertContains('direct source dependencies: base.phs', $projectUnitsView['stdout'], 'project-units should show the child direct source dependency');
 			$this->assertContains('direct local headers: .prism/generated/base.hpp', $projectUnitsView['stdout'], 'project-units should show the child direct generated header dependency');
 
@@ -253,7 +253,7 @@ final class ScppExplainBuildTest
 			$this->assertSame(3, $noStanProjectUnits['candidate_blocked_units'] ?? null, 'warm --no-stan build should count all generated candidates as blocked');
 			$this->assertSame([
 				['reason' => 'STAN dependency state unavailable', 'unit_count' => 3],
-				['reason' => 'function or executable statement body present', 'unit_count' => 1],
+				['reason' => 'executable body present', 'unit_count' => 1],
 			], $noStanProjectUnits['candidate_blocker_counts'] ?? null, 'warm --no-stan build should use build-owned source summaries while keeping STAN-gated scoped activation blocked');
 			$this->assertFileExists($project . '/.prism/cache/project_unit_dependency_state.php', 'warm --no-stan build should write a build-owned project unit dependency state');
 			$noStanBuildHeaders = is_array($noStanProjectUnits['headers'] ?? null) ? $noStanProjectUnits['headers'] : [];

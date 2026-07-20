@@ -44,10 +44,23 @@ namespace App\Schema;
 class BaseNode {
 }
 PHS);
+		$this->write($project . '/schema/item.phs', <<<'PHS'
+namespace App\Schema;
+
+class Item {
+}
+PHS);
 		$this->write($project . '/orm/child_node.phs', <<<'PHS'
 namespace App\Orm;
 
 class ChildNode extends \App\Schema\BaseNode {
+}
+PHS);
+		$this->write($project . '/contracts/sink.phs', <<<'PHS'
+namespace App\Contracts;
+
+interface Sink {
+    public function accept(\App\Schema\Item $item): \App\Schema\BaseNode;
 }
 PHS);
 		$this->write($project . '/db/holder.phs', <<<'PHS'
@@ -55,6 +68,7 @@ namespace App\Db;
 
 class Holder {
     public \App\Schema\BaseNode $node;
+    public \App\Schema\Item $item;
 }
 PHS);
 		$this->write($project . '/main.phs', <<<'PHS'
@@ -69,10 +83,10 @@ PHS);
 		$this->assertSame(true, $build['ok'], 'nested namespace scoped-pack project should build');
 
 		$projectUnits = $this->loadProjectUnits($project);
-		$this->assertSame(4, $projectUnits['total_units'] ?? null, 'nested project should report four generated units');
-		$this->assertSame(2, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for the base and inheritance-only child');
+		$this->assertSame(6, $projectUnits['total_units'] ?? null, 'nested project should report six generated units');
+		$this->assertSame(4, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only and signature-only units');
 		$this->assertSame(2, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep the executable and property-layout unit broad');
-		$this->assertSame(2, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report two scoped candidates');
+		$this->assertSame(4, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report four scoped candidates');
 		$this->assertSame(2, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report two blocked candidates');
 
 		$childSummary = $this->findSummary($projectUnits, 'orm/child_node.phs', '');
@@ -86,9 +100,17 @@ PHS);
 		$this->assertOrderBefore('#include "../schema/base_node.hpp"', '#include "../orm/child_node.hpp"', $childPackContents, 'child scoped pack should include the base header before the child header');
 		$this->assertNotContains('db/holder.hpp', $childPackContents, 'child scoped pack should not include unrelated broad-fallback headers');
 
+		$sinkSummary = $this->findSummary($projectUnits, 'contracts/sink.phs', '');
+		$this->assertSame('scoped', $sinkSummary['status'] ?? null, 'signature-only interface should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $sinkSummary['candidate_status'] ?? null, 'signature-only interface should be a scoped candidate');
+		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $sinkSummary['direct_source_dependencies'] ?? null, 'method signatures should report direct type source dependencies');
+		$this->assertSame(['.prism/generated/schema/base_node.hpp', '.prism/generated/schema/item.hpp'], $sinkSummary['direct_local_headers'] ?? null, 'method signatures should map direct type dependencies to generated headers');
+
 		$holderSummary = $this->findSummary($projectUnits, 'db/holder.phs', '');
 		$this->assertSame('fallback_broad', $holderSummary['status'] ?? null, 'property-layout class should stay on broad fallback');
 		$this->assertSame('blocked_broad_fallback', $holderSummary['candidate_status'] ?? null, 'property-layout class should be blocked from scoped activation');
+		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $holderSummary['direct_source_dependencies'] ?? null, 'property types should report direct source dependencies even while layout remains broad');
+		$this->assertSame(['.prism/generated/schema/base_node.hpp', '.prism/generated/schema/item.hpp'], $holderSummary['direct_local_headers'] ?? null, 'property types should map direct type dependencies to generated headers');
 		$this->assertContains('class properties require complete-type dependency modeling', implode("\n", $holderSummary['candidate_blocking_reasons'] ?? []), 'property-layout blocker should be reported');
 	}
 

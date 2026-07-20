@@ -346,48 +346,66 @@ final class FrontEndSymbolExtractor
 	{
 		$dependencies = [];
 
+		foreach ($file->functions as $function) {
+			if (!$function instanceof FunctionDecl) {
+				continue;
+			}
+			$this->appendCallableTypeDependencies($dependencies, 'function', $function->params, $function->returnType, $function->name);
+		}
+
 		foreach ($file->classes as $class) {
 			if (!$class instanceof ClassDecl) {
 				continue;
 			}
+			$classOwner = $class->name;
 			if (is_string($class->parentClass) && $class->parentClass !== '') {
 				$dependencies[] = [
 					'kind' => 'extends',
 					'target' => $class->parentClass,
-					'owner' => $class->name,
+					'owner' => $classOwner,
 				];
 			}
 			foreach ($class->interfaces as $interface) {
 				$dependencies[] = [
 					'kind' => 'implements',
 					'target' => $interface,
-					'owner' => $class->name,
+					'owner' => $classOwner,
 				];
 			}
+			$this->appendClassTypeDependencies($dependencies, $class, $classOwner);
 		}
 
 		foreach ($file->namespaces as $namespaceBlock) {
 			if (!$namespaceBlock instanceof NamespaceBlock) {
 				continue;
 			}
+			foreach ($namespaceBlock->functions as $function) {
+				if (!$function instanceof FunctionDecl) {
+					continue;
+				}
+				$functionOwner = $namespaceBlock->name . '\\' . $function->name;
+				$this->appendCallableTypeDependencies($dependencies, 'function', $function->params, $function->returnType, $functionOwner);
+			}
 			foreach ($namespaceBlock->classes as $class) {
 				if (!$class instanceof ClassDecl) {
 					continue;
 				}
+				$classOwner = $namespaceBlock->name . '\\' . $class->name;
 				if (is_string($class->parentClass) && $class->parentClass !== '') {
 					$dependencies[] = [
 						'kind' => 'extends',
 						'target' => $class->parentClass,
-						'owner' => $namespaceBlock->name . '\\' . $class->name,
+						'owner' => $classOwner,
 					];
 				}
 				foreach ($class->interfaces as $interface) {
 					$dependencies[] = [
 						'kind' => 'implements',
 						'target' => $interface,
-						'owner' => $namespaceBlock->name . '\\' . $class->name,
+						'owner' => $classOwner,
 					];
 				}
+				$this->appendClassTypeDependencies($dependencies, $class, $classOwner);
 			}
 
 			foreach ($namespaceBlock->uses as $useDecl) {
@@ -414,6 +432,148 @@ final class FrontEndSymbolExtractor
 		}
 
 		return $dependencies;
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 * @param list<ParamDecl> $params
+	 */
+	private function appendCallableTypeDependencies(array &$dependencies, string $kindPrefix, array $params, ?string $returnType, ?string $owner): void
+	{
+		foreach ($params as $param) {
+			if (!$param instanceof ParamDecl) {
+				continue;
+			}
+			$this->appendTypeDependencies($dependencies, $kindPrefix . '_param_type', $param->type, $owner);
+		}
+		$this->appendTypeDependencies($dependencies, $kindPrefix . '_return_type', $returnType, $owner);
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 */
+	private function appendClassTypeDependencies(array &$dependencies, ClassDecl $class, string $classOwner): void
+	{
+		$this->appendTypeDependencies($dependencies, 'enum_backing_type', $class->enumBackingType, $classOwner);
+		foreach ($class->properties as $property) {
+			if (!$property instanceof PropertyDecl) {
+				continue;
+			}
+			$this->appendTypeDependencies($dependencies, 'property_type', $property->type, $classOwner);
+		}
+		foreach ($class->methods as $method) {
+			if (!$method instanceof MethodDecl) {
+				continue;
+			}
+			$methodOwner = $classOwner . '::' . $method->name;
+			$this->appendCallableTypeDependencies($dependencies, 'method', $method->params, $method->returnType, $methodOwner);
+		}
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 */
+	private function appendTypeDependencies(array &$dependencies, string $kind, ?string $type, ?string $owner): void
+	{
+		foreach ($this->collectTypeDependencyTargets($type) as $target) {
+			$dependencies[] = [
+				'kind' => $kind,
+				'target' => $target,
+				'owner' => $owner,
+			];
+		}
+	}
+
+	/** @return list<string> */
+	private function collectTypeDependencyTargets(?string $type): array
+	{
+		if ($type === null || trim($type) === '') {
+			return [];
+		}
+		if (preg_match_all('/\\\\?[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*/', $type, $matches) === false) {
+			return [];
+		}
+		$targets = [];
+		foreach ($matches[0] ?? [] as $rawTarget) {
+			if (!is_string($rawTarget)) {
+				continue;
+			}
+			$target = trim($rawTarget, "\\ \t\n\r\0\x0B");
+			if ($target === '' || $this->isBuiltinTypeDependencyTarget($target)) {
+				continue;
+			}
+			$targets[$target] = true;
+		}
+		$result = array_keys($targets);
+		sort($result, SORT_STRING);
+		return $result;
+	}
+
+	private function isBuiltinTypeDependencyTarget(string $target): bool
+	{
+		$lower = strtolower($target);
+		$builtins = [
+			'any' => true,
+			'array' => true,
+			'array_t' => true,
+			'bool' => true,
+			'boolean' => true,
+			'byte' => true,
+			'callable' => true,
+			'char' => true,
+			'class' => true,
+			'double' => true,
+			'dynamic' => true,
+			'false' => true,
+			'fixed_array' => true,
+			'fixed_array_t' => true,
+			'float' => true,
+			'float32' => true,
+			'float64' => true,
+			'hash' => true,
+			'hash_t' => true,
+			'int' => true,
+			'int8' => true,
+			'int16' => true,
+			'int32' => true,
+			'int64' => true,
+			'int8_t' => true,
+			'int16_t' => true,
+			'int32_t' => true,
+			'int64_t' => true,
+			'integer' => true,
+			'iterable' => true,
+			'long' => true,
+			'mixed' => true,
+			'mixed_t' => true,
+			'namespace' => true,
+			'null' => true,
+			'object' => true,
+			'parent' => true,
+			'resource' => true,
+			'self' => true,
+			'shared_p' => true,
+			'short' => true,
+			'size_t' => true,
+			'static' => true,
+			'std' => true,
+			'string' => true,
+			'string_t' => true,
+			'true' => true,
+			'uint' => true,
+			'uint8' => true,
+			'uint16' => true,
+			'uint32' => true,
+			'uint64' => true,
+			'uint8_t' => true,
+			'uint16_t' => true,
+			'uint32_t' => true,
+			'uint64_t' => true,
+			'void' => true,
+			'vector' => true,
+			'vector_t' => true,
+		];
+		return isset($builtins[$lower]);
 	}
 
 	/** @return array<string,mixed> */

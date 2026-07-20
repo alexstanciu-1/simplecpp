@@ -4549,7 +4549,9 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary):
 	}
 	foreach (project_unit_summary_function_buckets($summary) as $function) {
 		if ((int) ($function['statement_count'] ?? 0) > 0) {
-			$blockers[] = 'function or executable statement body present';
+			$blockers[] = (bool) ($function['is_synthetic_entrypoint'] ?? false)
+				? 'executable body present'
+				: 'function body present';
 			break;
 		}
 	}
