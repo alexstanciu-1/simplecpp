@@ -3989,6 +3989,7 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 
 	$dependencySummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
 	$statusCounts = summarize_project_unit_dependency_status_counts($dependencySummaries);
+	$candidateBlockerCounts = summarize_project_unit_candidate_blocker_counts($dependencySummaries);
 
 	return [
 		'total_units' => count($units),
@@ -3998,6 +3999,7 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 		'active_broad_fallback_units' => $statusCounts['active_broad_fallback_units'],
 		'candidate_scoped_units' => $statusCounts['candidate_scoped_units'],
 		'candidate_blocked_units' => $statusCounts['candidate_blocked_units'],
+		'candidate_blocker_counts' => $candidateBlockerCounts,
 		'headers' => $headers,
 		'dependency_summaries' => $dependencySummaries,
 	];
@@ -4031,6 +4033,35 @@ function summarize_project_unit_dependency_status_counts(array $dependencySummar
 		}
 	}
 	return $counts;
+}
+
+/**
+ * @param list<array<string,mixed>> $dependencySummaries
+ * @return list<array{reason:string,unit_count:int}>
+ */
+function summarize_project_unit_candidate_blocker_counts(array $dependencySummaries): array
+{
+	$counts = [];
+	foreach ($dependencySummaries as $summary) {
+		if (!is_array($summary)) {
+			continue;
+		}
+		foreach (normalize_string_list($summary['candidate_blocking_reasons'] ?? []) as $reason) {
+			$counts[$reason] = ($counts[$reason] ?? 0) + 1;
+		}
+	}
+	$rows = [];
+	foreach ($counts as $reason => $unitCount) {
+		$rows[] = [
+			'reason' => $reason,
+			'unit_count' => $unitCount,
+		];
+	}
+	usort($rows, static function (array $left, array $right): int {
+		$byCount = ((int) ($right['unit_count'] ?? 0)) <=> ((int) ($left['unit_count'] ?? 0));
+		return $byCount !== 0 ? $byCount : strcmp((string) ($left['reason'] ?? ''), (string) ($right['reason'] ?? ''));
+	});
+	return $rows;
 }
 
 /**
@@ -4437,9 +4468,37 @@ function normalize_project_unit_force_include_report(array $report): array
 		'active_broad_fallback_units' => max(0, (int) ($report['active_broad_fallback_units'] ?? 0)),
 		'candidate_scoped_units' => max(0, (int) ($report['candidate_scoped_units'] ?? 0)),
 		'candidate_blocked_units' => max(0, (int) ($report['candidate_blocked_units'] ?? 0)),
+		'candidate_blocker_counts' => normalize_project_unit_candidate_blocker_counts(is_array($report['candidate_blocker_counts'] ?? null) ? $report['candidate_blocker_counts'] : []),
 		'headers' => $headers,
 		'dependency_summaries' => normalize_project_unit_dependency_summaries(is_array($report['dependency_summaries'] ?? null) ? $report['dependency_summaries'] : []),
 	];
+}
+
+/**
+ * @param list<array<string,mixed>> $rows
+ * @return list<array{reason:string,unit_count:int}>
+ */
+function normalize_project_unit_candidate_blocker_counts(array $rows): array
+{
+	$normalized = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$reason = trim((string) ($row['reason'] ?? ''));
+		if ($reason === '') {
+			continue;
+		}
+		$normalized[] = [
+			'reason' => $reason,
+			'unit_count' => max(0, (int) ($row['unit_count'] ?? 0)),
+		];
+	}
+	usort($normalized, static function (array $left, array $right): int {
+		$byCount = ((int) ($right['unit_count'] ?? 0)) <=> ((int) ($left['unit_count'] ?? 0));
+		return $byCount !== 0 ? $byCount : strcmp((string) ($left['reason'] ?? ''), (string) ($right['reason'] ?? ''));
+	});
+	return $normalized;
 }
 
 /**
@@ -5858,6 +5917,14 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 			. ', active broad fallback ' . $activeBroadFallbackUnits
 			. ', candidates scoped ' . $candidateScopedUnits
 			. ', candidates blocked ' . $candidateBlockedUnits;
+	}
+	$candidateBlockerCounts = normalize_project_unit_candidate_blocker_counts(is_array($report['candidate_blocker_counts'] ?? null) ? $report['candidate_blocker_counts'] : []);
+	if ($candidateBlockerCounts !== []) {
+		$blockerParts = [];
+		foreach (array_slice($candidateBlockerCounts, 0, 5) as $row) {
+			$blockerParts[] = (string) ($row['reason'] ?? '') . ' (' . (int) ($row['unit_count'] ?? 0) . ' unit(s))';
+		}
+		$lines[] = 'Project unit candidate blockers: ' . implode('; ', $blockerParts);
 	}
 	foreach ($headers as $header) {
 		if (!is_array($header)) {

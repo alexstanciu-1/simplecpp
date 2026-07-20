@@ -336,6 +336,10 @@ The project-unit report also includes scoped fanout counters: active scoped
 generated units, active broad-fallback generated units, scoped candidates, and
 blocked candidates. These counters are intended to make rebuild-fanout changes
 measurable as dependency precision expands.
+
+Blocked candidate reports include blocker histograms so the most common reasons
+for broad fallback can be tracked across a project without scanning every unit
+row.
 - `examples`
 - `authoring`
 - `gotchas`
