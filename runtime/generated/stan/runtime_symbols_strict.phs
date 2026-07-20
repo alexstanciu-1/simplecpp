@@ -8,6 +8,9 @@ function __scpp_debug_call_entry(): void {}
 function __scpp_debug_dump(string $phase, string $label, mixed $value): void {}
 function __scpp_debug_exit(): void {}
 function bin2hex(string $bytes): string {}
+function byte_span_at(byte_span $span, int $offset): byte {}
+function byte_span_len(byte_span $span): uint32 {}
+function byte_span_to_string(byte_span $span): string {}
 function cli_argc(): int {}
 function cli_args(): mixed {}
 function cli_argv(): mixed {}
@@ -32,6 +35,8 @@ function dt_format(int $stamp, string $format): string {}
 function dt_format_iso_utc(int $stamp): string {}
 function dt_format_now(string $format): string {}
 function dt_monotonic_ms(): int {}
+function dt_monotonic_ns(): uint64 {}
+function dt_monotonic_us(): uint64 {}
 function dt_now(): int {}
 function dt_now_ms(): int {}
 function dt_parse(string $text): result<int> {}
@@ -60,6 +65,8 @@ function fs_scan(string $path): result<vector<string>> {}
 function fs_size(string $path): result<int> {}
 function fs_touch(string $path): bool {}
 function getenv(string $name): mixed {}
+function hash_bytes(byte_span $span): string {}
+function hash_string(string $text): string {}
 function hex2bin(string $hex): result_or_false<string> {}
 function identical(mixed $left, mixed $right): bool {}
 function implode(string $separator, mixed $parts): string {}
@@ -80,10 +87,15 @@ function isset_eval(): bool {}
 function js_plus(): mixed {}
 function json_decode(string $json): dynamic {}
 function json_encode(mixed $value): string {}
+function jss_tokenize(string $source): token_buffer {}
+function jss_tokenize_buffer(string $source): token_buffer {}
 function lcfirst(string $text): string {}
 function ltrim(string $text): string {}
+function microtime(bool $as_float = false): mixed {}
 function not_identical(mixed $left, mixed $right): bool {}
 function number_format(float $value): string {}
+function phs_tokenize(string $source): token_buffer {}
+function phs_tokenize_buffer(string $source): token_buffer {}
 function regex_filter(string $pattern, $input vector<string>): vector<string> {}
 function regex_grep(string $pattern, $input vector<string>): vector<string> {}
 function regex_jit_available(): bool {}
@@ -99,11 +111,46 @@ function regex_replace_callback_array(string $subject): result_or_false<string> 
 function regex_split(string $pattern, string $subject): result_or_false<vector<string>> {}
 function rtrim(string $text): string {}
 function shell_exec(string $command): mixed {}
+function source_buffer_byte_at(source_buffer $buffer, int $offset): byte {}
+function source_buffer_byte_len(source_buffer $buffer): uint32 {}
+function source_buffer_release(source_buffer $buffer): string {}
+function source_buffer_slice(source_buffer $buffer, int $offset, int $length): string {}
+function source_buffer_span(source_buffer $buffer, int $offset, int $length): byte_span {}
+function source_buffer_take(string $text): source_buffer {}
+function source_line_index_build(source_buffer $buffer): source_line_index {}
+function source_line_index_line_column_to_offset(source_line_index $index, int $line, int $column): uint32 {}
+function source_line_index_line_count(source_line_index $index): uint32 {}
+function source_line_index_offset_to_location(source_line_index $index, int $offset): source_location {}
+function source_location_column(source_location $location): uint32 {}
+function source_location_line(source_location $location): uint32 {}
+function source_location_offset(source_location $location): uint32 {}
+function stable_hash_bytes_u64(byte_span $span): uint64 {}
+function stable_hash_string_u64(string $text): uint64 {}
 function str_contains(string $text, string $needle): bool {}
 function str_ends_with(string $text, string $suffix): bool {}
 function str_pad(string $text, int $length): string {}
 function str_replace(string $search, string $replace, string $subject): string {}
 function str_starts_with(string $text, string $prefix): bool {}
+function string_byte_at(string $text, int $offset): int {}
+function string_byte_find(string $haystack, string $needle, int $offset = 0): result_or_false<int> {}
+function string_byte_len(string $text): int {}
+function string_byte_slice(string $text, int $offset, int $length): string {}
+function string_byte_slice_equals(string $text, int $offset, int $length, string $literal): bool {}
+function string_grapheme_count(string $text): int {}
+function string_grapheme_slice(string $text, int $start, int $length): string {}
+function string_parts_builder_append_bool(string_parts_builder $builder, bool $value): void {}
+function string_parts_builder_append_int(string_parts_builder $builder, int $value): void {}
+function string_parts_builder_append_string(string_parts_builder $builder, string $value): void {}
+function string_parts_builder_byte_len(string_parts_builder $builder): int {}
+function string_parts_builder_capacity(string_parts_builder $builder): int {}
+function string_parts_builder_clear(string_parts_builder $builder): void {}
+function string_parts_builder_count(string_parts_builder $builder): int {}
+function string_parts_builder_create(): string_parts_builder {}
+function string_parts_builder_reserve(string_parts_builder $builder, int $capacity): void {}
+function string_parts_builder_to_string(string_parts_builder $builder): string {}
+function string_utf8_codepoint_at(string $text, int $index): int {}
+function string_utf8_codepoint_count(string $text): int {}
+function string_utf8_slice_codepoints(string $text, int $start, int $length): string {}
 function strlen(string $text): int {}
 function strpos(string $haystack, string $needle): result_or_false<int> {}
 function strrpos(string $haystack, string $needle): result_or_false<int> {}
@@ -122,8 +169,27 @@ function task_set_status(task_context $ctx, string $status): void {}
 function task_start(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): task_batch {}
 function task_status(task_batch $batch): string {}
 function ternary_eval(): mixed {}
+function text_builder_append_bool(text_builder $builder, bool $value): void {}
+function text_builder_append_byte_span(text_builder $builder, byte_span $span): void {}
+function text_builder_append_int(text_builder $builder, int $value): void {}
+function text_builder_append_string(text_builder $builder, string $value): void {}
+function text_builder_byte_len(text_builder $builder): int {}
+function text_builder_capacity_bytes(text_builder $builder): int {}
+function text_builder_clear(text_builder $builder): void {}
+function text_builder_create(): text_builder {}
+function text_builder_reserve_bytes(text_builder $builder, int $capacity): void {}
+function text_builder_take_string(text_builder $builder): string {}
+function text_builder_to_string(text_builder $builder): string {}
 function to_dynamic(): mixed {}
 function to_hash(mixed $value): hash<mixed> {}
+function token_buffer_column(token_buffer $buffer, int $index): int {}
+function token_buffer_count(token_buffer $buffer): int {}
+function token_buffer_flags(token_buffer $buffer, int $index): int {}
+function token_buffer_kind_id(token_buffer $buffer, int $index): int {}
+function token_buffer_length(token_buffer $buffer, int $index): int {}
+function token_buffer_line(token_buffer $buffer, int $index): int {}
+function token_buffer_start_offset(token_buffer $buffer, int $index): int {}
+function token_buffer_to_mixed(token_buffer $buffer): mixed {}
 function trim(string $text): string {}
 function ucfirst(string $text): string {}
 function ui_app_create(): result<ui_app> {}
@@ -140,6 +206,13 @@ function ui_window_close(ui_window $window): result<bool> {}
 function ui_window_create(ui_app $app, string $title, int $width, int $height): result<ui_window> {}
 function ui_window_show(ui_window $window): result<bool> {}
 function var_dump(mixed $value): void {}
+function vector_capacity(mixed $values): int {}
+function vector_clear(mixed $values): void {}
+function vector_clear_keep_capacity(mixed $values): void {}
+function vector_compact(mixed $values, int $capacity = 0): void {}
+function vector_filled(int $count, mixed $default_value): mixed {}
+function vector_reserve(mixed $values, int $capacity): void {}
+function vector_resize(mixed $values, int $count, mixed $default_value): void {}
 function webview_close(webview $view): void {}
 function webview_create(ui_window $window): result<webview> {}
 function webview_eval(webview $view, string $script): result<bool> {}
@@ -153,6 +226,26 @@ function webview_reply_error(webview $view, int $id, string $code, string $messa
 function webview_reply_ok(webview $view, int $id, string $value_json): result<bool> {}
 
 namespace scpp;
+
+class token_buffer
+{
+}
+
+class string_parts_builder
+{
+}
+
+class text_builder
+{
+}
+
+class source_line_index
+{
+}
+
+class source_location
+{
+}
 
 class task_batch
 {

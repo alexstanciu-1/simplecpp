@@ -24,6 +24,7 @@ Current runtime targets include:
 - `scpp_json` â†’ JSON runtime module
 - `scpp_filesystem` -> filesystem runtime module
 - `scpp_datetime` -> datetime runtime module
+- `scpp_tokenizer` -> tokenizer runtime module
 
 ## Dependency rule
 
@@ -43,6 +44,7 @@ Current examples:
 - filesystem implementation lives in `modules/filesystem/` and `namespace scpp::fs`
 - datetime implementation lives in `modules/datetime/` and `namespace scpp::dt`
 - regex implementation lives in `modules/regex/` and `namespace scpp::regex`
+- tokenizer implementation lives in `modules/tokenizer/` and `namespace scpp::tokenizer`
 - PHP keeps wrapper headers in `lang/php/`
 
 

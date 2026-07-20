@@ -1,0 +1,51 @@
+{
+    "id": "strict_source_002_line_index",
+    "feature": "source",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "1\n1:1:0\n3\n2:2:3\n5\n3\n2:2:4\n7\n1:3:2\n2:1:3\n1\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "source_buffer",
+        "source_line_index"
+    ],
+    "notes": "Source line indexes should map byte offsets to 1-based line/byte-column locations for empty, LF, CRLF, and UTF-8 byte-column inputs.",
+    "build": {
+        "sanitizers": null
+    }
+}

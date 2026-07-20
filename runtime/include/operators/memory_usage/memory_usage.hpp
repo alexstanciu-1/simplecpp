@@ -2,6 +2,12 @@
 
 #include "lang/php/support/php_common.hpp"
 
+#include <cstring>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <sys/resource.h>
+
 namespace scpp {
 
 namespace detail {

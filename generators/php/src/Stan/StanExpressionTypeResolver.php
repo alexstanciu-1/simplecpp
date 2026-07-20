@@ -120,6 +120,47 @@ final class StanExpressionTypeResolver
 	}
 
 	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectUnsupportedHashKeyDiagnostics(array $fileSummaries, array $symbolIndex): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries);
+		$classLookup = $this->buildClassLookup($classCatalog);
+		$diagnostics = [];
+
+		foreach ($fileSummaries as $summary) {
+			$path = (string) ($summary['path'] ?? '(unknown)');
+			foreach (($summary['root_functions'] ?? []) as $function) {
+				if (is_array($function)) {
+					$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($function, (string) ($function['name'] ?? 'function'), $path, $classLookup));
+				}
+			}
+			foreach (($summary['root_classes'] ?? []) as $class) {
+				if (is_array($class)) {
+					$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForClass($class, (string) ($class['name'] ?? 'class'), $path, $classLookup));
+				}
+			}
+			foreach (($summary['namespaces'] ?? []) as $namespace) {
+				if (!is_array($namespace)) {
+					continue;
+				}
+				$namespaceName = (string) ($namespace['name'] ?? '');
+				foreach (($namespace['functions'] ?? []) as $function) {
+					if (is_array($function)) {
+						$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($function, $this->contextName($namespaceName, (string) ($function['name'] ?? 'function')), $path, $classLookup));
+					}
+				}
+				foreach (($namespace['classes'] ?? []) as $class) {
+					if (is_array($class)) {
+						$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForClass($class, $this->contextName($namespaceName, (string) ($class['name'] ?? 'class')), $path, $classLookup));
+					}
+				}
+			}
+		}
+
+		usort($diagnostics, static fn (array $a, array $b): int => strcmp($a['message'], $b['message']));
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
 	public function collectPropertyTypeDiagnostics(array $fileSummaries, array $symbolIndex): array
 	{
 		$classCatalog = $this->buildClassCatalog($fileSummaries);
@@ -751,6 +792,121 @@ final class StanExpressionTypeResolver
 		return $map;
 	}
 
+	/** @param array<string,mixed> $owner @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForOwner(array $owner, string $context, string $path, array $classLookup): array
+	{
+		$diagnostics = [];
+		foreach (($owner['params'] ?? []) as $param) {
+			if (is_array($param)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($param['type'] ?? ''), (int) ($param['line'] ?? 0), 'parameter $' . (string) ($param['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($owner['return_type'] ?? ''), (int) ($owner['line'] ?? 0), 'return type', $context, $path, $classLookup));
+		foreach (($owner['typed_locals'] ?? []) as $local) {
+			if (is_array($local)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($local['type'] ?? ''), (int) ($local['line'] ?? 0), 'local $' . (string) ($local['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForClass(array $class, string $context, string $path, array $classLookup): array
+	{
+		$diagnostics = [];
+		foreach (($class['properties'] ?? []) as $property) {
+			if (is_array($property)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($property['type'] ?? ''), (int) ($property['line'] ?? 0), 'property $' . (string) ($property['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($method, $context . '::' . (string) ($method['name'] ?? 'method'), $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForType(string $type, int $line, string $slot, string $context, string $path, array $classLookup): array
+	{
+		$type = trim($type);
+		if ($type === '') {
+			return [];
+		}
+		$diagnostics = [];
+		if (preg_match('/^(?:hash|hash_t)\s*<\s*(.+)\s*>$/i', $type, $matches) === 1) {
+			$args = $this->splitTopLevelGenericArgs((string) $matches[1]);
+			if (count($args) === 2 && !$this->isSupportedSourceHashKeyType($args[1], $classLookup)) {
+				$diagnostics[] = [
+					'kind' => 'unsupported_hash_key_type',
+					'severity' => 'error',
+					'context' => $context,
+					'path' => $path,
+					'line' => $line,
+					'target_type' => $type,
+					'slot' => $slot,
+					'message' => 'Unsupported hash<T,T_KEY> key type `' . trim($args[1]) . '` in ' . $slot . ' of `' . $context . '`. Supported key families are string, integer aliases, enum types, shared<T>, unique<T>, and weak<T>.',
+				];
+			}
+			foreach ($args as $arg) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType($arg, $line, $slot, $context, $path, $classLookup));
+			}
+			return $diagnostics;
+		}
+		if (preg_match('/^[a-zA-Z_\\\\][a-zA-Z0-9_\\\\]*\s*<\s*(.+)\s*>$/', $type, $matches) === 1) {
+			foreach ($this->splitTopLevelGenericArgs((string) $matches[1]) as $arg) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType($arg, $line, $slot, $context, $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup */
+	private function isSupportedSourceHashKeyType(string $type, array $classLookup): bool
+	{
+		$normalized = strtolower(ltrim(trim($type), '\\'));
+		if (in_array($normalized, ['string', 'string_t', 'int', 'int_t', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
+			return true;
+		}
+		if ($this->enumTypeId($type, $classLookup, null) !== null) {
+			return true;
+		}
+		return preg_match('/^(?:shared|unique|weak|weakref|shared_p|unique_p|weak_p)\s*<\s*.+\s*>$/i', trim($type)) === 1;
+	}
+
+	/** @return list<string> */
+	private function splitTopLevelGenericArgs(string $text): array
+	{
+		$args = [];
+		$current = '';
+		$depth = 0;
+		$length = strlen($text);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $text[$i];
+			if ($ch === '<') {
+				++$depth;
+			} elseif ($ch === '>') {
+				$depth = max(0, $depth - 1);
+			} elseif ($ch === ',' && $depth === 0) {
+				$args[] = trim($current);
+				$current = '';
+				continue;
+			}
+			$current .= $ch;
+		}
+		if (trim($current) !== '') {
+			$args[] = trim($current);
+		}
+		return $args;
+	}
+
+	private function contextName(string $namespace, string $name): string
+	{
+		$namespace = trim($namespace, '\\');
+		return $namespace === '' ? $name : $namespace . '\\' . $name;
+	}
+
 	/** @param array<string,mixed> $chain @param array<string,string> $paramTypes @param array<string,array<string,mixed>> $classLookup */
 	private function resolveChainType(array $chain, array $paramTypes, ?string $selfType, array $classLookup, array $functionLookup): string
 	{
@@ -1066,6 +1222,7 @@ final class StanExpressionTypeResolver
 					continue;
 				}
 				$declaredLocals[$name] = true;
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (int) ($event['line'] ?? 0));
 				$resolvedTypes = $this->resolveAssignmentDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 				$resolvedTypes = $this->normalizeTypeSet($resolvedTypes);
 				if ($resolvedTypes !== []) {
@@ -1615,7 +1772,7 @@ final class StanExpressionTypeResolver
 	{
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
-			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment'], true)) {
+			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment', 'enum_assignment', 'enum_comparison'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -1830,8 +1987,436 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
-		return $catalog;
-	}
+		$catalog['enum_value'] = [
+			'name' => 'enum_value',
+			'namespace' => null,
+			'params' => [['name' => 'case', 'type' => 'mixed']],
+			'return_type' => 'int',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['enum_name'] = [
+			'name' => 'enum_name',
+			'namespace' => null,
+			'params' => [['name' => 'case', 'type' => 'mixed']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['enum_from_value'] = [
+			'name' => 'enum_from_value',
+			'namespace' => null,
+			'params' => [
+				['name' => 'enum_class', 'type' => 'mixed'],
+				['name' => 'value', 'type' => 'mixed'],
+			],
+			'return_type' => 'mixed',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_reserve'] = [
+			'name' => 'vector_reserve',
+			'namespace' => null,
+			'params' => [
+				['name' => 'values', 'type' => 'mixed'],
+				['name' => 'capacity', 'type' => 'int'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_capacity'] = [
+			'name' => 'vector_capacity',
+			'namespace' => null,
+			'params' => [['name' => 'values', 'type' => 'mixed']],
+			'return_type' => 'int',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_resize'] = [
+			'name' => 'vector_resize',
+			'namespace' => null,
+			'params' => [
+				['name' => 'values', 'type' => 'mixed'],
+				['name' => 'count', 'type' => 'int'],
+				['name' => 'default_value', 'type' => 'mixed'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_filled'] = [
+			'name' => 'vector_filled',
+			'namespace' => null,
+			'params' => [
+				['name' => 'count', 'type' => 'int'],
+				['name' => 'default_value', 'type' => 'mixed'],
+			],
+			'return_type' => 'mixed',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_clear'] = [
+			'name' => 'vector_clear',
+			'namespace' => null,
+			'params' => [['name' => 'values', 'type' => 'mixed']],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_clear_keep_capacity'] = [
+			'name' => 'vector_clear_keep_capacity',
+			'namespace' => null,
+			'params' => [['name' => 'values', 'type' => 'mixed']],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_compact'] = [
+			'name' => 'vector_compact',
+			'namespace' => null,
+			'params' => [
+				['name' => 'values', 'type' => 'mixed'],
+				['name' => 'capacity', 'type' => '?int'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_take'] = [
+			'name' => 'source_buffer_take',
+			'namespace' => null,
+			'params' => [['name' => 'text', 'type' => 'string']],
+			'return_type' => 'source_buffer',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_release'] = [
+			'name' => 'source_buffer_release',
+			'namespace' => null,
+			'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_byte_len'] = [
+			'name' => 'source_buffer_byte_len',
+			'namespace' => null,
+			'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+			'return_type' => 'uint32',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_byte_at'] = [
+			'name' => 'source_buffer_byte_at',
+			'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+			],
+			'return_type' => 'byte',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_span'] = [
+			'name' => 'source_buffer_span',
+			'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+				['name' => 'length', 'type' => 'int'],
+			],
+			'return_type' => 'byte_span',
+			'line' => 0,
+			'is_static' => false,
+		];
+			$catalog['source_buffer_slice'] = [
+				'name' => 'source_buffer_slice',
+				'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+				['name' => 'length', 'type' => 'int'],
+			],
+			'return_type' => 'string',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_build'] = [
+				'name' => 'source_line_index_build',
+				'namespace' => null,
+				'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+				'return_type' => 'source_line_index',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_line_count'] = [
+				'name' => 'source_line_index_line_count',
+				'namespace' => null,
+				'params' => [['name' => 'index', 'type' => 'source_line_index']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_offset_to_location'] = [
+				'name' => 'source_line_index_offset_to_location',
+				'namespace' => null,
+				'params' => [
+					['name' => 'index', 'type' => 'source_line_index'],
+					['name' => 'offset', 'type' => 'int'],
+				],
+				'return_type' => 'source_location',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_line_column_to_offset'] = [
+				'name' => 'source_line_index_line_column_to_offset',
+				'namespace' => null,
+				'params' => [
+					['name' => 'index', 'type' => 'source_line_index'],
+					['name' => 'line', 'type' => 'int'],
+					['name' => 'column', 'type' => 'int'],
+				],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_offset'] = [
+				'name' => 'source_location_offset',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_line'] = [
+				'name' => 'source_location_line',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_column'] = [
+				'name' => 'source_location_column',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['byte_span_len'] = [
+			'name' => 'byte_span_len',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'uint32',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['byte_span_at'] = [
+			'name' => 'byte_span_at',
+			'namespace' => null,
+			'params' => [
+				['name' => 'span', 'type' => 'byte_span'],
+				['name' => 'offset', 'type' => 'int'],
+			],
+			'return_type' => 'byte',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['byte_span_to_string'] = [
+			'name' => 'byte_span_to_string',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['hash_bytes'] = [
+			'name' => 'hash_bytes',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+			$catalog['stable_hash_string_u64'] = [
+				'name' => 'stable_hash_string_u64',
+				'namespace' => null,
+				'params' => [['name' => 'text', 'type' => 'string']],
+				'return_type' => 'uint64',
+				'line' => 0,
+				'is_static' => false,
+			];
+		$catalog['stable_hash_bytes_u64'] = [
+			'name' => 'stable_hash_bytes_u64',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'uint64',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['string_parts_builder_create'] = [
+				'name' => 'string_parts_builder_create',
+				'namespace' => null,
+				'params' => [],
+				'return_type' => 'string_parts_builder',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_reserve'] = [
+				'name' => 'string_parts_builder_reserve',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'capacity', 'type' => 'int'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_count'] = [
+				'name' => 'string_parts_builder_count',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_capacity'] = [
+				'name' => 'string_parts_builder_capacity',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_byte_len'] = [
+				'name' => 'string_parts_builder_byte_len',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_string'] = [
+				'name' => 'string_parts_builder_append_string',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'string'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_int'] = [
+				'name' => 'string_parts_builder_append_int',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'int'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_bool'] = [
+				'name' => 'string_parts_builder_append_bool',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'bool'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_to_string'] = [
+				'name' => 'string_parts_builder_to_string',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'string',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_clear'] = [
+				'name' => 'string_parts_builder_clear',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			foreach ([
+				'text_builder_create' => ['return_type' => 'text_builder', 'params' => []],
+				'text_builder_reserve_bytes' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'capacity', 'type' => 'int'],
+					],
+				],
+				'text_builder_capacity_bytes' => [
+					'return_type' => 'int',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_byte_len' => [
+					'return_type' => 'int',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_append_string' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'string'],
+					],
+				],
+				'text_builder_append_int' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'int'],
+					],
+				],
+				'text_builder_append_bool' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'bool'],
+					],
+				],
+				'text_builder_append_byte_span' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'span', 'type' => 'byte_span'],
+					],
+				],
+				'text_builder_to_string' => [
+					'return_type' => 'string',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_take_string' => [
+					'return_type' => 'string',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_clear' => [
+					'return_type' => 'void',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+			] as $name => $entry) {
+				$catalog[$name] = [
+					'name' => $name,
+					'namespace' => null,
+					'params' => $entry['params'],
+					'return_type' => $entry['return_type'],
+					'line' => 0,
+					'is_static' => false,
+				];
+			}
+			return $catalog;
+		}
 
 	/** @param list<string> $types @return list<string> */
 	private function normalizeTypeSet(array $types): array
@@ -1952,6 +2537,12 @@ final class StanExpressionTypeResolver
 			$source = (string) ($descriptor['source'] ?? '');
 			return $source !== '' ? $this->canonicalizeTypeSet($localTypes[$source] ?? [], $classLookup, $selfType) : [];
 		}
+		if ($kind === 'class_constant') {
+			return $this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
+		}
+		if ($kind === 'comparison') {
+			return ['bool'];
+		}
 		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
 			return $this->canonicalizeTypeSet(
 				$this->resolveContainerElementTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup),
@@ -2034,7 +2625,22 @@ final class StanExpressionTypeResolver
 			if ($descriptor === null) {
 				continue;
 			}
+			$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (int) ($assignment['line'] ?? 0));
 			$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			$enumDiagnostic = $this->makeEnumAssignmentDiagnosticForTypes(
+				(string) ($assignment['name'] ?? ''),
+				$sourceTypes,
+				[$targetType],
+				$context,
+				$path,
+				(int) ($assignment['line'] ?? 0),
+				$classLookup,
+				$selfType
+			);
+			if ($enumDiagnostic !== null) {
+				$diagnostics[] = $enumDiagnostic;
+				continue;
+			}
 			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
 			if ($wrapperTypes !== []) {
 				$diagnostics[] = $this->makeCallDiagnostic(
@@ -2213,6 +2819,11 @@ final class StanExpressionTypeResolver
 			$className = (string) ($callSite['class_name'] ?? '');
 			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
 			$methodName = (string) ($callSite['method_name'] ?? '');
+			$runtimeSignature = $this->resolveRuntimeStaticCallSignature($resolvedClassName, $methodName, $functionCatalog);
+			if ($runtimeSignature !== null) {
+				$runtimeSignature['target_text'] = $resolvedClassName . '::' . $methodName . '()';
+				return $runtimeSignature;
+			}
 			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
 			if ($classInfo === null) {
 				return null;
@@ -2274,6 +2885,10 @@ final class StanExpressionTypeResolver
 			$className = (string) ($callSite['class_name'] ?? '');
 			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
 			$methodName = (string) ($callSite['method_name'] ?? '');
+			$runtimeSignature = $this->resolveRuntimeStaticCallSignature($resolvedClassName, $methodName, $functionCatalog);
+			if ($runtimeSignature !== null) {
+				return $this->checkSignatureCompatibility($callSite, $runtimeSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $resolvedClassName . '::' . $methodName . '()');
+			}
 			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
 			if ($classInfo === null) {
 				return [$this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static call receiver `' . $className . '` in `' . $context . '`.')];
@@ -2322,6 +2937,45 @@ final class StanExpressionTypeResolver
 		}
 
 		return [];
+	}
+
+	/** @param array<string,array<string,mixed>> $functionCatalog @return array<string,mixed>|null */
+	private function resolveRuntimeStaticCallSignature(string $className, string $methodName, array $functionCatalog): ?array
+	{
+		$symbolName = $this->runtimeStaticTargetSymbols()[strtolower(ltrim($className, '\\') . '::' . $methodName)] ?? null;
+		if (!is_string($symbolName) || $symbolName === '') {
+			return null;
+		}
+		$signature = $functionCatalog[strtolower($symbolName)] ?? null;
+		return is_array($signature) ? $signature : null;
+	}
+
+	/** @return array<string,string> */
+	private function runtimeStaticTargetSymbols(): array
+	{
+		static $symbols = null;
+		if (is_array($symbols)) {
+			return $symbols;
+		}
+
+		$symbols = [];
+		foreach ([
+			__DIR__ . '/../../specs/php_runtime_symbols_legacy.json',
+			__DIR__ . '/../../specs/php_runtime_symbols_strict.json',
+		] as $path) {
+			if (!is_file($path)) {
+				continue;
+			}
+			$decoded = json_decode((string) file_get_contents($path), true);
+			$targets = is_array($decoded['php_runtime_symbol_targets'] ?? null) ? $decoded['php_runtime_symbol_targets'] : [];
+			foreach ($targets as $symbolName => $target) {
+				if (!is_string($symbolName) || !is_string($target) || !str_contains($target, '::')) {
+					continue;
+				}
+				$symbols[strtolower(ltrim($target, '\\'))] = $symbolName;
+			}
+		}
+		return $symbols;
 	}
 
 	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
@@ -2617,8 +3271,21 @@ final class StanExpressionTypeResolver
 			$source = (string) ($descriptor['source'] ?? '');
 			return $source !== '' ? ($localTypes[$source] ?? []) : [];
 		}
+		if ($kind === 'class_constant') {
+			$className = (string) ($descriptor['class_name'] ?? '');
+			$constantName = (string) ($descriptor['constant_name'] ?? '');
+			$classInfo = $className !== '' ? $this->findClassInfo($className, $classLookup, $selfType) : null;
+			if ($classInfo !== null && (bool) ($classInfo['is_enum'] ?? false) && strtolower($constantName) !== 'class') {
+				$fqcn = (string) ($classInfo['fqcn'] ?? '');
+				return $fqcn !== '' ? [$fqcn] : [];
+			}
+			return [];
+		}
 		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
 			return $this->resolveContainerElementTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup);
+		}
+		if ($kind === 'comparison') {
+			return ['bool'];
 		}
 		if ($kind === 'conditional') {
 			$merged = [];
@@ -2782,12 +3449,23 @@ final class StanExpressionTypeResolver
 
 		$currentTypes = $localTypes[$name] ?? [];
 		$currentTypes = $this->canonicalizeTypeSet($currentTypes, $classLookup, $selfType);
-		if ($currentTypes !== [] && !$this->typeSetsAreCompatible($assignedTypes, $currentTypes, [], false)) {
-			if (count($currentTypes) === 1 && count($assignedTypes) === 1 && $this->fixedWidthIntegerInfo($currentTypes[0]) !== null && $this->fixedWidthIntegerInfo($assignedTypes[0]) !== null) {
-				$this->recordFixedWidthIntegerAssignmentDiagnostic($diagnostics, $name, $assignedTypes[0], $currentTypes[0], $context, $path, $line);
+		if ($currentTypes !== [] && !$this->typeSetsAreCompatible($assignedTypes, $currentTypes, $classLookup, false)) {
+			$enumDiagnostic = $this->makeEnumAssignmentDiagnosticForTypes($name, $assignedTypes, $currentTypes, $context, $path, $line, $classLookup, $selfType);
+			if ($enumDiagnostic !== null) {
+				$diagnostics[] = $enumDiagnostic;
 				unset($morphedLocals[$name]);
 				return;
 			}
+				if (count($currentTypes) === 1
+					&& count($assignedTypes) === 1
+					&& $this->fixedWidthIntegerInfo($currentTypes[0]) !== null
+					&& $this->fixedWidthIntegerInfo($assignedTypes[0]) !== null) {
+					if (!$this->isFixedWidthIntegerAssignable($assignedTypes[0], $currentTypes[0])) {
+						$this->recordFixedWidthIntegerAssignmentDiagnostic($diagnostics, $name, $assignedTypes[0], $currentTypes[0], $context, $path, $line);
+					}
+					unset($morphedLocals[$name]);
+					return;
+				}
 			$this->recordLocalTypeMorph($diagnostics, $localTypes, $morphedLocals, $name, $this->canonicalizeTypeSet(array_merge($currentTypes, $assignedTypes), $classLookup, $selfType), $context, $path, $line);
 			return;
 		}
@@ -2799,6 +3477,9 @@ final class StanExpressionTypeResolver
 	/** @param list<array<string,mixed>> $diagnostics */
 	private function recordFixedWidthIntegerAssignmentDiagnostic(array &$diagnostics, string $name, string $sourceType, string $targetType, string $context, string $path, int $line): void
 	{
+		if ($this->normalizeFixedWidthIntegerTypeLabel($sourceType) === 'int') {
+			return;
+		}
 		$diagnostics[] = [
 			'kind' => 'fixed_width_integer_assignment',
 			'severity' => 'error',
@@ -2810,6 +3491,103 @@ final class StanExpressionTypeResolver
 			'target_type' => $targetType,
 			'message' => 'Fixed-width integer assignment to local `$' . $name . '` in `' . $context . '` requires compatible same-signedness widening: cannot assign `' . $sourceType . '` to `' . $targetType . '`.',
 		];
+	}
+
+	/** @param list<string> $sourceTypes @param list<string> $targetTypes @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function makeEnumAssignmentDiagnosticForTypes(string $name, array $sourceTypes, array $targetTypes, string $context, string $path, int $line, array $classLookup, ?string $selfType): ?array
+	{
+		$sourceTypes = $this->canonicalizeTypeSet($sourceTypes, $classLookup, $selfType);
+		$targetTypes = $this->canonicalizeTypeSet($targetTypes, $classLookup, $selfType);
+		if (count($sourceTypes) !== 1 || count($targetTypes) !== 1) {
+			return null;
+		}
+		$sourceEnum = $this->enumTypeId($sourceTypes[0], $classLookup, $selfType);
+		$targetEnum = $this->enumTypeId($targetTypes[0], $classLookup, $selfType);
+		if ($sourceEnum === null && $targetEnum === null) {
+			return null;
+		}
+		if ($sourceEnum !== null && $targetEnum !== null && strtolower($sourceEnum) === strtolower($targetEnum)) {
+			return null;
+		}
+		return [
+			'kind' => 'enum_assignment',
+			'severity' => 'error',
+			'context' => $context,
+			'path' => $path,
+			'line' => $line,
+			'local_name' => $name,
+			'source_type' => $sourceTypes[0],
+			'target_type' => $targetTypes[0],
+			'message' => 'Enum assignment to local `$' . $name . '` in `' . $context . '` requires the same enum type: cannot assign `' . $sourceTypes[0] . '` to `' . $targetTypes[0] . '`. Use an explicit enum conversion helper for raw backing values.',
+		];
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @param array<string,mixed> $descriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup */
+	private function recordEnumComparisonDiagnostics(array &$diagnostics, array $descriptor, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, int $line): void
+	{
+		$kind = (string) ($descriptor['kind'] ?? '');
+		if ($kind === 'conditional') {
+			if (is_array($descriptor['if_true'] ?? null)) {
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $line);
+			}
+			if (is_array($descriptor['if_false'] ?? null)) {
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $line);
+			}
+			return;
+		}
+		if ($kind !== 'comparison') {
+			return;
+		}
+		$leftTypes = is_array($descriptor['left'] ?? null)
+			? $this->canonicalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor['left'], $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType)
+			: [];
+		$rightTypes = is_array($descriptor['right'] ?? null)
+			? $this->canonicalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor['right'], $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType)
+			: [];
+		$leftEnum = count($leftTypes) === 1 ? $this->enumTypeId($leftTypes[0], $classLookup, $selfType) : null;
+		$rightEnum = count($rightTypes) === 1 ? $this->enumTypeId($rightTypes[0], $classLookup, $selfType) : null;
+		if ($leftEnum === null && $rightEnum === null) {
+			return;
+		}
+		$operator = (string) ($descriptor['operator'] ?? '?');
+		$leftLabel = $leftTypes === [] ? 'unknown' : implode('|', $leftTypes);
+		$rightLabel = $rightTypes === [] ? 'unknown' : implode('|', $rightTypes);
+		if (!in_array($operator, ['===', '!==', '==', '!='], true)) {
+			$diagnostics[] = [
+				'kind' => 'enum_comparison',
+				'severity' => 'error',
+				'context' => $context,
+				'path' => $path,
+				'line' => $line,
+				'source_type' => $leftLabel,
+				'target_type' => $rightLabel,
+				'message' => 'Enum comparison in `' . $context . '` only supports equality or inequality operators: got `' . $operator . '` for `' . $leftLabel . '` and `' . $rightLabel . '`.',
+			];
+			return;
+		}
+		if ($leftEnum === null || $rightEnum === null || strtolower($leftEnum) !== strtolower($rightEnum)) {
+			$diagnostics[] = [
+				'kind' => 'enum_comparison',
+				'severity' => 'error',
+				'context' => $context,
+				'path' => $path,
+				'line' => $line,
+				'source_type' => $leftLabel,
+				'target_type' => $rightLabel,
+				'message' => 'Enum comparison in `' . $context . '` requires operands of the same enum type: got `' . $leftLabel . '` and `' . $rightLabel . '`.',
+			];
+		}
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup */
+	private function enumTypeId(string $type, array $classLookup, ?string $selfType): ?string
+	{
+		$classInfo = $this->findClassInfo($type, $classLookup, $selfType);
+		if ($classInfo === null || !(bool) ($classInfo['is_enum'] ?? false)) {
+			return null;
+		}
+		$fqcn = (string) ($classInfo['fqcn'] ?? '');
+		return $fqcn !== '' ? $fqcn : (string) ($classInfo['name'] ?? '');
 	}
 
 	/** @param array<string,list<string>> $localTypes @param array<string,bool> $morphedLocals @param list<array<string,mixed>> $diagnostics @param list<string> $candidateTypes */
@@ -3650,10 +4428,14 @@ final class StanExpressionTypeResolver
 
 	private function isFixedWidthIntegerAssignable(string $actualType, string $expectedType): bool
 	{
+		$actualNormalized = $this->normalizeFixedWidthIntegerTypeLabel($actualType);
 		$actual = $this->fixedWidthIntegerInfo($actualType);
 		$expected = $this->fixedWidthIntegerInfo($expectedType);
 		if ($actual === null || $expected === null) {
 			return false;
+		}
+		if ($actualNormalized === 'int') {
+			return true;
 		}
 		if ($actual['signed'] !== $expected['signed']) {
 			return false;
@@ -3675,6 +4457,11 @@ final class StanExpressionTypeResolver
 			'uint64' => ['signed' => false, 'bytes' => 8],
 			default => null,
 		};
+	}
+
+	private function normalizeFixedWidthIntegerTypeLabel(string $type): string
+	{
+		return strtolower((string) preg_replace('/[^A-Za-z0-9_]+/', '', ltrim(trim($type), '\\')));
 	}
 
 	private function unwrapNullableType(string $type): ?string
@@ -3785,7 +4572,7 @@ final class StanExpressionTypeResolver
 				}
 				if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 					$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-					$keyTypes[] = count($parts) === 2 ? $parts[0] : 'string';
+					$keyTypes[] = count($parts) === 2 ? $parts[1] : 'string';
 				}
 			}
 			return $this->normalizeTypeSet($keyTypes !== [] ? $keyTypes : ['mixed']);
@@ -3806,7 +4593,7 @@ final class StanExpressionTypeResolver
 			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
 				if (count($parts) === 2) {
-					$valueTypes[] = $parts[1];
+					$valueTypes[] = $parts[0];
 				} elseif (count($parts) === 1 && $parts[0] !== '') {
 					$valueTypes[] = $parts[0];
 				}

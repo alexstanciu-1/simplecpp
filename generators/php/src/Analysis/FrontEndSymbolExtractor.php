@@ -1293,8 +1293,8 @@ final class FrontEndSymbolExtractor
 				return $type;
 			}
 		}
-		$boolean = $this->describeBooleanExpression($expr);
-		if (is_array($boolean) && (($boolean['kind'] ?? '') === 'type')) {
+		$boolean = $this->describeBooleanExpression($expr, 0);
+		if (is_array($boolean) && in_array(($boolean['kind'] ?? ''), ['type', 'comparison'], true)) {
 			$type = (string) ($boolean['type'] ?? '');
 			if ($type !== '') {
 				return $type;
@@ -2016,6 +2016,7 @@ final class FrontEndSymbolExtractor
 			return [
 				'kind' => 'class_constant',
 				'root_class' => $classConstant['class_name'],
+				'class_name' => $classConstant['class_name'],
 				'constant_name' => $classConstant['constant_name'],
 			];
 		}
@@ -2039,7 +2040,7 @@ final class FrontEndSymbolExtractor
 		if ($stringConcat !== null) {
 			return $stringConcat;
 		}
-		$boolean = $this->describeBooleanExpression($expr);
+		$boolean = $this->describeBooleanExpression($expr, $line);
 		if ($boolean !== null) {
 			return $boolean;
 		}
@@ -2280,7 +2281,7 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @return array<string,mixed>|null */
-	private function describeBooleanExpression(mixed $expr): ?array
+	private function describeBooleanExpression(mixed $expr, int $line): ?array
 	{
 		if (!is_object($expr) || !isset($expr->kind)) {
 			return null;
@@ -2296,6 +2297,21 @@ final class FrontEndSymbolExtractor
 				AstKind::BINARY_IS_SMALLER_OR_EQUAL,
 				AstKind::BINARY_IS_GREATER,
 				257,
+			], true)) {
+				$left = $this->describeExpression($expr->children['left'] ?? null, $line);
+				$right = $this->describeExpression($expr->children['right'] ?? null, $line);
+				if (($left['kind'] ?? 'unknown') === 'unknown' || ($right['kind'] ?? 'unknown') === 'unknown') {
+					return ['kind' => 'type', 'type' => 'bool'];
+				}
+				return [
+					'kind' => 'comparison',
+					'type' => 'bool',
+					'operator' => $this->comparisonOperatorForFlag($flag),
+					'left' => $left,
+					'right' => $right,
+				];
+			}
+			if (in_array($flag, [
 				AstKind::BINARY_BOOL_AND,
 				AstKind::BINARY_BOOL_OR,
 			], true)) {
@@ -2303,6 +2319,21 @@ final class FrontEndSymbolExtractor
 			}
 		}
 		return null;
+	}
+
+	private function comparisonOperatorForFlag(int $flag): string
+	{
+		return match ($flag) {
+			AstKind::BINARY_IS_IDENTICAL => '===',
+			AstKind::BINARY_IS_NOT_IDENTICAL => '!==',
+			AstKind::BINARY_IS_EQUAL => '==',
+			AstKind::BINARY_IS_NOT_EQUAL => '!=',
+			AstKind::BINARY_IS_SMALLER => '<',
+			AstKind::BINARY_IS_SMALLER_OR_EQUAL => '<=',
+			AstKind::BINARY_IS_GREATER => '>',
+			257 => '>=',
+			default => '?',
+		};
 	}
 
 	/** @param mixed $branchStatements @return array<string,array<string,mixed>|null> */

@@ -1,0 +1,19 @@
+$phs /** token_buffer */ = phs_tokenize_buffer("function add() {\nreturn 1;\n}\n");
+
+echo token_buffer_count($phs), "\n";
+echo token_buffer_kind_id($phs, 0), "\n";
+echo token_buffer_start_offset($phs, 0), "\n";
+echo token_buffer_length($phs, 0), "\n";
+echo token_buffer_line($phs, 5), "\n";
+echo token_buffer_column($phs, 5), "\n";
+echo token_buffer_flags($phs, 0), "\n";
+
+$jss /** token_buffer */ = jss_tokenize_buffer("items.push(10)\n");
+
+echo token_buffer_count($jss), "\n";
+echo token_buffer_kind_id($jss, 0), "\n";
+echo token_buffer_kind_id($jss, 1), "\n";
+echo token_buffer_start_offset($jss, 2), "\n";
+echo token_buffer_length($jss, 4), "\n";
+echo token_buffer_line($jss, 6), "\n";
+echo token_buffer_column($jss, 6), "\n";

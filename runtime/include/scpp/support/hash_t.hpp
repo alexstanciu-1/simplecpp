@@ -83,6 +83,31 @@ using hash_index_variant_t = std::variant<
 	flat_hash_index_t<std::uint32_t>
 >;
 
+[[nodiscard]] inline std::size_t index_capacity(const hash_index_variant_t &index) noexcept {
+	std::size_t capacity = 0;
+	std::visit([&](const auto &idx) {
+		using I = std::decay_t<decltype(idx)>;
+		if constexpr (!std::is_same_v<I, std::monostate>) {
+			capacity = idx.capacity_;
+		}
+	}, index);
+	return capacity;
+}
+
+[[nodiscard]] inline std::size_t estimated_index_storage_bytes(const hash_index_variant_t &index) noexcept {
+	std::size_t bytes = 0;
+	std::visit([&](const auto &idx) {
+		using I = std::decay_t<decltype(idx)>;
+		if constexpr (!std::is_same_v<I, std::monostate>) {
+			using bucket_vector_t = std::decay_t<decltype(idx.buckets_)>;
+			bytes = sizeof(I)
+				+ idx.ctrl_bytes_.capacity() * sizeof(std::uint8_t)
+				+ idx.buckets_.capacity() * sizeof(typename bucket_vector_t::value_type);
+		}
+	}, index);
+	return bytes;
+}
+
 [[nodiscard]] inline std::uint64_t mix64(std::uint64_t value) noexcept {
 	value ^= value >> 16;
 	value *= 0x85ebca6bull;
@@ -138,6 +163,18 @@ struct dyn_keys final {
 template <typename T_KEY>
 struct key_ops;
 
+template <typename T_KEY>
+	requires std::is_enum_v<T_KEY>
+struct key_ops<T_KEY> final {
+	[[nodiscard]] static std::uint64_t hash(const T_KEY &key) {
+		return mix64(static_cast<std::uint64_t>(static_cast<std::underlying_type_t<T_KEY>>(key)));
+	}
+
+	[[nodiscard]] static bool equal(const T_KEY &left, const T_KEY &right) {
+		return left == right;
+	}
+};
+
 template <>
 struct key_ops<string_t> final {
 	[[nodiscard]] static std::uint64_t hash(const string_t &key) {
@@ -149,13 +186,13 @@ struct key_ops<string_t> final {
 	}
 };
 
-template <>
-struct key_ops<int_t<>> final {
-	[[nodiscard]] static std::uint64_t hash(const int_t<> &key) {
+template <typename Rep>
+struct key_ops<int_t<Rep>> final {
+	[[nodiscard]] static std::uint64_t hash(const int_t<Rep> &key) {
 		return mix64(static_cast<std::uint64_t>(key.native_value()));
 	}
 
-	[[nodiscard]] static bool equal(const int_t<> &left, const int_t<> &right) {
+	[[nodiscard]] static bool equal(const int_t<Rep> &left, const int_t<Rep> &right) {
 		return left.native_value() == right.native_value();
 	}
 };
@@ -425,15 +462,31 @@ private:
 		return values_[index];
 	}
 
-	[[nodiscard]] int_t<> next_append_key() const requires std::same_as<T_KEY, int_t<>> {
-		std::int64_t max_key = -1;
+	[[nodiscard]] T_KEY next_append_key() const requires detail::is_int_t_v<T_KEY> {
+		using rep_t = detail::int_rep_t<T_KEY>;
+		std::uint64_t max_key = 0;
+		bool found_non_negative_key = false;
 		for (std::uint32_t i = 0; i < keys_.size(); ++i) {
 			if (!live_[i]) continue;
-			if (keys_[i].native_value() > max_key) {
-				max_key = keys_[i].native_value();
+			const auto native_key = keys_[i].native_value();
+			if constexpr (std::is_signed_v<rep_t>) {
+				if (native_key < 0) {
+					continue;
+				}
+			}
+			const auto unsigned_key = static_cast<std::uint64_t>(native_key);
+			if (!found_non_negative_key || unsigned_key > max_key) {
+				max_key = unsigned_key;
+				found_non_negative_key = true;
 			}
 		}
-		return int_t<>{max_key + 1};
+		if (!found_non_negative_key) {
+			return T_KEY{static_cast<rep_t>(0)};
+		}
+		if (max_key >= static_cast<std::uint64_t>(std::numeric_limits<rep_t>::max())) {
+			throw std::overflow_error("hash_t::append key overflow");
+		}
+		return T_KEY{static_cast<rep_t>(max_key + 1)};
 	}
 
 public:
@@ -464,6 +517,26 @@ public:
 
 	[[nodiscard]] std::size_t size() const noexcept {
 		return live_size_;
+	}
+
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return values_.capacity();
+	}
+
+	[[nodiscard]] std::size_t key_capacity() const noexcept {
+		return keys_.capacity();
+	}
+
+	[[nodiscard]] std::size_t index_capacity() const noexcept {
+		return hash_detail::index_capacity(hash_index_);
+	}
+
+	[[nodiscard]] std::size_t estimated_storage_bytes() const noexcept {
+		return sizeof(*this)
+			+ values_.capacity() * sizeof(T_VALUE)
+			+ keys_.capacity() * sizeof(T_KEY)
+			+ live_.capacity() * sizeof(std::uint8_t)
+			+ hash_detail::estimated_index_storage_bytes(hash_index_);
 	}
 
 	[[nodiscard]] bool_t is_packed() const noexcept {
@@ -618,22 +691,22 @@ public:
 		return const_entry_iterator(this, static_cast<std::uint32_t>(values_.size()));
 	}
 
-	[[nodiscard]] int_t<> append(const T_VALUE &value) requires std::copyable<T_VALUE> {
-		if constexpr (std::same_as<T_KEY, int_t<>>) {
+	[[nodiscard]] T_KEY append(const T_VALUE &value) requires std::copyable<T_VALUE> {
+		if constexpr (detail::is_int_t_v<T_KEY>) {
 			const auto key = next_append_key();
 			insert_or_assign_key(key, T_VALUE{value});
 			return key;
 		}
-		throw std::runtime_error("hash_t::append requires int_t<> keys");
+		throw std::runtime_error("hash_t::append requires integer keys");
 	}
 
-	[[nodiscard]] int_t<> append(T_VALUE &&value) {
-		if constexpr (std::same_as<T_KEY, int_t<>>) {
+	[[nodiscard]] T_KEY append(T_VALUE &&value) {
+		if constexpr (detail::is_int_t_v<T_KEY>) {
 			const auto key = next_append_key();
 			insert_or_assign_key(key, std::move(value));
 			return key;
 		}
-		throw std::runtime_error("hash_t::append requires int_t<> keys");
+		throw std::runtime_error("hash_t::append requires integer keys");
 	}
 
 	hash_t &set(const T_KEY &key, const T_VALUE &value) requires(std::copyable<T_KEY> && std::copyable<T_VALUE>) {
@@ -1048,6 +1121,29 @@ public:
 			if (key != TOMBSTONE_KEY) ++count;
 		}
 		return count;
+	}
+
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return values_.capacity();
+	}
+
+	[[nodiscard]] std::size_t key_capacity() const noexcept {
+		if (std::holds_alternative<std::monostate>(keys_)) return 0;
+		return std::get<native_keys_t>(keys_).capacity();
+	}
+
+	[[nodiscard]] std::size_t index_capacity() const noexcept {
+		return hash_detail::index_capacity(hash_index_);
+	}
+
+	[[nodiscard]] std::size_t estimated_storage_bytes() const noexcept {
+		const auto keys_bytes = std::holds_alternative<native_keys_t>(keys_)
+			? std::get<native_keys_t>(keys_).capacity() * sizeof(native_keys_t::value_type)
+			: std::size_t{0};
+		return sizeof(*this)
+			+ values_.capacity() * sizeof(mixed_t)
+			+ keys_bytes
+			+ hash_detail::estimated_index_storage_bytes(hash_index_);
 	}
 
 	[[nodiscard]] bool_t is_packed() const noexcept {

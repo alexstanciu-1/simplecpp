@@ -21,6 +21,14 @@ namespace scpp::php {
 	return scpp::dt::monotonic_millis();
 }
 
+[[nodiscard]] inline int_t<std::uint64_t> dt_monotonic_us() {
+	return scpp::dt::monotonic_micros();
+}
+
+[[nodiscard]] inline int_t<std::uint64_t> dt_monotonic_ns() {
+	return scpp::dt::monotonic_nanos();
+}
+
 inline void dt_sleep_ms(const int_t<> &millis) {
 	scpp::dt::sleep_millis(millis);
 }

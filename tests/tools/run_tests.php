@@ -1223,7 +1223,13 @@ TXT;
 		if (($build['ok'] ?? false) === true && is_array($build['result'] ?? null) && is_string($build['result']['output_path'] ?? null)) {
 			$binaryPath = (string) $build['result']['output_path'];
 		}
-		$runtimeLibraryDir = $this->resolveProjectRuntimeLibraryDir($project['project_root'], $project['config_path']);
+		$runtimeLibraryDir = null;
+		if (is_array($build['result'] ?? null) && is_string($build['result']['runtime_library_dir'] ?? null) && $build['result']['runtime_library_dir'] !== '') {
+			$runtimeLibraryDir = (string) $build['result']['runtime_library_dir'];
+		}
+		if ($runtimeLibraryDir === null) {
+			$runtimeLibraryDir = $this->resolveProjectRuntimeLibraryDir($project['project_root'], $project['config_path']);
+		}
 
 		return [
 			'success' => (bool) ($build['ok'] ?? false),

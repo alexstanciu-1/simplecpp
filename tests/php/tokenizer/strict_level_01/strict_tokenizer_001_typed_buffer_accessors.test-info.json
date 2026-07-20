@@ -1,0 +1,51 @@
+{
+    "id": "strict_tokenizer_001_typed_buffer_accessors",
+    "feature": "tokenizer",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "10\n2\n0\n8\n2\n1\n0\n7\n1\n5\n6\n2\n2\n1\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "tokenizer",
+        "token_buffer"
+    ],
+    "notes": "Typed tokenizer buffers should expose kind, byte offset, length, line, column, and flags without mixed conversion.",
+    "build": {
+        "sanitizers": null
+    }
+}

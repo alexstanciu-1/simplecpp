@@ -194,6 +194,27 @@ static void test_containers_and_strings() {
 	assert(values.size() == 2);
 	assert(values.at(0).native_value() == 4);
 	assert(values.index(1).native_value() == 9);
+	scpp::php::vector_reserve(values, scpp::int_t<>(8));
+	assert(scpp::php::vector_capacity(values).native_value() >= 8);
+	scpp::php::vector_resize(values, scpp::int_t<>(4), scpp::int_t<>(11));
+	assert(values.size() == 4);
+	assert(values.at(2).native_value() == 11);
+	scpp::php::vector_resize(values, scpp::int_t<>(1), scpp::int_t<>(0));
+	assert(values.size() == 1);
+	assert(values.at(0).native_value() == 4);
+	scpp::php::vector_clear_keep_capacity(values);
+	assert(values.size() == 0);
+	assert(scpp::php::vector_capacity(values).native_value() >= 8);
+	const auto filled = scpp::php::vector_filled(scpp::int_t<>(3), scpp::int_t<>(6));
+	assert(filled.size() == 3);
+	assert(filled.at(0).native_value() == 6);
+	assert(filled.at(2).native_value() == 6);
+	scpp_test::expect_throw<scpp::runtime_error>([&]() {
+		scpp::php::vector_resize(values, scpp::int_t<>(-1), scpp::int_t<>(0));
+	});
+	scpp_test::expect_throw<scpp::runtime_error>([]() {
+		(void)scpp::php::vector_filled(scpp::int_t<>(-1), scpp::int_t<>(0));
+	});
 }
 
 static void test_php_countable_contract_helpers() {

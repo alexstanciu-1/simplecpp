@@ -1,0 +1,36 @@
+$items /** vector<int> */ = [];
+
+vector_reserve($items, 8);
+echo vector_capacity($items) >= 8 ? "reserved\n" : "not_reserved\n";
+
+$items[] = 1;
+$items[] = 2;
+vector_resize($items, 5, 9);
+echo count($items), "\n";
+echo $items[4], "\n";
+vector_resize($items, 1, 0);
+echo count($items), "\n";
+echo $items[0], "\n";
+vector_clear_keep_capacity($items);
+echo count($items), "\n";
+echo vector_capacity($items) >= 8 ? "kept\n" : "lost\n";
+
+$items[] = 3;
+vector_compact($items, 4);
+echo count($items), "\n";
+echo $items[0], "\n";
+echo vector_capacity($items) >= 4 ? "target\n" : "small\n";
+
+$bytes /** vector<byte> */ = [];
+vector_reserve($bytes, 2);
+$seven /** byte */ = 7;
+$eight /** byte */ = 8;
+$bytes[] = $seven;
+$bytes[] = $eight;
+echo vector_capacity($bytes) >= 2 ? "byte_reserved\n" : "byte_lost\n";
+echo $bytes[1], "\n";
+
+$filled vector<int> = vector_filled(3, 6);
+echo count($filled), "\n";
+echo $filled[0], "\n";
+echo $filled[2], "\n";

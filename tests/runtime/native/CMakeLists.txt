@@ -59,6 +59,46 @@ add_executable(test_hash_t test_hash_t.cpp)
 target_link_libraries(test_hash_t PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_hash_t COMMAND test_hash_t)
 
+# row_arena_t stable-id storage coverage.
+add_executable(test_row_arena_t test_row_arena_t.cpp)
+target_link_libraries(test_row_arena_t PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_row_arena_t COMMAND test_row_arena_t)
+
+# bitset_t compact dirty/visited storage coverage.
+add_executable(test_bitset_t test_bitset_t.cpp)
+target_link_libraries(test_bitset_t PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_bitset_t COMMAND test_bitset_t)
+
+# work_queue_t ring-buffer queue coverage.
+add_executable(test_work_queue_t test_work_queue_t.cpp)
+target_link_libraries(test_work_queue_t PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_work_queue_t COMMAND test_work_queue_t)
+
+# Little-endian binary codec coverage for future compiler artifacts.
+add_executable(test_binary_codec test_binary_codec.cpp)
+target_link_libraries(test_binary_codec PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_binary_codec COMMAND test_binary_codec)
+
+# Approximate memory accounting helper coverage.
+add_executable(test_memory_accounting test_memory_accounting.cpp)
+target_link_libraries(test_memory_accounting PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_memory_accounting COMMAND test_memory_accounting)
+
+# Stable hash helper coverage for compiler cache keys.
+add_executable(test_stable_hash test_stable_hash.cpp)
+target_link_libraries(test_stable_hash PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_stable_hash COMMAND test_stable_hash)
+
+# string_parts_builder coverage for artifact-style string assembly.
+add_executable(test_string_parts_builder test_string_parts_builder.cpp)
+target_link_libraries(test_string_parts_builder PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_string_parts_builder COMMAND test_string_parts_builder)
+
+# text_builder coverage for contiguous artifact-style text assembly.
+add_executable(test_text_builder test_text_builder.cpp)
+target_link_libraries(test_text_builder PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_text_builder COMMAND test_text_builder)
+
 # mixed_t dynamic dispatch coverage.
 add_executable(test_mixed_t_dynamic test_mixed_t_dynamic.cpp)
 target_link_libraries(test_mixed_t_dynamic PRIVATE scpp_runtime scpp_runtime_test_support)

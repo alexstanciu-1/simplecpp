@@ -304,7 +304,13 @@ final class Generator
 
 	private function isDirectInitializerBoundaryType(string $type): bool
 	{
-		return preg_match('/^(?:nullable|result|result_or_false|result_or_bool|shared_p|unique_p|weak_p|value_p|fixed_array_t)<.+>$/', $type) === 1;
+		if (preg_match('/^(?:nullable|result|result_or_false|result_or_bool|shared_p|unique_p|weak_p|value_p|fixed_array_t)<.+>$/', $type) === 1) {
+			return true;
+		}
+		if ($this->resolveStructDeclByMappedType($type) instanceof ClassDecl) {
+			return true;
+		}
+		return $this->typeMapper->declaredTypeKind(str_replace('::', '\\', trim($type))) === 'struct';
 	}
 
 	/** @param list<string> $lines @return list<CodeBlock> */
@@ -644,6 +650,26 @@ final class Generator
 		return $out;
 	}
 
+	private function isKnownEnumTypeName(string $name): bool
+	{
+		$trimmed = ltrim(trim($name), '\\');
+		if ($trimmed === '') {
+			return false;
+		}
+		$class = $this->classDecls[$trimmed] ?? $this->classDecls[basename(str_replace('\\', '/', $trimmed))] ?? null;
+		return ($class instanceof ClassDecl && $class->isEnum) || $this->typeMapper->declaredTypeKind($trimmed) === 'enum';
+	}
+
+	private function lookupEnumDeclByTypeName(string $name): ?ClassDecl
+	{
+		$trimmed = ltrim(trim($name), '\\');
+		if ($trimmed === '') {
+			return null;
+		}
+		$class = $this->classDecls[$trimmed] ?? $this->classDecls[basename(str_replace('\\', '/', $trimmed))] ?? null;
+		return $class instanceof ClassDecl && $class->isEnum ? $class : null;
+	}
+
 	private function lookupFunctionDeclByCall(mixed $nameExpr, ?string $namespacePhp): ?FunctionDecl
 	{
 		if (!is_object($nameExpr) || ($nameExpr->kind ?? null) !== AstKind::NAME) {
@@ -871,6 +897,14 @@ final class Generator
 			return $this->renderGeneratedCast($expectedType, $renderedExpr);
 		}
 
+		if ($this->isKnownEnumTypeName($expectedType) && $this->isIntegerRuntimeType($exprType)) {
+			throw new \RuntimeException('Implicit assignment from raw integer to enum `' . $expectedType . '` is not supported; use an explicit enum conversion helper.');
+		}
+
+		if ($expectedType === 'bool_t' && $exprType === 'bool_t') {
+			return 'bool_t(' . $renderedExpr . ')';
+		}
+
 		if ($exprType === 'dynamic_t<>') {
 			return $expectedType === 'mixed_t' ? ('mixed_t{dynamic_box(' . $renderedExpr . ')}') : $renderedExpr;
 		}
@@ -887,6 +921,16 @@ final class Generator
 		}
 
 		return $renderedExpr;
+	}
+
+	private function isFixedWidthIntegerRuntimeType(string $type): bool
+	{
+		return preg_match('/^int_t<std::(?:u?int(?:8|16|32|64)_t)>$/', $type) === 1;
+	}
+
+	private function isIntegerRuntimeType(string $type): bool
+	{
+		return $type === 'int_t<>' || $this->isFixedWidthIntegerRuntimeType($type);
 	}
 
 	private function renderCallArgExpr(mixed $arg, ?string $namespacePhp): string
@@ -1884,7 +1928,7 @@ final class Generator
 		if (str_contains($normalized, '\\') || str_contains($normalized, '::')) {
 			return;
 		}
-		if (in_array($normalized, ['int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'fixed_array', 'fixed_array_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'int_t', 'int_t<>', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t'], true)) {
+		if (in_array($normalized, ['int', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64', 'float', 'bool', 'string', 'array', 'mixed', 'dynamic', 'void', 'false', 'null', 'vector', 'vector_t', 'fixed_array', 'fixed_array_t', 'hash', 'hash_t', 'error', 'resource_handle', 'nullable_resource_handle', 'falseable_resource_handle', 'token_buffer', 'string_parts_builder', 'text_builder', 'source_buffer', 'byte_span', 'source_line_index', 'source_location', 'int_t', 'int_t<>', 'float_t', 'bool_t', 'string_t', 'mixed_t', 'dynamic_t<>', 'error_t', 'resource_handle_t', 'nullable_resource_handle_t', 'falseable_resource_handle_t', 'token_buffer_t', 'tokenizer::token_buffer_t', 'str::string_parts_builder', 'str::text_builder', 'source::source_buffer', 'source::byte_span', 'source::source_line_index', 'source::source_location'], true)) {
 			return;
 		}
 		if (in_array($this->typeMapper->declaredTypeKind($normalized), ['enum', 'struct', 'union'], true)) {
@@ -2023,6 +2067,30 @@ final class Generator
 			'uint64' => [0, PHP_INT_MAX],
 			default => null,
 		};
+	}
+
+	private function enumBackingRuntimeType(ClassDecl $class): string
+	{
+		$backingType = $class->enumBackingType !== null ? strtolower($class->enumBackingType) : null;
+		return match ($backingType) {
+			'int8' => 'int_t<std::int8_t>',
+			'int16' => 'int_t<std::int16_t>',
+			'int32' => 'int_t<std::int32_t>',
+			'int64' => 'int_t<std::int64_t>',
+			'uint8', 'byte' => 'int_t<std::uint8_t>',
+			'uint16' => 'int_t<std::uint16_t>',
+			'uint32' => 'int_t<std::uint32_t>',
+			'uint64' => 'int_t<std::uint64_t>',
+			default => 'int_t<>',
+		};
+	}
+
+	private function enumBackingNativeType(ClassDecl $class): string
+	{
+		$storage = $this->enumStorageType($class);
+		return $class->enumBackingType !== null && strtolower($class->enumBackingType) === 'int'
+			? 'std::int64_t'
+			: $storage;
 	}
 
 	private function enumCaseIntValue(ConstantDecl $case): int
@@ -2315,6 +2383,7 @@ final class Generator
 		if ($class->enumCases === []) {
 			throw new \RuntimeException('Enums must declare at least one case in the current enum lowering');
 		}
+		$this->validateEnumCases($class);
 		$storage = $this->enumStorageType($class);
 		$this->appendHeaderLines($header, $this->code('enum class ' . $class->name . ' : ' . $storage . ' {', $class->line));
 		foreach ($class->enumCases as $index => $case) {
@@ -2329,6 +2398,29 @@ final class Generator
 		$this->appendHeaderLines($header, $this->code('', 0));
 	}
 
+	private function validateEnumCases(ClassDecl $class): void
+	{
+		$seenNames = [];
+		$seenValues = [];
+		foreach ($class->enumCases as $index => $case) {
+			$name = $case->name;
+			if (isset($seenNames[$name])) {
+				throw new \RuntimeException('Duplicate enum case name `' . $name . '` in enum `' . $class->name . '`');
+			}
+			$seenNames[$name] = true;
+
+			if ($class->enumBackingType === null) {
+				$value = $index;
+			} else {
+				$value = $this->enumCaseIntValue($case);
+			}
+			if (isset($seenValues[$value])) {
+				throw new \RuntimeException('Duplicate enum case value `' . (string) $value . '` in enum `' . $class->name . '`');
+			}
+			$seenValues[$value] = true;
+		}
+	}
+
 	private function emitStructClass(array &$header, ClassDecl $class, ?string $namespacePhp): void
 	{
 		if ($class->parentClass !== null || $class->interfaces !== [] || $class->constants !== [] || $class->methods !== [] || $class->isAbstract || $class->isInterface) {
@@ -2336,6 +2428,8 @@ final class Generator
 		}
 
 		$this->appendHeaderLines($header, $this->code('struct ' . $class->name . ' {', $class->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . $class->name . '* operator->() { return this; }', $class->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'const ' . $class->name . '* operator->() const { return this; }', $class->line));
 		foreach ($class->properties as $property) {
 			if ($property->visibility !== 'public' || $property->isStatic) {
 				throw new \RuntimeException('Only public instance fields are supported in the current struct lowering');
@@ -2369,6 +2463,8 @@ final class Generator
 		$this->appendHeaderLines($header, $this->code('union ' . $class->name . ' {', $class->line));
 		$this->appendHeaderLines($header, $this->code($this->indent(1) . $class->name . '() {}', $class->line));
 		$this->appendHeaderLines($header, $this->code($this->indent(1) . '~' . $class->name . '() {}', $class->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . $class->name . '* operator->() { return this; }', $class->line));
+		$this->appendHeaderLines($header, $this->code($this->indent(1) . 'const ' . $class->name . '* operator->() const { return this; }', $class->line));
 		foreach ($class->properties as $property) {
 			if ($property->visibility !== 'public' || $property->isStatic || $property->hasDefault) {
 				throw new \RuntimeException('Only public instance payload fields without defaults are supported in the current union lowering');
@@ -5260,8 +5356,9 @@ final class Generator
 		if (preg_match('/^fixed_array_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if ($this->parseHashTypeParts($baseType) !== null) {
-			return $base . '.at(' . $dim . ')';
+		$hashTypeParts = $this->parseHashTypeParts($baseType);
+		if ($hashTypeParts !== null) {
+			return $base . '.at(' . $this->renderHashKeyExpr($dim, $hashTypeParts['key']) . ')';
 		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '.get(' . $dim . ')';
@@ -5303,8 +5400,9 @@ final class Generator
 		if (preg_match('/^fixed_array_t<(.+)>$/', $baseType) === 1) {
 			return $base . '.at(' . $dim . ')';
 		}
-		if ($this->parseHashTypeParts($baseType) !== null) {
-			return $base . '[' . $dim . ']';
+		$hashTypeParts = $this->parseHashTypeParts($baseType);
+		if ($hashTypeParts !== null) {
+			return $base . '[' . $this->renderHashKeyExpr($dim, $hashTypeParts['key']) . ']';
 		}
 		if ($baseType === 'mixed_t' || $baseType === 'maybe_value_t') {
 			return $base . '[' . $dim . ']';
@@ -5370,6 +5468,15 @@ final class Generator
 		}
 
 		return $base;
+	}
+
+	private function renderHashKeyExpr(string $expr, string $keyType): string
+	{
+		$normalized = trim($keyType);
+		if ($normalized === 'mixed_t') {
+			return $expr;
+		}
+		return $this->renderGeneratedCast($normalized, $expr);
 	}
 
 	private function renderAssignmentExpr(mixed $varNode, mixed $valueNode, ?string $namespacePhp): string
@@ -6031,6 +6138,11 @@ final class Generator
 			return implode("\n", $lines);
 		}
 
+		$mappedStructType = $typedLocalType !== null ? $this->mapTypedStructLocalType($typedLocalType) : null;
+		if ($mappedStructType !== null) {
+			return $this->renderTypedStructArrayLiteral($expr, $namespacePhp, $typedLocalType, $mappedStructType);
+		}
+
 		if ($elements === []) {
 			return 'mixed_t{shared_table_()}';
 		}
@@ -6126,6 +6238,130 @@ final class Generator
 		}
 		if ($this->parseMappedFixedArrayType($normalized) !== null) {
 			return $this->renderTypedFixedArrayLiteral($expr, $namespacePhp, $normalized);
+		}
+		$struct = $this->resolveStructDeclByMappedType($normalized);
+		if ($struct instanceof ClassDecl) {
+			return $this->renderTypedStructArrayLiteral($expr, $namespacePhp, $struct->name, $normalized);
+		}
+		return null;
+	}
+
+	private function mapTypedStructLocalType(string $typedLocalType): ?string
+	{
+		if ($this->typeMapper->declaredTypeKind($typedLocalType) !== 'struct') {
+			return null;
+		}
+
+		return $this->typeMapper->mapTypedLocalType($typedLocalType);
+	}
+
+	private function resolveStructDeclByMappedType(string $mappedType): ?ClassDecl
+	{
+		$normalized = trim($mappedType);
+		foreach ($this->classDecls as $name => $class) {
+			if (!$class->isStruct) {
+				continue;
+			}
+			if ($this->typeMapper->mapDeclaredType($name) === $normalized || $this->typeMapper->mapDeclaredType($class->name) === $normalized) {
+				return $class;
+			}
+		}
+		return null;
+	}
+
+	private function renderTypedStructArrayLiteral(mixed $expr, ?string $namespacePhp, string $typedStructType, string $mappedStructType): string
+	{
+		$elements = is_object($expr) && isset($expr->children) && is_array($expr->children)
+			? array_values($expr->children)
+			: [];
+		if ($elements === []) {
+			return $mappedStructType . '{}';
+		}
+
+		$valuesByField = [];
+		foreach ($elements as $element) {
+			if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+				$this->errors[] = 'Unsupported struct initializer element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+				return '/* unsupported-struct-initializer */';
+			}
+
+			$keyNode = $element->children['key'] ?? null;
+			$fieldName = $this->extractStructInitializerFieldName($keyNode);
+			if ($fieldName === null) {
+				$this->errors[] = 'Struct initializers require literal string field keys at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-struct-initializer-key */';
+			}
+			if (isset($valuesByField[$fieldName])) {
+				$this->errors[] = 'Struct initializer field `' . $fieldName . '` is assigned more than once at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* duplicate-struct-initializer-field */';
+			}
+
+			$valueNode = $element->children['value'] ?? null;
+			if ($valueNode === null) {
+				$this->errors[] = 'Array unpack and empty struct initializer elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-struct-initializer-element */';
+			}
+			$valuesByField[$fieldName] = $valueNode;
+		}
+
+		$struct = $this->resolveClassDeclByTypeName($typedStructType);
+		if (!$struct instanceof ClassDecl || !$struct->isStruct) {
+			$items = [];
+			foreach ($valuesByField as $fieldName => $valueNode) {
+				$items[] = '.' . $this->cppIdentifier($fieldName) . ' = ' . $this->renderExpr($valueNode, $namespacePhp);
+			}
+			return $mappedStructType . '{' . implode(', ', $items) . '}';
+		}
+
+		$fieldTypes = [];
+		foreach ($struct->properties as $property) {
+			$fieldTypes[$property->name] = $property->type;
+		}
+		foreach (array_keys($valuesByField) as $fieldName) {
+			if (!array_key_exists($fieldName, $fieldTypes)) {
+				$this->errors[] = 'Struct initializer for ' . $struct->name . ' references unknown field `' . $fieldName . '`.';
+				return '/* unknown-struct-initializer-field */';
+			}
+		}
+
+		$items = [];
+		foreach ($struct->properties as $property) {
+			if (!array_key_exists($property->name, $valuesByField)) {
+				continue;
+			}
+			$valueNode = $valuesByField[$property->name];
+			$value = $this->renderStructInitializerFieldValue($valueNode, $namespacePhp, $property->type);
+			$items[] = '.' . $this->cppIdentifier($property->name) . ' = ' . $value;
+		}
+
+		return $mappedStructType . '{' . implode(', ', $items) . '}';
+	}
+
+	private function renderStructInitializerFieldValue(mixed $valueNode, ?string $namespacePhp, ?string $fieldType): string
+	{
+		if ($fieldType !== null && is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::ARRAY)) {
+			$nestedMappedType = $this->mapTypedStructLocalType($fieldType);
+			if ($nestedMappedType !== null) {
+				return $this->renderTypedStructArrayLiteral($valueNode, $namespacePhp, $fieldType, $nestedMappedType);
+			}
+			$expectedMappedType = $this->typeMapper->mapDeclaredType($fieldType);
+			$nestedLiteral = $this->renderArrayLiteralForExpectedMappedType($valueNode, $namespacePhp, $expectedMappedType);
+			if ($nestedLiteral !== null) {
+				return $nestedLiteral;
+			}
+		}
+
+		$rendered = $this->renderExpr($valueNode, $namespacePhp);
+		if ($fieldType === null) {
+			return $rendered;
+		}
+		return $this->wrapExprForExpectedType($rendered, $this->inferExprType($valueNode), $this->typeMapper->mapDeclaredType($fieldType));
+	}
+
+	private function extractStructInitializerFieldName(mixed $keyNode): ?string
+	{
+		if (is_string($keyNode) && $keyNode !== '') {
+			return $keyNode;
 		}
 		return null;
 	}
@@ -7103,6 +7339,17 @@ final class Generator
 
 			$left = $this->renderExpr($leftNode, $namespacePhp);
 			$right = $this->renderExpr($rightNode, $namespacePhp);
+			if ($flags === AstKind::BINARY_IS_EQUAL || $flags === AstKind::BINARY_IS_NOT_EQUAL) {
+				$leftType = $this->inferConstantType($leftNode, $namespacePhp);
+				$rightType = $this->inferConstantType($rightNode, $namespacePhp);
+				if ($leftType === $rightType && $this->isKnownEnumTypeName($leftType)) {
+					$comparison = '(' . $left . ' == ' . $right . ')';
+					if ($flags === AstKind::BINARY_IS_NOT_EQUAL) {
+						$comparison = '(!' . $comparison . ')';
+					}
+					return 'bool_t(' . $comparison . ')';
+				}
+			}
 
 			return match ($flags) {
 				AstKind::PLUS => '(' . $left . ' + ' . $right . ')',
@@ -7290,6 +7537,15 @@ final class Generator
 			}
 			if ($this->isLayoutProbeCallName($nameExpr)) {
 				return $this->renderLayoutProbeCallExpr($nameExpr, $args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
+			if ($this->isEnumValueCallName($nameExpr)) {
+				return $this->renderEnumValueCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
+			if ($this->isEnumNameCallName($nameExpr)) {
+				return $this->renderEnumNameCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
+			}
+			if ($this->isEnumFromValueCallName($nameExpr)) {
+				return $this->renderEnumFromValueCallExpr($args, $namespacePhp, (int) ($expr->lineno ?? 0));
 			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			$name = $functionDecl !== null
@@ -7697,6 +7953,33 @@ final class Generator
 		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'dbg_if';
 	}
 
+	private function isEnumValueCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'enum_value';
+	}
+
+	private function isEnumNameCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'enum_name';
+	}
+
+	private function isEnumFromValueCallName(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
+			return false;
+		}
+
+		return strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'enum_from_value';
+	}
+
 	private function isScppDebugDumpCallName(mixed $expr): bool
 	{
 		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::NAME)) {
@@ -7848,6 +8131,77 @@ final class Generator
 			. $this->cppStringLiteral($this->currentSourcePath) . ', '
 			. (string) $line
 			. ')';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderEnumValueCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 1) {
+			$this->fail('enum_value() expects exactly one enum argument at line ' . $line . '.');
+		}
+		$arg = $args[0] ?? null;
+		$enumType = $this->inferExprTypeWithNamespace($arg, $namespacePhp);
+		$class = $this->lookupEnumDeclByTypeName($enumType);
+		if (!$class instanceof ClassDecl) {
+			$this->fail('enum_value() expects an enum argument at line ' . $line . '.');
+		}
+		$runtimeType = $this->enumBackingRuntimeType($class);
+		$nativeType = $this->enumBackingNativeType($class);
+		return $runtimeType . '(static_cast<' . $nativeType . '>(' . $this->renderExpr($arg, $namespacePhp) . '))';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderEnumNameCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 1) {
+			$this->fail('enum_name() expects exactly one enum argument at line ' . $line . '.');
+		}
+		$arg = $args[0] ?? null;
+		$enumType = $this->inferExprTypeWithNamespace($arg, $namespacePhp);
+		$class = $this->lookupEnumDeclByTypeName($enumType);
+		if (!$class instanceof ClassDecl) {
+			$this->fail('enum_name() expects an enum argument at line ' . $line . '.');
+		}
+		$cases = [];
+		foreach ($class->enumCases as $case) {
+			$cases[] = 'case ' . $class->name . '::' . $this->cppIdentifier($case->name) . ': return string_t(' . $this->cppStringLiteral($case->name) . ');';
+		}
+		return '([&]() -> string_t { switch (' . $this->renderExpr($arg, $namespacePhp) . ') { ' . implode(' ', $cases) . ' default: throw std::runtime_error("Invalid value for enum ' . $class->name . '"); } }())';
+	}
+
+	/** @param list<mixed> $args */
+	private function renderEnumFromValueCallExpr(array $args, ?string $namespacePhp, int $line): string
+	{
+		if (count($args) !== 2) {
+			$this->fail('enum_from_value() expects enum_from_value(Enum::class, value) at line ' . $line . '.');
+		}
+		$className = $this->extractEnumClassNameMarker($args[0] ?? null, $namespacePhp);
+		$class = $className !== null ? $this->lookupEnumDeclByTypeName($className) : null;
+		if (!$class instanceof ClassDecl) {
+			$this->fail('enum_from_value() first argument must be an enum class marker such as token_kind::class at line ' . $line . '.');
+		}
+		$runtimeType = $this->enumBackingRuntimeType($class);
+		$nativeType = $this->enumBackingNativeType($class);
+		$valueExpr = $this->renderExpr($args[1] ?? null, $namespacePhp);
+		$cases = [];
+		foreach ($class->enumCases as $index => $case) {
+			$value = $class->enumBackingType === null ? $index : $this->enumCaseIntValue($case);
+			$cases[] = 'case static_cast<' . $nativeType . '>(' . (string) $value . '): return ' . $class->name . '::' . $this->cppIdentifier($case->name) . ';';
+		}
+		return '([&]() -> ' . $class->name . ' { const auto __scpp_enum_value = cast<' . $runtimeType . '>(' . $valueExpr . ').native_value(); switch (__scpp_enum_value) { ' . implode(' ', $cases) . ' default: throw std::runtime_error("Invalid value for enum ' . $class->name . '"); } }())';
+	}
+
+	private function extractEnumClassNameMarker(mixed $expr, ?string $namespacePhp): ?string
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::CLASS_NAME)) {
+			return null;
+		}
+		$classNode = $expr->children['class'] ?? null;
+		if (!is_object($classNode) || (($classNode->kind ?? null) !== AstKind::NAME)) {
+			return null;
+		}
+		$name = (string) ($classNode->children['name'] ?? '');
+		return $this->resolveDeclaredClassLikeType($name, $namespacePhp);
 	}
 
 	/** @param list<mixed> $args */
@@ -8336,8 +8690,27 @@ final class Generator
 		}
 
 		$rendered = $this->renderExpr($expr, $namespacePhp);
+		if ($expected === 'bool_t' && $this->isBinaryComparisonExpr($expr)) {
+			return 'bool_t(' . $rendered . ')';
+		}
 		$exprType = $this->inferExprType($expr);
 		return $this->wrapExprForExpectedType($rendered, $exprType, $expected);
+	}
+
+	private function isBinaryComparisonExpr(mixed $expr): bool
+	{
+		if (!is_object($expr) || (($expr->kind ?? null) !== AstKind::BINARY_OP)) {
+			return false;
+		}
+		return in_array((int) ($expr->flags ?? 0), [
+			AstKind::BINARY_IS_SMALLER,
+			AstKind::BINARY_IS_SMALLER_OR_EQUAL,
+			AstKind::BINARY_IS_GREATER,
+			AstKind::BINARY_IS_NOT_EQUAL,
+			AstKind::BINARY_IS_EQUAL,
+			AstKind::BINARY_IS_IDENTICAL,
+			AstKind::BINARY_IS_NOT_IDENTICAL,
+		], true);
 	}
 
 	private function isLvalueCapableExpr(mixed $expr, ?string $namespacePhp = null): bool
@@ -8442,6 +8815,18 @@ final class Generator
 			}
 			if ($this->isLayoutProbeCallName($nameExpr)) {
 				return 'int_t<>';
+			}
+			if ($this->isEnumValueCallName($nameExpr)) {
+				$args = $expr->children['args']->children ?? [];
+				$class = $this->lookupEnumDeclByTypeName($this->inferExprTypeWithNamespace($args[0] ?? null, $namespacePhp));
+				return $class instanceof ClassDecl ? $this->enumBackingRuntimeType($class) : 'auto';
+			}
+			if ($this->isEnumNameCallName($nameExpr)) {
+				return 'string_t';
+			}
+			if ($this->isEnumFromValueCallName($nameExpr)) {
+				$args = $expr->children['args']->children ?? [];
+				return $this->extractEnumClassNameMarker($args[0] ?? null, $namespacePhp) ?? 'auto';
 			}
 			$functionDecl = $this->lookupFunctionDeclByCall($nameExpr, $namespacePhp);
 			if ($functionDecl !== null && $functionDecl->returnType !== null) {
