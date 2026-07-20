@@ -4238,6 +4238,10 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 	$stanFileSummaries = is_array($stanDependencyState['file_summaries'] ?? null) ? $stanDependencyState['file_summaries'] : [];
 	$buildDependencyKeys = is_array($buildDependencyState['dependency_keys'] ?? null) ? $buildDependencyState['dependency_keys'] : [];
 	$buildFileSummaries = is_array($buildDependencyState['file_summaries'] ?? null) ? $buildDependencyState['file_summaries'] : [];
+	$dependencyResolver = new StanDependencyResolver();
+	$symbolIndexBuilder = new StanSymbolIndexBuilder();
+	$stanDependencyLookup = $stanFileSummaries !== [] ? $dependencyResolver->buildResolutionLookup($symbolIndexBuilder->build($stanFileSummaries)) : [];
+	$buildDependencyLookup = $buildFileSummaries !== [] ? $dependencyResolver->buildResolutionLookup($symbolIndexBuilder->build($buildFileSummaries)) : [];
 
 	$sourceKeyToHeader = [];
 	foreach ($generatedUnits as $unit) {
@@ -4320,6 +4324,8 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		$sourceSummary = is_array($stanFileSummaries[$sourceKey] ?? null)
 			? $stanFileSummaries[$sourceKey]
 			: (is_array($buildFileSummaries[$sourceKey] ?? null) ? $buildFileSummaries[$sourceKey] : null);
+		$dependencyCategoryLookup = $dependencyKeySource === 'stan' ? $stanDependencyLookup : ($dependencyKeySource === 'build' ? $buildDependencyLookup : []);
+		$dependencyCategories = collect_project_unit_dependency_category_rows($normalizedProjectRoot, $sourceKey, $sourceSummary, $dependencyCategoryLookup, $sourceKeyToHeader);
 		$hasStanDependencyStateForSource = $hasStanDependencyState && array_key_exists($sourceKey, $stanDependencyKeys);
 		$candidate = classify_project_unit_scoped_candidate($hasStanDependencyStateForSource, $sourceSummary, $unresolvedDependencyKeys, $ownHeader);
 		$forceIncludeHeader = normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['force_include_header'] ?? ''))));
@@ -4359,12 +4365,111 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			'direct_local_headers' => array_values($directLocalHeaders),
 			'dependency_export_headers' => array_values(array_unique($dependencyExportHeaders)),
 			'unresolved_dependency_keys' => $unresolvedDependencyKeys,
+			'dependency_categories' => $dependencyCategories,
 			'reasons' => $reasons,
 		];
 	}
 
 	usort($summaries, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
 	return $summaries;
+}
+
+/**
+ * @param array<string,mixed>|null $sourceSummary
+ * @param array<string,list<array<string,mixed>>> $resolutionLookup
+ * @param array<string,array{project_root:string,header:string}> $sourceKeyToHeader
+ * @return list<array<string,mixed>>
+ */
+function collect_project_unit_dependency_category_rows(string $projectRoot, string $sourceKey, ?array $sourceSummary, array $resolutionLookup, array $sourceKeyToHeader): array
+{
+	if ($sourceSummary === null) {
+		return [[
+			'category' => 'missing summary',
+			'kind' => '',
+			'target' => '',
+			'owner' => '',
+			'resolution' => 'missing_summary',
+			'source_dependencies' => [],
+		]];
+	}
+	$rows = [];
+	$resolver = new StanDependencyResolver();
+	foreach (is_array($sourceSummary['dependencies'] ?? null) ? $sourceSummary['dependencies'] : [] as $dependency) {
+		if (!is_array($dependency)) {
+			continue;
+		}
+		$kind = trim((string) ($dependency['kind'] ?? ''));
+		$target = trim((string) ($dependency['target'] ?? ''));
+		$owner = isset($dependency['owner']) && is_string($dependency['owner']) ? trim($dependency['owner']) : '';
+		if ($kind === '' || $target === '') {
+			continue;
+		}
+		$matches = $resolutionLookup === [] ? [] : $resolver->resolveDependencyTarget($kind, $target, $resolutionLookup);
+		if ($matches === []) {
+			$rows[] = [
+				'category' => 'unresolved symbol',
+				'kind' => $kind,
+				'target' => $target,
+				'owner' => $owner,
+				'resolution' => 'unresolved_symbol',
+				'source_dependencies' => [],
+			];
+			continue;
+		}
+		$sourceDependencies = [];
+		$hasMissingHeader = false;
+		foreach ($matches as $symbol) {
+			$path = normalize_path((string) ($symbol['path'] ?? ''));
+			if ($path === '') {
+				continue;
+			}
+			$sourceDependency = project_unit_stan_source_key($projectRoot, $path);
+			if ($sourceDependency === $sourceKey) {
+				continue;
+			}
+			$sourceDependencies[$sourceDependency] = true;
+			if (!isset($sourceKeyToHeader[$sourceDependency])) {
+				$hasMissingHeader = true;
+			}
+		}
+		$resolvedSourceDependencies = array_keys($sourceDependencies);
+		sort($resolvedSourceDependencies, SORT_STRING);
+		if ($resolvedSourceDependencies === []) {
+			continue;
+		}
+		$rows[] = [
+			'category' => project_unit_dependency_category_for_kind($kind),
+			'kind' => $kind,
+			'target' => $target,
+			'owner' => $owner,
+			'resolution' => count($matches) > 1 ? 'ambiguous_symbol' : ($hasMissingHeader ? 'unresolved_dependency_key' : 'resolved'),
+			'source_dependencies' => $resolvedSourceDependencies,
+		];
+	}
+	return normalize_project_unit_dependency_category_rows($rows);
+}
+
+function project_unit_dependency_category_for_kind(string $kind): string
+{
+	if ($kind === 'extends' || $kind === 'implements') {
+		return 'inheritance';
+	}
+	if ($kind === 'function_param_type' || $kind === 'function_return_type') {
+		return 'function signature';
+	}
+	if ($kind === 'method_param_type' || $kind === 'method_return_type') {
+		return 'method signature';
+	}
+	if ($kind === 'property_type') {
+		return 'property layout';
+	}
+	if ($kind === 'use') {
+		return 'direct type reference';
+	}
+	if ($kind === 'enum_backing_type') {
+		return 'direct type reference';
+	}
+	return str_replace('_', ' ', $kind);
 }
 
 /**
@@ -4733,10 +4838,103 @@ function normalize_project_unit_dependency_summaries(array $summaries): array
 			'direct_local_headers' => normalize_string_list($summary['direct_local_headers'] ?? []),
 			'dependency_export_headers' => normalize_string_list($summary['dependency_export_headers'] ?? []),
 			'unresolved_dependency_keys' => normalize_string_list($summary['unresolved_dependency_keys'] ?? []),
+			'dependency_categories' => normalize_project_unit_dependency_category_rows(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []),
 			'reasons' => normalize_string_list($summary['reasons'] ?? []),
 		];
 	}
 	return $normalized;
+}
+
+/**
+ * @param list<array<string,mixed>> $rows
+ * @return list<array<string,mixed>>
+ */
+function normalize_project_unit_dependency_category_rows(array $rows): array
+{
+	$normalized = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$category = trim((string) ($row['category'] ?? ''));
+		if ($category === '') {
+			continue;
+		}
+		$normalized[] = [
+			'category' => $category,
+			'kind' => trim((string) ($row['kind'] ?? '')),
+			'target' => trim((string) ($row['target'] ?? '')),
+			'owner' => trim((string) ($row['owner'] ?? '')),
+			'resolution' => trim((string) ($row['resolution'] ?? '')),
+			'source_dependencies' => normalize_string_list($row['source_dependencies'] ?? []),
+		];
+	}
+	usort($normalized, static function (array $left, array $right): int {
+		foreach (['category', 'resolution', 'kind', 'target', 'owner'] as $key) {
+			$compare = strcmp((string) ($left[$key] ?? ''), (string) ($right[$key] ?? ''));
+			if ($compare !== 0) {
+				return $compare;
+			}
+		}
+		return strcmp(implode("\n", is_array($left['source_dependencies'] ?? null) ? $left['source_dependencies'] : []), implode("\n", is_array($right['source_dependencies'] ?? null) ? $right['source_dependencies'] : []));
+	});
+	$deduped = [];
+	foreach ($normalized as $row) {
+		$key = implode('|', [
+			(string) ($row['category'] ?? ''),
+			(string) ($row['resolution'] ?? ''),
+			(string) ($row['kind'] ?? ''),
+			(string) ($row['target'] ?? ''),
+			(string) ($row['owner'] ?? ''),
+			implode(',', is_array($row['source_dependencies'] ?? null) ? $row['source_dependencies'] : []),
+		]);
+		$deduped[$key] = $row;
+	}
+	return array_values($deduped);
+}
+
+/**
+ * @param list<array<string,mixed>> $rows
+ * @return list<string>
+ */
+function render_project_unit_dependency_category_parts(array $rows): array
+{
+	$bucketed = [];
+	foreach (normalize_project_unit_dependency_category_rows($rows) as $row) {
+		$category = (string) ($row['category'] ?? '');
+		if ($category === '') {
+			continue;
+		}
+		$resolution = (string) ($row['resolution'] ?? '');
+		if ($resolution === 'unresolved_symbol') {
+			$category = 'unresolved symbol';
+		} elseif ($resolution === 'ambiguous_symbol') {
+			$category = 'ambiguous symbol';
+		} elseif ($resolution === 'unresolved_dependency_key') {
+			$category = 'unresolved dependency key';
+		}
+		$values = is_array($row['source_dependencies'] ?? null) ? $row['source_dependencies'] : [];
+		if ($values === []) {
+			$target = trim((string) ($row['target'] ?? ''));
+			$values = [$target !== '' ? $target : $category];
+		}
+		foreach ($values as $value) {
+			$value = trim((string) $value);
+			if ($value !== '') {
+				$bucketed[$category][$value] = true;
+			}
+		}
+	}
+	$parts = [];
+	ksort($bucketed, SORT_STRING);
+	foreach ($bucketed as $category => $values) {
+		$valueList = array_keys($values);
+		sort($valueList, SORT_STRING);
+		$parts[] = count($valueList) === 1 && $valueList[0] === $category
+			? $category
+			: $category . ': ' . implode(', ', $valueList);
+	}
+	return $parts;
 }
 
 /** @return list<string> */
@@ -6243,6 +6441,10 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 				$unresolvedKeys = is_array($summary['unresolved_dependency_keys'] ?? null) ? $summary['unresolved_dependency_keys'] : [];
 				if ($unresolvedKeys !== []) {
 					$lines[] = '    unresolved dependency keys: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $unresolvedKeys));
+				}
+				$dependencyCategoryParts = render_project_unit_dependency_category_parts(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []);
+				if ($dependencyCategoryParts !== []) {
+					$lines[] = '    dependency categories: ' . implode('; ', $dependencyCategoryParts);
 				}
 				$reasons = is_array($summary['reasons'] ?? null) ? $summary['reasons'] : [];
 				foreach ($reasons as $reason) {

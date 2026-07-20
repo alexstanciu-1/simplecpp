@@ -344,6 +344,14 @@ scoped-pack candidates. Layout-sensitive files with class properties still stay
 on broad fallback until complete-type scoped activation is modeled, even though
 their direct property type evidence is reported.
 
+Saved per-source dependency summary rows also include compact dependency
+category evidence. The current categories distinguish inheritance, direct type
+references, function signatures, method signatures, property layout, unresolved
+symbols, unresolved dependency keys, and missing source summaries. The focused
+`scpp explain-build project-units` view renders these categories as compact
+per-source lines so large-project blocker and dependency patterns can be audited
+without reading raw state files.
+
 The project-unit report also includes scoped fanout counters: active scoped
 generated units, active broad-fallback generated units, scoped candidates, and
 blocked candidates. These counters are intended to make rebuild-fanout changes

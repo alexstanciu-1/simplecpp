@@ -129,6 +129,7 @@ final class ScppExplainBuildTest
 			$this->assertSame([], $childDependencySummary['candidate_blocking_reasons'] ?? null, 'child scoped candidate should not have C0 blockers');
 			$this->assertSame(['base.phs'], $childDependencySummary['direct_source_dependencies'] ?? null, 'child.phs should record its direct base-class source dependency');
 			$this->assertSame(['.prism/generated/base.hpp'], $childDependencySummary['direct_local_headers'] ?? null, 'child.phs should map its direct dependency to the generated base header');
+			$this->assertSame(['base.phs'], $this->dependencyCategorySources($childDependencySummary, 'inheritance'), 'child.phs should categorize the base-class dependency as inheritance');
 			$mainDependencySummary = $dependencySummaryBySource['main.phs'] ?? null;
 			if (!is_array($mainDependencySummary)) {
 				throw new RuntimeException('project unit report should contain a main.phs dependency summary');
@@ -196,6 +197,7 @@ final class ScppExplainBuildTest
 			$this->assertContains('candidate blocker: executable body present', $projectUnitsView['stdout'], 'project-units should show scoped candidate blockers');
 			$this->assertContains('direct source dependencies: base.phs', $projectUnitsView['stdout'], 'project-units should show the child direct source dependency');
 			$this->assertContains('direct local headers: .prism/generated/base.hpp', $projectUnitsView['stdout'], 'project-units should show the child direct generated header dependency');
+			$this->assertContains('dependency categories: inheritance: base.phs', $projectUnitsView['stdout'], 'project-units should show categorized child dependency evidence');
 
 			$entrypointView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'entrypoint'], [], 20.0);
 			$this->assertSame(0, $entrypointView['exit_code'], 'scpp explain-build entrypoint should succeed');
@@ -280,6 +282,7 @@ final class ScppExplainBuildTest
 			$this->assertNotContains('source summary unavailable', implode("\n", is_array($noStanChildSummary['candidate_blocking_reasons'] ?? null) ? $noStanChildSummary['candidate_blocking_reasons'] : []), 'warm --no-stan child unit should use the build-owned source summary');
 			$this->assertSame(['base.phs'], $noStanChildSummary['direct_source_dependencies'] ?? null, 'warm --no-stan child unit should still report direct dependencies from build-owned summaries');
 			$this->assertSame(['.prism/generated/base.hpp'], $noStanChildSummary['direct_local_headers'] ?? null, 'warm --no-stan child unit should still map direct dependencies to generated headers');
+			$this->assertSame(['base.phs'], $this->dependencyCategorySources($noStanChildSummary, 'inheritance'), 'warm --no-stan child unit should still categorize direct dependency evidence');
 			$this->assertContains('build-owned project unit dependency summary available', implode("\n", is_array($noStanChildSummary['reasons'] ?? null) ? $noStanChildSummary['reasons'] : []), 'warm --no-stan child summary should identify the build-owned summary source');
 
 			$noStanProject = $this->root . '/no_stan_report';
@@ -331,7 +334,10 @@ final class ScppExplainBuildTest
 			$this->assertSame(['.prism/generated/main.hpp'], $noStanSummary['candidate_scoped_headers'] ?? null, 'no-STAN scoped candidate should still report its own header');
 			$this->assertContains('STAN dependency state unavailable', implode("\n", is_array($noStanSummary['candidate_blocking_reasons'] ?? null) ? $noStanSummary['candidate_blocking_reasons'] : []), 'no-STAN scoped candidate should explain missing STAN state');
 			$this->assertContains('source summary unavailable', implode("\n", is_array($noStanSummary['candidate_blocking_reasons'] ?? null) ? $noStanSummary['candidate_blocking_reasons'] : []), 'no-STAN scoped candidate should explain missing source summary');
+			$this->assertContains('missing summary', implode("\n", $this->dependencyCategoryNames($noStanSummary)), 'no-STAN dependency summary should categorize missing source-summary evidence');
 			$this->assertContains('STAN dependency state unavailable for this build', implode("\n", is_array($noStanSummary['reasons'] ?? null) ? $noStanSummary['reasons'] : []), 'no-STAN dependency summary should explain missing STAN state');
+			$noStanReportView = implode("\n", render_project_unit_force_include_lines($noStanReport, true));
+			$this->assertContains('dependency categories: missing summary', $noStanReportView, 'project-units view should show missing-summary category evidence');
 
 			echo "PASS: scpp explain-build\n";
 			return 0;
@@ -354,6 +360,44 @@ final class ScppExplainBuildTest
 			throw new RuntimeException('Failed to read ' . $path);
 		}
 		return $contents;
+	}
+
+	/** @return list<string> */
+	private function dependencyCategorySources(array $summary, string $category): array
+	{
+		$sources = [];
+		foreach (is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : [] as $row) {
+			if (!is_array($row) || ($row['category'] ?? null) !== $category) {
+				continue;
+			}
+			foreach (is_array($row['source_dependencies'] ?? null) ? $row['source_dependencies'] : [] as $source) {
+				$source = trim((string) $source);
+				if ($source !== '') {
+					$sources[$source] = true;
+				}
+			}
+		}
+		$result = array_keys($sources);
+		sort($result, SORT_STRING);
+		return $result;
+	}
+
+	/** @return list<string> */
+	private function dependencyCategoryNames(array $summary): array
+	{
+		$categories = [];
+		foreach (is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : [] as $row) {
+			if (!is_array($row)) {
+				continue;
+			}
+			$category = trim((string) ($row['category'] ?? ''));
+			if ($category !== '') {
+				$categories[$category] = true;
+			}
+		}
+		$result = array_keys($categories);
+		sort($result, SORT_STRING);
+		return $result;
 	}
 
 	private function mkdir(string $path): void

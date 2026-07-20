@@ -295,6 +295,10 @@ Status legend:
   property type dependencies into direct source/header evidence while keeping
   property-layout units on broad fallback until layout-sensitive scoped
   activation is implemented.
+- [x] `PUH-022` Expose dependency categories in saved per-source rows and
+  focused `project-units` output. Rows now categorize inheritance, direct type
+  references, function signatures, method signatures, property layout,
+  unresolved symbols, unresolved dependency keys, and missing source summaries.
 
 ### Ready
 
@@ -305,10 +309,6 @@ Status legend:
 - [ ] `PUH-014` Make `project-units` and `generated-files` output suitable for
   large projects by keeping summaries compact and pushing verbose per-source
   detail behind the focused view only.
-- [ ] `PUH-022` Expose dependency categories in saved per-source rows and
-  focused `project-units` output, including direct type reference, inheritance,
-  function signature, method signature, property layout, unresolved symbol, and
-  missing summary evidence.
 
 ### Planned Dependency-Model Work
 

@@ -94,6 +94,7 @@ PHS);
 		$this->assertSame('candidate_scoped', $childSummary['candidate_status'] ?? null, 'inheritance-only child should be a scoped candidate');
 		$this->assertSame(['schema/base_node.phs'], $childSummary['direct_source_dependencies'] ?? null, 'child should report its nested base source dependency');
 		$this->assertSame(['.prism/generated/schema/base_node.hpp'], $childSummary['direct_local_headers'] ?? null, 'child should include the nested base header directly');
+		$this->assertSame(['schema/base_node.phs'], $this->dependencyCategorySources($childSummary, 'inheritance'), 'child should categorize its base dependency as inheritance');
 
 		$childPack = $project . '/' . (string) ($childSummary['candidate_pack_header'] ?? '');
 		$childPackContents = $this->read($childPack);
@@ -105,12 +106,14 @@ PHS);
 		$this->assertSame('candidate_scoped', $sinkSummary['candidate_status'] ?? null, 'signature-only interface should be a scoped candidate');
 		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $sinkSummary['direct_source_dependencies'] ?? null, 'method signatures should report direct type source dependencies');
 		$this->assertSame(['.prism/generated/schema/base_node.hpp', '.prism/generated/schema/item.hpp'], $sinkSummary['direct_local_headers'] ?? null, 'method signatures should map direct type dependencies to generated headers');
+		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $this->dependencyCategorySources($sinkSummary, 'method signature'), 'method signatures should categorize direct type source dependencies');
 
 		$holderSummary = $this->findSummary($projectUnits, 'db/holder.phs', '');
 		$this->assertSame('fallback_broad', $holderSummary['status'] ?? null, 'property-layout class should stay on broad fallback');
 		$this->assertSame('blocked_broad_fallback', $holderSummary['candidate_status'] ?? null, 'property-layout class should be blocked from scoped activation');
 		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $holderSummary['direct_source_dependencies'] ?? null, 'property types should report direct source dependencies even while layout remains broad');
 		$this->assertSame(['.prism/generated/schema/base_node.hpp', '.prism/generated/schema/item.hpp'], $holderSummary['direct_local_headers'] ?? null, 'property types should map direct type dependencies to generated headers');
+		$this->assertSame(['schema/base_node.phs', 'schema/item.phs'], $this->dependencyCategorySources($holderSummary, 'property layout'), 'property types should categorize direct dependencies as layout-sensitive');
 		$this->assertContains('class properties require complete-type dependency modeling', implode("\n", $holderSummary['candidate_blocking_reasons'] ?? []), 'property-layout blocker should be reported');
 	}
 
@@ -238,6 +241,26 @@ PHS);
 			}
 		}
 		throw new RuntimeException('Missing project unit dependency summary for ' . ($projectRoot === '' ? $source : $projectRoot . '/' . $source));
+	}
+
+	/** @return list<string> */
+	private function dependencyCategorySources(array $summary, string $category): array
+	{
+		$sources = [];
+		foreach (is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : [] as $row) {
+			if (!is_array($row) || ($row['category'] ?? null) !== $category) {
+				continue;
+			}
+			foreach (is_array($row['source_dependencies'] ?? null) ? $row['source_dependencies'] : [] as $source) {
+				$source = trim((string) $source);
+				if ($source !== '') {
+					$sources[$source] = true;
+				}
+			}
+		}
+		$result = array_keys($sources);
+		sort($result, SORT_STRING);
+		return $result;
 	}
 
 	private function write(string $path, string $contents): void
