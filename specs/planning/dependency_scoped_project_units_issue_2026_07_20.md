@@ -350,6 +350,11 @@ Status legend:
   dependencies. Property-layout units now become scoped candidates when their
   direct property type dependencies resolve to generated headers, and focused
   coverage proves dependency headers are included before the owning header.
+- [x] `PUH-025d` Activate scoped packs for safe class constants. Scalar class
+  constants and resolved class-constant references now become scoped
+  candidates, constant-specific descriptors preserve nested string-concat
+  dependencies, and focused coverage proves referenced class headers are
+  included before the owning constant class header.
 - [x] `PUH-034` Update user-facing build diagnostic docs for the current
   project-unit diagnostics surface. The strict quick-learn, getting-started
   guide, onboarding workflow, and project-build spec now mention rebuild
@@ -364,10 +369,9 @@ Status legend:
   the motivating support-file edit.
 ### Planned Dependency-Model Work
 
-- [ ] `PUH-025` Finish complete-type activation requirements for class
-  constants, value-layout structs/unions, enum backing/type references, and
-  generated declarations whose headers require another generated header to be
-  complete.
+- [ ] `PUH-025` Finish complete-type activation requirements for value-layout
+  structs/unions, enum backing/type references, and generated declarations
+  whose headers require another generated header to be complete.
 ### Planned Validation And Rollout
 
 - [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:

@@ -105,10 +105,10 @@ PHS);
 
 		$projectUnits = $this->loadProjectUnits($project);
 		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'nested project should report nine generated units');
-		$this->assertSame(6, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only, signature-only, property-layout, and safe helper units');
-		$this->assertSame(3, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep the executable and constant units broad');
-		$this->assertSame(6, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report six scoped candidates');
-		$this->assertSame(3, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report three blocked candidates');
+		$this->assertSame(8, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only, signature-only, property-layout, safe class constants, and safe helper units');
+		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep only the executable unit broad');
+		$this->assertSame(8, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report eight scoped candidates');
+		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report one blocked candidate');
 
 		$childSummary = $this->findSummary($projectUnits, 'orm/child_node.phs', '');
 		$this->assertSame('scoped', $childSummary['status'] ?? null, 'inheritance-only child should compile with a scoped pack');
@@ -154,13 +154,21 @@ PHS);
 		$this->assertOrderBefore('#include "../schema/base_node.hpp"', '#include "../db/holder.hpp"', $holderPackContents, 'property-layout scoped pack should include base node before holder');
 		$this->assertOrderBefore('#include "../schema/item.hpp"', '#include "../db/holder.hpp"', $holderPackContents, 'property-layout scoped pack should include item before holder');
 
+		$kindSummary = $this->findSummary($projectUnits, 'schema/kind.phs', '');
+		$this->assertSame('scoped', $kindSummary['status'] ?? null, 'scalar class-constant file should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $kindSummary['candidate_status'] ?? null, 'scalar class-constant file should be a scoped candidate');
+		$this->assertSame([], $kindSummary['direct_source_dependencies'] ?? null, 'scalar class constants should not add direct source dependencies');
+		$this->assertSame([], $kindSummary['candidate_blocking_reasons'] ?? null, 'scalar class constants should not block scoped activation');
+
 		$defaultsSummary = $this->findSummary($projectUnits, 'config/defaults.phs', '');
-		$this->assertSame('fallback_broad', $defaultsSummary['status'] ?? null, 'class-constant dependency file should stay on broad fallback');
-		$this->assertSame('blocked_broad_fallback', $defaultsSummary['candidate_status'] ?? null, 'class-constant dependency file should stay blocked from scoped activation');
+		$this->assertSame('scoped', $defaultsSummary['status'] ?? null, 'resolved class-constant dependency file should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $defaultsSummary['candidate_status'] ?? null, 'resolved class-constant dependency file should be a scoped candidate');
 		$this->assertSame(['schema/kind.phs'], $defaultsSummary['direct_source_dependencies'] ?? null, 'class constant values should report direct source dependencies');
 		$this->assertSame(['.prism/generated/schema/kind.hpp'], $defaultsSummary['direct_local_headers'] ?? null, 'class constant values should map direct dependencies to generated headers');
 		$this->assertSame(['schema/kind.phs'], $this->dependencyCategorySources($defaultsSummary, 'class constant value'), 'class constant values should categorize direct dependencies');
-		$this->assertContains('class constants require complete-type activation validation', implode("\n", $defaultsSummary['candidate_blocking_reasons'] ?? []), 'class-constant blocker should be reported');
+		$this->assertSame([], $defaultsSummary['candidate_blocking_reasons'] ?? null, 'resolved class constant values should not block scoped activation');
+		$defaultsPackContents = $this->read($project . '/' . (string) ($defaultsSummary['candidate_pack_header'] ?? ''));
+		$this->assertOrderBefore('#include "../schema/kind.hpp"', '#include "../config/defaults.hpp"', $defaultsPackContents, 'class-constant scoped pack should include referenced class before owning class');
 	}
 
 	private function assertDependencyScopedPacksUseExportHeaders(): void

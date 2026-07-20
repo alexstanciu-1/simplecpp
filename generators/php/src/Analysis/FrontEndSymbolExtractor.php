@@ -338,7 +338,7 @@ final class FrontEndSymbolExtractor
 			'line' => $constant->line,
 			'is_lib_export' => $constant->isLibExport,
 			'visibility' => $constant->visibility,
-			'value_descriptor' => $this->describeExpression($constant->value, $constant->line),
+			'value_descriptor' => $this->describeConstantValueExpression($constant->value, $constant->line),
 		];
 	}
 
@@ -2060,6 +2060,37 @@ final class FrontEndSymbolExtractor
 			return ['kind' => 'alias', 'source' => $varName];
 		}
 		return ['kind' => 'unknown'];
+	}
+
+	/** @return array<string,mixed> */
+	private function describeConstantValueExpression(mixed $expr, int $line): array
+	{
+		$stringConcat = $this->describeConstantStringConcatExpression($expr, $line);
+		if ($stringConcat !== null) {
+			return $stringConcat;
+		}
+		return $this->describeExpression($expr, $line);
+	}
+
+	/** @return array<string,mixed>|null */
+	private function describeConstantStringConcatExpression(mixed $expr, int $line): ?array
+	{
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::BINARY_OP || (int) ($expr->flags ?? 0) !== AstKind::BINARY_CONCAT) {
+			return null;
+		}
+		$left = $this->describeConstantValueExpression($expr->children['left'] ?? null, $line);
+		$right = $this->describeConstantValueExpression($expr->children['right'] ?? null, $line);
+		if (($left['kind'] ?? 'unknown') === 'unknown' || ($right['kind'] ?? 'unknown') === 'unknown') {
+			return null;
+		}
+		return [
+			'kind' => 'string_concat',
+			'left' => $left,
+			'right' => $right,
+		];
 	}
 
 	/** @return array<string,mixed>|null */

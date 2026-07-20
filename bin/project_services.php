@@ -5056,8 +5056,8 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary, 
 		}
 	}
 	foreach (project_unit_summary_classes($summary) as $class) {
-		if (is_array($class['constants'] ?? null) && $class['constants'] !== []) {
-			$blockers[] = 'class constants require complete-type activation validation';
+		if (is_array($class['constants'] ?? null) && $class['constants'] !== [] && !project_unit_class_constants_are_scoped_candidate_safe($class, $dependencyCategories)) {
+			$blockers[] = 'class constants contain unmodeled dependency evidence';
 		}
 		foreach (is_array($class['methods'] ?? null) ? $class['methods'] : [] as $method) {
 			if (is_array($method) && (int) ($method['statement_count'] ?? 0) > 0) {
@@ -5067,6 +5067,78 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary, 
 		}
 	}
 	return normalize_string_list($blockers);
+}
+
+/** @param array<string,mixed> $class @param list<array<string,mixed>> $dependencyCategories */
+function project_unit_class_constants_are_scoped_candidate_safe(array $class, array $dependencyCategories): bool
+{
+	foreach (is_array($class['constants'] ?? null) ? $class['constants'] : [] as $constant) {
+		if (!is_array($constant)) {
+			return false;
+		}
+		$descriptor = is_array($constant['value_descriptor'] ?? null) ? $constant['value_descriptor'] : null;
+		if ($descriptor === null || !project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor, $dependencyCategories)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/** @param array<string,mixed> $descriptor @param list<array<string,mixed>> $dependencyCategories */
+function project_unit_constant_descriptor_is_scoped_candidate_safe(array $descriptor, array $dependencyCategories): bool
+{
+	$kind = trim((string) ($descriptor['kind'] ?? 'unknown'));
+	if ($kind === 'type') {
+		return project_unit_constant_descriptor_type_is_scalar_like((string) ($descriptor['type'] ?? ''));
+	}
+	if ($kind === 'class_constant') {
+		return project_unit_class_constant_dependency_is_resolved($descriptor, $dependencyCategories);
+	}
+	if ($kind === 'arithmetic') {
+		return is_array($descriptor['left'] ?? null)
+			&& is_array($descriptor['right'] ?? null)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['left'], $dependencyCategories)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['right'], $dependencyCategories);
+	}
+	if ($kind === 'conditional') {
+		return is_array($descriptor['if_true'] ?? null)
+			&& is_array($descriptor['if_false'] ?? null)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['if_true'], $dependencyCategories)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['if_false'], $dependencyCategories);
+	}
+	if ($kind === 'string_concat') {
+		return is_array($descriptor['left'] ?? null)
+			&& is_array($descriptor['right'] ?? null)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['left'], $dependencyCategories)
+			&& project_unit_constant_descriptor_is_scoped_candidate_safe($descriptor['right'], $dependencyCategories);
+	}
+	return false;
+}
+
+function project_unit_constant_descriptor_type_is_scalar_like(string $type): bool
+{
+	$type = strtolower(trim($type));
+	return in_array($type, ['bool', 'boolean', 'false', 'float', 'int', 'integer', 'long', 'null', 'string', 'true'], true);
+}
+
+/** @param array<string,mixed> $descriptor @param list<array<string,mixed>> $dependencyCategories */
+function project_unit_class_constant_dependency_is_resolved(array $descriptor, array $dependencyCategories): bool
+{
+	$className = trim((string) ($descriptor['root_class'] ?? ''), "\\ \t\n\r\0\x0B");
+	if ($className === '' || in_array(strtolower($className), ['parent', 'self', 'static'], true)) {
+		return false;
+	}
+	foreach (normalize_project_unit_dependency_category_rows($dependencyCategories) as $row) {
+		if (($row['kind'] ?? '') !== 'class_constant_value') {
+			continue;
+		}
+		$target = trim((string) ($row['target'] ?? ''), "\\ \t\n\r\0\x0B");
+		if ($target !== $className) {
+			continue;
+		}
+		return (string) ($row['resolution'] ?? '') === 'resolved';
+	}
+	return false;
 }
 
 /** @param array<string,mixed> $function @param list<array<string,mixed>> $dependencyCategories */
