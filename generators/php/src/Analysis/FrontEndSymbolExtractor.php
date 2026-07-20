@@ -500,7 +500,7 @@ final class FrontEndSymbolExtractor
 	 */
 	private function appendConstantValueDependencies(array &$dependencies, string $kind, ConstantDecl $constant, ?string $owner): void
 	{
-		$this->appendDescriptorTypeDependencies($dependencies, $kind, $this->describeExpression($constant->value, $constant->line), $owner);
+		$this->appendDescriptorTypeDependencies($dependencies, $kind, $this->describeConstantValueExpression($constant->value, $constant->line), $owner);
 	}
 
 	/**

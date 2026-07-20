@@ -55,6 +55,7 @@ namespace App\Schema;
 
 class Kind {
     public const ITEM = 7;
+    public const LABEL = "item";
 }
 PHS);
 		$this->write($project . '/orm/child_node.phs', <<<'PHS'
@@ -68,6 +69,7 @@ namespace App\Config;
 
 class Defaults {
     public const ITEM_KIND = \App\Schema\Kind::ITEM;
+    public const ITEM_LABEL = "kind-" . \App\Schema\Kind::LABEL;
 }
 PHS);
 		$this->write($project . '/contracts/sink.phs', <<<'PHS'
@@ -166,6 +168,7 @@ PHS);
 		$this->assertSame(['schema/kind.phs'], $defaultsSummary['direct_source_dependencies'] ?? null, 'class constant values should report direct source dependencies');
 		$this->assertSame(['.prism/generated/schema/kind.hpp'], $defaultsSummary['direct_local_headers'] ?? null, 'class constant values should map direct dependencies to generated headers');
 		$this->assertSame(['schema/kind.phs'], $this->dependencyCategorySources($defaultsSummary, 'class constant value'), 'class constant values should categorize direct dependencies');
+		$this->assertSame(['App\Config\Defaults::ITEM_KIND', 'App\Config\Defaults::ITEM_LABEL'], $this->dependencyCategoryOwners($defaultsSummary, 'class constant value'), 'class constant values should preserve nested string-concat dependency owners');
 		$this->assertSame([], $defaultsSummary['candidate_blocking_reasons'] ?? null, 'resolved class constant values should not block scoped activation');
 		$defaultsPackContents = $this->read($project . '/' . (string) ($defaultsSummary['candidate_pack_header'] ?? ''));
 		$this->assertOrderBefore('#include "../schema/kind.hpp"', '#include "../config/defaults.hpp"', $defaultsPackContents, 'class-constant scoped pack should include referenced class before owning class');
@@ -349,6 +352,24 @@ PHS);
 			}
 		}
 		$result = array_keys($sources);
+		sort($result, SORT_STRING);
+		return $result;
+	}
+
+	/** @return list<string> */
+	private function dependencyCategoryOwners(array $summary, string $category): array
+	{
+		$owners = [];
+		foreach (is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : [] as $row) {
+			if (!is_array($row) || ($row['category'] ?? null) !== $category) {
+				continue;
+			}
+			$owner = trim((string) ($row['owner'] ?? ''));
+			if ($owner !== '') {
+				$owners[$owner] = true;
+			}
+		}
+		$result = array_keys($owners);
 		sort($result, SORT_STRING);
 		return $result;
 	}

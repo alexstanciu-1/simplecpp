@@ -355,6 +355,11 @@ Status legend:
   candidates, constant-specific descriptors preserve nested string-concat
   dependencies, and focused coverage proves referenced class headers are
   included before the owning constant class header.
+- [x] `PUH-025e` Align class-constant dependency rows with the constant-specific
+  descriptor path. Class constants nested inside string-concat initializers now
+  produce direct dependency evidence for the owning constant row, so scoped-pack
+  safety does not depend on another constant in the same class exposing the same
+  referenced header.
 - [x] `PUH-034` Update user-facing build diagnostic docs for the current
   project-unit diagnostics surface. The strict quick-learn, getting-started
   guide, onboarding workflow, and project-build spec now mention rebuild
