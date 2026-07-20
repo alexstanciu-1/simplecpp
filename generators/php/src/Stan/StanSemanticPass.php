@@ -17,8 +17,8 @@ final class StanSemanticPass
 	{
 	}
 
-	/** @param array<string,array<string,mixed>> $fileSummaries @param list<string>|null $activeRuntimeModules @return array<string,mixed> */
-	public function analyze(array $fileSummaries, string $projectRoot, ?array $activeRuntimeModules = null, string $analysisMode = 'full'): array
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<string>|null $activeRuntimeModules @param array<string,mixed> $previousSemanticCache @return array<string,mixed> */
+	public function analyze(array $fileSummaries, string $projectRoot, ?array $activeRuntimeModules = null, string $analysisMode = 'full', array $previousSemanticCache = [], string $semanticCacheSignature = ''): array
 	{
 		$buildGateOnly = $analysisMode === 'build_gate';
 		$timings = [];
@@ -55,7 +55,9 @@ final class StanSemanticPass
 				static fn (array $diagnostic): bool => in_array((string) ($diagnostic['kind'] ?? ''), ['interface_contract_mismatch', 'abstract_contract_mismatch', 'struct_contract_mismatch', 'union_contract_mismatch'], true)
 			));
 		}
-		$expressionAnalysis = $timeSubpass('expression_analysis', fn (): array => $this->expressionTypeResolver->analyzeWorkspaceExpressions($fileSummaries, $symbolIndex, $buildGateOnly));
+		$expressionAnalysis = $timeSubpass('expression_analysis', fn (): array => $this->expressionTypeResolver->analyzeWorkspaceExpressions($fileSummaries, $symbolIndex, $buildGateOnly, $previousSemanticCache, $semanticCacheSignature));
+		$timings['expression_cache_hits'] = (int) ($expressionAnalysis['expression_cache_hits'] ?? 0);
+		$timings['expression_cache_misses'] = (int) ($expressionAnalysis['expression_cache_misses'] ?? 0);
 		$returnChainTypes = $expressionAnalysis['return_chain_types'] ?? [];
 		$returnChainDiagnostics = $expressionAnalysis['return_chain_diagnostics'] ?? [];
 		$expressionChainTypes = $expressionAnalysis['expression_chain_types'] ?? [];
@@ -147,6 +149,7 @@ final class StanSemanticPass
 			'frontend_classifications' => $frontendClassifications,
 			'file_dependency_keys' => $fileDependencyKeys,
 			'warning_samples' => $warningSamples,
+			'semantic_cache' => is_array($expressionAnalysis['semantic_cache'] ?? null) ? $expressionAnalysis['semantic_cache'] : [],
 			'timings_ms' => $timings,
 			'warning_count' => count($duplicateDiagnostics)
 				+ count($resolutionDiagnostics)

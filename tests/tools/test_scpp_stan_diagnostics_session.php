@@ -76,6 +76,8 @@ final class ScppStanDiagnosticsSessionTest
 			$this->assertSame(1, count($diagnostics['diagnostics'] ?? []), 'runDiagnostics should expose one diagnostic');
 			$this->assertTrue(isset($diagnostics['timings_ms']['context_build_ms']), 'runDiagnostics should expose STAN context timing');
 			$this->assertTrue(isset($diagnostics['timings_ms']['semantic_subpasses_ms']['expression_analysis_ms']), 'runDiagnostics should expose semantic expression-analysis timing');
+			$this->assertSame(true, $diagnostics['timings_ms']['state_cache_hit'] ?? null, 'unchanged runDiagnostics should reuse the persisted full STAN state');
+			$this->assertSame(0, $diagnostics['timings_ms']['semantic_pass_ms'] ?? null, 'persisted-state reuse should skip the semantic pass');
 
 			$firstDiagnostic = $diagnostics['diagnostics'][0] ?? null;
 			if (!is_array($firstDiagnostic)) {
@@ -120,6 +122,37 @@ final class ScppStanDiagnosticsSessionTest
 			$restoredRun = $session->run($project, $project . '/prism.json');
 			$this->assertSame(1, $restoredRun['analyzed_count'] ?? null, 'restoring source content should still use per-file invalidation');
 			$this->assertTrue((int) ($restoredRun['reused_count'] ?? 0) > 0, 'restoring source content should keep runtime/cache summaries reusable');
+
+			$helperPath = $project . '/helper.phs';
+			$this->write($mainPath, implode("\n", [
+				'function main(): void',
+				'{',
+				'	echo helper_value(), "\n";',
+				'}',
+				'',
+			]));
+			$this->write($helperPath, implode("\n", [
+				'function helper_value(): int',
+				'{',
+				'	return 1;',
+				'}',
+				'',
+			]));
+			$session->run($project, $project . '/prism.json');
+			$this->write($helperPath, implode("\n", [
+				'function helper_value(): int',
+				'{',
+				'	return 2;',
+				'}',
+				'',
+			]));
+			$helperBodyEditDiagnostics = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $helperBodyEditDiagnostics['analyzed_count'] ?? null, 'dependency body-only edit should reanalyze only the edited helper source');
+			$this->assertTrue((int) ($helperBodyEditDiagnostics['reused_count'] ?? 0) > 0, 'dependency body-only edit should reuse dependent file summaries');
+			$this->assertTrue((int) ($helperBodyEditDiagnostics['timings_ms']['semantic_subpasses_ms']['expression_cache_hits'] ?? 0) > 0, 'dependency body-only edit should reuse cached semantic owner results');
+			@unlink($helperPath);
+			$this->write($mainPath, $originalSource);
+			$session->run($project, $project . '/prism.json');
 
 			$plainCli = $this->runCommand([
 				PHP_BINARY,

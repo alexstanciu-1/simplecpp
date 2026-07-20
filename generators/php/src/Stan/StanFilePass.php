@@ -30,14 +30,11 @@ final class StanFilePass
 		string $stanSignature,
 		array $state,
 		array $sourceUnits,
-		bool $respectDependencyInvalidation = true,
 	): array {
 		$files = [];
 
-		$currentFileMetas = [];
 		foreach ($sourceUnits as $sourceUnit) {
 			$files[] = $sourceUnit->path;
-			$currentFileMetas[$sourceUnit->sourceKey] = $sourceUnit->meta;
 		}
 
 		$analyzedCount = 0;
@@ -52,7 +49,7 @@ final class StanFilePass
 			$meta = $sourceUnit->meta;
 			$previous = is_array($state['files'][$relativeKey] ?? null) ? $state['files'][$relativeKey] : null;
 			$cachePath = $cacheDir . '/' . $this->cacheFileName($relativeKey, $sourceUnit) . '.php';
-			$needsAnalyze = $this->collectReasons($previous, $meta, $stanSignature, $cachePath, $currentFileMetas, is_array($state['files'] ?? null) ? $state['files'] : [], $respectDependencyInvalidation) !== [];
+			$needsAnalyze = $this->collectReasons($previous, $meta, $stanSignature, $cachePath) !== [];
 			$summary = null;
 			if ($needsAnalyze) {
 				try {
@@ -84,12 +81,16 @@ final class StanFilePass
 						'prologue_includes' => [],
 					];
 				}
+				$apiHash = $this->summaryApiHash($summary);
+				$bodyHash = $this->summaryBodyHash($summary);
 				$this->stateStore->save($cachePath, [
 					'version' => 1,
 					'source_path' => $sourcePath,
 					'source_key' => $relativeKey,
 					'source_meta' => $meta,
 					'stan_signature' => $stanSignature,
+					'api_hash' => $apiHash,
+					'body_hash' => $bodyHash,
 					'summary' => $summary,
 				]);
 				$analyzedCount++;
@@ -109,17 +110,24 @@ final class StanFilePass
 				$reusedCount++;
 			}
 
+			$apiHash = isset($apiHash) && is_string($apiHash) ? $apiHash : $this->summaryApiHash($summary);
+			$bodyHash = isset($bodyHash) && is_string($bodyHash) ? $bodyHash : $this->summaryBodyHash($summary);
 			$summary['is_runtime_shallow'] = $sourceUnit->isRuntimeShallow;
-			$warningCount += $this->diagnosticCollector->countWarnings($summary);
+			$fileWarningCount = $this->diagnosticCollector->countWarnings($summary);
+			$warningCount += $fileWarningCount;
 			$fileSummaries[$relativeKey] = $summary;
 			$newFilesState[$relativeKey] = [
 				'size' => $meta['size'],
 				'mtime' => $meta['mtime'],
 				'content_hash' => $meta['content_hash'],
+				'api_hash' => $apiHash,
+				'body_hash' => $bodyHash,
+				'file_warning_count' => $fileWarningCount,
 				'stan_signature' => $stanSignature,
 				'cache_path' => \normalize_path($cachePath),
 				'is_runtime_shallow' => $sourceUnit->isRuntimeShallow,
 			];
+			unset($apiHash, $bodyHash);
 		}
 
 		return [
@@ -140,8 +148,8 @@ final class StanFilePass
 		return sha1($relativeKey);
 	}
 
-	/** @param array<string,mixed>|null $previous @param array{size:int,mtime:int,content_hash:string} $meta @param array<string,array{size:int,mtime:int,content_hash:string}> $currentFileMetas @param array<string,array<string,mixed>> $previousFilesState @return list<string> */
-	private function collectReasons(?array $previous, array $meta, string $stanSignature, string $cachePath, array $currentFileMetas = [], array $previousFilesState = [], bool $respectDependencyInvalidation = true): array
+	/** @param array<string,mixed>|null $previous @param array{size:int,mtime:int,content_hash:string} $meta @return list<string> */
+	private function collectReasons(?array $previous, array $meta, string $stanSignature, string $cachePath): array
 	{
 		$reasons = [];
 		if (!is_array($previous)) {
@@ -163,43 +171,146 @@ final class StanFilePass
 		if (!is_file($cachePath)) {
 			$reasons[] = 'per-file STAN cache missing';
 		}
-		if (!$respectDependencyInvalidation) {
-			return $reasons;
-		}
-		return array_merge($reasons, $this->collectDependencyReasons($previous, $currentFileMetas, $previousFilesState));
+		return $reasons;
 	}
 
-	/** @param array<string,mixed> $previous @param array<string,array{size:int,mtime:int,content_hash:string}> $currentFileMetas @param array<string,array<string,mixed>> $previousFilesState @return list<string> */
-	private function collectDependencyReasons(array $previous, array $currentFileMetas, array $previousFilesState): array
+	/** @param array<string,mixed> $summary */
+	private function summaryApiHash(array $summary): string
 	{
-		$reasons = [];
-		$dependencyKeys = $previous['dependency_keys'] ?? [];
-		if (!is_array($dependencyKeys)) {
-			return $reasons;
+		return hash('sha256', serialize($this->summaryApiSurface($summary)));
+	}
+
+	/** @param array<string,mixed> $summary */
+	private function summaryBodyHash(array $summary): string
+	{
+		return hash('sha256', serialize($summary));
+	}
+
+	/** @param array<string,mixed> $summary @return array<string,mixed> */
+	private function summaryApiSurface(array $summary): array
+	{
+		return [
+			'prologue_includes' => $summary['prologue_includes'] ?? [],
+			'root_uses' => $summary['root_uses'] ?? [],
+			'root_constants' => $summary['root_constants'] ?? [],
+			'root_functions' => $this->functionApiList($summary['root_functions'] ?? []),
+			'root_classes' => $this->classApiList($summary['root_classes'] ?? []),
+			'namespaces' => $this->namespaceApiList($summary['namespaces'] ?? []),
+			'dependencies' => $this->apiDependencies($summary['dependencies'] ?? []),
+			'build_errors' => $summary['build_errors'] ?? [],
+			'scanner_annotations' => $summary['scanner_annotations'] ?? [],
+		];
+	}
+
+	/** @param mixed $functions @return list<array<string,mixed>> */
+	private function functionApiList(mixed $functions): array
+	{
+		$results = [];
+		foreach (is_array($functions) ? $functions : [] as $function) {
+			if (is_array($function)) {
+				$results[] = $this->functionApi($function);
+			}
 		}
-		foreach ($dependencyKeys as $dependencyKey) {
-			if (!is_string($dependencyKey) || $dependencyKey === '') {
-				continue;
-			}
-			$previousDependency = is_array($previousFilesState[$dependencyKey] ?? null) ? $previousFilesState[$dependencyKey] : null;
-			$currentDependency = is_array($currentFileMetas[$dependencyKey] ?? null) ? $currentFileMetas[$dependencyKey] : null;
-			if ($previousDependency === null) {
-				$reasons[] = 'dependency metadata missing for `' . $dependencyKey . '`';
-				continue;
-			}
-			if ($currentDependency === null) {
-				$reasons[] = 'dependency source removed `' . $dependencyKey . '`';
-				continue;
-			}
-			if ((int) ($previousDependency['size'] ?? -1) !== $currentDependency['size']) {
-				$reasons[] = 'dependency size changed `' . $dependencyKey . '`';
-				continue;
-			}
-			if ((string) ($previousDependency['content_hash'] ?? '') !== $currentDependency['content_hash']) {
-				$reasons[] = 'dependency content changed `' . $dependencyKey . '`';
+		return $results;
+	}
+
+	/** @param array<string,mixed> $function @return array<string,mixed> */
+	private function functionApi(array $function): array
+	{
+		return [
+			'name' => $function['name'] ?? '',
+			'namespace' => $function['namespace'] ?? null,
+			'params' => $function['params'] ?? [],
+			'return_type' => $function['return_type'] ?? null,
+			'line' => $function['line'] ?? 0,
+			'returns_by_reference' => (bool) ($function['returns_by_reference'] ?? false),
+			'is_lib_export' => (bool) ($function['is_lib_export'] ?? false),
+			'is_synthetic_entrypoint' => (bool) ($function['is_synthetic_entrypoint'] ?? false),
+		];
+	}
+
+	/** @param mixed $classes @return list<array<string,mixed>> */
+	private function classApiList(mixed $classes): array
+	{
+		$results = [];
+		foreach (is_array($classes) ? $classes : [] as $class) {
+			if (is_array($class)) {
+				$results[] = $this->classApi($class);
 			}
 		}
-		return $reasons;
+		return $results;
+	}
+
+	/** @param array<string,mixed> $class @return array<string,mixed> */
+	private function classApi(array $class): array
+	{
+		$methods = [];
+		foreach (is_array($class['methods'] ?? null) ? $class['methods'] : [] as $method) {
+			if (is_array($method)) {
+				$methods[] = [
+					'name' => $method['name'] ?? '',
+					'params' => $method['params'] ?? [],
+					'return_type' => $method['return_type'] ?? null,
+					'line' => $method['line'] ?? 0,
+					'returns_by_reference' => (bool) ($method['returns_by_reference'] ?? false),
+					'is_static' => (bool) ($method['is_static'] ?? false),
+					'visibility' => $method['visibility'] ?? 'public',
+				];
+			}
+		}
+		return [
+			'name' => $class['name'] ?? '',
+			'namespace' => $class['namespace'] ?? null,
+			'line' => $class['line'] ?? 0,
+			'parent_class' => $class['parent_class'] ?? null,
+			'interfaces' => $class['interfaces'] ?? [],
+			'is_interface' => (bool) ($class['is_interface'] ?? false),
+			'is_abstract' => (bool) ($class['is_abstract'] ?? false),
+			'is_enum' => (bool) ($class['is_enum'] ?? false),
+			'is_struct' => (bool) ($class['is_struct'] ?? false),
+			'is_union' => (bool) ($class['is_union'] ?? false),
+			'declaration_kind' => $class['declaration_kind'] ?? 'class',
+			'is_lib_export' => (bool) ($class['is_lib_export'] ?? false),
+			'methods' => $methods,
+			'properties' => $class['properties'] ?? [],
+			'constants' => $class['constants'] ?? [],
+		];
+	}
+
+	/** @param mixed $namespaces @return list<array<string,mixed>> */
+	private function namespaceApiList(mixed $namespaces): array
+	{
+		$results = [];
+		foreach (is_array($namespaces) ? $namespaces : [] as $namespace) {
+			if (!is_array($namespace)) {
+				continue;
+			}
+			$results[] = [
+				'name' => $namespace['name'] ?? '',
+				'uses' => $namespace['uses'] ?? [],
+				'constants' => $namespace['constants'] ?? [],
+				'functions' => $this->functionApiList($namespace['functions'] ?? []),
+				'classes' => $this->classApiList($namespace['classes'] ?? []),
+			];
+		}
+		return $results;
+	}
+
+	/** @param mixed $dependencies @return list<array<string,mixed>> */
+	private function apiDependencies(mixed $dependencies): array
+	{
+		$results = [];
+		foreach (is_array($dependencies) ? $dependencies : [] as $dependency) {
+			if (!is_array($dependency)) {
+				continue;
+			}
+			$kind = (string) ($dependency['kind'] ?? '');
+			if ($kind === '' || str_contains($kind, '_body_') || str_starts_with($kind, 'executable_body')) {
+				continue;
+			}
+			$results[] = $dependency;
+		}
+		return $results;
 	}
 
 	private function isJssSource(string $path): bool

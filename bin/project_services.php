@@ -4958,8 +4958,7 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 		$cacheDir,
 		$summarySignature,
 		$previousState,
-		$sourceUnits,
-		false
+		$sourceUnits
 	);
 	$fileSummaries = is_array($filePassResult['file_summaries'] ?? null) ? $filePassResult['file_summaries'] : [];
 	$symbolIndex = (new StanSymbolIndexBuilder())->build($fileSummaries);
@@ -8985,10 +8984,25 @@ function compute_stan_implementation_fingerprint(string $repoRoot): string
 		$repoRoot . '/generators/php/src/Jss/JssParser.php',
 		$repoRoot . '/generators/php/src/Jss/JssSummaryExtractor.php',
 		$repoRoot . '/generators/php/src/Jss/JssTokenizer.php',
+		$repoRoot . '/generators/php/src/Stan/StanDependencyResolver.php',
+		$repoRoot . '/generators/php/src/Stan/StanDiagnosticCollector.php',
+		$repoRoot . '/generators/php/src/Stan/StanDiagnosticEnricher.php',
+		$repoRoot . '/generators/php/src/Stan/StanExpressionTypeResolver.php',
+		$repoRoot . '/generators/php/src/Stan/StanFilePass.php',
 		$repoRoot . '/generators/php/src/Stan/StanFrontendClassifier.php',
+		$repoRoot . '/generators/php/src/Stan/StanPhpRuntimeFunctionCatalog.php',
+		$repoRoot . '/generators/php/src/Stan/StanPositionResolver.php',
+		$repoRoot . '/generators/php/src/Stan/StanResultAssembler.php',
+		$repoRoot . '/generators/php/src/Stan/StanRuntimeProfilePreparer.php',
 		$repoRoot . '/generators/php/src/Stan/StanSemanticPass.php',
+		$repoRoot . '/generators/php/src/Stan/StanSourceMetaBuilder.php',
 		$repoRoot . '/generators/php/src/Stan/StanSourceCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/Stan/StanSourceUnit.php',
+		$repoRoot . '/generators/php/src/Stan/StanStateStore.php',
 		$repoRoot . '/generators/php/src/Stan/StanSymbolIndexBuilder.php',
+		$repoRoot . '/generators/php/src/Stan/StanTakeContractResolver.php',
+		$repoRoot . '/generators/php/src/Stan/StanWarningPresenter.php',
+		$repoRoot . '/generators/php/src/Stan/StanWorkspaceContext.php',
 		$repoRoot . '/generators/php/src/Stan/StanWorkspaceContextBuilder.php',
 		$repoRoot . '/generators/php/src/Stan/StanWorkspaceSession.php',
 	];

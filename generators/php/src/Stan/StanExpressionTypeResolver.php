@@ -11,36 +11,38 @@ final class StanExpressionTypeResolver
 	{
 	}
 
-	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return array<string,list<array<string,mixed>>> */
-	public function analyzeWorkspaceExpressions(array $fileSummaries, array $symbolIndex, bool $buildGateOnly = false): array
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @param array<string,mixed> $previousSemanticCache @return array<string,mixed> */
+	public function analyzeWorkspaceExpressions(array $fileSummaries, array $symbolIndex, bool $buildGateOnly = false, array $previousSemanticCache = [], string $semanticCacheSignature = ''): array
 	{
 		$classCatalog = $this->buildClassCatalog($fileSummaries);
 		$classLookup = $this->buildClassLookup($classCatalog);
 		$functionCatalog = $this->buildFunctionCatalog($fileSummaries);
 		$functionLookup = $this->buildFunctionLookup($fileSummaries);
-		$result = [
-			'return_chain_types' => [],
-			'return_chain_diagnostics' => [],
-			'expression_chain_types' => [],
-			'expression_chain_diagnostics' => [],
-			'local_type_diagnostics' => [],
-			'property_type_diagnostics' => [],
-			'property_read_diagnostics' => [],
-			'initialization_diagnostics' => [],
-			'call_site_diagnostics' => [],
-			'return_type_diagnostics' => [],
+		$result = $this->emptyExpressionAnalysisResult();
+		$cacheContextHash = $this->expressionCacheContextHash($classCatalog, $functionCatalog, $functionLookup, $buildGateOnly, $semanticCacheSignature);
+		$previousOwnerCache = (
+			(int) ($previousSemanticCache['version'] ?? 0) === 1
+			&& (string) ($previousSemanticCache['context_hash'] ?? '') === $cacheContextHash
+			&& is_array($previousSemanticCache['owners'] ?? null)
+		) ? $previousSemanticCache['owners'] : [];
+		$semanticCache = [
+			'version' => 1,
+			'context_hash' => $cacheContextHash,
+			'owners' => [],
 		];
+		$cacheHits = 0;
+		$cacheMisses = 0;
 
 		foreach ($fileSummaries as $summary) {
 			$path = (string) ($summary['path'] ?? '(unknown)');
 			foreach (($summary['root_functions'] ?? []) as $function) {
 				if (is_array($function)) {
-					$this->appendFunctionExpressionAnalysis($result, $function, null, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+					$this->appendFunctionExpressionAnalysisCached($result, $semanticCache, $cacheHits, $cacheMisses, $previousOwnerCache, $function, null, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
 				}
 			}
 			foreach (($summary['root_classes'] ?? []) as $class) {
 				if (is_array($class)) {
-					$this->appendClassExpressionAnalysis($result, $class, '', $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+					$this->appendClassExpressionAnalysisCached($result, $semanticCache, $cacheHits, $cacheMisses, $previousOwnerCache, $class, '', $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
 					$result['local_type_diagnostics'] = array_merge(
 						$result['local_type_diagnostics'],
 						$this->collectUnsupportedHashKeyDiagnosticsForClass($class, (string) ($class['name'] ?? 'class'), $path, $classLookup)
@@ -54,12 +56,12 @@ final class StanExpressionTypeResolver
 				$namespaceName = (string) ($namespace['name'] ?? '');
 				foreach (($namespace['functions'] ?? []) as $function) {
 					if (is_array($function)) {
-						$this->appendFunctionExpressionAnalysis($result, $function, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+						$this->appendFunctionExpressionAnalysisCached($result, $semanticCache, $cacheHits, $cacheMisses, $previousOwnerCache, $function, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
 					}
 				}
 				foreach (($namespace['classes'] ?? []) as $class) {
 					if (is_array($class)) {
-						$this->appendClassExpressionAnalysis($result, $class, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+						$this->appendClassExpressionAnalysisCached($result, $semanticCache, $cacheHits, $cacheMisses, $previousOwnerCache, $class, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
 						$result['local_type_diagnostics'] = array_merge(
 							$result['local_type_diagnostics'],
 							$this->collectUnsupportedHashKeyDiagnosticsForClass($class, $this->contextName($namespaceName, (string) ($class['name'] ?? 'class')), $path, $classLookup)
@@ -69,20 +71,10 @@ final class StanExpressionTypeResolver
 			}
 		}
 
-		usort($result['return_chain_types'], static fn (array $a, array $b): int => strcmp($a['context'], $b['context']));
-		usort($result['expression_chain_types'], static fn (array $a, array $b): int => strcmp($a['context'], $b['context']));
-		foreach ([
-			'return_chain_diagnostics',
-			'expression_chain_diagnostics',
-			'local_type_diagnostics',
-			'property_type_diagnostics',
-			'property_read_diagnostics',
-			'initialization_diagnostics',
-			'call_site_diagnostics',
-			'return_type_diagnostics',
-		] as $diagnosticKey) {
-			usort($result[$diagnosticKey], static fn (array $a, array $b): int => strcmp((string) ($a['message'] ?? ''), (string) ($b['message'] ?? '')));
-		}
+		$this->sortExpressionAnalysisResult($result);
+		$result['semantic_cache'] = $semanticCache;
+		$result['expression_cache_hits'] = $cacheHits;
+		$result['expression_cache_misses'] = $cacheMisses;
 
 		return $result;
 	}
@@ -854,6 +846,28 @@ final class StanExpressionTypeResolver
 		);
 	}
 
+	/** @param array<string,mixed> $result @param array<string,mixed> $semanticCache @param array<string,mixed> $previousOwnerCache @param array<string,mixed> $function @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendFunctionExpressionAnalysisCached(array &$result, array &$semanticCache, int &$cacheHits, int &$cacheMisses, array $previousOwnerCache, array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog, bool $buildGateOnly): void
+	{
+		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
+		$ownerSlot = $this->ownerCacheSlotKey($path, $context);
+		$cacheKey = $this->ownerExpressionCacheKey($function, null, 'function_return_chain', []);
+		$cached = is_array($previousOwnerCache[$ownerSlot] ?? null) ? $previousOwnerCache[$ownerSlot] : null;
+		if (is_array($cached) && (string) ($cached['cache_key'] ?? '') === $cacheKey && $this->isExpressionAnalysisResult($cached['result'] ?? null)) {
+			$ownerResult = $cached['result'];
+			$cacheHits++;
+		} else {
+			$ownerResult = $this->emptyExpressionAnalysisResult();
+			$this->appendFunctionExpressionAnalysis($ownerResult, $function, $namespace, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+			$cacheMisses++;
+		}
+		$semanticCache['owners'][$ownerSlot] = [
+			'cache_key' => $cacheKey,
+			'result' => $ownerResult,
+		];
+		$this->mergeExpressionAnalysisResult($result, $ownerResult);
+	}
+
 	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
 	private function appendClassExpressionAnalysis(array &$result, array $class, string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog, bool $buildGateOnly): void
 	{
@@ -867,19 +881,69 @@ final class StanExpressionTypeResolver
 			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
 			$methodName = (string) ($method['name'] ?? '');
 			$context = $classType . '::' . $methodName;
-			$analysis = $this->analyzeChainSequence(
+			$this->appendMethodExpressionAnalysis(
+				$result,
 				$method,
-				$baseTypes,
 				$classType,
-				$classLookup,
-				$functionLookup,
 				$context,
 				$path,
+				$classLookup,
+				$functionLookup,
 				$functionCatalog,
-				$this->constructorBaselineForMethod($methodName, $constructorInitializedProperties)
+				$this->constructorBaselineForMethod($methodName, $constructorInitializedProperties),
+				$buildGateOnly
 			);
-			$this->appendOwnerExpressionAnalysis($result, $method, $analysis, $classType, $classLookup, $functionLookup, $functionCatalog, $context, $path, 'method_return_chain', $buildGateOnly);
 		}
+	}
+
+	/** @param array<string,mixed> $result @param array<string,mixed> $semanticCache @param array<string,mixed> $previousOwnerCache @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendClassExpressionAnalysisCached(array &$result, array &$semanticCache, int &$cacheHits, int &$cacheMisses, array $previousOwnerCache, array $class, string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog, bool $buildGateOnly): void
+	{
+		$className = (string) ($class['name'] ?? '');
+		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
+		foreach (($class['methods'] ?? []) as $method) {
+			if (!is_array($method)) {
+				continue;
+			}
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$constructorBaseline = $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties);
+			$ownerSlot = $this->ownerCacheSlotKey($path, $context);
+			$cacheKey = $this->ownerExpressionCacheKey($method, $classType, 'method_return_chain', $constructorBaseline);
+			$cached = is_array($previousOwnerCache[$ownerSlot] ?? null) ? $previousOwnerCache[$ownerSlot] : null;
+			if (is_array($cached) && (string) ($cached['cache_key'] ?? '') === $cacheKey && $this->isExpressionAnalysisResult($cached['result'] ?? null)) {
+				$ownerResult = $cached['result'];
+				$cacheHits++;
+			} else {
+				$ownerResult = $this->emptyExpressionAnalysisResult();
+				$this->appendMethodExpressionAnalysis($ownerResult, $method, $classType, $context, $path, $classLookup, $functionLookup, $functionCatalog, $constructorBaseline, $buildGateOnly);
+				$cacheMisses++;
+			}
+			$semanticCache['owners'][$ownerSlot] = [
+				'cache_key' => $cacheKey,
+				'result' => $ownerResult,
+			];
+			$this->mergeExpressionAnalysisResult($result, $ownerResult);
+		}
+	}
+
+	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $method @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @param array<string,bool> $constructorBaseline */
+	private function appendMethodExpressionAnalysis(array &$result, array $method, string $classType, string $context, string $path, array $classLookup, array $functionLookup, array $functionCatalog, array $constructorBaseline, bool $buildGateOnly): void
+	{
+		$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
+		$analysis = $this->analyzeChainSequence(
+			$method,
+			$baseTypes,
+			$classType,
+			$classLookup,
+			$functionLookup,
+			$context,
+			$path,
+			$functionCatalog,
+			$constructorBaseline
+		);
+		$this->appendOwnerExpressionAnalysis($result, $method, $analysis, $classType, $classLookup, $functionLookup, $functionCatalog, $context, $path, 'method_return_chain', $buildGateOnly);
 	}
 
 	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $ownerNode @param array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>,call_site_diagnostics:list<array<string,mixed>>,property_read_diagnostics:list<array<string,mixed>>} $analysis @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
@@ -934,6 +998,97 @@ final class StanExpressionTypeResolver
 			$result['return_type_diagnostics'],
 			$buildGateOnly ? $this->filterBuildGateReturnTypeDiagnostics($returnDiagnostics) : $returnDiagnostics
 		);
+	}
+
+	/** @return array<string,list<array<string,mixed>>> */
+	private function emptyExpressionAnalysisResult(): array
+	{
+		return [
+			'return_chain_types' => [],
+			'return_chain_diagnostics' => [],
+			'expression_chain_types' => [],
+			'expression_chain_diagnostics' => [],
+			'local_type_diagnostics' => [],
+			'property_type_diagnostics' => [],
+			'property_read_diagnostics' => [],
+			'initialization_diagnostics' => [],
+			'call_site_diagnostics' => [],
+			'return_type_diagnostics' => [],
+		];
+	}
+
+	/** @param array<string,mixed> $value */
+	private function isExpressionAnalysisResult(mixed $value): bool
+	{
+		if (!is_array($value)) {
+			return false;
+		}
+		foreach (array_keys($this->emptyExpressionAnalysisResult()) as $key) {
+			if (!is_array($value[$key] ?? null)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** @param array<string,mixed> $target @param array<string,mixed> $source */
+	private function mergeExpressionAnalysisResult(array &$target, array $source): void
+	{
+		foreach (array_keys($this->emptyExpressionAnalysisResult()) as $key) {
+			$target[$key] = array_merge(
+				is_array($target[$key] ?? null) ? $target[$key] : [],
+				is_array($source[$key] ?? null) ? $source[$key] : []
+			);
+		}
+	}
+
+	/** @param array<string,mixed> $result */
+	private function sortExpressionAnalysisResult(array &$result): void
+	{
+		usort($result['return_chain_types'], static fn (array $a, array $b): int => strcmp((string) ($a['context'] ?? ''), (string) ($b['context'] ?? '')));
+		usort($result['expression_chain_types'], static fn (array $a, array $b): int => strcmp((string) ($a['context'] ?? ''), (string) ($b['context'] ?? '')));
+		foreach ([
+			'return_chain_diagnostics',
+			'expression_chain_diagnostics',
+			'local_type_diagnostics',
+			'property_type_diagnostics',
+			'property_read_diagnostics',
+			'initialization_diagnostics',
+			'call_site_diagnostics',
+			'return_type_diagnostics',
+		] as $diagnosticKey) {
+			usort($result[$diagnosticKey], static fn (array $a, array $b): int => strcmp((string) ($a['message'] ?? ''), (string) ($b['message'] ?? '')));
+		}
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog @param array<string,array<string,mixed>> $functionCatalog @param array<string,string> $functionLookup */
+	private function expressionCacheContextHash(array $classCatalog, array $functionCatalog, array $functionLookup, bool $buildGateOnly, string $semanticCacheSignature): string
+	{
+		return hash('sha256', serialize([
+			'version' => 1,
+			'build_gate_only' => $buildGateOnly,
+			'semantic_cache_signature' => $semanticCacheSignature,
+			'class_catalog' => $classCatalog,
+			'function_catalog' => $functionCatalog,
+			'function_lookup' => $functionLookup,
+		]));
+	}
+
+	/** @param array<string,mixed> $ownerNode @param array<string,bool> $constructorBaseline */
+	private function ownerExpressionCacheKey(array $ownerNode, ?string $selfType, string $returnChainKind, array $constructorBaseline): string
+	{
+		return hash('sha256', serialize([
+			'version' => 1,
+			'owner' => $ownerNode,
+			'self_type' => $selfType,
+			'return_chain_kind' => $returnChainKind,
+			'constructor_baseline' => $constructorBaseline,
+		]));
+	}
+
+	private function ownerCacheSlotKey(string $path, string $context): string
+	{
+		return hash('sha256', $path . "\0" . $context);
 	}
 
 	/** @param list<array<string,mixed>> $params @return array<string,string> */

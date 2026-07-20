@@ -88,13 +88,18 @@ final class StanResultAssembler
 		array $frontendClassifications,
 		array $filesState,
 		string $activeRuntimeShallowPath,
+		int $warningCount,
+		array $warningSamples,
+		array $semanticCache = [],
 	): array {
 		return [
-			'version' => 1,
+			'version' => 2,
 			'project_root' => \normalize_path($projectRoot),
 			'php_profile' => $phpProfile,
 			'source_fingerprint' => $sourceFingerprint,
 			'updated_at' => time(),
+			'warning_count' => $warningCount,
+			'warning_samples' => $warningSamples,
 			'symbol_index' => $symbolIndex,
 			'duplicate_diagnostics' => $duplicateDiagnostics,
 			'resolution_diagnostics' => $resolutionDiagnostics,
@@ -113,6 +118,7 @@ final class StanResultAssembler
 			'frontend_classifications' => $frontendClassifications,
 			'files' => $filesState,
 			'runtime_shallow_path' => \normalize_path($activeRuntimeShallowPath),
+			'semantic_cache' => $semanticCache,
 		];
 	}
 
