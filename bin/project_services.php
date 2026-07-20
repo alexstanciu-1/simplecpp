@@ -4103,6 +4103,7 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 	$dependencySummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
 	$statusCounts = summarize_project_unit_dependency_status_counts($dependencySummaries);
 	$candidateBlockerCounts = summarize_project_unit_candidate_blocker_counts($dependencySummaries);
+	$nativeUnitCount = count($nativeCppUnits);
 
 	return [
 		'total_units' => count($units),
@@ -4113,6 +4114,14 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 		'candidate_scoped_units' => $statusCounts['candidate_scoped_units'],
 		'candidate_blocked_units' => $statusCounts['candidate_blocked_units'],
 		'candidate_blocker_counts' => $candidateBlockerCounts,
+		'native_units' => $nativeUnitCount,
+		'native_broad_fallback_units' => $nativeUnitCount,
+		'native_policy' => [
+			'status' => $nativeUnitCount > 0 ? 'broad_fallback_without_dependency_manifest' : 'not_applicable',
+			'reason' => $nativeUnitCount > 0
+				? 'native C++ project-unit dependencies are not modeled; native units use broad-equivalent packs'
+				: 'no native C++ units in this build',
+		],
 		'headers' => $headers,
 		'pack_changes' => normalize_project_unit_pack_changes($packChanges),
 		'dependency_summary_artifact' => normalize_project_unit_dependency_summary_artifact_info([]),
@@ -5225,6 +5234,9 @@ function normalize_project_unit_force_include_report(array $report): array
 		'candidate_scoped_units' => max(0, (int) ($report['candidate_scoped_units'] ?? 0)),
 		'candidate_blocked_units' => max(0, (int) ($report['candidate_blocked_units'] ?? 0)),
 		'candidate_blocker_counts' => normalize_project_unit_candidate_blocker_counts(is_array($report['candidate_blocker_counts'] ?? null) ? $report['candidate_blocker_counts'] : []),
+		'native_units' => max(0, (int) ($report['native_units'] ?? 0)),
+		'native_broad_fallback_units' => max(0, (int) ($report['native_broad_fallback_units'] ?? 0)),
+		'native_policy' => normalize_project_unit_native_policy(is_array($report['native_policy'] ?? null) ? $report['native_policy'] : []),
 		'headers' => $headers,
 		'pack_changes' => normalize_project_unit_pack_changes(is_array($report['pack_changes'] ?? null) ? $report['pack_changes'] : []),
 		'dependency_summary_artifact' => normalize_project_unit_dependency_summary_artifact_info(is_array($report['dependency_summary_artifact'] ?? null) ? $report['dependency_summary_artifact'] : []),
@@ -5257,6 +5269,25 @@ function normalize_project_unit_candidate_blocker_counts(array $rows): array
 		return $byCount !== 0 ? $byCount : strcmp((string) ($left['reason'] ?? ''), (string) ($right['reason'] ?? ''));
 	});
 	return $normalized;
+}
+
+/** @return array{status:string,reason:string} */
+function normalize_project_unit_native_policy(array $policy): array
+{
+	$status = trim((string) ($policy['status'] ?? 'not_applicable'));
+	if ($status === '') {
+		$status = 'not_applicable';
+	}
+	$reason = trim((string) ($policy['reason'] ?? ''));
+	if ($reason === '') {
+		$reason = $status === 'not_applicable'
+			? 'no native C++ units in this build'
+			: 'native C++ project-unit dependencies are not modeled; native units use broad-equivalent packs';
+	}
+	return [
+		'status' => $status,
+		'reason' => $reason,
+	];
 }
 
 /** @return array{path:string,summary_signature:string,source_fingerprint:string,source_count:int,used_stan_dependency_state:bool,source_overrides_active:bool} */
@@ -6904,6 +6935,12 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 			. ', active broad fallback ' . $activeBroadFallbackUnits
 			. ', candidates scoped ' . $candidateScopedUnits
 			. ', candidates blocked ' . $candidateBlockedUnits;
+	}
+	$nativeUnits = max(0, (int) ($report['native_units'] ?? 0));
+	if ($nativeUnits > 0) {
+		$nativeBroadFallbackUnits = max(0, (int) ($report['native_broad_fallback_units'] ?? $nativeUnits));
+		$nativePolicy = normalize_project_unit_native_policy(is_array($report['native_policy'] ?? null) ? $report['native_policy'] : []);
+		$lines[] = 'Project unit native policy: ' . $nativeBroadFallbackUnits . '/' . $nativeUnits . ' native unit(s) broad fallback (' . (string) ($nativePolicy['reason'] ?? '') . ')';
 	}
 	$candidateBlockerCounts = normalize_project_unit_candidate_blocker_counts(is_array($report['candidate_blocker_counts'] ?? null) ? $report['candidate_blocker_counts'] : []);
 	if ($candidateBlockerCounts !== []) {

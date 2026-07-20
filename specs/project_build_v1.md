@@ -343,6 +343,14 @@ unit packs only for generated PHS units whose dependency summaries are
 classified as `candidate_scoped`; blocked generated units, no-STAN builds, and
 native C++ units keep using broad-equivalent project unit packs.
 
+Native C++ units are intentionally reported under a separate native policy.
+Current v1 policy is `broad_fallback_without_dependency_manifest`: native C++
+files are force-included with the project's broad-equivalent pack because the
+build does not yet have a native dependency manifest format. The report includes
+`native_units`, `native_broad_fallback_units`, and `native_policy` so this
+fallback is visible instead of being mixed into generated-source scoped
+candidate counts.
+
 The same diagnostic payload reports the scoped-pack candidate for each
 generated PHS unit. Candidate rows include the scoped header list, the stable
 candidate hash/path, a candidate status, and any blocking reasons that kept the

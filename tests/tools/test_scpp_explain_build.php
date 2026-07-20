@@ -30,6 +30,7 @@ final class ScppExplainBuildTest
 			$this->write($project . '/base.phs', "class Base {}\n");
 			$this->write($project . '/child.phs', "class Child extends Base {}\n");
 			$this->write($project . '/main.phs', "\$child = new Child();\necho \"hello\\n\";\n");
+			$this->write($project . '/native_cpp/policy_probe.cpp', "void scpp_native_project_unit_policy_probe() {}\n");
 			$config = [
 				'config_version' => 1,
 				'project_name' => 'explain_build',
@@ -134,13 +135,16 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $rebuildFanout['changed_project_unit_pack_count'] ?? null, 'warm STAN build should record no changed project-unit packs');
 			$this->assertSame(0, $rebuildFanout['removed_project_unit_pack_count'] ?? null, 'warm STAN build should record no removed project-unit packs');
 			$this->assertSame(true, $rebuildFanout['ninja_no_work'] ?? null, 'warm STAN build should record Ninja no-work');
-			$this->assertSame(3, $projectUnits['total_units'] ?? null, 'three-file project should report three compiled units');
-			$this->assertSame(3, $projectUnits['units_with_force_include'] ?? null, 'three-file project should force-include the project unit header for each generated unit');
-			$this->assertSame(3, $projectUnits['distinct_headers'] ?? null, 'three-file project should use scoped packs for safe declaration-only units and broad fallback for main');
+			$this->assertSame(4, $projectUnits['total_units'] ?? null, 'three-source project with one native file should report four compiled units');
+			$this->assertSame(4, $projectUnits['units_with_force_include'] ?? null, 'three-source project with one native file should force-include a project unit header for each compiled unit');
+			$this->assertSame(3, $projectUnits['distinct_headers'] ?? null, 'three-source project should use scoped packs for safe declaration-only units and broad fallback for main/native');
 			$this->assertSame(2, $projectUnits['active_scoped_units'] ?? null, 'three-file project should count two active scoped units');
 			$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'three-file project should count one active broad fallback unit');
 			$this->assertSame(2, $projectUnits['candidate_scoped_units'] ?? null, 'three-file project should count two scoped candidates');
 			$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'three-file project should count one blocked scoped candidate');
+			$this->assertSame(1, $projectUnits['native_units'] ?? null, 'project unit report should count native C++ units');
+			$this->assertSame(1, $projectUnits['native_broad_fallback_units'] ?? null, 'native C++ units should stay on broad fallback');
+			$this->assertSame('broad_fallback_without_dependency_manifest', $projectUnits['native_policy']['status'] ?? null, 'native C++ project-unit policy should be explicit');
 			$this->assertSame([['reason' => 'executable body present', 'unit_count' => 1]], $projectUnits['candidate_blocker_counts'] ?? null, 'three-file project should count the executable-body blocker');
 			$projectUnitHeaders = is_array($projectUnits['headers'] ?? null) ? $projectUnits['headers'] : [];
 			$headerModes = [];
@@ -235,8 +239,9 @@ final class ScppExplainBuildTest
 
 			$projectUnitsView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-units'], [], 20.0);
 			$this->assertSame(0, $projectUnitsView['exit_code'], 'scpp explain-build project-units should succeed');
-			$this->assertContains('Project unit force-includes: 3/3 unit(s), 3 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
+			$this->assertContains('Project unit force-includes: 4/4 unit(s), 3 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
 			$this->assertContains('Project unit scoped fanout: active scoped 2, active broad fallback 1, candidates scoped 2, candidates blocked 1', $projectUnitsView['stdout'], 'project-units should summarize scoped activation fanout');
+			$this->assertContains('Project unit native policy: 1/1 native unit(s) broad fallback (native C++ project-unit dependencies are not modeled; native units use broad-equivalent packs)', $projectUnitsView['stdout'], 'project-units should summarize native broad fallback policy');
 			$this->assertContains('Project unit candidate blockers: executable body present (1 unit(s))', $projectUnitsView['stdout'], 'project-units should summarize candidate blocker counts');
 			$this->assertContains('Project unit pack changes: changed 0, removed 0', $projectUnitsView['stdout'], 'project-units should summarize project-unit pack changes');
 			$this->assertContains('Project unit dependency summary artifact: .prism/cache/project_unit_dependency_summary.php (sources 3, STAN yes, overrides no)', $projectUnitsView['stdout'], 'project-units should show the dependency summary artifact pointer');
@@ -335,10 +340,11 @@ final class ScppExplainBuildTest
 			$this->assertRebuildFanoutShape($noStanFanout, 'warm no-STAN rebuild fanout');
 			$this->assertSame($noStanPackChanges['removed_count'] ?? null, $noStanFanout['removed_project_unit_pack_count'] ?? null, 'warm --no-stan rebuild fanout should mirror removed project-unit packs');
 			$this->assertSame($noStanPackChanges['removed_headers'] ?? null, $noStanFanout['removed_project_unit_pack_headers'] ?? null, 'warm --no-stan rebuild fanout should mirror removed project-unit pack headers');
-			$this->assertSame(3, $noStanProjectUnits['total_units'] ?? null, 'warm --no-stan build should still report all generated units');
+			$this->assertSame(4, $noStanProjectUnits['total_units'] ?? null, 'warm --no-stan build should still report all generated and native units');
 			$this->assertSame(1, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should fall back to one broad-equivalent pack even if stale STAN state exists');
 			$this->assertSame(0, $noStanProjectUnits['active_scoped_units'] ?? null, 'warm --no-stan build should count no active scoped units');
 			$this->assertSame(3, $noStanProjectUnits['active_broad_fallback_units'] ?? null, 'warm --no-stan build should count all generated units as broad fallback');
+			$this->assertSame(1, $noStanProjectUnits['native_broad_fallback_units'] ?? null, 'warm --no-stan build should keep native units on broad fallback');
 			$this->assertSame(0, $noStanProjectUnits['candidate_scoped_units'] ?? null, 'warm --no-stan build should count no scoped candidates');
 			$this->assertSame(3, $noStanProjectUnits['candidate_blocked_units'] ?? null, 'warm --no-stan build should count all generated candidates as blocked');
 			$this->assertSame([
@@ -559,6 +565,9 @@ final class ScppExplainBuildTest
 			'dependency_summaries',
 			'distinct_headers',
 			'headers',
+			'native_broad_fallback_units',
+			'native_policy',
+			'native_units',
 			'pack_changes',
 			'total_units',
 			'units_with_force_include',
@@ -569,6 +578,12 @@ final class ScppExplainBuildTest
 			throw new RuntimeException($context . ' pack_changes should be an object');
 		}
 		$this->assertKeys(['changed_count', 'changed_headers', 'removed_count', 'removed_headers'], $packChanges, $context . ' pack_changes keys');
+
+		$nativePolicy = is_array($projectUnits['native_policy'] ?? null) ? $projectUnits['native_policy'] : null;
+		if (!is_array($nativePolicy)) {
+			throw new RuntimeException($context . ' native_policy should be an object');
+		}
+		$this->assertKeys(['reason', 'status'], $nativePolicy, $context . ' native_policy keys');
 
 		$summaryArtifact = is_array($projectUnits['dependency_summary_artifact'] ?? null) ? $projectUnits['dependency_summary_artifact'] : null;
 		if (!is_array($summaryArtifact)) {

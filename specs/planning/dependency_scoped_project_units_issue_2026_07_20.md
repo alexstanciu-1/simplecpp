@@ -341,6 +341,10 @@ Status legend:
   produce direct source/header evidence and a `class constant value` category,
   while class-constant files remain on broad fallback until scoped activation is
   validated for that header shape.
+- [x] `PUH-027` Make the native C++ unit policy explicit. Native C++ files now
+  stay on broad-equivalent project-unit packs under
+  `broad_fallback_without_dependency_manifest`, with saved report counters and
+  focused `project-units` output showing the native broad-fallback count.
 
 ### Ready
 
@@ -354,10 +358,6 @@ Status legend:
   properties, class constants, value-layout structs/unions, enum backing/type
   references, and generated declarations whose headers require another
   generated header to be complete.
-- [ ] `PUH-027` Decide the native C++ unit policy. Initial likely rule: native
-  C++ stays on broad fallback unless a project config or manifest explicitly
-  declares a narrower generated-header dependency set.
-
 ### Planned Validation And Rollout
 
 - [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:
