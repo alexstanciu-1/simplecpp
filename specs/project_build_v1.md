@@ -381,12 +381,15 @@ base header. The final scoped header list still uses the generated-header
 ordering routine so base headers appear before derived headers.
 
 Current v1 scoped activation remains conservative. Files with class properties
-may activate scoped packs when their direct property type dependencies resolve
-to generated headers, and those headers are placed before the owning header in
-the scoped pack. Files with class constants may activate scoped packs only when
-their initializer descriptors are simple scalar expressions, recursively simple
-arithmetic/conditional/string-concat expressions, or resolved class-constant
-references whose generated headers are included before the owning header.
+or compact-layout struct/union fields may activate scoped packs when their
+direct property type dependencies resolve to generated headers, and those
+headers are placed before the owning header in the scoped pack. Enum-typed value
+fields use the same property-layout dependency evidence, while fixed-width enum
+backing types do not add generated-header dependencies. Files with class
+constants may activate scoped packs only when their initializer descriptors are
+simple scalar expressions, recursively simple arithmetic/conditional/string-concat
+expressions, or resolved class-constant references whose generated headers are
+included before the owning header.
 Top-level helper function bodies may activate scoped packs only when their body
 evidence is limited to resolved direct function/static calls and resolved type
 references. Executable bodies, method bodies, property/static access, unresolved

@@ -360,6 +360,11 @@ Status legend:
   produce direct dependency evidence for the owning constant row, so scoped-pack
   safety does not depend on another constant in the same class exposing the same
   referenced header.
+- [x] `PUH-025f` Lock scoped-pack activation for compact-layout value
+  dependencies. Separate enum, struct, union, and record units now have focused
+  coverage proving direct value-layout dependencies, transitive union payload
+  dependencies, and base generated-header ordering are preserved in scoped
+  packs.
 - [x] `PUH-034` Update user-facing build diagnostic docs for the current
   project-unit diagnostics surface. The strict quick-learn, getting-started
   guide, onboarding workflow, and project-build spec now mention rebuild
@@ -374,9 +379,10 @@ Status legend:
   the motivating support-file edit.
 ### Planned Dependency-Model Work
 
-- [ ] `PUH-025` Finish complete-type activation requirements for value-layout
-  structs/unions, enum backing/type references, and generated declarations
-  whose headers require another generated header to be complete.
+- [ ] `PUH-025` Finish any remaining complete-type activation requirements for
+  generated declarations whose headers require another generated header to be
+  complete beyond the covered inheritance, signature, property-layout,
+  class-constant, and compact-layout value-field cases.
 ### Planned Validation And Rollout
 
 - [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:

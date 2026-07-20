@@ -27,6 +27,7 @@ final class ScppProjectUnitScopedPacksTest
 		try {
 			$this->assertNestedNamespaceInheritanceScopedPacks();
 			$this->assertDependencyScopedPacksUseExportHeaders();
+			$this->assertCompactLayoutScopedPacksIncludeValueDependencies();
 			echo "PASS: scpp project unit scoped packs\n";
 			return 0;
 		} finally {
@@ -260,6 +261,76 @@ PHS);
 		$cleanLocalSummary = $this->findSummary($cleanProjectUnits, 'local_node.phs', '');
 		$this->assertSame('scoped', $cleanLocalSummary['status'] ?? null, 'clean rebuild should restore the root scoped pack');
 		$this->assertSame(['../lib/.prism/generated/__project.hpp'], $cleanLocalSummary['dependency_export_headers'] ?? null, 'clean rebuild should restore dependency project exports in scoped packs');
+	}
+
+	private function assertCompactLayoutScopedPacksIncludeValueDependencies(): void
+	{
+		$project = $this->root . '/compact_layout_units';
+		$this->writeProject($project, [], "echo \"compact\\n\";\n", 'strict');
+		$this->write($project . '/kind.phs', <<<'PHS'
+enum ExpressionKind : uint16 {
+    case Error = 0;
+    case Access = 1;
+}
+PHS);
+		$this->write($project . '/span.phs', <<<'PHS'
+struct CompactChildSpan {
+    public uint32 $first_child_index = 0;
+    public uint32 $child_count = 0;
+}
+PHS);
+		$this->write($project . '/access_payload.phs', <<<'PHS'
+struct ParsedAccessPayload {
+    public uint32 $subject_id = 0;
+    public uint32 $member_id = 0;
+}
+PHS);
+		$this->write($project . '/payload.phs', <<<'PHS'
+union ParsedExpressionPayload {
+    public uint32 $name_id;
+    public ParsedAccessPayload $access;
+}
+PHS);
+		$this->write($project . '/record.phs', <<<'PHS'
+struct CompactParsedExpressionRecord {
+    public ExpressionKind $kind = ExpressionKind::Error;
+    public CompactChildSpan $children;
+    public ParsedExpressionPayload $payload;
+}
+PHS);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(true, $build['ok'], 'compact-layout scoped-pack project should build');
+
+		$projectUnits = $this->loadProjectUnits($project);
+		$this->assertSame(6, $projectUnits['total_units'] ?? null, 'compact-layout project should report six generated units');
+		$this->assertSame(5, $projectUnits['active_scoped_units'] ?? null, 'compact-layout declaration units should activate scoped packs');
+		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'compact-layout executable unit should stay broad');
+		$this->assertSame(5, $projectUnits['candidate_scoped_units'] ?? null, 'compact-layout declarations should be scoped candidates');
+		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'compact-layout main should be the only blocked candidate');
+
+		$payloadSummary = $this->findSummary($projectUnits, 'payload.phs', '');
+		$this->assertSame('scoped', $payloadSummary['status'] ?? null, 'union payload should compile with a scoped pack');
+		$this->assertSame(['access_payload.phs'], $payloadSummary['direct_source_dependencies'] ?? null, 'union payload should report its nested struct dependency');
+		$this->assertSame(['.prism/generated/access_payload.hpp'], $payloadSummary['direct_local_headers'] ?? null, 'union payload should direct-include its nested struct header');
+		$this->assertSame(['access_payload.phs'], $this->dependencyCategorySources($payloadSummary, 'property layout'), 'union value fields should categorize dependencies as property layout');
+		$payloadPackContents = $this->read($project . '/' . (string) ($payloadSummary['candidate_pack_header'] ?? ''));
+		$this->assertOrderBefore('#include "../access_payload.hpp"', '#include "../payload.hpp"', $payloadPackContents, 'union scoped pack should include nested struct before union');
+
+		$recordSummary = $this->findSummary($projectUnits, 'record.phs', '');
+		$this->assertSame('scoped', $recordSummary['status'] ?? null, 'compact record should compile with a scoped pack');
+		$this->assertSame(['kind.phs', 'payload.phs', 'span.phs'], $recordSummary['direct_source_dependencies'] ?? null, 'compact record should report enum, union, and struct direct dependencies');
+		$this->assertSame(['.prism/generated/kind.hpp', '.prism/generated/payload.hpp', '.prism/generated/span.hpp'], $recordSummary['direct_local_headers'] ?? null, 'compact record direct headers should stay direct');
+		$this->assertSame(['.prism/generated/access_payload.hpp', '.prism/generated/kind.hpp', '.prism/generated/payload.hpp', '.prism/generated/span.hpp'], $recordSummary['scoped_local_headers'] ?? null, 'compact record scoped headers should include transitive union payload dependencies');
+		$this->assertSame(['kind.phs', 'payload.phs', 'span.phs'], $this->dependencyCategorySources($recordSummary, 'property layout'), 'compact record value fields should categorize direct dependencies as property layout');
+		$recordPackContents = $this->read($project . '/' . (string) ($recordSummary['candidate_pack_header'] ?? ''));
+		$this->assertOrderBefore('#include "../access_payload.hpp"', '#include "../payload.hpp"', $recordPackContents, 'record scoped pack should include transitive nested struct before union');
+		$this->assertOrderBefore('#include "../kind.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include enum before record');
+		$this->assertOrderBefore('#include "../span.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include child span before record');
+		$this->assertOrderBefore('#include "../payload.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include union before record');
 	}
 
 	/** @param list<string> $dependencies */
