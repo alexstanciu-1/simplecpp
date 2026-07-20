@@ -103,6 +103,7 @@ $node = new App\Orm\ChildNode();
 echo "ok\n";
 PHS);
 
+		$this->publishFullStanState($project);
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -210,6 +211,7 @@ $node = new App\LocalNode();
 echo "ok\n";
 PHS);
 
+		$this->publishFullStanState($project);
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -255,6 +257,7 @@ PHS);
 		$this->assertSame(true, $clean['ok'], 'dependency scoped-pack project clean should succeed');
 		$this->assertFileMissing($project . '/.prism/generated/__project_units/manifest.json', 'clean should remove root project unit pack manifest');
 		$this->assertFileMissing($dependency . '/.prism/generated/__project_units/manifest.json', 'clean should remove dependency project unit pack manifest');
+		$this->publishFullStanState($project);
 		$cleanBuild = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -317,6 +320,7 @@ class TableConsumer {
 }
 PHS);
 
+		$this->publishFullStanState($project);
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -377,6 +381,7 @@ const LABEL_FLAGS = [
 ];
 PHS);
 
+		$this->publishFullStanState($project);
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -487,6 +492,7 @@ class MixedProbe {
 }
 PHS);
 
+		$this->publishFullStanState($project);
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -566,6 +572,7 @@ class Calculator {
 }
 PHS);
 
+		$this->publishFullStanState($project);
 		$initialBuild = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -582,6 +589,7 @@ function helper_value(): int {
     return 2;
 }
 PHS);
+		$this->publishFullStanState($project);
 		$helperEditBuild = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -597,6 +605,7 @@ class Calculator {
     }
 }
 PHS);
+		$this->publishFullStanState($project);
 		$methodEditBuild = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
 			'compile_dependencies' => true,
@@ -640,6 +649,32 @@ PHS);
 			throw new RuntimeException('Failed to encode prism.json');
 		}
 		$this->write($path . '/prism.json', $json . PHP_EOL);
+	}
+
+	private function publishFullStanState(string $project): void
+	{
+		$configPath = $project . '/prism.json';
+		$config = load_project_config($configPath);
+		$paths = build_stan_worker_paths($project, $config);
+		ensure_directory($paths['cache_dir']);
+		$sourceFingerprint = compute_stan_source_fingerprint($project, $configPath);
+		$report = build_stan_worker_report($project, $configPath, $sourceFingerprint);
+		$report = write_stan_report_file_atomic($paths['report_path'], $report);
+		write_json_file_atomic($paths['status_path'], [
+			'project_root' => normalize_path($project),
+			'analysis_state' => 'ready',
+			'source_fingerprint' => $sourceFingerprint,
+			'requested_fingerprint' => $sourceFingerprint,
+			'run_id' => $report['run_id'],
+			'started_at' => $report['started_at'],
+			'finished_at' => $report['finished_at'],
+			'last_activity_at' => microtime(true),
+			'compile_error_count' => $report['compile_error_count'],
+			'stan_error_count' => $report['stan_error_count'],
+			'stan_warning_count' => $report['stan_warning_count'],
+			'stan_notice_count' => $report['stan_notice_count'],
+			'report_path' => normalize_path($paths['report_path']),
+		]);
 	}
 
 	/** @return array<string,mixed> */

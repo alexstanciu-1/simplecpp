@@ -2875,11 +2875,15 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$markTiming('options_normalized');
 	$config = load_project_config($configPath);
 	$sourceOverrides = normalize_source_override_map($options['source_overrides'] ?? []);
+	$stanPreflightReport = null;
 	$markTiming('config_loaded');
 	if (!$options['disable_stan']) {
-		execute_stan_build_preflight($projectRoot, $configPath, $config, $sourceOverrides);
+		$stanPreflightReport = execute_stan_build_preflight($projectRoot, $configPath, $config, $sourceOverrides);
 	}
 	$markTiming('stan_checked');
+	$useFreshStanState = !$options['disable_stan']
+		&& is_array($stanPreflightReport)
+		&& (string) ($stanPreflightReport['analysis_mode'] ?? 'full') === 'full';
 	$projectGraph = resolve_project_dependency_graph($projectRoot, $configPath, $config);
 	$markTiming('project_graph_resolved');
 	$entrypointAbs = resolve_build_entrypoint($projectRoot, $config, $options['entry_override']);
@@ -2937,7 +2941,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$declaredTypeKinds = build_s2s_declared_type_kind_catalog($projectGraph, $sourceOverrides);
 	$transpiler = new Transpiler(phpProfile: $phpProfile);
 	$transpiler->setDeclaredTypeKinds($declaredTypeKinds);
-	$stanFrontendClassifications = $options['disable_stan'] ? [] : load_stan_frontend_classifications_for_build($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE);
+	$stanFrontendClassifications = $useFreshStanState ? load_stan_frontend_classifications_for_build($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE) : [];
 	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides, $declaredTypeKinds);
 	$projectUnitDependencySignature = compute_project_unit_dependency_summary_signature($repoRoot, $phpProfile);
 	$projectLibraryFlags = resolve_project_library_link_flags($projectRoot, $projectGraph, $compiler);
@@ -3136,7 +3140,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	unset($projectContext);
 	$markTiming('source_scan_complete');
-	if ($options['disable_stan']) {
+	if (!$useFreshStanState) {
 		write_project_unit_dependency_summary_state($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature);
 	}
 	validate_runtime_module_symbol_usage($projectRoot, $generatedUnits, $runtimeConfig);
@@ -3147,7 +3151,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
 	}
 	unset($unit);
-	if (!$options['disable_stan']) {
+	if ($useFreshStanState) {
 		apply_project_unit_scoped_force_include_candidates($projectRoot, $projectContexts, $generatedUnits);
 	}
 	foreach ($nativeCppUnits as &$nativeUnit) {
@@ -3156,8 +3160,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	unset($nativeUnit);
 	cleanup_project_unit_pack_headers($projectContexts, $generatedUnits, $nativeCppUnits, $projectUnitForceIncludes);
 	$projectUnitPackChanges = compare_project_unit_pack_header_state($projectRoot, $projectUnitPackStateBefore, capture_project_unit_pack_header_state($projectContexts));
-	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, !$options['disable_stan'], $projectUnitPackChanges);
-	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, !$options['disable_stan']);
+	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, $useFreshStanState, $projectUnitPackChanges);
+	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, $useFreshStanState);
 	$projectUnitDependencySummaryArtifact = write_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitForceIncludeReport, $projectUnitDependencySummaryFreshness);
 	$projectUnitForceIncludeReport['dependency_summary_artifact'] = $projectUnitDependencySummaryArtifact;
 
@@ -9141,6 +9145,39 @@ function build_stan_worker_report(string $projectRoot, string $configPath, strin
 		'php_profile' => (string) ($diagnosticResult['php_profile'] ?? ''),
 		'source_fingerprint' => $sourceFingerprint,
 		'run_id' => build_stan_worker_run_id(),
+		'analysis_mode' => (string) ($diagnosticResult['analysis_mode'] ?? 'full'),
+		'started_at' => $startedAt,
+		'finished_at' => $finishedAt,
+		'source_unit_count' => (int) ($diagnosticResult['source_unit_count'] ?? 0),
+		'analyzed_count' => (int) ($diagnosticResult['analyzed_count'] ?? 0),
+		'reused_count' => (int) ($diagnosticResult['reused_count'] ?? 0),
+		'warning_count' => (int) ($diagnosticResult['warning_count'] ?? 0),
+		'warning_samples' => is_array($diagnosticResult['warning_samples'] ?? null) ? $diagnosticResult['warning_samples'] : [],
+		'compile_error_count' => $classified['compile_error_count'],
+		'stan_error_count' => $classified['stan_error_count'],
+		'stan_warning_count' => $classified['stan_warning_count'],
+		'stan_notice_count' => $classified['stan_notice_count'],
+		'timings_ms' => $timings,
+		'diagnostics' => $classified['diagnostics'],
+	];
+}
+
+/** @return array<string,mixed> */
+function build_stan_build_gate_report(string $projectRoot, string $configPath, string $sourceFingerprint): array
+{
+	$session = new \Scpp\S2S\Stan\StanWorkspaceSession();
+	$startedAt = microtime(true);
+	$diagnosticResult = $session->runBuildGateDiagnostics($projectRoot, $configPath, []);
+	$classified = classify_stan_build_diagnostics(is_array($diagnosticResult['diagnostics'] ?? null) ? $diagnosticResult['diagnostics'] : []);
+	$finishedAt = microtime(true);
+	$timings = is_array($diagnosticResult['timings_ms'] ?? null) ? $diagnosticResult['timings_ms'] : [];
+	return [
+		'project_root' => normalize_path((string) ($diagnosticResult['project_root'] ?? $projectRoot)),
+		'php_profile' => (string) ($diagnosticResult['php_profile'] ?? ''),
+		'source_fingerprint' => $sourceFingerprint,
+		'run_id' => build_stan_worker_run_id(),
+		'analysis_mode' => 'build_gate',
+		'advisory_deferred' => true,
 		'started_at' => $startedAt,
 		'finished_at' => $finishedAt,
 		'source_unit_count' => (int) ($diagnosticResult['source_unit_count'] ?? 0),
@@ -9271,28 +9308,13 @@ function execute_stan_build_preflight(string $projectRoot, string $configPath, a
 	ensure_directory($paths['cache_dir']);
 	$sourceFingerprint = compute_stan_source_fingerprint($projectRoot, $configPath);
 	$status = read_json_file($paths['status_path']);
+	$gateReport = null;
 
 	if (!stan_status_matches_fingerprint($status, $sourceFingerprint)) {
 		$heartbeat = read_json_file($paths['heartbeat_path']);
 		if (!stan_worker_heartbeat_is_live($heartbeat)) {
-			$report = build_stan_worker_report($projectRoot, $configPath, $sourceFingerprint);
-			$report = write_stan_report_file_atomic($paths['report_path'], $report);
-			write_json_file_atomic($paths['status_path'], [
-				'project_root' => normalize_path($projectRoot),
-				'analysis_state' => 'ready',
-				'source_fingerprint' => $sourceFingerprint,
-				'requested_fingerprint' => $sourceFingerprint,
-				'run_id' => $report['run_id'],
-				'started_at' => $report['started_at'],
-				'finished_at' => $report['finished_at'],
-				'last_activity_at' => microtime(true),
-				'compile_error_count' => $report['compile_error_count'],
-				'stan_error_count' => $report['stan_error_count'],
-				'stan_warning_count' => $report['stan_warning_count'],
-				'stan_notice_count' => $report['stan_notice_count'],
-				'report_path' => normalize_path($paths['report_path']),
-			]);
-			$status = read_json_file($paths['status_path']);
+			$gateReport = build_stan_build_gate_report($projectRoot, $configPath, $sourceFingerprint);
+			maybe_autostart_stan_worker($projectRoot, $paths);
 		} else {
 			write_json_file_atomic($paths['request_path'], [
 				'requested_at' => microtime(true),
@@ -9312,7 +9334,18 @@ function execute_stan_build_preflight(string $projectRoot, string $configPath, a
 					scpp_fail('STAN pre-build check failed: ' . $error . PHP_EOL, 2);
 				}
 			}
+			if (!stan_status_matches_fingerprint($status, $sourceFingerprint)) {
+				$gateReport = build_stan_build_gate_report($projectRoot, $configPath, $sourceFingerprint);
+				maybe_autostart_stan_worker($projectRoot, $paths);
+			}
 		}
+	}
+
+	if ($gateReport !== null) {
+		if ((int) ($gateReport['compile_error_count'] ?? 0) > 0) {
+			scpp_fail(implode(PHP_EOL, render_stan_compile_error_lines($gateReport)) . PHP_EOL, 1);
+		}
+		return $gateReport;
 	}
 
 	$status = read_json_file($paths['status_path']);
@@ -9346,6 +9379,7 @@ function build_stan_override_report(string $projectRoot, string $configPath, arr
 		'php_profile' => (string) ($diagnosticResult['php_profile'] ?? ''),
 		'source_fingerprint' => 'debug-override',
 		'run_id' => build_stan_worker_run_id(),
+		'analysis_mode' => 'override',
 		'started_at' => $startedAt,
 		'finished_at' => $finishedAt,
 		'source_unit_count' => (int) ($diagnosticResult['source_unit_count'] ?? 0),
@@ -9474,6 +9508,7 @@ function build_stan_cli_result_from_report(string $projectRoot, string $configPa
 		'runtime_shallow_sources' => [],
 		'warning_samples' => is_array($report['warning_samples'] ?? null) ? $report['warning_samples'] : [],
 		'timings_ms' => is_array($report['timings_ms'] ?? null) ? $report['timings_ms'] : [],
+		'analysis_mode' => (string) ($report['analysis_mode'] ?? 'full'),
 	];
 }
 

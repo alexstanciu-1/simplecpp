@@ -29,6 +29,12 @@ final class StanWorkspaceSession
 	}
 
 	/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
+	public function runBuildGateDiagnostics(string $projectRoot, string $configPath, array $sourceOverrides = []): array
+	{
+		return $this->buildDiagnosticsResultFromSnapshot($this->createBridgeSnapshot($projectRoot, $configPath, $sourceOverrides, 'build_gate'));
+	}
+
+	/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
 	public function runDocumentSymbols(string $projectRoot, string $configPath, string $documentPath, array $sourceOverrides = []): array
 	{
 		return $this->buildDocumentSymbolsResultFromSnapshot($this->createBridgeSnapshot($projectRoot, $configPath, $sourceOverrides), $documentPath);
@@ -53,9 +59,9 @@ final class StanWorkspaceSession
 	}
 
 	/** @param array<string,string> $sourceOverrides @return array<string,mixed> */
-	public function createBridgeSnapshot(string $projectRoot, string $configPath, array $sourceOverrides = []): array
+	public function createBridgeSnapshot(string $projectRoot, string $configPath, array $sourceOverrides = [], string $analysisMode = 'full'): array
 	{
-		[$context, $filePassResult, $semanticResult, $warningCount, $timings] = $this->analyzeWorkspace($projectRoot, $configPath, $sourceOverrides);
+		[$context, $filePassResult, $semanticResult, $warningCount, $timings] = $this->analyzeWorkspace($projectRoot, $configPath, $sourceOverrides, $analysisMode);
 
 		$diagnosticAssemblyStart = microtime(true);
 		$allDiagnostics = $this->resultAssembler->flattenDiagnostics(
@@ -88,6 +94,7 @@ final class StanWorkspaceSession
 				'source_unit_count' => count($filePassResult['files'] ?? []),
 				'warning_count' => $warningCount,
 				'timings_ms' => $timings,
+				'analysis_mode' => $analysisMode,
 			],
 		];
 	}
@@ -113,6 +120,7 @@ final class StanWorkspaceSession
 		);
 		$debug = is_array($snapshot['debug'] ?? null) ? $snapshot['debug'] : [];
 		$result['timings_ms'] = is_array($debug['timings_ms'] ?? null) ? $debug['timings_ms'] : [];
+		$result['analysis_mode'] = (string) ($debug['analysis_mode'] ?? 'full');
 		return $result;
 	}
 
@@ -232,9 +240,10 @@ final class StanWorkspaceSession
 	}
 
 	/** @param array<string,string> $sourceOverrides @return array{0:StanWorkspaceContext,1:array<string,mixed>,2:array<string,mixed>,3:int,4:array<string,mixed>} */
-	private function analyzeWorkspace(string $projectRoot, string $configPath, array $sourceOverrides): array
+	private function analyzeWorkspace(string $projectRoot, string $configPath, array $sourceOverrides, string $analysisMode = 'full'): array
 	{
 		$hasSourceOverrides = $sourceOverrides !== [];
+		$buildGateOnly = $analysisMode === 'build_gate';
 		$timings = [];
 		$contextStart = microtime(true);
 		$context = $this->contextBuilder->build($projectRoot, $configPath, $sourceOverrides);
@@ -260,7 +269,7 @@ final class StanWorkspaceSession
 		$runtimeConfig = \resolve_runtime_build_config($context->config);
 		$activeRuntimeModules = is_array($runtimeConfig['modules'] ?? null) ? array_values(array_map('strval', $runtimeConfig['modules'])) : null;
 		$semanticStart = microtime(true);
-		$semanticResult = $this->semanticPass->analyze($filePassResult['file_summaries'], $context->projectRoot, $activeRuntimeModules);
+		$semanticResult = $this->semanticPass->analyze($filePassResult['file_summaries'], $context->projectRoot, $activeRuntimeModules, $analysisMode);
 		$timings['semantic_pass_ms'] = $this->elapsedMilliseconds($semanticStart);
 		$timings['semantic_subpasses_ms'] = is_array($semanticResult['timings_ms'] ?? null) ? $semanticResult['timings_ms'] : [];
 		$warningCount += (int) ($semanticResult['warning_count'] ?? 0);
@@ -269,6 +278,13 @@ final class StanWorkspaceSession
 		$fileDependencyKeys = $semanticResult['file_dependency_keys'];
 		foreach ($newFilesState as $sourceKey => $fileState) {
 			$newFilesState[$sourceKey]['dependency_keys'] = $fileDependencyKeys[$sourceKey] ?? [];
+		}
+
+		if ($buildGateOnly) {
+			$timings['state_build_ms'] = 0;
+			$timings['state_save_ms'] = 0;
+			$filePassResult['files_state'] = $newFilesState;
+			return [$context, $filePassResult, $semanticResult, $warningCount, $timings];
 		}
 
 		$stateBuildStart = microtime(true);

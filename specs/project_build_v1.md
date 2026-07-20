@@ -203,8 +203,9 @@ The lower-level build service path used by helpers/tests also defaults to reuse 
 Current v1 behavior:
 
 - if a fresh matching STAN report already exists for the current project source fingerprint, the build reuses it and may start a background STAN worker when none is alive
-- if a live STAN worker exists but its report is stale, the build requests a refresh and waits briefly for a matching ready result
-- if no live STAN worker exists, the build performs an inline STAN refresh, publishes the same project-local status/report files used by worker mode, and then starts a worker for subsequent edits
+- if a live STAN worker exists but its report is stale, the build requests a refresh and waits briefly for a matching ready result; if the worker does not publish in time, the build falls back to an inline compile-gating STAN check
+- if no live STAN worker exists and the current report is stale, the build performs an inline compile-gating STAN check, starts a worker for the full advisory/status/report refresh, and continues only if the compile-gating diagnostics are clean
+- while only the compile-gating check is fresh, the build does not activate STAN-backed scoped project-unit packs; it uses the build-owned dependency summary and broad fallback until the worker publishes a full fresh STAN state
 - background worker refreshes debounce source edits before proactive analysis; explicit build refresh requests bypass that debounce
 - if STAN reports `compile-errors`, the build stops before C++ generation/compilation continues
 - if STAN reports only advisory findings, the build continues and prints a short static-analysis summary

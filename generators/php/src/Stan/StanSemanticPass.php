@@ -18,8 +18,9 @@ final class StanSemanticPass
 	}
 
 	/** @param array<string,array<string,mixed>> $fileSummaries @param list<string>|null $activeRuntimeModules @return array<string,mixed> */
-	public function analyze(array $fileSummaries, string $projectRoot, ?array $activeRuntimeModules = null): array
+	public function analyze(array $fileSummaries, string $projectRoot, ?array $activeRuntimeModules = null, string $analysisMode = 'full'): array
 	{
+		$buildGateOnly = $analysisMode === 'build_gate';
 		$timings = [];
 		$timeSubpass = static function (string $label, callable $callback) use (&$timings): mixed {
 			$startedAt = microtime(true);
@@ -32,15 +33,29 @@ final class StanSemanticPass
 
 		$symbolIndex = $timeSubpass('symbol_index', fn (): array => $this->symbolIndexBuilder->build($fileSummaries));
 		$duplicateDiagnostics = $timeSubpass('duplicate_diagnostics', fn (): array => $this->diagnosticCollector->collectDuplicateDiagnostics($symbolIndex));
-		$resolutionDiagnostics = $timeSubpass('resolution_diagnostics', fn (): array => $this->diagnosticCollector->collectResolutionDiagnostics($fileSummaries, $symbolIndex));
-		$overrideDiagnostics = $timeSubpass('override_diagnostics', function () use ($fileSummaries, $symbolIndex, $projectRoot): array {
-			$diagnostics = $this->diagnosticCollector->collectOverrideDiagnostics($fileSummaries, $symbolIndex, $projectRoot);
+		if ($buildGateOnly) {
+			$resolutionDiagnostics = [];
+			$timings['resolution_diagnostics_ms'] = 0;
+		} else {
+			$resolutionDiagnostics = $timeSubpass('resolution_diagnostics', fn (): array => $this->diagnosticCollector->collectResolutionDiagnostics($fileSummaries, $symbolIndex));
+		}
+		$overrideDiagnostics = $timeSubpass('override_diagnostics', function () use ($fileSummaries, $symbolIndex, $projectRoot, $buildGateOnly): array {
+			$diagnostics = [];
+			if (!$buildGateOnly) {
+				$diagnostics = $this->diagnosticCollector->collectOverrideDiagnostics($fileSummaries, $symbolIndex, $projectRoot);
+			}
 			$diagnostics = array_merge($diagnostics, $this->diagnosticCollector->collectInterfaceContractDiagnostics($fileSummaries, $symbolIndex, $projectRoot));
 			$diagnostics = array_merge($diagnostics, $this->diagnosticCollector->collectStructContractDiagnostics($fileSummaries, $symbolIndex, $projectRoot));
 			$diagnostics = array_merge($diagnostics, $this->diagnosticCollector->collectUnionContractDiagnostics($fileSummaries, $symbolIndex, $projectRoot));
 			return $diagnostics;
 		});
-		$expressionAnalysis = $timeSubpass('expression_analysis', fn (): array => $this->expressionTypeResolver->analyzeWorkspaceExpressions($fileSummaries, $symbolIndex));
+		if ($buildGateOnly) {
+			$overrideDiagnostics = array_values(array_filter(
+				$overrideDiagnostics,
+				static fn (array $diagnostic): bool => in_array((string) ($diagnostic['kind'] ?? ''), ['interface_contract_mismatch', 'abstract_contract_mismatch', 'struct_contract_mismatch', 'union_contract_mismatch'], true)
+			));
+		}
+		$expressionAnalysis = $timeSubpass('expression_analysis', fn (): array => $this->expressionTypeResolver->analyzeWorkspaceExpressions($fileSummaries, $symbolIndex, $buildGateOnly));
 		$returnChainTypes = $expressionAnalysis['return_chain_types'] ?? [];
 		$returnChainDiagnostics = $expressionAnalysis['return_chain_diagnostics'] ?? [];
 		$expressionChainTypes = $expressionAnalysis['expression_chain_types'] ?? [];
@@ -53,6 +68,12 @@ final class StanSemanticPass
 		$returnTypeDiagnostics = $expressionAnalysis['return_type_diagnostics'] ?? [];
 		$frontendClassifications = $timeSubpass('frontend_classify', fn (): array => $this->frontendClassifier->classify($fileSummaries, $symbolIndex, $activeRuntimeModules));
 		$frontendDiagnostics = $timeSubpass('frontend_diagnostics', fn (): array => $this->collectFrontendDiagnostics($frontendClassifications));
+		if ($buildGateOnly) {
+			$frontendDiagnostics = array_values(array_filter(
+				$frontendDiagnostics,
+				static fn (array $diagnostic): bool => in_array((string) ($diagnostic['code'] ?? ''), ['frontend_member_access', 'frontend_binary_plus', 'frontend_take_contract'], true)
+			));
+		}
 		$suppressionStart = microtime(true);
 		[
 			$initializationDiagnostics,
@@ -86,7 +107,12 @@ final class StanSemanticPass
 		$returnTypeDiagnostics = $this->diagnosticEnricher->enrichList($returnTypeDiagnostics);
 		$frontendDiagnostics = $this->diagnosticEnricher->enrichList($frontendDiagnostics);
 		$timings['enrich_diagnostics_ms'] = (int) round(max(0.0, (microtime(true) - $enrichStart) * 1000.0));
-		$fileDependencyKeys = $timeSubpass('file_dependency_keys', fn (): array => $this->dependencyResolver->collectFileDependencyKeys($fileSummaries, $symbolIndex, $projectRoot));
+		if ($buildGateOnly) {
+			$fileDependencyKeys = [];
+			$timings['file_dependency_keys_ms'] = 0;
+		} else {
+			$fileDependencyKeys = $timeSubpass('file_dependency_keys', fn (): array => $this->dependencyResolver->collectFileDependencyKeys($fileSummaries, $symbolIndex, $projectRoot));
+		}
 		$warningSamples = $timeSubpass('warning_samples', fn (): array => $this->warningPresenter->buildWarningSamples(
 			$duplicateDiagnostics,
 			$resolutionDiagnostics,
