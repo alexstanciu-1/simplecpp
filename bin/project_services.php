@@ -34,6 +34,8 @@ const SCPP_STAN_SIGNATURE_VERSION = 1;
 const SCPP_PROJECT_UNIT_DEPENDENCY_SIGNATURE_VERSION = 1;
 const SCPP_CANONICAL_SOURCE_EXTENSION = 'phs';
 const SCPP_COMPAT_SOURCE_EXTENSIONS = ['phs', 'php', 'jss'];
+const SCPP_EXPLAIN_PROJECT_UNIT_HEADER_LIMIT = 20;
+const SCPP_EXPLAIN_PROJECT_UNIT_SUMMARY_LIMIT = 50;
 
 final class ScppCliException extends RuntimeException
 {
@@ -713,7 +715,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|project-units|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|project-units|project-unit <source>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -2768,7 +2770,7 @@ function handle_explain_build_report(string $cwd, array $args = []): void
 	$details = is_array($data['details'] ?? null) ? $data['details'] : [];
 	$buildExplanation = is_array($details['build_explanation'] ?? null) ? $details['build_explanation'] : [];
 	$view = strtolower(trim((string) ($args[0] ?? '')));
-	foreach (render_explain_build_view_lines($buildExplanation, $view) as $line) {
+	foreach (render_explain_build_view_lines($buildExplanation, $view, array_slice($args, 1)) as $line) {
 		$output[] = $line;
 	}
 	scpp_write(implode(PHP_EOL, $output) . PHP_EOL);
@@ -6470,7 +6472,7 @@ function render_build_explanation_lines(array $details): array
  * @param array<string,mixed> $report
  * @return list<string>
  */
-function render_project_unit_force_include_lines(array $report, bool $includeDependencySummaries = false): array
+function render_project_unit_force_include_lines(array $report, bool $includeDependencySummaries = false, ?string $dependencySummarySource = null, bool $compactDependencySummaries = false): array
 {
 	$totalUnits = (int) ($report['total_units'] ?? 0);
 	$unitsWithForceInclude = (int) ($report['units_with_force_include'] ?? 0);
@@ -6501,7 +6503,13 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 		}
 		$lines[] = 'Project unit candidate blockers: ' . implode('; ', $blockerParts);
 	}
-	foreach ($headers as $header) {
+	$headerRows = count($headers) > SCPP_EXPLAIN_PROJECT_UNIT_HEADER_LIMIT
+		? array_slice($headers, 0, SCPP_EXPLAIN_PROJECT_UNIT_HEADER_LIMIT)
+		: $headers;
+	if (count($headers) > count($headerRows)) {
+		$lines[] = 'Project unit headers shown: first ' . count($headerRows) . ' of ' . count($headers) . ' header(s)';
+	}
+	foreach ($headerRows as $header) {
 		if (!is_array($header)) {
 			continue;
 		}
@@ -6520,68 +6528,187 @@ function render_project_unit_force_include_lines(array $report, bool $includeDep
 		$dependencySummaries = is_array($report['dependency_summaries'] ?? null) ? $report['dependency_summaries'] : [];
 		if ($dependencySummaries === []) {
 			$lines[] = 'Dependency summaries: none';
+		} elseif ($dependencySummarySource !== null && trim($dependencySummarySource) !== '') {
+			$matched = [];
+			foreach ($dependencySummaries as $summary) {
+				if (is_array($summary) && project_unit_dependency_summary_matches_filter($summary, $dependencySummarySource)) {
+					$matched[] = $summary;
+				}
+			}
+			if ($matched === []) {
+				$lines[] = 'Dependency summary for ' . trim($dependencySummarySource) . ': not found';
+			} else {
+				$lines[] = 'Dependency summary for ' . trim($dependencySummarySource) . ':';
+				foreach ($matched as $summary) {
+					foreach (render_project_unit_dependency_summary_detail_lines($summary) as $line) {
+						$lines[] = $line;
+					}
+				}
+			}
+		} elseif ($compactDependencySummaries) {
+			$lines[] = 'Dependency summaries: ' . count($dependencySummaries) . ' unit(s)';
+			$summaryRows = count($dependencySummaries) > SCPP_EXPLAIN_PROJECT_UNIT_SUMMARY_LIMIT
+				? array_slice($dependencySummaries, 0, SCPP_EXPLAIN_PROJECT_UNIT_SUMMARY_LIMIT)
+				: $dependencySummaries;
+			if (count($dependencySummaries) > count($summaryRows)) {
+				$lines[] = 'Dependency summaries shown: first ' . count($summaryRows) . ' of ' . count($dependencySummaries) . ' unit(s); use `scpp explain-build project-unit <source>` for a detailed source row';
+			}
+			foreach ($summaryRows as $summary) {
+				if (!is_array($summary)) {
+					continue;
+				}
+				$line = render_project_unit_dependency_summary_compact_line($summary);
+				if ($line !== '') {
+					$lines[] = '  - ' . $line;
+				}
+			}
 		} else {
 			$lines[] = 'Dependency summaries:';
 			foreach ($dependencySummaries as $summary) {
 				if (!is_array($summary)) {
 					continue;
 				}
-				$source = trim((string) ($summary['source'] ?? ''));
-				if ($source === '') {
-					continue;
-				}
-				$status = trim((string) ($summary['status'] ?? 'fallback_broad'));
-				$lines[] = '  - ' . $source . ': ' . ($status !== '' ? $status : 'fallback_broad');
-				$candidateStatus = trim((string) ($summary['candidate_status'] ?? ''));
-				if ($candidateStatus !== '') {
-					$lines[] = '    candidate status: ' . $candidateStatus;
-				}
-				$candidatePackHeader = trim((string) ($summary['candidate_pack_header'] ?? ''));
-				if ($candidatePackHeader !== '') {
-					$lines[] = '    candidate pack: ' . $candidatePackHeader;
-				}
-				$candidateHeaders = is_array($summary['candidate_scoped_headers'] ?? null) ? $summary['candidate_scoped_headers'] : [];
-				if ($candidateHeaders !== []) {
-					$lines[] = '    candidate scoped headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $candidateHeaders));
-				}
-				$candidateBlockers = is_array($summary['candidate_blocking_reasons'] ?? null) ? $summary['candidate_blocking_reasons'] : [];
-				foreach ($candidateBlockers as $blocker) {
-					$message = trim((string) $blocker);
-					if ($message !== '') {
-						$lines[] = '    candidate blocker: ' . $message;
-					}
-				}
-				$generatedHeader = trim((string) ($summary['generated_header'] ?? ''));
-				if ($generatedHeader !== '') {
-					$lines[] = '    generated header: ' . $generatedHeader;
-				}
-				$directDependencies = is_array($summary['direct_source_dependencies'] ?? null) ? $summary['direct_source_dependencies'] : [];
-				$lines[] = '    direct source dependencies: ' . ($directDependencies === [] ? 'none' : implode(', ', array_map(static fn ($value): string => (string) $value, $directDependencies)));
-				$directHeaders = is_array($summary['direct_local_headers'] ?? null) ? $summary['direct_local_headers'] : [];
-				$lines[] = '    direct local headers: ' . ($directHeaders === [] ? 'none' : implode(', ', array_map(static fn ($value): string => (string) $value, $directHeaders)));
-				$scopedHeaders = is_array($summary['scoped_local_headers'] ?? null) ? $summary['scoped_local_headers'] : [];
-				if ($scopedHeaders !== [] && normalize_string_list($scopedHeaders) !== normalize_string_list($directHeaders)) {
-					$lines[] = '    scoped local headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $scopedHeaders));
-				}
-				$unresolvedKeys = is_array($summary['unresolved_dependency_keys'] ?? null) ? $summary['unresolved_dependency_keys'] : [];
-				if ($unresolvedKeys !== []) {
-					$lines[] = '    unresolved dependency keys: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $unresolvedKeys));
-				}
-				$dependencyCategoryParts = render_project_unit_dependency_category_parts(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []);
-				if ($dependencyCategoryParts !== []) {
-					$lines[] = '    dependency categories: ' . implode('; ', $dependencyCategoryParts);
-				}
-				$reasons = is_array($summary['reasons'] ?? null) ? $summary['reasons'] : [];
-				foreach ($reasons as $reason) {
-					$message = trim((string) $reason);
-					if ($message !== '') {
-						$lines[] = '    reason: ' . $message;
-					}
+				foreach (render_project_unit_dependency_summary_detail_lines($summary) as $line) {
+					$lines[] = $line;
 				}
 			}
 		}
 	}
 	return $lines;
+}
+
+/** @param array<string,mixed> $summary */
+function project_unit_dependency_summary_matches_filter(array $summary, string $filter): bool
+{
+	$normalizedFilter = normalize_config_path(trim($filter));
+	if ($normalizedFilter === '') {
+		return false;
+	}
+	$source = normalize_config_path(trim((string) ($summary['source'] ?? '')));
+	$projectRoot = normalize_config_path(trim((string) ($summary['project_root'] ?? '')));
+	if ($source === $normalizedFilter) {
+		return true;
+	}
+	$qualifiedSource = $projectRoot === '' || $projectRoot === '.' ? $source : normalize_config_path($projectRoot . '/' . $source);
+	return $qualifiedSource === $normalizedFilter;
+}
+
+/** @param array<string,mixed> $summary */
+function render_project_unit_dependency_summary_compact_line(array $summary): string
+{
+	$source = trim((string) ($summary['source'] ?? ''));
+	if ($source === '') {
+		return '';
+	}
+	$label = project_unit_dependency_summary_label($summary);
+	$status = trim((string) ($summary['status'] ?? 'fallback_broad'));
+	$candidateStatus = trim((string) ($summary['candidate_status'] ?? ''));
+	$directDependencies = normalize_string_list($summary['direct_source_dependencies'] ?? []);
+	$directHeaders = normalize_string_list($summary['direct_local_headers'] ?? []);
+	$candidateBlockers = normalize_string_list($summary['candidate_blocking_reasons'] ?? []);
+	$categoryNames = render_project_unit_dependency_category_name_list(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []);
+	$parts = [$label . ': ' . ($status !== '' ? $status : 'fallback_broad')];
+	if ($candidateStatus !== '') {
+		$parts[] = 'candidate ' . $candidateStatus;
+	}
+	$parts[] = 'direct deps ' . count($directDependencies);
+	$parts[] = 'direct headers ' . count($directHeaders);
+	if ($candidateBlockers !== []) {
+		$parts[] = 'blockers ' . implode(', ', $candidateBlockers);
+	}
+	if ($categoryNames !== []) {
+		$parts[] = 'categories ' . implode(', ', $categoryNames);
+	}
+	return implode(', ', $parts);
+}
+
+/** @param list<array<string,mixed>> $rows @return list<string> */
+function render_project_unit_dependency_category_name_list(array $rows): array
+{
+	$names = [];
+	foreach (normalize_project_unit_dependency_category_rows($rows) as $row) {
+		$category = trim((string) ($row['category'] ?? ''));
+		$resolution = trim((string) ($row['resolution'] ?? ''));
+		if ($resolution === 'unresolved_symbol') {
+			$category = 'unresolved symbol';
+		} elseif ($resolution === 'ambiguous_symbol') {
+			$category = 'ambiguous symbol';
+		} elseif ($resolution === 'unresolved_dependency_key') {
+			$category = 'unresolved dependency key';
+		}
+		if ($category !== '') {
+			$names[$category] = true;
+		}
+	}
+	$result = array_keys($names);
+	sort($result, SORT_STRING);
+	return $result;
+}
+
+/** @param array<string,mixed> $summary @return list<string> */
+function render_project_unit_dependency_summary_detail_lines(array $summary): array
+{
+	$source = trim((string) ($summary['source'] ?? ''));
+	if ($source === '') {
+		return [];
+	}
+	$status = trim((string) ($summary['status'] ?? 'fallback_broad'));
+	$lines = ['  - ' . project_unit_dependency_summary_label($summary) . ': ' . ($status !== '' ? $status : 'fallback_broad')];
+	$candidateStatus = trim((string) ($summary['candidate_status'] ?? ''));
+	if ($candidateStatus !== '') {
+		$lines[] = '    candidate status: ' . $candidateStatus;
+	}
+	$candidatePackHeader = trim((string) ($summary['candidate_pack_header'] ?? ''));
+	if ($candidatePackHeader !== '') {
+		$lines[] = '    candidate pack: ' . $candidatePackHeader;
+	}
+	$candidateHeaders = is_array($summary['candidate_scoped_headers'] ?? null) ? $summary['candidate_scoped_headers'] : [];
+	if ($candidateHeaders !== []) {
+		$lines[] = '    candidate scoped headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $candidateHeaders));
+	}
+	$candidateBlockers = is_array($summary['candidate_blocking_reasons'] ?? null) ? $summary['candidate_blocking_reasons'] : [];
+	foreach ($candidateBlockers as $blocker) {
+		$message = trim((string) $blocker);
+		if ($message !== '') {
+			$lines[] = '    candidate blocker: ' . $message;
+		}
+	}
+	$generatedHeader = trim((string) ($summary['generated_header'] ?? ''));
+	if ($generatedHeader !== '') {
+		$lines[] = '    generated header: ' . $generatedHeader;
+	}
+	$directDependencies = is_array($summary['direct_source_dependencies'] ?? null) ? $summary['direct_source_dependencies'] : [];
+	$lines[] = '    direct source dependencies: ' . ($directDependencies === [] ? 'none' : implode(', ', array_map(static fn ($value): string => (string) $value, $directDependencies)));
+	$directHeaders = is_array($summary['direct_local_headers'] ?? null) ? $summary['direct_local_headers'] : [];
+	$lines[] = '    direct local headers: ' . ($directHeaders === [] ? 'none' : implode(', ', array_map(static fn ($value): string => (string) $value, $directHeaders)));
+	$scopedHeaders = is_array($summary['scoped_local_headers'] ?? null) ? $summary['scoped_local_headers'] : [];
+	if ($scopedHeaders !== [] && normalize_string_list($scopedHeaders) !== normalize_string_list($directHeaders)) {
+		$lines[] = '    scoped local headers: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $scopedHeaders));
+	}
+	$unresolvedKeys = is_array($summary['unresolved_dependency_keys'] ?? null) ? $summary['unresolved_dependency_keys'] : [];
+	if ($unresolvedKeys !== []) {
+		$lines[] = '    unresolved dependency keys: ' . implode(', ', array_map(static fn ($value): string => (string) $value, $unresolvedKeys));
+	}
+	$dependencyCategoryParts = render_project_unit_dependency_category_parts(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []);
+	if ($dependencyCategoryParts !== []) {
+		$lines[] = '    dependency categories: ' . implode('; ', $dependencyCategoryParts);
+	}
+	$reasons = is_array($summary['reasons'] ?? null) ? $summary['reasons'] : [];
+	foreach ($reasons as $reason) {
+		$message = trim((string) $reason);
+		if ($message !== '') {
+			$lines[] = '    reason: ' . $message;
+		}
+	}
+	return $lines;
+}
+
+/** @param array<string,mixed> $summary */
+function project_unit_dependency_summary_label(array $summary): string
+{
+	$source = trim((string) ($summary['source'] ?? ''));
+	$projectRoot = trim((string) ($summary['project_root'] ?? ''));
+	return $projectRoot === '' || $projectRoot === '.' ? $source : normalize_config_path($projectRoot . '/' . $source);
 }
 
 /**
@@ -6634,7 +6761,7 @@ function render_runtime_module_explanation_lines(array $runtimeModules): array
  * @param array<string,mixed> $details
  * @return list<string>
  */
-function render_explain_build_view_lines(array $details, string $view): array
+function render_explain_build_view_lines(array $details, string $view, array $viewArgs = []): array
 {
 	if ($view === '' || $view === 'summary') {
 		$lines = render_build_explanation_lines($details);
@@ -6687,7 +6814,15 @@ function render_explain_build_view_lines(array $details, string $view): array
 	}
 
 	if ($view === 'project-units') {
-		return render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], true);
+		return render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], true, null, true);
+	}
+
+	if ($view === 'project-unit') {
+		$source = trim((string) ($viewArgs[0] ?? ''));
+		if ($source === '') {
+			return ['Project unit source: missing source path. Use `scpp explain-build project-unit <source>`.'];
+		}
+		return render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], true, $source, false);
 	}
 
 	if ($view === 'entrypoint') {
@@ -6743,7 +6878,7 @@ function render_explain_build_view_lines(array $details, string $view): array
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, project-units, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, project-units, project-unit <source>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }

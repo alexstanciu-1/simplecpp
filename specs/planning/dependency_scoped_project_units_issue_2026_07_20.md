@@ -310,6 +310,12 @@ Status legend:
   before writing candidate scoped headers. A helper returning a derived type now
   gets the derived header and its transitive base header in base-before-derived
   order.
+- [x] `PUH-014` Make project-unit diagnostics suitable for large projects. The
+  `project-units` overview now keeps header rows and dependency rows
+  compact/capped, while `scpp explain-build project-unit <source>` provides the
+  verbose candidate-pack, dependency, blocker, category, and reason details for
+  one source row. `generated-files` remains one compact source/output/pack line
+  per generated source.
 
 ### Ready
 
@@ -317,10 +323,6 @@ Status legend:
   current branch. Record active scoped units, active broad-fallback units,
   candidate blocker histogram, no-change build behavior, and rebuild fanout for
   the motivating support-file edit.
-- [ ] `PUH-014` Make `project-units` and `generated-files` output suitable for
-  large projects by keeping summaries compact and pushing verbose per-source
-  detail behind the focused view only.
-
 ### Planned Dependency-Model Work
 
 - [ ] `PUH-021` Store/reuse a build-owned per-source dependency summary artifact

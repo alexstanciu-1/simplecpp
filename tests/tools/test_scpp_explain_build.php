@@ -189,15 +189,26 @@ final class ScppExplainBuildTest
 			$this->assertContains('.prism/generated/__project_units/', $projectUnitsView['stdout'], 'project-units should list the force-included hash-pack header');
 			$this->assertContains('scoped', $projectUnitsView['stdout'], 'project-units should classify active scoped pack headers');
 			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify fallback broad pack headers');
-			$this->assertContains('child.phs: scoped', $projectUnitsView['stdout'], 'project-units should list the active child scoped summary');
-			$this->assertContains('main.phs: fallback_broad', $projectUnitsView['stdout'], 'project-units should list the active main broad fallback summary');
-			$this->assertContains('candidate status: candidate_scoped', $projectUnitsView['stdout'], 'project-units should show scoped candidate status');
-			$this->assertContains('candidate pack: .prism/generated/__project_units/scoped-', $projectUnitsView['stdout'], 'project-units should show scoped candidate pack paths');
-			$this->assertContains('candidate scoped headers:', $projectUnitsView['stdout'], 'project-units should show scoped candidate header lists');
-			$this->assertContains('candidate blocker: executable body present', $projectUnitsView['stdout'], 'project-units should show scoped candidate blockers');
-			$this->assertContains('direct source dependencies: base.phs', $projectUnitsView['stdout'], 'project-units should show the child direct source dependency');
-			$this->assertContains('direct local headers: .prism/generated/base.hpp', $projectUnitsView['stdout'], 'project-units should show the child direct generated header dependency');
-			$this->assertContains('dependency categories: inheritance: base.phs', $projectUnitsView['stdout'], 'project-units should show categorized child dependency evidence');
+			$this->assertContains('Dependency summaries: 3 unit(s)', $projectUnitsView['stdout'], 'project-units should summarize dependency row count');
+			$this->assertContains('child.phs: scoped, candidate candidate_scoped, direct deps 1, direct headers 1, categories inheritance', $projectUnitsView['stdout'], 'project-units should show a compact child dependency summary');
+			$this->assertContains('main.phs: fallback_broad, candidate blocked_broad_fallback', $projectUnitsView['stdout'], 'project-units should show a compact main broad-fallback summary');
+			$this->assertContains('blockers executable body present', $projectUnitsView['stdout'], 'project-units should show compact blocker evidence');
+			$this->assertNotContains('candidate scoped headers:', $projectUnitsView['stdout'], 'project-units should keep verbose header lists out of the compact overview');
+
+			$projectUnitDetailView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-unit', 'child.phs'], [], 20.0);
+			$this->assertSame(0, $projectUnitDetailView['exit_code'], 'scpp explain-build project-unit child.phs should succeed');
+			$this->assertContains('Dependency summary for child.phs:', $projectUnitDetailView['stdout'], 'project-unit should identify the requested source');
+			$this->assertContains('child.phs: scoped', $projectUnitDetailView['stdout'], 'project-unit should list the active child scoped summary');
+			$this->assertContains('candidate status: candidate_scoped', $projectUnitDetailView['stdout'], 'project-unit should show scoped candidate status');
+			$this->assertContains('candidate pack: .prism/generated/__project_units/scoped-', $projectUnitDetailView['stdout'], 'project-unit should show scoped candidate pack paths');
+			$this->assertContains('candidate scoped headers:', $projectUnitDetailView['stdout'], 'project-unit should show scoped candidate header lists');
+			$this->assertContains('direct source dependencies: base.phs', $projectUnitDetailView['stdout'], 'project-unit should show the child direct source dependency');
+			$this->assertContains('direct local headers: .prism/generated/base.hpp', $projectUnitDetailView['stdout'], 'project-unit should show the child direct generated header dependency');
+			$this->assertContains('dependency categories: inheritance: base.phs', $projectUnitDetailView['stdout'], 'project-unit should show categorized child dependency evidence');
+
+			$missingProjectUnitView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-unit', 'missing.phs'], [], 20.0);
+			$this->assertSame(0, $missingProjectUnitView['exit_code'], 'scpp explain-build project-unit missing.phs should still produce a focused report');
+			$this->assertContains('Dependency summary for missing.phs: not found', $missingProjectUnitView['stdout'], 'project-unit should clearly report a missing requested source');
 
 			$entrypointView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'entrypoint'], [], 20.0);
 			$this->assertSame(0, $entrypointView['exit_code'], 'scpp explain-build entrypoint should succeed');

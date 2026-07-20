@@ -311,6 +311,7 @@ The initial registry includes:
 - `scpp explain-build files-reused`
 - `scpp explain-build outputs-rebuilt`
 - `scpp explain-build project-units`
+- `scpp explain-build project-unit <source>`
 - `scpp explain-build entrypoint`
 - `scpp explain-build final-output`
 - `scpp explain-build generated-files`
@@ -363,9 +364,11 @@ category evidence. The current categories distinguish inheritance, direct type
 references, function signatures, method signatures, function bodies, method
 bodies, executable bodies, property layout, unresolved symbols, unresolved
 dependency keys, and missing source summaries. The focused `scpp explain-build
-project-units` view renders these categories as compact per-source lines so
-large-project blocker and dependency patterns can be audited without reading
-raw state files.
+project-units` view renders a compact overview for large projects: fanout
+counters, capped header rows, blocker histograms, and one compact row per source
+up to a display cap. The `scpp explain-build project-unit <source>` view renders
+the verbose candidate pack, direct dependency, header, category, blocker, and
+reason details for one source row.
 
 The project-unit report also includes scoped fanout counters: active scoped
 generated units, active broad-fallback generated units, scoped candidates, and
