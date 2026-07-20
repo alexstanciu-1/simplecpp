@@ -447,6 +447,45 @@ class LayoutProbe {
     }
 }
 PHS);
+		$this->write($project . '/reader.phs', <<<'PHS'
+class Reader {
+    public static function content_or_empty(string $path): string {
+        $text string = "";
+        $err /** error */;
+        if (take($text, $err, fs_get($path))) {
+            return $text;
+        }
+        return "";
+    }
+}
+PHS);
+		$this->write($project . '/accumulator.phs', <<<'PHS'
+class Accumulator {
+    public static function count_to(int $limit): int {
+        $value int = 0;
+        while ($value < $limit) {
+            $value = $value + 1;
+        }
+        return $value;
+    }
+}
+PHS);
+		$this->write($project . '/mixed_probe.phs', <<<'PHS'
+class MixedProbe {
+    public static function read_count(string $path): int {
+        $text string = "";
+        $err /** error */;
+        if (!take($text, $err, fs_get($path))) {
+            return 0;
+        }
+        $value int = 0;
+        while ($value < 3) {
+            $value = $value + 1;
+        }
+        return $value;
+    }
+}
+PHS);
 
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
@@ -462,10 +501,10 @@ PHS);
 		);
 
 		$projectUnits = $this->loadProjectUnits($project);
-		$this->assertSame(6, $projectUnits['total_units'] ?? null, 'method-body project should report six generated units');
-		$this->assertSame(5, $projectUnits['active_scoped_units'] ?? null, 'resolved method-body units should activate scoped packs');
+		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'method-body project should report nine generated units');
+		$this->assertSame(8, $projectUnits['active_scoped_units'] ?? null, 'resolved method-body units should activate scoped packs');
 		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'only executable unit should stay broad');
-		$this->assertSame(5, $projectUnits['candidate_scoped_units'] ?? null, 'resolved method-body units should be scoped candidates');
+		$this->assertSame(8, $projectUnits['candidate_scoped_units'] ?? null, 'resolved method-body units should be scoped candidates');
 		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'only executable unit should be blocked');
 
 		$metricsSummary = $this->findSummary($projectUnits, 'metrics.phs', '');
@@ -488,6 +527,22 @@ PHS);
 		$this->assertSame(['row.phs'], $this->projectDependencyCategorySources($layoutSummary, 'method body'), 'layout probe should categorize its type operand as method-body dependency evidence');
 		$layoutPackContents = $this->read($project . '/' . (string) ($layoutSummary['candidate_pack_header'] ?? ''));
 		$this->assertContains('#include "../row.hpp"', $layoutPackContents, 'layout probe scoped pack should include the probed row header');
+
+		$readerSummary = $this->findSummary($projectUnits, 'reader.phs', '');
+		$this->assertSame('scoped', $readerSummary['status'] ?? null, 'runtime error slot method should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $readerSummary['candidate_status'] ?? null, 'runtime error slot method should be a scoped candidate');
+		$this->assertSame([], $readerSummary['candidate_blocking_reasons'] ?? null, 'runtime error slot dependency should not block scoped activation');
+		$this->assertSame(['error'], $this->dependencyCategoryTargets($readerSummary, 'unresolved symbol'), 'runtime error slot should remain visible as unresolved runtime evidence');
+
+		$accumulatorSummary = $this->findSummary($projectUnits, 'accumulator.phs', '');
+		$this->assertSame('scoped', $accumulatorSummary['status'] ?? null, 'method local-invalidation body should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $accumulatorSummary['candidate_status'] ?? null, 'method local-invalidation body should be a scoped candidate');
+		$this->assertSame([], $accumulatorSummary['candidate_blocking_reasons'] ?? null, 'method local invalidations should not block scoped activation when dependency rows are otherwise safe');
+
+		$mixedProbeSummary = $this->findSummary($projectUnits, 'mixed_probe.phs', '');
+		$this->assertSame('scoped', $mixedProbeSummary['status'] ?? null, 'combined runtime-error and local-invalidation method should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $mixedProbeSummary['candidate_status'] ?? null, 'combined runtime-error and local-invalidation method should be a scoped candidate');
+		$this->assertSame([], $mixedProbeSummary['candidate_blocking_reasons'] ?? null, 'combined runtime-error and local-invalidation evidence should not block scoped activation');
 	}
 
 	private function assertBodyOnlyEditsKeepRebuildFanoutMinimal(): void
@@ -684,6 +739,24 @@ PHS);
 			}
 		}
 		$result = array_keys($owners);
+		sort($result, SORT_STRING);
+		return $result;
+	}
+
+	/** @return list<string> */
+	private function dependencyCategoryTargets(array $summary, string $category): array
+	{
+		$targets = [];
+		foreach (is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : [] as $row) {
+			if (!is_array($row) || ($row['category'] ?? null) !== $category) {
+				continue;
+			}
+			$target = trim((string) ($row['target'] ?? ''));
+			if ($target !== '') {
+				$targets[$target] = true;
+			}
+		}
+		$result = array_keys($targets);
 		sort($result, SORT_STRING);
 		return $result;
 	}

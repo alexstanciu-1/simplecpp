@@ -401,6 +401,15 @@ Status legend:
   link, rebuilt 0 native/runtime objects, and changed 0 project-unit packs. A
   behavior-neutral body edit transpiled 1 file but left generated C++ unchanged,
   so Ninja reported no work.
+- [x] `PUH-036` Remove the last method-body broad fallbacks that only contained
+  runtime `error` / `error_t` wrapper slots or local accumulator invalidations.
+  Runtime error slots now count as scoped-safe unresolved runtime evidence, and
+  method local invalidations no longer block scoped activation when dependency
+  rows are otherwise safe. The sandbox compiler clone now reports 388 generated
+  PHS units, 387 active scoped units, and 1 broad fallback unit (`main.phs`). The
+  first build after this classifier change rebuilt the six newly scoped objects
+  plus the link due changed scoped-pack headers; the next warm build reported
+  Ninja no work.
 
 ### Ready
 

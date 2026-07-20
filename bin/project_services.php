@@ -5291,9 +5291,6 @@ function project_unit_function_body_is_scoped_candidate_safe(array $function, ar
 /** @param array<string,mixed> $class @param array<string,mixed> $method @param list<array<string,mixed>> $dependencyCategories */
 function project_unit_method_body_is_scoped_candidate_safe(array $class, array $method, array $dependencyCategories): bool
 {
-	if (is_array($method['local_invalidations'] ?? null) && $method['local_invalidations'] !== []) {
-		return false;
-	}
 	foreach (is_array($method['call_sites'] ?? null) ? $method['call_sites'] : [] as $callSite) {
 		if (!is_array($callSite)) {
 			return false;
@@ -5360,7 +5357,7 @@ function project_unit_body_dependency_row_is_scoped_candidate_safe(array $row): 
 function project_unit_unresolved_body_symbol_is_core_runtime(string $target): bool
 {
 	$target = trim($target, "\\ \t\n\r\0\x0B");
-	return in_array(strtolower($target), ['php', 'scpp', 'std'], true);
+	return in_array(strtolower($target), ['error', 'error_t', 'php', 'scpp', 'std'], true);
 }
 
 /** @param array<string,mixed> $function */
