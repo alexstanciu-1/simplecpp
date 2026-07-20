@@ -223,7 +223,8 @@ Start narrowing only for safe, measurable source categories:
 
 - leaf helper functions;
 - support/proof/report files with explicit type references;
-- files with no class inheritance or layout-sensitive declarations;
+- files with resolved inheritance, signature, function-body, or property-layout
+  dependency evidence;
 - files where STAN/source summaries can name all same-project dependencies.
 
 Everything else keeps using the existing broad fallback.
@@ -349,6 +350,11 @@ Status legend:
   dependencies. Property-layout units now become scoped candidates when their
   direct property type dependencies resolve to generated headers, and focused
   coverage proves dependency headers are included before the owning header.
+- [x] `PUH-034` Update user-facing build diagnostic docs for the current
+  project-unit diagnostics surface. The strict quick-learn, getting-started
+  guide, onboarding workflow, and project-build spec now mention rebuild
+  fanout, focused project-unit rows, dependency summary artifacts, and native
+  broad-fallback policy.
 
 ### Ready
 
@@ -367,9 +373,6 @@ Status legend:
 - [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:
   a narrow support-file edit should dirty a much smaller slice than the previous
   ~387-object rebuild, while no-change builds remain Ninja no-work.
-- [ ] `PUH-034` Update `specs/project_build_v1.md`, strict quick-learn, and
-  getting-started docs once build-owned summaries and expanded scoped
-  activation are stable.
 - [ ] `PUH-035` Prepare a GitHub issue update for
   `alexstanciu-1/simplecpp#215` summarizing implemented slices, measured
   results, remaining blockers, and next release/risk notes.

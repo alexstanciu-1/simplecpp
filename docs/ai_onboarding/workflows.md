@@ -113,6 +113,13 @@ Use when changing project mode or multi-file behavior:
 - `scpp init`
 - `scpp build`
 - `scpp run`
+- `scpp explain-build` for saved rebuild causality, project-unit pack fanout,
+  focused source dependency rows, and Ninja target hints
+- `scpp explain-build rebuild-fanout` when the question is "what actually got
+  dirtied?"
+- `scpp explain-build project-units` or `scpp explain-build project-unit
+  <source>` when the question is "why does this object include this
+  project-unit header?"
 
 Relevant docs:
 
