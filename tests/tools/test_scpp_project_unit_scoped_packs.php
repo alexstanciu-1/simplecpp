@@ -29,6 +29,8 @@ final class ScppProjectUnitScopedPacksTest
 			$this->assertDependencyScopedPacksUseExportHeaders();
 			$this->assertCompactLayoutScopedPacksIncludeValueDependencies();
 			$this->assertTopLevelConstantScopedPackSafety();
+			$this->assertMethodBodyScopedPackSafety();
+			$this->assertBodyOnlyEditsKeepRebuildFanoutMinimal();
 			echo "PASS: scpp project unit scoped packs\n";
 			return 0;
 		} finally {
@@ -299,6 +301,21 @@ struct CompactParsedExpressionRecord {
     public ParsedExpressionPayload $payload;
 }
 PHS);
+		$this->write($project . '/z_row.phs', <<<'PHS'
+struct ZRow {
+    public uint32 $id = 0;
+}
+PHS);
+		$this->write($project . '/a_table.phs', <<<'PHS'
+struct ATable {
+    public $rows vector<ZRow> = [];
+}
+PHS);
+		$this->write($project . '/table_consumer.phs', <<<'PHS'
+class TableConsumer {
+    public ATable $table;
+}
+PHS);
 
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
 			'compile_runtime' => true,
@@ -307,10 +324,10 @@ PHS);
 		$this->assertSame(true, $build['ok'], 'compact-layout scoped-pack project should build');
 
 		$projectUnits = $this->loadProjectUnits($project);
-		$this->assertSame(6, $projectUnits['total_units'] ?? null, 'compact-layout project should report six generated units');
-		$this->assertSame(5, $projectUnits['active_scoped_units'] ?? null, 'compact-layout declaration units should activate scoped packs');
+		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'compact-layout project should report nine generated units');
+		$this->assertSame(8, $projectUnits['active_scoped_units'] ?? null, 'compact-layout declaration units should activate scoped packs');
 		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'compact-layout executable unit should stay broad');
-		$this->assertSame(5, $projectUnits['candidate_scoped_units'] ?? null, 'compact-layout declarations should be scoped candidates');
+		$this->assertSame(8, $projectUnits['candidate_scoped_units'] ?? null, 'compact-layout declarations should be scoped candidates');
 		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'compact-layout main should be the only blocked candidate');
 
 		$payloadSummary = $this->findSummary($projectUnits, 'payload.phs', '');
@@ -325,13 +342,21 @@ PHS);
 		$this->assertSame('scoped', $recordSummary['status'] ?? null, 'compact record should compile with a scoped pack');
 		$this->assertSame(['kind.phs', 'payload.phs', 'span.phs'], $recordSummary['direct_source_dependencies'] ?? null, 'compact record should report enum, union, and struct direct dependencies');
 		$this->assertSame(['.prism/generated/kind.hpp', '.prism/generated/payload.hpp', '.prism/generated/span.hpp'], $recordSummary['direct_local_headers'] ?? null, 'compact record direct headers should stay direct');
-		$this->assertSame(['.prism/generated/access_payload.hpp', '.prism/generated/kind.hpp', '.prism/generated/payload.hpp', '.prism/generated/span.hpp'], $recordSummary['scoped_local_headers'] ?? null, 'compact record scoped headers should include transitive union payload dependencies');
+		$this->assertSame(['.prism/generated/access_payload.hpp', '.prism/generated/kind.hpp', '.prism/generated/payload.hpp', '.prism/generated/span.hpp'], $recordSummary['scoped_local_headers'] ?? null, 'compact record scoped headers should include transitive union payload dependencies before dependent headers');
 		$this->assertSame(['kind.phs', 'payload.phs', 'span.phs'], $this->dependencyCategorySources($recordSummary, 'property layout'), 'compact record value fields should categorize direct dependencies as property layout');
 		$recordPackContents = $this->read($project . '/' . (string) ($recordSummary['candidate_pack_header'] ?? ''));
 		$this->assertOrderBefore('#include "../access_payload.hpp"', '#include "../payload.hpp"', $recordPackContents, 'record scoped pack should include transitive nested struct before union');
 		$this->assertOrderBefore('#include "../kind.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include enum before record');
 		$this->assertOrderBefore('#include "../span.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include child span before record');
 		$this->assertOrderBefore('#include "../payload.hpp"', '#include "../record.hpp"', $recordPackContents, 'record scoped pack should include union before record');
+
+		$tableConsumerSummary = $this->findSummary($projectUnits, 'table_consumer.phs', '');
+		$this->assertSame('scoped', $tableConsumerSummary['status'] ?? null, 'container-table consumer should compile with a scoped pack');
+		$this->assertSame(['a_table.phs'], $tableConsumerSummary['direct_source_dependencies'] ?? null, 'container-table consumer should report its direct table dependency');
+		$this->assertSame(['.prism/generated/a_table.hpp', '.prism/generated/z_row.hpp'], $tableConsumerSummary['scoped_local_headers'] ?? null, 'container-table scoped headers should report the table and its transitive element row');
+		$tableConsumerPackContents = $this->read($project . '/' . (string) ($tableConsumerSummary['candidate_pack_header'] ?? ''));
+		$this->assertOrderBefore('#include "../z_row.hpp"', '#include "../a_table.hpp"', $tableConsumerPackContents, 'consumer scoped pack should include generic element row before the table header');
+		$this->assertOrderBefore('#include "../a_table.hpp"', '#include "../table_consumer.hpp"', $tableConsumerPackContents, 'consumer scoped pack should include table before consumer');
 	}
 
 	private function assertTopLevelConstantScopedPackSafety(): void
@@ -379,6 +404,151 @@ PHS);
 		$this->assertSame('fallback_broad', $arraySummary['status'] ?? null, 'unmodeled top-level constant initializer should stay on broad fallback');
 		$this->assertSame('blocked_broad_fallback', $arraySummary['candidate_status'] ?? null, 'unmodeled top-level constant initializer should block scoped candidacy');
 		$this->assertContains('top-level constants contain unmodeled dependency evidence', implode("\n", is_array($arraySummary['candidate_blocking_reasons'] ?? null) ? $arraySummary['candidate_blocking_reasons'] : []), 'unmodeled top-level constant initializer should report a blocker');
+	}
+
+	private function assertMethodBodyScopedPackSafety(): void
+	{
+		$project = $this->root . '/method_body_units';
+		$this->writeProject($project, [], "echo \"method\\n\";\n", 'strict');
+		$this->write($project . '/row.phs', <<<'PHS'
+struct MetricRow {
+    public int32 $value = 0;
+}
+PHS);
+		$this->write($project . '/report.phs', <<<'PHS'
+class MetricReport {
+    public MetricRow $row;
+    public int $count = 0;
+}
+PHS);
+		$this->write($project . '/ids.phs', <<<'PHS'
+class MetricIds {
+    public static function from_int(int $value): int {
+        return $value;
+    }
+}
+PHS);
+		$this->write($project . '/metrics.phs', <<<'PHS'
+class Metrics {
+    public static function update(MetricReport &$report, MetricRow $row): int {
+        $report->row = $row;
+        $report->count = strlen("abc");
+        if (MetricIds::from_int($report->count) === $row->value) {
+            return $report->count + 1;
+        }
+        return $report->count;
+    }
+}
+PHS);
+		$this->write($project . '/layout_probe.phs', <<<'PHS'
+class LayoutProbe {
+    public static function bytes(): int {
+        return layout_sizeof(MetricRow);
+    }
+}
+PHS);
+
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(
+			true,
+			$build['ok'],
+			"method-body scoped-pack project should build\nSTDOUT:\n"
+				. (string) ($build['output'] ?? '')
+				. "\nSTDERR:\n"
+				. (string) ($build['error'] ?? '')
+		);
+
+		$projectUnits = $this->loadProjectUnits($project);
+		$this->assertSame(6, $projectUnits['total_units'] ?? null, 'method-body project should report six generated units');
+		$this->assertSame(5, $projectUnits['active_scoped_units'] ?? null, 'resolved method-body units should activate scoped packs');
+		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'only executable unit should stay broad');
+		$this->assertSame(5, $projectUnits['candidate_scoped_units'] ?? null, 'resolved method-body units should be scoped candidates');
+		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'only executable unit should be blocked');
+
+		$metricsSummary = $this->findSummary($projectUnits, 'metrics.phs', '');
+		$this->assertSame('scoped', $metricsSummary['status'] ?? null, 'resolved method body should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $metricsSummary['candidate_status'] ?? null, 'resolved method body should be a scoped candidate');
+		$this->assertSame([], $metricsSummary['candidate_blocking_reasons'] ?? null, 'resolved method body and runtime helper dependency should not block scoped activation');
+		$this->assertSame([], $metricsSummary['unresolved_dependency_keys'] ?? null, 'strict runtime shallow dependency should not be reported as an unresolved project-header dependency');
+		$this->assertSame(['ids.phs', 'report.phs', 'row.phs'], $metricsSummary['direct_source_dependencies'] ?? null, 'method body should report only project-header dependencies');
+		$this->assertSame(['ids.phs'], $this->projectDependencyCategorySources($metricsSummary, 'method body'), 'method body should categorize resolved local body dependencies separately from runtime shallow helpers');
+
+		$metricsPackContents = $this->read($project . '/' . (string) ($metricsSummary['candidate_pack_header'] ?? ''));
+		$this->assertContains('#include "../ids.hpp"', $metricsPackContents, 'method-body scoped pack should include static-call dependency');
+		$this->assertContains('#include "../report.hpp"', $metricsPackContents, 'method-body scoped pack should include parameter/property dependency');
+		$this->assertContains('#include "../row.hpp"', $metricsPackContents, 'method-body scoped pack should include value-row dependency');
+		$this->assertNotContains('runtime_symbols_strict', $metricsPackContents, 'method-body scoped pack should not include runtime shallow symbols as project headers');
+
+		$layoutSummary = $this->findSummary($projectUnits, 'layout_probe.phs', '');
+		$this->assertSame('scoped', $layoutSummary['status'] ?? null, 'layout probe method body should compile with a scoped pack');
+		$this->assertSame(['row.phs'], $layoutSummary['direct_source_dependencies'] ?? null, 'layout probe should report the probed type as a body dependency');
+		$this->assertSame(['row.phs'], $this->projectDependencyCategorySources($layoutSummary, 'method body'), 'layout probe should categorize its type operand as method-body dependency evidence');
+		$layoutPackContents = $this->read($project . '/' . (string) ($layoutSummary['candidate_pack_header'] ?? ''));
+		$this->assertContains('#include "../row.hpp"', $layoutPackContents, 'layout probe scoped pack should include the probed row header');
+	}
+
+	private function assertBodyOnlyEditsKeepRebuildFanoutMinimal(): void
+	{
+		$project = $this->root . '/body_only_rebuild';
+		$this->writeProject($project, [], <<<'PHS'
+echo helper_value(), "\n";
+$calculator = new Calculator();
+echo $calculator->value(), "\n";
+PHS, 'strict');
+		$this->write($project . '/helper.phs', <<<'PHS'
+function helper_value(): int {
+    return 1;
+}
+PHS);
+		$this->write($project . '/calculator.phs', <<<'PHS'
+class Calculator {
+    public function value(): int {
+        return 10;
+    }
+}
+PHS);
+
+		$initialBuild = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(true, $initialBuild['ok'], 'body-only rebuild project should build initially');
+		$initialUnits = $this->loadProjectUnits($project);
+		$calculatorSummary = $this->findSummary($initialUnits, 'calculator.phs', '');
+		$this->assertSame('scoped', $calculatorSummary['status'] ?? null, 'method-only class should activate a scoped pack before body-edit measurement');
+		$helperSummary = $this->findSummary($initialUnits, 'helper.phs', '');
+		$this->assertSame('scoped', $helperSummary['status'] ?? null, 'top-level helper should activate a scoped pack before body-edit measurement');
+
+		$this->write($project . '/helper.phs', <<<'PHS'
+function helper_value(): int {
+    return 2;
+}
+PHS);
+		$helperEditBuild = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(true, $helperEditBuild['ok'], 'top-level function body-only edit should rebuild successfully');
+		$helperEditReport = $this->loadLastRunReport($project);
+		$this->assertBodyOnlyFanout($helperEditReport, 1, 'top-level function body-only edit');
+
+		$this->write($project . '/calculator.phs', <<<'PHS'
+class Calculator {
+    public function value(): int {
+        return 11;
+    }
+}
+PHS);
+		$methodEditBuild = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(true, $methodEditBuild['ok'], 'method body-only edit should rebuild successfully');
+		$methodEditReport = $this->loadLastRunReport($project);
+		$this->assertBodyOnlyFanout($methodEditReport, 1, 'method body-only edit');
 	}
 
 	/** @param list<string> $dependencies */
@@ -440,6 +610,18 @@ PHS);
 		return $report;
 	}
 
+	private function assertBodyOnlyFanout(array $report, int $expectedGeneratedObjects, string $label): void
+	{
+		$details = is_array($report['details'] ?? null) ? $report['details'] : [];
+		$fanout = is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : [];
+		$this->assertSame(1, $details['transpiled_count'] ?? null, $label . ' should transpile only the edited source');
+		$this->assertSame(2, $details['skipped_count'] ?? null, $label . ' should skip unchanged sources');
+		$this->assertSame($expectedGeneratedObjects, $fanout['rebuilt_generated_object_count'] ?? null, $label . ' should rebuild only the edited generated object');
+		$this->assertSame(0, $fanout['rebuilt_native_object_count'] ?? null, $label . ' should not rebuild native objects');
+		$this->assertSame(0, $fanout['rebuilt_runtime_object_count'] ?? null, $label . ' should not rebuild runtime objects');
+		$this->assertSame(0, $fanout['changed_project_unit_pack_count'] ?? null, $label . ' should not rewrite project-unit packs when headers are unchanged');
+	}
+
 	/** @return array<string,mixed> */
 	private function findSummary(array $projectUnits, string $source, string $projectRoot): array
 	{
@@ -473,6 +655,19 @@ PHS);
 		$result = array_keys($sources);
 		sort($result, SORT_STRING);
 		return $result;
+	}
+
+	/** @return list<string> */
+	private function projectDependencyCategorySources(array $summary, string $category): array
+	{
+		$sources = [];
+		foreach ($this->dependencyCategorySources($summary, $category) as $source) {
+			if (!project_unit_dependency_key_requires_project_header_resolution($source)) {
+				continue;
+			}
+			$sources[] = $source;
+		}
+		return $sources;
 	}
 
 	/** @return list<string> */

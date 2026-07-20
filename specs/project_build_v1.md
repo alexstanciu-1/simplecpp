@@ -370,15 +370,19 @@ Current lightweight source dependency summaries derive direct dependency keys
 from inheritance and interface declarations, `use` declarations, class property
 types, class constant value expressions, function/method parameter and return
 types, and conservative function body evidence such as direct function calls,
-static-call class names, typed locals, constructed locals, and typed return
-descriptors. These keys are used to report direct source dependencies and direct
-generated local headers for scoped-pack candidates.
+static-call class names, static calls in control-flow conditions, layout-probe
+type operands, typed locals, constructed locals, and typed return descriptors.
+These keys are used to report direct source dependencies and direct generated
+local headers for scoped-pack candidates.
 
-Scoped candidate packs direct-include same-project generated headers through
-the same-project dependency-key closure, not only the first direct edge. This
-keeps a unit that directly depends on a derived class from missing that class's
-base header. The final scoped header list still uses the generated-header
-ordering routine so base headers appear before derived headers.
+Scoped candidate packs direct-include same-project generated headers for the
+owning source unit's direct project-header dependencies. Transitive closure then
+follows only public/header dependencies of those direct dependencies, rather
+than their body-only implementation dependencies. This keeps a unit that
+directly depends on a derived class from missing that class's base header without
+pulling unrelated implementation-only headers through every consumer. The scoped
+candidate header list preserves that dependency walk order, so public/header
+dependencies are emitted before the generated headers that require them.
 
 Current v1 scoped activation remains conservative. Files with class properties
 or compact-layout struct/union fields may activate scoped packs when their
@@ -395,8 +399,14 @@ initializer evidence, such as array literals or calls, keeps the unit on broad
 fallback.
 Top-level helper function bodies may activate scoped packs only when their body
 evidence is limited to resolved direct function/static calls and resolved type
-references. Executable bodies, method bodies, property/static access, unresolved
-calls/types, and unmodeled body evidence keep broad fallback.
+references. Class method bodies may also activate scoped packs when their
+method-body dependency evidence is resolved or points only at core runtime
+shallow symbols, and their call sites remain in the locally modeled
+function/static-method forms. Layout probes count their type-name operand as a
+body type dependency because the generated C++ applies `sizeof`, `alignof`, or
+field layout operations to the complete type. Executable bodies, unresolved
+non-runtime calls/types, unsupported body call shapes, local invalidation
+evidence, and unmodeled body evidence keep broad fallback.
 
 Saved per-source dependency summary rows also include compact dependency
 category evidence. The current categories distinguish inheritance, direct type

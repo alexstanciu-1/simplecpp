@@ -240,8 +240,9 @@ Handle complete type requirements explicitly:
 - generated declarations whose C++ header itself needs another generated
   header to be complete.
 
-This should reuse or extend the existing `sort_project_unit_include_headers(...)`
-logic rather than inventing an unrelated ordering system.
+Scoped packs should preserve the dependency-summary walk order for these
+header relationships. Broad-equivalent project headers may continue using the
+existing `sort_project_unit_include_headers(...)` fallback sorter.
 
 ## Implementation Backlog
 
@@ -306,11 +307,10 @@ Status legend:
   references; executable bodies, method bodies, property/static access,
   control-flow-heavy summaries, unresolved calls/types, and other unmodeled
   evidence stay broad.
-- [x] `PUH-026` Reuse the existing generated-header ordering for scoped packs
-  and expand same-project local dependencies through the dependency-key closure
-  before writing candidate scoped headers. A helper returning a derived type now
-  gets the derived header and its transitive base header in base-before-derived
-  order.
+- [x] `PUH-026` Expand same-project local dependencies through the
+  dependency-key closure before writing candidate scoped headers. A helper
+  returning a derived type now gets the derived header and its transitive base
+  header in base-before-derived order.
 - [x] `PUH-014` Make project-unit diagnostics suitable for large projects. The
   `project-units` overview now keeps header rows and dependency rows
   compact/capped, while `scpp explain-build project-unit <source>` provides the
@@ -374,15 +374,12 @@ Status legend:
   guide, onboarding workflow, and project-build spec now mention rebuild
   fanout, focused project-unit rows, dependency summary artifacts, and native
   broad-fallback policy.
-
-### Ready
-
 - [x] `PUH-010` Run a real-project baseline on `compiler/v2/src` with the
   current branch. Record active scoped units, active broad-fallback units,
   candidate blocker histogram, no-change build behavior, and rebuild fanout for
   the motivating support-file edit.
   Measured against the sandbox clone of the pushed compiler `main` checkpoint
-  after merging `codex/compiler-vector-runtime` into this branch. Current
+  after merging `codex/compiler-vector-runtime` into this branch. Baseline
   project-unit report: 388 total generated PHS units, 388 units with
   force-includes, 276 distinct project-unit headers, 275 active scoped units,
   and 113 active broad-fallback units. Candidate blockers: 112 units with
@@ -394,24 +391,29 @@ Status legend:
   `compile/support/compiler_profile_events.phs` transpiled 1 file, skipped 387,
   rebuilt 113 generated objects plus the linked output, and rebuilt 0 runtime or
   native C++ units. The probe edit was removed after measurement.
+- [x] `PUH-033` Validate on the motivating large strict project after the C2
+  precision slice. The sandbox compiler clone now clean-builds successfully
+  with 388 generated PHS units, 381 active scoped units, and 7 broad fallback
+  units. Candidate blockers are down to 6 method-body units and 1 function-body
+  unit with unmodeled dependency evidence. A sandbox-only body edit in
+  `compile/support/compiler_profile_events.phs` that changed generated C++
+  transpiled 1 file, skipped 387, rebuilt exactly 1 generated object plus the
+  link, rebuilt 0 native/runtime objects, and changed 0 project-unit packs. A
+  behavior-neutral body edit transpiled 1 file but left generated C++ unchanged,
+  so Ninja reported no work.
+
+### Ready
+
+- [ ] `PUH-035` Prepare a GitHub issue update for
+  `alexstanciu-1/simplecpp#215` summarizing implemented slices, measured
+  results, remaining blockers, and next release/risk notes.
+
 ### Planned Dependency-Model Work
 
 - [ ] `PUH-025` Finish any remaining complete-type activation requirements for
   generated declarations whose headers require another generated header to be
   complete beyond the covered inheritance, signature, property-layout,
   class-constant, and compact-layout value-field cases.
-### Planned Validation And Rollout
-
-- [ ] `PUH-033` Validate on the motivating large strict project. Acceptance:
-  a narrow support-file edit should dirty a much smaller slice than the previous
-  ~387-object rebuild, while no-change builds remain Ninja no-work.
-  Current C2 measurement reduces the motivating header-surface edit to 113
-  generated object rebuilds plus link, which is a clear reduction but still above
-  the ideal under-50 target. Next precision work should focus on the remaining
-  broad-fallback blockers and public-surface/body dependency separation.
-- [ ] `PUH-035` Prepare a GitHub issue update for
-  `alexstanciu-1/simplecpp#215` summarizing implemented slices, measured
-  results, remaining blockers, and next release/risk notes.
 
 ### Deferred / Blocked
 

@@ -537,6 +537,9 @@ final class FrontEndSymbolExtractor
 						'target' => $name,
 						'owner' => $owner,
 					];
+					if ($this->isLayoutProbeCallName($name) && is_string($callSite['layout_type'] ?? null)) {
+						$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', $callSite['layout_type'], $owner);
+					}
 				}
 			} elseif ($callKind === 'static_method') {
 				$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($callSite['class_name'] ?? null) ? $callSite['class_name'] : null, $owner);
@@ -1578,11 +1581,9 @@ final class FrontEndSymbolExtractor
 			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
 				continue;
 			}
-			$this->collectCallSitesFromNode(match ($statement->kind) {
-				'assign', 'assign_ref', 'assign_op' => is_array($statement->payload) ? ($statement->payload['expr'] ?? null) : null,
-				'expr', 'return', 'throw', 'echo' => $statement->payload,
-				default => null,
-			}, $statement->line, $calls, $statement->kind);
+			foreach ($this->statementExpressionNodesForSummary($statement) as $expr) {
+				$this->collectCallSitesFromNode($expr, $statement->line, $calls, $statement->kind);
+			}
 		}
 		return $calls;
 	}
@@ -1602,6 +1603,64 @@ final class FrontEndSymbolExtractor
 			}, $statement->line, $reads, $statement->kind);
 		}
 		return $reads;
+	}
+
+	/** @return list<mixed> */
+	private function statementExpressionNodesForSummary(\Scpp\S2S\IR\Statement $statement): array
+	{
+		$nodes = [];
+		$payload = $statement->payload;
+		if (in_array($statement->kind, ['assign', 'assign_ref', 'assign_op'], true)) {
+			if (is_array($payload)) {
+				$this->appendExpressionNodeCandidate($nodes, $payload['expr'] ?? null);
+			}
+			return $nodes;
+		}
+		if (in_array($statement->kind, ['expr', 'return', 'throw', 'echo'], true)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload);
+			return $nodes;
+		}
+		if ($statement->kind === 'if' && is_array($payload)) {
+			foreach ($payload as $branch) {
+				if (is_array($branch)) {
+					$this->appendExpressionNodeCandidate($nodes, $branch['cond'] ?? null);
+				}
+			}
+			return $nodes;
+		}
+		if (in_array($statement->kind, ['while', 'do_while'], true) && is_array($payload)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload['cond'] ?? null);
+			return $nodes;
+		}
+		if ($statement->kind === 'foreach' && is_array($payload)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload['expr'] ?? null);
+			return $nodes;
+		}
+		if ($statement->kind === 'for' && is_array($payload)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload['init'] ?? null);
+			$this->appendExpressionNodeCandidate($nodes, $payload['cond'] ?? null);
+			$this->appendExpressionNodeCandidate($nodes, $payload['loop'] ?? null);
+			return $nodes;
+		}
+		if ($statement->kind === 'switch' && is_array($payload)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload['cond'] ?? null);
+		}
+		return $nodes;
+	}
+
+	/** @param list<mixed> $nodes */
+	private function appendExpressionNodeCandidate(array &$nodes, mixed $node): void
+	{
+		if (is_object($node)) {
+			$nodes[] = $node;
+			return;
+		}
+		if (!is_array($node)) {
+			return;
+		}
+		foreach ($node as $value) {
+			$this->appendExpressionNodeCandidate($nodes, $value);
+		}
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
@@ -1812,13 +1871,20 @@ final class FrontEndSymbolExtractor
 			if (is_object($callee) && isset($callee->kind, $callee->children) && is_array($callee->children) && $callee->kind === AstKind::NAME) {
 				$name = (string) ($callee->children['name'] ?? '');
 				if ($name !== '') {
-					$calls[] = [
+					$call = [
 						'line' => $line,
 						'statement_kind' => $statementKind,
 						'call_kind' => 'function',
 						'name' => $name,
 						'args' => $this->describeArgs($node->children['args'] ?? null, $line),
 					];
+					if ($this->isLayoutProbeCallName($name)) {
+						$layoutType = $this->extractLayoutProbeTypeDependency($node->children['args'] ?? null);
+						if ($layoutType !== null) {
+							$call['layout_type'] = $layoutType;
+						}
+					}
+					$calls[] = $call;
 				}
 			}
 		} elseif ($node->kind === AstKind::STATIC_CALL) {
@@ -1860,6 +1926,43 @@ final class FrontEndSymbolExtractor
 			}
 			$this->collectCallSitesFromNode($child, $line, $calls, $statementKind);
 		}
+	}
+
+	private function isLayoutProbeCallName(string $name): bool
+	{
+		return in_array(strtolower(ltrim(trim($name), '\\')), [
+			'layout_sizeof',
+			'layout_alignof',
+			'layout_offsetof',
+			'layout_field_sizeof',
+		], true);
+	}
+
+	private function extractLayoutProbeTypeDependency(mixed $argsNode): ?string
+	{
+		$children = is_object($argsNode) && isset($argsNode->children) && is_array($argsNode->children)
+			? array_values($argsNode->children)
+			: [];
+		$arg = $children[0] ?? null;
+		if (!is_object($arg) || !isset($arg->kind, $arg->children) || !is_array($arg->children)) {
+			return null;
+		}
+		if ($arg->kind === AstKind::CONST) {
+			$nameNode = $arg->children['name'] ?? null;
+			$name = is_object($nameNode) && isset($nameNode->children) && is_array($nameNode->children)
+				? (string) ($nameNode->children['name'] ?? '')
+				: (string) $nameNode;
+			$name = trim($name);
+			return $name !== '' ? ltrim($name, '\\') : null;
+		}
+		if ($arg->kind === AstKind::CLASS_CONST && strtolower((string) ($arg->children['const'] ?? '')) === 'class') {
+			$classNode = $arg->children['class'] ?? null;
+			if (is_object($classNode) && isset($classNode->kind, $classNode->children) && is_array($classNode->children) && $classNode->kind === AstKind::NAME) {
+				$name = trim((string) ($classNode->children['name'] ?? ''));
+				return $name !== '' ? ltrim($name, '\\') : null;
+			}
+		}
+		return null;
 	}
 
 	/** @param list<array<string,mixed>> $reads */

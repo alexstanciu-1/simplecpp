@@ -50,6 +50,10 @@ final class ScppStrictPrefixGenericRefParamTest
 				],
 			], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 			$this->write($project . '/main.phs', implode("\n", [
+				'function bump(int &$value): void {',
+				'	$value = $value + 1;',
+				'}',
+				'',
 				'class QueryBuffer {',
 				'	private function query_assoc_rows(string $sql, vector<mixed> &$rows): bool {',
 				'		$rows[] = $sql;',
@@ -65,6 +69,10 @@ final class ScppStrictPrefixGenericRefParamTest
 				'	}',
 				'}',
 				'',
+				'$count int = 1;',
+				'bump($count);',
+				'echo $count, "\\n";',
+				'',
 				'$buffer = new QueryBuffer();',
 				'echo $buffer->run(), "\\n";',
 				'',
@@ -74,6 +82,13 @@ final class ScppStrictPrefixGenericRefParamTest
 			$this->assertSame(0, $build['exit_code'], 'scpp build should accept a strict prefix generic by-reference parameter');
 			$this->assertNotContains('internal error:', $build['stderr'], 'build stderr should not present this as an internal error');
 			$this->assertNotContains('unexpected token "<"', $build['stderr'], 'build stderr should not leak the parser token error');
+			$header = $this->read($project . '/.prism/generated/main.hpp');
+			$source = $this->read($project . '/.prism/generated/main.cpp');
+			$this->assertContains('bump__exec', $header, 'normalized template wrapper should declare the split exec body');
+			$this->assertNotContains('SCPP_CALL_DEPTH_GUARD("bump"', $header, 'normalized template wrapper header should not contain the executable body');
+			$this->assertNotContains('value = (value +', $header, 'normalized template wrapper header should not contain the short function body');
+			$this->assertContains('bump__exec', $source, 'normalized template executable body should be emitted to the source file');
+			$this->assertContains('SCPP_CALL_DEPTH_GUARD("bump__exec"', $source, 'normalized template executable body should keep the guard in the source file');
 
 			echo "PASS: scpp strict prefix generic ref param\n";
 			return 0;
@@ -138,6 +153,15 @@ final class ScppStrictPrefixGenericRefParamTest
 		}
 	}
 
+	private function read(string $path): string
+	{
+		$contents = file_get_contents($path);
+		if (!is_string($contents)) {
+			throw new RuntimeException('Failed to read ' . $path);
+		}
+		return $contents;
+	}
+
 	private function mkdir(string $path): void
 	{
 		if (!is_dir($path) && !mkdir($path, 0777, true)) {
@@ -179,6 +203,13 @@ final class ScppStrictPrefixGenericRefParamTest
 	{
 		if (str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' found `' . $needle . '` in: ' . $haystack);
+		}
+	}
+
+	private function assertContains(string $needle, string $haystack, string $message): void
+	{
+		if (!str_contains($haystack, $needle)) {
+			throw new RuntimeException($message . ' missing `' . $needle . '`.');
 		}
 	}
 }

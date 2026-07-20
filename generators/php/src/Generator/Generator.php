@@ -3333,7 +3333,7 @@ final class Generator
 
 	private function functionLikeUsesExecBodySplit(array $params, array $statements): bool
 	{
-		return $this->functionLikeNeedsNormalizedTemplate($params) && count($statements) > 2;
+		return $this->functionLikeNeedsNormalizedTemplate($params) && count($statements) > 0;
 	}
 
 	private function renderExecCallableName(string $callableName): string

@@ -4472,6 +4472,8 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			'header' => $generatedHeader,
 		];
 	}
+	$stanPublicDependencyKeys = build_project_unit_public_dependency_key_map($normalizedProjectRoot, $stanFileSummaries, $stanDependencyLookup, $sourceKeyToHeader);
+	$buildPublicDependencyKeys = build_project_unit_public_dependency_key_map($normalizedProjectRoot, $buildFileSummaries, $buildDependencyLookup, $sourceKeyToHeader);
 
 	$summaries = [];
 	foreach ($generatedUnits as $unit) {
@@ -4486,11 +4488,15 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			static fn (string $value): bool => $value !== ''
 		));
 		sort($dependencyKeys, SORT_STRING);
+		$projectHeaderDependencyKeys = array_values(array_filter(
+			$dependencyKeys,
+			static fn (string $dependencyKey): bool => project_unit_dependency_key_requires_project_header_resolution($dependencyKey)
+		));
 
 		$directLocalHeaders = [];
 		$directLocalHeaderPaths = [];
 		$unresolvedDependencyKeys = [];
-		foreach ($dependencyKeys as $dependencyKey) {
+		foreach ($projectHeaderDependencyKeys as $dependencyKey) {
 			$dependencyHeader = is_array($sourceKeyToHeader[$dependencyKey] ?? null) ? $sourceKeyToHeader[$dependencyKey] : null;
 			if ($dependencyHeader !== null && normalize_path((string) ($dependencyHeader['project_root'] ?? '')) !== $unitProjectRoot) {
 				continue;
@@ -4503,7 +4509,8 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			}
 			$unresolvedDependencyKeys[] = $dependencyKey;
 		}
-		$scopedLocalHeaderPaths = collect_project_unit_scoped_same_project_header_paths($dependencyKeys, $dependencyKeySourceMap, $sourceKeyToHeader, $unitProjectRoot);
+		$publicDependencyKeyMap = $dependencyKeySource === 'stan' ? $stanPublicDependencyKeys : ($dependencyKeySource === 'build' ? $buildPublicDependencyKeys : []);
+		$scopedLocalHeaderPaths = collect_project_unit_scoped_same_project_header_paths($projectHeaderDependencyKeys, $publicDependencyKeyMap, $sourceKeyToHeader, $unitProjectRoot);
 		$scopedLocalHeaders = array_map(
 			static fn (string $header): string => normalize_config_path(relative_path($normalizedProjectRoot, $header)),
 			array_values($scopedLocalHeaderPaths)
@@ -4582,7 +4589,7 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			'candidate_pack_hash' => $candidateHash,
 			'candidate_pack_header' => $candidatePackHeader,
 			'candidate_blocking_reasons' => $candidate['blocking_reasons'],
-			'direct_source_dependencies' => $dependencyKeys,
+			'direct_source_dependencies' => $projectHeaderDependencyKeys,
 			'direct_local_headers' => array_values($directLocalHeaders),
 			'scoped_local_headers' => array_values(array_unique($scopedLocalHeaders)),
 			'dependency_export_headers' => array_values(array_unique($dependencyExportHeaders)),
@@ -4604,33 +4611,102 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
  */
 function collect_project_unit_scoped_same_project_header_paths(array $dependencyKeys, array $dependencyKeyMap, array $sourceKeyToHeader, string $unitProjectRoot): array
 {
-	$queue = array_values($dependencyKeys);
 	$seen = [];
+	$visiting = [];
 	$headers = [];
-	while ($queue !== []) {
-		$dependencyKey = array_shift($queue);
+	$visit = static function (string $dependencyKey) use (&$visit, &$seen, &$visiting, &$headers, $dependencyKeyMap, $sourceKeyToHeader, $unitProjectRoot): void {
 		$dependencyKey = trim((string) $dependencyKey);
 		if ($dependencyKey === '' || isset($seen[$dependencyKey])) {
-			continue;
+			return;
 		}
+		if (isset($visiting[$dependencyKey])) {
+			return;
+		}
+		$visiting[$dependencyKey] = true;
+		$transitiveDependencyKeys = normalize_string_list($dependencyKeyMap[$dependencyKey] ?? []);
+		sort($transitiveDependencyKeys, SORT_STRING);
+		foreach ($transitiveDependencyKeys as $transitiveDependencyKey) {
+			$visit($transitiveDependencyKey);
+		}
+		unset($visiting[$dependencyKey]);
 		$seen[$dependencyKey] = true;
 		$dependencyHeader = is_array($sourceKeyToHeader[$dependencyKey] ?? null) ? $sourceKeyToHeader[$dependencyKey] : null;
 		if ($dependencyHeader === null || normalize_path((string) ($dependencyHeader['project_root'] ?? '')) !== $unitProjectRoot) {
-			continue;
+			return;
 		}
 		$header = normalize_path((string) ($dependencyHeader['header'] ?? ''));
 		if ($header !== '') {
 			$headers[$header] = $header;
 		}
-		foreach (is_array($dependencyKeyMap[$dependencyKey] ?? null) ? $dependencyKeyMap[$dependencyKey] : [] as $transitiveDependencyKey) {
-			$transitiveDependencyKey = trim((string) $transitiveDependencyKey);
-			if ($transitiveDependencyKey !== '' && !isset($seen[$transitiveDependencyKey])) {
-				$queue[] = $transitiveDependencyKey;
+	};
+	$rootDependencyKeys = normalize_string_list($dependencyKeys);
+	sort($rootDependencyKeys, SORT_STRING);
+	foreach ($rootDependencyKeys as $dependencyKey) {
+		$visit($dependencyKey);
+	}
+	return $headers;
+}
+
+/**
+ * @param array<string,array<string,mixed>> $fileSummaries
+ * @param array<string,list<array<string,mixed>>> $resolutionLookup
+ * @param array<string,array{project_root:string,header:string}> $sourceKeyToHeader
+ * @return array<string,list<string>>
+ */
+function build_project_unit_public_dependency_key_map(string $projectRoot, array $fileSummaries, array $resolutionLookup, array $sourceKeyToHeader): array
+{
+	$map = [];
+	foreach ($fileSummaries as $sourceKey => $sourceSummary) {
+		if (!is_string($sourceKey) || !is_array($sourceSummary)) {
+			continue;
+		}
+		$dependencies = [];
+		foreach (collect_project_unit_dependency_category_rows($projectRoot, $sourceKey, $sourceSummary, $resolutionLookup, $sourceKeyToHeader) as $row) {
+			if (!project_unit_dependency_kind_affects_public_header((string) ($row['kind'] ?? ''))) {
+				continue;
+			}
+			foreach (normalize_string_list($row['source_dependencies'] ?? []) as $dependencyKey) {
+				if (project_unit_dependency_key_requires_project_header_resolution($dependencyKey)) {
+					$dependencies[$dependencyKey] = true;
+				}
 			}
 		}
+		$keys = array_keys($dependencies);
+		sort($keys, SORT_STRING);
+		$map[$sourceKey] = $keys;
 	}
-	ksort($headers, SORT_STRING);
-	return $headers;
+	return $map;
+}
+
+function project_unit_dependency_kind_affects_public_header(string $kind): bool
+{
+	return in_array($kind, [
+		'extends',
+		'implements',
+		'function_param_type',
+		'function_return_type',
+		'method_param_type',
+		'method_return_type',
+		'property_type',
+		'class_constant_value',
+		'constant_value',
+		'use',
+		'enum_backing_type',
+	], true);
+}
+
+function project_unit_dependency_key_requires_project_header_resolution(string $dependencyKey): bool
+{
+	return !project_unit_dependency_key_is_runtime_shallow($dependencyKey);
+}
+
+function project_unit_dependency_key_is_runtime_shallow(string $dependencyKey): bool
+{
+	$dependencyKey = normalize_config_path(trim($dependencyKey));
+	if (!str_starts_with($dependencyKey, '@external/')) {
+		return false;
+	}
+	return preg_match('/\/runtime_symbols_(?:legacy|strict)\.(?:php|phs)$/', $dependencyKey) === 1;
 }
 
 /**
@@ -5011,7 +5087,7 @@ function build_project_unit_candidate_scoped_header_paths(array $dependencyExpor
 		array_map(static fn (string $header): string => normalize_path($header), array_merge($directLocalHeaderPaths, [$ownHeader])),
 		static fn (string $header): bool => $header !== ''
 	)));
-	foreach (sort_project_unit_include_headers($localHeaders) as $localHeader) {
+	foreach ($localHeaders as $localHeader) {
 		$headers[] = $localHeader;
 	}
 	return array_values(array_unique($headers));
@@ -5026,6 +5102,7 @@ function project_unit_candidate_scoped_pack_hash(array $candidateHeaders): strin
 /**
  * @param array<string,mixed>|null $sourceSummary
  * @param list<string> $unresolvedDependencyKeys
+ * @param list<array<string,mixed>> $dependencyCategories
  * @return array{status:string,blocking_reasons:list<string>}
  */
 function classify_project_unit_scoped_candidate(bool $hasStanDependencyState, ?array $sourceSummary, array $unresolvedDependencyKeys, string $ownHeader, array $dependencyCategories = []): array
@@ -5082,8 +5159,10 @@ function collect_project_unit_scoped_candidate_summary_blockers(array $summary, 
 		}
 		foreach (is_array($class['methods'] ?? null) ? $class['methods'] : [] as $method) {
 			if (is_array($method) && (int) ($method['statement_count'] ?? 0) > 0) {
-				$blockers[] = 'method body present';
-				break 2;
+				if (!project_unit_method_body_is_scoped_candidate_safe($class, $method, $dependencyCategories)) {
+					$blockers[] = 'method body contains unmodeled dependency evidence';
+					break 2;
+				}
 			}
 		}
 	}
@@ -5206,23 +5285,82 @@ function project_unit_function_body_is_scoped_candidate_safe(array $function, ar
 		}
 	}
 	$owner = project_unit_summary_function_owner($function);
+	return project_unit_body_dependency_rows_are_scoped_candidate_safe($dependencyCategories, 'function_body_', $owner);
+}
+
+/** @param array<string,mixed> $class @param array<string,mixed> $method @param list<array<string,mixed>> $dependencyCategories */
+function project_unit_method_body_is_scoped_candidate_safe(array $class, array $method, array $dependencyCategories): bool
+{
+	if (is_array($method['local_invalidations'] ?? null) && $method['local_invalidations'] !== []) {
+		return false;
+	}
+	foreach (is_array($method['call_sites'] ?? null) ? $method['call_sites'] : [] as $callSite) {
+		if (!is_array($callSite)) {
+			return false;
+		}
+		$callKind = (string) ($callSite['call_kind'] ?? '');
+		if ($callKind !== 'function' && $callKind !== 'static_method') {
+			return false;
+		}
+	}
+	return project_unit_body_dependency_rows_are_scoped_candidate_safe(
+		$dependencyCategories,
+		'method_body_',
+		project_unit_summary_method_owner($class, $method)
+	);
+}
+
+/** @param list<array<string,mixed>> $dependencyCategories */
+function project_unit_body_dependency_rows_are_scoped_candidate_safe(array $dependencyCategories, string $bodyKindPrefix, string $owner): bool
+{
 	foreach ($dependencyCategories as $row) {
 		if (!is_array($row)) {
 			continue;
 		}
 		$kind = (string) ($row['kind'] ?? '');
-		if (!str_starts_with($kind, 'function_body_')) {
+		if (!str_starts_with($kind, $bodyKindPrefix)) {
 			continue;
 		}
 		$rowOwner = trim((string) ($row['owner'] ?? ''));
 		if ($rowOwner !== '' && $owner !== '' && $rowOwner !== $owner) {
 			continue;
 		}
-		if ((string) ($row['resolution'] ?? '') !== 'resolved') {
+		if (!project_unit_body_dependency_row_is_scoped_candidate_safe($row)) {
 			return false;
 		}
 	}
 	return true;
+}
+
+/** @param array<string,mixed> $row */
+function project_unit_body_dependency_row_is_scoped_candidate_safe(array $row): bool
+{
+	$resolution = (string) ($row['resolution'] ?? '');
+	if ($resolution === 'resolved') {
+		return true;
+	}
+	if ($resolution === 'unresolved_dependency_key') {
+		$dependencies = normalize_string_list($row['source_dependencies'] ?? []);
+		if ($dependencies === []) {
+			return false;
+		}
+		foreach ($dependencies as $dependencyKey) {
+			if (!project_unit_dependency_key_is_runtime_shallow($dependencyKey)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	if ($resolution === 'unresolved_symbol') {
+		return project_unit_unresolved_body_symbol_is_core_runtime((string) ($row['target'] ?? ''));
+	}
+	return false;
+}
+
+function project_unit_unresolved_body_symbol_is_core_runtime(string $target): bool
+{
+	$target = trim($target, "\\ \t\n\r\0\x0B");
+	return in_array(strtolower($target), ['php', 'scpp', 'std'], true);
 }
 
 /** @param array<string,mixed> $function */
@@ -5234,6 +5372,19 @@ function project_unit_summary_function_owner(array $function): string
 	}
 	$namespace = trim((string) ($function['namespace'] ?? ''));
 	return $namespace === '' ? $name : $namespace . '\\' . $name;
+}
+
+/** @param array<string,mixed> $class @param array<string,mixed> $method */
+function project_unit_summary_method_owner(array $class, array $method): string
+{
+	$className = trim((string) ($class['name'] ?? ''));
+	$methodName = trim((string) ($method['name'] ?? ''));
+	if ($className === '' || $methodName === '') {
+		return '';
+	}
+	$namespace = trim((string) ($class['namespace'] ?? ''));
+	$classOwner = $namespace === '' ? $className : $namespace . '\\' . $className;
+	return $classOwner . '::' . $methodName;
 }
 
 /** @param array<string,mixed> $summary @return list<array<string,mixed>> */
