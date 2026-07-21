@@ -3149,9 +3149,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
 	}
 	unset($unit);
-	if ($useFreshStanState) {
-		apply_project_unit_scoped_force_include_candidates($projectRoot, $projectContexts, $generatedUnits);
-	}
+	apply_project_unit_scoped_force_include_candidates($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState);
 	foreach ($nativeCppUnits as &$nativeUnit) {
 		$nativeUnit['force_include_header'] = $projectUnitForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
 	}
@@ -4302,10 +4300,10 @@ function summarize_project_unit_candidate_blocker_counts(array $dependencySummar
  * @param array<string,array<string,mixed>> $projectContexts
  * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
  */
-function apply_project_unit_scoped_force_include_candidates(string $projectRoot, array $projectContexts, array &$generatedUnits): void
+function apply_project_unit_scoped_force_include_candidates(string $projectRoot, array $projectContexts, array &$generatedUnits, bool $useStanDependencyState = true): void
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
-	$summaries = collect_project_unit_dependency_summaries($normalizedProjectRoot, $projectContexts, $generatedUnits);
+	$summaries = collect_project_unit_dependency_summaries($normalizedProjectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
 	$scopedPackBySourceKey = [];
 	foreach ($summaries as $summary) {
 		if (!is_array($summary) || ($summary['candidate_status'] ?? null) !== 'candidate_scoped') {
@@ -4632,8 +4630,8 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			: (is_array($buildFileSummaries[$sourceKey] ?? null) ? $buildFileSummaries[$sourceKey] : null);
 		$dependencyCategoryLookup = $dependencyKeySource === 'stan' ? $stanDependencyLookup : ($dependencyKeySource === 'build' ? $buildDependencyLookup : []);
 		$dependencyCategories = collect_project_unit_dependency_category_rows($normalizedProjectRoot, $sourceKey, $sourceSummary, $dependencyCategoryLookup, $sourceKeyToHeader);
-		$hasStanDependencyStateForSource = $hasStanDependencyState && array_key_exists($sourceKey, $stanDependencyKeys);
-		$candidate = classify_project_unit_scoped_candidate($hasStanDependencyStateForSource, $sourceSummary, $unresolvedDependencyKeys, $ownHeader, $dependencyCategories);
+		$hasDependencyStateForSource = $dependencyKeySource !== 'none';
+		$candidate = classify_project_unit_scoped_candidate($hasDependencyStateForSource, $sourceSummary, $unresolvedDependencyKeys, $ownHeader, $dependencyCategories);
 		$forceIncludeHeader = normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['force_include_header'] ?? ''))));
 		$status = $candidate['status'] === 'candidate_scoped' && $forceIncludeHeader !== '' && $forceIncludeHeader === $candidatePackHeader
 			? 'scoped'
@@ -4645,10 +4643,10 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			if ($buildDependencyState !== null) {
 				$reasons[] = 'build-owned project unit dependency summary available';
 			}
-		} elseif (!$hasStanDependencyStateForSource) {
-			$reasons[] = 'STAN dependency state unavailable for this source';
+		} elseif (!$hasDependencyStateForSource) {
+			$reasons[] = 'project unit dependency state unavailable for this source';
 		} elseif ($dependencyKeys === []) {
-			$reasons[] = 'no direct STAN dependency keys recorded';
+			$reasons[] = 'no direct project unit dependency keys recorded';
 		} else {
 			foreach ($dependencyKeys as $dependencyKey) {
 				$reasons[] = strtoupper($dependencyKeySource) . ' dependency key: ' . $dependencyKey;
@@ -5182,11 +5180,11 @@ function project_unit_candidate_scoped_pack_hash(array $candidateHeaders): strin
  * @param list<array<string,mixed>> $dependencyCategories
  * @return array{status:string,blocking_reasons:list<string>}
  */
-function classify_project_unit_scoped_candidate(bool $hasStanDependencyState, ?array $sourceSummary, array $unresolvedDependencyKeys, string $ownHeader, array $dependencyCategories = []): array
+function classify_project_unit_scoped_candidate(bool $hasDependencyState, ?array $sourceSummary, array $unresolvedDependencyKeys, string $ownHeader, array $dependencyCategories = []): array
 {
 	$blockingReasons = [];
-	if (!$hasStanDependencyState) {
-		$blockingReasons[] = 'STAN dependency state unavailable';
+	if (!$hasDependencyState) {
+		$blockingReasons[] = 'project unit dependency state unavailable';
 	}
 	if ($sourceSummary === null) {
 		$blockingReasons[] = 'source summary unavailable';

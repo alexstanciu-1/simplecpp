@@ -88,14 +88,14 @@ final class ScppExplainBuildTest
 			if (!is_array($projectUnits)) {
 				throw new RuntimeException('build explanation should contain project unit force-include details');
 			}
-			$this->assertProjectUnitReportShape($projectUnits, 'warm STAN project-unit report');
-			$this->assertSame(['changed_headers' => [], 'removed_headers' => [], 'changed_count' => 0, 'removed_count' => 0], $projectUnits['pack_changes'] ?? null, 'warm STAN project-unit report should record no changed pack headers');
+			$this->assertProjectUnitReportShape($projectUnits, 'warm project-unit report');
+			$this->assertSame(['changed_headers' => [], 'removed_headers' => [], 'changed_count' => 0, 'removed_count' => 0], $projectUnits['pack_changes'] ?? null, 'warm project-unit report should record no changed pack headers');
 			$summaryArtifact = is_array($projectUnits['dependency_summary_artifact'] ?? null) ? $projectUnits['dependency_summary_artifact'] : [];
-			$this->assertSame('.prism/cache/project_unit_dependency_summary.php', $summaryArtifact['path'] ?? null, 'warm STAN project-unit report should point to the build-owned dependency summary artifact');
-			$this->assertSame(3, $summaryArtifact['source_count'] ?? null, 'warm STAN dependency summary artifact should count project sources');
-			$this->assertSame(true, $summaryArtifact['used_stan_dependency_state'] ?? null, 'warm STAN dependency summary artifact should record STAN-backed inputs');
-			$this->assertSame(false, $summaryArtifact['source_overrides_active'] ?? null, 'warm STAN dependency summary artifact should record source override state');
-			$this->assertFileExists($project . '/' . (string) ($summaryArtifact['path'] ?? ''), 'warm STAN build should write the project-unit dependency summary artifact');
+			$this->assertSame('.prism/cache/project_unit_dependency_summary.php', $summaryArtifact['path'] ?? null, 'warm project-unit report should point to the build-owned dependency summary artifact');
+			$this->assertSame(3, $summaryArtifact['source_count'] ?? null, 'warm dependency summary artifact should count project sources');
+			$this->assertSame(false, $summaryArtifact['used_stan_dependency_state'] ?? null, 'warm dependency summary artifact should record build-owned inputs when fresh STAN state is unavailable');
+			$this->assertSame(false, $summaryArtifact['source_overrides_active'] ?? null, 'warm dependency summary artifact should record source override state');
+			$this->assertFileExists($project . '/' . (string) ($summaryArtifact['path'] ?? ''), 'warm build should write the project-unit dependency summary artifact');
 			$summaryArtifactState = require $project . '/' . (string) ($summaryArtifact['path'] ?? '');
 			if (!is_array($summaryArtifactState)) {
 				throw new RuntimeException('project-unit dependency summary artifact should return an object');
@@ -123,18 +123,18 @@ final class ScppExplainBuildTest
 			if (!is_array($topLevelFanout)) {
 				throw new RuntimeException('last_run details should contain rebuild fanout');
 			}
-			$this->assertRebuildFanoutShape($topLevelFanout, 'warm STAN top-level rebuild fanout');
+			$this->assertRebuildFanoutShape($topLevelFanout, 'warm top-level rebuild fanout');
 			$rebuildFanout = is_array($explanation['rebuild_fanout'] ?? null) ? $explanation['rebuild_fanout'] : null;
 			if (!is_array($rebuildFanout)) {
 				throw new RuntimeException('build explanation should contain rebuild fanout');
 			}
-			$this->assertRebuildFanoutShape($rebuildFanout, 'warm STAN explanation rebuild fanout');
+			$this->assertRebuildFanoutShape($rebuildFanout, 'warm explanation rebuild fanout');
 			$this->assertSame($topLevelFanout, $rebuildFanout, 'top-level and explanation rebuild fanout should match');
-			$this->assertSame(0, $rebuildFanout['rebuilt_output_count'] ?? null, 'warm STAN build should record no changed outputs');
-			$this->assertSame(0, $rebuildFanout['rebuilt_object_count'] ?? null, 'warm STAN build should record no rebuilt objects');
-			$this->assertSame(0, $rebuildFanout['changed_project_unit_pack_count'] ?? null, 'warm STAN build should record no changed project-unit packs');
-			$this->assertSame(0, $rebuildFanout['removed_project_unit_pack_count'] ?? null, 'warm STAN build should record no removed project-unit packs');
-			$this->assertSame(true, $rebuildFanout['ninja_no_work'] ?? null, 'warm STAN build should record Ninja no-work');
+			$this->assertSame(0, $rebuildFanout['rebuilt_output_count'] ?? null, 'warm build should record no changed outputs');
+			$this->assertSame(0, $rebuildFanout['rebuilt_object_count'] ?? null, 'warm build should record no rebuilt objects');
+			$this->assertSame(0, $rebuildFanout['changed_project_unit_pack_count'] ?? null, 'warm build should record no changed project-unit packs');
+			$this->assertSame(0, $rebuildFanout['removed_project_unit_pack_count'] ?? null, 'warm build should record no removed project-unit packs');
+			$this->assertSame(true, $rebuildFanout['ninja_no_work'] ?? null, 'warm build should record Ninja no-work');
 			$this->assertSame(4, $projectUnits['total_units'] ?? null, 'three-source project with one native file should report four compiled units');
 			$this->assertSame(4, $projectUnits['units_with_force_include'] ?? null, 'three-source project with one native file should force-include a project unit header for each compiled unit');
 			$this->assertSame(3, $projectUnits['distinct_headers'] ?? null, 'three-source project should use scoped packs for safe declaration-only units and broad fallback for main/native');
@@ -244,7 +244,7 @@ final class ScppExplainBuildTest
 			$this->assertContains('Project unit native policy: 1/1 native unit(s) broad fallback (native C++ project-unit dependencies are not modeled; native units use broad-equivalent packs)', $projectUnitsView['stdout'], 'project-units should summarize native broad fallback policy');
 			$this->assertContains('Project unit candidate blockers: executable body present (1 unit(s))', $projectUnitsView['stdout'], 'project-units should summarize candidate blocker counts');
 			$this->assertContains('Project unit pack changes: changed 0, removed 0', $projectUnitsView['stdout'], 'project-units should summarize project-unit pack changes');
-			$this->assertContains('Project unit dependency summary artifact: .prism/cache/project_unit_dependency_summary.php (sources 3, STAN yes, overrides no)', $projectUnitsView['stdout'], 'project-units should show the dependency summary artifact pointer');
+			$this->assertContains('Project unit dependency summary artifact: .prism/cache/project_unit_dependency_summary.php (sources 3, STAN no, overrides no)', $projectUnitsView['stdout'], 'project-units should show the dependency summary artifact pointer');
 			$this->assertContains('.prism/generated/__project_units/', $projectUnitsView['stdout'], 'project-units should list the force-included hash-pack header');
 			$this->assertContains('scoped', $projectUnitsView['stdout'], 'project-units should classify active scoped pack headers');
 			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify fallback broad pack headers');
@@ -341,24 +341,25 @@ final class ScppExplainBuildTest
 			$this->assertSame($noStanPackChanges['removed_count'] ?? null, $noStanFanout['removed_project_unit_pack_count'] ?? null, 'warm --no-stan rebuild fanout should mirror removed project-unit packs');
 			$this->assertSame($noStanPackChanges['removed_headers'] ?? null, $noStanFanout['removed_project_unit_pack_headers'] ?? null, 'warm --no-stan rebuild fanout should mirror removed project-unit pack headers');
 			$this->assertSame(4, $noStanProjectUnits['total_units'] ?? null, 'warm --no-stan build should still report all generated and native units');
-			$this->assertSame(1, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should fall back to one broad-equivalent pack even if stale STAN state exists');
-			$this->assertSame(0, $noStanProjectUnits['active_scoped_units'] ?? null, 'warm --no-stan build should count no active scoped units');
-			$this->assertSame(3, $noStanProjectUnits['active_broad_fallback_units'] ?? null, 'warm --no-stan build should count all generated units as broad fallback');
+			$this->assertSame(3, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should use build-owned scoped packs for safe units plus broad fallback for main/native');
+			$this->assertSame(2, $noStanProjectUnits['active_scoped_units'] ?? null, 'warm --no-stan build should count scoped units from build-owned dependency summaries');
+			$this->assertSame(1, $noStanProjectUnits['active_broad_fallback_units'] ?? null, 'warm --no-stan build should keep only executable generated units on broad fallback');
 			$this->assertSame(1, $noStanProjectUnits['native_broad_fallback_units'] ?? null, 'warm --no-stan build should keep native units on broad fallback');
-			$this->assertSame(0, $noStanProjectUnits['candidate_scoped_units'] ?? null, 'warm --no-stan build should count no scoped candidates');
-			$this->assertSame(3, $noStanProjectUnits['candidate_blocked_units'] ?? null, 'warm --no-stan build should count all generated candidates as blocked');
+			$this->assertSame(2, $noStanProjectUnits['candidate_scoped_units'] ?? null, 'warm --no-stan build should count safe build-owned summaries as scoped candidates');
+			$this->assertSame(1, $noStanProjectUnits['candidate_blocked_units'] ?? null, 'warm --no-stan build should count only blocked generated candidates as blocked');
 			$this->assertSame([
-				['reason' => 'STAN dependency state unavailable', 'unit_count' => 3],
 				['reason' => 'executable body present', 'unit_count' => 1],
-			], $noStanProjectUnits['candidate_blocker_counts'] ?? null, 'warm --no-stan build should use build-owned source summaries while keeping STAN-gated scoped activation blocked');
+			], $noStanProjectUnits['candidate_blocker_counts'] ?? null, 'warm --no-stan build should use build-owned source summaries for scoped activation');
 			$this->assertFileExists($project . '/.prism/cache/project_unit_dependency_state.php', 'warm --no-stan build should write a build-owned project unit dependency state');
 			$noStanBuildHeaders = is_array($noStanProjectUnits['headers'] ?? null) ? $noStanProjectUnits['headers'] : [];
-			$noStanBuildHeader = $noStanBuildHeaders[0] ?? null;
-			if (!is_array($noStanBuildHeader)) {
-				throw new RuntimeException('warm --no-stan project unit report should contain a header row');
+			$noStanHeaderModes = [];
+			foreach ($noStanBuildHeaders as $header) {
+				if (is_array($header) && is_string($header['mode'] ?? null)) {
+					$noStanHeaderModes[] = $header['mode'];
+				}
 			}
-			$this->assertSame('broad_equivalent_pack', $noStanBuildHeader['mode'] ?? null, 'warm --no-stan build should keep active broad-equivalent pack mode');
-			$this->assertTrue(!str_contains((string) ($noStanBuildHeader['path'] ?? ''), '/scoped-'), 'warm --no-stan build should not assign stale scoped pack headers');
+			$this->assertContains('broad_equivalent_pack', implode("\n", $noStanHeaderModes), 'warm --no-stan build should keep active broad-equivalent pack mode for fallback units');
+			$this->assertContains('scoped', implode("\n", $noStanHeaderModes), 'warm --no-stan build should assign scoped pack headers from build-owned summaries');
 			$noStanBuildSummaries = is_array($noStanProjectUnits['dependency_summaries'] ?? null) ? $noStanProjectUnits['dependency_summaries'] : [];
 			$noStanChildSummary = null;
 			foreach ($noStanBuildSummaries as $summary) {
@@ -370,9 +371,9 @@ final class ScppExplainBuildTest
 			if (!is_array($noStanChildSummary)) {
 				throw new RuntimeException('warm --no-stan project unit report should contain a child.phs dependency summary');
 			}
-			$this->assertSame('fallback_broad', $noStanChildSummary['status'] ?? null, 'warm --no-stan child unit should keep broad fallback active status');
-			$this->assertSame('blocked_broad_fallback', $noStanChildSummary['candidate_status'] ?? null, 'warm --no-stan child unit should block scoped activation');
-			$this->assertContains('STAN dependency state unavailable', implode("\n", is_array($noStanChildSummary['candidate_blocking_reasons'] ?? null) ? $noStanChildSummary['candidate_blocking_reasons'] : []), 'warm --no-stan child unit should explain that STAN data is intentionally unavailable');
+			$this->assertSame('scoped', $noStanChildSummary['status'] ?? null, 'warm --no-stan child unit should use scoped activation from build-owned summaries');
+			$this->assertSame('candidate_scoped', $noStanChildSummary['candidate_status'] ?? null, 'warm --no-stan child unit should be a scoped candidate');
+			$this->assertSame([], $noStanChildSummary['candidate_blocking_reasons'] ?? null, 'warm --no-stan child unit should not block solely because STAN is bypassed');
 			$this->assertNotContains('source summary unavailable', implode("\n", is_array($noStanChildSummary['candidate_blocking_reasons'] ?? null) ? $noStanChildSummary['candidate_blocking_reasons'] : []), 'warm --no-stan child unit should use the build-owned source summary');
 			$this->assertSame(['base.phs'], $noStanChildSummary['direct_source_dependencies'] ?? null, 'warm --no-stan child unit should still report direct dependencies from build-owned summaries');
 			$this->assertSame(['.prism/generated/base.hpp'], $noStanChildSummary['direct_local_headers'] ?? null, 'warm --no-stan child unit should still map direct dependencies to generated headers');
@@ -422,12 +423,12 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $noStanReport['candidate_scoped_units'] ?? null, 'direct no-STAN report should count no scoped candidates');
 			$this->assertSame(1, $noStanReport['candidate_blocked_units'] ?? null, 'direct no-STAN report should count one blocked scoped candidate');
 			$this->assertSame([
-				['reason' => 'STAN dependency state unavailable', 'unit_count' => 1],
+				['reason' => 'project unit dependency state unavailable', 'unit_count' => 1],
 				['reason' => 'source summary unavailable', 'unit_count' => 1],
 			], $noStanReport['candidate_blocker_counts'] ?? null, 'direct no-STAN report should count blocker reasons');
 			$this->assertSame('blocked_broad_fallback', $noStanSummary['candidate_status'] ?? null, 'no-STAN scoped candidates should be marked blocked');
 			$this->assertSame(['.prism/generated/main.hpp'], $noStanSummary['candidate_scoped_headers'] ?? null, 'no-STAN scoped candidate should still report its own header');
-			$this->assertContains('STAN dependency state unavailable', implode("\n", is_array($noStanSummary['candidate_blocking_reasons'] ?? null) ? $noStanSummary['candidate_blocking_reasons'] : []), 'no-STAN scoped candidate should explain missing STAN state');
+			$this->assertContains('project unit dependency state unavailable', implode("\n", is_array($noStanSummary['candidate_blocking_reasons'] ?? null) ? $noStanSummary['candidate_blocking_reasons'] : []), 'no-STAN scoped candidate should explain missing dependency state');
 			$this->assertContains('source summary unavailable', implode("\n", is_array($noStanSummary['candidate_blocking_reasons'] ?? null) ? $noStanSummary['candidate_blocking_reasons'] : []), 'no-STAN scoped candidate should explain missing source summary');
 			$this->assertContains('missing summary', implode("\n", $this->dependencyCategoryNames($noStanSummary)), 'no-STAN dependency summary should categorize missing source-summary evidence');
 			$this->assertContains('STAN dependency state unavailable for this build', implode("\n", is_array($noStanSummary['reasons'] ?? null) ? $noStanSummary['reasons'] : []), 'no-STAN dependency summary should explain missing STAN state');

@@ -239,7 +239,7 @@ Current v1 behavior:
 - if a fresh matching STAN report already exists for the current project source fingerprint, the build reuses it and may start a background STAN worker when none is alive
 - if a live STAN worker exists but its report is stale, the build requests a refresh and waits briefly for a matching ready result; if the worker does not publish in time, the build falls back to an inline compile-gating STAN check
 - if no live STAN worker exists and the current report is stale, the build performs an inline compile-gating STAN check, starts a worker for the full advisory/status/report refresh, and continues only if the compile-gating diagnostics are clean
-- while only the compile-gating check is fresh, the build does not activate STAN-backed scoped project-unit packs; it uses the build-owned dependency summary and broad fallback until the worker publishes a full fresh STAN state
+- while only the compile-gating check is fresh, or when `--no-stan` bypasses the STAN pre-build check, the build writes a fresh build-owned dependency summary and may activate scoped project-unit packs from that summary; sources without complete dependency evidence keep broad fallback
 - background worker refreshes debounce source edits before proactive analysis; explicit build refresh requests bypass that debounce
 - if STAN reports `compile-errors`, the build stops before C++ generation/compilation continues
 - if STAN reports only advisory findings, the build continues and prints a short static-analysis summary
@@ -372,13 +372,13 @@ rebuild-fanout` can report it without recomputing mtimes or build ownership.
 The `project-units` view reports the current project unit force-include fanout
 and per-source dependency summaries. These summaries may use STAN's stored
 dependency keys when available. When `--no-stan` is used, the build writes a
-build-owned lightweight project-unit dependency state from frontend/source
-summaries so diagnostics can still show direct dependency evidence; scoped
-activation remains STAN-gated, so no-STAN generated units keep using
-broad-equivalent project unit packs. Current v1 builds activate scoped project
-unit packs only for generated PHS units whose dependency summaries are
-classified as `candidate_scoped`; blocked generated units, no-STAN builds, and
-native C++ units keep using broad-equivalent project unit packs.
+fresh build-owned lightweight project-unit dependency state from
+frontend/source summaries so diagnostics can still show direct dependency
+evidence and safe generated units can still use scoped packs. Current v1 builds
+activate scoped project unit packs for generated PHS units whose dependency
+summaries are classified as `candidate_scoped`; blocked generated units,
+sources without complete dependency state, and native C++ units keep using
+broad-equivalent project unit packs.
 
 Native C++ units are intentionally reported under a separate native policy.
 Current v1 policy is `broad_fallback_without_dependency_manifest`: native C++
