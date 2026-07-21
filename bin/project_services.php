@@ -400,11 +400,7 @@ final class ProjectCleanCommand
 		foreach ($contexts as $context) {
 			$contextProjectRoot = normalize_path($context['project_root']);
 			$projectWorkspace = normalize_path($contextProjectRoot . '/.prism');
-			$configuredDirs = [
-				normalize_path($context['build_dir']),
-				normalize_path($context['generated_dir']),
-				normalize_path($context['cache_dir']),
-			];
+			$configuredDirs = collect_project_clean_dirs($contextProjectRoot, $context['config']);
 			$allInProjectWorkspace = true;
 			foreach ($configuredDirs as $configuredDir) {
 				if ($configuredDir !== $projectWorkspace && !path_is_inside($projectWorkspace, $configuredDir)) {
@@ -697,10 +693,10 @@ function print_help(): void
 	echo "Usage:\n";
 	echo "  scpp <input.phs>\n";
 	echo "  scpp init [--php-profile=legacy|strict]\n";
-	echo "  scpp build [--entry=<path>] [--build-runtime] [--build-dependencies] [--no-stan] [--timings]\n";
+	echo "  scpp build [--entry=<path>] [--mode=debug|release] [--build-runtime] [--build-dependencies] [--no-stan] [--timings]\n";
 	echo "  scpp clean\n";
 	echo "  scpp update [--force]\n";
-	echo "  scpp run [--entry=<path>] [--build-runtime] [--build-dependencies] [--force] [--no-stan] [--timings] [-- <args...>]\n";
+	echo "  scpp run [--entry=<path>] [--mode=debug|release] [--build-runtime] [--build-dependencies] [--force] [--no-stan] [--timings] [-- <args...>]\n";
 	echo "  scpp debug [--format=text|json|ndjson] [--args=<json>] [--env=NAME=VALUE] [--stdin-file=<path>] [--plan-only] [--save-session=<path>] [--load-session=<path>]\n";
 	echo "  scpp runtime-build [--debug|--release] [--force]\n";
 	echo "  scpp stan\n";
@@ -2884,7 +2880,14 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$useFreshStanState = !$options['disable_stan']
 		&& is_array($stanPreflightReport)
 		&& (string) ($stanPreflightReport['analysis_mode'] ?? 'full') === 'full';
+	$buildMode = resolve_build_mode($config);
+	$modeExplicit = is_string($options['build_mode'] ?? null) && trim((string) $options['build_mode']) !== '';
+	if ($modeExplicit) {
+		$buildMode = normalize_build_mode_name((string) $options['build_mode'], 'build option mode');
+	}
+	$config = apply_build_profile_to_config($config, $buildMode, $modeExplicit);
 	$projectGraph = resolve_project_dependency_graph($projectRoot, $configPath, $config);
+	$projectGraph = apply_build_profile_to_project_graph($projectGraph, $buildMode, $modeExplicit);
 	$markTiming('project_graph_resolved');
 	$entrypointAbs = resolve_build_entrypoint($projectRoot, $config, $options['entry_override']);
 
@@ -2896,11 +2899,6 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$compiler = resolve_compiler($config);
 	if ($compiler === null) {
 		scpp_fail("No supported C++ compiler found.\n" . install_hint_for_compiler() . PHP_EOL, 1);
-	}
-	$buildMode = resolve_build_mode($config);
-	if (is_string($options['build_mode'] ?? null) && $options['build_mode'] !== '') {
-		$requestedBuildMode = strtolower(trim((string) $options['build_mode']));
-		$buildMode = in_array($requestedBuildMode, ['debug', 'dev', 'development'], true) ? 'debug' : ($requestedBuildMode === 'release' ? 'release' : $buildMode);
 	}
 	$config = apply_build_runtime_module_overrides($config, $options);
 	$runtimeConfig = resolve_runtime_build_config($config);
@@ -3227,7 +3225,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$entryGeneratedUnit,
 			$startedAt,
 			$phpProfile,
-			$projectUnitForceIncludeReport
+			$projectUnitForceIncludeReport,
+			$rootContext
 		);
 	}
 	if (!$options['compile_dependencies']) {
@@ -3323,7 +3322,10 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					null,
 					$command,
 					$runtimeConfig,
-					$projectUnitForceIncludeReport
+					$projectUnitForceIncludeReport,
+					[],
+					$buildMode,
+					$rootContext
 				),
 			]
 		);
@@ -3442,7 +3444,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$command,
 				$runtimeConfig,
 				$projectUnitForceIncludeReport,
-				$rebuildFanout
+				$rebuildFanout,
+				$buildMode,
+				$rootContext
 			),
 		]
 	);
@@ -3489,7 +3493,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$command,
 			$runtimeConfig,
 			$projectUnitForceIncludeReport,
-			$rebuildFanout
+			$rebuildFanout,
+			$buildMode,
+			$rootContext
 		),
 	];
 }
@@ -3672,6 +3678,7 @@ function validate_reused_runtime_artifact(
 	float $startedAt,
 	string $phpProfile,
 	array $projectUnitForceIncludeReport = [],
+	array $rootContext = [],
 ): void {
 	$artifactPath = normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
 	$requiredArtifacts = [$artifactPath];
@@ -3694,9 +3701,12 @@ function validate_reused_runtime_artifact(
 	}
 
 	$finishedAt = microtime(true);
+	$runtimeBuildCommand = $buildMode === 'release'
+		? 'scpp runtime-build --release'
+		: 'scpp runtime-build --debug';
 	$guidance = append_standard_report_guidance([
 		'This build is reusing runtime artifacts by default.',
-		"Run 'scpp runtime-build' to rebuild the reusable runtime artifact.",
+		"Run '" . $runtimeBuildCommand . "' to rebuild the reusable " . $buildMode . " runtime artifact.",
 		"Retry with 'scpp build --build-runtime' if you want the build command to refresh the runtime now.",
 	], false);
 
@@ -3733,7 +3743,10 @@ function validate_reused_runtime_artifact(
 				null,
 				[],
 				[],
-				$projectUnitForceIncludeReport
+				$projectUnitForceIncludeReport,
+				[],
+				$buildMode,
+				$rootContext
 			),
 		]
 	);
@@ -3819,7 +3832,7 @@ function normalize_build_execution_options(array $options): array
 	];
 }
 
-/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,show_timings:bool,entry_override:?string} */
+/** @param list<string> $args @return array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,show_timings:bool,entry_override:?string,build_mode:?string} */
 function parse_build_command_arguments(array $args): array
 {
 	$options = [
@@ -3829,10 +3842,15 @@ function parse_build_command_arguments(array $args): array
 		'disable_stan' => false,
 		'show_timings' => false,
 		'entry_override' => null,
+		'build_mode' => null,
 	];
 	foreach ($args as $arg) {
 		if (str_starts_with($arg, '--entry=')) {
 			$options['entry_override'] = normalize_config_path(substr($arg, strlen('--entry=')));
+			continue;
+		}
+		if (str_starts_with($arg, '--mode=')) {
+			$options['build_mode'] = normalize_build_mode_name(substr($arg, strlen('--mode=')), '--mode');
 			continue;
 		}
 		if ($arg === '--build-runtime') {
@@ -3861,7 +3879,7 @@ function parse_build_command_arguments(array $args): array
 	return $options;
 }
 
-/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,show_timings:bool,entry_override:?string},run_args:list<string>} */
+/** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,show_timings:bool,entry_override:?string,build_mode:?string},run_args:list<string>} */
 function parse_run_command_arguments(array $args): array
 {
 	$buildOptions = [
@@ -3871,6 +3889,7 @@ function parse_run_command_arguments(array $args): array
 		'disable_stan' => false,
 		'show_timings' => false,
 		'entry_override' => null,
+		'build_mode' => null,
 	];
 	$runArgs = [];
 	$inRunArgs = false;
@@ -3885,6 +3904,10 @@ function parse_run_command_arguments(array $args): array
 		}
 		if (str_starts_with($arg, '--entry=')) {
 			$buildOptions['entry_override'] = normalize_config_path(substr($arg, strlen('--entry=')));
+			continue;
+		}
+		if (str_starts_with($arg, '--mode=')) {
+			$buildOptions['build_mode'] = normalize_build_mode_name(substr($arg, strlen('--mode=')), '--mode');
 			continue;
 		}
 		if ($arg === '--build-runtime') {
@@ -6315,6 +6338,99 @@ function build_project_contexts(array $projectGraph): array
 	return $contexts;
 }
 
+/**
+ * @param list<array{
+ *   project_root:string,
+ *   config_path:string,
+ *   config:array<string,mixed>,
+ *   dependency_roots:list<string>
+ * }> $projectGraph
+ * @return list<array{
+ *   project_root:string,
+ *   config_path:string,
+ *   config:array<string,mixed>,
+ *   dependency_roots:list<string>
+ * }>
+ */
+function apply_build_profile_to_project_graph(array $projectGraph, string $buildMode, bool $modeExplicit): array
+{
+	foreach ($projectGraph as &$projectSpec) {
+		if (!is_array($projectSpec['config'] ?? null)) {
+			continue;
+		}
+		$projectSpec['config'] = apply_build_profile_to_config($projectSpec['config'], $buildMode, $modeExplicit);
+	}
+	unset($projectSpec);
+	return $projectGraph;
+}
+
+/** @param array<string,mixed> $config @return array<string,mixed> */
+function apply_build_profile_to_config(array $config, string $buildMode, bool $modeExplicit): array
+{
+	$profiles = is_array($config['profiles'] ?? null) ? $config['profiles'] : [];
+	$profile = is_array($profiles[$buildMode] ?? null) ? $profiles[$buildMode] : null;
+	if ($profile !== null) {
+		foreach (['build_dir', 'generated_dir', 'cache_dir', 'native_cpp_dir'] as $key) {
+			if (is_string($profile[$key] ?? null) && trim((string) $profile[$key]) !== '') {
+				$config[$key] = (string) $profile[$key];
+			}
+		}
+		if (is_array($profile['build'] ?? null)) {
+			$baseBuild = is_array($config['build'] ?? null) ? $config['build'] : [];
+			$config['build'] = array_merge($baseBuild, $profile['build']);
+		}
+	}
+
+	if ($modeExplicit && $profile === null) {
+		$config['build_dir'] = '.prism/build/' . $buildMode;
+		$config['generated_dir'] = '.prism/generated/' . $buildMode;
+		$config['cache_dir'] = '.prism/cache/' . $buildMode;
+	}
+
+	$build = is_array($config['build'] ?? null) ? $config['build'] : [];
+	$build['mode'] = $buildMode;
+	$config['build'] = $build;
+	return $config;
+}
+
+/** @param array<string,mixed> $config @return list<string> */
+function collect_project_clean_dirs(string $projectRoot, array $config): array
+{
+	$dirs = [];
+	foreach (['build_dir', 'generated_dir', 'cache_dir'] as $key) {
+		$dirs[] = normalize_path($projectRoot . '/' . normalize_config_path((string) ($config[$key] ?? default_project_state_dir($key))));
+	}
+
+	$profiles = is_array($config['profiles'] ?? null) ? $config['profiles'] : [];
+	foreach ($profiles as $profile) {
+		if (!is_array($profile)) {
+			continue;
+		}
+		foreach (['build_dir', 'generated_dir', 'cache_dir'] as $key) {
+			if (is_string($profile[$key] ?? null) && trim((string) $profile[$key]) !== '') {
+				$dirs[] = normalize_path($projectRoot . '/' . normalize_config_path((string) $profile[$key]));
+			}
+		}
+	}
+
+	$unique = [];
+	foreach ($dirs as $dir) {
+		$unique[normalize_path($dir)] = normalize_path($dir);
+	}
+	return array_values($unique);
+}
+
+function default_project_state_dir(string $key): string
+{
+	if ($key === 'generated_dir') {
+		return '.prism/generated';
+	}
+	if ($key === 'cache_dir') {
+		return '.prism/cache';
+	}
+	return '.prism/build';
+}
+
 function build_project_scoped_relative_path(string $rootProjectRoot, string $contextProjectRoot, string $relativePath): string
 {
 	$normalizedRelativePath = normalize_config_path($relativePath);
@@ -6990,6 +7106,8 @@ function build_explanation_details(
 	array $runtimeConfig = [],
 	array $projectUnitForceIncludeReport = [],
 	array $rebuildFanout = [],
+	?string $buildMode = null,
+	array $rootContext = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -7012,6 +7130,12 @@ function build_explanation_details(
 
 	return [
 		'status' => $exitCode === 0 ? 'success' : 'failure',
+		'build_mode' => $buildMode !== null ? normalize_build_mode_name($buildMode, 'build explanation mode') : null,
+		'build_roots' => [
+			'build_dir' => is_string($rootContext['build_dir'] ?? null) ? normalize_config_path(relative_path($projectRoot, (string) $rootContext['build_dir'])) : null,
+			'generated_dir' => is_string($rootContext['generated_dir'] ?? null) ? normalize_config_path(relative_path($projectRoot, (string) $rootContext['generated_dir'])) : null,
+			'cache_dir' => is_string($rootContext['cache_dir'] ?? null) ? normalize_config_path(relative_path($projectRoot, (string) $rootContext['cache_dir'])) : null,
+		],
 		'transpiled_count' => $transpiledCount,
 		'skipped_count' => $skippedCount,
 		'output_path' => $outputPath !== null ? normalize_config_path(relative_path($projectRoot, $outputPath)) : null,
@@ -7148,6 +7272,19 @@ function render_build_explanation_lines(array $details): array
 {
 	$lines = [];
 	$lines[] = 'Build status: ' . (string) ($details['status'] ?? 'unknown');
+	$buildMode = trim((string) ($details['build_mode'] ?? ''));
+	if ($buildMode !== '') {
+		$lines[] = 'Build mode: ' . $buildMode;
+	}
+	$buildRoots = is_array($details['build_roots'] ?? null) ? $details['build_roots'] : [];
+	$buildDir = trim((string) ($buildRoots['build_dir'] ?? ''));
+	$generatedDir = trim((string) ($buildRoots['generated_dir'] ?? ''));
+	$cacheDir = trim((string) ($buildRoots['cache_dir'] ?? ''));
+	if ($buildDir !== '' || $generatedDir !== '' || $cacheDir !== '') {
+		$lines[] = 'Build roots: build ' . ($buildDir !== '' ? $buildDir : 'unknown')
+			. ', generated ' . ($generatedDir !== '' ? $generatedDir : 'unknown')
+			. ', cache ' . ($cacheDir !== '' ? $cacheDir : 'unknown');
+	}
 	$lines[] = 'PHP transpile decisions: ' . (int) ($details['transpiled_count'] ?? 0) . ' transpiled, ' . (int) ($details['skipped_count'] ?? 0) . ' reused';
 
 	$runtime = is_array($details['runtime'] ?? null) ? $details['runtime'] : [];
@@ -9868,13 +10005,8 @@ function resolve_compiler(array $config): ?array
 	return detect_default_compiler();
 }
 
-function resolve_build_mode(array $config): string
+function normalize_build_mode_name(string $mode, string $source = 'build.mode'): string
 {
-	$mode = $config['build']['mode'] ?? 'debug';
-	if (!is_string($mode)) {
-		scpp_fail('Invalid build.mode in ' . SCPP_PROJECT_CONFIG . '; expected a string.' . PHP_EOL, 1);
-	}
-
 	$normalized = strtolower(trim($mode));
 	if ($normalized === '') {
 		return 'debug';
@@ -9886,7 +10018,17 @@ function resolve_build_mode(array $config): string
 		return 'release';
 	}
 
-	scpp_fail('Unsupported build.mode `' . $mode . '` in ' . SCPP_PROJECT_CONFIG . '; expected `debug`, `dev`, `development`, or `release`.' . PHP_EOL, 1);
+	scpp_fail('Unsupported ' . $source . ' `' . $mode . '`; expected `debug`, `dev`, `development`, or `release`.' . PHP_EOL, 1);
+}
+
+function resolve_build_mode(array $config): string
+{
+	$mode = $config['build']['mode'] ?? 'debug';
+	if (!is_string($mode)) {
+		scpp_fail('Invalid build.mode in ' . SCPP_PROJECT_CONFIG . '; expected a string.' . PHP_EOL, 1);
+	}
+
+	return normalize_build_mode_name($mode, 'build.mode in ' . SCPP_PROJECT_CONFIG);
 }
 
 

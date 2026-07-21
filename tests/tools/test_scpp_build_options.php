@@ -44,6 +44,9 @@ final class ScppBuildOptionsTest
 			$buildTimings = parse_build_command_arguments(['--timings']);
 			$this->assertSame(true, $buildTimings['show_timings'], 'build should accept a timings flag');
 
+			$buildMode = parse_build_command_arguments(['--mode=release']);
+			$this->assertSame('release', $buildMode['build_mode'], 'build should accept release mode selection');
+
 			$runDefault = parse_run_command_arguments(['--', 'arg1', 'arg2']);
 			$this->assertSame(false, $runDefault['build_options']['compile_runtime'], 'scpp run should reuse runtime by default');
 			$this->assertSame(false, $runDefault['build_options']['compile_dependencies'], 'scpp run should reuse dependencies by default');
@@ -66,6 +69,10 @@ final class ScppBuildOptionsTest
 			$this->assertSame(true, $runTimings['build_options']['show_timings'], 'run should accept a timings flag');
 			$this->assertSame(['arg1'], $runTimings['run_args'], 'run timings flag should not consume program args');
 
+			$runMode = parse_run_command_arguments(['--mode=debug', '--', 'arg1']);
+			$this->assertSame('debug', $runMode['build_options']['build_mode'], 'run should accept debug mode selection');
+			$this->assertSame(['arg1'], $runMode['run_args'], 'run mode flag should not consume program args');
+
 			$runImplicitArgs = parse_run_command_arguments(['hello', 'world']);
 			$this->assertSame(['hello', 'world'], $runImplicitArgs['run_args'], 'plain run args without separator should still work');
 
@@ -78,6 +85,7 @@ final class ScppBuildOptionsTest
 			$this->assertSame(true, $runtimeBuildRelease['force'], 'runtime-build should accept force');
 
 			$this->assertUpdateArgumentHandling();
+			$this->assertBuildProfileResolution();
 			$this->assertRuntimeLaunchEnvironment();
 			$this->assertRuntimeArtifactPlacementPolicy();
 
@@ -114,6 +122,45 @@ final class ScppBuildOptionsTest
 			$this->assertContains('Unknown option for `scpp update`', $ex->getMessage(), 'unknown update flags should report the offending option');
 			return;
 		}
+	}
+
+	private function assertBuildProfileResolution(): void
+	{
+		$config = [
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'build' => [
+				'backend' => 'ninja',
+				'mode' => 'debug',
+			],
+			'profiles' => [
+				'release' => [
+					'build_dir' => '.prism/build/release-custom',
+					'generated_dir' => '.prism/generated/release-custom',
+					'cache_dir' => '.prism/cache/release-custom',
+					'build' => [
+						'mode' => 'release',
+					],
+				],
+			],
+		];
+
+		$release = apply_build_profile_to_config($config, 'release', true);
+		$this->assertSame('.prism/build/release-custom', $release['build_dir'], 'release profile should override build_dir');
+		$this->assertSame('.prism/generated/release-custom', $release['generated_dir'], 'release profile should override generated_dir');
+		$this->assertSame('.prism/cache/release-custom', $release['cache_dir'], 'release profile should override cache_dir');
+		$this->assertSame('release', $release['build']['mode'], 'release profile should set build mode');
+
+		$debug = apply_build_profile_to_config([
+			'build' => [
+				'backend' => 'ninja',
+			],
+		], 'debug', true);
+		$this->assertSame('.prism/build/debug', $debug['build_dir'], 'explicit debug mode without profile should get a separated build root');
+		$this->assertSame('.prism/generated/debug', $debug['generated_dir'], 'explicit debug mode without profile should get a separated generated root');
+		$this->assertSame('.prism/cache/debug', $debug['cache_dir'], 'explicit debug mode without profile should get a separated cache root');
+		$this->assertSame('debug', $debug['build']['mode'], 'explicit debug mode should set build mode');
 	}
 
 	private function assertRuntimeLaunchEnvironment(): void

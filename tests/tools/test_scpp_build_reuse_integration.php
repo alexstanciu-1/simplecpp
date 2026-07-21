@@ -40,6 +40,7 @@ final class ScppBuildReuseIntegrationTest
 			$this->assertBuildNinjaReusesPrebuiltRuntime($app);
 			$this->assertConcurrentRuntimeBuildsAreSerialized();
 			$this->assertDirectNinjaNoWork($app);
+			$this->assertModeSeparatedBuildRoots();
 			$this->assertSameProjectStrictUnitsComposeWithoutSourceIncludes();
 			$this->assertSameProjectStrictNamespacedUnitsComposeBeforeIncludeOrder();
 			$this->assertStrictProjectDependencyHeadersComposeBeforeLocalUnits();
@@ -210,6 +211,39 @@ final class ScppBuildReuseIntegrationTest
 		if (str_contains($output, 'missing and no known rule to make it')) {
 			throw new RuntimeException("Direct ninja check still reports a missing dependency edge:\n" . $output);
 		}
+	}
+
+	private function assertModeSeparatedBuildRoots(): void
+	{
+		$project = $this->root . '/mode_roots';
+		$this->writeProject($project, [], "echo \"mode\\n\";\n");
+
+		$debug = scpp_run_build_service($project, $project . '/prism.json', parse_build_command_arguments(['--mode=debug', '--build-runtime']));
+		$this->assertSame(true, $debug['ok'], 'debug mode build should succeed');
+		$debugResult = is_array($debug['result'] ?? null) ? $debug['result'] : [];
+		$this->assertSame(normalize_path($project . '/.prism/build/debug'), normalize_path((string) ($debugResult['build_dir'] ?? '')), 'debug mode should use the debug build root');
+		$this->assertFileExists($project . '/.prism/build/debug/main', 'debug mode executable should be under the debug build root');
+		$this->assertFileExists($project . '/.prism/generated/debug/main.cpp', 'debug mode generated source should be under the debug generated root');
+		$debugExplanation = is_array($debugResult['build_explanation'] ?? null) ? $debugResult['build_explanation'] : [];
+		$this->assertSame('debug', $debugExplanation['build_mode'] ?? null, 'debug build explanation should record the active mode');
+		$debugRoots = is_array($debugExplanation['build_roots'] ?? null) ? $debugExplanation['build_roots'] : [];
+		$this->assertSame('.prism/build/debug', $debugRoots['build_dir'] ?? null, 'debug build explanation should record the selected build root');
+		$debugOutputMtime = $this->mtime($project . '/.prism/build/debug/main');
+
+		$this->sleepForTimestamp();
+		$release = scpp_run_build_service($project, $project . '/prism.json', parse_build_command_arguments(['--mode=release', '--build-runtime']));
+		$this->assertSame(true, $release['ok'], 'release mode build should succeed');
+		$releaseResult = is_array($release['result'] ?? null) ? $release['result'] : [];
+		$this->assertSame(normalize_path($project . '/.prism/build/release'), normalize_path((string) ($releaseResult['build_dir'] ?? '')), 'release mode should use the release build root');
+		$this->assertFileExists($project . '/.prism/build/release/main', 'release mode executable should be under the release build root');
+		$this->assertFileExists($project . '/.prism/generated/release/main.cpp', 'release mode generated source should be under the release generated root');
+		$this->assertSame($debugOutputMtime, $this->mtime($project . '/.prism/build/debug/main'), 'release mode build should not touch the debug executable');
+		$releaseOutputMtime = $this->mtime($project . '/.prism/build/release/main');
+
+		$this->sleepForTimestamp();
+		$debugAgain = scpp_run_build_service($project, $project . '/prism.json', parse_build_command_arguments(['--mode=debug']));
+		$this->assertSame(true, $debugAgain['ok'], 'warm debug mode build should succeed after release mode build');
+		$this->assertSame($releaseOutputMtime, $this->mtime($project . '/.prism/build/release/main'), 'debug mode rebuild should not touch the release executable');
 	}
 
 	private function assertBuildNinjaReusesPrebuiltRuntime(string $projectRoot): void

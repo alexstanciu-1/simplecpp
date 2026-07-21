@@ -117,6 +117,39 @@ Paths emitted into `build.ninja` are:
 }
 ```
 
+Optional build profiles may provide stable per-mode project state roots without
+requiring scripts to rewrite `prism.json` between measurements:
+
+```json
+{
+  "profiles": {
+    "debug": {
+      "build_dir": ".prism/build/debug",
+      "generated_dir": ".prism/generated/debug",
+      "cache_dir": ".prism/cache/debug",
+      "build": {
+        "mode": "debug"
+      }
+    },
+    "release": {
+      "build_dir": ".prism/build/release",
+      "generated_dir": ".prism/generated/release",
+      "cache_dir": ".prism/cache/release",
+      "build": {
+        "mode": "release"
+      }
+    }
+  }
+}
+```
+
+When `--mode=<debug|release>` is supplied to `scpp build` or `scpp run`, the
+selected profile overrides the top-level state roots and `build` settings for
+that invocation. If no matching profile exists, the command uses built-in
+mode-separated roots under `.prism/build/<mode>`, `.prism/generated/<mode>`,
+and `.prism/cache/<mode>`. Existing projects without `--mode` keep the current
+top-level default behavior.
+
 ## `scpp init` behavior
 
 `scpp init` creates:
@@ -194,6 +227,7 @@ The lower-level build service path used by helpers/tests also defaults to reuse 
 - `scpp build` reuses runtime and dependencies by default
 - `scpp run` reuses runtime and dependencies by default, then executes the primary output
 - both commands accept `--entry=<path>` to build or run a specific project-local source file instead of the configured `prism.json` entrypoint for that invocation only
+- both commands accept `--mode=debug` and `--mode=release` to select a stable build profile/root set for that invocation only
 - both commands accept `--timings` to print the internal `execute_build()` timing breakdown for that invocation only
 
 ### STAN pre-build check
@@ -226,8 +260,9 @@ The command:
 2. resolves the root project and its Prism project dependency graph
 3. removes each participating project's `.prism/` working tree when the configured `build_dir`, `generated_dir`, and `cache_dir` all live inside it
 4. otherwise removes each participating project's configured `build_dir`, `generated_dir`, and `cache_dir`
-5. treats missing clean targets as already clean
-6. refuses to remove the project root, filesystem root, non-directory targets, or paths outside the owning project root
+5. includes configured profile roots from `profiles.*.build_dir`, `profiles.*.generated_dir`, and `profiles.*.cache_dir`
+6. treats missing clean targets as already clean
+7. refuses to remove the project root, filesystem root, non-directory targets, or paths outside the owning project root
 
 ## `scpp update` behavior
 
