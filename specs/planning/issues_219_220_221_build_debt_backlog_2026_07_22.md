@@ -17,6 +17,7 @@ Related implementation commits:
 Related planning report:
 
 - `specs/planning/build_invalidation_industry_standard_report_2026_07_22.md`
+- `specs/planning/remote_cache_execution_requirements_2026_07_22.md`
 
 The active implementation goal is to work this backlog in separately validated
 slices while preserving clean issue-scoped commits.
@@ -122,6 +123,12 @@ reports warm-state status, graph counts, source metadata hit/miss counts, hash
 reads/reuse, and planner timings. This is a process-to-process snapshot, not a
 live resident daemon process.
 
+The first cross-issue remote-cache slice scopes requirements for future remote
+cache and remote execution work. It documents identity, trust, platform,
+toolchain, path mapping, invalidation, observability, rollout, and acceptance
+gates before implementation. It does not implement remote cache or remote
+execution.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -183,7 +190,8 @@ live resident daemon process.
 - Local content-addressed object/action cache exists behind
   `build.object_cache = true`; default-on policy, eviction, cross-checkout
   reuse, and shared cache behavior are not implemented.
-- No remote cache or remote execution.
+- Remote cache/execution requirements are scoped, but there is no remote cache
+  or remote execution implementation.
 - A persisted build planner warm-state snapshot exists, but there is no live
   resident build daemon process or in-memory resident graph.
 - Acceptance benchmarks still need to be formalized for the v2 compiler:
@@ -294,6 +302,8 @@ live resident daemon process.
     - Measure warm no-change planner time against normal process startup.
 
 15. `BLD-X-REMOTE-1`: Scope remote cache/execution requirements.
+    - Status: implemented as
+      `specs/planning/remote_cache_execution_requirements_2026_07_22.md`.
     - Document trust, platform, compiler, path mapping, and cache invalidation
       requirements before implementation.
 
