@@ -481,6 +481,9 @@ This command is a documentation discoverability helper. It does not change langu
   interface/implementation-changed counts
 - captured Ninja explain output when `SCPP_NINJA_EXPLAIN=1` or an internal
   explain probe is enabled, including normalized object-to-cause mappings
+- generated/native object action identities, including stable action keys,
+  command/input/output hashes, primary inputs, member sources, implicit inputs,
+  and module surface inputs
 - the active build grouping policy, deterministic group membership, changed
   groups, and object fanout
 - which generated project unit force-include headers were assigned, including
@@ -498,6 +501,7 @@ This command is a documentation discoverability helper. It does not change langu
 - `scpp explain-build rebuild-fanout`
 - `scpp explain-build generated-artifacts`
 - `scpp explain-build ninja-explain`
+- `scpp explain-build action-identity`
 - `scpp explain-build grouping`
 - `scpp explain-build project-units`
 - `scpp explain-build project-unit <source>`
@@ -537,6 +541,18 @@ source-level hash, module, project-unit, runtime, and dependency reasons remain
 preferred; Ninja explain messages are used as a fallback before the generic
 "no source/interface/project-unit cause" text. `scpp explain-build
 ninja-explain` renders the captured object explanations.
+
+Saved successful build details also include an `object_action_identity` summary.
+The summary records generated and native object compile action rows with a
+stable action key, command hash, input hash, output hash, compiler identity,
+build mode, selected environment values, primary input, member source labels,
+generated inputs, implicit inputs, force-include headers, module surface inputs,
+and per-input fingerprints. The same normalized summary is stored under
+`details.build_explanation.object_action_identity`, and source rows may carry
+`object_action_key` plus `object_action_kind` when their object path was
+matched. These action keys are report/provenance data in this slice; they do
+not yet drive object reuse. `scpp explain-build action-identity` renders the
+recorded object action rows.
 
 Saved successful and failed build details include
 `details.build_explanation.build_grouping`. The grouping report stores the

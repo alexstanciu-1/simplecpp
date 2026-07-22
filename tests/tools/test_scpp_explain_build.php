@@ -142,6 +142,28 @@ final class ScppExplainBuildTest
 			$this->assertSame(3, $artifactSources['total_count'] ?? null, 'warm build should count three generated sources');
 			$this->assertSame(3, $artifactSources['preserved_count'] ?? null, 'warm build should preserve all generated sources');
 			$this->assertSame(0, $artifactSources['implementation_changed_count'] ?? null, 'warm build should report no generated implementation changes');
+			$topLevelObjectActionIdentity = is_array($details['object_action_identity'] ?? null) ? $details['object_action_identity'] : null;
+			if (!is_array($topLevelObjectActionIdentity)) {
+				throw new RuntimeException('last_run details should contain object action identity details');
+			}
+			$this->assertObjectActionIdentityReportShape($topLevelObjectActionIdentity, 'warm top-level object action identity report');
+			$objectActionIdentity = is_array($explanation['object_action_identity'] ?? null) ? $explanation['object_action_identity'] : null;
+			if (!is_array($objectActionIdentity)) {
+				throw new RuntimeException('build explanation should contain object action identity details');
+			}
+			$this->assertObjectActionIdentityReportShape($objectActionIdentity, 'warm explanation object action identity report');
+			$this->assertSame($topLevelObjectActionIdentity, $objectActionIdentity, 'top-level and explanation object action identity reports should match');
+			$this->assertSame(4, $objectActionIdentity['total_action_count'] ?? null, 'warm build should record generated and native object actions');
+			$this->assertSame(3, $objectActionIdentity['generated_action_count'] ?? null, 'warm build should record three generated object actions');
+			$this->assertSame(1, $objectActionIdentity['native_action_count'] ?? null, 'warm build should record one native object action');
+			$objectActionByObject = [];
+			foreach (is_array($objectActionIdentity['actions'] ?? null) ? $objectActionIdentity['actions'] : [] as $action) {
+				if (is_array($action) && is_string($action['object_path'] ?? null)) {
+					$objectActionByObject[(string) $action['object_path']] = $action;
+				}
+			}
+			$this->assertTrue(isset($objectActionByObject['.prism/build/main.o']), 'object action identity report should contain the generated main object');
+			$this->assertTrue(isset($objectActionByObject['.prism/build/native/native_cpp/policy_probe.o']), 'object action identity report should contain the native object');
 			$projectModules = is_array($explanation['project_modules'] ?? null) ? $explanation['project_modules'] : null;
 			if (!is_array($projectModules)) {
 				throw new RuntimeException('build explanation should contain project module details');
@@ -320,6 +342,12 @@ final class ScppExplainBuildTest
 			$this->assertSame('broad_equivalent_pack', $mainSource['project_unit_force_include_mode'] ?? null, 'source explanation should annotate main broad pack mode');
 			$this->assertTrue(str_starts_with((string) ($mainSource['project_unit_force_include_header'] ?? ''), '.prism/generated/__project_units/'), 'source explanation should annotate main force-include header');
 			$this->assertSame('app', $mainSource['project_module'] ?? null, 'source explanation should annotate main project module membership');
+			$mainObjectAction = $objectActionByObject['.prism/build/main.o'] ?? null;
+			if (!is_array($mainObjectAction)) {
+				throw new RuntimeException('object action identity report should contain the generated main object row');
+			}
+			$this->assertSame($mainObjectAction['action_key'] ?? null, $mainSource['object_action_key'] ?? null, 'source explanation should annotate main object action key');
+			$this->assertSame('generated', $mainSource['object_action_kind'] ?? null, 'source explanation should annotate main object action kind');
 			$mainArtifacts = is_array($mainSource['generated_artifacts'] ?? null) ? $mainSource['generated_artifacts'] : [];
 			$this->assertSame('preserved', $mainArtifacts['header_write_status'] ?? null, 'warm reused main source should report preserved generated header');
 			$this->assertSame('preserved', $mainArtifacts['source_write_status'] ?? null, 'warm reused main source should report preserved generated source');
@@ -342,6 +370,7 @@ final class ScppExplainBuildTest
 			$this->assertContains('Generated artifact writes: artifacts 6 total, 0 written, 6 preserved, 0 first-recorded, 0 changed', $explain['stdout'], 'explain-build should summarize generated artifact writes');
 			$this->assertContains('Generated headers: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 interface-changed', $explain['stdout'], 'explain-build should summarize generated header write counters');
 			$this->assertContains('Generated sources: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 implementation-changed', $explain['stdout'], 'explain-build should summarize generated source write counters');
+			$this->assertContains('Object action identities: 4 action(s), generated 3, native 1, skipped dependency objects 0', $explain['stdout'], 'explain-build should summarize object action identity counts');
 			$this->assertContains('Rebuild fanout: outputs 0, objects 0 (generated 0, native 0, runtime 0), project-unit packs changed 0, removed 0, Ninja no-work yes', $explain['stdout'], 'explain-build should summarize warm no-work fanout');
 			$this->assertContains('main.phs -> reused (source metadata and generated artifacts unchanged)', $explain['stdout'], 'explain-build should explain source reuse');
 			$this->assertContains('Direct Ninja target: main', $explain['stdout'], 'explain-build should report the direct Ninja target name');
@@ -366,6 +395,12 @@ final class ScppExplainBuildTest
 			$this->assertContains('Generated artifact writes: artifacts 6 total, 0 written, 6 preserved, 0 first-recorded, 0 changed', $generatedArtifactsView['stdout'], 'generated-artifacts should report warm generated artifact writes');
 			$this->assertContains('Generated headers: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 interface-changed', $generatedArtifactsView['stdout'], 'generated-artifacts should report warm generated header writes');
 			$this->assertContains('Generated sources: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 implementation-changed', $generatedArtifactsView['stdout'], 'generated-artifacts should report warm generated source writes');
+
+			$actionIdentityView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'action-identity'], [], 20.0);
+			$this->assertSame(0, $actionIdentityView['exit_code'], 'scpp explain-build action-identity should succeed');
+			$this->assertContains('Object action identity: 4 action(s), generated 3, native 1, skipped dependency objects 0', $actionIdentityView['stdout'], 'action-identity should summarize object action counts');
+			$this->assertContains('.prism/build/main.o: generated, key ', $actionIdentityView['stdout'], 'action-identity should list the generated main object key');
+			$this->assertContains('.prism/build/native/native_cpp/policy_probe.o: native, key ', $actionIdentityView['stdout'], 'action-identity should list the native object key');
 
 			$groupingView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'grouping'], [], 20.0);
 			$this->assertSame(0, $groupingView['exit_code'], 'scpp explain-build grouping should succeed');
@@ -911,6 +946,64 @@ final class ScppExplainBuildTest
 		$objectExplanations = is_array($ninjaExplain['object_explanations'] ?? null) ? $ninjaExplain['object_explanations'] : null;
 		if (!is_array($objectExplanations)) {
 			throw new RuntimeException($context . ' object_explanations should be an object');
+		}
+	}
+
+	private function assertObjectActionIdentityReportShape(array $objectActionIdentity, string $context): void
+	{
+		$this->assertKeys([
+			'actions',
+			'algorithm',
+			'generated_action_count',
+			'native_action_count',
+			'schema_version',
+			'skipped_dependency_object_count',
+			'total_action_count',
+		], $objectActionIdentity, $context . ' top-level keys');
+		foreach (is_array($objectActionIdentity['actions'] ?? null) ? $objectActionIdentity['actions'] : [] as $action) {
+			if (!is_array($action)) {
+				throw new RuntimeException($context . ' action row should be an object');
+			}
+			$this->assertKeys([
+				'action_key',
+				'build_mode',
+				'command',
+				'command_hash',
+				'compiler',
+				'compiler_kind',
+				'environment',
+				'force_include_headers',
+				'generated_inputs',
+				'implicit_inputs',
+				'input_fingerprints',
+				'input_hash',
+				'kind',
+				'member_sources',
+				'module_surface_inputs',
+				'object_path',
+				'output_hash',
+				'primary_input',
+			], $action, $context . ' action row keys');
+			foreach (['action_key', 'command_hash', 'input_hash'] as $key) {
+				if (preg_match('/^[0-9a-f]{64}$/', (string) ($action[$key] ?? '')) !== 1) {
+					throw new RuntimeException($context . ' action row should contain a sha256 ' . $key);
+				}
+			}
+			if (!is_array($action['command'] ?? null)) {
+				throw new RuntimeException($context . ' action command should be an object');
+			}
+			if (!is_array($action['environment'] ?? null)) {
+				throw new RuntimeException($context . ' action environment should be an object');
+			}
+			if (!is_array($action['input_fingerprints'] ?? null) || $action['input_fingerprints'] === []) {
+				throw new RuntimeException($context . ' action input fingerprints should be a non-empty list');
+			}
+			foreach ($action['input_fingerprints'] as $fingerprint) {
+				if (!is_array($fingerprint)) {
+					throw new RuntimeException($context . ' input fingerprint row should be an object');
+				}
+				$this->assertKeys(['exists', 'path', 'sha256'], $fingerprint, $context . ' input fingerprint row keys');
+			}
 		}
 	}
 

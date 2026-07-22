@@ -93,20 +93,29 @@ unconstrained for compatibility. Validation reports unknown configured exports
 and direct cross-module dependency targets that reach declarations outside the
 dependency module's non-empty public export list.
 
+The first #219 action-identity slice records generated and native object
+compile action identities in `.prism/last_run.json` and
+`details.build_explanation.object_action_identity`. Each row includes a stable
+action key, command/input/output hashes, compiler/build mode, selected
+environment values, primary input, member sources, generated inputs, implicit
+inputs, force-include headers, module surface inputs, and per-input
+fingerprints. `scpp explain-build action-identity` renders the recorded rows.
+This is provenance/reporting only; object reuse is still future CAS work.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
 
 - Object rebuild reasons are still inferred from saved build fanout; there is
-  no complete Ninja action explanation model.
-- Generated output hashes exist, but object reuse is not keyed by a complete
-  action identity covering command line, toolchain, environment, inputs, and
-  output hashes.
+  no complete action cache/reuse model.
+- Generated output hashes and object action keys exist, but object reuse is not
+  driven by those keys yet.
 - Old caches need one warm-up build before hash-based explanation rows become
   fully precise.
 - Native C++ rebuild explanations remain weaker than generated PHS source
   explanations.
-- Generated header/source written-vs-preserved counters are not reported.
+- Generated header/source written-vs-preserved counters are report-only and are
+  not yet used to skip downstream build planning.
 
 ### #220 Build Grouping Debt
 
@@ -159,12 +168,14 @@ dependency module's non-empty public export list.
 ### P0: Tighten Observability And Benchmarks
 
 1. `BLD-219-OBS-1`: Add generated artifact write counters.
+   - Status: implemented.
    - Count generated headers/sources written, preserved, first-recorded,
      interface-changed, and implementation-changed.
    - Store counts in `.prism/last_run.json`.
    - Render counts in `scpp explain-build` and focused generated/build views.
 
 2. `BLD-219-OBS-2`: Capture stronger object rebuild provenance.
+   - Status: implemented.
    - Persist normalized Ninja explain lines when `SCPP_NINJA_EXPLAIN` or an
      internal explain probe is enabled.
    - Map generated/native object causes to source rows when possible.
@@ -237,6 +248,7 @@ dependency module's non-empty public export list.
 ### P2: Broader Build-System Maturity
 
 12. `BLD-219-ACTION-1`: Define full local action identity.
+    - Status: implemented for generated/native object action provenance.
     - Include toolchain, command line, environment, source/generator inputs,
       generated artifacts, module surfaces, and runtime signatures.
     - Store action keys for generated and native object compile actions.

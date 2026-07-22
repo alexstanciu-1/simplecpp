@@ -718,7 +718,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|ninja-explain|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|ninja-explain|action-identity|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp build-benchmark writes .prism/build_invalidation_benchmark.json from an isolated benchmark work tree\n";
@@ -3238,6 +3238,20 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		}
 	}
 	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppUnits, $runtimeBuild, $buildDir, $compiler['kind'], $outputName, $fastcgiBuild, $projectRoot, $effectiveBuildOptions);
+	$objectActionIdentityReport = collect_object_action_identity_report(
+		$projectRoot,
+		$repoRoot,
+		$buildDir,
+		$generatedDir,
+		$generatedUnits,
+		$nativeCppUnits,
+		$compiler,
+		$buildMode,
+		$runtimeConfig,
+		$effectiveBuildOptions,
+		$runtimePlacementForInvocation,
+		$projectModuleReport
+	);
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
@@ -3360,6 +3374,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'diagnostic_count' => count($diagnostics),
 				'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
 				'ninja_explain' => $ninjaExplainReport,
+				'object_action_identity' => $objectActionIdentityReport,
 				'build_explanation' => build_explanation_details(
 					$projectRoot,
 					$options,
@@ -3380,7 +3395,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					$rootContext,
 					$failureBuildGroupingReport,
 					$projectModuleReport,
-					$ninjaExplainReport
+					$ninjaExplainReport,
+					$objectActionIdentityReport
 				),
 			]
 		);
@@ -3444,6 +3460,20 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$rebuiltOutputs = detect_rebuilt_outputs($buildOutputMtimesBefore, $buildOutputMtimesAfter);
 	$rebuildFanout = summarize_build_rebuild_fanout($projectRoot, $generatedUnits, $nativeCppUnits, $runtimeBuild, $rebuiltOutputs, $projectUnitPackChanges);
 	$buildGroupingReport = collect_build_grouping_report($projectRoot, $buildGroupingPolicy, $generatedUnits, $nativeCppUnits, $rebuildFanout);
+	$objectActionIdentityReport = collect_object_action_identity_report(
+		$projectRoot,
+		$repoRoot,
+		$buildDir,
+		$generatedDir,
+		$generatedUnits,
+		$nativeCppUnits,
+		$compiler,
+		$buildMode,
+		$runtimeConfig,
+		$effectiveBuildOptions,
+		$runtimePlacementForInvocation,
+		$projectModuleReport
+	);
 	if ($rebuiltOutputs !== []) {
 		echo 'Rebuilt outputs: ' . implode(', ', array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)) . PHP_EOL;
 	} else {
@@ -3483,6 +3513,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			'skipped_count' => $skippedCount,
 			'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
 			'ninja_explain' => $ninjaExplainReport,
+			'object_action_identity' => $objectActionIdentityReport,
 			'rebuilt_outputs' => array_values(array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)),
 			'rebuild_fanout' => $rebuildFanout,
 			'ninja_command' => $command,
@@ -3507,7 +3538,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$rootContext,
 				$buildGroupingReport,
 				$projectModuleReport,
-				$ninjaExplainReport
+				$ninjaExplainReport,
+				$objectActionIdentityReport
 			),
 		]
 	);
@@ -3558,7 +3590,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$buildMode,
 			$rootContext,
 			$buildGroupingReport,
-			$projectModuleReport
+			$projectModuleReport,
+			$ninjaExplainReport,
+			$objectActionIdentityReport
 		),
 	];
 }
@@ -5023,6 +5057,440 @@ function normalize_ninja_explain_report(array $report): array
 		'lines' => $rows,
 		'object_explanations' => $objectExplanations,
 	];
+}
+
+/**
+ * @param list<array<string,mixed>> $generatedUnits
+ * @param list<array<string,mixed>> $nativeCppUnits
+ * @return array<string,mixed>
+ */
+function collect_object_action_identity_report(
+	string $projectRoot,
+	string $repoRoot,
+	string $buildDir,
+	string $generatedDir,
+	array $generatedUnits,
+	array $nativeCppUnits,
+	array $compiler,
+	string $buildMode,
+	array $runtimeConfig,
+	array $options,
+	string $runtimePlacement,
+	array $projectModuleReport = []
+): array {
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$usePch = array_key_exists('use_pch', $options) ? (bool) $options['use_pch'] : supports_compiler_pch($compiler);
+	$generatedIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $generatedDir);
+	$runtimeIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $repoRoot . '/runtime/include');
+	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig, $runtimePlacement);
+	$appRuntimeCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
+	$appCxxFlags = trim(build_compiler_flags((string) ($compiler['kind'] ?? ''), $buildMode, $runtimeIncludeDir, $generatedIncludeDir) . ($appRuntimeCxxFlags !== [] ? ' ' . implode(' ', $appRuntimeCxxFlags) : ''));
+	$runtimeSignature = normalize_path($buildDir . '/runtime_signature.txt');
+	$appPchArtifact = normalize_path(build_app_pch_artifact_path($buildDir, (string) ($compiler['kind'] ?? 'gnu_like')));
+	$appPchHeader = normalize_path(build_app_pch_header_path($buildDir));
+	$projectModuleCompileSurfaceDeps = collect_project_module_compile_surface_deps($projectModuleReport);
+	$environment = collect_object_action_identity_environment();
+
+	$generatedUnitsByObject = [];
+	foreach ($generatedUnits as $unit) {
+		if (!is_array($unit)) {
+			continue;
+		}
+		$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+		if ($objectPath !== '') {
+			$generatedUnitsByObject[$objectPath][] = $unit;
+		}
+	}
+
+	$actions = [];
+	$skippedDependencyObjectCount = 0;
+	$emittedGeneratedObjects = [];
+	foreach ($generatedUnits as $unit) {
+		if (!is_array($unit)) {
+			continue;
+		}
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		if (!($options['compile_dependencies'] ?? true) && $unitProjectRoot !== $normalizedProjectRoot) {
+			$skippedDependencyObjectCount++;
+			continue;
+		}
+		$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+		if ($objectPath === '' || isset($emittedGeneratedObjects[$objectPath])) {
+			continue;
+		}
+		$emittedGeneratedObjects[$objectPath] = true;
+		$members = $generatedUnitsByObject[$objectPath] ?? [$unit];
+		$compileSource = is_string($unit['compile_source_path'] ?? null) && trim((string) $unit['compile_source_path']) !== ''
+			? normalize_path((string) $unit['compile_source_path'])
+			: normalize_path((string) ($unit['generated_cpp'] ?? ''));
+		$implicitInputs = [$runtimeSignature];
+		if ($usePch) {
+			$implicitInputs[] = $appPchArtifact;
+		}
+		$logicalInputs = [$compileSource, $runtimeSignature];
+		if ($usePch) {
+			$logicalInputs[] = $appPchHeader;
+			$logicalInputs[] = $appPchArtifact;
+		}
+		$forceIncludeHeaders = [];
+		$moduleSurfaceInputs = [];
+		$memberSources = [];
+		$generatedInputs = [$compileSource];
+		foreach ($members as $member) {
+			if (!is_array($member)) {
+				continue;
+			}
+			$memberProjectRoot = normalize_path((string) ($member['project_root'] ?? ''));
+			$projectLabel = project_context_report_label($projectRoot, $memberProjectRoot);
+			$relativePhp = normalize_config_path((string) ($member['relative_php'] ?? ''));
+			if ($relativePhp !== '') {
+				$memberSources[] = project_module_source_label($projectLabel, $relativePhp);
+			}
+			$memberGeneratedCpp = normalize_path((string) ($member['generated_cpp'] ?? ''));
+			if ($memberGeneratedCpp !== '') {
+				$generatedInputs[] = $memberGeneratedCpp;
+				if ($memberGeneratedCpp !== $compileSource) {
+					$implicitInputs[] = $memberGeneratedCpp;
+				}
+			}
+			$sourceKey = project_module_source_key($projectLabel, $relativePhp);
+			foreach ($projectModuleCompileSurfaceDeps[$sourceKey] ?? [] as $moduleSurfaceDep) {
+				$moduleSurfacePath = is_absolute_path($moduleSurfaceDep)
+					? normalize_path($moduleSurfaceDep)
+					: normalize_path($projectRoot . '/' . normalize_config_path($moduleSurfaceDep));
+				$implicitInputs[] = $moduleSurfacePath;
+				$moduleSurfaceInputs[] = $moduleSurfacePath;
+			}
+			$forceIncludeHeader = is_string($member['force_include_header'] ?? null) ? normalize_path((string) $member['force_include_header']) : '';
+			if ($forceIncludeHeader !== '') {
+				$forceIncludeHeaders[] = $forceIncludeHeader;
+				$logicalInputs[] = $forceIncludeHeader;
+			}
+		}
+		$logicalInputs = array_merge($logicalInputs, $generatedInputs, $implicitInputs, $moduleSurfaceInputs);
+		$moreCxxFlags = build_force_include_flags((string) ($compiler['kind'] ?? ''), array_map(
+			static fn (string $path): string => build_ninja_relative_path($projectRoot, $buildDir, $path),
+			normalize_path_list($forceIncludeHeaders)
+		));
+		$actions[] = build_object_action_identity_row(
+			$projectRoot,
+			'generated',
+			$objectPath,
+			$compileSource,
+			$memberSources,
+			$generatedInputs,
+			$implicitInputs,
+			$forceIncludeHeaders,
+			$moduleSurfaceInputs,
+			$compiler,
+			$buildMode,
+			$appCxxFlags,
+			$moreCxxFlags,
+			$environment,
+			$logicalInputs
+		);
+	}
+
+	foreach ($nativeCppUnits as $nativeUnit) {
+		if (!is_array($nativeUnit)) {
+			continue;
+		}
+		$unitProjectRoot = normalize_path((string) ($nativeUnit['project_root'] ?? ''));
+		if (!($options['compile_dependencies'] ?? true) && $unitProjectRoot !== $normalizedProjectRoot) {
+			$skippedDependencyObjectCount++;
+			continue;
+		}
+		$objectPath = normalize_path((string) ($nativeUnit['object_path'] ?? ''));
+		$sourcePath = normalize_path((string) ($nativeUnit['source_path'] ?? ''));
+		if ($objectPath === '' || $sourcePath === '') {
+			continue;
+		}
+		$implicitInputs = [$runtimeSignature];
+		$logicalInputs = [$sourcePath, $runtimeSignature];
+		if ($usePch) {
+			$implicitInputs[] = $appPchArtifact;
+			$logicalInputs[] = $appPchHeader;
+			$logicalInputs[] = $appPchArtifact;
+		}
+		$forceIncludeHeaders = [];
+		$forceIncludeHeader = is_string($nativeUnit['force_include_header'] ?? null) ? normalize_path((string) $nativeUnit['force_include_header']) : '';
+		if ($forceIncludeHeader !== '') {
+			$forceIncludeHeaders[] = $forceIncludeHeader;
+			$logicalInputs[] = $forceIncludeHeader;
+		}
+		$projectLabel = project_context_report_label($projectRoot, $unitProjectRoot);
+		$sourceLabel = project_module_source_label($projectLabel, normalize_config_path(relative_path($unitProjectRoot, $sourcePath)));
+		$moreCxxFlags = build_force_include_flags((string) ($compiler['kind'] ?? ''), array_map(
+			static fn (string $path): string => build_ninja_relative_path($projectRoot, $buildDir, $path),
+			normalize_path_list($forceIncludeHeaders)
+		));
+		$actions[] = build_object_action_identity_row(
+			$projectRoot,
+			'native',
+			$objectPath,
+			$sourcePath,
+			[$sourceLabel],
+			[$sourcePath],
+			$implicitInputs,
+			$forceIncludeHeaders,
+			[],
+			$compiler,
+			$buildMode,
+			$appCxxFlags,
+			$moreCxxFlags,
+			$environment,
+			$logicalInputs
+		);
+	}
+
+	return normalize_object_action_identity_report([
+		'schema_version' => 1,
+		'algorithm' => 'sha256:scpp-object-action-v1',
+		'skipped_dependency_object_count' => $skippedDependencyObjectCount,
+		'actions' => $actions,
+	]);
+}
+
+/**
+ * @param list<string> $memberSources
+ * @param list<string> $generatedInputs
+ * @param list<string> $implicitInputs
+ * @param list<string> $forceIncludeHeaders
+ * @param list<string> $moduleSurfaceInputs
+ * @param list<string> $logicalInputs
+ * @param array<string,string> $environment
+ * @return array<string,mixed>
+ */
+function build_object_action_identity_row(
+	string $projectRoot,
+	string $kind,
+	string $objectPath,
+	string $primaryInput,
+	array $memberSources,
+	array $generatedInputs,
+	array $implicitInputs,
+	array $forceIncludeHeaders,
+	array $moduleSurfaceInputs,
+	array $compiler,
+	string $buildMode,
+	string $cxxFlags,
+	string $moreCxxFlags,
+	array $environment,
+	array $logicalInputs
+): array {
+	$objectPath = normalize_path($objectPath);
+	$primaryInput = normalize_path($primaryInput);
+	$inputFingerprints = collect_object_action_input_fingerprints($projectRoot, $logicalInputs);
+	$commandPayload = [
+		'compiler' => compiler_display_command($compiler),
+		'compiler_kind' => (string) ($compiler['kind'] ?? ''),
+		'compiler_launcher' => is_string($compiler['launcher'] ?? null) ? (string) $compiler['launcher'] : '',
+		'invocation_prefix' => compiler_invocation_prefix($compiler),
+		'build_mode' => normalize_build_mode_name($buildMode, 'object action build mode'),
+		'cxxflags' => $cxxFlags,
+		'more_cxxflags' => $moreCxxFlags,
+		'rule' => 'compile',
+	];
+	$inputHash = hash_project_module_payload([
+		'version' => 1,
+		'inputs' => $inputFingerprints,
+	]);
+	$commandHash = hash_project_module_payload([
+		'version' => 1,
+		'command' => $commandPayload,
+		'environment' => $environment,
+	]);
+	$payload = [
+		'version' => 1,
+		'kind' => $kind,
+		'object_path' => normalize_config_path(relative_path($projectRoot, $objectPath)),
+		'primary_input' => normalize_config_path(relative_path($projectRoot, $primaryInput)),
+		'member_sources' => normalize_string_list($memberSources),
+		'generated_inputs' => relative_path_list($projectRoot, $generatedInputs),
+		'implicit_inputs' => relative_path_list($projectRoot, $implicitInputs),
+		'force_include_headers' => relative_path_list($projectRoot, $forceIncludeHeaders),
+		'module_surface_inputs' => relative_path_list($projectRoot, $moduleSurfaceInputs),
+		'command_hash' => $commandHash,
+		'input_hash' => $inputHash,
+	];
+	return [
+		'kind' => $kind,
+		'object_path' => normalize_config_path(relative_path($projectRoot, $objectPath)),
+		'action_key' => hash_project_module_payload($payload),
+		'command_hash' => $commandHash,
+		'input_hash' => $inputHash,
+		'output_hash' => existing_file_sha256($objectPath) ?? '',
+		'compiler' => (string) ($commandPayload['compiler'] ?? ''),
+		'compiler_kind' => (string) ($commandPayload['compiler_kind'] ?? ''),
+		'build_mode' => (string) ($commandPayload['build_mode'] ?? ''),
+		'primary_input' => normalize_config_path(relative_path($projectRoot, $primaryInput)),
+		'member_sources' => normalize_string_list($memberSources),
+		'generated_inputs' => relative_path_list($projectRoot, $generatedInputs),
+		'implicit_inputs' => relative_path_list($projectRoot, $implicitInputs),
+		'force_include_headers' => relative_path_list($projectRoot, $forceIncludeHeaders),
+		'module_surface_inputs' => relative_path_list($projectRoot, $moduleSurfaceInputs),
+		'command' => $commandPayload,
+		'environment' => $environment,
+		'input_fingerprints' => $inputFingerprints,
+	];
+}
+
+/** @return array<string,string> */
+function collect_object_action_identity_environment(): array
+{
+	$processEnvironment = scpp_build_process_environment();
+	$keys = ['PATH', 'CC', 'CXX', 'CXXFLAGS', 'CPPFLAGS', 'TMP', 'TEMP', 'TMPDIR'];
+	$result = [];
+	foreach ($keys as $key) {
+		if (is_string($processEnvironment[$key] ?? null) && trim((string) $processEnvironment[$key]) !== '') {
+			$result[$key] = (string) $processEnvironment[$key];
+		}
+	}
+	ksort($result, SORT_STRING);
+	return $result;
+}
+
+/** @param list<string> $paths @return list<array{path:string,exists:bool,sha256:string}> */
+function collect_object_action_input_fingerprints(string $projectRoot, array $paths): array
+{
+	$rows = [];
+	foreach (normalize_path_list($paths) as $path) {
+		$rows[] = [
+			'path' => normalize_config_path(relative_path($projectRoot, $path)),
+			'exists' => is_file($path),
+			'sha256' => existing_file_sha256($path) ?? '',
+		];
+	}
+	usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left['path'] ?? ''), (string) ($right['path'] ?? '')));
+	return $rows;
+}
+
+/** @param list<string> $paths @return list<string> */
+function normalize_path_list(array $paths): array
+{
+	$result = [];
+	foreach ($paths as $path) {
+		if (!is_string($path)) {
+			continue;
+		}
+		$normalized = normalize_path($path);
+		if ($normalized !== '') {
+			$result[] = $normalized;
+		}
+	}
+	sort($result, SORT_STRING);
+	return array_values(array_unique($result));
+}
+
+/** @param list<string> $paths @return list<string> */
+function relative_path_list(string $projectRoot, array $paths): array
+{
+	$result = [];
+	foreach (normalize_path_list($paths) as $path) {
+		$result[] = normalize_config_path(relative_path($projectRoot, $path));
+	}
+	sort($result, SORT_STRING);
+	return array_values(array_unique($result));
+}
+
+/** @return array<string,mixed> */
+function normalize_object_action_identity_report(array $report): array
+{
+	$actions = normalize_object_action_identity_rows(is_array($report['actions'] ?? null) ? $report['actions'] : []);
+	$generatedCount = 0;
+	$nativeCount = 0;
+	foreach ($actions as $action) {
+		if (($action['kind'] ?? '') === 'generated') {
+			$generatedCount++;
+		} elseif (($action['kind'] ?? '') === 'native') {
+			$nativeCount++;
+		}
+	}
+	return [
+		'schema_version' => max(1, (int) ($report['schema_version'] ?? 1)),
+		'algorithm' => trim((string) ($report['algorithm'] ?? 'sha256:scpp-object-action-v1')),
+		'total_action_count' => count($actions),
+		'generated_action_count' => $generatedCount,
+		'native_action_count' => $nativeCount,
+		'skipped_dependency_object_count' => max(0, (int) ($report['skipped_dependency_object_count'] ?? 0)),
+		'actions' => $actions,
+	];
+}
+
+/** @return list<array<string,mixed>> */
+function normalize_object_action_identity_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$objectPath = normalize_config_path((string) ($row['object_path'] ?? ''));
+		if ($objectPath === '') {
+			continue;
+		}
+		$kind = trim((string) ($row['kind'] ?? 'generated'));
+		if (!in_array($kind, ['generated', 'native'], true)) {
+			$kind = 'generated';
+		}
+		$result[] = [
+			'kind' => $kind,
+			'object_path' => $objectPath,
+			'action_key' => trim((string) ($row['action_key'] ?? '')),
+			'command_hash' => trim((string) ($row['command_hash'] ?? '')),
+			'input_hash' => trim((string) ($row['input_hash'] ?? '')),
+			'output_hash' => trim((string) ($row['output_hash'] ?? '')),
+			'compiler' => trim((string) ($row['compiler'] ?? '')),
+			'compiler_kind' => trim((string) ($row['compiler_kind'] ?? '')),
+			'build_mode' => trim((string) ($row['build_mode'] ?? '')),
+			'primary_input' => normalize_config_path((string) ($row['primary_input'] ?? '')),
+			'member_sources' => normalize_string_list($row['member_sources'] ?? []),
+			'generated_inputs' => normalize_string_list($row['generated_inputs'] ?? []),
+			'implicit_inputs' => normalize_string_list($row['implicit_inputs'] ?? []),
+			'force_include_headers' => normalize_string_list($row['force_include_headers'] ?? []),
+			'module_surface_inputs' => normalize_string_list($row['module_surface_inputs'] ?? []),
+			'command' => is_array($row['command'] ?? null) ? $row['command'] : [],
+			'environment' => normalize_string_map(is_array($row['environment'] ?? null) ? $row['environment'] : []),
+			'input_fingerprints' => normalize_object_action_input_fingerprint_rows(is_array($row['input_fingerprints'] ?? null) ? $row['input_fingerprints'] : []),
+		];
+	}
+	usort($result, static fn (array $left, array $right): int => strcmp((string) ($left['object_path'] ?? ''), (string) ($right['object_path'] ?? '')));
+	return $result;
+}
+
+/** @return array<string,string> */
+function normalize_string_map(array $values): array
+{
+	$result = [];
+	foreach ($values as $key => $value) {
+		if (is_string($key) && trim($key) !== '' && is_scalar($value)) {
+			$result[$key] = (string) $value;
+		}
+	}
+	ksort($result, SORT_STRING);
+	return $result;
+}
+
+/** @return list<array{path:string,exists:bool,sha256:string}> */
+function normalize_object_action_input_fingerprint_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$path = normalize_config_path((string) ($row['path'] ?? ''));
+		if ($path === '') {
+			continue;
+		}
+		$result[] = [
+			'path' => $path,
+			'exists' => (bool) ($row['exists'] ?? false),
+			'sha256' => trim((string) ($row['sha256'] ?? '')),
+		];
+	}
+	usort($result, static fn (array $left, array $right): int => strcmp((string) ($left['path'] ?? ''), (string) ($right['path'] ?? '')));
+	return $result;
 }
 
 function strip_ninja_explain_lines(string $text): string
@@ -11178,6 +11646,7 @@ function build_explanation_details(
 	array $buildGroupingReport = [],
 	array $projectModuleReport = [],
 	array $ninjaExplainReport = [],
+	array $objectActionIdentityReport = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -11199,7 +11668,8 @@ function build_explanation_details(
 	$normalizedRebuildFanout = normalize_build_rebuild_fanout($rebuildFanout);
 	$projectModuleReport = normalize_project_module_report($projectModuleReport);
 	$ninjaExplainReport = normalize_ninja_explain_report($ninjaExplainReport);
-	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options, $projectModuleReport, $ninjaExplainReport);
+	$objectActionIdentityReport = normalize_object_action_identity_report($objectActionIdentityReport);
+	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options, $projectModuleReport, $ninjaExplainReport, $objectActionIdentityReport);
 
 	return [
 		'status' => $exitCode === 0 ? 'success' : 'failure',
@@ -11231,6 +11701,7 @@ function build_explanation_details(
 		'sources' => $sources,
 		'generated_artifact_writes' => summarize_generated_artifact_write_report($sources),
 		'ninja_explain' => $ninjaExplainReport,
+		'object_action_identity' => $objectActionIdentityReport,
 		'rebuilt_outputs' => $rebuilt,
 		'rebuild_fanout' => $normalizedRebuildFanout,
 		'project_unit_force_includes' => $projectUnitForceIncludeReport,
@@ -11243,7 +11714,7 @@ function build_explanation_details(
  * @param array<string,mixed> $projectUnitForceIncludeReport
  * @return list<array<string,mixed>>
  */
-function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport, array $rebuildFanout = [], bool $buildSucceeded = true, array $options = [], array $projectModuleReport = [], array $ninjaExplainReport = []): array
+function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport, array $rebuildFanout = [], bool $buildSucceeded = true, array $options = [], array $projectModuleReport = [], array $ninjaExplainReport = [], array $objectActionIdentityReport = []): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$rebuiltGeneratedObjects = [];
@@ -11252,6 +11723,13 @@ function annotate_build_explanation_sources_with_project_units(string $projectRo
 	}
 	$ninjaExplainReport = normalize_ninja_explain_report($ninjaExplainReport);
 	$ninjaObjectExplanations = is_array($ninjaExplainReport['object_explanations'] ?? null) ? $ninjaExplainReport['object_explanations'] : [];
+	$objectActionByObject = [];
+	foreach (normalize_object_action_identity_rows(is_array($objectActionIdentityReport['actions'] ?? null) ? $objectActionIdentityReport['actions'] : []) as $actionRow) {
+		$objectPath = normalize_config_path((string) ($actionRow['object_path'] ?? ''));
+		if ($objectPath !== '') {
+			$objectActionByObject[$objectPath] = $actionRow;
+		}
+	}
 	$changedPackHeaders = [];
 	$packChanges = is_array($projectUnitForceIncludeReport['pack_changes'] ?? null) ? $projectUnitForceIncludeReport['pack_changes'] : [];
 	foreach (normalize_string_list($packChanges['changed_headers'] ?? []) as $headerPath) {
@@ -11307,6 +11785,11 @@ function annotate_build_explanation_sources_with_project_units(string $projectRo
 		}
 		$objectPath = normalize_config_path((string) ($source['object_path'] ?? ''));
 		$source['object_rebuild_ninja_explain'] = normalize_string_list($ninjaObjectExplanations[$objectPath] ?? []);
+		$objectAction = $objectActionByObject[$objectPath] ?? null;
+		if (is_array($objectAction)) {
+			$source['object_action_key'] = (string) ($objectAction['action_key'] ?? '');
+			$source['object_action_kind'] = (string) ($objectAction['kind'] ?? '');
+		}
 		if (!$buildSucceeded) {
 			$source['object_rebuilt'] = null;
 			$source['object_rebuild_reason'] = 'object rebuild status unavailable because Ninja failed before final output mtimes were captured';
@@ -11483,6 +11966,47 @@ function render_ninja_explain_report_lines(array $report, bool $includeDetails =
 }
 
 /**
+ * @param array<string,mixed> $report
+ * @return list<string>
+ */
+function render_object_action_identity_lines(array $report): array
+{
+	$report = normalize_object_action_identity_report($report);
+	$lines = [
+		'Object action identity: ' . (int) ($report['total_action_count'] ?? 0)
+			. ' action(s), generated ' . (int) ($report['generated_action_count'] ?? 0)
+			. ', native ' . (int) ($report['native_action_count'] ?? 0)
+			. ', skipped dependency objects ' . (int) ($report['skipped_dependency_object_count'] ?? 0)
+			. ', algorithm ' . (string) ($report['algorithm'] ?? 'sha256:scpp-object-action-v1'),
+	];
+	foreach (normalize_object_action_identity_rows(is_array($report['actions'] ?? null) ? $report['actions'] : []) as $action) {
+		$lines[] = '  - ' . (string) ($action['object_path'] ?? '')
+			. ': ' . (string) ($action['kind'] ?? '')
+			. ', key ' . (string) ($action['action_key'] ?? '')
+			. ', input ' . (string) ($action['input_hash'] ?? '')
+			. ', command ' . (string) ($action['command_hash'] ?? '')
+			. ', output ' . (((string) ($action['output_hash'] ?? '')) !== '' ? (string) ($action['output_hash'] ?? '') : 'missing');
+		$primaryInput = trim((string) ($action['primary_input'] ?? ''));
+		if ($primaryInput !== '') {
+			$lines[] = '    primary input: ' . $primaryInput;
+		}
+		$memberSources = normalize_string_list($action['member_sources'] ?? []);
+		if ($memberSources !== []) {
+			$lines[] = '    member sources: ' . implode(', ', $memberSources);
+		}
+		$forceIncludeHeaders = normalize_string_list($action['force_include_headers'] ?? []);
+		if ($forceIncludeHeaders !== []) {
+			$lines[] = '    force includes: ' . implode(', ', $forceIncludeHeaders);
+		}
+		$moduleSurfaces = normalize_string_list($action['module_surface_inputs'] ?? []);
+		if ($moduleSurfaces !== []) {
+			$lines[] = '    module surfaces: ' . implode(', ', $moduleSurfaces);
+		}
+	}
+	return $lines;
+}
+
+/**
  * @param array<string,mixed> $details
  * @return list<string>
  */
@@ -11508,6 +12032,13 @@ function render_build_explanation_lines(array $details): array
 		foreach (render_build_grouping_lines($buildGrouping, false) as $line) {
 			$lines[] = $line;
 		}
+	}
+	$objectActionIdentity = normalize_object_action_identity_report(is_array($details['object_action_identity'] ?? null) ? $details['object_action_identity'] : []);
+	if ((int) ($objectActionIdentity['total_action_count'] ?? 0) > 0) {
+		$lines[] = 'Object action identities: ' . (int) ($objectActionIdentity['total_action_count'] ?? 0)
+			. ' action(s), generated ' . (int) ($objectActionIdentity['generated_action_count'] ?? 0)
+			. ', native ' . (int) ($objectActionIdentity['native_action_count'] ?? 0)
+			. ', skipped dependency objects ' . (int) ($objectActionIdentity['skipped_dependency_object_count'] ?? 0);
 	}
 	$lines[] = 'PHP transpile decisions: ' . (int) ($details['transpiled_count'] ?? 0) . ' transpiled, ' . (int) ($details['skipped_count'] ?? 0) . ' reused';
 	foreach (render_generated_artifact_write_report_lines(is_array($details['generated_artifact_writes'] ?? null) ? $details['generated_artifact_writes'] : []) as $line) {
@@ -12279,6 +12810,10 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 		return render_ninja_explain_report_lines(is_array($details['ninja_explain'] ?? null) ? $details['ninja_explain'] : [], true);
 	}
 
+	if ($view === 'action-identity') {
+		return render_object_action_identity_lines(is_array($details['object_action_identity'] ?? null) ? $details['object_action_identity'] : []);
+	}
+
 	if ($view === 'grouping') {
 		return render_build_grouping_lines(is_array($details['build_grouping'] ?? null) ? $details['build_grouping'] : [], true);
 	}
@@ -12365,7 +12900,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, ninja-explain, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, ninja-explain, action-identity, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }
