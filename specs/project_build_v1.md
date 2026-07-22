@@ -153,10 +153,9 @@ top-level default behavior.
 Projects may also set `build.grouping_policy` to one of `incremental`,
 `isolated`, `package`, `folder`, `manual`, `release`, `auto`, or `none`.
 Current v1 builds record the selected deterministic grouping policy and group
-membership in build reports, while the actual Ninja graph still compiles one
-generated/native object per source. This makes debug/incremental isolation and
-future release grouping decisions visible without changing compile edges before
-the dependency model can enforce them.
+membership in build reports. By default, the Ninja graph compiles one
+generated/native object per source. An explicit manual opt-in can enable grouped
+generated-object edges before broader automatic/release grouping is available.
 
 When `build.grouping_policy` is `manual`, `build.grouping` must be an object
 mapping manual group names to project-relative source lists:
@@ -174,10 +173,19 @@ mapping manual group names to project-relative source lists:
 ```
 
 Manual grouping validates path escapes, duplicate assignments, unknown sources,
-empty groups, and non-list group values. Manual groups are report-only in v1:
-assigned root-project generated/native sources are reported under their manual
-groups, unassigned root-project sources stay isolated, and dependency-project
-sources stay under their deterministic policy-derived groups.
+empty groups, and non-list group values. Without `build.grouping_compile`,
+manual groups are report-only: assigned root-project generated/native sources
+are reported under their manual groups, unassigned root-project sources stay
+isolated, and dependency-project sources stay under their deterministic
+policy-derived groups.
+
+When `build.grouping_compile` is `true`, manual groups with at least two
+root-project generated sources emit a grouped generated object edge. The build
+writes a generated group source under `.prism/generated/__build_groups/`,
+compiles one grouped object under `.prism/build/__build_groups/`, and links that
+object once. Native C++ sources, unassigned sources, dependency-project sources,
+and manual groups with fewer than two generated sources continue using
+per-source object edges in this first slice.
 
 Project-local compile-time modules may be declared with `project_modules`.
 These are distinct from `runtime.modules` and describe build/report boundaries
@@ -206,9 +214,10 @@ Each module may provide `sources`, `source_roots`, `dependencies`, and
 write report/cache artifacts for module public surfaces and implementation
 artifact sets, store module interface and implementation hashes, and report
 consumer invalidation from dependency interface hash changes. The current Ninja
-compile graph remains per-source, but generated object compile edges for sources
-assigned to a module take the owning module's public surface artifact and each
-depended module's public surface artifact as implicit inputs. Private
+compile graph defaults to per-source objects, with opt-in manual grouping for
+root generated sources. Generated object compile edges for sources assigned to a
+module take the owning module's public surface artifact and each depended
+module's public surface artifact as implicit inputs. Private
 implementation artifacts are not compile inputs for consumers.
 
 ## `scpp init` behavior
@@ -475,12 +484,14 @@ Saved successful and failed build details include
 `details.build_explanation.build_grouping`. The grouping report stores the
 active policy, policy source, report-only status, current compile-unit strategy,
 deterministic group rows, changed groups, and object fanout. The focused
-`grouping` view renders this data, including group membership. In current v1,
-grouping policy selection does not change the Ninja compile graph; it exposes
-the planned grouping boundary and measured fanout for incremental, manual, and
-release workflow tuning. For manual grouping, the report also stores configured
-manual groups, assigned source count, unassigned root source count, and
-unassigned root source names.
+`grouping` view renders this data, including group membership. For most
+policies, grouping selection remains report-only and exposes the planned
+boundary and measured fanout for incremental, manual, and release workflow
+tuning. For manual grouping with `build.grouping_compile = true`, the report
+uses status `active_generated_edges` and compile-unit strategy
+`manual_grouped_generated_objects`. For manual grouping, the report also stores
+configured manual groups, assigned source count, unassigned root source count,
+unassigned root source names, and whether generated grouping is enabled.
 
 Saved build details also include `details.build_explanation.project_modules`.
 When `project_modules` is configured, each module row stores source membership,

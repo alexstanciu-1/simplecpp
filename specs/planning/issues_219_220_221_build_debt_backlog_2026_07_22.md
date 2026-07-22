@@ -47,6 +47,11 @@ passed for the benchmark seed.
 unknown source assignments, and reports assigned/unassigned manual grouping
 fanout while keeping compile edges report-only.
 
+The first #220 compile-graph slice now accepts `build.grouping_compile = true`
+for manual grouping. Manual groups with at least two root generated sources emit
+one grouped generated object edge under `.prism/build/__build_groups/`; native,
+dependency, unassigned, and singleton generated sources remain per-source.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -64,10 +69,10 @@ fanout while keeping compile edges report-only.
 
 ### #220 Build Grouping Debt
 
-- `build.grouping_policy` is currently `report_only`; it does not change Ninja
-  compile edges.
-- `manual` grouping maps are report-only; they do not drive generated grouped
-  objects yet.
+- `build.grouping_policy` defaults to report-only for most policies; only
+  manual groups can opt into grouped generated object edges so far.
+- `manual` grouping maps do not group native C++ units, dependency project
+  units, unassigned sources, or singleton generated groups yet.
 - `auto` is a simple policy choice, not a measured cost model.
 - Release/O3 grouped or unity object generation is not implemented.
 - Hot-file isolation heuristics are not implemented.
@@ -131,6 +136,7 @@ fanout while keeping compile edges report-only.
    - Keep deterministic explain-build output for all manual groups.
 
 5. `BLD-220-GRAPH-2`: Emit grouped generated object edges for selected policies.
+   - Status: implemented for explicit manual `build.grouping_compile = true`.
    - Start with an opt-in policy or experimental flag.
    - Preserve isolated debug behavior as the default safe path.
    - Report grouped object membership and changed group reasons.

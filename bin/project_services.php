@@ -3200,6 +3200,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectUnitDependencySummaryArtifact = write_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitForceIncludeReport, $projectUnitDependencySummaryFreshness);
 	$projectUnitForceIncludeReport['dependency_summary_artifact'] = $projectUnitDependencySummaryArtifact;
 	$projectModuleReport = collect_project_module_report($projectRoot, $projectContexts, $generatedUnits);
+	apply_grouped_generated_object_edges($projectRoot, $buildDir, $generatedDir, $buildGroupingPolicy, $generatedUnits, $sourceRebuildReasons, $compiler['kind']);
 
 	if ($usePch) {
 		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
@@ -4814,6 +4815,7 @@ function summarize_build_rebuild_fanout(string $projectRoot, array $generatedUni
 			$generatedObjects[] = normalize_config_path(relative_path($projectRoot, $objectPath));
 		}
 	}
+	$generatedObjects = array_values(array_unique($generatedObjects));
 	sort($generatedObjects, SORT_STRING);
 	$nativeObjects = [];
 	foreach ($nativeCppUnits as $unit) {
@@ -4822,6 +4824,7 @@ function summarize_build_rebuild_fanout(string $projectRoot, array $generatedUni
 			$nativeObjects[] = normalize_config_path(relative_path($projectRoot, $objectPath));
 		}
 	}
+	$nativeObjects = array_values(array_unique($nativeObjects));
 	sort($nativeObjects, SORT_STRING);
 	$runtimeObjects = [];
 	$runtimeObjectPath = normalize_path((string) ($runtimeBuild['object_path'] ?? ''));
@@ -4847,8 +4850,8 @@ function summarize_build_rebuild_fanout(string $projectRoot, array $generatedUni
 		'rebuilt_generated_object_count' => count($generatedObjects),
 		'rebuilt_native_object_count' => count($nativeObjects),
 		'rebuilt_runtime_object_count' => count($runtimeObjects),
-		'rebuilt_generated_objects' => array_values(array_unique($generatedObjects)),
-		'rebuilt_native_objects' => array_values(array_unique($nativeObjects)),
+		'rebuilt_generated_objects' => $generatedObjects,
+		'rebuilt_native_objects' => $nativeObjects,
 		'rebuilt_runtime_objects' => array_values(array_unique($runtimeObjects)),
 		'rebuilt_other_outputs' => array_values(array_unique($otherOutputs)),
 		'changed_project_unit_pack_count' => (int) ($packChanges['changed_count'] ?? 0),
@@ -5063,18 +5066,31 @@ function resolve_build_grouping_policy(array $config, string $buildMode): array
 		$manualGroups = normalize_build_grouping_manual_config($build['grouping'] ?? null);
 		$notes[] = 'manual group maps are report-only; unassigned root sources are reported as isolated groups';
 	}
+	$rawGroupingCompile = $build['grouping_compile'] ?? false;
+	if (!is_bool($rawGroupingCompile)) {
+		scpp_fail('Invalid build.grouping_compile in ' . SCPP_PROJECT_CONFIG . ': expected a boolean.' . PHP_EOL, 2);
+	}
+	if ($rawGroupingCompile && $policy !== 'manual') {
+		scpp_fail('Invalid build.grouping_compile in ' . SCPP_PROJECT_CONFIG . ': grouped generated object edges currently require build.grouping_policy = "manual".' . PHP_EOL, 2);
+	}
+	$generatedGroupingEnabled = $rawGroupingCompile && $policy === 'manual';
+	if ($generatedGroupingEnabled) {
+		$notes[] = 'manual groups with at least two generated root sources emit one grouped generated object edge';
+		$notes[] = 'native C++ units and unassigned sources still compile as per-source objects';
+	}
 
 	return [
 		'policy' => $policy,
 		'source' => $source,
-		'status' => 'report_only',
+		'status' => $generatedGroupingEnabled ? 'active_generated_edges' : 'report_only',
 		'build_mode' => normalize_build_mode_name($buildMode, 'build grouping mode'),
-		'compile_unit_strategy' => 'per_source_objects',
+		'compile_unit_strategy' => $generatedGroupingEnabled ? 'manual_grouped_generated_objects' : 'per_source_objects',
 		'native_strategy' => 'per_source_objects_with_project_unit_broad_fallback',
 		'deterministic' => true,
 		'allowed_policies' => $allowed,
 		'notes' => $notes,
 		'manual_groups' => $manualGroups,
+		'generated_grouping_enabled' => $generatedGroupingEnabled,
 	];
 }
 
@@ -5155,6 +5171,103 @@ function build_grouping_manual_group_id(string $name): string
 		$id = substr(hash('sha256', $name), 0, 12);
 	}
 	return 'manual:root:' . $id;
+}
+
+/**
+ * @param array<string,mixed> $policy
+ * @param list<array<string,mixed>> $generatedUnits
+ * @param list<array<string,mixed>> $sourceRebuildReasons
+ */
+function apply_grouped_generated_object_edges(string $projectRoot, string $buildDir, string $generatedDir, array $policy, array &$generatedUnits, array &$sourceRebuildReasons, string $compilerKind): void
+{
+	if ((string) ($policy['policy'] ?? '') !== 'manual' || !((bool) ($policy['generated_grouping_enabled'] ?? false))) {
+		return;
+	}
+	$manualGroups = normalize_build_grouping_manual_group_rows(is_array($policy['manual_groups'] ?? null) ? $policy['manual_groups'] : []);
+	if ($manualGroups === []) {
+		return;
+	}
+	$rootProjectRoot = normalize_path($projectRoot);
+	$indexesBySource = [];
+	foreach ($generatedUnits as $index => $unit) {
+		if (normalize_path((string) ($unit['project_root'] ?? '')) !== $rootProjectRoot) {
+			continue;
+		}
+		$relativePhp = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		if ($relativePhp !== '') {
+			$indexesBySource[$relativePhp] = $index;
+		}
+	}
+
+	foreach ($manualGroups as $manualGroup) {
+		$memberIndexes = [];
+		foreach (normalize_string_list($manualGroup['sources'] ?? []) as $source) {
+			if (isset($indexesBySource[$source])) {
+				$memberIndexes[] = $indexesBySource[$source];
+			}
+		}
+		$memberIndexes = array_values(array_unique($memberIndexes));
+		if (count($memberIndexes) < 2) {
+			continue;
+		}
+		usort($memberIndexes, static function (int $left, int $right) use ($generatedUnits): int {
+			return strcmp((string) ($generatedUnits[$left]['relative_php'] ?? ''), (string) ($generatedUnits[$right]['relative_php'] ?? ''));
+		});
+		$memberSources = [];
+		foreach ($memberIndexes as $memberIndex) {
+			$memberSources[] = normalize_config_path((string) ($generatedUnits[$memberIndex]['relative_php'] ?? ''));
+		}
+		$groupHash = substr(hash('sha256', (string) ($manualGroup['id'] ?? '') . "\n" . implode("\n", $memberSources)), 0, 16);
+		$groupSourcePath = normalize_path($generatedDir . '/__build_groups/' . $groupHash . '.cpp');
+		$groupObjectPath = normalize_path($buildDir . '/__build_groups/' . $groupHash . '.' . object_extension($compilerKind));
+		$memberUnits = [];
+		foreach ($memberIndexes as $memberIndex) {
+			$memberUnits[] = $generatedUnits[$memberIndex];
+		}
+		write_text_file($groupSourcePath, render_grouped_generated_cpp_source($groupSourcePath, $manualGroup, $memberUnits));
+		foreach ($memberIndexes as $memberIndex) {
+			$generatedUnits[$memberIndex]['object_path'] = $groupObjectPath;
+			$generatedUnits[$memberIndex]['compile_source_path'] = $groupSourcePath;
+			$generatedUnits[$memberIndex]['build_group_id'] = (string) ($manualGroup['id'] ?? '');
+			$generatedUnits[$memberIndex]['build_group_label'] = (string) ($manualGroup['name'] ?? '');
+			$generatedUnits[$memberIndex]['build_group_source_count'] = count($memberIndexes);
+		}
+		foreach ($sourceRebuildReasons as &$sourceRow) {
+			if (normalize_path((string) ($sourceRow['project_root'] ?? '')) !== $rootProjectRoot) {
+				continue;
+			}
+			$sourcePath = normalize_config_path((string) ($sourceRow['path'] ?? ''));
+			if (!in_array($sourcePath, $memberSources, true)) {
+				continue;
+			}
+			$sourceRow['object_path'] = normalize_config_path(relative_path($projectRoot, $groupObjectPath));
+			$sourceRow['build_group_id'] = (string) ($manualGroup['id'] ?? '');
+			$sourceRow['build_group_label'] = (string) ($manualGroup['name'] ?? '');
+			$sourceRow['build_group_source_count'] = count($memberIndexes);
+		}
+		unset($sourceRow);
+	}
+}
+
+/**
+ * @param array<string,mixed> $manualGroup
+ * @param list<array<string,mixed>> $memberUnits
+ */
+function render_grouped_generated_cpp_source(string $groupSourcePath, array $manualGroup, array $memberUnits): string
+{
+	$lines = [];
+	$lines[] = '// Generated by scpp build grouping.';
+	$lines[] = '// Group: ' . (string) ($manualGroup['name'] ?? '');
+	foreach ($memberUnits as $unit) {
+		$generatedCpp = normalize_path((string) ($unit['generated_cpp'] ?? ''));
+		if ($generatedCpp === '') {
+			continue;
+		}
+		$includePath = normalize_config_path(relative_path(dirname($groupSourcePath), $generatedCpp));
+		$includePath = str_replace('"', '\\"', $includePath);
+		$lines[] = '#include "' . $includePath . '"';
+	}
+	return implode(PHP_EOL, $lines) . PHP_EOL;
 }
 
 /**
@@ -5294,10 +5407,29 @@ function collect_build_grouping_report(string $projectRoot, array $policy, array
 			}
 		}
 		sort($unassignedRootSources, SORT_STRING);
+		$changedGroupReasons = [];
+		foreach ($groupRows as $group) {
+			if (!((bool) ($group['changed'] ?? false))) {
+				continue;
+			}
+			$groupId = trim((string) ($group['id'] ?? ''));
+			if ($groupId === '') {
+				continue;
+			}
+			$reasons = [];
+			foreach (normalize_string_list($group['rebuilt_objects'] ?? []) as $objectPath) {
+				$reasons[] = 'rebuilt object ' . $objectPath;
+			}
+			$changedGroupReasons[] = [
+				'group_id' => $groupId,
+				'reasons' => $reasons,
+			];
+		}
 		$policy['manual_group_count'] = count($manualGroups);
 		$policy['manual_assigned_source_count'] = count($manualGroupsBySource);
 		$policy['manual_unassigned_source_count'] = count($unassignedRootSources);
 		$policy['manual_unassigned_sources'] = $unassignedRootSources;
+		$policy['changed_group_reasons'] = $changedGroupReasons;
 	}
 	return normalize_build_grouping_report($policy);
 }
@@ -5412,6 +5544,22 @@ function normalize_build_grouping_report(array $report): array
 		$normalized['manual_assigned_source_count'] = max(0, (int) ($report['manual_assigned_source_count'] ?? $manualSourceCount));
 		$normalized['manual_unassigned_source_count'] = max(0, (int) ($report['manual_unassigned_source_count'] ?? 0));
 		$normalized['manual_unassigned_sources'] = normalize_string_list($report['manual_unassigned_sources'] ?? []);
+		$normalized['generated_grouping_enabled'] = (bool) ($report['generated_grouping_enabled'] ?? false);
+		$changedGroupReasons = [];
+		foreach (is_array($report['changed_group_reasons'] ?? null) ? $report['changed_group_reasons'] : [] as $row) {
+			if (!is_array($row)) {
+				continue;
+			}
+			$groupId = trim((string) ($row['group_id'] ?? ''));
+			if ($groupId === '') {
+				continue;
+			}
+			$changedGroupReasons[] = [
+				'group_id' => $groupId,
+				'reasons' => normalize_string_list($row['reasons'] ?? []),
+			];
+		}
+		$normalized['changed_group_reasons'] = $changedGroupReasons;
 	}
 	return $normalized;
 }
@@ -12946,31 +13094,60 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 			$lines[] = 'build ' . ninja_escape_path($runtimePchArtifact) . ': compile_pch_runtime ' . ninja_escape_path($runtimePchHeader);
 		}
 	}
+	$generatedUnitsByObject = [];
+	foreach ($generatedUnits as $unit) {
+		$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+		if ($objectPath !== '') {
+			$generatedUnitsByObject[$objectPath][] = $unit;
+		}
+	}
+	$emittedGeneratedObjects = [];
 	foreach ($generatedUnits as $unit) {
 		if (!$options['compile_dependencies'] && normalize_path($unit['project_root']) !== normalize_path($projectRoot)) {
 			$objectPaths[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $unit['object_path']));
 			continue;
 		}
-		$generatedCpp = build_ninja_relative_path($projectRoot, $buildDir, $unit['generated_cpp']);
-		$objectPath = build_ninja_relative_path($projectRoot, $buildDir, $unit['object_path']);
+		$objectAbs = normalize_path((string) ($unit['object_path'] ?? ''));
+		$objectPath = build_ninja_relative_path($projectRoot, $buildDir, $objectAbs);
+		$objectPaths[] = ninja_escape_path($objectPath);
+		if (isset($emittedGeneratedObjects[$objectAbs])) {
+			continue;
+		}
+		$emittedGeneratedObjects[$objectAbs] = true;
+		$members = $generatedUnitsByObject[$objectAbs] ?? [$unit];
+		$compileSource = is_string($unit['compile_source_path'] ?? null) && trim((string) $unit['compile_source_path']) !== ''
+			? normalize_path((string) $unit['compile_source_path'])
+			: normalize_path((string) ($unit['generated_cpp'] ?? ''));
+		$generatedCpp = build_ninja_relative_path($projectRoot, $buildDir, $compileSource);
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if ($usePch) {
 			$implicitDeps[] = ninja_escape_path($appPchArtifact);
 		}
-		$projectLabel = project_context_report_label($projectRoot, (string) ($unit['project_root'] ?? ''));
-		$sourceKey = project_module_source_key($projectLabel, (string) ($unit['relative_php'] ?? ''));
-		foreach ($projectModuleCompileSurfaceDeps[$sourceKey] ?? [] as $moduleSurfaceDep) {
-			$moduleSurfacePath = is_absolute_path($moduleSurfaceDep)
-				? normalize_path($moduleSurfaceDep)
-				: normalize_path($projectRoot . '/' . normalize_config_path($moduleSurfaceDep));
-			$implicitDeps[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $moduleSurfacePath));
+		$forceIncludeHeaders = [];
+		foreach ($members as $member) {
+			$memberGeneratedCpp = normalize_path((string) ($member['generated_cpp'] ?? ''));
+			if ($memberGeneratedCpp !== '' && $memberGeneratedCpp !== $compileSource) {
+				$implicitDeps[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $memberGeneratedCpp));
+			}
+			$projectLabel = project_context_report_label($projectRoot, (string) ($member['project_root'] ?? ''));
+			$sourceKey = project_module_source_key($projectLabel, (string) ($member['relative_php'] ?? ''));
+			foreach ($projectModuleCompileSurfaceDeps[$sourceKey] ?? [] as $moduleSurfaceDep) {
+				$moduleSurfacePath = is_absolute_path($moduleSurfaceDep)
+					? normalize_path($moduleSurfaceDep)
+					: normalize_path($projectRoot . '/' . normalize_config_path($moduleSurfaceDep));
+				$implicitDeps[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $moduleSurfacePath));
+			}
+			$unitForceIncludeHeader = is_string($member['force_include_header'] ?? null) ? $member['force_include_header'] : null;
+			if ($unitForceIncludeHeader !== null && $unitForceIncludeHeader !== '') {
+				$forceIncludeHeaders[] = build_ninja_relative_path($projectRoot, $buildDir, $unitForceIncludeHeader);
+			}
 		}
+		$implicitDeps = array_values(array_unique($implicitDeps));
 		$lines[] = 'build ' . ninja_escape_path($objectPath) . ': compile ' . ninja_escape_path($generatedCpp) . ' | ' . implode(' ', $implicitDeps);
-		$unitForceIncludeHeader = is_string($unit['force_include_header'] ?? null) ? $unit['force_include_header'] : null;
-		if ($unitForceIncludeHeader !== null && $unitForceIncludeHeader !== '') {
-			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], [build_ninja_relative_path($projectRoot, $buildDir, $unitForceIncludeHeader)]);
+		$forceIncludeHeaders = array_values(array_unique($forceIncludeHeaders));
+		if ($forceIncludeHeaders !== []) {
+			$lines[] = '  more_cxxflags = ' . build_force_include_flags($compiler['kind'], $forceIncludeHeaders);
 		}
-		$objectPaths[] = ninja_escape_path($objectPath);
 	}
 	foreach ($nativeCppUnits as $nativeUnit) {
 		if (!$options['compile_dependencies'] && normalize_path($nativeUnit['project_root']) !== normalize_path($projectRoot)) {
@@ -13018,6 +13195,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		}
 	}
 	$lines[] = '';
+	$objectPaths = array_values(array_unique($objectPaths));
 	$lines[] = 'build ' . ninja_escape_path($output) . ': link ' . implode(' ', $objectPaths);
 	if ($fastcgiBuild !== null) {
 		$fcgiObjects = [];
@@ -13052,6 +13230,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		foreach ($sharedRuntimeModules as $moduleSpec) {
 			$fcgiObjects[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, (string) $moduleSpec['artifact_path']));
 		}
+		$fcgiObjects = array_values(array_unique($fcgiObjects));
 		$lines[] = 'build ' . ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $fastcgiBuild['output_path'])) . ': link_fcgi ' . implode(' ', $fcgiObjects);
 	}
 	$lines[] = '';
