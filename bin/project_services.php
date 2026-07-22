@@ -3199,6 +3199,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, $useFreshStanState);
 	$projectUnitDependencySummaryArtifact = write_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitForceIncludeReport, $projectUnitDependencySummaryFreshness);
 	$projectUnitForceIncludeReport['dependency_summary_artifact'] = $projectUnitDependencySummaryArtifact;
+	$buildGroupingPolicy = apply_auto_build_grouping_evidence($projectRoot, $buildGroupingPolicy, $generatedUnits);
 	$projectModuleReport = collect_project_module_report($projectRoot, $projectContexts, $generatedUnits);
 	apply_grouped_generated_object_edges($projectRoot, $buildDir, $generatedDir, $buildGroupingPolicy, $generatedUnits, $sourceRebuildReasons, $compiler['kind']);
 
@@ -5186,6 +5187,225 @@ function build_grouping_manual_group_id(string $name): string
 /**
  * @param array<string,mixed> $policy
  * @param list<array<string,mixed>> $generatedUnits
+ * @return array<string,mixed>
+ */
+function apply_auto_build_grouping_evidence(string $projectRoot, array $policy, array $generatedUnits): array
+{
+	if ((string) ($policy['policy'] ?? '') !== 'auto') {
+		return $policy;
+	}
+	$buildMode = normalize_build_mode_name((string) ($policy['build_mode'] ?? 'debug'), 'auto build grouping mode');
+	$previous = collect_previous_auto_build_grouping_evidence($projectRoot);
+	$rootGeneratedUnits = [];
+	foreach ($generatedUnits as $unit) {
+		if (normalize_path((string) ($unit['project_root'] ?? '')) !== normalize_path($projectRoot)) {
+			continue;
+		}
+		$relativeSource = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		if ($relativeSource === '') {
+			continue;
+		}
+		$rootGeneratedUnits[] = $unit;
+	}
+	$generatedCount = count($rootGeneratedUnits);
+	[$selectedPolicy, $selectionReasons] = select_auto_build_grouping_policy($buildMode, $previous, $generatedCount);
+	$policy['auto_evidence'] = [
+		'source' => (string) ($previous['source'] ?? 'none'),
+		'selected_policy' => $selectedPolicy,
+		'reasons' => $selectionReasons,
+		'prior_ninja_subprocess_ms' => (int) ($previous['prior_ninja_subprocess_ms'] ?? 0),
+		'prior_rebuilt_object_count' => (int) ($previous['prior_rebuilt_object_count'] ?? 0),
+		'prior_rebuilt_generated_object_count' => (int) ($previous['prior_rebuilt_generated_object_count'] ?? 0),
+		'prior_changed_group_count' => (int) ($previous['prior_changed_group_count'] ?? 0),
+		'root_generated_source_count' => $generatedCount,
+	];
+	$policy['auto_source_decisions'] = collect_auto_build_grouping_source_decisions($projectRoot, $buildMode, $selectedPolicy, $previous, $rootGeneratedUnits);
+	if ($selectedPolicy !== 'incremental') {
+		$notes = normalize_string_list($policy['notes'] ?? []);
+		$notes[] = 'auto selected ' . $selectedPolicy . ' grouping from saved build evidence';
+		$policy['notes'] = $notes;
+	}
+	return $policy;
+}
+
+/** @return array<string,mixed> */
+function collect_previous_auto_build_grouping_evidence(string $projectRoot): array
+{
+	$lastRun = read_json_file(normalize_path($projectRoot . '/.prism/last_run.json'));
+	if (!is_array($lastRun)) {
+		return [
+			'source' => 'none',
+			'previous_volatile_sources' => [],
+			'previous_object_paths_by_source' => [],
+		];
+	}
+	$details = is_array($lastRun['details'] ?? null) ? $lastRun['details'] : [];
+	$timings = is_array($details['timing_breakdown_ms'] ?? null) ? $details['timing_breakdown_ms'] : [];
+	$explanation = is_array($details['build_explanation'] ?? null) ? $details['build_explanation'] : [];
+	$fanout = is_array($explanation['rebuild_fanout'] ?? null) ? $explanation['rebuild_fanout'] : (is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : []);
+	$grouping = is_array($explanation['build_grouping'] ?? null) ? $explanation['build_grouping'] : [];
+	$volatileSources = [];
+	$objectPathsBySource = [];
+	foreach (is_array($explanation['sources'] ?? null) ? $explanation['sources'] : [] as $source) {
+		if (!is_array($source)) {
+			continue;
+		}
+		$path = normalize_config_path((string) ($source['path'] ?? ''));
+		if ($path === '') {
+			continue;
+		}
+		$artifacts = is_array($source['generated_artifacts'] ?? null) ? $source['generated_artifacts'] : [];
+		$firstRecorded = (bool) ($artifacts['interface_first_recorded'] ?? false) || (bool) ($artifacts['implementation_first_recorded'] ?? false);
+		$changed = (bool) ($artifacts['interface_changed'] ?? false) || (bool) ($artifacts['implementation_changed'] ?? false);
+		if ($changed && !$firstRecorded) {
+			$volatileSources[$path] = true;
+		}
+		$objectPath = normalize_config_path((string) ($source['object_path'] ?? ''));
+		if ($objectPath !== '') {
+			$objectPathsBySource[$path] = $objectPath;
+		}
+	}
+	return [
+		'source' => '.prism/last_run.json',
+		'prior_ninja_subprocess_ms' => max(0, (int) ($timings['ninja_subprocess_ms'] ?? 0)),
+		'prior_rebuilt_object_count' => max(0, (int) ($fanout['rebuilt_object_count'] ?? 0)),
+		'prior_rebuilt_generated_object_count' => max(0, (int) ($fanout['rebuilt_generated_object_count'] ?? 0)),
+		'prior_changed_group_count' => max(0, (int) ($grouping['changed_group_count'] ?? 0)),
+		'previous_volatile_sources' => $volatileSources,
+		'previous_object_paths_by_source' => $objectPathsBySource,
+	];
+}
+
+/** @param array<string,mixed> $previous @return array{0:string,1:list<string>} */
+function select_auto_build_grouping_policy(string $buildMode, array $previous, int $generatedCount): array
+{
+	if ($buildMode !== 'release') {
+		return ['incremental', ['debug builds keep per-source grouping for edit isolation']];
+	}
+	if ((string) ($previous['source'] ?? 'none') === 'none') {
+		return ['folder', ['no prior build evidence; starting with stable folder grouping']];
+	}
+	$priorGeneratedFanout = max(0, (int) ($previous['prior_rebuilt_generated_object_count'] ?? 0));
+	$priorNinjaMs = max(0, (int) ($previous['prior_ninja_subprocess_ms'] ?? 0));
+	if ($priorGeneratedFanout > 0 && $priorGeneratedFanout <= max(2, (int) ceil(max(1, $generatedCount) / 4))) {
+		return ['folder', ['prior build showed narrow generated-object fanout; preserving folder granularity']];
+	}
+	if ($generatedCount >= 50 || $priorNinjaMs >= 2000) {
+		return ['release', ['large release build evidence favors fewer generated compile units']];
+	}
+	return ['package', ['moderate release build evidence favors package grouping']];
+}
+
+/**
+ * @param array<string,mixed> $previous
+ * @param list<array<string,mixed>> $generatedUnits
+ * @return list<array<string,mixed>>
+ */
+function collect_auto_build_grouping_source_decisions(string $projectRoot, string $buildMode, string $selectedPolicy, array $previous, array $generatedUnits): array
+{
+	$previousVolatileSources = is_array($previous['previous_volatile_sources'] ?? null) ? $previous['previous_volatile_sources'] : [];
+	$previousObjectPathsBySource = is_array($previous['previous_object_paths_by_source'] ?? null) ? $previous['previous_object_paths_by_source'] : [];
+	$rows = [];
+	foreach ($generatedUnits as $unit) {
+		$source = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$objectSizeBytes = detect_auto_grouping_object_size($projectRoot, $unit, normalize_config_path((string) ($previousObjectPathsBySource[$source] ?? '')));
+		if ($selectedPolicy === 'incremental') {
+			$rows[] = build_auto_grouping_source_decision($source, 'isolated', '', '', 'debug auto policy keeps generated source isolated', $objectSizeBytes);
+			continue;
+		}
+		if ((bool) ($unit['is_entrypoint'] ?? false)) {
+			$rows[] = build_auto_grouping_source_decision($source, 'isolated', '', '', 'entrypoint generated source stays isolated', $objectSizeBytes);
+			continue;
+		}
+		if ($objectSizeBytes >= 8 * 1024 * 1024) {
+			$rows[] = build_auto_grouping_source_decision($source, 'isolated', '', '', 'previous object size is at least 8 MiB', $objectSizeBytes);
+			continue;
+		}
+		if (isset($previousVolatileSources[$source])) {
+			$rows[] = build_auto_grouping_source_decision($source, 'isolated', '', '', 'previous build changed this source generated artifacts', $objectSizeBytes);
+			continue;
+		}
+		$group = build_grouping_group_key($selectedPolicy, $buildMode, 'generated', '.', $source, null);
+		$rows[] = build_auto_grouping_source_decision(
+			$source,
+			'grouped',
+			(string) ($group['id'] ?? ''),
+			(string) ($group['label'] ?? ''),
+			'selected ' . $selectedPolicy . ' grouping from saved evidence',
+			$objectSizeBytes
+		);
+	}
+	$groupCounts = [];
+	foreach ($rows as $row) {
+		if ((string) ($row['decision'] ?? '') !== 'grouped') {
+			continue;
+		}
+		$groupId = trim((string) ($row['group_id'] ?? ''));
+		if ($groupId !== '') {
+			$groupCounts[$groupId] = ($groupCounts[$groupId] ?? 0) + 1;
+		}
+	}
+	foreach ($rows as &$row) {
+		if ((string) ($row['decision'] ?? '') !== 'grouped') {
+			continue;
+		}
+		$groupId = trim((string) ($row['group_id'] ?? ''));
+		if ($groupId === '' || (int) ($groupCounts[$groupId] ?? 0) >= 2) {
+			continue;
+		}
+		$row['decision'] = 'isolated';
+		$row['group_id'] = '';
+		$row['group_label'] = '';
+		$row['reason'] = 'auto group has fewer than two generated sources';
+	}
+	unset($row);
+	usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left['source'] ?? ''), (string) ($right['source'] ?? '')));
+	return $rows;
+}
+
+/** @param array<string,mixed> $unit */
+function detect_auto_grouping_object_size(string $projectRoot, array $unit, string $previousObjectPath): int
+{
+	$candidates = [];
+	$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+	if ($objectPath !== '') {
+		$candidates[] = $objectPath;
+	}
+	if ($previousObjectPath !== '') {
+		$candidates[] = is_absolute_path($previousObjectPath)
+			? normalize_path($previousObjectPath)
+			: normalize_path($projectRoot . '/' . $previousObjectPath);
+	}
+	foreach (array_values(array_unique($candidates)) as $candidate) {
+		if (is_file($candidate)) {
+			$size = filesize($candidate);
+			if (is_int($size) && $size >= 0) {
+				return $size;
+			}
+		}
+	}
+	return 0;
+}
+
+/** @return array{source:string,decision:string,group_id:string,group_label:string,reason:string,object_size_bytes:int} */
+function build_auto_grouping_source_decision(string $source, string $decision, string $groupId, string $groupLabel, string $reason, int $objectSizeBytes): array
+{
+	return [
+		'source' => normalize_config_path($source),
+		'decision' => $decision,
+		'group_id' => $groupId,
+		'group_label' => $groupLabel,
+		'reason' => $reason,
+		'object_size_bytes' => max(0, $objectSizeBytes),
+	];
+}
+
+/**
+ * @param array<string,mixed> $policy
+ * @param list<array<string,mixed>> $generatedUnits
  * @param list<array<string,mixed>> $sourceRebuildReasons
  */
 function apply_grouped_generated_object_edges(string $projectRoot, string $buildDir, string $generatedDir, array $policy, array &$generatedUnits, array &$sourceRebuildReasons, string $compilerKind): void
@@ -5272,6 +5492,41 @@ function collect_release_generated_group_rows(string $projectRoot, array $policy
 	$policyName = (string) ($policy['policy'] ?? '');
 	if (!in_array($policyName, ['folder', 'package', 'release', 'auto'], true)) {
 		return [];
+	}
+	if ($policyName === 'auto') {
+		$rowsByGroup = [];
+		foreach (normalize_auto_build_grouping_source_decisions(is_array($policy['auto_source_decisions'] ?? null) ? $policy['auto_source_decisions'] : []) as $decision) {
+			if ((string) ($decision['decision'] ?? '') !== 'grouped') {
+				continue;
+			}
+			$groupId = trim((string) ($decision['group_id'] ?? ''));
+			$source = normalize_config_path((string) ($decision['source'] ?? ''));
+			if ($groupId === '' || $source === '') {
+				continue;
+			}
+			if (!isset($rowsByGroup[$groupId])) {
+				$rowsByGroup[$groupId] = [
+					'id' => $groupId,
+					'name' => (string) ($decision['group_label'] ?? $groupId),
+					'sources' => [],
+				];
+			}
+			$rowsByGroup[$groupId]['sources'][] = $source;
+		}
+		$rows = [];
+		foreach ($rowsByGroup as $group) {
+			$sources = normalize_string_list($group['sources'] ?? []);
+			if (count($sources) < 2) {
+				continue;
+			}
+			$rows[] = [
+				'id' => (string) ($group['id'] ?? ''),
+				'name' => (string) ($group['name'] ?? ''),
+				'sources' => $sources,
+			];
+		}
+		usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left['id'] ?? ''), (string) ($right['id'] ?? '')));
+		return $rows;
 	}
 	$rootProjectRoot = normalize_path($projectRoot);
 	$groups = [];
@@ -5389,15 +5644,39 @@ function collect_build_grouping_report(string $projectRoot, array $policy, array
 			scpp_fail('Invalid build.grouping in ' . SCPP_PROJECT_CONFIG . ': manual source `' . $manualSource . '` is not a generated or native source in the root project.' . PHP_EOL, 2);
 		}
 	}
+	$autoDecisionsBySource = [];
+	if ((string) ($policy['policy'] ?? '') === 'auto') {
+		foreach (normalize_auto_build_grouping_source_decisions(is_array($policy['auto_source_decisions'] ?? null) ? $policy['auto_source_decisions'] : []) as $decision) {
+			$source = normalize_config_path((string) ($decision['source'] ?? ''));
+			if ($source !== '') {
+				$autoDecisionsBySource[$source] = $decision;
+			}
+		}
+	}
 
 	$groups = [];
-	$addUnit = static function (string $kind, string $unitProjectRoot, string $relativeSource, string $objectPath) use (&$groups, $projectRoot, $policy, $rebuiltObjects, $manualGroupsBySource): void {
+	$addUnit = static function (string $kind, string $unitProjectRoot, string $relativeSource, string $objectPath) use (&$groups, $projectRoot, $policy, $rebuiltObjects, $manualGroupsBySource, $autoDecisionsBySource): void {
 		$projectLabel = project_context_report_label($projectRoot, $unitProjectRoot);
 		$manualGroup = null;
 		if ((string) ($policy['policy'] ?? '') === 'manual' && normalize_path($unitProjectRoot) === normalize_path($projectRoot)) {
 			$manualGroup = is_array($manualGroupsBySource[$relativeSource] ?? null) ? $manualGroupsBySource[$relativeSource] : null;
 		}
-		$group = build_grouping_group_key((string) ($policy['policy'] ?? 'incremental'), (string) ($policy['build_mode'] ?? 'debug'), $kind, $projectLabel, $relativeSource, $manualGroup);
+		$group = null;
+		if ((string) ($policy['policy'] ?? '') === 'auto' && normalize_path($unitProjectRoot) === normalize_path($projectRoot) && $kind === 'generated') {
+			$decision = is_array($autoDecisionsBySource[$relativeSource] ?? null) ? $autoDecisionsBySource[$relativeSource] : null;
+			if ($decision !== null && (string) ($decision['decision'] ?? '') === 'grouped' && trim((string) ($decision['group_id'] ?? '')) !== '') {
+				$group = [
+					'id' => trim((string) ($decision['group_id'] ?? '')),
+					'label' => trim((string) ($decision['group_label'] ?? '')),
+					'kind' => 'auto_group',
+				];
+			} elseif ($decision !== null && (string) ($decision['decision'] ?? '') === 'isolated') {
+				$group = build_grouping_group_key('incremental', (string) ($policy['build_mode'] ?? 'debug'), $kind, $projectLabel, $relativeSource, null);
+			}
+		}
+		if ($group === null) {
+			$group = build_grouping_group_key((string) ($policy['policy'] ?? 'incremental'), (string) ($policy['build_mode'] ?? 'debug'), $kind, $projectLabel, $relativeSource, $manualGroup);
+		}
 		$objectLabel = normalize_config_path(relative_path($projectRoot, normalize_path($objectPath)));
 		if (!isset($groups[$group['id']])) {
 			$groups[$group['id']] = [
@@ -5641,7 +5920,59 @@ function normalize_build_grouping_report(array $report): array
 		}
 		$normalized['changed_group_reasons'] = $changedGroupReasons;
 	}
+	if ($policy === 'auto') {
+		$normalized['auto_evidence'] = normalize_auto_build_grouping_evidence(is_array($report['auto_evidence'] ?? null) ? $report['auto_evidence'] : []);
+		$normalized['auto_source_decisions'] = normalize_auto_build_grouping_source_decisions(is_array($report['auto_source_decisions'] ?? null) ? $report['auto_source_decisions'] : []);
+	}
 	return $normalized;
+}
+
+/** @return array<string,mixed> */
+function normalize_auto_build_grouping_evidence(array $evidence): array
+{
+	$selectedPolicy = trim((string) ($evidence['selected_policy'] ?? ''));
+	if (!in_array($selectedPolicy, ['incremental', 'folder', 'package', 'release'], true)) {
+		$selectedPolicy = 'incremental';
+	}
+	return [
+		'source' => trim((string) ($evidence['source'] ?? 'none')),
+		'selected_policy' => $selectedPolicy,
+		'reasons' => normalize_string_list($evidence['reasons'] ?? []),
+		'prior_ninja_subprocess_ms' => max(0, (int) ($evidence['prior_ninja_subprocess_ms'] ?? 0)),
+		'prior_rebuilt_object_count' => max(0, (int) ($evidence['prior_rebuilt_object_count'] ?? 0)),
+		'prior_rebuilt_generated_object_count' => max(0, (int) ($evidence['prior_rebuilt_generated_object_count'] ?? 0)),
+		'prior_changed_group_count' => max(0, (int) ($evidence['prior_changed_group_count'] ?? 0)),
+		'root_generated_source_count' => max(0, (int) ($evidence['root_generated_source_count'] ?? 0)),
+	];
+}
+
+/** @return list<array{source:string,decision:string,group_id:string,group_label:string,reason:string,object_size_bytes:int}> */
+function normalize_auto_build_grouping_source_decisions(array $decisions): array
+{
+	$rows = [];
+	foreach ($decisions as $decision) {
+		if (!is_array($decision)) {
+			continue;
+		}
+		$source = normalize_config_path((string) ($decision['source'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$decisionKind = trim((string) ($decision['decision'] ?? 'isolated'));
+		if (!in_array($decisionKind, ['grouped', 'isolated'], true)) {
+			$decisionKind = 'isolated';
+		}
+		$rows[] = [
+			'source' => $source,
+			'decision' => $decisionKind,
+			'group_id' => trim((string) ($decision['group_id'] ?? '')),
+			'group_label' => trim((string) ($decision['group_label'] ?? '')),
+			'reason' => trim((string) ($decision['reason'] ?? '')),
+			'object_size_bytes' => max(0, (int) ($decision['object_size_bytes'] ?? 0)),
+		];
+	}
+	usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left['source'] ?? ''), (string) ($right['source'] ?? '')));
+	return $rows;
 }
 
 /** @param list<array<string,mixed>> $groups @return list<array{id:string,name:string,sources:list<string>}> */
@@ -10031,12 +10362,39 @@ function render_build_grouping_lines(array $report, bool $includeGroups = false)
 			. ', assigned sources ' . (int) ($report['manual_assigned_source_count'] ?? 0)
 			. ', unassigned root sources ' . (int) ($report['manual_unassigned_source_count'] ?? 0);
 	}
+	if ($policy === 'auto') {
+		$autoEvidence = is_array($report['auto_evidence'] ?? null) ? $report['auto_evidence'] : [];
+		$selectedPolicy = trim((string) ($autoEvidence['selected_policy'] ?? 'incremental'));
+		$evidenceSource = trim((string) ($autoEvidence['source'] ?? 'none'));
+		$lines[] = 'Build grouping auto: selected ' . ($selectedPolicy !== '' ? $selectedPolicy : 'incremental')
+			. ', evidence ' . ($evidenceSource !== '' ? $evidenceSource : 'none')
+			. ', prior Ninja ' . (int) ($autoEvidence['prior_ninja_subprocess_ms'] ?? 0) . ' ms'
+			. ', prior generated fanout ' . (int) ($autoEvidence['prior_rebuilt_generated_object_count'] ?? 0);
+	}
 	if (!$includeGroups) {
 		return $lines;
 	}
 	$notes = normalize_string_list($report['notes'] ?? []);
 	foreach ($notes as $note) {
 		$lines[] = 'Build grouping note: ' . $note;
+	}
+	if ($policy === 'auto') {
+		$reasons = normalize_string_list($report['auto_evidence']['reasons'] ?? []);
+		foreach ($reasons as $reason) {
+			$lines[] = 'Build grouping auto reason: ' . $reason;
+		}
+		$decisions = normalize_auto_build_grouping_source_decisions(is_array($report['auto_source_decisions'] ?? null) ? $report['auto_source_decisions'] : []);
+		if ($decisions !== []) {
+			$lines[] = 'Build grouping auto decisions:';
+			foreach ($decisions as $decision) {
+				$groupId = trim((string) ($decision['group_id'] ?? ''));
+				$reason = trim((string) ($decision['reason'] ?? ''));
+				$lines[] = '  - ' . (string) ($decision['source'] ?? '')
+					. ': ' . (string) ($decision['decision'] ?? 'isolated')
+					. ($groupId !== '' ? ' ' . $groupId : '')
+					. ($reason !== '' ? ' (' . $reason . ')' : '');
+			}
+		}
 	}
 	$groups = is_array($report['groups'] ?? null) ? $report['groups'] : [];
 	if ($groups === []) {

@@ -227,6 +227,7 @@ Compiler selection:
 - `--force` forces a runtime rebuild for the current build, even if the reusable artifact already exists
 - `scpp update` and `scpp runtime-build` are the commands that refresh the shared reusable runtime cache
 - `build.grouping_compile = true` can opt into grouped generated object edges for manual groups, or for release-mode `folder`/`package`/`release`/`auto` grouping while keeping debug builds per-source by default
+- `build.grouping_policy = "auto"` records deterministic prior-build evidence and source-level grouped/isolated reasons in `scpp explain-build grouping`
 - `scpp docs <name>` prints curated local Markdown documentation by short name
 
 ## 4. Single-file transpile remains available

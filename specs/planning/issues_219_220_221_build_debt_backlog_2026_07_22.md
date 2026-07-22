@@ -58,6 +58,12 @@ group root generated sources according to their deterministic grouping key while
 keeping entrypoints, native C++ units, dependency sources, and singleton groups
 per-source.
 
+The #220 auto grouping slice records deterministic prior-build evidence from
+`.prism/last_run.json`, selects an auto policy from saved timing and generated
+object fanout, and stores per-source grouped/isolated reasons. Auto grouping
+also isolates entrypoints, sources whose generated artifacts changed, previous
+objects of at least 8 MiB, and singleton would-be groups.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -80,7 +86,8 @@ per-source.
   generated object edges so far.
 - `manual` grouping maps do not group native C++ units, dependency project
   units, unassigned sources, or singleton generated groups yet.
-- `auto` is a simple policy choice, not a measured cost model.
+- `auto` now uses saved local evidence, but it is still a simple deterministic
+  heuristic rather than a calibrated measured cost model.
 - Release/O3 grouping is generated-source only; native units, entrypoints,
   dependencies, singleton groups, and measured hot-file isolation are still not
   implemented.
@@ -157,6 +164,7 @@ per-source.
    - Compare cold build, hot edit, and link-time behavior against isolated mode.
 
 7. `BLD-220-AUTO-1`: Make `auto` evidence-based.
+   - Status: implemented with deterministic prior-build heuristics.
    - Use prior build timing, object size, fanout, and volatility.
    - Store why a file/group was isolated or grouped.
    - Keep the policy deterministic for a given saved history.

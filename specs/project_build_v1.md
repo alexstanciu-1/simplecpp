@@ -197,6 +197,17 @@ sources, and native C++ sources as per-source object edges. This keeps debug
 isolation as the default while allowing explicit release/O3 unity-style
 generated objects.
 
+When `build.grouping_policy` is `auto`, the build records deterministic
+auto-grouping evidence in the grouping report. Debug auto builds select
+per-source `incremental` grouping. Release auto builds read the previous
+`.prism/last_run.json` when available: no prior evidence starts with `folder`,
+narrow prior generated-object fanout preserves `folder` granularity, large
+release evidence selects `release`, and moderate evidence selects `package`.
+Auto source decisions then isolate entrypoints, sources whose previous object
+generated artifacts changed, sources whose previous object is at least 8 MiB,
+and singleton would-be groups. The report stores the selected policy, evidence
+source, prior timing/fanout values, and the per-source grouped/isolated reason.
+
 Project-local compile-time modules may be declared with `project_modules`.
 These are distinct from `runtime.modules` and describe build/report boundaries
 inside one project:
@@ -504,7 +515,9 @@ strategy `manual_grouped_generated_objects`; release-mode
 folder/package/release/auto grouped edges use
 `release_grouped_generated_objects`. For manual grouping, the report also stores
 configured manual groups, assigned source count, unassigned root source count,
-and unassigned root source names.
+and unassigned root source names. For auto grouping, the report also stores
+`auto_evidence` and `auto_source_decisions`, and the focused `grouping` view
+renders the selected auto policy plus source-level grouping/isolation reasons.
 
 Saved build details also include `details.build_explanation.project_modules`.
 When `project_modules` is configured, each module row stores source membership,
