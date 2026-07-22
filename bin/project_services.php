@@ -712,7 +712,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|project-units|project-unit <source>|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|grouping|project-units|project-unit <source>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -2928,6 +2928,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if (!is_array($rootContext)) {
 		scpp_fail('Internal error: missing root project build context.' . PHP_EOL, 4);
 	}
+	$buildGroupingPolicy = resolve_build_grouping_policy(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config, $buildMode);
 	$generatedDir = $rootContext['generated_dir'];
 	$cacheDir = $rootContext['cache_dir'];
 	$fastcgiBuild = $fastcgiConfig['enabled'] ? resolve_fastcgi_build_spec($projectRoot, $repoRoot, $buildDir, $generatedDir, $entrypointAbs, $compiler, $fastcgiConfig) : null;
@@ -3212,6 +3213,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
 	echo 'Using compiler: ' . compiler_display_command($compiler) . ' (' . $compiler['kind'] . ')' . PHP_EOL;
 	echo 'Using build mode: ' . $buildMode . PHP_EOL;
+	echo 'Using build grouping policy: ' . (string) ($buildGroupingPolicy['policy'] ?? 'incremental') . ' (' . (string) ($buildGroupingPolicy['status'] ?? 'report_only') . ')' . PHP_EOL;
 	echo 'Using repo root: ' . normalize_path($repoRoot) . PHP_EOL;
 	echo 'Resolved project dependency graph: ' . count($projectGraph) . ' project(s)' . PHP_EOL;
 	echo 'Runtime compilation: ' . ($options['compile_runtime'] ? 'enabled' : 'reuse existing artifact only') . PHP_EOL;
@@ -3236,7 +3238,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$startedAt,
 			$phpProfile,
 			$projectUnitForceIncludeReport,
-			$rootContext
+			$rootContext,
+			collect_build_grouping_report($projectRoot, $buildGroupingPolicy, $generatedUnits, $nativeCppUnits, [])
 		);
 	}
 	if (!$options['compile_dependencies']) {
@@ -3300,6 +3303,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if ($status !== 0) {
 		$diagnostics = collect_compiler_diagnostics($projectRoot, $buildDir, $ninjaStdout, $ninjaStderr, $generatedArtifactOrigins);
 		$finishedAt = microtime(true);
+		$failureBuildGroupingReport = collect_build_grouping_report($projectRoot, $buildGroupingPolicy, $generatedUnits, $nativeCppUnits, []);
 		write_last_run_report(
 			$projectRoot,
 			'build',
@@ -3335,7 +3339,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					$projectUnitForceIncludeReport,
 					[],
 					$buildMode,
-					$rootContext
+					$rootContext,
+					$failureBuildGroupingReport
 				),
 			]
 		);
@@ -3398,6 +3403,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$buildOutputMtimesAfter = capture_file_mtimes($buildOutputs);
 	$rebuiltOutputs = detect_rebuilt_outputs($buildOutputMtimesBefore, $buildOutputMtimesAfter);
 	$rebuildFanout = summarize_build_rebuild_fanout($projectRoot, $generatedUnits, $nativeCppUnits, $runtimeBuild, $rebuiltOutputs, $projectUnitPackChanges);
+	$buildGroupingReport = collect_build_grouping_report($projectRoot, $buildGroupingPolicy, $generatedUnits, $nativeCppUnits, $rebuildFanout);
 	if ($rebuiltOutputs !== []) {
 		echo 'Rebuilt outputs: ' . implode(', ', array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)) . PHP_EOL;
 	} else {
@@ -3456,7 +3462,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$projectUnitForceIncludeReport,
 				$rebuildFanout,
 				$buildMode,
-				$rootContext
+				$rootContext,
+				$buildGroupingReport
 			),
 		]
 	);
@@ -3505,7 +3512,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$projectUnitForceIncludeReport,
 			$rebuildFanout,
 			$buildMode,
-			$rootContext
+			$rootContext,
+			$buildGroupingReport
 		),
 	];
 }
@@ -3689,6 +3697,7 @@ function validate_reused_runtime_artifact(
 	string $phpProfile,
 	array $projectUnitForceIncludeReport = [],
 	array $rootContext = [],
+	array $buildGroupingReport = [],
 ): void {
 	$artifactPath = normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
 	$requiredArtifacts = [$artifactPath];
@@ -3756,7 +3765,8 @@ function validate_reused_runtime_artifact(
 				$projectUnitForceIncludeReport,
 				[],
 				$buildMode,
-				$rootContext
+				$rootContext,
+				$buildGroupingReport
 			),
 		]
 	);
@@ -4170,6 +4180,235 @@ function normalize_build_rebuild_fanout(array $fanout): array
 		'changed_project_unit_pack_headers' => normalize_string_list($fanout['changed_project_unit_pack_headers'] ?? []),
 		'removed_project_unit_pack_headers' => normalize_string_list($fanout['removed_project_unit_pack_headers'] ?? []),
 		'ninja_no_work' => (bool) ($fanout['ninja_no_work'] ?? false),
+	];
+}
+
+/** @return array<string,mixed> */
+function resolve_build_grouping_policy(array $config, string $buildMode): array
+{
+	$build = is_array($config['build'] ?? null) ? $config['build'] : [];
+	$rawPolicy = $build['grouping_policy'] ?? null;
+	$source = 'implicit ' . normalize_build_mode_name($buildMode, 'build grouping mode') . ' default';
+	if ($rawPolicy === null) {
+		$policy = normalize_build_mode_name($buildMode, 'build grouping mode') === 'release' ? 'release' : 'incremental';
+	} elseif (is_string($rawPolicy)) {
+		$policy = strtolower(trim($rawPolicy));
+		$source = 'build.grouping_policy';
+	} else {
+		scpp_fail('Invalid build.grouping_policy in ' . SCPP_PROJECT_CONFIG . ': expected a string.' . PHP_EOL, 2);
+	}
+
+	$allowed = ['incremental', 'isolated', 'package', 'folder', 'manual', 'release', 'auto', 'none'];
+	if (!in_array($policy, $allowed, true)) {
+		scpp_fail('Invalid build.grouping_policy `' . $policy . '` in ' . SCPP_PROJECT_CONFIG . '. Use one of: ' . implode(', ', $allowed) . '.' . PHP_EOL, 2);
+	}
+
+	$notes = [
+		'current compile graph still emits one generated/native object per source',
+		'policy membership is deterministic and report-only until grouped compile edges are enabled',
+	];
+	if ($policy === 'manual') {
+		$notes[] = 'manual group maps are not implemented yet; sources are reported as isolated groups';
+	}
+
+	return [
+		'policy' => $policy,
+		'source' => $source,
+		'status' => 'report_only',
+		'build_mode' => normalize_build_mode_name($buildMode, 'build grouping mode'),
+		'compile_unit_strategy' => 'per_source_objects',
+		'native_strategy' => 'per_source_objects_with_project_unit_broad_fallback',
+		'deterministic' => true,
+		'allowed_policies' => $allowed,
+		'notes' => $notes,
+	];
+}
+
+/**
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @param list<array{project_root:string,source_path:string,object_path:string,force_include_header:?string}> $nativeCppUnits
+ * @return array<string,mixed>
+ */
+function collect_build_grouping_report(string $projectRoot, array $policy, array $generatedUnits, array $nativeCppUnits, array $rebuildFanout = []): array
+{
+	$policy = normalize_build_grouping_report($policy);
+	$fanout = normalize_build_rebuild_fanout($rebuildFanout);
+	$rebuiltObjects = [];
+	foreach (array_merge($fanout['rebuilt_generated_objects'], $fanout['rebuilt_native_objects']) as $objectPath) {
+		$rebuiltObjects[normalize_config_path((string) $objectPath)] = true;
+	}
+
+	$groups = [];
+	$addUnit = static function (string $kind, string $unitProjectRoot, string $relativeSource, string $objectPath) use (&$groups, $projectRoot, $policy, $rebuiltObjects): void {
+		$projectLabel = project_context_report_label($projectRoot, $unitProjectRoot);
+		$group = build_grouping_group_key((string) ($policy['policy'] ?? 'incremental'), (string) ($policy['build_mode'] ?? 'debug'), $kind, $projectLabel, $relativeSource);
+		$objectLabel = normalize_config_path(relative_path($projectRoot, normalize_path($objectPath)));
+		if (!isset($groups[$group['id']])) {
+			$groups[$group['id']] = [
+				'id' => $group['id'],
+				'label' => $group['label'],
+				'kind' => $group['kind'],
+				'project_root' => $projectLabel,
+				'generated_sources' => [],
+				'native_sources' => [],
+				'objects' => [],
+				'rebuilt_objects' => [],
+				'changed' => false,
+			];
+		}
+		if ($kind === 'generated') {
+			$groups[$group['id']]['generated_sources'][] = normalize_config_path($relativeSource);
+		} else {
+			$groups[$group['id']]['native_sources'][] = normalize_config_path($relativeSource);
+		}
+		if ($objectLabel !== '') {
+			$groups[$group['id']]['objects'][] = $objectLabel;
+			if (isset($rebuiltObjects[$objectLabel])) {
+				$groups[$group['id']]['rebuilt_objects'][] = $objectLabel;
+				$groups[$group['id']]['changed'] = true;
+			}
+		}
+	};
+
+	foreach ($generatedUnits as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$relativeSource = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+		if ($unitProjectRoot === '' || $relativeSource === '' || $objectPath === '') {
+			continue;
+		}
+		$addUnit('generated', $unitProjectRoot, $relativeSource, $objectPath);
+	}
+	foreach ($nativeCppUnits as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$sourcePath = normalize_path((string) ($unit['source_path'] ?? ''));
+		$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+		if ($unitProjectRoot === '' || $sourcePath === '' || $objectPath === '') {
+			continue;
+		}
+		$addUnit('native', $unitProjectRoot, normalize_config_path(relative_path($unitProjectRoot, $sourcePath)), $objectPath);
+	}
+
+	$groupRows = [];
+	$changedGroups = [];
+	foreach ($groups as $group) {
+		$group['generated_sources'] = normalize_string_list($group['generated_sources'] ?? []);
+		$group['native_sources'] = normalize_string_list($group['native_sources'] ?? []);
+		$group['objects'] = normalize_string_list($group['objects'] ?? []);
+		$group['rebuilt_objects'] = normalize_string_list($group['rebuilt_objects'] ?? []);
+		$group['object_count'] = count($group['objects']);
+		$group['rebuilt_object_count'] = count($group['rebuilt_objects']);
+		$group['generated_source_count'] = count($group['generated_sources']);
+		$group['native_source_count'] = count($group['native_sources']);
+		if ((bool) ($group['changed'] ?? false)) {
+			$changedGroups[] = (string) ($group['id'] ?? '');
+		}
+		$groupRows[] = $group;
+	}
+	usort($groupRows, static fn (array $left, array $right): int => strcmp((string) ($left['id'] ?? ''), (string) ($right['id'] ?? '')));
+	sort($changedGroups, SORT_STRING);
+
+	$policy['groups'] = $groupRows;
+	$policy['total_groups'] = count($groupRows);
+	$policy['changed_groups'] = array_values(array_unique(array_filter($changedGroups, static fn (string $value): bool => $value !== '')));
+	$policy['changed_group_count'] = count($policy['changed_groups']);
+	$policy['object_fanout'] = [
+		'rebuilt_object_count' => (int) ($fanout['rebuilt_object_count'] ?? 0),
+		'rebuilt_generated_object_count' => (int) ($fanout['rebuilt_generated_object_count'] ?? 0),
+		'rebuilt_native_object_count' => (int) ($fanout['rebuilt_native_object_count'] ?? 0),
+	];
+	return normalize_build_grouping_report($policy);
+}
+
+/** @return array{id:string,label:string,kind:string} */
+function build_grouping_group_key(string $policy, string $buildMode, string $kind, string $projectLabel, string $relativeSource): array
+{
+	$shape = $policy;
+	if ($policy === 'auto') {
+		$shape = $buildMode === 'release' ? 'release' : 'incremental';
+	} elseif ($policy === 'none' || $policy === 'isolated' || $policy === 'manual') {
+		$shape = 'incremental';
+	}
+
+	$projectKey = $projectLabel === '.' ? 'root' : $projectLabel;
+	if ($shape === 'release') {
+		return [
+			'id' => 'release:' . $projectKey,
+			'label' => $projectLabel,
+			'kind' => 'release_project',
+		];
+	}
+	if ($shape === 'folder') {
+		$folder = dirname($relativeSource);
+		$folder = $folder === '.' ? '.' : normalize_config_path($folder);
+		return [
+			'id' => 'folder:' . $projectKey . ':' . $folder,
+			'label' => $folder,
+			'kind' => 'folder',
+		];
+	}
+	if ($shape === 'package') {
+		$parts = explode('/', normalize_config_path($relativeSource));
+		$package = count($parts) > 1 ? (string) $parts[0] : '.';
+		return [
+			'id' => 'package:' . $projectKey . ':' . $package,
+			'label' => $package,
+			'kind' => 'package',
+		];
+	}
+
+	return [
+		'id' => 'source:' . $projectKey . ':' . $kind . ':' . normalize_config_path($relativeSource),
+		'label' => normalize_config_path($relativeSource),
+		'kind' => $kind . '_source',
+	];
+}
+
+/** @return array<string,mixed> */
+function normalize_build_grouping_report(array $report): array
+{
+	$groups = [];
+	foreach (is_array($report['groups'] ?? null) ? $report['groups'] : [] as $group) {
+		if (!is_array($group)) {
+			continue;
+		}
+		$groups[] = [
+			'id' => trim((string) ($group['id'] ?? '')),
+			'label' => trim((string) ($group['label'] ?? '')),
+			'kind' => trim((string) ($group['kind'] ?? '')),
+			'project_root' => trim((string) ($group['project_root'] ?? '.')),
+			'generated_sources' => normalize_string_list($group['generated_sources'] ?? []),
+			'native_sources' => normalize_string_list($group['native_sources'] ?? []),
+			'objects' => normalize_string_list($group['objects'] ?? []),
+			'rebuilt_objects' => normalize_string_list($group['rebuilt_objects'] ?? []),
+			'object_count' => max(0, (int) ($group['object_count'] ?? count(is_array($group['objects'] ?? null) ? $group['objects'] : []))),
+			'rebuilt_object_count' => max(0, (int) ($group['rebuilt_object_count'] ?? count(is_array($group['rebuilt_objects'] ?? null) ? $group['rebuilt_objects'] : []))),
+			'generated_source_count' => max(0, (int) ($group['generated_source_count'] ?? count(is_array($group['generated_sources'] ?? null) ? $group['generated_sources'] : []))),
+			'native_source_count' => max(0, (int) ($group['native_source_count'] ?? count(is_array($group['native_sources'] ?? null) ? $group['native_sources'] : []))),
+			'changed' => (bool) ($group['changed'] ?? false),
+		];
+	}
+	usort($groups, static fn (array $left, array $right): int => strcmp((string) ($left['id'] ?? ''), (string) ($right['id'] ?? '')));
+	$fanout = is_array($report['object_fanout'] ?? null) ? $report['object_fanout'] : [];
+	return [
+		'policy' => trim((string) ($report['policy'] ?? '')),
+		'source' => trim((string) ($report['source'] ?? '')),
+		'status' => trim((string) ($report['status'] ?? '')),
+		'build_mode' => trim((string) ($report['build_mode'] ?? '')),
+		'compile_unit_strategy' => trim((string) ($report['compile_unit_strategy'] ?? '')),
+		'native_strategy' => trim((string) ($report['native_strategy'] ?? '')),
+		'deterministic' => (bool) ($report['deterministic'] ?? false),
+		'allowed_policies' => normalize_string_list($report['allowed_policies'] ?? []),
+		'notes' => normalize_string_list($report['notes'] ?? []),
+		'total_groups' => max(0, (int) ($report['total_groups'] ?? count($groups))),
+		'changed_group_count' => max(0, (int) ($report['changed_group_count'] ?? 0)),
+		'changed_groups' => normalize_string_list($report['changed_groups'] ?? []),
+		'object_fanout' => [
+			'rebuilt_object_count' => max(0, (int) ($fanout['rebuilt_object_count'] ?? 0)),
+			'rebuilt_generated_object_count' => max(0, (int) ($fanout['rebuilt_generated_object_count'] ?? 0)),
+			'rebuilt_native_object_count' => max(0, (int) ($fanout['rebuilt_native_object_count'] ?? 0)),
+		],
+		'groups' => $groups,
 	];
 }
 
@@ -5154,6 +5393,12 @@ function write_project_unit_dependency_summary_artifact(string $projectRoot, arr
 		'used_stan_dependency_state' => (bool) ($freshness['used_stan_dependency_state'] ?? false),
 		'source_overrides_active' => (bool) ($freshness['source_overrides_active'] ?? false),
 	]);
+}
+
+function project_context_report_label(string $projectRoot, string $contextProjectRoot): string
+{
+	$label = normalize_config_path(relative_path(normalize_path($projectRoot), normalize_path($contextProjectRoot)));
+	return $label === '' ? '.' : $label;
 }
 
 /**
@@ -7155,6 +7400,7 @@ function build_explanation_details(
 	array $rebuildFanout = [],
 	?string $buildMode = null,
 	array $rootContext = [],
+	array $buildGroupingReport = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -7184,6 +7430,7 @@ function build_explanation_details(
 			'generated_dir' => is_string($rootContext['generated_dir'] ?? null) ? normalize_config_path(relative_path($projectRoot, (string) $rootContext['generated_dir'])) : null,
 			'cache_dir' => is_string($rootContext['cache_dir'] ?? null) ? normalize_config_path(relative_path($projectRoot, (string) $rootContext['cache_dir'])) : null,
 		],
+		'build_grouping' => normalize_build_grouping_report($buildGroupingReport),
 		'transpiled_count' => $transpiledCount,
 		'skipped_count' => $skippedCount,
 		'output_path' => $outputPath !== null ? normalize_config_path(relative_path($projectRoot, $outputPath)) : null,
@@ -7377,6 +7624,12 @@ function render_build_explanation_lines(array $details): array
 			. ', generated ' . ($generatedDir !== '' ? $generatedDir : 'unknown')
 			. ', cache ' . ($cacheDir !== '' ? $cacheDir : 'unknown');
 	}
+	$buildGrouping = normalize_build_grouping_report(is_array($details['build_grouping'] ?? null) ? $details['build_grouping'] : []);
+	if ((string) ($buildGrouping['policy'] ?? '') !== '') {
+		foreach (render_build_grouping_lines($buildGrouping, false) as $line) {
+			$lines[] = $line;
+		}
+	}
 	$lines[] = 'PHP transpile decisions: ' . (int) ($details['transpiled_count'] ?? 0) . ' transpiled, ' . (int) ($details['skipped_count'] ?? 0) . ' reused';
 
 	$runtime = is_array($details['runtime'] ?? null) ? $details['runtime'] : [];
@@ -7468,6 +7721,68 @@ function render_build_rebuild_fanout_lines(array $fanout): array
 		$values = normalize_string_list($fanout[$key] ?? []);
 		if ($values !== []) {
 			$lines[] = '  ' . $label . ': ' . implode(', ', $values);
+		}
+	}
+	return $lines;
+}
+
+/**
+ * @param array<string,mixed> $report
+ * @return list<string>
+ */
+function render_build_grouping_lines(array $report, bool $includeGroups = false): array
+{
+	$report = normalize_build_grouping_report($report);
+	$policy = trim((string) ($report['policy'] ?? ''));
+	if ($policy === '') {
+		return ['Build grouping: unavailable'];
+	}
+	$status = str_replace('_', '-', trim((string) ($report['status'] ?? 'report_only')));
+	$source = trim((string) ($report['source'] ?? ''));
+	$strategy = trim((string) ($report['compile_unit_strategy'] ?? ''));
+	$lines = [
+		'Build grouping: ' . $policy
+			. ($source !== '' ? ' (' . $source . ', ' . $status . ')' : ' (' . $status . ')')
+			. ($strategy !== '' ? ', compile units ' . str_replace('_', '-', $strategy) : ''),
+	];
+	$fanout = is_array($report['object_fanout'] ?? null) ? $report['object_fanout'] : [];
+	$lines[] = 'Build grouping fanout: groups ' . (int) ($report['total_groups'] ?? 0)
+		. ', changed ' . (int) ($report['changed_group_count'] ?? 0)
+		. ', rebuilt objects ' . (int) ($fanout['rebuilt_object_count'] ?? 0)
+		. ' (generated ' . (int) ($fanout['rebuilt_generated_object_count'] ?? 0)
+		. ', native ' . (int) ($fanout['rebuilt_native_object_count'] ?? 0) . ')';
+	if (!$includeGroups) {
+		return $lines;
+	}
+	$notes = normalize_string_list($report['notes'] ?? []);
+	foreach ($notes as $note) {
+		$lines[] = 'Build grouping note: ' . $note;
+	}
+	$groups = is_array($report['groups'] ?? null) ? $report['groups'] : [];
+	if ($groups === []) {
+		$lines[] = 'Build groups: none';
+		return $lines;
+	}
+	$lines[] = 'Build groups:';
+	foreach ($groups as $group) {
+		if (!is_array($group)) {
+			continue;
+		}
+		$id = trim((string) ($group['id'] ?? ''));
+		$label = trim((string) ($group['label'] ?? ''));
+		$lines[] = '  - ' . ($id !== '' ? $id : ($label !== '' ? $label : '(unknown)'))
+			. ': generated ' . (int) ($group['generated_source_count'] ?? 0)
+			. ', native ' . (int) ($group['native_source_count'] ?? 0)
+			. ', objects ' . (int) ($group['object_count'] ?? 0)
+			. ', rebuilt ' . (int) ($group['rebuilt_object_count'] ?? 0)
+			. ', changed ' . (((bool) ($group['changed'] ?? false)) ? 'yes' : 'no');
+		$sources = array_merge(normalize_string_list($group['generated_sources'] ?? []), normalize_string_list($group['native_sources'] ?? []));
+		if ($sources !== []) {
+			$lines[] = '    sources: ' . implode(', ', $sources);
+		}
+		$objects = normalize_string_list($group['objects'] ?? []);
+		if ($objects !== []) {
+			$lines[] = '    objects: ' . implode(', ', $objects);
 		}
 	}
 	return $lines;
@@ -7865,6 +8180,10 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 		return render_build_rebuild_fanout_lines(is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : []);
 	}
 
+	if ($view === 'grouping') {
+		return render_build_grouping_lines(is_array($details['build_grouping'] ?? null) ? $details['build_grouping'] : [], true);
+	}
+
 	if ($view === 'project-units') {
 		return render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], true, null, true);
 	}
@@ -7930,7 +8249,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, project-units, project-unit <source>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, grouping, project-units, project-unit <source>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }

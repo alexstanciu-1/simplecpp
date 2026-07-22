@@ -45,6 +45,7 @@ final class ScppExplainBuildTest
 					'backend' => 'ninja',
 					'cxx' => null,
 					'mode' => 'debug',
+					'grouping_policy' => 'incremental',
 				],
 				'runtime' => [
 					'languages' => ['php'],
@@ -84,6 +85,26 @@ final class ScppExplainBuildTest
 			$this->assertSame('success', $explanation['status'] ?? null, 'build explanation should record success');
 			$this->assertSame('reuse', $explanation['runtime']['action'] ?? null, 'warm build should report runtime reuse');
 			$this->assertSame(['reusing existing runtime artifact by default'], $explanation['runtime']['reasons'] ?? null, 'warm build should preserve runtime reuse reason');
+			$buildGrouping = is_array($explanation['build_grouping'] ?? null) ? $explanation['build_grouping'] : null;
+			if (!is_array($buildGrouping)) {
+				throw new RuntimeException('build explanation should contain build grouping details');
+			}
+			$this->assertBuildGroupingReportShape($buildGrouping, 'warm build grouping report');
+			$this->assertSame('incremental', $buildGrouping['policy'] ?? null, 'warm build grouping report should preserve the configured policy');
+			$this->assertSame('build.grouping_policy', $buildGrouping['source'] ?? null, 'warm build grouping report should identify the config source');
+			$this->assertSame('report_only', $buildGrouping['status'] ?? null, 'warm build grouping report should be explicit about current report-only status');
+			$this->assertSame(4, $buildGrouping['total_groups'] ?? null, 'incremental grouping should isolate each generated/native source as its own group');
+			$this->assertSame(0, $buildGrouping['changed_group_count'] ?? null, 'warm build grouping should record no changed groups');
+			$buildGroupingFanout = is_array($buildGrouping['object_fanout'] ?? null) ? $buildGrouping['object_fanout'] : [];
+			$this->assertSame(0, $buildGroupingFanout['rebuilt_object_count'] ?? null, 'warm build grouping should mirror no object fanout');
+			$groupIds = [];
+			foreach (is_array($buildGrouping['groups'] ?? null) ? $buildGrouping['groups'] : [] as $group) {
+				if (is_array($group) && is_string($group['id'] ?? null)) {
+					$groupIds[] = $group['id'];
+				}
+			}
+			$this->assertContains('source:root:generated:child.phs', implode("\n", $groupIds), 'warm build grouping should include an isolated child source group');
+			$this->assertContains('source:root:native:native_cpp/policy_probe.cpp', implode("\n", $groupIds), 'warm build grouping should include an isolated native source group');
 			$projectUnits = is_array($explanation['project_unit_force_includes'] ?? null) ? $explanation['project_unit_force_includes'] : null;
 			if (!is_array($projectUnits)) {
 				throw new RuntimeException('build explanation should contain project unit force-include details');
@@ -237,6 +258,14 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $fanoutView['exit_code'], 'scpp explain-build rebuild-fanout should succeed');
 			$this->assertContains('Rebuild fanout: outputs 0, objects 0 (generated 0, native 0, runtime 0), project-unit packs changed 0, removed 0, Ninja no-work yes', $fanoutView['stdout'], 'rebuild-fanout should report warm no-work fanout');
 
+			$groupingView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'grouping'], [], 20.0);
+			$this->assertSame(0, $groupingView['exit_code'], 'scpp explain-build grouping should succeed');
+			$this->assertContains('Build grouping: incremental (build.grouping_policy, report-only)', $groupingView['stdout'], 'grouping view should show the configured policy and report-only status');
+			$this->assertContains('Build grouping fanout: groups 4, changed 0, rebuilt objects 0 (generated 0, native 0)', $groupingView['stdout'], 'grouping view should summarize group/object fanout');
+			$this->assertContains('Build groups:', $groupingView['stdout'], 'grouping view should list deterministic groups');
+			$this->assertContains('source:root:generated:child.phs', $groupingView['stdout'], 'grouping view should list the child source group');
+			$this->assertContains('source:root:native:native_cpp/policy_probe.cpp', $groupingView['stdout'], 'grouping view should list the native source group');
+
 			$projectUnitsView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-units'], [], 20.0);
 			$this->assertSame(0, $projectUnitsView['exit_code'], 'scpp explain-build project-units should succeed');
 			$this->assertContains('Project unit force-includes: 4/4 unit(s), 3 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
@@ -268,6 +297,7 @@ final class ScppExplainBuildTest
 			$missingProjectUnitView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-unit', 'missing.phs'], [], 20.0);
 			$this->assertSame(0, $missingProjectUnitView['exit_code'], 'scpp explain-build project-unit missing.phs should still produce a focused report');
 			$this->assertContains('Dependency summary for missing.phs: not found', $missingProjectUnitView['stdout'], 'project-unit should clearly report a missing requested source');
+
 
 			$entrypointView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'entrypoint'], [], 20.0);
 			$this->assertSame(0, $entrypointView['exit_code'], 'scpp explain-build entrypoint should succeed');
@@ -551,6 +581,53 @@ final class ScppExplainBuildTest
 	{
 		if (str_contains($haystack, $needle)) {
 			throw new RuntimeException($message . ' contained `' . $needle . '`');
+		}
+	}
+
+	private function assertBuildGroupingReportShape(array $buildGrouping, string $context): void
+	{
+		$this->assertKeys([
+			'allowed_policies',
+			'build_mode',
+			'changed_group_count',
+			'changed_groups',
+			'compile_unit_strategy',
+			'deterministic',
+			'groups',
+			'native_strategy',
+			'notes',
+			'object_fanout',
+			'policy',
+			'source',
+			'status',
+			'total_groups',
+		], $buildGrouping, $context . ' top-level keys');
+
+		$objectFanout = is_array($buildGrouping['object_fanout'] ?? null) ? $buildGrouping['object_fanout'] : null;
+		if (!is_array($objectFanout)) {
+			throw new RuntimeException($context . ' object_fanout should be an object');
+		}
+		$this->assertKeys(['rebuilt_generated_object_count', 'rebuilt_native_object_count', 'rebuilt_object_count'], $objectFanout, $context . ' object_fanout keys');
+
+		foreach (is_array($buildGrouping['groups'] ?? null) ? $buildGrouping['groups'] : [] as $group) {
+			if (!is_array($group)) {
+				throw new RuntimeException($context . ' group row should be an object');
+			}
+			$this->assertKeys([
+				'changed',
+				'generated_source_count',
+				'generated_sources',
+				'id',
+				'kind',
+				'label',
+				'native_source_count',
+				'native_sources',
+				'object_count',
+				'objects',
+				'project_root',
+				'rebuilt_object_count',
+				'rebuilt_objects',
+			], $group, $context . ' group row keys');
 		}
 	}
 

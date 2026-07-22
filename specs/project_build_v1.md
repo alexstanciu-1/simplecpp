@@ -150,6 +150,14 @@ mode-separated roots under `.prism/build/<mode>`, `.prism/generated/<mode>`,
 and `.prism/cache/<mode>`. Existing projects without `--mode` keep the current
 top-level default behavior.
 
+Projects may also set `build.grouping_policy` to one of `incremental`,
+`isolated`, `package`, `folder`, `manual`, `release`, `auto`, or `none`.
+Current v1 builds record the selected deterministic grouping policy and group
+membership in build reports, while the actual Ninja graph still compiles one
+generated/native object per source. This makes debug/incremental isolation and
+future release grouping decisions visible without changing compile edges before
+the dependency model can enforce them.
+
 ## `scpp init` behavior
 
 `scpp init` creates:
@@ -341,6 +349,8 @@ The initial registry includes:
 - which outputs changed in the most recent saved build
 - rebuild fanout for the most recent saved build, including changed objects,
   changed/removed project-unit packs, and Ninja no-work status
+- the active build grouping policy, deterministic group membership, changed
+  groups, and object fanout
 - which generated project unit force-include headers were assigned, including
   unit counts, header size, pack-change counts, and report-only per-source
   dependency summaries
@@ -351,6 +361,7 @@ The initial registry includes:
 - `scpp explain-build files-reused`
 - `scpp explain-build outputs-rebuilt`
 - `scpp explain-build rebuild-fanout`
+- `scpp explain-build grouping`
 - `scpp explain-build project-units`
 - `scpp explain-build project-unit <source>`
 - `scpp explain-build entrypoint`
@@ -368,6 +379,15 @@ changed and removed project-unit pack headers, and whether Ninja observed a
 no-work build. The same normalized fanout is stored under
 `details.build_explanation.rebuild_fanout` so `scpp explain-build
 rebuild-fanout` can report it without recomputing mtimes or build ownership.
+
+Saved successful and failed build details include
+`details.build_explanation.build_grouping`. The grouping report stores the
+active policy, policy source, report-only status, current compile-unit strategy,
+deterministic group rows, changed groups, and object fanout. The focused
+`grouping` view renders this data, including group membership. In current v1,
+grouping policy selection does not change the Ninja compile graph; it exposes
+the planned grouping boundary and measured fanout for incremental and release
+workflow tuning.
 
 The `project-units` view reports the current project unit force-include fanout
 and per-source dependency summaries. These summaries may use STAN's stored

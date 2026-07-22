@@ -400,6 +400,7 @@ Use each tool for the question it answers:
   `scpp explain-build files-reused`,
   `scpp explain-build outputs-rebuilt`,
   `scpp explain-build rebuild-fanout`,
+  `scpp explain-build grouping`,
   `scpp explain-build project-units` for force-include and dependency-summary diagnostics,
   `scpp explain-build project-unit <source>` for one source's project-unit dependency row,
   `scpp explain-build entrypoint`,
