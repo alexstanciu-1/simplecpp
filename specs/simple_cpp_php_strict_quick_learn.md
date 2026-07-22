@@ -411,6 +411,12 @@ Use each tool for the question it answers:
   `scpp explain-build final-output`,
   `scpp explain-build generated-files`,
   `scpp explain-build ninja-target`
+- `scpp build-benchmark --no-stan`: write
+  `.prism/build_invalidation_benchmark.json` from an isolated copied work tree;
+  pass `--build-runtime` when the copied benchmark project must seed a runtime
+  artifact; add explicit `--private-source`, `--public-source`,
+  `--coordinator-source`, and `--release-source` selectors when you want
+  edit-scenario measurements
 - `dbg(...)`: inspect runtime shape and typed-boundary inputs
 - `.line.tsv`: remap generated locations back to source when the saved report still points into generated artifacts
 - generated C++: inspect lowering only after the source-level diagnostic suggests a generator/runtime-boundary problem
@@ -418,6 +424,7 @@ Use each tool for the question it answers:
 Keep build-debug and runtime-debug separate:
 
 - use `scpp explain-build` and `last-run` when the problem is rebuild causality, entrypoint selection, or build orchestration
+- use `scpp build-benchmark` when the problem is repeatable build invalidation measurement across warm, private edit, public edit, coordinator edit, and release hot-edit scenarios
 - use `scpp error`, `scpp full-error`, `dbg(...)`, and typed-boundary inspection when the problem is runtime shape or strict type stabilization
 
 ### When unsure

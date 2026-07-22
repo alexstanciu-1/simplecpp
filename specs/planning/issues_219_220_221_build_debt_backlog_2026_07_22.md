@@ -35,6 +35,13 @@ implementation artifacts, records module cache status and consumer invalidation,
 adds module explain-build views, and wires public module surfaces as generated
 object implicit compile inputs.
 
+The P0 benchmark slice now exposes `scpp build-benchmark`, which writes
+`.prism/build_invalidation_benchmark.json` from an isolated copied work tree and
+measures warm no-change plus explicit private, public, coordinator, and release
+hot-edit scenarios when project-relative selectors are supplied. It mirrors
+normal build behavior by reusing runtime artifacts unless `--build-runtime` is
+passed for the benchmark seed.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -104,6 +111,7 @@ object implicit compile inputs.
    - Keep current fanout inference as fallback.
 
 3. `BLD-X-BENCH-1`: Add a repeatable v2 build invalidation benchmark harness.
+   - Status: implemented.
    - Measure warm no-change, private body edit, public surface edit, broad
      coordinator edit, and release/O3 hot edit.
    - Record transpiled/reused counts, generated writes, object fanout, grouping

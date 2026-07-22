@@ -601,6 +601,11 @@ function main(array $argv): void
 		return;
 	}
 
+	if ($args[0] === 'build-benchmark') {
+		handle_build_benchmark(getcwd() === false ? '.' : getcwd(), array_slice($args, 1));
+		return;
+	}
+
 	if ($args[0] === 'clean') {
 		handle_clean(getcwd() === false ? '.' : getcwd());
 		return;
@@ -694,6 +699,7 @@ function print_help(): void
 	echo "  scpp <input.phs>\n";
 	echo "  scpp init [--php-profile=legacy|strict]\n";
 	echo "  scpp build [--entry=<path>] [--mode=debug|release] [--build-runtime] [--build-dependencies] [--no-stan] [--timings]\n";
+	echo "  scpp build-benchmark [--entry=<path>] [--build-runtime] [--no-stan] [--keep-workdir] [--private-source=<path>] [--public-source=<path>] [--coordinator-source=<path>] [--release-source=<path>]\n";
 	echo "  scpp clean\n";
 	echo "  scpp update [--force]\n";
 	echo "  scpp run [--entry=<path>] [--mode=debug|release] [--build-runtime] [--build-dependencies] [--force] [--no-stan] [--timings] [-- <args...>]\n";
@@ -715,6 +721,7 @@ function print_help(): void
 	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|ninja-explain|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
+	echo "  scpp build-benchmark writes .prism/build_invalidation_benchmark.json from an isolated benchmark work tree\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
 	echo "  scpp update fast-forwards the scpp repository from origin/main and rebuilds the default runtime when it changes\n";
 	echo "  scpp run builds first, then executes the selected output\n";
@@ -2693,6 +2700,25 @@ function handle_build(string $cwd, array $args = []): void
 	execute_build($project['project_root'], $project['config_path'], parse_build_command_arguments($args));
 }
 
+/** @param list<string> $args */
+function handle_build_benchmark(string $cwd, array $args = []): void
+{
+	$project = find_project_config($cwd);
+	if ($project === null) {
+		scpp_fail('No ' . SCPP_PROJECT_CONFIG . ' found in the current directory or any parent directory.' . PHP_EOL . 'Run `scpp init` in the project root first.' . PHP_EOL, 1);
+	}
+
+	$report = run_build_invalidation_benchmark(
+		$project['project_root'],
+		$project['config_path'],
+		parse_build_benchmark_command_arguments($args)
+	);
+	scpp_write(implode(PHP_EOL, render_build_benchmark_summary_lines($report)) . PHP_EOL);
+	if ((int) ($report['failed_scenario_count'] ?? 0) > 0) {
+		scpp_fail('Build benchmark completed with failed scenarios. See .prism/build_invalidation_benchmark.json for details.' . PHP_EOL, 1);
+	}
+}
+
 function handle_runtime_build(string $cwd, array $args = []): void
 {
 	$startedAt = microtime(true);
@@ -3916,6 +3942,658 @@ function parse_build_command_arguments(array $args): array
 		scpp_fail('Unknown option for `scpp build`: ' . $arg . PHP_EOL, 1);
 	}
 	return $options;
+}
+
+/** @param list<string> $args @return array{compile_runtime:bool,disable_stan:bool,show_timings:bool,keep_workdir:bool,entry_override:?string,private_source:?string,public_source:?string,coordinator_source:?string,release_source:?string} */
+function parse_build_benchmark_command_arguments(array $args): array
+{
+	$options = [
+		'compile_runtime' => false,
+		'disable_stan' => false,
+		'show_timings' => false,
+		'keep_workdir' => false,
+		'entry_override' => null,
+		'private_source' => null,
+		'public_source' => null,
+		'coordinator_source' => null,
+		'release_source' => null,
+	];
+	foreach ($args as $arg) {
+		if (str_starts_with($arg, '--entry=')) {
+			$options['entry_override'] = normalize_config_path(substr($arg, strlen('--entry=')));
+			continue;
+		}
+		if (str_starts_with($arg, '--private-source=')) {
+			$options['private_source'] = normalize_build_benchmark_source_selector(substr($arg, strlen('--private-source=')), '--private-source');
+			continue;
+		}
+		if (str_starts_with($arg, '--public-source=')) {
+			$options['public_source'] = normalize_build_benchmark_source_selector(substr($arg, strlen('--public-source=')), '--public-source');
+			continue;
+		}
+		if (str_starts_with($arg, '--coordinator-source=')) {
+			$options['coordinator_source'] = normalize_build_benchmark_source_selector(substr($arg, strlen('--coordinator-source=')), '--coordinator-source');
+			continue;
+		}
+		if (str_starts_with($arg, '--release-source=')) {
+			$options['release_source'] = normalize_build_benchmark_source_selector(substr($arg, strlen('--release-source=')), '--release-source');
+			continue;
+		}
+		if ($arg === '--build-runtime') {
+			$options['compile_runtime'] = true;
+			continue;
+		}
+		if ($arg === '--no-stan') {
+			$options['disable_stan'] = true;
+			continue;
+		}
+		if ($arg === '--timings') {
+			$options['show_timings'] = true;
+			continue;
+		}
+		if ($arg === '--keep-workdir') {
+			$options['keep_workdir'] = true;
+			continue;
+		}
+		scpp_fail('Unknown option for `scpp build-benchmark`: ' . $arg . PHP_EOL, 1);
+	}
+	return $options;
+}
+
+function normalize_build_benchmark_source_selector(string $value, string $label): string
+{
+	$value = trim(str_replace('\\', '/', $value));
+	if ($value === '') {
+		scpp_fail('Empty value for ' . $label . PHP_EOL, 1);
+	}
+	if (is_absolute_path($value)) {
+		scpp_fail($label . ' must be project-relative, not absolute: ' . $value . PHP_EOL, 1);
+	}
+	if (str_contains($value, "\0")) {
+		scpp_fail($label . ' contains an invalid NUL byte.' . PHP_EOL, 1);
+	}
+	return normalize_config_path($value);
+}
+
+/** @param array{compile_runtime:bool,disable_stan:bool,show_timings:bool,keep_workdir:bool,entry_override:?string,private_source:?string,public_source:?string,coordinator_source:?string,release_source:?string} $options @return array<string,mixed> */
+function run_build_invalidation_benchmark(string $projectRoot, string $configPath, array $options): array
+{
+	$startedAt = microtime(true);
+	$projectRoot = normalize_path($projectRoot);
+	$configPath = normalize_path($configPath);
+	$configRelative = normalize_config_path(relative_path($projectRoot, $configPath));
+	$benchmarkId = gmdate('Ymd_His') . '_' . bin2hex(random_bytes(4));
+	$benchmarkRoot = normalize_path($projectRoot . '/.prism/build_benchmarks/' . $benchmarkId);
+	$seedRoot = normalize_path($benchmarkRoot . '/seed');
+	$scenariosRoot = normalize_path($benchmarkRoot . '/scenarios');
+	$reportPath = normalize_path($projectRoot . '/.prism/build_invalidation_benchmark.json');
+
+	$report = [
+		'version' => 1,
+		'kind' => 'build_invalidation_benchmark',
+		'benchmark_id' => $benchmarkId,
+		'status' => 'running',
+		'project_root' => $projectRoot,
+		'config_path' => normalize_config_path(relative_path($projectRoot, $configPath)),
+		'report_path' => normalize_config_path(relative_path($projectRoot, $reportPath)),
+		'work_dir' => normalize_config_path(relative_path($projectRoot, $benchmarkRoot)),
+		'work_dir_retained' => (bool) $options['keep_workdir'],
+		'started_at' => gmdate('c', (int) floor($startedAt)),
+		'options' => [
+			'entry_override' => $options['entry_override'],
+			'compile_runtime' => (bool) $options['compile_runtime'],
+			'disable_stan' => (bool) $options['disable_stan'],
+			'show_timings' => (bool) $options['show_timings'],
+			'selectors' => [
+				'private_source' => $options['private_source'],
+				'public_source' => $options['public_source'],
+				'coordinator_source' => $options['coordinator_source'],
+				'release_source' => $options['release_source'],
+			],
+		],
+		'seed' => null,
+		'scenarios' => [],
+		'measured_scenario_count' => 0,
+		'skipped_scenario_count' => 0,
+		'failed_scenario_count' => 0,
+	];
+
+	ensure_directory($benchmarkRoot);
+	copy_directory_tree_for_build_benchmark($projectRoot, $seedRoot, false);
+	$seedConfigPath = normalize_path($seedRoot . '/' . $configRelative);
+
+	$debugSeedOptions = [
+		'compile_runtime' => (bool) $options['compile_runtime'],
+		'compile_dependencies' => false,
+		'force_runtime_rebuild' => false,
+		'disable_stan' => (bool) $options['disable_stan'],
+		'show_timings' => false,
+		'entry_override' => $options['entry_override'],
+		'build_mode' => 'debug',
+	];
+	$debugBuildOptions = $debugSeedOptions;
+	$debugBuildOptions['compile_runtime'] = false;
+
+	$seedRun = run_build_benchmark_build($seedRoot, $seedConfigPath, $debugSeedOptions);
+	$report['seed'] = build_benchmark_seed_summary('debug_seed', 'debug', $seedRun);
+	if (!$seedRun['ok']) {
+		$report['status'] = 'failed';
+		$report['failed_scenario_count'] = 1;
+		$report['finished_at'] = gmdate('c');
+		$report['duration_ms'] = (int) round(max(0, (microtime(true) - $startedAt) * 1000));
+		write_json_file_atomic($reportPath, $report);
+		if (!$options['keep_workdir']) {
+			remove_directory_tree($benchmarkRoot);
+		}
+		return $report;
+	}
+
+	$scenarios = [];
+	$scenarios[] = measure_build_benchmark_scenario(
+		'warm_no_change',
+		$seedRoot,
+		$seedConfigPath,
+		$debugBuildOptions,
+		'debug',
+		null,
+		null
+	);
+
+	$editScenarios = [
+		[
+			'name' => 'private_body_edit',
+			'selector' => $options['private_source'],
+			'mutation_kind' => 'private_body',
+			'build_mode' => 'debug',
+		],
+		[
+			'name' => 'public_surface_edit',
+			'selector' => $options['public_source'],
+			'mutation_kind' => 'public_surface',
+			'build_mode' => 'debug',
+		],
+		[
+			'name' => 'broad_coordinator_edit',
+			'selector' => $options['coordinator_source'],
+			'mutation_kind' => 'coordinator',
+			'build_mode' => 'debug',
+		],
+		[
+			'name' => 'release_o3_hot_edit',
+			'selector' => $options['release_source'],
+			'mutation_kind' => 'release_hot',
+			'build_mode' => 'release',
+		],
+	];
+
+	foreach ($editScenarios as $scenario) {
+		$name = (string) $scenario['name'];
+		$selector = is_string($scenario['selector']) ? $scenario['selector'] : null;
+		$buildMode = (string) $scenario['build_mode'];
+		if ($selector === null) {
+			$scenarios[] = skipped_build_benchmark_scenario($name, $buildMode, 'source selector not provided');
+			continue;
+		}
+
+		$scenarioRoot = normalize_path($scenariosRoot . '/' . $name);
+		copy_directory_tree_for_build_benchmark($seedRoot, $scenarioRoot, true);
+		$scenarioConfigPath = normalize_path($scenarioRoot . '/' . $configRelative);
+		$buildOptions = $debugBuildOptions;
+		if ($buildMode === 'release') {
+			$releaseSeedOptions = $debugSeedOptions;
+			$releaseSeedOptions['build_mode'] = 'release';
+			$releaseSeed = run_build_benchmark_build($scenarioRoot, $scenarioConfigPath, $releaseSeedOptions);
+			if (!$releaseSeed['ok']) {
+				$scenarios[] = failed_build_benchmark_seed_scenario($name, $buildMode, $releaseSeed);
+				continue;
+			}
+			$buildOptions = $debugBuildOptions;
+			$buildOptions['build_mode'] = 'release';
+		}
+
+		$mutation = apply_build_benchmark_source_mutation(
+			$scenarioRoot,
+			$selector,
+			(string) $scenario['mutation_kind'],
+			bin2hex(random_bytes(4))
+		);
+		if (!($mutation['ok'] ?? false)) {
+			$scenarios[] = skipped_build_benchmark_scenario($name, $buildMode, (string) ($mutation['skip_reason'] ?? 'mutation skipped'), $selector);
+			continue;
+		}
+
+		$scenarios[] = measure_build_benchmark_scenario(
+			$name,
+			$scenarioRoot,
+			$scenarioConfigPath,
+			$buildOptions,
+			$buildMode,
+			is_array($mutation) ? $mutation : null,
+			$selector
+		);
+	}
+
+	$report['scenarios'] = $scenarios;
+	foreach ($scenarios as $scenario) {
+		$status = (string) ($scenario['status'] ?? '');
+		if ($status === 'measured') {
+			$report['measured_scenario_count']++;
+		} elseif ($status === 'skipped') {
+			$report['skipped_scenario_count']++;
+		} else {
+			$report['failed_scenario_count']++;
+		}
+	}
+	$report['status'] = (int) $report['failed_scenario_count'] === 0 ? 'success' : 'failed';
+	$report['finished_at'] = gmdate('c');
+	$report['duration_ms'] = (int) round(max(0, (microtime(true) - $startedAt) * 1000));
+	write_json_file_atomic($reportPath, $report);
+	if (!$options['keep_workdir']) {
+		remove_directory_tree($benchmarkRoot);
+	}
+	return $report;
+}
+
+function copy_directory_tree_for_build_benchmark(string $source, string $destination, bool $includePrism): void
+{
+	$source = normalize_path($source);
+	$destination = normalize_path($destination);
+	if (!is_dir($source)) {
+		scpp_fail('Build benchmark source directory not found: ' . $source . PHP_EOL, 2);
+	}
+	if (file_exists($destination)) {
+		scpp_fail('Build benchmark destination already exists: ' . $destination . PHP_EOL, 2);
+	}
+	ensure_directory($destination);
+	$items = scandir($source);
+	if ($items === false) {
+		scpp_fail('Failed to read build benchmark source directory: ' . $source . PHP_EOL, 2);
+	}
+	foreach ($items as $item) {
+		if ($item === '.' || $item === '..' || $item === '.git') {
+			continue;
+		}
+		if (!$includePrism && $item === '.prism') {
+			continue;
+		}
+		$childSource = $source . '/' . $item;
+		$childDestination = $destination . '/' . $item;
+		if (is_link($childSource)) {
+			continue;
+		}
+		if (is_dir($childSource)) {
+			copy_directory_tree_for_build_benchmark($childSource, $childDestination, $includePrism);
+			continue;
+		}
+		if (is_file($childSource) && !@copy($childSource, $childDestination)) {
+			scpp_fail('Failed to copy build benchmark file: ' . $childSource . PHP_EOL, 2);
+		}
+	}
+}
+
+/** @param array<string,mixed> $buildOptions @return array<string,mixed> */
+function run_build_benchmark_build(string $projectRoot, string $configPath, array $buildOptions): array
+{
+	$startedAt = microtime(true);
+	$previousProbe = getenv('SCPP_NINJA_EXPLAIN_PROBE');
+	putenv('SCPP_NINJA_EXPLAIN_PROBE=1');
+	try {
+		$build = scpp_run_build_service($projectRoot, $configPath, $buildOptions);
+	} finally {
+		if ($previousProbe === false) {
+			putenv('SCPP_NINJA_EXPLAIN_PROBE');
+		} else {
+			putenv('SCPP_NINJA_EXPLAIN_PROBE=' . $previousProbe);
+		}
+	}
+	$finishedAt = microtime(true);
+	$lastRun = read_json_file(normalize_path($projectRoot . '/.prism/last_run.json'));
+	return [
+		'ok' => (bool) ($build['ok'] ?? false),
+		'exit_code' => (int) ($build['exit_code'] ?? 1),
+		'wall_ms' => (int) round(max(0, ($finishedAt - $startedAt) * 1000)),
+		'output' => (string) ($build['output'] ?? ''),
+		'error' => (string) ($build['error'] ?? ''),
+		'last_run' => is_array($lastRun) ? $lastRun : [],
+		'result' => is_array($build['result'] ?? null) ? $build['result'] : [],
+	];
+}
+
+/** @param array<string,mixed> $run @return array<string,mixed> */
+function build_benchmark_seed_summary(string $name, string $buildMode, array $run): array
+{
+	return [
+		'name' => $name,
+		'status' => (bool) ($run['ok'] ?? false) ? 'success' : 'build_failed',
+		'build_mode' => $buildMode,
+		'exit_code' => (int) ($run['exit_code'] ?? 1),
+		'wall_ms' => (int) ($run['wall_ms'] ?? 0),
+		'metrics' => build_benchmark_metrics_from_run($run),
+		'failure' => (bool) ($run['ok'] ?? false) ? null : build_benchmark_failure_summary($run),
+	];
+}
+
+/** @param array<string,mixed> $buildOptions @param array<string,mixed>|null $mutation @return array<string,mixed> */
+function measure_build_benchmark_scenario(
+	string $name,
+	string $projectRoot,
+	string $configPath,
+	array $buildOptions,
+	string $buildMode,
+	?array $mutation,
+	?string $sourceSelector
+): array {
+	$run = run_build_benchmark_build($projectRoot, $configPath, $buildOptions);
+	return [
+		'name' => $name,
+		'status' => (bool) ($run['ok'] ?? false) ? 'measured' : 'build_failed',
+		'build_mode' => $buildMode,
+		'source_selector' => $sourceSelector,
+		'mutation' => $mutation,
+		'exit_code' => (int) ($run['exit_code'] ?? 1),
+		'metrics' => build_benchmark_metrics_from_run($run),
+		'failure' => (bool) ($run['ok'] ?? false) ? null : build_benchmark_failure_summary($run),
+	];
+}
+
+/** @return array<string,mixed> */
+function skipped_build_benchmark_scenario(string $name, string $buildMode, string $reason, ?string $sourceSelector = null): array
+{
+	return [
+		'name' => $name,
+		'status' => 'skipped',
+		'build_mode' => $buildMode,
+		'source_selector' => $sourceSelector,
+		'skip_reason' => $reason,
+		'metrics' => null,
+	];
+}
+
+/** @param array<string,mixed> $seedRun @return array<string,mixed> */
+function failed_build_benchmark_seed_scenario(string $name, string $buildMode, array $seedRun): array
+{
+	return [
+		'name' => $name,
+		'status' => 'build_failed',
+		'build_mode' => $buildMode,
+		'source_selector' => null,
+		'phase' => 'seed',
+		'metrics' => build_benchmark_metrics_from_run($seedRun),
+		'failure' => build_benchmark_failure_summary($seedRun),
+	];
+}
+
+/** @param array<string,mixed> $run @return array<string,mixed> */
+function build_benchmark_metrics_from_run(array $run): array
+{
+	$lastRun = is_array($run['last_run'] ?? null) ? $run['last_run'] : [];
+	$details = is_array($lastRun['details'] ?? null) ? $lastRun['details'] : [];
+	$result = is_array($run['result'] ?? null) ? $run['result'] : [];
+	$explanation = is_array($details['build_explanation'] ?? null)
+		? $details['build_explanation']
+		: (is_array($result['build_explanation'] ?? null) ? $result['build_explanation'] : []);
+	$timings = is_array($details['timing_breakdown_ms'] ?? null)
+		? $details['timing_breakdown_ms']
+		: (is_array($result['timing_breakdown_ms'] ?? null) ? $result['timing_breakdown_ms'] : []);
+	$grouping = is_array($explanation['build_grouping'] ?? null) ? $explanation['build_grouping'] : [];
+	$modules = is_array($explanation['project_modules'] ?? null) ? $explanation['project_modules'] : [];
+	$ninjaExplain = is_array($explanation['ninja_explain'] ?? null) ? $explanation['ninja_explain'] : [];
+	$transpiledCount = (int) ($explanation['transpiled_count'] ?? ($details['transpiled_count'] ?? 0));
+	$skippedCount = (int) ($explanation['skipped_count'] ?? ($details['skipped_count'] ?? 0));
+	return [
+		'duration_ms' => (int) ($lastRun['duration_ms'] ?? 0),
+		'wall_ms' => (int) ($run['wall_ms'] ?? 0),
+		'ninja_subprocess_ms' => (int) ($timings['ninja_subprocess_ms'] ?? 0),
+		'transpiled_count' => $transpiledCount,
+		'reused_count' => $skippedCount,
+		'skipped_count' => $skippedCount,
+		'generated_artifact_writes' => is_array($explanation['generated_artifact_writes'] ?? null) ? $explanation['generated_artifact_writes'] : [],
+		'object_fanout' => is_array($explanation['rebuild_fanout'] ?? null) ? $explanation['rebuild_fanout'] : [],
+		'grouping_fanout' => [
+			'total_groups' => (int) ($grouping['total_groups'] ?? 0),
+			'changed_group_count' => (int) ($grouping['changed_group_count'] ?? 0),
+			'object_fanout' => is_array($grouping['object_fanout'] ?? null) ? $grouping['object_fanout'] : [],
+		],
+		'module_cache_status_counts' => is_array($modules['cache_status_counts'] ?? null) ? $modules['cache_status_counts'] : [],
+		'ninja_explain' => [
+			'enabled' => (bool) ($ninjaExplain['enabled'] ?? false),
+			'source' => (string) ($ninjaExplain['source'] ?? ''),
+			'line_count' => count(is_array($ninjaExplain['lines'] ?? null) ? $ninjaExplain['lines'] : []),
+			'object_explanation_count' => count(is_array($ninjaExplain['object_explanations'] ?? null) ? $ninjaExplain['object_explanations'] : []),
+		],
+	];
+}
+
+/** @param array<string,mixed> $run @return array<string,mixed> */
+function build_benchmark_failure_summary(array $run): array
+{
+	return [
+		'exit_code' => (int) ($run['exit_code'] ?? 1),
+		'stdout_tail' => build_benchmark_tail_lines((string) ($run['output'] ?? ''), 20),
+		'stderr_tail' => build_benchmark_tail_lines((string) ($run['error'] ?? ''), 20),
+	];
+}
+
+/** @return list<string> */
+function build_benchmark_tail_lines(string $text, int $limit): array
+{
+	$lines = preg_split('/\R/', trim($text));
+	$lines = is_array($lines) ? array_values(array_filter($lines, static fn (string $line): bool => $line !== '')) : [];
+	if (count($lines) <= $limit) {
+		return $lines;
+	}
+	return array_slice($lines, -$limit);
+}
+
+/** @return array<string,mixed> */
+function apply_build_benchmark_source_mutation(string $projectRoot, string $sourceSelector, string $kind, string $token): array
+{
+	$projectRoot = normalize_path($projectRoot);
+	$sourceSelector = normalize_config_path($sourceSelector);
+	$sourcePath = normalize_path($projectRoot . '/' . $sourceSelector);
+	if (!path_is_inside($projectRoot, $sourcePath)) {
+		scpp_fail('Build benchmark source selector escapes the project root: ' . $sourceSelector . PHP_EOL, 1);
+	}
+	if (!is_file($sourcePath)) {
+		return [
+			'ok' => false,
+			'skip_reason' => 'selected source not found: ' . $sourceSelector,
+		];
+	}
+	$before = file_get_contents($sourcePath);
+	if (!is_string($before)) {
+		return [
+			'ok' => false,
+			'skip_reason' => 'selected source could not be read: ' . $sourceSelector,
+		];
+	}
+
+	$mutation = build_benchmark_mutated_source($before, $sourcePath, $kind, $token);
+	if (!($mutation['changed'] ?? false) || !is_string($mutation['contents'] ?? null)) {
+		return [
+			'ok' => false,
+			'skip_reason' => (string) ($mutation['skip_reason'] ?? 'no safe mutation was available for selected source'),
+		];
+	}
+	$after = (string) $mutation['contents'];
+	write_text_file($sourcePath, $after);
+	return [
+		'ok' => true,
+		'kind' => $kind,
+		'source_path' => $sourceSelector,
+		'strategy' => (string) ($mutation['strategy'] ?? 'unknown'),
+		'description' => (string) ($mutation['description'] ?? ''),
+		'bytes_before' => strlen($before),
+		'bytes_after' => strlen($after),
+		'sha256_before' => hash('sha256', $before),
+		'sha256_after' => hash('sha256', $after),
+	];
+}
+
+/** @return array<string,mixed> */
+function build_benchmark_mutated_source(string $contents, string $sourcePath, string $kind, string $token): array
+{
+	if ($kind === 'public_surface') {
+		return build_benchmark_mutate_public_surface($contents, $sourcePath, $token);
+	}
+	if ($kind === 'coordinator') {
+		return build_benchmark_mutate_coordinator($contents, $sourcePath, $token);
+	}
+	if ($kind === 'release_hot') {
+		return build_benchmark_mutate_private_like_source($contents, $token, 'SCPP_BENCH_RELEASE_EDIT_', 'release private-like literal edit');
+	}
+	return build_benchmark_mutate_private_like_source($contents, $token, 'SCPP_BENCH_PRIVATE_EDIT_', 'private-like literal edit');
+}
+
+/** @return array<string,mixed> */
+function build_benchmark_mutate_private_like_source(string $contents, string $token, string $markerPrefix, string $description): array
+{
+	$count = 0;
+	$markerPattern = '/' . preg_quote($markerPrefix, '/') . '[0-9A-Za-z_]+/';
+	$changed = preg_replace($markerPattern, $markerPrefix . $token, $contents, 1, $count);
+	if (is_string($changed) && $count > 0 && $changed !== $contents) {
+		return [
+			'changed' => true,
+			'contents' => $changed,
+			'strategy' => 'marker_replacement',
+			'description' => $description . ' via ' . $markerPrefix . '* marker',
+		];
+	}
+
+	$count = 0;
+	$changed = preg_replace_callback(
+		'/"((?:\\\\.|[^"\\\\])*)"/',
+		static fn (array $matches): string => '"' . (string) $matches[1] . ' scpp-bench-' . $token . '"',
+		$contents,
+		1,
+		$count
+	);
+	if (is_string($changed) && $count > 0 && $changed !== $contents) {
+		return [
+			'changed' => true,
+			'contents' => $changed,
+			'strategy' => 'string_literal_edit',
+			'description' => $description . ' by changing the first string literal',
+		];
+	}
+
+	$count = 0;
+	$changed = preg_replace_callback(
+		'/\b([0-9]+)\b/',
+		static fn (array $matches): string => (string) (((int) $matches[1]) + 1),
+		$contents,
+		1,
+		$count
+	);
+	if (is_string($changed) && $count > 0 && $changed !== $contents) {
+		return [
+			'changed' => true,
+			'contents' => $changed,
+			'strategy' => 'integer_literal_edit',
+			'description' => $description . ' by changing the first integer literal',
+		];
+	}
+
+	return [
+		'changed' => false,
+		'skip_reason' => 'no marker, string literal, or integer literal was found for a private-like edit',
+	];
+}
+
+/** @return array<string,mixed> */
+function build_benchmark_mutate_public_surface(string $contents, string $sourcePath, string $token): array
+{
+	$count = 0;
+	$changed = preg_replace('/SCPP_BENCH_PUBLIC_EDIT_[0-9A-Za-z_]+/', 'SCPP_BENCH_PUBLIC_EDIT_' . $token, $contents, 1, $count);
+	if (is_string($changed) && $count > 0 && $changed !== $contents) {
+		return [
+			'changed' => true,
+			'contents' => $changed,
+			'strategy' => 'marker_replacement',
+			'description' => 'public surface marker replacement',
+		];
+	}
+
+	$extension = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
+	if ($extension !== 'phs' && $extension !== 'php') {
+		return [
+			'changed' => false,
+			'skip_reason' => 'public surface fallback only supports PHP/PHS sources',
+		];
+	}
+	$className = 'ScppBenchmarkPublicProbe' . preg_replace('/[^A-Za-z0-9_]/', '', $token);
+	$after = rtrim($contents) . "\n\nclass " . $className . " {\n\tpublic function value(): int {\n\t\treturn 1;\n\t}\n}\n";
+	return [
+		'changed' => true,
+		'contents' => $after,
+		'strategy' => 'append_public_class',
+		'description' => 'public surface edit by appending a small generated class',
+	];
+}
+
+/** @return array<string,mixed> */
+function build_benchmark_mutate_coordinator(string $contents, string $sourcePath, string $token): array
+{
+	$count = 0;
+	$changed = preg_replace('/SCPP_BENCH_COORDINATOR_EDIT_[0-9A-Za-z_]+/', 'SCPP_BENCH_COORDINATOR_EDIT_' . $token, $contents, 1, $count);
+	if (is_string($changed) && $count > 0 && $changed !== $contents) {
+		return [
+			'changed' => true,
+			'contents' => $changed,
+			'strategy' => 'marker_replacement',
+			'description' => 'coordinator marker replacement',
+		];
+	}
+
+	$extension = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
+	if ($extension !== 'phs' && $extension !== 'php') {
+		return [
+			'changed' => false,
+			'skip_reason' => 'coordinator fallback only supports PHP/PHS sources',
+		];
+	}
+	return [
+		'changed' => true,
+		'contents' => rtrim($contents) . "\n\necho \"\";\n",
+		'strategy' => 'append_empty_echo',
+		'description' => 'coordinator edit by appending a no-output top-level statement',
+	];
+}
+
+/** @return list<string> */
+function render_build_benchmark_summary_lines(array $report): array
+{
+	$lines = [];
+	$lines[] = 'Build benchmark: ' . (string) ($report['status'] ?? 'unknown');
+	$lines[] = 'Saved report: ' . (string) ($report['report_path'] ?? '.prism/build_invalidation_benchmark.json');
+	$lines[] = 'Work dir: ' . (string) ($report['work_dir'] ?? '.prism/build_benchmarks') . ((bool) ($report['work_dir_retained'] ?? false) ? ' (retained)' : ' (removed)');
+	$lines[] = 'Scenarios:';
+	foreach (is_array($report['scenarios'] ?? null) ? $report['scenarios'] : [] as $scenario) {
+		if (!is_array($scenario)) {
+			continue;
+		}
+		$name = (string) ($scenario['name'] ?? 'unknown');
+		$status = (string) ($scenario['status'] ?? 'unknown');
+		if ($status === 'skipped') {
+			$lines[] = '  ' . $name . ': skipped - ' . (string) ($scenario['skip_reason'] ?? 'no reason recorded');
+			continue;
+		}
+		$metrics = is_array($scenario['metrics'] ?? null) ? $scenario['metrics'] : [];
+		$fanout = is_array($metrics['object_fanout'] ?? null) ? $metrics['object_fanout'] : [];
+		$grouping = is_array($metrics['grouping_fanout'] ?? null) ? $metrics['grouping_fanout'] : [];
+		$lines[] = sprintf(
+			'  %s: %s, wall=%dms, ninja=%dms, transpiled=%d, reused=%d, rebuilt_objects=%d, changed_groups=%d',
+			$name,
+			$status,
+			(int) ($metrics['wall_ms'] ?? 0),
+			(int) ($metrics['ninja_subprocess_ms'] ?? 0),
+			(int) ($metrics['transpiled_count'] ?? 0),
+			(int) ($metrics['reused_count'] ?? 0),
+			(int) ($fanout['rebuilt_object_count'] ?? 0),
+			(int) ($grouping['changed_group_count'] ?? 0)
+		);
+	}
+	return $lines;
 }
 
 /** @param list<string> $args @return array{build_options:array{compile_runtime:bool,compile_dependencies:bool,force_runtime_rebuild:bool,disable_stan:bool,show_timings:bool,entry_override:?string,build_mode:?string},run_args:list<string>} */

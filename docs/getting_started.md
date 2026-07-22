@@ -180,6 +180,16 @@ scpp explain-build generated-files
 scpp explain-build ninja-target
 ```
 
+Record repeatable build invalidation measurements from an isolated copied work tree:
+
+```bash
+scpp build-benchmark --no-stan
+scpp build-benchmark --build-runtime --no-stan
+scpp build-benchmark --no-stan --private-source=src/model.phs --public-source=src/api.phs --coordinator-source=main.phs --release-source=src/hot.phs
+```
+
+The report is written to `.prism/build_invalidation_benchmark.json`. The command reuses runtime artifacts by default, like `scpp build`; use `--build-runtime` when the benchmark copy must seed a project-local runtime first. Edit scenarios use explicit project-relative selectors; missing selectors are reported as skipped instead of guessed.
+
 Run the deterministic usability harness:
 
 ```bash

@@ -366,6 +366,13 @@ The initial registry includes:
 - `profiles`
 - `modules`
 - `dependencies`
+- `examples`
+- `authoring`
+- `gotchas`
+- `skill`
+- `agents`
+
+This command is a documentation discoverability helper. It does not change language semantics or document authority.
 
 ## `scpp last-run`, `scpp full-last-run`, and `scpp explain-build` behavior
 
@@ -570,13 +577,52 @@ row.
 Generated source rows in the saved build explanation also carry the active
 project-unit status, force-include header, and header mode so focused views such
 as `generated-files` can show which pack each generated object compiles with.
-- `examples`
-- `authoring`
-- `gotchas`
-- `skill`
-- `agents`
 
-This command is a documentation discoverability helper. It does not change language semantics or document authority.
+## `scpp build-benchmark` behavior
+
+`scpp build-benchmark` records repeatable invalidation measurements for the
+current project without mutating the project sources under test. The command
+finds `prism.json`, copies the project into `.prism/build_benchmarks/<id>`,
+excludes `.git` and the original `.prism` state from the initial copy, seeds a
+debug baseline build, and writes `.prism/build_invalidation_benchmark.json`.
+Like `scpp build`, it reuses existing runtime artifacts by default; pass
+`--build-runtime` when the isolated benchmark work tree should seed a
+project-local runtime artifact before measuring scenarios.
+Unless `--keep-workdir` is supplied, the disposable benchmark work tree is
+removed after the report is published.
+
+The command always measures:
+
+- `warm_no_change`
+
+The following edit scenarios are measured only when the caller supplies an
+explicit project-relative source selector:
+
+- `--private-source=<path>` for `private_body_edit`
+- `--public-source=<path>` for `public_surface_edit`
+- `--coordinator-source=<path>` for `broad_coordinator_edit`
+- `--release-source=<path>` for `release_o3_hot_edit`
+
+Missing selectors produce `skipped` scenario rows. The command does not infer or
+auto-propose module/private/public sources. Explicit selectors are required so
+large-project benchmarks remain intentional and repeatable.
+
+The report stores one row per scenario with `status`, `build_mode`,
+`source_selector`, mutation metadata when an edit was applied, and metrics
+extracted from the build's saved explanation:
+
+- total wall time and saved build duration
+- Ninja subprocess time
+- transpiled and reused source counts
+- generated header/source write counters
+- object rebuild fanout
+- grouping fanout and changed-group count
+- project module cache status counts
+- Ninja explain probe summary
+
+Measured builds enable the internal Ninja explain probe so the benchmark report
+can be compared with `.prism/last_run.json` rebuild provenance when a work tree
+is retained for inspection.
 
 ## Project dependencies
 
