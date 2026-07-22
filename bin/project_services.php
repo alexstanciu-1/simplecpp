@@ -25,6 +25,7 @@ const SCPP_STATE_FILE = 's2s_state.php';
 const SCPP_STAN_STATE_FILE = 'stan_state.php';
 const SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE = 'project_unit_dependency_state.php';
 const SCPP_PROJECT_UNIT_DEPENDENCY_SUMMARY_FILE = 'project_unit_dependency_summary.php';
+const SCPP_BUILD_PLANNER_STATE_FILE = 'build_planner_state.json';
 const SCPP_STAN_STATUS_FILE = 'stan_status.json';
 const SCPP_STAN_REPORT_FILE = 'stan_report.json';
 const SCPP_STAN_WORKER_FILE = 'stan_worker.json';
@@ -718,7 +719,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|ninja-explain|action-identity|object-cache|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|ninja-explain|action-identity|object-cache|build-planner|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp build-benchmark writes .prism/build_invalidation_benchmark.json from an isolated benchmark work tree\n";
@@ -2958,6 +2959,10 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$objectCacheConfig = resolve_build_object_cache_config(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config);
 	$generatedDir = $rootContext['generated_dir'];
 	$cacheDir = $rootContext['cache_dir'];
+	$buildPlannerLoadStartedAt = microtime(true);
+	$previousBuildPlannerState = load_build_planner_state($cacheDir . '/' . SCPP_BUILD_PLANNER_STATE_FILE);
+	$buildPlannerLoadMs = (int) round(max(0.0, (microtime(true) - $buildPlannerLoadStartedAt) * 1000.0));
+	$buildPlannerStats = create_build_planner_stats($projectRoot, $cacheDir, $previousBuildPlannerState, $buildPlannerLoadMs);
 	$fastcgiBuild = $fastcgiConfig['enabled'] ? resolve_fastcgi_build_spec($projectRoot, $repoRoot, $buildDir, $generatedDir, $entrypointAbs, $compiler, $fastcgiConfig) : null;
 	ensure_directory($buildDir);
 	$usePch = array_key_exists('use_pch', $options) && is_bool($options['use_pch']) ? $options['use_pch'] : supports_compiler_pch($compiler);
@@ -3012,7 +3017,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$generatedArtifactOrigins[normalize_path($generatedHeader)] = normalize_path($phpPathAbs);
 			$generatedArtifactOrigins[normalize_path($generatedCpp)] = normalize_path($phpPathAbs);
 			$emitProgramEntry = normalize_path($contextProjectRoot) === normalize_path($projectRoot) && $phpPathAbs === $entrypointAbs;
-			$meta = build_file_meta($phpPathAbs);
+			$meta = build_file_meta_with_planner_state($phpPathAbs, $contextProjectRoot, $relativePhp, $previousBuildPlannerState, $buildPlannerStats);
 			$sourceOverride = array_key_exists(normalize_path($phpPathAbs), $sourceOverrides) ? (string) $sourceOverrides[normalize_path($phpPathAbs)] : null;
 			$previous = is_array($projectContext['state']['files'][$relativePhp] ?? null) ? $projectContext['state']['files'][$relativePhp] : null;
 			$transpileReasons = collect_transpile_reasons(
@@ -3136,6 +3141,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$projectContext['state']['files'][$relativePhp] = [
 				'size' => $meta['size'],
 				'mtime' => $meta['mtime'],
+				'ctime' => $meta['ctime'] ?? 0,
 				'content_hash' => $meta['content_hash'],
 				'generator_signature' => $generatorSignature,
 				'generated_base' => normalize_config_path(relative_path($contextProjectRoot, $generatedBase)),
@@ -3204,6 +3210,19 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectModuleReport = collect_project_module_report($projectRoot, $projectContexts, $generatedUnits, $projectUnitForceIncludeReport);
 	$buildGroupingPolicy = apply_project_module_build_grouping_evidence($projectRoot, $buildGroupingPolicy, $projectModuleReport, $generatedUnits);
 	apply_grouped_generated_object_edges($projectRoot, $buildDir, $generatedDir, $buildGroupingPolicy, $generatedUnits, $sourceRebuildReasons, $compiler['kind']);
+	$buildPlannerReport = write_build_planner_state_report(
+		$projectRoot,
+		$cacheDir,
+		$previousBuildPlannerState,
+		$buildPlannerStats,
+		$projectGraph,
+		$projectContexts,
+		$generatedUnits,
+		$nativeCppUnits,
+		$projectModuleReport,
+		is_array($stanPreflightReport) ? $stanPreflightReport : null,
+		$timingMs('source_scan_start', 'source_scan_complete')
+	);
 
 	if ($usePch) {
 		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
@@ -3380,6 +3399,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'ninja_command' => $command,
 				'diagnostic_count' => count($diagnostics),
 				'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
+				'build_planner' => $buildPlannerReport,
 				'ninja_explain' => $ninjaExplainReport,
 				'object_action_identity' => $objectActionIdentityReport,
 				'object_cache' => $objectCacheReport,
@@ -3405,7 +3425,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					$projectModuleReport,
 					$ninjaExplainReport,
 					$objectActionIdentityReport,
-					$objectCacheReport
+					$objectCacheReport,
+					$buildPlannerReport
 				),
 			]
 		);
@@ -3522,6 +3543,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			'transpiled_count' => $transpiledCount,
 			'skipped_count' => $skippedCount,
 			'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
+			'build_planner' => $buildPlannerReport,
 			'ninja_explain' => $ninjaExplainReport,
 			'object_action_identity' => $objectActionIdentityReport,
 			'object_cache' => $objectCacheReport,
@@ -3551,7 +3573,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$projectModuleReport,
 				$ninjaExplainReport,
 				$objectActionIdentityReport,
-				$objectCacheReport
+				$objectCacheReport,
+				$buildPlannerReport
 			),
 		]
 	);
@@ -3605,7 +3628,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$projectModuleReport,
 			$ninjaExplainReport,
 			$objectActionIdentityReport,
-			$objectCacheReport
+			$objectCacheReport,
+			$buildPlannerReport
 		),
 	];
 }
@@ -12060,6 +12084,7 @@ function build_explanation_details(
 	array $ninjaExplainReport = [],
 	array $objectActionIdentityReport = [],
 	array $objectCacheReport = [],
+	array $buildPlannerReport = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -12083,6 +12108,7 @@ function build_explanation_details(
 	$ninjaExplainReport = normalize_ninja_explain_report($ninjaExplainReport);
 	$objectActionIdentityReport = normalize_object_action_identity_report($objectActionIdentityReport);
 	$objectCacheReport = normalize_object_cache_report($objectCacheReport);
+	$buildPlannerReport = normalize_build_planner_report($buildPlannerReport);
 	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options, $projectModuleReport, $ninjaExplainReport, $objectActionIdentityReport);
 
 	return [
@@ -12114,6 +12140,7 @@ function build_explanation_details(
 		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
 		'sources' => $sources,
 		'generated_artifact_writes' => summarize_generated_artifact_write_report($sources),
+		'build_planner' => $buildPlannerReport,
 		'ninja_explain' => $ninjaExplainReport,
 		'object_action_identity' => $objectActionIdentityReport,
 		'object_cache' => $objectCacheReport,
@@ -12467,6 +12494,32 @@ function render_object_cache_lines(array $report): array
 }
 
 /**
+ * @param array<string,mixed> $report
+ * @return list<string>
+ */
+function render_build_planner_lines(array $report): array
+{
+	$report = normalize_build_planner_report($report);
+	$timing = is_array($report['timing_ms'] ?? null) ? $report['timing_ms'] : [];
+	return [
+		'Build planner warm state: ' . (string) ($report['status'] ?? 'unavailable')
+			. (((string) ($report['state_path'] ?? '')) !== '' ? ', state ' . (string) ($report['state_path'] ?? '') : ''),
+		'Build planner graph: projects ' . (int) ($report['project_count'] ?? 0)
+			. ', sources ' . (int) ($report['source_count'] ?? 0)
+			. ', native sources ' . (int) ($report['native_source_count'] ?? 0)
+			. ', modules ' . (int) ($report['module_count'] ?? 0)
+			. ', STAN summary ' . ((bool) ($report['stan_summary_available'] ?? false) ? 'available' : 'unavailable'),
+		'Build planner source metadata: hits ' . (int) ($report['source_metadata_hit_count'] ?? 0)
+			. ', misses ' . (int) ($report['source_metadata_miss_count'] ?? 0)
+			. ', hash reads ' . (int) ($report['hash_read_count'] ?? 0)
+			. ', hashes reused ' . (int) ($report['reused_hash_count'] ?? 0),
+		'Build planner timing: load ' . (int) ($timing['load_state_ms'] ?? 0)
+			. ' ms, source scan ' . (int) ($timing['source_scan_ms'] ?? 0)
+			. ' ms, write ' . (int) ($timing['write_state_ms'] ?? 0) . ' ms',
+	];
+}
+
+/**
  * @param array<string,mixed> $details
  * @return list<string>
  */
@@ -12511,6 +12564,14 @@ function render_build_explanation_lines(array $details): array
 			. '), store stored ' . (int) ($store['stored_count'] ?? 0)
 			. ', preserved ' . (int) ($store['preserved_count'] ?? 0)
 			. ', skipped ' . (int) ($store['skipped_count'] ?? 0);
+	}
+	$buildPlanner = normalize_build_planner_report(is_array($details['build_planner'] ?? null) ? $details['build_planner'] : []);
+	if ((string) ($buildPlanner['state_path'] ?? '') !== '') {
+		$lines[] = 'Build planner warm state: ' . (string) ($buildPlanner['status'] ?? 'unavailable')
+			. ', source metadata hits ' . (int) ($buildPlanner['source_metadata_hit_count'] ?? 0)
+			. '/' . (int) ($buildPlanner['source_count'] ?? 0)
+			. ', hash reads ' . (int) ($buildPlanner['hash_read_count'] ?? 0)
+			. ', hashes reused ' . (int) ($buildPlanner['reused_hash_count'] ?? 0);
 	}
 	$lines[] = 'PHP transpile decisions: ' . (int) ($details['transpiled_count'] ?? 0) . ' transpiled, ' . (int) ($details['skipped_count'] ?? 0) . ' reused';
 	foreach (render_generated_artifact_write_report_lines(is_array($details['generated_artifact_writes'] ?? null) ? $details['generated_artifact_writes'] : []) as $line) {
@@ -13290,6 +13351,10 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 		return render_object_cache_lines(is_array($details['object_cache'] ?? null) ? $details['object_cache'] : []);
 	}
 
+	if ($view === 'build-planner') {
+		return render_build_planner_lines(is_array($details['build_planner'] ?? null) ? $details['build_planner'] : []);
+	}
+
 	if ($view === 'grouping') {
 		return render_build_grouping_lines(is_array($details['build_grouping'] ?? null) ? $details['build_grouping'] : [], true);
 	}
@@ -13376,7 +13441,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, ninja-explain, action-identity, object-cache, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, ninja-explain, action-identity, object-cache, build-planner, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }
@@ -14376,19 +14441,393 @@ function supports_compiler_pch(array $compiler): bool
 	return $compiler['kind'] === 'gnu_like';
 }
 
-/** @return array{size:int,mtime:int,content_hash:string} */
+/** @return array{size:int,mtime:int,ctime:int,content_hash:string} */
 function build_file_meta(string $path): array
 {
 	$size = filesize($path);
 	$mtime = filemtime($path);
+	$stat = @stat($path);
+	$ctime = is_array($stat) ? ($stat['ctime'] ?? false) : false;
 	$contentHash = hash_file('sha256', $path);
-	if ($size === false || $mtime === false || $contentHash === false) {
+	if ($size === false || $mtime === false || $ctime === false || $contentHash === false) {
 		scpp_fail('Failed to stat file: ' . $path . PHP_EOL, 2);
 	}
 	return [
 		'size' => (int) $size,
 		'mtime' => (int) $mtime,
+		'ctime' => (int) $ctime,
 		'content_hash' => $contentHash,
+	];
+}
+
+/**
+ * @param array<string,mixed> $previousState
+ * @param array<string,mixed> $stats
+ * @return array{size:int,mtime:int,ctime:int,content_hash:string}
+ */
+function build_file_meta_with_planner_state(string $path, string $contextProjectRoot, string $relativeSource, array $previousState, array &$stats): array
+{
+	$size = filesize($path);
+	$mtime = filemtime($path);
+	$stat = @stat($path);
+	$ctime = is_array($stat) ? ($stat['ctime'] ?? false) : false;
+	if ($size === false || $mtime === false || $ctime === false) {
+		scpp_fail('Failed to stat file: ' . $path . PHP_EOL, 2);
+	}
+	$sourceKey = build_planner_source_key($contextProjectRoot, $relativeSource);
+	$previousSources = is_array($previousState['source_metadata_by_key'] ?? null) ? $previousState['source_metadata_by_key'] : [];
+	$previous = is_array($previousSources[$sourceKey] ?? null) ? $previousSources[$sourceKey] : null;
+	$status = 'miss';
+	$contentHash = '';
+	if (
+		is_array($previous)
+		&& (int) ($previous['size'] ?? -1) === (int) $size
+		&& (int) ($previous['mtime'] ?? -1) === (int) $mtime
+		&& (int) ($previous['ctime'] ?? -1) === (int) $ctime
+		&& preg_match('/^[0-9a-f]{64}$/', (string) ($previous['content_hash'] ?? '')) === 1
+		&& build_planner_previous_source_timestamp_is_safe($previous, $previousState)
+	) {
+		$contentHash = (string) $previous['content_hash'];
+		$status = 'hit';
+		$stats['source_metadata_hit_count'] = (int) ($stats['source_metadata_hit_count'] ?? 0) + 1;
+		$stats['reused_hash_count'] = (int) ($stats['reused_hash_count'] ?? 0) + 1;
+	} else {
+		$hash = hash_file('sha256', $path);
+		if ($hash === false) {
+			scpp_fail('Failed to hash file: ' . $path . PHP_EOL, 2);
+		}
+		$contentHash = $hash;
+		$stats['source_metadata_miss_count'] = (int) ($stats['source_metadata_miss_count'] ?? 0) + 1;
+		$stats['hash_read_count'] = (int) ($stats['hash_read_count'] ?? 0) + 1;
+	}
+
+	$stats['source_count'] = (int) ($stats['source_count'] ?? 0) + 1;
+	$rows = is_array($stats['source_metadata_rows'] ?? null) ? $stats['source_metadata_rows'] : [];
+	$rows[] = [
+		'project_root' => normalize_path($contextProjectRoot),
+		'source' => normalize_config_path($relativeSource),
+		'source_key' => $sourceKey,
+		'size' => (int) $size,
+		'mtime' => (int) $mtime,
+		'ctime' => (int) $ctime,
+		'content_hash' => $contentHash,
+		'cache_status' => $status,
+	];
+	$stats['source_metadata_rows'] = $rows;
+
+	return [
+		'size' => (int) $size,
+		'mtime' => (int) $mtime,
+		'ctime' => (int) $ctime,
+		'content_hash' => $contentHash,
+	];
+}
+
+/** @return array<string,mixed> */
+function load_build_planner_state(string $statePath): array
+{
+	$state = read_json_file($statePath);
+	if (!is_array($state)) {
+		return normalize_build_planner_state([]);
+	}
+	return normalize_build_planner_state($state);
+}
+
+/** @return array<string,mixed> */
+function create_build_planner_stats(string $projectRoot, string $cacheDir, array $previousState, int $loadMs): array
+{
+	return [
+		'project_root' => normalize_path($projectRoot),
+		'state_path' => normalize_path($cacheDir . '/' . SCPP_BUILD_PLANNER_STATE_FILE),
+		'state_path_relative' => normalize_config_path(relative_path($projectRoot, $cacheDir . '/' . SCPP_BUILD_PLANNER_STATE_FILE)),
+		'previous_signature' => trim((string) ($previousState['signature'] ?? '')),
+		'previous_available' => trim((string) ($previousState['signature'] ?? '')) !== '',
+		'load_ms' => max(0, $loadMs),
+		'source_count' => 0,
+		'source_metadata_hit_count' => 0,
+		'source_metadata_miss_count' => 0,
+		'hash_read_count' => 0,
+		'reused_hash_count' => 0,
+		'source_metadata_rows' => [],
+	];
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectGraph
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param list<array<string,mixed>> $generatedUnits
+ * @param list<array<string,mixed>> $nativeCppUnits
+ * @return array<string,mixed>
+ */
+function write_build_planner_state_report(
+	string $projectRoot,
+	string $cacheDir,
+	array $previousState,
+	array $stats,
+	array $projectGraph,
+	array $projectContexts,
+	array $generatedUnits,
+	array $nativeCppUnits,
+	array $projectModuleReport,
+	?array $stanPreflightReport,
+	int $sourceScanMs
+): array {
+	$statePath = normalize_path($cacheDir . '/' . SCPP_BUILD_PLANNER_STATE_FILE);
+	$sourceMetadataRows = normalize_build_planner_source_metadata_rows(is_array($stats['source_metadata_rows'] ?? null) ? $stats['source_metadata_rows'] : []);
+	foreach ($sourceMetadataRows as &$sourceMetadataRow) {
+		$sourceMetadataRow['cache_status'] = '';
+	}
+	unset($sourceMetadataRow);
+	$state = normalize_build_planner_state([
+		'schema_version' => 1,
+		'project_root' => normalize_path($projectRoot),
+		'written_at' => time(),
+		'project_graph' => collect_build_planner_project_rows($projectRoot, $projectGraph, $projectContexts),
+		'source_metadata' => $sourceMetadataRows,
+		'native_sources' => collect_build_planner_native_source_rows($projectRoot, $nativeCppUnits),
+		'module_summaries' => collect_build_planner_module_summary_rows($projectModuleReport),
+		'stan_summary' => collect_build_planner_stan_summary($stanPreflightReport),
+	]);
+	$state['signature'] = hash_project_module_payload([
+		'version' => 1,
+		'project_graph' => $state['project_graph'],
+		'source_metadata' => $state['source_metadata'],
+		'native_sources' => $state['native_sources'],
+		'module_summaries' => $state['module_summaries'],
+		'stan_summary' => $state['stan_summary'],
+	]);
+	$writeStartedAt = microtime(true);
+	write_json_file_atomic($statePath, $state);
+	$writeMs = (int) round(max(0.0, (microtime(true) - $writeStartedAt) * 1000.0));
+	$previousSignature = trim((string) ($previousState['signature'] ?? ''));
+	$currentSignature = trim((string) ($state['signature'] ?? ''));
+	$sourceCount = max(0, (int) ($stats['source_count'] ?? 0));
+	$hitCount = max(0, (int) ($stats['source_metadata_hit_count'] ?? 0));
+	$missCount = max(0, (int) ($stats['source_metadata_miss_count'] ?? 0));
+	$status = 'new';
+	if ($previousSignature !== '') {
+		$status = $previousSignature === $currentSignature ? 'hit' : 'changed';
+		if ($hitCount > 0 && $missCount > 0) {
+			$status = 'partial';
+		}
+	}
+	$modules = is_array($state['module_summaries'] ?? null) ? $state['module_summaries'] : [];
+	$nativeSources = is_array($state['native_sources'] ?? null) ? $state['native_sources'] : [];
+	$projectRows = is_array($state['project_graph'] ?? null) ? $state['project_graph'] : [];
+	return normalize_build_planner_report([
+		'schema_version' => 1,
+		'status' => $status,
+		'state_path' => normalize_config_path(relative_path($projectRoot, $statePath)),
+		'previous_signature' => $previousSignature,
+		'current_signature' => $currentSignature,
+		'project_count' => count($projectRows),
+		'source_count' => $sourceCount,
+		'native_source_count' => count($nativeSources),
+		'module_count' => count($modules),
+		'stan_summary_available' => is_array($state['stan_summary'] ?? null) && trim((string) (($state['stan_summary'] ?? [])['source_fingerprint'] ?? '')) !== '',
+		'source_metadata_hit_count' => $hitCount,
+		'source_metadata_miss_count' => $missCount,
+		'hash_read_count' => max(0, (int) ($stats['hash_read_count'] ?? 0)),
+		'reused_hash_count' => max(0, (int) ($stats['reused_hash_count'] ?? 0)),
+		'timing_ms' => [
+			'load_state_ms' => max(0, (int) ($stats['load_ms'] ?? 0)),
+			'source_scan_ms' => max(0, $sourceScanMs),
+			'write_state_ms' => $writeMs,
+		],
+	]);
+}
+
+function build_planner_source_key(string $projectRoot, string $relativeSource): string
+{
+	return normalize_path($projectRoot) . ':' . normalize_config_path($relativeSource);
+}
+
+/**
+ * @param array<string,mixed> $previousSource
+ * @param array<string,mixed> $previousState
+ */
+function build_planner_previous_source_timestamp_is_safe(array $previousSource, array $previousState): bool
+{
+	$writtenAt = (int) ($previousState['written_at'] ?? 0);
+	if ($writtenAt <= 0) {
+		return false;
+	}
+	return (int) ($previousSource['mtime'] ?? 0) < $writtenAt
+		&& (int) ($previousSource['ctime'] ?? 0) < $writtenAt;
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectGraph
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @return list<array<string,mixed>>
+ */
+function collect_build_planner_project_rows(string $rootProjectRoot, array $projectGraph, array $projectContexts): array
+{
+	$rows = [];
+	foreach ($projectGraph as $projectRoot => $projectSpec) {
+		$projectRoot = normalize_path((string) ($projectSpec['project_root'] ?? $projectRoot));
+		$context = is_array($projectContexts[$projectRoot] ?? null) ? $projectContexts[$projectRoot] : [];
+		$rows[] = [
+			'project_root' => $projectRoot,
+			'project_label' => project_context_report_label($rootProjectRoot, $projectRoot),
+			'config_path' => normalize_path((string) ($projectSpec['config_path'] ?? '')),
+			'build_dir' => normalize_path((string) ($context['build_dir'] ?? '')),
+			'generated_dir' => normalize_path((string) ($context['generated_dir'] ?? '')),
+			'cache_dir' => normalize_path((string) ($context['cache_dir'] ?? '')),
+			'dependency_roots' => normalize_path_list(is_array($context['dependency_roots'] ?? null) ? $context['dependency_roots'] : []),
+		];
+	}
+	usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left['project_root'] ?? ''), (string) ($right['project_root'] ?? '')));
+	return $rows;
+}
+
+/** @return list<array<string,mixed>> */
+function collect_build_planner_native_source_rows(string $projectRoot, array $nativeCppUnits): array
+{
+	$rows = [];
+	foreach ($nativeCppUnits as $unit) {
+		if (!is_array($unit)) {
+			continue;
+		}
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$sourcePath = normalize_path((string) ($unit['source_path'] ?? ''));
+		if ($sourcePath === '') {
+			continue;
+		}
+		$rows[] = [
+			'project_root' => $unitProjectRoot,
+			'source' => normalize_config_path(relative_path($unitProjectRoot !== '' ? $unitProjectRoot : $projectRoot, $sourcePath)),
+			'object_path' => normalize_config_path(relative_path($projectRoot, normalize_path((string) ($unit['object_path'] ?? '')))),
+		];
+	}
+	usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left['project_root'] ?? '') . ':' . (string) ($left['source'] ?? ''), (string) ($right['project_root'] ?? '') . ':' . (string) ($right['source'] ?? '')));
+	return $rows;
+}
+
+/** @return list<array<string,mixed>> */
+function collect_build_planner_module_summary_rows(array $projectModuleReport): array
+{
+	$rows = [];
+	foreach (is_array($projectModuleReport['modules'] ?? null) ? $projectModuleReport['modules'] : [] as $module) {
+		if (!is_array($module)) {
+			continue;
+		}
+		$name = trim((string) ($module['name'] ?? ''));
+		if ($name === '') {
+			continue;
+		}
+		$rows[] = [
+			'name' => $name,
+			'project_root' => normalize_path((string) ($module['project_root'] ?? '')),
+			'source_count' => max(0, (int) ($module['source_count'] ?? 0)),
+			'dependencies' => normalize_string_list($module['dependencies'] ?? []),
+			'interface_hash' => trim((string) ($module['interface_hash'] ?? '')),
+			'implementation_hash' => trim((string) ($module['implementation_hash'] ?? '')),
+			'stan_summary_hash' => trim((string) ($module['stan_summary_hash'] ?? '')),
+		];
+	}
+	usort($rows, static fn (array $left, array $right): int => strcmp((string) ($left['project_root'] ?? '') . ':' . (string) ($left['name'] ?? ''), (string) ($right['project_root'] ?? '') . ':' . (string) ($right['name'] ?? '')));
+	return $rows;
+}
+
+/** @return array<string,mixed> */
+function collect_build_planner_stan_summary(?array $stanPreflightReport): array
+{
+	if (!is_array($stanPreflightReport)) {
+		return [
+			'source_fingerprint' => '',
+			'analysis_mode' => 'unavailable',
+			'diagnostic_count' => 0,
+			'warning_count' => 0,
+			'compile_error_count' => 0,
+		];
+	}
+	return [
+		'source_fingerprint' => trim((string) ($stanPreflightReport['source_fingerprint'] ?? '')),
+		'analysis_mode' => trim((string) ($stanPreflightReport['analysis_mode'] ?? '')),
+		'diagnostic_count' => count(is_array($stanPreflightReport['diagnostics'] ?? null) ? $stanPreflightReport['diagnostics'] : []),
+		'warning_count' => max(0, (int) ($stanPreflightReport['warning_count'] ?? 0)),
+		'compile_error_count' => max(0, (int) ($stanPreflightReport['compile_error_count'] ?? 0)),
+	];
+}
+
+/** @return array<string,mixed> */
+function normalize_build_planner_state(array $state): array
+{
+	$sourceRows = normalize_build_planner_source_metadata_rows(is_array($state['source_metadata'] ?? null) ? $state['source_metadata'] : []);
+	$sourceByKey = [];
+	foreach ($sourceRows as $row) {
+		$key = (string) ($row['source_key'] ?? '');
+		if ($key !== '') {
+			$sourceByKey[$key] = $row;
+		}
+	}
+	return [
+		'schema_version' => max(1, (int) ($state['schema_version'] ?? 1)),
+		'project_root' => normalize_path((string) ($state['project_root'] ?? '')),
+		'signature' => trim((string) ($state['signature'] ?? '')),
+		'written_at' => max(0, (int) ($state['written_at'] ?? 0)),
+		'project_graph' => is_array($state['project_graph'] ?? null) ? $state['project_graph'] : [],
+		'source_metadata' => $sourceRows,
+		'source_metadata_by_key' => $sourceByKey,
+		'native_sources' => is_array($state['native_sources'] ?? null) ? $state['native_sources'] : [],
+		'module_summaries' => is_array($state['module_summaries'] ?? null) ? $state['module_summaries'] : [],
+		'stan_summary' => is_array($state['stan_summary'] ?? null) ? $state['stan_summary'] : [],
+	];
+}
+
+/** @return list<array<string,mixed>> */
+function normalize_build_planner_source_metadata_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$projectRoot = normalize_path((string) ($row['project_root'] ?? ''));
+		$source = normalize_config_path((string) ($row['source'] ?? ''));
+		if ($projectRoot === '' || $source === '') {
+			continue;
+		}
+		$result[] = [
+			'project_root' => $projectRoot,
+			'source' => $source,
+			'source_key' => trim((string) ($row['source_key'] ?? build_planner_source_key($projectRoot, $source))),
+			'size' => max(0, (int) ($row['size'] ?? 0)),
+			'mtime' => max(0, (int) ($row['mtime'] ?? 0)),
+			'ctime' => max(0, (int) ($row['ctime'] ?? 0)),
+			'content_hash' => trim((string) ($row['content_hash'] ?? '')),
+			'cache_status' => trim((string) ($row['cache_status'] ?? '')),
+		];
+	}
+	usort($result, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
+	return $result;
+}
+
+/** @return array<string,mixed> */
+function normalize_build_planner_report(array $report): array
+{
+	$timing = is_array($report['timing_ms'] ?? null) ? $report['timing_ms'] : [];
+	return [
+		'schema_version' => max(1, (int) ($report['schema_version'] ?? 1)),
+		'status' => trim((string) ($report['status'] ?? 'unavailable')),
+		'state_path' => normalize_config_path((string) ($report['state_path'] ?? '')),
+		'previous_signature' => trim((string) ($report['previous_signature'] ?? '')),
+		'current_signature' => trim((string) ($report['current_signature'] ?? '')),
+		'project_count' => max(0, (int) ($report['project_count'] ?? 0)),
+		'source_count' => max(0, (int) ($report['source_count'] ?? 0)),
+		'native_source_count' => max(0, (int) ($report['native_source_count'] ?? 0)),
+		'module_count' => max(0, (int) ($report['module_count'] ?? 0)),
+		'stan_summary_available' => (bool) ($report['stan_summary_available'] ?? false),
+		'source_metadata_hit_count' => max(0, (int) ($report['source_metadata_hit_count'] ?? 0)),
+		'source_metadata_miss_count' => max(0, (int) ($report['source_metadata_miss_count'] ?? 0)),
+		'hash_read_count' => max(0, (int) ($report['hash_read_count'] ?? 0)),
+		'reused_hash_count' => max(0, (int) ($report['reused_hash_count'] ?? 0)),
+		'timing_ms' => [
+			'load_state_ms' => max(0, (int) ($timing['load_state_ms'] ?? 0)),
+			'source_scan_ms' => max(0, (int) ($timing['source_scan_ms'] ?? 0)),
+			'write_state_ms' => max(0, (int) ($timing['write_state_ms'] ?? 0)),
+		],
 	];
 }
 

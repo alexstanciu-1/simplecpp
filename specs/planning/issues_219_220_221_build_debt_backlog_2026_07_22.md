@@ -112,6 +112,16 @@ allowing the final link to consume the restored object. `scpp explain-build
 object-cache` reports restore and store rows. This is local-only and does not
 provide remote cache, remote execution, eviction, or cross-checkout sharing.
 
+The first cross-issue planner slice writes a persisted build planner
+warm-state snapshot under `.prism/cache/build_planner_state.json`. The snapshot
+records resolved project graph rows, source metadata, native source rows,
+module summary hashes, and available STAN summary fingerprints. Warm builds can
+reuse source content hashes when the saved size/mtime/ctime tuple is unchanged
+and timestamp reuse is safely settled. `scpp explain-build build-planner`
+reports warm-state status, graph counts, source metadata hit/miss counts, hash
+reads/reuse, and planner timings. This is a process-to-process snapshot, not a
+live resident daemon process.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -126,6 +136,9 @@ provide remote cache, remote execution, eviction, or cross-checkout sharing.
   explanations.
 - Generated header/source written-vs-preserved counters are report-only and are
   not yet used to skip downstream build planning.
+- Build planner source metadata now reuses safely settled source hashes across
+  invocations, but generated write counters still do not directly prune
+  downstream planning.
 
 ### #220 Build Grouping Debt
 
@@ -154,7 +167,8 @@ provide remote cache, remote execution, eviction, or cross-checkout sharing.
   Native units, dependency project units, singleton module groups, and
   entrypoints still stay per-source.
 - Module-level dependency summary artifacts and cache reporting are implemented,
-  but they are not yet used to skip planner or STAN work.
+  and the build planner records module summary hashes, but they are not yet used
+  to skip STAN semantic work.
 - `public_exports` now drives declaration-target public/private API validation,
   but method/property-level module API modeling is not implemented.
 - Duplicate assignments and unassigned sources are reported, not
@@ -162,7 +176,7 @@ provide remote cache, remote execution, eviction, or cross-checkout sharing.
 - Project modules are project-local; cross-project module surfaces are not
   modeled.
 - Module cache hit/miss data is reported, but not used to skip planner/source
-  analysis work.
+  analysis work beyond persisted planner snapshot reporting.
 
 ### Cross-Issue Debt
 
@@ -170,7 +184,8 @@ provide remote cache, remote execution, eviction, or cross-checkout sharing.
   `build.object_cache = true`; default-on policy, eviction, cross-checkout
   reuse, and shared cache behavior are not implemented.
 - No remote cache or remote execution.
-- No persistent build daemon or resident build graph.
+- A persisted build planner warm-state snapshot exists, but there is no live
+  resident build daemon process or in-memory resident graph.
 - Acceptance benchmarks still need to be formalized for the v2 compiler:
   warm no-change, private body edit, public surface edit, broad coordinator
   edit, and release/O3 hot edit.
@@ -272,6 +287,8 @@ provide remote cache, remote execution, eviction, or cross-checkout sharing.
     - Keep safety-first invalidation and clear explain-build evidence.
 
 14. `BLD-X-DAEMON-1`: Prototype a resident build planner.
+    - Status: implemented as a persisted warm-state planner snapshot; live
+      resident daemon process remains deferred.
     - Keep project graph, source metadata, module summaries, and STAN summaries
       warm across invocations.
     - Measure warm no-change planner time against normal process startup.

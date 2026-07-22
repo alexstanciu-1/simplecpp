@@ -171,6 +171,7 @@ scpp explain-build generated-artifacts
 scpp explain-build ninja-explain
 scpp explain-build action-identity
 scpp explain-build object-cache
+scpp explain-build build-planner
 scpp explain-build grouping
 scpp explain-build project-units
 scpp explain-build project-unit main.phs

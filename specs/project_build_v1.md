@@ -220,6 +220,16 @@ the restored object without re-running the compiler. After a successful build,
 object outputs are stored or preserved in the cache. The cache is project-local,
 uses only local action-key identity, and is not a remote cache.
 
+`scpp build` also writes a build planner warm-state snapshot under
+`.prism/cache/build_planner_state.json`. The snapshot records the resolved
+project graph, source metadata rows, native source rows, module summaries, and
+the available STAN summary fingerprint. On later invocations, source content
+hashes may be reused from this state when size, mtime, and ctime match and the
+previous timestamp observation is safely settled. The report is observable in
+`.prism/last_run.json` and `scpp explain-build build-planner`. This is a
+process-to-process warm-state snapshot, not a live resident daemon or remote
+cache.
+
 Project-local compile-time modules may be declared with `project_modules`.
 These are distinct from `runtime.modules` and describe build/report boundaries
 inside one project:
@@ -495,6 +505,8 @@ This command is a documentation discoverability helper. It does not change langu
   and module surface inputs
 - local object action cache restore/store counts when `build.object_cache` is
   enabled
+- build planner warm-state status, graph counts, source metadata hit/miss
+  counts, hash reads/reuse, and load/source-scan/write timings
 - the active build grouping policy, deterministic group membership, changed
   groups, and object fanout
 - which generated project unit force-include headers were assigned, including
@@ -514,6 +526,7 @@ This command is a documentation discoverability helper. It does not change langu
 - `scpp explain-build ninja-explain`
 - `scpp explain-build action-identity`
 - `scpp explain-build object-cache`
+- `scpp explain-build build-planner`
 - `scpp explain-build grouping`
 - `scpp explain-build project-units`
 - `scpp explain-build project-unit <source>`
