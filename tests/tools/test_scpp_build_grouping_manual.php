@@ -435,7 +435,7 @@ PHS);
 					'grouping_compile' => true,
 				],
 			], 'debug');
-		}, 'grouped generated object edges currently require build.grouping_policy = "manual"');
+		}, 'non-manual grouped generated object edges require release build mode');
 	}
 
 	/** @param array<string,mixed> $report @return array<string,array<string,mixed>> */

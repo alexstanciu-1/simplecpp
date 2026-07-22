@@ -226,7 +226,7 @@ Compiler selection:
 - `--build-dependencies` explicitly recompiles Prism project dependency units for the current build
 - `--force` forces a runtime rebuild for the current build, even if the reusable artifact already exists
 - `scpp update` and `scpp runtime-build` are the commands that refresh the shared reusable runtime cache
-- `build.grouping_policy = "manual"` can use `build.grouping` to report explicit project-relative source groups, and `build.grouping_compile = true` opt-in groups generated object edges for manual groups with at least two generated sources
+- `build.grouping_compile = true` can opt into grouped generated object edges for manual groups, or for release-mode `folder`/`package`/`release`/`auto` grouping while keeping debug builds per-source by default
 - `scpp docs <name>` prints curated local Markdown documentation by short name
 
 ## 4. Single-file transpile remains available

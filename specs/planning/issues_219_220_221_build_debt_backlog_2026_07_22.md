@@ -52,6 +52,12 @@ for manual grouping. Manual groups with at least two root generated sources emit
 one grouped generated object edge under `.prism/build/__build_groups/`; native,
 dependency, unassigned, and singleton generated sources remain per-source.
 
+The release/O3 grouping slice extends `build.grouping_compile = true` to
+release-mode `folder`, `package`, `release`, and `auto` policies. These policies
+group root generated sources according to their deterministic grouping key while
+keeping entrypoints, native C++ units, dependency sources, and singleton groups
+per-source.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -69,12 +75,15 @@ dependency, unassigned, and singleton generated sources remain per-source.
 
 ### #220 Build Grouping Debt
 
-- `build.grouping_policy` defaults to report-only for most policies; only
-  manual groups can opt into grouped generated object edges so far.
+- `build.grouping_policy` defaults to report-only for most policies; manual
+  groups and release-mode folder/package/release grouping can opt into grouped
+  generated object edges so far.
 - `manual` grouping maps do not group native C++ units, dependency project
   units, unassigned sources, or singleton generated groups yet.
 - `auto` is a simple policy choice, not a measured cost model.
-- Release/O3 grouped or unity object generation is not implemented.
+- Release/O3 grouping is generated-source only; native units, entrypoints,
+  dependencies, singleton groups, and measured hot-file isolation are still not
+  implemented.
 - Hot-file isolation heuristics are not implemented.
 - There is no benchmark command that compares grouping policies side by side.
 - Native C++ units still use broad-equivalent project-unit behavior.
@@ -142,6 +151,7 @@ dependency, unassigned, and singleton generated sources remain per-source.
    - Report grouped object membership and changed group reasons.
 
 6. `BLD-220-GRAPH-3`: Add release/O3 grouping strategy.
+   - Status: implemented for explicit release-mode `build.grouping_compile = true`.
    - Prefer stable folder/package groups.
    - Keep known volatile or high-cost files isolated.
    - Compare cold build, hot edit, and link-time behavior against isolated mode.
