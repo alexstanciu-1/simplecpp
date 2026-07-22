@@ -3201,6 +3201,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectUnitForceIncludeReport['dependency_summary_artifact'] = $projectUnitDependencySummaryArtifact;
 	$buildGroupingPolicy = apply_auto_build_grouping_evidence($projectRoot, $buildGroupingPolicy, $generatedUnits);
 	$projectModuleReport = collect_project_module_report($projectRoot, $projectContexts, $generatedUnits, $projectUnitForceIncludeReport);
+	$buildGroupingPolicy = apply_project_module_build_grouping_evidence($projectRoot, $buildGroupingPolicy, $projectModuleReport, $generatedUnits);
 	apply_grouped_generated_object_edges($projectRoot, $buildDir, $generatedDir, $buildGroupingPolicy, $generatedUnits, $sourceRebuildReasons, $compiler['kind']);
 
 	if ($usePch) {
@@ -5053,7 +5054,7 @@ function resolve_build_grouping_policy(array $config, string $buildMode): array
 		scpp_fail('Invalid build.grouping_policy in ' . SCPP_PROJECT_CONFIG . ': expected a string.' . PHP_EOL, 2);
 	}
 
-	$allowed = ['incremental', 'isolated', 'package', 'folder', 'manual', 'release', 'auto', 'none'];
+	$allowed = ['incremental', 'isolated', 'package', 'folder', 'manual', 'module', 'release', 'auto', 'none'];
 	if (!in_array($policy, $allowed, true)) {
 		scpp_fail('Invalid build.grouping_policy `' . $policy . '` in ' . SCPP_PROJECT_CONFIG . '. Use one of: ' . implode(', ', $allowed) . '.' . PHP_EOL, 2);
 	}
@@ -5072,9 +5073,9 @@ function resolve_build_grouping_policy(array $config, string $buildMode): array
 		scpp_fail('Invalid build.grouping_compile in ' . SCPP_PROJECT_CONFIG . ': expected a boolean.' . PHP_EOL, 2);
 	}
 	$buildModeName = normalize_build_mode_name($buildMode, 'build grouping mode');
-	$releaseGroupingPolicies = ['folder', 'package', 'release', 'auto'];
+	$releaseGroupingPolicies = ['folder', 'package', 'module', 'release', 'auto'];
 	if ($rawGroupingCompile && $policy !== 'manual' && !in_array($policy, $releaseGroupingPolicies, true)) {
-		scpp_fail('Invalid build.grouping_compile in ' . SCPP_PROJECT_CONFIG . ': grouped generated object edges currently require build.grouping_policy = "manual", "folder", "package", "release", or "auto".' . PHP_EOL, 2);
+		scpp_fail('Invalid build.grouping_compile in ' . SCPP_PROJECT_CONFIG . ': grouped generated object edges currently require build.grouping_policy = "manual", "folder", "package", "module", "release", or "auto".' . PHP_EOL, 2);
 	}
 	if ($rawGroupingCompile && $policy !== 'manual' && $buildModeName !== 'release') {
 		scpp_fail('Invalid build.grouping_compile in ' . SCPP_PROJECT_CONFIG . ': non-manual grouped generated object edges require release build mode.' . PHP_EOL, 2);
@@ -5083,6 +5084,9 @@ function resolve_build_grouping_policy(array $config, string $buildMode): array
 	if ($generatedGroupingEnabled && $policy === 'manual') {
 		$notes[] = 'manual groups with at least two generated root sources emit one grouped generated object edge';
 		$notes[] = 'native C++ units and unassigned sources still compile as per-source objects';
+	} elseif ($generatedGroupingEnabled && $policy === 'module') {
+		$notes[] = 'release-mode module grouping emits grouped generated object edges for explicit project module sources';
+		$notes[] = 'entrypoints, native C++ units, dependency sources, unassigned sources, and singleton module groups still compile as per-source objects';
 	} elseif ($generatedGroupingEnabled) {
 		$notes[] = 'release-mode folder/package/release/auto grouping emits grouped generated object edges for root generated sources';
 		$notes[] = 'entrypoints, native C++ units, dependency sources, and singleton groups still compile as per-source objects';
@@ -5094,7 +5098,7 @@ function resolve_build_grouping_policy(array $config, string $buildMode): array
 		'status' => $generatedGroupingEnabled ? 'active_generated_edges' : 'report_only',
 		'build_mode' => $buildModeName,
 		'compile_unit_strategy' => $generatedGroupingEnabled
-			? ($policy === 'manual' ? 'manual_grouped_generated_objects' : 'release_grouped_generated_objects')
+			? ($policy === 'manual' ? 'manual_grouped_generated_objects' : ($policy === 'module' ? 'module_grouped_generated_objects' : 'release_grouped_generated_objects'))
 			: 'per_source_objects',
 		'native_strategy' => 'per_source_objects_with_project_unit_broad_fallback',
 		'deterministic' => true,
@@ -5403,6 +5407,122 @@ function build_auto_grouping_source_decision(string $source, string $decision, s
 	];
 }
 
+/** @return array<string,mixed> */
+function apply_project_module_build_grouping_evidence(string $projectRoot, array $policy, array $projectModuleReport, array $generatedUnits): array
+{
+	if ((string) ($policy['policy'] ?? '') !== 'module') {
+		return $policy;
+	}
+	$moduleGroups = collect_project_module_generated_group_rows($projectRoot, $projectModuleReport, $generatedUnits);
+	$assignedSources = [];
+	foreach ($moduleGroups as $group) {
+		foreach (normalize_string_list($group['sources'] ?? []) as $source) {
+			$assignedSources[$source] = true;
+		}
+	}
+	$eligibleRootSources = collect_root_generated_grouping_sources($projectRoot, $generatedUnits);
+	$unassignedSources = [];
+	foreach (array_keys($eligibleRootSources) as $source) {
+		if (!isset($assignedSources[$source])) {
+			$unassignedSources[] = $source;
+		}
+	}
+	sort($unassignedSources, SORT_STRING);
+	$notes = normalize_string_list($policy['notes'] ?? []);
+	$moduleReport = normalize_project_module_report($projectModuleReport);
+	if ((bool) ($moduleReport['configured'] ?? false)) {
+		$notes[] = 'module grouping uses explicit project_modules membership';
+		$notes[] = 'module grouping excludes entrypoints from grouped generated object edges';
+	} else {
+		$notes[] = 'module grouping found no configured project_modules; generated sources stay isolated';
+	}
+	$policy['notes'] = normalize_string_list($notes);
+	$policy['module_groups'] = $moduleGroups;
+	$policy['module_group_count'] = count($moduleGroups);
+	$policy['module_assigned_source_count'] = count($assignedSources);
+	$policy['module_unassigned_source_count'] = count($unassignedSources);
+	$policy['module_unassigned_sources'] = $unassignedSources;
+	return $policy;
+}
+
+/** @return array<string,bool> */
+function collect_root_generated_grouping_sources(string $projectRoot, array $generatedUnits): array
+{
+	$rootProjectRoot = normalize_path($projectRoot);
+	$sources = [];
+	foreach ($generatedUnits as $unit) {
+		if (normalize_path((string) ($unit['project_root'] ?? '')) !== $rootProjectRoot) {
+			continue;
+		}
+		if ((bool) ($unit['is_entrypoint'] ?? false)) {
+			continue;
+		}
+		$source = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		if ($source !== '') {
+			$sources[$source] = true;
+		}
+	}
+	ksort($sources, SORT_STRING);
+	return $sources;
+}
+
+/** @return list<array{id:string,name:string,project_root:string,sources:list<string>}> */
+function collect_project_module_generated_group_rows(string $projectRoot, array $projectModuleReport, array $generatedUnits): array
+{
+	$eligibleRootSources = collect_root_generated_grouping_sources($projectRoot, $generatedUnits);
+	if ($eligibleRootSources === []) {
+		return [];
+	}
+	$report = normalize_project_module_report($projectModuleReport);
+	if (!(bool) ($report['configured'] ?? false)) {
+		return [];
+	}
+	$groups = [];
+	foreach (is_array($report['modules'] ?? null) ? $report['modules'] : [] as $module) {
+		if (!is_array($module)) {
+			continue;
+		}
+		$moduleName = trim((string) ($module['name'] ?? ''));
+		$projectLabel = trim((string) ($module['project_root'] ?? '.'));
+		if ($moduleName === '' || ($projectLabel !== '' && $projectLabel !== '.')) {
+			continue;
+		}
+		$sources = [];
+		foreach (normalize_project_module_source_rows(is_array($module['sources'] ?? null) ? $module['sources'] : []) as $sourceRow) {
+			$source = normalize_config_path((string) ($sourceRow['source'] ?? ''));
+			if ($source !== '' && isset($eligibleRootSources[$source])) {
+				$sources[] = $source;
+			}
+		}
+		$sources = normalize_string_list($sources);
+		if ($sources === []) {
+			continue;
+		}
+		$groups[] = [
+			'id' => build_grouping_module_group_id('.', $moduleName),
+			'name' => $moduleName,
+			'project_root' => '.',
+			'sources' => $sources,
+		];
+	}
+	usort($groups, static fn (array $left, array $right): int => strcmp((string) ($left['id'] ?? ''), (string) ($right['id'] ?? '')));
+	return $groups;
+}
+
+function build_grouping_module_group_id(string $projectLabel, string $moduleName): string
+{
+	$projectKey = trim($projectLabel) === '.' || trim($projectLabel) === '' ? 'root' : trim($projectLabel);
+	$projectKey = strtolower(trim(preg_replace('/[^A-Za-z0-9_.-]+/', '-', $projectKey) ?? ''));
+	$moduleKey = strtolower(trim(preg_replace('/[^A-Za-z0-9_.-]+/', '-', $moduleName) ?? ''));
+	if ($projectKey === '') {
+		$projectKey = 'project';
+	}
+	if ($moduleKey === '') {
+		$moduleKey = substr(hash('sha256', $moduleName), 0, 12);
+	}
+	return 'module:' . $projectKey . ':' . $moduleKey;
+}
+
 /**
  * @param array<string,mixed> $policy
  * @param list<array<string,mixed>> $generatedUnits
@@ -5414,9 +5534,13 @@ function apply_grouped_generated_object_edges(string $projectRoot, string $build
 		return;
 	}
 	$policyName = (string) ($policy['policy'] ?? '');
-	$groups = $policyName === 'manual'
-		? normalize_build_grouping_manual_group_rows(is_array($policy['manual_groups'] ?? null) ? $policy['manual_groups'] : [])
-		: collect_release_generated_group_rows($projectRoot, $policy, $generatedUnits);
+	if ($policyName === 'manual') {
+		$groups = normalize_build_grouping_manual_group_rows(is_array($policy['manual_groups'] ?? null) ? $policy['manual_groups'] : []);
+	} elseif ($policyName === 'module') {
+		$groups = normalize_build_grouping_module_group_rows(is_array($policy['module_groups'] ?? null) ? $policy['module_groups'] : []);
+	} else {
+		$groups = collect_release_generated_group_rows($projectRoot, $policy, $generatedUnits);
+	}
 	if ($groups === []) {
 		return;
 	}
@@ -5623,6 +5747,15 @@ function collect_build_grouping_report(string $projectRoot, array $policy, array
 			$manualGroupsBySource[$source] = $manualGroup;
 		}
 	}
+	$moduleGroupsBySource = [];
+	$moduleGroups = normalize_build_grouping_module_group_rows(is_array($policy['module_groups'] ?? null) ? $policy['module_groups'] : []);
+	if ((string) ($policy['policy'] ?? '') === 'module') {
+		foreach ($moduleGroups as $moduleGroup) {
+			foreach (normalize_string_list($moduleGroup['sources'] ?? []) as $source) {
+				$moduleGroupsBySource[$source] = $moduleGroup;
+			}
+		}
+	}
 
 	$knownRootSources = [];
 	foreach ($generatedUnits as $unit) {
@@ -5655,13 +5788,23 @@ function collect_build_grouping_report(string $projectRoot, array $policy, array
 	}
 
 	$groups = [];
-	$addUnit = static function (string $kind, string $unitProjectRoot, string $relativeSource, string $objectPath) use (&$groups, $projectRoot, $policy, $rebuiltObjects, $manualGroupsBySource, $autoDecisionsBySource): void {
+	$addUnit = static function (string $kind, string $unitProjectRoot, string $relativeSource, string $objectPath) use (&$groups, $projectRoot, $policy, $rebuiltObjects, $manualGroupsBySource, $moduleGroupsBySource, $autoDecisionsBySource): void {
 		$projectLabel = project_context_report_label($projectRoot, $unitProjectRoot);
 		$manualGroup = null;
 		if ((string) ($policy['policy'] ?? '') === 'manual' && normalize_path($unitProjectRoot) === normalize_path($projectRoot)) {
 			$manualGroup = is_array($manualGroupsBySource[$relativeSource] ?? null) ? $manualGroupsBySource[$relativeSource] : null;
 		}
 		$group = null;
+		if ((string) ($policy['policy'] ?? '') === 'module' && normalize_path($unitProjectRoot) === normalize_path($projectRoot) && $kind === 'generated') {
+			$moduleGroup = is_array($moduleGroupsBySource[$relativeSource] ?? null) ? $moduleGroupsBySource[$relativeSource] : null;
+			if ($moduleGroup !== null) {
+				$group = [
+					'id' => trim((string) ($moduleGroup['id'] ?? '')),
+					'label' => trim((string) ($moduleGroup['name'] ?? '')),
+					'kind' => 'project_module',
+				];
+			}
+		}
 		if ((string) ($policy['policy'] ?? '') === 'auto' && normalize_path($unitProjectRoot) === normalize_path($projectRoot) && $kind === 'generated') {
 			$decision = is_array($autoDecisionsBySource[$relativeSource] ?? null) ? $autoDecisionsBySource[$relativeSource] : null;
 			if ($decision !== null && (string) ($decision['decision'] ?? '') === 'grouped' && trim((string) ($decision['group_id'] ?? '')) !== '') {
@@ -5787,6 +5930,13 @@ function collect_build_grouping_report(string $projectRoot, array $policy, array
 		$policy['manual_unassigned_source_count'] = count($unassignedRootSources);
 		$policy['manual_unassigned_sources'] = $unassignedRootSources;
 	}
+	if ((string) ($policy['policy'] ?? '') === 'module') {
+		$policy['module_groups'] = $moduleGroups;
+		$policy['module_group_count'] = max(0, (int) ($policy['module_group_count'] ?? count($moduleGroups)));
+		$policy['module_assigned_source_count'] = max(0, (int) ($policy['module_assigned_source_count'] ?? count($moduleGroupsBySource)));
+		$policy['module_unassigned_source_count'] = max(0, (int) ($policy['module_unassigned_source_count'] ?? 0));
+		$policy['module_unassigned_sources'] = normalize_string_list($policy['module_unassigned_sources'] ?? []);
+	}
 	return normalize_build_grouping_report($policy);
 }
 
@@ -5873,6 +6023,11 @@ function normalize_build_grouping_report(array $report): array
 	foreach ($manualGroups as $manualGroup) {
 		$manualSourceCount += count(is_array($manualGroup['sources'] ?? null) ? $manualGroup['sources'] : []);
 	}
+	$moduleGroups = normalize_build_grouping_module_group_rows(is_array($report['module_groups'] ?? null) ? $report['module_groups'] : []);
+	$moduleSourceCount = 0;
+	foreach ($moduleGroups as $moduleGroup) {
+		$moduleSourceCount += count(is_array($moduleGroup['sources'] ?? null) ? $moduleGroup['sources'] : []);
+	}
 	$policy = trim((string) ($report['policy'] ?? ''));
 	$generatedGroupingEnabled = (bool) ($report['generated_grouping_enabled'] ?? false);
 	$normalized = [
@@ -5901,6 +6056,13 @@ function normalize_build_grouping_report(array $report): array
 		$normalized['manual_assigned_source_count'] = max(0, (int) ($report['manual_assigned_source_count'] ?? $manualSourceCount));
 		$normalized['manual_unassigned_source_count'] = max(0, (int) ($report['manual_unassigned_source_count'] ?? 0));
 		$normalized['manual_unassigned_sources'] = normalize_string_list($report['manual_unassigned_sources'] ?? []);
+	}
+	if ($policy === 'module') {
+		$normalized['module_groups'] = $moduleGroups;
+		$normalized['module_group_count'] = max(0, (int) ($report['module_group_count'] ?? count($moduleGroups)));
+		$normalized['module_assigned_source_count'] = max(0, (int) ($report['module_assigned_source_count'] ?? $moduleSourceCount));
+		$normalized['module_unassigned_source_count'] = max(0, (int) ($report['module_unassigned_source_count'] ?? 0));
+		$normalized['module_unassigned_sources'] = normalize_string_list($report['module_unassigned_sources'] ?? []);
 	}
 	if ($policy === 'manual' || $generatedGroupingEnabled) {
 		$normalized['generated_grouping_enabled'] = $generatedGroupingEnabled;
@@ -5991,6 +6153,37 @@ function normalize_build_grouping_manual_group_rows(array $groups): array
 		$normalized[] = [
 			'id' => trim((string) ($group['id'] ?? build_grouping_manual_group_id($name))),
 			'name' => $name,
+			'sources' => $sources,
+		];
+	}
+	usort($normalized, static fn (array $left, array $right): int => strcmp((string) ($left['id'] ?? ''), (string) ($right['id'] ?? '')));
+	return $normalized;
+}
+
+/** @return list<array{id:string,name:string,project_root:string,sources:list<string>}> */
+function normalize_build_grouping_module_group_rows(array $groups): array
+{
+	$normalized = [];
+	foreach ($groups as $group) {
+		if (!is_array($group)) {
+			continue;
+		}
+		$name = trim((string) ($group['name'] ?? ($group['label'] ?? '')));
+		$projectLabel = trim((string) ($group['project_root'] ?? '.'));
+		if ($projectLabel === '') {
+			$projectLabel = '.';
+		}
+		if ($name === '') {
+			continue;
+		}
+		$sources = normalize_string_list($group['sources'] ?? []);
+		if ($sources === []) {
+			continue;
+		}
+		$normalized[] = [
+			'id' => trim((string) ($group['id'] ?? build_grouping_module_group_id($projectLabel, $name))),
+			'name' => $name,
+			'project_root' => $projectLabel,
 			'sources' => $sources,
 		];
 	}
@@ -10927,6 +11120,11 @@ function render_build_grouping_lines(array $report, bool $includeGroups = false)
 		$lines[] = 'Build grouping manual map: groups ' . (int) ($report['manual_group_count'] ?? 0)
 			. ', assigned sources ' . (int) ($report['manual_assigned_source_count'] ?? 0)
 			. ', unassigned root sources ' . (int) ($report['manual_unassigned_source_count'] ?? 0);
+	}
+	if ($policy === 'module') {
+		$lines[] = 'Build grouping project modules: groups ' . (int) ($report['module_group_count'] ?? 0)
+			. ', assigned sources ' . (int) ($report['module_assigned_source_count'] ?? 0)
+			. ', unassigned grouped sources ' . (int) ($report['module_unassigned_source_count'] ?? 0);
 	}
 	if ($policy === 'auto') {
 		$autoEvidence = is_array($report['auto_evidence'] ?? null) ? $report['auto_evidence'] : [];

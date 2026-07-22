@@ -226,7 +226,7 @@ Compiler selection:
 - `--build-dependencies` explicitly recompiles Prism project dependency units for the current build
 - `--force` forces a runtime rebuild for the current build, even if the reusable artifact already exists
 - `scpp update` and `scpp runtime-build` are the commands that refresh the shared reusable runtime cache
-- `build.grouping_compile = true` can opt into grouped generated object edges for manual groups, or for release-mode `folder`/`package`/`release`/`auto` grouping while keeping debug builds per-source by default
+- `build.grouping_compile = true` can opt into grouped generated object edges for manual groups, or for release-mode `folder`/`package`/`module`/`release`/`auto` grouping while keeping debug builds per-source by default
 - `build.grouping_policy = "auto"` records deterministic prior-build evidence and source-level grouped/isolated reasons in `scpp explain-build grouping`
 - `project_module_dependency_policy = "report"|"warn"|"fail"` compares explicit project module dependencies with source dependency evidence
 - `scpp explain-build modules` reports project module surface cache status and module analysis summary cache status from `.prism/cache/project_modules/*.stan-summary.json`

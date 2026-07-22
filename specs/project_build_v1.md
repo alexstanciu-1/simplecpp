@@ -151,12 +151,13 @@ and `.prism/cache/<mode>`. Existing projects without `--mode` keep the current
 top-level default behavior.
 
 Projects may also set `build.grouping_policy` to one of `incremental`,
-`isolated`, `package`, `folder`, `manual`, `release`, `auto`, or `none`.
+`isolated`, `package`, `folder`, `manual`, `module`, `release`, `auto`, or
+`none`.
 Current v1 builds record the selected deterministic grouping policy and group
 membership in build reports. By default, the Ninja graph compiles one
 generated/native object per source. Explicit `build.grouping_compile` opt-ins
 can enable grouped generated-object edges for manual groups or release-mode
-folder/package/release grouping.
+folder/package/module/release grouping.
 
 When `build.grouping_policy` is `manual`, `build.grouping` must be an object
 mapping manual group names to project-relative source lists:
@@ -189,12 +190,14 @@ and manual groups with fewer than two generated sources continue using
 per-source object edges in this first slice.
 
 For non-manual policies, `build.grouping_compile = true` is accepted only in
-release build mode and only with `folder`, `package`, `release`, or `auto`
-grouping. These release-mode grouped generated edges use the selected
+release build mode and only with `folder`, `package`, `module`, `release`, or
+`auto` grouping. These release-mode grouped generated edges use the selected
 deterministic policy to form root-project generated-source groups, skip
 entrypoint generated sources, and keep singleton groups, dependency-project
-sources, and native C++ sources as per-source object edges. This keeps debug
-isolation as the default while allowing explicit release/O3 unity-style
+sources, and native C++ sources as per-source object edges. The `module` policy
+uses explicit `project_modules` membership, excludes entrypoints from grouped
+objects, and leaves unassigned or singleton module sources isolated. This keeps
+debug isolation as the default while allowing explicit release/O3 unity-style
 generated objects.
 
 When `build.grouping_policy` is `auto`, the build records deterministic
@@ -533,13 +536,16 @@ boundary and measured fanout for incremental, manual, and release workflow
 tuning. When `build.grouping_compile = true` emits grouped generated edges, the
 report uses status `active_generated_edges`, records whether generated grouping
 is enabled, and stores changed group reasons. Manual grouped edges use compile
-strategy `manual_grouped_generated_objects`; release-mode
-folder/package/release/auto grouped edges use
-`release_grouped_generated_objects`. For manual grouping, the report also stores
-configured manual groups, assigned source count, unassigned root source count,
-and unassigned root source names. For auto grouping, the report also stores
-`auto_evidence` and `auto_source_decisions`, and the focused `grouping` view
-renders the selected auto policy plus source-level grouping/isolation reasons.
+strategy `manual_grouped_generated_objects`; release-mode module grouped edges
+use `module_grouped_generated_objects`; release-mode folder/package/release/auto
+grouped edges use `release_grouped_generated_objects`. For manual grouping, the
+report also stores configured manual groups, assigned source count, unassigned
+root source count, and unassigned root source names. For module grouping, the
+report stores explicit module groups, assigned source count, and unassigned
+non-entrypoint root generated source names. For auto grouping, the report also
+stores `auto_evidence` and `auto_source_decisions`, and the focused `grouping`
+view renders the selected auto policy plus source-level grouping/isolation
+reasons.
 
 Saved build details also include `details.build_explanation.project_modules`.
 When `project_modules` is configured, each module row stores source membership,

@@ -276,7 +276,7 @@ PHS);
 					'grouping_compile' => true,
 				],
 			], 'release');
-		}, 'grouped generated object edges currently require build.grouping_policy = "manual", "folder", "package", "release", or "auto"');
+		}, 'grouped generated object edges currently require build.grouping_policy = "manual", "folder", "package", "module", "release", or "auto"');
 	}
 
 	/** @param array<string,mixed> $report @return array<string,array<string,mixed>> */

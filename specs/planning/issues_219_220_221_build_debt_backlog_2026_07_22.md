@@ -77,6 +77,15 @@ and cache reasons. The cache hash is based on module-local dependency evidence
 rather than whole-project source fingerprints, so stable dependency evidence can
 hit even when unrelated implementation text changes.
 
+The first #221 module-graph slice adds explicit module grouping via
+`build.grouping_policy = "module"`. With `build.grouping_compile = true` in
+release mode, non-entrypoint root generated sources assigned to the same
+explicit project module can compile through one grouped generated object. Entry
+points, native units, dependency project sources, singleton module groups, and
+unassigned sources stay per-source. Grouped module compile edges keep public
+module surface artifacts as implicit inputs and keep private implementation
+artifacts out of consumer compile inputs.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -95,8 +104,8 @@ hit even when unrelated implementation text changes.
 ### #220 Build Grouping Debt
 
 - `build.grouping_policy` defaults to report-only for most policies; manual
-  groups and release-mode folder/package/release grouping can opt into grouped
-  generated object edges so far.
+  groups and release-mode folder/package/module/release grouping can opt into
+  grouped generated object edges so far.
 - `manual` grouping maps do not group native C++ units, dependency project
   units, unassigned sources, or singleton generated groups yet.
 - `auto` now uses saved local evidence, but it is still a simple deterministic
@@ -113,8 +122,11 @@ hit even when unrelated implementation text changes.
 - Modules are explicit config only; Simple C++ now validates declared module
   dependencies against direct source evidence, but public/private API policy and
   transitive boundary enforcement are still not implemented.
-- Module surfaces are cache/report artifacts and implicit compile inputs, but
-  module boundaries do not drive grouped objects.
+- Module surfaces are cache/report artifacts, implicit compile inputs, and can
+  drive explicit release-mode grouped generated objects with
+  `build.grouping_policy = "module"` plus `build.grouping_compile = true`.
+  Native units, dependency project units, singleton module groups, and
+  entrypoints still stay per-source.
 - Module-level dependency summary artifacts and cache reporting are implemented,
   but they are not yet used to skip planner or STAN work.
 - `public_exports` participates in module identity, but public/private API
@@ -202,6 +214,7 @@ hit even when unrelated implementation text changes.
    - Report module analysis cache hit/miss reasons.
 
 10. `BLD-221-GRAPH-1`: Use module boundaries for grouped object topology.
+    - Status: implemented for explicit release-mode generated module groups.
     - Allow a module to map to isolated per-source objects, a grouped object, or
       a hybrid shape.
     - Use public surface artifacts for consumer invalidation.
