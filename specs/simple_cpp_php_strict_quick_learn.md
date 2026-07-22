@@ -403,6 +403,8 @@ Use each tool for the question it answers:
   `scpp explain-build grouping`,
   `scpp explain-build project-units` for force-include and dependency-summary diagnostics,
   `scpp explain-build project-unit <source>` for one source's project-unit dependency row,
+  `scpp explain-build modules`,
+  `scpp explain-build module <name>`,
   `scpp explain-build entrypoint`,
   `scpp explain-build final-output`,
   `scpp explain-build generated-files`,

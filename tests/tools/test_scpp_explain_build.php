@@ -47,6 +47,18 @@ final class ScppExplainBuildTest
 					'mode' => 'debug',
 					'grouping_policy' => 'incremental',
 				],
+				'project_modules' => [
+					[
+						'name' => 'domain',
+						'sources' => ['base.phs', 'child.phs'],
+						'dependencies' => [],
+					],
+					[
+						'name' => 'app',
+						'sources' => ['main.phs'],
+						'dependencies' => ['domain'],
+					],
+				],
 				'runtime' => [
 					'languages' => ['php'],
 					'modules' => ['json', 'filesystem'],
@@ -105,6 +117,49 @@ final class ScppExplainBuildTest
 			}
 			$this->assertContains('source:root:generated:child.phs', implode("\n", $groupIds), 'warm build grouping should include an isolated child source group');
 			$this->assertContains('source:root:native:native_cpp/policy_probe.cpp', implode("\n", $groupIds), 'warm build grouping should include an isolated native source group');
+			$projectModules = is_array($explanation['project_modules'] ?? null) ? $explanation['project_modules'] : null;
+			if (!is_array($projectModules)) {
+				throw new RuntimeException('build explanation should contain project module details');
+			}
+			$this->assertProjectModuleReportShape($projectModules, 'warm project module report');
+			$this->assertSame(true, $projectModules['configured'] ?? null, 'project module report should record configured modules');
+			$this->assertSame(2, $projectModules['total_modules'] ?? null, 'project module report should count configured modules');
+			$this->assertSame(3, $projectModules['generated_source_count'] ?? null, 'project module report should count generated project sources');
+			$this->assertSame(3, $projectModules['assigned_source_count'] ?? null, 'project module report should count assigned generated sources');
+			$this->assertSame(0, $projectModules['unassigned_source_count'] ?? null, 'project module report should record no unassigned generated sources');
+			$moduleCacheCounts = is_array($projectModules['cache_status_counts'] ?? null) ? $projectModules['cache_status_counts'] : [];
+			$this->assertSame(2, $moduleCacheCounts['hit'] ?? null, 'warm project module report should reuse both module surface artifacts');
+			$moduleByName = [];
+			foreach (is_array($projectModules['modules'] ?? null) ? $projectModules['modules'] : [] as $module) {
+				if (is_array($module) && is_string($module['name'] ?? null)) {
+					$moduleByName[$module['name']] = $module;
+				}
+			}
+			$domainModule = $moduleByName['domain'] ?? null;
+			if (!is_array($domainModule)) {
+				throw new RuntimeException('project module report should contain domain module');
+			}
+			$this->assertSame(2, $domainModule['source_count'] ?? null, 'domain module should own base and child sources');
+			$this->assertSame('hit', $domainModule['cache_status'] ?? null, 'warm domain module should be a cache hit');
+			$this->assertSame(false, $domainModule['interface_changed'] ?? null, 'warm domain module should not change interface hash');
+			$this->assertSame(false, $domainModule['implementation_changed'] ?? null, 'warm domain module should not change implementation hash');
+			$this->assertSame('interface_hash_only', $domainModule['consumer_rebuild_policy'] ?? null, 'domain module should report interface-hash consumer policy');
+			$this->assertTrue(is_string($domainModule['surface_artifact'] ?? null) && str_ends_with((string) $domainModule['surface_artifact'], '.surface.json'), 'domain module should report a surface artifact');
+			$this->assertTrue(is_string($domainModule['implementation_artifact'] ?? null) && str_ends_with((string) $domainModule['implementation_artifact'], '.implementation.json'), 'domain module should report an implementation artifact');
+			$this->assertFileExists($project . '/' . (string) ($domainModule['surface_artifact'] ?? ''), 'warm build should write the domain module surface artifact');
+			$this->assertFileExists($project . '/' . (string) ($domainModule['implementation_artifact'] ?? ''), 'warm build should write the domain module implementation artifact');
+			$domainSurfaceArtifact = json_decode($this->read($project . '/' . (string) ($domainModule['surface_artifact'] ?? '')), true);
+			if (!is_array($domainSurfaceArtifact)) {
+				throw new RuntimeException('domain module surface artifact should decode as JSON');
+			}
+			$this->assertSame('project_module_surface', $domainSurfaceArtifact['kind'] ?? null, 'domain module surface artifact should identify its kind');
+			$this->assertSame($domainModule['interface_hash'] ?? null, $domainSurfaceArtifact['interface_hash'] ?? null, 'domain module surface artifact should persist the interface hash');
+			$appModule = $moduleByName['app'] ?? null;
+			if (!is_array($appModule)) {
+				throw new RuntimeException('project module report should contain app module');
+			}
+			$this->assertSame(['domain'], $appModule['dependencies'] ?? null, 'app module should report its project-local dependency');
+			$this->assertSame(false, $appModule['consumer_rebuild_required'] ?? null, 'warm app module should not require consumer rebuild when domain interface is unchanged');
 			$projectUnits = is_array($explanation['project_unit_force_includes'] ?? null) ? $explanation['project_unit_force_includes'] : null;
 			if (!is_array($projectUnits)) {
 				throw new RuntimeException('build explanation should contain project unit force-include details');
@@ -226,6 +281,10 @@ final class ScppExplainBuildTest
 			$this->assertSame('fallback_broad', $mainSource['project_unit_status'] ?? null, 'source explanation should annotate main broad fallback status');
 			$this->assertSame('broad_equivalent_pack', $mainSource['project_unit_force_include_mode'] ?? null, 'source explanation should annotate main broad pack mode');
 			$this->assertTrue(str_starts_with((string) ($mainSource['project_unit_force_include_header'] ?? ''), '.prism/generated/__project_units/'), 'source explanation should annotate main force-include header');
+			$this->assertSame('app', $mainSource['project_module'] ?? null, 'source explanation should annotate main project module membership');
+			$mainModuleSurfaceArtifacts = is_array($mainSource['project_module_surface_artifacts'] ?? null) ? $mainSource['project_module_surface_artifacts'] : [];
+			$this->assertContains('.prism/cache/project_modules/app-', implode("\n", $mainModuleSurfaceArtifacts), 'source explanation should include the app module surface input');
+			$this->assertContains('.prism/cache/project_modules/domain-', implode("\n", $mainModuleSurfaceArtifacts), 'source explanation should include the domain dependency surface input');
 			$childSource = $sourceByPath['child.phs'] ?? null;
 			if (!is_array($childSource)) {
 				throw new RuntimeException('build explanation should include the child source record');
@@ -298,6 +357,23 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $missingProjectUnitView['exit_code'], 'scpp explain-build project-unit missing.phs should still produce a focused report');
 			$this->assertContains('Dependency summary for missing.phs: not found', $missingProjectUnitView['stdout'], 'project-unit should clearly report a missing requested source');
 
+			$modulesView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'modules'], [], 20.0);
+			$this->assertSame(0, $modulesView['exit_code'], 'scpp explain-build modules should succeed');
+			$this->assertContains('Project modules: 2 module(s), 3/3 generated source(s) assigned, unassigned 0', $modulesView['stdout'], 'modules view should summarize configured module coverage');
+			$this->assertContains('Project module cache: hits 2, new 0, interface changed 0, implementation changed 0', $modulesView['stdout'], 'modules view should summarize warm module cache hits');
+			$this->assertContains('Project module rows:', $modulesView['stdout'], 'modules view should list module rows');
+			$this->assertContains('domain: sources 2, deps none, cache hit', $modulesView['stdout'], 'modules view should show the domain module');
+			$this->assertContains('app: sources 1, deps domain, cache hit', $modulesView['stdout'], 'modules view should show the app module dependency');
+
+			$moduleDetailView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'module', 'app'], [], 20.0);
+			$this->assertSame(0, $moduleDetailView['exit_code'], 'scpp explain-build module app should succeed');
+			$this->assertContains('Project module detail:', $moduleDetailView['stdout'], 'module detail view should include a detail header');
+			$this->assertContains('app: sources 1, deps domain, cache hit', $moduleDetailView['stdout'], 'module detail view should show the requested app module');
+			$this->assertContains('sources: main.phs', $moduleDetailView['stdout'], 'module detail view should list module sources');
+			$buildNinjaText = $this->read($project . '/.prism/build/build.ninja');
+			$this->assertContains('../cache/project_modules/domain-', $buildNinjaText, 'build.ninja should use module surface artifacts as generated-object compile inputs');
+			$this->assertContains('.surface.json', $buildNinjaText, 'build.ninja should reference public surface artifacts, not private implementation artifacts');
+			$this->assertNotContains('.implementation.json', $buildNinjaText, 'build.ninja should not rebuild consumers from private implementation artifacts');
 
 			$entrypointView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'entrypoint'], [], 20.0);
 			$this->assertSame(0, $entrypointView['exit_code'], 'scpp explain-build entrypoint should succeed');
@@ -628,6 +704,78 @@ final class ScppExplainBuildTest
 				'rebuilt_object_count',
 				'rebuilt_objects',
 			], $group, $context . ' group row keys');
+		}
+	}
+
+	private function assertProjectModuleReportShape(array $projectModules, string $context): void
+	{
+		$this->assertKeys([
+			'assigned_source_count',
+			'cache_status_counts',
+			'configured',
+			'consumer_rebuild_required_count',
+			'duplicate_assignments',
+			'generated_source_count',
+			'manifest_artifacts',
+			'modules',
+			'total_modules',
+			'unassigned_source_count',
+			'unassigned_sources',
+		], $projectModules, $context . ' top-level keys');
+
+		$cacheStatusCounts = is_array($projectModules['cache_status_counts'] ?? null) ? $projectModules['cache_status_counts'] : null;
+		if (!is_array($cacheStatusCounts)) {
+			throw new RuntimeException($context . ' cache_status_counts should be an object');
+		}
+		$this->assertKeys([
+			'hit',
+			'implementation_changed',
+			'interface_and_implementation_changed',
+			'interface_changed',
+			'new',
+			'unavailable',
+		], $cacheStatusCounts, $context . ' cache_status_counts keys');
+
+		foreach (is_array($projectModules['modules'] ?? null) ? $projectModules['modules'] : [] as $module) {
+			if (!is_array($module)) {
+				throw new RuntimeException($context . ' module row should be an object');
+			}
+			$this->assertKeys([
+				'cache_status',
+				'configured_sources',
+				'consumer_rebuild_policy',
+				'consumer_rebuild_reasons',
+				'consumer_rebuild_required',
+				'dependencies',
+				'implementation_artifacts',
+				'implementation_artifact',
+				'implementation_changed',
+				'implementation_hash',
+				'interface_changed',
+				'interface_hash',
+				'name',
+				'project_root',
+				'public_exports',
+				'source_count',
+				'source_roots',
+				'sources',
+				'surface_artifact',
+				'unresolved_dependencies',
+			], $module, $context . ' module row keys');
+			foreach (is_array($module['sources'] ?? null) ? $module['sources'] : [] as $source) {
+				if (!is_array($source)) {
+					throw new RuntimeException($context . ' module source row should be an object');
+				}
+				$this->assertKeys([
+					'generated_cpp',
+					'generated_header',
+					'implementation_hash',
+					'interface_hash',
+					'object_path',
+					'project_root',
+					'source',
+				], $source, $context . ' module source row keys');
+			}
 		}
 	}
 

@@ -158,6 +158,38 @@ generated/native object per source. This makes debug/incremental isolation and
 future release grouping decisions visible without changing compile edges before
 the dependency model can enforce them.
 
+Project-local compile-time modules may be declared with `project_modules`.
+These are distinct from `runtime.modules` and describe build/report boundaries
+inside one project:
+
+```json
+{
+  "project_modules": [
+    {
+      "name": "domain",
+      "sources": ["src/domain/base.phs"],
+      "source_roots": ["src/domain"],
+      "dependencies": []
+    },
+    {
+      "name": "app",
+      "source_roots": ["src/app"],
+      "dependencies": ["domain"]
+    }
+  ]
+}
+```
+
+Each module may provide `sources`, `source_roots`, `dependencies`, and
+`public_exports`. Source paths and roots are project-relative. Current v1 builds
+write report/cache artifacts for module public surfaces and implementation
+artifact sets, store module interface and implementation hashes, and report
+consumer invalidation from dependency interface hash changes. The current Ninja
+compile graph remains per-source, but generated object compile edges for sources
+assigned to a module take the owning module's public surface artifact and each
+depended module's public surface artifact as implicit inputs. Private
+implementation artifacts are not compile inputs for consumers.
+
 ## `scpp init` behavior
 
 `scpp init` creates:
@@ -354,6 +386,9 @@ The initial registry includes:
 - which generated project unit force-include headers were assigned, including
   unit counts, header size, pack-change counts, and report-only per-source
   dependency summaries
+- configured project-local modules, their public surface artifacts, interface
+  and implementation hashes, cache status, implementation artifact sets, and
+  consumer invalidation from dependency interface hash changes
 
 `scpp explain-build` also accepts focused view arguments so users do not need to scan the full summary when they only want one answer:
 
@@ -364,6 +399,8 @@ The initial registry includes:
 - `scpp explain-build grouping`
 - `scpp explain-build project-units`
 - `scpp explain-build project-unit <source>`
+- `scpp explain-build modules`
+- `scpp explain-build module <name>`
 - `scpp explain-build entrypoint`
 - `scpp explain-build final-output`
 - `scpp explain-build generated-files`
@@ -388,6 +425,18 @@ deterministic group rows, changed groups, and object fanout. The focused
 grouping policy selection does not change the Ninja compile graph; it exposes
 the planned grouping boundary and measured fanout for incremental and release
 workflow tuning.
+
+Saved build details also include `details.build_explanation.project_modules`.
+When `project_modules` is configured, each module row stores source membership,
+module dependencies, public exports, interface hash, implementation hash,
+surface artifact path, implementation artifact paths, cache status, and whether
+consumers must rebuild because a depended module's interface hash changed.
+Per-project module surface artifacts are written under
+`.prism/cache/project_modules/*.surface.json`, private implementation metadata
+is written under `.prism/cache/project_modules/*.implementation.json`, and a
+stable manifest is written at `.prism/cache/project_modules/manifest.json`. The
+focused `modules` view renders the module overview, while `module <name>`
+renders one module row.
 
 The `project-units` view reports the current project unit force-include fanout
 and per-source dependency summaries. These summaries may use STAN's stored

@@ -170,6 +170,8 @@ scpp explain-build rebuild-fanout
 scpp explain-build grouping
 scpp explain-build project-units
 scpp explain-build project-unit main.phs
+scpp explain-build modules
+scpp explain-build module app
 scpp explain-build entrypoint
 scpp explain-build final-output
 scpp explain-build generated-files

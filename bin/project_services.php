@@ -712,7 +712,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|grouping|project-units|project-unit <source>|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -3173,6 +3173,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, $useFreshStanState);
 	$projectUnitDependencySummaryArtifact = write_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitForceIncludeReport, $projectUnitDependencySummaryFreshness);
 	$projectUnitForceIncludeReport['dependency_summary_artifact'] = $projectUnitDependencySummaryArtifact;
+	$projectModuleReport = collect_project_module_report($projectRoot, $projectContexts, $generatedUnits);
 
 	if ($usePch) {
 		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
@@ -3196,7 +3197,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	$effectiveBuildOptions['use_pch'] = $usePch;
 	$markTiming('runtime_prepare_complete');
-	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppUnits, $outputName, $compiler, $buildMode, $runtimeConfig, $projectLibraryFlags, $fastcgiBuild, $effectiveBuildOptions, $runtimePlacementForInvocation);
+	$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppUnits, $outputName, $compiler, $buildMode, $runtimeConfig, $projectLibraryFlags, $fastcgiBuild, $effectiveBuildOptions, $runtimePlacementForInvocation, $projectModuleReport);
 	$buildNinjaPath = $buildDir . '/build.ninja';
 	write_text_file($buildNinjaPath, $buildNinja);
 	$markTiming('build_ninja_written');
@@ -3239,7 +3240,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$phpProfile,
 			$projectUnitForceIncludeReport,
 			$rootContext,
-			collect_build_grouping_report($projectRoot, $buildGroupingPolicy, $generatedUnits, $nativeCppUnits, [])
+			collect_build_grouping_report($projectRoot, $buildGroupingPolicy, $generatedUnits, $nativeCppUnits, []),
+			$projectModuleReport
 		);
 	}
 	if (!$options['compile_dependencies']) {
@@ -3340,7 +3342,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					[],
 					$buildMode,
 					$rootContext,
-					$failureBuildGroupingReport
+					$failureBuildGroupingReport,
+					$projectModuleReport
 				),
 			]
 		);
@@ -3463,7 +3466,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$rebuildFanout,
 				$buildMode,
 				$rootContext,
-				$buildGroupingReport
+				$buildGroupingReport,
+				$projectModuleReport
 			),
 		]
 	);
@@ -3513,7 +3517,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$rebuildFanout,
 			$buildMode,
 			$rootContext,
-			$buildGroupingReport
+			$buildGroupingReport,
+			$projectModuleReport
 		),
 	];
 }
@@ -3698,6 +3703,7 @@ function validate_reused_runtime_artifact(
 	array $projectUnitForceIncludeReport = [],
 	array $rootContext = [],
 	array $buildGroupingReport = [],
+	array $projectModuleReport = [],
 ): void {
 	$artifactPath = normalize_path($projectRoot . '/' . normalize_config_path($runtimeBuild['artifact_path']));
 	$requiredArtifacts = [$artifactPath];
@@ -3766,7 +3772,8 @@ function validate_reused_runtime_artifact(
 				[],
 				$buildMode,
 				$rootContext,
-				$buildGroupingReport
+				$buildGroupingReport,
+				$projectModuleReport
 			),
 		]
 	);
@@ -5395,10 +5402,765 @@ function write_project_unit_dependency_summary_artifact(string $projectRoot, arr
 	]);
 }
 
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @return array<string,mixed>
+ */
+function collect_project_module_report(string $projectRoot, array $projectContexts, array $generatedUnits): array
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$unitsByProjectRoot = [];
+	foreach ($generatedUnits as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$relativePhp = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		if ($unitProjectRoot === '' || $relativePhp === '') {
+			continue;
+		}
+		$unitsByProjectRoot[$unitProjectRoot][$relativePhp] = $unit;
+	}
+	foreach ($unitsByProjectRoot as &$rows) {
+		ksort($rows, SORT_STRING);
+	}
+	unset($rows);
+
+	$moduleRows = [];
+	$manifestArtifacts = [];
+	$assignedSourceKeys = [];
+	$unassignedSources = [];
+	$duplicateAssignments = [];
+	$generatedSourceCount = 0;
+
+	foreach ($projectContexts as $contextProjectRoot => $projectContext) {
+		$contextProjectRoot = normalize_path((string) $contextProjectRoot);
+		if (!is_array($projectContext)) {
+			continue;
+		}
+		$contextConfig = is_array($projectContext['config'] ?? null) ? $projectContext['config'] : [];
+		$moduleConfigs = normalize_project_module_config_rows($contextConfig, project_context_report_label($normalizedProjectRoot, $contextProjectRoot));
+		if ($moduleConfigs === []) {
+			continue;
+		}
+		$contextUnits = $unitsByProjectRoot[$contextProjectRoot] ?? [];
+		$generatedSourceCount += count($contextUnits);
+		$contextModuleRows = [];
+		$contextAssignments = [];
+		foreach ($moduleConfigs as $moduleConfig) {
+			$matchedSources = [];
+			foreach ($contextUnits as $relativePhp => $unit) {
+				if (project_module_matches_source($moduleConfig, (string) $relativePhp)) {
+					$matchedSources[] = build_project_module_source_row($normalizedProjectRoot, $contextProjectRoot, $projectContext, $unit);
+					$assignmentKey = project_context_report_label($normalizedProjectRoot, $contextProjectRoot) . "\0" . (string) $relativePhp;
+					$contextAssignments[$assignmentKey][] = (string) ($moduleConfig['name'] ?? '');
+					$assignedSourceKeys[$assignmentKey] = true;
+				}
+			}
+			usort($matchedSources, static fn (array $left, array $right): int => strcmp((string) ($left['source'] ?? ''), (string) ($right['source'] ?? '')));
+			$moduleRow = build_project_module_report_row($normalizedProjectRoot, $contextProjectRoot, $projectContext, $moduleConfig, $matchedSources);
+			$contextModuleRows[] = $moduleRow;
+		}
+		$contextModuleRows = apply_project_module_consumer_rebuild_status($contextModuleRows);
+		$manifestArtifact = write_project_module_manifest($normalizedProjectRoot, $contextProjectRoot, $projectContext, $contextModuleRows);
+		if ($manifestArtifact !== null) {
+			$manifestArtifacts[] = $manifestArtifact;
+		}
+		foreach ($contextModuleRows as $moduleRow) {
+			$moduleRows[] = $moduleRow;
+		}
+		foreach ($contextUnits as $relativePhp => $_unit) {
+			$key = project_context_report_label($normalizedProjectRoot, $contextProjectRoot) . "\0" . (string) $relativePhp;
+			if (!isset($assignedSourceKeys[$key])) {
+				$unassignedSources[] = project_module_source_label(project_context_report_label($normalizedProjectRoot, $contextProjectRoot), (string) $relativePhp);
+			}
+		}
+		foreach ($contextAssignments as $assignmentKey => $modules) {
+			$modules = normalize_string_list($modules);
+			if (count($modules) <= 1) {
+				continue;
+			}
+			[$projectLabel, $source] = explode("\0", (string) $assignmentKey, 2);
+			$duplicateAssignments[] = [
+				'source' => project_module_source_label($projectLabel, $source),
+				'modules' => $modules,
+			];
+		}
+	}
+
+	usort($moduleRows, static function (array $left, array $right): int {
+		$leftKey = (string) ($left['project_root'] ?? '') . "\0" . (string) ($left['name'] ?? '');
+		$rightKey = (string) ($right['project_root'] ?? '') . "\0" . (string) ($right['name'] ?? '');
+		return strcmp($leftKey, $rightKey);
+	});
+	sort($unassignedSources, SORT_STRING);
+	usort($duplicateAssignments, static fn (array $left, array $right): int => strcmp((string) ($left['source'] ?? ''), (string) ($right['source'] ?? '')));
+
+	$cacheStatusCounts = summarize_project_module_cache_status_counts($moduleRows);
+	return normalize_project_module_report([
+		'configured' => $moduleRows !== [],
+		'total_modules' => count($moduleRows),
+		'generated_source_count' => $generatedSourceCount,
+		'assigned_source_count' => count($assignedSourceKeys),
+		'unassigned_source_count' => count($unassignedSources),
+		'unassigned_sources' => array_values(array_unique($unassignedSources)),
+		'duplicate_assignments' => $duplicateAssignments,
+		'consumer_rebuild_required_count' => count(array_filter($moduleRows, static fn (array $row): bool => (bool) ($row['consumer_rebuild_required'] ?? false))),
+		'cache_status_counts' => $cacheStatusCounts,
+		'manifest_artifacts' => normalize_string_list($manifestArtifacts),
+		'modules' => $moduleRows,
+	]);
+}
+
+/** @return list<array<string,mixed>> */
+function normalize_project_module_config_rows(array $config, string $projectLabel): array
+{
+	$rawModules = $config['project_modules'] ?? [];
+	if ($rawModules === null) {
+		return [];
+	}
+	if (!is_array($rawModules)) {
+		scpp_fail('Invalid project_modules in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': expected an array.' . PHP_EOL, 2);
+	}
+
+	$modules = [];
+	foreach ($rawModules as $key => $rawModule) {
+		if (!is_array($rawModule)) {
+			scpp_fail('Invalid project_modules entry in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': expected an object.' . PHP_EOL, 2);
+		}
+		$name = is_string($rawModule['name'] ?? null) ? trim((string) $rawModule['name']) : '';
+		if ($name === '' && is_string($key)) {
+			$name = trim($key);
+		}
+		if ($name === '') {
+			scpp_fail('Invalid project_modules entry in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': missing module name.' . PHP_EOL, 2);
+		}
+		$sources = normalize_project_module_path_list($rawModule['sources'] ?? [], 'project_modules.' . $name . '.sources', $projectLabel);
+		$sourceRoots = normalize_project_module_path_list($rawModule['source_roots'] ?? ($rawModule['source_root'] ?? []), 'project_modules.' . $name . '.source_roots', $projectLabel);
+		$dependencies = normalize_project_module_name_list($rawModule['dependencies'] ?? ($rawModule['deps'] ?? []), 'project_modules.' . $name . '.dependencies', $projectLabel);
+		$publicExports = normalize_project_module_name_list($rawModule['public_exports'] ?? [], 'project_modules.' . $name . '.public_exports', $projectLabel);
+		$modules[] = [
+			'name' => $name,
+			'sources' => $sources,
+			'source_roots' => $sourceRoots,
+			'dependencies' => $dependencies,
+			'public_exports' => $publicExports,
+		];
+	}
+	usort($modules, static fn (array $left, array $right): int => strcmp((string) ($left['name'] ?? ''), (string) ($right['name'] ?? '')));
+	return $modules;
+}
+
+/** @return list<string> */
+function normalize_project_module_path_list(mixed $values, string $field, string $projectLabel): array
+{
+	if (is_string($values)) {
+		$values = [$values];
+	}
+	if (!is_array($values)) {
+		scpp_fail('Invalid ' . $field . ' in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': expected a string array.' . PHP_EOL, 2);
+	}
+	$result = [];
+	foreach ($values as $value) {
+		if (!is_string($value)) {
+			scpp_fail('Invalid ' . $field . ' in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': expected string paths.' . PHP_EOL, 2);
+		}
+		$path = trim($value);
+		if ($path === '') {
+			continue;
+		}
+		if (is_absolute_path($path)) {
+			scpp_fail('Invalid ' . $field . ' path `' . $path . '` in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': project module paths must be project-relative.' . PHP_EOL, 2);
+		}
+		$normalized = normalize_config_path($path);
+		if ($normalized === '..' || str_starts_with($normalized, '../') || str_contains($normalized, '/../')) {
+			scpp_fail('Invalid ' . $field . ' path `' . $path . '` in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': project module paths must not escape the project root.' . PHP_EOL, 2);
+		}
+		$result[] = rtrim($normalized, '/');
+	}
+	sort($result, SORT_STRING);
+	return array_values(array_unique($result));
+}
+
+/** @return list<string> */
+function normalize_project_module_name_list(mixed $values, string $field, string $projectLabel): array
+{
+	if (is_string($values)) {
+		$values = [$values];
+	}
+	if (!is_array($values)) {
+		scpp_fail('Invalid ' . $field . ' in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': expected a string array.' . PHP_EOL, 2);
+	}
+	$result = [];
+	foreach ($values as $value) {
+		if (!is_string($value)) {
+			scpp_fail('Invalid ' . $field . ' in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': expected string names.' . PHP_EOL, 2);
+		}
+		$name = trim($value);
+		if ($name !== '') {
+			$result[] = $name;
+		}
+	}
+	sort($result, SORT_STRING);
+	return array_values(array_unique($result));
+}
+
+/** @param array<string,mixed> $moduleConfig */
+function project_module_matches_source(array $moduleConfig, string $relativeSource): bool
+{
+	$relativeSource = normalize_config_path($relativeSource);
+	foreach (normalize_string_list($moduleConfig['sources'] ?? []) as $source) {
+		if (normalize_config_path($source) === $relativeSource) {
+			return true;
+		}
+	}
+	foreach (normalize_string_list($moduleConfig['source_roots'] ?? []) as $root) {
+		$root = rtrim(normalize_config_path($root), '/');
+		if ($root === '' || $root === '.') {
+			return true;
+		}
+		if ($relativeSource === $root || str_starts_with($relativeSource, $root . '/')) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/** @return array<string,mixed> */
+function build_project_module_source_row(string $projectRoot, string $contextProjectRoot, array $projectContext, array $unit): array
+{
+	$relativePhp = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+	$fileState = is_array($projectContext['state']['files'][$relativePhp] ?? null) ? $projectContext['state']['files'][$relativePhp] : [];
+	$generatedHeader = normalize_path((string) ($unit['generated_header'] ?? ''));
+	$generatedCpp = normalize_path((string) ($unit['generated_cpp'] ?? ''));
+	$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+	$interfaceHash = trim((string) ($fileState['generated_interface_hash'] ?? ''));
+	if ($interfaceHash === '') {
+		$interfaceHash = existing_file_sha256($generatedHeader) ?? '';
+	}
+	$implementationHash = trim((string) ($fileState['generated_implementation_hash'] ?? ''));
+	if ($implementationHash === '') {
+		$implementationHash = existing_file_sha256($generatedCpp) ?? '';
+	}
+	return [
+		'source' => $relativePhp,
+		'project_root' => project_context_report_label($projectRoot, $contextProjectRoot),
+		'generated_header' => $generatedHeader !== '' ? normalize_config_path(relative_path($projectRoot, $generatedHeader)) : '',
+		'generated_cpp' => $generatedCpp !== '' ? normalize_config_path(relative_path($projectRoot, $generatedCpp)) : '',
+		'object_path' => $objectPath !== '' ? normalize_config_path(relative_path($projectRoot, $objectPath)) : '',
+		'interface_hash' => $interfaceHash,
+		'implementation_hash' => $implementationHash,
+	];
+}
+
+/** @param list<array<string,mixed>> $sources @return array<string,mixed> */
+function build_project_module_report_row(string $projectRoot, string $contextProjectRoot, array $projectContext, array $moduleConfig, array $sources): array
+{
+	$name = (string) ($moduleConfig['name'] ?? '');
+	$dependencies = normalize_string_list($moduleConfig['dependencies'] ?? []);
+	$publicExports = normalize_string_list($moduleConfig['public_exports'] ?? []);
+	$sourceRoots = normalize_string_list($moduleConfig['source_roots'] ?? []);
+	$configuredSources = normalize_string_list($moduleConfig['sources'] ?? []);
+	$interfaceInput = [
+		'version' => 1,
+		'name' => $name,
+		'dependencies' => $dependencies,
+		'public_exports' => $publicExports,
+		'sources' => array_map(static fn (array $source): array => [
+			'source' => (string) ($source['source'] ?? ''),
+			'interface_hash' => (string) ($source['interface_hash'] ?? ''),
+		], $sources),
+	];
+	$implementationInput = [
+		'version' => 1,
+		'name' => $name,
+		'dependencies' => $dependencies,
+		'public_exports' => $publicExports,
+		'sources' => array_map(static fn (array $source): array => [
+			'source' => (string) ($source['source'] ?? ''),
+			'interface_hash' => (string) ($source['interface_hash'] ?? ''),
+			'implementation_hash' => (string) ($source['implementation_hash'] ?? ''),
+		], $sources),
+	];
+	$interfaceHash = hash_project_module_payload($interfaceInput);
+	$implementationHash = hash_project_module_payload($implementationInput);
+	$artifactInfo = write_project_module_surface_artifact($projectRoot, $contextProjectRoot, $projectContext, [
+		'name' => $name,
+		'project_root' => project_context_report_label($projectRoot, $contextProjectRoot),
+		'source_roots' => $sourceRoots,
+		'configured_sources' => $configuredSources,
+		'dependencies' => $dependencies,
+		'public_exports' => $publicExports,
+		'sources' => $sources,
+		'interface_hash' => $interfaceHash,
+		'implementation_hash' => $implementationHash,
+	]);
+
+	return [
+		'name' => $name,
+		'project_root' => project_context_report_label($projectRoot, $contextProjectRoot),
+		'source_roots' => $sourceRoots,
+		'configured_sources' => $configuredSources,
+		'dependencies' => $dependencies,
+		'public_exports' => $publicExports,
+		'source_count' => count($sources),
+		'sources' => $sources,
+		'interface_hash' => $interfaceHash,
+		'implementation_hash' => $implementationHash,
+		'surface_artifact' => (string) ($artifactInfo['surface_artifact'] ?? ''),
+		'implementation_artifact' => (string) ($artifactInfo['implementation_artifact'] ?? ''),
+		'cache_status' => (string) ($artifactInfo['cache_status'] ?? 'new'),
+		'interface_changed' => (bool) ($artifactInfo['interface_changed'] ?? true),
+		'implementation_changed' => (bool) ($artifactInfo['implementation_changed'] ?? true),
+		'implementation_artifacts' => normalize_string_list(array_map(static fn (array $source): string => (string) ($source['generated_cpp'] ?? ''), $sources)),
+		'consumer_rebuild_policy' => 'interface_hash_only',
+		'consumer_rebuild_required' => false,
+		'consumer_rebuild_reasons' => [],
+		'unresolved_dependencies' => [],
+	];
+}
+
+/** @return list<array<string,mixed>> */
+function apply_project_module_consumer_rebuild_status(array $moduleRows): array
+{
+	$modulesByName = [];
+	$interfaceChangedByName = [];
+	foreach ($moduleRows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$name = trim((string) ($row['name'] ?? ''));
+		if ($name === '') {
+			continue;
+		}
+		$modulesByName[$name] = true;
+		if ((bool) ($row['interface_changed'] ?? false)) {
+			$interfaceChangedByName[$name] = true;
+		}
+	}
+
+	foreach ($moduleRows as &$row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$changedDependencies = [];
+		$unresolved = [];
+		foreach (normalize_string_list($row['dependencies'] ?? []) as $dependency) {
+			if (!isset($modulesByName[$dependency])) {
+				$unresolved[] = $dependency;
+				continue;
+			}
+			if (isset($interfaceChangedByName[$dependency])) {
+				$changedDependencies[] = $dependency;
+			}
+		}
+		$row['consumer_rebuild_required'] = $changedDependencies !== [];
+		$row['consumer_rebuild_reasons'] = array_map(static fn (string $dependency): string => 'dependency interface changed: ' . $dependency, $changedDependencies);
+		$row['unresolved_dependencies'] = $unresolved;
+	}
+	unset($row);
+	return $moduleRows;
+}
+
+/** @param array<string,mixed> $payload */
+function hash_project_module_payload(array $payload): string
+{
+	$json = json_encode($payload, JSON_UNESCAPED_SLASHES);
+	if (!is_string($json)) {
+		scpp_fail('Failed to encode project module hash payload.' . PHP_EOL, 2);
+	}
+	return hash('sha256', $json);
+}
+
+/** @param array<string,mixed> $artifact @return array<string,mixed> */
+function write_project_module_surface_artifact(string $projectRoot, string $contextProjectRoot, array $projectContext, array $artifact): array
+{
+	if (!is_string($projectContext['cache_dir'] ?? null)) {
+		return [
+			'surface_artifact' => '',
+			'implementation_artifact' => '',
+			'cache_status' => 'unavailable',
+			'interface_changed' => true,
+			'implementation_changed' => true,
+		];
+	}
+	$moduleName = (string) ($artifact['name'] ?? 'module');
+	$surfacePath = normalize_path($projectContext['cache_dir'] . '/project_modules/' . project_module_artifact_filename($moduleName, 'surface'));
+	$implementationPath = normalize_path($projectContext['cache_dir'] . '/project_modules/' . project_module_artifact_filename($moduleName, 'implementation'));
+	$previousSurface = read_json_file($surfacePath);
+	$previousImplementation = read_json_file($implementationPath);
+	$previousInterfaceHash = is_array($previousSurface) ? trim((string) ($previousSurface['interface_hash'] ?? '')) : '';
+	$previousImplementationHash = is_array($previousImplementation) ? trim((string) ($previousImplementation['implementation_hash'] ?? '')) : '';
+	$interfaceHash = trim((string) ($artifact['interface_hash'] ?? ''));
+	$implementationHash = trim((string) ($artifact['implementation_hash'] ?? ''));
+	$interfaceChanged = $previousInterfaceHash === '' || $previousInterfaceHash !== $interfaceHash;
+	$implementationChanged = $previousImplementationHash === '' || $previousImplementationHash !== $implementationHash;
+	$cacheStatus = 'hit';
+	if ($previousSurface === null || $previousImplementation === null) {
+		$cacheStatus = 'new';
+	} elseif ($interfaceChanged && $implementationChanged) {
+		$cacheStatus = 'interface_and_implementation_changed';
+	} elseif ($interfaceChanged) {
+		$cacheStatus = 'interface_changed';
+	} elseif ($implementationChanged) {
+		$cacheStatus = 'implementation_changed';
+	}
+
+	$artifactPayload = [
+		'version' => 1,
+		'kind' => 'project_module_surface',
+		'name' => $moduleName,
+		'project_root' => project_context_report_label($projectRoot, $contextProjectRoot),
+		'source_roots' => normalize_string_list($artifact['source_roots'] ?? []),
+		'configured_sources' => normalize_string_list($artifact['configured_sources'] ?? []),
+		'dependencies' => normalize_string_list($artifact['dependencies'] ?? []),
+		'public_exports' => normalize_string_list($artifact['public_exports'] ?? []),
+		'interface_hash' => $interfaceHash,
+		'consumer_rebuild_policy' => 'interface_hash_only',
+		'sources' => normalize_project_module_surface_source_rows(is_array($artifact['sources'] ?? null) ? $artifact['sources'] : []),
+	];
+	$surfaceJson = json_encode($artifactPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if (!is_string($surfaceJson)) {
+		scpp_fail('Failed to encode project module surface artifact: ' . $surfacePath . PHP_EOL, 2);
+	}
+	write_text_file($surfacePath, $surfaceJson . PHP_EOL);
+
+	$implementationPayload = [
+		'version' => 1,
+		'kind' => 'project_module_implementation',
+		'name' => $moduleName,
+		'project_root' => project_context_report_label($projectRoot, $contextProjectRoot),
+		'implementation_hash' => $implementationHash,
+		'interface_hash' => $interfaceHash,
+		'implementation_artifacts' => normalize_string_list(array_map(static fn (array $source): string => (string) ($source['generated_cpp'] ?? ''), is_array($artifact['sources'] ?? null) ? $artifact['sources'] : [])),
+		'sources' => normalize_project_module_source_rows(is_array($artifact['sources'] ?? null) ? $artifact['sources'] : []),
+	];
+	$implementationJson = json_encode($implementationPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if (!is_string($implementationJson)) {
+		scpp_fail('Failed to encode project module implementation artifact: ' . $implementationPath . PHP_EOL, 2);
+	}
+	write_text_file($implementationPath, $implementationJson . PHP_EOL);
+
+	return [
+		'surface_artifact' => normalize_config_path(relative_path($projectRoot, $surfacePath)),
+		'implementation_artifact' => normalize_config_path(relative_path($projectRoot, $implementationPath)),
+		'cache_status' => $cacheStatus,
+		'interface_changed' => $interfaceChanged,
+		'implementation_changed' => $implementationChanged,
+	];
+}
+
+function project_module_artifact_filename(string $moduleName, string $kind): string
+{
+	$slug = strtolower(trim(preg_replace('/[^A-Za-z0-9_.-]+/', '-', $moduleName) ?? ''));
+	$slug = trim($slug, '.-');
+	if ($slug === '') {
+		$slug = 'module';
+	}
+	$suffix = $kind === 'implementation' ? 'implementation' : 'surface';
+	return $slug . '-' . substr(hash('sha256', $moduleName), 0, 12) . '.' . $suffix . '.json';
+}
+
+/** @param list<array<string,mixed>> $moduleRows */
+function write_project_module_manifest(string $projectRoot, string $contextProjectRoot, array $projectContext, array $moduleRows): ?string
+{
+	if (!is_string($projectContext['cache_dir'] ?? null)) {
+		return null;
+	}
+	$manifestPath = normalize_path($projectContext['cache_dir'] . '/project_modules/manifest.json');
+	$modules = [];
+	foreach (normalize_project_module_rows($moduleRows) as $row) {
+		$modules[] = [
+			'name' => (string) ($row['name'] ?? ''),
+			'project_root' => (string) ($row['project_root'] ?? ''),
+			'source_count' => (int) ($row['source_count'] ?? 0),
+			'source_roots' => normalize_string_list($row['source_roots'] ?? []),
+			'configured_sources' => normalize_string_list($row['configured_sources'] ?? []),
+			'dependencies' => normalize_string_list($row['dependencies'] ?? []),
+			'public_exports' => normalize_string_list($row['public_exports'] ?? []),
+			'interface_hash' => (string) ($row['interface_hash'] ?? ''),
+			'implementation_hash' => (string) ($row['implementation_hash'] ?? ''),
+			'surface_artifact' => (string) ($row['surface_artifact'] ?? ''),
+			'implementation_artifact' => (string) ($row['implementation_artifact'] ?? ''),
+			'consumer_rebuild_policy' => (string) ($row['consumer_rebuild_policy'] ?? 'interface_hash_only'),
+		];
+	}
+	$payload = [
+		'version' => 1,
+		'kind' => 'project_module_manifest',
+		'project_root' => project_context_report_label($projectRoot, $contextProjectRoot),
+		'modules' => $modules,
+	];
+	$json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if (!is_string($json)) {
+		scpp_fail('Failed to encode project module manifest: ' . $manifestPath . PHP_EOL, 2);
+	}
+	write_text_file($manifestPath, $json . PHP_EOL);
+	return normalize_config_path(relative_path($projectRoot, $manifestPath));
+}
+
+/** @param list<array<string,mixed>> $moduleRows @return array<string,int> */
+function summarize_project_module_cache_status_counts(array $moduleRows): array
+{
+	$counts = [
+		'hit' => 0,
+		'new' => 0,
+		'interface_changed' => 0,
+		'implementation_changed' => 0,
+		'interface_and_implementation_changed' => 0,
+		'unavailable' => 0,
+	];
+	foreach ($moduleRows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$status = trim((string) ($row['cache_status'] ?? 'unavailable'));
+		if (!array_key_exists($status, $counts)) {
+			$counts[$status] = 0;
+		}
+		$counts[$status]++;
+	}
+	ksort($counts, SORT_STRING);
+	return $counts;
+}
+
+/** @return array<string,mixed> */
+function normalize_project_module_report(array $report): array
+{
+	$modules = normalize_project_module_rows(is_array($report['modules'] ?? null) ? $report['modules'] : []);
+	$cacheStatusCounts = is_array($report['cache_status_counts'] ?? null) ? $report['cache_status_counts'] : summarize_project_module_cache_status_counts($modules);
+	$normalizedCacheStatusCounts = [];
+	foreach ($cacheStatusCounts as $status => $count) {
+		if (is_string($status) && trim($status) !== '') {
+			$normalizedCacheStatusCounts[$status] = max(0, (int) $count);
+		}
+	}
+	ksort($normalizedCacheStatusCounts, SORT_STRING);
+	$duplicateAssignments = [];
+	foreach (is_array($report['duplicate_assignments'] ?? null) ? $report['duplicate_assignments'] : [] as $assignment) {
+		if (!is_array($assignment)) {
+			continue;
+		}
+		$source = trim((string) ($assignment['source'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$duplicateAssignments[] = [
+			'source' => $source,
+			'modules' => normalize_string_list($assignment['modules'] ?? []),
+		];
+	}
+	usort($duplicateAssignments, static fn (array $left, array $right): int => strcmp((string) ($left['source'] ?? ''), (string) ($right['source'] ?? '')));
+	return [
+		'configured' => (bool) ($report['configured'] ?? ($modules !== [])),
+		'total_modules' => max(0, (int) ($report['total_modules'] ?? count($modules))),
+		'generated_source_count' => max(0, (int) ($report['generated_source_count'] ?? 0)),
+		'assigned_source_count' => max(0, (int) ($report['assigned_source_count'] ?? 0)),
+		'unassigned_source_count' => max(0, (int) ($report['unassigned_source_count'] ?? 0)),
+		'unassigned_sources' => normalize_string_list($report['unassigned_sources'] ?? []),
+		'duplicate_assignments' => $duplicateAssignments,
+		'consumer_rebuild_required_count' => max(0, (int) ($report['consumer_rebuild_required_count'] ?? 0)),
+		'cache_status_counts' => $normalizedCacheStatusCounts,
+		'manifest_artifacts' => normalize_string_list($report['manifest_artifacts'] ?? []),
+		'modules' => $modules,
+	];
+}
+
+/** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
+function normalize_project_module_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$name = trim((string) ($row['name'] ?? ''));
+		if ($name === '') {
+			continue;
+		}
+		$result[] = [
+			'name' => $name,
+			'project_root' => trim((string) ($row['project_root'] ?? '.')),
+			'source_roots' => normalize_string_list($row['source_roots'] ?? []),
+			'configured_sources' => normalize_string_list($row['configured_sources'] ?? []),
+			'dependencies' => normalize_string_list($row['dependencies'] ?? []),
+			'public_exports' => normalize_string_list($row['public_exports'] ?? []),
+			'source_count' => max(0, (int) ($row['source_count'] ?? 0)),
+			'sources' => normalize_project_module_source_rows(is_array($row['sources'] ?? null) ? $row['sources'] : []),
+			'interface_hash' => trim((string) ($row['interface_hash'] ?? '')),
+			'implementation_hash' => trim((string) ($row['implementation_hash'] ?? '')),
+			'surface_artifact' => trim((string) ($row['surface_artifact'] ?? '')),
+			'implementation_artifact' => trim((string) ($row['implementation_artifact'] ?? '')),
+			'cache_status' => trim((string) ($row['cache_status'] ?? 'unavailable')),
+			'interface_changed' => (bool) ($row['interface_changed'] ?? false),
+			'implementation_changed' => (bool) ($row['implementation_changed'] ?? false),
+			'implementation_artifacts' => normalize_string_list($row['implementation_artifacts'] ?? []),
+			'consumer_rebuild_policy' => trim((string) ($row['consumer_rebuild_policy'] ?? 'interface_hash_only')),
+			'consumer_rebuild_required' => (bool) ($row['consumer_rebuild_required'] ?? false),
+			'consumer_rebuild_reasons' => normalize_string_list($row['consumer_rebuild_reasons'] ?? []),
+			'unresolved_dependencies' => normalize_string_list($row['unresolved_dependencies'] ?? []),
+		];
+	}
+	usort($result, static function (array $left, array $right): int {
+		$leftKey = (string) ($left['project_root'] ?? '') . "\0" . (string) ($left['name'] ?? '');
+		$rightKey = (string) ($right['project_root'] ?? '') . "\0" . (string) ($right['name'] ?? '');
+		return strcmp($leftKey, $rightKey);
+	});
+	return $result;
+}
+
+/** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
+function normalize_project_module_surface_source_rows(array $rows): array
+{
+	$result = [];
+	foreach (normalize_project_module_source_rows($rows) as $row) {
+		$result[] = [
+			'source' => (string) ($row['source'] ?? ''),
+			'project_root' => (string) ($row['project_root'] ?? '.'),
+			'generated_header' => (string) ($row['generated_header'] ?? ''),
+			'interface_hash' => (string) ($row['interface_hash'] ?? ''),
+		];
+	}
+	return $result;
+}
+
+/** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
+function normalize_project_module_source_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$source = normalize_config_path((string) ($row['source'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$result[] = [
+			'source' => $source,
+			'project_root' => trim((string) ($row['project_root'] ?? '.')),
+			'generated_header' => normalize_config_path((string) ($row['generated_header'] ?? '')),
+			'generated_cpp' => normalize_config_path((string) ($row['generated_cpp'] ?? '')),
+			'object_path' => normalize_config_path((string) ($row['object_path'] ?? '')),
+			'interface_hash' => trim((string) ($row['interface_hash'] ?? '')),
+			'implementation_hash' => trim((string) ($row['implementation_hash'] ?? '')),
+		];
+	}
+	usort($result, static fn (array $left, array $right): int => strcmp((string) ($left['source'] ?? ''), (string) ($right['source'] ?? '')));
+	return $result;
+}
+
 function project_context_report_label(string $projectRoot, string $contextProjectRoot): string
 {
 	$label = normalize_config_path(relative_path(normalize_path($projectRoot), normalize_path($contextProjectRoot)));
 	return $label === '' ? '.' : $label;
+}
+
+function project_module_source_label(string $projectLabel, string $source): string
+{
+	$source = normalize_config_path($source);
+	return $projectLabel === '' || $projectLabel === '.' ? $source : normalize_config_path($projectLabel . '/' . $source);
+}
+
+/** @return array<string,list<string>> */
+function collect_project_module_compile_surface_deps(array $projectModuleReport): array
+{
+	$report = normalize_project_module_report($projectModuleReport);
+	if (!(bool) ($report['configured'] ?? false)) {
+		return [];
+	}
+	$surfaceByModule = [];
+	foreach (is_array($report['modules'] ?? null) ? $report['modules'] : [] as $module) {
+		if (!is_array($module)) {
+			continue;
+		}
+		$name = trim((string) ($module['name'] ?? ''));
+		$projectLabel = trim((string) ($module['project_root'] ?? '.'));
+		$surfaceArtifact = normalize_config_path((string) ($module['surface_artifact'] ?? ''));
+		if ($name === '' || $surfaceArtifact === '') {
+			continue;
+		}
+		$surfaceByModule[project_module_identity_key($projectLabel, $name)] = $surfaceArtifact;
+	}
+
+	$depsBySource = [];
+	foreach (is_array($report['modules'] ?? null) ? $report['modules'] : [] as $module) {
+		if (!is_array($module)) {
+			continue;
+		}
+		$name = trim((string) ($module['name'] ?? ''));
+		$projectLabel = trim((string) ($module['project_root'] ?? '.'));
+		if ($name === '') {
+			continue;
+		}
+		$deps = [];
+		$ownSurface = $surfaceByModule[project_module_identity_key($projectLabel, $name)] ?? '';
+		if ($ownSurface !== '') {
+			$deps[] = $ownSurface;
+		}
+		foreach (normalize_string_list($module['dependencies'] ?? []) as $dependency) {
+			$dependencySurface = $surfaceByModule[project_module_identity_key($projectLabel, $dependency)] ?? '';
+			if ($dependencySurface !== '') {
+				$deps[] = $dependencySurface;
+			}
+		}
+		$deps = normalize_string_list($deps);
+		if ($deps === []) {
+			continue;
+		}
+		foreach (normalize_project_module_source_rows(is_array($module['sources'] ?? null) ? $module['sources'] : []) as $source) {
+			$sourcePath = normalize_config_path((string) ($source['source'] ?? ''));
+			if ($sourcePath === '') {
+				continue;
+			}
+			$depsBySource[project_module_source_key($projectLabel, $sourcePath)] = $deps;
+		}
+	}
+	ksort($depsBySource, SORT_STRING);
+	return $depsBySource;
+}
+
+function project_module_identity_key(string $projectLabel, string $moduleName): string
+{
+	$projectLabel = trim($projectLabel);
+	return ($projectLabel === '' ? '.' : $projectLabel) . "\0" . trim($moduleName);
+}
+
+function project_module_source_key(string $projectLabel, string $source): string
+{
+	$projectLabel = trim($projectLabel);
+	return ($projectLabel === '' ? '.' : $projectLabel) . "\0" . normalize_config_path($source);
+}
+
+/** @return array<string,array<string,mixed>> */
+function build_project_module_source_explanation_map(array $projectModuleReport): array
+{
+	$report = normalize_project_module_report($projectModuleReport);
+	$compileDepsBySource = collect_project_module_compile_surface_deps($report);
+	$result = [];
+	foreach (is_array($report['modules'] ?? null) ? $report['modules'] : [] as $module) {
+		if (!is_array($module)) {
+			continue;
+		}
+		$moduleName = trim((string) ($module['name'] ?? ''));
+		$projectLabel = trim((string) ($module['project_root'] ?? '.'));
+		if ($moduleName === '') {
+			continue;
+		}
+		foreach (normalize_project_module_source_rows(is_array($module['sources'] ?? null) ? $module['sources'] : []) as $source) {
+			$sourcePath = normalize_config_path((string) ($source['source'] ?? ''));
+			if ($sourcePath === '') {
+				continue;
+			}
+			$sourceKey = project_module_source_key($projectLabel, $sourcePath);
+			$result[$sourceKey] = [
+				'module' => $projectLabel === '' || $projectLabel === '.' ? $moduleName : $projectLabel . '/' . $moduleName,
+				'surface_artifacts' => $compileDepsBySource[$sourceKey] ?? [],
+				'consumer_rebuild_required' => (bool) ($module['consumer_rebuild_required'] ?? false),
+				'consumer_rebuild_reasons' => normalize_string_list($module['consumer_rebuild_reasons'] ?? []),
+			];
+		}
+	}
+	ksort($result, SORT_STRING);
+	return $result;
 }
 
 /**
@@ -7401,6 +8163,7 @@ function build_explanation_details(
 	?string $buildMode = null,
 	array $rootContext = [],
 	array $buildGroupingReport = [],
+	array $projectModuleReport = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -7420,7 +8183,8 @@ function build_explanation_details(
 	}
 	$projectUnitForceIncludeReport = normalize_project_unit_force_include_report($projectUnitForceIncludeReport);
 	$normalizedRebuildFanout = normalize_build_rebuild_fanout($rebuildFanout);
-	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options);
+	$projectModuleReport = normalize_project_module_report($projectModuleReport);
+	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options, $projectModuleReport);
 
 	return [
 		'status' => $exitCode === 0 ? 'success' : 'failure',
@@ -7453,6 +8217,7 @@ function build_explanation_details(
 		'rebuilt_outputs' => $rebuilt,
 		'rebuild_fanout' => $normalizedRebuildFanout,
 		'project_unit_force_includes' => $projectUnitForceIncludeReport,
+		'project_modules' => $projectModuleReport,
 	];
 }
 
@@ -7461,7 +8226,7 @@ function build_explanation_details(
  * @param array<string,mixed> $projectUnitForceIncludeReport
  * @return list<array<string,mixed>>
  */
-function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport, array $rebuildFanout = [], bool $buildSucceeded = true, array $options = []): array
+function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport, array $rebuildFanout = [], bool $buildSucceeded = true, array $options = [], array $projectModuleReport = []): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$rebuiltGeneratedObjects = [];
@@ -7497,6 +8262,7 @@ function annotate_build_explanation_sources_with_project_units(string $projectRo
 		$projectRootKey = normalize_config_path((string) ($summary['project_root'] ?? ''));
 		$summaryBySource[$projectRootKey . "\0" . $source] = $summary;
 	}
+	$projectModuleSourceInfo = build_project_module_source_explanation_map($projectModuleReport);
 
 	$annotated = [];
 	foreach ($sources as $source) {
@@ -7512,6 +8278,13 @@ function annotate_build_explanation_sources_with_project_units(string $projectRo
 			$source['project_unit_status'] = trim((string) ($summary['status'] ?? 'fallback_broad'));
 			$source['project_unit_force_include_header'] = $forceIncludeHeader;
 			$source['project_unit_force_include_mode'] = $headerModes[$forceIncludeHeader] ?? ($forceIncludeHeader !== '' ? project_unit_force_include_header_mode(normalize_path($normalizedProjectRoot . '/' . $forceIncludeHeader)) : '');
+		}
+		$moduleSource = $projectModuleSourceInfo[$projectRootKey . "\0" . $sourcePath] ?? null;
+		if (is_array($moduleSource)) {
+			$source['project_module'] = (string) ($moduleSource['module'] ?? '');
+			$source['project_module_surface_artifacts'] = normalize_string_list($moduleSource['surface_artifacts'] ?? []);
+			$source['project_module_consumer_rebuild_required'] = (bool) ($moduleSource['consumer_rebuild_required'] ?? false);
+			$source['project_module_consumer_rebuild_reasons'] = normalize_string_list($moduleSource['consumer_rebuild_reasons'] ?? []);
 		}
 		$objectPath = normalize_config_path((string) ($source['object_path'] ?? ''));
 		if (!$buildSucceeded) {
@@ -7539,6 +8312,10 @@ function explain_source_object_rebuild_reason(array $source, array $changedPackH
 	$changeReason = trim((string) ($artifacts['change_reason'] ?? ''));
 	if ($changeReason !== '' && $changeReason !== 'generated artifacts unchanged' && $changeReason !== 'generated artifact hashes first recorded') {
 		return $changeReason;
+	}
+	$moduleReasons = normalize_string_list($source['project_module_consumer_rebuild_reasons'] ?? []);
+	if ($moduleReasons !== []) {
+		return implode('; ', $moduleReasons);
 	}
 	$forceIncludeHeader = normalize_config_path((string) ($source['project_unit_force_include_header'] ?? ''));
 	if ($forceIncludeHeader !== '' && isset($changedPackHeaders[$forceIncludeHeader])) {
@@ -7631,6 +8408,12 @@ function render_build_explanation_lines(array $details): array
 		}
 	}
 	$lines[] = 'PHP transpile decisions: ' . (int) ($details['transpiled_count'] ?? 0) . ' transpiled, ' . (int) ($details['skipped_count'] ?? 0) . ' reused';
+	$projectModules = normalize_project_module_report(is_array($details['project_modules'] ?? null) ? $details['project_modules'] : []);
+	if ((bool) ($projectModules['configured'] ?? false)) {
+		foreach (render_project_module_report_lines($projectModules, false) as $line) {
+			$lines[] = $line;
+		}
+	}
 
 	$runtime = is_array($details['runtime'] ?? null) ? $details['runtime'] : [];
 	$runtimeReasons = is_array($runtime['reasons'] ?? null) ? $runtime['reasons'] : [];
@@ -7783,6 +8566,112 @@ function render_build_grouping_lines(array $report, bool $includeGroups = false)
 		$objects = normalize_string_list($group['objects'] ?? []);
 		if ($objects !== []) {
 			$lines[] = '    objects: ' . implode(', ', $objects);
+		}
+	}
+	return $lines;
+}
+
+/**
+ * @param array<string,mixed> $report
+ * @return list<string>
+ */
+function render_project_module_report_lines(array $report, bool $includeModules = false, ?string $moduleFilter = null): array
+{
+	$report = normalize_project_module_report($report);
+	if (!(bool) ($report['configured'] ?? false)) {
+		return ['Project modules: none configured'];
+	}
+	$lines = [
+		'Project modules: ' . (int) ($report['total_modules'] ?? 0)
+			. ' module(s), ' . (int) ($report['assigned_source_count'] ?? 0)
+			. '/' . (int) ($report['generated_source_count'] ?? 0)
+			. ' generated source(s) assigned, unassigned ' . (int) ($report['unassigned_source_count'] ?? 0),
+	];
+	$cache = is_array($report['cache_status_counts'] ?? null) ? $report['cache_status_counts'] : [];
+	$lines[] = 'Project module cache: hits ' . (int) ($cache['hit'] ?? 0)
+		. ', new ' . (int) ($cache['new'] ?? 0)
+		. ', interface changed ' . ((int) ($cache['interface_changed'] ?? 0) + (int) ($cache['interface_and_implementation_changed'] ?? 0))
+		. ', implementation changed ' . ((int) ($cache['implementation_changed'] ?? 0) + (int) ($cache['interface_and_implementation_changed'] ?? 0));
+	$lines[] = 'Project module consumer fanout: ' . (int) ($report['consumer_rebuild_required_count'] ?? 0) . ' consumer module(s) require rebuild by interface hash';
+	if (!$includeModules && $moduleFilter === null) {
+		return $lines;
+	}
+	$manifestArtifacts = normalize_string_list($report['manifest_artifacts'] ?? []);
+	if ($manifestArtifacts !== []) {
+		$lines[] = 'Project module manifests: ' . implode(', ', $manifestArtifacts);
+	}
+	$modules = is_array($report['modules'] ?? null) ? $report['modules'] : [];
+	$matched = [];
+	$filter = $moduleFilter !== null ? trim($moduleFilter) : '';
+	foreach ($modules as $module) {
+		if (!is_array($module)) {
+			continue;
+		}
+		$name = trim((string) ($module['name'] ?? ''));
+		$projectLabel = trim((string) ($module['project_root'] ?? '.'));
+		$qualifiedName = $projectLabel === '' || $projectLabel === '.' ? $name : $projectLabel . '/' . $name;
+		if ($filter !== '' && $filter !== $name && $filter !== $qualifiedName) {
+			continue;
+		}
+		$matched[] = $module;
+	}
+	if ($filter !== '' && $matched === []) {
+		$lines[] = 'Project module ' . $filter . ': not found';
+		return $lines;
+	}
+	if ($matched === []) {
+		$lines[] = 'Project module rows: none';
+		return $lines;
+	}
+	$lines[] = $filter !== '' ? 'Project module detail:' : 'Project module rows:';
+	foreach ($matched as $module) {
+		$name = trim((string) ($module['name'] ?? ''));
+		$projectLabel = trim((string) ($module['project_root'] ?? '.'));
+		$dependencies = normalize_string_list($module['dependencies'] ?? []);
+		$surfaceArtifact = trim((string) ($module['surface_artifact'] ?? ''));
+		$implementationArtifact = trim((string) ($module['implementation_artifact'] ?? ''));
+		$lines[] = '  - ' . ($projectLabel === '' || $projectLabel === '.' ? $name : $projectLabel . '/' . $name)
+			. ': sources ' . (int) ($module['source_count'] ?? 0)
+			. ', deps ' . ($dependencies === [] ? 'none' : implode(', ', $dependencies))
+			. ', cache ' . trim((string) ($module['cache_status'] ?? 'unavailable'))
+			. ', interface changed ' . (((bool) ($module['interface_changed'] ?? false)) ? 'yes' : 'no')
+			. ', implementation changed ' . (((bool) ($module['implementation_changed'] ?? false)) ? 'yes' : 'no')
+			. ', consumers ' . (((bool) ($module['consumer_rebuild_required'] ?? false)) ? 'rebuild' : 'stable')
+			. ($surfaceArtifact !== '' ? ', artifact ' . $surfaceArtifact : '');
+		if ($implementationArtifact !== '') {
+			$lines[] = '    implementation artifact: ' . $implementationArtifact;
+		}
+		$sourceRows = normalize_project_module_source_rows(is_array($module['sources'] ?? null) ? $module['sources'] : []);
+		if ($sourceRows !== []) {
+			$sourceNames = array_map(static fn (array $row): string => (string) ($row['source'] ?? ''), $sourceRows);
+			$lines[] = '    sources: ' . implode(', ', normalize_string_list($sourceNames));
+		}
+		$implementationArtifacts = normalize_string_list($module['implementation_artifacts'] ?? []);
+		if ($implementationArtifacts !== []) {
+			$lines[] = '    implementation artifacts: ' . implode(', ', $implementationArtifacts);
+		}
+		$consumerReasons = normalize_string_list($module['consumer_rebuild_reasons'] ?? []);
+		foreach ($consumerReasons as $reason) {
+			$lines[] = '    consumer reason: ' . $reason;
+		}
+		$unresolved = normalize_string_list($module['unresolved_dependencies'] ?? []);
+		if ($unresolved !== []) {
+			$lines[] = '    unresolved dependencies: ' . implode(', ', $unresolved);
+		}
+	}
+	$unassignedSources = normalize_string_list($report['unassigned_sources'] ?? []);
+	if ($unassignedSources !== []) {
+		$lines[] = 'Project module unassigned sources: ' . implode(', ', $unassignedSources);
+	}
+	$duplicateAssignments = is_array($report['duplicate_assignments'] ?? null) ? $report['duplicate_assignments'] : [];
+	foreach ($duplicateAssignments as $assignment) {
+		if (!is_array($assignment)) {
+			continue;
+		}
+		$source = trim((string) ($assignment['source'] ?? ''));
+		$modulesForSource = normalize_string_list($assignment['modules'] ?? []);
+		if ($source !== '' && $modulesForSource !== []) {
+			$lines[] = 'Project module duplicate assignment: ' . $source . ' -> ' . implode(', ', $modulesForSource);
 		}
 	}
 	return $lines;
@@ -8196,6 +9085,18 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 		return render_project_unit_force_include_lines(is_array($details['project_unit_force_includes'] ?? null) ? $details['project_unit_force_includes'] : [], true, $source, false);
 	}
 
+	if ($view === 'modules') {
+		return render_project_module_report_lines(is_array($details['project_modules'] ?? null) ? $details['project_modules'] : [], true);
+	}
+
+	if ($view === 'module') {
+		$module = trim((string) ($viewArgs[0] ?? ''));
+		if ($module === '') {
+			return ['Project module: missing module name. Use `scpp explain-build module <name>`.'];
+		}
+		return render_project_module_report_lines(is_array($details['project_modules'] ?? null) ? $details['project_modules'] : [], true, $module);
+	}
+
 	if ($view === 'entrypoint') {
 		$entrySource = (string) ($entrypoint['source_path'] ?? '');
 		if ($entrySource === '') {
@@ -8239,6 +9140,10 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 			if ($projectUnitHeader !== '') {
 				$line .= ' (project unit: ' . ($projectUnitMode !== '' ? $projectUnitMode . ' ' : '') . $projectUnitHeader . ')';
 			}
+			$projectModule = trim((string) ($source['project_module'] ?? ''));
+			if ($projectModule !== '') {
+				$line .= ' (project module: ' . $projectModule . ')';
+			}
 			$lines[] = $line;
 		}
 		return $lines === [] ? ['Generated files: none'] : array_merge(['Generated files:'], array_map(static fn (string $line): string => '  - ' . $line, $lines));
@@ -8249,7 +9154,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, grouping, project-units, project-unit <source>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }
@@ -10618,7 +11523,7 @@ function compiler_display_command(array $compiler): string
  * @param array{compile_runtime:bool,compile_dependencies:bool} $options
  * @param 'reuse'|'local' $runtimePlacement
  */
-function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppUnits, string $outputName, array $compiler, string $buildMode, array $runtimeConfig, array $projectLibraryFlags = [], ?array $fastcgiBuild = null, array $options = ['compile_runtime' => true, 'compile_dependencies' => true], string $runtimePlacement = 'reuse'): string
+function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppUnits, string $outputName, array $compiler, string $buildMode, array $runtimeConfig, array $projectLibraryFlags = [], ?array $fastcgiBuild = null, array $options = ['compile_runtime' => true, 'compile_dependencies' => true], string $runtimePlacement = 'reuse', array $projectModuleReport = []): string
 {
 	$usePch = array_key_exists('use_pch', $options) ? (bool) $options['use_pch'] : supports_compiler_pch($compiler);
 	$generatedIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $generatedDir);
@@ -10658,6 +11563,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		}
 	}
 	$binaryLinkFlags = array_values(array_unique($binaryLinkFlags));
+	$projectModuleCompileSurfaceDeps = collect_project_module_compile_surface_deps($projectModuleReport);
 
 	$lines = [];
 	$lines[] = 'cxx = ' . $compilerCommand;
@@ -10772,6 +11678,14 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if ($usePch) {
 			$implicitDeps[] = ninja_escape_path($appPchArtifact);
+		}
+		$projectLabel = project_context_report_label($projectRoot, (string) ($unit['project_root'] ?? ''));
+		$sourceKey = project_module_source_key($projectLabel, (string) ($unit['relative_php'] ?? ''));
+		foreach ($projectModuleCompileSurfaceDeps[$sourceKey] ?? [] as $moduleSurfaceDep) {
+			$moduleSurfacePath = is_absolute_path($moduleSurfaceDep)
+				? normalize_path($moduleSurfaceDep)
+				: normalize_path($projectRoot . '/' . normalize_config_path($moduleSurfaceDep));
+			$implicitDeps[] = ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $moduleSurfacePath));
 		}
 		$lines[] = 'build ' . ninja_escape_path($objectPath) . ': compile ' . ninja_escape_path($generatedCpp) . ' | ' . implode(' ', $implicitDeps);
 		$unitForceIncludeHeader = is_string($unit['force_include_header'] ?? null) ? $unit['force_include_header'] : null;
