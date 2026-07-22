@@ -718,7 +718,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|ninja-explain|action-identity|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|ninja-explain|action-identity|object-cache|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp build-benchmark writes .prism/build_invalidation_benchmark.json from an isolated benchmark work tree\n";
@@ -2955,6 +2955,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		scpp_fail('Internal error: missing root project build context.' . PHP_EOL, 4);
 	}
 	$buildGroupingPolicy = resolve_build_grouping_policy(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config, $buildMode);
+	$objectCacheConfig = resolve_build_object_cache_config(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config);
 	$generatedDir = $rootContext['generated_dir'];
 	$cacheDir = $rootContext['cache_dir'];
 	$fastcgiBuild = $fastcgiConfig['enabled'] ? resolve_fastcgi_build_spec($projectRoot, $repoRoot, $buildDir, $generatedDir, $entrypointAbs, $compiler, $fastcgiConfig) : null;
@@ -3252,12 +3253,12 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$runtimePlacementForInvocation,
 		$projectModuleReport
 	);
-	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
 	echo 'Using compiler: ' . compiler_display_command($compiler) . ' (' . $compiler['kind'] . ')' . PHP_EOL;
 	echo 'Using build mode: ' . $buildMode . PHP_EOL;
 	echo 'Using build grouping policy: ' . (string) ($buildGroupingPolicy['policy'] ?? 'incremental') . ' (' . (string) ($buildGroupingPolicy['status'] ?? 'report_only') . ')' . PHP_EOL;
+	echo 'Object cache: ' . ((bool) ($objectCacheConfig['enabled'] ?? false) ? 'enabled' : 'disabled') . ' (' . (string) ($objectCacheConfig['source'] ?? 'default disabled') . ')' . PHP_EOL;
 	echo 'Using repo root: ' . normalize_path($repoRoot) . PHP_EOL;
 	echo 'Resolved project dependency graph: ' . count($projectGraph) . ' project(s)' . PHP_EOL;
 	echo 'Runtime compilation: ' . ($options['compile_runtime'] ? 'enabled' : 'reuse existing artifact only') . PHP_EOL;
@@ -3290,7 +3291,13 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if (!$options['compile_dependencies']) {
 		validate_reused_dependency_artifacts($projectRoot, $generatedUnits, $nativeCppUnits);
 	}
+	$objectCacheReport = restore_object_action_cache_entries($projectRoot, $cacheDir, $objectCacheConfig, $objectActionIdentityReport);
 	scrub_invalid_cached_objects_for_rebuild($projectRoot, array_merge($generatedUnits, $nativeCppUnits), $options['compile_dependencies']);
+	if (object_cache_report_has_restored_objects($objectCacheReport)) {
+		$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppUnits, $outputName, $compiler, $buildMode, $runtimeConfig, $projectLibraryFlags, $fastcgiBuild, $effectiveBuildOptions, $runtimePlacementForInvocation, $projectModuleReport, $objectCacheReport);
+		write_text_file($buildNinjaPath, $buildNinja);
+	}
+	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 
 	$command = [
 		$ninjaPath,
@@ -3375,6 +3382,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
 				'ninja_explain' => $ninjaExplainReport,
 				'object_action_identity' => $objectActionIdentityReport,
+				'object_cache' => $objectCacheReport,
 				'build_explanation' => build_explanation_details(
 					$projectRoot,
 					$options,
@@ -3396,7 +3404,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					$failureBuildGroupingReport,
 					$projectModuleReport,
 					$ninjaExplainReport,
-					$objectActionIdentityReport
+					$objectActionIdentityReport,
+					$objectCacheReport
 				),
 			]
 		);
@@ -3474,6 +3483,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$runtimePlacementForInvocation,
 		$projectModuleReport
 	);
+	$objectCacheReport = store_object_action_cache_entries($projectRoot, $cacheDir, $objectCacheConfig, $objectActionIdentityReport, $objectCacheReport);
 	if ($rebuiltOutputs !== []) {
 		echo 'Rebuilt outputs: ' . implode(', ', array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)) . PHP_EOL;
 	} else {
@@ -3514,6 +3524,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
 			'ninja_explain' => $ninjaExplainReport,
 			'object_action_identity' => $objectActionIdentityReport,
+			'object_cache' => $objectCacheReport,
 			'rebuilt_outputs' => array_values(array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)),
 			'rebuild_fanout' => $rebuildFanout,
 			'ninja_command' => $command,
@@ -3539,7 +3550,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$buildGroupingReport,
 				$projectModuleReport,
 				$ninjaExplainReport,
-				$objectActionIdentityReport
+				$objectActionIdentityReport,
+				$objectCacheReport
 			),
 		]
 	);
@@ -3592,7 +3604,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			$buildGroupingReport,
 			$projectModuleReport,
 			$ninjaExplainReport,
-			$objectActionIdentityReport
+			$objectActionIdentityReport,
+			$objectCacheReport
 		),
 	];
 }
@@ -5153,6 +5166,12 @@ function collect_object_action_identity_report(
 					$implicitInputs[] = $memberGeneratedCpp;
 				}
 			}
+			$memberGeneratedHeader = normalize_path((string) ($member['generated_header'] ?? ''));
+			if ($memberGeneratedHeader !== '') {
+				$generatedInputs[] = $memberGeneratedHeader;
+				$implicitInputs[] = $memberGeneratedHeader;
+				$logicalInputs[] = $memberGeneratedHeader;
+			}
 			$sourceKey = project_module_source_key($projectLabel, $relativePhp);
 			foreach ($projectModuleCompileSurfaceDeps[$sourceKey] ?? [] as $moduleSurfaceDep) {
 				$moduleSurfacePath = is_absolute_path($moduleSurfaceDep)
@@ -5490,6 +5509,399 @@ function normalize_object_action_input_fingerprint_rows(array $rows): array
 		];
 	}
 	usort($result, static fn (array $left, array $right): int => strcmp((string) ($left['path'] ?? ''), (string) ($right['path'] ?? '')));
+	return $result;
+}
+
+/** @return array{enabled:bool,source:string} */
+function resolve_build_object_cache_config(array $config): array
+{
+	$build = is_array($config['build'] ?? null) ? $config['build'] : [];
+	if (!array_key_exists('object_cache', $build)) {
+		return [
+			'enabled' => false,
+			'source' => 'default disabled',
+		];
+	}
+	if (!is_bool($build['object_cache'])) {
+		scpp_fail('Invalid build.object_cache in ' . SCPP_PROJECT_CONFIG . ': expected a boolean.' . PHP_EOL, 2);
+	}
+	return [
+		'enabled' => (bool) $build['object_cache'],
+		'source' => 'build.object_cache',
+	];
+}
+
+/**
+ * @param array{enabled:bool,source:string} $config
+ * @return array<string,mixed>
+ */
+function restore_object_action_cache_entries(string $projectRoot, string $cacheDir, array $config, array $objectActionIdentityReport): array
+{
+	$enabled = (bool) ($config['enabled'] ?? false);
+	$report = normalize_object_cache_report([
+		'enabled' => $enabled,
+		'status' => $enabled ? 'enabled' : 'disabled',
+		'source' => (string) ($config['source'] ?? 'default disabled'),
+		'cache_dir' => normalize_config_path(relative_path($projectRoot, $cacheDir . '/object_actions')),
+		'restore' => [
+			'rows' => [],
+		],
+		'store' => [
+			'rows' => [],
+		],
+	]);
+	if (!$enabled) {
+		return $report;
+	}
+
+	$rows = [];
+	foreach (normalize_object_action_identity_rows(is_array($objectActionIdentityReport['actions'] ?? null) ? $objectActionIdentityReport['actions'] : []) as $action) {
+		$rows[] = restore_object_action_cache_entry($projectRoot, $cacheDir, $action);
+	}
+	$report['restore'] = normalize_object_cache_restore_report(['rows' => $rows]);
+	return normalize_object_cache_report($report);
+}
+
+/**
+ * @param array<string,mixed> $action
+ * @return array<string,mixed>
+ */
+function restore_object_action_cache_entry(string $projectRoot, string $cacheDir, array $action): array
+{
+	$objectPath = normalize_config_path((string) ($action['object_path'] ?? ''));
+	$actionKey = trim((string) ($action['action_key'] ?? ''));
+	$row = [
+		'object_path' => $objectPath,
+		'action_key' => $actionKey,
+		'status' => 'skipped',
+		'reason' => '',
+		'cache_object' => '',
+		'output_hash' => '',
+	];
+	if (!object_action_cache_key_is_valid($actionKey)) {
+		$row['reason'] = 'invalid action key';
+		return $row;
+	}
+	$objectAbs = object_action_project_output_path($projectRoot, $objectPath);
+	if ($objectAbs === null) {
+		$row['reason'] = 'object path outside project root';
+		return $row;
+	}
+	$paths = build_object_action_cache_entry_paths($projectRoot, $cacheDir, $actionKey, $objectPath);
+	$row['cache_object'] = $paths['object_path_relative'];
+	if (!is_file($paths['object_path']) || !is_file($paths['metadata_path'])) {
+		$row['status'] = 'miss';
+		$row['reason'] = 'cache entry missing';
+		return $row;
+	}
+	$metadata = read_json_file($paths['metadata_path']);
+	if (!object_action_cache_metadata_matches($metadata, $action)) {
+		$row['reason'] = 'cache metadata does not match action identity';
+		return $row;
+	}
+	if (!cached_object_looks_valid($paths['object_path'])) {
+		$row['reason'] = 'cached object is not a valid native object artifact';
+		return $row;
+	}
+	$cachedHash = existing_file_sha256($paths['object_path']) ?? '';
+	$expectedHash = trim((string) ($metadata['output_hash'] ?? ''));
+	if ($cachedHash === '' || $expectedHash === '' || !hash_equals($expectedHash, $cachedHash)) {
+		$row['reason'] = 'cached object hash does not match metadata';
+		return $row;
+	}
+	$row['output_hash'] = $cachedHash;
+	$currentHash = existing_file_sha256($objectAbs) ?? '';
+	if ($currentHash !== '' && hash_equals($cachedHash, $currentHash)) {
+		$row['status'] = 'already_current';
+		$row['reason'] = 'object already matches cached output';
+		return $row;
+	}
+	copy_file_atomically($paths['object_path'], $objectAbs, 'Failed to restore object cache entry');
+	touch_restored_object_after_inputs($projectRoot, $objectAbs, $action);
+	$row['status'] = 'restored';
+	$row['reason'] = 'restored object from local action cache';
+	return $row;
+}
+
+/**
+ * @param array{enabled:bool,source:string} $config
+ * @return array<string,mixed>
+ */
+function store_object_action_cache_entries(string $projectRoot, string $cacheDir, array $config, array $objectActionIdentityReport, array $existingReport = []): array
+{
+	$report = normalize_object_cache_report($existingReport);
+	if (!(bool) ($config['enabled'] ?? false)) {
+		return $report;
+	}
+	$rows = [];
+	foreach (normalize_object_action_identity_rows(is_array($objectActionIdentityReport['actions'] ?? null) ? $objectActionIdentityReport['actions'] : []) as $action) {
+		$rows[] = store_object_action_cache_entry($projectRoot, $cacheDir, $action);
+	}
+	$report['store'] = normalize_object_cache_store_report(['rows' => $rows]);
+	return normalize_object_cache_report($report);
+}
+
+/**
+ * @param array<string,mixed> $action
+ * @return array<string,mixed>
+ */
+function store_object_action_cache_entry(string $projectRoot, string $cacheDir, array $action): array
+{
+	$objectPath = normalize_config_path((string) ($action['object_path'] ?? ''));
+	$actionKey = trim((string) ($action['action_key'] ?? ''));
+	$row = [
+		'object_path' => $objectPath,
+		'action_key' => $actionKey,
+		'status' => 'skipped',
+		'reason' => '',
+		'cache_object' => '',
+		'output_hash' => trim((string) ($action['output_hash'] ?? '')),
+	];
+	if (!object_action_cache_key_is_valid($actionKey)) {
+		$row['reason'] = 'invalid action key';
+		return $row;
+	}
+	$objectAbs = object_action_project_output_path($projectRoot, $objectPath);
+	if ($objectAbs === null) {
+		$row['reason'] = 'object path outside project root';
+		return $row;
+	}
+	if (!is_file($objectAbs)) {
+		$row['reason'] = 'object output missing';
+		return $row;
+	}
+	if (!cached_object_looks_valid($objectAbs)) {
+		$row['reason'] = 'object output is not a valid native object artifact';
+		return $row;
+	}
+	$outputHash = existing_file_sha256($objectAbs) ?? '';
+	if ($outputHash === '') {
+		$row['reason'] = 'object output hash unavailable';
+		return $row;
+	}
+	$row['output_hash'] = $outputHash;
+	$paths = build_object_action_cache_entry_paths($projectRoot, $cacheDir, $actionKey, $objectPath);
+	$row['cache_object'] = $paths['object_path_relative'];
+	$metadata = build_object_action_cache_metadata($action, $outputHash);
+	$cachedHash = existing_file_sha256($paths['object_path']) ?? '';
+	$cachedMetadata = read_json_file($paths['metadata_path']);
+	if ($cachedHash !== '' && hash_equals($outputHash, $cachedHash) && object_action_cache_metadata_matches($cachedMetadata, $action)) {
+		$row['status'] = 'preserved';
+		$row['reason'] = 'cache entry already matches object output';
+		return $row;
+	}
+	copy_file_atomically($objectAbs, $paths['object_path'], 'Failed to store object cache entry');
+	write_json_file_atomic($paths['metadata_path'], $metadata);
+	$row['status'] = 'stored';
+	$row['reason'] = 'stored object output in local action cache';
+	return $row;
+}
+
+/** @return array<string,mixed> */
+function build_object_action_cache_metadata(array $action, string $outputHash): array
+{
+	return [
+		'schema_version' => 1,
+		'action_key' => trim((string) ($action['action_key'] ?? '')),
+		'kind' => trim((string) ($action['kind'] ?? '')),
+		'object_path' => normalize_config_path((string) ($action['object_path'] ?? '')),
+		'command_hash' => trim((string) ($action['command_hash'] ?? '')),
+		'input_hash' => trim((string) ($action['input_hash'] ?? '')),
+		'output_hash' => $outputHash,
+		'stored_at' => time(),
+	];
+}
+
+function object_action_cache_metadata_matches(?array $metadata, array $action): bool
+{
+	if (!is_array($metadata)) {
+		return false;
+	}
+	foreach (['action_key', 'command_hash', 'input_hash'] as $key) {
+		if (!hash_equals(trim((string) ($action[$key] ?? '')), trim((string) ($metadata[$key] ?? '')))) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function object_action_cache_key_is_valid(string $actionKey): bool
+{
+	return preg_match('/^[0-9a-f]{64}$/', $actionKey) === 1;
+}
+
+function object_action_project_output_path(string $projectRoot, string $objectPath): ?string
+{
+	$relative = normalize_config_path($objectPath);
+	if ($relative === '' || $relative === '..' || str_starts_with($relative, '../')) {
+		return null;
+	}
+	$projectRoot = normalize_path($projectRoot);
+	$absolute = normalize_path($projectRoot . '/' . $relative);
+	if ($absolute !== $projectRoot && !str_starts_with($absolute, $projectRoot . '/')) {
+		return null;
+	}
+	return $absolute;
+}
+
+/** @return array{object_path:string,metadata_path:string,object_path_relative:string,metadata_path_relative:string} */
+function build_object_action_cache_entry_paths(string $projectRoot, string $cacheDir, string $actionKey, string $objectPath): array
+{
+	$extension = pathinfo($objectPath, PATHINFO_EXTENSION);
+	if (!is_string($extension) || trim($extension) === '') {
+		$extension = 'object';
+	}
+	$extension = preg_replace('/[^A-Za-z0-9_.-]+/', '_', $extension);
+	$extension = is_string($extension) && $extension !== '' ? $extension : 'object';
+	$base = normalize_path($cacheDir . '/object_actions/' . substr($actionKey, 0, 2) . '/' . $actionKey);
+	$objectCachePath = $base . '.' . $extension;
+	$metadataPath = $base . '.json';
+	return [
+		'object_path' => $objectCachePath,
+		'metadata_path' => $metadataPath,
+		'object_path_relative' => normalize_config_path(relative_path($projectRoot, $objectCachePath)),
+		'metadata_path_relative' => normalize_config_path(relative_path($projectRoot, $metadataPath)),
+	];
+}
+
+function copy_file_atomically(string $sourcePath, string $destinationPath, string $failureMessage): void
+{
+	$destinationDir = dirname($destinationPath);
+	if (!is_dir($destinationDir)) {
+		ensure_directory($destinationDir);
+	}
+	$tmpPath = $destinationPath . '.tmp.' . bin2hex(random_bytes(4));
+	if (!@copy($sourcePath, $tmpPath)) {
+		@unlink($tmpPath);
+		scpp_fail($failureMessage . ': ' . $destinationPath . PHP_EOL, 2);
+	}
+	replace_file_atomically($tmpPath, $destinationPath, $failureMessage);
+	@touch($destinationPath);
+}
+
+/** @param array<string,mixed> $action */
+function touch_restored_object_after_inputs(string $projectRoot, string $objectPath, array $action): void
+{
+	$mtime = time();
+	foreach (normalize_object_action_input_fingerprint_rows(is_array($action['input_fingerprints'] ?? null) ? $action['input_fingerprints'] : []) as $fingerprint) {
+		$inputPath = object_action_project_output_path($projectRoot, (string) ($fingerprint['path'] ?? ''));
+		if ($inputPath === null || !is_file($inputPath)) {
+			continue;
+		}
+		$inputMtime = filemtime($inputPath);
+		if (is_int($inputMtime)) {
+			$mtime = max($mtime, $inputMtime + 1);
+		}
+	}
+	@touch($objectPath, $mtime);
+}
+
+/** @return array<string,mixed> */
+function normalize_object_cache_report(array $report): array
+{
+	$enabled = (bool) ($report['enabled'] ?? false);
+	return [
+		'enabled' => $enabled,
+		'status' => $enabled ? 'enabled' : 'disabled',
+		'source' => trim((string) ($report['source'] ?? ($enabled ? 'build.object_cache' : 'default disabled'))),
+		'cache_dir' => normalize_config_path((string) ($report['cache_dir'] ?? '')),
+		'restore' => normalize_object_cache_restore_report(is_array($report['restore'] ?? null) ? $report['restore'] : []),
+		'store' => normalize_object_cache_store_report(is_array($report['store'] ?? null) ? $report['store'] : []),
+	];
+}
+
+/** @return array<string,mixed> */
+function normalize_object_cache_restore_report(array $report): array
+{
+	$rows = normalize_object_cache_rows(is_array($report['rows'] ?? null) ? $report['rows'] : []);
+	$counts = object_cache_status_counts($rows);
+	return [
+		'action_count' => count($rows),
+		'hit_count' => (int) ($counts['restored'] ?? 0) + (int) ($counts['already_current'] ?? 0),
+		'miss_count' => (int) ($counts['miss'] ?? 0),
+		'restored_count' => (int) ($counts['restored'] ?? 0),
+		'already_current_count' => (int) ($counts['already_current'] ?? 0),
+		'skipped_count' => (int) ($counts['skipped'] ?? 0),
+		'rows' => $rows,
+	];
+}
+
+/** @return array<string,mixed> */
+function normalize_object_cache_store_report(array $report): array
+{
+	$rows = normalize_object_cache_rows(is_array($report['rows'] ?? null) ? $report['rows'] : []);
+	$counts = object_cache_status_counts($rows);
+	return [
+		'action_count' => count($rows),
+		'stored_count' => (int) ($counts['stored'] ?? 0),
+		'preserved_count' => (int) ($counts['preserved'] ?? 0),
+		'skipped_count' => (int) ($counts['skipped'] ?? 0),
+		'rows' => $rows,
+	];
+}
+
+/** @return list<array<string,mixed>> */
+function normalize_object_cache_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$objectPath = normalize_config_path((string) ($row['object_path'] ?? ''));
+		$actionKey = trim((string) ($row['action_key'] ?? ''));
+		if ($objectPath === '' && $actionKey === '') {
+			continue;
+		}
+		$result[] = [
+			'object_path' => $objectPath,
+			'action_key' => $actionKey,
+			'status' => trim((string) ($row['status'] ?? 'skipped')),
+			'reason' => trim((string) ($row['reason'] ?? '')),
+			'cache_object' => normalize_config_path((string) ($row['cache_object'] ?? '')),
+			'output_hash' => trim((string) ($row['output_hash'] ?? '')),
+		];
+	}
+	usort($result, static fn (array $left, array $right): int => strcmp((string) ($left['object_path'] ?? ''), (string) ($right['object_path'] ?? '')));
+	return $result;
+}
+
+/** @return array<string,int> */
+function object_cache_status_counts(array $rows): array
+{
+	$counts = [];
+	foreach ($rows as $row) {
+		$status = trim((string) ($row['status'] ?? 'skipped'));
+		if ($status === '') {
+			$status = 'skipped';
+		}
+		$counts[$status] = (int) ($counts[$status] ?? 0) + 1;
+	}
+	return $counts;
+}
+
+function object_cache_report_has_restored_objects(array $report): bool
+{
+	$restore = is_array($report['restore'] ?? null) ? $report['restore'] : [];
+	return (int) ($restore['restored_count'] ?? 0) > 0;
+}
+
+/** @return array<string,string> */
+function object_cache_restored_cache_inputs_by_object(array $report): array
+{
+	$restore = is_array($report['restore'] ?? null) ? $report['restore'] : [];
+	$result = [];
+	foreach (normalize_object_cache_rows(is_array($restore['rows'] ?? null) ? $restore['rows'] : []) as $row) {
+		if (($row['status'] ?? '') !== 'restored') {
+			continue;
+		}
+		$objectPath = normalize_config_path((string) ($row['object_path'] ?? ''));
+		$cacheObject = normalize_config_path((string) ($row['cache_object'] ?? ''));
+		if ($objectPath !== '' && $cacheObject !== '') {
+			$result[$objectPath] = $cacheObject;
+		}
+	}
+	ksort($result, SORT_STRING);
 	return $result;
 }
 
@@ -11647,6 +12059,7 @@ function build_explanation_details(
 	array $projectModuleReport = [],
 	array $ninjaExplainReport = [],
 	array $objectActionIdentityReport = [],
+	array $objectCacheReport = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -11669,6 +12082,7 @@ function build_explanation_details(
 	$projectModuleReport = normalize_project_module_report($projectModuleReport);
 	$ninjaExplainReport = normalize_ninja_explain_report($ninjaExplainReport);
 	$objectActionIdentityReport = normalize_object_action_identity_report($objectActionIdentityReport);
+	$objectCacheReport = normalize_object_cache_report($objectCacheReport);
 	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options, $projectModuleReport, $ninjaExplainReport, $objectActionIdentityReport);
 
 	return [
@@ -11702,6 +12116,7 @@ function build_explanation_details(
 		'generated_artifact_writes' => summarize_generated_artifact_write_report($sources),
 		'ninja_explain' => $ninjaExplainReport,
 		'object_action_identity' => $objectActionIdentityReport,
+		'object_cache' => $objectCacheReport,
 		'rebuilt_outputs' => $rebuilt,
 		'rebuild_fanout' => $normalizedRebuildFanout,
 		'project_unit_force_includes' => $projectUnitForceIncludeReport,
@@ -12007,6 +12422,51 @@ function render_object_action_identity_lines(array $report): array
 }
 
 /**
+ * @param array<string,mixed> $report
+ * @return list<string>
+ */
+function render_object_cache_lines(array $report): array
+{
+	$report = normalize_object_cache_report($report);
+	$restore = is_array($report['restore'] ?? null) ? $report['restore'] : [];
+	$store = is_array($report['store'] ?? null) ? $report['store'] : [];
+	$lines = [
+		'Object cache: ' . (string) ($report['status'] ?? 'disabled')
+			. ' (' . (string) ($report['source'] ?? 'default disabled') . ')'
+			. (((string) ($report['cache_dir'] ?? '')) !== '' ? ', cache ' . (string) ($report['cache_dir'] ?? '') : ''),
+		'Object cache restore: actions ' . (int) ($restore['action_count'] ?? 0)
+			. ', hits ' . (int) ($restore['hit_count'] ?? 0)
+			. ', restored ' . (int) ($restore['restored_count'] ?? 0)
+			. ', already-current ' . (int) ($restore['already_current_count'] ?? 0)
+			. ', misses ' . (int) ($restore['miss_count'] ?? 0)
+			. ', skipped ' . (int) ($restore['skipped_count'] ?? 0),
+		'Object cache store: actions ' . (int) ($store['action_count'] ?? 0)
+			. ', stored ' . (int) ($store['stored_count'] ?? 0)
+			. ', preserved ' . (int) ($store['preserved_count'] ?? 0)
+			. ', skipped ' . (int) ($store['skipped_count'] ?? 0),
+	];
+	$restoreRows = normalize_object_cache_rows(is_array($restore['rows'] ?? null) ? $restore['rows'] : []);
+	if ($restoreRows !== []) {
+		$lines[] = 'Object cache restore rows:';
+		foreach ($restoreRows as $row) {
+			$lines[] = '  - ' . (string) ($row['object_path'] ?? '')
+				. ': ' . (string) ($row['status'] ?? 'skipped')
+				. (((string) ($row['reason'] ?? '')) !== '' ? ' (' . (string) ($row['reason'] ?? '') . ')' : '');
+		}
+	}
+	$storeRows = normalize_object_cache_rows(is_array($store['rows'] ?? null) ? $store['rows'] : []);
+	if ($storeRows !== []) {
+		$lines[] = 'Object cache store rows:';
+		foreach ($storeRows as $row) {
+			$lines[] = '  - ' . (string) ($row['object_path'] ?? '')
+				. ': ' . (string) ($row['status'] ?? 'skipped')
+				. (((string) ($row['reason'] ?? '')) !== '' ? ' (' . (string) ($row['reason'] ?? '') . ')' : '');
+		}
+	}
+	return $lines;
+}
+
+/**
  * @param array<string,mixed> $details
  * @return list<string>
  */
@@ -12039,6 +12499,18 @@ function render_build_explanation_lines(array $details): array
 			. ' action(s), generated ' . (int) ($objectActionIdentity['generated_action_count'] ?? 0)
 			. ', native ' . (int) ($objectActionIdentity['native_action_count'] ?? 0)
 			. ', skipped dependency objects ' . (int) ($objectActionIdentity['skipped_dependency_object_count'] ?? 0);
+	}
+	$objectCache = normalize_object_cache_report(is_array($details['object_cache'] ?? null) ? $details['object_cache'] : []);
+	if ((bool) ($objectCache['enabled'] ?? false)) {
+		$restore = is_array($objectCache['restore'] ?? null) ? $objectCache['restore'] : [];
+		$store = is_array($objectCache['store'] ?? null) ? $objectCache['store'] : [];
+		$lines[] = 'Object cache: enabled, restore hits ' . (int) ($restore['hit_count'] ?? 0)
+			. ' (restored ' . (int) ($restore['restored_count'] ?? 0)
+			. ', already-current ' . (int) ($restore['already_current_count'] ?? 0)
+			. ', misses ' . (int) ($restore['miss_count'] ?? 0)
+			. '), store stored ' . (int) ($store['stored_count'] ?? 0)
+			. ', preserved ' . (int) ($store['preserved_count'] ?? 0)
+			. ', skipped ' . (int) ($store['skipped_count'] ?? 0);
 	}
 	$lines[] = 'PHP transpile decisions: ' . (int) ($details['transpiled_count'] ?? 0) . ' transpiled, ' . (int) ($details['skipped_count'] ?? 0) . ' reused';
 	foreach (render_generated_artifact_write_report_lines(is_array($details['generated_artifact_writes'] ?? null) ? $details['generated_artifact_writes'] : []) as $line) {
@@ -12814,6 +13286,10 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 		return render_object_action_identity_lines(is_array($details['object_action_identity'] ?? null) ? $details['object_action_identity'] : []);
 	}
 
+	if ($view === 'object-cache') {
+		return render_object_cache_lines(is_array($details['object_cache'] ?? null) ? $details['object_cache'] : []);
+	}
+
 	if ($view === 'grouping') {
 		return render_build_grouping_lines(is_array($details['build_grouping'] ?? null) ? $details['build_grouping'] : [], true);
 	}
@@ -12900,7 +13376,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, ninja-explain, action-identity, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, ninja-explain, action-identity, object-cache, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }
@@ -15269,7 +15745,7 @@ function compiler_display_command(array $compiler): string
  * @param array{compile_runtime:bool,compile_dependencies:bool} $options
  * @param 'reuse'|'local' $runtimePlacement
  */
-function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppUnits, string $outputName, array $compiler, string $buildMode, array $runtimeConfig, array $projectLibraryFlags = [], ?array $fastcgiBuild = null, array $options = ['compile_runtime' => true, 'compile_dependencies' => true], string $runtimePlacement = 'reuse', array $projectModuleReport = []): string
+function render_build_ninja(string $projectRoot, string $repoRoot, string $buildDir, string $generatedDir, array $generatedUnits, array $nativeCppUnits, string $outputName, array $compiler, string $buildMode, array $runtimeConfig, array $projectLibraryFlags = [], ?array $fastcgiBuild = null, array $options = ['compile_runtime' => true, 'compile_dependencies' => true], string $runtimePlacement = 'reuse', array $projectModuleReport = [], array $objectCacheReport = []): string
 {
 	$usePch = array_key_exists('use_pch', $options) ? (bool) $options['use_pch'] : supports_compiler_pch($compiler);
 	$generatedIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $generatedDir);
@@ -15310,6 +15786,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	}
 	$binaryLinkFlags = array_values(array_unique($binaryLinkFlags));
 	$projectModuleCompileSurfaceDeps = collect_project_module_compile_surface_deps($projectModuleReport);
+	$restoredCacheInputsByObject = object_cache_restored_cache_inputs_by_object($objectCacheReport);
 
 	$lines = [];
 	$lines[] = 'cxx = ' . $compilerCommand;
@@ -15439,6 +15916,12 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 			? normalize_path((string) $unit['compile_source_path'])
 			: normalize_path((string) ($unit['generated_cpp'] ?? ''));
 		$generatedCpp = build_ninja_relative_path($projectRoot, $buildDir, $compileSource);
+		$objectRelative = normalize_config_path(relative_path($projectRoot, $objectAbs));
+		if (isset($restoredCacheInputsByObject[$objectRelative])) {
+			$cacheObject = normalize_path($projectRoot . '/' . normalize_config_path($restoredCacheInputsByObject[$objectRelative]));
+			$lines[] = 'build ' . ninja_escape_path($objectPath) . ': phony ' . ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $cacheObject));
+			continue;
+		}
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if ($usePch) {
 			$implicitDeps[] = ninja_escape_path($appPchArtifact);
@@ -15476,6 +15959,13 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 		}
 		$nativeRelative = build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['source_path']);
 		$nativeObject = build_ninja_relative_path($projectRoot, $buildDir, $nativeUnit['object_path']);
+		$nativeObjectRelative = normalize_config_path(relative_path($projectRoot, normalize_path((string) ($nativeUnit['object_path'] ?? ''))));
+		if (isset($restoredCacheInputsByObject[$nativeObjectRelative])) {
+			$cacheObject = normalize_path($projectRoot . '/' . normalize_config_path($restoredCacheInputsByObject[$nativeObjectRelative]));
+			$lines[] = 'build ' . ninja_escape_path($nativeObject) . ': phony ' . ninja_escape_path(build_ninja_relative_path($projectRoot, $buildDir, $cacheObject));
+			$objectPaths[] = ninja_escape_path($nativeObject);
+			continue;
+		}
 		$implicitDeps = [ninja_escape_path($runtimeSignatureStamp)];
 		if ($usePch) {
 			$implicitDeps[] = ninja_escape_path($appPchArtifact);

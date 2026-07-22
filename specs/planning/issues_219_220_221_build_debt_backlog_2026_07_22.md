@@ -100,7 +100,17 @@ action key, command/input/output hashes, compiler/build mode, selected
 environment values, primary input, member sources, generated inputs, implicit
 inputs, force-include headers, module surface inputs, and per-input
 fingerprints. `scpp explain-build action-identity` renders the recorded rows.
-This is provenance/reporting only; object reuse is still future CAS work.
+This action identity is the key material used by the opt-in local object cache;
+default-on reuse and shared/remote cache behavior remain future work.
+
+The first cross-issue CAS slice adds an opt-in project-local object action
+cache with `build.object_cache = true`. Generated and native object outputs are
+stored under `.prism/cache/object_actions/` by action key. On a later matching
+action, the cached object can be restored before Ninja and the object edge is
+rendered as a phony edge for that invocation, avoiding the compiler while still
+allowing the final link to consume the restored object. `scpp explain-build
+object-cache` reports restore and store rows. This is local-only and does not
+provide remote cache, remote execution, eviction, or cross-checkout sharing.
 
 ## Debt By Issue
 
@@ -108,8 +118,8 @@ This is provenance/reporting only; object reuse is still future CAS work.
 
 - Object rebuild reasons are still inferred from saved build fanout; there is
   no complete action cache/reuse model.
-- Generated output hashes and object action keys exist, but object reuse is not
-  driven by those keys yet.
+- Generated output hashes and object action keys can drive opt-in local object
+  cache restore/store, but this is still a prototype and not the default.
 - Old caches need one warm-up build before hash-based explanation rows become
   fully precise.
 - Native C++ rebuild explanations remain weaker than generated PHS source
@@ -156,7 +166,9 @@ This is provenance/reporting only; object reuse is still future CAS work.
 
 ### Cross-Issue Debt
 
-- No content-addressed object/action cache.
+- Local content-addressed object/action cache exists behind
+  `build.object_cache = true`; default-on policy, eviction, cross-checkout
+  reuse, and shared cache behavior are not implemented.
 - No remote cache or remote execution.
 - No persistent build daemon or resident build graph.
 - Acceptance benchmarks still need to be formalized for the v2 compiler:
@@ -254,6 +266,8 @@ This is provenance/reporting only; object reuse is still future CAS work.
     - Store action keys for generated and native object compile actions.
 
 13. `BLD-X-CAS-1`: Prototype local content-addressed object reuse.
+    - Status: implemented for opt-in project-local generated/native object
+      restore/store via `build.object_cache = true`.
     - Reuse object outputs by action key in one checkout.
     - Keep safety-first invalidation and clear explain-build evidence.
 

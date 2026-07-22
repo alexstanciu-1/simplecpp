@@ -211,6 +211,15 @@ generated artifacts changed, sources whose previous object is at least 8 MiB,
 and singleton would-be groups. The report stores the selected policy, evidence
 source, prior timing/fanout values, and the per-source grouped/isolated reason.
 
+`build.object_cache = true` opts into the local object action cache prototype.
+The cache stores generated and native object outputs under
+`.prism/cache/object_actions/` by the recorded object action key. Before Ninja
+runs, a matching cached object may be restored into the build directory and its
+object edge is rendered as a phony edge for that invocation so Ninja can link
+the restored object without re-running the compiler. After a successful build,
+object outputs are stored or preserved in the cache. The cache is project-local,
+uses only local action-key identity, and is not a remote cache.
+
 Project-local compile-time modules may be declared with `project_modules`.
 These are distinct from `runtime.modules` and describe build/report boundaries
 inside one project:
@@ -484,6 +493,8 @@ This command is a documentation discoverability helper. It does not change langu
 - generated/native object action identities, including stable action keys,
   command/input/output hashes, primary inputs, member sources, implicit inputs,
   and module surface inputs
+- local object action cache restore/store counts when `build.object_cache` is
+  enabled
 - the active build grouping policy, deterministic group membership, changed
   groups, and object fanout
 - which generated project unit force-include headers were assigned, including
@@ -502,6 +513,7 @@ This command is a documentation discoverability helper. It does not change langu
 - `scpp explain-build generated-artifacts`
 - `scpp explain-build ninja-explain`
 - `scpp explain-build action-identity`
+- `scpp explain-build object-cache`
 - `scpp explain-build grouping`
 - `scpp explain-build project-units`
 - `scpp explain-build project-unit <source>`
@@ -553,6 +565,16 @@ and per-input fingerprints. The same normalized summary is stored under
 matched. These action keys are report/provenance data in this slice; they do
 not yet drive object reuse. `scpp explain-build action-identity` renders the
 recorded object action rows.
+
+Saved successful build details also include an `object_cache` summary. The
+summary records whether the local action cache was enabled, where the project
+cache lives, per-action restore results before Ninja, and per-action store
+results after a successful Ninja run. Restore rows distinguish misses,
+restored hits, already-current hits, and skipped entries; store rows distinguish
+stored, preserved, and skipped entries. The same normalized summary is stored
+under `details.build_explanation.object_cache`. The focused
+`scpp explain-build object-cache` view renders the cache policy and restore/
+store rows.
 
 Saved successful and failed build details include
 `details.build_explanation.build_grouping`. The grouping report stores the
