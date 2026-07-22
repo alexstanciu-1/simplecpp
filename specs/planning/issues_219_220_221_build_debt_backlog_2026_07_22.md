@@ -42,6 +42,11 @@ hot-edit scenarios when project-relative selectors are supplied. It mirrors
 normal build behavior by reusing runtime artifacts unless `--build-runtime` is
 passed for the benchmark seed.
 
+#220 manual grouping now accepts a `build.grouping` map when
+`build.grouping_policy` is `manual`, validates duplicate, escaping, empty, and
+unknown source assignments, and reports assigned/unassigned manual grouping
+fanout while keeping compile edges report-only.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -61,8 +66,8 @@ passed for the benchmark seed.
 
 - `build.grouping_policy` is currently `report_only`; it does not change Ninja
   compile edges.
-- `manual` grouping accepts the policy name, but manual group maps are not
-  implemented.
+- `manual` grouping maps are report-only; they do not drive generated grouped
+  objects yet.
 - `auto` is a simple policy choice, not a measured cost model.
 - Release/O3 grouped or unity object generation is not implemented.
 - Hot-file isolation heuristics are not implemented.
@@ -120,6 +125,7 @@ passed for the benchmark seed.
 ### P1: Turn #220 Grouping From Report To Compile Graph
 
 4. `BLD-220-GRAPH-1`: Implement manual grouping config.
+   - Status: implemented.
    - Add an explicit `build.grouping` map or equivalent config surface.
    - Validate unknown sources, duplicate group membership, and path escapes.
    - Keep deterministic explain-build output for all manual groups.

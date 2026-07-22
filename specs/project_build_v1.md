@@ -158,6 +158,27 @@ generated/native object per source. This makes debug/incremental isolation and
 future release grouping decisions visible without changing compile edges before
 the dependency model can enforce them.
 
+When `build.grouping_policy` is `manual`, `build.grouping` must be an object
+mapping manual group names to project-relative source lists:
+
+```json
+{
+  "build": {
+    "grouping_policy": "manual",
+    "grouping": {
+      "domain": ["src/domain/base.phs", "src/domain/model.phs"],
+      "native-tools": ["native_cpp/probe.cpp"]
+    }
+  }
+}
+```
+
+Manual grouping validates path escapes, duplicate assignments, unknown sources,
+empty groups, and non-list group values. Manual groups are report-only in v1:
+assigned root-project generated/native sources are reported under their manual
+groups, unassigned root-project sources stay isolated, and dependency-project
+sources stay under their deterministic policy-derived groups.
+
 Project-local compile-time modules may be declared with `project_modules`.
 These are distinct from `runtime.modules` and describe build/report boundaries
 inside one project:
@@ -456,8 +477,10 @@ active policy, policy source, report-only status, current compile-unit strategy,
 deterministic group rows, changed groups, and object fanout. The focused
 `grouping` view renders this data, including group membership. In current v1,
 grouping policy selection does not change the Ninja compile graph; it exposes
-the planned grouping boundary and measured fanout for incremental and release
-workflow tuning.
+the planned grouping boundary and measured fanout for incremental, manual, and
+release workflow tuning. For manual grouping, the report also stores configured
+manual groups, assigned source count, unassigned root source count, and
+unassigned root source names.
 
 Saved build details also include `details.build_explanation.project_modules`.
 When `project_modules` is configured, each module row stores source membership,

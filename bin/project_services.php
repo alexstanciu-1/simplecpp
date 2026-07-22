@@ -5058,8 +5058,10 @@ function resolve_build_grouping_policy(array $config, string $buildMode): array
 		'current compile graph still emits one generated/native object per source',
 		'policy membership is deterministic and report-only until grouped compile edges are enabled',
 	];
+	$manualGroups = [];
 	if ($policy === 'manual') {
-		$notes[] = 'manual group maps are not implemented yet; sources are reported as isolated groups';
+		$manualGroups = normalize_build_grouping_manual_config($build['grouping'] ?? null);
+		$notes[] = 'manual group maps are report-only; unassigned root sources are reported as isolated groups';
 	}
 
 	return [
@@ -5072,7 +5074,87 @@ function resolve_build_grouping_policy(array $config, string $buildMode): array
 		'deterministic' => true,
 		'allowed_policies' => $allowed,
 		'notes' => $notes,
+		'manual_groups' => $manualGroups,
 	];
+}
+
+/** @return list<array{id:string,name:string,sources:list<string>}> */
+function normalize_build_grouping_manual_config(mixed $rawGrouping): array
+{
+	if (!is_array($rawGrouping) || array_is_list($rawGrouping)) {
+		scpp_fail('Invalid build.grouping in ' . SCPP_PROJECT_CONFIG . ': manual grouping requires an object mapping group names to source lists.' . PHP_EOL, 2);
+	}
+	if ($rawGrouping === []) {
+		scpp_fail('Invalid build.grouping in ' . SCPP_PROJECT_CONFIG . ': manual grouping requires at least one group.' . PHP_EOL, 2);
+	}
+
+	$groups = [];
+	$sourceOwners = [];
+	foreach ($rawGrouping as $rawName => $rawSources) {
+		$name = trim((string) $rawName);
+		if ($name === '') {
+			scpp_fail('Invalid build.grouping in ' . SCPP_PROJECT_CONFIG . ': manual group names must not be empty.' . PHP_EOL, 2);
+		}
+		if (!is_array($rawSources) || !array_is_list($rawSources)) {
+			scpp_fail('Invalid build.grouping.' . $name . ' in ' . SCPP_PROJECT_CONFIG . ': expected a list of project-relative source paths.' . PHP_EOL, 2);
+		}
+		$sources = [];
+		foreach ($rawSources as $index => $rawSource) {
+			if (!is_string($rawSource)) {
+				scpp_fail('Invalid build.grouping.' . $name . '[' . (int) $index . '] in ' . SCPP_PROJECT_CONFIG . ': expected a source path string.' . PHP_EOL, 2);
+			}
+			$source = normalize_build_grouping_source_path($rawSource, 'build.grouping.' . $name . '[' . (int) $index . ']');
+			if (isset($sourceOwners[$source]) && $sourceOwners[$source] !== $name) {
+				scpp_fail('Duplicate manual build grouping source `' . $source . '` in ' . SCPP_PROJECT_CONFIG . ': already assigned to group `' . $sourceOwners[$source] . '`.' . PHP_EOL, 2);
+			}
+			if (isset($sourceOwners[$source]) && $sourceOwners[$source] === $name) {
+				scpp_fail('Duplicate manual build grouping source `' . $source . '` in group `' . $name . '`.' . PHP_EOL, 2);
+			}
+			$sourceOwners[$source] = $name;
+			$sources[] = $source;
+		}
+		if ($sources === []) {
+			scpp_fail('Invalid build.grouping.' . $name . ' in ' . SCPP_PROJECT_CONFIG . ': manual groups must include at least one source.' . PHP_EOL, 2);
+		}
+		sort($sources, SORT_STRING);
+		$groups[] = [
+			'id' => build_grouping_manual_group_id($name),
+			'name' => $name,
+			'sources' => $sources,
+		];
+	}
+	usort($groups, static fn (array $left, array $right): int => strcmp((string) ($left['id'] ?? ''), (string) ($right['id'] ?? '')));
+	return $groups;
+}
+
+function normalize_build_grouping_source_path(string $rawSource, string $label): string
+{
+	$source = trim(str_replace('\\', '/', $rawSource));
+	if ($source === '') {
+		scpp_fail('Invalid ' . $label . ' in ' . SCPP_PROJECT_CONFIG . ': source path must not be empty.' . PHP_EOL, 2);
+	}
+	if (is_absolute_path($source)) {
+		scpp_fail('Invalid ' . $label . ' in ' . SCPP_PROJECT_CONFIG . ': source path must be project-relative.' . PHP_EOL, 2);
+	}
+	if (str_contains($source, "\0")) {
+		scpp_fail('Invalid ' . $label . ' in ' . SCPP_PROJECT_CONFIG . ': source path contains a NUL byte.' . PHP_EOL, 2);
+	}
+	$source = normalize_config_path(normalize_path($source));
+	if ($source === '..' || str_starts_with($source, '../')) {
+		scpp_fail('Invalid ' . $label . ' in ' . SCPP_PROJECT_CONFIG . ': source path escapes the project root.' . PHP_EOL, 2);
+	}
+	return $source;
+}
+
+function build_grouping_manual_group_id(string $name): string
+{
+	$id = strtolower(trim($name));
+	$id = preg_replace('/[^a-z0-9_.-]+/', '-', $id);
+	$id = trim(is_string($id) ? $id : '', '-');
+	if ($id === '') {
+		$id = substr(hash('sha256', $name), 0, 12);
+	}
+	return 'manual:root:' . $id;
 }
 
 /**
@@ -5089,10 +5171,46 @@ function collect_build_grouping_report(string $projectRoot, array $policy, array
 		$rebuiltObjects[normalize_config_path((string) $objectPath)] = true;
 	}
 
+	$manualGroupsBySource = [];
+	$manualGroups = is_array($policy['manual_groups'] ?? null) ? $policy['manual_groups'] : [];
+	foreach ($manualGroups as $manualGroup) {
+		if (!is_array($manualGroup)) {
+			continue;
+		}
+		foreach (normalize_string_list($manualGroup['sources'] ?? []) as $source) {
+			$manualGroupsBySource[$source] = $manualGroup;
+		}
+	}
+
+	$knownRootSources = [];
+	foreach ($generatedUnits as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$relativeSource = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		if ($unitProjectRoot === normalize_path($projectRoot) && $relativeSource !== '') {
+			$knownRootSources[$relativeSource] = true;
+		}
+	}
+	foreach ($nativeCppUnits as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$sourcePath = normalize_path((string) ($unit['source_path'] ?? ''));
+		if ($unitProjectRoot === normalize_path($projectRoot) && $sourcePath !== '') {
+			$knownRootSources[normalize_config_path(relative_path($unitProjectRoot, $sourcePath))] = true;
+		}
+	}
+	foreach (array_keys($manualGroupsBySource) as $manualSource) {
+		if (!isset($knownRootSources[$manualSource])) {
+			scpp_fail('Invalid build.grouping in ' . SCPP_PROJECT_CONFIG . ': manual source `' . $manualSource . '` is not a generated or native source in the root project.' . PHP_EOL, 2);
+		}
+	}
+
 	$groups = [];
-	$addUnit = static function (string $kind, string $unitProjectRoot, string $relativeSource, string $objectPath) use (&$groups, $projectRoot, $policy, $rebuiltObjects): void {
+	$addUnit = static function (string $kind, string $unitProjectRoot, string $relativeSource, string $objectPath) use (&$groups, $projectRoot, $policy, $rebuiltObjects, $manualGroupsBySource): void {
 		$projectLabel = project_context_report_label($projectRoot, $unitProjectRoot);
-		$group = build_grouping_group_key((string) ($policy['policy'] ?? 'incremental'), (string) ($policy['build_mode'] ?? 'debug'), $kind, $projectLabel, $relativeSource);
+		$manualGroup = null;
+		if ((string) ($policy['policy'] ?? '') === 'manual' && normalize_path($unitProjectRoot) === normalize_path($projectRoot)) {
+			$manualGroup = is_array($manualGroupsBySource[$relativeSource] ?? null) ? $manualGroupsBySource[$relativeSource] : null;
+		}
+		$group = build_grouping_group_key((string) ($policy['policy'] ?? 'incremental'), (string) ($policy['build_mode'] ?? 'debug'), $kind, $projectLabel, $relativeSource, $manualGroup);
 		$objectLabel = normalize_config_path(relative_path($projectRoot, normalize_path($objectPath)));
 		if (!isset($groups[$group['id']])) {
 			$groups[$group['id']] = [
@@ -5168,12 +5286,33 @@ function collect_build_grouping_report(string $projectRoot, array $policy, array
 		'rebuilt_generated_object_count' => (int) ($fanout['rebuilt_generated_object_count'] ?? 0),
 		'rebuilt_native_object_count' => (int) ($fanout['rebuilt_native_object_count'] ?? 0),
 	];
+	if ((string) ($policy['policy'] ?? '') === 'manual') {
+		$unassignedRootSources = [];
+		foreach (array_keys($knownRootSources) as $source) {
+			if (!isset($manualGroupsBySource[$source])) {
+				$unassignedRootSources[] = $source;
+			}
+		}
+		sort($unassignedRootSources, SORT_STRING);
+		$policy['manual_group_count'] = count($manualGroups);
+		$policy['manual_assigned_source_count'] = count($manualGroupsBySource);
+		$policy['manual_unassigned_source_count'] = count($unassignedRootSources);
+		$policy['manual_unassigned_sources'] = $unassignedRootSources;
+	}
 	return normalize_build_grouping_report($policy);
 }
 
-/** @return array{id:string,label:string,kind:string} */
-function build_grouping_group_key(string $policy, string $buildMode, string $kind, string $projectLabel, string $relativeSource): array
+/** @param array<string,mixed>|null $manualGroup @return array{id:string,label:string,kind:string} */
+function build_grouping_group_key(string $policy, string $buildMode, string $kind, string $projectLabel, string $relativeSource, ?array $manualGroup = null): array
 {
+	if ($policy === 'manual' && $manualGroup !== null) {
+		return [
+			'id' => (string) ($manualGroup['id'] ?? build_grouping_manual_group_id((string) ($manualGroup['name'] ?? 'manual'))),
+			'label' => (string) ($manualGroup['name'] ?? ''),
+			'kind' => 'manual',
+		];
+	}
+
 	$shape = $policy;
 	if ($policy === 'auto') {
 		$shape = $buildMode === 'release' ? 'release' : 'incremental';
@@ -5241,8 +5380,14 @@ function normalize_build_grouping_report(array $report): array
 	}
 	usort($groups, static fn (array $left, array $right): int => strcmp((string) ($left['id'] ?? ''), (string) ($right['id'] ?? '')));
 	$fanout = is_array($report['object_fanout'] ?? null) ? $report['object_fanout'] : [];
-	return [
-		'policy' => trim((string) ($report['policy'] ?? '')),
+	$manualGroups = normalize_build_grouping_manual_group_rows(is_array($report['manual_groups'] ?? null) ? $report['manual_groups'] : []);
+	$manualSourceCount = 0;
+	foreach ($manualGroups as $manualGroup) {
+		$manualSourceCount += count(is_array($manualGroup['sources'] ?? null) ? $manualGroup['sources'] : []);
+	}
+	$policy = trim((string) ($report['policy'] ?? ''));
+	$normalized = [
+		'policy' => $policy,
 		'source' => trim((string) ($report['source'] ?? '')),
 		'status' => trim((string) ($report['status'] ?? '')),
 		'build_mode' => trim((string) ($report['build_mode'] ?? '')),
@@ -5261,6 +5406,37 @@ function normalize_build_grouping_report(array $report): array
 		],
 		'groups' => $groups,
 	];
+	if ($policy === 'manual') {
+		$normalized['manual_groups'] = $manualGroups;
+		$normalized['manual_group_count'] = max(0, (int) ($report['manual_group_count'] ?? count($manualGroups)));
+		$normalized['manual_assigned_source_count'] = max(0, (int) ($report['manual_assigned_source_count'] ?? $manualSourceCount));
+		$normalized['manual_unassigned_source_count'] = max(0, (int) ($report['manual_unassigned_source_count'] ?? 0));
+		$normalized['manual_unassigned_sources'] = normalize_string_list($report['manual_unassigned_sources'] ?? []);
+	}
+	return $normalized;
+}
+
+/** @param list<array<string,mixed>> $groups @return list<array{id:string,name:string,sources:list<string>}> */
+function normalize_build_grouping_manual_group_rows(array $groups): array
+{
+	$normalized = [];
+	foreach ($groups as $group) {
+		if (!is_array($group)) {
+			continue;
+		}
+		$name = trim((string) ($group['name'] ?? ($group['label'] ?? '')));
+		if ($name === '') {
+			continue;
+		}
+		$sources = normalize_string_list($group['sources'] ?? []);
+		$normalized[] = [
+			'id' => trim((string) ($group['id'] ?? build_grouping_manual_group_id($name))),
+			'name' => $name,
+			'sources' => $sources,
+		];
+	}
+	usort($normalized, static fn (array $left, array $right): int => strcmp((string) ($left['id'] ?? ''), (string) ($right['id'] ?? '')));
+	return $normalized;
 }
 
 /**
@@ -9622,6 +9798,11 @@ function render_build_grouping_lines(array $report, bool $includeGroups = false)
 		. ', rebuilt objects ' . (int) ($fanout['rebuilt_object_count'] ?? 0)
 		. ' (generated ' . (int) ($fanout['rebuilt_generated_object_count'] ?? 0)
 		. ', native ' . (int) ($fanout['rebuilt_native_object_count'] ?? 0) . ')';
+	if ($policy === 'manual') {
+		$lines[] = 'Build grouping manual map: groups ' . (int) ($report['manual_group_count'] ?? 0)
+			. ', assigned sources ' . (int) ($report['manual_assigned_source_count'] ?? 0)
+			. ', unassigned root sources ' . (int) ($report['manual_unassigned_source_count'] ?? 0);
+	}
 	if (!$includeGroups) {
 		return $lines;
 	}
