@@ -384,6 +384,8 @@ The initial registry includes:
 - generated artifact write counters for content-aware generated headers and
   generated sources, including written, preserved, first-recorded, and
   interface/implementation-changed counts
+- captured Ninja explain output when `SCPP_NINJA_EXPLAIN=1` or an internal
+  explain probe is enabled, including normalized object-to-cause mappings
 - the active build grouping policy, deterministic group membership, changed
   groups, and object fanout
 - which generated project unit force-include headers were assigned, including
@@ -400,6 +402,7 @@ The initial registry includes:
 - `scpp explain-build outputs-rebuilt`
 - `scpp explain-build rebuild-fanout`
 - `scpp explain-build generated-artifacts`
+- `scpp explain-build ninja-explain`
 - `scpp explain-build grouping`
 - `scpp explain-build project-units`
 - `scpp explain-build project-unit <source>`
@@ -428,6 +431,17 @@ interface/implementation changed. The same normalized summary is stored under
 `details.build_explanation.generated_artifact_writes` so `scpp explain-build`,
 `scpp explain-build generated-artifacts`, and generated-file focused views can
 report generated write behavior without reading current generated file mtimes.
+
+When the build runs Ninja with `-d explain`, saved build details also include a
+`ninja_explain` summary. The summary records the trigger source, normalized
+Ninja explain messages, and object-to-message mappings for known generated and
+native object paths. The same normalized summary is stored under
+`details.build_explanation.ninja_explain`, and generated source rows may carry
+`object_rebuild_ninja_explain` when their object path was matched. Current
+source-level hash, module, project-unit, runtime, and dependency reasons remain
+preferred; Ninja explain messages are used as a fallback before the generic
+"no source/interface/project-unit cause" text. `scpp explain-build
+ninja-explain` renders the captured object explanations.
 
 Saved successful and failed build details include
 `details.build_explanation.build_grouping`. The grouping report stores the

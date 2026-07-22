@@ -579,6 +579,97 @@ final class ScppExplainBuildTest
 			$noStanReportView = implode("\n", render_project_unit_force_include_lines($noStanReport, true));
 			$this->assertContains('dependency categories: missing summary', $noStanReportView, 'project-units view should show missing-summary category evidence');
 
+			$ninjaExplainProject = $this->root . '/ninja_explain_report';
+			$this->mkdir($ninjaExplainProject);
+			$this->write($ninjaExplainProject . '/main.phs', "echo \"before\\n\";\n");
+			$this->write($ninjaExplainProject . '/prism.json', json_encode([
+				'config_version' => 1,
+				'project_name' => 'ninja_explain_report',
+				'entrypoint' => 'main.phs',
+				'build_dir' => '.prism/build',
+				'generated_dir' => '.prism/generated',
+				'cache_dir' => '.prism/cache',
+				'dependencies' => [],
+				'libraries' => [],
+				'runtime' => [
+					'languages' => ['php'],
+					'modules' => ['json', 'filesystem'],
+					'language_profiles' => [
+						'php' => ['profile' => 'strict'],
+					],
+				],
+			], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+			$ninjaSeedBuild = scpp_run_build_service($ninjaExplainProject, $ninjaExplainProject . '/prism.json', [
+				'compile_runtime' => true,
+				'disable_stan' => true,
+			]);
+			$this->assertSame(true, $ninjaSeedBuild['ok'], 'ninja explain seed build should succeed');
+			$this->write($ninjaExplainProject . '/main.phs', "echo \"after\\n\";\n");
+			$ninjaExplainBuild = scpp_run_optional_command($ninjaExplainProject, [PHP_BINARY, $script, 'build', '--no-stan'], [
+				'SCPP_NINJA_EXPLAIN' => '1',
+			], 30.0);
+			$this->assertSame(0, $ninjaExplainBuild['exit_code'], 'SCPP_NINJA_EXPLAIN build should succeed');
+			$this->assertContains('ninja explain:', $ninjaExplainBuild['stderr'] . $ninjaExplainBuild['stdout'], 'explicit Ninja explain mode should keep raw explain output visible');
+			$ninjaExplainReport = json_decode($this->read($ninjaExplainProject . '/.prism/last_run.json'), true);
+			if (!is_array($ninjaExplainReport)) {
+				throw new RuntimeException('Ninja explain last_run.json should decode as an object');
+			}
+			$ninjaExplainDetails = is_array($ninjaExplainReport['details'] ?? null) ? $ninjaExplainReport['details'] : [];
+			$ninjaExplainTopLevel = is_array($ninjaExplainDetails['ninja_explain'] ?? null) ? $ninjaExplainDetails['ninja_explain'] : null;
+			if (!is_array($ninjaExplainTopLevel)) {
+				throw new RuntimeException('last_run details should contain captured Ninja explain output');
+			}
+			$this->assertNinjaExplainReportShape($ninjaExplainTopLevel, 'top-level Ninja explain report');
+			$this->assertSame(true, $ninjaExplainTopLevel['enabled'] ?? null, 'top-level Ninja explain report should record capture enabled');
+			$this->assertSame('SCPP_NINJA_EXPLAIN', $ninjaExplainTopLevel['source'] ?? null, 'top-level Ninja explain report should record the capture source');
+			$this->assertTrue((int) ($ninjaExplainTopLevel['line_count'] ?? 0) > 0, 'top-level Ninja explain report should capture explain lines');
+			$ninjaExplanation = is_array($ninjaExplainDetails['build_explanation'] ?? null) ? $ninjaExplainDetails['build_explanation'] : [];
+			$ninjaExplain = is_array($ninjaExplanation['ninja_explain'] ?? null) ? $ninjaExplanation['ninja_explain'] : null;
+			if (!is_array($ninjaExplain)) {
+				throw new RuntimeException('build explanation should contain captured Ninja explain output');
+			}
+			$this->assertNinjaExplainReportShape($ninjaExplain, 'build explanation Ninja explain report');
+			$this->assertSame($ninjaExplainTopLevel, $ninjaExplain, 'top-level and explanation Ninja explain reports should match');
+			$objectExplanations = is_array($ninjaExplain['object_explanations'] ?? null) ? $ninjaExplain['object_explanations'] : [];
+			$this->assertTrue(isset($objectExplanations['.prism/build/main.o']), 'Ninja explain report should map the generated main object');
+			$ninjaSources = is_array($ninjaExplanation['sources'] ?? null) ? $ninjaExplanation['sources'] : [];
+			$ninjaMainSource = null;
+			foreach ($ninjaSources as $source) {
+				if (is_array($source) && ($source['path'] ?? null) === 'main.phs') {
+					$ninjaMainSource = $source;
+					break;
+				}
+			}
+			if (!is_array($ninjaMainSource)) {
+				throw new RuntimeException('Ninja explain build explanation should include main.phs');
+			}
+			$this->assertTrue(normalize_string_list($ninjaMainSource['object_rebuild_ninja_explain'] ?? []) !== [], 'source row should carry matched Ninja explain lines');
+			$ninjaExplainView = scpp_run_optional_command($ninjaExplainProject, [PHP_BINARY, $script, 'explain-build', 'ninja-explain'], [], 20.0);
+			$this->assertSame(0, $ninjaExplainView['exit_code'], 'scpp explain-build ninja-explain should succeed');
+			$this->assertContains('Ninja explain: captured', $ninjaExplainView['stdout'], 'ninja-explain view should summarize capture counts');
+			$this->assertContains('Ninja explained objects:', $ninjaExplainView['stdout'], 'ninja-explain view should list mapped objects');
+			$this->assertContains('.prism/build/main.o:', $ninjaExplainView['stdout'], 'ninja-explain view should list the generated main object');
+			$this->write($ninjaExplainProject . '/main.phs', "echo \"probe\\n\";\n");
+			$ninjaProbeBuild = scpp_run_optional_command($ninjaExplainProject, [PHP_BINARY, $script, 'build', '--no-stan'], [
+				'SCPP_NINJA_EXPLAIN_PROBE' => '1',
+			], 30.0);
+			$this->assertSame(0, $ninjaProbeBuild['exit_code'], 'SCPP_NINJA_EXPLAIN_PROBE build should succeed');
+			$this->assertNotContains('ninja explain:', $ninjaProbeBuild['stderr'] . $ninjaProbeBuild['stdout'], 'internal Ninja explain probe should not print raw explain output');
+			$ninjaProbeReport = json_decode($this->read($ninjaExplainProject . '/.prism/last_run.json'), true);
+			if (!is_array($ninjaProbeReport)) {
+				throw new RuntimeException('Ninja probe last_run.json should decode as an object');
+			}
+			$ninjaProbeDetails = is_array($ninjaProbeReport['details'] ?? null) ? $ninjaProbeReport['details'] : [];
+			$ninjaProbeExplanation = is_array($ninjaProbeDetails['build_explanation'] ?? null) ? $ninjaProbeDetails['build_explanation'] : [];
+			$ninjaProbeExplain = is_array($ninjaProbeExplanation['ninja_explain'] ?? null) ? $ninjaProbeExplanation['ninja_explain'] : null;
+			if (!is_array($ninjaProbeExplain)) {
+				throw new RuntimeException('build explanation should contain captured Ninja probe output');
+			}
+			$this->assertNinjaExplainReportShape($ninjaProbeExplain, 'build explanation Ninja probe report');
+			$this->assertSame(true, $ninjaProbeExplain['enabled'] ?? null, 'Ninja probe report should record capture enabled');
+			$this->assertSame('SCPP_NINJA_EXPLAIN_PROBE', $ninjaProbeExplain['source'] ?? null, 'Ninja probe report should record the probe source');
+			$this->assertTrue((int) ($ninjaProbeExplain['line_count'] ?? 0) > 0, 'Ninja probe report should capture explain lines');
+
 			echo "PASS: scpp explain-build\n";
 			return 0;
 		} finally {
@@ -783,6 +874,28 @@ final class ScppExplainBuildTest
 			'preserved_count',
 			'written_count',
 		], $total, $context . ' total counter keys');
+	}
+
+	private function assertNinjaExplainReportShape(array $ninjaExplain, string $context): void
+	{
+		$this->assertKeys([
+			'enabled',
+			'line_count',
+			'lines',
+			'object_count',
+			'object_explanations',
+			'source',
+		], $ninjaExplain, $context . ' top-level keys');
+		foreach (is_array($ninjaExplain['lines'] ?? null) ? $ninjaExplain['lines'] : [] as $row) {
+			if (!is_array($row)) {
+				throw new RuntimeException($context . ' line row should be an object');
+			}
+			$this->assertKeys(['message', 'objects'], $row, $context . ' line row keys');
+		}
+		$objectExplanations = is_array($ninjaExplain['object_explanations'] ?? null) ? $ninjaExplain['object_explanations'] : null;
+		if (!is_array($objectExplanations)) {
+			throw new RuntimeException($context . ' object_explanations should be an object');
+		}
 	}
 
 	private function assertProjectModuleReportShape(array $projectModules, string $context): void

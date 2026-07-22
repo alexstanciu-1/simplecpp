@@ -401,6 +401,7 @@ Use each tool for the question it answers:
   `scpp explain-build outputs-rebuilt`,
   `scpp explain-build rebuild-fanout`,
   `scpp explain-build generated-artifacts`,
+  `scpp explain-build ninja-explain`,
   `scpp explain-build grouping`,
   `scpp explain-build project-units` for force-include and dependency-summary diagnostics,
   `scpp explain-build project-unit <source>` for one source's project-unit dependency row,

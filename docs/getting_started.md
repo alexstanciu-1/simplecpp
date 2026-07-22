@@ -168,6 +168,7 @@ scpp explain-build files-transpiled
 scpp explain-build outputs-rebuilt
 scpp explain-build rebuild-fanout
 scpp explain-build generated-artifacts
+scpp explain-build ninja-explain
 scpp explain-build grouping
 scpp explain-build project-units
 scpp explain-build project-unit main.phs

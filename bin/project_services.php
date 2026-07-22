@@ -712,7 +712,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|ninja-explain|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -3292,6 +3292,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$markTiming('ninja_finished');
 	$ninjaStdout = is_string($ninjaStdout) ? $ninjaStdout : '';
 	$ninjaStderr = is_string($ninjaStderr) ? $ninjaStderr : '';
+	$ninjaExplainReport = collect_ninja_explain_report($projectRoot, $buildDir, $ninjaStdout, $ninjaStderr, $generatedUnits, $nativeCppUnits);
+	if (build_ninja_explain_probe_requested() && !build_ninja_explain_raw_requested()) {
+		$ninjaStdout = strip_ninja_explain_lines($ninjaStdout);
+		$ninjaStderr = strip_ninja_explain_lines($ninjaStderr);
+	}
 	if ($captureSubprocessOutput) {
 		scpp_append_captured_subprocess_output($ninjaStdout, $ninjaStderr);
 	} else {
@@ -3325,6 +3330,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'ninja_command' => $command,
 				'diagnostic_count' => count($diagnostics),
 				'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
+				'ninja_explain' => $ninjaExplainReport,
 				'build_explanation' => build_explanation_details(
 					$projectRoot,
 					$options,
@@ -3344,7 +3350,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					$buildMode,
 					$rootContext,
 					$failureBuildGroupingReport,
-					$projectModuleReport
+					$projectModuleReport,
+					$ninjaExplainReport
 				),
 			]
 		);
@@ -3446,6 +3453,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			'transpiled_count' => $transpiledCount,
 			'skipped_count' => $skippedCount,
 			'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
+			'ninja_explain' => $ninjaExplainReport,
 			'rebuilt_outputs' => array_values(array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)),
 			'rebuild_fanout' => $rebuildFanout,
 			'ninja_command' => $command,
@@ -3469,7 +3477,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$buildMode,
 				$rootContext,
 				$buildGroupingReport,
-				$projectModuleReport
+				$projectModuleReport,
+				$ninjaExplainReport
 			),
 		]
 	);
@@ -4191,6 +4200,160 @@ function normalize_build_rebuild_fanout(array $fanout): array
 		'removed_project_unit_pack_headers' => normalize_string_list($fanout['removed_project_unit_pack_headers'] ?? []),
 		'ninja_no_work' => (bool) ($fanout['ninja_no_work'] ?? false),
 	];
+}
+
+/** @param list<array<string,mixed>> $generatedUnits @param list<array<string,mixed>> $nativeCppUnits @return array<string,mixed> */
+function collect_ninja_explain_report(string $projectRoot, string $buildDir, string $stdout, string $stderr, array $generatedUnits, array $nativeCppUnits): array
+{
+	$enabled = build_ninja_explain_requested();
+	$source = build_ninja_explain_source_label();
+	if (!$enabled) {
+		return normalize_ninja_explain_report([
+			'enabled' => false,
+			'source' => '',
+			'lines' => [],
+			'object_explanations' => [],
+		]);
+	}
+
+	$lookup = build_ninja_explain_object_lookup($projectRoot, $buildDir, $generatedUnits, $nativeCppUnits);
+	$rows = [];
+	$objectExplanations = [];
+	$rawLines = preg_split('/\R/', $stderr . "\n" . $stdout);
+	foreach (is_array($rawLines) ? $rawLines : [] as $line) {
+		$line = trim((string) $line);
+		if ($line === '' || !str_starts_with($line, 'ninja explain:')) {
+			continue;
+		}
+		$message = trim(substr($line, strlen('ninja explain:')));
+		if ($message === '') {
+			continue;
+		}
+		$objects = match_ninja_explain_objects($message, $lookup);
+		$rows[] = [
+			'message' => $message,
+			'objects' => $objects,
+		];
+		foreach ($objects as $objectPath) {
+			if (!isset($objectExplanations[$objectPath])) {
+				$objectExplanations[$objectPath] = [];
+			}
+			$objectExplanations[$objectPath][] = $message;
+		}
+	}
+
+	return normalize_ninja_explain_report([
+		'enabled' => true,
+		'source' => $source,
+		'lines' => $rows,
+		'object_explanations' => $objectExplanations,
+	]);
+}
+
+/** @param list<array<string,mixed>> $generatedUnits @param list<array<string,mixed>> $nativeCppUnits @return array<string,string> */
+function build_ninja_explain_object_lookup(string $projectRoot, string $buildDir, array $generatedUnits, array $nativeCppUnits): array
+{
+	$lookup = [];
+	foreach (array_merge($generatedUnits, $nativeCppUnits) as $unit) {
+		if (!is_array($unit)) {
+			continue;
+		}
+		$objectPath = normalize_path((string) ($unit['object_path'] ?? ''));
+		if ($objectPath === '') {
+			continue;
+		}
+		$projectRelative = normalize_config_path(relative_path($projectRoot, $objectPath));
+		$buildRelative = normalize_config_path(relative_path($buildDir, $objectPath));
+		foreach ([$projectRelative, $buildRelative] as $key) {
+			if ($key !== '' && $key !== '.') {
+				$lookup[$key] = $projectRelative;
+			}
+		}
+	}
+	uksort($lookup, static fn (string $left, string $right): int => strlen($right) <=> strlen($left));
+	return $lookup;
+}
+
+/** @param array<string,string> $lookup @return list<string> */
+function match_ninja_explain_objects(string $message, array $lookup): array
+{
+	$matches = [];
+	foreach ($lookup as $needle => $objectPath) {
+		if ($needle === '') {
+			continue;
+		}
+		$pattern = '/(^|[\s,;:()\[\]])' . preg_quote($needle, '/') . '($|[\s,;:()\[\]])/';
+		if (preg_match($pattern, $message) === 1) {
+			$matches[$objectPath] = true;
+		}
+	}
+	$result = array_keys($matches);
+	sort($result, SORT_STRING);
+	return $result;
+}
+
+/** @return array<string,mixed> */
+function normalize_ninja_explain_report(array $report): array
+{
+	$rows = [];
+	$objectExplanations = [];
+	foreach (is_array($report['lines'] ?? null) ? $report['lines'] : [] as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$message = trim((string) ($row['message'] ?? ''));
+		if ($message === '') {
+			continue;
+		}
+		$objects = normalize_string_list($row['objects'] ?? []);
+		$rows[] = [
+			'message' => $message,
+			'objects' => $objects,
+		];
+		foreach ($objects as $objectPath) {
+			if (!isset($objectExplanations[$objectPath])) {
+				$objectExplanations[$objectPath] = [];
+			}
+			$objectExplanations[$objectPath][] = $message;
+		}
+	}
+	foreach (is_array($report['object_explanations'] ?? null) ? $report['object_explanations'] : [] as $objectPath => $messages) {
+		if (!is_string($objectPath) || trim($objectPath) === '') {
+			continue;
+		}
+		if (!isset($objectExplanations[$objectPath])) {
+			$objectExplanations[$objectPath] = [];
+		}
+		foreach (normalize_string_list($messages) as $message) {
+			$objectExplanations[$objectPath][] = $message;
+		}
+	}
+	ksort($objectExplanations, SORT_STRING);
+	foreach ($objectExplanations as $objectPath => $messages) {
+		$objectExplanations[$objectPath] = normalize_string_list($messages);
+	}
+	return [
+		'enabled' => (bool) ($report['enabled'] ?? false),
+		'source' => trim((string) ($report['source'] ?? '')),
+		'line_count' => count($rows),
+		'object_count' => count($objectExplanations),
+		'lines' => $rows,
+		'object_explanations' => $objectExplanations,
+	];
+}
+
+function strip_ninja_explain_lines(string $text): string
+{
+	if ($text === '') {
+		return '';
+	}
+	$kept = [];
+	foreach (preg_split('/\R/', $text) ?: [] as $line) {
+		if (!str_starts_with(trim((string) $line), 'ninja explain:')) {
+			$kept[] = (string) $line;
+		}
+	}
+	return $kept === [] ? '' : rtrim(implode(PHP_EOL, $kept), PHP_EOL) . PHP_EOL;
 }
 
 /** @return array<string,mixed> */
@@ -7468,8 +7631,30 @@ function build_ninja_verbose_requested(): bool
 
 function build_ninja_explain_requested(): bool
 {
+	return build_ninja_explain_raw_requested() || build_ninja_explain_probe_requested();
+}
+
+function build_ninja_explain_raw_requested(): bool
+{
 	$value = getenv('SCPP_NINJA_EXPLAIN');
 	return scpp_env_truthy($value);
+}
+
+function build_ninja_explain_probe_requested(): bool
+{
+	$value = getenv('SCPP_NINJA_EXPLAIN_PROBE');
+	return scpp_env_truthy($value);
+}
+
+function build_ninja_explain_source_label(): string
+{
+	if (build_ninja_explain_raw_requested()) {
+		return 'SCPP_NINJA_EXPLAIN';
+	}
+	if (build_ninja_explain_probe_requested()) {
+		return 'SCPP_NINJA_EXPLAIN_PROBE';
+	}
+	return '';
 }
 
 function scpp_env_truthy(mixed $value): bool
@@ -8292,6 +8477,7 @@ function build_explanation_details(
 	array $rootContext = [],
 	array $buildGroupingReport = [],
 	array $projectModuleReport = [],
+	array $ninjaExplainReport = [],
 ): array {
 	$entrySourcePath = is_string($entrySourcePath) && trim($entrySourcePath) !== '' ? $entrySourcePath : null;
 	$entryGeneratedCppPath = is_string($entryGeneratedCppPath) && trim($entryGeneratedCppPath) !== '' ? $entryGeneratedCppPath : null;
@@ -8312,7 +8498,8 @@ function build_explanation_details(
 	$projectUnitForceIncludeReport = normalize_project_unit_force_include_report($projectUnitForceIncludeReport);
 	$normalizedRebuildFanout = normalize_build_rebuild_fanout($rebuildFanout);
 	$projectModuleReport = normalize_project_module_report($projectModuleReport);
-	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options, $projectModuleReport);
+	$ninjaExplainReport = normalize_ninja_explain_report($ninjaExplainReport);
+	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options, $projectModuleReport, $ninjaExplainReport);
 
 	return [
 		'status' => $exitCode === 0 ? 'success' : 'failure',
@@ -8343,6 +8530,7 @@ function build_explanation_details(
 		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
 		'sources' => $sources,
 		'generated_artifact_writes' => summarize_generated_artifact_write_report($sources),
+		'ninja_explain' => $ninjaExplainReport,
 		'rebuilt_outputs' => $rebuilt,
 		'rebuild_fanout' => $normalizedRebuildFanout,
 		'project_unit_force_includes' => $projectUnitForceIncludeReport,
@@ -8355,13 +8543,15 @@ function build_explanation_details(
  * @param array<string,mixed> $projectUnitForceIncludeReport
  * @return list<array<string,mixed>>
  */
-function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport, array $rebuildFanout = [], bool $buildSucceeded = true, array $options = [], array $projectModuleReport = []): array
+function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport, array $rebuildFanout = [], bool $buildSucceeded = true, array $options = [], array $projectModuleReport = [], array $ninjaExplainReport = []): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$rebuiltGeneratedObjects = [];
 	foreach (normalize_string_list($rebuildFanout['rebuilt_generated_objects'] ?? []) as $objectPath) {
 		$rebuiltGeneratedObjects[$objectPath] = true;
 	}
+	$ninjaExplainReport = normalize_ninja_explain_report($ninjaExplainReport);
+	$ninjaObjectExplanations = is_array($ninjaExplainReport['object_explanations'] ?? null) ? $ninjaExplainReport['object_explanations'] : [];
 	$changedPackHeaders = [];
 	$packChanges = is_array($projectUnitForceIncludeReport['pack_changes'] ?? null) ? $projectUnitForceIncludeReport['pack_changes'] : [];
 	foreach (normalize_string_list($packChanges['changed_headers'] ?? []) as $headerPath) {
@@ -8416,6 +8606,7 @@ function annotate_build_explanation_sources_with_project_units(string $projectRo
 			$source['project_module_consumer_rebuild_reasons'] = normalize_string_list($moduleSource['consumer_rebuild_reasons'] ?? []);
 		}
 		$objectPath = normalize_config_path((string) ($source['object_path'] ?? ''));
+		$source['object_rebuild_ninja_explain'] = normalize_string_list($ninjaObjectExplanations[$objectPath] ?? []);
 		if (!$buildSucceeded) {
 			$source['object_rebuilt'] = null;
 			$source['object_rebuild_reason'] = 'object rebuild status unavailable because Ninja failed before final output mtimes were captured';
@@ -8455,6 +8646,10 @@ function explain_source_object_rebuild_reason(array $source, array $changedPackH
 	}
 	if ((bool) ($options['compile_dependencies'] ?? false)) {
 		return 'dependency rebuild requested for this build';
+	}
+	$ninjaExplain = normalize_string_list($source['object_rebuild_ninja_explain'] ?? []);
+	if ($ninjaExplain !== []) {
+		return 'Ninja explain: ' . $ninjaExplain[0];
 	}
 	return 'Ninja rebuilt the object; no source/interface/project-unit cause was recorded';
 }
@@ -8542,6 +8737,52 @@ function render_generated_artifact_write_report_lines(array $report): array
 }
 
 /**
+ * @param array<string,mixed> $report
+ * @return list<string>
+ */
+function render_ninja_explain_report_lines(array $report, bool $includeDetails = false): array
+{
+	$report = normalize_ninja_explain_report($report);
+	if (!(bool) ($report['enabled'] ?? false)) {
+		return ['Ninja explain: not captured'];
+	}
+	$source = trim((string) ($report['source'] ?? ''));
+	$lines = [
+		'Ninja explain: captured ' . (int) ($report['line_count'] ?? 0)
+			. ' line(s), ' . (int) ($report['object_count'] ?? 0)
+			. ' object(s)' . ($source !== '' ? ' (' . $source . ')' : ''),
+	];
+	if (!$includeDetails) {
+		return $lines;
+	}
+	$objectExplanations = is_array($report['object_explanations'] ?? null) ? $report['object_explanations'] : [];
+	if ($objectExplanations !== []) {
+		$lines[] = 'Ninja explained objects:';
+		foreach ($objectExplanations as $objectPath => $messages) {
+			$messageList = normalize_string_list($messages);
+			$lines[] = '  - ' . (string) $objectPath . ': ' . ($messageList === [] ? '(no message)' : implode('; ', $messageList));
+		}
+		return $lines;
+	}
+	$rows = is_array($report['lines'] ?? null) ? $report['lines'] : [];
+	if ($rows === []) {
+		$lines[] = 'Ninja explain lines: none';
+		return $lines;
+	}
+	$lines[] = 'Ninja explain lines:';
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$message = trim((string) ($row['message'] ?? ''));
+		if ($message !== '') {
+			$lines[] = '  - ' . $message;
+		}
+	}
+	return $lines;
+}
+
+/**
  * @param array<string,mixed> $details
  * @return list<string>
  */
@@ -8594,6 +8835,11 @@ function render_build_explanation_lines(array $details): array
 	}
 	foreach (render_build_rebuild_fanout_lines(is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : []) as $line) {
 		$lines[] = $line;
+	}
+	if ((bool) (($details['ninja_explain']['enabled'] ?? false))) {
+		foreach (render_ninja_explain_report_lines(is_array($details['ninja_explain'] ?? null) ? $details['ninja_explain'] : [], false) as $line) {
+			$lines[] = $line;
+		}
 	}
 
 	$sources = is_array($details['sources'] ?? null) ? $details['sources'] : [];
@@ -9237,6 +9483,10 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 		return render_generated_artifact_write_report_lines(is_array($details['generated_artifact_writes'] ?? null) ? $details['generated_artifact_writes'] : []);
 	}
 
+	if ($view === 'ninja-explain') {
+		return render_ninja_explain_report_lines(is_array($details['ninja_explain'] ?? null) ? $details['ninja_explain'] : [], true);
+	}
+
 	if ($view === 'grouping') {
 		return render_build_grouping_lines(is_array($details['build_grouping'] ?? null) ? $details['build_grouping'] : [], true);
 	}
@@ -9323,7 +9573,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, ninja-explain, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }
