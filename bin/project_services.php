@@ -7042,6 +7042,7 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 			$contextModuleRows[] = $moduleRow;
 		}
 		$contextModuleRows = apply_project_module_consumer_rebuild_status($contextModuleRows);
+		$contextModuleRows = apply_project_module_stan_summary_artifacts($normalizedProjectRoot, $contextProjectRoot, $projectContext, $contextModuleRows, $projectUnitForceIncludeReport);
 		$manifestArtifact = write_project_module_manifest($normalizedProjectRoot, $contextProjectRoot, $projectContext, $contextModuleRows);
 		if ($manifestArtifact !== null) {
 			$manifestArtifacts[] = $manifestArtifact;
@@ -7077,6 +7078,7 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 	usort($duplicateAssignments, static fn (array $left, array $right): int => strcmp((string) ($left['source'] ?? ''), (string) ($right['source'] ?? '')));
 
 	$cacheStatusCounts = summarize_project_module_cache_status_counts($moduleRows);
+	$stanSummaryCacheStatusCounts = summarize_project_module_stan_summary_cache_status_counts($moduleRows);
 	$dependencyValidation = collect_project_module_dependency_validation($normalizedProjectRoot, $moduleRows, $projectUnitForceIncludeReport, $dependencyValidationPolicy);
 	$moduleRows = apply_project_module_dependency_validation_to_module_rows($moduleRows, $dependencyValidation);
 	if ($dependencyValidationPolicy === 'warn' && (int) ($dependencyValidation['undeclared_dependency_count'] ?? 0) > 0) {
@@ -7101,6 +7103,7 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 		'duplicate_assignments' => $duplicateAssignments,
 		'consumer_rebuild_required_count' => count(array_filter($moduleRows, static fn (array $row): bool => (bool) ($row['consumer_rebuild_required'] ?? false))),
 		'cache_status_counts' => $cacheStatusCounts,
+		'stan_summary_cache_status_counts' => $stanSummaryCacheStatusCounts,
 		'dependency_validation' => $dependencyValidation,
 		'manifest_artifacts' => normalize_string_list($manifestArtifacts),
 		'modules' => $moduleRows,
@@ -7375,6 +7378,227 @@ function apply_project_module_consumer_rebuild_status(array $moduleRows): array
 
 /**
  * @param list<array<string,mixed>> $moduleRows
+ * @return list<array<string,mixed>>
+ */
+function apply_project_module_stan_summary_artifacts(string $projectRoot, string $contextProjectRoot, array $projectContext, array $moduleRows, array $projectUnitForceIncludeReport): array
+{
+	$dependencySummaries = normalize_project_unit_dependency_summaries(is_array($projectUnitForceIncludeReport['dependency_summaries'] ?? null) ? $projectUnitForceIncludeReport['dependency_summaries'] : []);
+	$evidenceSource = project_module_dependency_evidence_source($projectUnitForceIncludeReport, $dependencySummaries);
+	$dependencySummariesBySource = [];
+	foreach ($dependencySummaries as $summary) {
+		$projectLabel = trim((string) ($summary['project_root'] ?? '.'));
+		if ($projectLabel === '') {
+			$projectLabel = '.';
+		}
+		$source = normalize_config_path((string) ($summary['source'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$dependencySummariesBySource[project_module_source_key($projectLabel, $source)] = $summary;
+	}
+
+	foreach ($moduleRows as &$row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$artifactInfo = write_project_module_stan_summary_artifact(
+			$projectRoot,
+			$contextProjectRoot,
+			$projectContext,
+			$row,
+			$dependencySummariesBySource,
+			$projectUnitForceIncludeReport,
+			$evidenceSource
+		);
+		$row['stan_summary_artifact'] = (string) ($artifactInfo['stan_summary_artifact'] ?? '');
+		$row['stan_summary_hash'] = (string) ($artifactInfo['stan_summary_hash'] ?? '');
+		$row['stan_summary_evidence_source'] = (string) ($artifactInfo['stan_summary_evidence_source'] ?? 'none');
+		$row['stan_summary_cache_status'] = (string) ($artifactInfo['stan_summary_cache_status'] ?? 'unavailable');
+		$row['stan_summary_cache_reasons'] = normalize_string_list($artifactInfo['stan_summary_cache_reasons'] ?? []);
+	}
+	unset($row);
+	return $moduleRows;
+}
+
+/**
+ * @param array<string,array<string,mixed>> $dependencySummariesBySource
+ * @return array<string,mixed>
+ */
+function write_project_module_stan_summary_artifact(string $projectRoot, string $contextProjectRoot, array $projectContext, array $moduleRow, array $dependencySummariesBySource, array $projectUnitForceIncludeReport, string $evidenceSource): array
+{
+	$moduleName = trim((string) ($moduleRow['name'] ?? ''));
+	if ($moduleName === '') {
+		$moduleName = 'module';
+	}
+	if (!is_string($projectContext['cache_dir'] ?? null)) {
+		return [
+			'stan_summary_artifact' => '',
+			'stan_summary_hash' => '',
+			'stan_summary_evidence_source' => $evidenceSource,
+			'stan_summary_cache_status' => 'unavailable',
+			'stan_summary_cache_reasons' => ['project module cache directory unavailable'],
+		];
+	}
+	if ($evidenceSource === 'none') {
+		return [
+			'stan_summary_artifact' => '',
+			'stan_summary_hash' => '',
+			'stan_summary_evidence_source' => 'none',
+			'stan_summary_cache_status' => 'unavailable',
+			'stan_summary_cache_reasons' => ['project-unit dependency evidence unavailable; module analysis summary artifact not written'],
+		];
+	}
+
+	$projectLabel = project_context_report_label($projectRoot, $contextProjectRoot);
+	$summarySources = [];
+	$missingSummarySources = [];
+	foreach (normalize_project_module_source_rows(is_array($moduleRow['sources'] ?? null) ? $moduleRow['sources'] : []) as $sourceRow) {
+		$sourceProjectLabel = trim((string) ($sourceRow['project_root'] ?? $projectLabel));
+		if ($sourceProjectLabel === '') {
+			$sourceProjectLabel = '.';
+		}
+		$source = normalize_config_path((string) ($sourceRow['source'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$summary = $dependencySummariesBySource[project_module_source_key($sourceProjectLabel, $source)] ?? null;
+		if (!is_array($summary)) {
+			$missingSummarySources[] = project_module_source_label($sourceProjectLabel, $source);
+			$summarySources[] = [
+				'source' => $source,
+				'source_key' => '',
+				'project_root' => $sourceProjectLabel,
+				'status' => 'missing_dependency_summary',
+				'candidate_status' => 'unavailable',
+				'direct_source_dependencies' => [],
+				'direct_local_headers' => [],
+				'scoped_local_headers' => [],
+				'dependency_export_headers' => [],
+				'unresolved_dependency_keys' => [],
+				'candidate_blocking_reasons' => ['project-unit dependency summary missing for module source'],
+				'candidate_scoped_headers' => [],
+				'candidate_pack_hash' => '',
+				'candidate_pack_header' => '',
+				'dependency_categories' => [],
+				'reasons' => ['project-unit dependency summary missing for module source'],
+			];
+			continue;
+		}
+		$summarySources[] = normalize_project_module_stan_summary_source_row($summary);
+	}
+	usort($summarySources, static function (array $left, array $right): int {
+		return strcmp((string) ($left['project_root'] ?? '') . "\0" . (string) ($left['source'] ?? ''), (string) ($right['project_root'] ?? '') . "\0" . (string) ($right['source'] ?? ''));
+	});
+	$missingSummarySources = normalize_string_list($missingSummarySources);
+	$dependencyArtifact = normalize_project_unit_dependency_summary_artifact_info(is_array($projectUnitForceIncludeReport['dependency_summary_artifact'] ?? null) ? $projectUnitForceIncludeReport['dependency_summary_artifact'] : []);
+	$dependencyArtifactInput = [
+		'path' => (string) ($dependencyArtifact['path'] ?? ''),
+		'summary_signature' => (string) ($dependencyArtifact['summary_signature'] ?? ''),
+		'source_count' => (int) ($dependencyArtifact['source_count'] ?? 0),
+		'used_stan_dependency_state' => (bool) ($dependencyArtifact['used_stan_dependency_state'] ?? false),
+		'source_overrides_active' => (bool) ($dependencyArtifact['source_overrides_active'] ?? false),
+	];
+	$hashInput = [
+		'version' => 1,
+		'name' => $moduleName,
+		'project_root' => $projectLabel,
+		'dependencies' => normalize_string_list($moduleRow['dependencies'] ?? []),
+		'public_exports' => normalize_string_list($moduleRow['public_exports'] ?? []),
+		'evidence_source' => $evidenceSource,
+		'dependency_summary_artifact' => $dependencyArtifactInput,
+		'missing_summary_sources' => $missingSummarySources,
+		'sources' => $summarySources,
+	];
+	$summaryHash = hash_project_module_payload($hashInput);
+	$artifactPath = normalize_path($projectContext['cache_dir'] . '/project_modules/' . project_module_artifact_filename($moduleName, 'stan_summary'));
+	$previousArtifact = read_json_file($artifactPath);
+	$previousHash = is_array($previousArtifact) ? trim((string) ($previousArtifact['stan_summary_hash'] ?? '')) : '';
+	$cacheStatus = 'hit';
+	$cacheReasons = [];
+	if ($previousArtifact === null) {
+		$cacheStatus = 'new';
+		$cacheReasons[] = 'no previous module analysis summary artifact';
+	} elseif ($previousHash === '') {
+		$cacheStatus = 'changed';
+		$cacheReasons[] = 'previous module analysis summary artifact had no hash';
+	} elseif ($previousHash !== $summaryHash) {
+		$cacheStatus = 'changed';
+		$cacheReasons[] = 'module dependency summary hash changed';
+	} else {
+		$cacheReasons[] = 'module dependency summary hash unchanged';
+	}
+	$cacheReasons[] = $evidenceSource === 'stan'
+		? 'using STAN dependency evidence'
+		: 'using build-owned dependency evidence';
+	if ($missingSummarySources !== []) {
+		$cacheReasons[] = 'missing dependency summaries for: ' . implode(', ', $missingSummarySources);
+	}
+
+	$artifactPayload = [
+		'version' => 1,
+		'kind' => 'project_module_stan_summary',
+		'name' => $moduleName,
+		'project_root' => $projectLabel,
+		'dependencies' => normalize_string_list($moduleRow['dependencies'] ?? []),
+		'public_exports' => normalize_string_list($moduleRow['public_exports'] ?? []),
+		'evidence_source' => $evidenceSource,
+		'stan_summary_hash' => $summaryHash,
+		'dependency_summary_artifact' => $dependencyArtifactInput,
+		'missing_summary_sources' => $missingSummarySources,
+		'sources' => $summarySources,
+	];
+	$json = json_encode($artifactPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+	if (!is_string($json)) {
+		scpp_fail('Failed to encode project module analysis summary artifact: ' . $artifactPath . PHP_EOL, 2);
+	}
+	write_text_file($artifactPath, $json . PHP_EOL);
+
+	return [
+		'stan_summary_artifact' => normalize_config_path(relative_path($projectRoot, $artifactPath)),
+		'stan_summary_hash' => $summaryHash,
+		'stan_summary_evidence_source' => $evidenceSource,
+		'stan_summary_cache_status' => $cacheStatus,
+		'stan_summary_cache_reasons' => $cacheReasons,
+	];
+}
+
+/** @return array<string,mixed> */
+function normalize_project_module_stan_summary_source_row(array $summary): array
+{
+	return [
+		'source' => normalize_config_path((string) ($summary['source'] ?? '')),
+		'source_key' => trim((string) ($summary['source_key'] ?? '')),
+		'project_root' => trim((string) ($summary['project_root'] ?? '.')),
+		'generated_header' => normalize_config_path((string) ($summary['generated_header'] ?? '')),
+		'force_include_header' => normalize_config_path((string) ($summary['force_include_header'] ?? '')),
+		'status' => trim((string) ($summary['status'] ?? 'fallback_broad')),
+		'candidate_status' => trim((string) ($summary['candidate_status'] ?? 'blocked_broad_fallback')),
+		'direct_source_dependencies' => normalize_string_list($summary['direct_source_dependencies'] ?? []),
+		'direct_local_headers' => normalize_string_list($summary['direct_local_headers'] ?? []),
+		'scoped_local_headers' => normalize_string_list($summary['scoped_local_headers'] ?? []),
+		'dependency_export_headers' => normalize_string_list($summary['dependency_export_headers'] ?? []),
+		'unresolved_dependency_keys' => normalize_string_list($summary['unresolved_dependency_keys'] ?? []),
+		'candidate_blocking_reasons' => normalize_string_list($summary['candidate_blocking_reasons'] ?? []),
+		'candidate_scoped_headers' => normalize_string_list($summary['candidate_scoped_headers'] ?? []),
+		'candidate_pack_hash' => trim((string) ($summary['candidate_pack_hash'] ?? '')),
+		'candidate_pack_header' => normalize_config_path((string) ($summary['candidate_pack_header'] ?? '')),
+		'dependency_categories' => normalize_project_unit_dependency_category_rows(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []),
+		'reasons' => normalize_string_list($summary['reasons'] ?? []),
+	];
+}
+
+/** @param list<array<string,mixed>> $dependencySummaries */
+function project_module_dependency_evidence_source(array $projectUnitForceIncludeReport, array $dependencySummaries): string
+{
+	if ($dependencySummaries === []) {
+		return 'none';
+	}
+	$summaryArtifact = is_array($projectUnitForceIncludeReport['dependency_summary_artifact'] ?? null) ? $projectUnitForceIncludeReport['dependency_summary_artifact'] : [];
+	return ((bool) ($summaryArtifact['used_stan_dependency_state'] ?? false)) ? 'stan' : 'build';
+}
+
+/**
+ * @param list<array<string,mixed>> $moduleRows
  * @return array<string,mixed>
  */
 function collect_project_module_dependency_validation(string $projectRoot, array $moduleRows, array $projectUnitForceIncludeReport, string $policy): array
@@ -7401,12 +7625,8 @@ function collect_project_module_dependency_validation(string $projectRoot, array
 			}
 		}
 	}
-	$summaryArtifact = is_array($projectUnitForceIncludeReport['dependency_summary_artifact'] ?? null) ? $projectUnitForceIncludeReport['dependency_summary_artifact'] : [];
 	$dependencySummaries = normalize_project_unit_dependency_summaries(is_array($projectUnitForceIncludeReport['dependency_summaries'] ?? null) ? $projectUnitForceIncludeReport['dependency_summaries'] : []);
-	$evidenceSource = 'none';
-	if ($dependencySummaries !== []) {
-		$evidenceSource = ((bool) ($summaryArtifact['used_stan_dependency_state'] ?? false)) ? 'stan' : 'build';
-	}
+	$evidenceSource = project_module_dependency_evidence_source($projectUnitForceIncludeReport, $dependencySummaries);
 	$actualSourcesByModuleDependency = [];
 	foreach ($dependencySummaries as $summary) {
 		$projectLabel = trim((string) ($summary['project_root'] ?? '.'));
@@ -7672,7 +7892,11 @@ function project_module_artifact_filename(string $moduleName, string $kind): str
 	if ($slug === '') {
 		$slug = 'module';
 	}
-	$suffix = $kind === 'implementation' ? 'implementation' : 'surface';
+	$suffix = match ($kind) {
+		'implementation' => 'implementation',
+		'stan_summary', 'stan-summary' => 'stan-summary',
+		default => 'surface',
+	};
 	return $slug . '-' . substr(hash('sha256', $moduleName), 0, 12) . '.' . $suffix . '.json';
 }
 
@@ -7697,6 +7921,10 @@ function write_project_module_manifest(string $projectRoot, string $contextProje
 			'implementation_hash' => (string) ($row['implementation_hash'] ?? ''),
 			'surface_artifact' => (string) ($row['surface_artifact'] ?? ''),
 			'implementation_artifact' => (string) ($row['implementation_artifact'] ?? ''),
+			'stan_summary_artifact' => (string) ($row['stan_summary_artifact'] ?? ''),
+			'stan_summary_hash' => (string) ($row['stan_summary_hash'] ?? ''),
+			'stan_summary_evidence_source' => (string) ($row['stan_summary_evidence_source'] ?? 'none'),
+			'stan_summary_cache_status' => (string) ($row['stan_summary_cache_status'] ?? 'unavailable'),
 			'consumer_rebuild_policy' => (string) ($row['consumer_rebuild_policy'] ?? 'interface_hash_only'),
 		];
 	}
@@ -7739,6 +7967,29 @@ function summarize_project_module_cache_status_counts(array $moduleRows): array
 	return $counts;
 }
 
+/** @param list<array<string,mixed>> $moduleRows @return array<string,int> */
+function summarize_project_module_stan_summary_cache_status_counts(array $moduleRows): array
+{
+	$counts = [
+		'hit' => 0,
+		'new' => 0,
+		'changed' => 0,
+		'unavailable' => 0,
+	];
+	foreach ($moduleRows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$status = trim((string) ($row['stan_summary_cache_status'] ?? 'unavailable'));
+		if (!array_key_exists($status, $counts)) {
+			$counts[$status] = 0;
+		}
+		$counts[$status]++;
+	}
+	ksort($counts, SORT_STRING);
+	return $counts;
+}
+
 /** @return array<string,mixed> */
 function normalize_project_module_report(array $report): array
 {
@@ -7751,6 +8002,14 @@ function normalize_project_module_report(array $report): array
 		}
 	}
 	ksort($normalizedCacheStatusCounts, SORT_STRING);
+	$stanSummaryCacheStatusCounts = is_array($report['stan_summary_cache_status_counts'] ?? null) ? $report['stan_summary_cache_status_counts'] : summarize_project_module_stan_summary_cache_status_counts($modules);
+	$normalizedStanSummaryCacheStatusCounts = [];
+	foreach ($stanSummaryCacheStatusCounts as $status => $count) {
+		if (is_string($status) && trim($status) !== '') {
+			$normalizedStanSummaryCacheStatusCounts[$status] = max(0, (int) $count);
+		}
+	}
+	ksort($normalizedStanSummaryCacheStatusCounts, SORT_STRING);
 	$duplicateAssignments = [];
 	foreach (is_array($report['duplicate_assignments'] ?? null) ? $report['duplicate_assignments'] : [] as $assignment) {
 		if (!is_array($assignment)) {
@@ -7776,6 +8035,7 @@ function normalize_project_module_report(array $report): array
 		'duplicate_assignments' => $duplicateAssignments,
 		'consumer_rebuild_required_count' => max(0, (int) ($report['consumer_rebuild_required_count'] ?? 0)),
 		'cache_status_counts' => $normalizedCacheStatusCounts,
+		'stan_summary_cache_status_counts' => $normalizedStanSummaryCacheStatusCounts,
 		'dependency_validation' => normalize_project_module_dependency_validation(is_array($report['dependency_validation'] ?? null) ? $report['dependency_validation'] : []),
 		'manifest_artifacts' => normalize_string_list($report['manifest_artifacts'] ?? []),
 		'modules' => $modules,
@@ -7865,6 +8125,11 @@ function normalize_project_module_rows(array $rows): array
 			'implementation_hash' => trim((string) ($row['implementation_hash'] ?? '')),
 			'surface_artifact' => trim((string) ($row['surface_artifact'] ?? '')),
 			'implementation_artifact' => trim((string) ($row['implementation_artifact'] ?? '')),
+			'stan_summary_artifact' => trim((string) ($row['stan_summary_artifact'] ?? '')),
+			'stan_summary_hash' => trim((string) ($row['stan_summary_hash'] ?? '')),
+			'stan_summary_evidence_source' => trim((string) ($row['stan_summary_evidence_source'] ?? 'none')),
+			'stan_summary_cache_status' => trim((string) ($row['stan_summary_cache_status'] ?? 'unavailable')),
+			'stan_summary_cache_reasons' => normalize_string_list($row['stan_summary_cache_reasons'] ?? []),
 			'cache_status' => trim((string) ($row['cache_status'] ?? 'unavailable')),
 			'interface_changed' => (bool) ($row['interface_changed'] ?? false),
 			'implementation_changed' => (bool) ($row['implementation_changed'] ?? false),
@@ -10748,6 +11013,11 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 		. ', new ' . (int) ($cache['new'] ?? 0)
 		. ', interface changed ' . ((int) ($cache['interface_changed'] ?? 0) + (int) ($cache['interface_and_implementation_changed'] ?? 0))
 		. ', implementation changed ' . ((int) ($cache['implementation_changed'] ?? 0) + (int) ($cache['interface_and_implementation_changed'] ?? 0));
+	$stanSummaryCache = is_array($report['stan_summary_cache_status_counts'] ?? null) ? $report['stan_summary_cache_status_counts'] : [];
+	$lines[] = 'Project module analysis cache: hits ' . (int) ($stanSummaryCache['hit'] ?? 0)
+		. ', new ' . (int) ($stanSummaryCache['new'] ?? 0)
+		. ', changed ' . (int) ($stanSummaryCache['changed'] ?? 0)
+		. ', unavailable ' . (int) ($stanSummaryCache['unavailable'] ?? 0);
 	$lines[] = 'Project module consumer fanout: ' . (int) ($report['consumer_rebuild_required_count'] ?? 0) . ' consumer module(s) require rebuild by interface hash';
 	$validation = normalize_project_module_dependency_validation(is_array($report['dependency_validation'] ?? null) ? $report['dependency_validation'] : []);
 	$lines[] = 'Project module dependency validation: ' . (string) ($validation['status'] ?? 'unavailable')
@@ -10793,10 +11063,13 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 		$dependencies = normalize_string_list($module['dependencies'] ?? []);
 		$surfaceArtifact = trim((string) ($module['surface_artifact'] ?? ''));
 		$implementationArtifact = trim((string) ($module['implementation_artifact'] ?? ''));
+		$stanSummaryArtifact = trim((string) ($module['stan_summary_artifact'] ?? ''));
 		$lines[] = '  - ' . ($projectLabel === '' || $projectLabel === '.' ? $name : $projectLabel . '/' . $name)
 			. ': sources ' . (int) ($module['source_count'] ?? 0)
 			. ', deps ' . ($dependencies === [] ? 'none' : implode(', ', $dependencies))
 			. ', cache ' . trim((string) ($module['cache_status'] ?? 'unavailable'))
+			. ', analysis cache ' . trim((string) ($module['stan_summary_cache_status'] ?? 'unavailable'))
+			. ', analysis evidence ' . trim((string) ($module['stan_summary_evidence_source'] ?? 'none'))
 			. ', interface changed ' . (((bool) ($module['interface_changed'] ?? false)) ? 'yes' : 'no')
 			. ', implementation changed ' . (((bool) ($module['implementation_changed'] ?? false)) ? 'yes' : 'no')
 			. ', consumers ' . (((bool) ($module['consumer_rebuild_required'] ?? false)) ? 'rebuild' : 'stable')
@@ -10804,6 +11077,13 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 			. ($surfaceArtifact !== '' ? ', artifact ' . $surfaceArtifact : '');
 		if ($implementationArtifact !== '') {
 			$lines[] = '    implementation artifact: ' . $implementationArtifact;
+		}
+		if ($stanSummaryArtifact !== '') {
+			$lines[] = '    analysis summary artifact: ' . $stanSummaryArtifact;
+		}
+		$stanSummaryReasons = normalize_string_list($module['stan_summary_cache_reasons'] ?? []);
+		foreach ($stanSummaryReasons as $reason) {
+			$lines[] = '    analysis cache reason: ' . $reason;
 		}
 		$sourceRows = normalize_project_module_source_rows(is_array($module['sources'] ?? null) ? $module['sources'] : []);
 		if ($sourceRows !== []) {

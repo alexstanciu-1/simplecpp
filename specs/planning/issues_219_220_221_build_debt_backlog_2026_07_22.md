@@ -70,6 +70,13 @@ against project-unit source dependency evidence, records inferred, undeclared,
 and unused declared dependencies, and reports whether evidence came from STAN,
 build-owned no-STAN summaries, or no available evidence.
 
+The first #221 module-analysis cache slice writes per-module dependency summary
+artifacts under `.prism/cache/project_modules/*.stan-summary.json`. Each module
+row records the summary artifact, summary hash, evidence source, cache status,
+and cache reasons. The cache hash is based on module-local dependency evidence
+rather than whole-project source fingerprints, so stable dependency evidence can
+hit even when unrelated implementation text changes.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -108,7 +115,8 @@ build-owned no-STAN summaries, or no available evidence.
   transitive boundary enforcement are still not implemented.
 - Module surfaces are cache/report artifacts and implicit compile inputs, but
   module boundaries do not drive grouped objects.
-- Module-level STAN/static-analysis summary caching is not implemented.
+- Module-level dependency summary artifacts and cache reporting are implemented,
+  but they are not yet used to skip planner or STAN work.
 - `public_exports` participates in module identity, but public/private API
   enforcement is not implemented.
 - Duplicate assignments and unassigned sources are reported, not
@@ -186,9 +194,11 @@ build-owned no-STAN summaries, or no available evidence.
    - Keep no-STAN behavior conservative and explicit.
 
 9. `BLD-221-STAN-1`: Add module-level STAN summary artifacts.
+   - Status: implemented for per-module dependency summary artifacts and
+     hit/new/changed/unavailable reporting.
    - Store per-module dependency summaries and hashes.
-   - Reuse module analysis when implementation changes do not affect public
-     surface evidence.
+   - Record stable module analysis summaries when implementation changes do not
+     affect dependency evidence.
    - Report module analysis cache hit/miss reasons.
 
 10. `BLD-221-GRAPH-1`: Use module boundaries for grouped object topology.

@@ -154,6 +154,8 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $projectModules['unassigned_source_count'] ?? null, 'project module report should record no unassigned generated sources');
 			$moduleCacheCounts = is_array($projectModules['cache_status_counts'] ?? null) ? $projectModules['cache_status_counts'] : [];
 			$this->assertSame(2, $moduleCacheCounts['hit'] ?? null, 'warm project module report should reuse both module surface artifacts');
+			$moduleStanSummaryCacheCounts = is_array($projectModules['stan_summary_cache_status_counts'] ?? null) ? $projectModules['stan_summary_cache_status_counts'] : [];
+			$this->assertSame(2, $moduleStanSummaryCacheCounts['hit'] ?? null, 'warm project module report should reuse both module analysis summary artifacts');
 			$moduleByName = [];
 			foreach (is_array($projectModules['modules'] ?? null) ? $projectModules['modules'] : [] as $module) {
 				if (is_array($module) && is_string($module['name'] ?? null)) {
@@ -171,14 +173,25 @@ final class ScppExplainBuildTest
 			$this->assertSame('interface_hash_only', $domainModule['consumer_rebuild_policy'] ?? null, 'domain module should report interface-hash consumer policy');
 			$this->assertTrue(is_string($domainModule['surface_artifact'] ?? null) && str_ends_with((string) $domainModule['surface_artifact'], '.surface.json'), 'domain module should report a surface artifact');
 			$this->assertTrue(is_string($domainModule['implementation_artifact'] ?? null) && str_ends_with((string) $domainModule['implementation_artifact'], '.implementation.json'), 'domain module should report an implementation artifact');
+			$this->assertTrue(is_string($domainModule['stan_summary_artifact'] ?? null) && str_ends_with((string) $domainModule['stan_summary_artifact'], '.stan-summary.json'), 'domain module should report an analysis summary artifact');
+			$this->assertSame('hit', $domainModule['stan_summary_cache_status'] ?? null, 'warm domain module analysis summary should be a cache hit');
+			$this->assertSame('build', $domainModule['stan_summary_evidence_source'] ?? null, 'warm domain module analysis summary should record build-owned evidence when fresh STAN state is unavailable');
+			$this->assertTrue(is_string($domainModule['stan_summary_hash'] ?? null) && strlen((string) $domainModule['stan_summary_hash']) === 64, 'domain module should report an analysis summary hash');
 			$this->assertFileExists($project . '/' . (string) ($domainModule['surface_artifact'] ?? ''), 'warm build should write the domain module surface artifact');
 			$this->assertFileExists($project . '/' . (string) ($domainModule['implementation_artifact'] ?? ''), 'warm build should write the domain module implementation artifact');
+			$this->assertFileExists($project . '/' . (string) ($domainModule['stan_summary_artifact'] ?? ''), 'warm build should write the domain module analysis summary artifact');
 			$domainSurfaceArtifact = json_decode($this->read($project . '/' . (string) ($domainModule['surface_artifact'] ?? '')), true);
 			if (!is_array($domainSurfaceArtifact)) {
 				throw new RuntimeException('domain module surface artifact should decode as JSON');
 			}
 			$this->assertSame('project_module_surface', $domainSurfaceArtifact['kind'] ?? null, 'domain module surface artifact should identify its kind');
 			$this->assertSame($domainModule['interface_hash'] ?? null, $domainSurfaceArtifact['interface_hash'] ?? null, 'domain module surface artifact should persist the interface hash');
+			$domainStanSummaryArtifact = json_decode($this->read($project . '/' . (string) ($domainModule['stan_summary_artifact'] ?? '')), true);
+			if (!is_array($domainStanSummaryArtifact)) {
+				throw new RuntimeException('domain module analysis summary artifact should decode as JSON');
+			}
+			$this->assertSame('project_module_stan_summary', $domainStanSummaryArtifact['kind'] ?? null, 'domain module analysis summary artifact should identify its kind');
+			$this->assertSame($domainModule['stan_summary_hash'] ?? null, $domainStanSummaryArtifact['stan_summary_hash'] ?? null, 'domain module analysis summary artifact should persist the summary hash');
 			$appModule = $moduleByName['app'] ?? null;
 			if (!is_array($appModule)) {
 				throw new RuntimeException('project module report should contain app module');
@@ -398,14 +411,17 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $modulesView['exit_code'], 'scpp explain-build modules should succeed');
 			$this->assertContains('Project modules: 2 module(s), 3/3 generated source(s) assigned, unassigned 0', $modulesView['stdout'], 'modules view should summarize configured module coverage');
 			$this->assertContains('Project module cache: hits 2, new 0, interface changed 0, implementation changed 0', $modulesView['stdout'], 'modules view should summarize warm module cache hits');
+			$this->assertContains('Project module analysis cache: hits 2, new 0, changed 0, unavailable 0', $modulesView['stdout'], 'modules view should summarize warm module analysis cache hits');
 			$this->assertContains('Project module rows:', $modulesView['stdout'], 'modules view should list module rows');
 			$this->assertContains('domain: sources 2, deps none, cache hit', $modulesView['stdout'], 'modules view should show the domain module');
+			$this->assertContains('analysis cache hit, analysis evidence build', $modulesView['stdout'], 'modules view should show module analysis cache evidence');
 			$this->assertContains('app: sources 1, deps domain, cache hit', $modulesView['stdout'], 'modules view should show the app module dependency');
 
 			$moduleDetailView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'module', 'app'], [], 20.0);
 			$this->assertSame(0, $moduleDetailView['exit_code'], 'scpp explain-build module app should succeed');
 			$this->assertContains('Project module detail:', $moduleDetailView['stdout'], 'module detail view should include a detail header');
 			$this->assertContains('app: sources 1, deps domain, cache hit', $moduleDetailView['stdout'], 'module detail view should show the requested app module');
+			$this->assertContains('analysis summary artifact: .prism/cache/project_modules/app-', $moduleDetailView['stdout'], 'module detail view should show the analysis summary artifact');
 			$this->assertContains('sources: main.phs', $moduleDetailView['stdout'], 'module detail view should list module sources');
 			$buildNinjaText = $this->read($project . '/.prism/build/build.ninja');
 			$this->assertContains('../cache/project_modules/domain-', $buildNinjaText, 'build.ninja should use module surface artifacts as generated-object compile inputs');
@@ -910,6 +926,7 @@ final class ScppExplainBuildTest
 			'generated_source_count',
 			'manifest_artifacts',
 			'modules',
+			'stan_summary_cache_status_counts',
 			'total_modules',
 			'unassigned_source_count',
 			'unassigned_sources',
@@ -927,6 +944,17 @@ final class ScppExplainBuildTest
 			'new',
 			'unavailable',
 		], $cacheStatusCounts, $context . ' cache_status_counts keys');
+
+		$stanSummaryCacheStatusCounts = is_array($projectModules['stan_summary_cache_status_counts'] ?? null) ? $projectModules['stan_summary_cache_status_counts'] : null;
+		if (!is_array($stanSummaryCacheStatusCounts)) {
+			throw new RuntimeException($context . ' stan_summary_cache_status_counts should be an object');
+		}
+		$this->assertKeys([
+			'changed',
+			'hit',
+			'new',
+			'unavailable',
+		], $stanSummaryCacheStatusCounts, $context . ' stan_summary_cache_status_counts keys');
 
 		foreach (is_array($projectModules['modules'] ?? null) ? $projectModules['modules'] : [] as $module) {
 			if (!is_array($module)) {
@@ -952,6 +980,11 @@ final class ScppExplainBuildTest
 				'public_exports',
 				'source_count',
 				'source_roots',
+				'stan_summary_artifact',
+				'stan_summary_cache_reasons',
+				'stan_summary_cache_status',
+				'stan_summary_evidence_source',
+				'stan_summary_hash',
 				'sources',
 				'surface_artifact',
 				'undeclared_dependencies',

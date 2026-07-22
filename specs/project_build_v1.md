@@ -252,6 +252,17 @@ undeclared dependency diagnostics, while `fail` stops the build on undeclared
 module dependency evidence. Unused declared dependencies are reported but do not
 fail by themselves.
 
+Each configured project module also writes a module analysis summary artifact
+from the same project-unit dependency summaries. These artifacts live under
+`.prism/cache/project_modules/*.stan-summary.json`, record whether their
+evidence came from STAN or the build-owned no-STAN summary, and store a stable
+per-module dependency summary hash. The hash is based on module-local dependency
+evidence and analyzer signature inputs rather than the whole-project source
+fingerprint, so private implementation edits that do not change dependency
+evidence should not churn every module summary artifact. Current v1 builds
+report module analysis cache hit/new/changed/unavailable status, but this data
+does not yet skip planner or STAN work.
+
 ## `scpp init` behavior
 
 `scpp init` creates:
@@ -533,17 +544,20 @@ renders the selected auto policy plus source-level grouping/isolation reasons.
 Saved build details also include `details.build_explanation.project_modules`.
 When `project_modules` is configured, each module row stores source membership,
 module dependencies, public exports, interface hash, implementation hash,
-surface artifact path, implementation artifact paths, cache status, and whether
-consumers must rebuild because a depended module's interface hash changed.
+surface artifact path, implementation artifact paths, module analysis summary
+artifact path, module analysis summary hash/cache status, surface cache status,
+and whether consumers must rebuild because a depended module's interface hash
+changed.
 The project module report also stores dependency validation policy, evidence
 source, inferred dependencies, undeclared dependency violations, unused declared
 dependencies, and per-module validation status.
 Per-project module surface artifacts are written under
 `.prism/cache/project_modules/*.surface.json`, private implementation metadata
-is written under `.prism/cache/project_modules/*.implementation.json`, and a
-stable manifest is written at `.prism/cache/project_modules/manifest.json`. The
-focused `modules` view renders the module overview, while `module <name>`
-renders one module row.
+is written under `.prism/cache/project_modules/*.implementation.json`, module
+analysis summaries are written under
+`.prism/cache/project_modules/*.stan-summary.json`, and a stable manifest is
+written at `.prism/cache/project_modules/manifest.json`. The focused `modules`
+view renders the module overview, while `module <name>` renders one module row.
 
 The `project-units` view reports the current project unit force-include fanout
 and per-source dependency summaries. These summaries may use STAN's stored
@@ -692,6 +706,7 @@ extracted from the build's saved explanation:
 - object rebuild fanout
 - grouping fanout and changed-group count
 - project module cache status counts
+- project module analysis summary cache status counts
 - Ninja explain probe summary
 
 Measured builds enable the internal Ninja explain probe so the benchmark report
