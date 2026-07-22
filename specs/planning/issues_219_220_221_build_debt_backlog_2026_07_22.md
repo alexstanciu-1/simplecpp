@@ -64,6 +64,12 @@ object fanout, and stores per-source grouped/isolated reasons. Auto grouping
 also isolates entrypoints, sources whose generated artifacts changed, previous
 objects of at least 8 MiB, and singleton would-be groups.
 
+The first #221 validation slice adds `project_module_dependency_policy` with
+`report`, `warn`, and `fail` modes. It compares explicit module dependencies
+against project-unit source dependency evidence, records inferred, undeclared,
+and unused declared dependencies, and reports whether evidence came from STAN,
+build-owned no-STAN summaries, or no available evidence.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -97,8 +103,9 @@ objects of at least 8 MiB, and singleton would-be groups.
 
 ### #221 Project Module Debt
 
-- Modules are explicit config only; Simple C++ does not validate declared module
-  dependencies against actual source/STAN dependency evidence yet.
+- Modules are explicit config only; Simple C++ now validates declared module
+  dependencies against direct source evidence, but public/private API policy and
+  transitive boundary enforcement are still not implemented.
 - Module surfaces are cache/report artifacts and implicit compile inputs, but
   module boundaries do not drive grouped objects.
 - Module-level STAN/static-analysis summary caching is not implemented.
@@ -172,6 +179,7 @@ objects of at least 8 MiB, and singleton would-be groups.
 ### P1: Turn #221 Modules Into Enforced Build Boundaries
 
 8. `BLD-221-VALIDATE-1`: Validate declared module dependencies.
+   - Status: implemented with `project_module_dependency_policy`.
    - Compare `project_modules.*.dependencies` with STAN/source dependency
      evidence when available.
    - Warn or fail on undeclared cross-module dependencies based on policy.

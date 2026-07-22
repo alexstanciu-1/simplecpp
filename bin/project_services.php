@@ -3200,7 +3200,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectUnitDependencySummaryArtifact = write_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitForceIncludeReport, $projectUnitDependencySummaryFreshness);
 	$projectUnitForceIncludeReport['dependency_summary_artifact'] = $projectUnitDependencySummaryArtifact;
 	$buildGroupingPolicy = apply_auto_build_grouping_evidence($projectRoot, $buildGroupingPolicy, $generatedUnits);
-	$projectModuleReport = collect_project_module_report($projectRoot, $projectContexts, $generatedUnits);
+	$projectModuleReport = collect_project_module_report($projectRoot, $projectContexts, $generatedUnits, $projectUnitForceIncludeReport);
 	apply_grouped_generated_object_edges($projectRoot, $buildDir, $generatedDir, $buildGroupingPolicy, $generatedUnits, $sourceRebuildReasons, $compiler['kind']);
 
 	if ($usePch) {
@@ -6986,9 +6986,12 @@ function write_project_unit_dependency_summary_artifact(string $projectRoot, arr
  * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
  * @return array<string,mixed>
  */
-function collect_project_module_report(string $projectRoot, array $projectContexts, array $generatedUnits): array
+function collect_project_module_report(string $projectRoot, array $projectContexts, array $generatedUnits, array $projectUnitForceIncludeReport = []): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
+	$rootContext = is_array($projectContexts[$normalizedProjectRoot] ?? null) ? $projectContexts[$normalizedProjectRoot] : [];
+	$rootConfig = is_array($rootContext['config'] ?? null) ? $rootContext['config'] : [];
+	$dependencyValidationPolicy = normalize_project_module_dependency_policy($rootConfig, project_context_report_label($normalizedProjectRoot, $normalizedProjectRoot));
 	$unitsByProjectRoot = [];
 	foreach ($generatedUnits as $unit) {
 		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
@@ -7074,6 +7077,20 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 	usort($duplicateAssignments, static fn (array $left, array $right): int => strcmp((string) ($left['source'] ?? ''), (string) ($right['source'] ?? '')));
 
 	$cacheStatusCounts = summarize_project_module_cache_status_counts($moduleRows);
+	$dependencyValidation = collect_project_module_dependency_validation($normalizedProjectRoot, $moduleRows, $projectUnitForceIncludeReport, $dependencyValidationPolicy);
+	$moduleRows = apply_project_module_dependency_validation_to_module_rows($moduleRows, $dependencyValidation);
+	if ($dependencyValidationPolicy === 'warn' && (int) ($dependencyValidation['undeclared_dependency_count'] ?? 0) > 0) {
+		foreach (normalize_project_module_dependency_validation_rows(is_array($dependencyValidation['undeclared_dependencies'] ?? null) ? $dependencyValidation['undeclared_dependencies'] : []) as $violation) {
+			scpp_write('Project module dependency warning: module `' . (string) ($violation['module'] ?? '') . '` uses undeclared dependency `' . (string) ($violation['dependency'] ?? '') . '` from ' . implode(', ', normalize_string_list($violation['sources'] ?? [])) . PHP_EOL, 'stderr');
+		}
+	}
+	if ($dependencyValidationPolicy === 'fail' && (int) ($dependencyValidation['undeclared_dependency_count'] ?? 0) > 0) {
+		$messages = [];
+		foreach (normalize_project_module_dependency_validation_rows(is_array($dependencyValidation['undeclared_dependencies'] ?? null) ? $dependencyValidation['undeclared_dependencies'] : []) as $violation) {
+			$messages[] = 'module `' . (string) ($violation['module'] ?? '') . '` uses undeclared dependency `' . (string) ($violation['dependency'] ?? '') . '` from ' . implode(', ', normalize_string_list($violation['sources'] ?? []));
+		}
+		scpp_fail('Project module dependency validation failed: ' . implode('; ', $messages) . PHP_EOL, 2);
+	}
 	return normalize_project_module_report([
 		'configured' => $moduleRows !== [],
 		'total_modules' => count($moduleRows),
@@ -7084,9 +7101,26 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 		'duplicate_assignments' => $duplicateAssignments,
 		'consumer_rebuild_required_count' => count(array_filter($moduleRows, static fn (array $row): bool => (bool) ($row['consumer_rebuild_required'] ?? false))),
 		'cache_status_counts' => $cacheStatusCounts,
+		'dependency_validation' => $dependencyValidation,
 		'manifest_artifacts' => normalize_string_list($manifestArtifacts),
 		'modules' => $moduleRows,
 	]);
+}
+
+function normalize_project_module_dependency_policy(array $config, string $projectLabel): string
+{
+	$rawPolicy = $config['project_module_dependency_policy'] ?? 'report';
+	if (!is_string($rawPolicy)) {
+		scpp_fail('Invalid project_module_dependency_policy in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': expected a string.' . PHP_EOL, 2);
+	}
+	$policy = strtolower(trim($rawPolicy));
+	if ($policy === '') {
+		$policy = 'report';
+	}
+	if (!in_array($policy, ['report', 'warn', 'fail'], true)) {
+		scpp_fail('Invalid project_module_dependency_policy `' . $policy . '` in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . '. Use one of: report, warn, fail.' . PHP_EOL, 2);
+	}
+	return $policy;
 }
 
 /** @return list<array<string,mixed>> */
@@ -7339,6 +7373,210 @@ function apply_project_module_consumer_rebuild_status(array $moduleRows): array
 	return $moduleRows;
 }
 
+/**
+ * @param list<array<string,mixed>> $moduleRows
+ * @return array<string,mixed>
+ */
+function collect_project_module_dependency_validation(string $projectRoot, array $moduleRows, array $projectUnitForceIncludeReport, string $policy): array
+{
+	$moduleRows = normalize_project_module_rows($moduleRows);
+	$moduleNames = [];
+	$declaredByModule = [];
+	$sourceToModule = [];
+	foreach ($moduleRows as $module) {
+		$moduleName = trim((string) ($module['name'] ?? ''));
+		$projectLabel = trim((string) ($module['project_root'] ?? '.'));
+		if ($moduleName === '') {
+			continue;
+		}
+		$moduleNames[$moduleName] = true;
+		$declaredByModule[$moduleName] = [];
+		foreach (normalize_string_list($module['dependencies'] ?? []) as $dependency) {
+			$declaredByModule[$moduleName][$dependency] = true;
+		}
+		foreach (normalize_project_module_source_rows(is_array($module['sources'] ?? null) ? $module['sources'] : []) as $source) {
+			$sourcePath = normalize_config_path((string) ($source['source'] ?? ''));
+			if ($sourcePath !== '') {
+				$sourceToModule[project_module_source_key($projectLabel, $sourcePath)] = $moduleName;
+			}
+		}
+	}
+	$summaryArtifact = is_array($projectUnitForceIncludeReport['dependency_summary_artifact'] ?? null) ? $projectUnitForceIncludeReport['dependency_summary_artifact'] : [];
+	$dependencySummaries = normalize_project_unit_dependency_summaries(is_array($projectUnitForceIncludeReport['dependency_summaries'] ?? null) ? $projectUnitForceIncludeReport['dependency_summaries'] : []);
+	$evidenceSource = 'none';
+	if ($dependencySummaries !== []) {
+		$evidenceSource = ((bool) ($summaryArtifact['used_stan_dependency_state'] ?? false)) ? 'stan' : 'build';
+	}
+	$actualSourcesByModuleDependency = [];
+	foreach ($dependencySummaries as $summary) {
+		$projectLabel = trim((string) ($summary['project_root'] ?? '.'));
+		if ($projectLabel === '') {
+			$projectLabel = '.';
+		}
+		$source = normalize_config_path((string) ($summary['source'] ?? ''));
+		if ($source === '') {
+			continue;
+		}
+		$sourceModule = $sourceToModule[project_module_source_key($projectLabel, $source)] ?? null;
+		if (!is_string($sourceModule) || $sourceModule === '') {
+			continue;
+		}
+		foreach (normalize_string_list($summary['direct_source_dependencies'] ?? []) as $dependencySourceKey) {
+			$dependencyModule = resolve_project_module_dependency_source_module($dependencySourceKey, $projectLabel, $sourceToModule);
+			if ($dependencyModule === null || $dependencyModule === $sourceModule) {
+				continue;
+			}
+			$actualSourcesByModuleDependency[$sourceModule][$dependencyModule][] = project_module_source_label($projectLabel, $source);
+		}
+	}
+
+	$undeclared = [];
+	$unusedDeclared = [];
+	$inferredDependencies = [];
+	foreach ($actualSourcesByModuleDependency as $moduleName => $dependencies) {
+		foreach ($dependencies as $dependency => $sources) {
+			$sources = normalize_string_list($sources);
+			$inferredDependencies[] = [
+				'module' => $moduleName,
+				'dependency' => $dependency,
+				'sources' => $sources,
+				'message' => 'source evidence shows module `' . $moduleName . '` depends on `' . $dependency . '`',
+			];
+			if (!isset($declaredByModule[$moduleName][$dependency])) {
+				$undeclared[] = [
+					'module' => $moduleName,
+					'dependency' => $dependency,
+					'sources' => $sources,
+					'message' => 'module `' . $moduleName . '` uses undeclared dependency `' . $dependency . '`',
+				];
+			}
+		}
+	}
+	foreach ($declaredByModule as $moduleName => $dependencies) {
+		foreach (array_keys($dependencies) as $dependency) {
+			if (!isset($moduleNames[$dependency])) {
+				continue;
+			}
+			if (!isset($actualSourcesByModuleDependency[$moduleName][$dependency])) {
+				$unusedDeclared[] = [
+					'module' => $moduleName,
+					'dependency' => $dependency,
+					'sources' => [],
+					'message' => 'declared dependency `' . $dependency . '` has no direct source evidence for module `' . $moduleName . '`',
+				];
+			}
+		}
+	}
+	usort($undeclared, static function (array $left, array $right): int {
+		return strcmp((string) ($left['module'] ?? '') . "\0" . (string) ($left['dependency'] ?? ''), (string) ($right['module'] ?? '') . "\0" . (string) ($right['dependency'] ?? ''));
+	});
+	usort($unusedDeclared, static function (array $left, array $right): int {
+		return strcmp((string) ($left['module'] ?? '') . "\0" . (string) ($left['dependency'] ?? ''), (string) ($right['module'] ?? '') . "\0" . (string) ($right['dependency'] ?? ''));
+	});
+	usort($inferredDependencies, static function (array $left, array $right): int {
+		return strcmp((string) ($left['module'] ?? '') . "\0" . (string) ($left['dependency'] ?? ''), (string) ($right['module'] ?? '') . "\0" . (string) ($right['dependency'] ?? ''));
+	});
+	$status = $dependencySummaries === [] ? 'unavailable' : ($undeclared === [] ? 'ok' : 'violations');
+	$notes = [];
+	if ($dependencySummaries === []) {
+		$notes[] = 'project-unit dependency evidence unavailable; module dependency validation did not infer source edges';
+	} elseif ($evidenceSource === 'build') {
+		$notes[] = 'using build-owned dependency evidence; no-STAN behavior is conservative and explicit';
+	} else {
+		$notes[] = 'using STAN dependency evidence';
+	}
+	return normalize_project_module_dependency_validation([
+		'policy' => $policy,
+		'status' => $status,
+		'evidence_source' => $evidenceSource,
+		'inferred_dependency_count' => count($inferredDependencies),
+		'undeclared_dependency_count' => count($undeclared),
+		'unused_declared_dependency_count' => count($unusedDeclared),
+		'inferred_dependencies' => $inferredDependencies,
+		'undeclared_dependencies' => $undeclared,
+		'unused_declared_dependencies' => $unusedDeclared,
+		'notes' => $notes,
+	]);
+}
+
+/** @param array<string,string> $sourceToModule */
+function resolve_project_module_dependency_source_module(string $dependencySourceKey, string $currentProjectLabel, array $sourceToModule): ?string
+{
+	$dependencySourceKey = normalize_config_path($dependencySourceKey);
+	if ($dependencySourceKey === '' || str_starts_with($dependencySourceKey, '@external/')) {
+		return null;
+	}
+	$currentProjectLabel = trim($currentProjectLabel);
+	if ($currentProjectLabel === '') {
+		$currentProjectLabel = '.';
+	}
+	$sameProjectKey = project_module_source_key($currentProjectLabel, $dependencySourceKey);
+	if (isset($sourceToModule[$sameProjectKey])) {
+		return $sourceToModule[$sameProjectKey];
+	}
+	foreach ($sourceToModule as $sourceKey => $moduleName) {
+		if (!is_string($sourceKey) || !is_string($moduleName)) {
+			continue;
+		}
+		[$projectLabel, $source] = array_pad(explode("\0", $sourceKey, 2), 2, '');
+		$fullSource = $projectLabel === '' || $projectLabel === '.' ? $source : normalize_config_path($projectLabel . '/' . $source);
+		if ($dependencySourceKey === $fullSource) {
+			return $moduleName;
+		}
+	}
+	return null;
+}
+
+/** @param list<array<string,mixed>> $moduleRows @return list<array<string,mixed>> */
+function apply_project_module_dependency_validation_to_module_rows(array $moduleRows, array $validation): array
+{
+	$undeclaredByModule = [];
+	foreach (normalize_project_module_dependency_validation_rows(is_array($validation['undeclared_dependencies'] ?? null) ? $validation['undeclared_dependencies'] : []) as $row) {
+		$module = (string) ($row['module'] ?? '');
+		$dependency = (string) ($row['dependency'] ?? '');
+		if ($module !== '' && $dependency !== '') {
+			$undeclaredByModule[$module][$dependency] = $row;
+		}
+	}
+	$unusedByModule = [];
+	foreach (normalize_project_module_dependency_validation_rows(is_array($validation['unused_declared_dependencies'] ?? null) ? $validation['unused_declared_dependencies'] : []) as $row) {
+		$module = (string) ($row['module'] ?? '');
+		$dependency = (string) ($row['dependency'] ?? '');
+		if ($module !== '' && $dependency !== '') {
+			$unusedByModule[$module][$dependency] = $row;
+		}
+	}
+	foreach ($moduleRows as &$row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$moduleName = trim((string) ($row['name'] ?? ''));
+		$undeclared = array_keys($undeclaredByModule[$moduleName] ?? []);
+		$unused = array_keys($unusedByModule[$moduleName] ?? []);
+		sort($undeclared, SORT_STRING);
+		sort($unused, SORT_STRING);
+		$row['dependency_validation_status'] = $undeclared !== [] ? 'violations' : ((string) ($validation['status'] ?? 'unavailable'));
+		$row['inferred_dependencies'] = collect_project_module_inferred_dependencies_for_module($moduleName, $validation);
+		$row['undeclared_dependencies'] = $undeclared;
+		$row['unused_declared_dependencies'] = $unused;
+	}
+	unset($row);
+	return $moduleRows;
+}
+
+/** @return list<string> */
+function collect_project_module_inferred_dependencies_for_module(string $moduleName, array $validation): array
+{
+	$dependencies = [];
+	foreach (normalize_project_module_dependency_validation_rows(is_array($validation['inferred_dependencies'] ?? null) ? $validation['inferred_dependencies'] : []) as $row) {
+		if ((string) ($row['module'] ?? '') === $moduleName && (string) ($row['dependency'] ?? '') !== '') {
+			$dependencies[] = (string) ($row['dependency'] ?? '');
+		}
+	}
+	sort($dependencies, SORT_STRING);
+	return array_values(array_unique($dependencies));
+}
+
 /** @param array<string,mixed> $payload */
 function hash_project_module_payload(array $payload): string
 {
@@ -7538,9 +7776,68 @@ function normalize_project_module_report(array $report): array
 		'duplicate_assignments' => $duplicateAssignments,
 		'consumer_rebuild_required_count' => max(0, (int) ($report['consumer_rebuild_required_count'] ?? 0)),
 		'cache_status_counts' => $normalizedCacheStatusCounts,
+		'dependency_validation' => normalize_project_module_dependency_validation(is_array($report['dependency_validation'] ?? null) ? $report['dependency_validation'] : []),
 		'manifest_artifacts' => normalize_string_list($report['manifest_artifacts'] ?? []),
 		'modules' => $modules,
 	];
+}
+
+/** @return array<string,mixed> */
+function normalize_project_module_dependency_validation(array $validation): array
+{
+	$policy = trim((string) ($validation['policy'] ?? 'report'));
+	if (!in_array($policy, ['report', 'warn', 'fail'], true)) {
+		$policy = 'report';
+	}
+	$status = trim((string) ($validation['status'] ?? 'unavailable'));
+	if (!in_array($status, ['ok', 'violations', 'unavailable'], true)) {
+		$status = 'unavailable';
+	}
+	$evidenceSource = trim((string) ($validation['evidence_source'] ?? 'none'));
+	if (!in_array($evidenceSource, ['stan', 'build', 'none'], true)) {
+		$evidenceSource = 'none';
+	}
+	$inferred = normalize_project_module_dependency_validation_rows(is_array($validation['inferred_dependencies'] ?? null) ? $validation['inferred_dependencies'] : []);
+	$undeclared = normalize_project_module_dependency_validation_rows(is_array($validation['undeclared_dependencies'] ?? null) ? $validation['undeclared_dependencies'] : []);
+	$unused = normalize_project_module_dependency_validation_rows(is_array($validation['unused_declared_dependencies'] ?? null) ? $validation['unused_declared_dependencies'] : []);
+	return [
+		'policy' => $policy,
+		'status' => $status,
+		'evidence_source' => $evidenceSource,
+		'inferred_dependency_count' => max(0, (int) ($validation['inferred_dependency_count'] ?? count($inferred))),
+		'undeclared_dependency_count' => max(0, (int) ($validation['undeclared_dependency_count'] ?? count($undeclared))),
+		'unused_declared_dependency_count' => max(0, (int) ($validation['unused_declared_dependency_count'] ?? count($unused))),
+		'inferred_dependencies' => $inferred,
+		'undeclared_dependencies' => $undeclared,
+		'unused_declared_dependencies' => $unused,
+		'notes' => normalize_string_list($validation['notes'] ?? []),
+	];
+}
+
+/** @return list<array{module:string,dependency:string,sources:list<string>,message:string}> */
+function normalize_project_module_dependency_validation_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$module = trim((string) ($row['module'] ?? ''));
+		$dependency = trim((string) ($row['dependency'] ?? ''));
+		if ($module === '' || $dependency === '') {
+			continue;
+		}
+		$result[] = [
+			'module' => $module,
+			'dependency' => $dependency,
+			'sources' => normalize_string_list($row['sources'] ?? []),
+			'message' => trim((string) ($row['message'] ?? '')),
+		];
+	}
+	usort($result, static function (array $left, array $right): int {
+		return strcmp((string) ($left['module'] ?? '') . "\0" . (string) ($left['dependency'] ?? ''), (string) ($right['module'] ?? '') . "\0" . (string) ($right['dependency'] ?? ''));
+	});
+	return $result;
 }
 
 /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
@@ -7576,6 +7873,10 @@ function normalize_project_module_rows(array $rows): array
 			'consumer_rebuild_required' => (bool) ($row['consumer_rebuild_required'] ?? false),
 			'consumer_rebuild_reasons' => normalize_string_list($row['consumer_rebuild_reasons'] ?? []),
 			'unresolved_dependencies' => normalize_string_list($row['unresolved_dependencies'] ?? []),
+			'dependency_validation_status' => trim((string) ($row['dependency_validation_status'] ?? 'unavailable')),
+			'inferred_dependencies' => normalize_string_list($row['inferred_dependencies'] ?? []),
+			'undeclared_dependencies' => normalize_string_list($row['undeclared_dependencies'] ?? []),
+			'unused_declared_dependencies' => normalize_string_list($row['unused_declared_dependencies'] ?? []),
 		];
 	}
 	usort($result, static function (array $left, array $right): int {
@@ -10448,6 +10749,13 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 		. ', interface changed ' . ((int) ($cache['interface_changed'] ?? 0) + (int) ($cache['interface_and_implementation_changed'] ?? 0))
 		. ', implementation changed ' . ((int) ($cache['implementation_changed'] ?? 0) + (int) ($cache['interface_and_implementation_changed'] ?? 0));
 	$lines[] = 'Project module consumer fanout: ' . (int) ($report['consumer_rebuild_required_count'] ?? 0) . ' consumer module(s) require rebuild by interface hash';
+	$validation = normalize_project_module_dependency_validation(is_array($report['dependency_validation'] ?? null) ? $report['dependency_validation'] : []);
+	$lines[] = 'Project module dependency validation: ' . (string) ($validation['status'] ?? 'unavailable')
+		. ' (policy ' . (string) ($validation['policy'] ?? 'report')
+		. ', evidence ' . (string) ($validation['evidence_source'] ?? 'none') . ')'
+		. ', inferred ' . (int) ($validation['inferred_dependency_count'] ?? 0)
+		. ', undeclared ' . (int) ($validation['undeclared_dependency_count'] ?? 0)
+		. ', unused declared ' . (int) ($validation['unused_declared_dependency_count'] ?? 0);
 	if (!$includeModules && $moduleFilter === null) {
 		return $lines;
 	}
@@ -10492,6 +10800,7 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 			. ', interface changed ' . (((bool) ($module['interface_changed'] ?? false)) ? 'yes' : 'no')
 			. ', implementation changed ' . (((bool) ($module['implementation_changed'] ?? false)) ? 'yes' : 'no')
 			. ', consumers ' . (((bool) ($module['consumer_rebuild_required'] ?? false)) ? 'rebuild' : 'stable')
+			. ', validation ' . trim((string) ($module['dependency_validation_status'] ?? 'unavailable'))
 			. ($surfaceArtifact !== '' ? ', artifact ' . $surfaceArtifact : '');
 		if ($implementationArtifact !== '') {
 			$lines[] = '    implementation artifact: ' . $implementationArtifact;
@@ -10512,6 +10821,18 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 		$unresolved = normalize_string_list($module['unresolved_dependencies'] ?? []);
 		if ($unresolved !== []) {
 			$lines[] = '    unresolved dependencies: ' . implode(', ', $unresolved);
+		}
+		$inferred = normalize_string_list($module['inferred_dependencies'] ?? []);
+		if ($inferred !== []) {
+			$lines[] = '    inferred dependencies: ' . implode(', ', $inferred);
+		}
+		$undeclared = normalize_string_list($module['undeclared_dependencies'] ?? []);
+		if ($undeclared !== []) {
+			$lines[] = '    undeclared dependencies: ' . implode(', ', $undeclared);
+		}
+		$unusedDeclared = normalize_string_list($module['unused_declared_dependencies'] ?? []);
+		if ($unusedDeclared !== []) {
+			$lines[] = '    unused declared dependencies: ' . implode(', ', $unusedDeclared);
 		}
 	}
 	$unassignedSources = normalize_string_list($report['unassigned_sources'] ?? []);

@@ -241,6 +241,17 @@ module take the owning module's public surface artifact and each depended
 module's public surface artifact as implicit inputs. Private
 implementation artifacts are not compile inputs for consumers.
 
+Projects may set `project_module_dependency_policy` to `report`, `warn`, or
+`fail`; the default is `report`. Module dependency validation compares explicit
+`project_modules.*.dependencies` against direct source dependency evidence from
+the project-unit dependency summaries. With STAN evidence, the report records
+`evidence_source = "stan"`; with `--no-stan`, the build-owned dependency
+summary is used and reported as `evidence_source = "build"`. Missing evidence is
+reported as `unavailable` and does not invent violations. `warn` prints
+undeclared dependency diagnostics, while `fail` stops the build on undeclared
+module dependency evidence. Unused declared dependencies are reported but do not
+fail by themselves.
+
 ## `scpp init` behavior
 
 `scpp init` creates:
@@ -524,6 +535,9 @@ When `project_modules` is configured, each module row stores source membership,
 module dependencies, public exports, interface hash, implementation hash,
 surface artifact path, implementation artifact paths, cache status, and whether
 consumers must rebuild because a depended module's interface hash changed.
+The project module report also stores dependency validation policy, evidence
+source, inferred dependencies, undeclared dependency violations, unused declared
+dependencies, and per-module validation status.
 Per-project module surface artifacts are written under
 `.prism/cache/project_modules/*.surface.json`, private implementation metadata
 is written under `.prism/cache/project_modules/*.implementation.json`, and a
