@@ -381,6 +381,9 @@ The initial registry includes:
 - which outputs changed in the most recent saved build
 - rebuild fanout for the most recent saved build, including changed objects,
   changed/removed project-unit packs, and Ninja no-work status
+- generated artifact write counters for content-aware generated headers and
+  generated sources, including written, preserved, first-recorded, and
+  interface/implementation-changed counts
 - the active build grouping policy, deterministic group membership, changed
   groups, and object fanout
 - which generated project unit force-include headers were assigned, including
@@ -396,6 +399,7 @@ The initial registry includes:
 - `scpp explain-build files-reused`
 - `scpp explain-build outputs-rebuilt`
 - `scpp explain-build rebuild-fanout`
+- `scpp explain-build generated-artifacts`
 - `scpp explain-build grouping`
 - `scpp explain-build project-units`
 - `scpp explain-build project-unit <source>`
@@ -416,6 +420,14 @@ changed and removed project-unit pack headers, and whether Ninja observed a
 no-work build. The same normalized fanout is stored under
 `details.build_explanation.rebuild_fanout` so `scpp explain-build
 rebuild-fanout` can report it without recomputing mtimes or build ownership.
+
+Saved build details also include a `generated_artifact_writes` summary. The
+summary counts generated headers and generated sources separately by
+content-aware write result: written, preserved, first-recorded, and
+interface/implementation changed. The same normalized summary is stored under
+`details.build_explanation.generated_artifact_writes` so `scpp explain-build`,
+`scpp explain-build generated-artifacts`, and generated-file focused views can
+report generated write behavior without reading current generated file mtimes.
 
 Saved successful and failed build details include
 `details.build_explanation.build_grouping`. The grouping report stores the

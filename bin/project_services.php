@@ -712,7 +712,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|generated-artifacts|grouping|project-units|project-unit <source>|modules|module <name>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -3041,9 +3041,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				$generatedImplementationHash = hash('sha256', $generatedCppContents);
 				$generatedArtifactChanges = summarize_generated_artifact_hash_changes($previous, $generatedInterfaceHash, $generatedImplementationHash);
 
-				write_text_file($generatedHeader, $generatedHeaderContents);
+				$generatedHeaderWriteStatus = write_text_file_with_status($generatedHeader, $generatedHeaderContents);
 				write_generated_line_map_file($generatedHeader . '.line.tsv', $cppFile->headerLineMap);
-				write_text_file($generatedCpp, $generatedCppContents);
+				$generatedCppWriteStatus = write_text_file_with_status($generatedCpp, $generatedCppContents);
 				write_generated_line_map_file($generatedCpp . '.line.tsv', $cppFile->sourceLineMap);
 				write_export_manifest_file($generatedExportManifest, $cppFile->exportManifest);
 				$transpiledCount++;
@@ -3055,7 +3055,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					'is_entrypoint' => $emitProgramEntry,
 					'action' => 'transpiled',
 					'reasons' => $transpileReasons,
-					'generated_artifacts' => $generatedArtifactChanges,
+					'generated_artifacts' => with_generated_artifact_write_statuses($generatedArtifactChanges, $generatedHeaderWriteStatus, $generatedCppWriteStatus),
 				];
 			} else {
 				$generatedInterfaceHash = existing_file_sha256($generatedHeader) ?? (string) ($previous['generated_interface_hash'] ?? '');
@@ -3069,7 +3069,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					'is_entrypoint' => $emitProgramEntry,
 					'action' => 'reused',
 					'reasons' => ['source metadata and generated artifacts unchanged'],
-					'generated_artifacts' => summarize_generated_artifact_hash_changes($previous, $generatedInterfaceHash, $generatedImplementationHash),
+					'generated_artifacts' => with_generated_artifact_write_statuses(summarize_generated_artifact_hash_changes($previous, $generatedInterfaceHash, $generatedImplementationHash), 'preserved', 'preserved'),
 				];
 			}
 
@@ -3324,6 +3324,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'compile_dependencies' => $options['compile_dependencies'],
 				'ninja_command' => $command,
 				'diagnostic_count' => count($diagnostics),
+				'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
 				'build_explanation' => build_explanation_details(
 					$projectRoot,
 					$options,
@@ -3444,6 +3445,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 			'compile_dependencies' => $options['compile_dependencies'],
 			'transpiled_count' => $transpiledCount,
 			'skipped_count' => $skippedCount,
+			'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
 			'rebuilt_outputs' => array_values(array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)),
 			'rebuild_fanout' => $rebuildFanout,
 			'ninja_command' => $command,
@@ -3754,6 +3756,7 @@ function validate_reused_runtime_artifact(
 			'diagnostic_count' => 0,
 			'preflight_failure' => 'missing_runtime_artifact',
 			'runtime_artifact' => $missingArtifact,
+			'generated_artifact_writes' => summarize_generated_artifact_write_report($sourceRebuildReasons),
 			'build_explanation' => build_explanation_details(
 				$projectRoot,
 				$options,
@@ -7999,6 +8002,18 @@ function write_text_file(string $path, string $contents): void
 	}
 }
 
+function write_text_file_with_status(string $path, string $contents): string
+{
+	if (is_file($path)) {
+		$existing = file_get_contents($path);
+		if (is_string($existing) && $existing === $contents) {
+			return 'preserved';
+		}
+	}
+	write_text_file($path, $contents);
+	return 'written';
+}
+
 function existing_file_sha256(string $path): ?string
 {
 	if (!is_file($path)) {
@@ -8110,12 +8125,14 @@ function collect_transpile_reasons(
 }
 
 /**
- * @return array{interface_hash:string,implementation_hash:string,interface_changed:bool,implementation_changed:bool,change_reason:string}
+ * @return array{interface_hash:string,implementation_hash:string,interface_changed:bool,implementation_changed:bool,interface_first_recorded:bool,implementation_first_recorded:bool,change_reason:string}
  */
 function summarize_generated_artifact_hash_changes(?array $previous, string $interfaceHash, string $implementationHash): array
 {
 	$previousInterfaceHash = is_array($previous) ? trim((string) ($previous['generated_interface_hash'] ?? '')) : '';
 	$previousImplementationHash = is_array($previous) ? trim((string) ($previous['generated_implementation_hash'] ?? '')) : '';
+	$interfaceFirstRecorded = $previousInterfaceHash === '';
+	$implementationFirstRecorded = $previousImplementationHash === '';
 	$interfaceChanged = $previousInterfaceHash === '' || $previousInterfaceHash !== $interfaceHash;
 	$implementationChanged = $previousImplementationHash === '' || $previousImplementationHash !== $implementationHash;
 	$reason = 'generated artifacts unchanged';
@@ -8133,7 +8150,118 @@ function summarize_generated_artifact_hash_changes(?array $previous, string $int
 		'implementation_hash' => $implementationHash,
 		'interface_changed' => $interfaceChanged,
 		'implementation_changed' => $implementationChanged,
+		'interface_first_recorded' => $interfaceFirstRecorded,
+		'implementation_first_recorded' => $implementationFirstRecorded,
 		'change_reason' => $reason,
+	];
+}
+
+/** @param array<string,mixed> $changes @return array<string,mixed> */
+function with_generated_artifact_write_statuses(array $changes, string $headerWriteStatus, string $sourceWriteStatus): array
+{
+	$changes['header_write_status'] = normalize_generated_artifact_write_status($headerWriteStatus);
+	$changes['source_write_status'] = normalize_generated_artifact_write_status($sourceWriteStatus);
+	return $changes;
+}
+
+function normalize_generated_artifact_write_status(mixed $status): string
+{
+	return is_string($status) && trim($status) === 'written' ? 'written' : 'preserved';
+}
+
+/** @param list<array<string,mixed>> $sources @return array<string,mixed> */
+function summarize_generated_artifact_write_report(array $sources): array
+{
+	$headers = [
+		'total_count' => 0,
+		'written_count' => 0,
+		'preserved_count' => 0,
+		'first_recorded_count' => 0,
+		'interface_changed_count' => 0,
+	];
+	$generatedSources = [
+		'total_count' => 0,
+		'written_count' => 0,
+		'preserved_count' => 0,
+		'first_recorded_count' => 0,
+		'implementation_changed_count' => 0,
+	];
+
+	foreach ($sources as $source) {
+		if (!is_array($source)) {
+			continue;
+		}
+		$artifacts = is_array($source['generated_artifacts'] ?? null) ? $source['generated_artifacts'] : [];
+		$action = trim((string) ($source['action'] ?? ''));
+		$defaultStatus = $action === 'transpiled' ? 'written' : 'preserved';
+
+		$headerStatus = normalize_generated_artifact_write_status($artifacts['header_write_status'] ?? $defaultStatus);
+		$headers['total_count']++;
+		if ($headerStatus === 'written') {
+			$headers['written_count']++;
+		} else {
+			$headers['preserved_count']++;
+		}
+		$interfaceFirstRecorded = (bool) ($artifacts['interface_first_recorded'] ?? false);
+		if ($interfaceFirstRecorded) {
+			$headers['first_recorded_count']++;
+		}
+		if ((bool) ($artifacts['interface_changed'] ?? false) && !$interfaceFirstRecorded) {
+			$headers['interface_changed_count']++;
+		}
+
+		$sourceStatus = normalize_generated_artifact_write_status($artifacts['source_write_status'] ?? $defaultStatus);
+		$generatedSources['total_count']++;
+		if ($sourceStatus === 'written') {
+			$generatedSources['written_count']++;
+		} else {
+			$generatedSources['preserved_count']++;
+		}
+		$implementationFirstRecorded = (bool) ($artifacts['implementation_first_recorded'] ?? false);
+		if ($implementationFirstRecorded) {
+			$generatedSources['first_recorded_count']++;
+		}
+		if ((bool) ($artifacts['implementation_changed'] ?? false) && !$implementationFirstRecorded) {
+			$generatedSources['implementation_changed_count']++;
+		}
+	}
+
+	return normalize_generated_artifact_write_report([
+		'headers' => $headers,
+		'sources' => $generatedSources,
+	]);
+}
+
+/** @return array<string,mixed> */
+function normalize_generated_artifact_write_report(array $report): array
+{
+	$headersRaw = is_array($report['headers'] ?? null) ? $report['headers'] : [];
+	$sourcesRaw = is_array($report['sources'] ?? null) ? $report['sources'] : [];
+	$headers = [
+		'total_count' => max(0, (int) ($headersRaw['total_count'] ?? 0)),
+		'written_count' => max(0, (int) ($headersRaw['written_count'] ?? 0)),
+		'preserved_count' => max(0, (int) ($headersRaw['preserved_count'] ?? 0)),
+		'first_recorded_count' => max(0, (int) ($headersRaw['first_recorded_count'] ?? 0)),
+		'interface_changed_count' => max(0, (int) ($headersRaw['interface_changed_count'] ?? 0)),
+	];
+	$generatedSources = [
+		'total_count' => max(0, (int) ($sourcesRaw['total_count'] ?? 0)),
+		'written_count' => max(0, (int) ($sourcesRaw['written_count'] ?? 0)),
+		'preserved_count' => max(0, (int) ($sourcesRaw['preserved_count'] ?? 0)),
+		'first_recorded_count' => max(0, (int) ($sourcesRaw['first_recorded_count'] ?? 0)),
+		'implementation_changed_count' => max(0, (int) ($sourcesRaw['implementation_changed_count'] ?? 0)),
+	];
+	$totalRaw = is_array($report['total'] ?? null) ? $report['total'] : [];
+	return [
+		'headers' => $headers,
+		'sources' => $generatedSources,
+		'total' => [
+			'artifact_count' => max(0, (int) ($totalRaw['artifact_count'] ?? ($headers['total_count'] + $generatedSources['total_count']))),
+			'written_count' => max(0, (int) ($totalRaw['written_count'] ?? ($headers['written_count'] + $generatedSources['written_count']))),
+			'preserved_count' => max(0, (int) ($totalRaw['preserved_count'] ?? ($headers['preserved_count'] + $generatedSources['preserved_count']))),
+			'first_recorded_count' => max(0, (int) ($totalRaw['first_recorded_count'] ?? ($headers['first_recorded_count'] + $generatedSources['first_recorded_count']))),
+			'changed_count' => max(0, (int) ($totalRaw['changed_count'] ?? ($headers['interface_changed_count'] + $generatedSources['implementation_changed_count']))),
+		],
 	];
 }
 
@@ -8214,6 +8342,7 @@ function build_explanation_details(
 		],
 		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
 		'sources' => $sources,
+		'generated_artifact_writes' => summarize_generated_artifact_write_report($sources),
 		'rebuilt_outputs' => $rebuilt,
 		'rebuild_fanout' => $normalizedRebuildFanout,
 		'project_unit_force_includes' => $projectUnitForceIncludeReport,
@@ -8381,6 +8510,38 @@ function build_runtime_module_explanation(array $runtimeConfig): array
 }
 
 /**
+ * @param array<string,mixed> $report
+ * @return list<string>
+ */
+function render_generated_artifact_write_report_lines(array $report): array
+{
+	$report = normalize_generated_artifact_write_report($report);
+	$total = is_array($report['total'] ?? null) ? $report['total'] : [];
+	if ((int) ($total['artifact_count'] ?? 0) === 0) {
+		return ['Generated artifact writes: none'];
+	}
+	$headers = is_array($report['headers'] ?? null) ? $report['headers'] : [];
+	$sources = is_array($report['sources'] ?? null) ? $report['sources'] : [];
+	return [
+		'Generated artifact writes: artifacts ' . (int) ($total['artifact_count'] ?? 0)
+			. ' total, ' . (int) ($total['written_count'] ?? 0) . ' written, '
+			. (int) ($total['preserved_count'] ?? 0) . ' preserved, '
+			. (int) ($total['first_recorded_count'] ?? 0) . ' first-recorded, '
+			. (int) ($total['changed_count'] ?? 0) . ' changed',
+		'Generated headers: ' . (int) ($headers['total_count'] ?? 0)
+			. ' total, ' . (int) ($headers['written_count'] ?? 0) . ' written, '
+			. (int) ($headers['preserved_count'] ?? 0) . ' preserved, '
+			. (int) ($headers['first_recorded_count'] ?? 0) . ' first-recorded, '
+			. (int) ($headers['interface_changed_count'] ?? 0) . ' interface-changed',
+		'Generated sources: ' . (int) ($sources['total_count'] ?? 0)
+			. ' total, ' . (int) ($sources['written_count'] ?? 0) . ' written, '
+			. (int) ($sources['preserved_count'] ?? 0) . ' preserved, '
+			. (int) ($sources['first_recorded_count'] ?? 0) . ' first-recorded, '
+			. (int) ($sources['implementation_changed_count'] ?? 0) . ' implementation-changed',
+	];
+}
+
+/**
  * @param array<string,mixed> $details
  * @return list<string>
  */
@@ -8408,6 +8569,9 @@ function render_build_explanation_lines(array $details): array
 		}
 	}
 	$lines[] = 'PHP transpile decisions: ' . (int) ($details['transpiled_count'] ?? 0) . ' transpiled, ' . (int) ($details['skipped_count'] ?? 0) . ' reused';
+	foreach (render_generated_artifact_write_report_lines(is_array($details['generated_artifact_writes'] ?? null) ? $details['generated_artifact_writes'] : []) as $line) {
+		$lines[] = $line;
+	}
 	$projectModules = normalize_project_module_report(is_array($details['project_modules'] ?? null) ? $details['project_modules'] : []);
 	if ((bool) ($projectModules['configured'] ?? false)) {
 		foreach (render_project_module_report_lines($projectModules, false) as $line) {
@@ -9069,6 +9233,10 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 		return render_build_rebuild_fanout_lines(is_array($details['rebuild_fanout'] ?? null) ? $details['rebuild_fanout'] : []);
 	}
 
+	if ($view === 'generated-artifacts') {
+		return render_generated_artifact_write_report_lines(is_array($details['generated_artifact_writes'] ?? null) ? $details['generated_artifact_writes'] : []);
+	}
+
 	if ($view === 'grouping') {
 		return render_build_grouping_lines(is_array($details['build_grouping'] ?? null) ? $details['build_grouping'] : [], true);
 	}
@@ -9120,7 +9288,8 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	if ($view === 'generated-files') {
-		$lines = [];
+		$lines = render_generated_artifact_write_report_lines(is_array($details['generated_artifact_writes'] ?? null) ? $details['generated_artifact_writes'] : []);
+		$fileLines = [];
 		foreach ($sources as $source) {
 			if (!is_array($source)) {
 				continue;
@@ -9144,9 +9313,9 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 			if ($projectModule !== '') {
 				$line .= ' (project module: ' . $projectModule . ')';
 			}
-			$lines[] = $line;
+			$fileLines[] = $line;
 		}
-		return $lines === [] ? ['Generated files: none'] : array_merge(['Generated files:'], array_map(static fn (string $line): string => '  - ' . $line, $lines));
+		return $fileLines === [] ? array_merge($lines, ['Generated files: none']) : array_merge($lines, ['Generated files:'], array_map(static fn (string $line): string => '  - ' . $line, $fileLines));
 	}
 
 	if ($view === 'ninja-target') {
@@ -9154,7 +9323,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 	}
 
 	scpp_fail(
-		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
+		'Unknown explain-build view `' . $view . '`. Use one of: files-transpiled, files-reused, outputs-rebuilt, rebuild-fanout, generated-artifacts, grouping, project-units, project-unit <source>, modules, module <name>, entrypoint, final-output, generated-files, ninja-target.' . PHP_EOL,
 		1
 	);
 }

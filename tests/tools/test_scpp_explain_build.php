@@ -117,6 +117,31 @@ final class ScppExplainBuildTest
 			}
 			$this->assertContains('source:root:generated:child.phs', implode("\n", $groupIds), 'warm build grouping should include an isolated child source group');
 			$this->assertContains('source:root:native:native_cpp/policy_probe.cpp', implode("\n", $groupIds), 'warm build grouping should include an isolated native source group');
+			$topLevelGeneratedArtifactWrites = is_array($details['generated_artifact_writes'] ?? null) ? $details['generated_artifact_writes'] : null;
+			if (!is_array($topLevelGeneratedArtifactWrites)) {
+				throw new RuntimeException('last_run details should contain generated artifact write counters');
+			}
+			$this->assertGeneratedArtifactWriteReportShape($topLevelGeneratedArtifactWrites, 'warm top-level generated artifact writes');
+			$generatedArtifactWrites = is_array($explanation['generated_artifact_writes'] ?? null) ? $explanation['generated_artifact_writes'] : null;
+			if (!is_array($generatedArtifactWrites)) {
+				throw new RuntimeException('build explanation should contain generated artifact write counters');
+			}
+			$this->assertGeneratedArtifactWriteReportShape($generatedArtifactWrites, 'warm explanation generated artifact writes');
+			$this->assertSame($topLevelGeneratedArtifactWrites, $generatedArtifactWrites, 'top-level and explanation generated artifact write counters should match');
+			$artifactTotals = is_array($generatedArtifactWrites['total'] ?? null) ? $generatedArtifactWrites['total'] : [];
+			$artifactHeaders = is_array($generatedArtifactWrites['headers'] ?? null) ? $generatedArtifactWrites['headers'] : [];
+			$artifactSources = is_array($generatedArtifactWrites['sources'] ?? null) ? $generatedArtifactWrites['sources'] : [];
+			$this->assertSame(6, $artifactTotals['artifact_count'] ?? null, 'warm build should report three generated headers and three generated sources');
+			$this->assertSame(0, $artifactTotals['written_count'] ?? null, 'warm build should not rewrite generated artifacts');
+			$this->assertSame(6, $artifactTotals['preserved_count'] ?? null, 'warm build should preserve all generated artifacts');
+			$this->assertSame(0, $artifactTotals['first_recorded_count'] ?? null, 'warm build should not first-record generated hashes after the seed build');
+			$this->assertSame(0, $artifactTotals['changed_count'] ?? null, 'warm build should report no generated artifact hash changes');
+			$this->assertSame(3, $artifactHeaders['total_count'] ?? null, 'warm build should count three generated headers');
+			$this->assertSame(3, $artifactHeaders['preserved_count'] ?? null, 'warm build should preserve all generated headers');
+			$this->assertSame(0, $artifactHeaders['interface_changed_count'] ?? null, 'warm build should report no generated interface changes');
+			$this->assertSame(3, $artifactSources['total_count'] ?? null, 'warm build should count three generated sources');
+			$this->assertSame(3, $artifactSources['preserved_count'] ?? null, 'warm build should preserve all generated sources');
+			$this->assertSame(0, $artifactSources['implementation_changed_count'] ?? null, 'warm build should report no generated implementation changes');
 			$projectModules = is_array($explanation['project_modules'] ?? null) ? $explanation['project_modules'] : null;
 			if (!is_array($projectModules)) {
 				throw new RuntimeException('build explanation should contain project module details');
@@ -282,6 +307,9 @@ final class ScppExplainBuildTest
 			$this->assertSame('broad_equivalent_pack', $mainSource['project_unit_force_include_mode'] ?? null, 'source explanation should annotate main broad pack mode');
 			$this->assertTrue(str_starts_with((string) ($mainSource['project_unit_force_include_header'] ?? ''), '.prism/generated/__project_units/'), 'source explanation should annotate main force-include header');
 			$this->assertSame('app', $mainSource['project_module'] ?? null, 'source explanation should annotate main project module membership');
+			$mainArtifacts = is_array($mainSource['generated_artifacts'] ?? null) ? $mainSource['generated_artifacts'] : [];
+			$this->assertSame('preserved', $mainArtifacts['header_write_status'] ?? null, 'warm reused main source should report preserved generated header');
+			$this->assertSame('preserved', $mainArtifacts['source_write_status'] ?? null, 'warm reused main source should report preserved generated source');
 			$mainModuleSurfaceArtifacts = is_array($mainSource['project_module_surface_artifacts'] ?? null) ? $mainSource['project_module_surface_artifacts'] : [];
 			$this->assertContains('.prism/cache/project_modules/app-', implode("\n", $mainModuleSurfaceArtifacts), 'source explanation should include the app module surface input');
 			$this->assertContains('.prism/cache/project_modules/domain-', implode("\n", $mainModuleSurfaceArtifacts), 'source explanation should include the domain dependency surface input');
@@ -298,6 +326,9 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $explain['exit_code'], 'scpp explain-build should succeed');
 			$this->assertContains('Explain build: build', $explain['stdout'], 'explain-build should identify the saved command');
 			$this->assertContains('Runtime: reuse (reusing existing runtime artifact by default)', $explain['stdout'], 'explain-build should explain runtime reuse');
+			$this->assertContains('Generated artifact writes: artifacts 6 total, 0 written, 6 preserved, 0 first-recorded, 0 changed', $explain['stdout'], 'explain-build should summarize generated artifact writes');
+			$this->assertContains('Generated headers: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 interface-changed', $explain['stdout'], 'explain-build should summarize generated header write counters');
+			$this->assertContains('Generated sources: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 implementation-changed', $explain['stdout'], 'explain-build should summarize generated source write counters');
 			$this->assertContains('Rebuild fanout: outputs 0, objects 0 (generated 0, native 0, runtime 0), project-unit packs changed 0, removed 0, Ninja no-work yes', $explain['stdout'], 'explain-build should summarize warm no-work fanout');
 			$this->assertContains('main.phs -> reused (source metadata and generated artifacts unchanged)', $explain['stdout'], 'explain-build should explain source reuse');
 			$this->assertContains('Direct Ninja target: main', $explain['stdout'], 'explain-build should report the direct Ninja target name');
@@ -316,6 +347,12 @@ final class ScppExplainBuildTest
 			$fanoutView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'rebuild-fanout'], [], 20.0);
 			$this->assertSame(0, $fanoutView['exit_code'], 'scpp explain-build rebuild-fanout should succeed');
 			$this->assertContains('Rebuild fanout: outputs 0, objects 0 (generated 0, native 0, runtime 0), project-unit packs changed 0, removed 0, Ninja no-work yes', $fanoutView['stdout'], 'rebuild-fanout should report warm no-work fanout');
+
+			$generatedArtifactsView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'generated-artifacts'], [], 20.0);
+			$this->assertSame(0, $generatedArtifactsView['exit_code'], 'scpp explain-build generated-artifacts should succeed');
+			$this->assertContains('Generated artifact writes: artifacts 6 total, 0 written, 6 preserved, 0 first-recorded, 0 changed', $generatedArtifactsView['stdout'], 'generated-artifacts should report warm generated artifact writes');
+			$this->assertContains('Generated headers: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 interface-changed', $generatedArtifactsView['stdout'], 'generated-artifacts should report warm generated header writes');
+			$this->assertContains('Generated sources: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 implementation-changed', $generatedArtifactsView['stdout'], 'generated-artifacts should report warm generated source writes');
 
 			$groupingView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'grouping'], [], 20.0);
 			$this->assertSame(0, $groupingView['exit_code'], 'scpp explain-build grouping should succeed');
@@ -387,6 +424,7 @@ final class ScppExplainBuildTest
 
 			$generatedFilesView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'generated-files'], [], 20.0);
 			$this->assertSame(0, $generatedFilesView['exit_code'], 'scpp explain-build generated-files should succeed');
+			$this->assertContains('Generated artifact writes: artifacts 6 total, 0 written, 6 preserved, 0 first-recorded, 0 changed', $generatedFilesView['stdout'], 'generated-files should include generated artifact write counters');
 			$this->assertContains('Generated files:', $generatedFilesView['stdout'], 'generated-files should include a header');
 			$this->assertContains('main.phs -> .prism/generated/main.cpp -> .prism/build/main.o (project unit: broad_equivalent_pack .prism/generated/__project_units/', $generatedFilesView['stdout'], 'generated-files should map main source to generated outputs and active broad pack');
 			$this->assertContains('child.phs -> .prism/generated/child.cpp -> .prism/build/child.o (project unit: scoped .prism/generated/__project_units/scoped-', $generatedFilesView['stdout'], 'generated-files should map child source to generated outputs and active scoped pack');
@@ -705,6 +743,46 @@ final class ScppExplainBuildTest
 				'rebuilt_objects',
 			], $group, $context . ' group row keys');
 		}
+	}
+
+	private function assertGeneratedArtifactWriteReportShape(array $generatedArtifactWrites, string $context): void
+	{
+		$this->assertKeys(['headers', 'sources', 'total'], $generatedArtifactWrites, $context . ' top-level keys');
+		$headers = is_array($generatedArtifactWrites['headers'] ?? null) ? $generatedArtifactWrites['headers'] : null;
+		if (!is_array($headers)) {
+			throw new RuntimeException($context . ' headers should be an object');
+		}
+		$this->assertKeys([
+			'first_recorded_count',
+			'interface_changed_count',
+			'preserved_count',
+			'total_count',
+			'written_count',
+		], $headers, $context . ' header counter keys');
+
+		$sources = is_array($generatedArtifactWrites['sources'] ?? null) ? $generatedArtifactWrites['sources'] : null;
+		if (!is_array($sources)) {
+			throw new RuntimeException($context . ' sources should be an object');
+		}
+		$this->assertKeys([
+			'first_recorded_count',
+			'implementation_changed_count',
+			'preserved_count',
+			'total_count',
+			'written_count',
+		], $sources, $context . ' source counter keys');
+
+		$total = is_array($generatedArtifactWrites['total'] ?? null) ? $generatedArtifactWrites['total'] : null;
+		if (!is_array($total)) {
+			throw new RuntimeException($context . ' total should be an object');
+		}
+		$this->assertKeys([
+			'artifact_count',
+			'changed_count',
+			'first_recorded_count',
+			'preserved_count',
+			'written_count',
+		], $total, $context . ' total counter keys');
 	}
 
 	private function assertProjectModuleReportShape(array $projectModules, string $context): void
