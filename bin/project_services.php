@@ -712,7 +712,7 @@ function print_help(): void
 	echo "  scpp full-error\n";
 	echo "  scpp last-run\n";
 	echo "  scpp full-last-run\n";
-	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|project-units|project-unit <source>|entrypoint|final-output|generated-files|ninja-target]\n";
+	echo "  scpp explain-build [files-transpiled|files-reused|outputs-rebuilt|rebuild-fanout|project-units|project-unit <source>|entrypoint|final-output|generated-files|ninja-target]\n";
 	echo "  scpp usability-harness [--config <path>] [--limit <n>] [--stop-after-bugs <n>] [--include-scenarios]\n";
 	echo "  scpp build emits a FastCGI companion binary when prism.json fastcgi.enabled = true\n";
 	echo "  scpp clean removes the generated project working tree for a cold rebuild\n";
@@ -3034,9 +3034,15 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					scpp_fail('internal error: ' . $e->getMessage() . PHP_EOL, 4);
 				}
 
-				write_text_file($generatedHeader, implode(PHP_EOL, $cppFile->headerLines) . PHP_EOL);
+				$generatedHeaderContents = implode(PHP_EOL, $cppFile->headerLines) . PHP_EOL;
+				$generatedCppContents = implode(PHP_EOL, $cppFile->sourceLines) . PHP_EOL;
+				$generatedInterfaceHash = hash('sha256', $generatedHeaderContents);
+				$generatedImplementationHash = hash('sha256', $generatedCppContents);
+				$generatedArtifactChanges = summarize_generated_artifact_hash_changes($previous, $generatedInterfaceHash, $generatedImplementationHash);
+
+				write_text_file($generatedHeader, $generatedHeaderContents);
 				write_generated_line_map_file($generatedHeader . '.line.tsv', $cppFile->headerLineMap);
-				write_text_file($generatedCpp, implode(PHP_EOL, $cppFile->sourceLines) . PHP_EOL);
+				write_text_file($generatedCpp, $generatedCppContents);
 				write_generated_line_map_file($generatedCpp . '.line.tsv', $cppFile->sourceLineMap);
 				write_export_manifest_file($generatedExportManifest, $cppFile->exportManifest);
 				$transpiledCount++;
@@ -3048,8 +3054,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					'is_entrypoint' => $emitProgramEntry,
 					'action' => 'transpiled',
 					'reasons' => $transpileReasons,
+					'generated_artifacts' => $generatedArtifactChanges,
 				];
 			} else {
+				$generatedInterfaceHash = existing_file_sha256($generatedHeader) ?? (string) ($previous['generated_interface_hash'] ?? '');
+				$generatedImplementationHash = existing_file_sha256($generatedCpp) ?? (string) ($previous['generated_implementation_hash'] ?? '');
 				$skippedCount++;
 				$sourceRebuildReasons[] = [
 					'project_root' => normalize_path($contextProjectRoot),
@@ -3059,6 +3068,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					'is_entrypoint' => $emitProgramEntry,
 					'action' => 'reused',
 					'reasons' => ['source metadata and generated artifacts unchanged'],
+					'generated_artifacts' => summarize_generated_artifact_hash_changes($previous, $generatedInterfaceHash, $generatedImplementationHash),
 				];
 			}
 
@@ -3101,6 +3111,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 				'content_hash' => $meta['content_hash'],
 				'generator_signature' => $generatorSignature,
 				'generated_base' => normalize_config_path(relative_path($contextProjectRoot, $generatedBase)),
+				'generated_interface_hash' => $generatedInterfaceHash ?? '',
+				'generated_implementation_hash' => $generatedImplementationHash ?? '',
 				'emit_program_entry' => $emitProgramEntry,
 				'has_export_manifest' => $hasExportManifest,
 			];
@@ -6980,6 +6992,15 @@ function write_text_file(string $path, string $contents): void
 	}
 }
 
+function existing_file_sha256(string $path): ?string
+{
+	if (!is_file($path)) {
+		return null;
+	}
+	$hash = hash_file('sha256', $path);
+	return is_string($hash) ? $hash : null;
+}
+
 /** @param array<string,mixed> $data */
 function write_json_file_atomic(string $path, array $data): void
 {
@@ -7082,6 +7103,34 @@ function collect_transpile_reasons(
 }
 
 /**
+ * @return array{interface_hash:string,implementation_hash:string,interface_changed:bool,implementation_changed:bool,change_reason:string}
+ */
+function summarize_generated_artifact_hash_changes(?array $previous, string $interfaceHash, string $implementationHash): array
+{
+	$previousInterfaceHash = is_array($previous) ? trim((string) ($previous['generated_interface_hash'] ?? '')) : '';
+	$previousImplementationHash = is_array($previous) ? trim((string) ($previous['generated_implementation_hash'] ?? '')) : '';
+	$interfaceChanged = $previousInterfaceHash === '' || $previousInterfaceHash !== $interfaceHash;
+	$implementationChanged = $previousImplementationHash === '' || $previousImplementationHash !== $implementationHash;
+	$reason = 'generated artifacts unchanged';
+	if ($interfaceChanged && $implementationChanged) {
+		$reason = $previousInterfaceHash === '' && $previousImplementationHash === ''
+			? 'generated artifact hashes first recorded'
+			: 'interface and implementation changed';
+	} elseif ($interfaceChanged) {
+		$reason = 'interface changed';
+	} elseif ($implementationChanged) {
+		$reason = 'implementation changed';
+	}
+	return [
+		'interface_hash' => $interfaceHash,
+		'implementation_hash' => $implementationHash,
+		'interface_changed' => $interfaceChanged,
+		'implementation_changed' => $implementationChanged,
+		'change_reason' => $reason,
+	];
+}
+
+/**
  * @param array{compile_runtime?:bool,compile_dependencies?:bool,force_runtime_rebuild?:bool,entry_override?:?string} $options
  * @param list<array<string,mixed>> $sourceRebuildReasons
  * @param list<string> $rebuiltOutputs
@@ -7124,7 +7173,8 @@ function build_explanation_details(
 		$rebuilt[] = normalize_config_path(relative_path($projectRoot, $path));
 	}
 	$projectUnitForceIncludeReport = normalize_project_unit_force_include_report($projectUnitForceIncludeReport);
-	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport);
+	$normalizedRebuildFanout = normalize_build_rebuild_fanout($rebuildFanout);
+	$sources = annotate_build_explanation_sources_with_project_units($projectRoot, $sourceRebuildReasons, $projectUnitForceIncludeReport, $normalizedRebuildFanout, $exitCode === 0, $options);
 
 	return [
 		'status' => $exitCode === 0 ? 'success' : 'failure',
@@ -7154,7 +7204,7 @@ function build_explanation_details(
 		'runtime_modules' => build_runtime_module_explanation($runtimeConfig),
 		'sources' => $sources,
 		'rebuilt_outputs' => $rebuilt,
-		'rebuild_fanout' => normalize_build_rebuild_fanout($rebuildFanout),
+		'rebuild_fanout' => $normalizedRebuildFanout,
 		'project_unit_force_includes' => $projectUnitForceIncludeReport,
 	];
 }
@@ -7164,9 +7214,18 @@ function build_explanation_details(
  * @param array<string,mixed> $projectUnitForceIncludeReport
  * @return list<array<string,mixed>>
  */
-function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport): array
+function annotate_build_explanation_sources_with_project_units(string $projectRoot, array $sources, array $projectUnitForceIncludeReport, array $rebuildFanout = [], bool $buildSucceeded = true, array $options = []): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
+	$rebuiltGeneratedObjects = [];
+	foreach (normalize_string_list($rebuildFanout['rebuilt_generated_objects'] ?? []) as $objectPath) {
+		$rebuiltGeneratedObjects[$objectPath] = true;
+	}
+	$changedPackHeaders = [];
+	$packChanges = is_array($projectUnitForceIncludeReport['pack_changes'] ?? null) ? $projectUnitForceIncludeReport['pack_changes'] : [];
+	foreach (normalize_string_list($packChanges['changed_headers'] ?? []) as $headerPath) {
+		$changedPackHeaders[$headerPath] = true;
+	}
 	$headerModes = [];
 	foreach (is_array($projectUnitForceIncludeReport['headers'] ?? null) ? $projectUnitForceIncludeReport['headers'] : [] as $header) {
 		if (!is_array($header)) {
@@ -7207,9 +7266,44 @@ function annotate_build_explanation_sources_with_project_units(string $projectRo
 			$source['project_unit_force_include_header'] = $forceIncludeHeader;
 			$source['project_unit_force_include_mode'] = $headerModes[$forceIncludeHeader] ?? ($forceIncludeHeader !== '' ? project_unit_force_include_header_mode(normalize_path($normalizedProjectRoot . '/' . $forceIncludeHeader)) : '');
 		}
+		$objectPath = normalize_config_path((string) ($source['object_path'] ?? ''));
+		if (!$buildSucceeded) {
+			$source['object_rebuilt'] = null;
+			$source['object_rebuild_reason'] = 'object rebuild status unavailable because Ninja failed before final output mtimes were captured';
+		} else {
+			$source['object_rebuilt'] = $objectPath !== '' && isset($rebuiltGeneratedObjects[$objectPath]);
+			$source['object_rebuild_reason'] = explain_source_object_rebuild_reason($source, $changedPackHeaders, $options);
+		}
 		$annotated[] = $source;
 	}
 	return $annotated;
+}
+
+/** @param array<string,mixed> $source @param array<string,bool> $changedPackHeaders @param array<string,mixed> $options */
+function explain_source_object_rebuild_reason(array $source, array $changedPackHeaders, array $options): string
+{
+	if (($source['object_rebuilt'] ?? null) !== true) {
+		if (($source['action'] ?? '') === 'transpiled') {
+			return 'generated object remained up-to-date after content-aware writes';
+		}
+		return 'source and generated object reused';
+	}
+	$artifacts = is_array($source['generated_artifacts'] ?? null) ? $source['generated_artifacts'] : [];
+	$changeReason = trim((string) ($artifacts['change_reason'] ?? ''));
+	if ($changeReason !== '' && $changeReason !== 'generated artifacts unchanged' && $changeReason !== 'generated artifact hashes first recorded') {
+		return $changeReason;
+	}
+	$forceIncludeHeader = normalize_config_path((string) ($source['project_unit_force_include_header'] ?? ''));
+	if ($forceIncludeHeader !== '' && isset($changedPackHeaders[$forceIncludeHeader])) {
+		return 'project-unit pack changed';
+	}
+	if ((bool) ($options['compile_runtime'] ?? false)) {
+		return 'runtime rebuild requested for this build';
+	}
+	if ((bool) ($options['compile_dependencies'] ?? false)) {
+		return 'dependency rebuild requested for this build';
+	}
+	return 'Ninja rebuilt the object; no source/interface/project-unit cause was recorded';
 }
 
 /**
@@ -7311,7 +7405,7 @@ function render_build_explanation_lines(array $details): array
 		}
 		$path = (string) ($source['path'] ?? '(unknown)');
 		$reasons = is_array($source['reasons'] ?? null) ? $source['reasons'] : [];
-		$line = $path . ' -> ' . (string) ($source['action'] ?? 'unknown') . format_reason_suffix($reasons);
+		$line = $path . ' -> ' . (string) ($source['action'] ?? 'unknown') . format_reason_suffix($reasons) . format_generated_artifact_suffix($source);
 		if (($source['action'] ?? '') === 'transpiled') {
 			$transpiled[] = $line;
 			continue;
@@ -7377,6 +7471,26 @@ function render_build_rebuild_fanout_lines(array $fanout): array
 		}
 	}
 	return $lines;
+}
+
+/** @param array<string,mixed> $source */
+function format_generated_artifact_suffix(array $source): string
+{
+	$artifacts = is_array($source['generated_artifacts'] ?? null) ? $source['generated_artifacts'] : [];
+	$changeReason = trim((string) ($artifacts['change_reason'] ?? ''));
+	$objectReason = trim((string) ($source['object_rebuild_reason'] ?? ''));
+	$objectRebuilt = (bool) ($source['object_rebuilt'] ?? false);
+	$parts = [];
+	if ($changeReason !== '') {
+		$parts[] = $changeReason;
+	}
+	if ($objectReason !== '') {
+		$objectState = array_key_exists('object_rebuilt', $source) && $source['object_rebuilt'] === null
+			? 'unknown'
+			: ($objectRebuilt ? 'rebuilt' : 'not rebuilt');
+		$parts[] = 'object ' . $objectState . ': ' . $objectReason;
+	}
+	return $parts === [] ? '' : ' [' . implode('; ', $parts) . ']';
 }
 
 /**
@@ -7715,7 +7829,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 				continue;
 			}
 			$path = (string) ($source['path'] ?? '(unknown)');
-			$lines[] = $path . format_reason_suffix(is_array($source['reasons'] ?? null) ? $source['reasons'] : []);
+			$lines[] = $path . format_reason_suffix(is_array($source['reasons'] ?? null) ? $source['reasons'] : []) . format_generated_artifact_suffix($source);
 		}
 		return $lines === [] ? ['Files transpiled: none'] : array_merge(['Files transpiled:'], array_map(static fn (string $line): string => '  - ' . $line, $lines));
 	}
@@ -7727,7 +7841,7 @@ function render_explain_build_view_lines(array $details, string $view, array $vi
 				continue;
 			}
 			$path = (string) ($source['path'] ?? '(unknown)');
-			$lines[] = $path . format_reason_suffix(is_array($source['reasons'] ?? null) ? $source['reasons'] : []);
+			$lines[] = $path . format_reason_suffix(is_array($source['reasons'] ?? null) ? $source['reasons'] : []) . format_generated_artifact_suffix($source);
 		}
 		return $lines === [] ? ['Files reused: none'] : array_merge(['Files reused:'], array_map(static fn (string $line): string => '  - ' . $line, $lines));
 	}

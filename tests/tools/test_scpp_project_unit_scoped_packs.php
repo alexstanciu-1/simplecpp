@@ -710,6 +710,24 @@ PHS);
 		$this->assertSame(0, $fanout['rebuilt_native_object_count'] ?? null, $label . ' should not rebuild native objects');
 		$this->assertSame(0, $fanout['rebuilt_runtime_object_count'] ?? null, $label . ' should not rebuild runtime objects');
 		$this->assertSame(0, $fanout['changed_project_unit_pack_count'] ?? null, $label . ' should not rewrite project-unit packs when headers are unchanged');
+
+		$explanation = is_array($details['build_explanation'] ?? null) ? $details['build_explanation'] : [];
+		$sources = is_array($explanation['sources'] ?? null) ? $explanation['sources'] : [];
+		$edited = null;
+		foreach ($sources as $source) {
+			if (is_array($source) && ($source['action'] ?? null) === 'transpiled') {
+				$edited = $source;
+				break;
+			}
+		}
+		if (!is_array($edited)) {
+			throw new RuntimeException($label . ' should report the edited source in build explanation');
+		}
+		$artifacts = is_array($edited['generated_artifacts'] ?? null) ? $edited['generated_artifacts'] : [];
+		$this->assertSame(false, $artifacts['interface_changed'] ?? null, $label . ' should keep the generated interface hash stable');
+		$this->assertSame(true, $artifacts['implementation_changed'] ?? null, $label . ' should change only the generated implementation hash');
+		$this->assertSame(true, $edited['object_rebuilt'] ?? null, $label . ' should explain that the edited object rebuilt');
+		$this->assertSame('implementation changed', $edited['object_rebuild_reason'] ?? null, $label . ' should explain the object rebuild by implementation hash change');
 	}
 
 	/** @return array<string,mixed> */
