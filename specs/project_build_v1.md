@@ -238,11 +238,12 @@ Each module may provide `sources`, `source_roots`, `dependencies`, and
 write report/cache artifacts for module public surfaces and implementation
 artifact sets, store module interface and implementation hashes, and report
 consumer invalidation from dependency interface hash changes. The current Ninja
-compile graph defaults to per-source objects, with opt-in manual grouping for
-root generated sources. Generated object compile edges for sources assigned to a
+compile graph defaults to per-source objects, with opt-in grouped generated
+object edges for manual groups and release-mode grouping policies, including
+explicit module groups. Generated object compile edges for sources assigned to a
 module take the owning module's public surface artifact and each depended
-module's public surface artifact as implicit inputs. Private
-implementation artifacts are not compile inputs for consumers.
+module's public surface artifact as implicit inputs. Private implementation
+artifacts are not compile inputs for consumers.
 
 Projects may set `project_module_dependency_policy` to `report`, `warn`, or
 `fail`; the default is `report`. Module dependency validation compares explicit
@@ -254,6 +255,17 @@ reported as `unavailable` and does not invent violations. `warn` prints
 undeclared dependency diagnostics, while `fail` stops the build on undeclared
 module dependency evidence. Unused declared dependencies are reported but do not
 fail by themselves.
+
+Projects may set `project_module_public_policy` to `report`, `warn`, or
+`fail`; the default is `report`. A non-empty `project_modules.*.public_exports`
+list is treated as that module's public declaration allow-list. Empty
+`public_exports` is unconstrained for compatibility. Public API validation uses
+file-summary declaration evidence plus project-unit dependency category rows to
+report unknown configured exports and cross-module references to declarations
+outside the dependency module's non-empty public export list. Missing evidence
+is reported as `unavailable` and does not invent violations. Current validation
+is declaration-target based; it does not model method/property-level API
+privacy as a separate module export surface.
 
 Each configured project module also writes a module analysis summary artifact
 from the same project-unit dependency summaries. These artifacts live under

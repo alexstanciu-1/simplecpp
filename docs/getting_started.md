@@ -229,7 +229,8 @@ Compiler selection:
 - `build.grouping_compile = true` can opt into grouped generated object edges for manual groups, or for release-mode `folder`/`package`/`module`/`release`/`auto` grouping while keeping debug builds per-source by default
 - `build.grouping_policy = "auto"` records deterministic prior-build evidence and source-level grouped/isolated reasons in `scpp explain-build grouping`
 - `project_module_dependency_policy = "report"|"warn"|"fail"` compares explicit project module dependencies with source dependency evidence
-- `scpp explain-build modules` reports project module surface cache status and module analysis summary cache status from `.prism/cache/project_modules/*.stan-summary.json`
+- `project_module_public_policy = "report"|"warn"|"fail"` validates non-empty module `public_exports` against declaration evidence and direct cross-module dependency targets
+- `scpp explain-build modules` reports project module surface cache status, module analysis summary cache status from `.prism/cache/project_modules/*.stan-summary.json`, dependency validation, and public API validation
 - `scpp docs <name>` prints curated local Markdown documentation by short name
 
 ## 4. Single-file transpile remains available

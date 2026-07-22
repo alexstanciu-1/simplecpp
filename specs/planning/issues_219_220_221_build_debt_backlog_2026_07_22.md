@@ -86,6 +86,13 @@ unassigned sources stay per-source. Grouped module compile edges keep public
 module surface artifacts as implicit inputs and keep private implementation
 artifacts out of consumer compile inputs.
 
+The first #221 public API slice adds `project_module_public_policy` with
+`report`, `warn`, and `fail` modes. Non-empty `public_exports` lists now act as
+explicit module public declaration allow-lists. Empty `public_exports` remains
+unconstrained for compatibility. Validation reports unknown configured exports
+and direct cross-module dependency targets that reach declarations outside the
+dependency module's non-empty public export list.
+
 ## Debt By Issue
 
 ### #219 Generated Artifact And Rebuild Explanation Debt
@@ -120,8 +127,8 @@ artifacts out of consumer compile inputs.
 ### #221 Project Module Debt
 
 - Modules are explicit config only; Simple C++ now validates declared module
-  dependencies against direct source evidence, but public/private API policy and
-  transitive boundary enforcement are still not implemented.
+  dependencies and declaration-target public API policy against direct source
+  evidence, but transitive boundary enforcement is still not implemented.
 - Module surfaces are cache/report artifacts, implicit compile inputs, and can
   drive explicit release-mode grouped generated objects with
   `build.grouping_policy = "module"` plus `build.grouping_compile = true`.
@@ -129,8 +136,8 @@ artifacts out of consumer compile inputs.
   entrypoints still stay per-source.
 - Module-level dependency summary artifacts and cache reporting are implemented,
   but they are not yet used to skip planner or STAN work.
-- `public_exports` participates in module identity, but public/private API
-  enforcement is not implemented.
+- `public_exports` now drives declaration-target public/private API validation,
+  but method/property-level module API modeling is not implemented.
 - Duplicate assignments and unassigned sources are reported, not
   policy-enforced.
 - Project modules are project-local; cross-project module surfaces are not
@@ -221,6 +228,8 @@ artifacts out of consumer compile inputs.
     - Keep private implementation artifacts out of consumer compile inputs.
 
 11. `BLD-221-PUBLIC-1`: Enforce public/private module API policy.
+    - Status: implemented for declaration-target validation with
+      `project_module_public_policy`.
     - Define what `public_exports` means for PHS-generated surfaces.
     - Detect private dependency leaks in generated header reach.
     - Add diagnostics that point to the source/module boundary.

@@ -926,6 +926,7 @@ final class ScppExplainBuildTest
 			'generated_source_count',
 			'manifest_artifacts',
 			'modules',
+			'public_api_validation',
 			'stan_summary_cache_status_counts',
 			'total_modules',
 			'unassigned_source_count',
@@ -956,6 +957,23 @@ final class ScppExplainBuildTest
 			'unavailable',
 		], $stanSummaryCacheStatusCounts, $context . ' stan_summary_cache_status_counts keys');
 
+		$publicApiValidation = is_array($projectModules['public_api_validation'] ?? null) ? $projectModules['public_api_validation'] : null;
+		if (!is_array($publicApiValidation)) {
+			throw new RuntimeException($context . ' public_api_validation should be an object');
+		}
+		$this->assertKeys([
+			'evidence_source',
+			'notes',
+			'policy',
+			'private_dependencies',
+			'private_dependency_count',
+			'resolved_public_export_count',
+			'resolved_public_exports',
+			'status',
+			'unknown_public_export_count',
+			'unknown_public_exports',
+		], $publicApiValidation, $context . ' public_api_validation keys');
+
 		foreach (is_array($projectModules['modules'] ?? null) ? $projectModules['modules'] : [] as $module) {
 			if (!is_array($module)) {
 				throw new RuntimeException($context . ' module row should be an object');
@@ -976,8 +994,11 @@ final class ScppExplainBuildTest
 				'interface_changed',
 				'interface_hash',
 				'name',
+				'private_dependency_violations',
 				'project_root',
 				'public_exports',
+				'public_api_validation_status',
+				'resolved_public_exports',
 				'source_count',
 				'source_roots',
 				'stan_summary_artifact',
@@ -988,6 +1009,7 @@ final class ScppExplainBuildTest
 				'sources',
 				'surface_artifact',
 				'undeclared_dependencies',
+				'unknown_public_exports',
 				'unused_declared_dependencies',
 				'unresolved_dependencies',
 			], $module, $context . ' module row keys');

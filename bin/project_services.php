@@ -7185,6 +7185,7 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 	$rootContext = is_array($projectContexts[$normalizedProjectRoot] ?? null) ? $projectContexts[$normalizedProjectRoot] : [];
 	$rootConfig = is_array($rootContext['config'] ?? null) ? $rootContext['config'] : [];
 	$dependencyValidationPolicy = normalize_project_module_dependency_policy($rootConfig, project_context_report_label($normalizedProjectRoot, $normalizedProjectRoot));
+	$publicApiPolicy = normalize_project_module_public_policy($rootConfig, project_context_report_label($normalizedProjectRoot, $normalizedProjectRoot));
 	$unitsByProjectRoot = [];
 	foreach ($generatedUnits as $unit) {
 		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
@@ -7274,6 +7275,8 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 	$stanSummaryCacheStatusCounts = summarize_project_module_stan_summary_cache_status_counts($moduleRows);
 	$dependencyValidation = collect_project_module_dependency_validation($normalizedProjectRoot, $moduleRows, $projectUnitForceIncludeReport, $dependencyValidationPolicy);
 	$moduleRows = apply_project_module_dependency_validation_to_module_rows($moduleRows, $dependencyValidation);
+	$publicApiValidation = collect_project_module_public_api_validation($normalizedProjectRoot, $projectContexts, $moduleRows, $projectUnitForceIncludeReport, $publicApiPolicy);
+	$moduleRows = apply_project_module_public_api_validation_to_module_rows($moduleRows, $publicApiValidation);
 	if ($dependencyValidationPolicy === 'warn' && (int) ($dependencyValidation['undeclared_dependency_count'] ?? 0) > 0) {
 		foreach (normalize_project_module_dependency_validation_rows(is_array($dependencyValidation['undeclared_dependencies'] ?? null) ? $dependencyValidation['undeclared_dependencies'] : []) as $violation) {
 			scpp_write('Project module dependency warning: module `' . (string) ($violation['module'] ?? '') . '` uses undeclared dependency `' . (string) ($violation['dependency'] ?? '') . '` from ' . implode(', ', normalize_string_list($violation['sources'] ?? [])) . PHP_EOL, 'stderr');
@@ -7285,6 +7288,24 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 			$messages[] = 'module `' . (string) ($violation['module'] ?? '') . '` uses undeclared dependency `' . (string) ($violation['dependency'] ?? '') . '` from ' . implode(', ', normalize_string_list($violation['sources'] ?? []));
 		}
 		scpp_fail('Project module dependency validation failed: ' . implode('; ', $messages) . PHP_EOL, 2);
+	}
+	if ($publicApiPolicy === 'warn' && ((int) ($publicApiValidation['private_dependency_count'] ?? 0) > 0 || (int) ($publicApiValidation['unknown_public_export_count'] ?? 0) > 0)) {
+		foreach (normalize_project_module_public_api_private_dependency_rows(is_array($publicApiValidation['private_dependencies'] ?? null) ? $publicApiValidation['private_dependencies'] : []) as $violation) {
+			scpp_write('Project module public API warning: module `' . (string) ($violation['module'] ?? '') . '` uses private declaration `' . (string) ($violation['target'] ?? '') . '` from module `' . (string) ($violation['dependency'] ?? '') . '` in ' . implode(', ', normalize_string_list($violation['sources'] ?? [])) . PHP_EOL, 'stderr');
+		}
+		foreach (normalize_project_module_public_api_unknown_export_rows(is_array($publicApiValidation['unknown_public_exports'] ?? null) ? $publicApiValidation['unknown_public_exports'] : []) as $violation) {
+			scpp_write('Project module public API warning: module `' . (string) ($violation['module'] ?? '') . '` declares unknown public export `' . (string) ($violation['export'] ?? '') . '`.' . PHP_EOL, 'stderr');
+		}
+	}
+	if ($publicApiPolicy === 'fail' && ((int) ($publicApiValidation['private_dependency_count'] ?? 0) > 0 || (int) ($publicApiValidation['unknown_public_export_count'] ?? 0) > 0)) {
+		$messages = [];
+		foreach (normalize_project_module_public_api_private_dependency_rows(is_array($publicApiValidation['private_dependencies'] ?? null) ? $publicApiValidation['private_dependencies'] : []) as $violation) {
+			$messages[] = 'module `' . (string) ($violation['module'] ?? '') . '` uses private declaration `' . (string) ($violation['target'] ?? '') . '` from module `' . (string) ($violation['dependency'] ?? '') . '` in ' . implode(', ', normalize_string_list($violation['sources'] ?? []));
+		}
+		foreach (normalize_project_module_public_api_unknown_export_rows(is_array($publicApiValidation['unknown_public_exports'] ?? null) ? $publicApiValidation['unknown_public_exports'] : []) as $violation) {
+			$messages[] = 'module `' . (string) ($violation['module'] ?? '') . '` declares unknown public export `' . (string) ($violation['export'] ?? '') . '`';
+		}
+		scpp_fail('Project module public API validation failed: ' . implode('; ', $messages) . PHP_EOL, 2);
 	}
 	return normalize_project_module_report([
 		'configured' => $moduleRows !== [],
@@ -7298,6 +7319,7 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 		'cache_status_counts' => $cacheStatusCounts,
 		'stan_summary_cache_status_counts' => $stanSummaryCacheStatusCounts,
 		'dependency_validation' => $dependencyValidation,
+		'public_api_validation' => $publicApiValidation,
 		'manifest_artifacts' => normalize_string_list($manifestArtifacts),
 		'modules' => $moduleRows,
 	]);
@@ -7315,6 +7337,22 @@ function normalize_project_module_dependency_policy(array $config, string $proje
 	}
 	if (!in_array($policy, ['report', 'warn', 'fail'], true)) {
 		scpp_fail('Invalid project_module_dependency_policy `' . $policy . '` in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . '. Use one of: report, warn, fail.' . PHP_EOL, 2);
+	}
+	return $policy;
+}
+
+function normalize_project_module_public_policy(array $config, string $projectLabel): string
+{
+	$rawPolicy = $config['project_module_public_policy'] ?? 'report';
+	if (!is_string($rawPolicy)) {
+		scpp_fail('Invalid project_module_public_policy in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . ': expected a string.' . PHP_EOL, 2);
+	}
+	$policy = strtolower(trim($rawPolicy));
+	if ($policy === '') {
+		$policy = 'report';
+	}
+	if (!in_array($policy, ['report', 'warn', 'fail'], true)) {
+		scpp_fail('Invalid project_module_public_policy `' . $policy . '` in ' . SCPP_PROJECT_CONFIG . ' for project ' . $projectLabel . '. Use one of: report, warn, fail.' . PHP_EOL, 2);
 	}
 	return $policy;
 }
@@ -7990,6 +8028,392 @@ function collect_project_module_inferred_dependencies_for_module(string $moduleN
 	return array_values(array_unique($dependencies));
 }
 
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param list<array<string,mixed>> $moduleRows
+ * @return array<string,mixed>
+ */
+function collect_project_module_public_api_validation(string $projectRoot, array $projectContexts, array $moduleRows, array $projectUnitForceIncludeReport, string $policy): array
+{
+	$moduleRows = normalize_project_module_rows($moduleRows);
+	$dependencySummaries = normalize_project_unit_dependency_summaries(is_array($projectUnitForceIncludeReport['dependency_summaries'] ?? null) ? $projectUnitForceIncludeReport['dependency_summaries'] : []);
+	$evidenceSource = project_module_dependency_evidence_source($projectUnitForceIncludeReport, $dependencySummaries);
+	$fileSummaries = load_project_module_public_api_file_summaries($projectRoot, $projectContexts, $projectUnitForceIncludeReport);
+	$notes = [];
+	if ($dependencySummaries === []) {
+		$notes[] = 'project-unit dependency evidence unavailable; module public API validation did not infer cross-module references';
+	}
+	if ($fileSummaries === []) {
+		$notes[] = 'file summary evidence unavailable; module public API validation did not inspect declarations';
+	}
+	if ($dependencySummaries !== [] && $fileSummaries !== []) {
+		$notes[] = $evidenceSource === 'stan'
+			? 'using STAN dependency and declaration evidence'
+			: 'using build-owned dependency and declaration evidence; no-STAN behavior is conservative and explicit';
+	}
+
+	$sourceToModule = [];
+	$moduleDeclarations = [];
+	foreach ($moduleRows as $module) {
+		$moduleName = trim((string) ($module['name'] ?? ''));
+		$projectLabel = trim((string) ($module['project_root'] ?? '.'));
+		if ($moduleName === '') {
+			continue;
+		}
+		$moduleDeclarations[$moduleName] = [];
+		foreach (normalize_project_module_source_rows(is_array($module['sources'] ?? null) ? $module['sources'] : []) as $source) {
+			$sourcePath = normalize_config_path((string) ($source['source'] ?? ''));
+			if ($sourcePath === '') {
+				continue;
+			}
+			$sourceToModule[project_module_source_key($projectLabel, $sourcePath)] = $moduleName;
+			$summary = project_module_public_api_file_summary_for_source($fileSummaries, $projectLabel, $sourcePath);
+			if ($summary === null) {
+				continue;
+			}
+			foreach (collect_project_module_public_api_declarations($summary, project_module_source_label($projectLabel, $sourcePath)) as $declaration) {
+				foreach (project_module_public_symbol_aliases((string) ($declaration['name'] ?? '')) as $alias => $_present) {
+					$moduleDeclarations[$moduleName][$alias] = $declaration;
+				}
+			}
+		}
+	}
+
+	$resolvedExports = [];
+	$unknownExports = [];
+	$publicExportAliasesByModule = [];
+	foreach ($moduleRows as $module) {
+		$moduleName = trim((string) ($module['name'] ?? ''));
+		if ($moduleName === '') {
+			continue;
+		}
+		$publicExportAliasesByModule[$moduleName] = [];
+		foreach (normalize_string_list($module['public_exports'] ?? []) as $export) {
+			foreach (project_module_public_symbol_aliases($export) as $alias => $_present) {
+				$publicExportAliasesByModule[$moduleName][$alias] = true;
+			}
+			if ($fileSummaries === []) {
+				continue;
+			}
+			if (project_module_public_target_matches_exports($export, $moduleDeclarations[$moduleName] ?? [])) {
+				$resolvedExports[] = [
+					'module' => $moduleName,
+					'export' => $export,
+					'message' => 'module `' . $moduleName . '` public export `' . $export . '` resolves to a declaration',
+				];
+			} else {
+				$unknownExports[] = [
+					'module' => $moduleName,
+					'export' => $export,
+					'message' => 'module `' . $moduleName . '` declares unknown public export `' . $export . '`',
+				];
+			}
+		}
+	}
+
+	$privateDependencies = [];
+	if ($dependencySummaries !== [] && $fileSummaries !== []) {
+		foreach ($dependencySummaries as $summary) {
+			$projectLabel = trim((string) ($summary['project_root'] ?? '.'));
+			if ($projectLabel === '') {
+				$projectLabel = '.';
+			}
+			$source = normalize_config_path((string) ($summary['source'] ?? ''));
+			if ($source === '') {
+				continue;
+			}
+			$sourceModule = $sourceToModule[project_module_source_key($projectLabel, $source)] ?? null;
+			if (!is_string($sourceModule) || $sourceModule === '') {
+				continue;
+			}
+			foreach (normalize_project_unit_dependency_category_rows(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []) as $category) {
+				$target = trim((string) ($category['target'] ?? ''));
+				if ($target === '') {
+					continue;
+				}
+				foreach (normalize_string_list($category['source_dependencies'] ?? []) as $dependencySourceKey) {
+					$dependencyModule = resolve_project_module_dependency_source_module($dependencySourceKey, $projectLabel, $sourceToModule);
+					if ($dependencyModule === null || $dependencyModule === $sourceModule) {
+						continue;
+					}
+					$publicAliases = $publicExportAliasesByModule[$dependencyModule] ?? [];
+					if ($publicAliases === []) {
+						continue;
+					}
+					if (project_module_public_target_matches_exports($target, $publicAliases)) {
+						continue;
+					}
+					$key = implode("\0", [
+						$sourceModule,
+						$dependencyModule,
+						(string) ($category['kind'] ?? ''),
+						$target,
+						(string) ($category['category'] ?? ''),
+					]);
+					if (!isset($privateDependencies[$key])) {
+						$privateDependencies[$key] = [
+							'module' => $sourceModule,
+							'dependency' => $dependencyModule,
+							'target' => $target,
+							'kind' => (string) ($category['kind'] ?? ''),
+							'category' => (string) ($category['category'] ?? ''),
+							'sources' => [],
+							'message' => 'module `' . $sourceModule . '` uses private declaration `' . $target . '` from module `' . $dependencyModule . '`',
+						];
+					}
+					$privateDependencies[$key]['sources'][] = project_module_source_label($projectLabel, $source);
+				}
+			}
+		}
+	}
+
+	$privateDependencies = array_values(array_map(static function (array $row): array {
+		$row['sources'] = normalize_string_list($row['sources'] ?? []);
+		return $row;
+	}, $privateDependencies));
+	usort($privateDependencies, static function (array $left, array $right): int {
+		foreach (['module', 'dependency', 'target', 'kind', 'category'] as $key) {
+			$compare = strcmp((string) ($left[$key] ?? ''), (string) ($right[$key] ?? ''));
+			if ($compare !== 0) {
+				return $compare;
+			}
+		}
+		return strcmp(implode("\n", normalize_string_list($left['sources'] ?? [])), implode("\n", normalize_string_list($right['sources'] ?? [])));
+	});
+	usort($unknownExports, static function (array $left, array $right): int {
+		return strcmp((string) ($left['module'] ?? '') . "\0" . (string) ($left['export'] ?? ''), (string) ($right['module'] ?? '') . "\0" . (string) ($right['export'] ?? ''));
+	});
+	usort($resolvedExports, static function (array $left, array $right): int {
+		return strcmp((string) ($left['module'] ?? '') . "\0" . (string) ($left['export'] ?? ''), (string) ($right['module'] ?? '') . "\0" . (string) ($right['export'] ?? ''));
+	});
+	$status = ($dependencySummaries === [] || $fileSummaries === [])
+		? 'unavailable'
+		: ($privateDependencies === [] && $unknownExports === [] ? 'ok' : 'violations');
+
+	return normalize_project_module_public_api_validation([
+		'policy' => $policy,
+		'status' => $status,
+		'evidence_source' => $evidenceSource,
+		'resolved_public_export_count' => count($resolvedExports),
+		'unknown_public_export_count' => count($unknownExports),
+		'private_dependency_count' => count($privateDependencies),
+		'resolved_public_exports' => $resolvedExports,
+		'unknown_public_exports' => $unknownExports,
+		'private_dependencies' => $privateDependencies,
+		'notes' => $notes,
+	]);
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @return array<string,array<string,mixed>>
+ */
+function load_project_module_public_api_file_summaries(string $projectRoot, array $projectContexts, array $projectUnitForceIncludeReport): array
+{
+	if (is_array($projectUnitForceIncludeReport['file_summaries'] ?? null)) {
+		return normalize_project_module_public_api_file_summary_map($projectUnitForceIncludeReport['file_summaries']);
+	}
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$rootContext = is_array($projectContexts[$normalizedProjectRoot] ?? null) ? $projectContexts[$normalizedProjectRoot] : [];
+	if (!is_string($rootContext['cache_dir'] ?? null)) {
+		return [];
+	}
+	$dependencyArtifact = normalize_project_unit_dependency_summary_artifact_info(is_array($projectUnitForceIncludeReport['dependency_summary_artifact'] ?? null) ? $projectUnitForceIncludeReport['dependency_summary_artifact'] : []);
+	$statePath = (bool) ($dependencyArtifact['used_stan_dependency_state'] ?? false)
+		? normalize_path($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE)
+		: normalize_path($rootContext['cache_dir'] . '/' . SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE);
+	$state = load_project_unit_dependency_state_from_state_file($statePath);
+	if (!is_array($state) || !is_array($state['file_summaries'] ?? null)) {
+		return [];
+	}
+	return normalize_project_module_public_api_file_summary_map($state['file_summaries']);
+}
+
+/** @return array<string,array<string,mixed>> */
+function normalize_project_module_public_api_file_summary_map(array $summaries): array
+{
+	$result = [];
+	foreach ($summaries as $sourceKey => $summary) {
+		if (!is_string($sourceKey) || !is_array($summary)) {
+			continue;
+		}
+		$sourceKey = normalize_config_path(trim($sourceKey));
+		if ($sourceKey === '') {
+			continue;
+		}
+		$result[$sourceKey] = $summary;
+	}
+	ksort($result, SORT_STRING);
+	return $result;
+}
+
+/**
+ * @param array<string,array<string,mixed>> $fileSummaries
+ * @return array<string,mixed>|null
+ */
+function project_module_public_api_file_summary_for_source(array $fileSummaries, string $projectLabel, string $source): ?array
+{
+	$projectLabel = trim($projectLabel);
+	if ($projectLabel === '') {
+		$projectLabel = '.';
+	}
+	$source = normalize_config_path($source);
+	$candidates = [$source, project_module_source_key($projectLabel, $source)];
+	if ($projectLabel !== '.') {
+		$candidates[] = normalize_config_path($projectLabel . '/' . $source);
+	}
+	foreach (normalize_string_list($candidates) as $candidate) {
+		if (is_array($fileSummaries[$candidate] ?? null)) {
+			return $fileSummaries[$candidate];
+		}
+	}
+	return null;
+}
+
+/** @return list<array{name:string,kind:string,source:string}> */
+function collect_project_module_public_api_declarations(array $summary, string $sourceLabel): array
+{
+	$declarations = [];
+	foreach (project_unit_summary_classes($summary) as $class) {
+		$name = project_module_public_declaration_name($class);
+		if ($name !== '') {
+			$declarations[] = [
+				'name' => $name,
+				'kind' => trim((string) ($class['declaration_kind'] ?? 'class')),
+				'source' => $sourceLabel,
+			];
+		}
+	}
+	foreach (project_unit_summary_function_buckets($summary) as $function) {
+		$name = project_module_public_declaration_name($function);
+		if ($name !== '') {
+			$declarations[] = [
+				'name' => $name,
+				'kind' => 'function',
+				'source' => $sourceLabel,
+			];
+		}
+	}
+	foreach (project_unit_summary_top_level_constants($summary) as $constant) {
+		$name = project_module_public_declaration_name($constant);
+		if ($name !== '') {
+			$declarations[] = [
+				'name' => $name,
+				'kind' => 'constant',
+				'source' => $sourceLabel,
+			];
+		}
+	}
+	usort($declarations, static function (array $left, array $right): int {
+		return strcmp((string) ($left['name'] ?? '') . "\0" . (string) ($left['kind'] ?? ''), (string) ($right['name'] ?? '') . "\0" . (string) ($right['kind'] ?? ''));
+	});
+	return $declarations;
+}
+
+/** @param array<string,mixed> $declaration */
+function project_module_public_declaration_name(array $declaration): string
+{
+	$name = trim((string) ($declaration['name'] ?? ''), "\\ \t\n\r\0\x0B");
+	if ($name === '') {
+		return '';
+	}
+	$namespace = trim((string) ($declaration['namespace'] ?? ''), "\\ \t\n\r\0\x0B");
+	return $namespace === '' ? $name : $namespace . '\\' . $name;
+}
+
+/** @return array<string,bool> */
+function project_module_public_symbol_aliases(string $symbol): array
+{
+	$symbol = trim($symbol, "\\ \t\n\r\0\x0B");
+	if ($symbol === '') {
+		return [];
+	}
+	$candidates = [$symbol];
+	if (str_contains($symbol, '::')) {
+		$candidates[] = strstr($symbol, '::', true) ?: $symbol;
+	}
+	$withoutMember = str_contains($symbol, '::') ? (strstr($symbol, '::', true) ?: $symbol) : $symbol;
+	if (str_contains($withoutMember, '\\')) {
+		$parts = explode('\\', $withoutMember);
+		$last = end($parts);
+		if (is_string($last) && $last !== '') {
+			$candidates[] = $last;
+		}
+	}
+	$aliases = [];
+	foreach ($candidates as $candidate) {
+		$normalized = project_module_public_symbol_key($candidate);
+		if ($normalized !== '') {
+			$aliases[$normalized] = true;
+		}
+	}
+	ksort($aliases, SORT_STRING);
+	return $aliases;
+}
+
+function project_module_public_symbol_key(string $symbol): string
+{
+	$symbol = trim($symbol, "\\ \t\n\r\0\x0B");
+	$symbol = preg_replace('/\s+/', '', $symbol) ?? $symbol;
+	return strtolower($symbol);
+}
+
+/** @param array<string,mixed>|array<string,bool> $exports */
+function project_module_public_target_matches_exports(string $target, array $exports): bool
+{
+	foreach (project_module_public_symbol_aliases($target) as $alias => $_present) {
+		if (array_key_exists($alias, $exports)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/** @param list<array<string,mixed>> $moduleRows @return list<array<string,mixed>> */
+function apply_project_module_public_api_validation_to_module_rows(array $moduleRows, array $validation): array
+{
+	$resolvedByModule = [];
+	foreach (normalize_project_module_public_api_export_rows(is_array($validation['resolved_public_exports'] ?? null) ? $validation['resolved_public_exports'] : []) as $row) {
+		$module = (string) ($row['module'] ?? '');
+		$export = (string) ($row['export'] ?? '');
+		if ($module !== '' && $export !== '') {
+			$resolvedByModule[$module][] = $export;
+		}
+	}
+	$unknownByModule = [];
+	foreach (normalize_project_module_public_api_unknown_export_rows(is_array($validation['unknown_public_exports'] ?? null) ? $validation['unknown_public_exports'] : []) as $row) {
+		$module = (string) ($row['module'] ?? '');
+		$export = (string) ($row['export'] ?? '');
+		if ($module !== '' && $export !== '') {
+			$unknownByModule[$module][] = $export;
+		}
+	}
+	$privateByModule = [];
+	foreach (normalize_project_module_public_api_private_dependency_rows(is_array($validation['private_dependencies'] ?? null) ? $validation['private_dependencies'] : []) as $row) {
+		$module = (string) ($row['module'] ?? '');
+		$dependency = (string) ($row['dependency'] ?? '');
+		$target = (string) ($row['target'] ?? '');
+		if ($module !== '' && $dependency !== '' && $target !== '') {
+			$privateByModule[$module][] = $dependency . ':' . $target;
+		}
+	}
+	foreach ($moduleRows as &$row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$moduleName = trim((string) ($row['name'] ?? ''));
+		$resolved = normalize_string_list($resolvedByModule[$moduleName] ?? []);
+		$unknown = normalize_string_list($unknownByModule[$moduleName] ?? []);
+		$private = normalize_string_list($privateByModule[$moduleName] ?? []);
+		$row['public_api_validation_status'] = ($unknown !== [] || $private !== []) ? 'violations' : ((string) ($validation['status'] ?? 'unavailable'));
+		$row['resolved_public_exports'] = $resolved;
+		$row['unknown_public_exports'] = $unknown;
+		$row['private_dependency_violations'] = $private;
+	}
+	unset($row);
+	return $moduleRows;
+}
+
 /** @param array<string,mixed> $payload */
 function hash_project_module_payload(array $payload): string
 {
@@ -8230,6 +8654,7 @@ function normalize_project_module_report(array $report): array
 		'cache_status_counts' => $normalizedCacheStatusCounts,
 		'stan_summary_cache_status_counts' => $normalizedStanSummaryCacheStatusCounts,
 		'dependency_validation' => normalize_project_module_dependency_validation(is_array($report['dependency_validation'] ?? null) ? $report['dependency_validation'] : []),
+		'public_api_validation' => normalize_project_module_public_api_validation(is_array($report['public_api_validation'] ?? null) ? $report['public_api_validation'] : []),
 		'manifest_artifacts' => normalize_string_list($report['manifest_artifacts'] ?? []),
 		'modules' => $modules,
 	];
@@ -8293,6 +8718,105 @@ function normalize_project_module_dependency_validation_rows(array $rows): array
 	return $result;
 }
 
+/** @return array<string,mixed> */
+function normalize_project_module_public_api_validation(array $validation): array
+{
+	$policy = trim((string) ($validation['policy'] ?? 'report'));
+	if (!in_array($policy, ['report', 'warn', 'fail'], true)) {
+		$policy = 'report';
+	}
+	$status = trim((string) ($validation['status'] ?? 'unavailable'));
+	if (!in_array($status, ['ok', 'violations', 'unavailable'], true)) {
+		$status = 'unavailable';
+	}
+	$evidenceSource = trim((string) ($validation['evidence_source'] ?? 'none'));
+	if (!in_array($evidenceSource, ['stan', 'build', 'none'], true)) {
+		$evidenceSource = 'none';
+	}
+	$resolved = normalize_project_module_public_api_export_rows(is_array($validation['resolved_public_exports'] ?? null) ? $validation['resolved_public_exports'] : []);
+	$unknown = normalize_project_module_public_api_unknown_export_rows(is_array($validation['unknown_public_exports'] ?? null) ? $validation['unknown_public_exports'] : []);
+	$private = normalize_project_module_public_api_private_dependency_rows(is_array($validation['private_dependencies'] ?? null) ? $validation['private_dependencies'] : []);
+	return [
+		'policy' => $policy,
+		'status' => $status,
+		'evidence_source' => $evidenceSource,
+		'resolved_public_export_count' => max(0, (int) ($validation['resolved_public_export_count'] ?? count($resolved))),
+		'unknown_public_export_count' => max(0, (int) ($validation['unknown_public_export_count'] ?? count($unknown))),
+		'private_dependency_count' => max(0, (int) ($validation['private_dependency_count'] ?? count($private))),
+		'resolved_public_exports' => $resolved,
+		'unknown_public_exports' => $unknown,
+		'private_dependencies' => $private,
+		'notes' => normalize_string_list($validation['notes'] ?? []),
+	];
+}
+
+/** @return list<array{module:string,export:string,message:string}> */
+function normalize_project_module_public_api_export_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$module = trim((string) ($row['module'] ?? ''));
+		$export = trim((string) ($row['export'] ?? ''));
+		if ($module === '' || $export === '') {
+			continue;
+		}
+		$result[] = [
+			'module' => $module,
+			'export' => $export,
+			'message' => trim((string) ($row['message'] ?? '')),
+		];
+	}
+	usort($result, static function (array $left, array $right): int {
+		return strcmp((string) ($left['module'] ?? '') . "\0" . (string) ($left['export'] ?? ''), (string) ($right['module'] ?? '') . "\0" . (string) ($right['export'] ?? ''));
+	});
+	return $result;
+}
+
+/** @return list<array{module:string,export:string,message:string}> */
+function normalize_project_module_public_api_unknown_export_rows(array $rows): array
+{
+	return normalize_project_module_public_api_export_rows($rows);
+}
+
+/** @return list<array{module:string,dependency:string,target:string,kind:string,category:string,sources:list<string>,message:string}> */
+function normalize_project_module_public_api_private_dependency_rows(array $rows): array
+{
+	$result = [];
+	foreach ($rows as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$module = trim((string) ($row['module'] ?? ''));
+		$dependency = trim((string) ($row['dependency'] ?? ''));
+		$target = trim((string) ($row['target'] ?? ''));
+		if ($module === '' || $dependency === '' || $target === '') {
+			continue;
+		}
+		$result[] = [
+			'module' => $module,
+			'dependency' => $dependency,
+			'target' => $target,
+			'kind' => trim((string) ($row['kind'] ?? '')),
+			'category' => trim((string) ($row['category'] ?? '')),
+			'sources' => normalize_string_list($row['sources'] ?? []),
+			'message' => trim((string) ($row['message'] ?? '')),
+		];
+	}
+	usort($result, static function (array $left, array $right): int {
+		foreach (['module', 'dependency', 'target', 'kind', 'category'] as $key) {
+			$compare = strcmp((string) ($left[$key] ?? ''), (string) ($right[$key] ?? ''));
+			if ($compare !== 0) {
+				return $compare;
+			}
+		}
+		return strcmp(implode("\n", normalize_string_list($left['sources'] ?? [])), implode("\n", normalize_string_list($right['sources'] ?? [])));
+	});
+	return $result;
+}
+
 /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */
 function normalize_project_module_rows(array $rows): array
 {
@@ -8335,6 +8859,10 @@ function normalize_project_module_rows(array $rows): array
 			'inferred_dependencies' => normalize_string_list($row['inferred_dependencies'] ?? []),
 			'undeclared_dependencies' => normalize_string_list($row['undeclared_dependencies'] ?? []),
 			'unused_declared_dependencies' => normalize_string_list($row['unused_declared_dependencies'] ?? []),
+			'public_api_validation_status' => trim((string) ($row['public_api_validation_status'] ?? 'unavailable')),
+			'resolved_public_exports' => normalize_string_list($row['resolved_public_exports'] ?? []),
+			'unknown_public_exports' => normalize_string_list($row['unknown_public_exports'] ?? []),
+			'private_dependency_violations' => normalize_string_list($row['private_dependency_violations'] ?? []),
 		];
 	}
 	usort($result, static function (array $left, array $right): int {
@@ -11224,6 +11752,13 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 		. ', inferred ' . (int) ($validation['inferred_dependency_count'] ?? 0)
 		. ', undeclared ' . (int) ($validation['undeclared_dependency_count'] ?? 0)
 		. ', unused declared ' . (int) ($validation['unused_declared_dependency_count'] ?? 0);
+	$publicApiValidation = normalize_project_module_public_api_validation(is_array($report['public_api_validation'] ?? null) ? $report['public_api_validation'] : []);
+	$lines[] = 'Project module public API validation: ' . (string) ($publicApiValidation['status'] ?? 'unavailable')
+		. ' (policy ' . (string) ($publicApiValidation['policy'] ?? 'report')
+		. ', evidence ' . (string) ($publicApiValidation['evidence_source'] ?? 'none') . ')'
+		. ', resolved exports ' . (int) ($publicApiValidation['resolved_public_export_count'] ?? 0)
+		. ', unknown exports ' . (int) ($publicApiValidation['unknown_public_export_count'] ?? 0)
+		. ', private deps ' . (int) ($publicApiValidation['private_dependency_count'] ?? 0);
 	if (!$includeModules && $moduleFilter === null) {
 		return $lines;
 	}
@@ -11272,6 +11807,7 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 			. ', implementation changed ' . (((bool) ($module['implementation_changed'] ?? false)) ? 'yes' : 'no')
 			. ', consumers ' . (((bool) ($module['consumer_rebuild_required'] ?? false)) ? 'rebuild' : 'stable')
 			. ', validation ' . trim((string) ($module['dependency_validation_status'] ?? 'unavailable'))
+			. ', public API ' . trim((string) ($module['public_api_validation_status'] ?? 'unavailable'))
 			. ($surfaceArtifact !== '' ? ', artifact ' . $surfaceArtifact : '');
 		if ($implementationArtifact !== '') {
 			$lines[] = '    implementation artifact: ' . $implementationArtifact;
@@ -11311,6 +11847,18 @@ function render_project_module_report_lines(array $report, bool $includeModules 
 		$unusedDeclared = normalize_string_list($module['unused_declared_dependencies'] ?? []);
 		if ($unusedDeclared !== []) {
 			$lines[] = '    unused declared dependencies: ' . implode(', ', $unusedDeclared);
+		}
+		$resolvedPublicExports = normalize_string_list($module['resolved_public_exports'] ?? []);
+		if ($resolvedPublicExports !== []) {
+			$lines[] = '    resolved public exports: ' . implode(', ', $resolvedPublicExports);
+		}
+		$unknownPublicExports = normalize_string_list($module['unknown_public_exports'] ?? []);
+		if ($unknownPublicExports !== []) {
+			$lines[] = '    unknown public exports: ' . implode(', ', $unknownPublicExports);
+		}
+		$privateDependencyViolations = normalize_string_list($module['private_dependency_violations'] ?? []);
+		if ($privateDependencyViolations !== []) {
+			$lines[] = '    private dependency violations: ' . implode(', ', $privateDependencyViolations);
 		}
 	}
 	$unassignedSources = normalize_string_list($report['unassigned_sources'] ?? []);
