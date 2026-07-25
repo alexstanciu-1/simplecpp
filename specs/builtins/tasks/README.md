@@ -31,6 +31,7 @@ First-pass builtins:
 - `task_status`
 - `task_progress`
 - `task_set_status`
+- `task_set_worker_pool_size`
 
 Deferred dynamic-batch builtins:
 

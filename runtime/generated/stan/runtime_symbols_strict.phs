@@ -172,6 +172,7 @@ function task_join(task_batch $batch): mixed {}
 function task_progress(task_batch $batch): task_progress_info {}
 function task_run(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): mixed {}
 function task_set_status(task_context $ctx, string $status): void {}
+function task_set_worker_pool_size(int $workers): void {}
 function task_start(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): task_batch {}
 function task_status(task_batch $batch): string {}
 function ternary_eval(): mixed {}

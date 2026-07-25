@@ -74,6 +74,7 @@ task_done(task_batch $batch): bool
 task_status(task_batch $batch): string
 task_progress(task_batch $batch): task_progress_info
 task_set_status(task_context $ctx, string $status): void
+task_set_worker_pool_size(workers): void
 ```
 
 The exact generic type spelling for `items`, callback parameters, callback returns, and result collection is owned by the implementation/spec pass that wires callable lowering.
@@ -236,6 +237,9 @@ First-pass worker-pool contract:
 
 - the pool is runtime-owned and is not a raw-thread API
 - existing `task_run` and `task_start` source signatures are unchanged
+- `task_set_worker_pool_size(workers)` sets the runtime-owned default pool
+  keepalive target for later task batches; non-positive values disable pool use
+  for future batches
 - if no reusable pool is configured, task batches use the existing batch-local
   worker creation/join path
 - when a reusable pool is configured, task batches enqueue one closure per

@@ -204,6 +204,7 @@
         "task_status": "tasks::status",
         "task_progress": "tasks::progress",
         "task_set_status": "tasks::set_status",
+        "task_set_worker_pool_size": "tasks::configure_default_worker_pool",
         "ui_app_create": "ui::app_create",
         "ui_window_create": "ui::window_create",
         "ui_window_show": "ui::window_show",

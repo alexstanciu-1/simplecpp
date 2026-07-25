@@ -443,6 +443,7 @@ final class RuntimeShallowSourceGenerator
 				'task_status' => ['return' => 'string', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
 				'task_progress' => ['return' => 'task_progress_info', 'params' => [['name' => 'batch', 'type' => 'task_batch']]],
 				'task_set_status' => ['return' => 'void', 'params' => [['name' => 'ctx', 'type' => 'task_context'], ['name' => 'status', 'type' => 'string']]],
+				'task_set_worker_pool_size' => ['return' => 'void', 'params' => [['name' => 'workers', 'type' => 'int']]],
 				'ui_app_create' => ['return' => 'result<ui_app>', 'params' => []],
 				'ui_window_create' => ['return' => 'result<ui_window>', 'params' => [
 					['name' => 'app', 'type' => 'ui_app'],

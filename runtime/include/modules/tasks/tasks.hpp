@@ -1715,6 +1715,16 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 	);
 }
 
+inline void configure_default_worker_pool(const int_t<> &)
+{
+	throw runtime_error(
+		"task_set_worker_pool_size(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_set_worker_pool_size"
+	);
+}
+
 #endif
 
 } // namespace scpp::tasks

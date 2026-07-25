@@ -42,6 +42,8 @@ final class ScppTasksModuleTest
 				],
 			], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 			$this->write($project . '/main.phs', <<<'PHS'
+task_set_worker_pool_size(2);
+
 $items vector<int> = [];
 $items[] = 1;
 $items[] = 2;
@@ -588,6 +590,8 @@ $perfStartedAfter = dt_monotonic_ms() - $perfStart;
 $perfJoined = task_join($perfBatch);
 $perfTotal = dt_monotonic_ms() - $perfStart;
 echo "perf:", $perfStartedAfter, ",", $perfTotal, ",", count($perfJoined), "\n";
+
+task_set_worker_pool_size(0);
 PHS
  . "\n");
 
@@ -628,10 +632,12 @@ PHS
 
 			$generated = $this->read($project . '/.prism/generated/main.cpp');
 			$this->assertContains('tasks::run', $generated, 'strict task_run source call should resolve through the tasks runtime registry');
+			$this->assertContains('tasks::configure_default_worker_pool', $generated, 'strict task_set_worker_pool_size source call should resolve through the tasks runtime registry');
 			$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 			$this->assertContains('function task_start(mixed $items, int $workers, mixed $exec', $strictRuntimeSymbols, 'strict runtime shallow source should expose the shaped task_start signature');
 			$this->assertContains('mixed $result = null', $strictRuntimeSymbols, 'strict runtime shallow source should name the fifth task argument result');
 			$this->assertContains('function task_progress(task_batch $batch): task_progress_info', $strictRuntimeSymbols, 'strict runtime shallow source should expose typed task_progress handles');
+			$this->assertContains('function task_set_worker_pool_size(int $workers): void', $strictRuntimeSymbols, 'strict runtime shallow source should expose task worker pool sizing');
 			$this->assertContains('public function stop_requested(): bool', $strictRuntimeSymbols, 'strict runtime shallow source should expose task progress stop_requested');
 			$this->assertContains('public function status(): string', $strictRuntimeSymbols, 'strict runtime shallow source should expose task progress status');
 			$this->assertContains('class task_error', $strictRuntimeSymbols, 'strict runtime shallow source should expose the task_error handle shape');
@@ -700,6 +706,33 @@ PHS
 		$error = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $project, 30);
 		$this->assertSame(0, $error['exit_code'], 'scpp error should read the saved disabled tasks module diagnostic');
 		$this->assertContains('tasks runtime module is not enabled', $error['stdout'], 'saved diagnostic should include the raw missing tasks module message');
+
+		$poolProject = $this->root . '/disabled-pool-app';
+		$this->mkdir($poolProject);
+		$this->write($poolProject . '/prism.json', json_encode([
+			'name' => 'tasks-pool-disabled-regression',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime'],
+			],
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		$this->write($poolProject . '/main.phs', <<<'PHS'
+task_set_worker_pool_size(2);
+echo "unreachable\n";
+PHS
+ . "\n");
+
+		$poolRun = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $poolProject, 120);
+		$this->assertNotSame(0, $poolRun['exit_code'], 'task_set_worker_pool_size without tasks module should fail clearly');
+		$this->assertContains('Operation: task_set_worker_pool_size', $poolRun['stderr'], "disabled task_set_worker_pool_size should identify the failing task operation:\nSTDOUT:\n" . $poolRun['stdout'] . "\nSTDERR:\n" . $poolRun['stderr']);
+
+		$poolError = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $poolProject, 30);
+		$this->assertSame(0, $poolError['exit_code'], 'scpp error should read the saved disabled task_set_worker_pool_size diagnostic');
+		$this->assertContains('tasks runtime module is not enabled', $poolError['stdout'], 'saved task_set_worker_pool_size diagnostic should include the raw missing tasks module message');
 
 		$indexedProject = $this->root . '/disabled-indexed-app';
 		$this->mkdir($indexedProject);
