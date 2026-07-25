@@ -657,6 +657,7 @@ PHS
 			$this->assertTaskRunCustomIndexWorkerErrorReportsClearly();
 			$this->assertTaskRunTimeoutReportsClearly();
 			$this->assertTaskRunMixedScalarInputReportsClearly();
+			$this->assertReusableWorkerPoolReusesWorkers();
 
 			echo "PASS: scpp tasks module\n";
 			return 0;
@@ -1016,6 +1017,123 @@ PHS
 		$error = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $project, 30);
 		$this->assertSame(0, $error['exit_code'], 'scpp error should read the saved scalar mixed input diagnostic');
 		$this->assertContains('mixed/dynamic input must resolve', $error['stdout'], "saved scalar mixed input diagnostic should explain the collection shape requirement:\nSTDOUT:\n" . $error['stdout'] . "\nSTDERR:\n" . $error['stderr']);
+	}
+
+	private function assertReusableWorkerPoolReusesWorkers(): void
+	{
+		$project = $this->root . '/reusable-worker-pool-app';
+		$this->mkdir($project . '/native_cpp');
+		$this->write($project . '/prism.json', json_encode([
+			'name' => 'tasks-reusable-worker-pool-regression',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'native_cpp_dir' => 'native_cpp',
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime', 'tasks'],
+			],
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		$this->write($project . '/main.phs', <<<'PHS'
+echo "pool-probe\n";
+PHS
+ . "\n");
+		$this->write($project . '/native_cpp/pool_probe.cpp', <<<'CPP'
+#include "scpp/tasks.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+#include <exception>
+#include <thread>
+
+namespace {
+
+[[noreturn]] void fail_pool_probe(const char *message)
+{
+	std::fprintf(stderr, "task pool probe failed: %s\n", message);
+	std::abort();
+}
+
+void assert_pool_probe(bool condition, const char *message)
+{
+	if (!condition) {
+		fail_pool_probe(message);
+	}
+}
+
+struct reusable_worker_pool_probe final {
+	reusable_worker_pool_probe()
+	{
+		using namespace scpp;
+
+		tasks::shutdown_default_worker_pool();
+		tasks::configure_default_worker_pool(int_t<>(2));
+		assert_pool_probe(tasks::default_worker_pool_size().native_value() == 2, "configured pool should report requested keepalive size");
+		assert_pool_probe(tasks::default_worker_pool_created_workers().native_value() == 2, "configuring two keepalive workers should create two workers");
+
+		vector_t<int_t<>> items;
+		items.push_back(int_t<>(1));
+		items.push_back(int_t<>(2));
+		items.push_back(int_t<>(3));
+		items.push_back(int_t<>(4));
+
+		for (int round = 0; round < 4; ++round) {
+			auto result = tasks::run(items, int_t<>(4), [](int_t<> item) -> int_t<> {
+				return int_t<>(item.native_value() + 10);
+			});
+			assert_pool_probe(result.size() == 4, "pooled task_run should return every item");
+			assert_pool_probe(result.at(0).native_value() == 11, "pooled task_run should preserve vector result order");
+		}
+
+		assert_pool_probe(tasks::default_worker_pool_created_workers().native_value() == 2, "repeated batches should reuse configured keepalive workers");
+
+		std::atomic<int> completed_items{0};
+		std::exception_ptr worker_error = nullptr;
+		std::thread live_batch([&]() {
+			try {
+				auto result = tasks::run(items, int_t<>(4), [&](int_t<> item) -> int_t<> {
+					std::this_thread::sleep_for(std::chrono::milliseconds(30));
+					completed_items.fetch_add(1, std::memory_order_relaxed);
+					return item;
+				});
+				assert_pool_probe(result.size() == 4, "live pooled batch should complete after keepalive reduction");
+			} catch (...) {
+				worker_error = std::current_exception();
+			}
+		});
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		tasks::configure_default_worker_pool(int_t<>(0));
+		live_batch.join();
+		if (worker_error) {
+			std::rethrow_exception(worker_error);
+		}
+		assert_pool_probe(completed_items.load(std::memory_order_relaxed) == 4, "reducing keepalive workers should not interrupt live worker closures");
+
+		for (int attempt = 0; attempt < 100 && tasks::default_worker_pool_live_workers().native_value() != 0; ++attempt) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(2));
+		}
+		assert_pool_probe(tasks::default_worker_pool_live_workers().native_value() == 0, "idle workers should retire after keepalive count is reduced to zero");
+	}
+
+	~reusable_worker_pool_probe()
+	{
+		scpp::tasks::shutdown_default_worker_pool();
+	}
+};
+
+reusable_worker_pool_probe probe;
+
+} // namespace
+CPP
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], "reusable worker pool native probe should build and run:\nSTDOUT:\n" . $run['stdout'] . "\nSTDERR:\n" . $run['stderr']);
+		$this->assertContains("pool-probe\n", $run['stdout'], 'reusable worker pool probe project should reach the PHS entrypoint');
 	}
 
 	private function assertTaskStartPerformanceShape(string $stdout, string $stderr): void

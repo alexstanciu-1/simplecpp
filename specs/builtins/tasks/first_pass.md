@@ -7,7 +7,8 @@ The `tasks` family is runtime-owned and lives under `namespace scpp::tasks`.
 
 Release status: v1-alpha / experimental.
 The module is opt-in and intended for independent batch work.
-Shared mutable object transfer, worker communication, STAN thread-safety enforcement, and thread-pool reuse remain outside the alpha contract.
+Shared mutable object transfer, worker communication, and STAN thread-safety enforcement remain outside the alpha contract.
+Reusable worker-pool backing is included only as a runtime-owned implementation substrate; it does not change the public `task_run` / `task_start` source signatures or expose raw thread management.
 
 The first-pass source surface is strict PHP++ only:
 
@@ -123,12 +124,14 @@ The first implementation supports both worker callback shapes.
 - returns a result collection
 - creates at most `workers` native worker threads for the batch
 - must not create one native thread per item
+- may reuse a configured runtime-owned worker pool instead of creating batch-local worker threads
 
 `task_start`:
 
 - starts a bounded worker batch in the background
 - returns a `task_batch` handle immediately
 - live background batches are joined by generated main cleanup if the user does not join them explicitly
+- may use the configured runtime-owned worker pool for the batch's internal worker loops while keeping the background coordinator handle semantics unchanged
 
 `task_join`:
 
@@ -223,6 +226,34 @@ Timeout:
 ## Thread boundary policy
 
 The first-pass public API does not expose raw threads, mutexes, condition variables, or forced thread termination.
+
+## Reusable worker-pool backing
+
+The tasks runtime may keep a process-owned default worker pool for repeated task
+batches and other thread-consuming runtime/compiler paths.
+
+First-pass worker-pool contract:
+
+- the pool is runtime-owned and is not a raw-thread API
+- existing `task_run` and `task_start` source signatures are unchanged
+- if no reusable pool is configured, task batches use the existing batch-local
+  worker creation/join path
+- when a reusable pool is configured, task batches enqueue one closure per
+  logical batch worker, not one closure per input item
+- logical worker closures still pull items through the batch-owned queue/index
+  state, preserving current result ordering, progress, cancellation, timeout,
+  and error publication behavior
+- the configured keepalive worker count is a target for reusable idle workers
+- reducing the keepalive target must not interrupt a worker that is currently
+  executing a live batch closure
+- workers that become idle after a target reduction may retire instead of
+  remaining alive
+- setting the keepalive target to zero disables pool use for future batches and
+  lets currently live workers finish before retiring
+- nested task batches entered from a reusable-pool worker may fall back to
+  batch-local worker creation to avoid pool starvation/deadlock
+- shutdown is structured: runtime cleanup wakes idle workers and joins workers
+  after queued/running closures finish
 
 Mutable input/output transfer over threads is intentionally deferred.
 For the first implementation, avoid adding a public mutable-item mode.

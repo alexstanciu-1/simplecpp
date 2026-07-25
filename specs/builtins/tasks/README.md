@@ -16,6 +16,7 @@ Current first-pass scope:
 - strict/runtime surface under `scpp::tasks`
 - flat strict source names with the `task_*` prefix
 - runtime-owned batch/progress/error objects
+- optional runtime-owned reusable worker-pool backing for repeated batches
 - typed vector/hash input plus conservative table-shaped mixed/dynamic input
 - cooperative timeout handling through diagnostics or `task_error`
 - no legacy PHP compatibility wrapper surface

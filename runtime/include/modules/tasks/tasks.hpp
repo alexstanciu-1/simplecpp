@@ -25,6 +25,7 @@
 #include <thread>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #ifndef SCPP_HAS_TASKS
 #define SCPP_HAS_TASKS 0
@@ -459,6 +460,19 @@ void cancel(const shared_p<batch> &resource);
 [[nodiscard]] string_t status(const shared_p<batch> &resource);
 [[nodiscard]] shared_p<progress_info> progress(const shared_p<batch> &resource);
 void set_status(const shared_p<context> &resource, const string_t &value);
+void configure_default_worker_pool(const int_t<> &workers);
+void shutdown_default_worker_pool();
+[[nodiscard]] int_t<> default_worker_pool_size();
+[[nodiscard]] int_t<> default_worker_pool_live_workers();
+[[nodiscard]] int_t<> default_worker_pool_created_workers();
+
+namespace detail {
+
+using worker_batch_body = std::function<void(std::size_t)>;
+
+void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body);
+
+} // namespace detail
 
 #if SCPP_HAS_TASKS
 
@@ -600,10 +614,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 		value_results.resize(item_count);
 	}
 
-	std::vector<worker_thread> threads;
-	threads.reserve(worker_count);
-	for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
-		threads.emplace_back([&, worker_index]() {
+	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
 			worker_context->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
@@ -684,14 +695,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 				}
 				errors.at(worker_index) = std::current_exception();
 			}
-		});
-	}
-
-	for (auto &thread : threads) {
-		if (thread.joinable()) {
-			thread.join();
-		}
-	}
+	});
 
 	for (const auto &entry : errors) {
 		if (entry) {
@@ -945,10 +949,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 	std::vector<std::pair<TKey, null_t>> void_results;
 	void_results.reserve(item_count);
 
-	std::vector<detail::worker_thread> threads;
-	threads.reserve(worker_count);
-	for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
-		threads.emplace_back([&, worker_index]() {
+	detail::execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
 			worker_context->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
@@ -1036,14 +1037,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 				}
 				errors.at(worker_index) = std::current_exception();
 			}
-		});
-	}
-
-	for (auto &thread : threads) {
-		if (thread.joinable()) {
-			thread.join();
-		}
-	}
+	});
 
 	for (const auto &entry : errors) {
 		if (entry) {
