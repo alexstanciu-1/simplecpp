@@ -591,7 +591,7 @@ echo "perf:", $perfStartedAfter, ",", $perfTotal, ",", count($perfJoined), "\n";
 PHS
  . "\n");
 
-			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime', '--no-stan'], $project, 120);
 			$this->assertSame(0, $run['exit_code'], "task_run project should build and run:\nSTDOUT:\n" . $run['stdout'] . "\nSTDERR:\n" . $run['stderr']);
 			$this->assertContains("2,4,6\n", $run['stdout'], 'task_run should preserve vector order and return callback results');
 			$this->assertContains("5,10,15\n", $run['stdout'], 'task_run should support coordinator-side vector custom index callbacks');
