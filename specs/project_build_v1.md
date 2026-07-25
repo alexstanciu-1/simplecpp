@@ -981,6 +981,25 @@ Legacy list-style `runtime.languages` remains accepted as a compatibility shape 
 
 Current default behavior enables the `json`, `filesystem`, and `datetime` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.
 
+When the opt-in `tasks` module is enabled, `runtime.tasks.default_worker_pool_size`
+may set the process-owned reusable tasks worker-pool keepalive target at runtime
+startup:
+
+```json
+{
+  "runtime": {
+    "modules": ["json", "filesystem", "datetime", "tasks"],
+    "tasks": {
+      "default_worker_pool_size": 4
+    }
+  }
+}
+```
+
+Non-positive values disable the startup pool default. A nonzero value is
+project-specific runtime composition and must not be served from a shared runtime
+module cache compiled for a different pool size.
+
 The normative meaning of PHP profile selection itself is defined in:
 
 - `specs/php/library_profiles.md`

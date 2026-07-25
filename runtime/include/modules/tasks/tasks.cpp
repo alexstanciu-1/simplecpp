@@ -3,6 +3,10 @@
 #include <deque>
 #include <memory>
 
+#ifndef SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE
+#define SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE 0
+#endif
+
 namespace scpp::tasks {
 
 namespace {
@@ -56,6 +60,7 @@ public:
 		};
 
 		auto state = std::make_shared<wait_state>();
+		auto shared_body = std::make_shared<detail::worker_batch_body>(body);
 		state->remaining = worker_count;
 
 		{
@@ -65,9 +70,9 @@ public:
 			}
 
 			for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
-				jobs_.push_back([state, body, worker_index]() {
+				jobs_.push_back([state, shared_body, worker_index]() {
 					try {
-						body(worker_index);
+						(*shared_body)(worker_index);
 					} catch (...) {
 						std::lock_guard<std::mutex> lock(state->mutex);
 						if (!state->error) {
@@ -196,6 +201,22 @@ private:
 
 std::mutex default_pool_mutex;
 std::shared_ptr<reusable_worker_pool> default_pool;
+
+#if SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE > 0
+struct configured_default_worker_pool final {
+	configured_default_worker_pool()
+	{
+		configure_default_worker_pool(int_t<>(SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE));
+	}
+
+	~configured_default_worker_pool()
+	{
+		shutdown_default_worker_pool();
+	}
+};
+
+configured_default_worker_pool configured_default_worker_pool_instance;
+#endif
 
 [[nodiscard]] std::shared_ptr<reusable_worker_pool> current_default_pool()
 {

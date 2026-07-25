@@ -11627,6 +11627,11 @@ function resolve_runtime_build_config(array $config): array
 		$implicitModules['ui'] = 'webview';
 	}
 	$safety = is_array($runtime['safety'] ?? null) ? $runtime['safety'] : [];
+	if (array_key_exists('tasks', $runtime) && !is_array($runtime['tasks'])) {
+		scpp_fail('Invalid runtime.tasks config in ' . SCPP_PROJECT_CONFIG . '; expected an object.' . PHP_EOL, 2);
+	}
+	$tasks = is_array($runtime['tasks'] ?? null) ? $runtime['tasks'] : [];
+	$tasksDefaultWorkerPoolSize = normalize_runtime_tasks_default_worker_pool_size($tasks['default_worker_pool_size'] ?? null);
 	$allowedLanguages = ['php'];
 	$allowedModules = ['json', 'filesystem', 'datetime', 'mysqli', 'regex', 'curl', 'tasks', 'ui', 'webview'];
 	foreach ($languages as $language) {
@@ -11642,13 +11647,40 @@ function resolve_runtime_build_config(array $config): array
 	if (!in_array('php', $languages, true)) {
 		scpp_fail('Current scpp build requires runtime.languages to include `php` because PHP is the active source language.' . PHP_EOL, 2);
 	}
+	if ($tasksDefaultWorkerPoolSize > 0 && !in_array('tasks', $modules, true)) {
+		scpp_fail('runtime.tasks.default_worker_pool_size requires `tasks` in runtime.modules.' . PHP_EOL, 2);
+	}
 	return [
 		'languages' => $languages,
 		'language_profiles' => $languageProfiles,
 		'modules' => $modules,
 		'implicit_modules' => $implicitModules,
 		'safety' => $safety,
+		'tasks' => [
+			'default_worker_pool_size' => $tasksDefaultWorkerPoolSize,
+		],
 	];
+}
+
+function normalize_runtime_tasks_default_worker_pool_size(mixed $value): int
+{
+	if ($value === null) {
+		return 0;
+	}
+	if (is_int($value)) {
+		$workers = $value;
+	} elseif (is_string($value) && preg_match('/^-?\d+$/', $value) === 1) {
+		$workers = (int) $value;
+	} else {
+		scpp_fail('Invalid runtime.tasks.default_worker_pool_size in ' . SCPP_PROJECT_CONFIG . '; expected an integer.' . PHP_EOL, 2);
+	}
+	if ($workers <= 0) {
+		return 0;
+	}
+	if ($workers > 1024) {
+		scpp_fail('Invalid runtime.tasks.default_worker_pool_size in ' . SCPP_PROJECT_CONFIG . '; expected a value between 0 and 1024.' . PHP_EOL, 2);
+	}
+	return $workers;
 }
 
 /** @param array<string,mixed> $config @param array<string,mixed> $options @return array<string,mixed> */
@@ -16668,6 +16700,10 @@ function runtime_config_uses_default_release_modules(array $runtimeConfig): bool
 
 function runtime_config_uses_shared_release_module_policy(array $runtimeConfig): bool
 {
+	if (runtime_tasks_default_worker_pool_size($runtimeConfig) !== 0) {
+		return false;
+	}
+
 	$languages = array_values(is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : []);
 	sort($languages, SORT_STRING);
 	if ($languages !== ['php']) {
@@ -17091,8 +17127,10 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 	}
 	if (in_array('tasks', $modules, true)) {
 		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=1';
+		$extraCxxFlags[] = '-DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=' . runtime_tasks_default_worker_pool_size($runtimeConfig);
 	} else {
 		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=0';
+		$extraCxxFlags[] = '-DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=0';
 	}
 	if (in_array('ui', $modules, true)) {
 		$uiBuild = resolve_runtime_ui_build_spec();
@@ -17225,6 +17263,7 @@ function build_runtime_module_artifact_spec(string $repoRoot, string $projectRoo
 		$extraLinkFlags = array_merge($extraLinkFlags, $curlBuild['ldflags']);
 	} elseif ($moduleName === 'tasks') {
 		$extraCxxFlags[] = '-DSCPP_HAS_TASKS=1';
+		$extraCxxFlags[] = '-DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=' . runtime_tasks_default_worker_pool_size($runtimeConfig);
 	}
 	$extraLinkFlags = adapt_windows_runtime_link_flags_for_compiler($extraLinkFlags, $compiler);
 
@@ -17279,6 +17318,7 @@ function compute_runtime_build_signature(string $repoRoot, array $compiler, stri
 		'runtime_languages:' . implode(',', is_array($runtimeConfig['languages'] ?? null) ? $runtimeConfig['languages'] : []),
 		'php_profile:' . resolve_php_runtime_profile($runtimeConfig),
 		'runtime_modules:' . implode(',', is_array($runtimeConfig['modules'] ?? null) ? $runtimeConfig['modules'] : []),
+		'tasks_default_worker_pool_size:' . runtime_tasks_default_worker_pool_size($runtimeConfig),
 		'call_depth_guard:' . (call_depth_guard_enabled($runtimeConfig, $buildMode) ? '1' : '0'),
 		'max_call_depth:' . call_depth_guard_limit($runtimeConfig),
 	];
@@ -17307,6 +17347,12 @@ function call_depth_guard_limit(array $runtimeConfig): int
 		return max(1, (int) $value);
 	}
 	return 4096;
+}
+
+function runtime_tasks_default_worker_pool_size(array $runtimeConfig): int
+{
+	$tasks = is_array($runtimeConfig['tasks'] ?? null) ? $runtimeConfig['tasks'] : [];
+	return normalize_runtime_tasks_default_worker_pool_size($tasks['default_worker_pool_size'] ?? null);
 }
 
 /**

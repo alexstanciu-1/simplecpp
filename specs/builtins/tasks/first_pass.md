@@ -242,6 +242,15 @@ First-pass worker-pool contract:
   for future batches
 - if no reusable pool is configured, task batches use the existing batch-local
   worker creation/join path
+- projects may set `runtime.tasks.default_worker_pool_size` in `prism.json` to
+  configure the process-owned default pool at runtime startup; non-positive
+  values mean no configured startup pool
+- `runtime.tasks.default_worker_pool_size` requires the `tasks` runtime module
+  to be enabled and should be compiled into a project-local runtime artifact
+  when nonzero so shared runtime caches are not polluted by project-specific
+  worker counts
+- a later `task_set_worker_pool_size(workers)` call overrides the startup
+  keepalive target for the running process
 - when a reusable pool is configured, task batches enqueue one closure per
   logical batch worker, not one closure per input item
 - logical worker closures still pull items through the batch-owned queue/index
@@ -311,6 +320,9 @@ The current implementation and focused task module test cover:
 - readable progress/status snapshots while live and after handled source-catchable background failure
 - vector result-target contract errors for negative and sparse numeric keys
 - a monotonic-time probe that rejects obvious serial execution or blocking `task_start`
+- reusable worker-pool probes covering configured reuse, disabled fallback,
+  runtime target reduction while live work completes, and benchmark-style
+  repeated-batch timing with and without the reusable pool
 
 Follow-up design must specify:
 

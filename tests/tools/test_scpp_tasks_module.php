@@ -663,6 +663,7 @@ PHS
 			$this->assertTaskRunCustomIndexWorkerErrorReportsClearly();
 			$this->assertTaskRunTimeoutReportsClearly();
 			$this->assertTaskRunMixedScalarInputReportsClearly();
+			$this->assertConfiguredWorkerPoolBuildConfig();
 			$this->assertReusableWorkerPoolReusesWorkers();
 
 			echo "PASS: scpp tasks module\n";
@@ -1103,15 +1104,41 @@ struct reusable_worker_pool_probe final {
 		using namespace scpp;
 
 		tasks::shutdown_default_worker_pool();
-		tasks::configure_default_worker_pool(int_t<>(2));
-		assert_pool_probe(tasks::default_worker_pool_size().native_value() == 2, "configured pool should report requested keepalive size");
-		assert_pool_probe(tasks::default_worker_pool_created_workers().native_value() == 2, "configuring two keepalive workers should create two workers");
 
 		vector_t<int_t<>> items;
 		items.push_back(int_t<>(1));
 		items.push_back(int_t<>(2));
 		items.push_back(int_t<>(3));
 		items.push_back(int_t<>(4));
+
+		auto run_repeated_batches = [&]() -> std::int64_t {
+			const auto start = std::chrono::steady_clock::now();
+			for (int round = 0; round < 12; ++round) {
+				auto result = tasks::run(items, int_t<>(4), [](int_t<> item) -> int_t<> {
+					return int_t<>(item.native_value() + 10);
+				});
+				assert_pool_probe(result.size() == 4, "task_run benchmark batch should return every item");
+				assert_pool_probe(result.at(0).native_value() == 11, "task_run benchmark batch should preserve vector result order");
+			}
+			return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+		};
+
+		const auto local_batch_ms = run_repeated_batches();
+		assert_pool_probe(tasks::default_worker_pool_created_workers().native_value() == 0, "unconfigured batches should use batch-local workers outside the reusable pool");
+
+		tasks::configure_default_worker_pool(int_t<>(4));
+		const auto pooled_batch_ms = run_repeated_batches();
+		const auto pooled_created = tasks::default_worker_pool_created_workers().native_value();
+		assert_pool_probe(pooled_created == 4, "pooled benchmark should create one keepalive worker per configured slot");
+		std::printf("pool-benchmark:%lld,%lld,%lld\n",
+			static_cast<long long>(local_batch_ms),
+			static_cast<long long>(pooled_batch_ms),
+			static_cast<long long>(pooled_created));
+
+		tasks::shutdown_default_worker_pool();
+		tasks::configure_default_worker_pool(int_t<>(2));
+		assert_pool_probe(tasks::default_worker_pool_size().native_value() == 2, "configured pool should report requested keepalive size");
+		assert_pool_probe(tasks::default_worker_pool_created_workers().native_value() == 2, "configuring two keepalive workers should create two workers");
 
 		for (int round = 0; round < 4; ++round) {
 			auto result = tasks::run(items, int_t<>(4), [](int_t<> item) -> int_t<> {
@@ -1167,6 +1194,67 @@ CPP
 		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
 		$this->assertSame(0, $run['exit_code'], "reusable worker pool native probe should build and run:\nSTDOUT:\n" . $run['stdout'] . "\nSTDERR:\n" . $run['stderr']);
 		$this->assertContains("pool-probe\n", $run['stdout'], 'reusable worker pool probe project should reach the PHS entrypoint');
+		$this->assertPoolBenchmarkShape($run['stdout'], $run['stderr']);
+	}
+
+	private function assertConfiguredWorkerPoolBuildConfig(): void
+	{
+		$config = resolve_runtime_build_config([
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime', 'tasks'],
+				'tasks' => [
+					'default_worker_pool_size' => 2,
+				],
+			],
+		]);
+		$this->assertSame(2, runtime_tasks_default_worker_pool_size($config), 'runtime.tasks.default_worker_pool_size should normalize into the runtime config');
+
+		$project = $this->root . '/configured-worker-pool-app';
+		$this->mkdir($project);
+		$this->write($project . '/prism.json', json_encode([
+			'name' => 'tasks-configured-worker-pool-regression',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime', 'tasks'],
+				'tasks' => [
+					'default_worker_pool_size' => 2,
+				],
+			],
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		$this->write($project . '/main.phs', <<<'PHS'
+$items vector<int> = [];
+$items[] = 1;
+$items[] = 2;
+
+$result = task_run($items, 2, function (int $item): int {
+	return $item + 20;
+});
+
+echo $result[0], ",", $result[1], "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime', '--no-stan'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], "configured worker pool project should build and run:\nSTDOUT:\n" . $run['stdout'] . "\nSTDERR:\n" . $run['stderr']);
+		$this->assertContains("21,22\n", $run['stdout'], 'configured worker pool project should preserve task_run behavior without a source-level pool helper call');
+
+		$ninja = $this->read($project . '/.prism/build/build.ninja');
+		$this->assertContains('-DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=2', $ninja, 'configured worker pool size should be compiled into the project-local tasks runtime');
+	}
+
+	private function assertPoolBenchmarkShape(string $stdout, string $stderr): void
+	{
+		if (!preg_match('/^pool-benchmark:(\d+),(\d+),(\d+)$/m', $stdout, $matches)) {
+			throw new RuntimeException("task worker pool benchmark did not print metrics:\nSTDOUT:\n" . $stdout . "\nSTDERR:\n" . $stderr);
+		}
+		$this->assertSame(4, (int) $matches[3], 'task worker pool benchmark should report the configured keepalive worker count');
 	}
 
 	private function assertTaskStartPerformanceShape(string $stdout, string $stderr): void
