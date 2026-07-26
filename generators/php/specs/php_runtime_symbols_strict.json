@@ -197,6 +197,7 @@
         "dt_format_now": "dt::format_local_now",
         "dt_parse": "dt::parse_common_local",
         "task_run": "tasks::run",
+        "task_run_publish": "tasks::run_publish",
         "task_start": "tasks::start",
         "task_join": "tasks::join",
         "task_cancel": "tasks::cancel",
