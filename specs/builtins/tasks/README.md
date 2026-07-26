@@ -34,6 +34,12 @@ First-pass builtins:
 - `task_progress`
 - `task_set_status`
 - `task_set_worker_pool_size`
+- experimental publish diagnostics:
+  `task_set_publish_try_lock`, `task_publish_lock_wait_us`,
+  `task_publish_lock_hold_us`, `task_publish_callback_us`,
+  `task_publish_batch_count`, `task_publish_published_count`,
+  `task_publish_max_batch_size`, `task_publish_failed_try_lock_count`, and
+  `task_publish_deferred_flush_count`
 
 Deferred dynamic-batch builtins:
 

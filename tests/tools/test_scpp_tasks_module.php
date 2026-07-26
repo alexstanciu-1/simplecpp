@@ -75,6 +75,10 @@ $publishedCount int = task_run_publish(
 );
 
 echo "publish:", $publishedCount, ",", $published[0], ",", $published[1], ",", $published[2], ",", $publishedBatches, "\n";
+$publishHoldMetricPresent int = task_publish_lock_hold_us() >= 0 ? 1 : 0;
+echo "publish-metrics:", task_publish_published_count(), ",", task_publish_batch_count(), ",", task_publish_max_batch_size(), ",", $publishHoldMetricPresent, "\n";
+task_set_publish_try_lock(true);
+task_set_publish_try_lock(false);
 
 $indexed = task_run(
 	$items,
@@ -620,6 +624,7 @@ PHS
 			$this->assertSame(0, $run['exit_code'], "task_run project should build and run:\nSTDOUT:\n" . $run['stdout'] . "\nSTDERR:\n" . $run['stderr']);
 			$this->assertContains("2,4,6\n", $run['stdout'], 'task_run should preserve vector order and return callback results');
 			$this->assertContains("publish:3,100,200,300,", $run['stdout'], 'task_run_publish should publish ordered worker batches without returning a value vector');
+			$this->assertContains("publish-metrics:3,", $run['stdout'], 'task_run_publish should expose publish diagnostics for the latest publish run');
 			$this->assertContains("5,10,15\n", $run['stdout'], 'task_run should support coordinator-side vector custom index callbacks');
 			$this->assertContains("7,14,21\n", $run['stdout'], 'task_run should support string keys from vector custom index callbacks');
 			$this->assertContains("3\n", $run['stdout'], 'task_run should return null placeholders for successful void vector callbacks');
@@ -656,12 +661,16 @@ PHS
 			$this->assertContains('tasks::run', $generated, 'strict task_run source call should resolve through the tasks runtime registry');
 			$this->assertContains('tasks::run_publish', $generated, 'strict task_run_publish source call should resolve through the tasks runtime registry');
 			$this->assertContains('tasks::configure_default_worker_pool', $generated, 'strict task_set_worker_pool_size source call should resolve through the tasks runtime registry');
+			$this->assertContains('tasks::configure_publish_try_lock', $generated, 'strict task_set_publish_try_lock source call should resolve through the tasks runtime registry');
+			$this->assertContains('tasks::publish_lock_hold_us', $generated, 'strict task publish metric source calls should resolve through the tasks runtime registry');
 			$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 			$this->assertContains('function task_start(mixed $items, int $workers, mixed $exec', $strictRuntimeSymbols, 'strict runtime shallow source should expose the shaped task_start signature');
 			$this->assertContains('function task_run_publish(mixed $items, int $workers, mixed $work, mixed $publish', $strictRuntimeSymbols, 'strict runtime shallow source should expose the shaped task_run_publish signature');
 			$this->assertContains('mixed $result = null', $strictRuntimeSymbols, 'strict runtime shallow source should name the fifth task argument result');
 			$this->assertContains('function task_progress(task_batch $batch): task_progress_info', $strictRuntimeSymbols, 'strict runtime shallow source should expose typed task_progress handles');
 			$this->assertContains('function task_set_worker_pool_size(int $workers): void', $strictRuntimeSymbols, 'strict runtime shallow source should expose task worker pool sizing');
+			$this->assertContains('function task_set_publish_try_lock(bool $enabled): void', $strictRuntimeSymbols, 'strict runtime shallow source should expose task publish try-lock diagnostics control');
+			$this->assertContains('function task_publish_lock_hold_us(): int', $strictRuntimeSymbols, 'strict runtime shallow source should expose task publish metrics');
 			$this->assertContains('public function stop_requested(): bool', $strictRuntimeSymbols, 'strict runtime shallow source should expose task progress stop_requested');
 			$this->assertContains('public function status(): string', $strictRuntimeSymbols, 'strict runtime shallow source should expose task progress status');
 			$this->assertContains('class task_error', $strictRuntimeSymbols, 'strict runtime shallow source should expose the task_error handle shape');

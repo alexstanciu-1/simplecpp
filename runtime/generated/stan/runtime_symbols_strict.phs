@@ -170,8 +170,17 @@ function task_cancel(task_batch $batch): void {}
 function task_done(task_batch $batch): bool {}
 function task_join(task_batch $batch): mixed {}
 function task_progress(task_batch $batch): task_progress_info {}
+function task_publish_batch_count(): int {}
+function task_publish_callback_us(): int {}
+function task_publish_deferred_flush_count(): int {}
+function task_publish_failed_try_lock_count(): int {}
+function task_publish_lock_hold_us(): int {}
+function task_publish_lock_wait_us(): int {}
+function task_publish_max_batch_size(): int {}
+function task_publish_published_count(): int {}
 function task_run(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): mixed {}
 function task_run_publish(mixed $items, int $workers, mixed $work, mixed $publish, mixed $error = null, int $timeout_ms = 0): int {}
+function task_set_publish_try_lock(bool $enabled): void {}
 function task_set_status(task_context $ctx, string $status): void {}
 function task_set_worker_pool_size(int $workers): void {}
 function task_start(mixed $items, int $workers, mixed $exec, mixed $index = null, mixed $result = null, mixed $error = null, int $timeout_ms = 0): task_batch {}

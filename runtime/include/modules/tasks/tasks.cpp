@@ -201,6 +201,22 @@ private:
 
 std::mutex default_pool_mutex;
 std::shared_ptr<reusable_worker_pool> default_pool;
+std::atomic<bool> publish_try_lock_mode{false};
+std::atomic<std::int64_t> publish_metric_lock_wait_us{0};
+std::atomic<std::int64_t> publish_metric_lock_hold_us{0};
+std::atomic<std::int64_t> publish_metric_callback_us{0};
+std::atomic<std::int64_t> publish_metric_batch_count{0};
+std::atomic<std::int64_t> publish_metric_published_count{0};
+std::atomic<std::int64_t> publish_metric_max_batch_size{0};
+std::atomic<std::int64_t> publish_metric_failed_try_lock_count{0};
+std::atomic<std::int64_t> publish_metric_deferred_flush_count{0};
+
+void record_max(std::atomic<std::int64_t> &target, std::int64_t value)
+{
+	auto current = target.load(std::memory_order_relaxed);
+	while (value > current && !target.compare_exchange_weak(current, value, std::memory_order_relaxed)) {
+	}
+}
 
 #if SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE > 0
 struct configured_default_worker_pool final {
@@ -241,6 +257,110 @@ configured_default_worker_pool configured_default_worker_pool_instance;
 }
 
 } // namespace
+
+void reset_publish_metrics()
+{
+	publish_metric_lock_wait_us.store(0, std::memory_order_relaxed);
+	publish_metric_lock_hold_us.store(0, std::memory_order_relaxed);
+	publish_metric_callback_us.store(0, std::memory_order_relaxed);
+	publish_metric_batch_count.store(0, std::memory_order_relaxed);
+	publish_metric_published_count.store(0, std::memory_order_relaxed);
+	publish_metric_max_batch_size.store(0, std::memory_order_relaxed);
+	publish_metric_failed_try_lock_count.store(0, std::memory_order_relaxed);
+	publish_metric_deferred_flush_count.store(0, std::memory_order_relaxed);
+}
+
+void record_publish_lock_wait(std::int64_t elapsed_us)
+{
+	publish_metric_lock_wait_us.fetch_add(elapsed_us, std::memory_order_relaxed);
+}
+
+void record_publish_lock_hold(std::int64_t elapsed_us)
+{
+	publish_metric_lock_hold_us.fetch_add(elapsed_us, std::memory_order_relaxed);
+}
+
+void record_publish_callback(std::int64_t elapsed_us, std::int64_t batch_size)
+{
+	publish_metric_callback_us.fetch_add(elapsed_us, std::memory_order_relaxed);
+	publish_metric_batch_count.fetch_add(1, std::memory_order_relaxed);
+	publish_metric_published_count.fetch_add(batch_size, std::memory_order_relaxed);
+	record_max(publish_metric_max_batch_size, batch_size);
+}
+
+void record_publish_failed_try_lock()
+{
+	publish_metric_failed_try_lock_count.fetch_add(1, std::memory_order_relaxed);
+}
+
+void record_publish_deferred_flush()
+{
+	publish_metric_deferred_flush_count.fetch_add(1, std::memory_order_relaxed);
+}
+
+[[nodiscard]] publish_metrics_snapshot publish_metrics()
+{
+	publish_metrics_snapshot snapshot;
+	snapshot.lock_wait_us = publish_metric_lock_wait_us.load(std::memory_order_relaxed);
+	snapshot.lock_hold_us = publish_metric_lock_hold_us.load(std::memory_order_relaxed);
+	snapshot.callback_us = publish_metric_callback_us.load(std::memory_order_relaxed);
+	snapshot.batch_count = publish_metric_batch_count.load(std::memory_order_relaxed);
+	snapshot.published_count = publish_metric_published_count.load(std::memory_order_relaxed);
+	snapshot.max_batch_size = publish_metric_max_batch_size.load(std::memory_order_relaxed);
+	snapshot.failed_try_lock_count = publish_metric_failed_try_lock_count.load(std::memory_order_relaxed);
+	snapshot.deferred_flush_count = publish_metric_deferred_flush_count.load(std::memory_order_relaxed);
+	return snapshot;
+}
+
+void configure_publish_try_lock(const bool_t &enabled)
+{
+	publish_try_lock_mode.store(enabled.native_value(), std::memory_order_relaxed);
+}
+
+[[nodiscard]] bool publish_try_lock_enabled()
+{
+	return publish_try_lock_mode.load(std::memory_order_relaxed);
+}
+
+[[nodiscard]] int_t<> publish_lock_wait_us()
+{
+	return int_t<>(publish_metrics().lock_wait_us);
+}
+
+[[nodiscard]] int_t<> publish_lock_hold_us()
+{
+	return int_t<>(publish_metrics().lock_hold_us);
+}
+
+[[nodiscard]] int_t<> publish_callback_us()
+{
+	return int_t<>(publish_metrics().callback_us);
+}
+
+[[nodiscard]] int_t<> publish_batch_count()
+{
+	return int_t<>(publish_metrics().batch_count);
+}
+
+[[nodiscard]] int_t<> publish_published_count()
+{
+	return int_t<>(publish_metrics().published_count);
+}
+
+[[nodiscard]] int_t<> publish_max_batch_size()
+{
+	return int_t<>(publish_metrics().max_batch_size);
+}
+
+[[nodiscard]] int_t<> publish_failed_try_lock_count()
+{
+	return int_t<>(publish_metrics().failed_try_lock_count);
+}
+
+[[nodiscard]] int_t<> publish_deferred_flush_count()
+{
+	return int_t<>(publish_metrics().deferred_flush_count);
+}
 
 void configure_default_worker_pool(const int_t<> &workers)
 {

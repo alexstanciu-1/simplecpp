@@ -75,9 +75,23 @@ task_status(task_batch $batch): string
 task_progress(task_batch $batch): task_progress_info
 task_set_status(task_context $ctx, string $status): void
 task_set_worker_pool_size(workers): void
+task_set_publish_try_lock(enabled): void
+task_publish_lock_wait_us(): int
+task_publish_lock_hold_us(): int
+task_publish_callback_us(): int
+task_publish_batch_count(): int
+task_publish_published_count(): int
+task_publish_max_batch_size(): int
+task_publish_failed_try_lock_count(): int
+task_publish_deferred_flush_count(): int
 ```
 
 The exact generic type spelling for `items`, callback parameters, callback returns, and result collection is owned by the implementation/spec pass that wires callable lowering.
+
+The publish diagnostics helpers are experimental measurement aids for
+`task_run_publish`. They report the most recent publish run in the current
+process and are intended for runtime/compiler scaling investigation, not stable
+application logic.
 
 Conceptual worker callback shapes:
 

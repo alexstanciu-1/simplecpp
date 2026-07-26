@@ -140,6 +140,11 @@ decltype(auto) invoke_publish_callback(TPublishCallback &callback, TValue &&valu
 	}
 }
 
+[[nodiscard]] inline std::int64_t elapsed_micros_since(std::chrono::steady_clock::time_point started)
+{
+	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - started).count();
+}
+
 [[nodiscard]] inline timeout_policy make_timeout_policy(const int_t<> &timeout_ms)
 {
 	const auto native_timeout = timeout_ms.native_value();
@@ -168,6 +173,35 @@ decltype(auto) invoke_publish_callback(TPublishCallback &callback, TValue &&valu
 }
 
 } // namespace detail
+
+struct publish_metrics_snapshot final {
+	std::int64_t lock_wait_us = 0;
+	std::int64_t lock_hold_us = 0;
+	std::int64_t callback_us = 0;
+	std::int64_t batch_count = 0;
+	std::int64_t published_count = 0;
+	std::int64_t max_batch_size = 0;
+	std::int64_t failed_try_lock_count = 0;
+	std::int64_t deferred_flush_count = 0;
+};
+
+void reset_publish_metrics();
+void record_publish_lock_wait(std::int64_t elapsed_us);
+void record_publish_lock_hold(std::int64_t elapsed_us);
+void record_publish_callback(std::int64_t elapsed_us, std::int64_t batch_size);
+void record_publish_failed_try_lock();
+void record_publish_deferred_flush();
+[[nodiscard]] publish_metrics_snapshot publish_metrics();
+void configure_publish_try_lock(const bool_t &enabled);
+[[nodiscard]] bool publish_try_lock_enabled();
+[[nodiscard]] int_t<> publish_lock_wait_us();
+[[nodiscard]] int_t<> publish_lock_hold_us();
+[[nodiscard]] int_t<> publish_callback_us();
+[[nodiscard]] int_t<> publish_batch_count();
+[[nodiscard]] int_t<> publish_published_count();
+[[nodiscard]] int_t<> publish_max_batch_size();
+[[nodiscard]] int_t<> publish_failed_try_lock_count();
+[[nodiscard]] int_t<> publish_deferred_flush_count();
 
 class batch final {
 public:
@@ -475,6 +509,15 @@ void shutdown_default_worker_pool();
 [[nodiscard]] int_t<> default_worker_pool_size();
 [[nodiscard]] int_t<> default_worker_pool_live_workers();
 [[nodiscard]] int_t<> default_worker_pool_created_workers();
+void configure_publish_try_lock(const bool_t &enabled);
+[[nodiscard]] int_t<> publish_lock_wait_us();
+[[nodiscard]] int_t<> publish_lock_hold_us();
+[[nodiscard]] int_t<> publish_callback_us();
+[[nodiscard]] int_t<> publish_batch_count();
+[[nodiscard]] int_t<> publish_published_count();
+[[nodiscard]] int_t<> publish_max_batch_size();
+[[nodiscard]] int_t<> publish_failed_try_lock_count();
+[[nodiscard]] int_t<> publish_deferred_flush_count();
 
 namespace detail {
 
@@ -748,6 +791,7 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 	using result_t = callback_result_t<TWorkCallback, TItem>;
 	static_assert(!std::is_void_v<result_t>, "task_run_publish(): work callback must return a value");
 
+	reset_publish_metrics();
 	const auto item_count = items.size();
 	if (item_count == 0) {
 		return int_t<>(0);
@@ -778,14 +822,59 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 			++published_count;
 		}
 		if (ready_values.size() > 0) {
+			const auto callback_started = std::chrono::steady_clock::now();
+			const auto batch_size = static_cast<std::int64_t>(ready_values.size());
 			invoke_publish_callback(publish_callback, std::move(ready_values), worker_context);
+			record_publish_callback(detail::elapsed_micros_since(callback_started), batch_size);
 		}
+	};
+	using pending_result_t = std::pair<std::size_t, task_value_t<result_t>>;
+	auto flush_pending_values = [&](std::vector<pending_result_t> &pending_values, const shared_p<context> &worker_context, bool blocking) -> bool {
+		if (pending_values.empty()) {
+			return true;
+		}
+		const bool deferred_flush = publish_try_lock_enabled() && (blocking || pending_values.size() > 1);
+		const auto wait_started = std::chrono::steady_clock::now();
+		if (blocking) {
+			std::unique_lock<std::mutex> lock(publish_mutex);
+			record_publish_lock_wait(detail::elapsed_micros_since(wait_started));
+			const auto hold_started = std::chrono::steady_clock::now();
+			for (auto &pending : pending_values) {
+				value_results.at(pending.first) = std::move(pending.second);
+			}
+			pending_values.clear();
+			publish_ready_values(worker_context);
+			record_publish_lock_hold(detail::elapsed_micros_since(hold_started));
+			if (deferred_flush) {
+				record_publish_deferred_flush();
+			}
+			return true;
+		}
+
+		std::unique_lock<std::mutex> lock(publish_mutex, std::try_to_lock);
+		if (!lock.owns_lock()) {
+			record_publish_failed_try_lock();
+			return false;
+		}
+		record_publish_lock_wait(detail::elapsed_micros_since(wait_started));
+		const auto hold_started = std::chrono::steady_clock::now();
+		for (auto &pending : pending_values) {
+			value_results.at(pending.first) = std::move(pending.second);
+		}
+		pending_values.clear();
+		publish_ready_values(worker_context);
+		record_publish_lock_hold(detail::elapsed_micros_since(hold_started));
+		if (deferred_flush) {
+			record_publish_deferred_flush();
+		}
+		return true;
 	};
 
 	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 		auto worker_context = shared<context>();
 		worker_context->state = state;
 		worker_context->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
+		std::vector<pending_result_t> pending_values;
 		bool active_item = false;
 		try {
 			while (true) {
@@ -810,11 +899,8 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 						state->stop_requested.store(true);
 						throw_timeout();
 					}
-					{
-						std::lock_guard<std::mutex> lock(publish_mutex);
-						value_results.at(index) = std::move(value);
-						publish_ready_values(worker_context);
-					}
+					pending_values.emplace_back(index, std::move(value));
+					flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
 				} catch (const std::exception &exception) {
 					state->errors.fetch_add(1, std::memory_order_relaxed);
 					if constexpr (std::is_same_v<std::decay_t<TErrorHandler>, null_t>) {
@@ -824,9 +910,8 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 						auto event = make_error_event(exception, mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
 						if constexpr (!std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
 							auto value = invoke_error_handler(error_handler, items.at(index), event);
-							std::lock_guard<std::mutex> lock(publish_mutex);
-							value_results.at(index) = std::move(value);
-							publish_ready_values(worker_context);
+							pending_values.emplace_back(index, std::move(value));
+							flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
 						}
 					}
 				} catch (...) {
@@ -838,9 +923,8 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 						auto event = make_unknown_error_event(mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
 						if constexpr (!std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
 							auto value = invoke_error_handler(error_handler, items.at(index), event);
-							std::lock_guard<std::mutex> lock(publish_mutex);
-							value_results.at(index) = std::move(value);
-							publish_ready_values(worker_context);
+							pending_values.emplace_back(index, std::move(value));
+							flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
 						}
 					}
 				}
@@ -848,6 +932,7 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 				active_item = false;
 				state->completed.fetch_add(1, std::memory_order_relaxed);
 			}
+			flush_pending_values(pending_values, worker_context, true);
 		} catch (...) {
 			if (active_item) {
 				state->active.fetch_sub(1, std::memory_order_relaxed);
@@ -1901,6 +1986,96 @@ inline void configure_default_worker_pool(const int_t<> &)
 		"tasks_module_disabled",
 		"scpp::tasks",
 		"task_set_worker_pool_size"
+	);
+}
+
+inline void configure_publish_try_lock(const bool_t &)
+{
+	throw runtime_error(
+		"task_set_publish_try_lock(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_set_publish_try_lock"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_lock_wait_us()
+{
+	throw runtime_error(
+		"task_publish_lock_wait_us(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_lock_wait_us"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_lock_hold_us()
+{
+	throw runtime_error(
+		"task_publish_lock_hold_us(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_lock_hold_us"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_callback_us()
+{
+	throw runtime_error(
+		"task_publish_callback_us(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_callback_us"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_batch_count()
+{
+	throw runtime_error(
+		"task_publish_batch_count(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_batch_count"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_published_count()
+{
+	throw runtime_error(
+		"task_publish_published_count(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_published_count"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_max_batch_size()
+{
+	throw runtime_error(
+		"task_publish_max_batch_size(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_max_batch_size"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_failed_try_lock_count()
+{
+	throw runtime_error(
+		"task_publish_failed_try_lock_count(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_failed_try_lock_count"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_deferred_flush_count()
+{
+	throw runtime_error(
+		"task_publish_deferred_flush_count(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_deferred_flush_count"
 	);
 }
 
