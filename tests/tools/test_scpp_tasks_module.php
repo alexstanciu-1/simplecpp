@@ -2020,6 +2020,11 @@ PHS
 	/** @return array{exit_code:int,stdout:string,stderr:string} */
 	private function runCommand(array $command, string $cwd, int $timeoutSeconds): array
 	{
+		$progress = getenv('SCPP_TASKS_TEST_PROGRESS') === '1';
+		$label = basename($cwd);
+		if ($progress) {
+			fwrite(STDERR, '[tasks-test] start ' . $label . ': ' . implode(' ', $command) . PHP_EOL);
+		}
 		$descriptor = [
 			0 => ['file', '/dev/null', 'r'],
 			1 => ['pipe', 'w'],
@@ -2034,6 +2039,7 @@ PHS
 		$stdout = '';
 		$stderr = '';
 		$started = microtime(true);
+		$lastProgress = $started;
 		$observedExitCode = null;
 		foreach ([1, 2] as $index) {
 			stream_set_blocking($pipes[$index], false);
@@ -2047,7 +2053,12 @@ PHS
 				$observedExitCode = is_int($exitCode) ? $exitCode : null;
 				break;
 			}
-			if ((microtime(true) - $started) > $timeoutSeconds) {
+			$now = microtime(true);
+			if ($progress && ($now - $lastProgress) >= 10.0) {
+				fwrite(STDERR, '[tasks-test] still running ' . $label . ' after ' . (int)($now - $started) . 's' . PHP_EOL);
+				$lastProgress = $now;
+			}
+			if (($now - $started) > $timeoutSeconds) {
 				proc_terminate($process);
 				throw new RuntimeException('Timed out after ' . $timeoutSeconds . 's: ' . implode(' ', $command));
 			}
@@ -2058,6 +2069,10 @@ PHS
 		fclose($pipes[1]);
 		fclose($pipes[2]);
 		$exitCode = proc_close($process);
+		if ($progress) {
+			$finalExitCode = $observedExitCode ?? (is_int($exitCode) ? $exitCode : 1);
+			fwrite(STDERR, '[tasks-test] done ' . $label . ': exit=' . $finalExitCode . ' elapsed=' . (int)(microtime(true) - $started) . 's' . PHP_EOL);
+		}
 		return [
 			'exit_code' => $observedExitCode ?? (is_int($exitCode) ? $exitCode : 1),
 			'stdout' => $stdout,
