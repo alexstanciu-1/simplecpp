@@ -969,7 +969,8 @@ final class StanExpressionTypeResolver
 		}
 		$result['local_type_diagnostics'] = array_merge(
 			$result['local_type_diagnostics'],
-			$buildGateOnly ? $this->filterBuildGateLocalTypeDiagnostics($analysis['diagnostics']) : $this->filterLocalTypeDiagnostics($analysis['diagnostics'])
+			$buildGateOnly ? $this->filterBuildGateLocalTypeDiagnostics($analysis['diagnostics']) : $this->filterLocalTypeDiagnostics($analysis['diagnostics']),
+			$this->collectConstParamWriteDiagnosticsForOwner($ownerNode, $context, $path)
 		);
 		$result['property_type_diagnostics'] = array_merge(
 			$result['property_type_diagnostics'],
@@ -2098,7 +2099,7 @@ final class StanExpressionTypeResolver
 	{
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
-			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment', 'enum_assignment', 'enum_comparison'], true)) {
+			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment', 'enum_assignment', 'enum_comparison', 'const_param_write'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -2111,7 +2112,7 @@ final class StanExpressionTypeResolver
 	{
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
-			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['fixed_width_integer_literal_range', 'fixed_width_integer_assignment', 'enum_assignment', 'enum_comparison'], true)) {
+			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['fixed_width_integer_literal_range', 'fixed_width_integer_assignment', 'enum_assignment', 'enum_comparison', 'const_param_write'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -3123,6 +3124,29 @@ final class StanExpressionTypeResolver
 				$path,
 				(int) ($assignment['line'] ?? 0),
 				'Unchecked wrapper result assigned to required `' . (string) $targetInfo['type'] . '` property `' . (string) $targetInfo['label'] . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the property write.'
+			);
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $ownerNode @return list<array<string,mixed>> */
+	private function collectConstParamWriteDiagnosticsForOwner(array $ownerNode, string $context, string $path): array
+	{
+		$diagnostics = [];
+		foreach (($ownerNode['const_param_writes'] ?? []) as $write) {
+			if (!is_array($write)) {
+				continue;
+			}
+			$name = (string) ($write['name'] ?? '');
+			if ($name === '') {
+				continue;
+			}
+			$diagnostics[] = $this->makeCallDiagnostic(
+				'const_param_write',
+				$context,
+				$path,
+				(int) ($write['line'] ?? 0),
+				'Cannot write through const parameter `$' . $name . '` in `' . $context . '`.'
 			);
 		}
 		return $diagnostics;

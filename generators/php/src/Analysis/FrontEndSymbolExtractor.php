@@ -190,6 +190,7 @@ final class FrontEndSymbolExtractor
 			'static_property_reads' => $this->summarizeStaticPropertyReads($function->statements),
 			'class_constant_accesses' => $this->summarizeClassConstantAccesses($function->statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($function->statements, $sourceLines),
+			'const_param_writes' => $this->summarizeConstParamWrites($function->params, $function->statements),
 			'statement_count' => count($function->statements),
 			'line' => $function->line,
 			'returns_by_reference' => $function->returnsByReference,
@@ -229,6 +230,7 @@ final class FrontEndSymbolExtractor
 			'static_property_reads' => $this->summarizeStaticPropertyReads($statements),
 			'class_constant_accesses' => $this->summarizeClassConstantAccesses($statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($statements, $sourceLines),
+			'const_param_writes' => [],
 			'statement_count' => count($statements),
 			'line' => 1,
 			'returns_by_reference' => false,
@@ -280,6 +282,7 @@ final class FrontEndSymbolExtractor
 				'static_property_reads' => $this->summarizeStaticPropertyReads($method->statements),
 				'class_constant_accesses' => $this->summarizeClassConstantAccesses($method->statements),
 				'local_invalidations' => $this->summarizeLocalInvalidations($method->statements, $sourceLines),
+				'const_param_writes' => $this->summarizeConstParamWrites($method->params, $method->statements),
 				'statement_count' => count($method->statements),
 				'line' => $method->line,
 				'returns_by_reference' => $method->returnsByReference,
@@ -697,6 +700,7 @@ final class FrontEndSymbolExtractor
 			'primary_type' => $param->primaryType,
 			'union_types' => $param->unionTypes,
 			'is_reference' => $param->isReference,
+			'is_const' => $param->isConst,
 			'is_variadic' => $param->isVariadic,
 			'has_default' => $param->default !== null,
 			'line' => $param->line,
@@ -916,6 +920,50 @@ final class FrontEndSymbolExtractor
 			];
 		}
 		return $invalidations;
+	}
+
+	/** @param list<\Scpp\S2S\IR\ParamDecl> $params @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeConstParamWrites(array $params, array $statements): array
+	{
+		$constParams = [];
+		foreach ($params as $param) {
+			if ($param instanceof \Scpp\S2S\IR\ParamDecl && $param->isConst) {
+				$constParams[$param->name] = true;
+			}
+		}
+		if ($constParams === []) {
+			return [];
+		}
+
+		$writes = [];
+		$seen = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
+				continue;
+			}
+			$target = null;
+			if (($statement->kind === 'assign' || $statement->kind === 'assign_ref' || $statement->kind === 'assign_op') && is_array($statement->payload)) {
+				$target = $this->extractRootVariableName($statement->payload['var'] ?? null);
+			} elseif ($statement->kind === 'unset') {
+				$target = $this->extractRootVariableName($statement->payload);
+			} elseif ($statement->kind === 'expr') {
+				$target = $this->extractMutationRootVariableName($statement->payload);
+			}
+			if ($target === null || !isset($constParams[$target])) {
+				continue;
+			}
+			$key = $statement->line . '|' . $target . '|' . $statement->kind;
+			if (isset($seen[$key])) {
+				continue;
+			}
+			$seen[$key] = true;
+			$writes[] = [
+				'line' => $statement->line,
+				'name' => $target,
+				'statement_kind' => $statement->kind,
+			];
+		}
+		return $writes;
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
@@ -1181,6 +1229,33 @@ final class FrontEndSymbolExtractor
 		}
 		$name = $node->children['name'] ?? null;
 		return is_string($name) && $name !== '' ? $name : null;
+	}
+
+	private function extractRootVariableName(mixed $node): ?string
+	{
+		while (is_object($node) && isset($node->kind, $node->children) && is_array($node->children)) {
+			if ($node->kind === AstKind::VAR) {
+				$name = $node->children['name'] ?? null;
+				return is_string($name) && $name !== '' ? $name : null;
+			}
+			if (in_array($node->kind, [AstKind::DIM, AstKind::PROP, AstKind::NULLSAFE_PROP], true)) {
+				$node = $node->children['expr'] ?? null;
+				continue;
+			}
+			return null;
+		}
+		return null;
+	}
+
+	private function extractMutationRootVariableName(mixed $node): ?string
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children)) {
+			return null;
+		}
+		if (in_array($node->kind, [AstKind::PRE_INC, AstKind::PRE_DEC, AstKind::POST_INC, AstKind::POST_DEC], true)) {
+			return $this->extractRootVariableName($node->children['var'] ?? null);
+		}
+		return null;
 	}
 
 	private function inferLiteralType(mixed $expr): ?string

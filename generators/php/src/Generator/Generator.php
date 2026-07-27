@@ -44,6 +44,8 @@ final class Generator
 	private int $currentSourceColumn = 0;
 	/** @var array<string, string> */
 	private array $localTypeComments = [];
+	/** @var array<string, bool> */
+	private array $localConstParams = [];
 	/** @var array<int, string> */
 	private array $scannerReturnAnnotationsByLine = [];
 	/** @var array<string,string> */
@@ -146,6 +148,7 @@ final class Generator
 		$this->errors = $file->buildErrors;
 		$this->warnings = [];
 		$this->localTypeComments = $file->localTypeCommentsByKey;
+		$this->localConstParams = $this->indexScannerConstParams($file);
 		$this->scannerReturnAnnotationsByLine = $this->indexScannerReturnAnnotations($file);
 		$this->declaredLocalTypes = [];
 		$this->predefinedReferenceLocals = [];
@@ -401,6 +404,23 @@ final class Generator
 			$type = $annotation['type'] ?? null;
 			if ($line > 0 && is_string($type) && $type !== '') {
 				$out[$line] = $type;
+			}
+		}
+		return $out;
+	}
+
+	/** @return array<string, bool> */
+	private function indexScannerConstParams(PhpFile $file): array
+	{
+		$out = [];
+		foreach ($file->scannerAnnotations as $annotation) {
+			if (($annotation['kind'] ?? null) !== 'param' || (bool) ($annotation['isConst'] ?? false) !== true) {
+				continue;
+			}
+			$name = $annotation['name'] ?? null;
+			$line = (int) ($annotation['line'] ?? 0);
+			if (is_string($name) && $name !== '' && $line > 0) {
+				$out[$line . ':' . $name] = true;
 			}
 		}
 		return $out;
@@ -974,6 +994,10 @@ final class Generator
 
 	private function paramNeedsTemplateNormalization(ParamDecl $param): bool
 	{
+		if ($param->isConst) {
+			return false;
+		}
+
 		if ($this->isSupportedScalarTemplateRefParam($param)) {
 			return true;
 		}
@@ -993,7 +1017,7 @@ final class Generator
 
 	private function isSupportedScalarTemplateRefParam(ParamDecl $param): bool
 	{
-		if (!$param->isReference || $param->type === null || $param->isVariadic) {
+		if (!$param->isReference || $param->isConst || $param->type === null || $param->isVariadic) {
 			return false;
 		}
 
@@ -2658,6 +2682,10 @@ final class Generator
 			if ($param->isReference || $param->isVariadic || $param->type === null) {
 				continue;
 			}
+			if ($param->isConst) {
+				$modes[$param->name] = 'readonly';
+				continue;
+			}
 
 			$mapped = $this->typeMapper->mapDeclaredType($param->type);
 			if ($mapped !== 'string_t' && $mapped !== 'mixed_t' && !str_starts_with($mapped, 'vector_t<') && !str_starts_with($mapped, 'fixed_array_t<') && !str_starts_with($mapped, 'hash_t<')) {
@@ -4005,6 +4033,11 @@ final class Generator
 
 		$qualifiedType = $this->qualifyDeclaredPhpType($param->type, $this->currentNamespacePhp);
 		$mapped = $this->typeMapper->mapDeclaredType($qualifiedType);
+		if ($param->isConst) {
+			return $param->isReference || $this->shouldPassConstParamByReference($mapped)
+				? 'const ' . $mapped . '&'
+				: 'const ' . $mapped;
+		}
 		if ($param->isReference) {
 			$proxyType = $this->typeMapper->mapReferenceProxyType($qualifiedType);
 			if ($proxyType !== null) {
@@ -4018,6 +4051,18 @@ final class Generator
 		}
 
 		return $this->typeMapper->mapParamType($qualifiedType, false);
+	}
+
+	private function shouldPassConstParamByReference(string $mapped): bool
+	{
+		return $mapped === 'string_t'
+			|| $mapped === 'mixed_t'
+			|| str_starts_with($mapped, 'vector_t<')
+			|| str_starts_with($mapped, 'fixed_array_t<')
+			|| str_starts_with($mapped, 'hash_t<')
+			|| str_starts_with($mapped, 'shared_p<')
+			|| str_starts_with($mapped, 'unique_p<')
+			|| str_starts_with($mapped, 'weak_p<');
 	}
 
 	/** @param list<Statement> $statements @return list<CodeBlock> */
@@ -6657,9 +6702,16 @@ final class Generator
 		return str_ends_with($mappedType, '&') ? $mappedType : ($mappedType . '&');
 	}
 
-	private function mapClosureDocParamType(string $docType, bool $isReference): string
+	private function mapClosureDocParamType(string $docType, bool $isReference, bool $isConst): string
 	{
-		return $this->typeMapper->mapParamType($this->qualifyDeclaredPhpType($docType, $this->currentNamespacePhp), $isReference);
+		$qualifiedType = $this->qualifyDeclaredPhpType($docType, $this->currentNamespacePhp);
+		$mapped = $this->typeMapper->mapDeclaredType($qualifiedType);
+		if ($isConst) {
+			return $isReference || $this->shouldPassConstParamByReference($mapped)
+				? 'const ' . $mapped . '&'
+				: 'const ' . $mapped;
+		}
+		return $this->typeMapper->mapParamType($qualifiedType, $isReference);
 	}
 
 	private function renderArrowFunctionExpr(object $expr, ?string $namespacePhp): string
@@ -7093,11 +7145,12 @@ final class Generator
 		$phpType = $this->readAstTypeName($param->children['type'] ?? null);
 		$docType = $this->resolveAstParamDocType($param);
 		$isReference = (((int) ($param->flags ?? 0)) & AstKind::PARAM_REF) !== 0;
+		$isConst = $this->isAstParamConst($param);
 		if ($phpType !== null) {
 			return $this->typeMapper->mapParamType($this->qualifyDeclaredPhpType($phpType, $this->currentNamespacePhp), $isReference);
 		}
 		if ($docType !== null) {
-			return $this->mapClosureDocParamType($docType, $isReference);
+			return $this->mapClosureDocParamType($docType, $isReference, $isConst);
 		}
 		if (is_string($expectedParamType) && $expectedParamType !== '') {
 			return $expectedParamType;
@@ -7110,6 +7163,13 @@ final class Generator
 			}
 		}
 		return $isReference ? 'auto&' : 'auto';
+	}
+
+	private function isAstParamConst(object $param): bool
+	{
+		$name = (string) ($param->children['name'] ?? '');
+		$line = (int) ($param->lineno ?? 0);
+		return $name !== '' && $line > 0 && isset($this->localConstParams[$line . ':' . $name]);
 	}
 
 	private function inferClosureParamStoredType(object $param, ?string $expectedParamType = null): ?string

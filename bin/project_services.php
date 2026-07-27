@@ -15249,6 +15249,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 		'fixed_width_integer_assignment',
 		'enum_assignment',
 		'enum_comparison',
+		'const_param_write',
 		'unsupported_hash_key_type',
 		'member_visibility_violation',
 		'interface_contract_mismatch',

@@ -223,7 +223,11 @@ final class TokenSiteScanner
 		}
 
 		$typeSlot = $this->parseBoundedTypeSlot($source, $typeStartIndex, $typeEndIndex);
-		if ($typeSlot === null || !str_contains($typeSlot['type'], '<')) {
+		if ($typeSlot === null) {
+			return null;
+		}
+		$typeInfo = $this->stripLeadingConst($typeSlot['type']);
+		if (!str_contains($typeInfo['type'], '<') && !$typeInfo['isConst']) {
 			return null;
 		}
 
@@ -234,13 +238,14 @@ final class TokenSiteScanner
 		return [
 			'kind' => 'param',
 			'name' => ltrim($variableToken['text'], '$'),
-			'type' => $typeSlot['type'],
+			'type' => $typeInfo['type'],
 			'line' => $variableToken['line'],
 			'startOffset' => $typeSlot['slotStartOffset'],
 			'endOffset' => $typeSlot['slotEndOffset'],
 			'rewriteStart' => $typeSlot['slotStartOffset'],
 			'rewriteEnd' => $variableToken['offset'] + strlen($variableToken['text']),
-			'replacement' => '/** ' . $typeSlot['type'] . ' */' . $middleTrivia . $variableToken['text'],
+			'replacement' => '/** ' . $typeInfo['type'] . ' */' . $middleTrivia . $variableToken['text'],
+			'isConst' => $typeInfo['isConst'],
 		];
 	}
 
@@ -694,6 +699,17 @@ final class TokenSiteScanner
 	private function needsPhpCompatibleRewrite(string $type): bool
 	{
 		return str_contains($type, '<') || str_contains($type, ' ') || str_contains($type, '|') || str_contains($type, '&');
+	}
+
+	/** @return array{type:string,isConst:bool} */
+	private function stripLeadingConst(string $type): array
+	{
+		$trimmed = trim($type);
+		if (preg_match('/^const\s+(.+)$/i', $trimmed, $matches) !== 1) {
+			return ['type' => $trimmed, 'isConst' => false];
+		}
+		$inner = preg_replace('/\s+/', ' ', trim((string) ($matches[1] ?? ''))) ?? trim((string) ($matches[1] ?? ''));
+		return ['type' => $inner, 'isConst' => true];
 	}
 
 	private function looksLikePrismType(string $type): bool

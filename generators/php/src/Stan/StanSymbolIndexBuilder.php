@@ -214,6 +214,9 @@ final class StanSymbolIndexBuilder
 			if ($name !== '' && $name[0] !== '$') {
 				$name = '$' . $name;
 			}
+			if ((bool) ($param['is_const'] ?? false) && $type !== '') {
+				$type = 'const ' . $type;
+			}
 			$text = trim(($type !== '' ? $type . ' ' : '') . $name);
 			if ($text !== '') {
 				$parts[] = $text;

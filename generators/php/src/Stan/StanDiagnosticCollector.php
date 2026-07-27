@@ -264,6 +264,27 @@ final class StanDiagnosticCollector
 						$interfaceParamType = (string) ($interfaceParam['type'] ?? '');
 						$implementedParamType = (string) ($implementedParam['type'] ?? '');
 						if ($interfaceParamType === '' || $implementedParamType === '' || $interfaceParamType === $implementedParamType) {
+							$interfaceParamConst = (bool) ($interfaceParam['is_const'] ?? false);
+							$implementedParamConst = (bool) ($implementedParam['is_const'] ?? false);
+							if ($interfaceParamConst === $implementedParamConst) {
+								continue;
+							}
+							$diagnostics[] = [
+								'kind' => 'interface_contract_mismatch',
+								'mismatch_kind' => 'parameter_const',
+								'class' => $classFqcn,
+								'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
+								'name' => (string) $methodName,
+								'path' => (string) ($classInfo['path'] ?? ''),
+								'line' => (int) ($implementedParam['line'] ?? $implementedMethod['line'] ?? $classInfo['line'] ?? 0),
+								'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
+								'interface_line' => (int) ($interfaceParam['line'] ?? $interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
+								'parameter_index' => $index,
+								'parameter_name' => (string) ($interfaceParam['name'] ?? $implementedParam['name'] ?? ('arg' . $index)),
+								'expected_const' => $interfaceParamConst,
+								'actual_const' => $implementedParamConst,
+								'message' => 'Class `' . $classFqcn . '` method `' . (string) $methodName . '()` parameter $' . (string) ($interfaceParam['name'] ?? $implementedParam['name'] ?? ('arg' . $index)) . ' does not match interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '`: expected ' . ($interfaceParamConst ? 'const' : 'non-const') . ' parameter, got ' . ($implementedParamConst ? 'const' : 'non-const') . '.',
+							];
 							continue;
 						}
 						$diagnostics[] = [
@@ -866,6 +887,9 @@ final class StanDiagnosticCollector
 				continue;
 			}
 			if ((string) ($leftParam['type'] ?? '') !== (string) ($rightParam['type'] ?? '')) {
+				return false;
+			}
+			if ((bool) ($leftParam['is_const'] ?? false) !== (bool) ($rightParam['is_const'] ?? false)) {
 				return false;
 			}
 		}

@@ -41,7 +41,7 @@ final class PreTokenizer
 			$rewritten .= $site['replacement'];
 			$cursor = $site['rewriteEnd'];
 
-			$annotations[] = [
+			$annotation = [
 				'kind' => $site['kind'],
 				'name' => $site['name'],
 				'type' => $site['type'],
@@ -49,6 +49,10 @@ final class PreTokenizer
 				'startOffset' => $site['startOffset'],
 				'endOffset' => $site['endOffset'],
 			];
+			if ((bool) ($site['isConst'] ?? false)) {
+				$annotation['isConst'] = true;
+			}
+			$annotations[] = $annotation;
 		}
 
 		$rewritten .= substr($source, $cursor);
