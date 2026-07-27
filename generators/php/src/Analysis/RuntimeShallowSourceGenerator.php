@@ -435,6 +435,7 @@ final class RuntimeShallowSourceGenerator
 					['name' => 'publish', 'type' => 'mixed'],
 					['name' => 'error', 'type' => 'mixed', 'has_default' => true],
 					['name' => 'timeout_ms', 'type' => 'int', 'has_default' => true],
+					['name' => 'max_publish_batch_size', 'type' => 'int', 'has_default' => true],
 				]],
 				'task_start' => ['return' => 'task_batch', 'params' => [
 					['name' => 'items', 'type' => 'mixed'],

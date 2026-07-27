@@ -75,6 +75,7 @@ task_status(task_batch $batch): string
 task_progress(task_batch $batch): task_progress_info
 task_set_status(task_context $ctx, string $status): void
 task_set_worker_pool_size(workers): void
+task_run_publish(items, workers, work, publish, error = null, timeout_ms = 0, max_publish_batch_size = 0): int
 task_set_publish_try_lock(enabled): void
 task_publish_lock_wait_us(): int
 task_publish_lock_hold_us(): int
@@ -92,6 +93,11 @@ The publish diagnostics helpers are experimental measurement aids for
 `task_run_publish`. They report the most recent publish run in the current
 process and are intended for runtime/compiler scaling investigation, not stable
 application logic.
+
+`max_publish_batch_size <= 0` preserves the default ordered-ready publication
+behavior. A positive value caps each publish callback batch independently of
+`timeout_ms`; final blocking flushes drain any remaining ordered-ready values in
+bounded callbacks.
 
 Conceptual worker callback shapes:
 

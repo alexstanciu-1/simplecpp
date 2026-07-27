@@ -34,6 +34,10 @@ First-pass builtins:
 - `task_progress`
 - `task_set_status`
 - `task_set_worker_pool_size`
+- `task_run_publish(items, workers, work, publish, error = null,
+  timeout_ms = 0, max_publish_batch_size = 0)` for ordered worker-result
+  publication, with `max_publish_batch_size > 0` capping each publish callback
+  batch independently of timeout handling
 - experimental publish diagnostics:
   `task_set_publish_try_lock`, `task_publish_lock_wait_us`,
   `task_publish_lock_hold_us`, `task_publish_callback_us`,

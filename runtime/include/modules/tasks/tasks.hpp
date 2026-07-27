@@ -534,6 +534,9 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>;
 
 template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms, const int_t<> &max_publish_batch_size);
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
 [[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms);
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
@@ -785,6 +788,7 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 	TPublishCallback publish_callback,
 	TErrorHandler error_handler,
 	const int_t<> &timeout_ms,
+	const int_t<> &max_publish_batch_size,
 	const shared_p<batch_state> &state
 )
 {
@@ -802,6 +806,10 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 		? std::size_t{1}
 		: static_cast<std::size_t>(requested_workers);
 	const std::size_t worker_count = std::min(native_workers, item_count);
+	const auto requested_publish_batch_size = max_publish_batch_size.native_value();
+	const std::size_t publish_batch_limit = requested_publish_batch_size <= 0
+		? std::size_t{0}
+		: std::min(static_cast<std::size_t>(requested_publish_batch_size), item_count);
 
 	std::vector<std::exception_ptr> errors(worker_count);
 	std::atomic<std::size_t> next_index{0};
@@ -813,25 +821,32 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 	std::vector<result_slot_t<result_t>> value_results(item_count);
 	std::size_t next_publish_index = 0;
 	std::size_t published_count = 0;
-	auto publish_ready_values = [&](const shared_p<context> &worker_context) {
+	auto publish_ready_values = [&](const shared_p<context> &worker_context) -> std::pair<std::size_t, bool> {
 		vector_t<task_value_t<result_t>> ready_values;
-		while (next_publish_index < item_count && value_results.at(next_publish_index).has_value()) {
+		while (
+			next_publish_index < item_count
+			&& value_results.at(next_publish_index).has_value()
+			&& (publish_batch_limit == 0 || ready_values.size() < publish_batch_limit)
+		) {
 			ready_values.push_back(std::move(value_results.at(next_publish_index).value()));
 			value_results.at(next_publish_index).reset();
 			++next_publish_index;
 			++published_count;
 		}
-		if (ready_values.size() > 0) {
+		const std::size_t published_now = ready_values.size();
+		if (published_now > 0) {
 			const auto callback_started = std::chrono::steady_clock::now();
-			const auto batch_size = static_cast<std::int64_t>(ready_values.size());
+			const auto batch_size = static_cast<std::int64_t>(published_now);
 			invoke_publish_callback(publish_callback, std::move(ready_values), worker_context);
 			record_publish_callback(detail::elapsed_micros_since(callback_started), batch_size);
 		}
+		const bool more_ready = next_publish_index < item_count && value_results.at(next_publish_index).has_value();
+		return {published_now, more_ready};
 	};
 	using pending_result_t = std::pair<std::size_t, task_value_t<result_t>>;
-	auto flush_pending_values = [&](std::vector<pending_result_t> &pending_values, const shared_p<context> &worker_context, bool blocking) -> bool {
-		if (pending_values.empty()) {
-			return true;
+	auto flush_pending_values = [&](std::vector<pending_result_t> &pending_values, const shared_p<context> &worker_context, bool blocking) -> std::pair<std::size_t, bool> {
+		if (pending_values.empty() && (!blocking || publish_batch_limit == 0)) {
+			return {0, false};
 		}
 		const bool deferred_flush = publish_try_lock_enabled() && (blocking || pending_values.size() > 1);
 		const auto wait_started = std::chrono::steady_clock::now();
@@ -839,35 +854,37 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 			std::unique_lock<std::mutex> lock(publish_mutex);
 			record_publish_lock_wait(detail::elapsed_micros_since(wait_started));
 			const auto hold_started = std::chrono::steady_clock::now();
+			const bool had_pending_values = !pending_values.empty();
 			for (auto &pending : pending_values) {
 				value_results.at(pending.first) = std::move(pending.second);
 			}
 			pending_values.clear();
-			publish_ready_values(worker_context);
+			const auto published = publish_ready_values(worker_context);
 			record_publish_lock_hold(detail::elapsed_micros_since(hold_started));
-			if (deferred_flush) {
+			if (deferred_flush && (had_pending_values || published.first > 0)) {
 				record_publish_deferred_flush();
 			}
-			return true;
+			return published;
 		}
 
 		std::unique_lock<std::mutex> lock(publish_mutex, std::try_to_lock);
 		if (!lock.owns_lock()) {
 			record_publish_failed_try_lock();
-			return false;
+			return {0, true};
 		}
 		record_publish_lock_wait(detail::elapsed_micros_since(wait_started));
 		const auto hold_started = std::chrono::steady_clock::now();
+		const bool had_pending_values = !pending_values.empty();
 		for (auto &pending : pending_values) {
 			value_results.at(pending.first) = std::move(pending.second);
 		}
 		pending_values.clear();
-		publish_ready_values(worker_context);
+		const auto published = publish_ready_values(worker_context);
 		record_publish_lock_hold(detail::elapsed_micros_since(hold_started));
-		if (deferred_flush) {
+		if (deferred_flush && (had_pending_values || published.first > 0)) {
 			record_publish_deferred_flush();
 		}
-		return true;
+		return published;
 	};
 
 	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
@@ -932,7 +949,12 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 				active_item = false;
 				state->completed.fetch_add(1, std::memory_order_relaxed);
 			}
-			flush_pending_values(pending_values, worker_context, true);
+			while (true) {
+				const auto published = flush_pending_values(pending_values, worker_context, true);
+				if (!published.second) {
+					break;
+				}
+			}
 		} catch (...) {
 			if (active_item) {
 				state->active.fetch_sub(1, std::memory_order_relaxed);
@@ -960,9 +982,15 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 }
 
 template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms, const int_t<> &max_publish_batch_size)
+{
+	return detail::run_publish_vector_with_state(items, workers, work_callback, publish_callback, error_handler, timeout_ms, max_publish_batch_size, shared<detail::batch_state>());
+}
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
 [[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
-	return detail::run_publish_vector_with_state(items, workers, work_callback, publish_callback, error_handler, timeout_ms, shared<detail::batch_state>());
+	return run_publish(items, workers, work_callback, publish_callback, error_handler, timeout_ms, int_t<>(0));
 }
 
 template <typename TItem, typename TWorkCallback, typename TPublishCallback>
@@ -1774,6 +1802,17 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 		"tasks_module_disabled",
 		"scpp::tasks",
 		"task_run"
+	);
+}
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &, const int_t<> &, TWorkCallback, TPublishCallback, TErrorHandler, const int_t<> &, const int_t<> &)
+{
+	throw runtime_error(
+		"task_run_publish(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_run_publish"
 	);
 }
 
