@@ -2491,6 +2491,14 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
+		$catalog['source_buffer_empty'] = [
+			'name' => 'source_buffer_empty',
+			'namespace' => null,
+			'params' => [],
+			'return_type' => 'source_buffer',
+			'line' => 0,
+			'is_static' => false,
+		];
 		$catalog['source_buffer_take'] = [
 			'name' => 'source_buffer_take',
 			'namespace' => null,

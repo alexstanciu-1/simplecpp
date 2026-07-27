@@ -1,6 +1,9 @@
 #include "tests/runtime/runtime_test_common.hpp"
 
 int main() {
+	auto empty_buffer = scpp::source::source_buffer_empty();
+	assert(scpp::source::source_buffer_byte_len(empty_buffer).native_value() == 0U);
+
 	scpp::string_t text("abcdef");
 	auto buffer = scpp::source::source_buffer_take(text);
 	assert(text.native_value().empty());

@@ -215,6 +215,10 @@ inline byte_span source_buffer::span(const std::size_t offset, const std::size_t
 	return byte_span(*this, offset, length);
 }
 
+[[nodiscard]] inline source_buffer source_buffer_empty() {
+	return source_buffer(std::string());
+}
+
 [[nodiscard]] inline source_buffer source_buffer_take(string_t &text) {
 	source_buffer buffer(text.native_value());
 	text._unset_();

@@ -279,6 +279,7 @@ final class RuntimeShallowSourceGenerator
 				'vector_clear' => ['return' => 'void', 'params' => [['name' => 'values', 'type' => 'mixed']]],
 				'vector_clear_keep_capacity' => ['return' => 'void', 'params' => [['name' => 'values', 'type' => 'mixed']]],
 				'vector_compact' => ['return' => 'void', 'params' => [['name' => 'values', 'type' => 'mixed'], ['name' => 'capacity', 'type' => 'int', 'has_default' => true]]],
+				'source_buffer_empty' => ['return' => 'source_buffer', 'params' => []],
 				'source_buffer_take' => ['return' => 'source_buffer', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'source_buffer_release' => ['return' => 'string', 'params' => [['name' => 'buffer', 'type' => 'source_buffer']]],
 				'source_buffer_byte_len' => ['return' => 'uint32', 'params' => [['name' => 'buffer', 'type' => 'source_buffer']]],

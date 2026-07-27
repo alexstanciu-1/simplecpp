@@ -105,6 +105,7 @@ function scandir(string $path): mixed {}
 function shell_exec(string $command): mixed {}
 function source_buffer_byte_at(source_buffer $buffer, int $offset): byte {}
 function source_buffer_byte_len(source_buffer $buffer): uint32 {}
+function source_buffer_empty(): source_buffer {}
 function source_buffer_release(source_buffer $buffer): string {}
 function source_buffer_slice(source_buffer $buffer, int $offset, int $length): string {}
 function source_buffer_span(source_buffer $buffer, int $offset, int $length): byte_span {}

@@ -73,6 +73,7 @@
         "number_format": "str::number_format",
         "hash_string": "php::hash_string",
         "stable_hash_string_u64": "php::stable_hash_string_u64",
+        "source_buffer_empty": "source::source_buffer_empty",
         "source_buffer_take": "source::source_buffer_take",
         "source_buffer_release": "source::source_buffer_release",
         "source_buffer_byte_len": "source::source_buffer_byte_len",

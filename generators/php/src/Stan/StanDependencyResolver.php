@@ -70,6 +70,7 @@ final class StanDependencyResolver
 			'vector_clear',
 			'vector_clear_keep_capacity',
 			'vector_compact',
+			'source_buffer_empty',
 			'source_buffer_take',
 			'source_buffer_release',
 			'source_buffer_byte_len',
