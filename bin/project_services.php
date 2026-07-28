@@ -5200,7 +5200,8 @@ function collect_object_action_identity_report(
 	$runtimeIncludeDir = build_ninja_relative_path($projectRoot, $buildDir, $repoRoot . '/runtime/include');
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig, $runtimePlacement);
 	$appRuntimeCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
-	$appCxxFlags = trim(build_compiler_flags((string) ($compiler['kind'] ?? ''), $buildMode, $runtimeIncludeDir, $generatedIncludeDir) . ($appRuntimeCxxFlags !== [] ? ' ' . implode(' ', $appRuntimeCxxFlags) : ''));
+	$clangTimeTraceFlags = resolve_clang_time_trace_flags($compiler);
+	$appCxxFlags = trim(build_compiler_flags((string) ($compiler['kind'] ?? ''), $buildMode, $runtimeIncludeDir, $generatedIncludeDir) . ($appRuntimeCxxFlags !== [] ? ' ' . implode(' ', $appRuntimeCxxFlags) : '') . ($clangTimeTraceFlags !== [] ? ' ' . implode(' ', $clangTimeTraceFlags) : ''));
 	$runtimeSignature = normalize_path($buildDir . '/runtime_signature.txt');
 	$appPchArtifact = normalize_path(build_app_pch_artifact_path($buildDir, (string) ($compiler['kind'] ?? 'gnu_like')));
 	$appPchHeader = normalize_path(build_app_pch_header_path($buildDir));
@@ -16850,6 +16851,32 @@ function resolve_compiler_launcher(string $compilerCommand): ?string
 	return detect_compiler_launcher($compilerCommand);
 }
 
+/** @param array{command:string,kind:string,launcher?:?string,linker_flags?:list<string>,archiver?:?string} $compiler @return list<string> */
+function resolve_clang_time_trace_flags(array $compiler): array
+{
+	$enabled = getenv('SCPP_CLANG_TIME_TRACE');
+	if (!is_string($enabled) || trim($enabled) === '' || !scpp_env_truthy($enabled)) {
+		return [];
+	}
+	if (($compiler['kind'] ?? '') !== 'gnu_like') {
+		scpp_fail('SCPP_CLANG_TIME_TRACE requires a GNU-like clang++ compiler.' . PHP_EOL, 2);
+	}
+	$command = strtolower(basename(str_replace('\\', '/', (string) ($compiler['command'] ?? ''))));
+	if (!str_contains($command, 'clang')) {
+		scpp_fail('SCPP_CLANG_TIME_TRACE requires clang++; current compiler is `' . (string) ($compiler['command'] ?? '') . '`.' . PHP_EOL, 2);
+	}
+	$flags = ['-ftime-trace'];
+	$granularity = getenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US');
+	if (is_string($granularity) && trim($granularity) !== '') {
+		$value = trim($granularity);
+		if (!preg_match('/^[1-9][0-9]*$/', $value)) {
+			scpp_fail('Invalid SCPP_CLANG_TIME_TRACE_GRANULARITY_US value `' . $granularity . '`; expected a positive integer microsecond threshold.' . PHP_EOL, 2);
+		}
+		$flags[] = '-ftime-trace-granularity=' . $value;
+	}
+	return $flags;
+}
+
 /** @return array{command:string,kind:string,launcher:?string,linker_flags:list<string>,archiver:?string}|null */
 function detect_default_compiler(): ?array
 {
@@ -16966,6 +16993,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$runtimeLinkFlags = $options['compile_runtime'] && is_array($runtimeBuild['link_flags'] ?? null) ? $runtimeBuild['link_flags'] : [];
 	$runtimeExtraCxxFlags = $options['compile_runtime'] && is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
 	$appRuntimeCxxFlags = is_array($runtimeBuild['extra_cxxflags'] ?? null) ? $runtimeBuild['extra_cxxflags'] : [];
+	$clangTimeTraceFlags = resolve_clang_time_trace_flags($compiler);
 	$fastcgiCxxFlags = is_array($fastcgiBuild['cxxflags'] ?? null) ? $fastcgiBuild['cxxflags'] : [];
 	$fastcgiLdFlags = is_array($fastcgiBuild['ldflags'] ?? null) ? $fastcgiBuild['ldflags'] : [];
 	$baseLinkFlags = $linkerFlags;
@@ -16990,8 +17018,8 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	if (is_string($compilerLauncher) && $compilerLauncher !== '') {
 		$lines[] = 'cxx_launcher = ' . $compilerLauncher;
 	}
-	$lines[] = 'cxxflags = ' . build_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir, $generatedIncludeDir) . ($appRuntimeCxxFlags !== [] ? ' ' . implode(' ', $appRuntimeCxxFlags) : '');
-	$lines[] = 'runtime_cxxflags = ' . build_runtime_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir) . ($runtimeExtraCxxFlags !== [] ? ' ' . implode(' ', $runtimeExtraCxxFlags) : '');
+	$lines[] = 'cxxflags = ' . build_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir, $generatedIncludeDir) . ($appRuntimeCxxFlags !== [] ? ' ' . implode(' ', $appRuntimeCxxFlags) : '') . ($clangTimeTraceFlags !== [] ? ' ' . implode(' ', $clangTimeTraceFlags) : '');
+	$lines[] = 'runtime_cxxflags = ' . build_runtime_compiler_flags($compiler['kind'], $buildMode, $runtimeIncludeDir) . ($runtimeExtraCxxFlags !== [] ? ' ' . implode(' ', $runtimeExtraCxxFlags) : '') . ($clangTimeTraceFlags !== [] ? ' ' . implode(' ', $clangTimeTraceFlags) : '');
 	$lines[] = 'base_ldflags = ' . implode(' ', $baseLinkFlags);
 	$lines[] = 'ldflags = ' . implode(' ', $binaryLinkFlags);
 	if ($fastcgiBuild !== null) {

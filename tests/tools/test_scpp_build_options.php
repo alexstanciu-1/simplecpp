@@ -90,6 +90,7 @@ final class ScppBuildOptionsTest
 			$this->assertRuntimeArtifactPlacementPolicy();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
+			$this->assertClangTimeTraceCanBeEnabled();
 			$this->assertCrossFileEnumTypesLowerThroughDeclarationCatalog();
 			$this->assertCrossFileStructTypesLowerThroughDeclarationCatalog();
 			$this->assertStructPointerStyleFieldAccessCompiles();
@@ -330,6 +331,76 @@ final class ScppBuildOptionsTest
 		);
 		$this->assertContains('ldflags = base.lib project.lib', $msvcNinja, 'MSVC Ninja rendering should preserve configured linker flags');
 		$this->assertContains('$cxx /nologo $in $ldflags /Fe$out', $msvcNinja, 'MSVC link rule should pass ldflags to the compiler driver');
+	}
+
+	private function assertClangTimeTraceCanBeEnabled(): void
+	{
+		$projectRoot = $this->root . '/trace_project';
+		$repoRoot = $this->root . '/trace_repo';
+		$buildDir = $projectRoot . '/.prism/build';
+		$generatedDir = $projectRoot . '/.prism/generated';
+		$this->mkdir($buildDir);
+		$this->mkdir($generatedDir);
+		$this->mkdir($repoRoot . '/runtime/include');
+
+		$generatedUnits = [[
+			'project_root' => $projectRoot,
+			'relative_php' => 'main.phs',
+			'generated_cpp' => $generatedDir . '/main.cpp',
+			'object_path' => $buildDir . '/main.o',
+			'is_entrypoint' => true,
+			'force_include_header' => null,
+		]];
+		$compiler = [
+			'command' => 'clang++',
+			'kind' => 'gnu_like',
+			'launcher' => null,
+			'linker_flags' => [],
+		];
+		$runtimeConfig = [
+			'languages' => ['php'],
+			'modules' => ['json'],
+			'language_profiles' => [
+				'php' => ['profile' => 'strict'],
+			],
+		];
+
+		$previousTrace = getenv('SCPP_CLANG_TIME_TRACE');
+		$previousGranularity = getenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US');
+		putenv('SCPP_CLANG_TIME_TRACE=1');
+		putenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US=250');
+		try {
+			$ninja = render_build_ninja(
+				$projectRoot,
+				$repoRoot,
+				$buildDir,
+				$generatedDir,
+				$generatedUnits,
+				[],
+				'app',
+				$compiler,
+				'debug',
+				$runtimeConfig,
+				[],
+				null,
+				['compile_runtime' => true, 'compile_dependencies' => true]
+			);
+		} finally {
+			if ($previousTrace === false) {
+				putenv('SCPP_CLANG_TIME_TRACE');
+			} else {
+				putenv('SCPP_CLANG_TIME_TRACE=' . $previousTrace);
+			}
+			if ($previousGranularity === false) {
+				putenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US');
+			} else {
+				putenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US=' . $previousGranularity);
+			}
+		}
+
+		$this->assertContains('-ftime-trace', $ninja, 'clang time tracing should append -ftime-trace when enabled');
+		$this->assertContains('-ftime-trace-granularity=250', $ninja, 'clang time tracing should honor granularity threshold');
+		$this->assertContains('runtime_cxxflags = ', $ninja, 'rendered Ninja should still contain runtime flags');
 	}
 
 	private function assertEntryOverrideCanSelectAnotherFile(): void
