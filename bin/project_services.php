@@ -10558,27 +10558,6 @@ function project_unit_class_constant_dependency_is_resolved(array $descriptor, a
 /** @param array<string,mixed> $function @param list<array<string,mixed>> $dependencyCategories */
 function project_unit_function_body_is_scoped_candidate_safe(array $function, array $dependencyCategories): bool
 {
-	foreach ([
-		'local_invalidations',
-		'local_branch_assignments',
-		'local_descriptor_assignments',
-		'typed_boundary_assignments',
-		'foreach_locals',
-		'for_loop_locals',
-		'property_reads',
-		'property_assignments',
-		'static_property_assignments',
-		'property_branch_assignments',
-		'static_property_reads',
-		'class_constant_accesses',
-		'return_chains',
-		'non_null_guards',
-		'non_false_guards',
-	] as $bucket) {
-		if (is_array($function[$bucket] ?? null) && $function[$bucket] !== []) {
-			return false;
-		}
-	}
 	foreach (is_array($function['call_sites'] ?? null) ? $function['call_sites'] : [] as $callSite) {
 		if (!is_array($callSite)) {
 			return false;
@@ -10698,8 +10677,70 @@ function project_unit_runtime_shallow_symbol_names(): array
 				}
 			}
 		}
+		foreach (project_unit_extract_runtime_shallow_signature_type_names($contents) as $name) {
+			$symbols[strtolower($name)] = true;
+		}
 	}
 	return $symbols;
+}
+
+/** @return list<string> */
+function project_unit_extract_runtime_shallow_signature_type_names(string $contents): array
+{
+	$typeNames = [];
+	if (preg_match_all('/^\s*function\s+[A-Za-z_][A-Za-z0-9_]*\s*\(([^)]*)\)\s*(?::\s*([^{]+))?\s*\{/m', $contents, $matches, PREG_SET_ORDER) === false) {
+		return [];
+	}
+	foreach ($matches as $match) {
+		$signatureTypeText = trim((string) ($match[1] ?? '')) . ' ' . trim((string) ($match[2] ?? ''));
+		$signatureTypeText = preg_replace('/\$[A-Za-z_][A-Za-z0-9_]*/', ' ', $signatureTypeText) ?? $signatureTypeText;
+		$signatureTypeText = preg_replace('/=[^,]*/', ' ', $signatureTypeText) ?? $signatureTypeText;
+		if (preg_match_all('/\b[A-Za-z_][A-Za-z0-9_]*\b/', $signatureTypeText, $typeMatches) === false) {
+			continue;
+		}
+		foreach ($typeMatches[0] as $name) {
+			if (project_unit_runtime_shallow_signature_type_name_is_builtin($name)) {
+				continue;
+			}
+			$typeNames[$name] = $name;
+		}
+	}
+	$result = array_values($typeNames);
+	sort($result, SORT_STRING);
+	return $result;
+}
+
+function project_unit_runtime_shallow_signature_type_name_is_builtin(string $name): bool
+{
+	return in_array(strtolower($name), [
+		'array',
+		'bool',
+		'byte',
+		'dynamic',
+		'false',
+		'fixed_array',
+		'float',
+		'hash',
+		'int',
+		'int8',
+		'int16',
+		'int32',
+		'int64',
+		'mixed',
+		'null',
+		'nullable',
+		'resource',
+		'result',
+		'result_or_false',
+		'string',
+		'true',
+		'uint8',
+		'uint16',
+		'uint32',
+		'uint64',
+		'vector',
+		'void',
+	], true);
 }
 
 /** @param array<string,mixed> $function */

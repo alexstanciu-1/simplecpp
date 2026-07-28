@@ -491,6 +491,20 @@ class MixedProbe {
     }
 }
 PHS);
+		$this->write($project . '/echo_probe.phs', <<<'PHS'
+function echo_metric_count(MetricReport $report): void {
+    echo $report->count, "\n";
+}
+PHS);
+		$this->write($project . '/builder_probe.phs', <<<'PHS'
+class BuilderProbe {
+    public static function label(): string {
+        $builder text_builder = text_builder_create();
+        text_builder_append_string($builder, "metric");
+        return text_builder_take_string($builder);
+    }
+}
+PHS);
 
 		$this->publishFullStanState($project);
 		$build = scpp_run_build_service($project, $project . '/prism.json', [
@@ -507,10 +521,10 @@ PHS);
 		);
 
 		$projectUnits = $this->loadProjectUnits($project);
-		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'method-body project should report nine generated units');
-		$this->assertSame(9, $projectUnits['active_scoped_units'] ?? null, 'method-body generated units should activate scoped packs');
+		$this->assertSame(11, $projectUnits['total_units'] ?? null, 'method-body project should report eleven generated units');
+		$this->assertSame(11, $projectUnits['active_scoped_units'] ?? null, 'method-body generated units should activate scoped packs');
 		$this->assertSame(0, $projectUnits['active_broad_fallback_units'] ?? null, 'method-body generated units should not stay broad');
-		$this->assertSame(8, $projectUnits['candidate_scoped_units'] ?? null, 'resolved method-body units should be scoped candidates');
+		$this->assertSame(10, $projectUnits['candidate_scoped_units'] ?? null, 'resolved method/function-body units should be scoped candidates');
 		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'only executable unit should be blocked');
 
 		$metricsSummary = $this->findSummary($projectUnits, 'metrics.phs', '');
@@ -549,6 +563,16 @@ PHS);
 		$this->assertSame('scoped', $mixedProbeSummary['status'] ?? null, 'combined runtime-error and local-invalidation method should compile with a scoped pack');
 		$this->assertSame('candidate_scoped', $mixedProbeSummary['candidate_status'] ?? null, 'combined runtime-error and local-invalidation method should be a scoped candidate');
 		$this->assertSame([], $mixedProbeSummary['candidate_blocking_reasons'] ?? null, 'combined runtime-error and local-invalidation evidence should not block scoped activation');
+
+		$echoProbeSummary = $this->findSummary($projectUnits, 'echo_probe.phs', '');
+		$this->assertSame('scoped', $echoProbeSummary['status'] ?? null, 'top-level function property-read body should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $echoProbeSummary['candidate_status'] ?? null, 'top-level function property-read body should be a scoped candidate');
+		$this->assertSame(['report.phs'], $this->dependencyCategorySources($echoProbeSummary, 'function signature'), 'function property-read source should retain the typed parameter dependency evidence');
+
+		$builderProbeSummary = $this->findSummary($projectUnits, 'builder_probe.phs', '');
+		$this->assertSame('scoped', $builderProbeSummary['status'] ?? null, 'runtime carrier type method should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $builderProbeSummary['candidate_status'] ?? null, 'runtime carrier type method should be a scoped candidate');
+		$this->assertSame([], $builderProbeSummary['candidate_blocking_reasons'] ?? null, 'runtime shallow carrier types should not block scoped activation');
 	}
 
 	private function assertBodyOnlyEditsKeepRebuildFanoutMinimal(): void
