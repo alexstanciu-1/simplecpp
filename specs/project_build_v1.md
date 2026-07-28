@@ -375,7 +375,7 @@ The lower-level build service path used by helpers/tests also defaults to reuse 
 - `scpp run` reuses runtime and dependencies by default, then executes the primary output
 - both commands accept `--entry=<path>` to build or run a specific project-local source file instead of the configured `prism.json` entrypoint for that invocation only
 - both commands accept `--mode=debug` and `--mode=release` to select a stable build profile/root set for that invocation only
-- both commands accept `--timings` to print the internal `execute_build()` timing breakdown for that invocation only, including pre-Ninja diagnostics/cache work, Ninja subprocess time, post-Ninja diagnostics/cache work, and saved-report writing
+- both commands accept `--timings` to print the internal `execute_build()` timing breakdown for that invocation only, including source inventory discovery, pre-Ninja diagnostics/cache work, Ninja subprocess time, post-Ninja diagnostics/cache work, and saved-report writing
 
 ### STAN pre-build check
 

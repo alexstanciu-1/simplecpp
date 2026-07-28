@@ -2963,6 +2963,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectUnitScopedPacksConfig = resolve_build_project_unit_scoped_packs_config(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config);
 	$generatedDir = $rootContext['generated_dir'];
 	$cacheDir = $rootContext['cache_dir'];
+	$markTiming('source_inventory_start');
+	$projectContexts = collect_project_context_php_file_inventory($projectRoot, $entrypointAbs, $projectContexts);
+	$markTiming('source_inventory_complete');
 	$buildPlannerLoadStartedAt = microtime(true);
 	$previousBuildPlannerState = load_build_planner_state($cacheDir . '/' . SCPP_BUILD_PLANNER_STATE_FILE);
 	$buildPlannerLoadMs = (int) round(max(0.0, (microtime(true) - $buildPlannerLoadStartedAt) * 1000.0));
@@ -2974,7 +2977,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
 	$sourceOverrides = is_array($options['source_overrides'] ?? null) ? normalize_source_override_map($options['source_overrides']) : [];
 	$markTiming('declared_type_catalog_start');
-	$declaredTypeKinds = build_s2s_declared_type_kind_catalog_cached($projectRoot, $repoRoot, $cacheDir, $projectGraph, $sourceOverrides, $previousBuildPlannerState);
+	$declaredTypeKinds = build_s2s_declared_type_kind_catalog_cached($projectRoot, $repoRoot, $cacheDir, $projectGraph, $sourceOverrides, $previousBuildPlannerState, $projectContexts);
 	$markTiming('declared_type_catalog_complete');
 	$transpiler = new Transpiler(phpProfile: $phpProfile);
 	$transpiler->setDeclaredTypeKinds($declaredTypeKinds);
@@ -2997,11 +3000,9 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		ensure_directory($projectContext['cache_dir']);
 		$projectContext['state_path'] = $projectContext['cache_dir'] . '/' . SCPP_STATE_FILE;
 		$projectContext['state'] = load_s2s_state($projectContext['state_path']);
-		$projectContext['php_files'] = collect_project_php_files($contextProjectRoot);
-		if (normalize_path($contextProjectRoot) === normalize_path($projectRoot) && !in_array($entrypointAbs, $projectContext['php_files'], true)) {
-			$projectContext['php_files'][] = $entrypointAbs;
-			sort($projectContext['php_files'], SORT_STRING);
-		}
+		$projectContext['php_files'] = is_array($projectContext['php_files'] ?? null)
+			? normalize_path_list($projectContext['php_files'])
+			: collect_project_php_files($contextProjectRoot);
 		$projectContext['native_cpp_files'] = collect_project_native_cpp_files($projectContext['native_cpp_dir']);
 		if (normalize_path($contextProjectRoot) === normalize_path($projectRoot)) {
 			foreach ((array) ($options['extra_native_cpp_files'] ?? []) as $extraNativeCppFile) {
@@ -3097,8 +3098,14 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 					'generated_artifacts' => with_generated_artifact_write_statuses($generatedArtifactChanges, $generatedHeaderWriteStatus, $generatedCppWriteStatus),
 				];
 			} else {
-				$generatedInterfaceHash = existing_file_sha256($generatedHeader) ?? (string) ($previous['generated_interface_hash'] ?? '');
-				$generatedImplementationHash = existing_file_sha256($generatedCpp) ?? (string) ($previous['generated_implementation_hash'] ?? '');
+				$previousInterfaceHash = is_array($previous) && preg_match('/^[0-9a-f]{64}$/', (string) ($previous['generated_interface_hash'] ?? '')) === 1
+					? (string) $previous['generated_interface_hash']
+					: null;
+				$previousImplementationHash = is_array($previous) && preg_match('/^[0-9a-f]{64}$/', (string) ($previous['generated_implementation_hash'] ?? '')) === 1
+					? (string) $previous['generated_implementation_hash']
+					: null;
+				$generatedInterfaceHash = $previousInterfaceHash ?? existing_file_sha256($generatedHeader) ?? '';
+				$generatedImplementationHash = $previousImplementationHash ?? existing_file_sha256($generatedCpp) ?? '';
 				$skippedCount++;
 				$sourceRebuildReasons[] = [
 					'project_root' => normalize_path($contextProjectRoot),
@@ -3578,6 +3585,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		'stan_preflight_ms' => $timingMs('config_loaded', 'stan_checked'),
 		'resolve_project_dependency_graph_ms' => $timingMs('stan_checked', 'project_graph_resolved'),
 		'pre_source_setup_ms' => $timingMs('pre_source_setup_start', 'pre_source_setup_complete'),
+		'source_inventory_ms' => $timingMs('source_inventory_start', 'source_inventory_complete'),
 		'declared_type_catalog_ms' => $timingMs('declared_type_catalog_start', 'declared_type_catalog_complete'),
 		'collect_project_php_files_and_s2s_state_ms' => $timingMs('source_scan_start', 'source_scan_complete'),
 		'project_unit_analysis_ms' => $timingMs('project_unit_analysis_start', 'project_unit_analysis_complete'),
@@ -15359,6 +15367,27 @@ function collect_project_stan_source_files(string $projectRoot): array
 	return $files;
 }
 
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @return array<string,array<string,mixed>>
+ */
+function collect_project_context_php_file_inventory(string $projectRoot, string $entrypointAbs, array $projectContexts): array
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$normalizedEntrypoint = normalize_path($entrypointAbs);
+	foreach ($projectContexts as $contextProjectRoot => &$projectContext) {
+		$contextProjectRoot = normalize_path((string) $contextProjectRoot);
+		$phpFiles = collect_project_php_files($contextProjectRoot);
+		if ($contextProjectRoot === $normalizedProjectRoot && !in_array($normalizedEntrypoint, $phpFiles, true)) {
+			$phpFiles[] = $normalizedEntrypoint;
+			sort($phpFiles, SORT_STRING);
+		}
+		$projectContext['php_files'] = $phpFiles;
+	}
+	unset($projectContext);
+	return $projectContexts;
+}
+
 /** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @return array<string,string> */
 function build_s2s_declared_type_kind_catalog(array $projectGraph, array $sourceOverrides = []): array
 {
@@ -15376,11 +15405,11 @@ function build_s2s_declared_type_kind_catalog(array $projectGraph, array $source
 	return $builder->buildFromSources(array_values(array_unique($sourcePaths)), $sourceOverrides);
 }
 
-/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @return array<string,string> */
-function build_s2s_declared_type_kind_catalog_cached(string $projectRoot, string $repoRoot, string $cacheDir, array $projectGraph, array $sourceOverrides, array $previousBuildPlannerState): array
+/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @param array<string,array<string,mixed>> $projectContexts @return array<string,string> */
+function build_s2s_declared_type_kind_catalog_cached(string $projectRoot, string $repoRoot, string $cacheDir, array $projectGraph, array $sourceOverrides, array $previousBuildPlannerState, array $projectContexts = []): array
 {
 	$cachePath = normalize_path($cacheDir . '/' . SCPP_DECLARED_TYPE_KIND_CATALOG_FILE);
-	$sourceInput = collect_declared_type_kind_catalog_source_input($projectGraph, $sourceOverrides, $previousBuildPlannerState);
+	$sourceInput = collect_declared_type_kind_catalog_source_input($projectGraph, $sourceOverrides, $previousBuildPlannerState, $projectContexts);
 	$sourceRows = is_array($sourceInput['source_rows'] ?? null) ? $sourceInput['source_rows'] : [];
 	$catalogSignature = compute_declared_type_kind_catalog_signature($repoRoot);
 	$cached = read_json_file($cachePath);
@@ -15459,8 +15488,8 @@ function build_s2s_declared_type_kind_catalog_cached(string $projectRoot, string
 	return $catalog;
 }
 
-/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @return array{source_fingerprint:string,source_count:int,source_rows:list<array<string,mixed>>} */
-function collect_declared_type_kind_catalog_source_input(array $projectGraph, array $sourceOverrides, array $previousBuildPlannerState): array
+/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @param array<string,array<string,mixed>> $projectContexts @return array{source_fingerprint:string,source_count:int,source_rows:list<array<string,mixed>>} */
+function collect_declared_type_kind_catalog_source_input(array $projectGraph, array $sourceOverrides, array $previousBuildPlannerState, array $projectContexts = []): array
 {
 	$sourceRows = [];
 	$seen = [];
@@ -15469,7 +15498,11 @@ function collect_declared_type_kind_catalog_source_input(array $projectGraph, ar
 		if ($contextProjectRoot === '') {
 			continue;
 		}
-		foreach (collect_project_php_files($contextProjectRoot) as $sourcePath) {
+		$projectContext = is_array($projectContexts[$contextProjectRoot] ?? null) ? $projectContexts[$contextProjectRoot] : [];
+		$phpFiles = is_array($projectContext['php_files'] ?? null)
+			? normalize_path_list($projectContext['php_files'])
+			: collect_project_php_files($contextProjectRoot);
+		foreach ($phpFiles as $sourcePath) {
 			$sourcePath = normalize_path($sourcePath);
 			if ($sourcePath === '' || isset($seen[$sourcePath]) || strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION)) === 'jss') {
 				continue;

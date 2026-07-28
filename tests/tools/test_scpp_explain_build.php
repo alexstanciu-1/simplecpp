@@ -91,6 +91,11 @@ final class ScppExplainBuildTest
 			if (!is_array($details)) {
 				throw new RuntimeException('last_run.json should contain details');
 			}
+			$timings = is_array($details['timing_breakdown_ms'] ?? null) ? $details['timing_breakdown_ms'] : null;
+			if (!is_array($timings)) {
+				throw new RuntimeException('last_run details should contain timing_breakdown_ms');
+			}
+			$this->assertTrue(array_key_exists('source_inventory_ms', $timings), 'warm build timings should expose source inventory cost');
 			$explanation = is_array($details['build_explanation'] ?? null) ? $details['build_explanation'] : null;
 			if (!is_array($explanation)) {
 				throw new RuntimeException('last_run.json should contain build_explanation');
