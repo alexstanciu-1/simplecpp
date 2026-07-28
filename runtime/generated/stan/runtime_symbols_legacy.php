@@ -117,6 +117,7 @@ function source_line_index_offset_to_location(source_line_index $index, int $off
 function source_location_column(source_location $location): uint32 {}
 function source_location_line(source_location $location): uint32 {}
 function source_location_offset(source_location $location): uint32 {}
+function source_text_vector_move_append(/** vector<string> */ $target, /** vector<string> */ $source, int $index): void {}
 function stable_hash_bytes_u64(byte_span $span): uint64 {}
 function stable_hash_string_u64(string $text): uint64 {}
 function str_ends_with(string $text, string $suffix): bool {}
