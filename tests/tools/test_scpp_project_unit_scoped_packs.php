@@ -76,6 +76,11 @@ CPP);
 		$leftRelative = array_map(static fn (string $path): string => normalize_config_path(relative_path($project, $path)), $left);
 		$rightRelative = array_map(static fn (string $path): string => normalize_config_path(relative_path($project, $path)), $right);
 		$this->assertSame(project_unit_candidate_scoped_pack_hash($leftRelative), project_unit_candidate_scoped_pack_hash($rightRelative), 'scoped candidate pack hash should be stable across equivalent include sets');
+		$normalizedSummaries = normalize_project_unit_dependency_summaries([[
+			'source' => 'probe.phs',
+			'candidate_scoped_headers' => $leftRelative,
+		]]);
+		$this->assertSame($leftRelative, $normalizedSummaries[0]['candidate_scoped_headers'] ?? null, 'scoped candidate summary normalization should preserve ordered pack headers');
 	}
 
 	private function assertNestedNamespaceInheritanceScopedPacks(): void

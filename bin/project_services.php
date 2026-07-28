@@ -8437,7 +8437,7 @@ function write_project_unit_dependency_summary_artifact(string $projectRoot, arr
 			'unresolved_dependency_keys' => normalize_string_list($summary['unresolved_dependency_keys'] ?? []),
 			'candidate_status' => (string) ($summary['candidate_status'] ?? 'blocked_broad_fallback'),
 			'candidate_blocking_reasons' => normalize_string_list($summary['candidate_blocking_reasons'] ?? []),
-			'candidate_scoped_headers' => normalize_string_list($summary['candidate_scoped_headers'] ?? []),
+			'candidate_scoped_headers' => normalize_ordered_string_list($summary['candidate_scoped_headers'] ?? []),
 			'candidate_pack_hash' => (string) ($summary['candidate_pack_hash'] ?? ''),
 			'candidate_pack_header' => (string) ($summary['candidate_pack_header'] ?? ''),
 			'dependency_categories' => normalize_project_unit_dependency_category_rows(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []),
@@ -9154,7 +9154,7 @@ function normalize_project_module_stan_summary_source_row(array $summary): array
 		'dependency_export_headers' => normalize_string_list($summary['dependency_export_headers'] ?? []),
 		'unresolved_dependency_keys' => normalize_string_list($summary['unresolved_dependency_keys'] ?? []),
 		'candidate_blocking_reasons' => normalize_string_list($summary['candidate_blocking_reasons'] ?? []),
-		'candidate_scoped_headers' => normalize_string_list($summary['candidate_scoped_headers'] ?? []),
+		'candidate_scoped_headers' => normalize_ordered_string_list($summary['candidate_scoped_headers'] ?? []),
 		'candidate_pack_hash' => trim((string) ($summary['candidate_pack_hash'] ?? '')),
 		'candidate_pack_header' => normalize_config_path((string) ($summary['candidate_pack_header'] ?? '')),
 		'dependency_categories' => normalize_project_unit_dependency_category_rows(is_array($summary['dependency_categories'] ?? null) ? $summary['dependency_categories'] : []),
@@ -11023,7 +11023,7 @@ function normalize_project_unit_dependency_summaries(array $summaries): array
 			'force_include_header' => trim((string) ($summary['force_include_header'] ?? '')),
 			'status' => trim((string) ($summary['status'] ?? 'fallback_broad')),
 			'candidate_status' => trim((string) ($summary['candidate_status'] ?? 'blocked_broad_fallback')),
-			'candidate_scoped_headers' => normalize_string_list($summary['candidate_scoped_headers'] ?? []),
+			'candidate_scoped_headers' => normalize_ordered_string_list($summary['candidate_scoped_headers'] ?? []),
 			'candidate_pack_hash' => trim((string) ($summary['candidate_pack_hash'] ?? '')),
 			'candidate_pack_header' => trim((string) ($summary['candidate_pack_header'] ?? '')),
 			'candidate_blocking_reasons' => normalize_string_list($summary['candidate_blocking_reasons'] ?? []),
@@ -11143,6 +11143,22 @@ function normalize_string_list(mixed $values): array
 	}
 	sort($strings, SORT_STRING);
 	return array_values(array_unique($strings));
+}
+
+/** @return list<string> */
+function normalize_ordered_string_list(mixed $values): array
+{
+	$strings = [];
+	$seen = [];
+	foreach (is_array($values) ? $values : [] as $value) {
+		$string = trim((string) $value);
+		if ($string === '' || isset($seen[$string])) {
+			continue;
+		}
+		$seen[$string] = true;
+		$strings[] = $string;
+	}
+	return $strings;
 }
 
 /** @param array<string,mixed> $manifest */
