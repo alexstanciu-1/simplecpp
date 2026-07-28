@@ -77,6 +77,32 @@ $publishedCount int = task_run_publish(
 echo "publish:", $publishedCount, ",", $published[0], ",", $published[1], ",", $published[2], ",", $publishedBatches, "\n";
 $publishHoldMetricPresent int = task_publish_lock_hold_us() >= 0 ? 1 : 0;
 echo "publish-metrics:", task_publish_published_count(), ",", task_publish_batch_count(), ",", task_publish_max_batch_size(), ",", $publishHoldMetricPresent, "\n";
+
+$capped vector<int> = [];
+$cappedBatches int = 0;
+$cappedMaxBatch int = 0;
+$cappedCount int = task_run_publish(
+	$items,
+	2,
+	function (int $item): int {
+		return $item * 10;
+	},
+	function (vector<int> $batch) use (&$capped, &$cappedBatches, &$cappedMaxBatch): void {
+		$cappedBatches = $cappedBatches + 1;
+		if (count($batch) > $cappedMaxBatch) {
+			$cappedMaxBatch = count($batch);
+		}
+		$batchIndex int = 0;
+		while ($batchIndex < count($batch)) {
+			$capped[] = $batch[$batchIndex];
+			$batchIndex = $batchIndex + 1;
+		}
+	},
+	null,
+	0,
+	1
+);
+echo "publish-cap:", $cappedCount, ",", $capped[0], ",", $capped[1], ",", $capped[2], ",", $cappedBatches, ",", $cappedMaxBatch, "\n";
 task_set_publish_try_lock(true);
 task_set_publish_try_lock(false);
 
@@ -646,7 +672,8 @@ PHS
 			$this->assertContains("2,4,6\n", $run['stdout'], 'task_run should preserve vector order and return callback results');
 			$this->assertContains("publish:3,100,200,300,", $run['stdout'], 'task_run_publish should publish ordered worker batches without returning a value vector');
 			$this->assertContains("publish-metrics:3,", $run['stdout'], 'task_run_publish should expose publish diagnostics for the latest publish run');
-			$this->assertContains("publish-capped:3,1000,2000,3000,2\n", $run['stdout'], 'task_run_publish should cap publish callback batch size independently of timeout');
+				$this->assertContains("publish-capped:3,1000,2000,3000,2\n", $run['stdout'], 'task_run_publish should cap publish callback batch size independently of timeout');
+				$this->assertContains("publish-cap:3,10,20,30,3,1\n", $run['stdout'], 'task_run_publish should cap publish callback batch size when requested');
 			$this->assertContains("5,10,15\n", $run['stdout'], 'task_run should support coordinator-side vector custom index callbacks');
 			$this->assertContains("7,14,21\n", $run['stdout'], 'task_run should support string keys from vector custom index callbacks');
 			$this->assertContains("3\n", $run['stdout'], 'task_run should return null placeholders for successful void vector callbacks');
@@ -687,7 +714,7 @@ PHS
 			$this->assertContains('tasks::publish_lock_hold_us', $generated, 'strict task publish metric source calls should resolve through the tasks runtime registry');
 			$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 			$this->assertContains('function task_start(mixed $items, int $workers, mixed $exec', $strictRuntimeSymbols, 'strict runtime shallow source should expose the shaped task_start signature');
-			$this->assertContains('function task_run_publish(mixed $items, int $workers, mixed $work, mixed $publish, mixed $error = null, int $timeout_ms = 0, int $max_publish_batch_size = 0): int', $strictRuntimeSymbols, 'strict runtime shallow source should expose the shaped task_run_publish signature with publish cap');
+				$this->assertContains('function task_run_publish(mixed $items, int $workers, mixed $work, mixed $publish, mixed $error = null, int $timeout_ms = 0, int $max_publish_batch_size = 0): int', $strictRuntimeSymbols, 'strict runtime shallow source should expose the shaped task_run_publish signature with publish cap');
 			$this->assertContains('mixed $result = null', $strictRuntimeSymbols, 'strict runtime shallow source should name the fifth task argument result');
 			$this->assertContains('function task_progress(task_batch $batch): task_progress_info', $strictRuntimeSymbols, 'strict runtime shallow source should expose typed task_progress handles');
 			$this->assertContains('function task_set_worker_pool_size(int $workers): void', $strictRuntimeSymbols, 'strict runtime shallow source should expose task worker pool sizing');

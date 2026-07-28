@@ -51,6 +51,7 @@ final class ScppObjectActionIdentityTest
 				'backend' => 'ninja',
 				'cxx' => null,
 				'mode' => 'debug',
+				'object_action_identity' => true,
 			],
 			'runtime' => [
 				'languages' => ['php'],
@@ -80,6 +81,8 @@ final class ScppObjectActionIdentityTest
 		$this->assertSame(1, $topLevel['generated_action_count'] ?? null, 'build should record one generated object action');
 		$this->assertSame(1, $topLevel['native_action_count'] ?? null, 'build should record one native object action');
 		$this->assertSame(0, $topLevel['skipped_dependency_object_count'] ?? null, 'root-only project should skip no dependency objects');
+		$this->assertSame('full', $topLevel['capture_mode'] ?? null, 'opt-in build should record full object action identities');
+		$this->assertSame('build.object_action_identity', $topLevel['capture_reason'] ?? null, 'full object action capture should identify the config source');
 
 		$actionsByKind = [];
 		foreach (is_array($topLevel['actions'] ?? null) ? $topLevel['actions'] : [] as $action) {

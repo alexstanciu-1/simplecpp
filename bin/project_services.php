@@ -26,6 +26,7 @@ const SCPP_STAN_STATE_FILE = 'stan_state.php';
 const SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE = 'project_unit_dependency_state.php';
 const SCPP_PROJECT_UNIT_DEPENDENCY_SUMMARY_FILE = 'project_unit_dependency_summary.php';
 const SCPP_BUILD_PLANNER_STATE_FILE = 'build_planner_state.json';
+const SCPP_DECLARED_TYPE_KIND_CATALOG_FILE = 'declared_type_kind_catalog.json';
 const SCPP_STAN_STATUS_FILE = 'stan_status.json';
 const SCPP_STAN_REPORT_FILE = 'stan_report.json';
 const SCPP_STAN_WORKER_FILE = 'stan_worker.json';
@@ -2916,6 +2917,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$projectGraph = resolve_project_dependency_graph($projectRoot, $configPath, $config);
 	$projectGraph = apply_build_profile_to_project_graph($projectGraph, $buildMode, $modeExplicit);
 	$markTiming('project_graph_resolved');
+	$markTiming('pre_source_setup_start');
 	$entrypointAbs = resolve_build_entrypoint($projectRoot, $config, $options['entry_override']);
 
 	$ninjaPath = find_command_path(['ninja']);
@@ -2957,6 +2959,8 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	$buildGroupingPolicy = resolve_build_grouping_policy(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config, $buildMode);
 	$objectCacheConfig = resolve_build_object_cache_config(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config);
+	$objectActionIdentityConfig = resolve_build_object_action_identity_config(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config);
+	$projectUnitScopedPacksConfig = resolve_build_project_unit_scoped_packs_config(is_array($rootContext['config'] ?? null) ? $rootContext['config'] : $config);
 	$generatedDir = $rootContext['generated_dir'];
 	$cacheDir = $rootContext['cache_dir'];
 	$buildPlannerLoadStartedAt = microtime(true);
@@ -2969,13 +2973,16 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$runtimeBuildSignature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode, $runtimeConfig);
 	$phpProfile = resolve_php_runtime_profile($runtimeConfig);
 	$sourceOverrides = is_array($options['source_overrides'] ?? null) ? normalize_source_override_map($options['source_overrides']) : [];
-	$declaredTypeKinds = build_s2s_declared_type_kind_catalog($projectGraph, $sourceOverrides);
+	$markTiming('declared_type_catalog_start');
+	$declaredTypeKinds = build_s2s_declared_type_kind_catalog_cached($projectRoot, $repoRoot, $cacheDir, $projectGraph, $sourceOverrides, $previousBuildPlannerState);
+	$markTiming('declared_type_catalog_complete');
 	$transpiler = new Transpiler(phpProfile: $phpProfile);
 	$transpiler->setDeclaredTypeKinds($declaredTypeKinds);
 	$stanFrontendClassifications = $useFreshStanState ? load_stan_frontend_classifications_for_build($rootContext['cache_dir'] . '/' . SCPP_STAN_STATE_FILE) : [];
 	$generatorSignature = compute_s2s_generator_signature($repoRoot, $phpProfile, $sourceOverrides, $declaredTypeKinds);
 	$projectUnitDependencySignature = compute_project_unit_dependency_summary_signature($repoRoot, $phpProfile);
 	$projectLibraryFlags = resolve_project_library_link_flags($projectRoot, $projectGraph, $compiler);
+	$markTiming('pre_source_setup_complete');
 	$generatedUnits = [];
 	$nativeCppUnits = [];
 	/** @var array<string,string> $generatedArtifactOrigins */
@@ -3184,32 +3191,56 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	}
 	unset($projectContext);
 	$markTiming('source_scan_complete');
+	$markTiming('project_unit_analysis_start');
+	$markTiming('project_unit_dependency_state_start');
 	if (!$useFreshStanState) {
 		write_project_unit_dependency_summary_state($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature);
 	}
+	$markTiming('project_unit_dependency_state_complete');
 	validate_runtime_module_symbol_usage($projectRoot, $generatedUnits, $runtimeConfig);
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
+	$markTiming('project_unit_summary_artifact_load_start');
+	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, $useFreshStanState);
+	$cachedProjectUnitSummaryArtifact = load_fresh_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitDependencySummaryFreshness);
+	$cachedProjectUnitDependencySummaries = is_array($cachedProjectUnitSummaryArtifact)
+		? (is_array($cachedProjectUnitSummaryArtifact['dependency_summaries'] ?? null) ? $cachedProjectUnitSummaryArtifact['dependency_summaries'] : null)
+		: null;
+	$markTiming('project_unit_summary_artifact_load_complete');
+	$markTiming('project_unit_pack_write_start');
 	$projectUnitPackStateBefore = capture_project_unit_pack_header_state($projectContexts);
 	$projectUnitForceIncludes = write_project_unit_force_include_headers($projectContexts);
 	foreach ($generatedUnits as &$unit) {
 		$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
 	}
 	unset($unit);
-	apply_project_unit_scoped_force_include_candidates($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState);
+	if ((bool) ($projectUnitScopedPacksConfig['enabled'] ?? false)) {
+		$projectUnitDependencySummaries = apply_project_unit_scoped_force_include_candidates($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState, $cachedProjectUnitDependencySummaries);
+	} else {
+		$projectUnitDependencySummaries = $cachedProjectUnitDependencySummaries ?? collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState);
+		$projectUnitDependencySummaries = apply_project_unit_active_force_include_headers_to_dependency_summaries($projectRoot, $generatedUnits, $projectUnitDependencySummaries);
+	}
+	$markTiming('project_unit_pack_write_complete');
 	foreach ($nativeCppUnits as &$nativeUnit) {
 		$nativeUnit['force_include_header'] = $projectUnitForceIncludes[normalize_path($nativeUnit['project_root'])] ?? null;
 	}
 	unset($nativeUnit);
 	cleanup_project_unit_pack_headers($projectContexts, $generatedUnits, $nativeCppUnits, $projectUnitForceIncludes);
 	$projectUnitPackChanges = compare_project_unit_pack_header_state($projectRoot, $projectUnitPackStateBefore, capture_project_unit_pack_header_state($projectContexts));
-	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, $useFreshStanState, $projectUnitPackChanges);
-	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, $useFreshStanState);
-	$projectUnitDependencySummaryArtifact = write_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitForceIncludeReport, $projectUnitDependencySummaryFreshness);
+	$markTiming('project_unit_report_start');
+	$projectUnitForceIncludeReport = collect_project_unit_force_include_report($projectRoot, $projectContexts, $generatedUnits, $nativeCppUnits, $useFreshStanState, $projectUnitPackChanges, $projectUnitDependencySummaries);
+	$projectUnitDependencySummaryArtifact = is_array($cachedProjectUnitSummaryArtifact) && is_array($cachedProjectUnitSummaryArtifact['artifact'] ?? null)
+		? normalize_project_unit_dependency_summary_artifact_info($cachedProjectUnitSummaryArtifact['artifact'])
+		: write_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitForceIncludeReport, $projectUnitDependencySummaryFreshness);
 	$projectUnitForceIncludeReport['dependency_summary_artifact'] = $projectUnitDependencySummaryArtifact;
+	$markTiming('project_unit_report_complete');
+	$markTiming('project_unit_analysis_complete');
+	$markTiming('build_grouping_analysis_start');
 	$buildGroupingPolicy = apply_auto_build_grouping_evidence($projectRoot, $buildGroupingPolicy, $generatedUnits);
 	$projectModuleReport = collect_project_module_report($projectRoot, $projectContexts, $generatedUnits, $projectUnitForceIncludeReport);
 	$buildGroupingPolicy = apply_project_module_build_grouping_evidence($projectRoot, $buildGroupingPolicy, $projectModuleReport, $generatedUnits);
 	apply_grouped_generated_object_edges($projectRoot, $buildDir, $generatedDir, $buildGroupingPolicy, $generatedUnits, $sourceRebuildReasons, $compiler['kind']);
+	$markTiming('build_grouping_analysis_complete');
+	$markTiming('build_planner_write_start');
 	$buildPlannerReport = write_build_planner_state_report(
 		$projectRoot,
 		$cacheDir,
@@ -3223,6 +3254,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		is_array($stanPreflightReport) ? $stanPreflightReport : null,
 		$timingMs('source_scan_start', 'source_scan_complete')
 	);
+	$markTiming('build_planner_write_complete');
 
 	if ($usePch) {
 		write_text_file(build_app_pch_header_path($buildDir), render_app_pch_header());
@@ -3258,20 +3290,25 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		}
 	}
 	$buildOutputs = collect_build_output_paths($generatedUnits, $nativeCppUnits, $runtimeBuild, $buildDir, $compiler['kind'], $outputName, $fastcgiBuild, $projectRoot, $effectiveBuildOptions);
-	$objectActionIdentityReport = collect_object_action_identity_report(
-		$projectRoot,
-		$repoRoot,
-		$buildDir,
-		$generatedDir,
-		$generatedUnits,
-		$nativeCppUnits,
-		$compiler,
-		$buildMode,
-		$runtimeConfig,
-		$effectiveBuildOptions,
-		$runtimePlacementForInvocation,
-		$projectModuleReport
-	);
+	$markTiming('pre_ninja_diagnostics_start');
+	$preNinjaActionIdentityReason = object_action_identity_pre_ninja_capture_reason($objectCacheConfig);
+	$objectActionIdentityReport = $preNinjaActionIdentityReason !== null
+		? collect_object_action_identity_report(
+			$projectRoot,
+			$repoRoot,
+			$buildDir,
+			$generatedDir,
+			$generatedUnits,
+			$nativeCppUnits,
+			$compiler,
+			$buildMode,
+			$runtimeConfig,
+			$effectiveBuildOptions,
+			$runtimePlacementForInvocation,
+			$projectModuleReport,
+			$preNinjaActionIdentityReason
+		)
+		: create_object_action_identity_placeholder_report('default lightweight build report');
 	echo 'Transpiled PHP files: ' . $transpiledCount . ', skipped unchanged: ' . $skippedCount . PHP_EOL;
 	echo 'Generated Ninja file: ' . normalize_config_path(relative_path($projectRoot, $buildNinjaPath)) . PHP_EOL;
 	echo 'Using compiler: ' . compiler_display_command($compiler) . ' (' . $compiler['kind'] . ')' . PHP_EOL;
@@ -3316,6 +3353,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$buildNinja = render_build_ninja($projectRoot, $repoRoot, $buildDir, $generatedDir, $generatedUnits, $nativeCppUnits, $outputName, $compiler, $buildMode, $runtimeConfig, $projectLibraryFlags, $fastcgiBuild, $effectiveBuildOptions, $runtimePlacementForInvocation, $projectModuleReport, $objectCacheReport);
 		write_text_file($buildNinjaPath, $buildNinja);
 	}
+	$markTiming('pre_ninja_diagnostics_complete');
 	$buildOutputMtimesBefore = capture_file_mtimes($buildOutputs);
 
 	$command = [
@@ -3359,6 +3397,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	fclose($pipes[2]);
 	$status = proc_close($process);
 	$markTiming('ninja_finished');
+	$markTiming('post_ninja_diagnostics_start');
 	$ninjaStdout = is_string($ninjaStdout) ? $ninjaStdout : '';
 	$ninjaStderr = is_string($ninjaStderr) ? $ninjaStderr : '';
 	$ninjaExplainReport = collect_ninja_explain_report($projectRoot, $buildDir, $ninjaStdout, $ninjaStderr, $generatedUnits, $nativeCppUnits);
@@ -3380,6 +3419,21 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$diagnostics = collect_compiler_diagnostics($projectRoot, $buildDir, $ninjaStdout, $ninjaStderr, $generatedArtifactOrigins);
 		$finishedAt = microtime(true);
 		$failureBuildGroupingReport = collect_build_grouping_report($projectRoot, $buildGroupingPolicy, $generatedUnits, $nativeCppUnits, []);
+		$objectActionIdentityReport = collect_object_action_identity_report(
+			$projectRoot,
+			$repoRoot,
+			$buildDir,
+			$generatedDir,
+			$generatedUnits,
+			$nativeCppUnits,
+			$compiler,
+			$buildMode,
+			$runtimeConfig,
+			$effectiveBuildOptions,
+			$runtimePlacementForInvocation,
+			$projectModuleReport,
+			'Ninja failure diagnostics'
+		);
 		write_last_run_report(
 			$projectRoot,
 			'build',
@@ -3490,21 +3544,26 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$rebuiltOutputs = detect_rebuilt_outputs($buildOutputMtimesBefore, $buildOutputMtimesAfter);
 	$rebuildFanout = summarize_build_rebuild_fanout($projectRoot, $generatedUnits, $nativeCppUnits, $runtimeBuild, $rebuiltOutputs, $projectUnitPackChanges);
 	$buildGroupingReport = collect_build_grouping_report($projectRoot, $buildGroupingPolicy, $generatedUnits, $nativeCppUnits, $rebuildFanout);
-	$objectActionIdentityReport = collect_object_action_identity_report(
-		$projectRoot,
-		$repoRoot,
-		$buildDir,
-		$generatedDir,
-		$generatedUnits,
-		$nativeCppUnits,
-		$compiler,
-		$buildMode,
-		$runtimeConfig,
-		$effectiveBuildOptions,
-		$runtimePlacementForInvocation,
-		$projectModuleReport
-	);
+	$postNinjaActionIdentityReason = object_action_identity_success_capture_reason($objectCacheConfig, $objectActionIdentityConfig);
+	if ($postNinjaActionIdentityReason !== null) {
+		$objectActionIdentityReport = collect_object_action_identity_report(
+			$projectRoot,
+			$repoRoot,
+			$buildDir,
+			$generatedDir,
+			$generatedUnits,
+			$nativeCppUnits,
+			$compiler,
+			$buildMode,
+			$runtimeConfig,
+			$effectiveBuildOptions,
+			$runtimePlacementForInvocation,
+			$projectModuleReport,
+			$postNinjaActionIdentityReason
+		);
+	}
 	$objectCacheReport = store_object_action_cache_entries($projectRoot, $cacheDir, $objectCacheConfig, $objectActionIdentityReport, $objectCacheReport);
+	$markTiming('post_ninja_diagnostics_complete');
 	if ($rebuiltOutputs !== []) {
 		echo 'Rebuilt outputs: ' . implode(', ', array_map(static fn (string $path): string => normalize_config_path(relative_path($projectRoot, $path)), $rebuiltOutputs)) . PHP_EOL;
 	} else {
@@ -3518,9 +3577,20 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		'load_project_config_ms' => $timingMs('options_normalized', 'config_loaded'),
 		'stan_preflight_ms' => $timingMs('config_loaded', 'stan_checked'),
 		'resolve_project_dependency_graph_ms' => $timingMs('stan_checked', 'project_graph_resolved'),
+		'pre_source_setup_ms' => $timingMs('pre_source_setup_start', 'pre_source_setup_complete'),
+		'declared_type_catalog_ms' => $timingMs('declared_type_catalog_start', 'declared_type_catalog_complete'),
 		'collect_project_php_files_and_s2s_state_ms' => $timingMs('source_scan_start', 'source_scan_complete'),
+		'project_unit_analysis_ms' => $timingMs('project_unit_analysis_start', 'project_unit_analysis_complete'),
+		'project_unit_dependency_state_ms' => $timingMs('project_unit_dependency_state_start', 'project_unit_dependency_state_complete'),
+		'project_unit_summary_artifact_load_ms' => $timingMs('project_unit_summary_artifact_load_start', 'project_unit_summary_artifact_load_complete'),
+		'project_unit_pack_write_ms' => $timingMs('project_unit_pack_write_start', 'project_unit_pack_write_complete'),
+		'project_unit_report_ms' => $timingMs('project_unit_report_start', 'project_unit_report_complete'),
+		'build_grouping_analysis_ms' => $timingMs('build_grouping_analysis_start', 'build_grouping_analysis_complete'),
+		'build_planner_write_ms' => $timingMs('build_planner_write_start', 'build_planner_write_complete'),
 		'render_and_write_build_ninja_ms' => $timingMs('runtime_prepare_complete', 'build_ninja_written'),
+		'pre_ninja_diagnostics_ms' => $timingMs('pre_ninja_diagnostics_start', 'pre_ninja_diagnostics_complete'),
 		'ninja_subprocess_ms' => $timingMs('ninja_started', 'ninja_finished'),
+		'post_ninja_diagnostics_ms' => $timingMs('post_ninja_diagnostics_start', 'post_ninja_diagnostics_complete'),
 	];
 	$reportStartedAt = microtime(true);
 	write_last_run_report(
@@ -5113,7 +5183,8 @@ function collect_object_action_identity_report(
 	array $runtimeConfig,
 	array $options,
 	string $runtimePlacement,
-	array $projectModuleReport = []
+	array $projectModuleReport = [],
+	string $captureReason = 'requested'
 ): array {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$usePch = array_key_exists('use_pch', $options) ? (bool) $options['use_pch'] : supports_compiler_pch($compiler);
@@ -5289,6 +5360,8 @@ function collect_object_action_identity_report(
 	return normalize_object_action_identity_report([
 		'schema_version' => 1,
 		'algorithm' => 'sha256:scpp-object-action-v1',
+		'capture_mode' => 'full',
+		'capture_reason' => $captureReason,
 		'skipped_dependency_object_count' => $skippedDependencyObjectCount,
 		'actions' => $actions,
 	]);
@@ -5440,6 +5513,14 @@ function relative_path_list(string $projectRoot, array $paths): array
 function normalize_object_action_identity_report(array $report): array
 {
 	$actions = normalize_object_action_identity_rows(is_array($report['actions'] ?? null) ? $report['actions'] : []);
+	$captureMode = strtolower(trim((string) ($report['capture_mode'] ?? '')));
+	if (!in_array($captureMode, ['off', 'full'], true)) {
+		$captureMode = $actions !== [] ? 'full' : 'off';
+	}
+	$captureReason = trim((string) ($report['capture_reason'] ?? ''));
+	if ($captureReason === '') {
+		$captureReason = $captureMode === 'full' ? 'legacy or requested full report' : 'not captured';
+	}
 	$generatedCount = 0;
 	$nativeCount = 0;
 	foreach ($actions as $action) {
@@ -5452,6 +5533,8 @@ function normalize_object_action_identity_report(array $report): array
 	return [
 		'schema_version' => max(1, (int) ($report['schema_version'] ?? 1)),
 		'algorithm' => trim((string) ($report['algorithm'] ?? 'sha256:scpp-object-action-v1')),
+		'capture_mode' => $captureMode,
+		'capture_reason' => $captureReason,
 		'total_action_count' => count($actions),
 		'generated_action_count' => $generatedCount,
 		'native_action_count' => $nativeCount,
@@ -5552,6 +5635,123 @@ function resolve_build_object_cache_config(array $config): array
 	return [
 		'enabled' => (bool) $build['object_cache'],
 		'source' => 'build.object_cache',
+	];
+}
+
+/** @return array{enabled:bool,source:string} */
+function resolve_build_object_action_identity_config(array $config): array
+{
+	$env = getenv('SCPP_OBJECT_ACTION_IDENTITY');
+	if (is_string($env) && trim($env) !== '') {
+		$value = strtolower(trim($env));
+		if (in_array($value, ['1', 'true', 'yes', 'on', 'full'], true)) {
+			return [
+				'enabled' => true,
+				'source' => 'SCPP_OBJECT_ACTION_IDENTITY',
+			];
+		}
+		if (in_array($value, ['0', 'false', 'no', 'off', 'none'], true)) {
+			return [
+				'enabled' => false,
+				'source' => 'SCPP_OBJECT_ACTION_IDENTITY',
+			];
+		}
+		scpp_fail('Invalid SCPP_OBJECT_ACTION_IDENTITY value `' . $env . '`; expected `full`, `on`, `1`, `off`, or `0`.' . PHP_EOL, 2);
+	}
+
+	$build = is_array($config['build'] ?? null) ? $config['build'] : [];
+	if (!array_key_exists('object_action_identity', $build)) {
+		return [
+			'enabled' => false,
+			'source' => 'default lightweight report',
+		];
+	}
+	if (!is_bool($build['object_action_identity'])) {
+		scpp_fail('Invalid build.object_action_identity in ' . SCPP_PROJECT_CONFIG . ': expected a boolean.' . PHP_EOL, 2);
+	}
+	return [
+		'enabled' => (bool) $build['object_action_identity'],
+		'source' => 'build.object_action_identity',
+	];
+}
+
+/** @param array{enabled:bool,source:string} $objectCacheConfig */
+function object_action_identity_pre_ninja_capture_reason(array $objectCacheConfig): ?string
+{
+	if ((bool) ($objectCacheConfig['enabled'] ?? false)) {
+		return 'build.object_cache pre-Ninja restore';
+	}
+	return null;
+}
+
+/**
+ * @param array{enabled:bool,source:string} $objectCacheConfig
+ * @param array{enabled:bool,source:string} $objectActionIdentityConfig
+ */
+function object_action_identity_success_capture_reason(array $objectCacheConfig, array $objectActionIdentityConfig): ?string
+{
+	if ((bool) ($objectCacheConfig['enabled'] ?? false)) {
+		return 'build.object_cache post-Ninja store';
+	}
+	if ((bool) ($objectActionIdentityConfig['enabled'] ?? false)) {
+		return (string) ($objectActionIdentityConfig['source'] ?? 'object action identity opt-in');
+	}
+	if (build_ninja_explain_requested()) {
+		return build_ninja_explain_source_label() . ' diagnostics';
+	}
+	if (build_ninja_explain_probe_requested()) {
+		return build_ninja_explain_source_label() . ' diagnostics';
+	}
+	return null;
+}
+
+/** @return array<string,mixed> */
+function create_object_action_identity_placeholder_report(string $reason): array
+{
+	return normalize_object_action_identity_report([
+		'schema_version' => 1,
+		'algorithm' => 'sha256:scpp-object-action-v1',
+		'capture_mode' => 'off',
+		'capture_reason' => $reason,
+		'skipped_dependency_object_count' => 0,
+		'actions' => [],
+	]);
+}
+
+/** @return array{enabled:bool,source:string} */
+function resolve_build_project_unit_scoped_packs_config(array $config): array
+{
+	$env = getenv('SCPP_PROJECT_UNIT_SCOPED_PACKS');
+	if (is_string($env) && trim($env) !== '') {
+		$value = strtolower(trim($env));
+		if (in_array($value, ['1', 'true', 'yes', 'on'], true)) {
+			return [
+				'enabled' => true,
+				'source' => 'SCPP_PROJECT_UNIT_SCOPED_PACKS',
+			];
+		}
+		if (in_array($value, ['0', 'false', 'no', 'off'], true)) {
+			return [
+				'enabled' => false,
+				'source' => 'SCPP_PROJECT_UNIT_SCOPED_PACKS',
+			];
+		}
+		scpp_fail('Invalid SCPP_PROJECT_UNIT_SCOPED_PACKS value `' . $env . '`; expected `on`, `1`, `off`, or `0`.' . PHP_EOL, 2);
+	}
+
+	$build = is_array($config['build'] ?? null) ? $config['build'] : [];
+	if (!array_key_exists('project_unit_scoped_packs', $build)) {
+		return [
+			'enabled' => false,
+			'source' => 'default broad project-unit packs',
+		];
+	}
+	if (!is_bool($build['project_unit_scoped_packs'])) {
+		scpp_fail('Invalid build.project_unit_scoped_packs in ' . SCPP_PROJECT_CONFIG . ': expected a boolean.' . PHP_EOL, 2);
+	}
+	return [
+		'enabled' => (bool) $build['project_unit_scoped_packs'],
+		'source' => 'build.project_unit_scoped_packs',
 	];
 }
 
@@ -7099,9 +7299,10 @@ function normalize_build_grouping_module_group_rows(array $groups): array
  * @param array<string,array<string,mixed>> $projectContexts
  * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
  * @param list<array{project_root:string,source_path:string,object_path:string,force_include_header:?string}> $nativeCppUnits
+ * @param list<array<string,mixed>>|null $dependencySummaries
  * @return array<string,mixed>
  */
-function collect_project_unit_force_include_report(string $projectRoot, array $projectContexts, array $generatedUnits, array $nativeCppUnits, bool $useStanDependencyState = true, array $packChanges = []): array
+function collect_project_unit_force_include_report(string $projectRoot, array $projectContexts, array $generatedUnits, array $nativeCppUnits, bool $useStanDependencyState = true, array $packChanges = [], ?array $dependencySummaries = null): array
 {
 	$units = array_merge($generatedUnits, $nativeCppUnits);
 	$headerCounts = [];
@@ -7127,7 +7328,7 @@ function collect_project_unit_force_include_report(string $projectRoot, array $p
 		];
 	}
 
-	$dependencySummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
+	$dependencySummaries = $dependencySummaries ?? collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
 	$statusCounts = summarize_project_unit_dependency_status_counts($dependencySummaries);
 	$candidateBlockerCounts = summarize_project_unit_candidate_blocker_counts($dependencySummaries);
 	$nativeUnitCount = count($nativeCppUnits);
@@ -7233,14 +7434,16 @@ function summarize_project_unit_candidate_blocker_counts(array $dependencySummar
 /**
  * @param array<string,array<string,mixed>> $projectContexts
  * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @param list<array<string,mixed>>|null $dependencySummaries
+ * @return list<array<string,mixed>>
  */
-function apply_project_unit_scoped_force_include_candidates(string $projectRoot, array $projectContexts, array &$generatedUnits, bool $useStanDependencyState = true): void
+function apply_project_unit_scoped_force_include_candidates(string $projectRoot, array $projectContexts, array &$generatedUnits, bool $useStanDependencyState = true, ?array $dependencySummaries = null): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
-	$summaries = collect_project_unit_dependency_summaries($normalizedProjectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
+	$summaries = $dependencySummaries ?? collect_project_unit_dependency_summaries($normalizedProjectRoot, $projectContexts, $generatedUnits, $useStanDependencyState);
 	$scopedPackBySourceKey = [];
 	foreach ($summaries as $summary) {
-		if (!is_array($summary) || ($summary['candidate_status'] ?? null) !== 'candidate_scoped') {
+		if (!is_array($summary) || !project_unit_scoped_pack_is_activation_eligible($summary)) {
 			continue;
 		}
 		$sourceKey = trim((string) ($summary['source_key'] ?? ''));
@@ -7265,7 +7468,7 @@ function apply_project_unit_scoped_force_include_candidates(string $projectRoot,
 		$scopedPackBySourceKey[$sourceKey] = $packHeaderPath;
 	}
 	if ($scopedPackBySourceKey === []) {
-		return;
+		return $summaries;
 	}
 	foreach ($generatedUnits as &$unit) {
 		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
@@ -7277,6 +7480,86 @@ function apply_project_unit_scoped_force_include_candidates(string $projectRoot,
 		}
 	}
 	unset($unit);
+	foreach ($summaries as &$summary) {
+		if (!is_array($summary)) {
+			continue;
+		}
+		$sourceKey = trim((string) ($summary['source_key'] ?? ''));
+		if ($sourceKey === '' || !isset($scopedPackBySourceKey[$sourceKey])) {
+			continue;
+		}
+		$summary['force_include_header'] = normalize_config_path(relative_path($normalizedProjectRoot, $scopedPackBySourceKey[$sourceKey]));
+		$summary['status'] = 'scoped';
+	}
+	unset($summary);
+	return $summaries;
+}
+
+/**
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @param list<array<string,mixed>> $summaries
+ * @return list<array<string,mixed>>
+ */
+function apply_project_unit_active_force_include_headers_to_dependency_summaries(string $projectRoot, array $generatedUnits, array $summaries): array
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$headerBySourceKey = [];
+	foreach ($generatedUnits as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$relativePhp = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		if ($unitProjectRoot === '' || $relativePhp === '') {
+			continue;
+		}
+		$sourceKey = project_unit_stan_source_key($normalizedProjectRoot, normalize_path($unitProjectRoot . '/' . $relativePhp));
+		$forceIncludeHeader = is_string($unit['force_include_header'] ?? null) ? normalize_path($unit['force_include_header']) : '';
+		$headerBySourceKey[$sourceKey] = $forceIncludeHeader !== ''
+			? normalize_config_path(relative_path($normalizedProjectRoot, $forceIncludeHeader))
+			: '';
+	}
+	foreach ($summaries as &$summary) {
+		if (!is_array($summary)) {
+			continue;
+		}
+		$sourceKey = trim((string) ($summary['source_key'] ?? ''));
+		if ($sourceKey === '' || !array_key_exists($sourceKey, $headerBySourceKey)) {
+			continue;
+		}
+		$forceIncludeHeader = $headerBySourceKey[$sourceKey];
+		$summary['force_include_header'] = $forceIncludeHeader;
+		$summary['status'] = $forceIncludeHeader !== ''
+			&& $forceIncludeHeader === trim((string) ($summary['candidate_pack_header'] ?? ''))
+			&& project_unit_scoped_pack_is_activation_eligible($summary)
+				? 'scoped'
+				: 'fallback_broad';
+	}
+	unset($summary);
+	return $summaries;
+}
+
+/** @param array<string,mixed> $summary */
+function project_unit_scoped_pack_is_activation_eligible(array $summary): bool
+{
+	$candidatePackHeader = trim((string) ($summary['candidate_pack_header'] ?? ''));
+	$candidateHeaders = is_array($summary['candidate_scoped_headers'] ?? null) ? $summary['candidate_scoped_headers'] : [];
+	if ($candidatePackHeader === '' || $candidateHeaders === []) {
+		return false;
+	}
+
+	foreach (normalize_string_list($summary['candidate_blocking_reasons'] ?? []) as $reason) {
+		if (project_unit_scoped_pack_blocker_is_hard($reason)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function project_unit_scoped_pack_blocker_is_hard(string $reason): bool
+{
+	return $reason === 'project unit dependency state unavailable'
+		|| $reason === 'source summary unavailable'
+		|| $reason === 'own generated header unavailable'
+		|| str_starts_with($reason, 'unresolved dependency key `')
+		|| str_contains($reason, 'unmodeled dependency evidence');
 }
 
 /**
@@ -7482,8 +7765,10 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			'header' => $generatedHeader,
 		];
 	}
-	$stanPublicDependencyKeys = build_project_unit_public_dependency_key_map($normalizedProjectRoot, $stanFileSummaries, $stanDependencyLookup, $sourceKeyToHeader);
-	$buildPublicDependencyKeys = build_project_unit_public_dependency_key_map($normalizedProjectRoot, $buildFileSummaries, $buildDependencyLookup, $sourceKeyToHeader);
+	$stanDependencyCategoriesBySource = collect_project_unit_dependency_category_rows_by_source($normalizedProjectRoot, $stanFileSummaries, $stanDependencyLookup, $sourceKeyToHeader);
+	$buildDependencyCategoriesBySource = collect_project_unit_dependency_category_rows_by_source($normalizedProjectRoot, $buildFileSummaries, $buildDependencyLookup, $sourceKeyToHeader);
+	$stanPublicDependencyKeys = build_project_unit_public_dependency_key_map_from_category_rows($stanDependencyCategoriesBySource);
+	$buildPublicDependencyKeys = build_project_unit_public_dependency_key_map_from_category_rows($buildDependencyCategoriesBySource);
 
 	$summaries = [];
 	foreach ($generatedUnits as $unit) {
@@ -7562,16 +7847,23 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		$sourceSummary = is_array($stanFileSummaries[$sourceKey] ?? null)
 			? $stanFileSummaries[$sourceKey]
 			: (is_array($buildFileSummaries[$sourceKey] ?? null) ? $buildFileSummaries[$sourceKey] : null);
-		$dependencyCategoryLookup = $dependencyKeySource === 'stan' ? $stanDependencyLookup : ($dependencyKeySource === 'build' ? $buildDependencyLookup : []);
-		$dependencyCategories = collect_project_unit_dependency_category_rows($normalizedProjectRoot, $sourceKey, $sourceSummary, $dependencyCategoryLookup, $sourceKeyToHeader);
+		$dependencyCategories = $dependencyKeySource === 'stan'
+			? ($stanDependencyCategoriesBySource[$sourceKey] ?? [])
+			: ($dependencyKeySource === 'build'
+				? ($buildDependencyCategoriesBySource[$sourceKey] ?? [])
+				: collect_project_unit_dependency_category_rows($normalizedProjectRoot, $sourceKey, null, [], $sourceKeyToHeader));
 		$hasDependencyStateForSource = $dependencyKeySource !== 'none';
 		$candidate = classify_project_unit_scoped_candidate($hasDependencyStateForSource, $sourceSummary, $unresolvedDependencyKeys, $ownHeader, $dependencyCategories);
 		$forceIncludeHeader = normalize_config_path(relative_path($normalizedProjectRoot, normalize_path((string) ($unit['force_include_header'] ?? ''))));
-		$status = $candidate['status'] === 'candidate_scoped' && $forceIncludeHeader !== '' && $forceIncludeHeader === $candidatePackHeader
+		$status = project_unit_scoped_pack_is_activation_eligible([
+			'candidate_pack_header' => $candidatePackHeader,
+			'candidate_scoped_headers' => $candidateHeaders,
+			'candidate_blocking_reasons' => $candidate['blocking_reasons'],
+		]) && $forceIncludeHeader !== '' && $forceIncludeHeader === $candidatePackHeader
 			? 'scoped'
 			: 'fallback_broad';
 
-		$reasons = ['Phase C1 activates scoped packs for candidate_scoped units; blocked units still use broad-equivalent packs'];
+		$reasons = ['Scoped project-unit packs activate when dependency evidence is present and no hard blocker is reported'];
 		if (!$hasStanDependencyState) {
 			$reasons[] = 'STAN dependency state unavailable for this build';
 			if ($buildDependencyState !== null) {
@@ -7665,13 +7957,46 @@ function collect_project_unit_scoped_same_project_header_paths(array $dependency
  */
 function build_project_unit_public_dependency_key_map(string $projectRoot, array $fileSummaries, array $resolutionLookup, array $sourceKeyToHeader): array
 {
-	$map = [];
+	return build_project_unit_public_dependency_key_map_from_category_rows(
+		collect_project_unit_dependency_category_rows_by_source($projectRoot, $fileSummaries, $resolutionLookup, $sourceKeyToHeader)
+	);
+}
+
+/**
+ * @param array<string,array<string,mixed>> $fileSummaries
+ * @param array<string,list<array<string,mixed>>> $resolutionLookup
+ * @param array<string,array{project_root:string,header:string}> $sourceKeyToHeader
+ * @return array<string,list<array<string,mixed>>>
+ */
+function collect_project_unit_dependency_category_rows_by_source(string $projectRoot, array $fileSummaries, array $resolutionLookup, array $sourceKeyToHeader): array
+{
+	$rowsBySource = [];
 	foreach ($fileSummaries as $sourceKey => $sourceSummary) {
 		if (!is_string($sourceKey) || !is_array($sourceSummary)) {
 			continue;
 		}
+		$rowsBySource[$sourceKey] = collect_project_unit_dependency_category_rows($projectRoot, $sourceKey, $sourceSummary, $resolutionLookup, $sourceKeyToHeader);
+	}
+	ksort($rowsBySource, SORT_STRING);
+	return $rowsBySource;
+}
+
+/**
+ * @param array<string,list<array<string,mixed>>> $rowsBySource
+ * @return array<string,list<string>>
+ */
+function build_project_unit_public_dependency_key_map_from_category_rows(array $rowsBySource): array
+{
+	$map = [];
+	foreach ($rowsBySource as $sourceKey => $rows) {
+		if (!is_string($sourceKey)) {
+			continue;
+		}
 		$dependencies = [];
-		foreach (collect_project_unit_dependency_category_rows($projectRoot, $sourceKey, $sourceSummary, $resolutionLookup, $sourceKeyToHeader) as $row) {
+		foreach ($rows as $row) {
+			if (!is_array($row)) {
+				continue;
+			}
 			if (!project_unit_dependency_kind_affects_public_header((string) ($row['kind'] ?? ''))) {
 				continue;
 			}
@@ -7685,6 +8010,7 @@ function build_project_unit_public_dependency_key_map(string $projectRoot, array
 		sort($keys, SORT_STRING);
 		$map[$sourceKey] = $keys;
 	}
+	ksort($map, SORT_STRING);
 	return $map;
 }
 
@@ -7893,12 +8219,12 @@ function load_project_unit_dependency_state_from_state_file(string $statePath): 
  * @param array<string,array<string,mixed>> $projectContexts
  * @param array<string,string> $sourceOverrides
  */
-function write_project_unit_dependency_summary_state(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature): void
+function write_project_unit_dependency_summary_state(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature): string
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
 	if (!is_array($rootContext) || !is_string($rootContext['cache_dir'] ?? null)) {
-		return;
+		return 'unavailable';
 	}
 	$statePath = normalize_path($rootContext['cache_dir'] . '/' . SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE);
 	$cacheDir = normalize_path($rootContext['cache_dir'] . '/project_units/files');
@@ -7907,6 +8233,10 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 	$sourceUnits = (new StanSourceCatalogBuilder())->build($normalizedProjectRoot, $projectContexts, [], $sourceOverrides);
 	$stateStore = new StanStateStore();
 	$previousState = $stateStore->load($statePath);
+	$sourceFingerprint = project_unit_dependency_state_source_fingerprint($sourceUnits);
+	if (project_unit_dependency_state_is_fresh($previousState, $summarySignature, $sourceFingerprint, count($sourceUnits))) {
+		return 'hit';
+	}
 	$filePassResult = (new StanFilePass())->analyze(
 		$normalizedProjectRoot,
 		$statePath,
@@ -7926,22 +8256,61 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 		$filesState[$sourceKey]['dependency_keys'] = $dependencyKeys[$sourceKey] ?? [];
 	}
 
-	$sourceFingerprintParts = [];
-	foreach ($sourceUnits as $sourceUnit) {
-		$sourceFingerprintParts[] = normalize_path($sourceUnit->path) . ':' . (string) ($sourceUnit->meta['content_hash'] ?? '');
-	}
-	sort($sourceFingerprintParts, SORT_STRING);
 	$stateStore->save($statePath, [
 		'version' => 1,
 		'project_root' => $normalizedProjectRoot,
 		'summary_signature' => $summarySignature,
-		'source_fingerprint' => hash('sha256', implode("\n", $sourceFingerprintParts)),
+		'source_fingerprint' => $sourceFingerprint,
 		'source_count' => count($sourceUnits),
 		'analyzed_count' => max(0, (int) ($filePassResult['analyzed_count'] ?? 0)),
 		'reused_count' => max(0, (int) ($filePassResult['reused_count'] ?? 0)),
 		'updated_at' => time(),
 		'files' => $filesState,
 	]);
+	return 'updated';
+}
+
+/**
+ * @param list<Scpp\S2S\Stan\StanSourceUnit> $sourceUnits
+ */
+function project_unit_dependency_state_source_fingerprint(array $sourceUnits): string
+{
+	$sourceFingerprintParts = [];
+	foreach ($sourceUnits as $sourceUnit) {
+		if (!$sourceUnit instanceof \Scpp\S2S\Stan\StanSourceUnit) {
+			continue;
+		}
+		$sourceFingerprintParts[] = normalize_path($sourceUnit->path) . ':' . (string) ($sourceUnit->meta['content_hash'] ?? '');
+	}
+	sort($sourceFingerprintParts, SORT_STRING);
+	return hash('sha256', implode("\n", $sourceFingerprintParts));
+}
+
+function project_unit_dependency_state_is_fresh(array $state, string $summarySignature, string $sourceFingerprint, int $sourceCount): bool
+{
+	if ((string) ($state['summary_signature'] ?? '') !== $summarySignature) {
+		return false;
+	}
+	if ((string) ($state['source_fingerprint'] ?? '') !== $sourceFingerprint) {
+		return false;
+	}
+	if ((int) ($state['source_count'] ?? -1) !== $sourceCount) {
+		return false;
+	}
+	$filesState = is_array($state['files'] ?? null) ? $state['files'] : [];
+	if (count($filesState) !== $sourceCount) {
+		return false;
+	}
+	foreach ($filesState as $fileState) {
+		if (!is_array($fileState) || !array_key_exists('dependency_keys', $fileState)) {
+			return false;
+		}
+		$cachePath = is_string($fileState['cache_path'] ?? null) ? normalize_path($fileState['cache_path']) : '';
+		if ($cachePath === '' || !is_file($cachePath)) {
+			return false;
+		}
+	}
+	return true;
 }
 
 /**
@@ -7964,15 +8333,23 @@ function collect_project_unit_dependency_summary_freshness(string $projectRoot, 
 				continue;
 			}
 			$sourceOverride = array_key_exists($sourcePath, $sourceOverrides) ? (string) $sourceOverrides[$sourcePath] : null;
+			$relativeSource = normalize_config_path(relative_path($contextProjectRoot, $sourcePath));
+			$sourceState = is_array($projectContext['state']['files'][$relativeSource] ?? null) ? $projectContext['state']['files'][$relativeSource] : null;
 			$meta = $sourceOverride !== null
 				? ['size' => strlen($sourceOverride), 'mtime' => 0, 'content_hash' => hash('sha256', $sourceOverride)]
-				: (is_file($sourcePath) ? build_file_meta($sourcePath) : null);
+				: (is_array($sourceState) && preg_match('/^[0-9a-f]{64}$/', (string) ($sourceState['content_hash'] ?? '')) === 1
+					? [
+						'size' => max(0, (int) ($sourceState['size'] ?? 0)),
+						'mtime' => max(0, (int) ($sourceState['mtime'] ?? 0)),
+						'content_hash' => (string) $sourceState['content_hash'],
+					]
+					: (is_file($sourcePath) ? build_file_meta($sourcePath) : null));
 			if (!is_array($meta)) {
 				continue;
 			}
 			$sourceInputs[] = [
 				'project_root' => normalize_config_path(relative_path($normalizedProjectRoot, $contextProjectRoot)),
-				'source' => normalize_config_path(relative_path($contextProjectRoot, $sourcePath)),
+				'source' => $relativeSource,
 				'source_key' => project_unit_stan_source_key($normalizedProjectRoot, $sourcePath),
 				'size' => (int) ($meta['size'] ?? 0),
 				'mtime' => (int) ($meta['mtime'] ?? 0),
@@ -8076,6 +8453,59 @@ function write_project_unit_dependency_summary_artifact(string $projectRoot, arr
 		'used_stan_dependency_state' => (bool) ($freshness['used_stan_dependency_state'] ?? false),
 		'source_overrides_active' => (bool) ($freshness['source_overrides_active'] ?? false),
 	]);
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @return array{dependency_summaries:list<array<string,mixed>>,artifact:array<string,mixed>}|null
+ */
+function load_fresh_project_unit_dependency_summary_artifact(string $projectRoot, array $projectContexts, array $freshness): ?array
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
+	if (!is_array($rootContext) || !is_string($rootContext['cache_dir'] ?? null)) {
+		return null;
+	}
+	$artifactPath = normalize_path($rootContext['cache_dir'] . '/' . SCPP_PROJECT_UNIT_DEPENDENCY_SUMMARY_FILE);
+	if (!is_file($artifactPath)) {
+		return null;
+	}
+	$artifact = require $artifactPath;
+	if (!is_array($artifact)) {
+		return null;
+	}
+	$currentFreshness = normalize_project_unit_dependency_summary_freshness($freshness);
+	$artifactFreshness = normalize_project_unit_dependency_summary_freshness(is_array($artifact['freshness'] ?? null) ? $artifact['freshness'] : []);
+	foreach (['summary_signature', 'source_fingerprint', 'source_count', 'used_stan_dependency_state', 'source_overrides_active'] as $key) {
+		if (($artifactFreshness[$key] ?? null) !== ($currentFreshness[$key] ?? null)) {
+			return null;
+		}
+	}
+	$sources = [];
+	foreach (is_array($artifact['sources'] ?? null) ? $artifact['sources'] : [] as $source) {
+		if (!is_array($source)) {
+			continue;
+		}
+		if (!array_key_exists('direct_source_dependencies', $source) && array_key_exists('direct_source_keys', $source)) {
+			$source['direct_source_dependencies'] = $source['direct_source_keys'];
+		}
+		$sources[] = $source;
+	}
+	$summaries = normalize_project_unit_dependency_summaries($sources);
+	if (count($summaries) !== (int) ($currentFreshness['source_count'] ?? 0)) {
+		return null;
+	}
+	return [
+		'dependency_summaries' => $summaries,
+		'artifact' => normalize_project_unit_dependency_summary_artifact_info([
+			'path' => normalize_config_path(relative_path($normalizedProjectRoot, $artifactPath)),
+			'summary_signature' => (string) ($currentFreshness['summary_signature'] ?? ''),
+			'source_fingerprint' => (string) ($currentFreshness['source_fingerprint'] ?? ''),
+			'source_count' => (int) ($currentFreshness['source_count'] ?? 0),
+			'used_stan_dependency_state' => (bool) ($currentFreshness['used_stan_dependency_state'] ?? false),
+			'source_overrides_active' => (bool) ($currentFreshness['source_overrides_active'] ?? false),
+		]),
+	];
 }
 
 /**
@@ -12446,12 +12876,21 @@ function render_ninja_explain_report_lines(array $report, bool $includeDetails =
 function render_object_action_identity_lines(array $report): array
 {
 	$report = normalize_object_action_identity_report($report);
+	if ((int) ($report['total_action_count'] ?? 0) === 0 && (string) ($report['capture_mode'] ?? '') !== 'full') {
+		$reason = trim((string) ($report['capture_reason'] ?? 'default lightweight report'));
+		return [
+			'Object action identity: not captured' . ($reason !== '' ? ' (' . $reason . ')' : ''),
+			'Enable full capture with build.object_action_identity = true, SCPP_OBJECT_ACTION_IDENTITY=full, build.object_cache = true, or Ninja explain diagnostics.',
+		];
+	}
 	$lines = [
 		'Object action identity: ' . (int) ($report['total_action_count'] ?? 0)
 			. ' action(s), generated ' . (int) ($report['generated_action_count'] ?? 0)
 			. ', native ' . (int) ($report['native_action_count'] ?? 0)
 			. ', skipped dependency objects ' . (int) ($report['skipped_dependency_object_count'] ?? 0)
-			. ', algorithm ' . (string) ($report['algorithm'] ?? 'sha256:scpp-object-action-v1'),
+			. ', algorithm ' . (string) ($report['algorithm'] ?? 'sha256:scpp-object-action-v1')
+			. ', capture ' . (string) ($report['capture_mode'] ?? 'full')
+			. ' (' . (string) ($report['capture_reason'] ?? 'requested') . ')',
 	];
 	foreach (normalize_object_action_identity_rows(is_array($report['actions'] ?? null) ? $report['actions'] : []) as $action) {
 		$lines[] = '  - ' . (string) ($action['object_path'] ?? '')
@@ -12584,6 +13023,9 @@ function render_build_explanation_lines(array $details): array
 			. ' action(s), generated ' . (int) ($objectActionIdentity['generated_action_count'] ?? 0)
 			. ', native ' . (int) ($objectActionIdentity['native_action_count'] ?? 0)
 			. ', skipped dependency objects ' . (int) ($objectActionIdentity['skipped_dependency_object_count'] ?? 0);
+	} elseif ((string) ($objectActionIdentity['capture_mode'] ?? '') !== 'full') {
+		$reason = trim((string) ($objectActionIdentity['capture_reason'] ?? 'default lightweight report'));
+		$lines[] = 'Object action identities: not captured' . ($reason !== '' ? ' (' . $reason . ')' : '');
 	}
 	$objectCache = normalize_object_cache_report(is_array($details['object_cache'] ?? null) ? $details['object_cache'] : []);
 	if ((bool) ($objectCache['enabled'] ?? false)) {
@@ -14444,7 +14886,7 @@ function build_app_pch_artifact_path(string $buildDir, string $compilerKind): st
 
 function render_app_pch_header(): string
 {
-	return "#include <scpp/runtime.hpp>\n";
+	return "#include <scpp/lang/php.hpp>\n";
 }
 
 function build_runtime_pch_header_path(string $buildDir): string
@@ -14932,6 +15374,234 @@ function build_s2s_declared_type_kind_catalog(array $projectGraph, array $source
 	}
 	$builder = new DeclarationKindCatalogBuilder();
 	return $builder->buildFromSources(array_values(array_unique($sourcePaths)), $sourceOverrides);
+}
+
+/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @return array<string,string> */
+function build_s2s_declared_type_kind_catalog_cached(string $projectRoot, string $repoRoot, string $cacheDir, array $projectGraph, array $sourceOverrides, array $previousBuildPlannerState): array
+{
+	$cachePath = normalize_path($cacheDir . '/' . SCPP_DECLARED_TYPE_KIND_CATALOG_FILE);
+	$sourceInput = collect_declared_type_kind_catalog_source_input($projectGraph, $sourceOverrides, $previousBuildPlannerState);
+	$sourceRows = is_array($sourceInput['source_rows'] ?? null) ? $sourceInput['source_rows'] : [];
+	$catalogSignature = compute_declared_type_kind_catalog_signature($repoRoot);
+	$cached = read_json_file($cachePath);
+	$cachedSources = is_array($cached) && (string) ($cached['catalog_signature'] ?? '') === $catalogSignature && is_array($cached['sources'] ?? null)
+		? $cached['sources']
+		: [];
+	$cachedSourcesByKey = [];
+	foreach ($cachedSources as $cachedSource) {
+		if (!is_array($cachedSource)) {
+			continue;
+		}
+		$sourceKey = trim((string) ($cachedSource['source_key'] ?? ''));
+		if ($sourceKey !== '') {
+			$cachedSourcesByKey[$sourceKey] = $cachedSource;
+		}
+	}
+
+	$catalog = [];
+	$cacheRows = [];
+	$changed = !is_array($cached) || (string) ($cached['catalog_signature'] ?? '') !== $catalogSignature;
+	foreach ($sourceRows as $sourceRow) {
+		if (!is_array($sourceRow)) {
+			continue;
+		}
+		$sourceKey = trim((string) ($sourceRow['source_key'] ?? ''));
+		$sourcePath = normalize_path((string) ($sourceRow['source_path'] ?? ''));
+		if ($sourceKey === '' || $sourcePath === '') {
+			continue;
+		}
+		$cachedSource = is_array($cachedSourcesByKey[$sourceKey] ?? null) ? $cachedSourcesByKey[$sourceKey] : null;
+		$sourceCatalog = null;
+		if (
+			$cachedSource !== null
+			&& (string) ($cachedSource['content_hash'] ?? '') === (string) ($sourceRow['content_hash'] ?? '')
+			&& (int) ($cachedSource['size'] ?? -1) === (int) ($sourceRow['size'] ?? 0)
+			&& (bool) ($cachedSource['source_override'] ?? false) === (bool) ($sourceRow['source_override'] ?? false)
+			&& is_array($cachedSource['declared_type_kinds'] ?? null)
+		) {
+			$sourceCatalog = normalize_declared_type_kind_catalog($cachedSource['declared_type_kinds']);
+		} else {
+			$sourceCatalog = build_s2s_declared_type_kind_catalog_for_source($sourcePath, $sourceOverrides);
+			$changed = true;
+		}
+		foreach ($sourceCatalog as $name => $kind) {
+			$catalog[$name] = $kind;
+		}
+		$cacheRows[] = [
+			'source_key' => $sourceKey,
+			'source_path' => $sourcePath,
+			'content_hash' => (string) ($sourceRow['content_hash'] ?? ''),
+			'size' => (int) ($sourceRow['size'] ?? 0),
+			'source_override' => (bool) ($sourceRow['source_override'] ?? false),
+			'declared_type_kinds' => $sourceCatalog,
+		];
+	}
+	ksort($catalog, SORT_STRING);
+	if (
+		!$changed
+		&& is_array($cached)
+		&& (string) ($cached['source_fingerprint'] ?? '') === (string) ($sourceInput['source_fingerprint'] ?? '')
+		&& (int) ($cached['source_count'] ?? -1) === (int) ($sourceInput['source_count'] ?? 0)
+		&& is_array($cached['declared_type_kinds'] ?? null)
+	) {
+		return normalize_declared_type_kind_catalog($cached['declared_type_kinds']);
+	}
+	write_json_file_atomic($cachePath, [
+		'schema_version' => 1,
+		'project_root' => normalize_path($projectRoot),
+		'catalog_signature' => $catalogSignature,
+		'source_fingerprint' => (string) ($sourceInput['source_fingerprint'] ?? ''),
+		'source_count' => (int) ($sourceInput['source_count'] ?? 0),
+		'updated_at' => time(),
+		'sources' => $cacheRows,
+		'declared_type_kinds' => $catalog,
+	]);
+	return $catalog;
+}
+
+/** @param array<string,array<string,mixed>> $projectGraph @param array<string,string> $sourceOverrides @return array{source_fingerprint:string,source_count:int,source_rows:list<array<string,mixed>>} */
+function collect_declared_type_kind_catalog_source_input(array $projectGraph, array $sourceOverrides, array $previousBuildPlannerState): array
+{
+	$sourceRows = [];
+	$seen = [];
+	foreach ($projectGraph as $projectSpec) {
+		$contextProjectRoot = normalize_path((string) ($projectSpec['project_root'] ?? ''));
+		if ($contextProjectRoot === '') {
+			continue;
+		}
+		foreach (collect_project_php_files($contextProjectRoot) as $sourcePath) {
+			$sourcePath = normalize_path($sourcePath);
+			if ($sourcePath === '' || isset($seen[$sourcePath]) || strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION)) === 'jss') {
+				continue;
+			}
+			$seen[$sourcePath] = true;
+			$relativeSource = normalize_config_path(relative_path($contextProjectRoot, $sourcePath));
+			$sourceOverride = array_key_exists($sourcePath, $sourceOverrides) ? (string) $sourceOverrides[$sourcePath] : null;
+			$meta = $sourceOverride !== null
+				? [
+					'size' => strlen($sourceOverride),
+					'mtime' => 0,
+					'ctime' => 0,
+					'content_hash' => hash('sha256', $sourceOverride),
+					'source_override' => true,
+				]
+				: declared_type_kind_catalog_source_meta($sourcePath, $contextProjectRoot, $relativeSource, $previousBuildPlannerState);
+			$sourceRows[] = [
+				'source_key' => build_planner_source_key($contextProjectRoot, $relativeSource),
+				'source_path' => $sourcePath,
+				'content_hash' => (string) ($meta['content_hash'] ?? ''),
+				'size' => max(0, (int) ($meta['size'] ?? 0)),
+				'source_override' => (bool) ($meta['source_override'] ?? false),
+			];
+		}
+	}
+	usort($sourceRows, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
+	$fingerprintParts = [];
+	foreach ($sourceRows as $sourceRow) {
+		$fingerprintParts[] = implode(':', [
+			(string) ($sourceRow['source_key'] ?? ''),
+			(string) ($sourceRow['content_hash'] ?? ''),
+			(string) ((int) ($sourceRow['size'] ?? 0)),
+			((bool) ($sourceRow['source_override'] ?? false)) ? 'override' : 'file',
+		]);
+	}
+	return [
+		'source_fingerprint' => hash('sha256', implode("\n", $fingerprintParts)),
+		'source_count' => count($sourceRows),
+		'source_rows' => $sourceRows,
+	];
+}
+
+/** @param array<string,string> $sourceOverrides @return array<string,string> */
+function build_s2s_declared_type_kind_catalog_for_source(string $sourcePath, array $sourceOverrides): array
+{
+	$builder = new DeclarationKindCatalogBuilder();
+	return normalize_declared_type_kind_catalog($builder->buildFromSources([$sourcePath], $sourceOverrides));
+}
+
+/** @return array{size:int,mtime:int,ctime:int,content_hash:string,source_override:bool} */
+function declared_type_kind_catalog_source_meta(string $path, string $contextProjectRoot, string $relativeSource, array $previousBuildPlannerState): array
+{
+	$size = filesize($path);
+	$mtime = filemtime($path);
+	$stat = @stat($path);
+	$ctime = is_array($stat) ? ($stat['ctime'] ?? false) : false;
+	if ($size === false || $mtime === false || $ctime === false) {
+		scpp_fail('Failed to stat file: ' . $path . PHP_EOL, 2);
+	}
+	$sourceKey = build_planner_source_key($contextProjectRoot, $relativeSource);
+	$previousSources = is_array($previousBuildPlannerState['source_metadata_by_key'] ?? null) ? $previousBuildPlannerState['source_metadata_by_key'] : [];
+	$previous = is_array($previousSources[$sourceKey] ?? null) ? $previousSources[$sourceKey] : null;
+	$contentHash = '';
+	if (
+		is_array($previous)
+		&& (int) ($previous['size'] ?? -1) === (int) $size
+		&& (int) ($previous['mtime'] ?? -1) === (int) $mtime
+		&& (int) ($previous['ctime'] ?? -1) === (int) $ctime
+		&& preg_match('/^[0-9a-f]{64}$/', (string) ($previous['content_hash'] ?? '')) === 1
+		&& build_planner_previous_source_timestamp_is_safe($previous, $previousBuildPlannerState)
+	) {
+		$contentHash = (string) $previous['content_hash'];
+	} else {
+		$hash = hash_file('sha256', $path);
+		if ($hash === false) {
+			scpp_fail('Failed to hash file: ' . $path . PHP_EOL, 2);
+		}
+		$contentHash = $hash;
+	}
+
+	return [
+		'size' => (int) $size,
+		'mtime' => (int) $mtime,
+		'ctime' => (int) $ctime,
+		'content_hash' => $contentHash,
+		'source_override' => false,
+	];
+}
+
+function compute_declared_type_kind_catalog_signature(string $repoRoot): string
+{
+	$parts = ['version:' . SCPP_S2S_SIGNATURE_VERSION];
+	foreach (declared_type_kind_catalog_signature_files($repoRoot) as $file) {
+		if (!is_file($file)) {
+			$parts[] = 'missing:' . normalize_config_path($file);
+			continue;
+		}
+		$hash = hash_file('sha256', $file);
+		$parts[] = normalize_config_path($file) . ':' . ($hash === false ? 'hash-failed' : $hash);
+	}
+	return hash('sha256', implode("\n", $parts));
+}
+
+/** @return list<string> */
+function declared_type_kind_catalog_signature_files(string $repoRoot): array
+{
+	return [
+		$repoRoot . '/generators/php/src/Analysis/DeclarationKindCatalogBuilder.php',
+		$repoRoot . '/generators/php/src/Analysis/FrontEndSymbolExtractor.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/PreTokenizer.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/StructSyntaxRewriter.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/UnionSyntaxRewriter.php',
+		$repoRoot . '/generators/php/src/PreTokenizer/EnumBackingSyntaxRewriter.php',
+	];
+}
+
+/** @return array<string,string> */
+function normalize_declared_type_kind_catalog(array $catalog): array
+{
+	$normalized = [];
+	foreach ($catalog as $name => $kind) {
+		if (!is_string($name) || $name === '') {
+			continue;
+		}
+		$kind = strtolower(trim((string) $kind));
+		if (!in_array($kind, ['class', 'enum', 'struct', 'union'], true)) {
+			$kind = 'class';
+		}
+		$normalized[$name] = $kind;
+	}
+	ksort($normalized, SORT_STRING);
+	return $normalized;
 }
 
 /** @param array<string,string> $sourceOverrides @param array<string,string> $declaredTypeKinds @return string */
@@ -16287,14 +16957,14 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	$lines[] = '';
 	if ($usePch) {
 		$lines[] = 'rule compile_pch_app';
-		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $cxxflags -MMD -MF $out.d -x c++-header $in -o $out');
+		$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $cxxflags -MD -MF $out.d -x c++-header $in -o $out');
 		$lines[] = '  depfile = $out.d';
 		$lines[] = '  deps = gcc';
 		$lines[] = '  description = PCH $out';
 		$lines[] = '';
 		if ($options['compile_runtime']) {
 			$lines[] = 'rule compile_pch_runtime';
-			$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $runtime_cxxflags -MMD -MF $out.d -x c++-header $in -o $out');
+			$lines[] = '  command = ' . $wrapNinjaCommand(compiler_invocation_prefix($compiler) . ' $cxx $runtime_cxxflags -MD -MF $out.d -x c++-header $in -o $out');
 			$lines[] = '  depfile = $out.d';
 			$lines[] = '  deps = gcc';
 			$lines[] = '  description = PCH $out';

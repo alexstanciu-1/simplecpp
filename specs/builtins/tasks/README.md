@@ -26,6 +26,7 @@ Current first-pass scope:
 First-pass builtins:
 
 - `task_run`
+- `task_run_publish`
 - `task_start`
 - `task_join`
 - `task_cancel`

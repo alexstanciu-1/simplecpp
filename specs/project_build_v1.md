@@ -375,7 +375,7 @@ The lower-level build service path used by helpers/tests also defaults to reuse 
 - `scpp run` reuses runtime and dependencies by default, then executes the primary output
 - both commands accept `--entry=<path>` to build or run a specific project-local source file instead of the configured `prism.json` entrypoint for that invocation only
 - both commands accept `--mode=debug` and `--mode=release` to select a stable build profile/root set for that invocation only
-- both commands accept `--timings` to print the internal `execute_build()` timing breakdown for that invocation only
+- both commands accept `--timings` to print the internal `execute_build()` timing breakdown for that invocation only, including pre-Ninja diagnostics/cache work, Ninja subprocess time, post-Ninja diagnostics/cache work, and saved-report writing
 
 ### STAN pre-build check
 
@@ -386,7 +386,7 @@ Current v1 behavior:
 - if a fresh matching STAN report already exists for the current project source fingerprint, the build reuses it and may start a background STAN worker when none is alive
 - if a live STAN worker exists but its report is stale, the build requests a refresh and waits briefly for a matching ready result; if the worker does not publish in time, the build falls back to an inline compile-gating STAN check
 - if no live STAN worker exists and the current report is stale, the build performs an inline compile-gating STAN check, starts a worker for the full advisory/status/report refresh, and continues only if the compile-gating diagnostics are clean
-- while only the compile-gating check is fresh, or when `--no-stan` bypasses the STAN pre-build check, the build writes a fresh build-owned dependency summary and may activate scoped project-unit packs from that summary; sources without complete dependency evidence keep broad fallback
+- while only the compile-gating check is fresh, or when `--no-stan` bypasses the STAN pre-build check, the build writes or reuses a build-owned dependency summary so diagnostics can still show direct dependency evidence
 - background worker refreshes debounce source edits before proactive analysis; explicit build refresh requests bypass that debounce
 - if STAN reports `compile-errors`, the build stops before C++ generation/compilation continues
 - if STAN reports only advisory findings, the build continues and prints a short static-analysis summary
@@ -500,9 +500,11 @@ This command is a documentation discoverability helper. It does not change langu
   interface/implementation-changed counts
 - captured Ninja explain output when `SCPP_NINJA_EXPLAIN=1` or an internal
   explain probe is enabled, including normalized object-to-cause mappings
-- generated/native object action identities, including stable action keys,
+- generated/native object action identity capture status; full action keys,
   command/input/output hashes, primary inputs, member sources, implicit inputs,
-  and module surface inputs
+  module surface inputs, and per-input fingerprints are captured only when
+  explicitly requested, when object cache is enabled, for Ninja explain/probe
+  diagnostics, or for compile/link failure diagnostics
 - local object action cache restore/store counts when `build.object_cache` is
   enabled
 - build planner warm-state status, graph counts, source metadata hit/miss
@@ -567,17 +569,22 @@ preferred; Ninja explain messages are used as a fallback before the generic
 "no source/interface/project-unit cause" text. `scpp explain-build
 ninja-explain` renders the captured object explanations.
 
-Saved successful build details also include an `object_action_identity` summary.
-The summary records generated and native object compile action rows with a
-stable action key, command hash, input hash, output hash, compiler identity,
-build mode, selected environment values, primary input, member source labels,
-generated inputs, implicit inputs, force-include headers, module surface inputs,
-and per-input fingerprints. The same normalized summary is stored under
+Saved successful build details also include an `object_action_identity` summary,
+but ordinary successful builds keep this summary lightweight by default. The
+lightweight summary records `capture_mode = "off"` and a capture reason instead
+of hashing every object action input and output. Full generated/native object
+compile action rows are captured when `build.object_action_identity = true`,
+when `SCPP_OBJECT_ACTION_IDENTITY=full`, when `build.object_cache = true`, when
+Ninja explain/probe diagnostics are enabled, or when compile/link failure
+diagnostics are being saved. Full rows include a stable action key, command
+hash, input hash, output hash, compiler identity, build mode, selected
+environment values, primary input, member source labels, generated inputs,
+implicit inputs, force-include headers, module surface inputs, and per-input
+fingerprints. The same normalized summary is stored under
 `details.build_explanation.object_action_identity`, and source rows may carry
-`object_action_key` plus `object_action_kind` when their object path was
-matched. These action keys are report/provenance data in this slice; they do
-not yet drive object reuse. `scpp explain-build action-identity` renders the
-recorded object action rows.
+`object_action_key` plus `object_action_kind` only when full capture matched
+their object path. `scpp explain-build action-identity` renders either the
+recorded full rows or the lightweight not-captured reason.
 
 Saved successful build details also include an `object_cache` summary. The
 summary records whether the local action cache was enabled, where the project
@@ -633,11 +640,13 @@ and per-source dependency summaries. These summaries may use STAN's stored
 dependency keys when available. When `--no-stan` is used, the build writes a
 fresh build-owned lightweight project-unit dependency state from
 frontend/source summaries so diagnostics can still show direct dependency
-evidence and safe generated units can still use scoped packs. Current v1 builds
-activate scoped project unit packs for generated PHS units whose dependency
-summaries are classified as `candidate_scoped`; blocked generated units,
-sources without complete dependency state, and native C++ units keep using
-broad-equivalent project unit packs.
+evidence. Ordinary v1 builds keep generated and native units on
+broad-equivalent project unit packs. Experimental scoped-pack activation is
+opt-in with `build.project_unit_scoped_packs = true` or
+`SCPP_PROJECT_UNIT_SCOPED_PACKS=1`; in that mode generated PHS units may use
+scoped packs only when their dependency summaries are safe for activation, while
+hard-blocked generated units, sources without complete dependency state, and
+native C++ units keep using broad-equivalent project unit packs.
 
 Native C++ units are intentionally reported under a separate native policy.
 Current v1 policy is `broad_fallback_without_dependency_manifest`: native C++
@@ -680,7 +689,7 @@ pulling unrelated implementation-only headers through every consumer. The scoped
 candidate header list preserves that dependency walk order, so public/header
 dependencies are emitted before the generated headers that require them.
 
-Current v1 scoped activation remains conservative. Files with class properties
+Current v1 scoped activation remains conservative and opt-in. Files with class properties
 or compact-layout struct/union fields may activate scoped packs when their
 direct property type dependencies resolve to generated headers, and those
 headers are placed before the owning header in the scoped pack. Enum-typed value
@@ -824,8 +833,9 @@ The compatibility broad header remains `.prism/generated/__project_units.hpp`.
 Current compile edges force-include deterministic project unit pack headers
 under `.prism/generated/__project_units/<hash>.hpp` or
 `.prism/generated/__project_units/scoped-<hash>.hpp`. The non-scoped packs are
-broad-equivalent fallbacks; scoped packs are used only for safe generated PHS
-units. These headers are build artifacts only. PHP++ source must not name
+broad-equivalent fallbacks and are the default for ordinary builds; scoped packs
+are used only for safe generated PHS units when scoped activation is explicitly
+enabled. These headers are build artifacts only. PHP++ source must not name
 generated `.hpp` files.
 
 The project unit headers include:

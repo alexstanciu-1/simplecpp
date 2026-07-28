@@ -112,8 +112,8 @@ PHS);
 
 		$projectUnits = $this->loadProjectUnits($project);
 		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'nested project should report nine generated units');
-		$this->assertSame(8, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for declaration-only, signature-only, property-layout, safe class constants, and safe helper units');
-		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should keep only the executable unit broad');
+		$this->assertSame(9, $projectUnits['active_scoped_units'] ?? null, 'nested project should activate scoped packs for every generated unit with dependency evidence');
+		$this->assertSame(0, $projectUnits['active_broad_fallback_units'] ?? null, 'nested project should not keep generated units on broad fallback');
 		$this->assertSame(8, $projectUnits['candidate_scoped_units'] ?? null, 'nested project should report eight scoped candidates');
 		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'nested project should report one blocked candidate');
 
@@ -329,8 +329,8 @@ PHS);
 
 		$projectUnits = $this->loadProjectUnits($project);
 		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'compact-layout project should report nine generated units');
-		$this->assertSame(8, $projectUnits['active_scoped_units'] ?? null, 'compact-layout declaration units should activate scoped packs');
-		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'compact-layout executable unit should stay broad');
+		$this->assertSame(9, $projectUnits['active_scoped_units'] ?? null, 'compact-layout generated units should activate scoped packs');
+		$this->assertSame(0, $projectUnits['active_broad_fallback_units'] ?? null, 'compact-layout generated units should not stay broad');
 		$this->assertSame(8, $projectUnits['candidate_scoped_units'] ?? null, 'compact-layout declarations should be scoped candidates');
 		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'compact-layout main should be the only blocked candidate');
 
@@ -390,8 +390,8 @@ PHS);
 
 		$projectUnits = $this->loadProjectUnits($project);
 		$this->assertSame(4, $projectUnits['total_units'] ?? null, 'top-level constant project should report four generated units');
-		$this->assertSame(2, $projectUnits['active_scoped_units'] ?? null, 'safe top-level constant and class-constant provider should activate scoped packs');
-		$this->assertSame(2, $projectUnits['active_broad_fallback_units'] ?? null, 'executable and unmodeled top-level constant units should stay broad');
+		$this->assertSame(3, $projectUnits['active_scoped_units'] ?? null, 'top-level constant project should activate scoped packs for generated units without hard blockers');
+		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'top-level constant project should keep unmodeled generated units on broad fallback');
 		$this->assertSame(2, $projectUnits['candidate_scoped_units'] ?? null, 'top-level constant project should report two scoped candidates');
 		$this->assertSame(2, $projectUnits['candidate_blocked_units'] ?? null, 'top-level constant project should report two blocked candidates');
 
@@ -406,7 +406,7 @@ PHS);
 		$this->assertOrderBefore('#include "../kind.hpp"', '#include "../safe_label.hpp"', $safePackContents, 'top-level constant scoped pack should include referenced class before owning constant header');
 
 		$arraySummary = $this->findSummary($projectUnits, 'array_labels.phs', '');
-		$this->assertSame('fallback_broad', $arraySummary['status'] ?? null, 'unmodeled top-level constant initializer should stay on broad fallback');
+		$this->assertSame('fallback_broad', $arraySummary['status'] ?? null, 'unmodeled top-level constant initializer should keep the broad fallback pack');
 		$this->assertSame('blocked_broad_fallback', $arraySummary['candidate_status'] ?? null, 'unmodeled top-level constant initializer should block scoped candidacy');
 		$this->assertContains('top-level constants contain unmodeled dependency evidence', implode("\n", is_array($arraySummary['candidate_blocking_reasons'] ?? null) ? $arraySummary['candidate_blocking_reasons'] : []), 'unmodeled top-level constant initializer should report a blocker');
 	}
@@ -508,8 +508,8 @@ PHS);
 
 		$projectUnits = $this->loadProjectUnits($project);
 		$this->assertSame(9, $projectUnits['total_units'] ?? null, 'method-body project should report nine generated units');
-		$this->assertSame(8, $projectUnits['active_scoped_units'] ?? null, 'resolved method-body units should activate scoped packs');
-		$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'only executable unit should stay broad');
+		$this->assertSame(9, $projectUnits['active_scoped_units'] ?? null, 'method-body generated units should activate scoped packs');
+		$this->assertSame(0, $projectUnits['active_broad_fallback_units'] ?? null, 'method-body generated units should not stay broad');
 		$this->assertSame(8, $projectUnits['candidate_scoped_units'] ?? null, 'resolved method-body units should be scoped candidates');
 		$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'only executable unit should be blocked');
 
@@ -635,6 +635,7 @@ PHS);
 				'backend' => 'ninja',
 				'cxx' => null,
 				'mode' => 'debug',
+				'project_unit_scoped_packs' => true,
 			],
 			'runtime' => [
 				'languages' => ['php'],

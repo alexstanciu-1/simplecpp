@@ -231,8 +231,9 @@ Compiler selection:
 - `scpp update` and `scpp runtime-build` are the commands that refresh the shared reusable runtime cache
 - `build.grouping_compile = true` can opt into grouped generated object edges for manual groups, or for release-mode `folder`/`package`/`module`/`release`/`auto` grouping while keeping debug builds per-source by default
 - `build.grouping_policy = "auto"` records deterministic prior-build evidence and source-level grouped/isolated reasons in `scpp explain-build grouping`
-- `scpp explain-build action-identity` reports generated/native object action keys plus command, input, and output hashes for local build provenance
+- `scpp explain-build action-identity` reports whether full object action identity capture ran; enable it with `build.object_action_identity = true` or `SCPP_OBJECT_ACTION_IDENTITY=full` when you need generated/native action keys plus command, input, and output hashes
 - `build.object_cache = true` enables the project-local object action cache prototype; `scpp explain-build object-cache` reports restore/store hits by action key
+- `build.project_unit_scoped_packs = true` or `SCPP_PROJECT_UNIT_SCOPED_PACKS=1` opts into experimental scoped project-unit force-include packs; ordinary builds use broad-equivalent packs while still reporting scoped-candidate evidence
 - `project_module_dependency_policy = "report"|"warn"|"fail"` compares explicit project module dependencies with source dependency evidence
 - `project_module_public_policy = "report"|"warn"|"fail"` validates non-empty module `public_exports` against declaration evidence and direct cross-module dependency targets
 - `scpp explain-build modules` reports project module surface cache status, module analysis summary cache status from `.prism/cache/project_modules/*.stan-summary.json`, dependency validation, and public API validation

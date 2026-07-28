@@ -46,6 +46,7 @@ final class ScppExplainBuildTest
 					'cxx' => null,
 					'mode' => 'debug',
 					'grouping_policy' => 'incremental',
+					'project_unit_scoped_packs' => true,
 				],
 				'project_modules' => [
 					[
@@ -153,17 +154,17 @@ final class ScppExplainBuildTest
 			}
 			$this->assertObjectActionIdentityReportShape($objectActionIdentity, 'warm explanation object action identity report');
 			$this->assertSame($topLevelObjectActionIdentity, $objectActionIdentity, 'top-level and explanation object action identity reports should match');
-			$this->assertSame(4, $objectActionIdentity['total_action_count'] ?? null, 'warm build should record generated and native object actions');
-			$this->assertSame(3, $objectActionIdentity['generated_action_count'] ?? null, 'warm build should record three generated object actions');
-			$this->assertSame(1, $objectActionIdentity['native_action_count'] ?? null, 'warm build should record one native object action');
+			$this->assertSame('off', $objectActionIdentity['capture_mode'] ?? null, 'warm default build should use lightweight object action reporting');
+			$this->assertSame(0, $objectActionIdentity['total_action_count'] ?? null, 'warm default build should not capture full object actions');
+			$this->assertSame(0, $objectActionIdentity['generated_action_count'] ?? null, 'warm default build should not capture generated object actions');
+			$this->assertSame(0, $objectActionIdentity['native_action_count'] ?? null, 'warm default build should not capture native object actions');
 			$objectActionByObject = [];
 			foreach (is_array($objectActionIdentity['actions'] ?? null) ? $objectActionIdentity['actions'] : [] as $action) {
 				if (is_array($action) && is_string($action['object_path'] ?? null)) {
 					$objectActionByObject[(string) $action['object_path']] = $action;
 				}
 			}
-			$this->assertTrue(isset($objectActionByObject['.prism/build/main.o']), 'object action identity report should contain the generated main object');
-			$this->assertTrue(isset($objectActionByObject['.prism/build/native/native_cpp/policy_probe.o']), 'object action identity report should contain the native object');
+			$this->assertSame([], $objectActionByObject, 'lightweight object action report should not contain full action rows');
 			$projectModules = is_array($explanation['project_modules'] ?? null) ? $explanation['project_modules'] : null;
 			if (!is_array($projectModules)) {
 				throw new RuntimeException('build explanation should contain project module details');
@@ -273,9 +274,9 @@ final class ScppExplainBuildTest
 			$this->assertSame(true, $rebuildFanout['ninja_no_work'] ?? null, 'warm build should record Ninja no-work');
 			$this->assertSame(4, $projectUnits['total_units'] ?? null, 'three-source project with one native file should report four compiled units');
 			$this->assertSame(4, $projectUnits['units_with_force_include'] ?? null, 'three-source project with one native file should force-include a project unit header for each compiled unit');
-			$this->assertSame(3, $projectUnits['distinct_headers'] ?? null, 'three-source project should use scoped packs for safe declaration-only units and broad fallback for main/native');
-			$this->assertSame(2, $projectUnits['active_scoped_units'] ?? null, 'three-file project should count two active scoped units');
-			$this->assertSame(1, $projectUnits['active_broad_fallback_units'] ?? null, 'three-file project should count one active broad fallback unit');
+			$this->assertSame(4, $projectUnits['distinct_headers'] ?? null, 'three-source project should use scoped packs for generated units and broad fallback for native');
+			$this->assertSame(3, $projectUnits['active_scoped_units'] ?? null, 'three-file project should count three active scoped generated units');
+			$this->assertSame(0, $projectUnits['active_broad_fallback_units'] ?? null, 'three-file project should not keep generated units on broad fallback');
 			$this->assertSame(2, $projectUnits['candidate_scoped_units'] ?? null, 'three-file project should count two scoped candidates');
 			$this->assertSame(1, $projectUnits['candidate_blocked_units'] ?? null, 'three-file project should count one blocked scoped candidate');
 			$this->assertSame(1, $projectUnits['native_units'] ?? null, 'project unit report should count native C++ units');
@@ -321,8 +322,8 @@ final class ScppExplainBuildTest
 			if (!is_array($mainDependencySummary)) {
 				throw new RuntimeException('project unit report should contain a main.phs dependency summary');
 			}
-			$this->assertSame('fallback_broad', $mainDependencySummary['status'] ?? null, 'executable source should keep the active broad fallback status during C1');
-			$this->assertSame('blocked_broad_fallback', $mainDependencySummary['candidate_status'] ?? null, 'executable source should stay blocked for scoped-pack activation during C1');
+			$this->assertSame('scoped', $mainDependencySummary['status'] ?? null, 'executable source should use a scoped pack when dependency evidence exists');
+			$this->assertSame('blocked_broad_fallback', $mainDependencySummary['candidate_status'] ?? null, 'executable source should still report blocked scoped-candidate confidence');
 			$this->assertContains('executable body present', implode("\n", is_array($mainDependencySummary['candidate_blocking_reasons'] ?? null) ? $mainDependencySummary['candidate_blocking_reasons'] : []), 'executable source should explain the scoped candidate blocker');
 
 			$sources = is_array($explanation['sources'] ?? null) ? $explanation['sources'] : [];
@@ -338,16 +339,12 @@ final class ScppExplainBuildTest
 			}
 			$this->assertSame('main.phs', $mainSource['path'] ?? null, 'source explanation should preserve relative path');
 			$this->assertSame('reused', $mainSource['action'] ?? null, 'warm build should reuse unchanged source');
-			$this->assertSame('fallback_broad', $mainSource['project_unit_status'] ?? null, 'source explanation should annotate main broad fallback status');
-			$this->assertSame('broad_equivalent_pack', $mainSource['project_unit_force_include_mode'] ?? null, 'source explanation should annotate main broad pack mode');
+			$this->assertSame('scoped', $mainSource['project_unit_status'] ?? null, 'source explanation should annotate main scoped status');
+			$this->assertSame('scoped', $mainSource['project_unit_force_include_mode'] ?? null, 'source explanation should annotate main scoped pack mode');
 			$this->assertTrue(str_starts_with((string) ($mainSource['project_unit_force_include_header'] ?? ''), '.prism/generated/__project_units/'), 'source explanation should annotate main force-include header');
 			$this->assertSame('app', $mainSource['project_module'] ?? null, 'source explanation should annotate main project module membership');
-			$mainObjectAction = $objectActionByObject['.prism/build/main.o'] ?? null;
-			if (!is_array($mainObjectAction)) {
-				throw new RuntimeException('object action identity report should contain the generated main object row');
-			}
-			$this->assertSame($mainObjectAction['action_key'] ?? null, $mainSource['object_action_key'] ?? null, 'source explanation should annotate main object action key');
-			$this->assertSame('generated', $mainSource['object_action_kind'] ?? null, 'source explanation should annotate main object action kind');
+			$this->assertTrue(!array_key_exists('object_action_key', $mainSource), 'lightweight source explanation should not annotate object action key');
+			$this->assertTrue(!array_key_exists('object_action_kind', $mainSource), 'lightweight source explanation should not annotate object action kind');
 			$mainArtifacts = is_array($mainSource['generated_artifacts'] ?? null) ? $mainSource['generated_artifacts'] : [];
 			$this->assertSame('preserved', $mainArtifacts['header_write_status'] ?? null, 'warm reused main source should report preserved generated header');
 			$this->assertSame('preserved', $mainArtifacts['source_write_status'] ?? null, 'warm reused main source should report preserved generated source');
@@ -370,7 +367,7 @@ final class ScppExplainBuildTest
 			$this->assertContains('Generated artifact writes: artifacts 6 total, 0 written, 6 preserved, 0 first-recorded, 0 changed', $explain['stdout'], 'explain-build should summarize generated artifact writes');
 			$this->assertContains('Generated headers: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 interface-changed', $explain['stdout'], 'explain-build should summarize generated header write counters');
 			$this->assertContains('Generated sources: 3 total, 0 written, 3 preserved, 0 first-recorded, 0 implementation-changed', $explain['stdout'], 'explain-build should summarize generated source write counters');
-			$this->assertContains('Object action identities: 4 action(s), generated 3, native 1, skipped dependency objects 0', $explain['stdout'], 'explain-build should summarize object action identity counts');
+			$this->assertContains('Object action identities: not captured (default lightweight build report)', $explain['stdout'], 'explain-build should summarize lightweight object action identity mode');
 			$this->assertContains('Rebuild fanout: outputs 0, objects 0 (generated 0, native 0, runtime 0), project-unit packs changed 0, removed 0, Ninja no-work yes', $explain['stdout'], 'explain-build should summarize warm no-work fanout');
 			$this->assertContains('main.phs -> reused (source metadata and generated artifacts unchanged)', $explain['stdout'], 'explain-build should explain source reuse');
 			$this->assertContains('Direct Ninja target: main', $explain['stdout'], 'explain-build should report the direct Ninja target name');
@@ -398,9 +395,8 @@ final class ScppExplainBuildTest
 
 			$actionIdentityView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'action-identity'], [], 20.0);
 			$this->assertSame(0, $actionIdentityView['exit_code'], 'scpp explain-build action-identity should succeed');
-			$this->assertContains('Object action identity: 4 action(s), generated 3, native 1, skipped dependency objects 0', $actionIdentityView['stdout'], 'action-identity should summarize object action counts');
-			$this->assertContains('.prism/build/main.o: generated, key ', $actionIdentityView['stdout'], 'action-identity should list the generated main object key');
-			$this->assertContains('.prism/build/native/native_cpp/policy_probe.o: native, key ', $actionIdentityView['stdout'], 'action-identity should list the native object key');
+			$this->assertContains('Object action identity: not captured (default lightweight build report)', $actionIdentityView['stdout'], 'action-identity should explain lightweight default capture');
+			$this->assertContains('Enable full capture with build.object_action_identity = true', $actionIdentityView['stdout'], 'action-identity should explain how to opt in');
 
 			$groupingView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'grouping'], [], 20.0);
 			$this->assertSame(0, $groupingView['exit_code'], 'scpp explain-build grouping should succeed');
@@ -412,8 +408,8 @@ final class ScppExplainBuildTest
 
 			$projectUnitsView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'project-units'], [], 20.0);
 			$this->assertSame(0, $projectUnitsView['exit_code'], 'scpp explain-build project-units should succeed');
-			$this->assertContains('Project unit force-includes: 4/4 unit(s), 3 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
-			$this->assertContains('Project unit scoped fanout: active scoped 2, active broad fallback 1, candidates scoped 2, candidates blocked 1', $projectUnitsView['stdout'], 'project-units should summarize scoped activation fanout');
+				$this->assertContains('Project unit force-includes: 4/4 unit(s), 4 distinct header(s)', $projectUnitsView['stdout'], 'project-units should summarize force-include fanout');
+				$this->assertContains('Project unit scoped fanout: active scoped 3, active broad fallback 0, candidates scoped 2, candidates blocked 1', $projectUnitsView['stdout'], 'project-units should summarize scoped activation fanout');
 			$this->assertContains('Project unit native policy: 1/1 native unit(s) broad fallback (native C++ project-unit dependencies are not modeled; native units use broad-equivalent packs)', $projectUnitsView['stdout'], 'project-units should summarize native broad fallback policy');
 			$this->assertContains('Project unit candidate blockers: executable body present (1 unit(s))', $projectUnitsView['stdout'], 'project-units should summarize candidate blocker counts');
 			$this->assertContains('Project unit pack changes: changed 0, removed 0', $projectUnitsView['stdout'], 'project-units should summarize project-unit pack changes');
@@ -423,7 +419,7 @@ final class ScppExplainBuildTest
 			$this->assertContains('broad_equivalent_pack', $projectUnitsView['stdout'], 'project-units should classify fallback broad pack headers');
 			$this->assertContains('Dependency summaries: 3 unit(s)', $projectUnitsView['stdout'], 'project-units should summarize dependency row count');
 			$this->assertContains('child.phs: scoped, candidate candidate_scoped, direct deps 1, direct headers 1, categories inheritance', $projectUnitsView['stdout'], 'project-units should show a compact child dependency summary');
-			$this->assertContains('main.phs: fallback_broad, candidate blocked_broad_fallback', $projectUnitsView['stdout'], 'project-units should show a compact main broad-fallback summary');
+				$this->assertContains('main.phs: scoped, candidate blocked_broad_fallback', $projectUnitsView['stdout'], 'project-units should show a compact main scoped summary with blocked confidence evidence');
 			$this->assertContains('blockers executable body present', $projectUnitsView['stdout'], 'project-units should show compact blocker evidence');
 			$this->assertNotContains('candidate scoped headers:', $projectUnitsView['stdout'], 'project-units should keep verbose header lists out of the compact overview');
 
@@ -477,7 +473,7 @@ final class ScppExplainBuildTest
 			$this->assertSame(0, $generatedFilesView['exit_code'], 'scpp explain-build generated-files should succeed');
 			$this->assertContains('Generated artifact writes: artifacts 6 total, 0 written, 6 preserved, 0 first-recorded, 0 changed', $generatedFilesView['stdout'], 'generated-files should include generated artifact write counters');
 			$this->assertContains('Generated files:', $generatedFilesView['stdout'], 'generated-files should include a header');
-			$this->assertContains('main.phs -> .prism/generated/main.cpp -> .prism/build/main.o (project unit: broad_equivalent_pack .prism/generated/__project_units/', $generatedFilesView['stdout'], 'generated-files should map main source to generated outputs and active broad pack');
+			$this->assertContains('main.phs -> .prism/generated/main.cpp -> .prism/build/main.o (project unit: scoped .prism/generated/__project_units/scoped-', $generatedFilesView['stdout'], 'generated-files should map main source to generated outputs and active scoped pack');
 			$this->assertContains('child.phs -> .prism/generated/child.cpp -> .prism/build/child.o (project unit: scoped .prism/generated/__project_units/scoped-', $generatedFilesView['stdout'], 'generated-files should map child source to generated outputs and active scoped pack');
 
 			$ninjaTargetView = scpp_run_optional_command($project, [PHP_BINARY, $script, 'explain-build', 'ninja-target'], [], 20.0);
@@ -536,9 +532,9 @@ final class ScppExplainBuildTest
 			$this->assertSame($noStanPackChanges['removed_count'] ?? null, $noStanFanout['removed_project_unit_pack_count'] ?? null, 'warm --no-stan rebuild fanout should mirror removed project-unit packs');
 			$this->assertSame($noStanPackChanges['removed_headers'] ?? null, $noStanFanout['removed_project_unit_pack_headers'] ?? null, 'warm --no-stan rebuild fanout should mirror removed project-unit pack headers');
 			$this->assertSame(4, $noStanProjectUnits['total_units'] ?? null, 'warm --no-stan build should still report all generated and native units');
-			$this->assertSame(3, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should use build-owned scoped packs for safe units plus broad fallback for main/native');
-			$this->assertSame(2, $noStanProjectUnits['active_scoped_units'] ?? null, 'warm --no-stan build should count scoped units from build-owned dependency summaries');
-			$this->assertSame(1, $noStanProjectUnits['active_broad_fallback_units'] ?? null, 'warm --no-stan build should keep only executable generated units on broad fallback');
+			$this->assertSame(4, $noStanProjectUnits['distinct_headers'] ?? null, 'warm --no-stan build should use build-owned scoped packs for generated units plus broad fallback for native');
+			$this->assertSame(3, $noStanProjectUnits['active_scoped_units'] ?? null, 'warm --no-stan build should count scoped generated units from build-owned dependency summaries');
+			$this->assertSame(0, $noStanProjectUnits['active_broad_fallback_units'] ?? null, 'warm --no-stan build should not keep generated units on broad fallback');
 			$this->assertSame(1, $noStanProjectUnits['native_broad_fallback_units'] ?? null, 'warm --no-stan build should keep native units on broad fallback');
 			$this->assertSame(2, $noStanProjectUnits['candidate_scoped_units'] ?? null, 'warm --no-stan build should count safe build-owned summaries as scoped candidates');
 			$this->assertSame(1, $noStanProjectUnits['candidate_blocked_units'] ?? null, 'warm --no-stan build should count only blocked generated candidates as blocked');
@@ -954,6 +950,8 @@ final class ScppExplainBuildTest
 		$this->assertKeys([
 			'actions',
 			'algorithm',
+			'capture_mode',
+			'capture_reason',
 			'generated_action_count',
 			'native_action_count',
 			'schema_version',

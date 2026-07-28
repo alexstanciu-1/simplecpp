@@ -67,6 +67,7 @@ using task_error = tasks::error;
 
 ```text
 task_run(items, workers, exec, index = null, result = null, error = null, timeout_ms = 0) -> result
+task_run_publish(items, workers, work, publish, error = null, timeout_ms = 0, max_publish_batch_size = 0) -> int
 task_start(items, workers, exec, index = null, result = null, error = null, timeout_ms = 0) -> task_batch
 task_join(task_batch $batch) -> result
 task_cancel(task_batch $batch): void
@@ -75,7 +76,6 @@ task_status(task_batch $batch): string
 task_progress(task_batch $batch): task_progress_info
 task_set_status(task_context $ctx, string $status): void
 task_set_worker_pool_size(workers): void
-task_run_publish(items, workers, work, publish, error = null, timeout_ms = 0, max_publish_batch_size = 0): int
 task_set_publish_try_lock(enabled): void
 task_publish_lock_wait_us(): int
 task_publish_lock_hold_us(): int
