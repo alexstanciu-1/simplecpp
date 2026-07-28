@@ -25,6 +25,7 @@ final class ScppProjectUnitScopedPacksTest
 		}
 
 		try {
+			$this->assertScopedPackCandidateHashIsOrderStable();
 			$this->assertNestedNamespaceInheritanceScopedPacks();
 			$this->assertDependencyScopedPacksUseExportHeaders();
 			$this->assertCompactLayoutScopedPacksIncludeValueDependencies();
@@ -36,6 +37,45 @@ final class ScppProjectUnitScopedPacksTest
 		} finally {
 			$this->removeTree($this->root);
 		}
+	}
+
+	private function assertScopedPackCandidateHashIsOrderStable(): void
+	{
+		$project = $this->root . '/candidate_hash_order';
+		$generated = $project . '/.prism/generated';
+		$this->write($generated . '/schema/base.hpp', <<<'CPP'
+#pragma once
+namespace scpp {
+class Base {
+};
+}
+CPP);
+		$this->write($generated . '/schema/child.hpp', <<<'CPP'
+#pragma once
+namespace scpp {
+class Child : public Base {
+};
+}
+CPP);
+		$this->write($generated . '/schema/utility.hpp', <<<'CPP'
+#pragma once
+namespace scpp {
+class Utility {
+};
+}
+CPP);
+
+		$base = normalize_path($generated . '/schema/base.hpp');
+		$child = normalize_path($generated . '/schema/child.hpp');
+		$utility = normalize_path($generated . '/schema/utility.hpp');
+		$left = canonicalize_project_unit_candidate_scoped_header_paths([$child, $utility, $base]);
+		$right = canonicalize_project_unit_candidate_scoped_header_paths([$utility, $base, $child]);
+
+		$this->assertSame($left, $right, 'scoped candidate header order should be canonical across discovery orders');
+		$this->assertSame(true, array_search($base, $left, true) < array_search($child, $left, true), 'canonical scoped candidate order should keep base before child');
+		$leftRelative = array_map(static fn (string $path): string => normalize_config_path(relative_path($project, $path)), $left);
+		$rightRelative = array_map(static fn (string $path): string => normalize_config_path(relative_path($project, $path)), $right);
+		$this->assertSame(project_unit_candidate_scoped_pack_hash($leftRelative), project_unit_candidate_scoped_pack_hash($rightRelative), 'scoped candidate pack hash should be stable across equivalent include sets');
 	}
 
 	private function assertNestedNamespaceInheritanceScopedPacks(): void

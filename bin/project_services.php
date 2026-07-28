@@ -10380,21 +10380,36 @@ function build_project_module_source_explanation_map(array $projectModuleReport)
  */
 function build_project_unit_candidate_scoped_header_paths(array $dependencyExportHeaderPaths, ?string $forwardHeader, array $directLocalHeaderPaths, string $ownHeader): array
 {
-	$headers = array_values(array_unique(array_filter(
-		array_map(static fn (string $header): string => normalize_path($header), array_values($dependencyExportHeaderPaths)),
-		static fn (string $header): bool => $header !== ''
-	)));
+	$dependencyHeaders = [];
+	foreach (array_values($dependencyExportHeaderPaths) as $headerPath) {
+		$header = normalize_path((string) $headerPath);
+		if ($header !== '') {
+			$dependencyHeaders[$header] = $header;
+		}
+	}
+	ksort($dependencyHeaders, SORT_STRING);
+	$headers = array_values($dependencyHeaders);
 	if ($forwardHeader !== null && $forwardHeader !== '') {
 		$headers[] = normalize_path($forwardHeader);
 	}
-	$localHeaders = array_values(array_unique(array_filter(
-		array_map(static fn (string $header): string => normalize_path($header), array_merge($directLocalHeaderPaths, [$ownHeader])),
-		static fn (string $header): bool => $header !== ''
-	)));
-	foreach ($localHeaders as $localHeader) {
+	foreach (canonicalize_project_unit_candidate_scoped_header_paths(array_merge($directLocalHeaderPaths, [$ownHeader])) as $localHeader) {
 		$headers[] = $localHeader;
 	}
 	return array_values(array_unique($headers));
+}
+
+/** @param list<string> $candidateHeaderPaths @return list<string> */
+function canonicalize_project_unit_candidate_scoped_header_paths(array $candidateHeaderPaths): array
+{
+	$headers = [];
+	foreach ($candidateHeaderPaths as $headerPath) {
+		$header = normalize_path((string) $headerPath);
+		if ($header !== '') {
+			$headers[$header] = $header;
+		}
+	}
+	ksort($headers, SORT_STRING);
+	return sort_project_unit_include_headers(array_values($headers));
 }
 
 /** @param list<string> $candidateHeaders */
