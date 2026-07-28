@@ -5,6 +5,7 @@
 #include "scpp/string_t.hpp"
 #include "scpp/stable_hash.hpp"
 #include "scpp/support/hash_t.hpp"
+#include "scpp/vector_t.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -220,13 +221,20 @@ inline byte_span source_buffer::span(const std::size_t offset, const std::size_t
 }
 
 [[nodiscard]] inline source_buffer source_buffer_take(string_t &text) {
-	source_buffer buffer(text.native_value());
-	text._unset_();
-	return buffer;
+	return source_buffer(text.release_native());
 }
 
 [[nodiscard]] inline string_t source_buffer_release(source_buffer &buffer) {
 	return buffer.release();
+}
+
+inline void source_text_vector_move_append(
+	vector_t<string_t> &target,
+	vector_t<string_t> &source,
+	const int_t<> &index
+) {
+	auto &text = source.at(index);
+	target.append(string_t(text.release_native()));
 }
 
 [[nodiscard]] inline int_t<std::uint32_t> source_buffer_byte_len(const source_buffer &buffer) {

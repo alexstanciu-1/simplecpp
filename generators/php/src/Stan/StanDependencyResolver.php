@@ -73,6 +73,7 @@ final class StanDependencyResolver
 			'source_buffer_empty',
 			'source_buffer_take',
 			'source_buffer_release',
+			'source_text_vector_move_append',
 			'source_buffer_byte_len',
 			'source_buffer_byte_at',
 			'source_buffer_span',

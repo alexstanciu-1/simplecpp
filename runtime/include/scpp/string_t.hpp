@@ -90,6 +90,12 @@ public:
 		value_ += value.value_;
 	}
 
+	[[nodiscard]] std::string release_native() noexcept {
+		std::string out = std::move(value_);
+		value_.clear();
+		return out;
+	}
+
 	void _unset_() noexcept {
 		value_.clear();
 	}

@@ -282,6 +282,7 @@ final class RuntimeShallowSourceGenerator
 				'source_buffer_empty' => ['return' => 'source_buffer', 'params' => []],
 				'source_buffer_take' => ['return' => 'source_buffer', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'source_buffer_release' => ['return' => 'string', 'params' => [['name' => 'buffer', 'type' => 'source_buffer']]],
+				'source_text_vector_move_append' => ['return' => 'void', 'params' => [['name' => 'target', 'type' => 'vector<string>'], ['name' => 'source', 'type' => 'vector<string>'], ['name' => 'index', 'type' => 'int']]],
 				'source_buffer_byte_len' => ['return' => 'uint32', 'params' => [['name' => 'buffer', 'type' => 'source_buffer']]],
 					'source_buffer_byte_at' => ['return' => 'byte', 'params' => [['name' => 'buffer', 'type' => 'source_buffer'], ['name' => 'offset', 'type' => 'int']]],
 					'source_buffer_span' => ['return' => 'byte_span', 'params' => [['name' => 'buffer', 'type' => 'source_buffer'], ['name' => 'offset', 'type' => 'int'], ['name' => 'length', 'type' => 'int']]],

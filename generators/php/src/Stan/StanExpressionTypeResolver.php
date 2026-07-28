@@ -2515,6 +2515,18 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
+		$catalog['source_text_vector_move_append'] = [
+			'name' => 'source_text_vector_move_append',
+			'namespace' => null,
+			'params' => [
+				['name' => 'target', 'type' => 'vector<string>'],
+				['name' => 'source', 'type' => 'vector<string>'],
+				['name' => 'index', 'type' => 'int'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
 		$catalog['source_buffer_byte_len'] = [
 			'name' => 'source_buffer_byte_len',
 			'namespace' => null,
