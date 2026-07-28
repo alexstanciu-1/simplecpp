@@ -121,7 +121,7 @@ template <typename TResult>
 using result_slot_t = typename result_slot<TResult>::type;
 
 template <typename TCallback, typename TItem>
-decltype(auto) invoke_callback(TCallback &callback, TItem item, const shared_p<context> &worker_context)
+decltype(auto) invoke_callback(TCallback &callback, const TItem &item, const shared_p<context> &worker_context)
 {
 	if constexpr (std::is_invocable_v<TCallback, TItem, shared_p<context>>) {
 		return callback(item, worker_context);
