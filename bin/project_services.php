@@ -15319,7 +15319,15 @@ function collect_project_php_files(string $projectRoot): array
 	$files = [];
 	$byStem = [];
 	$iterator = new RecursiveIteratorIterator(
-		new RecursiveDirectoryIterator($projectRoot, FilesystemIterator::SKIP_DOTS)
+		new RecursiveCallbackFilterIterator(
+			new RecursiveDirectoryIterator($projectRoot, FilesystemIterator::SKIP_DOTS),
+			static function (SplFileInfo $fileInfo) use ($projectRoot): bool {
+				if (!$fileInfo->isDir()) {
+					return true;
+				}
+				return !should_prune_project_source_inventory_directory($projectRoot, $fileInfo->getPathname());
+			}
+		)
 	);
 	foreach ($iterator as $fileInfo) {
 		if (!$fileInfo instanceof SplFileInfo || !$fileInfo->isFile()) {
@@ -15353,6 +15361,19 @@ function collect_project_php_files(string $projectRoot): array
 	}
 	sort($files, SORT_STRING);
 	return $files;
+}
+
+function should_prune_project_source_inventory_directory(string $projectRoot, string $path): bool
+{
+	$relative = normalize_config_path(relative_path($projectRoot, normalize_path($path)));
+	return $relative === '.prism'
+		|| str_starts_with($relative, '.prism/')
+		|| $relative === '.git'
+		|| str_starts_with($relative, '.git/')
+		|| $relative === '.hg'
+		|| str_starts_with($relative, '.hg/')
+		|| $relative === '.svn'
+		|| str_starts_with($relative, '.svn/');
 }
 
 /** @return list<string> */

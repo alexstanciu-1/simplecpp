@@ -339,7 +339,7 @@ If none exists, `prism.json` still gets written with the placeholder entrypoint 
 5. checks for dependency cycles and fails clearly if one is found
 6. checks for Ninja
 7. resolves a compiler from config override or sane defaults
-8. recursively scans the root project tree and all dependency project trees for `*.phs` files and compatible `*.php` files (excluding each project's `.prism/`)
+8. recursively scans the root project tree and all dependency project trees for `*.phs` files and compatible `*.php` files (pruning each project's `.prism/` working tree and VCS metadata directories)
 9. uses the S2S generator on all discovered PHP++ source files
 10. fails if both `<name>.phs` and `<name>.php` exist in the same directory
 11. stores S2S file state in each project's `.prism/cache/s2s_state.php` using PHP `return [...]` data for fast load
