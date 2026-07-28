@@ -10636,11 +10636,15 @@ function project_unit_body_dependency_rows_are_scoped_candidate_safe(array $depe
 /** @param array<string,mixed> $row */
 function project_unit_body_dependency_row_is_scoped_candidate_safe(array $row): bool
 {
+	$target = (string) ($row['target'] ?? '');
 	$resolution = (string) ($row['resolution'] ?? '');
 	if ($resolution === 'resolved') {
 		return true;
 	}
 	if ($resolution === 'unresolved_dependency_key') {
+		if (project_unit_unresolved_body_symbol_is_runtime_shallow($target)) {
+			return true;
+		}
 		$dependencies = normalize_string_list($row['source_dependencies'] ?? []);
 		if ($dependencies === []) {
 			return false;
@@ -10653,15 +10657,49 @@ function project_unit_body_dependency_row_is_scoped_candidate_safe(array $row): 
 		return true;
 	}
 	if ($resolution === 'unresolved_symbol') {
-		return project_unit_unresolved_body_symbol_is_core_runtime((string) ($row['target'] ?? ''));
+		return project_unit_unresolved_body_symbol_is_runtime_shallow($target);
 	}
 	return false;
 }
 
-function project_unit_unresolved_body_symbol_is_core_runtime(string $target): bool
+function project_unit_unresolved_body_symbol_is_runtime_shallow(string $target): bool
 {
 	$target = trim($target, "\\ \t\n\r\0\x0B");
+	if ($target === '') {
+		return false;
+	}
+	$runtimeSymbols = project_unit_runtime_shallow_symbol_names();
+	if (isset($runtimeSymbols[strtolower($target)])) {
+		return true;
+	}
 	return in_array(strtolower($target), ['error', 'error_t', 'php', 'scpp', 'std'], true);
+}
+
+/** @return array<string,true> */
+function project_unit_runtime_shallow_symbol_names(): array
+{
+	static $symbols = null;
+	if (is_array($symbols)) {
+		return $symbols;
+	}
+	$symbols = [];
+	foreach ([
+		resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs',
+		resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_legacy.php',
+	] as $path) {
+		$contents = is_file($path) ? file_get_contents($path) : false;
+		if (!is_string($contents) || $contents === '') {
+			continue;
+		}
+		if (preg_match_all('/^\s*function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/m', $contents, $matches) !== false) {
+			foreach ($matches[1] as $name) {
+				if (is_string($name) && $name !== '') {
+					$symbols[strtolower($name)] = true;
+				}
+			}
+		}
+	}
+	return $symbols;
 }
 
 /** @param array<string,mixed> $function */
@@ -11305,6 +11343,10 @@ function sort_project_unit_include_headers(array $includeHeaders): array
 		$contents = @file_get_contents($headerPath);
 		if (!is_string($contents)) {
 			continue;
+		}
+		$contentsWithoutIncludes = preg_replace('/^\s*#\s*include\b.*$/m', '', $contents);
+		if (is_string($contentsWithoutIncludes)) {
+			$contents = $contentsWithoutIncludes;
 		}
 		foreach ($knownNames as $name => $declaringHeaders) {
 			if (isset($declaringHeaders[$headerPath])) {
