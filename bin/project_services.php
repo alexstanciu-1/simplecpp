@@ -3200,14 +3200,15 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$markTiming('source_scan_complete');
 	$markTiming('project_unit_analysis_start');
 	$markTiming('project_unit_dependency_state_start');
+	$projectUnitDependencyStateSnapshot = null;
 	if (!$useFreshStanState) {
-		write_project_unit_dependency_summary_state($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature);
+		$projectUnitDependencyStateSnapshot = write_project_unit_dependency_summary_state($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature);
 	}
 	$markTiming('project_unit_dependency_state_complete');
 	validate_runtime_module_symbol_usage($projectRoot, $generatedUnits, $runtimeConfig);
 	write_text_file($buildDir . '/runtime_signature.txt', $runtimeBuildSignature . PHP_EOL);
 	$markTiming('project_unit_summary_artifact_load_start');
-	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, $useFreshStanState);
+	$projectUnitDependencySummaryFreshness = collect_project_unit_dependency_summary_freshness($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, $useFreshStanState, $projectUnitDependencyStateSnapshot);
 	$cachedProjectUnitSummaryArtifact = load_fresh_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitDependencySummaryFreshness);
 	$reusableProjectUnitSummaryArtifact = $cachedProjectUnitSummaryArtifact === null
 		? load_reusable_project_unit_dependency_summary_artifact($projectRoot, $projectContexts, $projectUnitDependencySummaryFreshness)
@@ -3218,7 +3219,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if ($cachedProjectUnitDependencySummaries === null && is_array($reusableProjectUnitSummaryArtifact)) {
 		$cachedSummaries = is_array($reusableProjectUnitSummaryArtifact['dependency_summaries'] ?? null) ? $reusableProjectUnitSummaryArtifact['dependency_summaries'] : [];
 		$staleSourceKeys = normalize_string_list($reusableProjectUnitSummaryArtifact['stale_source_keys'] ?? []);
-		$refreshedSummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState, $staleSourceKeys);
+		$refreshedSummaries = collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState, $staleSourceKeys, $projectUnitDependencyStateSnapshot);
 		$cachedProjectUnitDependencySummaries = merge_project_unit_dependency_summaries($cachedSummaries, $refreshedSummaries);
 	}
 	$markTiming('project_unit_summary_artifact_load_complete');
@@ -3232,7 +3233,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	if ((bool) ($projectUnitScopedPacksConfig['enabled'] ?? false)) {
 		$projectUnitDependencySummaries = apply_project_unit_scoped_force_include_candidates($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState, $cachedProjectUnitDependencySummaries);
 	} else {
-		$projectUnitDependencySummaries = $cachedProjectUnitDependencySummaries ?? collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState);
+		$projectUnitDependencySummaries = $cachedProjectUnitDependencySummaries ?? collect_project_unit_dependency_summaries($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState, null, $projectUnitDependencyStateSnapshot);
 		$projectUnitDependencySummaries = apply_project_unit_active_force_include_headers_to_dependency_summaries($projectRoot, $generatedUnits, $projectUnitDependencySummaries);
 	}
 	$markTiming('project_unit_pack_write_complete');
@@ -7749,7 +7750,7 @@ function write_project_unit_pack_manifest(string $projectRoot, string $packDir, 
  * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
  * @return list<array<string,mixed>>
  */
-function collect_project_unit_dependency_summaries(string $projectRoot, array $projectContexts, array $generatedUnits, bool $useStanDependencyState = true, ?array $sourceKeysFilter = null): array
+function collect_project_unit_dependency_summaries(string $projectRoot, array $projectContexts, array $generatedUnits, bool $useStanDependencyState = true, ?array $sourceKeysFilter = null, ?array $dependencyStateSnapshot = null): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$sourceKeyFilterMap = null;
@@ -7770,7 +7771,7 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 		? normalize_path($rootContext['cache_dir'] . '/' . SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE)
 		: '';
 	$stanDependencyState = $useStanDependencyState ? load_project_unit_dependency_state_from_stan_state($stanStatePath) : null;
-	$buildDependencyState = $useStanDependencyState ? null : load_project_unit_dependency_state_from_build_state($buildDependencyStatePath);
+	$buildDependencyState = $useStanDependencyState ? null : (is_array($dependencyStateSnapshot) ? $dependencyStateSnapshot : load_project_unit_dependency_state_from_build_state($buildDependencyStatePath));
 	$hasStanDependencyState = $stanDependencyState !== null;
 	$stanDependencyKeys = is_array($stanDependencyState['dependency_keys'] ?? null) ? $stanDependencyState['dependency_keys'] : [];
 	$stanFileSummaries = is_array($stanDependencyState['file_summaries'] ?? null) ? $stanDependencyState['file_summaries'] : [];
@@ -7794,8 +7795,8 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			'header' => $generatedHeader,
 		];
 	}
-	$stanDependencyCategoriesBySource = collect_project_unit_dependency_category_rows_by_source($normalizedProjectRoot, $stanFileSummaries, $stanDependencyLookup, $sourceKeyToHeader);
-	$buildDependencyCategoriesBySource = collect_project_unit_dependency_category_rows_by_source($normalizedProjectRoot, $buildFileSummaries, $buildDependencyLookup, $sourceKeyToHeader);
+	$stanDependencyCategoriesBySource = collect_project_unit_dependency_category_rows_by_source($normalizedProjectRoot, $stanFileSummaries, $stanDependencyLookup, $sourceKeyToHeader, $sourceKeyFilterMap);
+	$buildDependencyCategoriesBySource = collect_project_unit_dependency_category_rows_by_source($normalizedProjectRoot, $buildFileSummaries, $buildDependencyLookup, $sourceKeyToHeader, $sourceKeyFilterMap);
 	$stanPublicDependencyKeys = build_project_unit_public_dependency_key_map_from_category_rows($stanDependencyCategoriesBySource);
 	$buildPublicDependencyKeys = build_project_unit_public_dependency_key_map_from_category_rows($buildDependencyCategoriesBySource);
 
@@ -8000,11 +8001,14 @@ function build_project_unit_public_dependency_key_map(string $projectRoot, array
  * @param array<string,array{project_root:string,header:string}> $sourceKeyToHeader
  * @return array<string,list<array<string,mixed>>>
  */
-function collect_project_unit_dependency_category_rows_by_source(string $projectRoot, array $fileSummaries, array $resolutionLookup, array $sourceKeyToHeader): array
+function collect_project_unit_dependency_category_rows_by_source(string $projectRoot, array $fileSummaries, array $resolutionLookup, array $sourceKeyToHeader, ?array $sourceKeyFilterMap = null): array
 {
 	$rowsBySource = [];
 	foreach ($fileSummaries as $sourceKey => $sourceSummary) {
 		if (!is_string($sourceKey) || !is_array($sourceSummary)) {
+			continue;
+		}
+		if (is_array($sourceKeyFilterMap) && !isset($sourceKeyFilterMap[$sourceKey])) {
 			continue;
 		}
 		$rowsBySource[$sourceKey] = collect_project_unit_dependency_category_rows($projectRoot, $sourceKey, $sourceSummary, $resolutionLookup, $sourceKeyToHeader);
@@ -8244,19 +8248,21 @@ function load_project_unit_dependency_state_from_state_file(string $statePath): 
 	return [
 		'dependency_keys' => $dependencyKeys,
 		'file_summaries' => $fileSummaries,
+		'resolution_surface_hash' => (string) ($state['resolution_surface_hash'] ?? ''),
 	];
 }
 
 /**
  * @param array<string,array<string,mixed>> $projectContexts
  * @param array<string,string> $sourceOverrides
+ * @return array<string,mixed>|null
  */
-function write_project_unit_dependency_summary_state(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature): string
+function write_project_unit_dependency_summary_state(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature): ?array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
 	if (!is_array($rootContext) || !is_string($rootContext['cache_dir'] ?? null)) {
-		return 'unavailable';
+		return null;
 	}
 	$statePath = normalize_path($rootContext['cache_dir'] . '/' . SCPP_PROJECT_UNIT_DEPENDENCY_STATE_FILE);
 	$cacheDir = normalize_path($rootContext['cache_dir'] . '/project_units/files');
@@ -8267,7 +8273,10 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 	$previousState = $stateStore->load($statePath);
 	$sourceFingerprint = project_unit_dependency_state_source_fingerprint($sourceUnits);
 	if (project_unit_dependency_state_is_fresh($previousState, $summarySignature, $sourceFingerprint, count($sourceUnits))) {
-		return 'hit';
+		return [
+			'status' => 'hit',
+			'resolution_surface_hash' => (string) ($previousState['resolution_surface_hash'] ?? ''),
+		];
 	}
 	$filePassResult = (new StanFilePass())->analyze(
 		$normalizedProjectRoot,
@@ -8280,6 +8289,7 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 	$fileSummaries = is_array($filePassResult['file_summaries'] ?? null) ? $filePassResult['file_summaries'] : [];
 	$symbolIndex = (new StanSymbolIndexBuilder())->build($fileSummaries);
 	$dependencyKeys = (new StanDependencyResolver())->collectFileDependencyKeys($fileSummaries, $symbolIndex, $normalizedProjectRoot);
+	$resolutionSurfaceHash = project_unit_dependency_resolution_surface_hash_from_symbol_index($normalizedProjectRoot, $symbolIndex);
 	$filesState = is_array($filePassResult['files_state'] ?? null) ? $filePassResult['files_state'] : [];
 	foreach ($filesState as $sourceKey => $fileState) {
 		if (!is_array($fileState)) {
@@ -8296,10 +8306,16 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 		'source_count' => count($sourceUnits),
 		'analyzed_count' => max(0, (int) ($filePassResult['analyzed_count'] ?? 0)),
 		'reused_count' => max(0, (int) ($filePassResult['reused_count'] ?? 0)),
+		'resolution_surface_hash' => $resolutionSurfaceHash,
 		'updated_at' => time(),
 		'files' => $filesState,
 	]);
-	return 'updated';
+	return [
+		'status' => 'updated',
+		'dependency_keys' => $dependencyKeys,
+		'file_summaries' => $fileSummaries,
+		'resolution_surface_hash' => $resolutionSurfaceHash,
+	];
 }
 
 /**
@@ -8350,7 +8366,7 @@ function project_unit_dependency_state_is_fresh(array $state, string $summarySig
  * @param array<string,string> $sourceOverrides
  * @return array<string,mixed>
  */
-function collect_project_unit_dependency_summary_freshness(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature, bool $usedStanDependencyState): array
+function collect_project_unit_dependency_summary_freshness(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature, bool $usedStanDependencyState, ?array $dependencyStateSnapshot = null): array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$sourceInputs = [];
@@ -8409,14 +8425,23 @@ function collect_project_unit_dependency_summary_freshness(string $projectRoot, 
 		'source_count' => count($sourceInputs),
 		'used_stan_dependency_state' => $usedStanDependencyState,
 		'source_overrides_active' => $sourceOverridesActive,
-		'resolution_surface_hash' => project_unit_dependency_resolution_surface_hash($normalizedProjectRoot, $projectContexts, $usedStanDependencyState),
+		'resolution_surface_hash' => project_unit_dependency_resolution_surface_hash($normalizedProjectRoot, $projectContexts, $usedStanDependencyState, $dependencyStateSnapshot),
 		'source_inputs' => $sourceInputs,
 	];
 }
 
-function project_unit_dependency_resolution_surface_hash(string $projectRoot, array $projectContexts, bool $usedStanDependencyState): string
+function project_unit_dependency_resolution_surface_hash(string $projectRoot, array $projectContexts, bool $usedStanDependencyState, ?array $dependencyStateSnapshot = null): string
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
+	if (is_array($dependencyStateSnapshot)) {
+		$storedHash = trim((string) ($dependencyStateSnapshot['resolution_surface_hash'] ?? ''));
+		if ($storedHash !== '') {
+			return $storedHash;
+		}
+		if (is_array($dependencyStateSnapshot['file_summaries'] ?? null)) {
+			return project_unit_dependency_resolution_surface_hash_from_file_summaries($normalizedProjectRoot, $dependencyStateSnapshot['file_summaries']);
+		}
+	}
 	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
 	if (!is_array($rootContext) || !is_string($rootContext['cache_dir'] ?? null)) {
 		return '';
@@ -8429,8 +8454,21 @@ function project_unit_dependency_resolution_surface_hash(string $projectRoot, ar
 	if ($fileSummaries === []) {
 		return '';
 	}
+	return project_unit_dependency_resolution_surface_hash_from_file_summaries($normalizedProjectRoot, $fileSummaries);
+}
+
+/** @param array<string,array<string,mixed>> $fileSummaries */
+function project_unit_dependency_resolution_surface_hash_from_file_summaries(string $projectRoot, array $fileSummaries): string
+{
+	return project_unit_dependency_resolution_surface_hash_from_symbol_index($projectRoot, (new StanSymbolIndexBuilder())->build($fileSummaries));
+}
+
+/** @param list<array<string,mixed>> $symbolIndex */
+function project_unit_dependency_resolution_surface_hash_from_symbol_index(string $projectRoot, array $symbolIndex): string
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
 	$rows = [];
-	foreach ((new StanSymbolIndexBuilder())->build($fileSummaries) as $symbol) {
+	foreach ($symbolIndex as $symbol) {
 		if (!is_array($symbol)) {
 			continue;
 		}
