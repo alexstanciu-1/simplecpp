@@ -9488,6 +9488,20 @@ function project_module_dependency_evidence_source(array $projectUnitForceInclud
 function collect_project_module_dependency_validation(string $projectRoot, array $moduleRows, array $projectUnitForceIncludeReport, string $policy): array
 {
 	$moduleRows = normalize_project_module_rows($moduleRows);
+	if ($moduleRows === []) {
+		return normalize_project_module_dependency_validation([
+			'policy' => $policy,
+			'status' => 'ok',
+			'evidence_source' => 'none',
+			'inferred_dependency_count' => 0,
+			'undeclared_dependency_count' => 0,
+			'unused_declared_dependency_count' => 0,
+			'inferred_dependencies' => [],
+			'undeclared_dependencies' => [],
+			'unused_declared_dependencies' => [],
+			'notes' => ['no project_modules configured; module dependency validation skipped'],
+		]);
+	}
 	$moduleNames = [];
 	$declaredByModule = [];
 	$sourceToModule = [];
@@ -9689,6 +9703,20 @@ function collect_project_module_inferred_dependencies_for_module(string $moduleN
 function collect_project_module_public_api_validation(string $projectRoot, array $projectContexts, array $moduleRows, array $projectUnitForceIncludeReport, string $policy): array
 {
 	$moduleRows = normalize_project_module_rows($moduleRows);
+	if ($moduleRows === []) {
+		return normalize_project_module_public_api_validation([
+			'policy' => $policy,
+			'status' => 'ok',
+			'evidence_source' => 'none',
+			'resolved_public_export_count' => 0,
+			'unknown_public_export_count' => 0,
+			'private_dependency_count' => 0,
+			'resolved_public_exports' => [],
+			'unknown_public_exports' => [],
+			'private_dependencies' => [],
+			'notes' => ['no project_modules configured; module public API validation skipped'],
+		]);
+	}
 	$dependencySummaries = normalize_project_unit_dependency_summaries(is_array($projectUnitForceIncludeReport['dependency_summaries'] ?? null) ? $projectUnitForceIncludeReport['dependency_summaries'] : []);
 	$evidenceSource = project_module_dependency_evidence_source($projectUnitForceIncludeReport, $dependencySummaries);
 	$fileSummaries = load_project_module_public_api_file_summaries($projectRoot, $projectContexts, $projectUnitForceIncludeReport);
