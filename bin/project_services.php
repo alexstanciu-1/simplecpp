@@ -7484,7 +7484,9 @@ function apply_project_unit_scoped_force_include_candidates(string $projectRoot,
 			continue;
 		}
 		$includeHeaders = sort_project_unit_include_headers($includeHeaders);
-		write_text_file($packHeaderPath, render_project_unit_force_include_header($packHeaderPath, '', $includeHeaders));
+		if (!is_file($packHeaderPath)) {
+			write_text_file($packHeaderPath, render_project_unit_force_include_header($packHeaderPath, '', $includeHeaders));
+		}
 		$scopedPackBySourceKey[$sourceKey] = $packHeaderPath;
 	}
 	if ($scopedPackBySourceKey === []) {
@@ -11593,7 +11595,9 @@ function write_project_unit_force_include_headers(array $projectContexts): array
 		ensure_directory($packDir);
 		$packHash = project_unit_force_include_pack_hash($projectContext['generated_dir'], $forwardHeader, $includeHeaders);
 		$packHeaderPath = normalize_path($packDir . '/' . $packHash . '.hpp');
-		write_text_file($packHeaderPath, render_project_unit_force_include_header($packHeaderPath, $forwardHeader, $includeHeaders));
+		if (!is_file($packHeaderPath)) {
+			write_text_file($packHeaderPath, render_project_unit_force_include_header($packHeaderPath, $forwardHeader, $includeHeaders));
+		}
 		write_text_file(normalize_path($packDir . '/broad.hpp'), render_project_unit_force_include_header(normalize_path($packDir . '/broad.hpp'), $forwardHeader, $includeHeaders));
 		$headers[normalize_path($projectRoot)] = $packHeaderPath;
 	}
