@@ -5,6 +5,7 @@ use Scpp\S2S\Stan\StanRunner;
 use Scpp\S2S\Stan\StanDependencyResolver;
 use Scpp\S2S\Stan\StanFilePass;
 use Scpp\S2S\Stan\StanSourceCatalogBuilder;
+use Scpp\S2S\Stan\StanSourceUnit;
 use Scpp\S2S\Stan\StanStateStore;
 use Scpp\S2S\Stan\StanSymbolIndexBuilder;
 use Scpp\S2S\Transpiler;
@@ -3202,7 +3203,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$markTiming('project_unit_dependency_state_start');
 	$projectUnitDependencyStateSnapshot = null;
 	if (!$useFreshStanState) {
-		$projectUnitDependencyStateSnapshot = write_project_unit_dependency_summary_state($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature);
+		$projectUnitDependencyStateSnapshot = write_project_unit_dependency_summary_state($projectRoot, $projectContexts, $sourceOverrides, $projectUnitDependencySignature, is_array($buildPlannerStats['source_metadata_rows'] ?? null) ? $buildPlannerStats['source_metadata_rows'] : []);
 	}
 	$markTiming('project_unit_dependency_state_complete');
 	validate_runtime_module_symbol_usage($projectRoot, $generatedUnits, $runtimeConfig);
@@ -3225,11 +3226,17 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$markTiming('project_unit_summary_artifact_load_complete');
 	$markTiming('project_unit_pack_write_start');
 	$projectUnitPackStateBefore = capture_project_unit_pack_header_state($projectContexts);
-	$projectUnitForceIncludes = write_project_unit_force_include_headers($projectContexts);
-	foreach ($generatedUnits as &$unit) {
-		$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
+	$canSkipBroadProjectUnitPacks = (bool) ($projectUnitScopedPacksConfig['enabled'] ?? false)
+		&& $cachedProjectUnitDependencySummaries !== null
+		&& $nativeCppUnits === []
+		&& project_unit_scoped_summaries_cover_generated_units($projectRoot, $generatedUnits, $cachedProjectUnitDependencySummaries);
+	$projectUnitForceIncludes = $canSkipBroadProjectUnitPacks ? [] : write_project_unit_force_include_headers($projectContexts);
+	if (!$canSkipBroadProjectUnitPacks) {
+		foreach ($generatedUnits as &$unit) {
+			$unit['force_include_header'] = $projectUnitForceIncludes[normalize_path($unit['project_root'])] ?? null;
+		}
+		unset($unit);
 	}
-	unset($unit);
 	if ((bool) ($projectUnitScopedPacksConfig['enabled'] ?? false)) {
 		$projectUnitDependencySummaries = apply_project_unit_scoped_force_include_candidates($projectRoot, $projectContexts, $generatedUnits, $useFreshStanState, $cachedProjectUnitDependencySummaries);
 	} else {
@@ -7472,19 +7479,18 @@ function apply_project_unit_scoped_force_include_candidates(string $projectRoot,
 			continue;
 		}
 		$packHeaderPath = normalize_path($normalizedProjectRoot . '/' . $candidatePackHeader);
-		$includeHeaders = [];
-		foreach ($candidateHeaders as $candidateHeader) {
-			$header = normalize_path($normalizedProjectRoot . '/' . trim((string) $candidateHeader));
-			if ($header !== '') {
-				$includeHeaders[] = $header;
-			}
-		}
-		$includeHeaders = array_values(array_unique($includeHeaders));
-		if ($includeHeaders === []) {
-			continue;
-		}
-		$includeHeaders = sort_project_unit_include_headers($includeHeaders);
 		if (!is_file($packHeaderPath)) {
+			$includeHeaders = [];
+			foreach ($candidateHeaders as $candidateHeader) {
+				$header = normalize_path($normalizedProjectRoot . '/' . trim((string) $candidateHeader));
+				if ($header !== '') {
+					$includeHeaders[] = $header;
+				}
+			}
+			$includeHeaders = array_values(array_unique($includeHeaders));
+			if ($includeHeaders === []) {
+				continue;
+			}
 			write_text_file($packHeaderPath, render_project_unit_force_include_header($packHeaderPath, '', $includeHeaders));
 		}
 		$scopedPackBySourceKey[$sourceKey] = $packHeaderPath;
@@ -7569,6 +7575,42 @@ function project_unit_scoped_pack_is_activation_eligible(array $summary): bool
 
 	foreach (normalize_string_list($summary['candidate_blocking_reasons'] ?? []) as $reason) {
 		if (project_unit_scoped_pack_blocker_is_hard($reason)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
+ * @param list<array{project_root:string,relative_php:string,generated_header?:string,generated_cpp:string,object_path:string,is_entrypoint:bool,force_include_header:?string}> $generatedUnits
+ * @param list<array<string,mixed>> $summaries
+ */
+function project_unit_scoped_summaries_cover_generated_units(string $projectRoot, array $generatedUnits, array $summaries): bool
+{
+	$normalizedProjectRoot = normalize_path($projectRoot);
+	$eligibleBySourceKey = [];
+	foreach ($summaries as $summary) {
+		if (!is_array($summary) || !project_unit_scoped_pack_is_activation_eligible($summary)) {
+			continue;
+		}
+		$sourceKey = trim((string) ($summary['source_key'] ?? ''));
+		if ($sourceKey !== '') {
+			$eligibleBySourceKey[$sourceKey] = true;
+		}
+	}
+	if ($eligibleBySourceKey === []) {
+		return false;
+	}
+
+	foreach ($generatedUnits as $unit) {
+		$unitProjectRoot = normalize_path((string) ($unit['project_root'] ?? ''));
+		$relativePhp = normalize_config_path((string) ($unit['relative_php'] ?? ''));
+		if ($unitProjectRoot === '' || $relativePhp === '') {
+			return false;
+		}
+		$sourcePath = normalize_path($unitProjectRoot . '/' . $relativePhp);
+		$sourceKey = project_unit_stan_source_key($normalizedProjectRoot, $sourcePath);
+		if (!isset($eligibleBySourceKey[$sourceKey])) {
 			return false;
 		}
 	}
@@ -7797,6 +7839,22 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			'header' => $generatedHeader,
 		];
 	}
+	$localGeneratedHeaderPathsByProjectRoot = [];
+	foreach ($sourceKeyToHeader as $sourceHeader) {
+		$sourceProjectRoot = normalize_path((string) ($sourceHeader['project_root'] ?? ''));
+		$sourceHeaderPath = normalize_path((string) ($sourceHeader['header'] ?? ''));
+		if ($sourceProjectRoot === '' || $sourceHeaderPath === '') {
+			continue;
+		}
+		if (!isset($localGeneratedHeaderPathsByProjectRoot[$sourceProjectRoot])) {
+			$localGeneratedHeaderPathsByProjectRoot[$sourceProjectRoot] = [];
+		}
+		$localGeneratedHeaderPathsByProjectRoot[$sourceProjectRoot][$sourceHeaderPath] = $sourceHeaderPath;
+	}
+	$localScopedHeaderClosureContextByProjectRoot = [];
+	foreach ($localGeneratedHeaderPathsByProjectRoot as $sourceProjectRoot => $sourceHeaderPaths) {
+		$localScopedHeaderClosureContextByProjectRoot[$sourceProjectRoot] = build_project_unit_scoped_header_closure_context(array_values($sourceHeaderPaths));
+	}
 	$stanDependencyCategoriesBySource = collect_project_unit_dependency_category_rows_by_source($normalizedProjectRoot, $stanFileSummaries, $stanDependencyLookup, $sourceKeyToHeader, $sourceKeyFilterMap);
 	$buildDependencyCategoriesBySource = collect_project_unit_dependency_category_rows_by_source($normalizedProjectRoot, $buildFileSummaries, $buildDependencyLookup, $sourceKeyToHeader, $sourceKeyFilterMap);
 	$stanPublicDependencyKeys = build_project_unit_public_dependency_key_map_from_category_rows($stanDependencyCategoriesBySource);
@@ -7865,6 +7923,12 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 			: normalize_path(dirname((string) ($unit['generated_header'] ?? '')));
 		$forwardHeader = normalize_path($unitGeneratedDir . '/__project_fwd.hpp');
 		$ownHeader = normalize_path((string) ($unit['generated_header'] ?? ''));
+		$scopedLocalHeaderPaths = expand_project_unit_scoped_local_header_closure(
+			array_merge(array_values($scopedLocalHeaderPaths), [$ownHeader]),
+			is_array($localScopedHeaderClosureContextByProjectRoot[$unitProjectRoot] ?? null)
+				? $localScopedHeaderClosureContextByProjectRoot[$unitProjectRoot]
+				: []
+		);
 		$candidateHeaderPaths = build_project_unit_candidate_scoped_header_paths(
 			$dependencyExportHeaderPaths,
 			is_file($forwardHeader) ? $forwardHeader : null,
@@ -7938,6 +8002,104 @@ function collect_project_unit_dependency_summaries(string $projectRoot, array $p
 
 	usort($summaries, static fn (array $left, array $right): int => strcmp((string) ($left['source_key'] ?? ''), (string) ($right['source_key'] ?? '')));
 	return $summaries;
+}
+
+/**
+ * @param list<string> $sameProjectHeaderPaths
+ * @return array{headers:array<string,string>,dependencies:array<string,array<string,string>>}
+ */
+function build_project_unit_scoped_header_closure_context(array $sameProjectHeaderPaths): array
+{
+	$knownNames = [];
+	$universe = [];
+	foreach ($sameProjectHeaderPaths as $headerPath) {
+		$header = normalize_path((string) $headerPath);
+		if ($header === '' || !is_file($header)) {
+			continue;
+		}
+		$universe[$header] = $header;
+		foreach (read_project_header_class_metadata($header)['classes'] as $class) {
+			$name = trim((string) ($class['name'] ?? ''));
+			if ($name !== '') {
+				$knownNames[$name][$header] = $header;
+			}
+		}
+	}
+	ksort($universe, SORT_STRING);
+	ksort($knownNames, SORT_STRING);
+	foreach ($knownNames as &$headers) {
+		ksort($headers, SORT_STRING);
+	}
+	unset($headers);
+
+	$dependencies = [];
+	foreach ($universe as $header) {
+		$dependencies[$header] = [];
+		$contents = @file_get_contents($header);
+		if (!is_string($contents)) {
+			continue;
+		}
+		$contentsWithoutIncludes = preg_replace('/^\s*#\s*include\b.*$/m', '', $contents);
+		if (is_string($contentsWithoutIncludes)) {
+			$contents = $contentsWithoutIncludes;
+		}
+		foreach ($knownNames as $name => $declaringHeaders) {
+			if (isset($declaringHeaders[$header])) {
+				continue;
+			}
+			if (preg_match('/\b' . preg_quote((string) $name, '/') . '\b/', $contents) !== 1) {
+				continue;
+			}
+			foreach ($declaringHeaders as $dependencyHeader) {
+				if ($dependencyHeader !== $header) {
+					$dependencies[$header][$dependencyHeader] = $dependencyHeader;
+				}
+			}
+		}
+		ksort($dependencies[$header], SORT_STRING);
+	}
+
+	return [
+		'headers' => $universe,
+		'dependencies' => $dependencies,
+	];
+}
+
+/**
+ * @param list<string> $seedHeaderPaths
+ * @param array{headers?:array<string,string>,dependencies?:array<string,array<string,string>>} $closureContext
+ * @return list<string>
+ */
+function expand_project_unit_scoped_local_header_closure(array $seedHeaderPaths, array $closureContext): array
+{
+	$universe = is_array($closureContext['headers'] ?? null) ? $closureContext['headers'] : [];
+	$dependencies = is_array($closureContext['dependencies'] ?? null) ? $closureContext['dependencies'] : [];
+	$included = [];
+	$queue = [];
+	foreach ($seedHeaderPaths as $headerPath) {
+		$header = normalize_path((string) $headerPath);
+		if ($header === '' || !isset($universe[$header])) {
+			continue;
+		}
+		$queue[] = $header;
+	}
+	sort($queue, SORT_STRING);
+
+	for ($index = 0; $index < count($queue); $index++) {
+		$header = $queue[$index];
+		if (isset($included[$header])) {
+			continue;
+		}
+		$included[$header] = $header;
+		foreach (is_array($dependencies[$header] ?? null) ? $dependencies[$header] : [] as $dependencyHeader) {
+			$dependencyHeader = normalize_path((string) $dependencyHeader);
+			if ($dependencyHeader !== '' && !isset($included[$dependencyHeader])) {
+				$queue[] = $dependencyHeader;
+			}
+		}
+	}
+
+	return sort_project_unit_include_headers(array_values($included));
 }
 
 /**
@@ -8257,9 +8419,10 @@ function load_project_unit_dependency_state_from_state_file(string $statePath): 
 /**
  * @param array<string,array<string,mixed>> $projectContexts
  * @param array<string,string> $sourceOverrides
+ * @param list<array<string,mixed>> $sourceMetadataRows
  * @return array<string,mixed>|null
  */
-function write_project_unit_dependency_summary_state(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature): ?array
+function write_project_unit_dependency_summary_state(string $projectRoot, array $projectContexts, array $sourceOverrides, string $summarySignature, array $sourceMetadataRows = []): ?array
 {
 	$normalizedProjectRoot = normalize_path($projectRoot);
 	$rootContext = $projectContexts[$normalizedProjectRoot] ?? null;
@@ -8270,7 +8433,12 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 	$cacheDir = normalize_path($rootContext['cache_dir'] . '/project_units/files');
 	ensure_directory($cacheDir);
 
-	$sourceUnits = (new StanSourceCatalogBuilder())->build($normalizedProjectRoot, $projectContexts, [], $sourceOverrides);
+	$sourceUnits = $sourceOverrides === []
+		? build_project_unit_stan_source_units_from_metadata_rows($normalizedProjectRoot, $projectContexts, $sourceMetadataRows)
+		: [];
+	if ($sourceUnits === []) {
+		$sourceUnits = (new StanSourceCatalogBuilder())->build($normalizedProjectRoot, $projectContexts, [], $sourceOverrides);
+	}
 	$stateStore = new StanStateStore();
 	$previousState = $stateStore->load($statePath);
 	$sourceFingerprint = project_unit_dependency_state_source_fingerprint($sourceUnits);
@@ -8354,6 +8522,64 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 		'file_summaries' => $fileSummaries,
 		'resolution_surface_hash' => $resolutionSurfaceHash,
 	];
+}
+
+/**
+ * @param array<string,array<string,mixed>> $projectContexts
+ * @param list<array<string,mixed>> $sourceMetadataRows
+ * @return list<StanSourceUnit>
+ */
+function build_project_unit_stan_source_units_from_metadata_rows(string $projectRoot, array $projectContexts, array $sourceMetadataRows): array
+{
+	$expectedPaths = [];
+	foreach ($projectContexts as $contextProjectRoot => $projectContext) {
+		$contextProjectRoot = normalize_path((string) $contextProjectRoot);
+		$sourceFiles = is_array($projectContext['php_files'] ?? null)
+			? $projectContext['php_files']
+			: collect_project_stan_source_files($contextProjectRoot);
+		foreach ($sourceFiles as $sourcePath) {
+			if (!is_string($sourcePath) || !is_stan_source_extension(pathinfo($sourcePath, PATHINFO_EXTENSION))) {
+				continue;
+			}
+			$path = normalize_path($sourcePath);
+			if ($path !== '') {
+				$expectedPaths[$path] = true;
+			}
+		}
+	}
+	if ($expectedPaths === []) {
+		return [];
+	}
+
+	$rowsByPath = [];
+	foreach (normalize_build_planner_source_metadata_rows($sourceMetadataRows) as $row) {
+		$sourcePath = normalize_path((string) ($row['project_root'] ?? '') . '/' . normalize_config_path((string) ($row['source'] ?? '')));
+		$contentHash = trim((string) ($row['content_hash'] ?? ''));
+		if ($sourcePath === '' || !isset($expectedPaths[$sourcePath]) || preg_match('/^[0-9a-f]{64}$/', $contentHash) !== 1) {
+			continue;
+		}
+		$rowsByPath[$sourcePath] = $row;
+	}
+	if (count($rowsByPath) !== count($expectedPaths)) {
+		return [];
+	}
+
+	$sourceUnits = [];
+	ksort($rowsByPath, SORT_STRING);
+	foreach ($rowsByPath as $sourcePath => $row) {
+		$sourceUnits[] = new StanSourceUnit(
+			path: $sourcePath,
+			sourceKey: project_unit_stan_source_key($projectRoot, $sourcePath),
+			meta: [
+				'size' => max(0, (int) ($row['size'] ?? 0)),
+				'mtime' => max(0, (int) ($row['mtime'] ?? 0)),
+				'content_hash' => trim((string) ($row['content_hash'] ?? '')),
+			],
+			isRuntimeShallow: false,
+			contents: null,
+		);
+	}
+	return $sourceUnits;
 }
 
 /**
