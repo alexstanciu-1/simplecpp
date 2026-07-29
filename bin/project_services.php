@@ -8288,9 +8288,45 @@ function write_project_unit_dependency_summary_state(string $projectRoot, array 
 	);
 	$fileSummaries = is_array($filePassResult['file_summaries'] ?? null) ? $filePassResult['file_summaries'] : [];
 	$symbolIndex = (new StanSymbolIndexBuilder())->build($fileSummaries);
-	$dependencyKeys = (new StanDependencyResolver())->collectFileDependencyKeys($fileSummaries, $symbolIndex, $normalizedProjectRoot);
 	$resolutionSurfaceHash = project_unit_dependency_resolution_surface_hash_from_symbol_index($normalizedProjectRoot, $symbolIndex);
 	$filesState = is_array($filePassResult['files_state'] ?? null) ? $filePassResult['files_state'] : [];
+	$previousResolutionSurfaceHash = trim((string) ($previousState['resolution_surface_hash'] ?? ''));
+	$previousDependencyKeys = project_unit_dependency_keys_from_files_state(is_array($previousState['files'] ?? null) ? $previousState['files'] : []);
+	$changedDependencySourceKeys = project_unit_dependency_state_changed_source_keys($filesState, is_array($previousState['files'] ?? null) ? $previousState['files'] : [], $summarySignature);
+	$canReuseDependencyKeys = $previousResolutionSurfaceHash !== ''
+		&& $previousResolutionSurfaceHash === $resolutionSurfaceHash
+		&& $previousDependencyKeys !== [];
+	$dependencyResolver = new StanDependencyResolver();
+	if ($canReuseDependencyKeys) {
+		$dependencyKeys = $previousDependencyKeys;
+		$changedSummaries = [];
+		foreach ($changedDependencySourceKeys as $sourceKey) {
+			if (is_array($fileSummaries[$sourceKey] ?? null)) {
+				$changedSummaries[$sourceKey] = $fileSummaries[$sourceKey];
+			}
+		}
+		foreach ($filesState as $sourceKey => $_fileState) {
+			if (!is_string($sourceKey)) {
+				continue;
+			}
+			if (!array_key_exists($sourceKey, $dependencyKeys) && is_array($fileSummaries[$sourceKey] ?? null)) {
+				$changedSummaries[$sourceKey] = $fileSummaries[$sourceKey];
+			}
+		}
+		if ($changedSummaries !== []) {
+			foreach ($dependencyResolver->collectFileDependencyKeys($changedSummaries, $symbolIndex, $normalizedProjectRoot) as $sourceKey => $keys) {
+				$dependencyKeys[$sourceKey] = $keys;
+			}
+		}
+		foreach (array_keys($dependencyKeys) as $sourceKey) {
+			if (!isset($filesState[$sourceKey])) {
+				unset($dependencyKeys[$sourceKey]);
+			}
+		}
+		ksort($dependencyKeys, SORT_STRING);
+	} else {
+		$dependencyKeys = $dependencyResolver->collectFileDependencyKeys($fileSummaries, $symbolIndex, $normalizedProjectRoot);
+	}
 	foreach ($filesState as $sourceKey => $fileState) {
 		if (!is_array($fileState)) {
 			continue;
@@ -8359,6 +8395,62 @@ function project_unit_dependency_state_is_fresh(array $state, string $summarySig
 		}
 	}
 	return true;
+}
+
+/**
+ * @param array<string,array<string,mixed>> $filesState
+ * @return array<string,list<string>>
+ */
+function project_unit_dependency_keys_from_files_state(array $filesState): array
+{
+	$dependencyKeys = [];
+	foreach ($filesState as $sourceKey => $fileState) {
+		if (!is_string($sourceKey) || !is_array($fileState)) {
+			continue;
+		}
+		$keys = [];
+		foreach (is_array($fileState['dependency_keys'] ?? null) ? $fileState['dependency_keys'] : [] as $dependencyKey) {
+			$dependencyKey = trim((string) $dependencyKey);
+			if ($dependencyKey !== '') {
+				$keys[$dependencyKey] = true;
+			}
+		}
+		$dependencyKeys[$sourceKey] = array_keys($keys);
+		sort($dependencyKeys[$sourceKey], SORT_STRING);
+	}
+	ksort($dependencyKeys, SORT_STRING);
+	return $dependencyKeys;
+}
+
+/**
+ * @param array<string,array<string,mixed>> $filesState
+ * @param array<string,array<string,mixed>> $previousFilesState
+ * @return list<string>
+ */
+function project_unit_dependency_state_changed_source_keys(array $filesState, array $previousFilesState, string $summarySignature): array
+{
+	$changed = [];
+	foreach ($filesState as $sourceKey => $fileState) {
+		if (!is_string($sourceKey) || !is_array($fileState)) {
+			continue;
+		}
+		$previous = is_array($previousFilesState[$sourceKey] ?? null) ? $previousFilesState[$sourceKey] : null;
+		if ($previous === null) {
+			$changed[] = $sourceKey;
+			continue;
+		}
+		foreach (['size', 'content_hash', 'api_hash', 'body_hash', 'cache_path', 'is_runtime_shallow'] as $key) {
+			if (($previous[$key] ?? null) !== ($fileState[$key] ?? null)) {
+				$changed[] = $sourceKey;
+				continue 2;
+			}
+		}
+		if ((string) ($previous['stan_signature'] ?? '') !== $summarySignature) {
+			$changed[] = $sourceKey;
+		}
+	}
+	sort($changed, SORT_STRING);
+	return array_values(array_unique($changed));
 }
 
 /**
