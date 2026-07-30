@@ -400,8 +400,8 @@ token_buffer scan_ascii_language(const string_t &source_value, const char *langu
 			while (offset < source.size()) {
 				const auto current = static_cast<unsigned char>(source[offset]);
 				if (current == static_cast<unsigned char>('\n')) {
-					out.add_diagnostic("unterminated_string", start, start_line, start_column);
-					break;
+					advance_newline();
+					continue;
 				}
 				if (current == static_cast<unsigned char>('\\')) {
 					advance_one();
