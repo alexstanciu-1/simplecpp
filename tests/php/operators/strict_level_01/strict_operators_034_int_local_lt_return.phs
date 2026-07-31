@@ -1,0 +1,4 @@
+function run(): bool {
+	$value int = 2;
+	return $value < 3;
+}
