@@ -594,7 +594,10 @@ TXT;
 			$results['last_run']['stages']['generate']['comparison_notes'] = $generateComparison['notes'];
 
 			if ($generatorResult['success'] === true) {
-				$compileRun = $this->runPhpProjectCompileStage($runTestsProject);
+				$compileUnitOnly = (($build['compile_unit_only'] ?? false) === true);
+				$compileRun = $compileUnitOnly
+					? $this->runCompileUnitOnlyStage((string) ($generatorResult['compile_unit_path'] ?? ''), $tempDir)
+					: $this->runPhpProjectCompileStage($runTestsProject);
 				$results['last_run']['stages']['compile'] = [
 					'success' => $compileRun['success'],
 					'exit_code' => $compileRun['exit_code'],
@@ -618,7 +621,7 @@ TXT;
 				$results['last_run']['stages']['compile']['comparison_ok'] = $compileComparison['ok'];
 				$results['last_run']['stages']['compile']['comparison_notes'] = $compileComparison['notes'];
 
-				if ($results['last_run']['stages']['compile']['success'] === true) {
+				if ($results['last_run']['stages']['compile']['success'] === true && !$compileUnitOnly) {
 					$runExpect = is_array($expect['run'] ?? null) ? $expect['run'] : [];
 					$runtimeEnv = [];
 					if (is_string($compileRun['runtime_library_dir'] ?? null) && $compileRun['runtime_library_dir'] !== '') {
@@ -664,6 +667,13 @@ TXT;
 					$runComparison = $this->compareStageRun($runExpect, $results['last_run']['stages']['run'], $compare);
 					$results['last_run']['stages']['run']['comparison_ok'] = $runComparison['ok'];
 					$results['last_run']['stages']['run']['comparison_notes'] = $runComparison['notes'];
+				} else if ($results['last_run']['stages']['compile']['success'] === true) {
+					$results['last_run']['stages']['run'] = [
+						'skipped' => true,
+						'reason' => 'compile_unit_only',
+						'comparison_ok' => (($expect['run']['success'] ?? null) === false),
+						'comparison_notes' => [],
+					];
 				} else {
 					$results['last_run']['stages']['run'] = [
 						'skipped' => true,
@@ -1080,6 +1090,49 @@ TXT;
 		);
 		$result['binary_path'] = $binaryPath;
 		return $result;
+	}
+
+	/** @return array{success:bool,exit_code:int,stdout:string,stderr:string,duration_ms:int,binary_path:string,runtime_library_dir:?string} */
+	private function runCompileUnitOnlyStage(string $compileUnitPath, string $workDir): array
+	{
+		if ($compileUnitPath === '' || !is_file($compileUnitPath)) {
+			return [
+				'success' => false,
+				'exit_code' => 1,
+				'stdout' => '',
+				'stderr' => 'generated compile unit missing',
+				'duration_ms' => 0,
+				'binary_path' => '',
+				'runtime_library_dir' => null,
+			];
+		}
+		$started = microtime(true);
+		$objectPath = $workDir . '/test.o';
+		$result = $this->runCommand(
+			$this->withCompilerLauncher([
+				'g++',
+				'-std=c++23',
+				'-O3',
+				'-DSCPP_LANGUAGE_TARGET_PHP=1',
+				'-c',
+				$compileUnitPath,
+				'-I',
+				$this->projectRoot . '/runtime/include',
+				'-o',
+				$objectPath,
+			]),
+			$workDir,
+			self::COMPILE_TIMEOUT_SECONDS
+		);
+		return [
+			'success' => ((int) $result['exit_code'] === 0 && ($result['timed_out'] ?? false) === false),
+			'exit_code' => (int) $result['exit_code'],
+			'stdout' => (string) $result['stdout'],
+			'stderr' => (string) $result['stderr'],
+			'duration_ms' => (int) round((microtime(true) - $started) * 1000),
+			'binary_path' => $objectPath,
+			'runtime_library_dir' => null,
+		];
 	}
 
 	/** @return array{project_root:string,config_path:string,entry_relative:string,workspace_source:string,run_cwd:string} */
