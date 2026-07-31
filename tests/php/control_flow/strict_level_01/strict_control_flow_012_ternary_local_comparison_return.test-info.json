@@ -1,0 +1,53 @@
+{
+    "id": "strict_control_flow_012_ternary_local_comparison_return",
+    "feature": "control_flow",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "control_flow",
+        "ternary",
+        "comparison"
+    ],
+    "notes": "Representative strict authority for local int comparison feeding int literal ternary return without string output or runtime dependency.",
+    "build": {
+        "compile_unit_only": true,
+        "sanitizers": null
+    }
+}
