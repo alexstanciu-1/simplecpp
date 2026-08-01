@@ -1,0 +1,18 @@
+namespace App;
+
+function helper(): int
+{
+	return 42;
+}
+
+function run(): int
+{
+	return helper();
+}
+
+namespace Other;
+
+function helper(): int
+{
+	return 0;
+}
