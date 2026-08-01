@@ -1,0 +1,6 @@
+function run(): bool {
+	$ok bool = true;
+	$rhs bool = true;
+	$ok = $ok === $rhs;
+	return $ok;
+}
