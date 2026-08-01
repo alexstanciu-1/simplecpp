@@ -1,0 +1,5 @@
+function run(): int32 {
+	$left int32 = 20;
+	$right int32 = 22;
+	return $left + $right;
+}
