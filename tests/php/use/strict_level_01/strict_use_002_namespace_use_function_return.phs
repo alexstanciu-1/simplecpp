@@ -1,0 +1,15 @@
+namespace A;
+
+function value(): int
+{
+	return 42;
+}
+
+namespace B;
+
+use function A\value;
+
+function run(): int
+{
+	return value();
+}
