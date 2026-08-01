@@ -1,0 +1,9 @@
+function add_one(int $value = 0): int
+{
+	return $value + 1;
+}
+
+function run(): int
+{
+	return add_one(41);
+}

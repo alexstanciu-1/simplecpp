@@ -1,0 +1,9 @@
+function add3(int $left, int $middle = 2, int $right = 3): int
+{
+	return $left + $middle + $right;
+}
+
+function run(): int
+{
+	return add3(37);
+}
