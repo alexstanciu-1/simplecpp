@@ -1,0 +1,11 @@
+function run(): int
+{
+	$left int = 4;
+	$right int = 4;
+	$ok bool = false;
+	$ok = $left == $right;
+	if ($ok) {
+		return 42;
+	}
+	return 0;
+}
