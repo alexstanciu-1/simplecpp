@@ -237,6 +237,138 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/specs/builtins/string/bin2hex.md"
 		},
+		"fs_basename": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/basename.md"
+		},
+		"fs_copy": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["string", "string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/copy.md"
+		},
+		"fs_dirname": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/dirname.md"
+		},
+		"fs_exists": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/file_exists.md"
+		},
+		"fs_is_dir": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/is_dir.md"
+		},
+		"fs_is_file": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/is_file.md"
+		},
+		"fs_is_link": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/is_link.md"
+		},
+		"fs_mkdir": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/mkdir.md"
+		},
+		"fs_remove": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/unlink.md"
+		},
+		"fs_rename": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["string", "string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/rename.md"
+		},
+		"fs_rmdir": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/rmdir.md"
+		},
+		"fs_touch": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/filesystem/touch.md"
+		},
 		"dt_now": {
 			"contract_status": "complete",
 			"signature_status": "known",
