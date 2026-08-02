@@ -258,7 +258,8 @@
 				"native_value",
 				"size",
 				"empty",
-				"append"
+				"append",
+				"lexicographic_compare_via_native_value"
 			],
 			"entry_ctors": [
 				{
@@ -2885,7 +2886,8 @@
 			"identical",
 			"not_identical",
 			"concat_assign",
-			"echo_eval"
+			"echo_eval",
+			"compare"
 		],
 		"namespaces": {
 			"core": "scpp",
@@ -2903,11 +2905,19 @@
 			"identical",
 			"not_identical",
 			"concat_assign",
-			"echo_eval"
+			"echo_eval",
+			"compare"
 		],
 		"notes": {
 			"purpose": "declares stable runtime helper entry points that frontends/generators may target directly",
 			"separation_rule": "helpers listed here are shared knowledge contracts, not generator implementation details",
+			"abi_bridge_identity_standard": {
+				"purpose": "runtime ABI helpers are selected by stable helper keys, operation keys, and optional family ids; compilers must not encode one cast/operator combination per helper call site",
+				"helper_key_rule": "helper keys listed in stable_helpers and generator_allowed_helpers are the only generator-visible helper ids",
+				"operation_key_rule": "source-visible ABI descriptors use stable operation_key values such as php.text_coercion.int_t or string.compare.lexicographic",
+				"family_rule": "repeated source-TypeRef conversions use abi_bridge_rule_families with a stable family_id, member list, and deferred-member list",
+				"text_coercion_rule": "new printable source types add coercions.text.abi_bridge_rules or coercions.text.abi_bridge_rule_families plus any needed carrier adapter, not source-specific compiler casts"
+			},
 			"operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity using exact type matching except for null_t versus nullable<T>.",
 			"php_identity": {
 				"rule": "exact_type_required_except_null_nullable",

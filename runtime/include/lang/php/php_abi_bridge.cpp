@@ -24,6 +24,29 @@ extern "C" void scpp_v2_php_echo_eval_string(void *value) {
 	scpp::php::echo_one(*static_cast<scpp::string_t *>(value));
 }
 
+extern "C" std::int64_t scpp_v2_string_compare(void *left, void *right) {
+	const auto *lhs = static_cast<const scpp::string_t *>(left);
+	const auto *rhs = static_cast<const scpp::string_t *>(right);
+	if (lhs == nullptr && rhs == nullptr) {
+		return 0;
+	}
+	if (lhs == nullptr) {
+		return -1;
+	}
+	if (rhs == nullptr) {
+		return 1;
+	}
+
+	const int result = lhs->native_value().compare(rhs->native_value());
+	if (result < 0) {
+		return -1;
+	}
+	if (result > 0) {
+		return 1;
+	}
+	return 0;
+}
+
 extern "C" void scpp_v2_string_release(void *value) {
 	delete static_cast<scpp::string_t *>(value);
 }
