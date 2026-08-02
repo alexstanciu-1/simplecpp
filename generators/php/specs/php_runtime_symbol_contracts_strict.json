@@ -1,0 +1,56 @@
+{
+	"schema_version": "0.1.0",
+	"artifact": "php_runtime_symbol_contracts_strict",
+	"status": "normalization_foundation",
+	"applies_to": "php_runtime_symbols_strict.json",
+	"purpose": "Normalizes strict runtime symbol contract rows for compiler consumers without accepting source calls before argument, return, ownership, and module-link contracts are authoritative.",
+	"availability_policy_order": [
+		"strict_profile_core",
+		"shared_runtime_core",
+		"default_runtime_module",
+		"explicit_project_module"
+	],
+	"owner_availability_policy": {
+		"core": "strict_profile_core",
+		"php": "strict_profile_core",
+		"str": "shared_runtime_core",
+		"source": "shared_runtime_core",
+		"tokenizer": "shared_runtime_core",
+		"dt": "default_runtime_module",
+		"fs": "default_runtime_module",
+		"json": "default_runtime_module",
+		"curl": "explicit_project_module",
+		"io": "explicit_project_module",
+		"regex": "explicit_project_module",
+		"tasks": "explicit_project_module",
+		"ui": "explicit_project_module",
+		"webview_runtime": "explicit_project_module"
+	},
+	"contract_status_order": [
+		"incomplete",
+		"complete"
+	],
+	"signature_status_order": [
+		"missing",
+		"known"
+	],
+	"source_consumption_status_order": [
+		"blocked",
+		"ready"
+	],
+	"default_symbol_contract": {
+		"contract_status": "incomplete",
+		"signature_status": "missing",
+		"source_consumption_status": "blocked",
+		"min_arity": -1,
+		"max_arity": -1,
+		"return_type_ref": "unknown",
+		"blocked_reason": "argument_return_contract_missing"
+	},
+	"symbol_contracts": {},
+	"notes": {
+		"source_of_truth": "The visible strict source names and runtime targets remain in php_runtime_symbols_strict.json. This file adds the normalized contract dimensions that the compiler needs before source calls can be accepted.",
+		"no_redundancy_rule": "Do not add module helper semantics directly to the compiler. Add or derive symbol_contracts here, regenerate compiler lookup rows, then wire frontend/callable/lowering consumers to those rows.",
+		"source_consumption_rule": "A row with a missing signature remains source_consumption_status=blocked even when the module availability policy is known."
+	}
+}
