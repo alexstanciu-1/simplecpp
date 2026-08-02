@@ -2763,6 +2763,13 @@
                         {
                             "family_id":  "operators_comparison_ordering",
                             "item_id":  "less_than",
+                            "lhs_type":  "string_t",
+                            "rhs_type":  "string_t",
+                            "row_file":  "semantics/operators_comparison_ordering/less_than__string_t__string_t.tsv"
+                        },
+                        {
+                            "family_id":  "operators_comparison_ordering",
+                            "item_id":  "less_than",
                             "lhs_type":  "float_t",
                             "rhs_type":  "float_t",
                             "row_file":  "semantics/operators_comparison_ordering/less_than__float_t__float_t.tsv"
@@ -2850,6 +2857,13 @@
                             "lhs_type":  "int_t",
                             "rhs_type":  "int_t",
                             "row_file":  "semantics/operators_comparison_ordering/less_than_or_equal__int_t__int_t.tsv"
+                        },
+                        {
+                            "family_id":  "operators_comparison_ordering",
+                            "item_id":  "less_than_or_equal",
+                            "lhs_type":  "string_t",
+                            "rhs_type":  "string_t",
+                            "row_file":  "semantics/operators_comparison_ordering/less_than_or_equal__string_t__string_t.tsv"
                         },
                         {
                             "family_id":  "operators_comparison_ordering",
@@ -2945,6 +2959,13 @@
                         {
                             "family_id":  "operators_comparison_ordering",
                             "item_id":  "greater_than",
+                            "lhs_type":  "string_t",
+                            "rhs_type":  "string_t",
+                            "row_file":  "semantics/operators_comparison_ordering/greater_than__string_t__string_t.tsv"
+                        },
+                        {
+                            "family_id":  "operators_comparison_ordering",
+                            "item_id":  "greater_than",
                             "lhs_type":  "float_t",
                             "rhs_type":  "float_t",
                             "row_file":  "semantics/operators_comparison_ordering/greater_than__float_t__float_t.tsv"
@@ -3032,6 +3053,13 @@
                             "lhs_type":  "int_t",
                             "rhs_type":  "int_t",
                             "row_file":  "semantics/operators_comparison_ordering/greater_than_or_equal__int_t__int_t.tsv"
+                        },
+                        {
+                            "family_id":  "operators_comparison_ordering",
+                            "item_id":  "greater_than_or_equal",
+                            "lhs_type":  "string_t",
+                            "rhs_type":  "string_t",
+                            "row_file":  "semantics/operators_comparison_ordering/greater_than_or_equal__string_t__string_t.tsv"
                         },
                         {
                             "family_id":  "operators_comparison_ordering",
