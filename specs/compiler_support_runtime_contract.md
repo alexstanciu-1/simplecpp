@@ -39,6 +39,33 @@ Rules:
 - byte reads return `uint8` in compiler metadata, corresponding to strict
   source spelling `byte` where that alias is exposed.
 
+## Source Line Index And Location
+
+Simple C++ exposes `source_line_index` and `source_location` as
+compiler-support runtime-backed source mapping values.
+
+Supported helpers:
+
+```text
+source_line_index_build(source_buffer): source_line_index
+source_line_index_line_count(source_line_index): uint32
+source_line_index_offset_to_location(source_line_index, int): source_location
+source_line_index_line_column_to_offset(source_line_index, int, int): uint32
+source_location_offset(source_location): uint32
+source_location_line(source_location): uint32
+source_location_column(source_location): uint32
+```
+
+Rules:
+
+- offsets and columns are byte based;
+- lines and columns returned by `source_location_*` are 1-based;
+- line/column-to-offset inputs use normal `int` values and are range-checked
+  before conversion to runtime storage width;
+- `source_location` stores offset, line, and column as `uint32` in the runtime;
+- compiler metadata should treat both types as runtime-backed until a separate
+  value-layout storage contract is accepted.
+
 ## Stable Hash
 
 Simple C++ exposes:
