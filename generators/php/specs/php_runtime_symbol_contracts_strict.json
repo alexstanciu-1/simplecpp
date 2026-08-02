@@ -545,6 +545,17 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_monotonic_us.md"
 		},
+		"dt_sleep_ms": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["int"],
+			"return_type_ref": "void",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_sleep_ms.md"
+		},
 		"dt_format_iso_utc": {
 			"contract_status": "complete",
 			"signature_status": "known",
