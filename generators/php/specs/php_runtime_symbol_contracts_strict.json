@@ -83,6 +83,28 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_monotonic_ms.md"
 		},
+		"dt_monotonic_ns": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"return_type_ref": "uint64",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_monotonic_ns.md"
+		},
+		"dt_monotonic_us": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"return_type_ref": "uint64",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_monotonic_us.md"
+		},
 		"dt_format_iso_utc": {
 			"contract_status": "complete",
 			"signature_status": "known",
