@@ -1328,11 +1328,13 @@
 					"policy_role": "explicit_text_conversion_after_runtime_kind_dispatch"
 				}
 			],
-			"abi_bridge_rules": [
+			"abi_bridge_rules": [],
+			"abi_bridge_rule_families": [
 				{
+					"family_id": "php_text_integer_widths_to_string_i64",
 					"from": "int_t",
-					"source_type_ref": "int",
-					"operation_key": "php.text_coercion.int_t",
+					"source_type_ref_family": "primitive_integer_widths_i64_carrier",
+					"operation_key_template": "php.text_coercion.{source_type_ref}",
 					"helper_name": "to_string",
 					"runtime_namespace": "scpp::php",
 					"runtime_symbol": "scpp_v2_php_to_string_i64",
@@ -1348,7 +1350,24 @@
 					"blocked_reason": "none",
 					"llvm_return_type": "ptr",
 					"llvm_argument_signature": "i64",
-					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:coercions.text.abi_bridge_rules.int_t"
+					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:coercions.text.abi_bridge_rule_families.php_text_integer_widths_to_string_i64",
+					"members": [
+						{"source_type_ref": "int", "operation_key": "php.text_coercion.int_t"},
+						{"source_type_ref": "int64"},
+						{"source_type_ref": "int8"},
+						{"source_type_ref": "int16"},
+						{"source_type_ref": "int32"},
+						{"source_type_ref": "uint8"},
+						{"source_type_ref": "uint16"},
+						{"source_type_ref": "uint32"}
+					],
+					"deferred_members": [
+						{
+							"source_type_ref": "uint64",
+							"blocked_reason": "unsigned_i64_text_helper_not_ready",
+							"note": "uint64 needs a u64-safe runtime bridge symbol before full-range source consumption"
+						}
+					]
 				}
 			]
 		}
