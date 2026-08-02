@@ -50,6 +50,17 @@
 		"contract_authority_source": "default_missing_contract"
 	},
 	"symbol_contracts": {
+		"cli_argc": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/process/cli_argc.md"
+		},
 		"strlen": {
 			"contract_status": "complete",
 			"signature_status": "known",
