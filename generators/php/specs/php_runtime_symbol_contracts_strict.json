@@ -126,6 +126,17 @@
 			"return_type_ref": "string",
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_format.md"
+		},
+		"dt_format_now": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_format_now.md"
 		}
 	},
 	"notes": {
