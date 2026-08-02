@@ -281,6 +281,61 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/runtime/specs/catalog.md"
 		},
+		"string_utf8_codepoint_count": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/runtime/specs/catalog.md"
+		},
+		"string_utf8_codepoint_at": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["string", "int"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/runtime/specs/catalog.md"
+		},
+		"string_utf8_slice_codepoints": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 3,
+			"max_arity": 3,
+			"parameter_type_refs": ["string", "int", "int"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/runtime/specs/catalog.md"
+		},
+		"string_grapheme_count": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/runtime/specs/catalog.md"
+		},
+		"string_grapheme_slice": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 3,
+			"max_arity": 3,
+			"parameter_type_refs": ["string", "int", "int"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/runtime/specs/catalog.md"
+		},
 		"hash_string": {
 			"contract_status": "complete",
 			"signature_status": "known",
