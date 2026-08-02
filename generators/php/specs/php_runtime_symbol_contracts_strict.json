@@ -50,6 +50,50 @@
 		"contract_authority_source": "default_missing_contract"
 	},
 	"symbol_contracts": {
+		"strlen": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/string/strlen.md"
+		},
+		"str_starts_with": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["string", "string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/string/str_starts_with.md"
+		},
+		"str_ends_with": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["string", "string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/string/str_ends_with.md"
+		},
+		"str_contains": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["string", "string"],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/string/str_contains.md"
+		},
 		"dt_now": {
 			"contract_status": "complete",
 			"signature_status": "known",
