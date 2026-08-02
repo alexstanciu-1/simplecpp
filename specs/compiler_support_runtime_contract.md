@@ -91,6 +91,54 @@ stable_hash_u64:v1:<uint64>
 
 This helper is not a cryptographic security hash.
 
+## String Builder Helpers
+
+Simple C++ exposes `string_parts_builder` and `text_builder` as runtime-backed
+builder handles for compiler and runtime text assembly.
+
+`string_parts_builder` stores string parts and materializes a joined string on
+demand. `text_builder` stores one contiguous byte buffer and can either
+materialize a copy or move/take the accumulated string.
+
+Supported helpers:
+
+```text
+string_parts_builder_create(): string_parts_builder
+string_parts_builder_reserve(string_parts_builder, int): void
+string_parts_builder_count(string_parts_builder): int
+string_parts_builder_capacity(string_parts_builder): int
+string_parts_builder_byte_len(string_parts_builder): int
+string_parts_builder_append_string(string_parts_builder, string): void
+string_parts_builder_append_int(string_parts_builder, int): void
+string_parts_builder_append_bool(string_parts_builder, bool): void
+string_parts_builder_to_string(string_parts_builder): string
+string_parts_builder_clear(string_parts_builder): void
+text_builder_create(): text_builder
+text_builder_reserve_bytes(text_builder, int): void
+text_builder_capacity_bytes(text_builder): int
+text_builder_byte_len(text_builder): int
+text_builder_append_string(text_builder, string): void
+text_builder_append_int(text_builder, int): void
+text_builder_append_bool(text_builder, bool): void
+text_builder_append_byte_span(text_builder, byte_span): void
+text_builder_to_string(text_builder): string
+text_builder_take_string(text_builder): string
+text_builder_clear(text_builder): void
+```
+
+Rules:
+
+- reserve capacities accept normal `int` values and reject negatives at
+  runtime;
+- append helpers mutate the builder handle;
+- boolean append follows PHP-style text output: true appends `"1"` and false
+  appends an empty string;
+- `text_builder_to_string` materializes a copy, while
+  `text_builder_take_string` moves the current buffer into the returned string
+  and clears the builder;
+- compiler metadata should keep source consumption blocked until builder
+  storage, mutation, lifetime, and source-call consumers are accepted.
+
 ## Native Compiler Helpers
 
 The following native helpers are implementation-backed and may be used by
