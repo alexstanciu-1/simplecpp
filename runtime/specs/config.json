@@ -273,7 +273,14 @@
 					"from_cpp": "const char*",
 					"explicit": true
 				}
-			]
+			],
+			"abi_lifecycle": {
+				"release_owned": {
+					"symbol": "scpp_v2_string_release",
+					"carrier": "opaque_runtime_string",
+					"policy": "destroy_owned"
+				}
+			}
 		},
 		"vector_t": {
 			"kind": "template_wrapper",
@@ -1319,6 +1326,29 @@
 					"kind": "helper",
 					"helper_name": "to_string",
 					"policy_role": "explicit_text_conversion_after_runtime_kind_dispatch"
+				}
+			],
+			"abi_bridge_rules": [
+				{
+					"from": "int_t",
+					"source_type_ref": "int",
+					"operation_key": "php.text_coercion.int_t",
+					"helper_name": "to_string",
+					"runtime_namespace": "scpp::php",
+					"runtime_symbol": "scpp_v2_php_to_string_i64",
+					"argument_signature_key": "primitive_i64",
+					"result_runtime_type": "string_t",
+					"argument_count": 1,
+					"argument_carrier": "primitive_i64",
+					"return_carrier": "opaque_runtime_string",
+					"ownership_policy": "owned_return",
+					"lifetime_policy": "explicit_cleanup_required",
+					"call_lowering_status": "ready",
+					"source_consumption_status": "ready",
+					"blocked_reason": "none",
+					"llvm_return_type": "ptr",
+					"llvm_argument_signature": "i64",
+					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:coercions.text.abi_bridge_rules.int_t"
 				}
 			]
 		}
