@@ -7,6 +7,29 @@ The runtime tokenizer returns `token_buffer` for both `phs_tokenize_buffer()` an
 typed buffer. Readable/mixed output is an adapter and is not the compiler fast
 path.
 
+## Source-Level Signatures
+
+Current strict-profile source signatures are:
+
+```text
+phs_tokenize(string): token_buffer
+phs_tokenize_buffer(string): token_buffer
+jss_tokenize(string): token_buffer
+jss_tokenize_buffer(string): token_buffer
+token_buffer_count(token_buffer): int
+token_buffer_kind_id(token_buffer, int): int
+token_buffer_start_offset(token_buffer, int): int
+token_buffer_length(token_buffer, int): int
+token_buffer_line(token_buffer, int): int
+token_buffer_column(token_buffer, int): int
+token_buffer_flags(token_buffer, int): int
+token_buffer_to_mixed(token_buffer): mixed
+```
+
+The `*_tokenize_buffer` names currently consume source text as `string`; a
+future `source_buffer` overload should enter metadata as a distinct authority
+row rather than changing these signatures in place.
+
 ## Hot Tokens And Extras
 
 `token_buffer` stores one canonical hot token stream plus side data:

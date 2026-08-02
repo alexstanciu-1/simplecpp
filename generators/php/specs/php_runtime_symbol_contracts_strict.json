@@ -490,6 +490,127 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
 		},
+		"jss_tokenize": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "token_buffer",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"jss_tokenize_buffer": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "token_buffer",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"phs_tokenize": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "token_buffer",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"phs_tokenize_buffer": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "token_buffer",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"token_buffer_count": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["token_buffer"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"token_buffer_kind_id": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["token_buffer", "int"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"token_buffer_length": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["token_buffer", "int"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"token_buffer_start_offset": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["token_buffer", "int"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"token_buffer_line": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["token_buffer", "int"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"token_buffer_column": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["token_buffer", "int"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
+		"token_buffer_flags": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["token_buffer", "int"],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/tokenizer/token_buffer.md"
+		},
 		"memory_get_usage": {
 			"contract_status": "complete",
 			"signature_status": "known",
