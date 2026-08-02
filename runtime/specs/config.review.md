@@ -136,6 +136,15 @@ Text contexts route through one result type, one helper family, and explicit nul
 | `bool_t / int_t / float_t use to_string` | Scalar wrappers have helper-driven text conversion. | `echo 42;` | `::scpp::print(::scpp::to_string(::scpp::int_t(42)));` | Avoids depending on native iostream formatting rules. |
 | `nullable<T> / value_p<T> / native_ref<T> / shared_p<T> / unique_p<T> / weak_p<T> use to_string` | Wrapper text conversion is helper-defined, not implicit. | `echo $obj;` | `::scpp::print(::scpp::to_string(obj));` | Important because wrapper text policy can change independently of storage representation. |
 
+Text ABI bridge rule naming is part of the runtime contract. Singleton cases
+belong in `coercions.text.abi_bridge_rules[]`; repeated source TypeRef families
+belong in `coercions.text.abi_bridge_rule_families[]`. Compiler bridges should
+select these rows by stable operation/helper/source TypeRef ids and emit the
+configured runtime symbol. Adding another printable integer width, bool, float,
+or future wrapper should add metadata and, when necessary, a carrier adapter,
+not a source-type-specific compiler branch. The current vendor native shim for
+compiler bridge proofs lives at `runtime/include/lang/php/php_abi_bridge.cpp`.
+
 ## 6. Subtyping
 
 ### Description

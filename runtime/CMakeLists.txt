@@ -114,6 +114,7 @@ if(SCPP_WITH_UI)
 endif()
 
 add_library(scpp_php_legacy
+	include/lang/php/php_abi_bridge.cpp
 	include/lang/php/php_filesystem.cpp
 	include/lang/php/php_json.cpp
 	include/lang/php/php_datetime.cpp
