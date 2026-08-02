@@ -369,6 +369,127 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
 		},
+		"source_buffer_take": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["string"],
+			"return_type_ref": "source_buffer",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"source_buffer_release": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["source_buffer"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"source_buffer_byte_len": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["source_buffer"],
+			"return_type_ref": "uint32",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"source_buffer_byte_at": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["source_buffer", "int"],
+			"return_type_ref": "uint8",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"source_buffer_span": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 3,
+			"max_arity": 3,
+			"parameter_type_refs": ["source_buffer", "int", "int"],
+			"return_type_ref": "byte_span",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"source_buffer_slice": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 3,
+			"max_arity": 3,
+			"parameter_type_refs": ["source_buffer", "int", "int"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"byte_span_len": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["byte_span"],
+			"return_type_ref": "uint32",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"byte_span_at": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": ["byte_span", "int"],
+			"return_type_ref": "uint8",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"byte_span_to_string": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["byte_span"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"hash_bytes": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["byte_span"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
+		"stable_hash_bytes_u64": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["byte_span"],
+			"return_type_ref": "uint64",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
 		"memory_get_usage": {
 			"contract_status": "complete",
 			"signature_status": "known",
