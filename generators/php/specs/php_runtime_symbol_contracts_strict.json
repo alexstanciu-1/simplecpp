@@ -325,6 +325,39 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
 		},
+		"regex_jit_available": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"return_type_ref": "bool",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/regex/preg_jit_available.md"
+		},
+		"regex_quote": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 2,
+			"parameter_type_refs": ["string", "string"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/regex/preg_quote.md"
+		},
+		"curl_strerror": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 1,
+			"max_arity": 1,
+			"parameter_type_refs": ["int"],
+			"return_type_ref": "string",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/curl/first_pass.md"
+		},
 		"fs_basename": {
 			"contract_status": "complete",
 			"signature_status": "known",
