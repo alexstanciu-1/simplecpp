@@ -140,9 +140,13 @@ Text ABI bridge rule naming is part of the runtime contract. Singleton cases
 belong in `coercions.text.abi_bridge_rules[]`; repeated source TypeRef families
 belong in `coercions.text.abi_bridge_rule_families[]`. Compiler bridges should
 select these rows by stable operation/helper/source TypeRef ids and emit the
-configured runtime symbol. Adding another printable integer width, bool, float,
-or future wrapper should add metadata and, when necessary, a carrier adapter,
-not a source-type-specific compiler branch. The current vendor native shim for
+configured runtime symbol. Family bridge rows must provide a stable
+`family_id`, `source_type_ref_family`, concrete `members`, and explicit
+`deferred_members`; downstream compilers may consume the generated family row to
+discover all covered and blocked TypeRefs instead of implementing casts one
+combination at a time. Adding another printable integer width, bool, float, or
+future wrapper should add metadata and, when necessary, a carrier adapter, not a
+source-type-specific compiler branch. The current vendor native shim for
 compiler bridge proofs lives at `runtime/include/lang/php/php_abi_bridge.cpp`.
 
 ## 6. Subtyping
