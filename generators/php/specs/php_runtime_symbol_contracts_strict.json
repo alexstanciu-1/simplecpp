@@ -369,6 +369,17 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
 		},
+		"source_buffer_empty": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"return_type_ref": "source_buffer",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/compiler_support_runtime_contract.md"
+		},
 		"source_buffer_take": {
 			"contract_status": "complete",
 			"signature_status": "known",

@@ -19,6 +19,7 @@ into a `source_buffer`.
 Supported helpers:
 
 ```text
+source_buffer_empty(): source_buffer
 source_buffer_take(string): source_buffer
 source_buffer_release(source_buffer): string
 source_buffer_byte_len(source_buffer): uint32
@@ -33,6 +34,7 @@ byte_span_to_string(byte_span): string
 Rules:
 
 - offsets and lengths are byte based;
+- `source_buffer_empty` returns an owned zero-length source buffer;
 - source-language offsets and lengths accept normal `int` values and are
   range-checked to runtime storage width;
 - `source_buffer_release` invalidates spans derived from that buffer;
