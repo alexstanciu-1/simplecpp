@@ -44,10 +44,46 @@
 		"source_consumption_status": "blocked",
 		"min_arity": -1,
 		"max_arity": -1,
+		"parameter_type_refs": [],
 		"return_type_ref": "unknown",
-		"blocked_reason": "argument_return_contract_missing"
+		"blocked_reason": "argument_return_contract_missing",
+		"contract_authority_source": "default_missing_contract"
 	},
-	"symbol_contracts": {},
+	"symbol_contracts": {
+		"dt_now": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_now.md"
+		},
+		"dt_now_ms": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_now_ms.md"
+		},
+		"dt_monotonic_ms": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"return_type_ref": "int",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "vendor/simple_cpp/specs/builtins/datetime/dt_monotonic_ms.md"
+		}
+	},
 	"notes": {
 		"source_of_truth": "The visible strict source names and runtime targets remain in php_runtime_symbols_strict.json. This file adds the normalized contract dimensions that the compiler needs before source calls can be accepted.",
 		"no_redundancy_rule": "Do not add module helper semantics directly to the compiler. Add or derive symbol_contracts here, regenerate compiler lookup rows, then wire frontend/callable/lowering consumers to those rows.",
