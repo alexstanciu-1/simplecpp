@@ -1,4 +1,5 @@
 #include "lang/php/support/php_string.hpp"
+#include "scpp/vector_t.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -49,4 +50,28 @@ extern "C" std::int64_t scpp_v2_string_compare(void *left, void *right) {
 
 extern "C" void scpp_v2_string_release(void *value) {
 	delete static_cast<scpp::string_t *>(value);
+}
+
+extern "C" void *scpp_v2_vector_i32_new() {
+	return new scpp::vector_t<std::int32_t>();
+}
+
+extern "C" void scpp_v2_vector_i32_append(void *value, std::int32_t item) {
+	if (value == nullptr) {
+		return;
+	}
+
+	static_cast<scpp::vector_t<std::int32_t> *>(value)->append(item);
+}
+
+extern "C" std::int32_t scpp_v2_vector_i32_at(void *value, std::int64_t index) {
+	if (value == nullptr || index < 0) {
+		return 0;
+	}
+
+	return static_cast<scpp::vector_t<std::int32_t> *>(value)->at(static_cast<std::size_t>(index));
+}
+
+extern "C" void scpp_v2_vector_i32_release(void *value) {
+	delete static_cast<scpp::vector_t<std::int32_t> *>(value);
 }
