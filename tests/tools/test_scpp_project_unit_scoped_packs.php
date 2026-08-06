@@ -31,6 +31,7 @@ final class ScppProjectUnitScopedPacksTest
 			$this->assertCompactLayoutScopedPacksIncludeValueDependencies();
 			$this->assertTopLevelConstantScopedPackSafety();
 			$this->assertMethodBodyScopedPackSafety();
+			$this->assertTopLevelStructReturnScopedPackSafety();
 			$this->assertBodyOnlyEditsKeepRebuildFanoutMinimal();
 			echo "PASS: scpp project unit scoped packs\n";
 			return 0;
@@ -618,6 +619,59 @@ PHS);
 		$this->assertSame('scoped', $builderProbeSummary['status'] ?? null, 'runtime carrier type method should compile with a scoped pack');
 		$this->assertSame('candidate_scoped', $builderProbeSummary['candidate_status'] ?? null, 'runtime carrier type method should be a scoped candidate');
 		$this->assertSame([], $builderProbeSummary['candidate_blocking_reasons'] ?? null, 'runtime shallow carrier types should not block scoped activation');
+	}
+
+	private function assertTopLevelStructReturnScopedPackSafety(): void
+	{
+		$project = $this->root . '/top_level_struct_return_units';
+		$this->writeProject($project, [], <<<'PHS'
+echo "ok\n";
+PHS, 'strict');
+		$this->write($project . '/row.phs', <<<'PHS'
+struct MetricRow {
+}
+PHS);
+		$this->write($project . '/row_factory.phs', <<<'PHS'
+class RowFactory {
+    public static function pass_metric_row(MetricRow $row): MetricRow {
+        stable_hash_string_u64("row");
+        return $row;
+    }
+}
+PHS);
+
+		$this->publishFullStanState($project);
+		$build = scpp_run_build_service($project, $project . '/prism.json', [
+			'compile_runtime' => true,
+			'compile_dependencies' => true,
+		]);
+		$this->assertSame(
+			true,
+			$build['ok'],
+			"top-level struct-return scoped-pack project should build\nSTDOUT:\n"
+				. (string) ($build['output'] ?? '')
+				. "\nSTDERR:\n"
+				. (string) ($build['error'] ?? '')
+		);
+
+		$projectUnits = $this->loadProjectUnits($project);
+		$this->assertSame(3, $projectUnits['total_units'] ?? null, 'struct-return project should report three generated units');
+		$this->assertSame(3, $projectUnits['active_scoped_units'] ?? null, 'struct-return generated units should activate scoped packs');
+		$this->assertSame(0, $projectUnits['active_broad_fallback_units'] ?? null, 'struct-return generated units should not stay broad');
+
+		$factorySummary = $this->findSummary($projectUnits, 'row_factory.phs', '');
+		$this->assertSame('scoped', $factorySummary['status'] ?? null, 'top-level struct-return helper should compile with a scoped pack');
+		$this->assertSame('candidate_scoped', $factorySummary['candidate_status'] ?? null, 'top-level struct-return helper should be a scoped candidate');
+		$this->assertSame(['row.phs'], $factorySummary['direct_source_dependencies'] ?? null, 'struct-return helper should report its row dependency');
+		$this->assertSame(['row.phs'], $this->projectDependencyCategorySources($factorySummary, 'method signature'), 'struct return type should categorize as a method-signature dependency');
+		$this->assertSame([], $factorySummary['candidate_blocking_reasons'] ?? null, 'resolved struct-return and runtime helper dependencies should not block scoped activation');
+
+		$factoryHeader = $this->read($project . '/.prism/generated/row_factory.hpp');
+		$factorySource = $this->read($project . '/.prism/generated/row_factory.cpp');
+		$this->assertContains('static MetricRow pass_metric_row', $factoryHeader, 'struct return helper should lower the row as a value type, not shared_p');
+		$this->assertContains('php::stable_hash_string_u64', $factorySource, 'strict runtime helper calls should emit their metadata-qualified target');
+		$this->assertNotContains('shared_p<MetricRow> pass_metric_row', $factoryHeader, 'struct return helper should not lower compact rows through shared_p');
+		$this->assertNotContains('stable_hash_string_u64(', str_replace('php::stable_hash_string_u64(', '', $factorySource), 'strict runtime helper calls should not remain unqualified');
 	}
 
 	private function assertBodyOnlyEditsKeepRebuildFanoutMinimal(): void
