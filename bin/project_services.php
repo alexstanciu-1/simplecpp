@@ -13052,6 +13052,20 @@ function collect_transpile_reasons(
 	if (!is_file($generatedCpp)) {
 		$reasons[] = 'generated source missing';
 	}
+	$previousInterfaceHash = trim((string) ($previous['generated_interface_hash'] ?? ''));
+	if ($previousInterfaceHash !== '' && is_file($generatedHeader)) {
+		$currentInterfaceHash = existing_file_sha256($generatedHeader) ?? '';
+		if ($currentInterfaceHash === '' || $currentInterfaceHash !== $previousInterfaceHash) {
+			$reasons[] = 'generated header content changed';
+		}
+	}
+	$previousImplementationHash = trim((string) ($previous['generated_implementation_hash'] ?? ''));
+	if ($previousImplementationHash !== '' && is_file($generatedCpp)) {
+		$currentImplementationHash = existing_file_sha256($generatedCpp) ?? '';
+		if ($currentImplementationHash === '' || $currentImplementationHash !== $previousImplementationHash) {
+			$reasons[] = 'generated source content changed';
+		}
+	}
 	if ((bool) ($previous['emit_program_entry'] ?? false) !== $emitProgramEntry) {
 		$reasons[] = $emitProgramEntry
 			? 'file became the selected entrypoint'
