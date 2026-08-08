@@ -121,6 +121,18 @@ Use when changing project mode or multi-file behavior:
   <source>` when the question is "why does this object include this
   project-unit header?"
 
+When a project build is unexpectedly long, or the rebuild cost feels too large
+for the source change, treat `scpp explain-build` as the first diagnostic step.
+Run focused views instead of guessing: start with `rebuild-fanout` and
+`project-units`, then add `generated-files`, `ninja-explain`,
+`action-identity`, `object-cache`, `build-planner`, `modules`, or
+`project-unit <source>` as the symptom demands. Report the changed
+objects/outputs, project-unit force-include mode, scoped versus broad pack
+counts, pack changes, STAN or dependency-summary freshness, and whether the
+cause is actionable now or a known current limitation. If action identity was
+not captured and the next probe needs it, rerun with
+`SCPP_OBJECT_ACTION_IDENTITY=full` or the equivalent project config.
+
 Relevant docs:
 
 - `docs/getting_started.md`
