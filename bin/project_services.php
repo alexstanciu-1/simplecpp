@@ -1897,6 +1897,18 @@ function resolve_repo_git_diagnostics(string $repoRoot): array
  */
 function scpp_run_optional_command(string $cwd, array $command, array $extraEnv = [], ?float $timeoutSeconds = 3.0): array
 {
+	return scpp_run_command_capture($cwd, $command, $extraEnv, $timeoutSeconds);
+}
+
+/**
+ * Run a subprocess while draining stdout and stderr concurrently.
+ *
+ * @param list<string> $command
+ * @param array<string,string> $extraEnv
+ * @return array{exit_code:int,stdout:string,stderr:string}
+ */
+function scpp_run_command_capture(string $cwd, array $command, array $extraEnv = [], ?float $timeoutSeconds = null): array
+{
 	$descriptor = [
 		0 => ['pipe', 'r'],
 		1 => ['pipe', 'w'],
@@ -1917,39 +1929,15 @@ function scpp_run_optional_command(string $cwd, array $command, array $extraEnv 
 	$stderr = '';
 	$timedOut = false;
 	$deadline = $timeoutSeconds !== null ? microtime(true) + $timeoutSeconds : null;
+	$exitCode = null;
 	while (true) {
-		$read = [];
-		if (is_resource($pipes[1]) && !feof($pipes[1])) {
-			$read[] = $pipes[1];
-		}
-		if (is_resource($pipes[2]) && !feof($pipes[2])) {
-			$read[] = $pipes[2];
-		}
-
-		if ($read !== []) {
-			$seconds = 0;
-			$micros = 200000;
-			if ($deadline !== null) {
-				$remaining = $deadline - microtime(true);
-				if ($remaining <= 0.0) {
-					$timedOut = true;
+		foreach ([1, 2] as $pipeIndex) {
+			while (is_resource($pipes[$pipeIndex]) && !feof($pipes[$pipeIndex])) {
+				$chunk = stream_get_contents($pipes[$pipeIndex]);
+				if (!is_string($chunk) || $chunk === '') {
 					break;
 				}
-				$seconds = (int) floor($remaining);
-				$micros = (int) max(0, min(999999, floor(($remaining - $seconds) * 1000000)));
-			}
-			$write = null;
-			$except = null;
-			$selected = @stream_select($read, $write, $except, $seconds, $micros);
-			if ($selected === false) {
-				break;
-			}
-			foreach ($read as $stream) {
-				$chunk = stream_get_contents($stream);
-				if (!is_string($chunk) || $chunk === '') {
-					continue;
-				}
-				if ($stream === $pipes[1]) {
+				if ($pipeIndex === 1) {
 					$stdout .= $chunk;
 					continue;
 				}
@@ -1958,9 +1946,21 @@ function scpp_run_optional_command(string $cwd, array $command, array $extraEnv 
 		}
 
 		$status = proc_get_status($process);
-		if (!is_array($status) || ($status['running'] ?? false) !== true) {
+		$running = is_array($status) && ($status['running'] ?? false) === true;
+		if (is_array($status) && !$running && isset($status['exitcode']) && is_int($status['exitcode']) && $status['exitcode'] >= 0) {
+			$exitCode = $status['exitcode'];
+		}
+
+		if (!$running && (!is_resource($pipes[1]) || feof($pipes[1])) && (!is_resource($pipes[2]) || feof($pipes[2]))) {
 			break;
 		}
+
+		if ($deadline !== null && microtime(true) >= $deadline) {
+			$timedOut = true;
+			break;
+		}
+
+		usleep(20000);
 	}
 
 	if ($timedOut) {
@@ -1980,7 +1980,7 @@ function scpp_run_optional_command(string $cwd, array $command, array $extraEnv 
 	fclose($pipes[2]);
 	$status = proc_close($process);
 	return [
-		'exit_code' => $timedOut ? 124 : (is_int($status) ? $status : 1),
+		'exit_code' => $timedOut ? 124 : ($exitCode ?? (is_int($status) ? $status : 1)),
 		'stdout' => is_string($stdout) ? $stdout : '',
 		'stderr' => is_string($stderr) ? $stderr : '',
 	];
@@ -3404,22 +3404,11 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 		$command[] = $ninjaJobs;
 	}
 	$captureSubprocessOutput = scpp_capture_subprocess_output_enabled();
-	$descriptor = [
-		0 => ['file', 'php://stdin', 'r'],
-		1 => ['pipe', 'w'],
-		2 => ['pipe', 'w'],
-	];
-	$process = proc_open($command, $descriptor, $pipes, $projectRoot, scpp_build_process_environment());
-	if (!is_resource($process)) {
-		scpp_fail("Failed to start Ninja.
-", 4);
-	}
 	$markTiming('ninja_started');
-	$ninjaStdout = stream_get_contents($pipes[1]);
-	$ninjaStderr = stream_get_contents($pipes[2]);
-	fclose($pipes[1]);
-	fclose($pipes[2]);
-	$status = proc_close($process);
+	$ninjaResult = scpp_run_command_capture($projectRoot, $command);
+	$ninjaStdout = $ninjaResult['stdout'];
+	$ninjaStderr = $ninjaResult['stderr'];
+	$status = $ninjaResult['exit_code'];
 	$markTiming('ninja_finished');
 	$markTiming('post_ninja_diagnostics_start');
 	$ninjaStdout = is_string($ninjaStdout) ? $ninjaStdout : '';

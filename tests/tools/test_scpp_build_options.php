@@ -88,6 +88,7 @@ final class ScppBuildOptionsTest
 			$this->assertBuildProfileResolution();
 			$this->assertRuntimeLaunchEnvironment();
 			$this->assertRuntimeArtifactPlacementPolicy();
+			$this->assertSubprocessCaptureDoesNotDeadlockOnLargeStderr();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
 			$this->assertClangTimeTraceCanBeEnabled();
@@ -123,6 +124,19 @@ final class ScppBuildOptionsTest
 			$this->assertContains('Unknown option for `scpp update`', $ex->getMessage(), 'unknown update flags should report the offending option');
 			return;
 		}
+	}
+
+	private function assertSubprocessCaptureDoesNotDeadlockOnLargeStderr(): void
+	{
+		$result = scpp_run_command_capture(sys_get_temp_dir(), [
+			PHP_BINARY,
+			'-r',
+			'fwrite(STDOUT, "ready\n"); fwrite(STDERR, str_repeat("E", 262144)); exit(7);',
+		], [], 5.0);
+
+		$this->assertSame(7, $result['exit_code'], 'large-stderr subprocess exit code should be captured');
+		$this->assertSame("ready\n", $result['stdout'], 'large-stderr subprocess stdout should be captured');
+		$this->assertSame(262144, strlen($result['stderr']), 'large stderr payload should be drained without deadlock');
 	}
 
 	private function assertBuildProfileResolution(): void
