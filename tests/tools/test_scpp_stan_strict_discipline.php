@@ -19,6 +19,7 @@ final class ScppStanStrictDisciplineTest
 	{
 		try {
 			$this->assertDependencyEditsAffectRootStanFingerprint();
+			$this->assertStanModelIncompleteFindingsDoNotBlockBuild();
 
 			$project = $this->root . '/app';
 			$this->writeProject($project, <<<'PHS'
@@ -1007,6 +1008,47 @@ PHS
 		} finally {
 			$this->removeTree($this->root);
 		}
+	}
+
+	private function assertStanModelIncompleteFindingsDoNotBlockBuild(): void
+	{
+		$modelIncomplete = classify_stan_build_diagnostics([
+			[
+				'kind' => 'unresolved_property_read',
+				'failure_kind' => 'unknown_receiver_type',
+				'message' => 'Unknown receiver type `SomeResolutionRow` while resolving property read segment `->reference_id`.',
+			],
+			[
+				'kind' => 'unresolved_property_write',
+				'failure_kind' => 'unknown_receiver_type',
+				'message' => 'Cannot write property `source_unit_id` on non-object or unresolved receiver type `SomeContextRow`.',
+			],
+			[
+				'kind' => 'unresolved_method_call',
+				'failure_kind' => 'unknown_receiver_type',
+				'message' => 'Unresolved method call `hydrate()` due to unknown receiver type.',
+			],
+		]);
+		$this->assertSame(0, $modelIncomplete['compile_error_count'] ?? null, 'STAN model-incomplete receiver diagnostics should not block pre-build');
+		$this->assertSame(3, $modelIncomplete['stan_error_count'] ?? null, 'STAN model-incomplete receiver diagnostics should stay visible as STAN errors');
+
+		$definiteSourceErrors = classify_stan_build_diagnostics([
+			[
+				'kind' => 'unresolved_call',
+				'message' => 'Unresolved function call `missing_helper()`.',
+			],
+			[
+				'kind' => 'unresolved_property_read',
+				'failure_kind' => 'missing_property',
+				'message' => 'Missing property segment `->missing` on receiver type `Box`.',
+			],
+			[
+				'kind' => 'unresolved_property_write',
+				'failure_kind' => 'non_object_receiver_type',
+				'message' => 'Cannot write property `name` on scalar receiver type `int`.',
+			],
+		]);
+		$this->assertSame(3, $definiteSourceErrors['compile_error_count'] ?? null, 'definite source errors should still block pre-build');
 	}
 
 	private function assertDependencyEditsAffectRootStanFingerprint(): void

@@ -3342,7 +3342,7 @@ final class StanExpressionTypeResolver
 			}
 			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
 			if ($classInfo === null) {
-				return [$this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static call receiver `' . $className . '` in `' . $context . '`.')];
+				return [$this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static call receiver `' . $className . '` in `' . $context . '`.', ['failure_kind' => 'unknown_root_type'])];
 			}
 			$methodSignature = $this->findMethodSignature($classInfo, $methodName);
 			if ($methodSignature === null) {
@@ -3366,7 +3366,7 @@ final class StanExpressionTypeResolver
 			$receiverTypes = $this->normalizeTypeSet($receiverTypes);
 			$methodName = (string) ($callSite['method_name'] ?? '');
 			if (count($receiverTypes) !== 1) {
-				return [$this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved method call `' . $methodName . '()` in `' . $context . '` due to unknown receiver type.')];
+				return [$this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved method call `' . $methodName . '()` in `' . $context . '` due to unknown receiver type.', ['failure_kind' => 'unknown_receiver_type'])];
 			}
 			$receiverType = $this->unwrapMemberReceiverType($receiverTypes[0]);
 			$classInfo = $this->findClassInfo($receiverType, $classLookup);
@@ -3872,9 +3872,10 @@ final class StanExpressionTypeResolver
 		return $this->canonicalizeTypeSet($elementTypes, $classLookup, $selfType);
 	}
 
-	private function makeCallDiagnostic(string $kind, string $context, string $path, int $line, string $message): array
+	/** @param array<string,mixed> $extra */
+	private function makeCallDiagnostic(string $kind, string $context, string $path, int $line, string $message, array $extra = []): array
 	{
-		return [
+		return $extra + [
 			'kind' => $kind,
 			'context' => $context,
 			'path' => $path,
@@ -4142,33 +4143,34 @@ final class StanExpressionTypeResolver
 			} elseif ($rootKind === 'variable' && isset($localTypes[$rootName])) {
 				$receiverTypes = $localTypes[$rootName];
 			} else {
-				$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Unknown property write receiver in `' . $context . '` for `$' . $rootName . '->' . (string) ($propertySegment['name'] ?? '') . '`.');
+				$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Unknown property write receiver in `' . $context . '` for `$' . $rootName . '->' . (string) ($propertySegment['name'] ?? '') . '`.', 'unknown_root_type');
 				return;
 			}
 		} else {
 			$resolvedReceiver = $this->resolveChain($receiverChain, $localTypes, $selfType, $classLookup, $functionLookup);
 			$resolvedValue = $resolvedReceiver['resolved_type'] ?? 'unknown';
 			if ($resolvedValue === 'unknown') {
-				$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Unknown property write receiver in `' . $context . '` for `' . $this->formatChain($receiverChain) . '->' . (string) ($propertySegment['name'] ?? '') . '`.');
+				$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Unknown property write receiver in `' . $context . '` for `' . $this->formatChain($receiverChain) . '->' . (string) ($propertySegment['name'] ?? '') . '`.', (string) ($resolvedReceiver['failure_kind'] ?? 'unknown_receiver_type'));
 				return;
 			}
 			$receiverTypes = is_array($resolvedValue) ? $resolvedValue : [$resolvedValue];
 		}
 		$receiverTypes = $this->normalizeTypeSet($receiverTypes);
 		if (count($receiverTypes) !== 1) {
-			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Ambiguous property write receiver in `' . $context . '` for property `' . (string) ($propertySegment['name'] ?? '') . '`.');
+			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Ambiguous property write receiver in `' . $context . '` for property `' . (string) ($propertySegment['name'] ?? '') . '`.', 'ambiguous_receiver_type');
 			return;
 		}
 
 		$receiverInfo = $this->findClassInfo($receiverTypes[0], $classLookup, $selfType);
 		$propertyName = (string) ($propertySegment['name'] ?? '');
 		if ($receiverInfo === null) {
-			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Cannot write property `' . $propertyName . '` on non-object or unresolved receiver type `' . $receiverTypes[0] . '` in `' . $context . '`.');
+			$failureKind = $this->isKnownNonObjectType($receiverTypes[0]) ? 'non_object_receiver_type' : 'unknown_receiver_type';
+			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Cannot write property `' . $propertyName . '` on non-object or unresolved receiver type `' . $receiverTypes[0] . '` in `' . $context . '`.', $failureKind);
 			return;
 		}
 		$declaredType = (string) ($receiverInfo['property_types'][$propertyName] ?? '');
 		if ($declaredType === '') {
-			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Missing property write target `' . $receiverTypes[0] . '::$' . $propertyName . '` in `' . $context . '`.');
+			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Missing property write target `' . $receiverTypes[0] . '::$' . $propertyName . '` in `' . $context . '`.', 'missing_property');
 			return;
 		}
 		$visibility = $this->normalizeMemberVisibility((string) ($receiverInfo['property_visibility'][$propertyName] ?? 'public'));
@@ -4223,7 +4225,7 @@ final class StanExpressionTypeResolver
 		}
 	}
 
-	private function recordUnresolvedPropertyWrite(array &$diagnostics, string $context, string $path, int $line, string $propertyName, string $message): void
+	private function recordUnresolvedPropertyWrite(array &$diagnostics, string $context, string $path, int $line, string $propertyName, string $message, string $failureKind): void
 	{
 		$diagnostics[] = [
 			'kind' => 'unresolved_property_write',
@@ -4231,6 +4233,7 @@ final class StanExpressionTypeResolver
 			'path' => $path,
 			'line' => $line,
 			'property_name' => $propertyName,
+			'failure_kind' => $failureKind,
 			'message' => $message,
 		];
 	}

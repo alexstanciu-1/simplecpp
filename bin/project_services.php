@@ -16657,6 +16657,31 @@ function classify_stan_build_bucket(array $diagnostic): string
 		return 'stan-warnings';
 	}
 	$initializationKind = (string) ($diagnostic['initialization_kind'] ?? '');
+	$failureKind = (string) ($diagnostic['failure_kind'] ?? '');
+	if ($kind === 'unresolved_property_read') {
+		if (in_array($failureKind, ['unknown_root_type', 'unknown_receiver_type', 'missing_method_or_return_type', 'ambiguous_merged_member_type'], true)) {
+			return 'stan-errors';
+		}
+		return 'compile-errors';
+	}
+	if ($kind === 'unresolved_property_write') {
+		if (in_array($failureKind, ['unknown_root_type', 'unknown_receiver_type', 'ambiguous_receiver_type', 'missing_method_or_return_type', 'ambiguous_merged_member_type'], true)) {
+			return 'stan-errors';
+		}
+		return 'compile-errors';
+	}
+	if ($kind === 'unresolved_method_call') {
+		if (in_array($failureKind, ['unknown_receiver_type', 'unknown_root_type'], true)) {
+			return 'stan-errors';
+		}
+		return 'compile-errors';
+	}
+	if ($kind === 'unresolved_static_call') {
+		if ($failureKind === 'unknown_root_type') {
+			return 'stan-errors';
+		}
+		return 'compile-errors';
+	}
 	if (in_array($kind, [
 		'duplicate_declaration',
 		'unresolved_call',

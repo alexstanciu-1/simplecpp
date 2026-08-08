@@ -389,6 +389,7 @@ Current v1 behavior:
 - while only the compile-gating check is fresh, or when `--no-stan` bypasses the STAN pre-build check, the build writes or reuses a build-owned dependency summary so diagnostics can still show direct dependency evidence
 - background worker refreshes debounce source edits before proactive analysis; explicit build refresh requests bypass that debounce
 - if STAN reports `compile-errors`, the build stops before C++ generation/compilation continues
+- STAN model-incomplete unresolved receiver/root findings are not `compile-errors`; they remain reported as STAN diagnostics while the native build path continues to be the authority for whether generated C++ is valid
 - if STAN reports only advisory findings, the build continues and prints a short static-analysis summary
 - `--no-stan` bypasses this STAN pre-build check for that invocation only
 
