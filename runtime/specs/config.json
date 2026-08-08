@@ -315,8 +315,8 @@
 					"ownership_policy": "owned_return",
 					"lifetime_policy": "explicit_cleanup_required",
 					"call_lowering_status": "ready",
-					"source_consumption_status": "ready",
-					"blocked_reason": "none",
+					"source_consumption_status": "blocked",
+					"blocked_reason": "source_consumption_not_wired",
 					"source_type_ref": "vector<int32>",
 					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:types.vector_t.stable_core_api.default_ctor"
 				},
@@ -334,8 +334,8 @@
 					"ownership_policy": "mutates_lhs",
 					"lifetime_policy": "in_place_mutation",
 					"call_lowering_status": "ready",
-					"source_consumption_status": "ready",
-					"blocked_reason": "none",
+					"source_consumption_status": "blocked",
+					"blocked_reason": "source_consumption_not_wired",
 					"source_type_ref": "vector<int32>",
 					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:types.vector_t.stable_core_api.append"
 				},
@@ -353,8 +353,8 @@
 					"ownership_policy": "borrowed_arguments",
 					"lifetime_policy": "caller_retains_arguments",
 					"call_lowering_status": "ready",
-					"source_consumption_status": "ready",
-					"blocked_reason": "none",
+					"source_consumption_status": "blocked",
+					"blocked_reason": "source_consumption_not_wired",
 					"source_type_ref": "vector<int32>",
 					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:types.vector_t.stable_core_api.index"
 				},
@@ -372,8 +372,8 @@
 					"ownership_policy": "consumes_owned_argument",
 					"lifetime_policy": "cleanup_consumes_owned_argument",
 					"call_lowering_status": "ready",
-					"source_consumption_status": "ready",
-					"blocked_reason": "none",
+					"source_consumption_status": "blocked",
+					"blocked_reason": "source_consumption_not_wired",
 					"source_type_ref": "vector<int32>",
 					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:types.vector_t.lifecycle.destroy_owned"
 				}
