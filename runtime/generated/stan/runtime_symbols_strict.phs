@@ -85,8 +85,8 @@ function is_float(): mixed {}
 function is_int(): mixed {}
 function isset_eval(): bool {}
 function js_plus(): mixed {}
-function json_decode(string $json): dynamic {}
-function json_encode(mixed $value): string {}
+function json_decode(string $json): result<mixed> {}
+function json_encode(mixed $value): result<string> {}
 function jss_tokenize(string $source): token_buffer {}
 function jss_tokenize_buffer(string $source): token_buffer {}
 function layout_alignof(mixed $type_name): int {}
@@ -167,7 +167,7 @@ function strtoupper(string $text): string {}
 function substr(string $text, int $offset, int $length = 0): string {}
 function substr_compare(string $main, string $str, int $offset, int $length = 0): int {}
 function substr_replace(string $text, string $replace, int $offset, int $length = 0): string {}
-function take(mixed $out, mixed $source): bool {}
+function take(mixed $out, mixed $source_or_state, mixed $source = null): bool {}
 function task_cancel(task_batch $batch): void {}
 function task_done(task_batch $batch): bool {}
 function task_join(task_batch $batch): mixed {}
@@ -243,6 +243,13 @@ function webview_message_id(ui_event $event): int {}
 function webview_message_payload_json(ui_event $event): string {}
 function webview_reply_error(webview $view, int $id, string $code, string $message): result<bool> {}
 function webview_reply_ok(webview $view, int $id, string $value_json): result<bool> {}
+
+class error
+{
+	public function get_message(): string {}
+	public function get_line(): int {}
+	public function get_file(): string {}
+}
 
 namespace scpp;
 

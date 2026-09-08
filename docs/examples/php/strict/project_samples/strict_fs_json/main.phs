@@ -12,9 +12,13 @@ if (!take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
 	} else {
 		echo strlen($data), "\n";
 
-		$decoded dynamic = json_decode($data);
-		echo $decoded["name"], "\n";
-		echo $decoded["count"], "\n";
+		$decoded mixed;
+		if (!take($decoded, $err, json_decode($data))) {
+			echo $err->get_message(), "\n";
+		} else {
+			echo $decoded["name"], "\n";
+			echo $decoded["count"], "\n";
+		}
 	}
 
 	if (!fs_remove($file)) {

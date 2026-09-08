@@ -355,8 +355,8 @@ final class RuntimeShallowSourceGenerator
 				'trim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'ltrim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
 				'rtrim' => ['return' => 'string', 'params' => [['name' => 'text', 'type' => 'string']]],
-				'json_decode' => ['return' => 'dynamic', 'params' => [['name' => 'json', 'type' => 'string']]],
-				'json_encode' => ['return' => 'string', 'params' => [['name' => 'value', 'type' => 'mixed']]],
+				'json_decode' => ['return' => 'result<mixed>', 'params' => [['name' => 'json', 'type' => 'string']]],
+				'json_encode' => ['return' => 'result<string>', 'params' => [['name' => 'value', 'type' => 'mixed']]],
 				'dt_now' => ['return' => 'int', 'params' => []],
 				'dt_now_ms' => ['return' => 'int', 'params' => []],
 				'dt_monotonic_ms' => ['return' => 'int', 'params' => []],
@@ -368,7 +368,11 @@ final class RuntimeShallowSourceGenerator
 				'dt_format' => ['return' => 'string', 'params' => [['name' => 'stamp', 'type' => 'int'], ['name' => 'format', 'type' => 'string']]],
 				'dt_format_now' => ['return' => 'string', 'params' => [['name' => 'format', 'type' => 'string']]],
 				'dt_parse' => ['return' => 'result<int>', 'params' => [['name' => 'text', 'type' => 'string']]],
-				'take' => ['return' => 'bool', 'params' => [['name' => 'out', 'type' => 'mixed'], ['name' => 'source', 'type' => 'mixed']]],
+				'take' => ['return' => 'bool', 'params' => [
+					['name' => 'out', 'type' => 'mixed'],
+					['name' => 'source_or_state', 'type' => 'mixed'],
+					['name' => 'source', 'type' => 'mixed', 'has_default' => true],
+				]],
 				'curl_strerror' => ['return' => 'string', 'params' => [['name' => 'code', 'type' => 'int']]],
 			],
 			'strict' => [
@@ -561,7 +565,11 @@ final class RuntimeShallowSourceGenerator
 	private function renderRuntimeClasses(string $profile): array
 	{
 		$isStrict = $profile === 'strict';
-		$blocks = [];
+		$blocks = [$this->renderClassStub('error', [
+			['kind' => 'method', 'name' => 'get_message', 'return' => 'string', 'params' => []],
+			['kind' => 'method', 'name' => 'get_line', 'return' => 'int', 'params' => []],
+			['kind' => 'method', 'name' => 'get_file', 'return' => 'string', 'params' => []],
+		], $isStrict)];
 		$scppClasses = [];
 		if ($isStrict) {
 			$scppClasses = [

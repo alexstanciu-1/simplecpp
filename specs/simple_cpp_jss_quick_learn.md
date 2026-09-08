@@ -218,8 +218,18 @@ function main(): void {
 		return;
 	}
 
-	let data: dynamic = json.decode(text);
-	print(json.encode(data), "\n");
+	let data: mixed;
+	let jsonError: error;
+	if (!take(data, jsonError, json.decode(text))) {
+		print(jsonError.get_message(), "\n");
+		return;
+	}
+	let encoded: string = "";
+	if (take(encoded, jsonError, json.encode(data))) {
+		print(encoded, "\n");
+	} else {
+		print(jsonError.get_message(), "\n");
+	}
 	fs.remove(path);
 }
 
@@ -503,9 +513,18 @@ if (take(text, err, fs.get("data.txt"))) {
 ```
 
 ```js
-let data: dynamic = json.decode("{\"name\":\"alex\"}");
-let out: string = json.encode(data);
-print(out, "\n");
+let data: mixed;
+let jsonError: error;
+if (!take(data, jsonError, json.decode("{\"name\":\"alex\"}"))) {
+	print(jsonError.get_message(), "\n");
+	return;
+}
+let out: string = "";
+if (take(out, jsonError, json.encode(data))) {
+	print(out, "\n");
+} else {
+	print(jsonError.get_message(), "\n");
+}
 ```
 
 Runtime modules are project-selected capabilities. JSS source does not use JavaScript module semantics.
@@ -532,10 +551,15 @@ Do not treat result wrappers as JavaScript-truthy objects.
 
 ## Dynamic Data
 
-`json.decode(...)` returns dynamic by default. Stabilize dynamic values at typed boundaries:
+`json.decode(...)` returns `result<mixed>`. Unwrap it with `take` to handle malformed input. Stabilize dynamic values at typed boundaries:
 
 ```js
-let row: dynamic = json.decode("{\"count\":2}");
+let row: mixed;
+let jsonError: error;
+if (!take(row, jsonError, json.decode("{\"count\":2}"))) {
+	print(jsonError.get_message(), "\n");
+	return;
+}
 let count: int = row["count"];
 print(count + 1, "\n");
 ```
@@ -641,8 +665,18 @@ function main(): void {
 		return;
 	}
 
-	let data: dynamic = json.decode(text);
-	print(json.encode(data), "\n");
+	let data: mixed;
+	let jsonError: error;
+	if (!take(data, jsonError, json.decode(text))) {
+		print(jsonError.get_message(), "\n");
+		return;
+	}
+	let encoded: string = "";
+	if (take(encoded, jsonError, json.encode(data))) {
+		print(encoded, "\n");
+	} else {
+		print(jsonError.get_message(), "\n");
+	}
 	fs.remove(path);
 }
 

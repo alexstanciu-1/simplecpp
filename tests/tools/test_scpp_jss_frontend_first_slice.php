@@ -307,7 +307,7 @@ final class ScppJssFrontendFirstSliceTest
 	private function testJssClassifiedEmissionSupportsReservedHelperFamilies(): void
 	{
 		$source = implode("\n", [
-			'print(fs.get("a.txt"), fs.mkdir("tmp"), json.decode("{}"), "\\n");',
+			'print(fs.get("a.txt"), fs.mkdir("tmp"), json.decode("{}"), json.encode(null), "\\n");',
 			'',
 		]);
 		$program = (new JssParser())->parse((new JssTokenizer())->tokenize($source));
@@ -315,12 +315,13 @@ final class ScppJssFrontendFirstSliceTest
 		$classifications = (new StanFrontendClassifier())->classify(['main.jss' => $summary], (new StanSymbolIndexBuilder())->build(['main.jss' => $summary]));
 		$this->assertSame('result<string>', $this->findClassificationByTarget($classifications, 'fs_get')['return_type'] ?? null, 'STAN helper classification should expose fs_get return contract truth');
 		$this->assertSame('bool', $this->findClassificationByTarget($classifications, 'fs_mkdir')['return_type'] ?? null, 'STAN helper classification should expose plain bool fs mutator return contract truth');
-		$this->assertSame('dynamic', $this->findClassificationByTarget($classifications, 'json_decode')['return_type'] ?? null, 'STAN helper classification should expose json_decode dynamic return contract truth');
+		$this->assertSame('result<mixed>', $this->findClassificationByTarget($classifications, 'json_decode')['return_type'] ?? null, 'STAN helper classification should expose the checked json_decode return contract');
+		$this->assertSame('result<string>', $this->findClassificationByTarget($classifications, 'json_encode')['return_type'] ?? null, 'STAN helper classification should expose the checked json_encode return contract');
 
 		$phs = (new JssTranspiler())->transpileToPhsWithStanClassifications($source, 'main.jss');
 		$this->assertSame(
 			implode("\n", [
-				'echo fs_get("a.txt"), fs_mkdir("tmp"), json_decode("{}"), "\\n";',
+				'echo fs_get("a.txt"), fs_mkdir("tmp"), json_decode("{}"), json_encode(null), "\\n";',
 				'',
 			]),
 			$phs,

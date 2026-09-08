@@ -516,14 +516,15 @@ PHS
 			$this->assertSame(0, $checkedWrapperProperty['warning_count'] ?? null, 'take(...) wrapper property handling should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
-function main(): void
+function main(mixed $row, error $err): void
 {
-	$row = json_decode("{\"name\":\"Ada\"}");
+	if (!take($row, $err, json_decode("{\"name\":\"Ada\"}"))) {
+		return;
+	}
 	$name string = $row["name"];
 	echo $name, "\n";
 }
 
-main();
 PHS
  . "\n");
 
@@ -534,21 +535,22 @@ PHS
 				throw new RuntimeException('dynamic shape boundary diagnostic should be present');
 			}
 			$this->assertSame('stan.dynamic_shape_boundary', $dynamicDiagnostic['code'] ?? null, 'dynamic diagnostic code should be stable');
-			$this->assertSame(4, $dynamicDiagnostic['line'] ?? null, 'dynamic diagnostic should point at the required typed local');
+			$this->assertSame(6, $dynamicDiagnostic['line'] ?? null, 'dynamic diagnostic should point at the required typed local');
 			$this->assertContains('Dynamic value assigned to required `string` local `$name`', (string) ($dynamicDiagnostic['message'] ?? ''), 'dynamic diagnostic should describe the required boundary');
 			$this->assertContains('Guard the field with `isset(...)`', (string) ($dynamicDiagnostic['message'] ?? ''), 'dynamic diagnostic should recommend a shape guard');
 
 			$this->writeProject($project, <<<'PHS'
-function main(): void
+function main(mixed $row, error $err): void
 {
-	$row = json_decode("{\"name\":\"Ada\"}");
+	if (!take($row, $err, json_decode("{\"name\":\"Ada\"}"))) {
+		return;
+	}
 	if (isset($row["name"])) {
 		$name string = (string) $row["name"];
 		echo $name, "\n";
 	}
 }
 
-main();
 PHS
  . "\n");
 
@@ -556,14 +558,15 @@ PHS
 			$this->assertSame(0, $guardedDynamic['warning_count'] ?? null, 'guarded dynamic JSON extraction with an explicit cast should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
-function main(): void
+function main(mixed $row, error $err): void
 {
-	$row = json_decode("{\"name\":\"Ada\"}");
+	if (!take($row, $err, json_decode("{\"name\":\"Ada\"}"))) {
+		return;
+	}
 	$name string = $row["name"] ?? "";
 	echo $name, "\n";
 }
 
-main();
 PHS
  . "\n");
 

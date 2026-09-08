@@ -20,13 +20,23 @@ if ($ch === false) {
 	if (!take($reply, $out)) {
 		echo "EXEC_FAIL\n";
 	} else {
-		$decoded = json_decode($reply);
-		echo curl_getinfo($ch, CURLINFO_RESPONSE_CODE), "\n";
-		echo $decoded["ok"], "\n";
-		echo $decoded["kind"], "\n";
-		echo $decoded["payload"]["name"], "\n";
-		echo $decoded["payload"]["count"], "\n";
-		echo json_encode($decoded), "\n";
+		$decoded /** mixed */;
+		$err /** error */;
+		if (!take($decoded, $err, json_decode($reply))) {
+			echo "JSON_FAIL\n";
+		} else {
+			echo curl_getinfo($ch, CURLINFO_RESPONSE_CODE), "\n";
+			echo $decoded["ok"], "\n";
+			echo $decoded["kind"], "\n";
+			echo $decoded["payload"]["name"], "\n";
+			echo $decoded["payload"]["count"], "\n";
+			$encoded /** string */ = "";
+			if (take($encoded, $err, json_encode($decoded))) {
+				echo $encoded, "\n";
+			} else {
+				echo $err->get_message(), "\n";
+			}
+		}
 	}
 
 	echo curl_close($ch) ? "T\n" : "F\n";

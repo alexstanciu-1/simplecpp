@@ -489,18 +489,18 @@ Contract:
 
 # 6. JSON (`scpp::php`)
 
-### `json_encode(mixed_t) -> string_t` â€” Stable
-Encodes runtime dynamic value to JSON string.
+### `json_encode(mixed_t) -> result<string_t>` â€” Stable
+Encodes a runtime value to a checked JSON string result. Unsupported values return an error; consume with `take`.
 
 Contract:
 - public input surface is `mixed_t`
 - exact escaping/shape follows current runtime JSON implementation
 
-### `json_decode(string_t) -> dynamic` â€” Stable
-Decodes JSON string to runtime dynamic value.
+### `json_decode(string_t) -> result<mixed_t>` â€” Stable
+Decodes JSON text to a checked value or parse error.
 
 Contract:
-- source-facing result MUST be expressed as dynamic value
+- source-facing result is `result<mixed>`; malformed input returns `error`, handled with `take`
 - arrays/objects decode into runtime dynamic/container forms
 
 ---

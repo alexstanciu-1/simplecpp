@@ -25,8 +25,12 @@ final class ScppStrictRuntimeCatalogTest
 			$this->assertSame(null, $catalog->requiredModule($name), 'STAN catalog should treat ' . $name . ' as a core helper');
 		}
 
+		$this->assertSame('result<mixed>', $catalog->returnType('json_decode'), 'STAN should expose the checked JSON result');
+		$this->assertSame('result<string>', $catalog->returnType('json_encode'), 'STAN should expose the checked JSON encoding result');
+
 		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
+		$this->assertContains('public function get_message(): string', $strictRuntimeSymbols, 'captured errors should expose their message to STAN');
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');
 		$this->assertContains('function layout_sizeof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_sizeof');
 		$this->assertContains('function layout_alignof(mixed $type_name): int', $strictRuntimeSymbols, 'strict shallow runtime should expose layout_alignof');

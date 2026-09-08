@@ -217,7 +217,7 @@ static void test_string_key_identity_contract() {
 
 	assert(probe.get(scpp::string_t("name")).get_string().native_value() == "N");
 	assert(probe.get(scpp::string_t("class")).get_string().native_value() == "C");
-	assert(scpp::php::json_encode(probe).native_value() == "{\"name\":\"N\",\"class\":\"C\"}");
+	assert(scpp::php::json_encode(probe).value().native_value() == "{\"name\":\"N\",\"class\":\"C\"}");
 }
 
 // Verifies nested table lookups stay non-inserting and null-safe through the current hash_t/mixed_t API.

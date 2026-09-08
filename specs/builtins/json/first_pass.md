@@ -9,18 +9,17 @@ See also:
 
 ## Module split
 
-- `runtime/include/scpp/json module (scpp::json).hpp`
+- `runtime/include/modules/json/json.hpp`
 
 Support implementation lives in:
 
-- `runtime/include/scpp/support/json module (scpp::json).hpp`
-- `runtime/include/scpp/support/json module (scpp::json).cpp`
+- `runtime/include/modules/json/json.cpp`
 
 The goal is to keep JSON isolated from generic `php.hpp` growth, similar to filesystem and stdio.
 
 ## Runtime value target
 
-`json_decode()` returns the same runtime value model that hand-written Simple C++ / Prism++ code would build.
+`json_decode()` carries successful values in the same runtime value model that hand-written Simple C++ / Prism++ code would build.
 
 That means:
 
@@ -41,13 +40,13 @@ This first pass intentionally does **not** aim for full PHP `json_*` parity.
 Key decisions:
 
 - only the core `json_decode(string)` and `json_encode(value)` shapes are implemented
-- invalid input throws instead of returning a warning/false style result
+- decoding returns `result<mixed>`; malformed input is an error branch handled with `take`, distinct from valid JSON `null` or `false`
 - object-vs-array semantics follow `hash_t::is_packed()`
 - numeric-looking object keys normalize through existing `hash_t` key rules, matching normal runtime construction
-- non-finite floats are rejected by `json_encode()`
-- weak tables are rejected by `json_encode()`
+- `json_encode()` returns `result<string>`; non-finite floats produce its error branch
+- weak tables produce the error branch of `json_encode()`
 - no options bitmask or associative/object toggles are implemented yet
 
 ## Testing note
 
-Runtime smoke coverage lives in `tests/runtime/native/test_json module (scpp::json).cpp`.
+Runtime smoke coverage lives in `tests/runtime/native/test_json.cpp`.

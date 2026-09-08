@@ -14,18 +14,18 @@ Use the dedicated header instead:
 
 ## First-pass contract shape
 
-- `json_decode()` parses one full JSON document into `dynamic`
+- `json_decode()` parses one full JSON document into `result<mixed>`
 - decoded scalars stay inline in `mixed_t`
 - decoded arrays and objects both become `dynamic_t`
 - packed `hash_t` encodes as a JSON array
 - non-packed `hash_t` encodes as a JSON object
 - object-vs-array differentiation follows the same internal model as hand-written Prism++ / Simple C++ code
-- invalid JSON throws a runtime error with a byte position
-- `json_encode()` rejects weak tables and non-finite floats in this pass
+- invalid JSON returns an `error` with a byte position; `take($data, $err, json_decode($text))` returns `false` and allows the next request to continue
+- `json_encode()` returns `result<string>`; use `take` to handle weak-table or non-finite-float errors without partial output
 
 Strict-mode guidance:
 
-- treat `json_decode()` as a fat-variable ingestion boundary
+- declare `$data mixed;` and `$err error;`, then unwrap `json_decode()` with `take` at the ingestion boundary
 - decoded JSON is normal broad/dynamic data at that edge, not the preferred interior representation for strict business logic
 - when the expected payload shape is known, document it locally near the decode boundary
 - stabilize early into typed locals, typed properties, typed objects, or typed containers

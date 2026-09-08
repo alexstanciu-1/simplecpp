@@ -75,8 +75,8 @@ function is_file(string $path): bool {}
 function is_link(string $path): bool {}
 function isset_eval(): bool {}
 function js_plus(): mixed {}
-function json_decode(string $json): dynamic {}
-function json_encode(mixed $value): string {}
+function json_decode(string $json) /** result<mixed> */ {}
+function json_encode(mixed $value) /** result<string> */ {}
 function jss_tokenize(string $source): token_buffer {}
 function jss_tokenize_buffer(string $source): token_buffer {}
 function lcfirst(string $text): string {}
@@ -153,7 +153,7 @@ function strtoupper(string $text): string {}
 function substr(string $text, int $offset, int $length = 0): string {}
 function substr_compare(string $main, string $str, int $offset, int $length = 0): int {}
 function substr_replace(string $text, string $replace, int $offset, int $length = 0): string {}
-function take(mixed $out, mixed $source): bool {}
+function take(mixed $out, mixed $source_or_state, mixed $source = null): bool {}
 function ternary_eval(): mixed {}
 function text_builder_append_bool(text_builder $builder, bool $value): void {}
 function text_builder_append_byte_span(text_builder $builder, byte_span $span): void {}
@@ -189,6 +189,13 @@ function vector_compact(mixed $values, int $capacity = 0): void {}
 function vector_filled(int $count, mixed $default_value): mixed {}
 function vector_reserve(mixed $values, int $capacity): void {}
 function vector_resize(mixed $values, int $count, mixed $default_value): void {}
+
+class error
+{
+	public function get_message(): string {}
+	public function get_line(): int {}
+	public function get_file(): string {}
+}
 
 namespace scpp;
 

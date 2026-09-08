@@ -358,7 +358,12 @@ Current CLI runtime-failure presentation is intentionally source-first:
 End-to-end example:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 echo "name=" . $row["name"] . "\n";
 ```
 
@@ -373,7 +378,12 @@ Operation: scpp::cast<string_t>
 Recommended next move:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 dbg("name", $row["name"], DBG_SHAPE | DBG_TYPE);
 echo "name=" . $row["name"] . "\n";
 ```
@@ -381,7 +391,12 @@ echo "name=" . $row["name"] . "\n";
 Then rewrite into an intentional stabilization pattern:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 if (isset($row["name"])) {
 	$name string = $row["name"];
 	echo "name=" . $name . "\n";
@@ -508,7 +523,7 @@ Use this order:
 | strict general builtin | `$n = strlen("hello");` |
 | strict filesystem builtin | `take($data, $err, fs_get($file));` |
 | strict IO builtin | `take($written, io_write($fh, "abc"));` |
-| strict JSON builtin | `$data = json_decode($json);` |
+| strict JSON builtin | `take($data, $err, json_decode($json))` with `$data mixed` |
 | Prism++ file start | `echo "hello\n";` |
 | nullable local | `$id ?int = null;` |
 | strict comparison | `if ($value === 0) { ... }` |
@@ -570,7 +585,12 @@ Otherwise, prefer `isset(...)` for compact nullable-path checks.
 Preferred:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $name string = $row["name"];
 ```
 
@@ -582,14 +602,24 @@ The left side is already a visible typed boundary.
 Preferred when absence should default:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $nickname string = isset($row["nickname"]) ? $row["nickname"] : "";
 ```
 
 Preferred when absence should remain distinct:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $nickname = null;
 if (isset($row["nickname"])) {
 	$nickname string = $row["nickname"];
@@ -601,7 +631,12 @@ if (isset($row["nickname"])) {
 Preferred when the destination is already typed:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $count int = $row["count"];
 ```
 
@@ -815,7 +850,7 @@ are stabilization steps.
 - `Important`: if the key is missing or the value shape is not what you expect, do not assume this is a harmless PHP-style read
 - `When unsure`: guard first, or keep the value dynamic a little longer, or use a wrapper-producing boundary before stabilizing
 
-Decoded JSON is still dynamic after `json_decode(...)`.
+Decoded JSON is still dynamic after unwrapping `json_decode(...)` with `take`.
 Treat typed extraction from it as an assumption about shape, not as free PHP flexibility.
 
 ## Dynamic-Data Stabilization Cookbook
@@ -827,7 +862,12 @@ Use this section when incoming data is dynamic but the next step in the code wan
 Use a direct typed read when the field is required and the program genuinely expects that shape:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $name string = $row["name"];
 echo $name, "\n";
 ```
@@ -853,14 +893,24 @@ When a field is optional, choose between defaulting and nullable handling on pur
 Use a default when the rest of the code wants a normal string either way:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $nickname string = isset($row["nickname"]) ? $row["nickname"] : "";
 ```
 
 Use nullable handling when absence is meaningful and should stay distinct:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $nickname = null;
 if (isset($row["nickname"])) {
 	$nickname string = $row["nickname"];
@@ -891,7 +941,12 @@ Typed container writes are ordinary typed boundaries under the stable-left-side 
 Typed hash slot:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $counts hash<int> = [];
 $counts["id"] = $row["id"];
 ```
@@ -899,7 +954,12 @@ $counts["id"] = $row["id"];
 Typed vector append:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $items vector<int> = [];
 $items[] = $row["count"];
 ```
@@ -914,7 +974,7 @@ Prefer this when the program already knows the target container shape.
 
 ### 3A. Decoded JSON / fat-variable boundary
 
-`json_decode(...)` returns fat-variable data.
+`json_decode(...)` returns `result<mixed>`; unwrap it with `take` before using the decoded value.
 
 In practice, that means a `mixed` / dynamic-shaped boundary value, not a preferred interior representation for strict business logic.
 
@@ -934,7 +994,12 @@ When the source shape is known from a schema, API contract, or file format, a sh
  *  - type.list: bool
  *  - required: bool
  */
-$property_data = json_decode($text);
+$property_data mixed;
+$json_error error;
+if (!take($property_data, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 
 if (isset($property_data["name"])) {
 	$out->name = $property_data["name"];
@@ -973,7 +1038,12 @@ $out->name = $property_data["name"];
 Delay the typed boundary when the incoming shape is still genuinely uncertain.
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 $value = $row["name"];
 dbg("name", $value, DBG_SHAPE | DBG_TYPE);
 ```
@@ -998,7 +1068,12 @@ This is usually the better move when:
 When a field may be absent, `null`, a string, or the wrong kind entirely, keep those states explicit.
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$json_error error;
+if (!take($row, $json_error, json_decode($text))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 
 if (!isset($row["path"])) {
 	echo "path missing\n";
@@ -1032,7 +1107,7 @@ The goal is to place them where the shape assumption is intentional and easy to 
 
 - `Guaranteed`: it can carry error information such as message, line, and file
 - `Preferred`: in quick strict code, treat it as a payload you capture when `take(..., $err, ...)` fails
-- `Current`: detailed PHP++ / PHS user-facing accessor patterns for reading `error` are not fully documented in this quick-learn yet
+- `Guaranteed`: read the captured payload with `$err->get_message()`, `$err->get_line()`, and `$err->get_file()`; JSON parse messages include the byte offset, while line/file are left at their defaults.
 
 If your code depends heavily on inspecting error details, check the deeper runtime/spec docs before standardizing a pattern.
 
@@ -1164,8 +1239,8 @@ Visible PHP++ / PHS strict names use plain PHP-like names for general language-a
 
 | Name | Compact signature | Return shape / note |
 | --- | --- | --- |
-| `json_decode` | `json_decode(string $json)` | `dynamic`; arrays/objects become dynamic/hash-backed |
-| `json_encode` | `json_encode(mixed $value)` | `string` |
+| `json_decode` | `json_decode(string $json)` | `result<mixed>`; unwrap with `take`; malformed JSON returns an error |
+| `json_encode` | `json_encode(mixed $value)` | `result<string>`; unwrap with `take`; unsupported values return an error |
 
 ### Datetime
 
@@ -1213,7 +1288,12 @@ $written int = 0;
 if (take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))) {
 	$data string = "";
 	if (take($data, $err, fs_get($file))) {
-		$row = json_decode($data);
+		$row mixed;
+		$json_error error;
+		if (!take($row, $json_error, json_decode($data))) {
+			echo $json_error->get_message(), "\n";
+			return;
+		}
 		$name string = $row["name"];
 		$count int = $row["count"];
 		echo strlen($name), "\n";
