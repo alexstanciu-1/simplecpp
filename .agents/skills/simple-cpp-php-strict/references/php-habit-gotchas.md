@@ -84,7 +84,7 @@ Do not use arbitrary string or unresolved `mixed` values directly as conditions 
 
 ## Dynamic JSON
 
-`json_decode(...)` returns dynamic data. Treat typed reads from it as shape assumptions.
+`json_decode(...)` returns `result<mixed>`, not direct dynamic data. Extract it with `take` before reading fields. `json_encode(...)` likewise returns `result<string>`; unwrap before printing or writing the JSON text. Parse/encode errors are checked results, not source `Exception` objects to catch. A successful decode still does not prove the payload shape.
 
 Normal PHP habit often lets decoded arrays/objects flow everywhere.
 Strict PHP++ should treat decoded JSON as a boundary, not as the preferred interior representation.
@@ -92,7 +92,12 @@ Strict PHP++ should treat decoded JSON as a boundary, not as the preferred inter
 Preferred:
 
 ```php
-$data = json_decode($text);
+$data mixed;
+$err error;
+if (!take($data, $err, json_decode($text))) {
+	echo $err->get_message(), "\n";
+	return;
+}
 
 if (isset($data["name"])) {
 	$name string = $data["name"];
@@ -100,24 +105,21 @@ if (isset($data["name"])) {
 }
 ```
 
-Avoid assuming decoded JSON is already typed:
+The remaining examples use `$data` only after successful extraction above. Avoid assuming decoded JSON is already typed:
 
 ```php
-$data = json_decode($text);
 $name = $data["name"];
 ```
 
 When the field is optional, default or guard on purpose instead of letting ambiguity spread:
 
 ```php
-$data = json_decode($text);
 $nickname string = isset($data["nickname"]) ? $data["nickname"] : "";
 ```
 
 When the payload shape is still unclear, delay stabilization briefly and inspect it:
 
 ```php
-$data = json_decode($text);
 $raw = $data["name"];
 dbg("name", $raw, DBG_SHAPE | DBG_TYPE);
 ```
@@ -129,7 +131,6 @@ When the payload shape is known, leave a short local shape comment and normalize
  *  - name: string
  *  - active: bool
  */
-$data = json_decode($text);
 
 if (isset($data["name"])) {
 	$user->name = $data["name"];
@@ -169,7 +170,7 @@ Strict APIs often return wrappers instead of raw values.
 Preferred:
 
 ```php
-$err /** error_t */;
+$err error;
 $text string = "";
 
 if (!take($text, $err, fs_get($path))) {

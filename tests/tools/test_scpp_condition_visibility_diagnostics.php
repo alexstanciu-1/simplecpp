@@ -50,9 +50,9 @@ final class ScppConditionVisibilityDiagnosticsTest
 				],
 			], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 			$this->write($project . '/main.phs', implode("\n", [
-				'$rows vector<mixed> = [];',
-				'$result mixed = null;',
-				'while (($row = $result->fetch_assoc()) !== null) {',
+				'function next_row(): ?int { return null; }',
+				'$rows vector<int> = [];',
+				'while (($row = next_row()) !== null) {',
 				'	$rows[] = $row;',
 				'}',
 				'',

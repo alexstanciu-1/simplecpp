@@ -3308,7 +3308,7 @@ function execute_build(string $projectRoot, string $configPath, array $options =
 	$markTiming('build_ninja_written');
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig, $runtimePlacementForInvocation);
 	$GLOBALS['scpp_required_runtime_module_artifacts'] = [];
-	if ($runtimePlacementForInvocation === 'reuse' && runtime_is_shared_release_eligible($compiler, $buildMode, $runtimeConfig)) {
+	if (runtime_placement_uses_shared_release($runtimePlacementForInvocation, $compiler, $buildMode, $runtimeConfig)) {
 		foreach (resolve_shared_runtime_bundle_specs($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig)['modules'] as $moduleSpec) {
 			$GLOBALS['scpp_required_runtime_module_artifacts'][] = normalize_path($projectRoot . '/' . normalize_config_path((string) $moduleSpec['artifact_path']));
 		}
@@ -16648,8 +16648,7 @@ function classify_stan_build_bucket(array $diagnostic): string
 {
 	$kind = (string) ($diagnostic['kind'] ?? '');
 	if ($kind === 'frontend_classification') {
-		$code = (string) ($diagnostic['code'] ?? '');
-		if (in_array($code, ['frontend_member_access', 'frontend_binary_plus', 'frontend_take_contract'], true)) {
+		if (\Scpp\S2S\Stan\StanSemanticPass::isBuildBlockingFrontendDiagnostic($diagnostic)) {
 			return 'compile-errors';
 		}
 		return 'stan-warnings';
@@ -17704,7 +17703,7 @@ function render_build_ninja(string $projectRoot, string $repoRoot, string $build
 	};
 	$linkerFlags = is_array($compiler['linker_flags'] ?? null) ? $compiler['linker_flags'] : [];
 	$runtimeBuild = build_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig, $runtimePlacement);
-	$sharedRuntimeModules = ($runtimePlacement === 'reuse' && runtime_is_shared_release_eligible($compiler, $buildMode, $runtimeConfig))
+	$sharedRuntimeModules = runtime_placement_uses_shared_release($runtimePlacement, $compiler, $buildMode, $runtimeConfig)
 		? resolve_shared_runtime_bundle_specs($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig)['modules']
 		: [];
 	$runtimeSignatureStamp = build_ninja_relative_path($projectRoot, $buildDir, $buildDir . '/runtime_signature.txt');
@@ -18222,6 +18221,13 @@ function runtime_is_shared_release_eligible(array $compiler, string $buildMode, 
 		&& runtime_config_uses_shared_release_module_policy($runtimeConfig);
 }
 
+/** Resolve placement consistently for artifact selection and bundle compilation. */
+function runtime_placement_uses_shared_release(string $placement, array $compiler, string $buildMode, array $runtimeConfig): bool
+{
+	return $placement === 'shared'
+		|| ($placement === 'reuse' && runtime_is_shared_release_eligible($compiler, $buildMode, $runtimeConfig));
+}
+
 /** @return array{enabled:bool,cflags:list<string>,ldflags:list<string>,compile_defines:list<string>} */
 function resolve_runtime_mysqli_build_spec(): array
 {
@@ -18537,7 +18543,8 @@ function build_runtime_compiler_flags(string $compilerKind, string $buildMode, s
 		$flags[] = '-DNDEBUG';
 	} else {
 		$flags[] = '-O0';
-		$flags[] = '-g1';
+		// Full debug info preserves header/template file identities with Clang PCH.
+		$flags[] = '-g';
 		$flags[] = '-pipe';
 	}
 	$flags[] = '-I' . $runtimeIncludeDir;
@@ -18553,8 +18560,7 @@ function build_runtime_artifact_spec(string $repoRoot, string $projectRoot, arra
 {
 	$family = resolve_runtime_family($runtimeConfig);
 	$localSignature = compute_runtime_build_signature($repoRoot, $compiler, $buildMode, $runtimeConfig);
-	$useSharedReleaseRuntime = $runtimePlacement === 'shared'
-		|| ($runtimePlacement === 'reuse' && runtime_is_shared_release_eligible($compiler, $buildMode, $runtimeConfig));
+	$useSharedReleaseRuntime = runtime_placement_uses_shared_release($runtimePlacement, $compiler, $buildMode, $runtimeConfig);
 	$runtimeCacheDir = $useSharedReleaseRuntime
 		? normalize_path($repoRoot . '/.prism/runtime/release/' . $family . '/' . $buildMode)
 		: normalize_path($projectRoot . '/.prism/runtime/project/' . $family . '/' . $localSignature);
@@ -20556,7 +20562,7 @@ function scpp_build_runtime_from_config(string $repoRoot, ?array $config, string
 		scpp_fail("No supported C++ compiler found.\n" . install_hint_for_compiler() . PHP_EOL, 1);
 	}
 	$runtimeConfig = resolve_runtime_build_config($config);
-	if ($runtimePlacement === 'shared') {
+	if (runtime_placement_uses_shared_release($runtimePlacement, $compiler, $buildMode, $runtimeConfig)) {
 		$bundle = resolve_shared_runtime_bundle_specs($repoRoot, $projectRoot, $compiler, $buildMode, $runtimeConfig);
 		$artifactPath = scpp_compile_runtime_artifact_spec($repoRoot, $projectRoot, $compiler, $buildMode, $bundle['base'], render_shared_release_base_runtime_composition_source($runtimeConfig), $force);
 		foreach ($bundle['modules'] as $moduleSpec) {
@@ -20649,7 +20655,8 @@ function build_compiler_flags(string $compilerKind, string $buildMode, string $r
 		$flags[] = '-DNDEBUG';
 	} else {
 		$flags[] = '-O0';
-		$flags[] = '-g1';
+		// Full debug info preserves header/template file identities with Clang PCH.
+		$flags[] = '-g';
 		$flags[] = '-pipe';
 	}
 	$flags[] = '-I' . $runtimeIncludeDir;

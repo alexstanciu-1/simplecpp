@@ -73,7 +73,7 @@ final class StanSemanticPass
 		if ($buildGateOnly) {
 			$frontendDiagnostics = array_values(array_filter(
 				$frontendDiagnostics,
-				static fn (array $diagnostic): bool => in_array((string) ($diagnostic['code'] ?? ''), ['frontend_member_access', 'frontend_binary_plus', 'frontend_take_contract'], true)
+				self::isBuildBlockingFrontendDiagnostic(...)
 			));
 		}
 		$suppressionStart = microtime(true);
@@ -166,6 +166,15 @@ final class StanSemanticPass
 		];
 	}
 
+	/** Definite frontend failures must agree in the fast build gate and CLI report. */
+	public static function isBuildBlockingFrontendDiagnostic(array $diagnostic): bool
+	{
+		return in_array((string) ($diagnostic['code'] ?? ''), [
+			'frontend_member_access', 'frontend_binary_plus', 'frontend_take_contract',
+			'frontend_runtime_module',
+		], true);
+	}
+
 	/** @param array<string,array<string,mixed>> $frontendClassifications @return list<array<string,mixed>> */
 	private function collectFrontendDiagnostics(array $frontendClassifications): array
 	{
@@ -185,7 +194,9 @@ final class StanSemanticPass
 				}
 				$diagnostics[] = [
 					'kind' => 'frontend_classification',
-					'code' => 'frontend_' . (string) ($classification['request_kind'] ?? 'classification'),
+					'code' => ($classification['kind'] ?? '') === 'unavailable_runtime_module'
+						? 'frontend_runtime_module'
+						: 'frontend_' . (string) ($classification['request_kind'] ?? 'classification'),
 					'path' => (string) ($classification['path'] ?? ''),
 					'line' => (int) ($classification['line'] ?? 0),
 					'column' => (int) ($classification['column'] ?? 0),

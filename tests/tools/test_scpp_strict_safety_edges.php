@@ -99,7 +99,7 @@ PHS
 		] as $localType => $runtimeType) {
 			$this->write($project . '/main.phs', <<<'PHS'
 $text = "{\"count\":2}";
-$row = json_decode($text);
+$row mixed; $error_row error; echo "decoded:", take($row, $error_row, json_decode($text)), "\n";
 PHS
  . "\n"
  . '$value ' . $localType . ' = $row["name"];' . "\n"
@@ -107,6 +107,7 @@ PHS
 
 			$run = $this->runScpp($project, ['run'], !$builtRuntime, 120);
 			$builtRuntime = true;
+			$this->assertContains("decoded:1\n", $run['stdout'], 'valid JSON should decode before checking missing fields');
 			$this->assertNotSame(0, $run['exit_code'], 'missing dynamic JSON field should fail a required ' . $localType . ' typed local');
 			$this->assertContains('Cannot convert value to required ' . $runtimeType . '.', $run['stderr'], 'missing dynamic JSON field diagnostic should explain the required ' . $localType . ' typed boundary');
 			$this->assertContains('Runtime error in main.phs:3', $run['stderr'], 'missing dynamic JSON field diagnostic should remap to the ' . $localType . ' typed local');
@@ -124,7 +125,7 @@ PHS
 			'json_float_to_int' => '{"count":2.5}',
 			'json_string_number_to_int' => '{"count":"42"}',
 		] as $case => $json) {
-			$this->write($project . '/main.phs', '$row = json_decode(' . var_export($json, true) . ');' . "\n" . <<<'PHS'
+			$this->write($project . '/main.phs', '$row mixed; $jsonError error; echo "decoded:", take($row, $jsonError, json_decode(' . var_export($json, true) . ')), "\n";' . "\n" . <<<'PHS'
 $count int = $row["count"];
 echo $count, "\n";
 PHS
@@ -132,6 +133,7 @@ PHS
 
 			$run = $this->runScpp($project, ['run'], !$builtRuntime, 120);
 			$builtRuntime = true;
+			$this->assertContains("decoded:1\n", $run['stdout'], 'valid JSON should decode before checking numeric shapes');
 			$this->assertNotSame(0, $run['exit_code'], $case . ' should fail a required int typed local');
 			$this->assertContains('Cannot convert value to required int_t.', $run['stderr'], $case . ' diagnostic should explain the required int boundary');
 			$this->assertContains('Runtime error in main.phs:2', $run['stderr'], $case . ' diagnostic should remap to the typed local');
@@ -179,27 +181,27 @@ PHS
 		$project = $this->root . '/json_arrays_to_vectors';
 		$this->writeProject($project, []);
 		$this->write($project . '/main.phs', <<<'PHS'
-$intsJson = json_decode("[1,2,3]");
+$intsJson mixed; $error_intsJson error; echo "decoded:", take($intsJson, $error_intsJson, json_decode("[1,2,3]")), "\n";
 $ints vector<int> = $intsJson;
 echo $ints[0], ":", $ints[2], "\n";
 
-$floatsJson = json_decode("[1.5,2.25]");
+$floatsJson mixed; $error_floatsJson error; echo "decoded:", take($floatsJson, $error_floatsJson, json_decode("[1.5,2.25]")), "\n";
 $floats vector<float> = $floatsJson;
 echo $floats[0], ":", $floats[1], "\n";
 
-$boolsJson = json_decode("[true,false]");
+$boolsJson mixed; $error_boolsJson error; echo "decoded:", take($boolsJson, $error_boolsJson, json_decode("[true,false]")), "\n";
 $bools vector<bool> = $boolsJson;
 echo $bools[0], ":", $bools[1], "\n";
 
-$stringsJson = json_decode("[\"a\",\"b\"]");
+$stringsJson mixed; $error_stringsJson error; echo "decoded:", take($stringsJson, $error_stringsJson, json_decode("[\"a\",\"b\"]")), "\n";
 $strings vector<string> = $stringsJson;
 echo $strings[0], ":", $strings[1], "\n";
 
-$mixedJson = json_decode("[1,null,\"x\"]");
+$mixedJson mixed; $error_mixedJson error; echo "decoded:", take($mixedJson, $error_mixedJson, json_decode("[1,null,\"x\"]")), "\n";
 $mixed vector<mixed> = $mixedJson;
 echo count($mixed), "\n";
 
-$nestedJson = json_decode("[[1,2],[3,4]]");
+$nestedJson mixed; $error_nestedJson error; echo "decoded:", take($nestedJson, $error_nestedJson, json_decode("[[1,2],[3,4]]")), "\n";
 $nested vector<vector<int>> = $nestedJson;
 echo $nested[0][1], ":", $nested[1][0], "\n";
 PHS
@@ -207,6 +209,7 @@ PHS
 
 		$run = $this->runScpp($project, ['run'], true, 120);
 		$this->assertSame(0, $run['exit_code'], 'decoded JSON arrays should stabilize into typed vectors');
+		$this->assertSame(6, substr_count($run['stdout'], "decoded:1\n"), 'all six valid JSON arrays should decode successfully');
 		$this->assertContains("1:3\n", $run['stdout'], 'decoded JSON array should stabilize into vector<int>');
 		$this->assertContains("1.5:2.25\n", $run['stdout'], 'decoded JSON array should stabilize into vector<float>');
 		$this->assertContains("1:\n", $run['stdout'], 'decoded JSON array should stabilize into vector<bool>');
@@ -224,13 +227,14 @@ PHS
 				'expected' => 'int_t',
 			],
 		] as $case => $fixture) {
-			$this->write($project . '/main.phs', '$valuesJson = json_decode(' . var_export($fixture['json'], true) . ');' . "\n" . <<<'PHS'
+			$this->write($project . '/main.phs', '$valuesJson mixed; $jsonError error; echo "decoded:", take($valuesJson, $jsonError, json_decode(' . var_export($fixture['json'], true) . ')), "\n";' . "\n" . <<<'PHS'
 $values vector<int> = $valuesJson;
 echo $values[0], "\n";
 PHS
  . "\n");
 
 			$failedRun = $this->runScpp($project, ['run'], false, 120);
+			$this->assertContains("decoded:1\n", $failedRun['stdout'], 'valid JSON should decode before checking required vector boundaries');
 			$this->assertNotSame(0, $failedRun['exit_code'], $case . ' should fail a required vector<int> typed local');
 			$this->assertContains('Cannot convert value to required ' . $fixture['expected'] . '.', $failedRun['stderr'], $case . ' diagnostic should explain the failed required boundary');
 			$this->assertContains('Operation: scpp::required_cast<' . $fixture['expected'] . '>', $failedRun['stderr'], $case . ' diagnostic should use required_cast for the failed boundary');
@@ -243,20 +247,27 @@ PHS
 		$this->writeProject($project, []);
 		$this->write($project . '/main.phs', <<<'PHS'
 $items vector<int> = [1, 2, 3];
-echo json_encode($items), "\n";
+$encoded_items string = ""; $error_items error;
+echo "encoded:", take($encoded_items, $error_items, json_encode($items)), "\n";
+echo $encoded_items, "\n";
 
 $scores hash<int> = [];
 $scores["a"] = 1;
 $scores["b"] = 2;
-echo json_encode($scores), "\n";
+$encoded_scores string = ""; $error_scores error;
+echo "encoded:", take($encoded_scores, $error_scores, json_encode($scores)), "\n";
+echo $encoded_scores, "\n";
 
 $nested vector<vector<string>> = [["a", "b"], ["c"]];
-echo json_encode($nested), "\n";
+$encoded_nested string = ""; $error_nested error;
+echo "encoded:", take($encoded_nested, $error_nested, json_encode($nested)), "\n";
+echo $encoded_nested, "\n";
 PHS
  . "\n");
 
 		$run = $this->runScpp($project, ['run'], true, 120);
 		$this->assertSame(0, $run['exit_code'], 'json_encode should accept typed collections');
+		$this->assertSame(3, substr_count($run['stdout'], "encoded:1\n"), 'all three typed collections should encode successfully');
 		$this->assertContains("[1,2,3]\n", $run['stdout'], 'json_encode should accept vector<int>');
 		$this->assertContains("{\"a\":1,\"b\":2}\n", $run['stdout'], 'json_encode should accept hash<int>');
 		$this->assertContains("[[\"a\",\"b\"],[\"c\"]]\n", $run['stdout'], 'json_encode should accept nested vectors');

@@ -598,7 +598,8 @@ PHS);
 		$this->assertSame('scoped', $readerSummary['status'] ?? null, 'runtime error slot method should compile with a scoped pack');
 		$this->assertSame('candidate_scoped', $readerSummary['candidate_status'] ?? null, 'runtime error slot method should be a scoped candidate');
 		$this->assertSame([], $readerSummary['candidate_blocking_reasons'] ?? null, 'runtime error slot dependency should not block scoped activation');
-		$this->assertSame(['error'], $this->dependencyCategoryTargets($readerSummary, 'unresolved symbol'), 'runtime error slot should remain visible as unresolved runtime evidence');
+		$this->assertSame([], $this->dependencyCategoryTargets($readerSummary, 'unresolved symbol'), 'known runtime error type should not remain unresolved');
+		$this->assertSame([], $readerSummary['direct_source_dependencies'] ?? null, 'runtime error and filesystem helpers should not introduce project-header dependencies');
 
 		$accumulatorSummary = $this->findSummary($projectUnits, 'accumulator.phs', '');
 		$this->assertSame('scoped', $accumulatorSummary['status'] ?? null, 'method local-invalidation body should compile with a scoped pack');

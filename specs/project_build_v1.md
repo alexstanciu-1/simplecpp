@@ -451,6 +451,18 @@ The command:
 4. accepts `--release` to build the release runtime variant
 5. accepts `--force` to delete and rebuild the selected runtime artifact even if it already exists
 
+When the selected placement uses the shared runtime cache, the command maintains
+the complete requested bundle: the base runtime and each enabled optional module
+artifact. An existing base does not suppress compilation of a missing module.
+`--force` rebuilds all requested bundle members. Configurations ineligible for
+shared reuse continue to use their project-local runtime composition.
+
+GNU-like debug builds emit full debug information (`-g`) for both project and
+runtime compilation. This preserves header/template file identities through
+Clang precompiled headers so runtime traces can select the actual generated
+application frame. Debug artifacts can be larger than with line-only information;
+release builds retain their existing optimization flags.
+
 ## `scpp docs` behavior
 
 `scpp docs` prints curated local documentation without requiring network access.

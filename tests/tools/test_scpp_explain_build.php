@@ -1162,7 +1162,7 @@ final class ScppExplainBuildTest
 		if (!is_array($summaryArtifact)) {
 			throw new RuntimeException($context . ' dependency_summary_artifact should be an object');
 		}
-		$this->assertKeys(['path', 'source_count', 'source_fingerprint', 'source_overrides_active', 'summary_signature', 'used_stan_dependency_state'], $summaryArtifact, $context . ' dependency_summary_artifact keys');
+		$this->assertKeys(['path', 'resolution_surface_hash', 'source_count', 'source_fingerprint', 'source_overrides_active', 'summary_signature', 'used_stan_dependency_state'], $summaryArtifact, $context . ' dependency_summary_artifact keys');
 
 		foreach (is_array($projectUnits['headers'] ?? null) ? $projectUnits['headers'] : [] as $header) {
 			if (!is_array($header)) {

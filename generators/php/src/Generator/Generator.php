@@ -910,7 +910,12 @@ final class Generator
 		}
 
 		if ($exprType === 'mixed_t') {
-			return $this->renderGeneratedCast($expectedType, $renderedExpr);
+			// A typed destination checks the original dynamic payload. Explicit source
+			// casts retain their separate coercing path; casting here first would erase
+			// null/kind information and bypass recursive vector boundary validation.
+			return $this->isDirectInitializerBoundaryType($expectedType)
+				? $this->renderGeneratedCast($expectedType, $renderedExpr)
+				: $this->renderRequiredTypedBoundaryCast($expectedType, $renderedExpr);
 		}
 
 		if (preg_match('/^int_t<.+>$/', $expectedType) === 1 && str_starts_with($exprType, 'int_t')) {

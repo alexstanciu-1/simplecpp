@@ -646,6 +646,10 @@ final class ScppJssProjectBuildRunTest
 		$error = (string) ($build['error'] ?? '');
 		$this->assertContains('Runtime helper `curl_init()` requires module `curl` in the active project runtime config.', $error, 'JSS project build should surface the STAN-owned curl module diagnostic');
 		$this->assertContains('main.jss', $error, 'JSS project curl module diagnostic should mention the source file');
+
+		$warmBuild = scpp_run_build_service($project, $project . '/prism.json', ['compile_runtime' => true]);
+		$this->assertSame(false, $warmBuild['ok'], 'Reusing analysis must still reject an inactive curl module');
+		$this->assertContains('Runtime helper `curl_init()` requires module `curl`', (string) ($warmBuild['error'] ?? ''), 'Reused analysis should preserve the module diagnostic');
 	}
 
 	private function testJssProjectReportsMissingSymbolCompileError(): void

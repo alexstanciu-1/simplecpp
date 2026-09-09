@@ -6,7 +6,9 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#if defined(__unix__) || defined(__APPLE__)
 #include <sys/resource.h>
+#endif
 
 namespace scpp {
 

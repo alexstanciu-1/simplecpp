@@ -62,6 +62,7 @@ JSS should feel script-like at the surface but remain typed and compiled underne
 - Prefer explicit boolean conditions; do not rely on JavaScript truthiness.
 - Treat `==` / `!=` as currently allowed but review-listed; prefer strict comparisons when possible.
 - Use reserved helper families such as `fs.get(...)`, `io.open(...)`, `json.decode(...)`, and `dt.format(...)`.
+- `json.decode(...)` returns `result<mixed>` and `json.encode(...)` returns `result<string>`. Use `take(out, err, ...)` before accessing or printing the value. Valid JSON `null` and `false` are successes; malformed JSON is an error result. Migration from direct returns also requires rebuilding runtime artifacts; see `docs/json_builtins.md`.
 - Do not use JavaScript `import` / `export`; project modules are selected in `prism.json`.
 - Do not invent local JSS semantic workarounds when PHS/STAN/runtime should own the truth.
 

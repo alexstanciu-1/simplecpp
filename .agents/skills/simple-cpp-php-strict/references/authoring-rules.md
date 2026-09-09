@@ -79,6 +79,8 @@ Do not use annotation-style type syntax in strict mode, such as `$count /** int 
 Treat it as legacy compatibility syntax that should not appear in new strict examples or new strict code.
 Plan for it to become a hard error in a future version.
 
+Explicit parameter `const` is a read-only source contract: `const int $count` or `const vector<int> &$items`. Preserve constness in interface/abstract implementations and do not write through the parameter. This differs from automatic read-only parameter lowering; see `TYPE-PARAM-003F` and `TYPE-PARAM-003G` in `generators/php/specs/rules_catalog.md`.
+
 ## Struct Fields And Cross-File Assignments
 
 Strings, ordinary class fields, and typed containers are supported in public
@@ -164,12 +166,17 @@ Guidance:
 
 ## Dynamic Values
 
-Dynamic expressions stay dynamic until an explicit typed boundary or narrowing point.
+`json_decode(...)` first returns a checked `result<mixed>`. After successful extraction, the decoded value stays dynamic until a typed boundary or narrowing point.
 
 Preferred:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$err error;
+if (!take($row, $err, json_decode($text))) {
+	echo $err->get_message(), "\n";
+	return;
+}
 $name string = $row["name"];
 $count int = $row["count"];
 ```
@@ -184,10 +191,9 @@ $items vector<int> = [];
 $items[] = $row["count"];
 ```
 
-Avoid carrying unresolved dynamic state through the rest of the program:
+In the examples below, `$row` is the successfully extracted value above. Avoid carrying unresolved dynamic state through the rest of the program:
 
 ```php
-$row = json_decode($text);
 $count = $row["count"];
 echo $count + 1, "\n";
 ```
@@ -203,7 +209,7 @@ if (isset($row["count"])) {
 
 Treat decoded JSON as a fat-variable boundary, not as the preferred shape for the rest of strict code.
 
-- `json_decode(...)` is a normal place to accept broad dynamic input
+- unwrap `json_decode(...)` with `take` at the ingestion boundary
 - when the expected payload shape is known, document it locally near that boundary
 - stabilize early into typed locals, typed properties, typed objects, or typed containers
 - keep long-lived `mixed` / `dynamic` values only when the flexibility is intentionally needed later
@@ -215,7 +221,6 @@ Example:
  *  - name: string
  *  - active: bool
  */
-$row = json_decode($text);
 
 if (isset($row["name"])) {
 	$out->name = $row["name"];
@@ -227,10 +232,10 @@ if (isset($row["active"])) {
 
 ## Wrappers
 
-Strict APIs commonly return wrapper-shaped results. Resolve them near a meaningful boundary with `take(...)`.
+Strict APIs commonly return wrapper-shaped results. Resolve them near a meaningful boundary with `take(...)`. JSON decode returns `result<mixed>` and encode returns `result<string>`; neither is a direct value. `take` returns true for successfully decoded JSON `null` and `false`.
 
 ```php
-$err /** error_t */;
+$err error;
 $text string = "";
 
 if (!take($text, $err, fs_get($path))) {
@@ -248,7 +253,7 @@ if (!take($fh, io_open($path, "rb"))) {
 	return;
 }
 
-$pos = str_strpos("banana", "zz") ?? -1;
+$pos = strpos("banana", "zz") ?? -1;
 ```
 
 ## State Checks

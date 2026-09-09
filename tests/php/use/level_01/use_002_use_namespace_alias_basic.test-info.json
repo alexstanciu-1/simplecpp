@@ -31,7 +31,8 @@
         "compile": {
             "success": false,
             "error_contains": [
-                "Unresolved static call receiver `M\\Box`"
+                "use_002_use_namespace_alias_basic.phs:14:",
+                "Math"
             ]
         },
         "run": {
@@ -45,7 +46,7 @@
         "use",
         "namespace_alias"
     ],
-    "notes": "Namespace alias import is a known gap; STAN currently stops the unresolved alias receiver before C++ generation.",
+    "notes": "Namespace alias import remains a known gap. STAN treats unresolved receivers as advisory; native compilation must reject the namespace used as a type alias at source line 14. Compiler-specific wording is not required.",
     "build": {
         "sanitizers": null
     }

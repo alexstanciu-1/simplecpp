@@ -59,7 +59,12 @@ let maybe: ?string = null;
 Use `dynamic` / `mixed` only at explicit dynamic boundaries:
 
 ```js
-let row: dynamic = json.decode(text);
+let row: mixed;
+let err: error;
+if (!take(row, err, json.decode(text))) {
+	print(err.get_message(), "\n");
+	return;
+}
 let count: int = row["count"];
 ```
 
@@ -195,7 +200,7 @@ if (!take(text, err, fs.get(path))) {
 }
 ```
 
-Do not treat wrappers as JavaScript-truthy values.
+JSON decode returns `result<mixed>` and encode returns `result<string>`; both require extraction with `take`. Valid JSON `null` and `false` are successful values. Do not treat wrappers as JavaScript-truthy values.
 
 ## Mutation
 

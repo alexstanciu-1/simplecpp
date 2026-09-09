@@ -246,7 +246,12 @@ Use the smallest useful loop:
 Runtime-debug example:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$err error;
+if (!take($row, $err, json_decode($text))) {
+	echo $err->get_message(), "\n";
+	return;
+}
 echo "name=" . $row["name"] . "\n";
 ```
 
@@ -276,3 +281,23 @@ Useful local docs:
 - `specs/php/library_profiles.md`
 - `specs/dynamic_types.md`
 - `specs/array_semantics.md`
+
+## Build Cost and Analysis Triage
+
+For unexpectedly long builds or excessive rebuilds, start with `scpp explain-build`, then `rebuild-fanout` and `project-units`. Use the focused `generated-files`, `ninja-explain`, `action-identity`, `object-cache`, `build-planner`, or `modules` views as needed. Report which outputs changed and why; follow `docs/ai_onboarding/workflows.md` before changing cache/grouping settings.
+
+STAN separates confirmed build-blocking source errors from model-incomplete advisory findings. Inspect `scpp stan` for the full report and retain supported discipline checks. A successful native build alone does not prove the analyzer models every receiver or member.
+
+## Reusable Runtime Maintenance
+
+Run `scpp runtime-build` from the consuming project to prepare its configured
+reusable runtime. For shared-eligible configurations this includes the base and
+requested optional module artifacts, even when the base already exists. Use
+`scpp runtime-build --force` after a runtime ABI change; add `--release` when
+maintaining release artifacts. Then use the normal `scpp build` / `scpp run` flow.
+Custom configurations retain project-local composition.
+
+For typed-argument compile failures, read the error and its notes together: GCC
+may explain the mismatch at the call, while Clang supplies the typed explanation
+at the parameter declaration. Debug builds preserve full debug information for
+source-mapped runtime errors with precompiled headers.
