@@ -459,7 +459,14 @@ final class ScppJssFrontendFirstSliceTest
 			static fn (array $diagnostic): bool => ($diagnostic['message'] ?? null) === 'Runtime helper `fs_get()` requires module `filesystem` in the active project runtime config.'
 		));
 		$this->assertSame(1, count($moduleDiagnostics), 'STAN semantic result should expose helper module diagnostics as frontend diagnostics');
-		$this->assertSame('frontend_member_access', $moduleDiagnostics[0]['code'] ?? null, 'STAN should attach helper module diagnostics to the helper member-access request');
+		$this->assertSame('frontend_runtime_module', $moduleDiagnostics[0]['code'] ?? null, 'STAN should classify missing modules by their semantic failure rather than request syntax');
+		$buildGateResult = (new StanSemanticPass())->analyze(['main.jss' => $summary], $this->root, ['json', 'datetime'], 'build_gate');
+		$buildGateModules = array_values(array_filter(
+			$buildGateResult['frontend_diagnostics'] ?? [],
+			static fn (array $diagnostic): bool => ($diagnostic['code'] ?? null) === 'frontend_runtime_module'
+		));
+		$this->assertSame(1, count($buildGateModules), 'Fast build analysis must retain a confirmed missing-module error');
+		$this->assertSame($moduleDiagnostics[0]['message'], $buildGateModules[0]['message'], 'Full and fast analysis should preserve the same module explanation');
 
 		$enabledClassifications = (new StanFrontendClassifier())->classify(['main.jss' => $summary], $symbolIndex, ['json', 'datetime', 'filesystem']);
 		$enabledHelper = $this->findClassificationByTarget($enabledClassifications, 'fs_get');
