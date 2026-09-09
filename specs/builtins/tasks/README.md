@@ -16,6 +16,9 @@ Current first-pass scope:
 - strict/runtime surface under `scpp::tasks`
 - flat strict source names with the `task_*` prefix
 - runtime-owned batch/progress/error objects
+- optional runtime-owned reusable worker-pool backing for repeated batches,
+  configured either by `runtime.tasks.default_worker_pool_size` at runtime
+  startup or by `task_set_worker_pool_size(...)` during process execution
 - typed vector/hash input plus conservative table-shaped mixed/dynamic input
 - cooperative timeout handling through diagnostics or `task_error`
 - no legacy PHP compatibility wrapper surface
@@ -23,6 +26,7 @@ Current first-pass scope:
 First-pass builtins:
 
 - `task_run`
+- `task_run_publish`
 - `task_start`
 - `task_join`
 - `task_cancel`
@@ -30,6 +34,17 @@ First-pass builtins:
 - `task_status`
 - `task_progress`
 - `task_set_status`
+- `task_set_worker_pool_size`
+- `task_run_publish(items, workers, work, publish, error = null,
+  timeout_ms = 0, max_publish_batch_size = 0)` for ordered worker-result
+  publication, with `max_publish_batch_size > 0` capping each publish callback
+  batch independently of timeout handling
+- experimental publish diagnostics:
+  `task_set_publish_try_lock`, `task_publish_lock_wait_us`,
+  `task_publish_lock_hold_us`, `task_publish_callback_us`,
+  `task_publish_batch_count`, `task_publish_published_count`,
+  `task_publish_max_batch_size`, `task_publish_failed_try_lock_count`, and
+  `task_publish_deferred_flush_count`
 
 Deferred dynamic-batch builtins:
 

@@ -51,7 +51,8 @@ JSS should feel script-like at the surface but remain typed and compiled underne
 - Use explicit types at meaningful boundaries.
 - Use `let name: T = value;`.
 - Use `vector<T>` and `hash<T>` for known containers.
-- Use `struct Name { field: uint32 = 0; }` for compact inline value-layout records that should lower to PHS `struct` and generated C++ value storage.
+- Use `struct Name { field: uint32 = 0; }` for compact inline value-layout records that should lower to PHS `struct` and generated C++ value storage. String fields, ordinary class fields, and vector/hash/fixed-array compositions of supported field types are also allowed. Copies preserve string/container values and share class objects; `mixed`, `dynamic`, nullable fields, and explicit ownership-wrapper fields remain excluded. Managed fields remain forbidden in union payloads, including through nested structs.
+- For container-literal assignments to structs declared in another file, construct an explicitly typed container local first and then assign it to the field. This is a current generator metadata limitation, not a language restriction. See [Struct Fields And Cross-File Assignments](references/authoring-rules.md#struct-fields-and-cross-file-assignments) for supported fields, copy behavior, and examples.
 - Use `union Name { payload: uint32; nested: PayloadStruct; }` only for restricted mutually exclusive fixed-layout payloads; current union payloads may contain fixed-width integers, fixed-backed enums, and recursively trivial structs, but not strings, vectors, hashes, object/reference types, defaults, methods, constants, inheritance, or nested unions.
 - Use fixed-backed enums through the PHS-compatible compact-layout path when discriminators need exact storage width; JSS should emit clean PHS rather than internal parser carrier comments.
 - Use `dynamic` / `mixed` intentionally, especially around JSON or other dynamic input.
@@ -61,6 +62,7 @@ JSS should feel script-like at the surface but remain typed and compiled underne
 - Prefer explicit boolean conditions; do not rely on JavaScript truthiness.
 - Treat `==` / `!=` as currently allowed but review-listed; prefer strict comparisons when possible.
 - Use reserved helper families such as `fs.get(...)`, `io.open(...)`, `json.decode(...)`, and `dt.format(...)`.
+- `json.decode(...)` returns `result<mixed>` and `json.encode(...)` returns `result<string>`. Use `take(out, err, ...)` before accessing or printing the value. Valid JSON `null` and `false` are successes; malformed JSON is an error result. Migration from direct returns also requires rebuilding runtime artifacts; see `docs/json_builtins.md`.
 - Do not use JavaScript `import` / `export`; project modules are selected in `prism.json`.
 - Do not invent local JSS semantic workarounds when PHS/STAN/runtime should own the truth.
 

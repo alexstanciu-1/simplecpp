@@ -1,0 +1,11 @@
+function helper(): int
+{
+	$left int = 20;
+	$right int = 22;
+	return $left + $right;
+}
+
+function run(): int
+{
+	return helper();
+}

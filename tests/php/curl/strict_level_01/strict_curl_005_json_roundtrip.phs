@@ -22,14 +22,22 @@ if (!take($ch, $err, curl_init($url . "/echo-json"))) {
 	if (!take($resp, $err, curl_exec($ch))) {
 		echo "EXEC_FAIL\n";
 	} else {
-		$decoded = json_decode($resp->body);
-		echo $resp->status_code, "\n";
-		echo $resp->content_type, "\n";
-		echo $decoded["ok"], "\n";
-		echo $decoded["kind"], "\n";
-		echo $decoded["payload"]["name"], "\n";
-		echo $decoded["payload"]["count"], "\n";
-		echo json_encode($decoded), "\n";
+		if (!take($decoded, $err, json_decode($resp->body))) {
+			echo "JSON_FAIL\n";
+		} else {
+			echo $resp->status_code, "\n";
+			echo $resp->content_type, "\n";
+			echo $decoded["ok"], "\n";
+			echo $decoded["kind"], "\n";
+			echo $decoded["payload"]["name"], "\n";
+			echo $decoded["payload"]["count"], "\n";
+			$encoded string = "";
+			if (take($encoded, $err, json_encode($decoded))) {
+				echo $encoded, "\n";
+			} else {
+				echo $err->get_message(), "\n";
+			}
+		}
 	}
 
 	echo take($ok, $err, curl_close($ch)) ? "T\n" : "F\n";

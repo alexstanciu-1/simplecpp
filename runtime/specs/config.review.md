@@ -136,6 +136,19 @@ Text contexts route through one result type, one helper family, and explicit nul
 | `bool_t / int_t / float_t use to_string` | Scalar wrappers have helper-driven text conversion. | `echo 42;` | `::scpp::print(::scpp::to_string(::scpp::int_t(42)));` | Avoids depending on native iostream formatting rules. |
 | `nullable<T> / value_p<T> / native_ref<T> / shared_p<T> / unique_p<T> / weak_p<T> use to_string` | Wrapper text conversion is helper-defined, not implicit. | `echo $obj;` | `::scpp::print(::scpp::to_string(obj));` | Important because wrapper text policy can change independently of storage representation. |
 
+Text ABI bridge rule naming is part of the runtime contract. Singleton cases
+belong in `coercions.text.abi_bridge_rules[]`; repeated source TypeRef families
+belong in `coercions.text.abi_bridge_rule_families[]`. Compiler bridges should
+select these rows by stable operation/helper/source TypeRef ids and emit the
+configured runtime symbol. Family bridge rows must provide a stable
+`family_id`, `source_type_ref_family`, concrete `members`, and explicit
+`deferred_members`; downstream compilers may consume the generated family row to
+discover all covered and blocked TypeRefs instead of implementing casts one
+combination at a time. Adding another printable integer width, bool, float, or
+future wrapper should add metadata and, when necessary, a carrier adapter, not a
+source-type-specific compiler branch. The current vendor native shim for
+compiler bridge proofs lives at `runtime/include/lang/php/php_abi_bridge.cpp`.
+
 ## 6. Subtyping
 
 ### Description
@@ -162,7 +175,7 @@ Only these operator families are enabled. Everything else is forbidden by defaul
 | `int_arithmetic` | Unary and binary arithmetic plus comparisons on `int_t` are enabled. | `$a + $b;` | `auto x = a + b;` | Covers arithmetic and relational operations for integers. |
 | `float_arithmetic` | Unary and binary arithmetic plus comparisons on `float_t` are enabled. | `$a / $b;` | `auto x = a / b;` | Floating arithmetic mirrors integer structure. |
 | `mixed_numeric` | Mixed `int_t` + `float_t` arithmetic/comparison promotes to `float_t`. | `$a + $b; // int + float` | `auto x = a + b; // result float_t` | Promotion is explicit in config rather than inferred ad hoc. |
-| `string_ops` | Only equality/inequality on `string_t` are enabled. | `$a == $b;` | `auto same = (a == b);` | Notably, string concatenation is not an operator family here. |
+| `string_ops` | Equality/inequality and lexicographic ordering on `string_t` are enabled. | `$a < $b;` | `auto before = (a < b);` | Notably, string concatenation is not an operator family here. |
 | `pointer_null_comparisons` | Handle wrappers compare against the configured null-equivalence group and shared handles compare with same-family peers. | `$obj == null;` | `auto empty = (obj == ::scpp::null_t());` | This is how null checks stay legal without opening general pointer arithmetic or cross-family comparisons. |
 | `nullable_ops` | Nullable values compare with null-equivalent sentinels and same-type nullable peers. | `$maybe == null;` | `auto empty = (maybe == ::scpp::null_t());` | Makes presence tests legal while keeping nullable arithmetic forbidden. |
 

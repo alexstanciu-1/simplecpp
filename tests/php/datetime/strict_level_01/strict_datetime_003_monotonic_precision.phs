@@ -1,0 +1,10 @@
+$us0 uint64 = dt_monotonic_us();
+$ns0 uint64 = dt_monotonic_ns();
+dt_sleep_ms(1);
+$us1 uint64 = dt_monotonic_us();
+$ns1 uint64 = dt_monotonic_ns();
+
+echo $us0 > 0 ? "us-positive\n" : "us-zero\n";
+echo $ns0 > 0 ? "ns-positive\n" : "ns-zero\n";
+echo $us1 >= $us0 ? "us-monotonic\n" : "us-regressed\n";
+echo $ns1 >= $ns0 ? "ns-monotonic\n" : "ns-regressed\n";

@@ -1,0 +1,6 @@
+function run(): int
+{
+	$ok bool = false;
+	$ok = true;
+	return $ok ? 42 : 0;
+}

@@ -1,0 +1,53 @@
+{
+    "id": "hash_007_unsupported_key_negative",
+    "feature": "hash",
+    "level": "level_02",
+    "outcome": "negative",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": true,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": false,
+            "error_contains": [
+                "Unsupported hash<T,T_KEY> key type `bool`"
+            ]
+        },
+        "compile": {
+            "success": false,
+            "error_contains": []
+        },
+        "run": {
+            "success": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "types",
+        "hash",
+        "negative_generate"
+    ],
+    "notes": "Unsupported explicit hash key families should fail in the generator with a clear diagnostic.",
+    "build": {
+        "sanitizers": null
+    }
+}

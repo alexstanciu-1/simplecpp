@@ -56,6 +56,23 @@ public:
 		return value_.size();
 	}
 
+	// Native-sized capacity query for memory/performance-aware code.
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return value_.capacity();
+	}
+
+	[[nodiscard]] std::size_t estimated_storage_bytes() const noexcept {
+		return sizeof(*this) + (value_.capacity() * sizeof(T));
+	}
+
+	void reserve(std::size_t capacity) {
+		value_.reserve(capacity);
+	}
+
+	void resize(std::size_t count, const T &default_value) {
+		value_.resize(count, default_value);
+	}
+
 	// Runtime boolean wrapper for empty/non-empty state.
 	[[nodiscard]] bool_t empty() const noexcept {
 		return bool_t(value_.empty());
@@ -64,6 +81,20 @@ public:
 	// Removes all elements.
 	void clear() noexcept {
 		value_.clear();
+	}
+
+	void compact() {
+		value_.shrink_to_fit();
+	}
+
+	void compact(std::size_t requested_capacity) {
+		const auto target_capacity = requested_capacity < value_.size() ? value_.size() : requested_capacity;
+		std::vector<T> next;
+		next.reserve(target_capacity);
+		for (auto &item : value_) {
+			next.push_back(std::move(item));
+		}
+		value_ = std::move(next);
 	}
 
 	// Removes one indexed element and compacts later indexes like a sequence.

@@ -1,0 +1,15 @@
+$by_name /** hash<int> */ = [];
+$by_name["a"] = 10;
+$by_name["b"] = 20;
+
+$by_id /** hash<int,int> */ = [];
+$by_id[4] = 40;
+$assigned = $by_id[] = 50;
+
+echo count($by_name), "\n";
+echo $by_name["a"], "\n";
+echo $by_name["b"], "\n";
+echo count($by_id), "\n";
+echo $by_id[4], "\n";
+echo $by_id[5], "\n";
+echo $assigned, "\n";

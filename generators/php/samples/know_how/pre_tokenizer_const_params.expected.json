@@ -1,0 +1,23 @@
+{
+    "source": "function const_param_demo(/** int */ $count, /** vector<int> */ &$items): int {\n\treturn $count;\n}\n",
+    "annotations": [
+        {
+            "kind": "param",
+            "name": "count",
+            "type": "int",
+            "line": 1,
+            "startOffset": 26,
+            "endOffset": 35,
+            "isConst": true
+        },
+        {
+            "kind": "param",
+            "name": "items",
+            "type": "vector<int>",
+            "line": 1,
+            "startOffset": 44,
+            "endOffset": 61,
+            "isConst": true
+        }
+    ]
+}

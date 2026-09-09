@@ -1,0 +1,5 @@
+function run(): int32 {
+	$left int32 = 50;
+	$right int32 = 8;
+	return $left - $right;
+}

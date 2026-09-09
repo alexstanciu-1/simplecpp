@@ -13,7 +13,12 @@ function run(): void {
         return;
     }
 
-    let decoded: dynamic = json.decode(data);
+    let decoded: mixed;
+    let jsonError: error;
+    if (!take(decoded, jsonError, json.decode(data))) {
+        print("json_error\n");
+        return;
+    }
     print(written, "\n");
     print(strlen(data), "\n");
     print(decoded["name"], "\n");

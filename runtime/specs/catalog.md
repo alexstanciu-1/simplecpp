@@ -236,6 +236,41 @@ Returns code-point length of present value.
 Contract:
 - null input MUST raise runtime error
 
+### Explicit string unit helpers â€” Stable
+
+Byte-coordinate helpers:
+
+```text
+string_byte_len(value) -> int_t
+string_byte_at(value, offset) -> int_t
+string_byte_find(haystack, needle[, offset]) -> result_or_false<int_t>
+string_byte_slice(value, offset, length) -> string_t
+string_byte_slice_equals(value, offset, length, literal) -> bool_t
+```
+
+UTF-8 codepoint-coordinate helpers:
+
+```text
+string_utf8_codepoint_count(value) -> int_t
+string_utf8_codepoint_at(value, index) -> int_t
+string_utf8_slice_codepoints(value, start, length) -> string_t
+```
+
+User-visible grapheme-coordinate helpers:
+
+```text
+string_grapheme_count(value) -> int_t
+string_grapheme_slice(value, start, length) -> string_t
+```
+
+Contract:
+- byte helpers operate on encoded bytes and return byte coordinates;
+- UTF-8 helpers operate on Unicode scalar/codepoint coordinates;
+- grapheme helpers operate on conservative user-visible cluster coordinates;
+- hot scanners/tokenizers MUST use byte helpers rather than codepoint
+  substring loops;
+- existing PHP-like names keep their documented behavior.
+
 ### `strpos(haystack, needle[, offset]) -> result_or_false<int_t>` â€” Stable
 Returns code-point position or `false`.
 
@@ -454,18 +489,18 @@ Contract:
 
 # 6. JSON (`scpp::php`)
 
-### `json_encode(mixed_t) -> string_t` â€” Stable
-Encodes runtime dynamic value to JSON string.
+### `json_encode(mixed_t) -> result<string_t>` â€” Stable
+Encodes a runtime value to a checked JSON string result. Unsupported values return an error; consume with `take`.
 
 Contract:
 - public input surface is `mixed_t`
 - exact escaping/shape follows current runtime JSON implementation
 
-### `json_decode(string_t) -> dynamic` â€” Stable
-Decodes JSON string to runtime dynamic value.
+### `json_decode(string_t) -> result<mixed_t>` â€” Stable
+Decodes JSON text to a checked value or parse error.
 
 Contract:
-- source-facing result MUST be expressed as dynamic value
+- source-facing result is `result<mixed>`; malformed input returns `error`, handled with `take`
 - arrays/objects decode into runtime dynamic/container forms
 
 ---

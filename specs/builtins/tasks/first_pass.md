@@ -7,7 +7,8 @@ The `tasks` family is runtime-owned and lives under `namespace scpp::tasks`.
 
 Release status: v1-alpha / experimental.
 The module is opt-in and intended for independent batch work.
-Shared mutable object transfer, worker communication, STAN thread-safety enforcement, and thread-pool reuse remain outside the alpha contract.
+Shared mutable object transfer, worker communication, and STAN thread-safety enforcement remain outside the alpha contract.
+Reusable worker-pool backing is included only as a runtime-owned implementation substrate; it does not change the public `task_run` / `task_start` source signatures or expose raw thread management.
 
 The first-pass source surface is strict PHP++ only:
 
@@ -66,6 +67,7 @@ using task_error = tasks::error;
 
 ```text
 task_run(items, workers, exec, index = null, result = null, error = null, timeout_ms = 0) -> result
+task_run_publish(items, workers, work, publish, error = null, timeout_ms = 0, max_publish_batch_size = 0) -> int
 task_start(items, workers, exec, index = null, result = null, error = null, timeout_ms = 0) -> task_batch
 task_join(task_batch $batch) -> result
 task_cancel(task_batch $batch): void
@@ -73,9 +75,29 @@ task_done(task_batch $batch): bool
 task_status(task_batch $batch): string
 task_progress(task_batch $batch): task_progress_info
 task_set_status(task_context $ctx, string $status): void
+task_set_worker_pool_size(workers): void
+task_set_publish_try_lock(enabled): void
+task_publish_lock_wait_us(): int
+task_publish_lock_hold_us(): int
+task_publish_callback_us(): int
+task_publish_batch_count(): int
+task_publish_published_count(): int
+task_publish_max_batch_size(): int
+task_publish_failed_try_lock_count(): int
+task_publish_deferred_flush_count(): int
 ```
 
 The exact generic type spelling for `items`, callback parameters, callback returns, and result collection is owned by the implementation/spec pass that wires callable lowering.
+
+The publish diagnostics helpers are experimental measurement aids for
+`task_run_publish`. They report the most recent publish run in the current
+process and are intended for runtime/compiler scaling investigation, not stable
+application logic.
+
+`max_publish_batch_size <= 0` preserves the default ordered-ready publication
+behavior. A positive value caps each publish callback batch independently of
+`timeout_ms`; final blocking flushes drain any remaining ordered-ready values in
+bounded callbacks.
 
 Conceptual worker callback shapes:
 
@@ -123,12 +145,14 @@ The first implementation supports both worker callback shapes.
 - returns a result collection
 - creates at most `workers` native worker threads for the batch
 - must not create one native thread per item
+- may reuse a configured runtime-owned worker pool instead of creating batch-local worker threads
 
 `task_start`:
 
 - starts a bounded worker batch in the background
 - returns a `task_batch` handle immediately
 - live background batches are joined by generated main cleanup if the user does not join them explicitly
+- may use the configured runtime-owned worker pool for the batch's internal worker loops while keeping the background coordinator handle semantics unchanged
 
 `task_join`:
 
@@ -224,6 +248,46 @@ Timeout:
 
 The first-pass public API does not expose raw threads, mutexes, condition variables, or forced thread termination.
 
+## Reusable worker-pool backing
+
+The tasks runtime may keep a process-owned default worker pool for repeated task
+batches and other thread-consuming runtime/compiler paths.
+
+First-pass worker-pool contract:
+
+- the pool is runtime-owned and is not a raw-thread API
+- existing `task_run` and `task_start` source signatures are unchanged
+- `task_set_worker_pool_size(workers)` sets the runtime-owned default pool
+  keepalive target for later task batches; non-positive values disable pool use
+  for future batches
+- if no reusable pool is configured, task batches use the existing batch-local
+  worker creation/join path
+- projects may set `runtime.tasks.default_worker_pool_size` in `prism.json` to
+  configure the process-owned default pool at runtime startup; non-positive
+  values mean no configured startup pool
+- `runtime.tasks.default_worker_pool_size` requires the `tasks` runtime module
+  to be enabled and should be compiled into a project-local runtime artifact
+  when nonzero so shared runtime caches are not polluted by project-specific
+  worker counts
+- a later `task_set_worker_pool_size(workers)` call overrides the startup
+  keepalive target for the running process
+- when a reusable pool is configured, task batches enqueue one closure per
+  logical batch worker, not one closure per input item
+- logical worker closures still pull items through the batch-owned queue/index
+  state, preserving current result ordering, progress, cancellation, timeout,
+  and error publication behavior
+- the configured keepalive worker count is a target for reusable idle workers
+- reducing the keepalive target must not interrupt a worker that is currently
+  executing a live batch closure
+- workers that become idle after a target reduction may retire instead of
+  remaining alive
+- setting the keepalive target to zero disables pool use for future batches and
+  lets currently live workers finish before retiring
+- nested task batches entered from a reusable-pool worker may fall back to
+  batch-local worker creation to avoid pool starvation/deadlock
+- shutdown is structured: runtime cleanup wakes idle workers and joins workers
+  after queued/running closures finish
+
 Mutable input/output transfer over threads is intentionally deferred.
 For the first implementation, avoid adding a public mutable-item mode.
 The later mutable/exclusive item model is expected to be a separate design project involving runtime ownership, allocator behavior, S2S lowering, and STAN guidance/enforcement.
@@ -276,6 +340,9 @@ The current implementation and focused task module test cover:
 - readable progress/status snapshots while live and after handled source-catchable background failure
 - vector result-target contract errors for negative and sparse numeric keys
 - a monotonic-time probe that rejects obvious serial execution or blocking `task_start`
+- reusable worker-pool probes covering configured reuse, disabled fallback,
+  runtime target reduction while live work completes, and benchmark-style
+  repeated-batch timing with and without the reusable pool
 
 Follow-up design must specify:
 

@@ -42,6 +42,8 @@ final class ScppTasksModuleTest
 				],
 			], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 			$this->write($project . '/main.phs', <<<'PHS'
+task_set_worker_pool_size(2);
+
 $items vector<int> = [];
 $items[] = 1;
 $items[] = 2;
@@ -52,6 +54,78 @@ $result = task_run($items, 2, function (int $item): int {
 });
 
 echo $result[0], ",", $result[1], ",", $result[2], "\n";
+
+$published vector<int> = [];
+$publishedBatches int = 0;
+$publishedCount int = task_run_publish(
+	$items,
+	2,
+	function (int $item): int {
+		dt_sleep_ms((4 - $item) * 5);
+		return $item * 100;
+	},
+	function (vector<int> $batch) use (&$published, &$publishedBatches): void {
+		$publishedBatches = $publishedBatches + 1;
+		$batchIndex int = 0;
+		while ($batchIndex < count($batch)) {
+			$published[] = $batch[$batchIndex];
+			$batchIndex = $batchIndex + 1;
+		}
+	}
+);
+
+echo "publish:", $publishedCount, ",", $published[0], ",", $published[1], ",", $published[2], ",", $publishedBatches, "\n";
+$publishHoldMetricPresent int = task_publish_lock_hold_us() >= 0 ? 1 : 0;
+echo "publish-metrics:", task_publish_published_count(), ",", task_publish_batch_count(), ",", task_publish_max_batch_size(), ",", $publishHoldMetricPresent, "\n";
+
+$capped vector<int> = [];
+$cappedBatches int = 0;
+$cappedMaxBatch int = 0;
+$cappedCount int = task_run_publish(
+	$items,
+	2,
+	function (int $item): int {
+		return $item * 10;
+	},
+	function (vector<int> $batch) use (&$capped, &$cappedBatches, &$cappedMaxBatch): void {
+		$cappedBatches = $cappedBatches + 1;
+		if (count($batch) > $cappedMaxBatch) {
+			$cappedMaxBatch = count($batch);
+		}
+		$batchIndex int = 0;
+		while ($batchIndex < count($batch)) {
+			$capped[] = $batch[$batchIndex];
+			$batchIndex = $batchIndex + 1;
+		}
+	},
+	null,
+	0,
+	1
+);
+echo "publish-cap:", $cappedCount, ",", $capped[0], ",", $capped[1], ",", $capped[2], ",", $cappedBatches, ",", $cappedMaxBatch, "\n";
+task_set_publish_try_lock(true);
+task_set_publish_try_lock(false);
+
+$cappedPublished vector<int> = [];
+$cappedPublishedCount int = task_run_publish(
+	$items,
+	2,
+	function (int $item): int {
+		dt_sleep_ms((4 - $item) * 5);
+		return $item * 1000;
+	},
+	function (vector<int> $batch) use (&$cappedPublished): void {
+		$batchIndex int = 0;
+		while ($batchIndex < count($batch)) {
+			$cappedPublished[] = $batch[$batchIndex];
+			$batchIndex = $batchIndex + 1;
+		}
+	},
+	null,
+	0,
+	2
+);
+echo "publish-capped:", $cappedPublishedCount, ",", $cappedPublished[0], ",", $cappedPublished[1], ",", $cappedPublished[2], ",", task_publish_max_batch_size(), "\n";
 
 $indexed = task_run(
 	$items,
@@ -588,12 +662,18 @@ $perfStartedAfter = dt_monotonic_ms() - $perfStart;
 $perfJoined = task_join($perfBatch);
 $perfTotal = dt_monotonic_ms() - $perfStart;
 echo "perf:", $perfStartedAfter, ",", $perfTotal, ",", count($perfJoined), "\n";
+
+task_set_worker_pool_size(0);
 PHS
  . "\n");
 
-			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+			$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime', '--no-stan'], $project, 120);
 			$this->assertSame(0, $run['exit_code'], "task_run project should build and run:\nSTDOUT:\n" . $run['stdout'] . "\nSTDERR:\n" . $run['stderr']);
 			$this->assertContains("2,4,6\n", $run['stdout'], 'task_run should preserve vector order and return callback results');
+			$this->assertContains("publish:3,100,200,300,", $run['stdout'], 'task_run_publish should publish ordered worker batches without returning a value vector');
+			$this->assertContains("publish-metrics:3,", $run['stdout'], 'task_run_publish should expose publish diagnostics for the latest publish run');
+				$this->assertContains("publish-capped:3,1000,2000,3000,2\n", $run['stdout'], 'task_run_publish should cap publish callback batch size independently of timeout');
+				$this->assertContains("publish-cap:3,10,20,30,3,1\n", $run['stdout'], 'task_run_publish should cap publish callback batch size when requested');
 			$this->assertContains("5,10,15\n", $run['stdout'], 'task_run should support coordinator-side vector custom index callbacks');
 			$this->assertContains("7,14,21\n", $run['stdout'], 'task_run should support string keys from vector custom index callbacks');
 			$this->assertContains("3\n", $run['stdout'], 'task_run should return null placeholders for successful void vector callbacks');
@@ -628,10 +708,18 @@ PHS
 
 			$generated = $this->read($project . '/.prism/generated/main.cpp');
 			$this->assertContains('tasks::run', $generated, 'strict task_run source call should resolve through the tasks runtime registry');
+			$this->assertContains('tasks::run_publish', $generated, 'strict task_run_publish source call should resolve through the tasks runtime registry');
+			$this->assertContains('tasks::configure_default_worker_pool', $generated, 'strict task_set_worker_pool_size source call should resolve through the tasks runtime registry');
+			$this->assertContains('tasks::configure_publish_try_lock', $generated, 'strict task_set_publish_try_lock source call should resolve through the tasks runtime registry');
+			$this->assertContains('tasks::publish_lock_hold_us', $generated, 'strict task publish metric source calls should resolve through the tasks runtime registry');
 			$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 			$this->assertContains('function task_start(mixed $items, int $workers, mixed $exec', $strictRuntimeSymbols, 'strict runtime shallow source should expose the shaped task_start signature');
+				$this->assertContains('function task_run_publish(mixed $items, int $workers, mixed $work, mixed $publish, mixed $error = null, int $timeout_ms = 0, int $max_publish_batch_size = 0): int', $strictRuntimeSymbols, 'strict runtime shallow source should expose the shaped task_run_publish signature with publish cap');
 			$this->assertContains('mixed $result = null', $strictRuntimeSymbols, 'strict runtime shallow source should name the fifth task argument result');
 			$this->assertContains('function task_progress(task_batch $batch): task_progress_info', $strictRuntimeSymbols, 'strict runtime shallow source should expose typed task_progress handles');
+			$this->assertContains('function task_set_worker_pool_size(int $workers): void', $strictRuntimeSymbols, 'strict runtime shallow source should expose task worker pool sizing');
+			$this->assertContains('function task_set_publish_try_lock(bool $enabled): void', $strictRuntimeSymbols, 'strict runtime shallow source should expose task publish try-lock diagnostics control');
+			$this->assertContains('function task_publish_lock_hold_us(): int', $strictRuntimeSymbols, 'strict runtime shallow source should expose task publish metrics');
 			$this->assertContains('public function stop_requested(): bool', $strictRuntimeSymbols, 'strict runtime shallow source should expose task progress stop_requested');
 			$this->assertContains('public function status(): string', $strictRuntimeSymbols, 'strict runtime shallow source should expose task progress status');
 			$this->assertContains('class task_error', $strictRuntimeSymbols, 'strict runtime shallow source should expose the task_error handle shape');
@@ -657,6 +745,8 @@ PHS
 			$this->assertTaskRunCustomIndexWorkerErrorReportsClearly();
 			$this->assertTaskRunTimeoutReportsClearly();
 			$this->assertTaskRunMixedScalarInputReportsClearly();
+			$this->assertConfiguredWorkerPoolBuildConfig();
+			$this->assertReusableWorkerPoolReusesWorkers();
 
 			echo "PASS: scpp tasks module\n";
 			return 0;
@@ -699,6 +789,33 @@ PHS
 		$error = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $project, 30);
 		$this->assertSame(0, $error['exit_code'], 'scpp error should read the saved disabled tasks module diagnostic');
 		$this->assertContains('tasks runtime module is not enabled', $error['stdout'], 'saved diagnostic should include the raw missing tasks module message');
+
+		$poolProject = $this->root . '/disabled-pool-app';
+		$this->mkdir($poolProject);
+		$this->write($poolProject . '/prism.json', json_encode([
+			'name' => 'tasks-pool-disabled-regression',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime'],
+			],
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		$this->write($poolProject . '/main.phs', <<<'PHS'
+task_set_worker_pool_size(2);
+echo "unreachable\n";
+PHS
+ . "\n");
+
+		$poolRun = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $poolProject, 120);
+		$this->assertNotSame(0, $poolRun['exit_code'], 'task_set_worker_pool_size without tasks module should fail clearly');
+		$this->assertContains('Operation: task_set_worker_pool_size', $poolRun['stderr'], "disabled task_set_worker_pool_size should identify the failing task operation:\nSTDOUT:\n" . $poolRun['stdout'] . "\nSTDERR:\n" . $poolRun['stderr']);
+
+		$poolError = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $poolProject, 30);
+		$this->assertSame(0, $poolError['exit_code'], 'scpp error should read the saved disabled task_set_worker_pool_size diagnostic');
+		$this->assertContains('tasks runtime module is not enabled', $poolError['stdout'], 'saved task_set_worker_pool_size diagnostic should include the raw missing tasks module message');
 
 		$indexedProject = $this->root . '/disabled-indexed-app';
 		$this->mkdir($indexedProject);
@@ -1016,6 +1133,210 @@ PHS
 		$error = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'error'], $project, 30);
 		$this->assertSame(0, $error['exit_code'], 'scpp error should read the saved scalar mixed input diagnostic');
 		$this->assertContains('mixed/dynamic input must resolve', $error['stdout'], "saved scalar mixed input diagnostic should explain the collection shape requirement:\nSTDOUT:\n" . $error['stdout'] . "\nSTDERR:\n" . $error['stderr']);
+	}
+
+	private function assertReusableWorkerPoolReusesWorkers(): void
+	{
+		$project = $this->root . '/reusable-worker-pool-app';
+		$this->mkdir($project . '/native_cpp');
+		$this->write($project . '/prism.json', json_encode([
+			'name' => 'tasks-reusable-worker-pool-regression',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'native_cpp_dir' => 'native_cpp',
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime', 'tasks'],
+			],
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		$this->write($project . '/main.phs', <<<'PHS'
+echo "pool-probe\n";
+PHS
+ . "\n");
+		$this->write($project . '/native_cpp/pool_probe.cpp', <<<'CPP'
+#include "scpp/tasks.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+#include <exception>
+#include <thread>
+
+namespace {
+
+[[noreturn]] void fail_pool_probe(const char *message)
+{
+	std::fprintf(stderr, "task pool probe failed: %s\n", message);
+	std::abort();
+}
+
+void assert_pool_probe(bool condition, const char *message)
+{
+	if (!condition) {
+		fail_pool_probe(message);
+	}
+}
+
+struct reusable_worker_pool_probe final {
+	reusable_worker_pool_probe()
+	{
+		using namespace scpp;
+
+		tasks::shutdown_default_worker_pool();
+
+		vector_t<int_t<>> items;
+		items.push_back(int_t<>(1));
+		items.push_back(int_t<>(2));
+		items.push_back(int_t<>(3));
+		items.push_back(int_t<>(4));
+
+		auto run_repeated_batches = [&]() -> std::int64_t {
+			const auto start = std::chrono::steady_clock::now();
+			for (int round = 0; round < 12; ++round) {
+				auto result = tasks::run(items, int_t<>(4), [](int_t<> item) -> int_t<> {
+					return int_t<>(item.native_value() + 10);
+				});
+				assert_pool_probe(result.size() == 4, "task_run benchmark batch should return every item");
+				assert_pool_probe(result.at(0).native_value() == 11, "task_run benchmark batch should preserve vector result order");
+			}
+			return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+		};
+
+		const auto local_batch_ms = run_repeated_batches();
+		assert_pool_probe(tasks::default_worker_pool_created_workers().native_value() == 0, "unconfigured batches should use batch-local workers outside the reusable pool");
+
+		tasks::configure_default_worker_pool(int_t<>(4));
+		const auto pooled_batch_ms = run_repeated_batches();
+		const auto pooled_created = tasks::default_worker_pool_created_workers().native_value();
+		assert_pool_probe(pooled_created == 4, "pooled benchmark should create one keepalive worker per configured slot");
+		std::printf("pool-benchmark:%lld,%lld,%lld\n",
+			static_cast<long long>(local_batch_ms),
+			static_cast<long long>(pooled_batch_ms),
+			static_cast<long long>(pooled_created));
+
+		tasks::shutdown_default_worker_pool();
+		tasks::configure_default_worker_pool(int_t<>(2));
+		assert_pool_probe(tasks::default_worker_pool_size().native_value() == 2, "configured pool should report requested keepalive size");
+		assert_pool_probe(tasks::default_worker_pool_created_workers().native_value() == 2, "configuring two keepalive workers should create two workers");
+
+		for (int round = 0; round < 4; ++round) {
+			auto result = tasks::run(items, int_t<>(4), [](int_t<> item) -> int_t<> {
+				return int_t<>(item.native_value() + 10);
+			});
+			assert_pool_probe(result.size() == 4, "pooled task_run should return every item");
+			assert_pool_probe(result.at(0).native_value() == 11, "pooled task_run should preserve vector result order");
+		}
+
+		assert_pool_probe(tasks::default_worker_pool_created_workers().native_value() == 2, "repeated batches should reuse configured keepalive workers");
+
+		std::atomic<int> completed_items{0};
+		std::exception_ptr worker_error = nullptr;
+		std::thread live_batch([&]() {
+			try {
+				auto result = tasks::run(items, int_t<>(4), [&](int_t<> item) -> int_t<> {
+					std::this_thread::sleep_for(std::chrono::milliseconds(30));
+					completed_items.fetch_add(1, std::memory_order_relaxed);
+					return item;
+				});
+				assert_pool_probe(result.size() == 4, "live pooled batch should complete after keepalive reduction");
+			} catch (...) {
+				worker_error = std::current_exception();
+			}
+		});
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		tasks::configure_default_worker_pool(int_t<>(0));
+		live_batch.join();
+		if (worker_error) {
+			std::rethrow_exception(worker_error);
+		}
+		assert_pool_probe(completed_items.load(std::memory_order_relaxed) == 4, "reducing keepalive workers should not interrupt live worker closures");
+
+		for (int attempt = 0; attempt < 100 && tasks::default_worker_pool_live_workers().native_value() != 0; ++attempt) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(2));
+		}
+		assert_pool_probe(tasks::default_worker_pool_live_workers().native_value() == 0, "idle workers should retire after keepalive count is reduced to zero");
+	}
+
+	~reusable_worker_pool_probe()
+	{
+		scpp::tasks::shutdown_default_worker_pool();
+	}
+};
+
+reusable_worker_pool_probe probe;
+
+} // namespace
+CPP
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], "reusable worker pool native probe should build and run:\nSTDOUT:\n" . $run['stdout'] . "\nSTDERR:\n" . $run['stderr']);
+		$this->assertContains("pool-probe\n", $run['stdout'], 'reusable worker pool probe project should reach the PHS entrypoint');
+		$this->assertPoolBenchmarkShape($run['stdout'], $run['stderr']);
+	}
+
+	private function assertConfiguredWorkerPoolBuildConfig(): void
+	{
+		$config = resolve_runtime_build_config([
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime', 'tasks'],
+				'tasks' => [
+					'default_worker_pool_size' => 2,
+				],
+			],
+		]);
+		$this->assertSame(2, runtime_tasks_default_worker_pool_size($config), 'runtime.tasks.default_worker_pool_size should normalize into the runtime config');
+
+		$project = $this->root . '/configured-worker-pool-app';
+		$this->mkdir($project);
+		$this->write($project . '/prism.json', json_encode([
+			'name' => 'tasks-configured-worker-pool-regression',
+			'entrypoint' => 'main.phs',
+			'build_dir' => '.prism/build',
+			'runtime' => [
+				'languages' => [
+					'php' => ['profile' => 'strict'],
+				],
+				'modules' => ['json', 'filesystem', 'datetime', 'tasks'],
+				'tasks' => [
+					'default_worker_pool_size' => 2,
+				],
+			],
+		], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		$this->write($project . '/main.phs', <<<'PHS'
+$items vector<int> = [];
+$items[] = 1;
+$items[] = 2;
+
+$result = task_run($items, 2, function (int $item): int {
+	return $item + 20;
+});
+
+echo $result[0], ",", $result[1], "\n";
+PHS
+ . "\n");
+
+		$run = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'run', '--build-runtime', '--no-stan'], $project, 120);
+		$this->assertSame(0, $run['exit_code'], "configured worker pool project should build and run:\nSTDOUT:\n" . $run['stdout'] . "\nSTDERR:\n" . $run['stderr']);
+		$this->assertContains("21,22\n", $run['stdout'], 'configured worker pool project should preserve task_run behavior without a source-level pool helper call');
+
+		$ninja = $this->read($project . '/.prism/build/build.ninja');
+		$this->assertContains('-DSCPP_TASKS_DEFAULT_WORKER_POOL_SIZE=2', $ninja, 'configured worker pool size should be compiled into the project-local tasks runtime');
+	}
+
+	private function assertPoolBenchmarkShape(string $stdout, string $stderr): void
+	{
+		if (!preg_match('/^pool-benchmark:(\d+),(\d+),(\d+)$/m', $stdout, $matches)) {
+			throw new RuntimeException("task worker pool benchmark did not print metrics:\nSTDOUT:\n" . $stdout . "\nSTDERR:\n" . $stderr);
+		}
+		$this->assertSame(4, (int) $matches[3], 'task worker pool benchmark should report the configured keepalive worker count');
 	}
 
 	private function assertTaskStartPerformanceShape(string $stdout, string $stderr): void
@@ -1748,6 +2069,11 @@ PHS
 	/** @return array{exit_code:int,stdout:string,stderr:string} */
 	private function runCommand(array $command, string $cwd, int $timeoutSeconds): array
 	{
+		$progress = getenv('SCPP_TASKS_TEST_PROGRESS') === '1';
+		$label = basename($cwd);
+		if ($progress) {
+			fwrite(STDERR, '[tasks-test] start ' . $label . ': ' . implode(' ', $command) . PHP_EOL);
+		}
 		$descriptor = [
 			0 => ['file', '/dev/null', 'r'],
 			1 => ['pipe', 'w'],
@@ -1762,6 +2088,7 @@ PHS
 		$stdout = '';
 		$stderr = '';
 		$started = microtime(true);
+		$lastProgress = $started;
 		$observedExitCode = null;
 		foreach ([1, 2] as $index) {
 			stream_set_blocking($pipes[$index], false);
@@ -1775,7 +2102,12 @@ PHS
 				$observedExitCode = is_int($exitCode) ? $exitCode : null;
 				break;
 			}
-			if ((microtime(true) - $started) > $timeoutSeconds) {
+			$now = microtime(true);
+			if ($progress && ($now - $lastProgress) >= 10.0) {
+				fwrite(STDERR, '[tasks-test] still running ' . $label . ' after ' . (int)($now - $started) . 's' . PHP_EOL);
+				$lastProgress = $now;
+			}
+			if (($now - $started) > $timeoutSeconds) {
 				proc_terminate($process);
 				throw new RuntimeException('Timed out after ' . $timeoutSeconds . 's: ' . implode(' ', $command));
 			}
@@ -1786,6 +2118,10 @@ PHS
 		fclose($pipes[1]);
 		fclose($pipes[2]);
 		$exitCode = proc_close($process);
+		if ($progress) {
+			$finalExitCode = $observedExitCode ?? (is_int($exitCode) ? $exitCode : 1);
+			fwrite(STDERR, '[tasks-test] done ' . $label . ': exit=' . $finalExitCode . ' elapsed=' . (int)(microtime(true) - $started) . 's' . PHP_EOL);
+		}
 		return [
 			'exit_code' => $observedExitCode ?? (is_int($exitCode) ? $exitCode : 1),
 			'stdout' => $stdout,

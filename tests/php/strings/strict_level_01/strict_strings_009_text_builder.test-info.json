@@ -1,0 +1,52 @@
+{
+    "id": "strict_strings_009_text_builder",
+    "feature": "strings",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "reserved\n15\nhello-42-1-span\nhello-42-1-span\n0\nagain\n0\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "strings",
+        "builder",
+        "text_builder"
+    ],
+    "notes": "The text_builder runtime helper should expose typed, reusable contiguous text construction with byte-span appends.",
+    "build": {
+        "sanitizers": null
+    }
+}

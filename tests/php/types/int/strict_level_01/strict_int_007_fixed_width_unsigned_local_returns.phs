@@ -1,0 +1,36 @@
+// Strict fixed-width signed and unsigned integer local declarations and returns.
+function s8(): int8
+{
+	$value int8 = 7;
+	return $value;
+}
+
+function u8(): uint8
+{
+	$value uint8 = 8;
+	return $value;
+}
+
+function u16(): uint16
+{
+	$value uint16 = 16;
+	return $value;
+}
+
+function u32(): uint32
+{
+	$value uint32 = 32;
+	return $value;
+}
+
+function u64(): uint64
+{
+	$value uint64 = 64;
+	return $value;
+}
+
+echo s8(), "\n";
+echo u8(), "\n";
+echo u16(), "\n";
+echo u32(), "\n";
+echo u64(), "\n";

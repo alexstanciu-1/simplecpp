@@ -487,11 +487,16 @@ $result = $stmt->get_result();
 
 ---
 
-## Example 16 â€” JSON decode as dynamic result
+## Example 16 â€” JSON decode as checked result
 
 **Preferred**
 ```php
-$data = json_decode($json);
+$data mixed;
+$json_error error;
+if (!take($data, $json_error, json_decode($json))) {
+	echo $json_error->get_message(), "\n";
+	return;
+}
 
 if ($data === null) {
 	return;

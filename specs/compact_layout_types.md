@@ -116,7 +116,7 @@ Classes remain object/reference-oriented in the current model. A field declared
 as an ordinary class type continues to lower through the current class/object
 storage rules.
 
-### 2.2 First-Slice Struct Members
+### 2.2 Struct Members
 
 The first slice supports public instance fields only.
 
@@ -128,25 +128,53 @@ Rejected in current structs:
 - implemented interfaces
 - private or protected fields
 - static fields
-- class/object fields
-- ownership/reference wrappers
+- explicit ownership/reference wrappers (ordinary class fields use their existing shared-handle storage)
 - `mixed`
 - `dynamic`
 - nullable fields
 - unrestricted union fields
 
-### 2.3 First-Slice Field Types
+### 2.3 Field Types
 
 Current struct fields may use:
 
 - `bool`
+- `string` (stored as `string_t`)
 - fixed-width integer aliases: `int8`, `int16`, `int32`, `int64`,
   `uint8`, `byte`, `uint16`, `uint32`, `uint64`
 - fixed-backed enums
 - other first-slice structs
-- `vector_t<StructName>` / `vector<StructName>`
-- `hash_t<StructName>` / `hash<StructName>`
-- `fixed_array_t<StructName, N>` / `fixed_array<StructName, N>`
+- ordinary class types (stored as `shared_p<ClassName>`)
+- restricted unions conforming to section 4
+- `vector_t<T>` / `vector<T>`
+- `hash_t<T>` / `hash<T>`, including the existing explicit key-type form `hash<T, T_KEY>`
+- `fixed_array_t<T, N>` / `fixed_array<T, N>`
+
+Container element/value type `T` follows this same field-type rule recursively.
+Existing hash-key and fixed-array size restrictions still apply. `mixed` and
+`dynamic` remain excluded, including inside nested containers. Explicit ownership
+wrappers and nullable fields are not added by this extension.
+
+For example:
+
+```phs
+class Some_Custom_Class {
+	public string $name = "";
+}
+
+struct my_struct {
+	string $my_string;
+	Some_Custom_Class $my_property;
+	public $strings vector<string>;
+	public $objects hash_t<Some_Custom_Class>;
+}
+```
+
+Copying a struct copies each field using its existing value/ownership semantics:
+strings have independent values, ordinary class fields share the same object,
+and containers copy their elements (including shared handles). Moving and
+destruction use the existing member lifetimes. Structs do not acquire implicit
+deep object cloning, raw-byte serialization, or shared-ownership cycle collection.
 
 `float` is not promoted by this spec in the current first slice.
 
@@ -154,6 +182,21 @@ Current struct fields may use:
 
 Explicit struct field initializers lower to generated member initializers.
 Omitted initializers use the generated C++ default for the field type.
+Strings default to empty, vector/hash fields to empty containers, and ordinary
+class fields to absent shared handles. Reading required fields and accessing
+absent objects remain subject to the existing STAN and runtime rules.
+
+Typed struct locals may use keyed array initializer sugar:
+
+```php
+$row Row = ["x" => 10, "y" => 20];
+```
+
+This lowers as a value struct initializer, not as a dynamic array/table. When
+the struct declaration is available to the generator, fields are emitted in
+declaration order so generated C++ designated initialization remains valid even
+if source keys appear in a different order. Nested keyed initializers are
+supported for fields whose declared type is another first-slice struct.
 
 Required-field and maybe-uninitialized guarantees remain subject to STAN and
 generator diagnostics; they are not broadened by this first-slice spec.
@@ -203,6 +246,11 @@ Current union payload fields may use:
 - fixed-backed enums
 - first-slice structs
 
+Struct payload eligibility is recursive: strings, ordinary class handles, and
+containers are forbidden anywhere inside a union payload, including through
+nested structs. Supporting these fields in ordinary structs does not add managed
+union lifetimes or an active-member discriminator.
+
 Union fields intentionally omit default initializers. Source code that needs a
 tagged payload should store the tag separately, typically as a fixed-backed
 enum field in an enclosing first-slice struct.
@@ -224,6 +272,12 @@ kind:
 
 Generated project force-include headers must order generated headers so by-value
 struct, union, and enum uses see complete definitions before use.
+
+Current lowering limitation: declaration-kind metadata alone does not provide
+the field schema for every cross-file literal assignment. When assigning a
+container literal to a struct declared in another file, construct a typed
+container local first and assign that value to the field. This extension does
+not add general cross-file expression type inference.
 
 ## 6. Layout Probes
 

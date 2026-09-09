@@ -1,0 +1,26 @@
+$builder string_parts_builder = string_parts_builder_create();
+
+string_parts_builder_reserve($builder, 8);
+if (string_parts_builder_capacity($builder) >= 8) {
+	echo "reserved\n";
+} else {
+	echo "not-reserved\n";
+}
+
+string_parts_builder_append_string($builder, "hello");
+string_parts_builder_append_string($builder, "-");
+string_parts_builder_append_int($builder, 42);
+string_parts_builder_append_string($builder, "-");
+string_parts_builder_append_bool($builder, true);
+string_parts_builder_append_bool($builder, false);
+
+echo string_parts_builder_count($builder), "\n";
+echo string_parts_builder_byte_len($builder), "\n";
+echo string_parts_builder_to_string($builder), "\n";
+
+string_parts_builder_clear($builder);
+echo string_parts_builder_count($builder), "\n";
+echo string_parts_builder_byte_len($builder), "\n";
+
+string_parts_builder_append_string($builder, "again");
+echo string_parts_builder_to_string($builder), "\n";

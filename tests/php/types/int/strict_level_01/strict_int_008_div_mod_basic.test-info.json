@@ -1,0 +1,54 @@
+{
+    "id": "strict_int_008_div_mod_basic",
+    "feature": "int",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "exact",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "42\n42\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "types",
+        "int",
+        "arithmetic",
+        "division",
+        "modulo"
+    ],
+    "notes": "Strict int64 division and modulo should compile and run through the vendor language surface.",
+    "build": {
+        "sanitizers": null
+    }
+}

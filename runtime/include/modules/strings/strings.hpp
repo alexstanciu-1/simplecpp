@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/string_support.hpp"
+#include "modules/source/source.hpp"
 #include "scpp/result.hpp"
 #include "scpp/vector_t.hpp"
 
@@ -11,9 +12,207 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace scpp::str {
+
+class string_parts_builder final {
+private:
+	vector_t<string_t> parts_;
+	std::size_t byte_length_ = 0;
+
+public:
+	string_parts_builder() = default;
+
+	void reserve(const std::size_t capacity) {
+		parts_.reserve(capacity);
+	}
+
+	[[nodiscard]] std::size_t count() const noexcept {
+		return parts_.size();
+	}
+
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return parts_.capacity();
+	}
+
+	[[nodiscard]] std::size_t byte_length() const noexcept {
+		return byte_length_;
+	}
+
+	void append(const string_t &value) {
+		byte_length_ += value.native_value().size();
+		parts_.append(value);
+	}
+
+	void append(string_t &&value) {
+		byte_length_ += value.native_value().size();
+		parts_.append(std::move(value));
+	}
+
+	void clear() noexcept {
+		parts_.clear();
+		byte_length_ = 0;
+	}
+
+	[[nodiscard]] string_t to_string() const {
+		std::string out;
+		out.reserve(byte_length_);
+		for (const auto &part : parts_.native_value()) {
+			out += part.native_value();
+		}
+		return string_t(std::move(out));
+	}
+};
+
+class text_builder final {
+private:
+	std::string bytes_;
+
+public:
+	text_builder() = default;
+
+	void reserve(const std::size_t byte_capacity) {
+		bytes_.reserve(byte_capacity);
+	}
+
+	[[nodiscard]] std::size_t capacity() const noexcept {
+		return bytes_.capacity();
+	}
+
+	[[nodiscard]] std::size_t byte_length() const noexcept {
+		return bytes_.size();
+	}
+
+	void append(const std::string_view value) {
+		bytes_.append(value.data(), value.size());
+	}
+
+	void append(const string_t &value) {
+		append(value.native_value());
+	}
+
+	void append_int(const int_t<> &value) {
+		bytes_ += std::to_string(value.native_value());
+	}
+
+	void append_bool(const bool_t &value) {
+		if (value.native_value()) {
+			bytes_.push_back('1');
+		}
+	}
+
+	void append_byte_span(const source::byte_span &span) {
+		append(span.view());
+	}
+
+	void clear() noexcept {
+		bytes_.clear();
+	}
+
+	[[nodiscard]] string_t to_string() const {
+		return string_t(bytes_);
+	}
+
+	[[nodiscard]] string_t take_string() {
+		std::string out = std::move(bytes_);
+		bytes_.clear();
+		return string_t(std::move(out));
+	}
+};
+
+[[nodiscard]] inline string_parts_builder string_parts_builder_create() {
+	return string_parts_builder();
+}
+
+inline void string_parts_builder_reserve(string_parts_builder &builder, const int_t<> &capacity) {
+	const auto native = capacity.native_value();
+	if (native < 0) {
+		throw scpp::ValueError("string_parts_builder_reserve(): capacity must be non-negative");
+	}
+	builder.reserve(static_cast<std::size_t>(native));
+}
+
+[[nodiscard]] inline int_t<> string_parts_builder_count(const string_parts_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.count()));
+}
+
+[[nodiscard]] inline int_t<> string_parts_builder_capacity(const string_parts_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.capacity()));
+}
+
+[[nodiscard]] inline int_t<> string_parts_builder_byte_len(const string_parts_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.byte_length()));
+}
+
+inline void string_parts_builder_append_string(string_parts_builder &builder, const string_t &value) {
+	builder.append(value);
+}
+
+inline void string_parts_builder_append_int(string_parts_builder &builder, const int_t<> &value) {
+	builder.append(string_t(std::to_string(value.native_value())));
+}
+
+inline void string_parts_builder_append_bool(string_parts_builder &builder, const bool_t &value) {
+	builder.append(string_t(value.native_value() ? "1" : ""));
+}
+
+[[nodiscard]] inline string_t string_parts_builder_to_string(const string_parts_builder &builder) {
+	return builder.to_string();
+}
+
+inline void string_parts_builder_clear(string_parts_builder &builder) {
+	builder.clear();
+}
+
+[[nodiscard]] inline text_builder text_builder_create() {
+	return text_builder();
+}
+
+inline void text_builder_reserve_bytes(text_builder &builder, const int_t<> &capacity) {
+	const auto native = capacity.native_value();
+	if (native < 0) {
+		throw scpp::ValueError("text_builder_reserve_bytes(): capacity must be non-negative");
+	}
+	builder.reserve(static_cast<std::size_t>(native));
+}
+
+[[nodiscard]] inline int_t<> text_builder_capacity_bytes(const text_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.capacity()));
+}
+
+[[nodiscard]] inline int_t<> text_builder_byte_len(const text_builder &builder) {
+	return int_t<>(static_cast<std::int64_t>(builder.byte_length()));
+}
+
+inline void text_builder_append_string(text_builder &builder, const string_t &value) {
+	builder.append(value);
+}
+
+inline void text_builder_append_int(text_builder &builder, const int_t<> &value) {
+	builder.append_int(value);
+}
+
+inline void text_builder_append_bool(text_builder &builder, const bool_t &value) {
+	builder.append_bool(value);
+}
+
+inline void text_builder_append_byte_span(text_builder &builder, const source::byte_span &span) {
+	builder.append_byte_span(span);
+}
+
+[[nodiscard]] inline string_t text_builder_to_string(const text_builder &builder) {
+	return builder.to_string();
+}
+
+[[nodiscard]] inline string_t text_builder_take_string(text_builder &builder) {
+	return builder.take_string();
+}
+
+inline void text_builder_clear(text_builder &builder) {
+	builder.clear();
+}
 
 inline int_t<> length(const string_t &value) {
 	return int_t<>(static_cast<std::int64_t>(value.length_cp()));
@@ -24,6 +223,108 @@ inline int_t<> length(const nullable<string_t> &value) {
 		throw std::runtime_error("strlen(): nullable string is null");
 	}
 	return length(value.value());
+}
+
+inline int_t<> byte_length(const string_t &value) {
+	return int_t<>(static_cast<std::int64_t>(value.byte_size()));
+}
+
+inline int_t<> byte_at(const string_t &value, const int_t<> &offset) {
+	const auto native_offset = offset.native_value();
+	const auto &native = value.native_value();
+	if (native_offset < 0 || static_cast<std::size_t>(native_offset) >= native.size()) {
+		return int_t<>(-1);
+	}
+	return int_t<>(static_cast<std::int64_t>(static_cast<unsigned char>(native[static_cast<std::size_t>(native_offset)])));
+}
+
+inline nullable<int_t<>> byte_find(const string_t &haystack, const string_t &needle) {
+	const auto position = haystack.native_value().find(needle.native_value());
+	if (position == std::string::npos) {
+		return null;
+	}
+	return int_t<>(static_cast<std::int64_t>(position));
+}
+
+inline nullable<int_t<>> byte_find(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto native_offset = offset.native_value();
+	const auto &native = haystack.native_value();
+	if (native_offset < 0 || static_cast<std::size_t>(native_offset) > native.size()) {
+		throw scpp::ValueError("string_byte_find(): Argument #3 ($offset) must be contained in argument #1 ($haystack)");
+	}
+	const auto position = native.find(needle.native_value(), static_cast<std::size_t>(native_offset));
+	if (position == std::string::npos) {
+		return null;
+	}
+	return int_t<>(static_cast<std::int64_t>(position));
+}
+
+inline string_t byte_slice(const string_t &value, const int_t<> &offset, const int_t<> &length_value) {
+	const auto native_offset = offset.native_value();
+	const auto native_length = length_value.native_value();
+	const auto &native = value.native_value();
+	if (native_offset < 0 || native_length < 0 || static_cast<std::size_t>(native_offset) > native.size()) {
+		return string_t("");
+	}
+	const auto start = static_cast<std::size_t>(native_offset);
+	const auto available = native.size() - start;
+	const auto requested = static_cast<std::size_t>(native_length);
+	const auto used = requested < available ? requested : available;
+	return string_t(native.substr(start, used));
+}
+
+inline bool_t byte_slice_equals(const string_t &value, const int_t<> &offset, const int_t<> &length_value, const string_t &literal) {
+	const auto native_offset = offset.native_value();
+	const auto native_length = length_value.native_value();
+	if (native_offset < 0 || native_length < 0) {
+		return bool_t(false);
+	}
+	const auto start = static_cast<std::size_t>(native_offset);
+	const auto length = static_cast<std::size_t>(native_length);
+	const auto &native = value.native_value();
+	const auto &expected = literal.native_value();
+	if (length != expected.size() || start > native.size() || length > native.size() - start) {
+		return bool_t(false);
+	}
+	return bool_t(std::string_view(native).substr(start, length) == std::string_view(expected));
+}
+
+inline int_t<> utf8_codepoint_count(const string_t &value) {
+	return int_t<>(static_cast<std::int64_t>(value.length_cp()));
+}
+
+inline int_t<> utf8_codepoint_at(const string_t &value, const int_t<> &index) {
+	const auto native_index = index.native_value();
+	if (native_index < 0) {
+		return int_t<>(-1);
+	}
+	if (static_cast<std::size_t>(native_index) >= value.length_cp()) {
+		return int_t<>(-1);
+	}
+	const auto cp = utf8::codepoint_at(value.native_value(), static_cast<std::size_t>(native_index));
+	return int_t<>(static_cast<std::int64_t>(cp));
+}
+
+inline string_t utf8_slice_codepoints(const string_t &value, const int_t<> &start, const int_t<> &length_value) {
+	const auto native_start = start.native_value();
+	const auto native_length = length_value.native_value();
+	if (native_start < 0 || native_length < 0) {
+		return string_t("");
+	}
+	return value.substr_cp(static_cast<std::size_t>(native_start), static_cast<std::size_t>(native_length));
+}
+
+inline int_t<> grapheme_count(const string_t &value) {
+	return int_t<>(static_cast<std::int64_t>(utf8::length_grapheme(value.native_value())));
+}
+
+inline string_t grapheme_slice(const string_t &value, const int_t<> &start, const int_t<> &length_value) {
+	const auto native_start = start.native_value();
+	const auto native_length = length_value.native_value();
+	if (native_start < 0 || native_length < 0) {
+		return string_t("");
+	}
+	return string_t(utf8::substr_grapheme(value.native_value(), static_cast<std::size_t>(native_start), static_cast<std::size_t>(native_length)));
 }
 
 inline nullable<int_t<>> find(const string_t &haystack, const string_t &needle) {

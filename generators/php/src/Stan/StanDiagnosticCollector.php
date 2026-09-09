@@ -76,6 +76,9 @@ final class StanDiagnosticCollector
 		$lookup = $this->dependencyResolver->buildResolutionLookup($symbolIndex);
 		$diagnostics = [];
 		foreach ($fileSummaries as $summary) {
+			if ((bool) ($summary['is_runtime_shallow'] ?? false)) {
+				continue;
+			}
 			$path = (string) ($summary['path'] ?? '(unknown)');
 			foreach (($summary['dependencies'] ?? []) as $dependency) {
 				if (!is_array($dependency)) {
@@ -261,6 +264,27 @@ final class StanDiagnosticCollector
 						$interfaceParamType = (string) ($interfaceParam['type'] ?? '');
 						$implementedParamType = (string) ($implementedParam['type'] ?? '');
 						if ($interfaceParamType === '' || $implementedParamType === '' || $interfaceParamType === $implementedParamType) {
+							$interfaceParamConst = (bool) ($interfaceParam['is_const'] ?? false);
+							$implementedParamConst = (bool) ($implementedParam['is_const'] ?? false);
+							if ($interfaceParamConst === $implementedParamConst) {
+								continue;
+							}
+							$diagnostics[] = [
+								'kind' => 'interface_contract_mismatch',
+								'mismatch_kind' => 'parameter_const',
+								'class' => $classFqcn,
+								'interface' => (string) ($interfaceInfo['fqcn'] ?? $interfaceName),
+								'name' => (string) $methodName,
+								'path' => (string) ($classInfo['path'] ?? ''),
+								'line' => (int) ($implementedParam['line'] ?? $implementedMethod['line'] ?? $classInfo['line'] ?? 0),
+								'interface_path' => (string) ($interfaceInfo['path'] ?? ''),
+								'interface_line' => (int) ($interfaceParam['line'] ?? $interfaceMethod['line'] ?? $interfaceInfo['line'] ?? 0),
+								'parameter_index' => $index,
+								'parameter_name' => (string) ($interfaceParam['name'] ?? $implementedParam['name'] ?? ('arg' . $index)),
+								'expected_const' => $interfaceParamConst,
+								'actual_const' => $implementedParamConst,
+								'message' => 'Class `' . $classFqcn . '` method `' . (string) $methodName . '()` parameter $' . (string) ($interfaceParam['name'] ?? $implementedParam['name'] ?? ('arg' . $index)) . ' does not match interface `' . (string) ($interfaceInfo['fqcn'] ?? $interfaceName) . '`: expected ' . ($interfaceParamConst ? 'const' : 'non-const') . ' parameter, got ' . ($implementedParamConst ? 'const' : 'non-const') . '.',
+							];
 							continue;
 						}
 						$diagnostics[] = [
@@ -477,30 +501,10 @@ final class StanDiagnosticCollector
 	/** @param array<string,array<string,mixed>> $classCatalog */
 	private function isStructFieldTypeSupported(string $type, array $classCatalog): bool
 	{
-		$normalized = trim($type);
-		$lower = strtolower($normalized);
-		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
-			return true;
-		}
-		$kind = $this->declaredKindForType($normalized, $classCatalog);
-		if (in_array($kind, ['enum', 'struct', 'union'], true)) {
-			return true;
-		}
-		if (preg_match('/^(vector|vector_t|hash|hash_t|fixed_array|fixed_array_t)\s*<(.+)>$/', $normalized, $matches) === 1) {
-			$args = $this->splitTopLevelTypeArgs((string) $matches[2]);
-			$container = strtolower((string) $matches[1]);
-			if (in_array($container, ['vector', 'vector_t'], true) && count($args) !== 1) {
-				return false;
-			}
-			if (in_array($container, ['hash', 'hash_t'], true) && (count($args) < 1 || count($args) > 2)) {
-				return false;
-			}
-			if (in_array($container, ['fixed_array', 'fixed_array_t'], true) && count($args) !== 2) {
-				return false;
-			}
-			return isset($args[0]) && $this->isStructFieldTypeSupported($args[0], $classCatalog);
-		}
-		return false;
+		return \Scpp\S2S\Analysis\StructFieldTypePolicy::supports(
+			$type,
+			fn (string $name): ?string => $this->declaredKindForType($name, $classCatalog)
+		);
 	}
 
 	/** @param array<string,array<string,mixed>> $classCatalog */
@@ -863,6 +867,9 @@ final class StanDiagnosticCollector
 				continue;
 			}
 			if ((string) ($leftParam['type'] ?? '') !== (string) ($rightParam['type'] ?? '')) {
+				return false;
+			}
+			if ((bool) ($leftParam['is_const'] ?? false) !== (bool) ($rightParam['is_const'] ?? false)) {
 				return false;
 			}
 		}

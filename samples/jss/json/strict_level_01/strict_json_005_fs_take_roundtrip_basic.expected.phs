@@ -11,7 +11,12 @@ function run(): void {
 		echo "read_error\n";
 		return;
 	}
-	$decoded dynamic = json_decode($data);
+	$decoded mixed;
+	$jsonError error;
+	if (!take($decoded, $jsonError, json_decode($data))) {
+		echo "json_error\n";
+		return;
+	}
 	echo $written, "\n";
 	echo strlen($data), "\n";
 	echo $decoded["name"], "\n";

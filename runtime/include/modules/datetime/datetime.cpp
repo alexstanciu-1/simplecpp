@@ -10,12 +10,15 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <type_traits>
 
 namespace scpp::dt {
 namespace {
 
 using seconds_t = std::chrono::seconds;
 using millis_t = std::chrono::milliseconds;
+using micros_t = std::chrono::microseconds;
+using nanos_t = std::chrono::nanoseconds;
 
 [[nodiscard]] std::int64_t checked_count_to_int64(const auto duration) {
 	const auto count = duration.count();
@@ -26,6 +29,19 @@ using millis_t = std::chrono::milliseconds;
 		}
 	}
 	return static_cast<std::int64_t>(count);
+}
+
+[[nodiscard]] std::uint64_t checked_count_to_uint64(const auto duration) {
+	const auto count = duration.count();
+	if (count < 0) {
+		throw std::runtime_error("datetime monotonic value is outside uint64 range");
+	}
+	if constexpr (sizeof(count) > sizeof(std::uint64_t)) {
+		if (static_cast<std::make_unsigned_t<decltype(count)>>(count) > std::numeric_limits<std::uint64_t>::max()) {
+			throw std::runtime_error("datetime monotonic value is outside uint64 range");
+		}
+	}
+	return static_cast<std::uint64_t>(count);
 }
 
 [[nodiscard]] bool ascii_digit(const char ch) noexcept {
@@ -203,6 +219,16 @@ int_t<> now_unix_millis() {
 int_t<> monotonic_millis() {
 	const auto now = std::chrono::steady_clock::now().time_since_epoch();
 	return int_t<>(checked_count_to_int64(std::chrono::duration_cast<millis_t>(now)));
+}
+
+int_t<std::uint64_t> monotonic_micros() {
+	const auto now = std::chrono::steady_clock::now().time_since_epoch();
+	return int_t<std::uint64_t>(checked_count_to_uint64(std::chrono::duration_cast<micros_t>(now)));
+}
+
+int_t<std::uint64_t> monotonic_nanos() {
+	const auto now = std::chrono::steady_clock::now().time_since_epoch();
+	return int_t<std::uint64_t>(checked_count_to_uint64(std::chrono::duration_cast<nanos_t>(now)));
 }
 
 void sleep_millis(const int_t<> &millis) {

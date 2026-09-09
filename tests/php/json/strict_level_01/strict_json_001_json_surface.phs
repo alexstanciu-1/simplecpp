@@ -1,4 +1,52 @@
-$value dynamic = json_decode("{\"a\":1,\"b\":[2,3],\"c\":\"x\"}");
-echo $value["a"], "\n";
-echo $value["b"][1], "\n";
-echo json_encode($value), "\n";
+function main(): void
+{
+	$value mixed;
+	$err error;
+	if (!take($value, $err, json_decode("{\"a\":1,\"b\":[2,3],\"c\":\"x\"}"))) {
+		echo $err->get_message(), "\n";
+		return;
+	}
+	echo $value["a"], "\n";
+	echo $value["b"][1], "\n";
+	$encoded string = "";
+	if (take($encoded, $err, json_encode($value))) {
+		echo $encoded, "\n";
+	} else {
+		echo $err->get_message(), "\n";
+	}
+
+	$value = "unchanged";
+	if (!take($value, $err, json_decode("{"))) {
+		echo $err->get_message(), "\n";
+		echo $value, "\n";
+	}
+	if (take($value, $err, json_decode("{\"name\":\"repaired\"}"))) {
+		echo $value["name"], "\n";
+	}
+	echo take($value, $err, json_decode("null")) ? "null_ok\n" : "null_fail\n";
+	echo $value === null ? "null_value\n" : "wrong_value\n";
+	echo take($value, $err, json_decode("false")) ? "false_ok\n" : "false_fail\n";
+	echo $value === false ? "false_value\n" : "wrong_value\n";
+	$large float = 1.0e308;
+	$bad float = $large * 2.0;
+	$encoded = "unchanged";
+	if (!take($encoded, $err, json_encode($bad))) {
+		echo $err->get_message(), "\n";
+		echo $encoded, "\n";
+	}
+	$numbers vector<float> = [1.0, $bad];
+	echo take($encoded, $err, json_encode($numbers)) ? "unexpected_encode\n" : "nested_encode_error\n";
+	echo $encoded, "\n";
+	if (take($encoded, $err, json_encode("repaired"))) {
+		echo $encoded, "\n";
+	}
+	if (take($encoded, $err, json_encode(null))) {
+		echo $encoded, "\n";
+	}
+	if (take($encoded, $err, json_encode(false))) {
+		echo $encoded, "\n";
+	}
+
+}
+
+main();

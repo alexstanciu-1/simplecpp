@@ -1,0 +1,17 @@
+$text string = "abcdef";
+$buffer /** source_buffer */ = source_buffer_take($text);
+
+echo $text === "" ? "empty\n" : "not-empty\n";
+echo source_buffer_byte_len($buffer), "\n";
+echo source_buffer_byte_at($buffer, 1), "\n";
+echo source_buffer_slice($buffer, 2, 3), "\n";
+
+$span /** byte_span */ = source_buffer_span($buffer, 1, 3);
+echo byte_span_len($span), "\n";
+echo byte_span_at($span, 2), "\n";
+echo byte_span_to_string($span), "\n";
+echo hash_bytes($span) === hash_string("bcd") ? "hash-ok\n" : "hash-bad\n";
+
+$released string = source_buffer_release($buffer);
+echo $released, "\n";
+echo source_buffer_byte_len($buffer), "\n";

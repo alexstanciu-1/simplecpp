@@ -29,6 +29,8 @@ final class IrBuilder
 {
 	/** @var array<string, string> */
 	private array $typeCommentsByKey = [];
+	/** @var array<string, bool> */
+	private array $constParamsByKey = [];
 	/** @var array<int, string> */
 	private array $returnAnnotationsByLine = [];
 	private ArgNormalizationCommentParser $argNormalizationCommentParser;
@@ -47,6 +49,7 @@ final class IrBuilder
 		}
 
 		$this->typeCommentsByKey = [];
+		$this->constParamsByKey = [];
 		$this->returnAnnotationsByLine = [];
 		foreach ($input->annotations as $annotation) {
 			$name = $annotation['name'] ?? null;
@@ -55,6 +58,9 @@ final class IrBuilder
 					continue;
 				}
 				$this->typeCommentsByKey[$annotation['line'] . ':' . $name] = $annotation['type'];
+				if ($annotation['kind'] === 'param' && (bool) ($annotation['isConst'] ?? false)) {
+					$this->constParamsByKey[$annotation['line'] . ':' . $name] = true;
+				}
 				continue;
 			}
 			if (in_array($annotation['kind'], ['function_return', 'method_return', 'closure_return'], true) && is_int($annotation['line']) && $annotation['line'] > 0) {
@@ -549,6 +555,7 @@ final class IrBuilder
 				nativeType: $this->readTypeName($children['type'] ?? null),
 				docType: $this->resolveDocTypeComment($paramLine, $paramName),
 				isReference: (($node->flags ?? 0) & AstKind::PARAM_REF) !== 0,
+				isConst: $this->isConstParam($paramLine, $paramName),
 				isVariadic: (($node->flags ?? 0) & AstKind::STATIC) !== 0,
 				default: $children['default'] ?? null,
 				line: $paramLine,
@@ -577,6 +584,11 @@ final class IrBuilder
 	private function resolveDocTypeComment(int $line, string $name): ?string
 	{
 		return $this->lookupTypeComment($line, $name);
+	}
+
+	private function isConstParam(int $line, string $name): bool
+	{
+		return $name !== '' && isset($this->constParamsByKey[$line . ':' . $name]);
 	}
 
 

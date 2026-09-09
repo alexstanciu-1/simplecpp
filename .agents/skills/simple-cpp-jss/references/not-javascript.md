@@ -76,6 +76,11 @@ user.name = "alex";
 Dynamic JSON boundary:
 
 ```js
-let row: dynamic = json.decode(text);
+let row: mixed;
+let err: error;
+if (!take(row, err, json.decode(text))) {
+	print(err.get_message(), "\n");
+	return;
+}
 let name: string = row["name"];
 ```

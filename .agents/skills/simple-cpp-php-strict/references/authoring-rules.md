@@ -79,6 +79,74 @@ Do not use annotation-style type syntax in strict mode, such as `$count /** int 
 Treat it as legacy compatibility syntax that should not appear in new strict examples or new strict code.
 Plan for it to become a hard error in a future version.
 
+Explicit parameter `const` is a read-only source contract: `const int $count` or `const vector<int> &$items`. Preserve constness in interface/abstract implementations and do not write through the parameter. This differs from automatic read-only parameter lowering; see `TYPE-PARAM-003F` and `TYPE-PARAM-003G` in `generators/php/specs/rules_catalog.md`.
+
+## Struct Fields And Cross-File Assignments
+
+Strings, ordinary class fields, and typed containers are supported in public
+instance struct fields. Use the class name directly; no explicit `shared<T>`
+annotation is needed:
+
+`model.phs`:
+
+```php
+class Some_Custom_Class {
+	public string $name = "";
+}
+
+struct Row {
+	string $my_string;
+	Some_Custom_Class $my_property;
+	public $names vector<string>;
+	public $by_name hash_t<Some_Custom_Class>;
+}
+```
+
+The struct itself remains an inline value. Strings copy independently; ordinary
+class fields use existing shared handles, so copies still reference the same
+object. Vectors and hashes copy their contents using each element's existing
+semantics: a container of class handles still shares the referenced objects.
+Strings default to empty, vectors/hashes to empty containers, and class fields
+to absent handles; assign a class object before dereferencing an absent field.
+
+Container element/value types follow the permitted struct-field types
+recursively, including strings, ordinary classes, nested structs, and supported
+container compositions. Existing fixed arrays also accept these element types;
+existing size and hash-key restrictions remain in force. This does not enable
+all source types as struct fields: numeric eligibility remains bool and the
+existing fixed-width integer aliases, not plain `int` or `float`.
+
+`mixed` and `dynamic` remain rejected, including inside nested containers.
+Nullable fields and explicit ownership-wrapper fields are not added. Strings,
+class handles, and containers remain forbidden in union payloads, including
+through nested structs. See `specs/compact_layout_types.md` for the contract.
+
+Current compiler limitation: when the struct is declared in another source file,
+the generator knows its declaration kind but does not have the field schema in
+every literal-assignment path. A direct assignment such as
+`$row->names = ["Alice", "Bob"];` can consequently lower the literal as a dynamic
+array and fail compilation. This is not an intended language restriction.
+
+Use a typed local to give the literal its expected container type:
+
+`main.phs` (same project):
+
+```php
+$row Row = [];
+$row->my_string = "team";
+$row->my_property = new Some_Custom_Class();
+
+$names vector<string> = ["Alice", "Bob"];
+$row->names = $names;
+
+$by_name hash_t<Some_Custom_Class> = ["owner" => $row->my_property];
+$row->by_name = $by_name;
+```
+
+Apply this workaround where cross-file field metadata is missing; do not require
+intermediate locals for every assignment. Project composition discovers the
+other source file; do not add PHP includes or generated C++ header references.
+
 ## Containers
 
 Use typed containers when the shape is known at compile time.
@@ -98,12 +166,17 @@ Guidance:
 
 ## Dynamic Values
 
-Dynamic expressions stay dynamic until an explicit typed boundary or narrowing point.
+`json_decode(...)` first returns a checked `result<mixed>`. After successful extraction, the decoded value stays dynamic until a typed boundary or narrowing point.
 
 Preferred:
 
 ```php
-$row = json_decode($text);
+$row mixed;
+$err error;
+if (!take($row, $err, json_decode($text))) {
+	echo $err->get_message(), "\n";
+	return;
+}
 $name string = $row["name"];
 $count int = $row["count"];
 ```
@@ -118,10 +191,9 @@ $items vector<int> = [];
 $items[] = $row["count"];
 ```
 
-Avoid carrying unresolved dynamic state through the rest of the program:
+In the examples below, `$row` is the successfully extracted value above. Avoid carrying unresolved dynamic state through the rest of the program:
 
 ```php
-$row = json_decode($text);
 $count = $row["count"];
 echo $count + 1, "\n";
 ```
@@ -137,7 +209,7 @@ if (isset($row["count"])) {
 
 Treat decoded JSON as a fat-variable boundary, not as the preferred shape for the rest of strict code.
 
-- `json_decode(...)` is a normal place to accept broad dynamic input
+- unwrap `json_decode(...)` with `take` at the ingestion boundary
 - when the expected payload shape is known, document it locally near that boundary
 - stabilize early into typed locals, typed properties, typed objects, or typed containers
 - keep long-lived `mixed` / `dynamic` values only when the flexibility is intentionally needed later
@@ -149,7 +221,6 @@ Example:
  *  - name: string
  *  - active: bool
  */
-$row = json_decode($text);
 
 if (isset($row["name"])) {
 	$out->name = $row["name"];
@@ -161,10 +232,10 @@ if (isset($row["active"])) {
 
 ## Wrappers
 
-Strict APIs commonly return wrapper-shaped results. Resolve them near a meaningful boundary with `take(...)`.
+Strict APIs commonly return wrapper-shaped results. Resolve them near a meaningful boundary with `take(...)`. JSON decode returns `result<mixed>` and encode returns `result<string>`; neither is a direct value. `take` returns true for successfully decoded JSON `null` and `false`.
 
 ```php
-$err /** error_t */;
+$err error;
 $text string = "";
 
 if (!take($text, $err, fs_get($path))) {
@@ -182,7 +253,7 @@ if (!take($fh, io_open($path, "rb"))) {
 	return;
 }
 
-$pos = str_strpos("banana", "zz") ?? -1;
+$pos = strpos("banana", "zz") ?? -1;
 ```
 
 ## State Checks

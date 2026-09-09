@@ -6,11 +6,11 @@
 
 namespace scpp::php {
 
-[[nodiscard]] inline string_t json_encode(const mixed_t &value) {
+[[nodiscard]] inline result<string_t> json_encode(const mixed_t &value) {
 	return scpp::json::json_encode(value);
 }
 
-[[nodiscard]] inline mixed_t json_decode(const string_t &json) {
+[[nodiscard]] inline result<mixed_t> json_decode(const string_t &json) {
 	return scpp::json::json_decode(json);
 }
 

@@ -1,0 +1,9 @@
+function add3(int $a, int $b, int $c): int
+{
+	return $a + $b + $c;
+}
+
+function run(): int
+{
+	return add3(1, 2, 3);
+}

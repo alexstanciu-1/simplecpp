@@ -1,0 +1,7 @@
+function run(): bool {
+	$left int = 7;
+	$right int = 4;
+	$ok bool = false;
+	$ok = $left > $right;
+	return $ok;
+}

@@ -9,6 +9,8 @@ namespace scpp::dt {
 [[nodiscard]] int_t<> now_unix_seconds();
 [[nodiscard]] int_t<> now_unix_millis();
 [[nodiscard]] int_t<> monotonic_millis();
+[[nodiscard]] int_t<std::uint64_t> monotonic_micros();
+[[nodiscard]] int_t<std::uint64_t> monotonic_nanos();
 void sleep_millis(const int_t<> &millis);
 
 [[nodiscard]] string_t format_iso_utc(const int_t<> &unix_seconds);

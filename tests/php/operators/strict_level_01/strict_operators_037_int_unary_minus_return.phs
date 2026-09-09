@@ -1,0 +1,3 @@
+function run(): int {
+	return -42;
+}

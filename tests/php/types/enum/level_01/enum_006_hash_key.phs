@@ -1,0 +1,15 @@
+enum token_kind: byte {
+    case eof = 0;
+    case identifier = 1;
+    case number = 2;
+}
+
+$labels /** hash<string,token_kind> */ = [];
+$labels[token_kind::eof] = "eof";
+$labels[token_kind::identifier] = "identifier";
+
+$kind /** token_kind */ = enum_from_value(token_kind::class, 1);
+
+echo $labels[token_kind::eof], "\n";
+echo $labels[$kind], "\n";
+echo count($labels), "\n";

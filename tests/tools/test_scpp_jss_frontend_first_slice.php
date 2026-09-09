@@ -307,7 +307,7 @@ final class ScppJssFrontendFirstSliceTest
 	private function testJssClassifiedEmissionSupportsReservedHelperFamilies(): void
 	{
 		$source = implode("\n", [
-			'print(fs.get("a.txt"), fs.mkdir("tmp"), json.decode("{}"), "\\n");',
+			'print(fs.get("a.txt"), fs.mkdir("tmp"), json.decode("{}"), json.encode(null), "\\n");',
 			'',
 		]);
 		$program = (new JssParser())->parse((new JssTokenizer())->tokenize($source));
@@ -315,12 +315,13 @@ final class ScppJssFrontendFirstSliceTest
 		$classifications = (new StanFrontendClassifier())->classify(['main.jss' => $summary], (new StanSymbolIndexBuilder())->build(['main.jss' => $summary]));
 		$this->assertSame('result<string>', $this->findClassificationByTarget($classifications, 'fs_get')['return_type'] ?? null, 'STAN helper classification should expose fs_get return contract truth');
 		$this->assertSame('bool', $this->findClassificationByTarget($classifications, 'fs_mkdir')['return_type'] ?? null, 'STAN helper classification should expose plain bool fs mutator return contract truth');
-		$this->assertSame('dynamic', $this->findClassificationByTarget($classifications, 'json_decode')['return_type'] ?? null, 'STAN helper classification should expose json_decode dynamic return contract truth');
+		$this->assertSame('result<mixed>', $this->findClassificationByTarget($classifications, 'json_decode')['return_type'] ?? null, 'STAN helper classification should expose the checked json_decode return contract');
+		$this->assertSame('result<string>', $this->findClassificationByTarget($classifications, 'json_encode')['return_type'] ?? null, 'STAN helper classification should expose the checked json_encode return contract');
 
 		$phs = (new JssTranspiler())->transpileToPhsWithStanClassifications($source, 'main.jss');
 		$this->assertSame(
 			implode("\n", [
-				'echo fs_get("a.txt"), fs_mkdir("tmp"), json_decode("{}"), "\\n";',
+				'echo fs_get("a.txt"), fs_mkdir("tmp"), json_decode("{}"), json_encode(null), "\\n";',
 				'',
 			]),
 			$phs,
@@ -458,7 +459,14 @@ final class ScppJssFrontendFirstSliceTest
 			static fn (array $diagnostic): bool => ($diagnostic['message'] ?? null) === 'Runtime helper `fs_get()` requires module `filesystem` in the active project runtime config.'
 		));
 		$this->assertSame(1, count($moduleDiagnostics), 'STAN semantic result should expose helper module diagnostics as frontend diagnostics');
-		$this->assertSame('frontend_member_access', $moduleDiagnostics[0]['code'] ?? null, 'STAN should attach helper module diagnostics to the helper member-access request');
+		$this->assertSame('frontend_runtime_module', $moduleDiagnostics[0]['code'] ?? null, 'STAN should classify missing modules by their semantic failure rather than request syntax');
+		$buildGateResult = (new StanSemanticPass())->analyze(['main.jss' => $summary], $this->root, ['json', 'datetime'], 'build_gate');
+		$buildGateModules = array_values(array_filter(
+			$buildGateResult['frontend_diagnostics'] ?? [],
+			static fn (array $diagnostic): bool => ($diagnostic['code'] ?? null) === 'frontend_runtime_module'
+		));
+		$this->assertSame(1, count($buildGateModules), 'Fast build analysis must retain a confirmed missing-module error');
+		$this->assertSame($moduleDiagnostics[0]['message'], $buildGateModules[0]['message'], 'Full and fast analysis should preserve the same module explanation');
 
 		$enabledClassifications = (new StanFrontendClassifier())->classify(['main.jss' => $summary], $symbolIndex, ['json', 'datetime', 'filesystem']);
 		$enabledHelper = $this->findClassificationByTarget($enabledClassifications, 'fs_get');
@@ -1040,7 +1048,7 @@ final class ScppJssFrontendFirstSliceTest
 				'struct CompactChildSpan {',
 				"\t" . 'uint32 $first_child_index = 0;',
 				"\t" . 'uint16 $child_count = 0;',
-				"\t" . 'fixed_array_t<CompactChildSpan, 2> $first_two;',
+				"\t" . 'public $first_two fixed_array_t<CompactChildSpan, 2>;',
 				'}',
 				'',
 			]),

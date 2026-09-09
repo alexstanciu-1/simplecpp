@@ -345,6 +345,7 @@ Priority note:
 - typed vector literals must remain positional; explicit keys are rejected
 
 ### Typed hashes
+- Typed hash literals use the same expected-type initializer path inside struct fields and nested vector/hash/fixed-array literals as at typed local declarations. Known container element/value types must remain typed during recursive literal lowering.
 - `/** hash<T> */ []` lowers to `hash_t<T>{}`
 - `/** hash<T> */ ["k" => v, ...]` lowers to a typed `hash_t<T>` initializer sequence with the default `string_t` key surface
 - `/** hash<T, T_KEY> */ ...` lowers to `hash_t<T, T_KEY>` when an explicit typed key family is requested

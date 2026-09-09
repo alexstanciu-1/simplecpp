@@ -1,0 +1,52 @@
+{
+    "id": "strict_debug_001_dbg_scalar",
+    "feature": "debug",
+    "level": "strict_level_01",
+    "outcome": "positive",
+    "enabled": true,
+    "status": "active",
+    "php_as_oracle": false,
+    "compare": {
+        "stdout": "substring_all",
+        "stderr": "exact",
+        "generator_error": "substring_all",
+        "compile_error": "substring_all",
+        "normalize_stdout_newlines": true,
+        "normalize_stderr_newlines": true,
+        "trim_final_stdout_newline": false,
+        "trim_final_stderr_newline": false,
+        "case_sensitive_errors": true
+    },
+    "expect": {
+        "php": {
+            "run": false,
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+        },
+        "generate": {
+            "success": true,
+            "error_contains": []
+        },
+        "compile": {
+            "success": true,
+            "error_contains": []
+        },
+        "run": {
+            "success": true,
+            "exit_code": 0,
+            "stdout": "[dbg] catalog_dbg\n  value: 42\ndone\n",
+            "stderr": ""
+        }
+    },
+    "tags": [
+        "strict",
+        "debug",
+        "dbg",
+        "module-api"
+    ],
+    "notes": "Strict dbg helper calls should compile for scalar arguments without requiring module discovery in the compiler.",
+    "build": {
+        "sanitizers": null
+    }
+}

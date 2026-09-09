@@ -348,7 +348,10 @@ final class JssEmitter
 		if ($member->kind !== 'property_decl') {
 			return '';
 		}
-		$line = $this->emitType((string) $member->fields['type']) . ' $' . (string) $member->fields['name'];
+		$type = $this->emitType((string) $member->fields['type']);
+		$name = '$' . (string) $member->fields['name'];
+		// Generic fields use the PHS typed-property form understood by the pre-tokenizer.
+		$line = str_contains($type, '<') ? 'public ' . $name . ' ' . $type : $type . ' ' . $name;
 		if (($member->fields['default'] ?? null) instanceof JssNode) {
 			$line .= ' = ' . $this->emitExpression($member->fields['default']);
 		}
