@@ -7,6 +7,8 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
+## 0.1.75 - 2026-09-09
+
 ### Additions
 
 - Added string and ordinary class fields in value structs, plus vector/hash/fixed-array compositions of supported field types. Struct copies preserve string/container values and share referenced class objects; `mixed`, `dynamic`, and managed union payloads remain excluded.
