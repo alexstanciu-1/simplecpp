@@ -738,7 +738,7 @@ final class ScppBuildOptionsTest
 			'struct BadRow {',
 			'	private uint16 $hidden = 0;',
 			'	public static uint16 $counter = 0;',
-			'	public Box $box;',
+			'	public mixed $data;',
 			'	public function nope(): void {',
 			'		return;',
 			'	}',
@@ -753,7 +753,7 @@ final class ScppBuildOptionsTest
 		$diagnostics = (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? '');
 		$this->assertContains('Struct field BadRow::$hidden must be public', $diagnostics, 'private struct fields should be rejected');
 		$this->assertContains('Struct field BadRow::$counter cannot be static', $diagnostics, 'static struct fields should be rejected');
-		$this->assertContains('unsupported first-slice field type Box', $diagnostics, 'class object fields should be rejected in structs');
+		$this->assertContains('unsupported first-slice field type mixed', $diagnostics, 'mixed fields should be rejected in structs');
 		$this->assertContains('Struct BadRow cannot declare methods', $diagnostics, 'struct methods should be rejected in the first slice');
 	}
 

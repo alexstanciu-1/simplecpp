@@ -16211,7 +16211,7 @@ function collect_declared_type_kind_catalog_source_input(array $projectGraph, ar
 			: collect_project_php_files($contextProjectRoot);
 		foreach ($phpFiles as $sourcePath) {
 			$sourcePath = normalize_path($sourcePath);
-			if ($sourcePath === '' || isset($seen[$sourcePath]) || strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION)) === 'jss') {
+			if ($sourcePath === '' || isset($seen[$sourcePath])) {
 				continue;
 			}
 			$seen[$sourcePath] = true;
@@ -16317,6 +16317,13 @@ function compute_declared_type_kind_catalog_signature(string $repoRoot): string
 function declared_type_kind_catalog_signature_files(string $repoRoot): array
 {
 	return [
+		$repoRoot . '/generators/php/src/Jss/JssTokenizer.php',
+		$repoRoot . '/generators/php/src/Jss/JssParser.php',
+		$repoRoot . '/generators/php/src/Jss/JssNode.php',
+		$repoRoot . '/generators/php/src/Jss/JssSummaryExtractor.php',
+		$repoRoot . '/generators/php/src/Jss/JssFileSummaryBuilder.php',
+		$repoRoot . '/generators/php/src/Jss/JssFrontendRequestFactory.php',
+		$repoRoot . '/generators/php/src/Jss/JssCallSurface.php',
 		$repoRoot . '/generators/php/src/Analysis/DeclarationKindCatalogBuilder.php',
 		$repoRoot . '/generators/php/src/Analysis/FrontEndSymbolExtractor.php',
 		$repoRoot . '/generators/php/src/PreTokenizer/PreTokenizer.php',
@@ -16376,6 +16383,7 @@ function compute_s2s_generator_signature(string $repoRoot, string $phpProfile = 
 		$repoRoot . '/generators/php/src/Stan/StanPhpRuntimeFunctionCatalog.php',
 		$repoRoot . '/generators/php/src/Stan/StanTakeContractResolver.php',
 		$repoRoot . '/generators/php/src/Stan/StanFrontendClassifier.php',
+		$repoRoot . '/generators/php/src/Analysis/StructFieldTypePolicy.php',
 		$repoRoot . '/generators/php/src/Generator/Generator.php',
 		$repoRoot . '/generators/php/src/Lowering/TypeMapper.php',
 		$repoRoot . '/generators/php/specs/php_runtime_symbols_legacy.json',
@@ -16561,6 +16569,7 @@ function compute_stan_implementation_fingerprint(string $repoRoot): string
 		$repoRoot . '/generators/php/src/Jss/JssSummaryExtractor.php',
 		$repoRoot . '/generators/php/src/Jss/JssTokenizer.php',
 		$repoRoot . '/generators/php/src/Stan/StanDependencyResolver.php',
+		$repoRoot . '/generators/php/src/Analysis/StructFieldTypePolicy.php',
 		$repoRoot . '/generators/php/src/Stan/StanDiagnosticCollector.php',
 		$repoRoot . '/generators/php/src/Stan/StanDiagnosticEnricher.php',
 		$repoRoot . '/generators/php/src/Stan/StanExpressionTypeResolver.php',

@@ -501,30 +501,10 @@ final class StanDiagnosticCollector
 	/** @param array<string,array<string,mixed>> $classCatalog */
 	private function isStructFieldTypeSupported(string $type, array $classCatalog): bool
 	{
-		$normalized = trim($type);
-		$lower = strtolower($normalized);
-		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
-			return true;
-		}
-		$kind = $this->declaredKindForType($normalized, $classCatalog);
-		if (in_array($kind, ['enum', 'struct', 'union'], true)) {
-			return true;
-		}
-		if (preg_match('/^(vector|vector_t|hash|hash_t|fixed_array|fixed_array_t)\s*<(.+)>$/', $normalized, $matches) === 1) {
-			$args = $this->splitTopLevelTypeArgs((string) $matches[2]);
-			$container = strtolower((string) $matches[1]);
-			if (in_array($container, ['vector', 'vector_t'], true) && count($args) !== 1) {
-				return false;
-			}
-			if (in_array($container, ['hash', 'hash_t'], true) && (count($args) < 1 || count($args) > 2)) {
-				return false;
-			}
-			if (in_array($container, ['fixed_array', 'fixed_array_t'], true) && count($args) !== 2) {
-				return false;
-			}
-			return isset($args[0]) && $this->isStructFieldTypeSupported($args[0], $classCatalog);
-		}
-		return false;
+		return \Scpp\S2S\Analysis\StructFieldTypePolicy::supports(
+			$type,
+			fn (string $name): ?string => $this->declaredKindForType($name, $classCatalog)
+		);
 	}
 
 	/** @param array<string,array<string,mixed>> $classCatalog */

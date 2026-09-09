@@ -90,6 +90,7 @@ final class StanWorkspaceContextBuilder
 			$repoRoot . '/generators/php/src/Stan/StanPathMapper.php',
 			$repoRoot . '/generators/php/src/Stan/StanSymbolIndexBuilder.php',
 			$repoRoot . '/generators/php/src/Stan/StanDependencyResolver.php',
+			$repoRoot . '/generators/php/src/Analysis/StructFieldTypePolicy.php',
 			$repoRoot . '/generators/php/src/Stan/StanDiagnosticCollector.php',
 			$repoRoot . '/generators/php/src/Stan/StanDiagnosticEnricher.php',
 			$repoRoot . '/generators/php/src/Stan/StanExpressionTypeResolver.php',

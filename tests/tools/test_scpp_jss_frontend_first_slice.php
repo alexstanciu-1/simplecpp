@@ -1041,7 +1041,7 @@ final class ScppJssFrontendFirstSliceTest
 				'struct CompactChildSpan {',
 				"\t" . 'uint32 $first_child_index = 0;',
 				"\t" . 'uint16 $child_count = 0;',
-				"\t" . 'fixed_array_t<CompactChildSpan, 2> $first_two;',
+				"\t" . 'public $first_two fixed_array_t<CompactChildSpan, 2>;',
 				'}',
 				'',
 			]),

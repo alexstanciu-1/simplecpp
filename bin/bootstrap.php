@@ -30,6 +30,7 @@ require_once __DIR__ . '/../generators/php/src/Jss/JssEmitter.php';
 require_once __DIR__ . '/../generators/php/src/Jss/JssSummaryExtractor.php';
 require_once __DIR__ . '/../generators/php/src/Jss/JssSemanticValidator.php';
 require_once __DIR__ . '/../generators/php/src/Jss/JssTranspiler.php';
+require_once __DIR__ . '/../generators/php/src/Analysis/StructFieldTypePolicy.php';
 require_once __DIR__ . '/../generators/php/src/Analysis/FrontEndSymbolExtractor.php';
 require_once __DIR__ . '/../generators/php/src/Analysis/DeclarationKindCatalogBuilder.php';
 require_once __DIR__ . '/../generators/php/src/Analysis/RuntimeShallowSourceGenerator.php';

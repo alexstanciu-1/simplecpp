@@ -79,6 +79,72 @@ Do not use annotation-style type syntax in strict mode, such as `$count /** int 
 Treat it as legacy compatibility syntax that should not appear in new strict examples or new strict code.
 Plan for it to become a hard error in a future version.
 
+## Struct Fields And Cross-File Assignments
+
+Strings, ordinary class fields, and typed containers are supported in public
+instance struct fields. Use the class name directly; no explicit `shared<T>`
+annotation is needed:
+
+`model.phs`:
+
+```php
+class Some_Custom_Class {
+	public string $name = "";
+}
+
+struct Row {
+	string $my_string;
+	Some_Custom_Class $my_property;
+	public $names vector<string>;
+	public $by_name hash_t<Some_Custom_Class>;
+}
+```
+
+The struct itself remains an inline value. Strings copy independently; ordinary
+class fields use existing shared handles, so copies still reference the same
+object. Vectors and hashes copy their contents using each element's existing
+semantics: a container of class handles still shares the referenced objects.
+Strings default to empty, vectors/hashes to empty containers, and class fields
+to absent handles; assign a class object before dereferencing an absent field.
+
+Container element/value types follow the permitted struct-field types
+recursively, including strings, ordinary classes, nested structs, and supported
+container compositions. Existing fixed arrays also accept these element types;
+existing size and hash-key restrictions remain in force. This does not enable
+all source types as struct fields: numeric eligibility remains bool and the
+existing fixed-width integer aliases, not plain `int` or `float`.
+
+`mixed` and `dynamic` remain rejected, including inside nested containers.
+Nullable fields and explicit ownership-wrapper fields are not added. Strings,
+class handles, and containers remain forbidden in union payloads, including
+through nested structs. See `specs/compact_layout_types.md` for the contract.
+
+Current compiler limitation: when the struct is declared in another source file,
+the generator knows its declaration kind but does not have the field schema in
+every literal-assignment path. A direct assignment such as
+`$row->names = ["Alice", "Bob"];` can consequently lower the literal as a dynamic
+array and fail compilation. This is not an intended language restriction.
+
+Use a typed local to give the literal its expected container type:
+
+`main.phs` (same project):
+
+```php
+$row Row = [];
+$row->my_string = "team";
+$row->my_property = new Some_Custom_Class();
+
+$names vector<string> = ["Alice", "Bob"];
+$row->names = $names;
+
+$by_name hash_t<Some_Custom_Class> = ["owner" => $row->my_property];
+$row->by_name = $by_name;
+```
+
+Apply this workaround where cross-file field metadata is missing; do not require
+intermediate locals for every assignment. Project composition discovers the
+other source file; do not add PHP includes or generated C++ header references.
+
 ## Containers
 
 Use typed containers when the shape is known at compile time.

@@ -221,7 +221,7 @@ class Box
 struct BadRow {
 	private uint16 $hidden = 0;
 	public static uint16 $counter = 0;
-	public Box $box;
+	public mixed $data;
 	public function nope(): void {
 		return;
 	}
@@ -244,7 +244,7 @@ PHS
 			$this->assertContains('Struct `BadRow` cannot declare methods', $structMessages, 'struct method diagnostic should be reported by STAN');
 			$this->assertContains('Struct field `BadRow::$hidden` must be public', $structMessages, 'struct private field diagnostic should be reported by STAN');
 			$this->assertContains('Struct field `BadRow::$counter` cannot be static', $structMessages, 'struct static field diagnostic should be reported by STAN');
-			$this->assertContains('unsupported first-slice field type `Box`', $structMessages, 'struct object field diagnostic should be reported by STAN');
+			$this->assertContains('unsupported first-slice field type `mixed`', $structMessages, 'struct mixed field diagnostic should be reported by STAN');
 			$classifiedStruct = classify_stan_build_diagnostics($structDiagnostics);
 			$this->assertSame(4, $classifiedStruct['compile_error_count'] ?? null, 'struct contract diagnostics should block pre-build');
 

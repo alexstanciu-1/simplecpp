@@ -1164,7 +1164,7 @@ final class Generator
 				$this->errors[] = 'Struct field ' . $class->name . '::$' . $property->name . ' requires an explicit first-slice field type at line ' . $property->line . '.';
 				continue;
 			}
-			if (!$this->isFirstSliceStructFieldType($property->type)) {
+			if (!$this->isSupportedStructFieldType($property->type)) {
 				$this->errors[] = 'Struct field ' . $class->name . '::$' . $property->name . ' uses unsupported first-slice field type ' . $property->type . ' at line ' . $property->line . '.';
 			}
 		}
@@ -1192,34 +1192,12 @@ final class Generator
 		}
 	}
 
-	private function isFirstSliceStructFieldType(string $type): bool
+	private function isSupportedStructFieldType(string $type): bool
 	{
-		$normalized = trim($type);
-		$lower = strtolower($normalized);
-		if (in_array($lower, ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
-			return true;
-		}
-		$kind = $this->typeMapper->declaredTypeKind($normalized);
-		if (in_array($kind, ['enum', 'struct', 'union'], true)) {
-			return true;
-		}
-		if (preg_match('/^(vector|vector_t|hash|hash_t|fixed_array|fixed_array_t)\s*<(.+)>$/', $normalized, $matches) === 1) {
-			$args = $this->splitTopLevelTypeArgs($matches[2]);
-			if ($args === []) {
-				return false;
-			}
-			if (in_array(strtolower($matches[1]), ['fixed_array', 'fixed_array_t'], true) && count($args) !== 2) {
-				return false;
-			}
-			if (in_array(strtolower($matches[1]), ['vector', 'vector_t'], true) && count($args) !== 1) {
-				return false;
-			}
-			if (in_array(strtolower($matches[1]), ['hash', 'hash_t'], true) && (count($args) < 1 || count($args) > 2)) {
-				return false;
-			}
-			return $this->isFirstSliceStructFieldType($args[0]);
-		}
-		return false;
+		return \Scpp\S2S\Analysis\StructFieldTypePolicy::supports(
+			$type,
+			fn (string $name): ?string => $this->typeMapper->declaredTypeKind($name)
+		);
 	}
 
 	private function validateUnionDeclaration(ClassDecl $class): void
@@ -6132,55 +6110,8 @@ final class Generator
 		}
 
 		$mappedHashType = $typedLocalType !== null ? $this->mapTypedHashLocalType($typedLocalType) : null;
-			if ($mappedHashType !== null) {
-				$hashTypeParts = $this->parseHashTypeParts($mappedHashType);
-				if ($hashTypeParts === null) {
-					$this->errors[] = 'Unsupported typed hash mapping for ' . $typedLocalType . '.';
-					return '/* unsupported-typed-hash */';
-				}
-
-				$valueType = $hashTypeParts['value'];
-			$lines = [
-				'[&]() -> ' . $mappedHashType . ' {',
-				$this->indent(1) . $mappedHashType . ' __scpp_hash_value{};',
-			];
-
-			foreach ($elements as $element) {
-				if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
-					$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
-					return '/* unsupported-array-literal */';
-				}
-
-				$valueNode = $element->children['value'] ?? null;
-				if ($valueNode === null) {
-					$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
-					return '/* unsupported-array-element */';
-				}
-
-				$wrappedValue = $this->wrapExprForExpectedType(
-					$this->renderExpr($valueNode, $namespacePhp),
-					$this->inferExprType($valueNode),
-					$valueType
-				);
-
-				$keyNode = $element->children['key'] ?? null;
-				if ($keyNode === null) {
-					$lines[] = $this->indent(1) . '(void) __scpp_hash_value.append(' . $wrappedValue . ');';
-					continue;
-				}
-
-				$unsupportedKeyMessage = $this->unsupportedPhpArrayKeyMessage($keyNode);
-				if ($unsupportedKeyMessage !== null) {
-					$this->errors[] = $unsupportedKeyMessage;
-					return '/* unsupported-array-key */';
-				}
-
-				$lines[] = $this->indent(1) . '__scpp_hash_value.set(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $wrappedValue . ');';
-			}
-
-			$lines[] = $this->indent(1) . 'return __scpp_hash_value;';
-			$lines[] = '}()';
-			return implode("\n", $lines);
+		if ($mappedHashType !== null) {
+			return $this->renderTypedHashArrayLiteral($expr, $namespacePhp, $mappedHashType);
 		}
 
 		$mappedStructType = $typedLocalType !== null ? $this->mapTypedStructLocalType($typedLocalType) : null;
@@ -6221,6 +6152,64 @@ final class Generator
 		}
 
 		return 'mixed_t{shared_table_(' . implode(', ', $items) . ')}';
+	}
+
+	private function renderTypedHashArrayLiteral(mixed $expr, ?string $namespacePhp, string $mappedHashType): string
+	{
+		$elements = is_object($expr) && isset($expr->children) && is_array($expr->children)
+			? array_values($expr->children)
+			: [];
+		$hashTypeParts = $this->parseHashTypeParts($mappedHashType);
+		if ($hashTypeParts === null) {
+			$this->errors[] = 'Unsupported typed hash mapping for ' . $mappedHashType . '.';
+			return '/* unsupported-typed-hash */';
+		}
+
+		$valueType = $hashTypeParts['value'];
+		$lines = [
+			'[&]() -> ' . $mappedHashType . ' {',
+			$this->indent(1) . $mappedHashType . ' __scpp_hash_value{};',
+		];
+
+		foreach ($elements as $element) {
+			if (!is_object($element) || (($element->kind ?? null) !== AstKind::ARRAY_ELEM)) {
+				$this->errors[] = 'Unsupported array literal element shape at line ' . (int) ($expr->lineno ?? 0) . '.';
+				return '/* unsupported-array-literal */';
+			}
+
+			$valueNode = $element->children['value'] ?? null;
+			if ($valueNode === null) {
+				$this->errors[] = 'Array unpack and empty array elements are not supported yet at line ' . (int) ($element->lineno ?? $expr->lineno ?? 0) . '.';
+				return '/* unsupported-array-element */';
+			}
+
+			$nestedLiteral = is_object($valueNode) && (($valueNode->kind ?? null) === AstKind::ARRAY)
+				? $this->renderArrayLiteralForExpectedMappedType($valueNode, $namespacePhp, $valueType)
+				: null;
+			$wrappedValue = $nestedLiteral ?? $this->wrapExprForExpectedType(
+				$this->renderExpr($valueNode, $namespacePhp),
+				$this->inferExprType($valueNode),
+				$valueType
+			);
+
+			$keyNode = $element->children['key'] ?? null;
+			if ($keyNode === null) {
+				$lines[] = $this->indent(1) . '(void) __scpp_hash_value.append(' . $wrappedValue . ');';
+				continue;
+			}
+
+			$unsupportedKeyMessage = $this->unsupportedPhpArrayKeyMessage($keyNode);
+			if ($unsupportedKeyMessage !== null) {
+				$this->errors[] = $unsupportedKeyMessage;
+				return '/* unsupported-array-key */';
+			}
+
+			$lines[] = $this->indent(1) . '__scpp_hash_value.set(' . $this->renderExpr($keyNode, $namespacePhp) . ', ' . $wrappedValue . ');';
+		}
+
+		$lines[] = $this->indent(1) . 'return __scpp_hash_value;';
+		$lines[] = '}()';
+		return implode("\n", $lines);
 	}
 
 	private function renderTypedVectorArrayLiteral(mixed $expr, ?string $namespacePhp, string $mappedVectorType): string
@@ -6283,6 +6272,9 @@ final class Generator
 		}
 		if ($this->parseMappedFixedArrayType($normalized) !== null) {
 			return $this->renderTypedFixedArrayLiteral($expr, $namespacePhp, $normalized);
+		}
+		if ($this->parseHashTypeParts($normalized) !== null) {
+			return $this->renderTypedHashArrayLiteral($expr, $namespacePhp, $normalized);
 		}
 		$struct = $this->resolveStructDeclByMappedType($normalized);
 		if ($struct instanceof ClassDecl) {
