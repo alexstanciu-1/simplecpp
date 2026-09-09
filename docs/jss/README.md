@@ -193,8 +193,18 @@ function main(): void {
 		return;
 	}
 
-	let data: dynamic = json.decode(text);
-	print(json.encode(data), "\n");
+	let data: mixed;
+	let jsonError: error;
+	if (!take(data, jsonError, json.decode(text))) {
+		print(jsonError.get_message(), "\n");
+		return;
+	}
+	let encoded: string = "";
+	if (take(encoded, jsonError, json.encode(data))) {
+		print(encoded, "\n");
+	} else {
+		print(jsonError.get_message(), "\n");
+	}
 	fs.remove(path);
 }
 
@@ -287,12 +297,17 @@ Do not treat wrappers as JavaScript-truthy objects. Success/failure/error state 
 
 ## Dynamic Data
 
-`json.decode(...)` returns `dynamic` by default.
+`json.decode(...)` returns `result<mixed>`; unwrap with `take` before reading fields.
 
 Stabilize dynamic data at typed boundaries:
 
 ```js
-let row: dynamic = json.decode(text);
+let row: mixed;
+let jsonError: error;
+if (!take(row, jsonError, json.decode(text))) {
+	print(jsonError.get_message(), "\n");
+	return;
+}
 let count: int = row["count"];
 ```
 

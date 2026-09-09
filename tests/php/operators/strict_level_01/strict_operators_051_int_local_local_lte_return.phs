@@ -1,0 +1,5 @@
+function run(): bool {
+	$left int = 4;
+	$right int = 4;
+	return $left <= $right;
+}

@@ -16,8 +16,15 @@
 namespace scpp::json {
 namespace {
 
-[[noreturn]] void throw_json_error(const char *message, const std::size_t position) {
-	throw std::runtime_error(std::string("json error at byte ") + std::to_string(position) + ": " + message);
+// Private parser unwind signal. Only this failure is converted to an in-band error;
+// allocation failures and unrelated runtime exceptions retain their own contracts.
+struct json_parse_failure final {
+	const char *message;
+	std::size_t position;
+};
+
+[[noreturn]] void fail_json_parse(const char *message, const std::size_t position) {
+	throw json_parse_failure{message, position};
 }
 
 [[nodiscard]] bool is_ascii_digit(const char ch) noexcept {
@@ -66,7 +73,7 @@ private:
 
 	[[nodiscard]] char get() {
 		if (at_end()) {
-			throw_json_error("unexpected end of input", pos_);
+			fail_json_parse("unexpected end of input", pos_);
 		}
 		return input_[pos_++];
 	}
@@ -84,7 +91,7 @@ private:
 
 	void expect_literal(const std::string_view literal) {
 		if (input_.substr(pos_, literal.size()) != literal) {
-			throw_json_error("invalid literal", pos_);
+			fail_json_parse("invalid literal", pos_);
 		}
 		pos_ += literal.size();
 	}
@@ -93,7 +100,7 @@ private:
 		std::uint32_t value = 0;
 		for (int i = 0; i < 4; ++i) {
 			if (at_end()) {
-				throw_json_error("unfinished unicode escape", pos_);
+				fail_json_parse("unfinished unicode escape", pos_);
 			}
 			const char ch = get();
 			value <<= 4u;
@@ -109,7 +116,7 @@ private:
 				value |= static_cast<std::uint32_t>(10 + ch - 'A');
 				continue;
 			}
-			throw_json_error("invalid unicode escape", pos_ - 1);
+			fail_json_parse("invalid unicode escape", pos_ - 1);
 		}
 		return value;
 	}
@@ -117,7 +124,7 @@ private:
 	[[nodiscard]] string_t parse_string() {
 		const std::size_t start = pos_;
 		if (get() != '"') {
-			throw_json_error("expected string", start);
+			fail_json_parse("expected string", start);
 		}
 
 		std::string out;
@@ -127,7 +134,7 @@ private:
 				return string_t(std::move(out));
 			}
 			if (static_cast<unsigned char>(ch) < 0x20u) {
-				throw_json_error("control character in string", pos_ - 1);
+				fail_json_parse("control character in string", pos_ - 1);
 			}
 			if (ch != '\\') {
 				out.push_back(ch);
@@ -135,7 +142,7 @@ private:
 			}
 
 			if (at_end()) {
-				throw_json_error("unfinished escape sequence", pos_);
+				fail_json_parse("unfinished escape sequence", pos_);
 			}
 			const char esc = get();
 			switch (esc) {
@@ -151,28 +158,28 @@ private:
 					const auto high = parse_hex4();
 					if (high >= 0xD800u && high <= 0xDBFFu) {
 						if (at_end() || get() != '\\' || at_end() || get() != 'u') {
-							throw_json_error("expected low surrogate after high surrogate", pos_);
+							fail_json_parse("expected low surrogate after high surrogate", pos_);
 						}
 						const auto low = parse_hex4();
 						if (low < 0xDC00u || low > 0xDFFFu) {
-							throw_json_error("invalid low surrogate", pos_ - 4);
+							fail_json_parse("invalid low surrogate", pos_ - 4);
 						}
 						const auto codepoint = 0x10000u + (((high - 0xD800u) << 10u) | (low - 0xDC00u));
 						out += utf8_from_codepoint(codepoint);
 						break;
 					}
 					if (high >= 0xDC00u && high <= 0xDFFFu) {
-						throw_json_error("unexpected low surrogate", pos_ - 4);
+						fail_json_parse("unexpected low surrogate", pos_ - 4);
 					}
 					out += utf8_from_codepoint(high);
 					break;
 				}
 				default:
-					throw_json_error("invalid escape sequence", pos_ - 1);
+					fail_json_parse("invalid escape sequence", pos_ - 1);
 			}
 		}
 
-		throw_json_error("unterminated string", start);
+		fail_json_parse("unterminated string", start);
 	}
 
 	[[nodiscard]] mixed_t parse_number() {
@@ -181,16 +188,16 @@ private:
 			++pos_;
 		}
 		if (at_end()) {
-			throw_json_error("invalid number", start);
+			fail_json_parse("invalid number", start);
 		}
 		if (peek() == '0') {
 			++pos_;
 			if (!at_end() && is_ascii_digit(peek())) {
-				throw_json_error("leading zeros are not allowed", pos_);
+				fail_json_parse("leading zeros are not allowed", pos_);
 			}
 		} else {
 			if (!is_ascii_digit(peek())) {
-				throw_json_error("invalid number", pos_);
+				fail_json_parse("invalid number", pos_);
 			}
 			while (!at_end() && is_ascii_digit(peek())) {
 				++pos_;
@@ -202,7 +209,7 @@ private:
 			is_float = true;
 			++pos_;
 			if (at_end() || !is_ascii_digit(peek())) {
-				throw_json_error("invalid fraction", pos_);
+				fail_json_parse("invalid fraction", pos_);
 			}
 			while (!at_end() && is_ascii_digit(peek())) {
 				++pos_;
@@ -215,7 +222,7 @@ private:
 				++pos_;
 			}
 			if (at_end() || !is_ascii_digit(peek())) {
-				throw_json_error("invalid exponent", pos_);
+				fail_json_parse("invalid exponent", pos_);
 			}
 			while (!at_end() && is_ascii_digit(peek())) {
 				++pos_;
@@ -235,14 +242,14 @@ private:
 		char *end_ptr = nullptr;
 		const double value = std::strtod(number_text.c_str(), &end_ptr);
 		if (end_ptr == nullptr || *end_ptr != '\0' || !std::isfinite(value)) {
-			throw_json_error("invalid numeric value", start);
+			fail_json_parse("invalid numeric value", start);
 		}
 		return mixed_t(float_t(value));
 	}
 
 	[[nodiscard]] mixed_t parse_array() {
 		if (get() != '[') {
-			throw_json_error("expected '['", pos_);
+			fail_json_parse("expected '['", pos_);
 		}
 		auto out = shared<hash_t<mixed_t>>();
 		skip_whitespace();
@@ -262,14 +269,14 @@ private:
 				++pos_;
 				break;
 			}
-			throw_json_error("expected ',' or ']'", pos_);
+			fail_json_parse("expected ',' or ']'", pos_);
 		}
 		return mixed_t(dynamic_box(dynamic_t<>(out)));
 	}
 
 	[[nodiscard]] mixed_t parse_object() {
 		if (get() != '{') {
-			throw_json_error("expected '{'", pos_);
+			fail_json_parse("expected '{'", pos_);
 		}
 		auto out = shared<hash_t<mixed_t>>();
 		skip_whitespace();
@@ -280,12 +287,12 @@ private:
 		while (true) {
 			skip_whitespace();
 			if (peek() != '"') {
-				throw_json_error("expected string key", pos_);
+				fail_json_parse("expected string key", pos_);
 			}
 			const auto key = parse_string();
 			skip_whitespace();
 			if (get() != ':') {
-				throw_json_error("expected ':'", pos_ - 1);
+				fail_json_parse("expected ':'", pos_ - 1);
 			}
 			skip_whitespace();
 			out->set(key, parse_value());
@@ -299,7 +306,7 @@ private:
 				++pos_;
 				break;
 			}
-			throw_json_error("expected ',' or '}'", pos_);
+			fail_json_parse("expected ',' or '}'", pos_);
 		}
 		return mixed_t(dynamic_box(dynamic_t<>(out)));
 	}
@@ -312,7 +319,7 @@ public:
 	[[nodiscard]] mixed_t parse_value() {
 		skip_whitespace();
 		if (at_end()) {
-			throw_json_error("expected JSON value", pos_);
+			fail_json_parse("expected JSON value", pos_);
 		}
 		switch (peek()) {
 			case 'n':
@@ -334,7 +341,7 @@ public:
 				if (peek() == '-' || is_ascii_digit(peek())) {
 					return parse_number();
 				}
-				throw_json_error("unexpected character", pos_);
+				fail_json_parse("unexpected character", pos_);
 		}
 	}
 
@@ -342,7 +349,7 @@ public:
 		mixed_t value = parse_value();
 		skip_whitespace();
 		if (!at_end()) {
-			throw_json_error("trailing non-whitespace after JSON value", pos_);
+			fail_json_parse("trailing non-whitespace after JSON value", pos_);
 		}
 		return value;
 	}
@@ -372,6 +379,15 @@ void json_escape_string(const std::string_view value, std::string &out) {
 	out.push_back('"');
 }
 
+// Private writer unwind signal; unrelated runtime exceptions are not encoding failures.
+struct json_encode_failure final {
+	const char *message;
+};
+
+[[noreturn]] void fail_json_encode(const char *message) {
+	throw json_encode_failure{message};
+}
+
 void encode_hash(const hash_t<mixed_t> &value, std::string &out);
 
 void encode_value(const mixed_t &value, std::string &out) {
@@ -388,7 +404,7 @@ void encode_value(const mixed_t &value, std::string &out) {
 		case mixed_t::kind_t::float_v: {
 			const double native = value.get_float().native_value();
 			if (!std::isfinite(native)) {
-				throw std::runtime_error("json_encode: non-finite float_t is not supported");
+				fail_json_encode("json_encode: non-finite float_t is not supported");
 			}
 			std::ostringstream stream;
 			stream << std::setprecision(std::numeric_limits<double>::max_digits10) << native;
@@ -404,7 +420,7 @@ void encode_value(const mixed_t &value, std::string &out) {
 			encode_hash(value.get_hash(), out);
 			return;
 		case mixed_t::kind_t::weak_table_v:
-			throw std::runtime_error("json_encode: weak tables are not supported");
+			fail_json_encode("json_encode: weak tables are not supported");
 	}
 }
 
@@ -436,7 +452,7 @@ void encode_hash(const hash_t<mixed_t> &value, std::string &out) {
 		} else if (key.kind() == mixed_t::kind_t::int_v) {
 			json_escape_string(std::to_string(key.get_int().native_value()), out);
 		} else {
-			throw std::runtime_error("json_encode: object key must lower to string_t or int_t<>");
+			fail_json_encode("json_encode: object key must lower to string_t or int_t<>");
 		}
 		out.push_back(':');
 		encode_value((*it).value_ref(), out);
@@ -446,16 +462,25 @@ void encode_hash(const hash_t<mixed_t> &value, std::string &out) {
 
 } // namespace
 
-mixed_t json_decode(const string_t &json) {
-	json_parser parser(json);
-	return parser.parse_document();
+result<mixed_t> decode(const string_t &json) {
+	try {
+		json_parser parser(json);
+		return parser.parse_document();
+	} catch (const json_parse_failure &failure) {
+		return error_t(string_t(std::string("json error at byte ")
+			+ std::to_string(failure.position) + ": " + failure.message));
+	}
 }
 
-string_t json_encode(const mixed_t &value) {
-	std::string out;
-	out.reserve(64);
-	encode_value(value, out);
-	return string_t(std::move(out));
+result<string_t> encode(const mixed_t &value) {
+	try {
+		std::string out;
+		out.reserve(64);
+		encode_value(value, out);
+		return string_t(std::move(out));
+	} catch (const json_encode_failure &failure) {
+		return error_t(string_t(failure.message));
+	}
 }
 
 } // namespace scpp::json

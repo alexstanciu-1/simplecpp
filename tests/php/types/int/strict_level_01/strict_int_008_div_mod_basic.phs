@@ -1,0 +1,15 @@
+// Strict int64 division and modulo basics.
+function div_value(): int64
+{
+	$value int64 = 84;
+	return $value / 2;
+}
+
+function mod_value(): int64
+{
+	$value int64 = 85;
+	return $value % 43;
+}
+
+echo div_value(), "\n";
+echo mod_value(), "\n";

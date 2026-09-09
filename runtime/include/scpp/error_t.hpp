@@ -20,6 +20,10 @@ public:
 	[[nodiscard]] const string_t &get_message() const noexcept { return message_; }
 	[[nodiscard]] const int_t<> &get_line() const noexcept { return line_; }
 	[[nodiscard]] const string_t &get_file() const noexcept { return file_; }
+
+	// Value-owned errors support the same source member-call syntax as other runtime handles.
+	[[nodiscard]] error_t *operator->() noexcept { return this; }
+	[[nodiscard]] const error_t *operator->() const noexcept { return this; }
 };
 
 // Sentinel tag/object used by result<T> for explicit error-state comparisons.

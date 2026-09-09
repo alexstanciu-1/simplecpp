@@ -1,0 +1,8 @@
+function run(): int
+{
+	$left int = 4;
+	$right int = 5;
+	$ok bool = false;
+	$ok = $left < $right;
+	return $ok ? 42 : 0;
+}

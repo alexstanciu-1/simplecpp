@@ -11,6 +11,74 @@ final class StanExpressionTypeResolver
 	{
 	}
 
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @param array<string,mixed> $previousSemanticCache @return array<string,mixed> */
+	public function analyzeWorkspaceExpressions(array $fileSummaries, array $symbolIndex, bool $buildGateOnly = false, array $previousSemanticCache = [], string $semanticCacheSignature = ''): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries);
+		$classLookup = $this->buildClassLookup($classCatalog);
+		$functionCatalog = $this->buildFunctionCatalog($fileSummaries);
+		$functionLookup = $this->buildFunctionLookup($fileSummaries);
+		$result = $this->emptyExpressionAnalysisResult();
+		$cacheContextHash = $this->expressionCacheContextHash($classCatalog, $functionCatalog, $functionLookup, $buildGateOnly, $semanticCacheSignature);
+		$previousOwnerCache = (
+			(int) ($previousSemanticCache['version'] ?? 0) === 1
+			&& (string) ($previousSemanticCache['context_hash'] ?? '') === $cacheContextHash
+			&& is_array($previousSemanticCache['owners'] ?? null)
+		) ? $previousSemanticCache['owners'] : [];
+		$semanticCache = [
+			'version' => 1,
+			'context_hash' => $cacheContextHash,
+			'owners' => [],
+		];
+		$cacheHits = 0;
+		$cacheMisses = 0;
+
+		foreach ($fileSummaries as $summary) {
+			$path = (string) ($summary['path'] ?? '(unknown)');
+			foreach (($summary['root_functions'] ?? []) as $function) {
+				if (is_array($function)) {
+					$this->appendFunctionExpressionAnalysisCached($result, $semanticCache, $cacheHits, $cacheMisses, $previousOwnerCache, $function, null, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+				}
+			}
+			foreach (($summary['root_classes'] ?? []) as $class) {
+				if (is_array($class)) {
+					$this->appendClassExpressionAnalysisCached($result, $semanticCache, $cacheHits, $cacheMisses, $previousOwnerCache, $class, '', $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+					$result['local_type_diagnostics'] = array_merge(
+						$result['local_type_diagnostics'],
+						$this->collectUnsupportedHashKeyDiagnosticsForClass($class, (string) ($class['name'] ?? 'class'), $path, $classLookup)
+					);
+				}
+			}
+			foreach (($summary['namespaces'] ?? []) as $namespace) {
+				if (!is_array($namespace)) {
+					continue;
+				}
+				$namespaceName = (string) ($namespace['name'] ?? '');
+				foreach (($namespace['functions'] ?? []) as $function) {
+					if (is_array($function)) {
+						$this->appendFunctionExpressionAnalysisCached($result, $semanticCache, $cacheHits, $cacheMisses, $previousOwnerCache, $function, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+					}
+				}
+				foreach (($namespace['classes'] ?? []) as $class) {
+					if (is_array($class)) {
+						$this->appendClassExpressionAnalysisCached($result, $semanticCache, $cacheHits, $cacheMisses, $previousOwnerCache, $class, $namespaceName, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+						$result['local_type_diagnostics'] = array_merge(
+							$result['local_type_diagnostics'],
+							$this->collectUnsupportedHashKeyDiagnosticsForClass($class, $this->contextName($namespaceName, (string) ($class['name'] ?? 'class')), $path, $classLookup)
+						);
+					}
+				}
+			}
+		}
+
+		$this->sortExpressionAnalysisResult($result);
+		$result['semantic_cache'] = $semanticCache;
+		$result['expression_cache_hits'] = $cacheHits;
+		$result['expression_cache_misses'] = $cacheMisses;
+
+		return $result;
+	}
+
 	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
 	public function resolveReturnChains(array $fileSummaries, array $symbolIndex): array
 	{
@@ -110,6 +178,47 @@ final class StanExpressionTypeResolver
 				foreach (($namespace['classes'] ?? []) as $class) {
 					if (is_array($class)) {
 						$diagnostics = array_merge($diagnostics, $this->collectClassMethodLocalTypeDiagnostics($class, $namespaceName, $path, $classLookup, $functionLookup));
+					}
+				}
+			}
+		}
+
+		usort($diagnostics, static fn (array $a, array $b): int => strcmp($a['message'], $b['message']));
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $fileSummaries @param list<array<string,mixed>> $symbolIndex @return list<array<string,mixed>> */
+	public function collectUnsupportedHashKeyDiagnostics(array $fileSummaries, array $symbolIndex): array
+	{
+		$classCatalog = $this->buildClassCatalog($fileSummaries);
+		$classLookup = $this->buildClassLookup($classCatalog);
+		$diagnostics = [];
+
+		foreach ($fileSummaries as $summary) {
+			$path = (string) ($summary['path'] ?? '(unknown)');
+			foreach (($summary['root_functions'] ?? []) as $function) {
+				if (is_array($function)) {
+					$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($function, (string) ($function['name'] ?? 'function'), $path, $classLookup));
+				}
+			}
+			foreach (($summary['root_classes'] ?? []) as $class) {
+				if (is_array($class)) {
+					$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForClass($class, (string) ($class['name'] ?? 'class'), $path, $classLookup));
+				}
+			}
+			foreach (($summary['namespaces'] ?? []) as $namespace) {
+				if (!is_array($namespace)) {
+					continue;
+				}
+				$namespaceName = (string) ($namespace['name'] ?? '');
+				foreach (($namespace['functions'] ?? []) as $function) {
+					if (is_array($function)) {
+						$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($function, $this->contextName($namespaceName, (string) ($function['name'] ?? 'function')), $path, $classLookup));
+					}
+				}
+				foreach (($namespace['classes'] ?? []) as $class) {
+					if (is_array($class)) {
+						$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForClass($class, $this->contextName($namespaceName, (string) ($class['name'] ?? 'class')), $path, $classLookup));
 					}
 				}
 			}
@@ -724,6 +833,265 @@ final class StanExpressionTypeResolver
 		return $results;
 	}
 
+	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $function @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendFunctionExpressionAnalysis(array &$result, array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog, bool $buildGateOnly): void
+	{
+		$baseTypes = $this->buildParamTypeMap($function['params'] ?? []);
+		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
+		$analysis = $this->analyzeChainSequence($function, $baseTypes, null, $classLookup, $functionLookup, $context, $path, $functionCatalog);
+		$this->appendOwnerExpressionAnalysis($result, $function, $analysis, null, $classLookup, $functionLookup, $functionCatalog, $context, $path, 'function_return_chain', $buildGateOnly);
+		$result['local_type_diagnostics'] = array_merge(
+			$result['local_type_diagnostics'],
+			$this->collectUnsupportedHashKeyDiagnosticsForOwner($function, $context, $path, $classLookup)
+		);
+	}
+
+	/** @param array<string,mixed> $result @param array<string,mixed> $semanticCache @param array<string,mixed> $previousOwnerCache @param array<string,mixed> $function @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendFunctionExpressionAnalysisCached(array &$result, array &$semanticCache, int &$cacheHits, int &$cacheMisses, array $previousOwnerCache, array $function, ?string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog, bool $buildGateOnly): void
+	{
+		$context = ($namespace !== null && $namespace !== '' ? $namespace . '\\' : '') . (string) ($function['name'] ?? '');
+		$ownerSlot = $this->ownerCacheSlotKey($path, $context);
+		$cacheKey = $this->ownerExpressionCacheKey($function, null, 'function_return_chain', []);
+		$cached = is_array($previousOwnerCache[$ownerSlot] ?? null) ? $previousOwnerCache[$ownerSlot] : null;
+		if (is_array($cached) && (string) ($cached['cache_key'] ?? '') === $cacheKey && $this->isExpressionAnalysisResult($cached['result'] ?? null)) {
+			$ownerResult = $cached['result'];
+			$cacheHits++;
+		} else {
+			$ownerResult = $this->emptyExpressionAnalysisResult();
+			$this->appendFunctionExpressionAnalysis($ownerResult, $function, $namespace, $path, $classLookup, $functionLookup, $functionCatalog, $buildGateOnly);
+			$cacheMisses++;
+		}
+		$semanticCache['owners'][$ownerSlot] = [
+			'cache_key' => $cacheKey,
+			'result' => $ownerResult,
+		];
+		$this->mergeExpressionAnalysisResult($result, $ownerResult);
+	}
+
+	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendClassExpressionAnalysis(array &$result, array $class, string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog, bool $buildGateOnly): void
+	{
+		$className = (string) ($class['name'] ?? '');
+		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
+		foreach (($class['methods'] ?? []) as $method) {
+			if (!is_array($method)) {
+				continue;
+			}
+			$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$this->appendMethodExpressionAnalysis(
+				$result,
+				$method,
+				$classType,
+				$context,
+				$path,
+				$classLookup,
+				$functionLookup,
+				$functionCatalog,
+				$this->constructorBaselineForMethod($methodName, $constructorInitializedProperties),
+				$buildGateOnly
+			);
+		}
+	}
+
+	/** @param array<string,mixed> $result @param array<string,mixed> $semanticCache @param array<string,mixed> $previousOwnerCache @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendClassExpressionAnalysisCached(array &$result, array &$semanticCache, int &$cacheHits, int &$cacheMisses, array $previousOwnerCache, array $class, string $namespace, string $path, array $classLookup, array $functionLookup, array $functionCatalog, bool $buildGateOnly): void
+	{
+		$className = (string) ($class['name'] ?? '');
+		$classType = $namespace === '' ? $className : $namespace . '\\' . $className;
+		$constructorInitializedProperties = $this->collectConstructorInitializedPropertiesForClass($class, $classType, $classLookup);
+		foreach (($class['methods'] ?? []) as $method) {
+			if (!is_array($method)) {
+				continue;
+			}
+			$methodName = (string) ($method['name'] ?? '');
+			$context = $classType . '::' . $methodName;
+			$constructorBaseline = $this->constructorBaselineForMethod($methodName, $constructorInitializedProperties);
+			$ownerSlot = $this->ownerCacheSlotKey($path, $context);
+			$cacheKey = $this->ownerExpressionCacheKey($method, $classType, 'method_return_chain', $constructorBaseline);
+			$cached = is_array($previousOwnerCache[$ownerSlot] ?? null) ? $previousOwnerCache[$ownerSlot] : null;
+			if (is_array($cached) && (string) ($cached['cache_key'] ?? '') === $cacheKey && $this->isExpressionAnalysisResult($cached['result'] ?? null)) {
+				$ownerResult = $cached['result'];
+				$cacheHits++;
+			} else {
+				$ownerResult = $this->emptyExpressionAnalysisResult();
+				$this->appendMethodExpressionAnalysis($ownerResult, $method, $classType, $context, $path, $classLookup, $functionLookup, $functionCatalog, $constructorBaseline, $buildGateOnly);
+				$cacheMisses++;
+			}
+			$semanticCache['owners'][$ownerSlot] = [
+				'cache_key' => $cacheKey,
+				'result' => $ownerResult,
+			];
+			$this->mergeExpressionAnalysisResult($result, $ownerResult);
+		}
+	}
+
+	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $method @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog @param array<string,bool> $constructorBaseline */
+	private function appendMethodExpressionAnalysis(array &$result, array $method, string $classType, string $context, string $path, array $classLookup, array $functionLookup, array $functionCatalog, array $constructorBaseline, bool $buildGateOnly): void
+	{
+		$baseTypes = $this->buildParamTypeMap($method['params'] ?? []);
+		$analysis = $this->analyzeChainSequence(
+			$method,
+			$baseTypes,
+			$classType,
+			$classLookup,
+			$functionLookup,
+			$context,
+			$path,
+			$functionCatalog,
+			$constructorBaseline
+		);
+		$this->appendOwnerExpressionAnalysis($result, $method, $analysis, $classType, $classLookup, $functionLookup, $functionCatalog, $context, $path, 'method_return_chain', $buildGateOnly);
+	}
+
+	/** @param array<string,list<array<string,mixed>>> $result @param array<string,mixed> $ownerNode @param array{observations:list<array<string,mixed>>,diagnostics:list<array<string,mixed>>,final_local_types:array<string,list<string>>,call_site_diagnostics:list<array<string,mixed>>,property_read_diagnostics:list<array<string,mixed>>} $analysis @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @param array<string,array<string,mixed>> $functionCatalog */
+	private function appendOwnerExpressionAnalysis(array &$result, array $ownerNode, array $analysis, ?string $selfType, array $classLookup, array $functionLookup, array $functionCatalog, string $context, string $path, string $returnChainKind, bool $buildGateOnly): void
+	{
+		if (!$buildGateOnly) {
+			$result['return_chain_types'] = array_merge(
+				$result['return_chain_types'],
+				$this->filterObservationResults($analysis['observations'], 'return_chains', $returnChainKind)
+			);
+			$result['return_chain_diagnostics'] = array_merge(
+				$result['return_chain_diagnostics'],
+				$this->filterDiagnosticResults($analysis['diagnostics'], 'return_chains', 'return_chain_resolution_warning')
+			);
+			$result['expression_chain_types'] = array_merge(
+				$result['expression_chain_types'],
+				$this->filterObservationResults($analysis['observations'], 'expression_chains', 'expression_chain')
+			);
+			$result['expression_chain_diagnostics'] = array_merge(
+				$result['expression_chain_diagnostics'],
+				$this->filterDiagnosticResults($analysis['diagnostics'], 'expression_chains', 'expression_chain_resolution_warning')
+			);
+		}
+		$result['local_type_diagnostics'] = array_merge(
+			$result['local_type_diagnostics'],
+			$buildGateOnly ? $this->filterBuildGateLocalTypeDiagnostics($analysis['diagnostics']) : $this->filterLocalTypeDiagnostics($analysis['diagnostics']),
+			$this->collectConstParamWriteDiagnosticsForOwner($ownerNode, $context, $path)
+		);
+		$result['property_type_diagnostics'] = array_merge(
+			$result['property_type_diagnostics'],
+			$buildGateOnly ? $this->filterBuildGatePropertyTypeDiagnostics($analysis['diagnostics']) : $this->filterPropertyTypeDiagnostics($analysis['diagnostics'])
+		);
+		$result['property_read_diagnostics'] = array_merge(
+			$result['property_read_diagnostics'],
+			$buildGateOnly ? $this->filterBuildGatePropertyReadDiagnostics($analysis['property_read_diagnostics']) : $analysis['property_read_diagnostics']
+		);
+		$result['initialization_diagnostics'] = array_merge(
+			$result['initialization_diagnostics'],
+			$buildGateOnly ? $this->filterBuildGateInitializationDiagnostics($analysis['diagnostics']) : $this->filterInitializationDiagnostics($analysis['diagnostics'])
+		);
+		$callSiteDiagnostics = $buildGateOnly
+			? $this->filterBuildGateCallSiteDiagnostics($analysis['call_site_diagnostics'])
+			: array_merge(
+				$analysis['call_site_diagnostics'],
+				$this->collectWrapperBoundaryDiagnosticsForOwner($ownerNode, $analysis['final_local_types'], $selfType, $classLookup, $functionLookup, $functionCatalog, $context, $path)
+			);
+		$result['call_site_diagnostics'] = array_merge(
+			$result['call_site_diagnostics'],
+			$callSiteDiagnostics
+		);
+		$returnDiagnostics = $this->collectReturnDiagnosticsForOwner($ownerNode, $analysis['final_local_types'], $selfType, $classLookup, $functionLookup, $context, $path);
+		$result['return_type_diagnostics'] = array_merge(
+			$result['return_type_diagnostics'],
+			$buildGateOnly ? $this->filterBuildGateReturnTypeDiagnostics($returnDiagnostics) : $returnDiagnostics
+		);
+	}
+
+	/** @return array<string,list<array<string,mixed>>> */
+	private function emptyExpressionAnalysisResult(): array
+	{
+		return [
+			'return_chain_types' => [],
+			'return_chain_diagnostics' => [],
+			'expression_chain_types' => [],
+			'expression_chain_diagnostics' => [],
+			'local_type_diagnostics' => [],
+			'property_type_diagnostics' => [],
+			'property_read_diagnostics' => [],
+			'initialization_diagnostics' => [],
+			'call_site_diagnostics' => [],
+			'return_type_diagnostics' => [],
+		];
+	}
+
+	/** @param array<string,mixed> $value */
+	private function isExpressionAnalysisResult(mixed $value): bool
+	{
+		if (!is_array($value)) {
+			return false;
+		}
+		foreach (array_keys($this->emptyExpressionAnalysisResult()) as $key) {
+			if (!is_array($value[$key] ?? null)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** @param array<string,mixed> $target @param array<string,mixed> $source */
+	private function mergeExpressionAnalysisResult(array &$target, array $source): void
+	{
+		foreach (array_keys($this->emptyExpressionAnalysisResult()) as $key) {
+			$target[$key] = array_merge(
+				is_array($target[$key] ?? null) ? $target[$key] : [],
+				is_array($source[$key] ?? null) ? $source[$key] : []
+			);
+		}
+	}
+
+	/** @param array<string,mixed> $result */
+	private function sortExpressionAnalysisResult(array &$result): void
+	{
+		usort($result['return_chain_types'], static fn (array $a, array $b): int => strcmp((string) ($a['context'] ?? ''), (string) ($b['context'] ?? '')));
+		usort($result['expression_chain_types'], static fn (array $a, array $b): int => strcmp((string) ($a['context'] ?? ''), (string) ($b['context'] ?? '')));
+		foreach ([
+			'return_chain_diagnostics',
+			'expression_chain_diagnostics',
+			'local_type_diagnostics',
+			'property_type_diagnostics',
+			'property_read_diagnostics',
+			'initialization_diagnostics',
+			'call_site_diagnostics',
+			'return_type_diagnostics',
+		] as $diagnosticKey) {
+			usort($result[$diagnosticKey], static fn (array $a, array $b): int => strcmp((string) ($a['message'] ?? ''), (string) ($b['message'] ?? '')));
+		}
+	}
+
+	/** @param array<string,array<string,mixed>> $classCatalog @param array<string,array<string,mixed>> $functionCatalog @param array<string,string> $functionLookup */
+	private function expressionCacheContextHash(array $classCatalog, array $functionCatalog, array $functionLookup, bool $buildGateOnly, string $semanticCacheSignature): string
+	{
+		return hash('sha256', serialize([
+			'version' => 1,
+			'build_gate_only' => $buildGateOnly,
+			'semantic_cache_signature' => $semanticCacheSignature,
+			'class_catalog' => $classCatalog,
+			'function_catalog' => $functionCatalog,
+			'function_lookup' => $functionLookup,
+		]));
+	}
+
+	/** @param array<string,mixed> $ownerNode @param array<string,bool> $constructorBaseline */
+	private function ownerExpressionCacheKey(array $ownerNode, ?string $selfType, string $returnChainKind, array $constructorBaseline): string
+	{
+		return hash('sha256', serialize([
+			'version' => 1,
+			'owner' => $ownerNode,
+			'self_type' => $selfType,
+			'return_chain_kind' => $returnChainKind,
+			'constructor_baseline' => $constructorBaseline,
+		]));
+	}
+
+	private function ownerCacheSlotKey(string $path, string $context): string
+	{
+		return hash('sha256', $path . "\0" . $context);
+	}
+
 	/** @param list<array<string,mixed>> $params @return array<string,string> */
 	private function buildParamTypeMap(array $params): array
 	{
@@ -749,6 +1117,121 @@ final class StanExpressionTypeResolver
 			$map[$name] = $this->normalizeTypeSet([$type]);
 		}
 		return $map;
+	}
+
+	/** @param array<string,mixed> $owner @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForOwner(array $owner, string $context, string $path, array $classLookup): array
+	{
+		$diagnostics = [];
+		foreach (($owner['params'] ?? []) as $param) {
+			if (is_array($param)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($param['type'] ?? ''), (int) ($param['line'] ?? 0), 'parameter $' . (string) ($param['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($owner['return_type'] ?? ''), (int) ($owner['line'] ?? 0), 'return type', $context, $path, $classLookup));
+		foreach (($owner['typed_locals'] ?? []) as $local) {
+			if (is_array($local)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($local['type'] ?? ''), (int) ($local['line'] ?? 0), 'local $' . (string) ($local['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $class @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForClass(array $class, string $context, string $path, array $classLookup): array
+	{
+		$diagnostics = [];
+		foreach (($class['properties'] ?? []) as $property) {
+			if (is_array($property)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType((string) ($property['type'] ?? ''), (int) ($property['line'] ?? 0), 'property $' . (string) ($property['name'] ?? ''), $context, $path, $classLookup));
+			}
+		}
+		foreach (($class['methods'] ?? []) as $method) {
+			if (is_array($method)) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForOwner($method, $context . '::' . (string) ($method['name'] ?? 'method'), $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup @return list<array<string,mixed>> */
+	private function collectUnsupportedHashKeyDiagnosticsForType(string $type, int $line, string $slot, string $context, string $path, array $classLookup): array
+	{
+		$type = trim($type);
+		if ($type === '') {
+			return [];
+		}
+		$diagnostics = [];
+		if (preg_match('/^(?:hash|hash_t)\s*<\s*(.+)\s*>$/i', $type, $matches) === 1) {
+			$args = $this->splitTopLevelGenericArgs((string) $matches[1]);
+			if (count($args) === 2 && !$this->isSupportedSourceHashKeyType($args[1], $classLookup)) {
+				$diagnostics[] = [
+					'kind' => 'unsupported_hash_key_type',
+					'severity' => 'error',
+					'context' => $context,
+					'path' => $path,
+					'line' => $line,
+					'target_type' => $type,
+					'slot' => $slot,
+					'message' => 'Unsupported hash<T,T_KEY> key type `' . trim($args[1]) . '` in ' . $slot . ' of `' . $context . '`. Supported key families are string, integer aliases, enum types, shared<T>, unique<T>, and weak<T>.',
+				];
+			}
+			foreach ($args as $arg) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType($arg, $line, $slot, $context, $path, $classLookup));
+			}
+			return $diagnostics;
+		}
+		if (preg_match('/^[a-zA-Z_\\\\][a-zA-Z0-9_\\\\]*\s*<\s*(.+)\s*>$/', $type, $matches) === 1) {
+			foreach ($this->splitTopLevelGenericArgs((string) $matches[1]) as $arg) {
+				$diagnostics = array_merge($diagnostics, $this->collectUnsupportedHashKeyDiagnosticsForType($arg, $line, $slot, $context, $path, $classLookup));
+			}
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup */
+	private function isSupportedSourceHashKeyType(string $type, array $classLookup): bool
+	{
+		$normalized = strtolower(ltrim(trim($type), '\\'));
+		if (in_array($normalized, ['string', 'string_t', 'int', 'int_t', 'int8', 'int16', 'int32', 'int64', 'uint8', 'byte', 'uint16', 'uint32', 'uint64'], true)) {
+			return true;
+		}
+		if ($this->enumTypeId($type, $classLookup, null) !== null) {
+			return true;
+		}
+		return preg_match('/^(?:shared|unique|weak|weakref|shared_p|unique_p|weak_p)\s*<\s*.+\s*>$/i', trim($type)) === 1;
+	}
+
+	/** @return list<string> */
+	private function splitTopLevelGenericArgs(string $text): array
+	{
+		$args = [];
+		$current = '';
+		$depth = 0;
+		$length = strlen($text);
+		for ($i = 0; $i < $length; ++$i) {
+			$ch = $text[$i];
+			if ($ch === '<') {
+				++$depth;
+			} elseif ($ch === '>') {
+				$depth = max(0, $depth - 1);
+			} elseif ($ch === ',' && $depth === 0) {
+				$args[] = trim($current);
+				$current = '';
+				continue;
+			}
+			$current .= $ch;
+		}
+		if (trim($current) !== '') {
+			$args[] = trim($current);
+		}
+		return $args;
+	}
+
+	private function contextName(string $namespace, string $name): string
+	{
+		$namespace = trim($namespace, '\\');
+		return $namespace === '' ? $name : $namespace . '\\' . $name;
 	}
 
 	/** @param array<string,mixed> $chain @param array<string,string> $paramTypes @param array<string,array<string,mixed>> $classLookup */
@@ -1066,6 +1549,7 @@ final class StanExpressionTypeResolver
 					continue;
 				}
 				$declaredLocals[$name] = true;
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (int) ($event['line'] ?? 0));
 				$resolvedTypes = $this->resolveAssignmentDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 				$resolvedTypes = $this->normalizeTypeSet($resolvedTypes);
 				if ($resolvedTypes !== []) {
@@ -1615,7 +2099,20 @@ final class StanExpressionTypeResolver
 	{
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
-			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment'], true)) {
+			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['local_type_morph_warning', 'fixed_width_integer_literal_range', 'fixed_width_integer_assignment', 'enum_assignment', 'enum_comparison', 'const_param_write'], true)) {
+				continue;
+			}
+			$results[] = $diagnostic;
+		}
+		return $results;
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @return list<array<string,mixed>> */
+	private function filterBuildGateLocalTypeDiagnostics(array $diagnostics): array
+	{
+		$results = [];
+		foreach ($diagnostics as $diagnostic) {
+			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['fixed_width_integer_literal_range', 'fixed_width_integer_assignment', 'enum_assignment', 'enum_comparison', 'const_param_write'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -1629,6 +2126,20 @@ final class StanExpressionTypeResolver
 		foreach ($diagnostics as $diagnostic) {
 			$kind = (string) ($diagnostic['kind'] ?? '');
 			if (!in_array($kind, ['property_type_morph_warning', 'unresolved_property_write', 'member_visibility_violation'], true)) {
+				continue;
+			}
+			$results[] = $diagnostic;
+		}
+		return $results;
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @return list<array<string,mixed>> */
+	private function filterBuildGatePropertyTypeDiagnostics(array $diagnostics): array
+	{
+		$results = [];
+		foreach ($diagnostics as $diagnostic) {
+			$kind = (string) ($diagnostic['kind'] ?? '');
+			if (!in_array($kind, ['unresolved_property_write', 'member_visibility_violation'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -1651,11 +2162,65 @@ final class StanExpressionTypeResolver
 	}
 
 	/** @param list<array<string,mixed>> $diagnostics @return list<array<string,mixed>> */
+	private function filterBuildGatePropertyReadDiagnostics(array $diagnostics): array
+	{
+		$results = [];
+		foreach ($diagnostics as $diagnostic) {
+			$kind = (string) ($diagnostic['kind'] ?? '');
+			if (!in_array($kind, ['unresolved_property_read', 'member_visibility_violation'], true)) {
+				continue;
+			}
+			$results[] = $diagnostic;
+		}
+		return $results;
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @return list<array<string,mixed>> */
 	private function filterInitializationDiagnostics(array $diagnostics): array
 	{
 		$results = [];
 		foreach ($diagnostics as $diagnostic) {
 			if (($diagnostic['kind'] ?? null) !== 'initialization_warning') {
+				continue;
+			}
+			$results[] = $diagnostic;
+		}
+		return $results;
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @return list<array<string,mixed>> */
+	private function filterBuildGateInitializationDiagnostics(array $diagnostics): array
+	{
+		$results = [];
+		foreach ($diagnostics as $diagnostic) {
+			if (($diagnostic['kind'] ?? null) !== 'initialization_warning' || (string) ($diagnostic['initialization_kind'] ?? '') !== 'maybe_uninitialized_property') {
+				continue;
+			}
+			$results[] = $diagnostic;
+		}
+		return $results;
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @return list<array<string,mixed>> */
+	private function filterBuildGateCallSiteDiagnostics(array $diagnostics): array
+	{
+		$results = [];
+		foreach ($diagnostics as $diagnostic) {
+			$kind = (string) ($diagnostic['kind'] ?? '');
+			if (!in_array($kind, ['unresolved_call', 'unresolved_static_call', 'unresolved_method_call', 'member_visibility_violation'], true)) {
+				continue;
+			}
+			$results[] = $diagnostic;
+		}
+		return $results;
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @return list<array<string,mixed>> */
+	private function filterBuildGateReturnTypeDiagnostics(array $diagnostics): array
+	{
+		$results = [];
+		foreach ($diagnostics as $diagnostic) {
+			if (!in_array((string) ($diagnostic['kind'] ?? ''), ['missing_return', 'direct_self_recursion'], true)) {
 				continue;
 			}
 			$results[] = $diagnostic;
@@ -1830,8 +2395,456 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
-		return $catalog;
-	}
+		$catalog['enum_value'] = [
+			'name' => 'enum_value',
+			'namespace' => null,
+			'params' => [['name' => 'case', 'type' => 'mixed']],
+			'return_type' => 'int',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['enum_name'] = [
+			'name' => 'enum_name',
+			'namespace' => null,
+			'params' => [['name' => 'case', 'type' => 'mixed']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['enum_from_value'] = [
+			'name' => 'enum_from_value',
+			'namespace' => null,
+			'params' => [
+				['name' => 'enum_class', 'type' => 'mixed'],
+				['name' => 'value', 'type' => 'mixed'],
+			],
+			'return_type' => 'mixed',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_reserve'] = [
+			'name' => 'vector_reserve',
+			'namespace' => null,
+			'params' => [
+				['name' => 'values', 'type' => 'mixed'],
+				['name' => 'capacity', 'type' => 'int'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_capacity'] = [
+			'name' => 'vector_capacity',
+			'namespace' => null,
+			'params' => [['name' => 'values', 'type' => 'mixed']],
+			'return_type' => 'int',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_resize'] = [
+			'name' => 'vector_resize',
+			'namespace' => null,
+			'params' => [
+				['name' => 'values', 'type' => 'mixed'],
+				['name' => 'count', 'type' => 'int'],
+				['name' => 'default_value', 'type' => 'mixed'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_filled'] = [
+			'name' => 'vector_filled',
+			'namespace' => null,
+			'params' => [
+				['name' => 'count', 'type' => 'int'],
+				['name' => 'default_value', 'type' => 'mixed'],
+			],
+			'return_type' => 'mixed',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_clear'] = [
+			'name' => 'vector_clear',
+			'namespace' => null,
+			'params' => [['name' => 'values', 'type' => 'mixed']],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_clear_keep_capacity'] = [
+			'name' => 'vector_clear_keep_capacity',
+			'namespace' => null,
+			'params' => [['name' => 'values', 'type' => 'mixed']],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['vector_compact'] = [
+			'name' => 'vector_compact',
+			'namespace' => null,
+			'params' => [
+				['name' => 'values', 'type' => 'mixed'],
+				['name' => 'capacity', 'type' => '?int'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_empty'] = [
+			'name' => 'source_buffer_empty',
+			'namespace' => null,
+			'params' => [],
+			'return_type' => 'source_buffer',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_take'] = [
+			'name' => 'source_buffer_take',
+			'namespace' => null,
+			'params' => [['name' => 'text', 'type' => 'string']],
+			'return_type' => 'source_buffer',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_release'] = [
+			'name' => 'source_buffer_release',
+			'namespace' => null,
+			'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_text_vector_move_append'] = [
+			'name' => 'source_text_vector_move_append',
+			'namespace' => null,
+			'params' => [
+				['name' => 'target', 'type' => 'vector<string>'],
+				['name' => 'source', 'type' => 'vector<string>'],
+				['name' => 'index', 'type' => 'int'],
+			],
+			'return_type' => 'void',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_byte_len'] = [
+			'name' => 'source_buffer_byte_len',
+			'namespace' => null,
+			'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+			'return_type' => 'uint32',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_byte_at'] = [
+			'name' => 'source_buffer_byte_at',
+			'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+			],
+			'return_type' => 'byte',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['source_buffer_span'] = [
+			'name' => 'source_buffer_span',
+			'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+				['name' => 'length', 'type' => 'int'],
+			],
+			'return_type' => 'byte_span',
+			'line' => 0,
+			'is_static' => false,
+		];
+			$catalog['source_buffer_slice'] = [
+				'name' => 'source_buffer_slice',
+				'namespace' => null,
+			'params' => [
+				['name' => 'buffer', 'type' => 'source_buffer'],
+				['name' => 'offset', 'type' => 'int'],
+				['name' => 'length', 'type' => 'int'],
+			],
+			'return_type' => 'string',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_build'] = [
+				'name' => 'source_line_index_build',
+				'namespace' => null,
+				'params' => [['name' => 'buffer', 'type' => 'source_buffer']],
+				'return_type' => 'source_line_index',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_line_count'] = [
+				'name' => 'source_line_index_line_count',
+				'namespace' => null,
+				'params' => [['name' => 'index', 'type' => 'source_line_index']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_offset_to_location'] = [
+				'name' => 'source_line_index_offset_to_location',
+				'namespace' => null,
+				'params' => [
+					['name' => 'index', 'type' => 'source_line_index'],
+					['name' => 'offset', 'type' => 'int'],
+				],
+				'return_type' => 'source_location',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_line_index_line_column_to_offset'] = [
+				'name' => 'source_line_index_line_column_to_offset',
+				'namespace' => null,
+				'params' => [
+					['name' => 'index', 'type' => 'source_line_index'],
+					['name' => 'line', 'type' => 'int'],
+					['name' => 'column', 'type' => 'int'],
+				],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_offset'] = [
+				'name' => 'source_location_offset',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_line'] = [
+				'name' => 'source_location_line',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['source_location_column'] = [
+				'name' => 'source_location_column',
+				'namespace' => null,
+				'params' => [['name' => 'location', 'type' => 'source_location']],
+				'return_type' => 'uint32',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['byte_span_len'] = [
+			'name' => 'byte_span_len',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'uint32',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['byte_span_at'] = [
+			'name' => 'byte_span_at',
+			'namespace' => null,
+			'params' => [
+				['name' => 'span', 'type' => 'byte_span'],
+				['name' => 'offset', 'type' => 'int'],
+			],
+			'return_type' => 'byte',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['byte_span_to_string'] = [
+			'name' => 'byte_span_to_string',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['hash_bytes'] = [
+			'name' => 'hash_bytes',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'string',
+			'line' => 0,
+			'is_static' => false,
+		];
+			$catalog['stable_hash_string_u64'] = [
+				'name' => 'stable_hash_string_u64',
+				'namespace' => null,
+				'params' => [['name' => 'text', 'type' => 'string']],
+				'return_type' => 'uint64',
+				'line' => 0,
+				'is_static' => false,
+			];
+		$catalog['stable_hash_bytes_u64'] = [
+			'name' => 'stable_hash_bytes_u64',
+			'namespace' => null,
+			'params' => [['name' => 'span', 'type' => 'byte_span']],
+			'return_type' => 'uint64',
+			'line' => 0,
+			'is_static' => false,
+		];
+		$catalog['string_parts_builder_create'] = [
+				'name' => 'string_parts_builder_create',
+				'namespace' => null,
+				'params' => [],
+				'return_type' => 'string_parts_builder',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_reserve'] = [
+				'name' => 'string_parts_builder_reserve',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'capacity', 'type' => 'int'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_count'] = [
+				'name' => 'string_parts_builder_count',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_capacity'] = [
+				'name' => 'string_parts_builder_capacity',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_byte_len'] = [
+				'name' => 'string_parts_builder_byte_len',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'int',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_string'] = [
+				'name' => 'string_parts_builder_append_string',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'string'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_int'] = [
+				'name' => 'string_parts_builder_append_int',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'int'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_append_bool'] = [
+				'name' => 'string_parts_builder_append_bool',
+				'namespace' => null,
+				'params' => [
+					['name' => 'builder', 'type' => 'string_parts_builder'],
+					['name' => 'value', 'type' => 'bool'],
+				],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_to_string'] = [
+				'name' => 'string_parts_builder_to_string',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'string',
+				'line' => 0,
+				'is_static' => false,
+			];
+			$catalog['string_parts_builder_clear'] = [
+				'name' => 'string_parts_builder_clear',
+				'namespace' => null,
+				'params' => [['name' => 'builder', 'type' => 'string_parts_builder']],
+				'return_type' => 'void',
+				'line' => 0,
+				'is_static' => false,
+			];
+			foreach ([
+				'text_builder_create' => ['return_type' => 'text_builder', 'params' => []],
+				'text_builder_reserve_bytes' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'capacity', 'type' => 'int'],
+					],
+				],
+				'text_builder_capacity_bytes' => [
+					'return_type' => 'int',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_byte_len' => [
+					'return_type' => 'int',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_append_string' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'string'],
+					],
+				],
+				'text_builder_append_int' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'int'],
+					],
+				],
+				'text_builder_append_bool' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'value', 'type' => 'bool'],
+					],
+				],
+				'text_builder_append_byte_span' => [
+					'return_type' => 'void',
+					'params' => [
+						['name' => 'builder', 'type' => 'text_builder'],
+						['name' => 'span', 'type' => 'byte_span'],
+					],
+				],
+				'text_builder_to_string' => [
+					'return_type' => 'string',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_take_string' => [
+					'return_type' => 'string',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+				'text_builder_clear' => [
+					'return_type' => 'void',
+					'params' => [['name' => 'builder', 'type' => 'text_builder']],
+				],
+			] as $name => $entry) {
+				$catalog[$name] = [
+					'name' => $name,
+					'namespace' => null,
+					'params' => $entry['params'],
+					'return_type' => $entry['return_type'],
+					'line' => 0,
+					'is_static' => false,
+				];
+			}
+			return $catalog;
+		}
 
 	/** @param list<string> $types @return list<string> */
 	private function normalizeTypeSet(array $types): array
@@ -1952,6 +2965,12 @@ final class StanExpressionTypeResolver
 			$source = (string) ($descriptor['source'] ?? '');
 			return $source !== '' ? $this->canonicalizeTypeSet($localTypes[$source] ?? [], $classLookup, $selfType) : [];
 		}
+		if ($kind === 'class_constant') {
+			return $this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup);
+		}
+		if ($kind === 'comparison') {
+			return ['bool'];
+		}
 		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
 			return $this->canonicalizeTypeSet(
 				$this->resolveContainerElementTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup),
@@ -2034,7 +3053,22 @@ final class StanExpressionTypeResolver
 			if ($descriptor === null) {
 				continue;
 			}
+			$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, (int) ($assignment['line'] ?? 0));
 			$sourceTypes = $this->normalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor, $localTypes, $selfType, $classLookup, $functionLookup));
+			$enumDiagnostic = $this->makeEnumAssignmentDiagnosticForTypes(
+				(string) ($assignment['name'] ?? ''),
+				$sourceTypes,
+				[$targetType],
+				$context,
+				$path,
+				(int) ($assignment['line'] ?? 0),
+				$classLookup,
+				$selfType
+			);
+			if ($enumDiagnostic !== null) {
+				$diagnostics[] = $enumDiagnostic;
+				continue;
+			}
 			$wrapperTypes = array_values(array_filter($sourceTypes, $this->isWrapperCarrierType(...)));
 			if ($wrapperTypes !== []) {
 				$diagnostics[] = $this->makeCallDiagnostic(
@@ -2110,6 +3144,29 @@ final class StanExpressionTypeResolver
 				$path,
 				(int) ($assignment['line'] ?? 0),
 				'Unchecked wrapper result assigned to required `' . (string) $targetInfo['type'] . '` property `' . (string) $targetInfo['label'] . '` in `' . $context . '`: source `' . $this->formatDescriptor($descriptor) . '` has `' . implode('|', $wrapperTypes) . '`. Use `take(...)`, `isset(...)`, or an explicit false/null/error-state check before the property write.'
+			);
+		}
+		return $diagnostics;
+	}
+
+	/** @param array<string,mixed> $ownerNode @return list<array<string,mixed>> */
+	private function collectConstParamWriteDiagnosticsForOwner(array $ownerNode, string $context, string $path): array
+	{
+		$diagnostics = [];
+		foreach (($ownerNode['const_param_writes'] ?? []) as $write) {
+			if (!is_array($write)) {
+				continue;
+			}
+			$name = (string) ($write['name'] ?? '');
+			if ($name === '') {
+				continue;
+			}
+			$diagnostics[] = $this->makeCallDiagnostic(
+				'const_param_write',
+				$context,
+				$path,
+				(int) ($write['line'] ?? 0),
+				'Cannot write through const parameter `$' . $name . '` in `' . $context . '`.'
 			);
 		}
 		return $diagnostics;
@@ -2213,6 +3270,11 @@ final class StanExpressionTypeResolver
 			$className = (string) ($callSite['class_name'] ?? '');
 			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
 			$methodName = (string) ($callSite['method_name'] ?? '');
+			$runtimeSignature = $this->resolveRuntimeStaticCallSignature($resolvedClassName, $methodName, $functionCatalog);
+			if ($runtimeSignature !== null) {
+				$runtimeSignature['target_text'] = $resolvedClassName . '::' . $methodName . '()';
+				return $runtimeSignature;
+			}
 			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
 			if ($classInfo === null) {
 				return null;
@@ -2274,9 +3336,13 @@ final class StanExpressionTypeResolver
 			$className = (string) ($callSite['class_name'] ?? '');
 			$resolvedClassName = $this->resolveStaticRootClassName($className, $selfType, $classLookup);
 			$methodName = (string) ($callSite['method_name'] ?? '');
+			$runtimeSignature = $this->resolveRuntimeStaticCallSignature($resolvedClassName, $methodName, $functionCatalog);
+			if ($runtimeSignature !== null) {
+				return $this->checkSignatureCompatibility($callSite, $runtimeSignature, $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $resolvedClassName . '::' . $methodName . '()');
+			}
 			$classInfo = $this->findClassInfo($resolvedClassName, $classLookup);
 			if ($classInfo === null) {
-				return [$this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static call receiver `' . $className . '` in `' . $context . '`.')];
+				return [$this->makeCallDiagnostic('unresolved_static_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved static call receiver `' . $className . '` in `' . $context . '`.', ['failure_kind' => 'unknown_root_type'])];
 			}
 			$methodSignature = $this->findMethodSignature($classInfo, $methodName);
 			if ($methodSignature === null) {
@@ -2300,7 +3366,7 @@ final class StanExpressionTypeResolver
 			$receiverTypes = $this->normalizeTypeSet($receiverTypes);
 			$methodName = (string) ($callSite['method_name'] ?? '');
 			if (count($receiverTypes) !== 1) {
-				return [$this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved method call `' . $methodName . '()` in `' . $context . '` due to unknown receiver type.')];
+				return [$this->makeCallDiagnostic('unresolved_method_call', $context, $path, (int) ($callSite['line'] ?? 0), 'Unresolved method call `' . $methodName . '()` in `' . $context . '` due to unknown receiver type.', ['failure_kind' => 'unknown_receiver_type'])];
 			}
 			$receiverType = $this->unwrapMemberReceiverType($receiverTypes[0]);
 			$classInfo = $this->findClassInfo($receiverType, $classLookup);
@@ -2322,6 +3388,45 @@ final class StanExpressionTypeResolver
 		}
 
 		return [];
+	}
+
+	/** @param array<string,array<string,mixed>> $functionCatalog @return array<string,mixed>|null */
+	private function resolveRuntimeStaticCallSignature(string $className, string $methodName, array $functionCatalog): ?array
+	{
+		$symbolName = $this->runtimeStaticTargetSymbols()[strtolower(ltrim($className, '\\') . '::' . $methodName)] ?? null;
+		if (!is_string($symbolName) || $symbolName === '') {
+			return null;
+		}
+		$signature = $functionCatalog[strtolower($symbolName)] ?? null;
+		return is_array($signature) ? $signature : null;
+	}
+
+	/** @return array<string,string> */
+	private function runtimeStaticTargetSymbols(): array
+	{
+		static $symbols = null;
+		if (is_array($symbols)) {
+			return $symbols;
+		}
+
+		$symbols = [];
+		foreach ([
+			__DIR__ . '/../../specs/php_runtime_symbols_legacy.json',
+			__DIR__ . '/../../specs/php_runtime_symbols_strict.json',
+		] as $path) {
+			if (!is_file($path)) {
+				continue;
+			}
+			$decoded = json_decode((string) file_get_contents($path), true);
+			$targets = is_array($decoded['php_runtime_symbol_targets'] ?? null) ? $decoded['php_runtime_symbol_targets'] : [];
+			foreach ($targets as $symbolName => $target) {
+				if (!is_string($symbolName) || !is_string($target) || !str_contains($target, '::')) {
+					continue;
+				}
+				$symbols[strtolower(ltrim($target, '\\'))] = $symbolName;
+			}
+		}
+		return $symbols;
 	}
 
 	/** @param array<string,mixed> $ownerNode @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup @return list<array<string,mixed>> */
@@ -2617,8 +3722,21 @@ final class StanExpressionTypeResolver
 			$source = (string) ($descriptor['source'] ?? '');
 			return $source !== '' ? ($localTypes[$source] ?? []) : [];
 		}
+		if ($kind === 'class_constant') {
+			$className = (string) ($descriptor['class_name'] ?? '');
+			$constantName = (string) ($descriptor['constant_name'] ?? '');
+			$classInfo = $className !== '' ? $this->findClassInfo($className, $classLookup, $selfType) : null;
+			if ($classInfo !== null && (bool) ($classInfo['is_enum'] ?? false) && strtolower($constantName) !== 'class') {
+				$fqcn = (string) ($classInfo['fqcn'] ?? '');
+				return $fqcn !== '' ? [$fqcn] : [];
+			}
+			return [];
+		}
 		if ($kind === 'element' && is_array($descriptor['source'] ?? null)) {
 			return $this->resolveContainerElementTypes($descriptor['source'], $localTypes, $selfType, $classLookup, $functionLookup);
+		}
+		if ($kind === 'comparison') {
+			return ['bool'];
 		}
 		if ($kind === 'conditional') {
 			$merged = [];
@@ -2754,9 +3872,10 @@ final class StanExpressionTypeResolver
 		return $this->canonicalizeTypeSet($elementTypes, $classLookup, $selfType);
 	}
 
-	private function makeCallDiagnostic(string $kind, string $context, string $path, int $line, string $message): array
+	/** @param array<string,mixed> $extra */
+	private function makeCallDiagnostic(string $kind, string $context, string $path, int $line, string $message, array $extra = []): array
 	{
-		return [
+		return $extra + [
 			'kind' => $kind,
 			'context' => $context,
 			'path' => $path,
@@ -2782,12 +3901,23 @@ final class StanExpressionTypeResolver
 
 		$currentTypes = $localTypes[$name] ?? [];
 		$currentTypes = $this->canonicalizeTypeSet($currentTypes, $classLookup, $selfType);
-		if ($currentTypes !== [] && !$this->typeSetsAreCompatible($assignedTypes, $currentTypes, [], false)) {
-			if (count($currentTypes) === 1 && count($assignedTypes) === 1 && $this->fixedWidthIntegerInfo($currentTypes[0]) !== null && $this->fixedWidthIntegerInfo($assignedTypes[0]) !== null) {
-				$this->recordFixedWidthIntegerAssignmentDiagnostic($diagnostics, $name, $assignedTypes[0], $currentTypes[0], $context, $path, $line);
+		if ($currentTypes !== [] && !$this->typeSetsAreCompatible($assignedTypes, $currentTypes, $classLookup, false)) {
+			$enumDiagnostic = $this->makeEnumAssignmentDiagnosticForTypes($name, $assignedTypes, $currentTypes, $context, $path, $line, $classLookup, $selfType);
+			if ($enumDiagnostic !== null) {
+				$diagnostics[] = $enumDiagnostic;
 				unset($morphedLocals[$name]);
 				return;
 			}
+				if (count($currentTypes) === 1
+					&& count($assignedTypes) === 1
+					&& $this->fixedWidthIntegerInfo($currentTypes[0]) !== null
+					&& $this->fixedWidthIntegerInfo($assignedTypes[0]) !== null) {
+					if (!$this->isFixedWidthIntegerAssignable($assignedTypes[0], $currentTypes[0])) {
+						$this->recordFixedWidthIntegerAssignmentDiagnostic($diagnostics, $name, $assignedTypes[0], $currentTypes[0], $context, $path, $line);
+					}
+					unset($morphedLocals[$name]);
+					return;
+				}
 			$this->recordLocalTypeMorph($diagnostics, $localTypes, $morphedLocals, $name, $this->canonicalizeTypeSet(array_merge($currentTypes, $assignedTypes), $classLookup, $selfType), $context, $path, $line);
 			return;
 		}
@@ -2799,6 +3929,9 @@ final class StanExpressionTypeResolver
 	/** @param list<array<string,mixed>> $diagnostics */
 	private function recordFixedWidthIntegerAssignmentDiagnostic(array &$diagnostics, string $name, string $sourceType, string $targetType, string $context, string $path, int $line): void
 	{
+		if ($this->normalizeFixedWidthIntegerTypeLabel($sourceType) === 'int') {
+			return;
+		}
 		$diagnostics[] = [
 			'kind' => 'fixed_width_integer_assignment',
 			'severity' => 'error',
@@ -2810,6 +3943,103 @@ final class StanExpressionTypeResolver
 			'target_type' => $targetType,
 			'message' => 'Fixed-width integer assignment to local `$' . $name . '` in `' . $context . '` requires compatible same-signedness widening: cannot assign `' . $sourceType . '` to `' . $targetType . '`.',
 		];
+	}
+
+	/** @param list<string> $sourceTypes @param list<string> $targetTypes @param array<string,array<string,mixed>> $classLookup @return array<string,mixed>|null */
+	private function makeEnumAssignmentDiagnosticForTypes(string $name, array $sourceTypes, array $targetTypes, string $context, string $path, int $line, array $classLookup, ?string $selfType): ?array
+	{
+		$sourceTypes = $this->canonicalizeTypeSet($sourceTypes, $classLookup, $selfType);
+		$targetTypes = $this->canonicalizeTypeSet($targetTypes, $classLookup, $selfType);
+		if (count($sourceTypes) !== 1 || count($targetTypes) !== 1) {
+			return null;
+		}
+		$sourceEnum = $this->enumTypeId($sourceTypes[0], $classLookup, $selfType);
+		$targetEnum = $this->enumTypeId($targetTypes[0], $classLookup, $selfType);
+		if ($sourceEnum === null && $targetEnum === null) {
+			return null;
+		}
+		if ($sourceEnum !== null && $targetEnum !== null && strtolower($sourceEnum) === strtolower($targetEnum)) {
+			return null;
+		}
+		return [
+			'kind' => 'enum_assignment',
+			'severity' => 'error',
+			'context' => $context,
+			'path' => $path,
+			'line' => $line,
+			'local_name' => $name,
+			'source_type' => $sourceTypes[0],
+			'target_type' => $targetTypes[0],
+			'message' => 'Enum assignment to local `$' . $name . '` in `' . $context . '` requires the same enum type: cannot assign `' . $sourceTypes[0] . '` to `' . $targetTypes[0] . '`. Use an explicit enum conversion helper for raw backing values.',
+		];
+	}
+
+	/** @param list<array<string,mixed>> $diagnostics @param array<string,mixed> $descriptor @param array<string,list<string>> $localTypes @param array<string,array<string,mixed>> $classLookup @param array<string,string> $functionLookup */
+	private function recordEnumComparisonDiagnostics(array &$diagnostics, array $descriptor, array $localTypes, ?string $selfType, array $classLookup, array $functionLookup, string $context, string $path, int $line): void
+	{
+		$kind = (string) ($descriptor['kind'] ?? '');
+		if ($kind === 'conditional') {
+			if (is_array($descriptor['if_true'] ?? null)) {
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor['if_true'], $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $line);
+			}
+			if (is_array($descriptor['if_false'] ?? null)) {
+				$this->recordEnumComparisonDiagnostics($diagnostics, $descriptor['if_false'], $localTypes, $selfType, $classLookup, $functionLookup, $context, $path, $line);
+			}
+			return;
+		}
+		if ($kind !== 'comparison') {
+			return;
+		}
+		$leftTypes = is_array($descriptor['left'] ?? null)
+			? $this->canonicalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor['left'], $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType)
+			: [];
+		$rightTypes = is_array($descriptor['right'] ?? null)
+			? $this->canonicalizeTypeSet($this->resolveExpressionDescriptorTypes($descriptor['right'], $localTypes, $selfType, $classLookup, $functionLookup), $classLookup, $selfType)
+			: [];
+		$leftEnum = count($leftTypes) === 1 ? $this->enumTypeId($leftTypes[0], $classLookup, $selfType) : null;
+		$rightEnum = count($rightTypes) === 1 ? $this->enumTypeId($rightTypes[0], $classLookup, $selfType) : null;
+		if ($leftEnum === null && $rightEnum === null) {
+			return;
+		}
+		$operator = (string) ($descriptor['operator'] ?? '?');
+		$leftLabel = $leftTypes === [] ? 'unknown' : implode('|', $leftTypes);
+		$rightLabel = $rightTypes === [] ? 'unknown' : implode('|', $rightTypes);
+		if (!in_array($operator, ['===', '!==', '==', '!='], true)) {
+			$diagnostics[] = [
+				'kind' => 'enum_comparison',
+				'severity' => 'error',
+				'context' => $context,
+				'path' => $path,
+				'line' => $line,
+				'source_type' => $leftLabel,
+				'target_type' => $rightLabel,
+				'message' => 'Enum comparison in `' . $context . '` only supports equality or inequality operators: got `' . $operator . '` for `' . $leftLabel . '` and `' . $rightLabel . '`.',
+			];
+			return;
+		}
+		if ($leftEnum === null || $rightEnum === null || strtolower($leftEnum) !== strtolower($rightEnum)) {
+			$diagnostics[] = [
+				'kind' => 'enum_comparison',
+				'severity' => 'error',
+				'context' => $context,
+				'path' => $path,
+				'line' => $line,
+				'source_type' => $leftLabel,
+				'target_type' => $rightLabel,
+				'message' => 'Enum comparison in `' . $context . '` requires operands of the same enum type: got `' . $leftLabel . '` and `' . $rightLabel . '`.',
+			];
+		}
+	}
+
+	/** @param array<string,array<string,mixed>> $classLookup */
+	private function enumTypeId(string $type, array $classLookup, ?string $selfType): ?string
+	{
+		$classInfo = $this->findClassInfo($type, $classLookup, $selfType);
+		if ($classInfo === null || !(bool) ($classInfo['is_enum'] ?? false)) {
+			return null;
+		}
+		$fqcn = (string) ($classInfo['fqcn'] ?? '');
+		return $fqcn !== '' ? $fqcn : (string) ($classInfo['name'] ?? '');
 	}
 
 	/** @param array<string,list<string>> $localTypes @param array<string,bool> $morphedLocals @param list<array<string,mixed>> $diagnostics @param list<string> $candidateTypes */
@@ -2913,33 +4143,34 @@ final class StanExpressionTypeResolver
 			} elseif ($rootKind === 'variable' && isset($localTypes[$rootName])) {
 				$receiverTypes = $localTypes[$rootName];
 			} else {
-				$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Unknown property write receiver in `' . $context . '` for `$' . $rootName . '->' . (string) ($propertySegment['name'] ?? '') . '`.');
+				$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Unknown property write receiver in `' . $context . '` for `$' . $rootName . '->' . (string) ($propertySegment['name'] ?? '') . '`.', 'unknown_root_type');
 				return;
 			}
 		} else {
 			$resolvedReceiver = $this->resolveChain($receiverChain, $localTypes, $selfType, $classLookup, $functionLookup);
 			$resolvedValue = $resolvedReceiver['resolved_type'] ?? 'unknown';
 			if ($resolvedValue === 'unknown') {
-				$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Unknown property write receiver in `' . $context . '` for `' . $this->formatChain($receiverChain) . '->' . (string) ($propertySegment['name'] ?? '') . '`.');
+				$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Unknown property write receiver in `' . $context . '` for `' . $this->formatChain($receiverChain) . '->' . (string) ($propertySegment['name'] ?? '') . '`.', (string) ($resolvedReceiver['failure_kind'] ?? 'unknown_receiver_type'));
 				return;
 			}
 			$receiverTypes = is_array($resolvedValue) ? $resolvedValue : [$resolvedValue];
 		}
 		$receiverTypes = $this->normalizeTypeSet($receiverTypes);
 		if (count($receiverTypes) !== 1) {
-			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Ambiguous property write receiver in `' . $context . '` for property `' . (string) ($propertySegment['name'] ?? '') . '`.');
+			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), (string) ($propertySegment['name'] ?? ''), 'Ambiguous property write receiver in `' . $context . '` for property `' . (string) ($propertySegment['name'] ?? '') . '`.', 'ambiguous_receiver_type');
 			return;
 		}
 
 		$receiverInfo = $this->findClassInfo($receiverTypes[0], $classLookup, $selfType);
 		$propertyName = (string) ($propertySegment['name'] ?? '');
 		if ($receiverInfo === null) {
-			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Cannot write property `' . $propertyName . '` on non-object or unresolved receiver type `' . $receiverTypes[0] . '` in `' . $context . '`.');
+			$failureKind = $this->isKnownNonObjectType($receiverTypes[0]) ? 'non_object_receiver_type' : 'unknown_receiver_type';
+			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Cannot write property `' . $propertyName . '` on non-object or unresolved receiver type `' . $receiverTypes[0] . '` in `' . $context . '`.', $failureKind);
 			return;
 		}
 		$declaredType = (string) ($receiverInfo['property_types'][$propertyName] ?? '');
 		if ($declaredType === '') {
-			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Missing property write target `' . $receiverTypes[0] . '::$' . $propertyName . '` in `' . $context . '`.');
+			$this->recordUnresolvedPropertyWrite($diagnostics, $context, $path, (int) ($event['line'] ?? 0), $propertyName, 'Missing property write target `' . $receiverTypes[0] . '::$' . $propertyName . '` in `' . $context . '`.', 'missing_property');
 			return;
 		}
 		$visibility = $this->normalizeMemberVisibility((string) ($receiverInfo['property_visibility'][$propertyName] ?? 'public'));
@@ -2994,7 +4225,7 @@ final class StanExpressionTypeResolver
 		}
 	}
 
-	private function recordUnresolvedPropertyWrite(array &$diagnostics, string $context, string $path, int $line, string $propertyName, string $message): void
+	private function recordUnresolvedPropertyWrite(array &$diagnostics, string $context, string $path, int $line, string $propertyName, string $message, string $failureKind): void
 	{
 		$diagnostics[] = [
 			'kind' => 'unresolved_property_write',
@@ -3002,6 +4233,7 @@ final class StanExpressionTypeResolver
 			'path' => $path,
 			'line' => $line,
 			'property_name' => $propertyName,
+			'failure_kind' => $failureKind,
 			'message' => $message,
 		];
 	}
@@ -3650,10 +4882,14 @@ final class StanExpressionTypeResolver
 
 	private function isFixedWidthIntegerAssignable(string $actualType, string $expectedType): bool
 	{
+		$actualNormalized = $this->normalizeFixedWidthIntegerTypeLabel($actualType);
 		$actual = $this->fixedWidthIntegerInfo($actualType);
 		$expected = $this->fixedWidthIntegerInfo($expectedType);
 		if ($actual === null || $expected === null) {
 			return false;
+		}
+		if ($actualNormalized === 'int') {
+			return true;
 		}
 		if ($actual['signed'] !== $expected['signed']) {
 			return false;
@@ -3675,6 +4911,11 @@ final class StanExpressionTypeResolver
 			'uint64' => ['signed' => false, 'bytes' => 8],
 			default => null,
 		};
+	}
+
+	private function normalizeFixedWidthIntegerTypeLabel(string $type): string
+	{
+		return strtolower((string) preg_replace('/[^A-Za-z0-9_]+/', '', ltrim(trim($type), '\\')));
 	}
 
 	private function unwrapNullableType(string $type): ?string
@@ -3785,7 +5026,7 @@ final class StanExpressionTypeResolver
 				}
 				if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 					$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-					$keyTypes[] = count($parts) === 2 ? $parts[0] : 'string';
+					$keyTypes[] = count($parts) === 2 ? $parts[1] : 'string';
 				}
 			}
 			return $this->normalizeTypeSet($keyTypes !== [] ? $keyTypes : ['mixed']);
@@ -3806,7 +5047,7 @@ final class StanExpressionTypeResolver
 			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
 				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
 				if (count($parts) === 2) {
-					$valueTypes[] = $parts[1];
+					$valueTypes[] = $parts[0];
 				} elseif (count($parts) === 1 && $parts[0] !== '') {
 					$valueTypes[] = $parts[0];
 				}

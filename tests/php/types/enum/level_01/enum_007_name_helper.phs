@@ -1,0 +1,10 @@
+enum token_kind: byte {
+    case eof = 0;
+    case identifier = 1;
+    case number = 2;
+}
+
+$kind /** token_kind */ = token_kind::identifier;
+
+echo enum_name($kind), "\n";
+echo enum_name(token_kind::number), "\n";

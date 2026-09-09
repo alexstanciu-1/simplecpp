@@ -27,9 +27,13 @@ final class ScppStanBuildWorkerIntegrationTest
 		$previousIdle = getenv('SCPP_STAN_WORKER_IDLE_SECONDS');
 		$previousWait = getenv('SCPP_STAN_BUILD_WAIT_SECONDS');
 		$previousPoll = getenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS');
+		$previousDebounce = getenv('SCPP_STAN_WORKER_DEBOUNCE_MS');
+		$previousAutostart = getenv('SCPP_STAN_WORKER_AUTOSTART');
 		putenv('SCPP_STAN_WORKER_IDLE_SECONDS=1');
 		putenv('SCPP_STAN_BUILD_WAIT_SECONDS=5');
 		putenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS=100');
+		putenv('SCPP_STAN_WORKER_DEBOUNCE_MS=100');
+		putenv('SCPP_STAN_WORKER_AUTOSTART=1');
 
 		$workerProcess = null;
 		try {
@@ -55,17 +59,36 @@ PHS);
 				'compile_dependencies' => false,
 			]);
 			$this->assertSame(true, $advisoryBuild['ok'], 'advisory STAN findings should not block build');
-			$this->assertContains('Static Analysis: 0 errors, 1 warnings, 0 notices.', $advisoryBuild['output'], 'build should print the advisory STAN summary');
+			$this->assertTrue(!str_contains($advisoryBuild['output'], 'Static Analysis:'), 'gate-only preflight should defer advisory STAN summary to the worker report');
 
 			$statusPath = $projectRoot . '/.prism/cache/' . SCPP_STAN_STATUS_FILE;
 			$reportPath = $projectRoot . '/.prism/cache/' . SCPP_STAN_REPORT_FILE;
+			$heartbeatPath = $projectRoot . '/.prism/cache/' . SCPP_STAN_WORKER_FILE;
+			$this->waitFor(function () use ($heartbeatPath): bool {
+				$heartbeat = read_json_file($heartbeatPath);
+				return stan_worker_heartbeat_is_live($heartbeat);
+			}, 3.0, 'inline STAN build preflight should auto-start a warm worker');
+			$autoHeartbeat = read_json_file($heartbeatPath);
+			$this->assertSame(normalize_path($projectRoot), is_array($autoHeartbeat) ? ($autoHeartbeat['project_root'] ?? null) : null, 'auto-started STAN worker heartbeat should point at the project');
+			$this->assertSame(100, is_array($autoHeartbeat) ? ($autoHeartbeat['debounce_ms'] ?? null) : null, 'auto-started STAN worker should receive debounce configuration');
+			$advisoryFingerprint = compute_stan_source_fingerprint($projectRoot, $projectRoot . '/prism.json');
+			$this->waitFor(function () use ($statusPath, $reportPath, $advisoryFingerprint): bool {
+				$status = read_json_file($statusPath);
+				$report = read_json_file($reportPath);
+				return stan_status_matches_fingerprint($status, $advisoryFingerprint)
+					&& is_array($report)
+					&& (string) ($report['source_fingerprint'] ?? '') === $advisoryFingerprint;
+			}, 10.0, 'auto-started STAN worker should publish the deferred advisory report');
 			$this->assertFileExists($statusPath, 'STAN worker should publish a status file');
 			$this->assertFileExists($reportPath, 'STAN worker should publish a report file');
 			$status = read_json_file($statusPath);
 			$report = read_json_file($reportPath);
 			$this->assertSame('ready', is_array($status) ? ($status['analysis_state'] ?? null) : null, 'status file should end in ready state');
+			$this->assertSame('full', is_array($report) ? ($report['analysis_mode'] ?? null) : null, 'worker report should preserve full advisory analysis mode');
 			$this->assertSame(0, is_array($report) ? ($report['compile_error_count'] ?? null) : null, 'advisory project should not produce compile-errors');
 			$this->assertSame(1, is_array($report) ? ($report['stan_warning_count'] ?? null) : null, 'advisory project should preserve the warning in the report');
+			$this->assertTrue(is_array($report) && isset($report['timings_ms']['context_build_ms']), 'published STAN report should expose context build timing');
+			$this->assertTrue(is_array($report) && isset($report['timings_ms']['report_write_ms']), 'published STAN report should expose report write timing');
 
 			$this->write($projectRoot . '/main.phs', <<<'PHS'
 function main(): void
@@ -82,6 +105,14 @@ PHS);
 			$this->assertContains('Unresolved function call `missing_helper()`', $blockingBuild['error'] ?? '', 'build failure should include the unresolved call detail');
 			$this->assertContains('scpp build --no-stan', $blockingBuild['error'] ?? '', 'build failure should explain the explicit STAN bypass flag');
 
+			$blockingFingerprint = compute_stan_source_fingerprint($projectRoot, $projectRoot . '/prism.json');
+			$this->waitFor(function () use ($statusPath, $reportPath, $blockingFingerprint): bool {
+				$status = read_json_file($statusPath);
+				$report = read_json_file($reportPath);
+				return stan_status_matches_fingerprint($status, $blockingFingerprint)
+					&& is_array($report)
+					&& (string) ($report['source_fingerprint'] ?? '') === $blockingFingerprint;
+			}, 10.0, 'auto-started STAN worker should publish the blocking diagnostic report');
 			$blockingReport = read_json_file($reportPath);
 			$this->assertSame(1, is_array($blockingReport) ? ($blockingReport['compile_error_count'] ?? null) : null, 'report should record one compile-error for the unresolved call');
 
@@ -173,6 +204,16 @@ PHS);
 				putenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS');
 			} else {
 				putenv('SCPP_STAN_WORKER_POLL_INTERVAL_MS=' . $previousPoll);
+			}
+			if ($previousDebounce === false) {
+				putenv('SCPP_STAN_WORKER_DEBOUNCE_MS');
+			} else {
+				putenv('SCPP_STAN_WORKER_DEBOUNCE_MS=' . $previousDebounce);
+			}
+			if ($previousAutostart === false) {
+				putenv('SCPP_STAN_WORKER_AUTOSTART');
+			} else {
+				putenv('SCPP_STAN_WORKER_AUTOSTART=' . $previousAutostart);
 			}
 			$this->stopWorker($workerProcess);
 			usleep(1500000);

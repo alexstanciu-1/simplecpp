@@ -35,7 +35,7 @@
         "run": {
             "success": true,
             "exit_code": 0,
-            "stdout": "1\n3\n{\"a\":1,\"b\":[2,3],\"c\":\"x\"}\n",
+            "stdout": "1\n3\n{\"a\":1,\"b\":[2,3],\"c\":\"x\"}\njson error at byte 1: expected string key\nunchanged\nrepaired\nnull_ok\nnull_value\nfalse_ok\nfalse_value\njson_encode: non-finite float_t is not supported\nunchanged\nnested_encode_error\nunchanged\n\"repaired\"\nnull\nfalse\n",
             "stderr": ""
         }
     },
@@ -43,7 +43,7 @@
         "strict",
         "json"
     ],
-    "notes": "Strict JSON profile surface should map directly to scpp::json::* runtime functions.",
+    "notes": "Strict JSON decoding returns a checked result: take captures malformed input without terminating the process, preserves the output on failure, and accepts repaired input, null, and false. Encoding also returns a checked result, preserves output on nested failure, and recovers in the same process.",
     "build": {
         "sanitizers": null
     }

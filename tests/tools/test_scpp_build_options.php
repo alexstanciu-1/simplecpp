@@ -44,6 +44,9 @@ final class ScppBuildOptionsTest
 			$buildTimings = parse_build_command_arguments(['--timings']);
 			$this->assertSame(true, $buildTimings['show_timings'], 'build should accept a timings flag');
 
+			$buildMode = parse_build_command_arguments(['--mode=release']);
+			$this->assertSame('release', $buildMode['build_mode'], 'build should accept release mode selection');
+
 			$runDefault = parse_run_command_arguments(['--', 'arg1', 'arg2']);
 			$this->assertSame(false, $runDefault['build_options']['compile_runtime'], 'scpp run should reuse runtime by default');
 			$this->assertSame(false, $runDefault['build_options']['compile_dependencies'], 'scpp run should reuse dependencies by default');
@@ -66,6 +69,10 @@ final class ScppBuildOptionsTest
 			$this->assertSame(true, $runTimings['build_options']['show_timings'], 'run should accept a timings flag');
 			$this->assertSame(['arg1'], $runTimings['run_args'], 'run timings flag should not consume program args');
 
+			$runMode = parse_run_command_arguments(['--mode=debug', '--', 'arg1']);
+			$this->assertSame('debug', $runMode['build_options']['build_mode'], 'run should accept debug mode selection');
+			$this->assertSame(['arg1'], $runMode['run_args'], 'run mode flag should not consume program args');
+
 			$runImplicitArgs = parse_run_command_arguments(['hello', 'world']);
 			$this->assertSame(['hello', 'world'], $runImplicitArgs['run_args'], 'plain run args without separator should still work');
 
@@ -78,17 +85,23 @@ final class ScppBuildOptionsTest
 			$this->assertSame(true, $runtimeBuildRelease['force'], 'runtime-build should accept force');
 
 			$this->assertUpdateArgumentHandling();
+			$this->assertBuildProfileResolution();
 			$this->assertRuntimeLaunchEnvironment();
 			$this->assertRuntimeArtifactPlacementPolicy();
+			$this->assertSubprocessCaptureDoesNotDeadlockOnLargeStderr();
 
 			$this->assertNinjaRenderingRespectsReuseFlags();
+			$this->assertClangTimeTraceCanBeEnabled();
 			$this->assertCrossFileEnumTypesLowerThroughDeclarationCatalog();
 			$this->assertCrossFileStructTypesLowerThroughDeclarationCatalog();
+			$this->assertStructPointerStyleFieldAccessCompiles();
+			$this->assertStructKeyedInitializerCompiles();
 			$this->assertStructContainersLowerThroughDeclarationCatalog();
 			$this->assertStructValidationRejectsClassLikeFeatures();
 			$this->assertFixedWidthEnumBackingLowersExactly();
 			$this->assertLayoutProbesLowerToCppOperators();
 			$this->assertUnionPayloadsLowerAndProbeLayout();
+			$this->assertUnionPointerStylePayloadAccessCompiles();
 			$this->assertUnionValidationRejectsClassLikeFeatures();
 			$this->assertEntryOverrideCanSelectAnotherFile();
 
@@ -111,6 +124,58 @@ final class ScppBuildOptionsTest
 			$this->assertContains('Unknown option for `scpp update`', $ex->getMessage(), 'unknown update flags should report the offending option');
 			return;
 		}
+	}
+
+	private function assertSubprocessCaptureDoesNotDeadlockOnLargeStderr(): void
+	{
+		$result = scpp_run_command_capture(sys_get_temp_dir(), [
+			PHP_BINARY,
+			'-r',
+			'fwrite(STDOUT, "ready\n"); fwrite(STDERR, str_repeat("E", 262144)); exit(7);',
+		], [], 5.0);
+
+		$this->assertSame(7, $result['exit_code'], 'large-stderr subprocess exit code should be captured');
+		$this->assertSame("ready\n", $result['stdout'], 'large-stderr subprocess stdout should be captured');
+		$this->assertSame(262144, strlen($result['stderr']), 'large stderr payload should be drained without deadlock');
+	}
+
+	private function assertBuildProfileResolution(): void
+	{
+		$config = [
+			'build_dir' => '.prism/build',
+			'generated_dir' => '.prism/generated',
+			'cache_dir' => '.prism/cache',
+			'build' => [
+				'backend' => 'ninja',
+				'mode' => 'debug',
+			],
+			'profiles' => [
+				'release' => [
+					'build_dir' => '.prism/build/release-custom',
+					'generated_dir' => '.prism/generated/release-custom',
+					'cache_dir' => '.prism/cache/release-custom',
+					'build' => [
+						'mode' => 'release',
+					],
+				],
+			],
+		];
+
+		$release = apply_build_profile_to_config($config, 'release', true);
+		$this->assertSame('.prism/build/release-custom', $release['build_dir'], 'release profile should override build_dir');
+		$this->assertSame('.prism/generated/release-custom', $release['generated_dir'], 'release profile should override generated_dir');
+		$this->assertSame('.prism/cache/release-custom', $release['cache_dir'], 'release profile should override cache_dir');
+		$this->assertSame('release', $release['build']['mode'], 'release profile should set build mode');
+
+		$debug = apply_build_profile_to_config([
+			'build' => [
+				'backend' => 'ninja',
+			],
+		], 'debug', true);
+		$this->assertSame('.prism/build/debug', $debug['build_dir'], 'explicit debug mode without profile should get a separated build root');
+		$this->assertSame('.prism/generated/debug', $debug['generated_dir'], 'explicit debug mode without profile should get a separated generated root');
+		$this->assertSame('.prism/cache/debug', $debug['cache_dir'], 'explicit debug mode without profile should get a separated cache root');
+		$this->assertSame('debug', $debug['build']['mode'], 'explicit debug mode should set build mode');
 	}
 
 	private function assertRuntimeLaunchEnvironment(): void
@@ -280,6 +345,76 @@ final class ScppBuildOptionsTest
 		);
 		$this->assertContains('ldflags = base.lib project.lib', $msvcNinja, 'MSVC Ninja rendering should preserve configured linker flags');
 		$this->assertContains('$cxx /nologo $in $ldflags /Fe$out', $msvcNinja, 'MSVC link rule should pass ldflags to the compiler driver');
+	}
+
+	private function assertClangTimeTraceCanBeEnabled(): void
+	{
+		$projectRoot = $this->root . '/trace_project';
+		$repoRoot = $this->root . '/trace_repo';
+		$buildDir = $projectRoot . '/.prism/build';
+		$generatedDir = $projectRoot . '/.prism/generated';
+		$this->mkdir($buildDir);
+		$this->mkdir($generatedDir);
+		$this->mkdir($repoRoot . '/runtime/include');
+
+		$generatedUnits = [[
+			'project_root' => $projectRoot,
+			'relative_php' => 'main.phs',
+			'generated_cpp' => $generatedDir . '/main.cpp',
+			'object_path' => $buildDir . '/main.o',
+			'is_entrypoint' => true,
+			'force_include_header' => null,
+		]];
+		$compiler = [
+			'command' => 'clang++',
+			'kind' => 'gnu_like',
+			'launcher' => null,
+			'linker_flags' => [],
+		];
+		$runtimeConfig = [
+			'languages' => ['php'],
+			'modules' => ['json'],
+			'language_profiles' => [
+				'php' => ['profile' => 'strict'],
+			],
+		];
+
+		$previousTrace = getenv('SCPP_CLANG_TIME_TRACE');
+		$previousGranularity = getenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US');
+		putenv('SCPP_CLANG_TIME_TRACE=1');
+		putenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US=250');
+		try {
+			$ninja = render_build_ninja(
+				$projectRoot,
+				$repoRoot,
+				$buildDir,
+				$generatedDir,
+				$generatedUnits,
+				[],
+				'app',
+				$compiler,
+				'debug',
+				$runtimeConfig,
+				[],
+				null,
+				['compile_runtime' => true, 'compile_dependencies' => true]
+			);
+		} finally {
+			if ($previousTrace === false) {
+				putenv('SCPP_CLANG_TIME_TRACE');
+			} else {
+				putenv('SCPP_CLANG_TIME_TRACE=' . $previousTrace);
+			}
+			if ($previousGranularity === false) {
+				putenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US');
+			} else {
+				putenv('SCPP_CLANG_TIME_TRACE_GRANULARITY_US=' . $previousGranularity);
+			}
+		}
+
+		$this->assertContains('-ftime-trace', $ninja, 'clang time tracing should append -ftime-trace when enabled');
+		$this->assertContains('-ftime-trace-granularity=250', $ninja, 'clang time tracing should honor granularity threshold');
+		$this->assertContains('runtime_cxxflags = ', $ninja, 'rendered Ninja should still contain runtime flags');
 	}
 
 	private function assertEntryOverrideCanSelectAnotherFile(): void
@@ -516,6 +651,79 @@ final class ScppBuildOptionsTest
 		$this->assertNotContains('shared_p<CompactChildSpan>', $mainHeader, 'struct containers should not wrap elements as shared object handles');
 	}
 
+	private function assertStructPointerStyleFieldAccessCompiles(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/struct_pointer_access_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'struct Row {',
+			'	public uint32 $x = 0;',
+			'}',
+			'function make_row(uint32 $value): Row {',
+			'	$row Row;',
+			'	$row->x = $value;',
+			'	return $row;',
+			'}',
+			'$row Row = make_row(7);',
+			'echo layout_sizeof(Row), "\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'struct_pointer_access_project', 'main.phs');
+
+		$build = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', [
+			'compile_runtime' => true,
+			'disable_stan' => true,
+		]);
+		$this->assertSame(true, $build['ok'], "value struct pointer-style field access should compile\n" . (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? ''));
+
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for struct pointer access project');
+		}
+		$this->assertContains('Row* operator->() { return this; }', $mainHeader, 'value structs should expose pointer-style mutable field access');
+		$this->assertContains('const Row* operator->() const { return this; }', $mainHeader, 'value structs should expose pointer-style const field access');
+	}
+
+	private function assertStructKeyedInitializerCompiles(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/struct_keyed_initializer_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'struct Point {',
+			'	public uint32 $x = 0;',
+			'	public uint32 $y = 0;',
+			'}',
+			'struct Row {',
+			'	public uint32 $id = 0;',
+			'	public Point $pos;',
+			'}',
+			'$row Row = ["pos" => ["y" => 20, "x" => 10], "id" => 7];',
+			'$empty Row = [];',
+			'echo layout_sizeof(Row), "\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'struct_keyed_initializer_project', 'main.phs');
+
+		$build = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', [
+			'compile_runtime' => true,
+			'disable_stan' => true,
+		]);
+		$this->assertSame(true, $build['ok'], "value struct keyed initializer should compile\n" . (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? ''));
+
+		$mainCpp = file_get_contents($projectRoot . '/.prism/generated/main.cpp');
+		if (!is_string($mainCpp)) {
+			throw new RuntimeException('Expected generated main.cpp for struct keyed initializer project');
+		}
+		$this->assertContains('Row row = Row{.id = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(7)), .pos = Point{.x = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(10)), .y = cast<int_t<std::uint32_t>>(static_cast<int_t<> >(20))}};', $mainCpp, 'struct initializer should emit C++ designated fields in declaration order');
+		$this->assertContains('Row empty = Row{};', $mainCpp, 'empty struct initializer should emit value initialization');
+	}
+
 	private function assertStructValidationRejectsClassLikeFeatures(): void
 	{
 		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
@@ -530,7 +738,7 @@ final class ScppBuildOptionsTest
 			'struct BadRow {',
 			'	private uint16 $hidden = 0;',
 			'	public static uint16 $counter = 0;',
-			'	public Box $box;',
+			'	public mixed $data;',
 			'	public function nope(): void {',
 			'		return;',
 			'	}',
@@ -545,7 +753,7 @@ final class ScppBuildOptionsTest
 		$diagnostics = (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? '');
 		$this->assertContains('Struct field BadRow::$hidden must be public', $diagnostics, 'private struct fields should be rejected');
 		$this->assertContains('Struct field BadRow::$counter cannot be static', $diagnostics, 'static struct fields should be rejected');
-		$this->assertContains('unsupported first-slice field type Box', $diagnostics, 'class object fields should be rejected in structs');
+		$this->assertContains('unsupported first-slice field type mixed', $diagnostics, 'mixed fields should be rejected in structs');
 		$this->assertContains('Struct BadRow cannot declare methods', $diagnostics, 'struct methods should be rejected in the first slice');
 	}
 
@@ -670,6 +878,48 @@ final class ScppBuildOptionsTest
 			throw new RuntimeException('Expected generated __project_units.hpp for union payload project');
 		}
 		$this->assertContains('#include "payload.hpp"' . "\n" . '#include "main.hpp"', $projectUnits, 'union dependency headers should be included before users');
+	}
+
+	private function assertUnionPointerStylePayloadAccessCompiles(): void
+	{
+		if (find_command_path(['ninja']) === null || resolve_compiler(['build' => []]) === null) {
+			return;
+		}
+		$projectRoot = $this->root . '/union_pointer_access_project';
+		$this->mkdir($projectRoot . '/native_cpp');
+		$this->write($projectRoot . '/main.phs', implode("\n", [
+			'struct AccessPayload {',
+			'	public uint32 $subject_id = 0;',
+			'	public uint32 $member_id = 0;',
+			'}',
+			'union ExpressionPayload {',
+			'	public uint32 $name_id;',
+			'	public AccessPayload $access;',
+			'}',
+			'struct Row {',
+			'	public ExpressionPayload $payload;',
+			'}',
+			'$row Row = [];',
+			'$row->payload->name_id = 7;',
+			'$row->payload->access->subject_id = 11;',
+			'$row->payload->access->member_id = $row->payload->name_id;',
+			'echo layout_sizeof(ExpressionPayload), "\n";',
+			'',
+		]));
+		$this->writeProjectConfig($projectRoot, 'union_pointer_access_project', 'main.phs');
+
+		$build = scpp_run_build_service($projectRoot, $projectRoot . '/prism.json', [
+			'compile_runtime' => true,
+			'disable_stan' => true,
+		]);
+		$this->assertSame(true, $build['ok'], "value union pointer-style payload access should compile\n" . (string) ($build['output'] ?? '') . "\n" . (string) ($build['error'] ?? ''));
+
+		$mainHeader = file_get_contents($projectRoot . '/.prism/generated/main.hpp');
+		if (!is_string($mainHeader)) {
+			throw new RuntimeException('Expected generated main.hpp for union pointer access project');
+		}
+		$this->assertContains('ExpressionPayload* operator->() { return this; }', $mainHeader, 'value unions should expose pointer-style mutable payload access');
+		$this->assertContains('const ExpressionPayload* operator->() const { return this; }', $mainHeader, 'value unions should expose pointer-style const payload access');
 	}
 
 	private function assertUnionValidationRejectsClassLikeFeatures(): void

@@ -2,6 +2,14 @@
 
 #include "lang/php/support/php_common.hpp"
 
+#include <cstring>
+#include <fstream>
+#include <sstream>
+#include <string>
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/resource.h>
+#endif
+
 namespace scpp {
 
 namespace detail {

@@ -13,3 +13,4 @@
 #include "lang/php/php_mysqli.hpp"
 #include "lang/php/php_regex.hpp"
 #include "lang/php/php_curl.hpp"
+#include "modules/source/source.hpp"

@@ -21,8 +21,14 @@ final class StanSourceCatalogBuilder
 	public function build(string $projectRoot, array $projectContexts, array $runtimeShallowPaths, array $sourceOverrides = []): array
 	{
 		$paths = [];
-		foreach ($projectContexts as $contextProjectRoot => $_projectContext) {
-			foreach (\collect_project_stan_source_files($contextProjectRoot) as $phpPathAbs) {
+		foreach ($projectContexts as $contextProjectRoot => $projectContext) {
+			$sourceFiles = \is_array($projectContext['php_files'] ?? null)
+				? $projectContext['php_files']
+				: \collect_project_stan_source_files($contextProjectRoot);
+			foreach ($sourceFiles as $phpPathAbs) {
+				if (!\is_string($phpPathAbs) || !\is_stan_source_extension(\pathinfo($phpPathAbs, PATHINFO_EXTENSION))) {
+					continue;
+				}
 				$paths[\normalize_path($phpPathAbs)] = false;
 			}
 		}

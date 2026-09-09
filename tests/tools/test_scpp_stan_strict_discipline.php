@@ -19,6 +19,7 @@ final class ScppStanStrictDisciplineTest
 	{
 		try {
 			$this->assertDependencyEditsAffectRootStanFingerprint();
+			$this->assertStanModelIncompleteFindingsDoNotBlockBuild();
 
 			$project = $this->root . '/app';
 			$this->writeProject($project, <<<'PHS'
@@ -96,6 +97,72 @@ PHS
 			$this->writeProject($project, <<<'PHS'
 function main(): void
 {
+	$source int = 7;
+	$id uint32 = $source;
+	echo (int)$id, "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$validGenericIntToFixedWidth = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $validGenericIntToFixedWidth['warning_count'] ?? null, 'generic int assignment to an explicit fixed-width local should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
+function consume_id(int $id): void
+{
+	echo $id, "\n";
+}
+
+function consume_label(string $label): void
+{
+	echo $label, "\n";
+}
+
+function main(): void
+{
+	$labels hash<string,int> = [];
+	$labels[10] = "ten";
+	foreach ($labels as $id => $label) {
+		consume_id($id);
+		consume_label($label);
+	}
+}
+
+main();
+PHS
+ . "\n");
+
+			$typedHashForeachKey = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $typedHashForeachKey['warning_count'] ?? null, 'hash<T,T_KEY> foreach key should use the explicit key generic');
+
+			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
+	$labels hash<string,float> = [];
+	$labels[1.5] = "bad";
+	echo "bad\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$unsupportedHashKey = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $unsupportedHashKey['warning_count'] ?? null, 'unsupported explicit hash key should produce one STAN finding');
+			$unsupportedHashKeyDiagnostic = $unsupportedHashKey['diagnostics'][0] ?? null;
+			if (!is_array($unsupportedHashKeyDiagnostic)) {
+				throw new RuntimeException('unsupported hash key diagnostic should be present');
+			}
+			$this->assertSame('stan.unsupported_hash_key_type', $unsupportedHashKeyDiagnostic['code'] ?? null, 'unsupported hash key diagnostic code should be stable');
+			$this->assertContains('Unsupported hash<T,T_KEY> key type `float`', (string) ($unsupportedHashKeyDiagnostic['message'] ?? ''), 'unsupported hash key diagnostic should name the rejected key family');
+			$classifiedUnsupportedHashKey = classify_stan_build_diagnostics([$unsupportedHashKeyDiagnostic]);
+			$this->assertSame(1, $classifiedUnsupportedHashKey['compile_error_count'] ?? null, 'unsupported hash key diagnostics should block pre-build');
+
+			$this->writeProject($project, <<<'PHS'
+function main(): void
+{
 	$small int8 = 7;
 	$bad uint16 = $small;
 	echo (int)$bad, "\n";
@@ -154,7 +221,7 @@ class Box
 struct BadRow {
 	private uint16 $hidden = 0;
 	public static uint16 $counter = 0;
-	public Box $box;
+	public mixed $data;
 	public function nope(): void {
 		return;
 	}
@@ -177,7 +244,7 @@ PHS
 			$this->assertContains('Struct `BadRow` cannot declare methods', $structMessages, 'struct method diagnostic should be reported by STAN');
 			$this->assertContains('Struct field `BadRow::$hidden` must be public', $structMessages, 'struct private field diagnostic should be reported by STAN');
 			$this->assertContains('Struct field `BadRow::$counter` cannot be static', $structMessages, 'struct static field diagnostic should be reported by STAN');
-			$this->assertContains('unsupported first-slice field type `Box`', $structMessages, 'struct object field diagnostic should be reported by STAN');
+			$this->assertContains('unsupported first-slice field type `mixed`', $structMessages, 'struct mixed field diagnostic should be reported by STAN');
 			$classifiedStruct = classify_stan_build_diagnostics($structDiagnostics);
 			$this->assertSame(4, $classifiedStruct['compile_error_count'] ?? null, 'struct contract diagnostics should block pre-build');
 
@@ -228,6 +295,82 @@ PHS
 			$this->assertContains('unsupported first-slice payload type `NonTrivialPayload`', $unionMessages, 'union non-trivial struct payload diagnostic should be reported by STAN');
 			$classifiedUnion = classify_stan_build_diagnostics($unionDiagnostics);
 			$this->assertSame(6, $classifiedUnion['compile_error_count'] ?? null, 'union contract diagnostics should block pre-build');
+
+			$this->writeProject($project, <<<'PHS'
+enum token_kind: byte {
+	case eof = 0;
+	case identifier = 1;
+}
+
+function main(): void
+{
+	$kind /** token_kind */ = 1;
+	echo enum_name($kind), "\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$enumAssignment = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $enumAssignment['warning_count'] ?? null, 'raw integer enum assignment should produce one STAN finding');
+			$enumAssignmentDiagnostic = $enumAssignment['diagnostics'][0] ?? null;
+			if (!is_array($enumAssignmentDiagnostic)) {
+				throw new RuntimeException('enum assignment diagnostic should be present');
+			}
+			$this->assertSame('stan.enum_assignment', $enumAssignmentDiagnostic['code'] ?? null, 'enum assignment diagnostic code should be stable');
+			$this->assertContains('cannot assign `int` to `token_kind`', (string) ($enumAssignmentDiagnostic['message'] ?? ''), 'enum assignment diagnostic should describe raw integer rejection');
+			$classifiedEnumAssignment = classify_stan_build_diagnostics([$enumAssignmentDiagnostic]);
+			$this->assertSame(1, $classifiedEnumAssignment['compile_error_count'] ?? null, 'enum assignment diagnostics should block pre-build');
+
+			$this->writeProject($project, <<<'PHS'
+enum token_kind: byte {
+	case eof = 0;
+	case identifier = 1;
+}
+
+function main(): void
+{
+	$kind /** token_kind */ = token_kind::identifier;
+	$other /** token_kind */ = token_kind::eof;
+	$same bool = $kind !== $other;
+	echo $same ? "different\n" : "same\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$validEnum = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(0, $validEnum['warning_count'] ?? null, 'same-enum assignment and equality should stay clean');
+
+			$this->writeProject($project, <<<'PHS'
+enum token_kind: byte {
+	case eof = 0;
+	case identifier = 1;
+}
+
+function main(): void
+{
+	$kind /** token_kind */ = token_kind::identifier;
+	$bad bool = $kind === 1;
+	echo $bad ? "bad\n" : "ok\n";
+}
+
+main();
+PHS
+ . "\n");
+
+			$enumComparison = $session->runDiagnostics($project, $project . '/prism.json');
+			$this->assertSame(1, $enumComparison['warning_count'] ?? null, 'enum/raw comparison should produce one STAN finding');
+			$enumComparisonDiagnostic = $enumComparison['diagnostics'][0] ?? null;
+			if (!is_array($enumComparisonDiagnostic)) {
+				throw new RuntimeException('enum comparison diagnostic should be present');
+			}
+			$this->assertSame('stan.enum_comparison', $enumComparisonDiagnostic['code'] ?? null, 'enum comparison diagnostic code should be stable');
+			$this->assertContains('requires operands of the same enum type', (string) ($enumComparisonDiagnostic['message'] ?? ''), 'enum comparison diagnostic should describe same-enum requirement');
+			$classifiedEnumComparison = classify_stan_build_diagnostics([$enumComparisonDiagnostic]);
+			$this->assertSame(1, $classifiedEnumComparison['compile_error_count'] ?? null, 'enum comparison diagnostics should block pre-build');
 
 			$this->writeProject($project, <<<'PHS'
 function consume(string $text): void
@@ -373,14 +516,15 @@ PHS
 			$this->assertSame(0, $checkedWrapperProperty['warning_count'] ?? null, 'take(...) wrapper property handling should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
-function main(): void
+function main(mixed $row, error $err): void
 {
-	$row = json_decode("{\"name\":\"Ada\"}");
+	if (!take($row, $err, json_decode("{\"name\":\"Ada\"}"))) {
+		return;
+	}
 	$name string = $row["name"];
 	echo $name, "\n";
 }
 
-main();
 PHS
  . "\n");
 
@@ -391,21 +535,22 @@ PHS
 				throw new RuntimeException('dynamic shape boundary diagnostic should be present');
 			}
 			$this->assertSame('stan.dynamic_shape_boundary', $dynamicDiagnostic['code'] ?? null, 'dynamic diagnostic code should be stable');
-			$this->assertSame(4, $dynamicDiagnostic['line'] ?? null, 'dynamic diagnostic should point at the required typed local');
+			$this->assertSame(6, $dynamicDiagnostic['line'] ?? null, 'dynamic diagnostic should point at the required typed local');
 			$this->assertContains('Dynamic value assigned to required `string` local `$name`', (string) ($dynamicDiagnostic['message'] ?? ''), 'dynamic diagnostic should describe the required boundary');
 			$this->assertContains('Guard the field with `isset(...)`', (string) ($dynamicDiagnostic['message'] ?? ''), 'dynamic diagnostic should recommend a shape guard');
 
 			$this->writeProject($project, <<<'PHS'
-function main(): void
+function main(mixed $row, error $err): void
 {
-	$row = json_decode("{\"name\":\"Ada\"}");
+	if (!take($row, $err, json_decode("{\"name\":\"Ada\"}"))) {
+		return;
+	}
 	if (isset($row["name"])) {
 		$name string = (string) $row["name"];
 		echo $name, "\n";
 	}
 }
 
-main();
 PHS
  . "\n");
 
@@ -413,14 +558,15 @@ PHS
 			$this->assertSame(0, $guardedDynamic['warning_count'] ?? null, 'guarded dynamic JSON extraction with an explicit cast should stay clean');
 
 			$this->writeProject($project, <<<'PHS'
-function main(): void
+function main(mixed $row, error $err): void
 {
-	$row = json_decode("{\"name\":\"Ada\"}");
+	if (!take($row, $err, json_decode("{\"name\":\"Ada\"}"))) {
+		return;
+	}
 	$name string = $row["name"] ?? "";
 	echo $name, "\n";
 }
 
-main();
 PHS
  . "\n");
 
@@ -865,6 +1011,47 @@ PHS
 		} finally {
 			$this->removeTree($this->root);
 		}
+	}
+
+	private function assertStanModelIncompleteFindingsDoNotBlockBuild(): void
+	{
+		$modelIncomplete = classify_stan_build_diagnostics([
+			[
+				'kind' => 'unresolved_property_read',
+				'failure_kind' => 'unknown_receiver_type',
+				'message' => 'Unknown receiver type `SomeResolutionRow` while resolving property read segment `->reference_id`.',
+			],
+			[
+				'kind' => 'unresolved_property_write',
+				'failure_kind' => 'unknown_receiver_type',
+				'message' => 'Cannot write property `source_unit_id` on non-object or unresolved receiver type `SomeContextRow`.',
+			],
+			[
+				'kind' => 'unresolved_method_call',
+				'failure_kind' => 'unknown_receiver_type',
+				'message' => 'Unresolved method call `hydrate()` due to unknown receiver type.',
+			],
+		]);
+		$this->assertSame(0, $modelIncomplete['compile_error_count'] ?? null, 'STAN model-incomplete receiver diagnostics should not block pre-build');
+		$this->assertSame(3, $modelIncomplete['stan_error_count'] ?? null, 'STAN model-incomplete receiver diagnostics should stay visible as STAN errors');
+
+		$definiteSourceErrors = classify_stan_build_diagnostics([
+			[
+				'kind' => 'unresolved_call',
+				'message' => 'Unresolved function call `missing_helper()`.',
+			],
+			[
+				'kind' => 'unresolved_property_read',
+				'failure_kind' => 'missing_property',
+				'message' => 'Missing property segment `->missing` on receiver type `Box`.',
+			],
+			[
+				'kind' => 'unresolved_property_write',
+				'failure_kind' => 'non_object_receiver_type',
+				'message' => 'Cannot write property `name` on scalar receiver type `int`.',
+			],
+		]);
+		$this->assertSame(3, $definiteSourceErrors['compile_error_count'] ?? null, 'definite source errors should still block pre-build');
 	}
 
 	private function assertDependencyEditsAffectRootStanFingerprint(): void

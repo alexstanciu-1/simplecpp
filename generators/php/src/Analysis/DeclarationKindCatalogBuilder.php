@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace Scpp\S2S\Analysis;
 
+use Scpp\S2S\Jss\JssParser;
+use Scpp\S2S\Jss\JssSummaryExtractor;
+use Scpp\S2S\Jss\JssTokenizer;
+
 final class DeclarationKindCatalogBuilder
 {
 	public function __construct(
@@ -16,14 +20,23 @@ final class DeclarationKindCatalogBuilder
 	{
 		$catalog = [];
 		foreach ($sourcePaths as $sourcePath) {
-			if (!is_string($sourcePath) || $sourcePath === '' || $this->isJssSourcePath($sourcePath)) {
+			if (!is_string($sourcePath) || $sourcePath === '') {
 				continue;
 			}
 			$sourceOverride = $sourceOverrides[$sourcePath] ?? null;
-			$summary = $this->extractor->summarize(
-				$this->extractor->extract($sourcePath, $sourceOverride),
-				$sourceOverride
-			);
+			if ($this->isJssSourcePath($sourcePath)) {
+				$source = $sourceOverride ?? file_get_contents($sourcePath);
+				if (!is_string($source)) {
+					throw new \RuntimeException('Cannot read JSS declarations from ' . $sourcePath);
+				}
+				$program = (new JssParser())->parse((new JssTokenizer())->tokenize($source));
+				$summary = (new JssSummaryExtractor())->summarize($program, $sourcePath);
+			} else {
+				$summary = $this->extractor->summarize(
+					$this->extractor->extract($sourcePath, $sourceOverride),
+					$sourceOverride
+				);
+			}
 			$this->collectFromClasses($catalog, $summary['root_classes'] ?? []);
 			foreach (($summary['namespaces'] ?? []) as $namespace) {
 				if (!is_array($namespace)) {

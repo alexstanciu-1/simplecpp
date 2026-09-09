@@ -1,0 +1,6 @@
+namespace App;
+
+function run(): int
+{
+	return 42;
+}

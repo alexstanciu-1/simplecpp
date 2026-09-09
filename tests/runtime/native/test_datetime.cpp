@@ -36,14 +36,24 @@ static void test_clock_shapes() {
 	assert(millis >= seconds * 1000);
 
 	const auto before = scpp::dt::monotonic_millis().native_value();
+	const auto before_us = scpp::dt::monotonic_micros().native_value();
+	const auto before_ns = scpp::dt::monotonic_nanos().native_value();
 	scpp::dt::sleep_millis(scpp::int_t<>(1));
 	const auto after = scpp::dt::monotonic_millis().native_value();
+	const auto after_us = scpp::dt::monotonic_micros().native_value();
+	const auto after_ns = scpp::dt::monotonic_nanos().native_value();
 	assert(after >= before);
+	assert(after_us >= before_us);
+	assert(after_ns >= before_ns);
+	assert(after_us > 0);
+	assert(after_ns > 0);
 }
 
 static void test_php_wrapper_surface() {
 	const auto seconds = scpp::php::time().native_value();
 	assert(seconds > 0);
+	assert(scpp::php::dt_monotonic_us().native_value() > 0);
+	assert(scpp::php::dt_monotonic_ns().native_value() > 0);
 	assert(scpp::php::dt_format_iso_utc(scpp::int_t<>(0)).native_value() == "1970-01-01T00:00:00Z");
 
 	const auto parsed = scpp::php::dt_parse_iso_utc(scpp::string_t("1970-01-01T00:00:01Z"));

@@ -1,0 +1,5 @@
+function run(): int {
+	$left int = 6;
+	$right int = 7;
+	return $left * $right;
+}

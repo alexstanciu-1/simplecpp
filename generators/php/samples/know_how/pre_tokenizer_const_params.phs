@@ -1,0 +1,3 @@
+function const_param_demo(const int $count, const vector<int> &$items): int {
+	return $count;
+}

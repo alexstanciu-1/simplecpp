@@ -136,10 +136,15 @@ final class ScppSourceDiagnosticsTest
 
 			$typedArgBuild = $this->runCommand([PHP_BINARY, resolve_repo_root() . '/bin/scpp.php', 'build', '--build-runtime'], $typedArgProject, 120);
 			$this->assertNotSame(0, $typedArgBuild['exit_code'], 'scpp build should fail for a typed argument mismatch');
-			$this->assertContains('Compile error in main.phs:5: argument 1 passed to double_it expects int, got string', $typedArgBuild['stderr'], 'build stderr should render typed argument mismatches in source terms');
+			$this->assertContains('Compile error in main.phs:5:', $typedArgBuild['stderr'], 'typed argument mismatch should identify the failing call site');
+			// GCC explains the conversion on the error; Clang explains it on a
+			// source-mapped candidate note at the parameter declaration.
+			$this->assertContains('argument 1 passed to double_it expects int, got string', $typedArgBuild['stderr'], 'build stderr should explain the typed mismatch in source terms');
 			$this->assertContains('Generated location:', $typedArgBuild['stderr'], 'build stderr should retain the generated location for deeper debugging');
 			$this->assertContains('Raw compiler excerpt:', $typedArgBuild['stderr'], 'build stderr should retain the raw compiler excerpt');
-			$this->assertContains('could not convert', $typedArgBuild['stderr'], 'raw compiler excerpt should preserve native compiler detail');
+			$rawExcerpt = substr($typedArgBuild['stderr'], (int) strpos($typedArgBuild['stderr'], 'Raw compiler excerpt:'));
+			$this->assertContains('string_t', $rawExcerpt, 'raw compiler excerpt should retain the actual native type');
+			$this->assertContains('int_t', $rawExcerpt, 'raw compiler excerpt should retain the required native type');
 
 			echo "PASS: scpp source diagnostics\n";
 			return 0;

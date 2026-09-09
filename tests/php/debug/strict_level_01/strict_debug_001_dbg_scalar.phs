@@ -1,0 +1,3 @@
+// Strict debug helper accepts scalar values.
+dbg("catalog_dbg", 42, DBG_VALUE | DBG_DEPTH_0);
+echo "done\n";

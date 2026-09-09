@@ -1,5 +1,14 @@
 function normalize(string $text): void {
-	$decoded dynamic = json_decode($text);
-	$encoded string = json_encode($decoded);
+	$decoded mixed;
+	$jsonError error;
+	if (!take($decoded, $jsonError, json_decode($text))) {
+		echo "json_error\n";
+		return;
+	}
+	$encoded string = "";
+	if (!take($encoded, $jsonError, json_encode($decoded))) {
+		echo "encode_error\n";
+		return;
+	}
 	echo "json " . $encoded, "\n";
 }

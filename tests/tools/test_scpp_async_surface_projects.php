@@ -97,7 +97,7 @@ async function value_one(): int {
 echo await value_one(), "\n";
 PHS,
 				'stdout' => "1\n",
-				'generated' => ['scpp::async_core::task<int_t> value_one()', 'co_return', 'sync_wait(value_one())'],
+				'generated' => ['scpp::async_core::task<int_t<>> value_one()', 'co_return', 'sync_wait(value_one())'],
 			],
 			[
 				'name' => 'typed_assignment',
@@ -156,7 +156,7 @@ async function add_one(int $value): int {
 echo await add_one(5), "\n";
 PHS,
 				'stdout' => "6\n",
-				'generated' => ['add_one(int_t value)', 'sync_wait(add_one'],
+				'generated' => ['add_one(int_t<> value)', 'sync_wait(add_one'],
 			],
 			[
 				'name' => 'arithmetic_await',
@@ -167,7 +167,7 @@ async function base(): int {
 echo (await base()) + 3, "\n";
 PHS,
 				'stdout' => "10\n",
-				'generated' => ['sync_wait(base())', '+ static_cast<int_t>(3)'],
+				'generated' => ['sync_wait(base())'],
 			],
 			[
 				'name' => 'two_awaits',

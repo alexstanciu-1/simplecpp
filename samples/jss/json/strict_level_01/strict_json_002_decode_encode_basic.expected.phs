@@ -1,5 +1,14 @@
 function roundTrip(string $text): void {
-	$value dynamic = json_decode($text);
-	$encoded string = json_encode($value);
+	$value mixed;
+	$jsonError error;
+	if (!take($value, $jsonError, json_decode($text))) {
+		echo "json_error\n";
+		return;
+	}
+	$encoded string = "";
+	if (!take($encoded, $jsonError, json_encode($value))) {
+		echo "encode_error\n";
+		return;
+	}
 	echo $encoded, "\n";
 }

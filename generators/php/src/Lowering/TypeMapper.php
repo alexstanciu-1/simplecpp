@@ -338,7 +338,19 @@ final class TypeMapper
 		}
 
 		$keyType = $this->mapDeclaredType($args[1]);
+		if (!$this->isSupportedHashKeyType($keyType)) {
+			throw new GenerationException('Unsupported hash<T,T_KEY> key type `' . trim($args[1]) . '`. Supported key families are string, integer aliases, enum types, shared<T>, unique<T>, and weak<T>.');
+		}
 		return 'hash_t<' . $valueType . ', ' . $keyType . '>';
+	}
+
+	private function isSupportedHashKeyType(string $mappedKeyType): bool
+	{
+		$normalized = trim($mappedKeyType);
+		return $normalized === 'string_t'
+			|| preg_match('/^int_t(?:<.*>)?$/', $normalized) === 1
+			|| $this->isEnumType($normalized)
+			|| preg_match('/^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) === 1;
 	}
 
 	private function mapContainerElementType(string $phpType): string
@@ -794,7 +806,7 @@ final class TypeMapper
 		if ($this->hasDisallowedNullableMarkerPosition($normalized)) {
 			throw new GenerationException('Nullable marker (?) is only supported as a leading type marker or in value<?T>: ' . $phpType);
 		}
-		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$/', $normalized) !== 1) {
+		if ((str_contains($normalized, '<') || str_contains($normalized, '>')) && preg_match('/^(?:nullable|value|shared|unique|weak|weakref|function|vector|vector_t|fixed_array|fixed_array_t|hash|hash_t|result_or_false|result_or_bool|result)\s*<.+>$|^(?:shared_p|unique_p|weak_p)<.+>$|^int_t\s*<\s*>$/', $normalized) !== 1) {
 			throw new GenerationException('Unsupported explicit type syntax: ' . $phpType);
 		}
 		if (preg_match('/^value\s*<\s*(.+)\s*>$/', $normalized, $matches) === 1) {
@@ -887,8 +899,15 @@ final class TypeMapper
 			'error' => 'error_t',
 			'resource_handle' => 'resource_handle_t',
 			'nullable_resource_handle' => 'nullable_resource_handle_t',
-			'falseable_resource_handle' => 'falseable_resource_handle_t',
-			'vector_t' => 'vector_t',
+				'falseable_resource_handle' => 'falseable_resource_handle_t',
+				'token_buffer' => 'tokenizer::token_buffer_t',
+				'string_parts_builder' => 'str::string_parts_builder',
+				'text_builder' => 'str::text_builder',
+				'source_buffer' => 'source::source_buffer',
+				'byte_span' => 'source::byte_span',
+				'source_line_index' => 'source::source_line_index',
+				'source_location' => 'source::source_location',
+				'vector_t' => 'vector_t',
 			default => $this->mapUserTypeName($phpType),
 		};
 	}
@@ -994,8 +1013,15 @@ final class TypeMapper
 			'error',
 			'resource_handle',
 			'nullable_resource_handle',
-			'falseable_resource_handle',
-			'vector_t',
+				'falseable_resource_handle',
+				'token_buffer',
+				'string_parts_builder',
+				'text_builder',
+				'source_buffer',
+				'byte_span',
+				'source_line_index',
+				'source_location',
+				'vector_t',
 			'fixed_array_t',
 			'int_t',
 			'int8',
@@ -1018,6 +1044,14 @@ final class TypeMapper
 			'resource_handle_t',
 			'nullable_resource_handle_t',
 			'falseable_resource_handle_t',
+			'token_buffer_t',
+			'tokenizer::token_buffer_t',
+			'str::string_parts_builder',
+			'str::text_builder',
+			'source::source_buffer',
+			'source::byte_span',
+			'source::source_line_index',
+			'source::source_location',
 		], true);
 	}
 }

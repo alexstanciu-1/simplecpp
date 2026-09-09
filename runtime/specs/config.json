@@ -258,7 +258,8 @@
 				"native_value",
 				"size",
 				"empty",
-				"append"
+				"append",
+				"lexicographic_compare_via_native_value"
 			],
 			"entry_ctors": [
 				{
@@ -273,7 +274,14 @@
 					"from_cpp": "const char*",
 					"explicit": true
 				}
-			]
+			],
+			"abi_lifecycle": {
+				"release_owned": {
+					"symbol": "scpp_v2_string_release",
+					"carrier": "opaque_runtime_string",
+					"policy": "destroy_owned"
+				}
+			}
 		},
 		"vector_t": {
 			"kind": "template_wrapper",
@@ -291,6 +299,84 @@
 				"at",
 				"index",
 				"append"
+			],
+			"abi_bridge_rules": [
+				{
+					"operation_key": "vector.construct.default",
+					"runtime_namespace": "scpp",
+					"runtime_symbol": "scpp_v2_vector_i32_new",
+					"argument_signature_key": "void",
+					"result_runtime_type": "vector_t<int32>",
+					"llvm_return_type": "ptr",
+					"llvm_argument_signature": "void",
+					"argument_count": 0,
+					"argument_carrier": "void",
+					"return_carrier": "opaque_runtime_vector",
+					"ownership_policy": "owned_return",
+					"lifetime_policy": "explicit_cleanup_required",
+					"call_lowering_status": "ready",
+					"source_consumption_status": "blocked",
+					"blocked_reason": "source_consumption_not_wired",
+					"source_type_ref": "vector<int32>",
+					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:types.vector_t.stable_core_api.default_ctor"
+				},
+				{
+					"operation_key": "vector.append",
+					"runtime_namespace": "scpp",
+					"runtime_symbol": "scpp_v2_vector_i32_append",
+					"argument_signature_key": "opaque_runtime_vector,primitive_i32",
+					"result_runtime_type": "void",
+					"llvm_return_type": "void",
+					"llvm_argument_signature": "ptr, i32",
+					"argument_count": 2,
+					"argument_carrier": "opaque_runtime_vector",
+					"return_carrier": "void",
+					"ownership_policy": "mutates_lhs",
+					"lifetime_policy": "in_place_mutation",
+					"call_lowering_status": "ready",
+					"source_consumption_status": "blocked",
+					"blocked_reason": "source_consumption_not_wired",
+					"source_type_ref": "vector<int32>",
+					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:types.vector_t.stable_core_api.append"
+				},
+				{
+					"operation_key": "vector.read.index",
+					"runtime_namespace": "scpp",
+					"runtime_symbol": "scpp_v2_vector_i32_at",
+					"argument_signature_key": "opaque_runtime_vector,primitive_i64",
+					"result_runtime_type": "int32",
+					"llvm_return_type": "i32",
+					"llvm_argument_signature": "ptr, i64",
+					"argument_count": 2,
+					"argument_carrier": "opaque_runtime_vector",
+					"return_carrier": "primitive_i32",
+					"ownership_policy": "borrowed_arguments",
+					"lifetime_policy": "caller_retains_arguments",
+					"call_lowering_status": "ready",
+					"source_consumption_status": "blocked",
+					"blocked_reason": "source_consumption_not_wired",
+					"source_type_ref": "vector<int32>",
+					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:types.vector_t.stable_core_api.index"
+				},
+				{
+					"operation_key": "vector.cleanup",
+					"runtime_namespace": "scpp",
+					"runtime_symbol": "scpp_v2_vector_i32_release",
+					"argument_signature_key": "opaque_runtime_vector",
+					"result_runtime_type": "void",
+					"llvm_return_type": "void",
+					"llvm_argument_signature": "ptr",
+					"argument_count": 1,
+					"argument_carrier": "opaque_runtime_vector",
+					"return_carrier": "void",
+					"ownership_policy": "consumes_owned_argument",
+					"lifetime_policy": "cleanup_consumes_owned_argument",
+					"call_lowering_status": "ready",
+					"source_consumption_status": "blocked",
+					"blocked_reason": "source_consumption_not_wired",
+					"source_type_ref": "vector<int32>",
+					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:types.vector_t.lifecycle.destroy_owned"
+				}
 			]
 		},
 		"value_p": {
@@ -1319,6 +1405,48 @@
 					"kind": "helper",
 					"helper_name": "to_string",
 					"policy_role": "explicit_text_conversion_after_runtime_kind_dispatch"
+				}
+			],
+			"abi_bridge_rules": [],
+			"abi_bridge_rule_families": [
+				{
+					"family_id": "php_text_integer_widths_to_string_i64",
+					"from": "int_t",
+					"source_type_ref_family": "primitive_integer_widths_i64_carrier",
+					"operation_key_template": "php.text_coercion.{source_type_ref}",
+					"helper_name": "to_string",
+					"runtime_namespace": "scpp::php",
+					"runtime_symbol": "scpp_v2_php_to_string_i64",
+					"argument_signature_key": "primitive_i64",
+					"result_runtime_type": "string_t",
+					"argument_count": 1,
+					"argument_carrier": "primitive_i64",
+					"return_carrier": "opaque_runtime_string",
+					"ownership_policy": "owned_return",
+					"lifetime_policy": "explicit_cleanup_required",
+					"call_lowering_status": "ready",
+					"source_consumption_status": "ready",
+					"blocked_reason": "none",
+					"llvm_return_type": "ptr",
+					"llvm_argument_signature": "i64",
+					"authority_source": "vendor/simple_cpp/runtime/specs/config.json:coercions.text.abi_bridge_rule_families.php_text_integer_widths_to_string_i64",
+					"members": [
+						{"source_type_ref": "int", "operation_key": "php.text_coercion.int_t"},
+						{"source_type_ref": "int64"},
+						{"source_type_ref": "int8"},
+						{"source_type_ref": "int16"},
+						{"source_type_ref": "int32"},
+						{"source_type_ref": "uint8"},
+						{"source_type_ref": "uint16"},
+						{"source_type_ref": "uint32"}
+					],
+					"deferred_members": [
+						{
+							"source_type_ref": "uint64",
+							"blocked_reason": "unsigned_i64_text_helper_not_ready",
+							"note": "uint64 needs a u64-safe runtime bridge symbol before full-range source consumption"
+						}
+					]
 				}
 			]
 		}
@@ -2836,7 +2964,8 @@
 			"identical",
 			"not_identical",
 			"concat_assign",
-			"echo_eval"
+			"echo_eval",
+			"compare"
 		],
 		"namespaces": {
 			"core": "scpp",
@@ -2854,11 +2983,19 @@
 			"identical",
 			"not_identical",
 			"concat_assign",
-			"echo_eval"
+			"echo_eval",
+			"compare"
 		],
 		"notes": {
 			"purpose": "declares stable runtime helper entry points that frontends/generators may target directly",
 			"separation_rule": "helpers listed here are shared knowledge contracts, not generator implementation details",
+			"abi_bridge_identity_standard": {
+				"purpose": "runtime ABI helpers are selected by stable helper keys, operation keys, and optional family ids; compilers must not encode one cast/operator combination per helper call site",
+				"helper_key_rule": "helper keys listed in stable_helpers and generator_allowed_helpers are the only generator-visible helper ids",
+				"operation_key_rule": "source-visible ABI descriptors use stable operation_key values such as php.text_coercion.int_t or string.compare.lexicographic",
+				"family_rule": "repeated source-TypeRef conversions use abi_bridge_rule_families with a stable family_id, member list, and deferred-member list",
+				"text_coercion_rule": "new printable source types add coercions.text.abi_bridge_rules or coercions.text.abi_bridge_rule_families plus any needed carrier adapter, not source-specific compiler casts"
+			},
 			"operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity using exact type matching except for null_t versus nullable<T>.",
 			"php_identity": {
 				"rule": "exact_type_required_except_null_nullable",

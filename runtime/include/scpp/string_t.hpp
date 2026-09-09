@@ -42,6 +42,14 @@ public:
 		return value_.size();
 	}
 
+	[[nodiscard]] std::size_t byte_capacity() const noexcept {
+		return value_.capacity();
+	}
+
+	[[nodiscard]] std::size_t estimated_storage_bytes() const noexcept {
+		return sizeof(*this) + value_.capacity();
+	}
+
 	[[nodiscard]] bool is_valid_utf8() const {
 		return utf8::is_valid(value_);
 	}
@@ -80,6 +88,12 @@ public:
 
 	void append(const string_t &value) {
 		value_ += value.value_;
+	}
+
+	[[nodiscard]] std::string release_native() noexcept {
+		std::string out = std::move(value_);
+		value_.clear();
+		return out;
 	}
 
 	void _unset_() noexcept {

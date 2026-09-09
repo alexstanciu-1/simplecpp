@@ -25,6 +25,7 @@
 #include <thread>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #ifndef SCPP_HAS_TASKS
 #define SCPP_HAS_TASKS 0
@@ -120,13 +121,28 @@ template <typename TResult>
 using result_slot_t = typename result_slot<TResult>::type;
 
 template <typename TCallback, typename TItem>
-decltype(auto) invoke_callback(TCallback &callback, TItem item, const shared_p<context> &worker_context)
+decltype(auto) invoke_callback(TCallback &callback, const TItem &item, const shared_p<context> &worker_context)
 {
 	if constexpr (std::is_invocable_v<TCallback, TItem, shared_p<context>>) {
 		return callback(item, worker_context);
 	} else {
 		return callback(item);
 	}
+}
+
+template <typename TPublishCallback, typename TValue>
+decltype(auto) invoke_publish_callback(TPublishCallback &callback, TValue &&value, const shared_p<context> &worker_context)
+{
+	if constexpr (std::is_invocable_v<TPublishCallback, TValue, shared_p<context>>) {
+		return callback(std::forward<TValue>(value), worker_context);
+	} else {
+		return callback(std::forward<TValue>(value));
+	}
+}
+
+[[nodiscard]] inline std::int64_t elapsed_micros_since(std::chrono::steady_clock::time_point started)
+{
+	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - started).count();
 }
 
 [[nodiscard]] inline timeout_policy make_timeout_policy(const int_t<> &timeout_ms)
@@ -157,6 +173,35 @@ decltype(auto) invoke_callback(TCallback &callback, TItem item, const shared_p<c
 }
 
 } // namespace detail
+
+struct publish_metrics_snapshot final {
+	std::int64_t lock_wait_us = 0;
+	std::int64_t lock_hold_us = 0;
+	std::int64_t callback_us = 0;
+	std::int64_t batch_count = 0;
+	std::int64_t published_count = 0;
+	std::int64_t max_batch_size = 0;
+	std::int64_t failed_try_lock_count = 0;
+	std::int64_t deferred_flush_count = 0;
+};
+
+void reset_publish_metrics();
+void record_publish_lock_wait(std::int64_t elapsed_us);
+void record_publish_lock_hold(std::int64_t elapsed_us);
+void record_publish_callback(std::int64_t elapsed_us, std::int64_t batch_size);
+void record_publish_failed_try_lock();
+void record_publish_deferred_flush();
+[[nodiscard]] publish_metrics_snapshot publish_metrics();
+void configure_publish_try_lock(const bool_t &enabled);
+[[nodiscard]] bool publish_try_lock_enabled();
+[[nodiscard]] int_t<> publish_lock_wait_us();
+[[nodiscard]] int_t<> publish_lock_hold_us();
+[[nodiscard]] int_t<> publish_callback_us();
+[[nodiscard]] int_t<> publish_batch_count();
+[[nodiscard]] int_t<> publish_published_count();
+[[nodiscard]] int_t<> publish_max_batch_size();
+[[nodiscard]] int_t<> publish_failed_try_lock_count();
+[[nodiscard]] int_t<> publish_deferred_flush_count();
 
 class batch final {
 public:
@@ -459,12 +504,40 @@ void cancel(const shared_p<batch> &resource);
 [[nodiscard]] string_t status(const shared_p<batch> &resource);
 [[nodiscard]] shared_p<progress_info> progress(const shared_p<batch> &resource);
 void set_status(const shared_p<context> &resource, const string_t &value);
+void configure_default_worker_pool(const int_t<> &workers);
+void shutdown_default_worker_pool();
+[[nodiscard]] int_t<> default_worker_pool_size();
+[[nodiscard]] int_t<> default_worker_pool_live_workers();
+[[nodiscard]] int_t<> default_worker_pool_created_workers();
+void configure_publish_try_lock(const bool_t &enabled);
+[[nodiscard]] int_t<> publish_lock_wait_us();
+[[nodiscard]] int_t<> publish_lock_hold_us();
+[[nodiscard]] int_t<> publish_callback_us();
+[[nodiscard]] int_t<> publish_batch_count();
+[[nodiscard]] int_t<> publish_published_count();
+[[nodiscard]] int_t<> publish_max_batch_size();
+[[nodiscard]] int_t<> publish_failed_try_lock_count();
+[[nodiscard]] int_t<> publish_deferred_flush_count();
+
+namespace detail {
+
+using worker_batch_body = std::function<void(std::size_t)>;
+
+void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body);
+
+} // namespace detail
 
 #if SCPP_HAS_TASKS
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
 [[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>;
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms, const int_t<> &max_publish_batch_size);
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms);
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
 [[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
@@ -600,10 +673,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 		value_results.resize(item_count);
 	}
 
-	std::vector<worker_thread> threads;
-	threads.reserve(worker_count);
-	for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
-		threads.emplace_back([&, worker_index]() {
+	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
 			worker_context->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
@@ -684,20 +754,14 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 				}
 				errors.at(worker_index) = std::current_exception();
 			}
-		});
-	}
-
-	for (auto &thread : threads) {
-		if (thread.joinable()) {
-			thread.join();
-		}
-	}
+	});
 
 	for (const auto &entry : errors) {
 		if (entry) {
 			std::rethrow_exception(entry);
 		}
 	}
+
 	state->done.store(true);
 
 	if constexpr (std::is_void_v<result_t>) {
@@ -716,6 +780,198 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	return results;
 }
 
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish_vector_with_state(
+	const vector_t<TItem> &items,
+	const int_t<> &workers,
+	TWorkCallback work_callback,
+	TPublishCallback publish_callback,
+	TErrorHandler error_handler,
+	const int_t<> &timeout_ms,
+	const int_t<> &max_publish_batch_size,
+	const shared_p<batch_state> &state
+)
+{
+	using result_t = callback_result_t<TWorkCallback, TItem>;
+	static_assert(!std::is_void_v<result_t>, "task_run_publish(): work callback must return a value");
+
+	reset_publish_metrics();
+	const auto item_count = items.size();
+	if (item_count == 0) {
+		return int_t<>(0);
+	}
+
+	const auto requested_workers = workers.native_value();
+	const std::size_t native_workers = requested_workers <= 0
+		? std::size_t{1}
+		: static_cast<std::size_t>(requested_workers);
+	const std::size_t worker_count = std::min(native_workers, item_count);
+	const auto requested_publish_batch_size = max_publish_batch_size.native_value();
+	const std::size_t publish_batch_limit = requested_publish_batch_size <= 0
+		? std::size_t{0}
+		: std::min(static_cast<std::size_t>(requested_publish_batch_size), item_count);
+
+	std::vector<std::exception_ptr> errors(worker_count);
+	std::atomic<std::size_t> next_index{0};
+	const auto timeout = detail::make_timeout_policy(timeout_ms);
+	state->total.store(static_cast<std::int64_t>(item_count), std::memory_order_relaxed);
+	state->queued.store(static_cast<std::int64_t>(item_count), std::memory_order_relaxed);
+
+	std::mutex publish_mutex;
+	std::vector<result_slot_t<result_t>> value_results(item_count);
+	std::size_t next_publish_index = 0;
+	std::size_t published_count = 0;
+	auto publish_ready_values = [&](const shared_p<context> &worker_context) -> std::pair<std::size_t, bool> {
+		vector_t<task_value_t<result_t>> ready_values;
+		while (
+			next_publish_index < item_count
+			&& value_results.at(next_publish_index).has_value()
+			&& (publish_batch_limit == 0 || ready_values.size() < publish_batch_limit)
+		) {
+			ready_values.push_back(std::move(value_results.at(next_publish_index).value()));
+			value_results.at(next_publish_index).reset();
+			++next_publish_index;
+			++published_count;
+		}
+		const std::size_t published_now = ready_values.size();
+		if (published_now > 0) {
+			const auto callback_started = std::chrono::steady_clock::now();
+			const auto batch_size = static_cast<std::int64_t>(published_now);
+			invoke_publish_callback(publish_callback, std::move(ready_values), worker_context);
+			record_publish_callback(detail::elapsed_micros_since(callback_started), batch_size);
+		}
+		const bool more_ready = next_publish_index < item_count && value_results.at(next_publish_index).has_value();
+		return {published_now, more_ready};
+	};
+	using pending_result_t = std::pair<std::size_t, task_value_t<result_t>>;
+	auto flush_pending_values = [&](std::vector<pending_result_t> &pending_values, const shared_p<context> &worker_context, bool blocking) -> std::pair<std::size_t, bool> {
+		if (pending_values.empty() && (!blocking || publish_batch_limit == 0)) {
+			return {0, false};
+		}
+		const bool deferred_flush = publish_try_lock_enabled() && (blocking || pending_values.size() > 1);
+		const auto wait_started = std::chrono::steady_clock::now();
+		if (blocking) {
+			std::unique_lock<std::mutex> lock(publish_mutex);
+			record_publish_lock_wait(detail::elapsed_micros_since(wait_started));
+			const auto hold_started = std::chrono::steady_clock::now();
+			const bool had_pending_values = !pending_values.empty();
+			for (auto &pending : pending_values) {
+				value_results.at(pending.first) = std::move(pending.second);
+			}
+			pending_values.clear();
+			const auto published = publish_ready_values(worker_context);
+			record_publish_lock_hold(detail::elapsed_micros_since(hold_started));
+			if (deferred_flush && (had_pending_values || published.first > 0)) {
+				record_publish_deferred_flush();
+			}
+			return published;
+		}
+
+		std::unique_lock<std::mutex> lock(publish_mutex, std::try_to_lock);
+		if (!lock.owns_lock()) {
+			record_publish_failed_try_lock();
+			return {0, true};
+		}
+		record_publish_lock_wait(detail::elapsed_micros_since(wait_started));
+		const auto hold_started = std::chrono::steady_clock::now();
+		const bool had_pending_values = !pending_values.empty();
+		for (auto &pending : pending_values) {
+			value_results.at(pending.first) = std::move(pending.second);
+		}
+		pending_values.clear();
+		const auto published = publish_ready_values(worker_context);
+		record_publish_lock_hold(detail::elapsed_micros_since(hold_started));
+		if (deferred_flush && (had_pending_values || published.first > 0)) {
+			record_publish_deferred_flush();
+		}
+		return published;
+	};
+
+	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
+		auto worker_context = shared<context>();
+		worker_context->state = state;
+		worker_context->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
+		std::vector<pending_result_t> pending_values;
+		bool active_item = false;
+		try {
+			while (true) {
+				if (is_timed_out(timeout)) {
+					state->stop_requested.store(true);
+					break;
+				}
+				if (state->stop_requested.load()) {
+					break;
+				}
+				const std::size_t index = next_index.fetch_add(1, std::memory_order_relaxed);
+				if (index >= item_count) {
+					break;
+				}
+				state->queued.fetch_sub(1, std::memory_order_relaxed);
+				state->active.fetch_add(1, std::memory_order_relaxed);
+				active_item = true;
+
+				try {
+					auto value = invoke_callback(work_callback, items.at(index), worker_context);
+					if (is_timed_out(timeout)) {
+						state->stop_requested.store(true);
+						throw_timeout();
+					}
+					pending_values.emplace_back(index, std::move(value));
+					flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
+				} catch (const std::exception &exception) {
+					state->errors.fetch_add(1, std::memory_order_relaxed);
+					if constexpr (std::is_same_v<std::decay_t<TErrorHandler>, null_t>) {
+						state->stop_requested.store(true);
+						throw;
+					} else {
+						auto event = make_error_event(exception, mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
+						if constexpr (!std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
+							auto value = invoke_error_handler(error_handler, items.at(index), event);
+							pending_values.emplace_back(index, std::move(value));
+							flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
+						}
+					}
+				} catch (...) {
+					state->errors.fetch_add(1, std::memory_order_relaxed);
+					if constexpr (std::is_same_v<std::decay_t<TErrorHandler>, null_t>) {
+						state->stop_requested.store(true);
+						throw;
+					} else {
+						auto event = make_unknown_error_event(mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
+						if constexpr (!std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
+							auto value = invoke_error_handler(error_handler, items.at(index), event);
+							pending_values.emplace_back(index, std::move(value));
+							flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
+						}
+					}
+				}
+				state->active.fetch_sub(1, std::memory_order_relaxed);
+				active_item = false;
+				state->completed.fetch_add(1, std::memory_order_relaxed);
+			}
+			while (true) {
+				const auto published = flush_pending_values(pending_values, worker_context, true);
+				if (!published.second) {
+					break;
+				}
+			}
+		} catch (...) {
+			if (active_item) {
+				state->active.fetch_sub(1, std::memory_order_relaxed);
+			}
+			errors.at(worker_index) = std::current_exception();
+		}
+	});
+
+	for (const auto &entry : errors) {
+		if (entry) {
+			std::rethrow_exception(entry);
+		}
+	}
+	state->done.store(true);
+	return int_t<>(static_cast<std::int64_t>(published_count));
+}
+
 } // namespace detail
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
@@ -723,6 +979,24 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	-> detail::result_vector_t<detail::callback_result_t<TCallback, TItem>>
 {
 	return detail::run_vector_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
+}
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms, const int_t<> &max_publish_batch_size)
+{
+	return detail::run_publish_vector_with_state(items, workers, work_callback, publish_callback, error_handler, timeout_ms, max_publish_batch_size, shared<detail::batch_state>());
+}
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms)
+{
+	return run_publish(items, workers, work_callback, publish_callback, error_handler, timeout_ms, int_t<>(0));
+}
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback)
+{
+	return run_publish(items, workers, work_callback, publish_callback, null, int_t<>(0));
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
@@ -945,10 +1219,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 	std::vector<std::pair<TKey, null_t>> void_results;
 	void_results.reserve(item_count);
 
-	std::vector<detail::worker_thread> threads;
-	threads.reserve(worker_count);
-	for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
-		threads.emplace_back([&, worker_index]() {
+	detail::execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
 			worker_context->worker_id = int_t<>(static_cast<std::int64_t>(worker_index));
@@ -1036,14 +1307,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 				}
 				errors.at(worker_index) = std::current_exception();
 			}
-		});
-	}
-
-	for (auto &thread : threads) {
-		if (thread.joinable()) {
-			thread.join();
-		}
-	}
+	});
 
 	for (const auto &entry : errors) {
 		if (entry) {
@@ -1541,6 +1805,39 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	);
 }
 
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &, const int_t<> &, TWorkCallback, TPublishCallback, TErrorHandler, const int_t<> &, const int_t<> &)
+{
+	throw runtime_error(
+		"task_run_publish(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_run_publish"
+	);
+}
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &, const int_t<> &, TWorkCallback, TPublishCallback, TErrorHandler, const int_t<> &)
+{
+	throw runtime_error(
+		"task_run_publish(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_run_publish"
+	);
+}
+
+template <typename TItem, typename TWorkCallback, typename TPublishCallback>
+[[nodiscard]] int_t<> run_publish(const vector_t<TItem> &, const int_t<> &, TWorkCallback, TPublishCallback)
+{
+	throw runtime_error(
+		"task_run_publish(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_run_publish"
+	);
+}
+
 template <typename TItem, typename TCallback, typename TIndexCallback>
 [[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t, const int_t<> &)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
@@ -1718,6 +2015,106 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 		"tasks_module_disabled",
 		"scpp::tasks",
 		"task_run"
+	);
+}
+
+inline void configure_default_worker_pool(const int_t<> &)
+{
+	throw runtime_error(
+		"task_set_worker_pool_size(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_set_worker_pool_size"
+	);
+}
+
+inline void configure_publish_try_lock(const bool_t &)
+{
+	throw runtime_error(
+		"task_set_publish_try_lock(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_set_publish_try_lock"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_lock_wait_us()
+{
+	throw runtime_error(
+		"task_publish_lock_wait_us(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_lock_wait_us"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_lock_hold_us()
+{
+	throw runtime_error(
+		"task_publish_lock_hold_us(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_lock_hold_us"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_callback_us()
+{
+	throw runtime_error(
+		"task_publish_callback_us(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_callback_us"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_batch_count()
+{
+	throw runtime_error(
+		"task_publish_batch_count(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_batch_count"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_published_count()
+{
+	throw runtime_error(
+		"task_publish_published_count(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_published_count"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_max_batch_size()
+{
+	throw runtime_error(
+		"task_publish_max_batch_size(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_max_batch_size"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_failed_try_lock_count()
+{
+	throw runtime_error(
+		"task_publish_failed_try_lock_count(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_failed_try_lock_count"
+	);
+}
+
+[[nodiscard]] inline int_t<> publish_deferred_flush_count()
+{
+	throw runtime_error(
+		"task_publish_deferred_flush_count(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled",
+		"scpp::tasks",
+		"task_publish_deferred_flush_count"
 	);
 }
 

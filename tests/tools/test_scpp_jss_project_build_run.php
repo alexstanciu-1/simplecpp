@@ -152,8 +152,12 @@ final class ScppJssProjectBuildRunTest
 			'        print("read_error\n");',
 			'        return;',
 			'    }',
-			'    // decode through the existing dynamic JSON boundary',
-			'    let decoded: dynamic = json.decode(data);',
+			'    // decode through the checked JSON boundary',
+			'    let decoded: mixed;',
+			'    if (!take(decoded, err, json.decode(data))) {',
+			'        print("json_error\n");',
+			'        return;',
+			'    }',
 			'    print(written, "\n");',
 			'    print(strlen(data), "\n");',
 			'    print(decoded["name"], "\n");',
@@ -174,7 +178,7 @@ final class ScppJssProjectBuildRunTest
 		$generated = (string) file_get_contents($generatedPhs);
 		$this->assertContains('take($written, $err, fs_put($file, "{\"name\":\"alex\",\"count\":2}\n"))', $generated, 'classified JSS build should lower fs.put through reserved helper-family mapping');
 		$this->assertContains('take($data, $err, fs_get($file))', $generated, 'classified JSS build should lower fs.get through reserved helper-family mapping');
-		$this->assertContains('$decoded dynamic = json_decode($data);', $generated, 'classified JSS build should preserve json.decode as a dynamic boundary');
+		$this->assertContains('if (!take($decoded, $err, json_decode($data)))', $generated, 'classified JSS build should preserve checked JSON decoding');
 		$this->assertContains('echo $decoded["name"], "\n";', $generated, 'classified JSS build should preserve direct decoded dynamic field access');
 		$this->assertContains('echo $decoded["count"], "\n";', $generated, 'classified JSS build should preserve direct decoded dynamic numeric field access');
 
@@ -209,7 +213,11 @@ final class ScppJssProjectBuildRunTest
 			'        print("read_error\n");',
 			'        return;',
 			'    }',
-			'    let decoded: dynamic = json.decode(data);',
+			'    let decoded: mixed;',
+			'    if (!take(decoded, err, json.decode(data))) {',
+			'        print("json_error\n");',
+			'        return;',
+			'    }',
 			'    let stamp: int = 0;',
 			'    if (!take(stamp, err, dt.parse_iso_utc("1970-01-01T00:00:00Z"))) {',
 			'        print("date_error\n");',
@@ -230,7 +238,7 @@ final class ScppJssProjectBuildRunTest
 		$this->assertSame(true, is_file($generatedPhs), 'JSS fs/json/datetime build should emit the classified PHS intermediate');
 		$generated = (string) file_get_contents($generatedPhs);
 		$this->assertContains('take($written, $err, fs_put($file, "{\"label\":\"epoch\"}\n"))', $generated, 'classified JSS build should lower fs.put in the combined helper flow');
-		$this->assertContains('$decoded dynamic = json_decode($data);', $generated, 'classified JSS build should preserve json.decode in the combined helper flow');
+		$this->assertContains('if (!take($decoded, $err, json_decode($data)))', $generated, 'classified JSS build should preserve json.decode in the combined helper flow');
 		$this->assertContains('take($stamp, $err, dt_parse_iso_utc("1970-01-01T00:00:00Z"))', $generated, 'classified JSS build should lower dt.parse_iso_utc in the combined helper flow');
 		$this->assertContains('echo dt_format_iso_utc($stamp), "\n";', $generated, 'classified JSS build should lower dt.format_iso_utc in the combined helper flow');
 
@@ -355,8 +363,27 @@ final class ScppJssProjectBuildRunTest
 			'',
 			'function badJson(): void {',
 			'    let bad: string = "{\"name\":\"alex\"";',
-			'    let decoded: dynamic = json.decode(bad);',
+			'    let decoded: mixed;',
+			'    let err: error;',
+			'    if (!take(decoded, err, json.decode(bad))) {',
+			'        print("malformed_json\n");',
+			'    }',
+			'    if (!take(decoded, err, json.decode("{\"name\":\"repaired\"}"))) {',
+			'        return;',
+			'    }',
 			'    print(decoded["name"], "\n");',
+			'    let encoded: string = "unchanged";',
+			'    let large: float = 10.0;',
+			'    for (let i: int = 0; i < 9; i++) {',
+			'        large = large * large;',
+			'    }',
+			'    if (!take(encoded, err, json.encode(large * 2.0))) {',
+			'        print("encode_error\n");',
+			'    }',
+			'    print(encoded, "\n");',
+			'    if (take(encoded, err, json.encode(decoded))) {',
+			'        print(encoded, "\n");',
+			'    }',
 			'}',
 			'',
 			'missingFile();',
@@ -371,13 +398,12 @@ final class ScppJssProjectBuildRunTest
 		$this->assertSame(true, is_file($generatedPhs), 'JSS fs/json error-path build should emit the classified PHS intermediate');
 		$generated = (string) file_get_contents($generatedPhs);
 		$this->assertContains('if (!take($text, $err, fs_get("missing_strict_fs_json.txt")))', $generated, 'classified JSS build should preserve the missing-file take flow');
-		$this->assertContains('$decoded dynamic = json_decode($bad);', $generated, 'classified JSS build should preserve json.decode as a dynamic error-path boundary');
+		$this->assertContains('if (!take($decoded, $err, json_decode($bad)))', $generated, 'classified JSS build should preserve checked JSON failure handling');
 
 		$run = scpp_run_binary_service($project, $project . '/.prism/build/main', [], $build);
-		$this->assertSame(1, $run['exit_code'], 'built JSS fs/json error-path program should surface the malformed json runtime failure');
-		$this->assertSame("missing_file\n", $run['stdout'], 'built JSS fs/json error-path program should report the missing file before the malformed json failure');
-		$this->assertContains('Runtime error while running the built program.', $run['stderr'], 'built JSS fs/json error-path program should surface a project-level runtime failure summary even when the runtime does not yet provide a source location');
-		$this->assertContains('Runtime message: json error at byte', $run['stderr'], 'built JSS fs/json error-path program should preserve the precise json parse detail as supporting context');
+		$this->assertSame(0, $run['exit_code'], 'malformed JSON handled with take should allow the resident process to continue');
+		$this->assertSame("missing_file\nmalformed_json\nrepaired\nencode_error\nunchanged\n{\"name\":\"repaired\"}\n", $run['stdout'], 'the same process should recover from decoding and encoding failures');
+		$this->assertSame('', $run['stderr'], 'checked parse failure should not produce runtime diagnostics');
 	}
 
 	private function testJssProjectBuildsRunsStrictWrapperErrorPaths(): void
@@ -620,6 +646,10 @@ final class ScppJssProjectBuildRunTest
 		$error = (string) ($build['error'] ?? '');
 		$this->assertContains('Runtime helper `curl_init()` requires module `curl` in the active project runtime config.', $error, 'JSS project build should surface the STAN-owned curl module diagnostic');
 		$this->assertContains('main.jss', $error, 'JSS project curl module diagnostic should mention the source file');
+
+		$warmBuild = scpp_run_build_service($project, $project . '/prism.json', ['compile_runtime' => true]);
+		$this->assertSame(false, $warmBuild['ok'], 'Reusing analysis must still reject an inactive curl module');
+		$this->assertContains('Runtime helper `curl_init()` requires module `curl`', (string) ($warmBuild['error'] ?? ''), 'Reused analysis should preserve the module diagnostic');
 	}
 
 	private function testJssProjectReportsMissingSymbolCompileError(): void

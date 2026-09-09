@@ -87,7 +87,7 @@ final class FrontEndSymbolExtractor
 			'namespaces' => $namespaces,
 			'build_errors' => $file->buildErrors,
 			'scanner_annotations' => $file->scannerAnnotations,
-			'dependencies' => $this->collectDependencies($file),
+			'dependencies' => $this->collectDependencies($file, $sourceLines),
 		];
 	}
 
@@ -190,6 +190,7 @@ final class FrontEndSymbolExtractor
 			'static_property_reads' => $this->summarizeStaticPropertyReads($function->statements),
 			'class_constant_accesses' => $this->summarizeClassConstantAccesses($function->statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($function->statements, $sourceLines),
+			'const_param_writes' => $this->summarizeConstParamWrites($function->params, $function->statements),
 			'statement_count' => count($function->statements),
 			'line' => $function->line,
 			'returns_by_reference' => $function->returnsByReference,
@@ -229,6 +230,7 @@ final class FrontEndSymbolExtractor
 			'static_property_reads' => $this->summarizeStaticPropertyReads($statements),
 			'class_constant_accesses' => $this->summarizeClassConstantAccesses($statements),
 			'local_invalidations' => $this->summarizeLocalInvalidations($statements, $sourceLines),
+			'const_param_writes' => [],
 			'statement_count' => count($statements),
 			'line' => 1,
 			'returns_by_reference' => false,
@@ -280,6 +282,7 @@ final class FrontEndSymbolExtractor
 				'static_property_reads' => $this->summarizeStaticPropertyReads($method->statements),
 				'class_constant_accesses' => $this->summarizeClassConstantAccesses($method->statements),
 				'local_invalidations' => $this->summarizeLocalInvalidations($method->statements, $sourceLines),
+				'const_param_writes' => $this->summarizeConstParamWrites($method->params, $method->statements),
 				'statement_count' => count($method->statements),
 				'line' => $method->line,
 				'returns_by_reference' => $method->returnsByReference,
@@ -338,56 +341,92 @@ final class FrontEndSymbolExtractor
 			'line' => $constant->line,
 			'is_lib_export' => $constant->isLibExport,
 			'visibility' => $constant->visibility,
+			'value_descriptor' => $this->describeConstantValueExpression($constant->value, $constant->line),
 		];
 	}
 
 	/** @return list<array{kind:string,target:string,owner:?string}> */
-	private function collectDependencies(PhpFile $file): array
+	private function collectDependencies(PhpFile $file, array $sourceLines): array
 	{
 		$dependencies = [];
+
+		foreach ($file->functions as $function) {
+			if (!$function instanceof FunctionDecl) {
+				continue;
+			}
+			$this->appendCallableTypeDependencies($dependencies, 'function', $function->params, $function->returnType, $function->name);
+			$this->appendCallableBodyDependencies($dependencies, 'function_body', $function->statements, $sourceLines, $function->name);
+		}
+		foreach ($file->constants as $constant) {
+			if (!$constant instanceof ConstantDecl) {
+				continue;
+			}
+			$this->appendConstantValueDependencies($dependencies, 'constant_value', $constant, $constant->name);
+		}
+		$this->appendCallableBodyDependencies($dependencies, 'executable_body', $file->rootStatements, $sourceLines, '__scpp_main');
 
 		foreach ($file->classes as $class) {
 			if (!$class instanceof ClassDecl) {
 				continue;
 			}
+			$classOwner = $class->name;
 			if (is_string($class->parentClass) && $class->parentClass !== '') {
 				$dependencies[] = [
 					'kind' => 'extends',
 					'target' => $class->parentClass,
-					'owner' => $class->name,
+					'owner' => $classOwner,
 				];
 			}
 			foreach ($class->interfaces as $interface) {
 				$dependencies[] = [
 					'kind' => 'implements',
 					'target' => $interface,
-					'owner' => $class->name,
+					'owner' => $classOwner,
 				];
 			}
+			$this->appendClassTypeDependencies($dependencies, $class, $classOwner, $sourceLines);
 		}
 
 		foreach ($file->namespaces as $namespaceBlock) {
 			if (!$namespaceBlock instanceof NamespaceBlock) {
 				continue;
 			}
+			foreach ($namespaceBlock->functions as $function) {
+				if (!$function instanceof FunctionDecl) {
+					continue;
+				}
+				$functionOwner = $namespaceBlock->name . '\\' . $function->name;
+				$this->appendCallableTypeDependencies($dependencies, 'function', $function->params, $function->returnType, $functionOwner);
+				$this->appendCallableBodyDependencies($dependencies, 'function_body', $function->statements, $sourceLines, $functionOwner);
+			}
+			foreach ($namespaceBlock->constants as $constant) {
+				if (!$constant instanceof ConstantDecl) {
+					continue;
+				}
+				$constantOwner = $namespaceBlock->name . '\\' . $constant->name;
+				$this->appendConstantValueDependencies($dependencies, 'constant_value', $constant, $constantOwner);
+			}
+			$this->appendCallableBodyDependencies($dependencies, 'executable_body', $namespaceBlock->statements, $sourceLines, $namespaceBlock->name . '\\__scpp_main');
 			foreach ($namespaceBlock->classes as $class) {
 				if (!$class instanceof ClassDecl) {
 					continue;
 				}
+				$classOwner = $namespaceBlock->name . '\\' . $class->name;
 				if (is_string($class->parentClass) && $class->parentClass !== '') {
 					$dependencies[] = [
 						'kind' => 'extends',
 						'target' => $class->parentClass,
-						'owner' => $namespaceBlock->name . '\\' . $class->name,
+						'owner' => $classOwner,
 					];
 				}
 				foreach ($class->interfaces as $interface) {
 					$dependencies[] = [
 						'kind' => 'implements',
 						'target' => $interface,
-						'owner' => $namespaceBlock->name . '\\' . $class->name,
+						'owner' => $classOwner,
 					];
 				}
+				$this->appendClassTypeDependencies($dependencies, $class, $classOwner, $sourceLines);
 			}
 
 			foreach ($namespaceBlock->uses as $useDecl) {
@@ -416,6 +455,240 @@ final class FrontEndSymbolExtractor
 		return $dependencies;
 	}
 
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 * @param list<ParamDecl> $params
+	 */
+	private function appendCallableTypeDependencies(array &$dependencies, string $kindPrefix, array $params, ?string $returnType, ?string $owner): void
+	{
+		foreach ($params as $param) {
+			if (!$param instanceof ParamDecl) {
+				continue;
+			}
+			$this->appendTypeDependencies($dependencies, $kindPrefix . '_param_type', $param->type, $owner);
+		}
+		$this->appendTypeDependencies($dependencies, $kindPrefix . '_return_type', $returnType, $owner);
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 */
+	private function appendClassTypeDependencies(array &$dependencies, ClassDecl $class, string $classOwner, array $sourceLines): void
+	{
+		$this->appendTypeDependencies($dependencies, 'enum_backing_type', $class->enumBackingType, $classOwner);
+		foreach ($class->properties as $property) {
+			if (!$property instanceof PropertyDecl) {
+				continue;
+			}
+			$this->appendTypeDependencies($dependencies, 'property_type', $property->type, $classOwner);
+		}
+		foreach ($class->constants as $constant) {
+			if (!$constant instanceof ConstantDecl) {
+				continue;
+			}
+			$this->appendConstantValueDependencies($dependencies, 'class_constant_value', $constant, $classOwner . '::' . $constant->name);
+		}
+		foreach ($class->methods as $method) {
+			if (!$method instanceof MethodDecl) {
+				continue;
+			}
+			$methodOwner = $classOwner . '::' . $method->name;
+			$this->appendCallableTypeDependencies($dependencies, 'method', $method->params, $method->returnType, $methodOwner);
+			$this->appendCallableBodyDependencies($dependencies, 'method_body', $method->statements, $sourceLines, $methodOwner);
+		}
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 */
+	private function appendConstantValueDependencies(array &$dependencies, string $kind, ConstantDecl $constant, ?string $owner): void
+	{
+		$this->appendDescriptorTypeDependencies($dependencies, $kind, $this->describeConstantValueExpression($constant->value, $constant->line), $owner);
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 * @param list<\Scpp\S2S\IR\Statement> $statements
+	 */
+	private function appendCallableBodyDependencies(array &$dependencies, string $kindPrefix, array $statements, array $sourceLines, ?string $owner): void
+	{
+		if ($statements === []) {
+			return;
+		}
+		foreach ($this->summarizeTypedLocals($statements, $sourceLines) as $local) {
+			$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($local['type'] ?? null) ? $local['type'] : null, $owner);
+		}
+		foreach ($this->summarizeLocalTypeAssignments($statements, $sourceLines) as $assignment) {
+			$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($assignment['type'] ?? null) ? $assignment['type'] : null, $owner);
+		}
+		foreach ($this->summarizeLocalConstructedAssignments($statements, $sourceLines) as $assignment) {
+			$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($assignment['type'] ?? null) ? $assignment['type'] : null, $owner);
+		}
+		foreach ($this->summarizeReturnValues($statements) as $returnValue) {
+			$this->appendDescriptorTypeDependencies($dependencies, $kindPrefix . '_type', $returnValue['descriptor'] ?? null, $owner);
+		}
+		foreach ($this->summarizeCallSites($statements) as $callSite) {
+			if (!is_array($callSite)) {
+				continue;
+			}
+			$callKind = (string) ($callSite['call_kind'] ?? '');
+			if ($callKind === 'function') {
+				$name = trim((string) ($callSite['name'] ?? ''));
+				if ($name !== '') {
+					$dependencies[] = [
+						'kind' => $kindPrefix . '_call',
+						'target' => $name,
+						'owner' => $owner,
+					];
+					if ($this->isLayoutProbeCallName($name) && is_string($callSite['layout_type'] ?? null)) {
+						$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', $callSite['layout_type'], $owner);
+					}
+				}
+			} elseif ($callKind === 'static_method') {
+				$this->appendTypeDependencies($dependencies, $kindPrefix . '_type', is_string($callSite['class_name'] ?? null) ? $callSite['class_name'] : null, $owner);
+			}
+			foreach (is_array($callSite['args'] ?? null) ? $callSite['args'] : [] as $argDescriptor) {
+				$this->appendDescriptorTypeDependencies($dependencies, $kindPrefix . '_type', $argDescriptor, $owner);
+			}
+			$this->appendDescriptorTypeDependencies($dependencies, $kindPrefix . '_type', $callSite['receiver'] ?? null, $owner);
+		}
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 */
+	private function appendDescriptorTypeDependencies(array &$dependencies, string $kind, mixed $descriptor, ?string $owner): void
+	{
+		if (!is_array($descriptor)) {
+			return;
+		}
+		if (($descriptor['kind'] ?? null) === 'type') {
+			$this->appendTypeDependencies($dependencies, $kind, is_string($descriptor['type'] ?? null) ? $descriptor['type'] : null, $owner);
+		}
+		if (is_string($descriptor['root_class'] ?? null)) {
+			$this->appendTypeDependencies($dependencies, $kind, $descriptor['root_class'], $owner);
+		}
+		foreach ($descriptor as $value) {
+			if (!is_array($value)) {
+				continue;
+			}
+			$isList = array_is_list($value);
+			if ($isList) {
+				foreach ($value as $nested) {
+					$this->appendDescriptorTypeDependencies($dependencies, $kind, $nested, $owner);
+				}
+				continue;
+			}
+			$this->appendDescriptorTypeDependencies($dependencies, $kind, $value, $owner);
+		}
+	}
+
+	/**
+	 * @param list<array{kind:string,target:string,owner:?string}> $dependencies
+	 */
+	private function appendTypeDependencies(array &$dependencies, string $kind, ?string $type, ?string $owner): void
+	{
+		foreach ($this->collectTypeDependencyTargets($type) as $target) {
+			$dependencies[] = [
+				'kind' => $kind,
+				'target' => $target,
+				'owner' => $owner,
+			];
+		}
+	}
+
+	/** @return list<string> */
+	private function collectTypeDependencyTargets(?string $type): array
+	{
+		if ($type === null || trim($type) === '') {
+			return [];
+		}
+		if (preg_match_all('/\\\\?[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*/', $type, $matches) === false) {
+			return [];
+		}
+		$targets = [];
+		foreach ($matches[0] ?? [] as $rawTarget) {
+			if (!is_string($rawTarget)) {
+				continue;
+			}
+			$target = trim($rawTarget, "\\ \t\n\r\0\x0B");
+			if ($target === '' || $this->isBuiltinTypeDependencyTarget($target)) {
+				continue;
+			}
+			$targets[$target] = true;
+		}
+		$result = array_keys($targets);
+		sort($result, SORT_STRING);
+		return $result;
+	}
+
+	private function isBuiltinTypeDependencyTarget(string $target): bool
+	{
+		$lower = strtolower($target);
+		$builtins = [
+			'any' => true,
+			'array' => true,
+			'array_t' => true,
+			'bool' => true,
+			'boolean' => true,
+			'byte' => true,
+			'callable' => true,
+			'char' => true,
+			'class' => true,
+			'double' => true,
+			'dynamic' => true,
+			'false' => true,
+			'fixed_array' => true,
+			'fixed_array_t' => true,
+			'float' => true,
+			'float32' => true,
+			'float64' => true,
+			'hash' => true,
+			'hash_t' => true,
+			'int' => true,
+			'int8' => true,
+			'int16' => true,
+			'int32' => true,
+			'int64' => true,
+			'int8_t' => true,
+			'int16_t' => true,
+			'int32_t' => true,
+			'int64_t' => true,
+			'integer' => true,
+			'iterable' => true,
+			'long' => true,
+			'mixed' => true,
+			'mixed_t' => true,
+			'namespace' => true,
+			'null' => true,
+			'object' => true,
+			'parent' => true,
+			'resource' => true,
+			'self' => true,
+			'shared_p' => true,
+			'short' => true,
+			'size_t' => true,
+			'static' => true,
+			'std' => true,
+			'string' => true,
+			'string_t' => true,
+			'true' => true,
+			'uint' => true,
+			'uint8' => true,
+			'uint16' => true,
+			'uint32' => true,
+			'uint64' => true,
+			'uint8_t' => true,
+			'uint16_t' => true,
+			'uint32_t' => true,
+			'uint64_t' => true,
+			'void' => true,
+			'vector' => true,
+			'vector_t' => true,
+		];
+		return isset($builtins[$lower]);
+	}
+
 	/** @return array<string,mixed> */
 	private function summarizeParam(ParamDecl $param): array
 	{
@@ -427,6 +700,7 @@ final class FrontEndSymbolExtractor
 			'primary_type' => $param->primaryType,
 			'union_types' => $param->unionTypes,
 			'is_reference' => $param->isReference,
+			'is_const' => $param->isConst,
 			'is_variadic' => $param->isVariadic,
 			'has_default' => $param->default !== null,
 			'line' => $param->line,
@@ -646,6 +920,50 @@ final class FrontEndSymbolExtractor
 			];
 		}
 		return $invalidations;
+	}
+
+	/** @param list<\Scpp\S2S\IR\ParamDecl> $params @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
+	private function summarizeConstParamWrites(array $params, array $statements): array
+	{
+		$constParams = [];
+		foreach ($params as $param) {
+			if ($param instanceof \Scpp\S2S\IR\ParamDecl && $param->isConst) {
+				$constParams[$param->name] = true;
+			}
+		}
+		if ($constParams === []) {
+			return [];
+		}
+
+		$writes = [];
+		$seen = [];
+		foreach ($this->flattenStatements($statements) as $statement) {
+			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
+				continue;
+			}
+			$target = null;
+			if (($statement->kind === 'assign' || $statement->kind === 'assign_ref' || $statement->kind === 'assign_op') && is_array($statement->payload)) {
+				$target = $this->extractRootVariableName($statement->payload['var'] ?? null);
+			} elseif ($statement->kind === 'unset') {
+				$target = $this->extractRootVariableName($statement->payload);
+			} elseif ($statement->kind === 'expr') {
+				$target = $this->extractMutationRootVariableName($statement->payload);
+			}
+			if ($target === null || !isset($constParams[$target])) {
+				continue;
+			}
+			$key = $statement->line . '|' . $target . '|' . $statement->kind;
+			if (isset($seen[$key])) {
+				continue;
+			}
+			$seen[$key] = true;
+			$writes[] = [
+				'line' => $statement->line,
+				'name' => $target,
+				'statement_kind' => $statement->kind,
+			];
+		}
+		return $writes;
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
@@ -913,6 +1231,33 @@ final class FrontEndSymbolExtractor
 		return is_string($name) && $name !== '' ? $name : null;
 	}
 
+	private function extractRootVariableName(mixed $node): ?string
+	{
+		while (is_object($node) && isset($node->kind, $node->children) && is_array($node->children)) {
+			if ($node->kind === AstKind::VAR) {
+				$name = $node->children['name'] ?? null;
+				return is_string($name) && $name !== '' ? $name : null;
+			}
+			if (in_array($node->kind, [AstKind::DIM, AstKind::PROP, AstKind::NULLSAFE_PROP], true)) {
+				$node = $node->children['expr'] ?? null;
+				continue;
+			}
+			return null;
+		}
+		return null;
+	}
+
+	private function extractMutationRootVariableName(mixed $node): ?string
+	{
+		if (!is_object($node) || !isset($node->kind, $node->children) || !is_array($node->children)) {
+			return null;
+		}
+		if (in_array($node->kind, [AstKind::PRE_INC, AstKind::PRE_DEC, AstKind::POST_INC, AstKind::POST_DEC], true)) {
+			return $this->extractRootVariableName($node->children['var'] ?? null);
+		}
+		return null;
+	}
+
 	private function inferLiteralType(mixed $expr): ?string
 	{
 		if ($expr === null) {
@@ -1026,8 +1371,8 @@ final class FrontEndSymbolExtractor
 				return $type;
 			}
 		}
-		$boolean = $this->describeBooleanExpression($expr);
-		if (is_array($boolean) && (($boolean['kind'] ?? '') === 'type')) {
+		$boolean = $this->describeBooleanExpression($expr, 0);
+		if (is_array($boolean) && in_array(($boolean['kind'] ?? ''), ['type', 'comparison'], true)) {
 			$type = (string) ($boolean['type'] ?? '');
 			if ($type !== '') {
 				return $type;
@@ -1311,11 +1656,9 @@ final class FrontEndSymbolExtractor
 			if (!$statement instanceof \Scpp\S2S\IR\Statement) {
 				continue;
 			}
-			$this->collectCallSitesFromNode(match ($statement->kind) {
-				'assign', 'assign_ref', 'assign_op' => is_array($statement->payload) ? ($statement->payload['expr'] ?? null) : null,
-				'expr', 'return', 'throw', 'echo' => $statement->payload,
-				default => null,
-			}, $statement->line, $calls, $statement->kind);
+			foreach ($this->statementExpressionNodesForSummary($statement) as $expr) {
+				$this->collectCallSitesFromNode($expr, $statement->line, $calls, $statement->kind);
+			}
 		}
 		return $calls;
 	}
@@ -1335,6 +1678,64 @@ final class FrontEndSymbolExtractor
 			}, $statement->line, $reads, $statement->kind);
 		}
 		return $reads;
+	}
+
+	/** @return list<mixed> */
+	private function statementExpressionNodesForSummary(\Scpp\S2S\IR\Statement $statement): array
+	{
+		$nodes = [];
+		$payload = $statement->payload;
+		if (in_array($statement->kind, ['assign', 'assign_ref', 'assign_op'], true)) {
+			if (is_array($payload)) {
+				$this->appendExpressionNodeCandidate($nodes, $payload['expr'] ?? null);
+			}
+			return $nodes;
+		}
+		if (in_array($statement->kind, ['expr', 'return', 'throw', 'echo'], true)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload);
+			return $nodes;
+		}
+		if ($statement->kind === 'if' && is_array($payload)) {
+			foreach ($payload as $branch) {
+				if (is_array($branch)) {
+					$this->appendExpressionNodeCandidate($nodes, $branch['cond'] ?? null);
+				}
+			}
+			return $nodes;
+		}
+		if (in_array($statement->kind, ['while', 'do_while'], true) && is_array($payload)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload['cond'] ?? null);
+			return $nodes;
+		}
+		if ($statement->kind === 'foreach' && is_array($payload)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload['expr'] ?? null);
+			return $nodes;
+		}
+		if ($statement->kind === 'for' && is_array($payload)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload['init'] ?? null);
+			$this->appendExpressionNodeCandidate($nodes, $payload['cond'] ?? null);
+			$this->appendExpressionNodeCandidate($nodes, $payload['loop'] ?? null);
+			return $nodes;
+		}
+		if ($statement->kind === 'switch' && is_array($payload)) {
+			$this->appendExpressionNodeCandidate($nodes, $payload['cond'] ?? null);
+		}
+		return $nodes;
+	}
+
+	/** @param list<mixed> $nodes */
+	private function appendExpressionNodeCandidate(array &$nodes, mixed $node): void
+	{
+		if (is_object($node)) {
+			$nodes[] = $node;
+			return;
+		}
+		if (!is_array($node)) {
+			return;
+		}
+		foreach ($node as $value) {
+			$this->appendExpressionNodeCandidate($nodes, $value);
+		}
 	}
 
 	/** @param list<\Scpp\S2S\IR\Statement> $statements @return list<array<string,mixed>> */
@@ -1545,13 +1946,20 @@ final class FrontEndSymbolExtractor
 			if (is_object($callee) && isset($callee->kind, $callee->children) && is_array($callee->children) && $callee->kind === AstKind::NAME) {
 				$name = (string) ($callee->children['name'] ?? '');
 				if ($name !== '') {
-					$calls[] = [
+					$call = [
 						'line' => $line,
 						'statement_kind' => $statementKind,
 						'call_kind' => 'function',
 						'name' => $name,
 						'args' => $this->describeArgs($node->children['args'] ?? null, $line),
 					];
+					if ($this->isLayoutProbeCallName($name)) {
+						$layoutType = $this->extractLayoutProbeTypeDependency($node->children['args'] ?? null);
+						if ($layoutType !== null) {
+							$call['layout_type'] = $layoutType;
+						}
+					}
+					$calls[] = $call;
 				}
 			}
 		} elseif ($node->kind === AstKind::STATIC_CALL) {
@@ -1593,6 +2001,43 @@ final class FrontEndSymbolExtractor
 			}
 			$this->collectCallSitesFromNode($child, $line, $calls, $statementKind);
 		}
+	}
+
+	private function isLayoutProbeCallName(string $name): bool
+	{
+		return in_array(strtolower(ltrim(trim($name), '\\')), [
+			'layout_sizeof',
+			'layout_alignof',
+			'layout_offsetof',
+			'layout_field_sizeof',
+		], true);
+	}
+
+	private function extractLayoutProbeTypeDependency(mixed $argsNode): ?string
+	{
+		$children = is_object($argsNode) && isset($argsNode->children) && is_array($argsNode->children)
+			? array_values($argsNode->children)
+			: [];
+		$arg = $children[0] ?? null;
+		if (!is_object($arg) || !isset($arg->kind, $arg->children) || !is_array($arg->children)) {
+			return null;
+		}
+		if ($arg->kind === AstKind::CONST) {
+			$nameNode = $arg->children['name'] ?? null;
+			$name = is_object($nameNode) && isset($nameNode->children) && is_array($nameNode->children)
+				? (string) ($nameNode->children['name'] ?? '')
+				: (string) $nameNode;
+			$name = trim($name);
+			return $name !== '' ? ltrim($name, '\\') : null;
+		}
+		if ($arg->kind === AstKind::CLASS_CONST && strtolower((string) ($arg->children['const'] ?? '')) === 'class') {
+			$classNode = $arg->children['class'] ?? null;
+			if (is_object($classNode) && isset($classNode->kind, $classNode->children) && is_array($classNode->children) && $classNode->kind === AstKind::NAME) {
+				$name = trim((string) ($classNode->children['name'] ?? ''));
+				return $name !== '' ? ltrim($name, '\\') : null;
+			}
+		}
+		return null;
 	}
 
 	/** @param list<array<string,mixed>> $reads */
@@ -1744,6 +2189,15 @@ final class FrontEndSymbolExtractor
 		if ($chain !== null) {
 			return ['kind' => 'chain', 'chain' => $chain];
 		}
+		$classConstant = $this->describeClassConstantAccess($expr, $line);
+		if ($classConstant !== null) {
+			return [
+				'kind' => 'class_constant',
+				'root_class' => $classConstant['class_name'],
+				'class_name' => $classConstant['class_name'],
+				'constant_name' => $classConstant['constant_name'],
+			];
+		}
 		$coalesce = $this->describeCoalesceExpression($expr, $line);
 		if ($coalesce !== null) {
 			return $coalesce;
@@ -1764,7 +2218,7 @@ final class FrontEndSymbolExtractor
 		if ($stringConcat !== null) {
 			return $stringConcat;
 		}
-		$boolean = $this->describeBooleanExpression($expr);
+		$boolean = $this->describeBooleanExpression($expr, $line);
 		if ($boolean !== null) {
 			return $boolean;
 		}
@@ -1785,6 +2239,37 @@ final class FrontEndSymbolExtractor
 			return ['kind' => 'alias', 'source' => $varName];
 		}
 		return ['kind' => 'unknown'];
+	}
+
+	/** @return array<string,mixed> */
+	private function describeConstantValueExpression(mixed $expr, int $line): array
+	{
+		$stringConcat = $this->describeConstantStringConcatExpression($expr, $line);
+		if ($stringConcat !== null) {
+			return $stringConcat;
+		}
+		return $this->describeExpression($expr, $line);
+	}
+
+	/** @return array<string,mixed>|null */
+	private function describeConstantStringConcatExpression(mixed $expr, int $line): ?array
+	{
+		if (!is_object($expr) || !isset($expr->kind, $expr->children) || !is_array($expr->children)) {
+			return null;
+		}
+		if ($expr->kind !== AstKind::BINARY_OP || (int) ($expr->flags ?? 0) !== AstKind::BINARY_CONCAT) {
+			return null;
+		}
+		$left = $this->describeConstantValueExpression($expr->children['left'] ?? null, $line);
+		$right = $this->describeConstantValueExpression($expr->children['right'] ?? null, $line);
+		if (($left['kind'] ?? 'unknown') === 'unknown' || ($right['kind'] ?? 'unknown') === 'unknown') {
+			return null;
+		}
+		return [
+			'kind' => 'string_concat',
+			'left' => $left,
+			'right' => $right,
+		];
 	}
 
 	/** @return array<string,mixed>|null */
@@ -1974,7 +2459,7 @@ final class FrontEndSymbolExtractor
 	}
 
 	/** @return array<string,mixed>|null */
-	private function describeBooleanExpression(mixed $expr): ?array
+	private function describeBooleanExpression(mixed $expr, int $line): ?array
 	{
 		if (!is_object($expr) || !isset($expr->kind)) {
 			return null;
@@ -1990,6 +2475,21 @@ final class FrontEndSymbolExtractor
 				AstKind::BINARY_IS_SMALLER_OR_EQUAL,
 				AstKind::BINARY_IS_GREATER,
 				257,
+			], true)) {
+				$left = $this->describeExpression($expr->children['left'] ?? null, $line);
+				$right = $this->describeExpression($expr->children['right'] ?? null, $line);
+				if (($left['kind'] ?? 'unknown') === 'unknown' || ($right['kind'] ?? 'unknown') === 'unknown') {
+					return ['kind' => 'type', 'type' => 'bool'];
+				}
+				return [
+					'kind' => 'comparison',
+					'type' => 'bool',
+					'operator' => $this->comparisonOperatorForFlag($flag),
+					'left' => $left,
+					'right' => $right,
+				];
+			}
+			if (in_array($flag, [
 				AstKind::BINARY_BOOL_AND,
 				AstKind::BINARY_BOOL_OR,
 			], true)) {
@@ -1997,6 +2497,21 @@ final class FrontEndSymbolExtractor
 			}
 		}
 		return null;
+	}
+
+	private function comparisonOperatorForFlag(int $flag): string
+	{
+		return match ($flag) {
+			AstKind::BINARY_IS_IDENTICAL => '===',
+			AstKind::BINARY_IS_NOT_IDENTICAL => '!==',
+			AstKind::BINARY_IS_EQUAL => '==',
+			AstKind::BINARY_IS_NOT_EQUAL => '!=',
+			AstKind::BINARY_IS_SMALLER => '<',
+			AstKind::BINARY_IS_SMALLER_OR_EQUAL => '<=',
+			AstKind::BINARY_IS_GREATER => '>',
+			257 => '>=',
+			default => '?',
+		};
 	}
 
 	/** @param mixed $branchStatements @return array<string,array<string,mixed>|null> */

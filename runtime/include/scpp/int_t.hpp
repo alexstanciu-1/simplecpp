@@ -30,6 +30,20 @@ public:
 		: value_(static_cast<Rep>(value)) {
 	}
 
+	template <typename OtherRep>
+		requires std::is_integral_v<OtherRep>
+	constexpr int_t &operator=(const int_t<OtherRep> &other) noexcept {
+		value_ = static_cast<Rep>(other.native_value());
+		return *this;
+	}
+
+	template <typename Value>
+		requires (std::is_integral_v<detail::remove_cvref_t<Value>> && !std::is_same_v<detail::remove_cvref_t<Value>, bool>)
+	constexpr int_t &operator=(Value value) noexcept {
+		value_ = static_cast<Rep>(value);
+		return *this;
+	}
+
 	[[nodiscard]] constexpr Rep native_value() const noexcept {
 		return value_;
 	}

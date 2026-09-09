@@ -1,0 +1,6 @@
+enum token_kind: byte {
+    case eof = 0;
+    case identifier = 1;
+}
+
+$kind /** token_kind */ = 1;

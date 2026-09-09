@@ -39,6 +39,37 @@ final class ScppCleanTest
 			$this->assertSame(true, $again['ok'], 'second clean should succeed');
 			$this->assertContains('Already clean: .prism', $again['output'], 'second clean should treat missing dirs as already clean');
 
+			$profiled = $this->root . '/profiled';
+			$this->writeProject($profiled, [], [
+				'profiles' => [
+					'debug' => [
+						'build_dir' => 'state/debug/build',
+						'generated_dir' => 'state/debug/generated',
+						'cache_dir' => 'state/debug/cache',
+					],
+					'release' => [
+						'build_dir' => 'state/release/build',
+						'generated_dir' => 'state/release/generated',
+						'cache_dir' => 'state/release/cache',
+					],
+				],
+			]);
+			$this->seedGeneratedState($profiled);
+			$this->write($profiled . '/state/debug/build/out.o', "object\n");
+			$this->write($profiled . '/state/debug/generated/main.cpp', "generated\n");
+			$this->write($profiled . '/state/debug/cache/s2s_state.php', "<?php\nreturn [];\n");
+			$this->write($profiled . '/state/release/build/out.o', "object\n");
+			$this->write($profiled . '/state/release/generated/main.cpp', "generated\n");
+			$this->write($profiled . '/state/release/cache/s2s_state.php', "<?php\nreturn [];\n");
+			$profiledResult = scpp_run_clean_service($profiled, $profiled . '/prism.json');
+			$this->assertSame(true, $profiledResult['ok'], 'profiled clean should succeed');
+			$this->assertDirectoryMissing($profiled . '/state/debug/build', 'debug profile build state should be removed');
+			$this->assertDirectoryMissing($profiled . '/state/debug/generated', 'debug profile generated state should be removed');
+			$this->assertDirectoryMissing($profiled . '/state/debug/cache', 'debug profile cache state should be removed');
+			$this->assertDirectoryMissing($profiled . '/state/release/build', 'release profile build state should be removed');
+			$this->assertDirectoryMissing($profiled . '/state/release/generated', 'release profile generated state should be removed');
+			$this->assertDirectoryMissing($profiled . '/state/release/cache', 'release profile cache state should be removed');
+
 			$unsafe = $this->root . '/unsafe';
 			$this->writeProject($unsafe, [], ['build_dir' => '.']);
 			$unsafeResult = scpp_run_clean_service($unsafe, $unsafe . '/prism.json');

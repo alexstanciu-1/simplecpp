@@ -45,7 +45,7 @@ final class ScppAsyncCoreLanguageTest
 		$this->assertContains('42', (string) ($run['stdout'] ?? ''), 'async_wait should return the async function result');
 
 		$generated = $this->read($project . '/.prism/generated/main.cpp');
-		$this->assertContains('scpp::async_core::task<int_t> compute_value()', $generated, 'async function should lower to task<T>');
+		$this->assertContains('scpp::async_core::task<int_t<>> compute_value()', $generated, 'async function should lower to task<T>');
 		$this->assertContains('co_await scpp::async_core::sleep_ms', $generated, 'async_sleep_ms should lower to co_await sleep_ms');
 		$this->assertContains('co_return', $generated, 'return inside async function should lower to co_return');
 		$this->assertContains('42', $generated, 'async return value should be preserved in generated C++');

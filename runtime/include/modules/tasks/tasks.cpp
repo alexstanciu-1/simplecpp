@@ -1,8 +1,247 @@
 #include "tasks.hpp"
 
+#include <deque>
+#include <memory>
+
+#ifndef SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE
+#define SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE 0
+#endif
+
 namespace scpp::tasks {
 
 namespace {
+
+thread_local bool default_pool_worker_active = false;
+
+class reusable_worker_pool final {
+public:
+	~reusable_worker_pool()
+	{
+		shutdown_and_join();
+	}
+
+	void configure(std::size_t workers)
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		desired_workers_ = workers;
+		if (!stopping_) {
+			ensure_workers_locked();
+		}
+		cv_.notify_all();
+	}
+
+	[[nodiscard]] std::size_t desired_workers() const
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		return desired_workers_;
+	}
+
+	[[nodiscard]] std::size_t live_workers() const
+	{
+		return live_workers_.load(std::memory_order_relaxed);
+	}
+
+	[[nodiscard]] std::size_t created_workers() const
+	{
+		return created_workers_.load(std::memory_order_relaxed);
+	}
+
+	[[nodiscard]] bool run_batch(std::size_t worker_count, const detail::worker_batch_body &body)
+	{
+		if (worker_count == 0) {
+			return true;
+		}
+
+		struct wait_state final {
+			std::mutex mutex;
+			std::condition_variable cv;
+			std::size_t remaining = 0;
+			std::exception_ptr error = nullptr;
+		};
+
+		auto state = std::make_shared<wait_state>();
+		auto shared_body = std::make_shared<detail::worker_batch_body>(body);
+		state->remaining = worker_count;
+
+		{
+			std::lock_guard<std::mutex> lock(mutex_);
+			if (stopping_ || desired_workers_ == 0) {
+				return false;
+			}
+
+			for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
+				jobs_.push_back([state, shared_body, worker_index]() {
+					try {
+						(*shared_body)(worker_index);
+					} catch (...) {
+						std::lock_guard<std::mutex> lock(state->mutex);
+						if (!state->error) {
+							state->error = std::current_exception();
+						}
+					}
+
+					{
+						std::lock_guard<std::mutex> lock(state->mutex);
+						if (state->remaining > 0) {
+							--state->remaining;
+						}
+					}
+					state->cv.notify_one();
+				});
+			}
+
+			ensure_workers_locked();
+		}
+		cv_.notify_all();
+
+		std::unique_lock<std::mutex> lock(state->mutex);
+		state->cv.wait(lock, [&state]() {
+			return state->remaining == 0;
+		});
+		if (state->error) {
+			std::rethrow_exception(state->error);
+		}
+		return true;
+	}
+
+	void shutdown_and_join()
+	{
+		{
+			std::lock_guard<std::mutex> lock(mutex_);
+			desired_workers_ = 0;
+			stopping_ = true;
+		}
+		cv_.notify_all();
+
+		for (auto &worker : workers_) {
+			if (worker.joinable() && worker.get_id() != std::this_thread::get_id()) {
+				worker.join();
+			}
+		}
+	}
+
+private:
+	[[nodiscard]] bool should_retire_locked() const
+	{
+		return jobs_.empty()
+			&& !stopping_
+			&& live_workers_.load(std::memory_order_relaxed) > desired_workers_ + retiring_workers_;
+	}
+
+	void ensure_workers_locked()
+	{
+		while (!stopping_ && live_workers_.load(std::memory_order_relaxed) < desired_workers_) {
+			live_workers_.fetch_add(1, std::memory_order_relaxed);
+			created_workers_.fetch_add(1, std::memory_order_relaxed);
+			try {
+				workers_.emplace_back([this]() {
+					worker_loop();
+				});
+			} catch (...) {
+				live_workers_.fetch_sub(1, std::memory_order_relaxed);
+				created_workers_.fetch_sub(1, std::memory_order_relaxed);
+				throw;
+			}
+		}
+	}
+
+	void worker_loop() noexcept
+	{
+		default_pool_worker_active = true;
+		bool retiring = false;
+		try {
+			while (true) {
+				std::function<void()> job;
+				{
+					std::unique_lock<std::mutex> lock(mutex_);
+					cv_.wait(lock, [this]() {
+						return stopping_ || !jobs_.empty() || should_retire_locked();
+					});
+
+					if (!jobs_.empty()) {
+						job = std::move(jobs_.front());
+						jobs_.pop_front();
+					} else if (stopping_ || should_retire_locked()) {
+						if (!stopping_) {
+							++retiring_workers_;
+							retiring = true;
+						}
+						break;
+					}
+				}
+
+				if (job) {
+					job();
+				}
+			}
+		} catch (...) {
+		}
+
+		{
+			std::lock_guard<std::mutex> lock(mutex_);
+			if (retiring && retiring_workers_ > 0) {
+				--retiring_workers_;
+			}
+			live_workers_.fetch_sub(1, std::memory_order_relaxed);
+		}
+		default_pool_worker_active = false;
+		cv_.notify_all();
+	}
+
+	mutable std::mutex mutex_;
+	std::condition_variable cv_;
+	std::deque<std::function<void()>> jobs_;
+	std::vector<detail::worker_thread> workers_;
+	std::atomic<std::size_t> live_workers_{0};
+	std::atomic<std::size_t> created_workers_{0};
+	std::size_t desired_workers_ = 0;
+	std::size_t retiring_workers_ = 0;
+	bool stopping_ = false;
+};
+
+std::mutex default_pool_mutex;
+std::shared_ptr<reusable_worker_pool> default_pool;
+std::atomic<bool> publish_try_lock_mode{false};
+std::atomic<std::int64_t> publish_metric_lock_wait_us{0};
+std::atomic<std::int64_t> publish_metric_lock_hold_us{0};
+std::atomic<std::int64_t> publish_metric_callback_us{0};
+std::atomic<std::int64_t> publish_metric_batch_count{0};
+std::atomic<std::int64_t> publish_metric_published_count{0};
+std::atomic<std::int64_t> publish_metric_max_batch_size{0};
+std::atomic<std::int64_t> publish_metric_failed_try_lock_count{0};
+std::atomic<std::int64_t> publish_metric_deferred_flush_count{0};
+
+void record_max(std::atomic<std::int64_t> &target, std::int64_t value)
+{
+	auto current = target.load(std::memory_order_relaxed);
+	while (value > current && !target.compare_exchange_weak(current, value, std::memory_order_relaxed)) {
+	}
+}
+
+#if SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE > 0
+struct configured_default_worker_pool final {
+	configured_default_worker_pool()
+	{
+		configure_default_worker_pool(int_t<>(SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE));
+	}
+
+	~configured_default_worker_pool()
+	{
+		shutdown_default_worker_pool();
+	}
+};
+
+configured_default_worker_pool configured_default_worker_pool_instance;
+#endif
+
+[[nodiscard]] std::shared_ptr<reusable_worker_pool> current_default_pool()
+{
+	std::lock_guard<std::mutex> lock(default_pool_mutex);
+	if (!default_pool || default_pool->desired_workers() == 0) {
+		return nullptr;
+	}
+	return default_pool;
+}
 
 [[nodiscard]] shared_p<detail::batch_state> state_or_throw(const shared_p<batch> &resource, const char *name)
 {
@@ -18,6 +257,199 @@ namespace {
 }
 
 } // namespace
+
+void reset_publish_metrics()
+{
+	publish_metric_lock_wait_us.store(0, std::memory_order_relaxed);
+	publish_metric_lock_hold_us.store(0, std::memory_order_relaxed);
+	publish_metric_callback_us.store(0, std::memory_order_relaxed);
+	publish_metric_batch_count.store(0, std::memory_order_relaxed);
+	publish_metric_published_count.store(0, std::memory_order_relaxed);
+	publish_metric_max_batch_size.store(0, std::memory_order_relaxed);
+	publish_metric_failed_try_lock_count.store(0, std::memory_order_relaxed);
+	publish_metric_deferred_flush_count.store(0, std::memory_order_relaxed);
+}
+
+void record_publish_lock_wait(std::int64_t elapsed_us)
+{
+	publish_metric_lock_wait_us.fetch_add(elapsed_us, std::memory_order_relaxed);
+}
+
+void record_publish_lock_hold(std::int64_t elapsed_us)
+{
+	publish_metric_lock_hold_us.fetch_add(elapsed_us, std::memory_order_relaxed);
+}
+
+void record_publish_callback(std::int64_t elapsed_us, std::int64_t batch_size)
+{
+	publish_metric_callback_us.fetch_add(elapsed_us, std::memory_order_relaxed);
+	publish_metric_batch_count.fetch_add(1, std::memory_order_relaxed);
+	publish_metric_published_count.fetch_add(batch_size, std::memory_order_relaxed);
+	record_max(publish_metric_max_batch_size, batch_size);
+}
+
+void record_publish_failed_try_lock()
+{
+	publish_metric_failed_try_lock_count.fetch_add(1, std::memory_order_relaxed);
+}
+
+void record_publish_deferred_flush()
+{
+	publish_metric_deferred_flush_count.fetch_add(1, std::memory_order_relaxed);
+}
+
+[[nodiscard]] publish_metrics_snapshot publish_metrics()
+{
+	publish_metrics_snapshot snapshot;
+	snapshot.lock_wait_us = publish_metric_lock_wait_us.load(std::memory_order_relaxed);
+	snapshot.lock_hold_us = publish_metric_lock_hold_us.load(std::memory_order_relaxed);
+	snapshot.callback_us = publish_metric_callback_us.load(std::memory_order_relaxed);
+	snapshot.batch_count = publish_metric_batch_count.load(std::memory_order_relaxed);
+	snapshot.published_count = publish_metric_published_count.load(std::memory_order_relaxed);
+	snapshot.max_batch_size = publish_metric_max_batch_size.load(std::memory_order_relaxed);
+	snapshot.failed_try_lock_count = publish_metric_failed_try_lock_count.load(std::memory_order_relaxed);
+	snapshot.deferred_flush_count = publish_metric_deferred_flush_count.load(std::memory_order_relaxed);
+	return snapshot;
+}
+
+void configure_publish_try_lock(const bool_t &enabled)
+{
+	publish_try_lock_mode.store(enabled.native_value(), std::memory_order_relaxed);
+}
+
+[[nodiscard]] bool publish_try_lock_enabled()
+{
+	return publish_try_lock_mode.load(std::memory_order_relaxed);
+}
+
+[[nodiscard]] int_t<> publish_lock_wait_us()
+{
+	return int_t<>(publish_metrics().lock_wait_us);
+}
+
+[[nodiscard]] int_t<> publish_lock_hold_us()
+{
+	return int_t<>(publish_metrics().lock_hold_us);
+}
+
+[[nodiscard]] int_t<> publish_callback_us()
+{
+	return int_t<>(publish_metrics().callback_us);
+}
+
+[[nodiscard]] int_t<> publish_batch_count()
+{
+	return int_t<>(publish_metrics().batch_count);
+}
+
+[[nodiscard]] int_t<> publish_published_count()
+{
+	return int_t<>(publish_metrics().published_count);
+}
+
+[[nodiscard]] int_t<> publish_max_batch_size()
+{
+	return int_t<>(publish_metrics().max_batch_size);
+}
+
+[[nodiscard]] int_t<> publish_failed_try_lock_count()
+{
+	return int_t<>(publish_metrics().failed_try_lock_count);
+}
+
+[[nodiscard]] int_t<> publish_deferred_flush_count()
+{
+	return int_t<>(publish_metrics().deferred_flush_count);
+}
+
+void configure_default_worker_pool(const int_t<> &workers)
+{
+	const auto requested = workers.native_value();
+	const std::size_t keepalive_workers = requested <= 0
+		? std::size_t{0}
+		: static_cast<std::size_t>(requested);
+
+	std::shared_ptr<reusable_worker_pool> pool;
+	{
+		std::lock_guard<std::mutex> lock(default_pool_mutex);
+		if (!default_pool) {
+			default_pool = std::make_shared<reusable_worker_pool>();
+		}
+		pool = default_pool;
+	}
+	pool->configure(keepalive_workers);
+}
+
+void shutdown_default_worker_pool()
+{
+	std::shared_ptr<reusable_worker_pool> pool;
+	{
+		std::lock_guard<std::mutex> lock(default_pool_mutex);
+		pool = default_pool;
+		default_pool.reset();
+	}
+	if (pool) {
+		pool->shutdown_and_join();
+	}
+}
+
+[[nodiscard]] int_t<> default_worker_pool_size()
+{
+	std::lock_guard<std::mutex> lock(default_pool_mutex);
+	if (!default_pool) {
+		return int_t<>(0);
+	}
+	return int_t<>(static_cast<std::int64_t>(default_pool->desired_workers()));
+}
+
+[[nodiscard]] int_t<> default_worker_pool_live_workers()
+{
+	std::lock_guard<std::mutex> lock(default_pool_mutex);
+	if (!default_pool) {
+		return int_t<>(0);
+	}
+	return int_t<>(static_cast<std::int64_t>(default_pool->live_workers()));
+}
+
+[[nodiscard]] int_t<> default_worker_pool_created_workers()
+{
+	std::lock_guard<std::mutex> lock(default_pool_mutex);
+	if (!default_pool) {
+		return int_t<>(0);
+	}
+	return int_t<>(static_cast<std::int64_t>(default_pool->created_workers()));
+}
+
+namespace detail {
+
+void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body)
+{
+	if (worker_count == 0) {
+		return;
+	}
+
+	if (!default_pool_worker_active) {
+		if (auto pool = current_default_pool(); pool && pool->run_batch(worker_count, body)) {
+			return;
+		}
+	}
+
+	std::vector<worker_thread> threads;
+	threads.reserve(worker_count);
+	for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
+		threads.emplace_back([&, worker_index]() {
+			body(worker_index);
+		});
+	}
+
+	for (auto &thread : threads) {
+		if (thread.joinable()) {
+			thread.join();
+		}
+	}
+}
+
+} // namespace detail
 
 [[nodiscard]] int_t<> progress_info::total() const
 {

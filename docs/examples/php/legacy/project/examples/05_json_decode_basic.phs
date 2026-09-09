@@ -1,7 +1,12 @@
 function example_05_json_decode_basic(): void
 {
 	$json = '{"name":"Alex","count":2}';
-	$decoded = json_decode($json);
+	$decoded /** mixed */;
+	$err /** error */;
+	if (!take($decoded, $err, json_decode($json))) {
+		echo $err->get_message(), "\n";
+		return;
+	}
 	$name /** string */ = $decoded["name"];
 	$count /** int */ = $decoded["count"];
 

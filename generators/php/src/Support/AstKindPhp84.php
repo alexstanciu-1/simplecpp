@@ -59,6 +59,7 @@ class AstKindPhp84
 	public const STATIC_CALL = 770;
 	public const CALL = 516;
 	public const CLASS_CONST = 517;
+	public const CLASS_NAME = 275;
 	public const PARAM = 1536;
 	public const STATIC_VAR = 532;
 	public const STATIC = 16;

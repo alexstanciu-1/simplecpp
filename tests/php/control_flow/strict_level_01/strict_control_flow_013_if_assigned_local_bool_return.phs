@@ -1,0 +1,9 @@
+function run(): int
+{
+	$ok bool = false;
+	$ok = true;
+	if ($ok) {
+		return 42;
+	}
+	return 0;
+}
