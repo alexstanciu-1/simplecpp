@@ -665,7 +665,6 @@ final class Generator
 		foreach ($this->classDecls as $name => $class) {
 			$kind = $class->isUnion ? 'union' : ($class->isStruct ? 'struct' : ($class->isEnum ? 'enum' : 'class'));
 			$out[ltrim($name, '\\')] = $kind;
-			$out[$class->name] = $kind;
 		}
 		return $out;
 	}
@@ -5805,6 +5804,10 @@ final class Generator
 	 */
 	private function resolveTypedLocalTypeForAssignment(string $typedLocalType, string $statementKind, mixed $exprNode, int $line): array
 	{
+		$qualifiedType = $this->resolveDeclaredClassLikeType($typedLocalType, $this->currentNamespacePhp);
+		if ($this->typeMapper->exactDeclaredTypeKind($qualifiedType) === 'struct') {
+			$typedLocalType = $qualifiedType;
+		}
 		if ($this->typeMapper->hasInvalidNestedWrapperType($typedLocalType)) {
 			return [$typedLocalType, 'Invalid nested wrapper type at line ' . $line . ': ' . $typedLocalType . ' is not allowed.'];
 		}
@@ -5836,7 +5839,7 @@ final class Generator
 		}
 
 		$classNode = $exprNode->children['class'] ?? null;
-		if (!is_object($classNode)) {
+		if (!is_object($classNode) || (($classNode->kind ?? null) !== AstKind::NAME)) {
 			return null;
 		}
 
@@ -5851,6 +5854,22 @@ final class Generator
 		}
 
 		return ltrim($name, '\\');
+	}
+
+	/** @return array{name:string,kind:?string,type:string}|null */
+	private function classifyConstructionTarget(mixed $expr, ?string $namespacePhp): ?array
+	{
+		$name = $this->extractDirectConstructedClassTypeName($expr);
+		if ($name === null) {
+			return null;
+		}
+		$classNode = $expr->children['class'];
+		$qualified = $this->nameRegistry->qualifyClassName($name, (int) ($classNode->flags ?? 0), $namespacePhp);
+		return [
+			'name' => $qualified,
+			'kind' => $this->typeMapper->exactDeclaredTypeKind($qualified),
+			'type' => $this->typeMapper->mapClassName($qualified),
+		];
 	}
 
 	private function validateTypedLocalAssignment(string $typedLocalType, string $statementKind, mixed $exprNode, int $line): ?string
@@ -6035,6 +6054,10 @@ final class Generator
 		$declaredInnerType = $this->extractWrappedObjectInnerType($typedLocalType);
 		if ($declaredInnerType === null) {
 			return null;
+		}
+		$target = $this->classifyConstructionTarget($expr, $namespacePhp);
+		if (($target['kind'] ?? null) === 'struct') {
+			return 'Ownership-wrapper construction of struct ' . $target['name'] . ' is unsupported at line ' . (int) ($expr->lineno ?? 0) . '; use new ' . $target['name'] . '() as a value.';
 		}
 
 		$constructedClassName = $this->extractDirectConstructedClassTypeName($expr);
@@ -7294,6 +7317,10 @@ final class Generator
 		}
 
 		$flags = str_starts_with($normalized, '\\') ? 0 : 1;
+		$qualified = $this->nameRegistry->qualifyClassName($normalized, $flags, $namespacePhp);
+		if ($this->typeMapper->exactDeclaredTypeKind($qualified) === 'struct') {
+			return $qualified;
+		}
 		$resolved = $this->nameRegistry->resolveClass($normalized, $flags, $namespacePhp);
 		if (is_string($resolved) && $resolved !== '') {
 			return $resolved;
@@ -7508,6 +7535,13 @@ final class Generator
 				return $this->renderLateStaticNewExpr($expr, $namespacePhp);
 			}
 			$class = $this->renderClassName($expr->children['class'] ?? null, $namespacePhp);
+			$target = $this->classifyConstructionTarget($expr, $namespacePhp);
+			if (($target['kind'] ?? null) === 'struct') {
+				if (($expr->children['args']->children ?? []) !== []) {
+					$this->fail('Struct construction for ' . $target['name'] . ' accepts no arguments at line ' . (int) ($expr->lineno ?? 0) . '.');
+				}
+				return $target['type'] . '{}';
+			}
 			return 'create<' . $class . '>(' . $this->renderArgs($expr->children['args']->children ?? [], $namespacePhp) . ')';
 		}
 		if ($kind === AstKind::STATIC_CALL) {
@@ -8985,6 +9019,10 @@ final class Generator
 
 			$constructedClass = $this->extractDirectConstructedClassTypeName($expr);
 			if ($constructedClass !== null) {
+				$target = $this->classifyConstructionTarget($expr, $this->currentNamespacePhp);
+				if (($target['kind'] ?? null) === 'struct') {
+					return $target['type'];
+				}
 				$mappedClass = $this->typeMapper->mapClassName($constructedClass);
 				$classDecl = $this->classDecls[$constructedClass] ?? $this->classDecls[basename(str_replace('\\', '/', $constructedClass))] ?? null;
 				return $classDecl instanceof ClassDecl && $classDecl->isEnum ? $mappedClass : 'shared_p<' . $mappedClass . '>';

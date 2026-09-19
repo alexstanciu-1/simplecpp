@@ -522,6 +522,15 @@ Restriction:
 ### 15.1 Object Construction
 `new Class(...)` must be lowered to `create<Class>(...)`.
 
+This rule applies to ordinary classes. For a declared struct, `new Struct()`
+must emit a value initializer `Struct{}` and expression typing must report the
+same value type. Construction emission and typing must use the same declaration
+identity/kind classification, including project metadata and imported names.
+Struct construction with any arguments (including named or unpacked arguments)
+is rejected with a source diagnostic. Explicit ownership-wrapper initialization
+from `new Struct()` is unsupported and must not bypass value construction.
+See `specs/compact_layout_types.md`, section 2.4.
+
 Examples:
 - `new X()` â†’ `create<X>()`
 - `new \A\B\X()` â†’ `create<::scpp::A::B::X>()`

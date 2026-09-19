@@ -180,6 +180,18 @@ deep object cloning, raw-byte serialization, or shared-ownership cycle collectio
 
 ### 2.4 Initialization
 
+`new StructName()` constructs a struct value, including in inferred locals,
+typed destinations, arguments, and returns. It does not allocate a shared object
+or use the class construction helper. Conceptually, it lowers to `StructName{}`.
+Declaration-kind metadata determines this behavior for same-file, cross-file,
+qualified, and imported names alike. Ordinary `new ClassName()` retains shared
+object ownership.
+
+Only no-argument struct construction is supported. Positional arguments, named
+arguments, and argument unpacking must produce a source diagnostic, rather than
+selecting aggregate positional initialization or class construction. Custom
+constructors and ownership-wrapper construction of structs are not introduced.
+
 Explicit struct field initializers lower to generated member initializers.
 Omitted initializers use the generated C++ default for the field type.
 Strings default to empty, vector/hash fields to empty containers, and ordinary

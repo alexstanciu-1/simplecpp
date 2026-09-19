@@ -33,6 +33,13 @@ php tests/tools/run_tests.php reset --suite=runtime
 php tests/tools/run_tests.php run --include-disabled
 
 
+## Struct construction regression
+
+Run `php tests/tools/test_scpp_struct_construction.php` for issue #229. This checks
+strict/legacy lowering and diagnostics, STAN typed/inferred value use, and a
+checked native project with cross-file/imported construction, independent struct
+copies, and shared class identity. The native checks require Ninja and a C++ compiler.
+
 ## Runtime sanitizer runs
 
 ```bash

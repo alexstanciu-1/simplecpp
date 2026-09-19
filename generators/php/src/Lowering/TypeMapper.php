@@ -50,7 +50,7 @@ final class TypeMapper
 
 	public function declaredTypeKind(string $phpType): ?string
 	{
-		$trimmed = ltrim(trim($phpType), '\\');
+		$trimmed = ltrim(str_replace('::', '\\', trim($phpType)), '\\');
 		if ($trimmed === '') {
 			return null;
 		}
@@ -62,6 +62,12 @@ final class TypeMapper
 			return $this->declaredTypeKinds[$short] ?? null;
 		}
 		return null;
+	}
+
+	/** Qualified declaration identities must not fall back to an unrelated short name. */
+	public function exactDeclaredTypeKind(string $phpType): ?string
+	{
+		return $this->declaredTypeKinds[ltrim(trim($phpType), '\\')] ?? null;
 	}
 
 	/** @return list<string> */

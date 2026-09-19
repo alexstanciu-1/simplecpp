@@ -7,6 +7,10 @@ This file is the authoritative checked-in source for release notes referenced by
 
 ## Unreleased
 
+### Fixes
+
+- Fixed `new Struct()` to construct a value for typed and inferred uses, including cross-file and imported declarations, while preserving shared ownership for ordinary classes (#229). Struct construction arguments and ownership-wrapper construction now produce source diagnostics.
+
 ## 0.1.75 - 2026-09-09
 
 ### Additions

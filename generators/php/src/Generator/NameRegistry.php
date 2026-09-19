@@ -20,10 +20,13 @@ final class NameRegistry
 	private array $functions = [];
 	/** @var array<string, bool> */
 	private array $constants = [];
+	/** @var array<string,array<string,string>> */
+	private array $classImports = [];
 
 	public static function fromPhpFile(PhpFile $file): self
 	{
 		$registry = new self();
+		$registry->collectClassImports('', $file->rootUses);
 
 		foreach ($file->constants as $constant) {
 			$registry->constants[$constant->name] = true;
@@ -35,6 +38,7 @@ final class NameRegistry
 			$registry->functions[$function->name] = true;
 		}
 		foreach ($file->namespaces as $namespace) {
+			$registry->collectClassImports($namespace->name, $namespace->uses);
 			foreach ($namespace->constants as $constant) {
 				$registry->constants[$namespace->name . '\\' . $constant->name] = true;
 			}
@@ -47,6 +51,34 @@ final class NameRegistry
 		}
 
 		return $registry;
+	}
+
+	/** @param list<\Scpp\S2S\IR\UseDecl> $uses */
+	private function collectClassImports(string $namespace, array $uses): void
+	{
+		foreach ($uses as $use) {
+			if (in_array($use->kind, ['function', 'const'], true)) {
+				continue;
+			}
+			$name = ltrim($use->name, '\\');
+			$alias = $use->alias ?? basename(str_replace('\\', '/', $name));
+			$this->classImports[$namespace][$alias] = $name;
+		}
+	}
+
+	/** Expand source namespace/import syntax without resolving or validating a symbol. */
+	public function qualifyClassName(string $name, int $flags, ?string $namespace): string
+	{
+		$trimmed = ltrim($name, '\\');
+		if ($flags === 0 || str_starts_with($name, '\\')) {
+			return $trimmed;
+		}
+		$parts = explode('\\', $trimmed, 2);
+		$import = $this->classImports[$namespace ?? ''][$parts[0]] ?? null;
+		if ($flags !== 2 && $import !== null) {
+			return $import . (isset($parts[1]) ? '\\' . $parts[1] : '');
+		}
+		return $namespace !== null && $namespace !== '' ? $namespace . '\\' . $trimmed : $trimmed;
 	}
 
 	/**
