@@ -100,4 +100,59 @@ needs_int(collection_map($input, function (int $x): string { return "x"; })[0]);
 PHS);
 check(count($negative['call_site_diagnostics']) === 2, 'nested argument and element rejection');
 check(count($negative['return_type_diagnostics']) === 1, 'mapped return rejection');
+// Constrained adapters instantiate the same callback/result contract.
+$adapters = analyze(<<<'PHS'
+$xs vector<int> = [10, 20, 30];
+$hs hash<int, int> = [0 => 10, 1 => 20];
+$seq = sequence_filter(sequence_map($xs, function (int $x): string { return "x"; }), function (string $x): bool { return true; });
+$key = keyed_filter(keyed_map($hs, function (int $x): string { return "x"; }), function (string $x): bool { return true; });
+$fixed fixed_array<int, 2> = [10, 20];
+$fixed_out = sequence_map($fixed, function (int $x): string { return "x"; });
+$box hash<mixed> = [0 => 10];
+$box_out = keyed_map($box, function (mixed $x): string { return "x"; });
+$table mixed = [0 => 10];
+$table_out = keyed_filter($table, function (mixed $x): bool { return true; });
+function adapted(vector<int> $xs): vector<string> {
+    return sequence_map($xs, function (int $x): string { return "x"; });
+}
+$named hash<int> = ["a" => 10];
+$named_out = keyed_map($named, function (int $x): string { return "x"; });
+PHS);
+check($adapters['call_site_diagnostics'] === [] && $adapters['return_type_diagnostics'] === [], 'valid constrained adapter calls');
+$types = [];
+foreach ($adapters['expression_chain_types'] as $row) { $types[$row['line']] = $row['resolved_type']; }
+foreach ([3=>'vector<string>',4=>'hash<string,int>',6=>'vector<string>',8=>'hash<mixed>',10=>'mixed',15=>'hash<string>'] as $line=>$expected) {
+    check(($types[$line] ?? null) === $expected, 'adapter line ' . $line . ': ' . json_encode($types[$line] ?? null));
+}
+foreach (['map', 'filter'] as $operation) {
+    $callback = $operation === 'map' ? 'function (int $x): int { return $x; }' : 'function (int $x): bool { return true; }';
+    foreach ([['sequence', 'hash<int,int>', '[0 => 10, 1 => 20]'], ['keyed', 'vector<int>', '[10, 20]'], ['keyed', 'fixed_array<int,2>', '[10, 20]']] as [$family, $type, $literal]) {
+        $bad = analyze('$input ' . $type . ' = ' . $literal . '; ' . $family . '_' . $operation . '($input, ' . $callback . ');');
+        check(str_contains(json_encode($bad['call_site_diagnostics']), 'requires carrier family'), 'wrong carrier accepted: ' . $family . '_' . $operation);
+    }
+    foreach (['sequence', 'keyed'] as $family) {
+        $bad = analyze('$input dynamic = [0 => 10]; ' . $family . '_' . $operation . '($input, function (mixed $x): bool { return true; });');
+        check(str_contains(json_encode($bad['call_site_diagnostics']), 'requires carrier family'), 'dynamic adapter scope expanded');
+    }
+}
+foreach (['sequence' => 'vector<int>', 'keyed' => 'hash<int,int>'] as $family => $type) {
+    $bad = analyze('$input ' . $type . ' = []; ' . $family . '_map($input, function (mixed $x): int { return 1; });');
+    check(str_contains(json_encode($bad['call_site_diagnostics']), 'value parameter'), 'adapter callback checking lost');
+    $bad = analyze('$input ' . $type . ' = []; ' . $family . '_filter($input, function (int $x): int { return $x; });');
+    check(str_contains(json_encode($bad['call_site_diagnostics']), 'must return `bool`'), 'adapter predicate checking lost');
+    $bad = analyze('$input ' . $type . ' = []; $wrong ' . $type . ' = ' . $family . '_map($input, function (int $x): string { return "x"; });');
+    check(str_contains(json_encode($bad['call_site_diagnostics']), 'Collection assignment'), 'adapter typed boundary checking lost');
+}
+$bad = analyze(<<<'PHS'
+function integers(vector<int> $xs): void {}
+function wrong(vector<int> $xs): vector<int> {
+    return sequence_map($xs, function (int $x): string { return "x"; });
+}
+$input vector<int> = [1];
+integers(sequence_filter(sequence_map($input, function (int $x): string { return "x"; }), function (string $x): bool { return true; }));
+function needs_int(int $x): void {}
+$hash hash<int,int> = [0 => 1];
+needs_int(keyed_map($hash, function (int $x): string { return "x"; })[0]);
+PHS);
+check(count($bad['call_site_diagnostics']) === 2 && count($bad['return_type_diagnostics']) === 1, 'adapter nested argument, element and return boundaries');
 echo "PASS: collection typing (inline/stored/inferred callbacks, nested calls, carriers, boundaries, rejection)\n";

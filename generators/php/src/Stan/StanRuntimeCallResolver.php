@@ -41,6 +41,10 @@ final class StanRuntimeCallResolver
 		if ($carrier === null) {
 			return $failure('Unsupported collection type `' . $arguments[0][0] . '`; unwrap results before mapping or filtering.');
 		}
+		$families = $contract['accepted_carrier_families'] ?? null;
+		if ($families !== null && !in_array($carrier['family'], $families, true)) {
+			return $failure('Collection operation requires carrier family ' . implode(' or ', $families) . '; got `' . $arguments[0][0] . '`.');
+		}
 		$callback = self::callable($arguments[1][0]);
 		if ($callback === null || count($callback['params']) !== 1 || $callback['params'][0] !== $carrier['value']) {
 			return $failure('Callback must take exactly one `' . $carrier['value'] . '` value parameter; got `' . $arguments[1][0] . '`.');
@@ -69,7 +73,7 @@ final class StanRuntimeCallResolver
 	{
 		$type = preg_replace('/\s+/', '', $type);
 		if (in_array($type, ['mixed', 'dynamic'], true)) {
-			return ['source' => $type, 'value' => 'mixed', 'key' => 'mixed', 'policy' => 'boxed'];
+			return ['source' => $type, 'family' => $type, 'value' => 'mixed', 'key' => 'mixed', 'policy' => 'boxed'];
 		}
 		if (preg_match('/^(vector|fixed_array|hash|dynamic)(?:_t)?<(.+)>$/', $type, $match) !== 1) {
 			return null;

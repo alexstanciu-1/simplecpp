@@ -186,3 +186,7 @@ if(SCPP_WITH_PROCESS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_test(NAME scpp_test_process COMMAND test_process)
 	set_tests_properties(scpp_test_process PROPERTIES TIMEOUT 30)
 endif()
+
+add_executable(test_collection_adapters test_collection_adapters.cpp)
+target_link_libraries(test_collection_adapters PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_collection_adapters COMMAND test_collection_adapters)

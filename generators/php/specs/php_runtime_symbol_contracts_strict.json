@@ -222,6 +222,126 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "specs/builtins/filesystem/fs_lock_transfer.md"
 		},
+		"sequence_map": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/sequence_map.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "map",
+				"accepted_carrier_families": [
+					"vector",
+					"fixed_array"
+				]
+			}
+		},
+		"sequence_filter": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/sequence_filter.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "filter",
+				"accepted_carrier_families": [
+					"vector",
+					"fixed_array"
+				]
+			}
+		},
+		"keyed_map": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/keyed_map.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "map",
+				"accepted_carrier_families": [
+					"hash",
+					"mixed"
+				]
+			}
+		},
+		"keyed_filter": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 2,
+			"max_arity": 2,
+			"parameter_type_refs": [
+				"mixed",
+				"mixed"
+			],
+			"parameter_names": [
+				"input",
+				"callback"
+			],
+			"parameter_passing": [
+				"value",
+				"value"
+			],
+			"return_type_ref": "mixed",
+			"blocked_reason": "polymorphic_runtime_contract_requires_portable_binding",
+			"contract_authority_source": "specs/builtins/collections/keyed_filter.md",
+			"call_contract": {
+				"kind": "collection_transform",
+				"operation": "filter",
+				"accepted_carrier_families": [
+					"hash",
+					"mixed"
+				]
+			}
+		},
 		"collection_map": {
 			"contract_status": "complete",
 			"signature_status": "known",

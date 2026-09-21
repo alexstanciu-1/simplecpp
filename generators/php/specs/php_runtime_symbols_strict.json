@@ -250,6 +250,10 @@
         "process_stop": "process::stop",
         "process_close": "process::close",
         "collection_map": "collections::map",
-        "collection_filter": "collections::filter"
+        "collection_filter": "collections::filter",
+        "sequence_map": "collections::sequence_map",
+        "sequence_filter": "collections::sequence_filter",
+        "keyed_map": "collections::keyed_map",
+        "keyed_filter": "collections::keyed_filter"
     }
 }

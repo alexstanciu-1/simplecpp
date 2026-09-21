@@ -4,6 +4,26 @@
     "note":  "Repository-wide documentation status catalog. Markdown docs are labeled in-place with Doc Status. JSON docs are classified here to avoid breaking machine-consumed schemas.",
     "entries":  [
                     {
+                        "path":  "specs/builtins/collections/sequence_map.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/sequence_filter.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/keyed_map.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
+                        "path":  "specs/builtins/collections/keyed_filter.md",
+                        "kind":  "markdown",
+                        "doc_status":  "normative"
+                    },
+                    {
                         "path":  "specs/builtins/process/process_start.md",
                         "kind":  "markdown",
                         "doc_status":  "normative"

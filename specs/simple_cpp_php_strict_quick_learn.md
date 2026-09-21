@@ -1353,6 +1353,12 @@ leave input and captured/shared state unchanged. Declare dynamic output locals
 explicitly before using their shared-table `[]` access. See
 [the collection contract](builtins/collections.md) for examples and result types.
 
+Portable source can select the policy with `sequence_map` / `sequence_filter`
+(vector/fixed-array only) or `keyed_map` / `keyed_filter` (hash/table-valued mixed
+only). Wrong carriers are rejected even for dense integer-keyed hashes. These
+adapters share the generic helpers' callback and result rules; dynamic remains
+on the generic surface.
+
 ## Managed batch processes
 
 Enable `process` in `runtime.modules`. Use `process_start` with an absolute tool

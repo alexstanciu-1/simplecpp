@@ -3911,21 +3911,9 @@ final class StanExpressionTypeResolver
 		$sourceTypes = $this->resolveExpressionDescriptorTypes($sourceDescriptor, $localTypes, $selfType, $classLookup, $functionLookup);
 		$elementTypes = [];
 		foreach ($this->normalizeTypeSet($sourceTypes) as $sourceType) {
-			if (preg_match('/^vector(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$elementTypes[] = trim((string) $matches[1]);
-				continue;
-			}
-			if (preg_match('/^fixed_array(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$parts = array_map('trim', explode(',', (string) $matches[1], 2));
-				if (($parts[0] ?? '') !== '') {
-					$elementTypes[] = $parts[0];
-				}
-				continue;
-			}
-			if (preg_match('/^hash(?:_t)?<\s*(.+)\s*>$/i', $sourceType, $matches) === 1) {
-				$inner = trim((string) $matches[1]);
-				$parts = array_map('trim', explode(',', $inner, 2));
-				$elementTypes[] = count($parts) === 2 ? $parts[1] : $parts[0];
+			$carrier = StanRuntimeCallResolver::carrier($sourceType);
+			if ($carrier !== null) {
+				$elementTypes[] = $carrier['value'];
 			}
 		}
 		return $this->canonicalizeTypeSet($elementTypes, $classLookup, $selfType);

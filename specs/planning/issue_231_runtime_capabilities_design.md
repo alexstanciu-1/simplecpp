@@ -2,7 +2,7 @@
 
 Doc Status: planning
 Status: collection/STAN, managed-process and file-lock runtime slices implemented locally; portable PHP integration and migration proofs remain outstanding.
-Revision: Simple C++ completion audit; descendant cleanup and collection boundary proofs added.
+Revision: constrained sequence/keyed adapter follow-up after downstream integration review.
 Baseline inspected: `main`, `8cc4d8ff`, tag `v0.1.76`.
 Issue: <https://github.com/alexstanciu-1/simplecpp/issues/231>
 
@@ -158,6 +158,42 @@ released compiler target. The adopted portability framework was inspected again:
 the current host PHP is 8.5.7 with pcntl_waitid available, but framework wrappers/mappings have not been
 changed in this runtime slice. PHP framework counterparts and the affected
 portability/migration proofs still prevent closing #231.
+
+## Constrained adapter follow-up
+
+The downstream update identified a gap in the earlier completion audit: the
+explicit portable operation policy below was documented but its native adapters
+were absent from candidate `394164c0`. This follow-up implements `sequence_map`,
+`sequence_filter`, `keyed_map` and `keyed_filter` on the same runtime line.
+
+Native result policies identify sequence/keyed/dynamic carriers. Constrained
+entry points delegate to the existing algorithms. Normalized call contracts add
+`accepted_carrier_families`; STAN checks those before reusing callback and result
+typing. Sequence rejects every hash, including dense integer-keyed hashes. Keyed
+accepts hashes and table-valued mixed and rejects sequences and dynamic handles.
+Generic helper behavior and dynamic scope are retained.
+
+Integration tests also exposed two existing mismatches, repaired in their owners:
+
+- Native callback checking now accepts the existing `const T&` lowering of source
+  value parameters, in addition to exact `T`. The callback receives the same
+  copied entry value; source references and native mutable references stay rejected.
+- STAN indexed-expression typing reuses the carrier model instead of parsing hash
+  parameters backwards or splitting nested generic arguments at the wrong comma.
+
+Validation for the follow-up:
+
+- `ctest --test-dir /tmp/scpp-file-lock-build -R 'scpp_test_(collection_adapters|collections)$' --output-on-failure`
+- `python3 tests/tools/test_scpp_collections.py`
+- `php tests/tools/test_scpp_collection_typing.php`
+- `php tests/tools/test_scpp_strict_runtime_catalog.php`
+- `php tests/tools/test_scpp_stan_strict_discipline.php`
+
+Coverage includes type-changing maps, empty/all/none results, dense sequences,
+key/order retention, carrier rejection, read-only string/container callbacks,
+nested calls and typed argument/return/element boundaries. The PHP framework,
+converter bindings and downstream parity/migration proofs remain owned by v0.2;
+this follow-up supplies the previously missing constrained native surface.
 
 ## 1. Original design scope (implementation updates above take precedence)
 
@@ -657,8 +693,8 @@ Issue-wide gates still outstanding:
    proofs before switching the compiler away from v0.1.76. The local working tree
    is not a released target. Publication has not been performed.
 
-No further Simple C++ feature is identified by this audit within the accepted
-Linux batch-tool scope. PHP framework parity and compiler migration remain
+The original audit missed the native constrained adapters; the follow-up recorded
+above closes that gap within the accepted Linux batch-tool scope. PHP framework parity and compiler migration remain
 separate work and still prevent closing #231.
 
 Stop and report a blocker if PHP parity needs a native launcher/extension or a

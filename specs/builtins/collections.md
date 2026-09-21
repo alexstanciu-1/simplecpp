@@ -7,6 +7,21 @@ Strict PHS exposes `collection_map(input, callback)` and
 `scpp::collections::map` and `scpp::collections::filter` in
 `scpp/collections.hpp`. These are core runtime helpers.
 
+Strict also exposes `sequence_map`, `sequence_filter`, `keyed_map` and
+`keyed_filter`, with native names in `scpp::collections`. These are constrained
+adapters over the same algorithms:
+
+- Sequence adapters accept only `vector<T>` and `fixed_array<T,N>`, returning dense
+  vectors. Hashes are rejected even when their integer keys are dense.
+- Keyed adapters accept `hash<T,K>`, `hash<mixed>` and table-valued `mixed`, preserving
+  keys/order and the result rules below. Vectors/fixed arrays are rejected.
+- Dynamic handles are excluded from both adapter families; use the generic helpers
+  for the existing dynamic contract. No portable dynamic expansion is implied.
+
+STAN checks the registered carrier constraint before callback/result instantiation.
+C++ constrains the native overloads as well, including when STAN is bypassed.
+The generator only remaps names; it does not infer a portable receiver policy.
+
 Both traverse the input through the runtime `foreach_range` protocol, in its
 iteration order. They accept exactly one collection and one synchronous callable.
 The callback receives one value, never a key, and is invoked once per visited
@@ -51,8 +66,11 @@ Use a closure with explicit parameter and return types, or a local with a concre
 `function<U(T)>` type. Exactly one by-value parameter of type `T` is required;
 implicit scalar/mixed conversions do not repair callback signature mismatches.
 A filter predicate must return `bool` (`scpp::bool_t` natively). Variadic/defaulted
-parameters, reference parameters, reference returns, and void map results are
-unsupported. Helpers invoke the supplied callable directly and do not retain it
+parameters, source reference parameters, reference returns, and void map results
+are unsupported. Native callbacks accept exactly `T` or `const T&`: the latter
+accommodates existing lowering of string/container value parameters. Both receive
+a copied entry value; mutable references and implicit element conversions remain
+rejected. A callback must not retain a reference to that temporary value. Helpers invoke the supplied callable directly and do not retain it
 or add a `std::function` conversion; existing callable-local lowering may use
 `std::function` storage.
 
@@ -101,3 +119,8 @@ Portable PHP framework bindings and compiler migration are separate work.
 
 - [collection_map](collections/collection_map.md)
 - [collection_filter](collections/collection_filter.md)
+
+- [sequence_map](collections/sequence_map.md)
+- [sequence_filter](collections/sequence_filter.md)
+- [keyed_map](collections/keyed_map.md)
+- [keyed_filter](collections/keyed_filter.md)

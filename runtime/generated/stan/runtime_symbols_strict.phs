@@ -7,6 +7,14 @@
 function collection_filter(mixed $input, mixed $callback): mixed {}
 /** Polymorphic runtime call: STAN instantiates its metadata contract; this stub is erased. */
 function collection_map(mixed $input, mixed $callback): mixed {}
+/** Polymorphic runtime call: STAN instantiates its metadata contract; this stub is erased. */
+function keyed_filter(mixed $input, mixed $callback): mixed {}
+/** Polymorphic runtime call: STAN instantiates its metadata contract; this stub is erased. */
+function keyed_map(mixed $input, mixed $callback): mixed {}
+/** Polymorphic runtime call: STAN instantiates its metadata contract; this stub is erased. */
+function sequence_filter(mixed $input, mixed $callback): mixed {}
+/** Polymorphic runtime call: STAN instantiates its metadata contract; this stub is erased. */
+function sequence_map(mixed $input, mixed $callback): mixed {}
 function __scpp_debug_break(): void {}
 function __scpp_debug_call_entry(): void {}
 function __scpp_debug_dump(string $phase, string $label, mixed $value): void {}

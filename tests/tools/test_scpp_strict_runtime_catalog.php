@@ -43,6 +43,12 @@ final class ScppStrictRuntimeCatalogTest
 			$this->assertSame('process', $catalog->requiredModule($name), 'process module ownership');
 		}
 
+		foreach (['sequence_map', 'sequence_filter', 'keyed_map', 'keyed_filter'] as $name) {
+			$this->assertSame(true, $catalog->hasFunction($name), 'constrained adapter registered');
+			$this->assertSame(null, $catalog->returnType($name), 'adapter return requires instantiation');
+			$this->assertSame(null, $catalog->requiredModule($name), 'adapters are core');
+		}
+
 		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 		$this->assertContains('public function get_message(): string', $strictRuntimeSymbols, 'captured errors should expose their message to STAN');

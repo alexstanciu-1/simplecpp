@@ -1364,7 +1364,11 @@ The expression resolver uses it for both result inference and call diagnostics,
 including nested argument, return and element expressions. Its collection type
 policy also supplies foreach element/key types. Explicit callable-local types
 and complete inline/local closure signatures share `function<U(T)>` type syntax.
-Existing concrete calls retain their fixed signatures.
+Existing concrete calls retain their fixed signatures. Constrained collection
+adapters add `accepted_carrier_families` to the same call contract. STAN checks
+that authored/inferred carrier family before reusing callback validation and result
+construction. Indexed expression descriptors also use this carrier model for value
+types, including the value-first `hash<T,K>` order and nested generic arguments.
 
 The generated shallow function has erased `mixed` positions solely so its name
 and arity can be represented in parseable PHS. Its generated comment identifies
