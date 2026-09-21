@@ -38,3 +38,13 @@ This folder contains one contract file per filesystem or stdio builtin in the fi
 - `basename`
 
 See also: `specs/builtins/filesystem/first_pass.md`.
+
+## Strict file locks
+
+Linux cross-process advisory locks use a dedicated `file_lock_handle`:
+
+- [fs_lock_try](fs_lock_try.md)
+- [fs_lock_release](fs_lock_release.md)
+- [fs_lock_transfer](fs_lock_transfer.md)
+
+The [family contract](file_locks.md) owns lifecycle and inheritance semantics.

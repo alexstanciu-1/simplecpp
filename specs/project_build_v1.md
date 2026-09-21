@@ -1004,6 +1004,10 @@ Legacy list-style `runtime.languages` remains accepted as a compatibility shape 
 
 Current default behavior enables the `json`, `filesystem`, and `datetime` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.
 
+The optional `process` module provides Linux managed child processes; see
+[the process contract](builtins/process.md). It is available in project runtime
+composition and as a separate shared runtime module.
+
 When the opt-in `tasks` module is enabled, `runtime.tasks.default_worker_pool_size`
 may set the process-owned reusable tasks worker-pool keepalive target at runtime
 startup:

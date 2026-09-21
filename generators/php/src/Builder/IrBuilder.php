@@ -48,25 +48,7 @@ final class IrBuilder
 			throw new BuildException('Unsupported AST root shape.');
 		}
 
-		$this->typeCommentsByKey = [];
-		$this->constParamsByKey = [];
-		$this->returnAnnotationsByLine = [];
-		foreach ($input->annotations as $annotation) {
-			$name = $annotation['name'] ?? null;
-			if (in_array($annotation['kind'], ['local', 'property', 'param'], true)) {
-				if (!is_string($name) || $name === '') {
-					continue;
-				}
-				$this->typeCommentsByKey[$annotation['line'] . ':' . $name] = $annotation['type'];
-				if ($annotation['kind'] === 'param' && (bool) ($annotation['isConst'] ?? false)) {
-					$this->constParamsByKey[$annotation['line'] . ':' . $name] = true;
-				}
-				continue;
-			}
-			if (in_array($annotation['kind'], ['function_return', 'method_return', 'closure_return'], true) && is_int($annotation['line']) && $annotation['line'] > 0) {
-				$this->returnAnnotationsByLine[$annotation['line']] = $annotation['type'];
-			}
-		}
+		$this->useAnnotations($input->annotations);
 
 		$top = $this->collectBlock($root->children ?? [], null);
 
@@ -83,6 +65,30 @@ final class IrBuilder
 			scannerAnnotations: $input->annotations,
 			buildErrors: $top['errors'],
 		);
+	}
+
+	/** Restore structural type annotations when inspecting a previously built file. */
+	public function useAnnotations(array $annotations): void
+	{
+		$this->typeCommentsByKey = [];
+		$this->constParamsByKey = [];
+		$this->returnAnnotationsByLine = [];
+		foreach ($annotations as $annotation) {
+			$name = $annotation['name'] ?? null;
+			if (in_array($annotation['kind'], ['local', 'property', 'param'], true)) {
+				if (!is_string($name) || $name === '') {
+					continue;
+				}
+				$this->typeCommentsByKey[$annotation['line'] . ':' . $name] = $annotation['type'];
+				if ($annotation['kind'] === 'param' && (bool) ($annotation['isConst'] ?? false)) {
+					$this->constParamsByKey[$annotation['line'] . ':' . $name] = true;
+				}
+				continue;
+			}
+			if (in_array($annotation['kind'], ['function_return', 'method_return', 'closure_return'], true) && is_int($annotation['line']) && $annotation['line'] > 0) {
+				$this->returnAnnotationsByLine[$annotation['line']] = $annotation['type'];
+			}
+		}
 	}
 
 	/**
@@ -540,7 +546,7 @@ final class IrBuilder
 	}
 
 	/** @param array<int, mixed> $nodes @return list<ParamDecl> */
-	private function buildParams(array $nodes): array
+	public function buildParams(array $nodes): array
 	{
 		$params = [];
 		foreach ($nodes as $node) {
@@ -570,7 +576,7 @@ final class IrBuilder
 		return $this->typeCommentsByKey[$key] ?? null;
 	}
 
-	private function resolveFunctionLikeReturnType(object $node): ?string
+	public function resolveFunctionLikeReturnType(object $node): ?string
 	{
 		$native = $this->readTypeName($node->children['returnType'] ?? null);
 		if ($native !== null) {

@@ -1,0 +1,32 @@
+function check_process(): int {
+$arguments vector<string> = ["-c", "cat; printf error >&2; exit 7"];
+$handle process_handle;
+$err error;
+if (!take($handle, $err, process_start("/bin/sh", $arguments, "input", 1000))) {
+	echo $err->get_message(), "\n";
+	return 1;
+}
+$done bool = false;
+while (!$done) {
+	if (!take($done, $err, process_poll($handle))) {
+		echo $err->get_message(), "\n";
+		return 2;
+	}
+}
+$output process_output;
+if (!take($output, $err, process_result($handle))) {
+	echo $err->get_message(), "\n";
+	return 3;
+}
+echo $output->stdout_text, ":", $output->stderr_text, ":", $output->exit_code, "\n";
+$closed bool = false;
+if (!take($closed, $err, process_close($handle))) {
+	return 4;
+}
+if (!take($closed, $err, process_close($handle))) {
+	return 5;
+}
+echo "process-ok\n";
+return 0;
+}
+echo check_process(), "\n";

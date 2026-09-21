@@ -78,6 +78,23 @@ Object construction and ownership helpers are runtime concepts. Current generati
 - non-void functions must return a value on all paths
 - void functions cannot return a value
 
+### Runtime shallow-signature metadata
+
+Strict contract rows in `php_runtime_symbol_contracts_strict.json` may opt into
+metadata-derived STAN signatures by supplying `parameter_names` and
+`parameter_passing` alongside `parameter_type_refs`. All three are ordered lists
+of equal length matching `max_arity`; passing entries are `value` or `reference`.
+`min_arity` selects required parameters. Optional parameters in this bounded path
+use the shallow generator's existing zero/false/empty/null defaults for scalar
+types; nonstandard defaults require extending the metadata contract first.
+The return comes from `return_type_ref`, and `signature_status` must be `known`.
+Malformed opt-in rows fail generation rather than falling back to guessed types.
+Rows without this metadata retain their existing signature-map path.
+
+This is signature rendering from authored metadata, not S2S type inference.
+The separate compiler's `source_consumption_status` is not changed by rendering
+the PHS shallow surface; its acceptance gates remain independently tracked.
+
 ### Closures and callable locals
 - Closure expressions are concrete callable values and lower to native C++ lambdas.
 - Explicit strict callable locals such as `$f function<int()> = function () use ($a) { return $a; };` lower to `std::function<int_t()>` storage and provide the expected closure signature when the initializer omits a return type.
@@ -1328,3 +1345,36 @@ If a symbol is not present in the registry, the generator will **not** rewrite i
 - `take(...)` output arguments must be simple local variables in v1. Wrong arity, wrong output type, or a non-wrapper source is a compile-time generator error when the source or output type is known.
 - `take(...)` evaluates its source expression exactly once and returns `bool_t`; for `result_or_bool<T>`, the helper returns `true` for both wrapped-value and bool-true states so mysqli-style APIs remain representable.
 - `take(...)` is the preferred explicit payload-extraction form for `result*<T>` wrappers because the generator does not perform symbol-resolution-driven wrapper inference.
+
+### Argument-dependent runtime calls
+
+Strict runtime contracts may opt into `call_contract` metadata. The initial
+bounded schema is `{"kind":"collection_transform","operation":"map"}` or
+`filter`; it requires collection argument 0 and callback argument 1. This is a
+STAN semantic rule, not a generator type-inference rule or user-defined generics.
+
+`FrontEndSymbolExtractor` preserves arguments on function-call expression chains
+and emits structural `callable` descriptors containing authored parameters,
+return type and return-reference flag. `IrBuilder` supplies the same annotation
+reading used by ordinary declarations; summaries restore the owning file's
+annotations before reading closures. No symbols or types are inferred there.
+
+`StanRuntimeCallResolver` instantiates the registered rule from argument types.
+The expression resolver uses it for both result inference and call diagnostics,
+including nested argument, return and element expressions. Its collection type
+policy also supplies foreach element/key types. Explicit callable-local types
+and complete inline/local closure signatures share `function<U(T)>` type syntax.
+Existing concrete calls retain their fixed signatures.
+
+The generated shallow function has erased `mixed` positions solely so its name
+and arity can be represented in parseable PHS. Its generated comment identifies
+that erasure; it is not the semantic call result. The fixed-return catalog reports
+no fixed return type for a polymorphic call. STAN instantiates the metadata rule,
+and does not fall back to the erased result when instantiation fails. Both the
+resolver and contract JSON participate in STAN implementation/cache signatures.
+
+The generator still lowers ordinary registered names to native entry points and
+lets C++ deduce templates. Dynamic result locals need an explicit `dynamic`
+annotation for subsequent shared-table subscript lowering. Generic PHS
+`dynamic<T,K>` remains unsupported. See `specs/builtins/collections.md` for the
+normative helper contract and callback discipline.

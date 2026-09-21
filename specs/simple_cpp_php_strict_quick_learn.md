@@ -1221,6 +1221,9 @@ Visible PHP++ / PHS strict names use plain PHP-like names for general language-a
 | `fs_is_link` | `fs_is_link(string $path)` | `bool` |
 | `fs_exists` | `fs_exists(string $path)` | `bool` |
 | `fs_get` | `fs_get(string $path)` | wrapper result to `string`; use `take($text, $err, ...)` |
+| `fs_lock_try` | `fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false)` | Linux `result<bool>`; extracted false means contention |
+| `fs_lock_release` | `fs_lock_release(file_lock_handle $handle)` | Linux `result<bool>`; idempotent explicit unlock/close |
+| `fs_lock_transfer` | `fs_lock_transfer(file_lock_handle $handle)` | Linux `result<file_lock_handle>`; invalidates old token without unlocking |
 | `fs_put` | `fs_put(string $path, string $data)` | wrapper result to `int`; use `take($written, $err, ...)` |
 | `fs_mkdir` | `fs_mkdir(string $path)` | `bool` |
 | `fs_scan` | `fs_scan(string $path)` | wrapper result; usually stabilize into `vector<string>` in strict code |
@@ -1339,3 +1342,23 @@ This example assumes the decoded JSON has the expected keys and compatible value
 - strict profile split: `simple_cpp/specs/php/library_profiles.md`
 - AI language model: `simple_cpp/docs/ai_onboarding/language_model.md`
 - strict examples: `simple_cpp/docs/examples/php/strict/project_samples/`
+
+## Typed map and filter
+
+Use `collection_map($input, $callback)` and `collection_filter($input, $predicate)`
+for vectors, fixed arrays, hashes, table-valued mixed and dynamic. The callback
+has one explicit by-value parameter matching the element type; filter returns
+`bool`. Sequence outputs are dense; keyed outputs preserve keys. Callbacks must
+leave input and captured/shared state unchanged. Declare dynamic output locals
+explicitly before using their shared-table `[]` access. See
+[the collection contract](builtins/collections.md) for examples and result types.
+
+## Managed batch processes
+
+Enable `process` in `runtime.modules`. Use `process_start` with an absolute tool
+path, `vector<string>` arguments and supplied stdin, then poll with `process_poll`
+until complete. Extract each result with `take`. `process_result` returns typed
+stdout/stderr and exit/termination fields; `process_stop` requests group termination
+and `process_close` releases the shared handle state. Positive deadlines require
+regular polling. See [the process contract](builtins/process.md) for ownership,
+Linux scope, file-backed capture and the complete API.

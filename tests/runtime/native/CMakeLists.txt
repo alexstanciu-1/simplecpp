@@ -24,6 +24,12 @@ target_link_libraries(test_sentinels PRIVATE scpp_runtime scpp_runtime_test_supp
 
 # Registers the executables with CTest for repeatable smoke execution.
 enable_testing()
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	add_executable(test_file_locks test_file_locks.cpp)
+	target_link_libraries(test_file_locks PRIVATE scpp_filesystem scpp_runtime)
+	add_test(NAME scpp_test_file_locks COMMAND test_file_locks)
+	set_tests_properties(scpp_test_file_locks PROPERTIES TIMEOUT 30)
+endif()
 add_test(NAME scpp_test_core COMMAND test_core)
 add_test(NAME scpp_test_nullable COMMAND test_nullable)
 
@@ -164,4 +170,19 @@ if(SCPP_ENABLE_MYSQLI_TESTS AND SCPP_WITH_MYSQLI)
 	add_executable(test_mysqli_connect test_mysqli_connect.cpp)
 	target_link_libraries(test_mysqli_connect PRIVATE scpp_php_legacy scpp_lang_php scpp_runtime scpp_runtime_test_support)
 	add_test(NAME scpp_test_mysqli_connect COMMAND test_mysqli_connect)
+endif()
+
+add_executable(test_collections test_collections.cpp)
+target_link_libraries(test_collections PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_collections COMMAND test_collections)
+
+# Opt-in timing probe; not a pass/fail performance test.
+add_executable(bench_collections EXCLUDE_FROM_ALL bench_collections.cpp)
+target_link_libraries(bench_collections PRIVATE scpp_runtime)
+
+if(SCPP_WITH_PROCESS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	add_executable(test_process test_process.cpp)
+	target_link_libraries(test_process PRIVATE scpp_process scpp_runtime scpp_runtime_test_support)
+	add_test(NAME scpp_test_process COMMAND test_process)
+	set_tests_properties(scpp_test_process PROPERTIES TIMEOUT 30)
 endif()

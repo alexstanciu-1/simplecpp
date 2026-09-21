@@ -9,6 +9,7 @@
 #include "scpp/support/hash_t.hpp"
 #include "scpp/fixed_array_t.hpp"
 #include "scpp/vector_t.hpp"
+#include "scpp/dynamic_t.hpp"
 
 namespace scpp {
 
@@ -296,13 +297,14 @@ private:
 	const fixed_array_t<T, N> *owner_;
 };
 
-template <typename T, typename K = typename default_hash_key<T>::type>
+template <typename T, typename K = typename default_hash_key<T>::type, bool Const = false>
 class foreach_hash_range final {
+	using owner_type = std::conditional_t<Const, const hash_t<T, K>, hash_t<T, K>>;
 public:
 	foreach_hash_range() noexcept
 		: owner_(&empty_owner()) {}
 
-	foreach_hash_range(hash_t<T, K> &owner) noexcept
+	foreach_hash_range(owner_type &owner) noexcept
 		: owner_(&owner) {}
 
 	[[nodiscard]] auto begin() const noexcept {
@@ -319,7 +321,7 @@ private:
 		return empty;
 	}
 
-	hash_t<T, K> *owner_;
+	owner_type *owner_;
 };
 
 template <typename T>
@@ -345,6 +347,28 @@ template <typename T, std::size_t N>
 template <typename T, typename K>
 [[nodiscard]] inline foreach_hash_range<T, K> foreach_range(hash_t<T, K> &value) noexcept {
 	return foreach_hash_range<T, K>(value);
+}
+
+template <typename T, typename K>
+[[nodiscard]] inline foreach_hash_range<T, K, true> foreach_range(const hash_t<T, K> &value) noexcept {
+	return foreach_hash_range<T, K, true>(value);
+}
+
+template <typename T, typename K>
+[[nodiscard]] inline foreach_hash_range<T, K> foreach_range(dynamic_t<T, K> &value) {
+	if (!static_cast<bool>(value)) { throw runtime_error("Cannot iterate a null dynamic collection.", "type_error", "runtime", "foreach"); }
+	return foreach_hash_range<T, K>(*value);
+}
+
+template <typename T, typename K>
+[[nodiscard]] inline foreach_hash_range<T, K, true> foreach_range(const dynamic_t<T, K> &value) {
+	if (!static_cast<bool>(value)) { throw runtime_error("Cannot iterate a null dynamic collection.", "type_error", "runtime", "foreach"); }
+	return foreach_hash_range<T, K, true>(*value);
+}
+
+[[nodiscard]] inline foreach_hash_range<mixed_t, mixed_t, true> foreach_range(const mixed_t &value) noexcept {
+	if (auto table = value.try_get_hash()) { return foreach_hash_range<mixed_t, mixed_t, true>(*table); }
+	return foreach_hash_range<mixed_t, mixed_t, true>();
 }
 
 [[nodiscard]] inline foreach_hash_range<mixed_t> foreach_range(mixed_t &value) noexcept {

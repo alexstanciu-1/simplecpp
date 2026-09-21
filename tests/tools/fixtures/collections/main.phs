@@ -1,0 +1,37 @@
+$input vector<int> = [1, 2, 3];
+$suffix string = "!";
+$mapped = collection_map($input, function (int $value) use ($suffix): string {
+	return "x" . $suffix;
+});
+echo $mapped[0], "\n";
+$keep = function (int $value): bool {
+	return $value > 1;
+};
+$filtered = collection_filter($input, $keep);
+echo $filtered[0], ":", $filtered[1], "\n";
+$fixed fixed_array<int, 2> = [3, 7];
+$dense = collection_filter($fixed, $keep);
+echo $dense[0], ":", $dense[1], "\n";
+$keyed hash<int, int> = [8 => 2, 3 => 1];
+$names = collection_map($keyed, function (int $value): string { return "name"; });
+foreach ($names as $key => $name) {
+	echo $key, ":", $name, "\n";
+}
+$table mixed = [4 => 1, "04" => 2];
+$copy = collection_map($table, function (mixed $value): string { return "boxed"; });
+foreach ($copy as $key => $value) {
+	echo $key, ":", $value, "\n";
+}
+$dynamic dynamic = [4 => 1, "04" => 2];
+$fresh dynamic = collection_filter($dynamic, function (mixed $value): bool { return true; });
+$fresh[4] = 99;
+echo $dynamic[4], ":", $fresh[4], "\n";
+foreach ($fresh as $key => $value) {
+	echo $key, ":", $value, "\n";
+}
+$hash hash<int> = ["first" => 2, "last" => 1];
+$hash_names = collection_map($hash, function (int $value): string { return "hash"; });
+echo $hash_names["first"], "\n";
+$boxed_hash hash<mixed> = [4 => 1, "04" => 2];
+$boxed_names = collection_map($boxed_hash, function (mixed $value): string { return "hash-box"; });
+echo $boxed_names["04"], "\n";

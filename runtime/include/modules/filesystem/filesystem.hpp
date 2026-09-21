@@ -1,5 +1,7 @@
 #pragma once
 
+#include "modules/filesystem/file_lock.hpp"
+
 #include "scpp/bool_t.hpp"
 #include "scpp/error_t.hpp"
 #include "scpp/hash_t.hpp"
