@@ -9055,7 +9055,14 @@ final class Generator
 			return 'auto';
 		}
 		if ($kind === AstKind::PROP) {
-			$baseType = $this->inferExprType($expr->children['expr'] ?? null);
+			$baseExpr = $expr->children['expr'] ?? null;
+			$baseType = $this->inferExprType($baseExpr);
+			// $this is not a declared local. Its direct fields still have authored
+			// types in the current class IR, just like fields of a typed local.
+			if (is_object($baseExpr) && ($baseExpr->kind ?? null) === AstKind::VAR
+				&& ($baseExpr->children['name'] ?? null) === 'this' && $this->currentClassName !== null) {
+				$baseType = $this->typeMapper->mapClassName($this->qualifyClassNameForLookup($this->currentClassName, $this->currentNamespacePhp));
+			}
 			$propName = (string) ($expr->children['prop'] ?? '');
 			$propertyDecl = $this->lookupPropertyDeclByMappedBaseType($baseType, $propName);
 			if ($propertyDecl instanceof PropertyDecl && $propertyDecl->type !== null) {

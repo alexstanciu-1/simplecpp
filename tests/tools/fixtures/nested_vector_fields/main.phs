@@ -1,0 +1,49 @@
+namespace samples;
+class Indexes {
+    private $folders /** vector<vector<int>> */ = [];
+    public $visible /** vector<vector<int>> */ = [];
+    protected $deep /** vector<vector<vector<int>>> */ = [];
+    private $positions /** hash<int, int> */ = [];
+    protected $paths /** hash<int> */ = [];
+    public function initialize(): void {
+        $ids /** vector<int> */ = [];
+        $ids[] = 12;
+        $ids[] = 37;
+        $this->folders[] = $ids;
+        $this->visible[] = $ids;
+        $rows /** vector<vector<int>> */ = [];
+        $rows[] = $ids;
+        $this->deep[] = $rows;
+        $this->positions[12] = 0;
+        $this->positions[37] = 1;
+        $this->paths["/root/a.phs"] = 12;
+    }
+    public function row(int $id): int { return $this->positions[$id]; }
+    public function file(string $path): int { return $this->paths[$path]; }
+    public function first(): int { return $this->folders[0][0]; }
+    public function deeper(): int { return $this->deep[0][0][1]; }
+    public function local_read(): int {
+        $ids /** vector<int> */ = $this->folders[0];
+        $ids[0] = 88;
+        return $this->folders[0][0];
+    }
+    public function copy_edit(): int {
+        $copy = $this->folders;
+        $copy[0][0] = 99;
+        $copy[0][] = 104;
+        return count($copy[0]);
+    }
+    public function direct_write(): int {
+        $this->folders[0][0] = 21;
+        $this->folders[0][] = 104;
+        return count($this->folders[0]);
+    }
+}
+$index = new Indexes();
+$index->initialize();
+echo $index->row(37), ":", $index->file("/root/a.phs"), ":", $index->copy_edit(), ":", $index->first(), "\n";
+echo $index->visible[0][1], ":", $index->deeper(), ":", $index->local_read(), "\n";
+$local /** vector<vector<int>> */ = $index->visible;
+$local[0][0] = 55;
+echo $local[0][0], ":", $index->visible[0][0], "\n";
+echo $index->direct_write(), ":", $index->first(), ":", $index->visible[0][0], "\n";

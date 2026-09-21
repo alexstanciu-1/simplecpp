@@ -360,6 +360,14 @@ Priority note:
 - `/** vector<T> */ []` lowers to `vector_t<T>{}`
 - `/** vector<T> */ [e1, e2, ...]` lowers to `vector_t<T>{e1, e2, ...}`
 - typed vector literals must remain positional; explicit keys are rejected
+- Ordinary typed vector reads use checked `.at(...)` access. Chained reads follow
+  each explicit container element type, including fields declared on the current
+  class reached through `$this`. The current class IR supplies that authored field
+  type; `$this` must not require a local-variable declaration to retain it.
+- This is a local structural metadata lookup, not inheritance resolution or
+  whole-program inference. It introduces no aliases: a local initialized from a
+  vector/inner-vector read retains normal value-copy semantics. Nested writes and
+  appends continue through the separate mutating LHS path.
 
 ### Typed hashes
 - Typed hash literals use the same expected-type initializer path inside struct fields and nested vector/hash/fixed-array literals as at typed local declarations. Known container element/value types must remain typed during recursive literal lowering.
